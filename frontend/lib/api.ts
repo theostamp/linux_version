@@ -1,15 +1,16 @@
-// lib/api.ts
+// frontend/lib/api.ts
 // Βοηθητικό αρχείο για κλήσεις στο backend API
 
-import { getBaseUrl } from "@/lib/config";
-import axios from "axios";
+import axios from 'axios';
+import { getBaseUrl } from '@/lib/config';
 
-// Ομογενοποιούμε το όνομα της env-var
-export const API_BASE_URL = getBaseUrl();
-console.log("✅ API_BASE_URL =", API_BASE_URL);
+// Βασικό URL για το API (env-var override)
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? getBaseUrl();
+console.log('✅ API_BASE_URL =', API_BASE_URL);
 
+// Axios instance
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? API_BASE_URL,
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -20,6 +21,14 @@ export const api = axios.create({
 export type Building = {
   id: number;
   name: string;
+  address: string;
+  city: string;
+  postal_code: string;
+  apartments_count?: number;
+  internal_manager_name?: string;
+  internal_manager_phone?: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Announcement = {
@@ -76,7 +85,7 @@ export type User = {
 };
 
 /* =========================================================================
-   ΒΟΗΘΗΤΙΚΑ
+   ΒΟΗΘΗΤΙΚΕΣ ΣΥΝΑΡΤΗΣΕΙΣ
    ========================================================================= */
 async function check(res: Response) {
   if (!res.ok) {
@@ -87,9 +96,8 @@ async function check(res: Response) {
 }
 
 function getCookie(name: string): string | null {
-  if (typeof document === "undefined") return null;
-  const regex = new RegExp(`(^| )${name}=([^;]+)`);
-  const match = regex.exec(document.cookie);
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
   return match ? match[2] : null;
 }
 
@@ -97,9 +105,8 @@ export async function csrfFetch(input: RequestInfo, init: RequestInit = {}) {
   const headers = {
     ...(init.headers || {}),
     'Content-Type': 'application/json',
-    'X-CSRFToken': getCookie('csrftoken') ?? '',
+    'X-CSRFToken': getCookie('csrftoken') || '',
   };
-
   return fetch(input, {
     ...init,
     headers,
@@ -107,27 +114,45 @@ export async function csrfFetch(input: RequestInfo, init: RequestInit = {}) {
   }).then(check);
 }
 
-// Προσθήκη fetchVoteResults
-export async function fetchVoteResults(voteId: number): Promise<VoteResultsData> {
-  const res = await fetch(`${API_BASE_URL}/votes/${voteId}/results/`, {
-    credentials: 'include',
-  }).then(check);
-  return res.json();
+/* =========================================================================
+   ΚΛΗΣΕΙΣ API - BUILDINGS
+   ========================================================================= */
+export async function fetchBuildings(): Promise<Building[]> {
+  const response = await api.get<any>('/buildings/');
+  const data = response.data;
+  // Διαχείριση paginated ή απλού array
+  if (data && typeof data === 'object' && 'results' in data && Array.isArray(data.results)) {
+    return data.results as Building[];
+  }
+  if (Array.isArray(data)) {
+    return data as Building[];
+  }
+  // Σε κάθε άλλη περίπτωση, επιστρέφουμε κενό πίνακα για αποφυγή σφαλμάτων
+  return [];
+}
+
+export async function fetchBuilding(id: number): Promise<Building> {
+  const { data } = await api.get<Building>(`/buildings/${id}/`);
+  return data;
+}
+
+export async function createBuilding(payload: Partial<Building>): Promise<Building> {
+  const { data } = await api.post<Building>('/buildings/', payload);
+  return data;
+}
+
+export async function updateBuilding(id: number, payload: Partial<Building>): Promise<Building> {
+  const { data } = await api.put<Building>(`/buildings/${id}/`, payload);
+  return data;
+}
+
+export async function deleteBuilding(id: number): Promise<void> {
+  await api.delete(`/buildings/${id}/`);
 }
 
 /* =========================================================================
-   ΚΛΗΣΕΙΣ API
+   ΚΛΗΣΕΙΣ API - ANNOUNCEMENTS
    ========================================================================= */
-
-// Buildings
-export async function fetchBuildings(): Promise<Building[]> {
-  const res = await fetch(`${API_BASE_URL}/buildings/`, {
-    credentials: 'include',
-  }).then(check);
-  return res.json();
-}
-
-// Announcements
 export async function fetchAnnouncements(): Promise<Announcement[]> {
   const res = await fetch(`${API_BASE_URL}/announcements/`, {
     cache: 'no-store',
@@ -135,11 +160,11 @@ export async function fetchAnnouncements(): Promise<Announcement[]> {
   }).then(check);
   const json = await res.json();
   const rows = Array.isArray(json.results) ? json.results : json;
-  return rows.map((row: any): Announcement => ({
+  return rows.map((row: any) => ({
     id: row.id,
     title: row.title,
-    description: row.description ?? row.content ?? '',
-    file: row.file ?? null,
+    description: row.description || row.content || '',
+    file: row.file || null,
     start_date: row.start_date,
     end_date: row.end_date,
     is_active: row.is_active,
@@ -160,7 +185,9 @@ export async function createAnnouncement(payload: {
   });
 }
 
-// Votes
+/* =========================================================================
+   ΚΛΗΣΕΙΣ API - VOTES
+   ========================================================================= */
 export async function fetchVotes(): Promise<Vote[]> {
   const res = await fetch(`${API_BASE_URL}/votes/`, {
     cache: 'no-store',
@@ -168,7 +195,7 @@ export async function fetchVotes(): Promise<Vote[]> {
   }).then(check);
   const json = await res.json();
   const rows = Array.isArray(json.results) ? json.results : json;
-  return rows.map((v: any): Vote => ({
+  return rows.map((v: any) => ({
     id: v.id,
     title: v.title,
     description: v.description,
@@ -178,9 +205,7 @@ export async function fetchVotes(): Promise<Vote[]> {
 }
 
 export async function fetchMyVote(voteId: number): Promise<VoteSubmission> {
-  const res = await fetch(`${API_BASE_URL}/votes/${voteId}/my-submission/`, {
-    credentials: 'include',
-  }).then(check);
+  const res = await fetch(`${API_BASE_URL}/votes/${voteId}/my-submission/`, { credentials: 'include' }).then(check);
   return res.json();
 }
 
@@ -189,6 +214,11 @@ export async function submitVote(voteId: number, choice: 'ΝΑΙ' | 'ΟΧΙ' | '
     method: 'POST',
     body: JSON.stringify({ choice }),
   });
+}
+
+export async function fetchVoteResults(voteId: number): Promise<VoteResultsData> {
+  const res = await fetch(`${API_BASE_URL}/votes/${voteId}/results/`, { credentials: 'include' }).then(check);
+  return res.json();
 }
 
 export interface CreateVotePayload {
@@ -207,17 +237,16 @@ export async function createVote(payload: CreateVotePayload) {
   });
 }
 
-// User Requests
+/* =========================================================================
+   ΚΛΗΣΕΙΣ API - USER REQUESTS
+   ========================================================================= */
 export async function fetchRequests(status: string = ''): Promise<UserRequest[]> {
   const url = new URL(`${API_BASE_URL}/user-requests/`);
   if (status) url.searchParams.append('status', status);
-  const res = await fetch(url.toString(), {
-    cache: 'no-store',
-    credentials: 'include',
-  }).then(check);
+  const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' }).then(check);
   const json = await res.json();
   const rows = Array.isArray(json.results) ? json.results : json;
-  return rows.map((r: any): UserRequest => ({
+  return rows.map((r: any) => ({
     id: r.id,
     title: r.title,
     description: r.description,
@@ -226,21 +255,18 @@ export async function fetchRequests(status: string = ''): Promise<UserRequest[]>
     updated_at: r.updated_at,
     created_by: r.created_by,
     created_by_username: r.created_by_username,
-    supporter_count: r.supporter_count ?? 0,
-    supporter_usernames: r.supporter_usernames ?? [],
-    is_urgent: r.is_urgent ?? false,
-    type: r.type ?? '',
+    supporter_count: r.supporter_count || 0,
+    supporter_usernames: r.supporter_usernames || [],
+    is_urgent: r.is_urgent || false,
+    type: r.type || '',
   }));
 }
 
 export async function fetchTopRequests(): Promise<UserRequest[]> {
-  const res = await fetch(`${API_BASE_URL}/user-requests/top/`, {
-    cache: 'no-store',
-    credentials: 'include',
-  }).then(check);
+  const res = await fetch(`${API_BASE_URL}/user-requests/top/`, { cache: 'no-store', credentials: 'include' }).then(check);
   const json = await res.json();
   const rows = Array.isArray(json.results) ? json.results : json;
-  return rows.map((r: any): UserRequest => ({
+  return rows.map((r: any) => ({
     id: r.id,
     title: r.title,
     description: r.description,
@@ -249,9 +275,10 @@ export async function fetchTopRequests(): Promise<UserRequest[]> {
     updated_at: r.updated_at,
     created_by: r.created_by,
     created_by_username: r.created_by_username,
-    supporter_count: r.supporter_count,
-    supporter_usernames: r.supporter_usernames,
-    is_urgent: r.is_urgent,
+    supporter_count: r.supporter_count || 0,
+    supporter_usernames: r.supporter_usernames || [],
+    is_urgent: r.is_urgent || false,
+    type: r.type || '',
   }));
 }
 
@@ -273,7 +300,9 @@ export async function createUserRequest(payload: {
   });
 }
 
-// Auth
+/* =========================================================================
+   ΚΛΗΣΕΙΣ API - AUTH
+   ========================================================================= */
 export async function loginUser(username: string, password: string): Promise<void> {
   await csrfFetch(`${API_BASE_URL}/users/login/`, {
     method: 'POST',
@@ -286,8 +315,6 @@ export async function logoutUser(): Promise<void> {
 }
 
 export async function getCurrentUser(): Promise<User> {
-  const res = await fetch(`${API_BASE_URL}/users/me/`, {
-    credentials: 'include',
-  }).then(check);
+  const res = await fetch(`${API_BASE_URL}/users/me/`, { credentials: 'include' }).then(check);
   return res.json();
 }
