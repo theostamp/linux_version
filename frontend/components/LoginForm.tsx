@@ -1,4 +1,4 @@
-// πιθανώς frontend/components/LoginForm.tsx ή παρόμοιο path
+// /frontend/components/LoginForm.tsx
 'use client';
 
 import { useState, useEffect } from 'react';

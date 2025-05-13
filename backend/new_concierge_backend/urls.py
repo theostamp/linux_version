@@ -1,16 +1,34 @@
-# backend/new_concierge_backend/urls.py
+# backend/users/urls.py
 
-from django.contrib import admin
 from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+
+from .views import (
+    get_csrf_token,
+    login_view,
+    logout_view,
+    me_view,
+    UserViewSet,
+)
+
+router = DefaultRouter()
+# Εγγραφή του UserViewSet στο βασικό path '' → 
+# GET /api/users/           list users
+# GET /api/users/{pk}/      retrieve user
+# POST /api/users/          create user (εφόσον το επιτρέπουν τα permissions)
+# PUT/PATCH /api/users/{pk}/ update user
+# DELETE /api/users/{pk}/   delete user
+router.register(r'', UserViewSet, basename='user')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/users/', include('users.urls')),
-    path('api/buildings/', include('buildings.urls')),
-    path('api/tenants/', include('tenants.urls')),
-    path('api/announcements/', include('announcements.urls')),
-    path('api/user-requests/', include('user_requests.urls')),
-    path('api/obligations/', include('obligations.urls')),
-    path('api/votes/', include('votes.urls')),
-    path('api/', include('core.urls')),  # csrf token, κ.λπ.
+    # Endpoint για τοποθέτηση CSRF cookie (εφόσον χρειάζεται ακόμη)
+    path('csrf/', get_csrf_token, name='get_csrf_token'),
+    # Login με email + password → JWT tokens
+    path('login/', login_view, name='login'),
+    # Logout (blacklist του refresh token)
+    path('logout/', logout_view, name='logout'),
+    # Πληροφορίες για τον τρέχοντα authenticated χρήστη
+    path('me/', me_view, name='me'),
+    # Routes για CRUD χρήστη μέσω ViewSet
+    path('', include(router.urls)),
 ]

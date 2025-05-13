@@ -88,6 +88,14 @@ DATABASES = {
 # ----------------------------------------
 AUTH_USER_MODEL = 'users.CustomUser'
 
+
+
+# Custom authentication backends για email-based login
+ AUTHENTICATION_BACKENDS = [
+   'users.backends.EmailBackend',              # email login
+    'django.contrib.auth.backends.ModelBackend', # default (username)
+ ]
+
 # ----------------------------------------
 # 🔐 Password Validation
 # ----------------------------------------
@@ -139,10 +147,13 @@ TEMPLATES = [
 # 🛡️ REST Framework
 # ----------------------------------------
 REST_FRAMEWORK = {
+    # Χρήση μόνο JWT authentication
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',    
     ],
+ 
+    'DEFAULT_JWT_AUTHENTICATION_CLASSES': [
+
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
