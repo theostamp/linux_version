@@ -18,10 +18,19 @@ const links = [
   { href: '/buildings', label: 'Κτίρια', icon: <Building className="w-4 h-4 mr-2" /> },
 ];
 
-export function Sidebar() {
+export default function Sidebar() {
   const pathname = usePathname();
   useCsrf();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // Προβολή indicator φόρτωσης ενώ φορτώνουμε το user
+  if (loading) {
+    return (
+      <aside className="w-64 bg-white dark:bg-gray-900 shadow-md flex items-center justify-center min-h-screen">
+        <p>Φόρτωση...</p>
+      </aside>
+    );
+  }
 
   return (
     <aside className="w-64 bg-white dark:bg-gray-900 shadow-md flex flex-col justify-between min-h-screen">
@@ -51,9 +60,9 @@ export function Sidebar() {
             <div className="mb-2">
               Συνδεδεμένος ως:{' '}
               <strong>
-                {user.first_name && user.last_name
+                {user.first_name || user.last_name
                   ? `${user.first_name} ${user.last_name}`
-                  : user.username}
+                  : user.email}
               </strong>
             </div>
             <LogoutButton />

@@ -91,10 +91,10 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 
 # Custom authentication backends για email-based login
- AUTHENTICATION_BACKENDS = [
-   'users.backends.EmailBackend',              # email login
+AUTHENTICATION_BACKENDS = [
+    'users.backends.EmailBackend',              # email login
     'django.contrib.auth.backends.ModelBackend', # default (username)
- ]
+]
 
 # ----------------------------------------
 # 🔐 Password Validation
@@ -120,9 +120,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",  # ή Path(BASE_DIR, "static")
-]
+# STATICFILES_DIRS = [
+#     BASE_DIR / "static",
+# ]
 
 # ----------------------------------------
 # ⚙️ Django Templates
@@ -151,9 +151,6 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',    
     ],
- 
-    'DEFAULT_JWT_AUTHENTICATION_CLASSES': [
-
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
