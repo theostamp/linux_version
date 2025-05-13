@@ -6,13 +6,15 @@ import axios, { AxiosResponse } from 'axios';
 // -----------------------------------------------------------------------------
 // Proxy μέσω Next.js: όλα τα /api/** περνάνε στο backend (rewrites στο next.config.js)
 // -----------------------------------------------------------------------------
-export const API_BASE_URL = '/api';
+
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
+
 
 // CSRF Interceptor: προσθέτει X-CSRFToken από cookie σε state-changing requests
 function getCookie(name: string): string | null {

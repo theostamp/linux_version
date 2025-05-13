@@ -1,15 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  // proxy όλα τα /api/* στο backend
   async rewrites() {
+    // ΔΕΝ θα εκτελεστεί στον browser
+    const apiBase = process.env.BACKEND_INTERNAL_URL || 'http://localhost:8000';
     return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:8000/api/:path*',
-      },
+      { source: '/api/:path*', destination: `${apiBase}/api/:path*` },
     ];
   },
 };
-
 module.exports = nextConfig;

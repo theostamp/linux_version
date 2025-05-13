@@ -1,46 +1,63 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import axios from 'axios';
-import { getCurrentUser, User } from '@/lib/api';
+'use client';
 
-interface AuthContextValue {
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
+import {
+  getCurrentUser,
+  loginUser,
+  logoutUser,
+  User,
+} from '@/lib/api';
+
+type AuthCtx = {
   user: User | null;
-  loading: boolean;
-}
+  login: (u: string, p: string) => Promise<void>;
+  logout: () => Promise<void>;
+};
 
-const AuthContext = createContext<AuthContextValue>({ user: null, loading: true });
+const AuthContext = createContext<AuthCtx | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
 
+  // Δοκιμάζουμε να φέρουμε τον τρέχοντα χρήστη,
+  // αλλά ακόμη κι αν αποτύχει συνεχίζουμε κανονικά.
   useEffect(() => {
-    let didCancel = false;
-
-    async function fetchUser() {
+    (async () => {
       try {
-        const u = await getCurrentUser();
-        if (!didCancel) setUser(u);
-      } catch (err: any) {
-        if (axios.isAxiosError(err) && err.response?.status === 401) {
-          // απλώς δεν είμαστε logged-in
-          if (!didCancel) setUser(null);
-        } else {
-          console.error('Auth fetch failed:', err);
-        }
-      } finally {
-        if (!didCancel) setLoading(false);
+        const me = await getCurrentUser();
+        setUser(me);
+      } catch {
+        setUser(null);
       }
-    }
-
-    fetchUser();
-    return () => { didCancel = true; };
+    })();
   }, []);
 
+  const login = async (username: string, password: string) => {
+    await loginUser(username, password);
+    const me = await getCurrentUser();
+    setUser(me);
+  };
+
+  const logout = async () => {
+    await logoutUser();
+    setUser(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
+}

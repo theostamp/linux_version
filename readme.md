@@ -100,9 +100,9 @@ npm run start
 <!-- diagrafh olvn  -->
 
 
-find . -name "*.pyc" -delete
-find . -name "__pycache__" -type d -exec rm -r {} +
-find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+sudo find . -name "*.pyc" -delete
+sudo find . -name "__pycache__" -type d -exec rm -r {} +
+sudo find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
 
 docker compose up -d
 ./scripts/reset.sh
@@ -160,7 +160,7 @@ echo "# linux_version" >> README.md
 git init
 
 git add .
-git commit -m "backup 2"
+git commit -m "end of olde version"
 git branch -M main
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

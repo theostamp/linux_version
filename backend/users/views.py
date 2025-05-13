@@ -2,13 +2,17 @@
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.contrib.auth import authenticate
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.contrib.auth import authenticate, login, logout
+from django.views.decorators.csrf import csrf_exempt      #  <-- πρόσθεσε αυτό
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from .models import CustomUser
 from .serializers import UserSerializer
@@ -25,6 +29,7 @@ def get_csrf_token(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@csrf_exempt  # Χρειάζεται αν δεν χρησιμοποιείτε CSRF token
 def login_view(request):
     """
     POST /api/users/login/
