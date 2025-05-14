@@ -7,8 +7,7 @@ venv/
 .git/
 .gitignore
 .dockerignore
-Dockerfile
-docker-compose.yml
 *.db
 staticfiles/
 mediafiles/
+__pycache__

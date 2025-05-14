@@ -1,18 +1,26 @@
-# backend/tenants/models.py
-
 from django.db import models
+from django_tenants.models import TenantMixin, DomainMixin
 from buildings.models import Building
+from django.utils.translation import gettext_lazy as _
 
-class Tenant(models.Model):
-    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='tenants')
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    email = models.EmailField(blank=True, null=True)
-    phone = models.CharField(max_length=20, blank=True)
-    apartment = models.CharField(max_length=50)
+class Client(TenantMixin):
+    building = models.OneToOneField(
+        Building, on_delete=models.CASCADE,
+        null=True, blank=True
+    )
+    name = models.CharField(max_length=200)
+    created_on = models.DateField(auto_now_add=True)
+    paid_until = models.DateField(null=True, blank=True)
+    on_trial = models.BooleanField(default=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    auto_create_schema = True
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} - {self.apartment}"
+        return self.name
+    
+
+class Domain(DomainMixin):
+    pass    
+    # The domain name must be unique
+    # and must not contain any special characters
+    # or spaces. It should be a valid domain name   

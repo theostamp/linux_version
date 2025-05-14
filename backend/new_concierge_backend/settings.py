@@ -1,8 +1,8 @@
+# backend/new_concierge_backend/settings.py
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load .env variables
 load_dotenv()
 
 # ----------------------------------------
@@ -13,45 +13,61 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ----------------------------------------
 # 🔐 Security
 # ----------------------------------------
-SECRET_KEY = os.getenv('SECRET_KEY', 'your_default_secret_key')
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
-IS_PRODUCTION = os.getenv("ENV", "development") == "production"
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'insecure_dev_key')
+DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost').split(',')
+IS_PRODUCTION = os.getenv('ENV', 'development') == 'production'
 
 # ----------------------------------------
-# 🔌 Installed Apps
+# 🏘️ django-tenants split apps
 # ----------------------------------------
-INSTALLED_APPS = [
-    # Django
-    'django.contrib.admin',
-    'django.contrib.auth',
+# -------------------- django-tenants split --------------------
+SHARED_APPS = [
+    'django_tenants',          # ΠΑΝΤΑ πρώτο
+    'tenants',                 # Client & Domain models (public-only)
+
+    # Django core που χρειαζόμαστε στο public
     'django.contrib.contenttypes',
+    'django.contrib.auth',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.admin',
 
-    # Third-party
+    # 👉 το app με το AUTH_USER_MODEL
+    'users',
+    'buildings',
+]
+
+TENANT_APPS = [
+    # Django / 3rd-party που θέλουμε ανα-tenant
     'rest_framework',
     'corsheaders',
     'django_filters',
 
-    # Local apps
-    'users',
-    'buildings',
-    'tenants',
+    # Δικά σου business-apps
+ 
     'announcements',
     'requests',
     'votes',
-    'api',
     'user_requests',
     'obligations',
     'core',
+    'residents',
 ]
+
+# ➜ ΧΩΡΙΣ duplicates
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS
+                                      if app not in SHARED_APPS]
+
+
+
 
 # ----------------------------------------
 # 🧩 Middleware
 # ----------------------------------------
 MIDDLEWARE = [
+    'django_tenants.middleware.main.TenantMainMiddleware',  # ⬅️ ΠΑΝΩ-ΠΑΝΩ!
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -63,42 +79,42 @@ MIDDLEWARE = [
 ]
 
 # ----------------------------------------
-# 🌐 URL & WSGI
+# 🌐 URL / WSGI / ASGI
 # ----------------------------------------
 ROOT_URLCONF = 'new_concierge_backend.urls'
 WSGI_APPLICATION = 'new_concierge_backend.wsgi.application'
 ASGI_APPLICATION = 'new_concierge_backend.asgi.application'
 
 # ----------------------------------------
-# 🗄️ Database
+# 🗄️ Database (django-tenants backend)
 # ----------------------------------------
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'new_concierge_db'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'password'),
-        'HOST': os.getenv('DB_HOST', 'db'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'ENGINE': 'django_tenants.postgresql_backend',
+        'NAME': os.getenv('DB_NAME',     os.getenv('POSTGRES_DB', 'postgres')),
+        'USER': os.getenv('DB_USER',     os.getenv('POSTGRES_USER', 'postgres')),
+        'PASSWORD': os.getenv('DB_PASSWORD', os.getenv('POSTGRES_PASSWORD', 'postgres')),
+        'HOST': os.getenv('DB_HOST',     os.getenv('POSTGRES_HOST', 'db')),
+        'PORT': os.getenv('DB_PORT',     os.getenv('POSTGRES_PORT', '5432')),
     }
 }
+# ----------------------------------------
+DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter',)
+
+# Υποχρεωτικά για django-tenants
+TENANT_MODEL  = 'tenants.Client'   # app.Model με schema_name & paid_until κ.λπ.
+TENANT_DOMAIN_MODEL  = 'tenants.Domain'   # app.Model με domain & tenant FK
+PUBLIC_SCHEMA_NAME = 'public'
 
 # ----------------------------------------
-# 🔑 Auth
+# 🔑 Custom auth
 # ----------------------------------------
 AUTH_USER_MODEL = 'users.CustomUser'
-
-
-
-# Custom authentication backends για email-based login
 AUTHENTICATION_BACKENDS = [
-    'users.backends.EmailBackend',              # email login
-    'django.contrib.auth.backends.ModelBackend', # default (username)
+    'users.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
-# ----------------------------------------
-# 🔐 Password Validation
-# ----------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -115,17 +131,18 @@ USE_I18N = True
 USE_TZ = True
 
 # ----------------------------------------
-# 📦 Static
+# 📦 Static / Media
 # ----------------------------------------
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL  = '/static/'
+STATIC_ROOT = Path(os.getenv('STATIC_ROOT', BASE_DIR / 'staticfiles'))
+MEDIA_ROOT  = Path(os.getenv('MEDIA_ROOT',  BASE_DIR / 'media'))
+MEDIA_URL   = '/media/'
+
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-# STATICFILES_DIRS = [
-#     BASE_DIR / "static",
-# ]
 
 # ----------------------------------------
-# ⚙️ Django Templates
+# ⚙️ Templates
 # ----------------------------------------
 TEMPLATES = [
     {
@@ -147,9 +164,8 @@ TEMPLATES = [
 # 🛡️ REST Framework
 # ----------------------------------------
 REST_FRAMEWORK = {
-    # Χρήση μόνο JWT authentication
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',    
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -181,50 +197,38 @@ REST_FRAMEWORK = {
 # 🌐 CORS
 # ----------------------------------------
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
 CORS_ALLOW_HEADERS = [
-    "accept", "accept-encoding", "authorization", "content-type", "dnt",
-    "origin", "user-agent", "x-csrftoken", "x-requested-with",
+    'accept', 'accept-encoding', 'authorization', 'content-type', 'dnt',
+    'origin', 'user-agent', 'x-csrftoken', 'x-requested-with',
 ]
-CORS_ALLOW_METHODS = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
-CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
+CORS_ALLOW_METHODS = ['DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT']
+CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
 
 # ----------------------------------------
 # 🔒 CSRF
 # ----------------------------------------
-raw_csrf_origins = os.getenv("CSRF_ORIGINS", "localhost:3000").split(",")
+_raw_csrf = os.getenv('CSRF_ORIGINS', 'localhost:3000').split(',')
+CSRF_TRUSTED_ORIGINS = [f'http://{h.strip()}' for h in _raw_csrf] + \
+                       [f'https://{h.strip()}' for h in _raw_csrf] + \
+                       ['http://localhost:3000']
 
-CSRF_TRUSTED_ORIGINS = [
-    f"http://{host.strip()}" for host in raw_csrf_origins
-] + [
-    f"https://{host.strip()}" for host in raw_csrf_origins
-] + [
-    "http://localhost:3000",
-]
-
-CSRF_COOKIE_NAME = "csrftoken"
-CSRF_COOKIE_HTTPONLY = False  # Accessible via JS (for axios)
-CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
-
-# Secure cookies (adjusted by environment)
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_COOKIE_HTTPONLY = False
 if IS_PRODUCTION:
-    CSRF_COOKIE_SECURE = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SAMESITE = "None"
-    SESSION_COOKIE_SAMESITE = "None"
+    CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = SESSION_COOKIE_SAMESITE = 'None'
 else:
-    CSRF_COOKIE_SECURE = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SAMESITE = "Lax"
-    SESSION_COOKIE_SAMESITE = "Lax"
+    CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SAMESITE = SESSION_COOKIE_SAMESITE = 'Lax'
 
 # ----------------------------------------
 # 📧 Email
 # ----------------------------------------
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_BACKEND      = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST         = 'smtp.gmail.com'
+EMAIL_PORT         = 587
+EMAIL_USE_TLS      = True
+EMAIL_HOST_USER    = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD= os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@example.com')

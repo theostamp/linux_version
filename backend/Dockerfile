@@ -1,29 +1,19 @@
-# backend/Dockerfile
+FROM python:3.12-slim
 
-FROM python:3.11-slim
-
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential curl libpq-dev netcat-openbsd \
-    && rm -rf /var/lib/apt/lists/*
+# System deps: gcc για psycopg2 + libpq-dev + ΠΡΟΣΘΗΚΗ postgresql-client (φέρνει pg_isready)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential gcc libpq-dev postgresql-client && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install Poetry (optional αν δεν χρησιμοποιείς poetry.lock)
-RUN curl -sSL https://install.python-poetry.org | python3 - --version 1.8.0
-ENV PATH="/root/.local/bin:$PATH"
-RUN poetry config virtualenvs.create false
+COPY requirements*.txt ./
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy code
 COPY . .
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
-
-RUN chmod +x start.sh
-ENTRYPOINT ["./start.sh"]
-
+CMD ["/entrypoint.sh"]

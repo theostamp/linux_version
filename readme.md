@@ -1,3 +1,13 @@
+# (α) φτιάχνεις το αρχείο migration
+python manage.py makemigrations tenants
+
+# (β) τρέχεις μόνο τα shared migrations (Client & Domain)
+python manage.py migrate_schemas --shared --noinput
+
+python manage.py createsuperuser
+
+
+
 
 # Makefile για unified commands (root folder) -->
 
@@ -160,7 +170,7 @@ echo "# linux_version" >> README.md
 git init
 
 git add .
-git commit -m "end of olde version"
+git commit -m "dfr"
 git branch -M main
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

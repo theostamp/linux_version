@@ -1,27 +1,15 @@
-# backend/tenants/views.py
-
-from rest_framework import viewsets
-from .models import Tenant
+from rest_framework import viewsets, permissions
+from .models import Client
 from .serializers import TenantSerializer
-from rest_framework.permissions import IsAuthenticated
-
-from core.permissions import IsManagerOrSuperuser
-
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.http import JsonResponse
-
-@ensure_csrf_cookie
-def get_csrf_token(request):
-    return JsonResponse({"message": "CSRF cookie set"})
-
+from core.permissions import IsManagerOrSuperuser   # δικό σου custom
 
 class TenantViewSet(viewsets.ModelViewSet):
-    queryset = Tenant.objects.all()
+    queryset = Client.objects.select_related("building")
     serializer_class = TenantSerializer
-    permission_classes = [IsAuthenticated, IsManagerOrSuperuser]
+    permission_classes = [permissions.IsAuthenticated, IsManagerOrSuperuser]
 
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser:
-            return Tenant.objects.all()
-        return Tenant.objects.filter(building__manager=user)
+            return self.queryset
+        return self.queryset.filter(building__manager=user)

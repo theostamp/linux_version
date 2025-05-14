@@ -1,14 +1,13 @@
-# backend/tenants/admin.py
-
 from django.contrib import admin
-from .models import Tenant
+from .models import Resident
 from buildings.models import Building
 
-@admin.register(Tenant)
-class TenantAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name', 'apartment', 'building')
-    search_fields = ('first_name', 'last_name', 'apartment')
-    list_filter = ('building',)
+
+@admin.register(Resident)
+class ResidentAdmin(admin.ModelAdmin):
+    list_display  = ("user", "apartment", "building", "role")
+    list_filter   = ("building", "role")
+    search_fields = ("user__first_name", "user__last_name", "apartment")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

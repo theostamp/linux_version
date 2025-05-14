@@ -1,94 +1,53 @@
-#######################################################################
-# SERVICES
-#######################################################################
-services:
-  #####################################################################
-  # 1. PostgreSQL
-  #####################################################################
-  db:
-    image: postgres:15.3
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB:     ${DB_NAME:-concierge}
-      POSTGRES_USER:   ${DB_USER:-concierge}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:            # ↳ μόνο αν το θες προσβάσιμο απ’ έξω
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+version: "3.9"
 
-  #####################################################################
-  # 2. Django / Gunicorn
-  #####################################################################
+services:
+  db:
+    image: postgres:16
+    env_file: .env
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    ports: ["5432:5432"]
+
   backend:
     build:
-      context: ./backend
+      context: ./backend          # ✅ μόνο τον φάκελο backend
       dockerfile: Dockerfile
-    command: >
-      sh -c "
-        python manage.py migrate &&
-        python manage.py collectstatic --noinput &&
-        gunicorn new_concierge_backend.wsgi:application --bind 0.0.0.0:8000
-      "
-    env_file: .env           # ό,τι έχεις ήδη
-    environment:
-      # Ελάχιστα που χρειάζεται το Django για να “δει” τη DB & επιτρέψει Host
-      DATABASE_URL:   postgres://${DB_USER:-concierge}:${DB_PASSWORD:-changeme}@db:5432/${DB_NAME:-concierge}
-      ALLOWED_HOSTS:  "*"
-      CSRF_TRUSTED_ORIGINS: "http://localhost http://nginx http://frontend"
+    command: ./entrypoint.sh      # τρέχει migrate, collectstatic, κ.λπ.
     volumes:
-      - ./backend:/app                 # live-reload (dev) – βγάλε το αν κάνεις prod build
-      - static_volume:/app/staticfiles
-    depends_on:
-      db:
-        condition: service_healthy
-    ports:
-      - "8000:8000"                    # ↳ publish στο host για εύκολο debug
+      - ./backend/:/app/          # hot-reload κώδικα
+      - static_dev:/app/staticfiles
+      - media_dev:/app/media
+    env_file: .env
+    depends_on: [db]
+    ports: ["8000:8000"]
 
-  #####################################################################
-  # 3. Next.js (dev)  
-  #    Αν κάνεις prod build, άλλαξε το `command` σε `npm run start`
-  #####################################################################
+
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   command: tail -f /dev/null  # Αντικαταστήστε το ./entrypoint.sh με αυτή την εντολή
+  #   volumes:
+  #     - ./backend/:/app/
+  #     - static_dev:/app/staticfiles
+  #     - media_dev:/app/media
+  #   env_file: .env
+  #   depends_on: [db]
+  #   ports: ["8000:8000"]
+
+
+
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    command: npm run dev -- --host 0.0.0.0
-    # env_file: ./frontend/.env.local
-    environment:
-      BACKEND_URL:        http://backend:8000         # 👈 Χρησιμοποιείται στο next.config.js
-      NEXT_PUBLIC_API_URL: http://backend:8000        # 👈 Ορατό και στο browser
+      context: ./frontend         # ✅ μόνο τον φάκελο frontend
+    command: npm run dev
     volumes:
-      - ./frontend:/app
-      - /app/node_modules               # κρατά τα node_modules έξω από bind mount
-    depends_on:
-      - backend
-    ports:
-      - "3000:3000"
+      - ./frontend/:/app/
+      - /app/node_modules         # κρατά τα container-node_modules μέσα
+    env_file: .env
+    ports: ["3000:3000"]
 
-  #####################################################################
-  # 4. Nginx reverse-proxy (προαιρετικό για dev, χρήσιμο σε prod)
-  #####################################################################
-  nginx:
-    image: nginx:1.25
-    container_name: nginx_proxy
-    depends_on:
-      - backend
-      - frontend
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - static_volume:/app/staticfiles   # σερβίρει τα συλλεγμένα static
-
-#######################################################################
-# VOLUMES
-#######################################################################
 volumes:
-  postgres_data:
-  static_volume:
+  pgdata_dev:
+  static_dev:
+  media_dev:
