@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
@@ -15,27 +13,12 @@ services:
     command: ./entrypoint.sh      # τρέχει migrate, collectstatic, κ.λπ.
     volumes:
       - ./backend/:/app/          # hot-reload κώδικα
-      - static_dev:/app/staticfiles
-      - media_dev:/app/media
+      # - static_dev:/app/staticfiles
+      - static_dev:/vol/static
+      - media_dev:/vol/media
     env_file: .env
     depends_on: [db]
     ports: ["8000:8000"]
-
-
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
-  #   command: tail -f /dev/null  # Αντικαταστήστε το ./entrypoint.sh με αυτή την εντολή
-  #   volumes:
-  #     - ./backend/:/app/
-  #     - static_dev:/app/staticfiles
-  #     - media_dev:/app/media
-  #   env_file: .env
-  #   depends_on: [db]
-  #   ports: ["8000:8000"]
-
-
 
   frontend:
     build:

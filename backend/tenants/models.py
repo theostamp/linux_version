@@ -1,7 +1,7 @@
-from django.db import models
-from django_tenants.models import TenantMixin, DomainMixin
+from django.db import models # type: ignore
+from django_tenants.models import TenantMixin, DomainMixin # type: ignore
 from buildings.models import Building
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _ # type: ignore
 
 class Client(TenantMixin):
     building = models.OneToOneField(

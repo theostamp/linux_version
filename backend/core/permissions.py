@@ -2,23 +2,29 @@
 
 from rest_framework import permissions
 
-class IsManagerOrSuperuser(permissions.BasePermission):
+
+
+class IsResidentOrSuperuser(permissions.BasePermission):
     """
-    Επιτρέπει την πρόσβαση σε superusers ή χρήστες που είναι manager του αντικειμένου.
+    Επιτρέπει μόνο σε superusers ή σε authenticated users που **δεν** είναι staff (δηλαδή κατοίκους).
     """
 
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(user and user.is_authenticated and (user.is_superuser or not user.is_staff))
+
+
+class IsManagerOrSuperuser(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         user = request.user
-
         if user.is_superuser:
             return True
-
-        # Για Building αντικείμενα
         if hasattr(obj, 'manager'):
             return obj.manager == user
-
-        # Για Tenant ή Announcement αντικείμενα που συνδέονται με Building
         if hasattr(obj, 'building') and hasattr(obj.building, 'manager'):
             return obj.building.manager == user
-
         return False
+
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(user and user.is_authenticated and (user.is_superuser or user.is_staff))

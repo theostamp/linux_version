@@ -3,6 +3,9 @@ services:
   db:
     image: postgres:16
     env_file: .env
+    container_name: postgres_db
+    ports:
+      - "5432:5432"
     restart: always
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -25,8 +28,17 @@ services:
       dockerfile: frontend/Dockerfile
     env_file: .env
     restart: always
-
-  nginx:
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - static:/vol/static        # target dir set in Django's STATIC_ROOT
+      - media:/vol/media
+  # nginx service to serve static files and reverse proxy to backend
+  nginx:  
     image: nginx:1.26-alpine
     restart: always
     depends_on:

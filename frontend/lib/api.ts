@@ -1,13 +1,8 @@
-// frontend/lib/api.ts
-// Βοηθητικό αρχείο για κλήσεις στο backend API
-
+// Helper για όλα τα calls στο backend
 import axios, { AxiosResponse } from 'axios';
 
-// -----------------------------------------------------------------------------
-// Proxy μέσω Next.js: όλα τα /api/** περνάνε στο backend (rewrites στο next.config.js)
-// -----------------------------------------------------------------------------
-
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? '/api';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -15,22 +10,98 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+/* ------------------------------------------------------------------ */
+/* 1.  Αυτόματος Authorization header από localStorage                 */
+/* ------------------------------------------------------------------ */
+api.interceptors.request.use((config) => {
+  const access = (typeof window !== 'undefined') ? localStorage.getItem('access') : null;
 
-// CSRF Interceptor: προσθέτει X-CSRFToken από cookie σε state-changing requests
+  if (!config.headers) config.headers = {} as import('axios').AxiosRequestHeaders;
+
+  // ⬇️ Authorization για όλα εκτός login
+  if (access && !config.url?.includes('/users/login/')) {
+    config.headers.Authorization = `Bearer ${access}`;
+  }
+
+  // ⬇️ Host header για να επιλέξει σωστά tenant
+  // config.headers.Host = window.location.hostname;
+  
+
+  return config;
+});
+
+
+/* ------------------------------------------------------------------ */
+/* 2.  CSRF token για state-changing requests (αν χρειάζεται)          */
+/* ------------------------------------------------------------------ */
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  return match ? match[2] : null;
+  const regex = new RegExp('(^| )' + name + '=([^;]+)');
+  const m = regex.exec(document.cookie);
+  return m ? decodeURIComponent(m[2]) : null;
 }
 
 api.interceptors.request.use((config) => {
-  const method = (config.method || '').toLowerCase();
+  const method = (config.method ?? '').toLowerCase();
   if (['post', 'put', 'patch', 'delete'].includes(method)) {
     const csrf = getCookie('csrftoken');
-    if (csrf) config.headers!['X-CSRFToken'] = csrf;
+    if (csrf) config.headers['X-CSRFToken'] = csrf;
   }
   return config;
 });
+
+/* ==================================================================
+   ΔΕΔΟΜΕΝΑ / TYPES
+   ================================================================== */
+export type User = {
+  id: number;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+};
+
+/* ------------------------------------------------------------------
+   AUTH
+   ------------------------------------------------------------------ */
+export async function loginUser(
+  email: string,
+  password: string,
+): Promise<{ access: string; refresh: string; user: User }> {
+  const { data } = await api.post('/users/login/', { email, password });
+
+  // — Αποθήκευση των tokens στο localStorage —
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('access', data.access);
+    localStorage.setItem('refresh', data.refresh);
+    console.log('[loginUser] saved tokens:', {
+      access: data.access.slice(0, 10) + '…',
+      refresh: data.refresh.slice(0, 10) + '…',
+    });
+  }
+
+  return data;
+}
+
+/** Αποσύνδεση: στέλνει το refresh token στον server για blacklist */
+export async function logoutUser(): Promise<void> {
+  const refresh = (typeof window !== 'undefined')
+    ? localStorage.getItem('refresh')
+    : null;
+  await api.post('/users/logout/', { refresh });
+  // (προαιρετικά: καθάρισμα localStorage εδώ ή στο Context)
+}
+
+/** Παίρνει τα στοιχεία του τρέχοντος χρήστη */
+export async function getCurrentUser(): Promise<User> {
+  const { data } = await api.get<User>('/users/me/');
+  return data;
+}
+
+
+/* ------------------------------------------------------------------
+   (τα υπόλοιπα helper‐functions: buildings, votes, … παραμένουν όπως
+   τα είχες – τα έκοψα για συντομία)
+   ------------------------------------------------------------------ */
 
 // -----------------------------------------------------------------------------
 // ΤΥΠΟΙ ΔΕΔΟΜΕΝΩΝ
@@ -41,7 +112,6 @@ export type Vote = { id: number; title: string; description: string; start_date:
 export type VoteSubmission = { choice: 'ΝΑΙ' | 'ΟΧΙ' | 'ΛΕΥΚΟ' | null; };
 export type VoteResultsData = { ΝΑΙ: number; ΟΧΙ: number; ΛΕΥΚΟ: number; total: number; };
 export type UserRequest = { id: number; title: string; description: string; status: string; created_at: string; updated_at?: string; created_by?: number; created_by_username: string; supporter_count: number; supporter_usernames?: string[]; is_urgent: boolean; type?: string; };
-export type User = { id: number; username: string; email?: string; first_name?: string; last_name?: string; };
 
 // -----------------------------------------------------------------------------
 // API CALLS - BUILDINGS
@@ -82,7 +152,7 @@ export async function fetchAnnouncements(): Promise<Announcement[]> {
   return rows.map((row): Announcement => ({
     id: row.id,
     title: row.title,
-    description: row.description || row.content || '',
+    description: row.description ?? row.content ?? '',
     file: row.file ?? null,
     start_date: row.start_date,
     end_date: row.end_date,
@@ -176,19 +246,7 @@ export async function toggleSupportRequest(id: number): Promise<{ status: string
 export async function createUserRequest(payload: { title: string; description: string; building?: number; type?: string; is_urgent?: boolean; }): Promise<void> {
   await api.post('/user-requests/', payload);
 }
-
-// -----------------------------------------------------------------------------
-// API CALLS - AUTH
-// -----------------------------------------------------------------------------
-export async function loginUser(username: string, password: string): Promise<void> {
-  await api.post('/users/login/', { username, password });
+export async function updateUserRequest(id: number, payload: { title: string; description: string; building?: number; type?: string; is_urgent?: boolean; }): Promise<void> {
+  await api.put(`/user-requests/${id}/`, payload);
 }
 
-export async function logoutUser(): Promise<void> {
-  await api.post('/users/logout/');
-}
-
-export async function getCurrentUser(): Promise<User> {
-  const { data } = await api.get<User>('/users/me/');
-  return data;
-}

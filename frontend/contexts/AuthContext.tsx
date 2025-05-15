@@ -1,6 +1,6 @@
 'use client';
 
-import {
+import React, {
   createContext,
   useContext,
   useEffect,
@@ -12,45 +12,73 @@ import {
   loginUser,
   logoutUser,
   User,
+  api,                           // ⬅️ για να βάλουμε default header
 } from '@/lib/api';
 
 type AuthCtx = {
   user: User | null;
-  login: (u: string, p: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthCtx | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  // Δοκιμάζουμε να φέρουμε τον τρέχοντα χρήστη,
-  // αλλά ακόμη κι αν αποτύχει συνεχίζουμε κανονικά.
+  // ------------------------------------------------------------
+  //  Φόρτωσε τον τρέχοντα χρήστη αν υπάρχει token στο localStorage
+  // ------------------------------------------------------------
   useEffect(() => {
     (async () => {
+      const token = localStorage.getItem('access');
+      if (!token) return;                         // δεν υπάρχει; άρα όχι log-in
+      api.defaults.headers.Authorization = `Bearer ${token}`;
+
       try {
         const me = await getCurrentUser();
         setUser(me);
       } catch {
+        // token ήταν άκυρο/έληξε – καθάρισέ το
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
         setUser(null);
       }
     })();
   }, []);
 
-  const login = async (username: string, password: string) => {
-    await loginUser(username, password);
-    const me = await getCurrentUser();
+  // ------------------------------------------------------------
+  //  LOGIN
+  // ------------------------------------------------------------
+  const login = async (email: string, password: string) => {
+    const { access, refresh, user: me } = await loginUser(email, password);
+
+    // αποθήκευσε tokens
+    localStorage.setItem('access', access);
+    localStorage.setItem('refresh', refresh);
+    api.defaults.headers.Authorization = `Bearer ${access}`;
+
     setUser(me);
   };
 
+  // ------------------------------------------------------------
+  //  LOGOUT
+  // ------------------------------------------------------------
   const logout = async () => {
-    await logoutUser();
-    setUser(null);
+    try {
+      await logoutUser();
+    } finally {
+      localStorage.removeItem('access');
+      localStorage.removeItem('refresh');
+      delete api.defaults.headers.Authorization;
+      setUser(null);
+    }
   };
 
+  const contextValue = React.useMemo(() => ({ user, login, logout }), [user, login, logout]);
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

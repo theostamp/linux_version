@@ -1,7 +1,6 @@
-# backend/new_concierge_backend/settings.py
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 
 load_dotenv()
 
@@ -21,12 +20,10 @@ IS_PRODUCTION = os.getenv('ENV', 'development') == 'production'
 # ----------------------------------------
 # 🏘️ django-tenants split apps
 # ----------------------------------------
-# -------------------- django-tenants split --------------------
 SHARED_APPS = [
-    'django_tenants',          # ΠΑΝΤΑ πρώτο
-    'tenants',                 # Client & Domain models (public-only)
+    'django_tenants',
+    'tenants',
 
-    # Django core που χρειαζόμαστε στο public
     'django.contrib.contenttypes',
     'django.contrib.auth',
     'django.contrib.sessions',
@@ -34,40 +31,29 @@ SHARED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.admin',
 
-    # 👉 το app με το AUTH_USER_MODEL
     'users',
     'buildings',
 ]
 
 TENANT_APPS = [
-    # Django / 3rd-party που θέλουμε ανα-tenant
     'rest_framework',
     'corsheaders',
     'django_filters',
-
-    # Δικά σου business-apps
- 
     'announcements',
-    'requests',
-    'votes',
     'user_requests',
+    'votes',
     'obligations',
     'core',
     'residents',
 ]
 
-# ➜ ΧΩΡΙΣ duplicates
-INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS
-                                      if app not in SHARED_APPS]
-
-
-
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 # ----------------------------------------
 # 🧩 Middleware
 # ----------------------------------------
 MIDDLEWARE = [
-    'django_tenants.middleware.main.TenantMainMiddleware',  # ⬅️ ΠΑΝΩ-ΠΑΝΩ!
+    'django_tenants.middleware.main.TenantMainMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -86,24 +72,22 @@ WSGI_APPLICATION = 'new_concierge_backend.wsgi.application'
 ASGI_APPLICATION = 'new_concierge_backend.asgi.application'
 
 # ----------------------------------------
-# 🗄️ Database (django-tenants backend)
+# 🗄️ Database
 # ----------------------------------------
 DATABASES = {
     'default': {
         'ENGINE': 'django_tenants.postgresql_backend',
-        'NAME': os.getenv('DB_NAME',     os.getenv('POSTGRES_DB', 'postgres')),
-        'USER': os.getenv('DB_USER',     os.getenv('POSTGRES_USER', 'postgres')),
+        'NAME': os.getenv('DB_NAME', os.getenv('POSTGRES_DB', 'postgres')),
+        'USER': os.getenv('DB_USER', os.getenv('POSTGRES_USER', 'postgres')),
         'PASSWORD': os.getenv('DB_PASSWORD', os.getenv('POSTGRES_PASSWORD', 'postgres')),
-        'HOST': os.getenv('DB_HOST',     os.getenv('POSTGRES_HOST', 'db')),
-        'PORT': os.getenv('DB_PORT',     os.getenv('POSTGRES_PORT', '5432')),
+        'HOST': os.getenv('DB_HOST', os.getenv('POSTGRES_HOST', 'db')),
+        'PORT': os.getenv('DB_PORT', os.getenv('POSTGRES_PORT', '5432')),
     }
 }
-# ----------------------------------------
-DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter',)
 
-# Υποχρεωτικά για django-tenants
-TENANT_MODEL  = 'tenants.Client'   # app.Model με schema_name & paid_until κ.λπ.
-TENANT_DOMAIN_MODEL  = 'tenants.Domain'   # app.Model με domain & tenant FK
+DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter',)
+TENANT_MODEL = 'tenants.Client'
+TENANT_DOMAIN_MODEL = 'tenants.Domain'
 PUBLIC_SCHEMA_NAME = 'public'
 
 # ----------------------------------------
@@ -133,11 +117,10 @@ USE_TZ = True
 # ----------------------------------------
 # 📦 Static / Media
 # ----------------------------------------
-STATIC_URL  = '/static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = Path(os.getenv('STATIC_ROOT', BASE_DIR / 'staticfiles'))
-MEDIA_ROOT  = Path(os.getenv('MEDIA_ROOT',  BASE_DIR / 'media'))
-MEDIA_URL   = '/media/'
-
+MEDIA_ROOT = Path(os.getenv('MEDIA_ROOT', BASE_DIR / 'media'))
+MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -225,10 +208,13 @@ else:
 # ----------------------------------------
 # 📧 Email
 # ----------------------------------------
-EMAIL_BACKEND      = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST         = 'smtp.gmail.com'
-EMAIL_PORT         = 587
-EMAIL_USE_TLS      = True
-EMAIL_HOST_USER    = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD= os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@example.com')
+
+# Debug unsafe (για dev περιβάλλον)
+DJANGO_ALLOW_ASYNC_UNSAFE = True

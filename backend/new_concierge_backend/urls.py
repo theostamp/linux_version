@@ -1,7 +1,10 @@
 # backend/new_concierge_backend/urls.py
 
-from django.contrib import admin
-from django.urls import path, include
+from django.contrib import admin # type: ignore
+from django.urls import path, include # type: ignore
+from django.conf import settings # type: ignore
+from django.conf.urls.static import static # type: ignore
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns # type: ignore
 
 urlpatterns = [
     # Admin panel
@@ -22,3 +25,11 @@ urlpatterns = [
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL,
+                          document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL,
+                          document_root=settings.MEDIA_ROOT)
+else:
+    urlpatterns += staticfiles_urlpatterns() 

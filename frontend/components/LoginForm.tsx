@@ -28,7 +28,7 @@ export default function LoginForm() {
       router.push('/dashboard');
     } catch (err: any) {
       console.error('Login error:', err);
-      toast.error(err.message || 'Κάτι πήγε στραβά!');
+      toast.error(err.message ?? 'Κάτι πήγε στραβά!');
     } finally {
       setLoading(false);
     }

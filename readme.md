@@ -1,8 +1,30 @@
 # (α) φτιάχνεις το αρχείο migration
-python manage.py makemigrations tenants
+docker compose exec backend python manage.py makemigrations tenants
 
 # (β) τρέχεις μόνο τα shared migrations (Client & Domain)
-python manage.py migrate_schemas --shared --noinput
+docker compose exec backend python manage.py migrate_schemas --shared --noinput
+
+docker compose exec backend python manage.py shell -c "
+from tenants.models import Client, Domain
+public, _ = Client.objects.get_or_create(schema_name='public',
+                                         defaults={'name':'Public'})
+Domain.objects.get_or_create(domain='localhost', tenant=public,
+                             defaults={'is_primary':True})
+print('✅ localhost → public tenant ready')
+"
+# (γ) τρέχεις τα migrations για όλα τα tenants
+
+docker compose exec backend python manage.py shell -c "
+from tenants.models import Client, Domain
+public = Client.objects.get(schema_name='public')
+Domain.objects.get_or_create(domain='localhost', tenant=public,
+                             defaults={'is_primary': True})
+print('✅ domain localhost → public tenant added')
+"
+docker compose exec backend python manage.py migrate_schemas --tenant --noinput
+
+
+
 
 python manage.py createsuperuser
 
@@ -170,7 +192,7 @@ echo "# linux_version" >> README.md
 git init
 
 git add .
-git commit -m "dfr"
+git commit -m "autoexec migrations"
 git branch -M main
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

@@ -5,12 +5,14 @@ from rest_framework.response import Response
 from django.db.models import Count
 from .models import UserRequest
 from .serializers import UserRequestSerializer
+from core.permissions import IsResidentOrSuperuser
 
 class UserRequestViewSet(viewsets.ModelViewSet):
     queryset = UserRequest.objects.all()
     serializer_class = UserRequestSerializer
     permission_classes = [IsAuthenticated]
     ordering = ['-created_at']  # ✅ πρόσθεσε αυτό
+    permission_classes = [IsResidentOrSuperuser]
 
 
     def perform_create(self, serializer):
