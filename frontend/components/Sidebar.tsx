@@ -21,16 +21,7 @@ const links = [
 export default function Sidebar() {
   const pathname = usePathname();
   useCsrf();
-  const { user, loading } = useAuth();
-
-  // Προβολή indicator φόρτωσης ενώ φορτώνουμε το user
-  if (loading) {
-    return (
-      <aside className="w-64 bg-white dark:bg-gray-900 shadow-md flex items-center justify-center min-h-screen">
-        <p>Φόρτωση...</p>
-      </aside>
-    );
-  }
+  const { user } = useAuth();
 
   return (
     <aside className="w-64 bg-white dark:bg-gray-900 shadow-md flex flex-col justify-between min-h-screen">

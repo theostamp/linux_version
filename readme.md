@@ -192,7 +192,7 @@ echo "# linux_version" >> README.md
 git init
 
 git add .
-git commit -m "looking for  solutions in 401"
+git commit -m "401 solved  "
 git branch -M main
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

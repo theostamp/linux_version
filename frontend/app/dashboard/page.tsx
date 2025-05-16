@@ -32,7 +32,7 @@ import { getBaseUrl } from '@/lib/config';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, loadingAuth, loading: authActionLoading } = useAuth();
+  const { user, loading } = useAuth();
 
   const [onlyMine, setOnlyMine] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -48,14 +48,14 @@ export default function DashboardPage() {
 
   // Redirect to login if auth finished and no user
   useEffect(() => {
-    if (!loadingAuth && !user) {
+    if (!loading && !user) {
       router.push('/login');
     }
-  }, [loadingAuth, user, router]);
+  }, [loading, user, router]);
 
   // Load announcements, votes, requests once authenticated
   useEffect(() => {
-    if (loadingAuth || !user) return;
+    if (loading || !user) return;
 
     async function loadAll() {
       setLoadingData(true);
@@ -82,11 +82,11 @@ export default function DashboardPage() {
     }
 
     loadAll();
-  }, [loadingAuth, user]);
+  }, [loading, user]);
 
   // Load management obligations for staff
   useEffect(() => {
-    if (loadingAuth || !user?.is_staff) return;
+    if (loading || !user?.is_staff) return;
 
     async function loadObligations() {
       try {
@@ -106,7 +106,7 @@ export default function DashboardPage() {
     }
 
     loadObligations();
-  }, [loadingAuth, user]);
+  }, [loading, user]);
 
   // Filter active votes
   const activeVotes = votes.filter(
@@ -116,7 +116,7 @@ export default function DashboardPage() {
   // Filter requests if “only mine” is checked
   const filteredRequests =
     onlyMine && user
-      ? requests.filter((r) => r.created_by_username === user.username)
+      ? requests.filter((r) => r.created_by_username === user.email)
       : requests;
 
   // Request cards config
@@ -152,7 +152,7 @@ export default function DashboardPage() {
   ];
 
   // Show loading until auth and data fetch complete
-  if (loadingAuth || loadingData) {
+  if (loading || loadingData) {
     return <p className="text-center mt-10">Φόρτωση...</p>;
   }
 
@@ -232,7 +232,7 @@ export default function DashboardPage() {
         </label>
       )}
 
-      {!authActionLoading && !error && (
+      {!error && (
         <DashboardCards data={filteredRequests} cards={requestCards} />
       )}
 

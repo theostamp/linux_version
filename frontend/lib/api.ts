@@ -93,6 +93,8 @@ function isTokenExpiredError(errorData: any): boolean {
     );
 }
 
+
+
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -100,26 +102,37 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    console.log('[AXIOS RES INTERCEPTOR] Error status:', error.response?.status);
-    console.log('[AXIOS RES INTERCEPTOR] Original request URL:', originalRequest?.url);
+    console.log('%c[AXIOS RES INTERCEPTOR] Σφάλμα:', 'color: red; font-weight: bold;');
+    console.log('Status code:', error.response?.status);
+    console.log('Αιτία:', error.response?.data);
+    console.log('URL Αρχικού Αιτήματος:', originalRequest?.url);
+    console.log('Authorization header:', originalRequest?.headers?.Authorization || originalRequest?.headers?.authorization);
 
     if (shouldAttemptTokenRefresh(error, originalRequest)) {
+      console.log('[INTERCEPTOR] Προϋποθέσεις για token refresh πληρούνται.');
+
       const errorData = error.response?.data as any;
       if (!isTokenExpiredError(errorData)) {
+        console.warn('[INTERCEPTOR] Το token ΔΕΝ έχει λήξει — πιθανώς πρόβλημα άλλης φύσης. Logout...');
         handleLogout('[AXIOS RES INTERCEPTOR] 401 αλλά όχι για ληγμένο access token. Αποσύνδεση χρήστη.');
         return Promise.reject(error);
       }
 
       if (isRefreshing) {
+        console.log('[INTERCEPTOR] Ήδη γίνεται refresh από άλλο αίτημα — προσθήκη σε ουρά.');
         return queueRequestWhileRefreshing(originalRequest);
       }
 
+      console.log('[INTERCEPTOR] Ξεκινά νέα ανανέωση token...');
       return await handleTokenRefresh(originalRequest, error);
     }
 
+    console.warn('[INTERCEPTOR] Δεν πληρούνται προϋποθέσεις για token refresh ή άλλο σφάλμα. Απόρριψη...');
     return Promise.reject(error);
   }
 );
+
+
 
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
