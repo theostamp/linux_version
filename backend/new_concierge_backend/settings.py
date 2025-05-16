@@ -17,13 +17,15 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost').split(',')
 IS_PRODUCTION = os.getenv('ENV', 'development') == 'production'
 
+
 # ----------------------------------------
 # 🏘️ django-tenants split apps
 # ----------------------------------------
 SHARED_APPS = [
-    'django_tenants',
-    'tenants',
+    'django_tenants',       # For django-tenants
+    'tenants',              # App for managing Client and Domain models (tenant metadata)
 
+    # Django's own apps, generally shared
     'django.contrib.contenttypes',
     'django.contrib.auth',
     'django.contrib.sessions',
@@ -31,24 +33,31 @@ SHARED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.admin',
 
+    # Your apps that need to be in the public schema
     'users',
     'buildings',
-]
-
-TENANT_APPS = [
-    'rest_framework',
-    'corsheaders',
-    'django_filters',
     'announcements',
     'user_requests',
     'votes',
-    'obligations',
-    'core',
-    'residents',
+    'residents',     # Αν οι residents είναι global ή συνδέονται από το public
+    'obligations',   # Μεταφέρθηκε εδώ, υποθέτοντας ότι είναι shared
 ]
 
-INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
+TENANT_APPS = [
+    # Django REST framework and related tools, often per-tenant if APIs are tenant-specific
+    'rest_framework',
+    'corsheaders',
+    'django_filters',
 
+    # Your apps that are specific to each tenant
+    'core',                 # Assuming core tenant-specific logic
+    # 'residents',          # Αφαιρέθηκε αν μεταφέρθηκε στις SHARED_APPS
+    # 'obligations',        # Αφαιρέθηκε καθώς μεταφέρθηκε στις SHARED_APPS
+]
+
+# Ensure no app is listed in both SHARED_APPS and TENANT_APPS if you modify them further.
+# The following line correctly combines them for INSTALLED_APPS.
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
 # ----------------------------------------
 # 🧩 Middleware
 # ----------------------------------------

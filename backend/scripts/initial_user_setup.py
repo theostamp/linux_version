@@ -1,56 +1,57 @@
 import os
-import django
 import sys
 import subprocess
+import django
 from django.utils import timezone
 
-# Προσθέτει το backend/ στο sys.path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+# --------------------------------------------------
+# Django bootstrap
+# --------------------------------------------------
+BASE_DIR = os.path.join(os.path.dirname(__file__), "..")
+sys.path.append(BASE_DIR)
 
-# Ορισμός settings module
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings")
 django.setup()
 
+# --------------------------------------------------
+# Imports AFTER django.setup()
+# --------------------------------------------------
 from django_tenants.utils import schema_context
 from tenants.models import Client, Domain
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 from buildings.models import Building
 from announcements.models import Announcement
 from votes.models import Vote
 from user_requests.models import UserRequest
-from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
 
 User = get_user_model()
 
-# -- Δεδομένα από .env ή defaults
-SUPERUSER_EMAIL = os.getenv("DJANGO_SUPERUSER_EMAIL", "theostam1966@gmail.com")
-SUPERUSER_PASSWORD = os.getenv("DJANGO_SUPERUSER_PASSWORD", "theo")
-SUPERUSER_FIRST_NAME = os.getenv("DJANGO_SUPERUSER_FIRST_NAME", "theo")
-SUPERUSER_LAST_NAME = os.getenv("DJANGO_SUPERUSER_LAST_NAME", "theo")
+# --------------------------------------------------
+# ENV defaults
+# --------------------------------------------------
+SUPERUSER_EMAIL = os.getenv("DJANGO_SUPERUSER_EMAIL", "admin@localhost")
+SUPERUSER_PASSWORD = os.getenv("DJANGO_SUPERUSER_PASSWORD", "admin")
+SUPERUSER_FIRST_NAME = os.getenv("DJANGO_SUPERUSER_FIRST_NAME", "Admin")
+SUPERUSER_LAST_NAME = os.getenv("DJANGO_SUPERUSER_LAST_NAME", "User")
 TENANT_DOMAIN = os.getenv("PUBLIC_DOMAIN", "localhost")
 TENANT_SCHEMA = os.getenv("TENANT_SCHEMA", "public")
 
+# --------------------------------------------------
+# Helpers
+# --------------------------------------------------
 
-def ensure_public_schema_migrated():
-    print("⏳ Running tenant migrations for 'public' schema...")
-    subprocess.run([
-        "python", "manage.py", "migrate_schemas",
-        "--tenant", "--schema=public"
-    ], check=True)
-    print("✅ Tenant migrations completed for 'public' schema.")
+def run_migrations(schema: str):
+    """Run tenant migrations for a given schema (shared+tenant)."""
+    print(f"\n⏳ Running migrations for schema '{schema}' ...")
+    subprocess.run(["python", "manage.py", "migrate_schemas", "--tenant", "--schema", schema], check=True)
+    print("✅ Migrations finished.")
 
 
 def ensure_public_tenant():
-    public, _ = Client.objects.get_or_create(
-        schema_name="public",
-        defaults={"name": "Public"},
-    )
-    Domain.objects.get_or_create(
-        domain=TENANT_DOMAIN,
-        tenant=public,
-        defaults={"is_primary": True}
-    )
+    public, _ = Client.objects.get_or_create(schema_name="public", defaults={"name": "Public"})
+    Domain.objects.get_or_create(domain=TENANT_DOMAIN, tenant=public, defaults={"is_primary": True})
     print("✅ Public tenant ensured.")
 
 
@@ -67,92 +68,61 @@ def ensure_superuser():
         print(f"ℹ️ Superuser {SUPERUSER_EMAIL} already exists.")
 
 
-def ensure_test_manager():
-    email = "manager@demo.com"
-    if not User.objects.filter(email=email).exists():
-        user = User.objects.create_user(
-            email=email,
-            password="manager123",
-            first_name="Demo",
-            last_name="Manager",
-            is_staff=True,
-        )
-        print("✅ Demo manager user created.")
-        return user
-    else:
-        print("ℹ️ Demo manager user already exists.")
-        return User.objects.get(email=email)
-
-
-def ensure_test_resident():
-    email = "resident@demo.com"
-    if not User.objects.filter(email=email).exists():
-        user = User.objects.create_user(
-            email=email,
-            password="resident123",
-            first_name="Demo",
-            last_name="Resident",
-        )
-        print("✅ Demo resident user created.")
-        return user
-    else:
-        print("ℹ️ Demo resident user already exists.")
-        return User.objects.get(email=email)
-
-
 def ensure_groups_and_permissions():
-    managers_group, _ = Group.objects.get_or_create(name="Managers")
-    residents_group, _ = Group.objects.get_or_create(name="Residents")
+    managers, _ = Group.objects.get_or_create(name="Managers")
+    residents, _ = Group.objects.get_or_create(name="Residents")
 
     for model_name in ["building", "vote", "announcement", "userrequest"]:
         try:
             ct = ContentType.objects.get(model=model_name)
             perms = Permission.objects.filter(content_type=ct)
-            managers_group.permissions.set(list(perms) + list(managers_group.permissions.all()))
+            managers.permissions.add(*perms)
         except ContentType.DoesNotExist:
-            print(f"⚠️ ContentType not found for: {model_name}")
+            pass
 
     for model_name in ["userrequest", "votesubmission"]:
         try:
             ct = ContentType.objects.get(model=model_name)
-            perms = Permission.objects.filter(
-                content_type=ct,
-                codename__in=["add_userrequest", "view_userrequest", "add_votesubmission", "view_votesubmission"]
-            )
-            residents_group.permissions.set(list(perms) + list(residents_group.permissions.all()))
+            perms = Permission.objects.filter(content_type=ct, codename__in=[
+                "add_userrequest", "view_userrequest", "add_votesubmission", "view_votesubmission"])
+            residents.permissions.add(*perms)
         except ContentType.DoesNotExist:
-            print(f"⚠️ ContentType not found for: {model_name}")
-
+            pass
     print("✅ Groups & permissions ensured.")
-    return managers_group, residents_group
 
 
-def ensure_default_groups():
-    for name in ["Managers", "Residents"]:
-        _, _ = Group.objects.get_or_create(name=name)
-    print("✅ Default groups ensured.")
+def ensure_demo_users():
+    def create(email, pwd, first, last, is_staff=False):
+        if User.objects.filter(email=email).exists():
+            print(f"ℹ️ Demo user {email} exists.")
+            return User.objects.get(email=email)
+        user = User.objects.create_user(email=email, password=pwd, first_name=first, last_name=last, is_staff=is_staff)
+        print(f"✅ Demo user {email} created.")
+        return user
 
+    mgr = create("manager@demo.com", "manager123", "Demo", "Manager", True)
+    res = create("resident@demo.com", "resident123", "Demo", "Resident", False)
+    mgr.groups.add(Group.objects.get(name="Managers"))
+    res.groups.add(Group.objects.get(name="Residents"))
+    return mgr, res
 
-def ensure_sample_building():
-    manager = User.objects.filter(email="manager@demo.com").first()
-    if not manager:
-        print("❌ Manager user not found — skipping building creation.")
-        return
+# --------------------------------------------------
+# Tenant‑scoped demo data
+# --------------------------------------------------
 
-    building, created = Building.objects.get_or_create(
+def seed_demo_data(manager, resident):
+    """Populate sample building/announcement/vote/request in current schema."""
+    building, _ = Building.objects.get_or_create(
         name="Κεντρικό Κτίριο",
         defaults={
             "address": "Μεγάλου Αλεξάνδρου 36",
             "city": "Αθήνα",
             "postal_code": "10435",
             "manager": manager,
-        }
+        },
     )
     print("✅ Sample building ensured.")
-    return building
 
-
-def ensure_sample_announcement(building):
     Announcement.objects.get_or_create(
         title="Διακοπή Ρεύματος",
         defaults={
@@ -160,64 +130,54 @@ def ensure_sample_announcement(building):
             "start_date": timezone.now().date(),
             "end_date": timezone.now().date() + timezone.timedelta(days=2),
             "building": building,
-            "is_active": True,
+            # "is_active": True,
         },
     )
     print("✅ Sample announcement ensured.")
 
-
-def ensure_sample_vote(building):
     Vote.objects.get_or_create(
         title="Εγκατάσταση κάμερας εισόδου",
         defaults={
-            "description": "Ψηφοφορία για την εγκατάσταση κάμερας ασφαλείας στην είσοδο.",
+            "description": "Ψηφοφορία για εγκατάσταση κάμερας ασφαλείας στην είσοδο.",
             "start_date": timezone.now().date(),
             "end_date": timezone.now().date() + timezone.timedelta(days=7),
             "building": building,
-            "choices": ["ΝΑΙ", "ΟΧΙ", "ΛΕΥΚΟ"],
+            # "choices": ["ΝΑΙ", "ΟΧΙ", "ΛΕΥΚΟ"],
         },
     )
     print("✅ Sample vote ensured.")
 
-
-def ensure_sample_request(user, building):
     UserRequest.objects.get_or_create(
         title="Επισκευή Ανελκυστήρα",
         defaults={
             "description": "Ο ανελκυστήρας σταματά συχνά μεταξύ ορόφων.",
             "status": "pending",
-            "created_by": user,
+            "created_by": resident,
             "building": building,
-            "is_urgent": True,
+            # "is_urgent": True,
             "type": "Τεχνικό",
         },
     )
     print("✅ Sample user request ensured.")
 
-
+# --------------------------------------------------
+# Main execution
+# --------------------------------------------------
 if __name__ == "__main__":
-    ensure_public_schema_migrated()
+    # 1) Run migrations for the public schema (tenant apps too)
+    run_migrations(TENANT_SCHEMA)
+
+    # 2) Shared setup (runs in default connection -> public)
     ensure_public_tenant()
     ensure_superuser()
     ensure_groups_and_permissions()
-    ensure_default_groups()
+    managers, residents = ensure_demo_users()
 
-    manager = ensure_test_manager()
-    resident = ensure_test_resident()
-
-    manager.groups.add(Group.objects.get(name="Managers"))
-    resident.groups.add(Group.objects.get(name="Residents"))
-
+    # 3) Seed demo data INSIDE the appropriate schema (public == main building)
     with schema_context(TENANT_SCHEMA):
-        building = ensure_sample_building()
-        if building:
-            ensure_sample_announcement(building)
-            ensure_sample_vote(building)
-            ensure_sample_request(resident, building)
+        seed_demo_data(managers, residents)
 
-    print("✅ Initial user setup completed.")
-    print("ℹ️ Manager: manager@demo.com / manager123")
-    print("ℹ️ Resident: resident@demo.com / resident123")
-    print("ℹ️ Superuser: {} / {}".format(SUPERUSER_EMAIL, SUPERUSER_PASSWORD))
-    print("ℹ️ Public tenant domain: {}".format(TENANT_DOMAIN))
-    print("ℹ️ Tenant schema: {}".format(TENANT_SCHEMA))  
+    print("\n✅ Initial user setup completed for schema:", TENANT_SCHEMA)
+    print("ℹ️  Manager  → manager@demo.com / manager123")
+    print("ℹ️  Resident → resident@demo.com / resident123")
+    print("ℹ️  Superuser→", SUPERUSER_EMAIL, "/", SUPERUSER_PASSWORD)
