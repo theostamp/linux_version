@@ -1,7 +1,7 @@
 # backend/user_requests/views.py
 
 from rest_framework import viewsets, permissions, status # Προσθήκη status για Response
-from rest_framework.decorators import action # <--- ΠΡΟΣΘΕΣΤΕ ΑΥΤΗ ΤΗ ΓΡΑΜΜΗ
+from rest_framework.decorators import action # type: ignore # <--- ΠΡΟΣΘΕΣΤΕ ΑΥΤΗ ΤΗ ΓΡΑΜΜΗ
 from rest_framework.response import Response
 from django.db.models import Count, Q
 from .models import UserRequest

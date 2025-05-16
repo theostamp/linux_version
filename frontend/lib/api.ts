@@ -211,7 +211,7 @@ export type Vote = {
 };
 
 export type VoteSubmission = { 
-  vote: number; user: number; choice: 'ΝΑΙ' | 'ΟΧΙ' | 'ΛΕΥΚΟ' | string | null; 
+  vote: number; user: number; choice: string | null; 
 };
 
 export type VoteResultsData = { [key: string]: number; total: number; };

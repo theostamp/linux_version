@@ -1,7 +1,7 @@
 import os
 import sys
 import subprocess
-import django
+import django # type: ignore
 from django.utils import timezone
 
 # --------------------------------------------------
@@ -16,9 +16,9 @@ django.setup()
 # --------------------------------------------------
 # Imports AFTER django.setup()
 # --------------------------------------------------
-from django_tenants.utils import schema_context
+from django_tenants.utils import schema_context # type: ignore
 from tenants.models import Client, Domain
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model # type: ignore
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from buildings.models import Building
