@@ -6,6 +6,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useMemo,
   ReactNode,
 } from 'react';
 import { fetchBuildings, Building } from '@/lib/api';
@@ -18,7 +19,7 @@ type BuildingContextType = {
 
 const BuildingContext = createContext<BuildingContextType | undefined>(undefined);
 
-export function BuildingProvider({ children }: { children: ReactNode }) {
+export function BuildingProvider({ children }: { readonly children: ReactNode }) {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [currentBuilding, setCurrentBuilding] = useState<Building | null>(null);
 
@@ -44,8 +45,13 @@ export function BuildingProvider({ children }: { children: ReactNode }) {
     }
   }, [currentBuilding]);
 
+  const contextValue = useMemo(
+    () => ({ buildings, currentBuilding, setCurrentBuilding }),
+    [buildings, currentBuilding, setCurrentBuilding]
+  );
+
   return (
-    <BuildingContext.Provider value={{ buildings, currentBuilding, setCurrentBuilding }}>
+    <BuildingContext.Provider value={contextValue}>
       {children}
     </BuildingContext.Provider>
   );

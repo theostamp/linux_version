@@ -60,9 +60,6 @@ api.interceptors.request.use(
       const csrfToken = getCookie('csrftoken');
       if (csrfToken) {
         config.headers['X-CSRFToken'] = csrfToken;
-        // console.log(`[AXIOS CSRF INTERCEPTOR] X-CSRFToken ΠΡΟΣΤΕΘΗΚΕ για: ${config.url}`);
-      } else {
-        // console.warn(`[AXIOS CSRF INTERCEPTOR] X-CSRFToken ΔΕΝ ΒΡΕΘΗΚΕ για state-changing request: ${config.url}`);
       }
     }
     return config;

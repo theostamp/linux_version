@@ -46,10 +46,14 @@ export default function Sidebar() {
         {/* dropdown επιλογής κτηρίου */}
         {buildings.length > 0 && (
           <div className="mt-4">
-            <label className="block text-xs text-gray-500 mb-1">
+            <label
+              htmlFor="building-select"
+              className="block text-xs text-gray-500 mb-1"
+            >
               Επιλογή Κτηρίου:
             </label>
             <select
+              id="building-select"
               className="w-full border rounded px-2 py-1 text-sm"
               value={currentBuilding?.id ?? ''}
               onChange={(e) => {
