@@ -1,20 +1,23 @@
-// app/votes/page.tsx
+// frontend/app/votes/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { fetchVotes } from '@/lib/api';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 import VoteCard from '@/components/VoteCard';
 import ErrorMessage from '@/components/ErrorMessage';
 
 export default function VotesPage() {
+  const { currentBuilding } = useBuilding();
   const [votes, setVotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   async function loadVotes() {
+    if (!currentBuilding?.id) return;
     try {
-      const data = await fetchVotes();
+      const data = await fetchVotes(currentBuilding.id);
       setVotes(data);
       setError(false);
     } catch (err) {
@@ -27,7 +30,7 @@ export default function VotesPage() {
 
   useEffect(() => {
     loadVotes();
-  }, []);
+  }, [currentBuilding?.id]);
 
   let content;
   if (loading) {
