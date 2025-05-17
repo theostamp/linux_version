@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/components/contexts/AuthContext';
 import Link from 'next/link';
 
 export default function LoginStatusIndicator() {

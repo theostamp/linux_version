@@ -1,9 +1,11 @@
 // frontend/app/layout.tsx
 
 import './globals.css';
-import { AuthProvider } from '@/contexts/AuthContext';
 import React from 'react';
-import Sidebar from '@/components/Sidebar'; // Προσαρμόστε τη διαδρομή αν χρειάζεται
+import { AuthProvider } from '@/components/contexts/AuthContext';
+import { BuildingProvider } from '@/components/contexts/BuildingContext';
+import Sidebar from '@/components/Sidebar';
+import { Toaster } from 'react-hot-toast';
 
 export const metadata = {
   title: 'My App',
@@ -13,18 +15,22 @@ export const metadata = {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  readonly children: React.ReactNode;
 }) {
   return (
     <html lang="el">
       <body>
         <AuthProvider>
-          <div className="flex h-screen bg-gray-100 dark:bg-gray-950">
-            <Sidebar />
-            <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 overflow-y-auto">
-              {children}
-            </main>
-          </div>
+          <BuildingProvider>
+            <div className="flex h-screen bg-gray-100 dark:bg-gray-950">
+              <Sidebar />
+              <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 overflow-y-auto">
+                {children}
+              </main>
+              {/* Global toast notifications */}
+              <Toaster position="top-right" />
+            </div>
+          </BuildingProvider>
         </AuthProvider>
       </body>
     </html>

@@ -17,8 +17,8 @@ import LogoutButton from '@/components/LogoutButton';
 import DashboardCards from '@/components/DashboardCards';
 import ErrorMessage from '@/components/ErrorMessage';
 import AnnouncementsCarousel from '@/components/AnnouncementsCarousel';
-
 import {
+  fetchObligationsSummary,
   fetchAnnouncements,
   fetchVotes,
   fetchRequests,
@@ -27,12 +27,11 @@ import {
   Vote,
   UserRequest,
 } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
-import { getBaseUrl } from '@/lib/config';
+import { useAuth } from '@/components/contexts/AuthContext';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
 
   const [onlyMine, setOnlyMine] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -48,14 +47,14 @@ export default function DashboardPage() {
 
   // Redirect to login if auth finished and no user
   useEffect(() => {
-    if (!loading && !user) {
+    if (!isLoading && !user) {
       router.push('/login');
     }
-  }, [loading, user, router]);
+  }, [isLoading, user, router]);
 
   // Load announcements, votes, requests once authenticated
   useEffect(() => {
-    if (loading || !user) return;
+    if (isLoading || !user) return;
 
     async function loadAll() {
       setLoadingData(true);
@@ -82,31 +81,29 @@ export default function DashboardPage() {
     }
 
     loadAll();
-  }, [loading, user]);
+  }, [isLoading, user]);
 
   // Load management obligations for staff
   useEffect(() => {
-    if (loading || !user?.is_staff) return;
+    if (isLoading || !user?.is_staff) return;
 
-    async function loadObligations() {
-      try {
-        const base = getBaseUrl();
-        if (!base) {
-          console.error('Base URL for obligations is undefined');
-          return;
-        }
-        const res = await fetch(`${base}/obligations/summary/`, {
-          credentials: 'include',
-        });
-        if (!res.ok) throw new Error('Failed to load obligations');
-        setObligations(await res.json());
-      } catch (err) {
-        console.error('Obligations error:', err);
-      }
+ 
+
+  // ...
+
+  async function loadObligations() {
+    try {
+      const summary = await fetchObligationsSummary();
+      setObligations(summary);
+    } catch (err) {
+      console.error('Obligations error:', err);
+      setError(true); // Optional
     }
+  }
+
 
     loadObligations();
-  }, [loading, user]);
+  }, [isLoading, user]);
 
   // Filter active votes
   const activeVotes = votes.filter(
@@ -151,8 +148,8 @@ export default function DashboardPage() {
     },
   ];
 
-  // Show loading until auth and data fetch complete
-  if (loading || loadingData) {
+  // Show isLoading until auth and data fetch complete
+  if (isLoading || loadingData) {
     return <p className="text-center mt-10">Φόρτωση...</p>;
   }
 

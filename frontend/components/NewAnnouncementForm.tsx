@@ -1,52 +1,119 @@
-// components/NewAnnouncementForm.tsx
 'use client';
+
 import { useState } from 'react';
-import { api } from '@/lib/api';
+import { useRouter } from 'next/navigation';
+import { createAnnouncement, CreateAnnouncementPayload } from '@/lib/api';
+import { toast } from 'react-hot-toast';
 
-interface Props {
+type Props = {
   readonly buildingId: number;
-  readonly onSuccess?: () => void;
-}
+};
 
-export default function NewAnnouncementForm({ buildingId, onSuccess }: Props) {
+export default function NewAnnouncementForm({ buildingId }: Props) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    try {
-      await api.post('/announcements/', {
-        title,
-        content,
-        building: buildingId,     // εδώ περνάμε το required πεδίο
-      });
-      onSuccess?.();
-    } catch (err) {
-      console.error(err);
-      alert('Σφάλμα κατά τη δημιουργία ανακοίνωσης');
-    } finally {
-      setLoading(false);
+    setSubmitting(true);
+
+    if (!title.trim()) {
+      toast.error('Ο τίτλος είναι υποχρεωτικός');
+      setSubmitting(false);
+      return;
     }
-  };
+
+    try {
+      const payload: CreateAnnouncementPayload = {
+        title: title.trim(),
+        description: content.trim(),
+        start_date: startDate,
+        end_date: endDate || '',
+        file: undefined,
+        building: buildingId,
+      };
+
+      await createAnnouncement(payload);
+
+      toast.success('Η ανακοίνωση δημιουργήθηκε με επιτυχία');
+      router.push('/announcements');
+    } catch (err) {
+      toast.error((err as Error).message || 'Αποτυχία δημιουργίας ανακοίνωσης');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <input
-        value={title}
-        onChange={e => setTitle(e.target.value)}
-        placeholder="Τίτλος"
-        required
-      />
-      <textarea
-        value={content}
-        onChange={e => setContent(e.target.value)}
-        placeholder="Κείμενο"
-        required
-      />
-      <button type="submit" disabled={loading}>
-        {loading ? 'Δημιουργία...' : 'Δημιουργία Ανακοίνωσης'}
+      <div>
+        <label htmlFor="title" className="block text-sm font-medium">Τίτλος</label>
+        <input
+          id="title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="mt-1 w-full border rounded-lg px-3 py-2"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="content" className="block text-sm font-medium">Περιεχόμενο</label>
+        <textarea
+          id="content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="mt-1 w-full border rounded-lg px-3 py-2 h-32"
+          required
+        />
+      </div>
+
+      <div className="flex gap-4">
+        <div className="flex-1">
+          <label htmlFor="start" className="block text-sm font-medium">Έναρξη</label>
+          <input
+            id="start"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="mt-1 w-full border rounded-lg px-3 py-2"
+            required
+          />
+        </div>
+        <div className="flex-1">
+          <label htmlFor="end" className="block text-sm font-medium">Λήξη</label>
+          <input
+            id="end"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="mt-1 w-full border rounded-lg px-3 py-2"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="file" className="block text-sm font-medium">URL Αρχείου (προαιρετικό)</label>
+        <input
+          id="file"
+          type="url"
+          value={fileUrl ?? ''}
+          onChange={(e) => setFileUrl(e.target.value || null)}
+          className="mt-1 w-full border rounded-lg px-3 py-2"
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={submitting}
+        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+      >
+        {submitting ? 'Υποβολή…' : 'Δημιουργία'}
       </button>
     </form>
   );

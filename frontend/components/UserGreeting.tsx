@@ -1,7 +1,7 @@
 // frontend\components\UserGreeting.tsx
 
 'use client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/components/contexts/AuthContext';
 
 export default function UserGreeting() {
   const { user, loading } = useAuth();
