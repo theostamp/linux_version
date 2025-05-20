@@ -1,4 +1,6 @@
 'use client';
+// lib/api.ts
+import type { User } from '@/types/user';
 
 import React, {
   createContext,
@@ -12,15 +14,19 @@ import {
   getCurrentUser,
   loginUser, // Υποθέτουμε ότι αυτή χειρίζεται την αποθήκευση των tokens στο localStorage μέσω του api.ts
   logoutUser as apiLogoutUser, // Μετονομασία για αποφυγή σύγκρουσης
-  User,
+
   // Το 'api' instance δεν χρειάζεται να το εισάγουμε εδώ αν δεν ορίζουμε default headers απευθείας
 } from '@/lib/api';
+
+
+
 
 interface AuthCtx { // Καλύτερα να χρησιμοποιούμε interface για τον τύπο του context
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean; // Για να ξέρουμε αν γίνεται αρχική φόρτωση χρήστη
+  setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthCtx | undefined>(undefined);
@@ -109,8 +115,8 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
 
   // Χρησιμοποιούμε useCallback για τις login/logout ώστε να μην αλλάζουν σε κάθε render εκτός αν αλλάξουν οι εξαρτήσεις τους
   const contextValue = React.useMemo(
-    () => ({ user, login, logout, isLoading }),
-    [user, login, logout, isLoading]
+    () => ({ user, login, logout, isLoading, setUser }), // ✅ ΠΡΟΣΘΗΚΗ
+    [user, login, logout, isLoading, setUser]
   );
 
   return (

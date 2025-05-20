@@ -22,7 +22,7 @@ export async function fetchAnnouncements() {
 
   if (!res.ok) {
     const err = await res.json();
-    throw new Error(err.detail || `Σφάλμα ${res.status}`);
+    throw new Error(err.detail ?? `Σφάλμα ${res.status}`);
   }
 
   return res.json();

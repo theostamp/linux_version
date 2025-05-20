@@ -1,4 +1,4 @@
-// C:\Users\Notebook\new_concierge\frontend\components\RequestForm.tsx
+// 📁 frontend/components/RequestForm.tsx
 'use client';
 
 import { useState } from 'react';
@@ -9,13 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { createUserRequest } from '@/lib/api';   // ✅ helper με csrfFetch
+import { createUserRequest } from '@/lib/api';
+import { useBuilding } from '@/components/contexts/BuildingContext'; // ✅ προσθήκη
 
 export default function RequestForm() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { currentBuilding } = useBuilding(); // ✅ χρήση του context
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,9 +27,18 @@ export default function RequestForm() {
       return;
     }
 
+    if (!currentBuilding?.id) {
+      toast.error('Δεν έχει επιλεγεί κτήριο.');
+      return;
+    }
+
     setLoading(true);
     try {
-      await createUserRequest({ title: title.trim(), description });
+      await createUserRequest({
+        title: title.trim(),
+        description,
+        building: currentBuilding.id, // ✅ κρίσιμο πεδίο
+      });
 
       toast.success('Το αίτημα υποβλήθηκε με επιτυχία');
       router.push('/requests');

@@ -1,6 +1,7 @@
 # backend/buildings/models.py
-from django.db import models
-from users.models import CustomUser
+
+from django.db import models # type: ignore
+from django.conf import settings # type: ignore
 
 # Σταθερές επιλογές για αριθμό διαμερισμάτων
 APARTMENT_CHOICES = [(i, str(i)) for i in range(1, 101)]  # 1 έως 100
@@ -10,12 +11,15 @@ class Building(models.Model):
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=100)
     postal_code = models.CharField(max_length=20)
+    
     manager = models.ForeignKey(
-        CustomUser,
-        on_delete=models.CASCADE,
-        related_name='buildings',
-        help_text='User who manages this building'
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="managed_buildings"
     )
+
     apartments_count = models.IntegerField(
         choices=APARTMENT_CHOICES,
         null=True,

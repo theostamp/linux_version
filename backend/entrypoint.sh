@@ -30,7 +30,12 @@ echo "=== Collecting static files"
 python manage.py collectstatic --no-input
 
 # 6. Launch Gunicorn
-echo "🚀 Launching Gunicorn"
-exec gunicorn new_concierge_backend.wsgi:application \
-  --bind 0.0.0.0:8000 \
-  --workers 3
+# echo "🚀 Launching Gunicorn"
+# exec gunicorn new_concierge_backend.wsgi:application \
+#   --bind 0.0.0.0:8000 \
+#   --workers 3
+
+  # 6. Launch Django dev server (temporary debug)
+echo "🚀 Launching Django runserver (DEBUG)"
+exec python manage.py runserver 0.0.0.0:8000
+

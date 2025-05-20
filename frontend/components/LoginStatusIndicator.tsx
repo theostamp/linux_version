@@ -4,7 +4,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import Link from 'next/link';
 
 export default function LoginStatusIndicator() {
-  const { user, loading } = useAuth();
+  const { user, isLoading: loading } = useAuth();
 
   if (loading) {
     return (

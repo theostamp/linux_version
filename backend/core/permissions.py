@@ -1,10 +1,6 @@
 # backend/core/permissions.py
 
-from rest_framework import permissions
-# from user_requests.models import UserRequest # Προαιρετικά, για type hinting
-# from buildings.models import Building # Προαιρετικά, για type hinting
-# from django.contrib.auth import get_user_model # Προαιρετικά, για type hinting
-# User = get_user_model()
+from rest_framework import permissions # type: ignore
 
 
 class IsSuperuser(permissions.BasePermission):
@@ -22,44 +18,49 @@ class IsResidentUser(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated and not request.user.is_staff
 
-# --- ΠΡΟΣΘΕΣΤΕ ΤΗΝ ΠΑΡΑΚΑΤΩ ΚΛΑΣΗ ΑΝ ΔΕΝ ΥΠΑΡΧΕΙ ---
+
 class IsManagerOrSuperuser(permissions.BasePermission):
     """
-    Επιτρέπει την πρόσβαση μόνο σε superusers ή σε αυθεντικοποιημένους χρήστες που ΕΙΝΑΙ staff (δηλαδή "Manager Office").
-    Επίσης, χειρίζεται object-level permissions για να επιτρέψει στους managers να επεξεργάζονται
-    αντικείμενα που σχετίζονται με τις πολυκατοικίες που διαχειρίζονται.
+    Επιτρέπει την πρόσβαση σε:
+    - Superusers
+    - Staff users
+    - Χρήστες με profile.role == 'manager'
     """
     def has_permission(self, request, view):
-        # Έλεγχος σε επίπεδο View: επιτρέπεται αν ο χρήστης είναι superuser ή staff.
-        return request.user and request.user.is_authenticated and \
-               (request.user.is_superuser or request.user.is_staff)
+        user = request.user
+        return (
+            user and user.is_authenticated and (
+                user.is_superuser or
+                user.is_staff or
+                getattr(user.profile, 'role', '') == 'manager'
+            )
+        )
 
     def has_object_permission(self, request, view, obj):
-        # Έλεγχος σε επίπεδο Object:
-        # Οι Superusers έχουν πάντα δικαίωμα.
         if request.user.is_superuser:
             return True
-        
-        # Οι Staff users (Managers Office) έχουν δικαίωμα αν το αντικείμενο
-        # σχετίζεται με κτίριο που διαχειρίζονται.
+
         if request.user.is_staff:
-            # Αν το ίδιο το αντικείμενο έχει πεδίο 'manager' (π.χ., ένα Building object)
             if hasattr(obj, 'manager') and obj.manager == request.user:
                 return True
-            # Αν το αντικείμενο έχει πεδίο 'building' και αυτό το building έχει manager
-            # (π.χ., UserRequest, Announcement, Vote που ανήκουν σε ένα Building)
             if hasattr(obj, 'building') and hasattr(obj.building, 'manager') and obj.building.manager == request.user:
                 return True
-            # Αν δεν υπάρχει σαφής σύνδεση διαχείρισης για αυτό το αντικείμενο,
-            # αλλά ο χρήστης είναι staff, θα μπορούσαμε να του επιτρέψουμε την πρόσβαση
-            # αν η has_permission ήταν αρκετή (π.χ., για list views που δεν φιλτράρονται εδώ).
-            # Για object-level, πρέπει να είναι πιο συγκεκριμένο.
-            # Αν δεν βρεθεί κάποια από τις παραπάνω συνθήκες, ο staff δεν έχει object permission by default εδώ.
-            # Ίσως θέλετε οι staff να έχουν πάντα object permission αν έχουν view permission.
-            # return True # Αυτό θα έδινε σε όλους τους staff πλήρη object permission αν πέρασαν το has_permission.
-                         # Πιο ασφαλές είναι να είναι ρητό.
 
-        return False # Απόρριψη για άλλες περιπτώσεις (π.χ. resident που προσπαθεί σε αντικείμενο άλλου)
+        # Προσθέτουμε και για χρήστες με role=manager (αν δεν είναι is_staff)
+        if getattr(request.user.profile, 'role', '') == 'manager':
+            if hasattr(obj, 'manager') and obj.manager == request.user:
+                return True
+            if hasattr(obj, 'building') and hasattr(obj.building, 'manager') and obj.building.manager == request.user:
+                return True
+
+        return False
+
+
+
+
+
+
+
 
 class UserRequestOwnerOrManagerPermission(permissions.BasePermission):
     """

@@ -2,7 +2,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   PieChart,
@@ -24,14 +23,15 @@ import {
   fetchRequests,
   fetchTopRequests,
   Announcement,
-  Vote,
-  UserRequest,
+  Vote 
 } from '@/lib/api';
+import type { UserRequest } from '@/types/userRequests';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 export default function DashboardPage() {
-  const router = useRouter();
   const { user, isLoading } = useAuth();
+  const { currentBuilding } = useBuilding();
 
   const [onlyMine, setOnlyMine] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -46,42 +46,39 @@ export default function DashboardPage() {
   const [error, setError] = useState(false);
 
   // Redirect to login if auth finished and no user
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    }
-  }, [isLoading, user, router]);
+    useEffect(() => {
+      if (isLoading || !user || !currentBuilding?.id) return;
 
-  // Load announcements, votes, requests once authenticated
-  useEffect(() => {
-    if (isLoading || !user) return;
+      async function loadAll() {
+        setLoadingData(true);
+        try {
+          if (!currentBuilding) {
+            throw new Error('No building selected');
+          }
+          const [ann, vt, req] = await Promise.all([
+            fetchAnnouncements(),
+            fetchVotes(),
+            fetchRequests({ buildingId: currentBuilding.id }),
+          ]);
+          setAnnouncements(ann);
+          setVotes(vt);
+          setRequests(req);
 
-    async function loadAll() {
-      setLoadingData(true);
-      try {
-        const [ann, vt, req] = await Promise.all([
-          fetchAnnouncements(),
-          fetchVotes(),
-          fetchRequests(),
-        ]);
-        setAnnouncements(ann);
-        setVotes(vt);
-        setRequests(req);
+          const top = await fetchTopRequests(currentBuilding.id);
+          setTopRequests(top);
 
-        const top = await fetchTopRequests();
-        setTopRequests(top);
-
-        setError(false);
-      } catch (err) {
-        console.error('Dashboard load failed:', err);
-        setError(true);
-      } finally {
-        setLoadingData(false);
+          setError(false);
+        } catch (err) {
+          console.error('Dashboard load failed:', err);
+          setError(true);
+        } finally {
+          setLoadingData(false);
+        }
       }
-    }
 
-    loadAll();
-  }, [isLoading, user]);
+      loadAll();
+    }, [isLoading, user, currentBuilding]);
+
 
   // Load management obligations for staff
   useEffect(() => {

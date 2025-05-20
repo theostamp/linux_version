@@ -1,7 +1,9 @@
 # users/models.py
 
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager # type: ignore
+from django.db import models # type: ignore
+from django.conf import settings
+from buildings.models import Building
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -23,6 +25,8 @@ class CustomUserManager(BaseUserManager):
             raise ValueError('Ο Superuser πρέπει να έχει is_superuser=True.')
 
         return self.create_user(email, password, **extra_fields)
+    
+
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)

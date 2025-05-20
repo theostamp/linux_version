@@ -1,34 +1,35 @@
-// frontend/app/buildings/page.tsx
 'use client';
-import { useState, useEffect } from 'react';
-import { fetchBuildings, deleteBuilding, Building } from '@/lib/api';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 import Link from 'next/link';
+import { deleteBuilding } from '@/lib/api';
 
 const BuildingsPage = () => {
-  const [buildings, setBuildings] = useState<Building[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await fetchBuildings();
-        setBuildings(data);
-      } catch (e) {
-        setError('Αποτυχία φόρτωσης κτιρίων');
-      }
-    }
-    load();
-  }, []);
+  const {
+    buildings,
+    error,
+    isLoading,
+    setCurrentBuilding,
+    setBuildings,
+    currentBuilding,
+  } = useBuilding();
 
   const handleDelete = async (id: number) => {
     if (!confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το κτίριο;')) return;
     try {
       await deleteBuilding(id);
-      setBuildings(prev => prev.filter(b => b.id !== id));
+      const updated = buildings.filter((b) => b.id !== id);
+      setBuildings(updated);
+      if (currentBuilding?.id === id) {
+        setCurrentBuilding(null);
+      }
     } catch {
       alert('Αποτυχία διαγραφής');
     }
   };
+
+  if (isLoading) return <p className="p-6">Φόρτωση...</p>;
+  if (error) return <p className="p-6 text-red-600">{error}</p>;
+  if (!Array.isArray(buildings)) return <p className="p-6 text-gray-600">Δεν βρέθηκαν κτίρια.</p>;
 
   return (
     <div className="p-6">
@@ -36,7 +37,7 @@ const BuildingsPage = () => {
         <h1 className="text-2xl font-bold">Διαχείριση Κτιρίων</h1>
         <Link href="/buildings/new" className="btn btn-primary">Νέο Κτίριο</Link>
       </header>
-      {error && <p className="text-red-600">{error}</p>}
+
       <table className="w-full table-auto border-collapse">
         <thead>
           <tr>
@@ -47,7 +48,7 @@ const BuildingsPage = () => {
           </tr>
         </thead>
         <tbody>
-          {buildings.map(b => (
+          {buildings.map((b) => (
             <tr key={b.id}>
               <td className="border p-2">{b.id}</td>
               <td className="border p-2">{b.name}</td>

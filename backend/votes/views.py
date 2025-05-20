@@ -1,13 +1,14 @@
 # backend/votes/views.py
 
-from rest_framework import viewsets, permissions, status, exceptions
-from rest_framework.decorators import action
-from rest_framework.response import Response
+from rest_framework import viewsets, permissions, status, exceptions  # type: ignore
+from rest_framework.decorators import action  # type: ignore
+from rest_framework.response import Response  # type: ignore
 
 from .models import Vote, VoteSubmission
 from .serializers import VoteSerializer, VoteSubmissionSerializer
 from buildings.models import Building
 from core.permissions import IsManagerOrSuperuser
+from core.utils import filter_queryset_by_user_and_building
 
 
 class VoteViewSet(viewsets.ModelViewSet):
@@ -23,18 +24,33 @@ class VoteViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve', 'my_submission', 'results']:
             return [permissions.IsAuthenticated()]
-        # create/update/delete/vote
         return [permissions.IsAuthenticated(), IsManagerOrSuperuser()]
 
     def get_queryset(self):
-        user = self.request.user
-        qs = Vote.objects.all().order_by('-created_at')
-        if user.is_superuser:
-            return qs
-        return qs.filter(building__manager=user)
+        qs = Vote.objects.all().order_by('-start_date')
+        return filter_queryset_by_user_and_building(self.request, qs)
+
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve', 'results']:
+            return VoteSerializer
+        elif self.action in ['vote', 'my_submission']:
+            return VoteSubmissionSerializer
+        return super().get_serializer_class()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    def perform_update(self, serializer):
+        building = serializer.validated_data.get('building')
+        if building:
+            serializer.save(building=building)
+        else:
+            serializer.save()
 
     def perform_create(self, serializer):
-        # Το building έρχεται από το validated_data του serializer
         serializer.save()
 
     @action(detail=True, methods=['post'], url_path='vote')
@@ -45,7 +61,6 @@ class VoteViewSet(viewsets.ModelViewSet):
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
-        # Δηλώνουμε ρητά vote και user για να αποθηκευτεί η υποβολή
         serializer.save(vote=vote, user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -63,8 +78,8 @@ class VoteViewSet(viewsets.ModelViewSet):
     def results(self, request, pk=None):
         vote = self.get_object()
         subs = vote.submissions.all()
-        yes   = subs.filter(choice='ΝΑΙ').count()
-        no    = subs.filter(choice='ΟΧΙ').count()
+        yes = subs.filter(choice='ΝΑΙ').count()
+        no = subs.filter(choice='ΟΧΙ').count()
         white = subs.filter(choice='ΛΕΥΚΟ').count()
         total = yes + no + white
         return Response({

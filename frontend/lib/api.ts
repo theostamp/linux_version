@@ -1,5 +1,11 @@
 // Helper για όλα τα calls στο backend
 import axios, { AxiosResponse, AxiosRequestHeaders, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import type { UserRequest } from '@/types/userRequests';
+export type { UserRequest };
+import type { User } from '@/types/user';
+
+
+
 
 // Βασικό URL του API. Προσαρμόστε το NEXT_PUBLIC_API_URL στο .env.local ή .env.production
 export const API_BASE_URL =
@@ -142,15 +148,6 @@ function getCookie(name: string): string | null {
   return null;
 }
 
-export type User = {
-  id: number;
-  email: string;
-  first_name?: string;
-  last_name?: string;
-  groups?: { id: number; name: string }[]; // Πιο πλήρης τύπος για groups
-  is_staff?: boolean;
-  is_superuser?: boolean;
-};
 
 export async function loginUser(
   email: string,
@@ -226,12 +223,7 @@ export type VoteSubmission = {
 
 export type VoteResultsData = { [key: string]: number; total: number; };
 
-export type UserRequest = { 
-  id: number; title: string; description: string; status: string; created_at: string; 
-  updated_at?: string; created_by?: number; created_by_username: string; building: number; // Building ID
-  supporter_count: number; supporter_usernames?: string[]; is_urgent: boolean; type?: string; 
-  supporters?: number[]; // Λίστα με User IDs των supporters
-};
+
 
 export type ObligationSummary = { pending_payments: number; maintenance_tickets: number; };
 export type Obligation = {
@@ -293,25 +285,45 @@ export async function deleteBuilding(id: number): Promise<void> {
 }
 
 export async function fetchAnnouncements(buildingId?: number): Promise<Announcement[]> {
-  const url = buildingId ? `/announcements/?building=${buildingId}` : '/announcements/';
-  console.log(`[API CALL] Attempting to fetch ${url}`);
-  const resp: AxiosResponse<{ results?: any[] } | any[]> = await api.get(url);
-  const data = resp.data;
-  const rows: any[] = Array.isArray(data) ? data : data.results ?? [];
-  return rows.map((row): Announcement => ({
-    id: row.id,
-    title: row.title,
-    description: row.description ?? row.content ?? '',
-    file: row.file ?? null,
-    start_date: row.start_date,
-    end_date: row.end_date,
-    is_active: row.is_active,
-    building: row.building,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-  }));
-}
+  const relativeUrl = buildingId ? `/announcements/?building=${buildingId}` : '/announcements/';
+  
+  // --- ΠΡΟΣΘΕΣΕ ΑΥΤΑ ΤΑ DEBUG LOGS ---
+  console.log(`%c[DEBUG fetchAnnouncements] Called for announcements page with buildingId: ${buildingId}`, "color: blue; font-weight: bold;");
+  console.log(`%c[DEBUG fetchAnnouncements] Constructed relativeUrl: "${relativeUrl}"`, "color: blue;");
+  console.log(`%c[DEBUG fetchAnnouncements] Axios instance current baseURL from defaults: "${api.defaults.baseURL}"`, "color: blue;");
+  // Αν το API_BASE_URL είναι exported από το ίδιο αρχείο και προσβάσιμο εδώ:
+  // console.log(`%c[DEBUG fetchAnnouncements] API_BASE_URL const from import: "${API_BASE_URL}"`, "color: blue;");
+  // --- ΤΕΛΟΣ DEBUG LOGS ---
 
+  console.log(`[API CALL] Attempting to fetch ${relativeUrl}`); // Το δικό σου υπάρχον log
+  
+  try {
+    const resp: AxiosResponse<{ results?: any[] } | any[]> = await api.get(relativeUrl);
+    const data = resp.data;
+    const rows: any[] = Array.isArray(data) ? data : data.results ?? [];
+    return rows.map((row): Announcement => ({
+      id: row.id,
+      title: row.title,
+      description: row.description ?? row.content ?? '',
+      file: row.file ?? null,
+      start_date: row.start_date,
+      end_date: row.end_date,
+      is_active: row.is_active,
+      building: row.building,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    }));
+  } catch (error) {
+    console.error(`[DEBUG fetchAnnouncements] Error during api.get("${relativeUrl}"):`, error);
+    // Για να δεις το config του request που απέτυχε:
+    // @ts-ignore
+    if (error?.isAxiosError && error?.config) {
+        // @ts-ignore
+        console.error('[DEBUG fetchAnnouncements] Failed Request Config:', JSON.stringify({url: error.config.url, baseURL: error.config.baseURL, method: error.config.method, params: error.config.params }, null, 2));
+    }
+    throw error;
+  }
+}
 export interface CreateAnnouncementPayload { 
   title: string; description: string; start_date: string; end_date: string; 
   file?: File | null; building: number; is_active?: boolean; 
@@ -413,11 +425,12 @@ export async function fetchRequests(filters: { status?: string; buildingId?: num
   }));
 }
 
-export async function fetchTopRequests(): Promise<UserRequest[]> {
-  console.log('[API CALL] Attempting to fetch /user-requests/top/');
-  const resp: AxiosResponse<{ results?: any[] } | any[]> = await api.get('/user-requests/top/');
+export async function fetchTopRequests(buildingId: number): Promise<UserRequest[]> {
+  const url = `/user-requests/top/?building=${buildingId}`;
+  const resp: AxiosResponse<{ results?: any[] } | any[]> = await api.get(url);
   const data = resp.data;
   const rows: any[] = Array.isArray(data) ? data : data.results ?? [];
+
   return rows.map((r): UserRequest => ({
     id: r.id,
     title: r.title,
@@ -429,18 +442,47 @@ export async function fetchTopRequests(): Promise<UserRequest[]> {
     created_by_username: r.created_by_username,
     building: r.building,
     supporter_count: r.supporter_count ?? 0,
-    supporter_usernames: r.supporter_usernames ?? [],
+    supporter_usernames: Array.isArray(r.supporter_usernames) ? r.supporter_usernames : [], // ✅ εξασφαλίζει string[]
     is_urgent: r.is_urgent ?? false,
     type: r.type ?? '',
-    supporters: r.supporters ?? [],
+    is_supported: r.is_supported ?? false,
   }));
 }
 
-export async function toggleSupportRequest(id: number): Promise<{ status: string; supporter_count: number, supported: boolean }> {
-  console.log(`[API CALL] Attempting to toggle support for request ${id}`);
-  const { data } = await api.post<{ status: string; supporter_count: number, supported: boolean }>(`/user-requests/${id}/support/`);
-  return data;
+export async function fetchUserRequestsForBuilding(buildingId: number): Promise<UserRequest[]> {
+  const url = `/user-requests/?building=${buildingId}`;
+  const resp: AxiosResponse<{ results?: any[] } | any[]> = await api.get(url);
+  const data = resp.data;
+  const rows: any[] = Array.isArray(data) ? data : data.results ?? [];
+
+  return rows.map((r): UserRequest => ({
+    id: r.id,
+    title: r.title,
+    description: r.description,
+    status: r.status,
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+    created_by: r.created_by,
+    created_by_username: r.created_by_username,
+    building: r.building,
+    supporter_count: r.supporter_count ?? 0,
+    supporter_usernames: Array.isArray(r.supporter_usernames) ? r.supporter_usernames : [],
+    is_urgent: r.is_urgent ?? false,
+    type: r.type ?? '',
+    is_supported: r.is_supported ?? false,
+  }));
 }
+
+
+// ✅ Υλοποίηση toggleSupportRequest στο αρχείο frontend/lib/api.ts
+  export async function toggleSupportRequest(
+    id: number
+  ): Promise<{ status: string; supporter_count: number; supported: boolean }> {
+    console.log(`[API CALL] Attempting to toggle support for request ${id}`);
+    const { data } = await api.post(`/user-requests/${id}/support/`);
+    return data;
+  }
+
 
 export interface CreateUserRequestPayload {
   title: string; description: string; building: number;
@@ -573,4 +615,3 @@ function handleLogout(logMessage: string) {
     // window.location.href = '/login';
   }
 }
-

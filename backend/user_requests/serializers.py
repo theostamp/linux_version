@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers # type: ignore
 from .models import UserRequest
 from buildings.models import Building
 
@@ -6,8 +6,6 @@ class UserRequestSerializer(serializers.ModelSerializer):
     # Expose building as a writable PK for creating/updating UserRequests
     building = serializers.PrimaryKeyRelatedField(
         queryset=Building.objects.all(),
-        # allow_null=True, # Ορίστε το True αν το κτίριο είναι προαιρετικό
-        # required=False # Ορίστε το False αν το κτίριο είναι προαιρετικό
     )
     
     # Display username of the creator, read-only
@@ -43,10 +41,6 @@ class UserRequestSerializer(serializers.ModelSerializer):
             # Το supporter_count είναι τώρα SerializerMethodField, άρα είναι read-only από τη φύση του.
             # Δεν χρειάζεται να το προσθέσετε εδώ, αλλά δεν βλάπτει.
         ]
-        # extra_kwargs = {
-        #     'building': {'required': True} # Ορίστε αν το building είναι πάντα υποχρεωτικό
-        # }
-
 
     def get_supporter_count(self, obj: UserRequest) -> int:
         """

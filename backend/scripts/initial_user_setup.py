@@ -1,8 +1,8 @@
 import os
 import sys
 import subprocess
-import django # type: ignore
-from django.utils import timezone
+import django  # type: ignore
+from django.utils import timezone # type: ignore
 
 # --------------------------------------------------
 # Django bootstrap
@@ -16,11 +16,11 @@ django.setup()
 # --------------------------------------------------
 # Imports AFTER django.setup()
 # --------------------------------------------------
-from django_tenants.utils import schema_context # type: ignore
+from django_tenants.utils import schema_context  # type: ignore
 from tenants.models import Client, Domain
 from django.contrib.auth import get_user_model # type: ignore
-from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Group, Permission # type: ignore
+from django.contrib.contenttypes.models import ContentType # type: ignore
 from buildings.models import Building
 from announcements.models import Announcement
 from votes.models import Vote
@@ -43,17 +43,14 @@ TENANT_SCHEMA = os.getenv("TENANT_SCHEMA", "public")
 # --------------------------------------------------
 
 def run_migrations(schema: str):
-    """Run tenant migrations for a given schema (shared+tenant)."""
     print(f"\n⏳ Running migrations for schema '{schema}' ...")
     subprocess.run(["python", "manage.py", "migrate_schemas", "--tenant", "--schema", schema], check=True)
     print("✅ Migrations finished.")
-
 
 def ensure_public_tenant():
     public, _ = Client.objects.get_or_create(schema_name="public", defaults={"name": "Public"})
     Domain.objects.get_or_create(domain=TENANT_DOMAIN, tenant=public, defaults={"is_primary": True})
     print("✅ Public tenant ensured.")
-
 
 def ensure_superuser():
     if not User.objects.filter(email=SUPERUSER_EMAIL).exists():
@@ -66,7 +63,6 @@ def ensure_superuser():
         print(f"✅ Superuser {SUPERUSER_EMAIL} created.")
     else:
         print(f"ℹ️ Superuser {SUPERUSER_EMAIL} already exists.")
-
 
 def ensure_groups_and_permissions():
     managers, _ = Group.objects.get_or_create(name="Managers")
@@ -90,7 +86,6 @@ def ensure_groups_and_permissions():
             pass
     print("✅ Groups & permissions ensured.")
 
-
 def ensure_demo_users():
     def create(email, pwd, first, last, is_staff=False):
         if User.objects.filter(email=email).exists():
@@ -100,84 +95,85 @@ def ensure_demo_users():
         print(f"✅ Demo user {email} created.")
         return user
 
-    mgr = create("manager@demo.com", "manager123", "Demo", "Manager", True)
-    res = create("resident@demo.com", "resident123", "Demo", "Resident", False)
-    mgr.groups.add(Group.objects.get(name="Managers"))
-    res.groups.add(Group.objects.get(name="Residents"))
-    return mgr, res
+    manager1 = create("manager1@demo.com", "manager123", "Manager", "One", True)
+    manager2 = create("manager2@demo.com", "manager123", "Manager", "Two", True)
+    tenant1 = create("tenant1@demo.com", "tenant123", "Tenant", "One", False)
+    tenant2 = create("tenant2@demo.com", "tenant123", "Tenant", "Two", False)
+
+    managers_group = Group.objects.get(name="Managers")
+    residents_group = Group.objects.get(name="Residents")
+    for mgr in [manager1, manager2]:
+        mgr.groups.add(managers_group)
+    for res in [tenant1, tenant2]:
+        res.groups.add(residents_group)
+
+    return manager1, manager2, tenant1, tenant2
 
 # --------------------------------------------------
 # Tenant‑scoped demo data
 # --------------------------------------------------
 
-def seed_demo_data(manager, resident):
-    """Populate sample building/announcement/vote/request in current schema."""
-    building, _ = Building.objects.get_or_create(
-        name="Κεντρικό Κτίριο",
-        defaults={
-            "address": "Μεγάλου Αλεξάνδρου 36",
-            "city": "Αθήνα",
-            "postal_code": "10435",
-            "manager": manager,
-        },
-    )
-    print("✅ Sample building ensured.")
+def seed_demo_data(manager1, manager2, tenant1, tenant2):
+    buildings = [
+        {"name": "Κτίριο 1.1", "manager": manager1, "tenant": tenant1, "address": "Οδός 1", "city": "Αθήνα", "postal_code": "11111"},
+        {"name": "Κτίριο 1.2", "manager": manager1, "tenant": tenant2, "address": "Οδός 2", "city": "Αθήνα", "postal_code": "11112"},
+        {"name": "Κτίριο 2.1", "manager": manager2, "tenant": tenant1, "address": "Οδός 3", "city": "Πειραιάς", "postal_code": "18531"},
+        {"name": "Κτίριο 2.2", "manager": manager2, "tenant": tenant2, "address": "Οδός 4", "city": "Πειραιάς", "postal_code": "18532"},
+    ]
 
-    Announcement.objects.get_or_create(
-        title="Διακοπή Ρεύματος",
-        defaults={
-            "description": "Θα γίνει προγραμματισμένη διακοπή ρεύματος την Παρασκευή.",
-            "start_date": timezone.now().date(),
-            "end_date": timezone.now().date() + timezone.timedelta(days=2),
-            "building": building,
-            # "is_active": True,
-        },
-    )
-    print("✅ Sample announcement ensured.")
+    for b in buildings:
+        building, _ = Building.objects.get_or_create(
+            name=b["name"],
+            defaults={
+                "manager": b["manager"],
+                "address": b["address"],
+                "city": b["city"],
+                "postal_code": b["postal_code"]
+            },
+        )
 
-    Vote.objects.get_or_create(
-        title="Εγκατάσταση κάμερας εισόδου",
-        defaults={
-            "description": "Ψηφοφορία για εγκατάσταση κάμερας ασφαλείας στην είσοδο.",
-            "start_date": timezone.now().date(),
-            "end_date": timezone.now().date() + timezone.timedelta(days=7),
-            "building": building,
-            # "choices": ["ΝΑΙ", "ΟΧΙ", "ΛΕΥΚΟ"],
-        },
-    )
-    print("✅ Sample vote ensured.")
+        Announcement.objects.get_or_create(
+            title=f"Ανακοίνωση για {b['name']}",
+            defaults={
+                "description": "Γενική ενημέρωση.",
+                "start_date": timezone.now().date(),
+                "end_date": timezone.now().date() + timezone.timedelta(days=2),
+                "building": building,
+            },
+        )
 
-    UserRequest.objects.get_or_create(
-        title="Επισκευή Ανελκυστήρα",
-        defaults={
-            "description": "Ο ανελκυστήρας σταματά συχνά μεταξύ ορόφων.",
-            "status": "pending",
-            "created_by": resident,
-            "building": building,
-            # "is_urgent": True,
-            "type": "Τεχνικό",
-        },
-    )
-    print("✅ Sample user request ensured.")
+        Vote.objects.get_or_create(
+            title=f"Ψηφοφορία για {b['name']}",
+            defaults={
+                "description": "Ετήσια συνέλευση.",
+                "start_date": timezone.now().date(),
+                "end_date": timezone.now().date() + timezone.timedelta(days=7),
+                "building": building,
+            },
+        )
+
+        UserRequest.objects.get_or_create(
+            title=f"Αίτημα για {b['name']}",
+            defaults={
+                "description": "Γενικό αίτημα.",
+                "status": "pending",
+                "created_by": b["tenant"],
+                "building": building,
+                "type": "Τεχνικό",
+            },
+        )
+
+    print("✅ Multiple buildings and data seeded.")
 
 # --------------------------------------------------
 # Main execution
 # --------------------------------------------------
 if __name__ == "__main__":
-    # 1) Run migrations for the public schema (tenant apps too)
     run_migrations(TENANT_SCHEMA)
-
-    # 2) Shared setup (runs in default connection -> public)
     ensure_public_tenant()
     ensure_superuser()
     ensure_groups_and_permissions()
-    managers, residents = ensure_demo_users()
-
-    # 3) Seed demo data INSIDE the appropriate schema (public == main building)
+    manager1, manager2, tenant1, tenant2 = ensure_demo_users()
     with schema_context(TENANT_SCHEMA):
-        seed_demo_data(managers, residents)
-
-    print("\n✅ Initial user setup completed for schema:", TENANT_SCHEMA)
-    print("ℹ️  Manager  → manager@demo.com / manager123")
-    print("ℹ️  Resident → resident@demo.com / resident123")
-    print("ℹ️  Superuser→", SUPERUSER_EMAIL, "/", SUPERUSER_PASSWORD)
+        seed_demo_data(manager1, manager2, tenant1, tenant2)
+    print("\n✅ Demo dataset complete for schema:", TENANT_SCHEMA)

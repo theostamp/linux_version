@@ -1,60 +1,44 @@
-// frontend/app/votes/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-import { fetchVotes } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import { useVotes } from '@/hooks/useVotes';
+import VoteStatus from '@/components/VoteStatus';
 
-import VoteCard from '@/components/VoteCard';
-import ErrorMessage from '@/components/ErrorMessage';
+function isActive(start: string, end: string) {
+  const today = new Date().toISOString().split('T')[0];
+  return start <= today && today <= end;
+}
 
 export default function VotesPage() {
-  const { currentBuilding } = useBuilding();
-  const [votes, setVotes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const { currentBuilding, isLoading: loadingBuilding } = useBuilding();
+  const { data: votes, isLoading, isError } = useVotes(currentBuilding?.id);
 
-  async function loadVotes() {
-    if (!currentBuilding?.id) return;
-    try {
-      const data = await fetchVotes(currentBuilding.id);
-      setVotes(data);
-      setError(false);
-    } catch (err) {
-      console.error(err);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }
+  if (loadingBuilding || isLoading) return <p className="p-6">Φόρτωση...</p>;
+  if (isError) return <p className="p-6 text-red-600">Αποτυχία φόρτωσης ψηφοφοριών.</p>;
 
-  useEffect(() => {
-    loadVotes();
-  }, [currentBuilding?.id]);
-
-  let content;
-  if (loading) {
-    content = <p className="text-gray-500">Φόρτωση...</p>;
-  } else if (error) {
-    content = <ErrorMessage message="Αδυναμία φόρτωσης ψηφοφοριών." />;
-  } else if (votes.length > 0) {
-    content = (
-      <div className="grid grid-cols-1 gap-4">
-        {votes.map((vote) => (
-          <VoteCard key={vote.id} vote={vote} />
-        ))}
-      </div>
-    );
-  } else {
-    content = (
-      <div className="text-gray-500 text-center">Δεν υπάρχουν ενεργές ψηφοφορίες.</div>
-    );
+  if (!votes || votes.length === 0) {
+    return <p className="p-6 text-gray-500">Δεν υπάρχουν διαθέσιμες ψηφοφορίες.</p>;
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">🗳️ Ενεργές Ψηφοφορίες</h1>
-      {content}
+    <div className="p-6 max-w-3xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold">🗳️ Ψηφοφορίες</h1>
+
+      {votes.map((vote: any) => {
+        const active = isActive(vote.start_date, vote.end_date);
+
+        return (
+          <div key={vote.id} className="p-4 border rounded-lg shadow-sm bg-white space-y-1">
+            <h2 className="text-lg font-semibold text-blue-700">{vote.title}</h2>
+            <p className="text-sm text-gray-600">{vote.description}</p>
+            <p className="text-xs text-gray-500">
+              Έναρξη: {vote.start_date} • Λήξη: {vote.end_date}
+            </p>
+
+            <VoteStatus voteId={vote.id} isActive={active} />
+          </div>
+        );
+      })}
     </div>
   );
 }

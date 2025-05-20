@@ -1,7 +1,8 @@
+// ✅ frontend/components/VoteCard.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
-import { submitVote, fetchMyVote, fetchVoteResults } from '@/lib/api';
+import { submitVote, fetchMyVote } from '@/lib/api';
 import VoteResults from './VoteResults';
 
 type Vote = {
@@ -12,16 +13,8 @@ type Vote = {
   end_date: string;
 };
 
-type VoteResultsData = {
-  ΝΑΙ: number;
-  ΟΧΙ: number;
-  ΛΕΥΚΟ: number;
-  total: number;
-};
-
 export default function VoteCard({ vote }: { readonly vote: Vote }) {
   const [userChoice, setUserChoice] = useState<"ΝΑΙ" | "ΟΧΙ" | "ΛΕΥΚΟ" | null>(null);
-  const [results, setResults] = useState<VoteResultsData | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +22,6 @@ export default function VoteCard({ vote }: { readonly vote: Vote }) {
   const isActive =
     new Date(vote.start_date) <= today && today <= new Date(vote.end_date);
 
-  // Φόρτωση ψήφου χρήστη
   useEffect(() => {
     fetchMyVote(vote.id)
       .then((data) => {
@@ -42,22 +34,13 @@ export default function VoteCard({ vote }: { readonly vote: Vote }) {
       });
   }, [vote.id]);
 
-  // Φόρτωση αποτελεσμάτων αν υπάρχει ψήφος
-  useEffect(() => {
-    if (userChoice) {
-      fetchVoteResults(vote.id)
-        .then((data) => setResults(data))
-        .catch((err) => console.error('Σφάλμα κατά τη λήψη αποτελεσμάτων:', err));
-    }
-  }, [userChoice, vote.id]);
-
   async function handleVote(choice: "ΝΑΙ" | "ΟΧΙ" | "ΛΕΥΚΟ") {
     setLoading(true);
     setError('');
 
     try {
       await submitVote(vote.id, choice);
-      setUserChoice(choice); // ενημερώνουμε την ψήφο
+      setUserChoice(choice);
     } catch (err) {
       if (err instanceof Error) {
         setError(`Αποτυχία υποβολής: ${err.message}`);
@@ -82,40 +65,48 @@ export default function VoteCard({ vote }: { readonly vote: Vote }) {
       <p className="text-gray-700 dark:text-gray-300 mt-2">{vote.description}</p>
 
       <div className="mt-4">
-        {userChoice ? (
-          <>
-            <p className="text-green-600 font-semibold">✅ Η ψήφος σας: {userChoice}</p>
-            {results && <VoteResults results={results} />}
-          </>
-        ) : isActive ? (
-          <div className="flex gap-4">
-            <button
-              onClick={() => handleVote('ΝΑΙ')}
-              disabled={loading}
-              className="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600 disabled:opacity-50"
-            >
-              ✅ ΝΑΙ
-            </button>
-            <button
-              onClick={() => handleVote('ΟΧΙ')}
-              disabled={loading}
-              className="bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 disabled:opacity-50"
-            >
-              ❌ ΟΧΙ
-            </button>
-            <button
-              onClick={() => handleVote('ΛΕΥΚΟ')}
-              disabled={loading}
-              className="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-500 disabled:opacity-50"
-            >
-              ⚪ ΛΕΥΚΟ
-            </button>
-          </div>
-        ) : (
-          <p className="text-yellow-600 font-semibold">
-            ⚠️ Η ψηφοφορία δεν είναι διαθέσιμη αυτή τη στιγμή.
-          </p>
-        )}
+        {(() => {
+          if (userChoice) {
+            return (
+              <>
+                <p className="text-green-600 font-semibold">✅ Η ψήφος σας: {userChoice}</p>
+                <VoteResults voteId={vote.id} />
+              </>
+            );
+          } else if (isActive) {
+            return (
+              <div className="flex gap-4">
+                <button
+                  onClick={() => handleVote('ΝΑΙ')}
+                  disabled={loading}
+                  className="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600 disabled:opacity-50"
+                >
+                  ✅ ΝΑΙ
+                </button>
+                <button
+                  onClick={() => handleVote('ΟΧΙ')}
+                  disabled={loading}
+                  className="bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 disabled:opacity-50"
+                >
+                  ❌ ΟΧΙ
+                </button>
+                <button
+                  onClick={() => handleVote('ΛΕΥΚΟ')}
+                  disabled={loading}
+                  className="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-500 disabled:opacity-50"
+                >
+                  ⚪ ΛΕΥΚΟ
+                </button>
+              </div>
+            );
+          } else {
+            return (
+              <p className="text-yellow-600 font-semibold">
+                ⚠️ Η ψηφοφορία δεν είναι διαθέσιμη αυτή τη στιγμή.
+              </p>
+            );
+          }
+        })()}
 
         {error && <p className="text-red-500 mt-2">{error}</p>}
       </div>
