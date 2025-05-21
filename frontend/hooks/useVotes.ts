@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
 export function useVotes(buildingId?: number) {
   return useQuery({
     queryKey: ['votes', buildingId],
     queryFn: async () => {
-      const res = await fetch(`/api/votes/?building=${buildingId}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Αποτυχία φόρτωσης ψηφοφοριών');
-      return await res.json();
+      const { data } = await api.get(`/votes/?building=${buildingId}`);
+      return data;
     },
     enabled: !!buildingId,
+    select: (data) => Array.isArray(data) ? data : [], // ✅ εγγυάται array
   });
 }

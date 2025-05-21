@@ -1,22 +1,29 @@
-import { useEffect } from 'react';
+// frontend/hooks/useEnsureCsrf.ts
+import { useEffect, useState } from 'react';
 import { getBaseUrl } from '@/lib/config';
 
 export default function useEnsureCsrf(): boolean {
+  const [ready, setReady] = useState(false);
+
   useEffect(() => {
     async function fetchToken() {
-      const base = getBaseUrl(); // παίρνουμε με ασφάλεια το base URL
+      const base = getBaseUrl();
       try {
         const res = await fetch(`${base}/csrf/`, {
           credentials: 'include',
         });
-        if (!res.ok) throw new Error(`CSRF fetch failed: ${res.status}`);
+        if (!res.ok) {
+          console.error('CSRF fetch failed:', res.status);
+          return;
+        }
+        setReady(true);
       } catch (err) {
-        console.error(err);
+        console.error('CSRF token error:', err);
       }
     }
+
     fetchToken();
   }, []);
 
-  // Μπορούμε να γυρίσουμε true αμέσως, το hook φροντίζει να κάνει το fetch
-  return true;
+  return ready;
 }

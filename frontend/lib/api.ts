@@ -110,6 +110,10 @@ api.interceptors.response.use(
     console.log('Αιτία:', error.response?.data);
     console.log('URL Αρχικού Αιτήματος:', originalRequest?.url);
     console.log('Authorization header:', originalRequest?.headers?.Authorization || originalRequest?.headers?.authorization);
+    console.log('[INTERCEPTOR] Replaying original request with new token:', {
+      url: originalRequest.url,
+      headers: originalRequest.headers,
+    });
 
     if (shouldAttemptTokenRefresh(error, originalRequest)) {
       console.log('[INTERCEPTOR] Προϋποθέσεις για token refresh πληρούνται.');
@@ -569,14 +573,28 @@ async function handleTokenRefresh(originalRequest: InternalAxiosRequestConfig & 
       localStorage.setItem('access', data.access);
     }
 
+    // Αποθηκεύουμε το νέο token
     api.defaults.headers.common['Authorization'] = `Bearer ${data.access}`;
     processQueue(null, data.access);
 
-    // Update the Authorization header for the original request
+    // Ορίζουμε Authorization για το αρχικό αίτημα
     originalRequest.headers = originalRequest.headers || {};
     originalRequest.headers['Authorization'] = `Bearer ${data.access}`;
 
+    // 🔍 DEBUG LOG ΠΡΙΝ το retry
+    console.log('%c[INTERCEPTOR] Replaying original request with new token:', 'color: green; font-weight: bold;');
+    console.log({
+      url: originalRequest.url,
+      method: originalRequest.method,
+      headers: {
+        ...(originalRequest.headers || {}),
+        Authorization: originalRequest.headers['Authorization']?.slice(0, 10) + '...' // Μόνο τα πρώτα 10 chars
+      }
+    });
+
+    // Επαναποστολή του αρχικού αιτήματος με το νέο token
     return api(originalRequest);
+
   } catch (refreshError: any) {
     handleLogout('[handleTokenRefresh] Token refresh failed. Logging out.');
     processQueue(refreshError, null);

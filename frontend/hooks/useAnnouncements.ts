@@ -1,17 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
+// frontend/hooks/useAnnouncements.ts
 
-const fetchAnnouncements = async (buildingId: number) => {
-  const res = await fetch(`/api/announcements/?building=${buildingId}`);
-  if (!res.ok) {
-    throw new Error('Σφάλμα κατά τη φόρτωση ανακοινώσεων');
-  }
-  return res.json();
-};
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api'; // Σωστό axios instance με interceptors
 
 export function useAnnouncements(buildingId?: number) {
   return useQuery({
     queryKey: ['announcements', buildingId],
-    queryFn: () => fetchAnnouncements(buildingId!),
+    queryFn: async () => {
+      const response = await api.get(`/announcements/?building=${buildingId}`);
+      return Array.isArray(response.data)
+        ? response.data
+        : response.data.results ?? [];
+    },
     enabled: !!buildingId,
   });
 }

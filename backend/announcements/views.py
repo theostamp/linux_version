@@ -8,6 +8,7 @@ from .serializers import AnnouncementSerializer
 from core.permissions import IsManagerOrSuperuser
 from buildings.models import Building
 from core.utils import filter_queryset_by_user_and_building
+from users.permissions import IsBuildingAdmin
 
 class AnnouncementViewSet(viewsets.ModelViewSet):
     """
@@ -16,6 +17,7 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
     - POST   /api/announcements/               -> δημιουργία (μόνο διαχειριστές)
     - GET    /api/announcements/<id>/          -> λεπτομέρειες (μόνο στο δικό σου κτήριο/ρόλο)
     """
+    permission_classes = [IsBuildingAdmin]
     serializer_class = AnnouncementSerializer
 
     def get_permissions(self):

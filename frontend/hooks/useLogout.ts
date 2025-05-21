@@ -1,3 +1,5 @@
+// frontend/hooks/useLogout.ts
+
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -11,12 +13,18 @@ export default function useLogout() {
 
   const logout = async () => {
     try {
-      await logoutUser();         // καλεί το API
-      setUser(null);              // καθαρίζει το context
-      toast.success('Αποσυνδεθήκατε');
-      router.replace('/dashboard');
+      await logoutUser(); // Εάν πετάει token από backend
     } catch (err: any) {
+      console.error("Logout API error:", err);
       toast.error(err.message ?? 'Αποτυχία αποσύνδεσης');
+    } finally {
+      // Fallback client-side cleanup
+      localStorage.removeItem('access');
+      localStorage.removeItem('refresh');
+      localStorage.removeItem('user');
+      setUser(null);
+      toast.success('Αποσυνδεθήκατε');
+      router.replace('/login');
     }
   };
 

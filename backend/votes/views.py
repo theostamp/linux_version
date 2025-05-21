@@ -3,12 +3,14 @@
 from rest_framework import viewsets, permissions, status, exceptions  # type: ignore
 from rest_framework.decorators import action  # type: ignore
 from rest_framework.response import Response  # type: ignore
+from users.permissions import IsBuildingAdmin
 
 from .models import Vote, VoteSubmission
 from .serializers import VoteSerializer, VoteSubmissionSerializer
 from buildings.models import Building
 from core.permissions import IsManagerOrSuperuser
 from core.utils import filter_queryset_by_user_and_building
+from .permissions import IsBuildingAdmin  # ή από όπου το έχεις ορίσει
 
 
 class VoteViewSet(viewsets.ModelViewSet):
@@ -18,6 +20,7 @@ class VoteViewSet(viewsets.ModelViewSet):
       - GET    /api/votes/{pk}/my-submission/  -> η ψήφος του τρέχοντα χρήστη
       - GET    /api/votes/{pk}/results/        -> αποτελέσματα
     """
+    permission_classes = [permissions.IsAuthenticated, IsBuildingAdmin]
     queryset = Vote.objects.all().order_by('-created_at')
     serializer_class = VoteSerializer
 
@@ -28,7 +31,36 @@ class VoteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = Vote.objects.all().order_by('-start_date')
-        return filter_queryset_by_user_and_building(self.request, qs)
+
+        print(">>> [get_queryset] Auth user:", self.request.user)
+        print(">>> [get_queryset] Is authenticated:", self.request.user.is_authenticated)
+        print(">>> [get_queryset] Query params:", self.request.query_params)
+
+        building_id = self.request.query_params.get('building')
+        if building_id:
+            try:
+                building_id = int(building_id)
+                qs = qs.filter(building_id=building_id)
+                print(f">>> [get_queryset] Filtered by building_id: {building_id}")
+            except (ValueError, TypeError):
+                print(">>> [get_queryset] Invalid building_id")
+                return Vote.objects.none()
+
+        user = self.request.user
+        if user.is_superuser:
+            print(">>> [get_queryset] Superuser access")
+            return qs
+        elif hasattr(user, "manager_buildings"):
+            buildings = list(user.manager_buildings.all())
+            print(f">>> [get_queryset] Manager buildings: {buildings}")
+            return qs.filter(building__in=buildings)
+        elif hasattr(user, "resident_buildings"):
+            buildings = list(user.resident_buildings.all())
+            print(f">>> [get_queryset] Resident buildings: {buildings}")
+            return qs.filter(building__in=buildings)
+
+        print(">>> [get_queryset] No matching user role")
+        return Vote.objects.none()
 
 
     def get_serializer_class(self):
@@ -51,7 +83,7 @@ class VoteViewSet(viewsets.ModelViewSet):
             serializer.save()
 
     def perform_create(self, serializer):
-        serializer.save()
+        serializer.save(creator=self.request.user)
 
     @action(detail=True, methods=['post'], url_path='vote')
     def vote(self, request, pk=None):

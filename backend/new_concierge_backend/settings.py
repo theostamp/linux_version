@@ -230,7 +230,7 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@example.com')
 # Django REST framework simple JWT settings
 # ----------------------------------------
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # π.χ. 30 λεπτά
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),  # π.χ. 30 λεπτά
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,

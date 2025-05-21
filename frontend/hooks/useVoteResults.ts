@@ -1,13 +1,14 @@
 // frontend/hooks/useVoteResults.ts
 
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api'; // ✅ Χρήση του axios instance
 
 // === Τύποι Ψηφοφορίας & Αποτελεσμάτων ===
 export interface VoteResults {
   ΝΑΙ: number;
   ΟΧΙ: number;
   ΛΕΥΚΟ: number;
-  [key: string]: number; // υποστήριξη για extra επιλογές
+  [key: string]: number;
 }
 
 export interface VoteResultsResponse {
@@ -15,22 +16,12 @@ export interface VoteResultsResponse {
   total: number;
 }
 
-// === Χρήση στο react-query για αποτελέσματα ψηφοφορίας ===
 export function useVoteResults(voteId?: number) {
   return useQuery<VoteResultsResponse>({
     queryKey: ['vote-results', voteId],
     queryFn: async () => {
-      const res = await fetch(`/api/votes/${voteId}/results/`, {
-        credentials: 'include',
-      });
+      const { data } = await api.get(`/votes/${voteId}/results/`);
 
-      if (!res.ok) {
-        throw new Error('Αποτυχία φόρτωσης αποτελεσμάτων ψηφοφορίας');
-      }
-
-      const data = await res.json();
-
-      // Fallback υπολογισμός total αν δεν επιστραφεί από backend
       const results: VoteResults = data.results ?? {};
       const total: number =
         typeof data.total === 'number'

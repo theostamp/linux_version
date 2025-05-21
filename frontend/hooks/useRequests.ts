@@ -1,17 +1,15 @@
+// frontend/hooks/useRequests.ts
 import { useQuery } from '@tanstack/react-query';
-
-const fetchRequests = async (buildingId: number) => {
-  const res = await fetch(`/api/requests/?building=${buildingId}`);
-  if (!res.ok) {
-    throw new Error('Σφάλμα κατά τη φόρτωση αιτημάτων');
-  }
-  return res.json();
-};
+import { api } from '@/lib/api';
+import type { UserRequest } from '@/types/userRequests';
 
 export function useRequests(buildingId?: number) {
-  return useQuery({
+  return useQuery<UserRequest[]>({
     queryKey: ['requests', buildingId],
-    queryFn: () => fetchRequests(buildingId!),
+    queryFn: async () => {
+      const { data } = await api.get(`/user-requests/?building=${buildingId}`);
+      return Array.isArray(data) ? data : data.results ?? [];
+    },
     enabled: !!buildingId,
   });
 }

@@ -1,14 +1,19 @@
+// frontend/hooks/useMyVote.ts
 import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
 export function useMyVote(voteId?: number) {
   return useQuery({
-    queryKey: ['my-vote', voteId],
+    queryKey: ['myVote', voteId],
     queryFn: async () => {
-      const res = await fetch(`/api/votes/${voteId}/my-submission/`, { credentials: 'include' });
-      if (!res.ok) throw new Error();
-      return await res.json(); 
+      try {
+        const { data } = await api.get(`/votes/${voteId}/my-submission/`);
+        return data;
+      } catch (error: any) {
+        if (error?.response?.status === 404) return null;
+        throw error;
+      }
     },
-    enabled: !!voteId,
-    retry: false,
+    enabled: voteId !== undefined,
   });
 }

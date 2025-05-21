@@ -1,20 +1,16 @@
+// frontend/hooks/useAuthGuard.ts
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser } from '@/lib/api';
+import { useAuth } from '@/components/contexts/AuthContext';
 
 export function useAuthGuard() {
   const router = useRouter();
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    async function checkAuth() {
-      try {
-        await getCurrentUser();
-      } catch (err) {
-        console.error('Authentication check failed:', err);
-        router.replace('/login');
-      }
+    if (!isLoading && !user) {
+      console.warn('[useAuthGuard] Δεν υπάρχει ενεργός χρήστης — redirect σε login.');
+      router.replace('/login');
     }
-
-    checkAuth();
-  }, [router]);
+  }, [user, isLoading, router]);
 }

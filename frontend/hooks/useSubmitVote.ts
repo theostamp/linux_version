@@ -1,3 +1,4 @@
+// frontend/hooks/useSubmitVote.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { submitVote } from '@/lib/api';
 
