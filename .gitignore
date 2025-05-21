@@ -19,8 +19,7 @@ venv/
 .venv/
 
 # Env files
-.env
-*.env
+
 
 # Egg
 *.egg-info/
