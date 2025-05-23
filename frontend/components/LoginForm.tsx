@@ -1,9 +1,7 @@
-// frontend/components/LoginForm.tsx
-
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +11,11 @@ import { useAuth } from '@/components/contexts/AuthContext';
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
+
+  const redirectTo = searchParams.get('redirectTo') ?? '/dashboard';
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,10 +24,9 @@ export default function LoginForm() {
     e.preventDefault();
     setLoading(true);
     try {
-      // Καλεί τη μέθοδο login του AuthContext που χειρίζεται JWT
       await login(email, password);
       toast.success('Επιτυχής σύνδεση!');
-      router.push('/dashboard');
+      router.push(redirectTo);
     } catch (err: any) {
       console.error('Login error:', err);
       toast.error(err.message ?? 'Κάτι πήγε στραβά!');
@@ -69,3 +70,8 @@ export default function LoginForm() {
     </Card>
   );
 }
+// Compare this snippet from frontend/components/ui/button.tsx:
+// import { forwardRef } from 'react';
+// import { cn } from '@/lib/utils';
+// import { Loader2 } from 'lucide-react';
+//

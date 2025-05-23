@@ -1,4 +1,4 @@
-
+# backend/announcements/views.py
 from rest_framework import viewsets, permissions, status  # type: ignore
 from rest_framework.response import Response  # type: ignore
 from django.core.exceptions import ObjectDoesNotExist

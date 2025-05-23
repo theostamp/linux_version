@@ -77,15 +77,25 @@ api.interceptors.request.use(
 );
 
 // Response Interceptor (για χειρισμό ληγμένων tokens)
-function shouldAttemptTokenRefresh(error: AxiosError, originalRequest: InternalAxiosRequestConfig & { _retry?: boolean }): boolean {
-  return !!(
+function shouldAttemptTokenRefresh(
+  error: AxiosError,
+  originalRequest: InternalAxiosRequestConfig & { _retry?: boolean }
+): boolean {
+  const isLogin = originalRequest?.url?.includes('/users/login/');
+  const isRefresh = originalRequest?.url?.includes('/users/token/refresh/');
+  const hasAccess = typeof window !== 'undefined' && !!localStorage.getItem('access');
+  const hasRefresh = typeof window !== 'undefined' && !!localStorage.getItem('refresh');
+
+  return (
     error.response?.status === 401 &&
-    originalRequest &&
     !originalRequest._retry &&
-    originalRequest.url !== '/users/token/refresh/' &&
-    originalRequest.url !== '/users/login/'
+    !isLogin &&
+    !isRefresh &&
+    hasAccess &&
+    hasRefresh
   );
 }
+
 
 function isTokenExpiredError(errorData: any): boolean {
   return errorData?.code === 'token_not_valid' &&
@@ -158,7 +168,7 @@ export async function loginUser(
   password: string,
 ): Promise<{ access: string; refresh: string; user: User }> {
   console.log(`[API CALL] Attempting login for user: ${email}`);
-  const { data } = await api.post<{ access: string; refresh: string; user: User }>('/users/login/', { email, password });
+  const { data } = await api.post('/users/login/', { email, password });
 
   if (typeof window !== 'undefined') {
     localStorage.setItem('access', data.access);
@@ -174,6 +184,7 @@ export async function loginUser(
   }
   return data;
 }
+
 
 export async function logoutUser(): Promise<void> {
   console.log('[API CALL] Attempting logout.');

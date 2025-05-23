@@ -1,5 +1,3 @@
-# backend/announcements/models.py
-
 from django.db import models
 from buildings.models import Building
 
@@ -18,9 +16,10 @@ class Announcement(models.Model):
     def __str__(self):
         return f"{self.title} ({self.building.name})"
 
-    def is_active(self):
+    @property
+    def is_currently_active(self):
         from django.utils import timezone
         today = timezone.now().date()
         if self.start_date and self.end_date:
-            return self.start_date <= today <= self.end_date
+            return self.start_date <= today <= self.end_date and self.published
         return self.published

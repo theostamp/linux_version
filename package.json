@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "@tanstack/react-query": "^5.76.1",
-    "@tanstack/react-query-devtools": "^5.76.1",
-    "react-hook-form": "^7.56.2",
-    "swr": "^2.3.3"
-  }
-}

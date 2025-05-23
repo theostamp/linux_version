@@ -20,7 +20,7 @@ interface AuthCtx {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
-  isAuthReady: boolean; // ✅ Νέο flag
+  isAuthReady: boolean;
   setUser: (user: User | null) => void;
 }
 
@@ -28,8 +28,8 @@ const AuthContext = createContext<AuthCtx | undefined>(undefined);
 
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // ✅ για το UI
-  const [isAuthReady, setIsAuthReady] = useState(false); // ✅ για τις εξωτερικές εξαρτήσεις
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   const performClientLogout = useCallback(() => {
     localStorage.removeItem('access');
@@ -39,39 +39,14 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     console.log('AuthContext: Client-side logout performed.');
   }, []);
 
-  useEffect(() => {
-    const loadUserOnMount = async () => {
-      setIsLoading(true);
-      const token = localStorage.getItem('access');
-
-      if (!token) {
-        setUser(null);
-        setIsLoading(false);
-        setIsAuthReady(true); // ✅ Έστω και χωρίς token, θεωρούμε το auth flow initialized
-        return;
-      }
-
-      try {
-        const me = await getCurrentUser();
-        setUser(me);
-      } catch (error) {
-        console.error('AuthContext: Error fetching current user on mount', error);
-        // @ts-ignore
-        if (error?.response?.status === 401) {
-          performClientLogout();
-        }
-      } finally {
-        setIsLoading(false);
-        setIsAuthReady(true); // ✅ Πάντα σηματοδοτούμε το τέλος της αρχικής φάσης
-      }
-    };
-
-    loadUserOnMount();
-  }, [performClientLogout]);
-
   const login = useCallback(async (email: string, password: string) => {
     const { user: loggedInUser } = await loginUser(email, password);
+
+    // ⚠️ Περιμένουμε να αποθηκευτεί και να "σταθεροποιηθεί" το access token
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     setUser(loggedInUser);
+    setIsAuthReady(true); // ✅ σηματοδοτεί ότι είμαστε έτοιμοι
   }, []);
 
   const logout = useCallback(async () => {
@@ -82,6 +57,49 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     } finally {
       performClientLogout();
     }
+  }, [performClientLogout]);
+
+  useEffect(() => {
+    const loadUserOnMount = async () => {
+      setIsLoading(true);
+
+      const token = localStorage.getItem('access');
+      const cachedUser = localStorage.getItem('user');
+
+      if (!token) {
+        setUser(null);
+        setIsLoading(false);
+        setIsAuthReady(true);
+        return;
+      }
+
+      if (cachedUser) {
+        try {
+          const parsedUser = JSON.parse(cachedUser) as User;
+          setUser(parsedUser);
+        } catch (e) {
+          console.warn('AuthContext: Failed to parse cached user from localStorage.', e);
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+      }
+
+      try {
+        const me = await getCurrentUser();
+        setUser(me);
+      } catch (error) {
+        console.warn(
+          'AuthContext: getCurrentUser failed. Relying on axios interceptor to refresh token if needed.',
+          error
+        );
+        // Δεν κάνουμε logout εδώ! Περιμένουμε το interceptor να διαχειριστεί το token refresh.
+      } finally {
+        setIsLoading(false);
+        setIsAuthReady(true);
+      }
+    };
+
+    loadUserOnMount();
   }, [performClientLogout]);
 
   const contextValue = React.useMemo(
@@ -96,4 +114,8 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
+}
+export function useAuthGuard() {
+  const { user, isAuthReady } = useAuth();
+  return { user, isAuthReady };
 }

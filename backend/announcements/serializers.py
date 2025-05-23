@@ -1,7 +1,7 @@
-# announcements/serializers.py
 from rest_framework import serializers
 from buildings.models import Building
 from .models import Announcement
+is_currently_active = serializers.SerializerMethodField()
 
 class AnnouncementSerializer(serializers.ModelSerializer):
     building = serializers.PrimaryKeyRelatedField(
@@ -12,10 +12,16 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
         fields = [
-            'id', 'title', 'description', 'created_at', 'author', 'building',
-            # Πρόσθεσε εδώ και άλλα πεδία αν χρειάζονται, π.χ., 'file', 'start_date', 'end_date'
-            # όπως είχες στον τύπο Announcement στο api.ts
-            # 'file', 'start_date', 'end_date', 'is_active'
+            'id',
+            'title',
+            'description',
+            'created_at',
+            'author',
+            'building',
+            'file',
+            'start_date',
+            'end_date',
+            'is_active',
         ]
         read_only_fields = ['id', 'created_at', 'author']
 
@@ -27,3 +33,9 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         elif not user.is_superuser:
             raise serializers.ValidationError("Μόνο διαχειριστές ή superusers μπορούν να αντιστοιχίσουν ανακοίνωση σε αυτό το κτίριο.")
         return value
+    
+       
+
+    def get_is_currently_active(self, obj):
+        return obj.is_currently_active
+

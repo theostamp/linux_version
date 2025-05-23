@@ -1,16 +1,21 @@
-// frontend/hooks/useAuthGuard.ts
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/contexts/AuthContext';
 
-export function useAuthGuard() {
-  const router = useRouter();
-  const { user, isLoading } = useAuth();
+type Role = 'any' | 'manager' | 'admin';
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      console.warn('[useAuthGuard] Δεν υπάρχει ενεργός χρήστης — redirect σε login.');
-      router.replace('/login');
-    }
-  }, [user, isLoading, router]);
+export function useAuthGuard(requiredRole: Role = 'any') {
+  const { user, isAuthReady } = useAuth();
+
+  const isAllowed = (() => {
+    if (!user) return false;
+    if (requiredRole === 'any') return true;
+
+    const role = user.profile?.role;
+
+    if (requiredRole === 'manager') return user.is_staff || role === 'manager';
+    if (requiredRole === 'admin') return user.is_superuser || role === 'superuser';
+
+    return false;
+  })();
+
+  return { isAllowed, isAuthReady };
 }

@@ -1,14 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+// frontend/hooks/useVotes.ts
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { fetchVotes, Vote } from '@/lib/api';
 
-export function useVotes(buildingId?: number) {
-  return useQuery({
+export function useVotes(
+  buildingId: number,
+  options?: UseQueryOptions<Vote[], Error>
+) {
+  return useQuery<Vote[], Error>({
     queryKey: ['votes', buildingId],
-    queryFn: async () => {
-      const { data } = await api.get(`/votes/?building=${buildingId}`);
-      return data;
-    },
+    queryFn: () => fetchVotes(buildingId),
     enabled: !!buildingId,
-    select: (data) => Array.isArray(data) ? data : [], // ✅ εγγυάται array
+    ...options, // ← δίνει δυνατότητα override
   });
 }

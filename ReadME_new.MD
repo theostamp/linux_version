@@ -2,16 +2,40 @@ docker compose exec backend python manage.py migrate_schemas --shared
 docker compose exec backend python manage.py migrate_schemas --tenant --schema=public
 
 
+docker compose exec backend python manage.py  makemigrations
+
+docker compose exec backend python manage.py  makemigrations announcements
+docker compose exec backend python manage.py  migrate announcements
+
+docker compose exec backend python manage.py migrate_schemas --tenant --schema=public
+docker compose exec backend python manage.py migrate_schemas --shared
+docker compose exec backend python manage.py migrate_schemas --tenant --schema=public
 docker compose exec backend python scripts/initial_user_setup.py
 
 
-rm -rf .next
-npm run build
-npm run dev
 
+στο local 
+sudo rm -rf .next
+sudo rm -rf node_modules
+sudo rm package-lock.json
+sudo npm run clean
+sudo npm install
+sudo npm run build
 
-rm -rf .next
-rm -rf node_modules/.cache
-npx tsc --noEmit
-npm run build
-npm run dev
+στο docker containersh
+docker compose exec frontend sh -c "rm -rf .next && rm -rf node_modules && rm package-lock.json && npm run clean && npm install && npm run build"
+
+ rm -rf .next
+
+ rm -rf node_modules
+
+ rm package-lock.json
+
+ npm run clean
+
+ npm install
+
+ npm run build
+
+docker compose exec frontend sh -c "rm -rf .next && rm -rf node_modules && rm package-lock.json && npm run clean && npm install && npm run build"
+

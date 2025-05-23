@@ -18,6 +18,22 @@ class IsResidentUser(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated and not request.user.is_staff
 
+class IsBuildingAdmin(permissions.BasePermission):
+    """
+    Επιτρέπει πρόσβαση σε:
+    - Superusers
+    - Staff users
+    - Χρήστες με role='admin'
+    """
+    def has_permission(self, request, view):
+        user = request.user
+        return (
+            user and user.is_authenticated and (
+                user.is_superuser or
+                user.is_staff or
+                getattr(user.profile, 'role', '') == 'admin'
+            )
+        )
 
 class IsManagerOrSuperuser(permissions.BasePermission):
     """

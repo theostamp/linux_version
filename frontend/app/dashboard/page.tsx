@@ -27,8 +27,27 @@ import {
 import type { UserRequest } from '@/types/userRequests';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import AuthGate from '@/components/AuthGate';
+import LoginForm from '@/components/LoginForm';
+
 
 export default function DashboardPage() {
+  return (
+    <AuthGate
+      role="any"
+      fallback={
+        <div className="p-4">
+          <p className="text-red-600 mb-4">🚫 Πρέπει να συνδεθείτε.</p>
+          <LoginForm />
+        </div>
+      }
+    >
+      <DashboardContent />
+    </AuthGate>
+  );
+}
+
+function DashboardContent() {
   const { user, isLoading: authLoading, isAuthReady } = useAuth();
   const { currentBuilding } = useBuilding();
 
@@ -44,7 +63,6 @@ export default function DashboardPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState(false);
 
-  // ✅ Φόρτωση κύριων δεδομένων
   useEffect(() => {
     if (!isAuthReady || authLoading || !user || !currentBuilding?.id) return;
 
@@ -75,7 +93,6 @@ export default function DashboardPage() {
     loadAll();
   }, [authLoading, isAuthReady, user, currentBuilding]);
 
-  // ✅ Φόρτωση εκκρεμοτήτων μόνο για staff
   useEffect(() => {
     if (!isAuthReady || authLoading || !user?.is_staff) return;
 
@@ -92,7 +109,6 @@ export default function DashboardPage() {
     loadObligations();
   }, [authLoading, isAuthReady, user]);
 
-  // ✅ Φιλτράρισμα ενεργών ψηφοφοριών και αιτημάτων
   const activeVotes = votes.filter(
     (v) => !v.end_date || new Date(v.end_date) > new Date()
   );
@@ -109,7 +125,6 @@ export default function DashboardPage() {
     { key: 'supported', label: 'Με Υποστήριξη', icon: '🤝', bgColor: 'bg-yellow-500', link: '/requests?supported=1' },
   ];
 
-  // ✅ Καθολική ένδειξη φόρτωσης
   if (authLoading || !isAuthReady || !user || !currentBuilding || loadingData) {
     return <p className="text-center mt-10">Φόρτωση...</p>;
   }

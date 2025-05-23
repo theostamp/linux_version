@@ -6,6 +6,7 @@ import { useVotes } from '@/hooks/useVotes';
 import VoteStatus from '@/components/VoteStatus';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useAuth } from '@/components/contexts/AuthContext';
+import type { Vote } from '@/lib/api';
 
 function isActive(start: string, end: string) {
   const today = new Date().toISOString().split('T')[0];
@@ -14,12 +15,14 @@ function isActive(start: string, end: string) {
 
 export default function VotesPage() {
   const { currentBuilding, isLoading: buildingLoading } = useBuilding();
-  const { isAuthReady } = useAuth(); 
+  const { isAuthReady } = useAuth();
 
-  if (!isAuthReady || buildingLoading || !currentBuilding) {
+  // 🛑 Αν δεν είναι ακόμα διαθέσιμο το currentBuilding, βγες έξω νωρίς
+  if (!isAuthReady || buildingLoading || !currentBuilding?.id) {
     return <p className="p-6">Φόρτωση ψηφοφοριών...</p>;
   }
 
+  // ✅ Καλούμε useVotes *μετά* το check για currentBuilding
   const {
     data: votes = [],
     isLoading,
@@ -42,7 +45,7 @@ export default function VotesPage() {
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">🗳️ Ψηφοφορίες</h1>
 
-      {votes.map((vote: any) => {
+      {votes.map((vote: Vote) => {
         const active = isActive(vote.start_date, vote.end_date);
         return (
           <div

@@ -3,14 +3,12 @@
 from rest_framework import viewsets, permissions, status, exceptions  # type: ignore
 from rest_framework.decorators import action  # type: ignore
 from rest_framework.response import Response  # type: ignore
-from users.permissions import IsBuildingAdmin
-
 from .models import Vote, VoteSubmission
 from .serializers import VoteSerializer, VoteSubmissionSerializer
 from buildings.models import Building
-from core.permissions import IsManagerOrSuperuser
+from core.permissions import IsManagerOrSuperuser, IsBuildingAdmin
 from core.utils import filter_queryset_by_user_and_building
-from .permissions import IsBuildingAdmin  # ή από όπου το έχεις ορίσει
+
 
 
 class VoteViewSet(viewsets.ModelViewSet):

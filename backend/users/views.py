@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_exempt      #  <-- πρόσθεσ�
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
+from django.contrib.auth import get_user_model
 from .models import CustomUser
 from .serializers import UserSerializer
 
@@ -35,8 +35,14 @@ def login_view(request):
     POST /api/users/login/
     Δέχεται JSON { email, password }, επιστρέφει JWT tokens + user data.
     """
+    # Debug πριν την αυθεντικοποίηση
+    user_model = get_user_model()
+    print(">>> Όλοι οι χρήστες:", list(user_model.objects.values('id', 'email')))
+
     email = request.data.get('email')
     password = request.data.get('password')
+
+    print(f">>> Ελήφθησαν στοιχεία login: email={email}, password={'****' if password else None}")
 
     if not email or not password:
         return Response(
@@ -46,6 +52,8 @@ def login_view(request):
 
     # Χρήση του custom EmailBackend για authentication με email
     user = authenticate(request, email=email, password=password)
+    print(">>> Χρήστης από authenticate():", user)
+
     if user is None:
         return Response(
             {'error': 'Μη έγκυρα στοιχεία σύνδεσης'},
@@ -71,6 +79,7 @@ def login_view(request):
     }, status=status.HTTP_200_OK)
 
 
+
 @api_view(['GET'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
@@ -80,14 +89,17 @@ def me_view(request):
     Επιστρέφει τα στοιχεία του authenticated χρήστη.
     """
     user = request.user
+    role = getattr(getattr(user, "profile", None), "role", None)
+
     return Response({
         'id': user.id,
         'email': user.email,
         'first_name': user.first_name,
         'last_name': user.last_name,
         'is_staff': user.is_staff,
+        'is_superuser': user.is_superuser,
+        'role': role,
     }, status=status.HTTP_200_OK)
-
 
 @api_view(['POST'])
 @authentication_classes([JWTAuthentication])

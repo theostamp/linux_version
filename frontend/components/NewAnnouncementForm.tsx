@@ -9,6 +9,17 @@ type Props = {
   readonly buildingId: number;
 };
 
+export interface NewAnnouncementFormProps {
+  onSubmit: (data: {
+    title: string;
+    description: string;
+    start_date: string;
+    end_date: string;
+    file?: File | null;
+    is_active?: boolean;
+  }) => void;
+}
+
 export default function NewAnnouncementForm({ buildingId }: Props) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
