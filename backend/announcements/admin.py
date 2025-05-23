@@ -1,6 +1,6 @@
 # backend/announcements/admin.py
 
-from django.contrib import admin
+from django.contrib import admin # type: ignore
 from .models import Announcement
 
 @admin.register(Announcement)

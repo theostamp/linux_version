@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers # type: ignore
 from buildings.models import Building
 from .models import Announcement
 

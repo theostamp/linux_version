@@ -192,7 +192,7 @@ echo "# linux_version" >> README.md
 git init
 
 git add .
-git commit -m "ANNOUNCEMENTS AND VOTING συνεχεια επσικευης"  
+git commit -m "ANNOUNCEMENTS AND VOTING συνεχεια επσικευης 1"  
 git branch -M main
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

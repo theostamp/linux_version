@@ -1,6 +1,6 @@
 # backend/core/urls.py
 
-from django.urls import path
+from django.urls import path # type: ignore
 from .views import get_csrf_token
 
 urlpatterns = [
