@@ -2,7 +2,7 @@ import os
 import sys
 import subprocess
 import django  # type: ignore
-from django.utils import timezone # type: ignore
+from django.utils import timezone  # type: ignore
 
 # --------------------------------------------------
 # Django bootstrap
@@ -18,9 +18,9 @@ django.setup()
 # --------------------------------------------------
 from django_tenants.utils import schema_context  # type: ignore
 from tenants.models import Client, Domain
-from django.contrib.auth import get_user_model # type: ignore
-from django.contrib.auth.models import Group, Permission # type: ignore
-from django.contrib.contenttypes.models import ContentType # type: ignore
+from django.contrib.auth import get_user_model  # type: ignore
+from django.contrib.auth.models import Group, Permission  # type: ignore
+from django.contrib.contenttypes.models import ContentType  # type: ignore
 from buildings.models import Building
 from announcements.models import Announcement
 from votes.models import Vote
@@ -139,6 +139,7 @@ def seed_demo_data(manager1, manager2, tenant1, tenant2):
                 "start_date": timezone.now().date(),
                 "end_date": timezone.now().date() + timezone.timedelta(days=2),
                 "building": building,
+                "author": b["manager"],  # ✅ Προστέθηκε το required πεδίο
             },
         )
 

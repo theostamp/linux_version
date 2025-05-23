@@ -1,13 +1,13 @@
 from rest_framework import serializers
 from buildings.models import Building
 from .models import Announcement
-is_currently_active = serializers.SerializerMethodField()
 
 class AnnouncementSerializer(serializers.ModelSerializer):
     building = serializers.PrimaryKeyRelatedField(
         queryset=Building.objects.all()
     )
     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    is_currently_active = serializers.SerializerMethodField()
 
     class Meta:
         model = Announcement
@@ -22,6 +22,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             'start_date',
             'end_date',
             'is_active',
+            'is_currently_active',
         ]
         read_only_fields = ['id', 'created_at', 'author']
 
@@ -33,9 +34,12 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         elif not user.is_superuser:
             raise serializers.ValidationError("Μόνο διαχειριστές ή superusers μπορούν να αντιστοιχίσουν ανακοίνωση σε αυτό το κτίριο.")
         return value
-    
-       
 
     def get_is_currently_active(self, obj):
         return obj.is_currently_active
 
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['author'] = request.user
+        return super().create(validated_data)

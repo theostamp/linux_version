@@ -1,3 +1,4 @@
+// frontend/components/LoginForm.tsx
 'use client';
 
 import { useState } from 'react';
@@ -9,13 +10,11 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/contexts/AuthContext';
 
-export default function LoginForm() {
+export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redirectTo?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const finalRedirect = searchParams.get('redirectTo') ?? redirectTo;
   const { login } = useAuth();
-
-  const redirectTo = searchParams.get('redirectTo') ?? '/dashboard';
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +25,7 @@ export default function LoginForm() {
     try {
       await login(email, password);
       toast.success('Επιτυχής σύνδεση!');
-      router.push(redirectTo);
+      router.push(finalRedirect);
     } catch (err: any) {
       console.error('Login error:', err);
       toast.error(err.message ?? 'Κάτι πήγε στραβά!');
@@ -70,8 +69,3 @@ export default function LoginForm() {
     </Card>
   );
 }
-// Compare this snippet from frontend/components/ui/button.tsx:
-// import { forwardRef } from 'react';
-// import { cn } from '@/lib/utils';
-// import { Loader2 } from 'lucide-react';
-//
