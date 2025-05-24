@@ -8,6 +8,8 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import { createVote } from '@/lib/api';
 import NewVoteForm from '@/components/NewVoteForm';
 import { useSuperUserGuard } from '@/hooks/useSuperUserGuard';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function NewVotePage() {
   const { currentBuilding } = useBuilding();
@@ -26,7 +28,6 @@ export default function NewVotePage() {
     return <p className="p-4">Δεν έχει επιλεγεί κτήριο.</p>;
   }
 
-  // Τώρα που περάσαμε τα guards, το currentBuilding είναι σίγουρα non-null
   const buildingId = currentBuilding.id;
 
   async function handleSubmit(data: any) {
@@ -40,8 +41,14 @@ export default function NewVotePage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">🗳️ Νέα Ψηφοφορία</h1>
+    <div className="p-6 max-w-2xl mx-auto space-y-6">
+      <Link href="/votes">
+        <Button variant="secondary">⬅ Επιστροφή στις Ψηφοφορίες</Button>
+      </Link>
+
+      {/* Προαιρετικά μπορείς να βάλεις τίτλο εδώ */}
+      {/* <h1 className="text-2xl font-bold">🗳️ Νέα Ψηφοφορία</h1> */}
+
       <NewVoteForm onSubmit={handleSubmit} buildingId={buildingId} />
     </div>
   );
