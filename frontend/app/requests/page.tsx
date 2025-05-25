@@ -1,13 +1,15 @@
-// app/requests/new/page.tsx
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorMessage from '@/components/ErrorMessage';
-import { createUserRequest, fetchBuildings, Building } from '@/lib/api';
+import { createUserRequest } from '@/lib/api';
+import { useBuilding } from '@/components/contexts/BuildingContext';
+import { useRequests } from '@/hooks/useRequests';
+import RequestCard from '@/components/RequestCard';
+import RequestSkeleton from '@/components/RequestSkeleton';
+import SupportButton from '@/components/SupportButton';
 
-// Προκαθορισμένες επιλογές για τον τύπο αίτησης
 const REQUEST_TYPES = [
   { value: 'damage', label: 'Ζημιά' },
   { value: 'maintenance', label: 'Συντήρηση' },
@@ -16,49 +18,25 @@ const REQUEST_TYPES = [
 
 export default function NewRequestPage() {
   const router = useRouter();
+  const { currentBuilding } = useBuilding();
+  const { data: requests, isLoading: loadingRequests } = useRequests(currentBuilding?.id);
 
-  // State για τα πεδία της φόρμας
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
   const [type, setType] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
-
-  // Options για dropdown κτιρίων
-  const [buildingOptions, setBuildingOptions] = useState<Building[]>([]);
-
-  // State για σφάλματα και υποβολή
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Φόρτωση λίστας κτιρίων από το API
-  useEffect(() => {
-    async function loadBuildings() {
-      try {
-        const data = await fetchBuildings();
-        // Διασφαλίζουμε ότι το state είναι πίνακας
-        let list: Building[] = [];
-        if (Array.isArray(data)) {
-          list = data;
-        } else if ((data as any)?.results instanceof Array) {
-          list = (data as any).results;
-        }
-        setBuildingOptions(list);
-      } catch (err) {
-        console.error('Load buildings failed:', err);
-        setBuildingOptions([]);
-      }
-    }
-    loadBuildings();
-  }, []);
+  if (!currentBuilding) {
+    return <p>Παρακαλώ επιλέξτε κτίριο από το Sidebar για να συνεχίσετε.</p>;
+  }
 
-  // Handler για υποβολή της φόρμας
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Client-side validation
-    if (!title.trim() || !description.trim() || !selectedBuildingId) {
+    if (!title.trim() || !description.trim()) {
       setError('Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία.');
       return;
     }
@@ -73,9 +51,9 @@ export default function NewRequestPage() {
       await createUserRequest({
         title: title.trim(),
         description: description.trim(),
-        building: Number(selectedBuildingId), // ID κτιρίου
-        type: type || undefined,              // προαιρετικό
-        is_urgent: isUrgent || undefined,     // προαιρετικό
+        building: currentBuilding.id,
+        type: type || undefined,
+        is_urgent: isUrgent || undefined,
       });
       router.push('/requests');
     } catch (err: any) {
@@ -90,11 +68,14 @@ export default function NewRequestPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-2xl shadow">
+    <div className="max-w-xl mx-auto mt-20 p-6 bg-white rounded-2xl shadow">
       <h1 className="text-2xl font-bold mb-4 text-center">Νέο Αίτημα</h1>
+      <p className="text-sm text-muted-foreground mb-4 text-center">
+        Κτίριο: <strong>{currentBuilding.name}</strong>
+      </p>
+
       {error && <ErrorMessage message={error} />}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Τίτλος */}
         <div>
           <label htmlFor="title" className="block text-sm font-medium">
             Τίτλος *
@@ -109,7 +90,6 @@ export default function NewRequestPage() {
           />
         </div>
 
-        {/* Περιγραφή */}
         <div>
           <label htmlFor="description" className="block text-sm font-medium">
             Περιγραφή *
@@ -123,28 +103,6 @@ export default function NewRequestPage() {
           />
         </div>
 
-        {/* Dropdown Κτιρίου */}
-        <div>
-          <label htmlFor="building" className="block text-sm font-medium">
-            Κτίριο *
-          </label>
-          <select
-            id="building"
-            value={selectedBuildingId}
-            onChange={(e) => setSelectedBuildingId(e.target.value)}
-            required
-            className="mt-1 w-full border p-2 rounded"
-          >
-            <option value="">-- Επιλέξτε κτίριο --</option>
-            {buildingOptions.length > 0 && buildingOptions.map((b) => (
-              <option key={b.id} value={String(b.id)}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Τύπος Αιτήματος */}
         <div>
           <label htmlFor="type" className="block text-sm font-medium">
             Τύπος (προαιρετικό)
@@ -164,7 +122,6 @@ export default function NewRequestPage() {
           </select>
         </div>
 
-        {/* Checkbox επείγοντος */}
         <div className="flex items-center">
           <input
             id="urgent"
@@ -178,7 +135,6 @@ export default function NewRequestPage() {
           </label>
         </div>
 
-        {/* Υποβολή */}
         <button
           type="submit"
           disabled={submitting}
@@ -187,6 +143,27 @@ export default function NewRequestPage() {
           {submitting ? 'Υποβολή…' : 'Δημιουργία Αιτήματος'}
         </button>
       </form>
+
+      <details className="mt-10">
+        <summary className="cursor-pointer text-blue-600 underline">
+          Προβολή υπαρχόντων αιτημάτων για το κτίριο
+        </summary>
+        <div className="mt-4">
+          {loadingRequests && <RequestSkeleton />}
+          {!loadingRequests && requests?.length === 0 && (
+            <p className="text-sm text-muted-foreground">Δεν υπάρχουν άλλα αιτήματα.</p>
+          )}
+          {!loadingRequests &&
+            requests?.map((r) => (
+              <div key={r.id} className="mb-4 border rounded p-3 shadow-sm">
+                <RequestCard request={r} />
+                <div className="mt-2 text-right">
+                  <SupportButton requestId={r.id} />
+                </div>
+              </div>
+            ))}
+        </div>
+      </details>
     </div>
   );
 }

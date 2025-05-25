@@ -1,16 +1,16 @@
 # backend/user_requests/admin.py
 
 import csv
-from django.contrib import admin
-from django.db.models import Count
-from django.http import HttpResponse
+from django.contrib import admin # type: ignore
+from django.db.models import Count # type: ignore
+from django.http import HttpResponse # type: ignore
 
 from .models import UserRequest, UrgentRequestLog
 
 
 @admin.register(UserRequest)
 class UserRequestAdmin(admin.ModelAdmin):
-    list_display = ('title', 'status', 'created_by', 'created_at')
+    list_display = ('title', 'status', 'created_by', 'created_at', 'supporter_count_display')
     list_filter = ('status', 'created_at', 'created_by')
     search_fields = ('title', 'description', 'created_by__username')
     ordering = ('-created_at',)
@@ -27,9 +27,12 @@ class UserRequestAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        # Annotate supporter_count ώστε να μπορεί να γίνει ordering
-        qs = qs.annotate(supporter_count=Count('supporters'))
-        return qs
+        return qs.annotate(supporter_count=Count('supporters'))
+
+    def supporter_count_display(self, obj):
+        return obj.supporter_count
+    supporter_count_display.short_description = 'Υποστηρικτές'
+    supporter_count_display.admin_order_field = 'supporter_count'
 
 
 class YearMonthFilter(admin.SimpleListFilter):

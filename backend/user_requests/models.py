@@ -1,7 +1,7 @@
 
 # backend/user_requests/models.py
-from django.db import models
-from django.contrib.auth import get_user_model
+from django.db import models # type: ignore
+from django.contrib.auth import get_user_model # type: ignore
 from buildings.models import Building
 
 User = get_user_model()
@@ -51,13 +51,15 @@ class UserRequest(models.Model):
     def __str__(self):
         return f"{self.title} ({self.get_status_display()})"
 
+
     @property
-    def supporter_count(self):
+    def supporter_count_cached(self):
         return self.supporters.count()
 
     @property
     def is_urgent(self):
-        return self.supporter_count >= 10
+        return self.supporter_count_cached >= 10
+
 
 
 class UrgentRequestLog(models.Model):
