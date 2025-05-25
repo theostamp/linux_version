@@ -1,9 +1,7 @@
-# backend/core/urls.py
-
 from django.urls import path # type: ignore
-from .views import get_csrf_token
+from .views import get_csrf_token, api_root
 
 urlpatterns = [
-    # GET /api/csrf/  →  επιστρέφει CSRF cookie
-    path('csrf/', get_csrf_token, name='get_csrf_token'),
+    path("", api_root, name="api_root"),
+    path("csrf/", get_csrf_token, name="get_csrf_token"),
 ]

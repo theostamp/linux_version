@@ -3,6 +3,8 @@ from django.db import models  # type: ignore
 from django.conf import settings  # type: ignore
 from django.utils.translation import gettext_lazy as _  # type: ignore
 
+from users.models import CustomUser
+
 # Σταθερές επιλογές για αριθμό διαμερισμάτων
 APARTMENT_CHOICES = [(i, str(i)) for i in range(1, 101)]  # 1 έως 100
 
@@ -38,3 +40,15 @@ class Building(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.address}"
+    
+    
+class BuildingMembership(models.Model):
+    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name="memberships")
+    resident = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="memberships")
+    apartment = models.CharField(max_length=10, blank=True)
+
+    class Meta:
+        unique_together = ('building', 'resident')
+
+    def __str__(self):
+        return f"{self.resident.email} → {self.building.name}"

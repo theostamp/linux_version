@@ -12,13 +12,16 @@ export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? 'http://localhost:8000/api'; // Default για τοπική ανάπτυξη
 
 export const api = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true, // Σημαντικό για cookies (π.χ., CSRF) αν τα χρησιμοποιείτε έτσι
+  baseURL: typeof window !== 'undefined'
+    ? `http://${window.location.hostname}:8000/api`
+    : 'http://localhost:8000/api',
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json', // Καλό είναι να υπάρχει και το Accept header
+    'Accept': 'application/json',
   },
 });
+
 
 // Flag για να αποφύγουμε πολλαπλές προσπάθειες ανανέωσης ταυτόχρονα
 let isRefreshing = false;
@@ -643,4 +646,13 @@ function handleLogout(logMessage: string) {
     // Optionally, redirect to login page:
     // window.location.href = '/login';
   }
+}
+
+// Νέα συνάρτηση για την ανάκτηση των κατοίκων ενός κτιρίου
+export async function fetchResidents(buildingId: number) {
+  const response = await api.get(`/buildings/memberships/?building=${buildingId}`);
+  // Φιλτράρει μόνο όσους έχουν role === 'resident'
+  return Array.isArray(response.data)
+    ? response.data.filter((m) => m.role === 'resident')
+    : [];
 }

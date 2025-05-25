@@ -2,6 +2,22 @@
 
 from rest_framework import permissions # type: ignore
 
+class IsBuildingAdmin(permissions.BasePermission):
+    """
+    Επιτρέπει πρόσβαση σε:
+    - Superusers
+    - Staff users
+    - Χρήστες με role='admin'
+    """
+    def has_permission(self, request, view):
+        user = request.user
+        return (
+            user and user.is_authenticated and (
+                user.is_superuser or
+                user.is_staff or
+                getattr(user, 'role', '') == 'admin'
+            )
+        )
 
 class IsSuperuser(permissions.BasePermission):
     """Allows access only to superusers."""
@@ -18,29 +34,12 @@ class IsResidentUser(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated and not request.user.is_staff
 
-class IsBuildingAdmin(permissions.BasePermission):
-    """
-    Επιτρέπει πρόσβαση σε:
-    - Superusers
-    - Staff users
-    - Χρήστες με role='admin'
-    """
-    def has_permission(self, request, view):
-        user = request.user
-        return (
-            user and user.is_authenticated and (
-                user.is_superuser or
-                user.is_staff or
-                getattr(user.profile, 'role', '') == 'admin'
-            )
-        )
-
 class IsManagerOrSuperuser(permissions.BasePermission):
     """
     Επιτρέπει την πρόσβαση σε:
     - Superusers
     - Staff users
-    - Χρήστες με profile.role == 'manager'
+    - Χρήστες με role == 'manager'
     """
     def has_permission(self, request, view):
         user = request.user
@@ -48,33 +47,28 @@ class IsManagerOrSuperuser(permissions.BasePermission):
             user and user.is_authenticated and (
                 user.is_superuser or
                 user.is_staff or
-                getattr(user.profile, 'role', '') == 'manager'
+                getattr(user, 'role', '') == 'manager'
             )
         )
 
     def has_object_permission(self, request, view, obj):
-        if request.user.is_superuser:
+        user = request.user
+
+        if not user or not user.is_authenticated:
+            return False
+
+        if user.is_superuser:
             return True
 
-        if request.user.is_staff:
-            if hasattr(obj, 'manager') and obj.manager == request.user:
+        if user.is_staff or getattr(user, 'role', '') == 'manager':
+            # Αν το αντικείμενο έχει manager που είναι ο ίδιος ο χρήστης
+            if hasattr(obj, 'manager') and obj.manager == user:
                 return True
-            if hasattr(obj, 'building') and hasattr(obj.building, 'manager') and obj.building.manager == request.user:
-                return True
-
-        # Προσθέτουμε και για χρήστες με role=manager (αν δεν είναι is_staff)
-        if getattr(request.user.profile, 'role', '') == 'manager':
-            if hasattr(obj, 'manager') and obj.manager == request.user:
-                return True
-            if hasattr(obj, 'building') and hasattr(obj.building, 'manager') and obj.building.manager == request.user:
+            # Αν το αντικείμενο έχει building με manager τον χρήστη
+            if hasattr(obj, 'building') and hasattr(obj.building, 'manager') and obj.building.manager == user:
                 return True
 
         return False
-
-
-
-
-
 
 
 

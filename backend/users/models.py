@@ -1,10 +1,9 @@
-# users/models.py
+# backend/users/models.py
 
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager # type: ignore
-from django.db import models # type: ignore
-from django.conf import settings
-from buildings.models import Building
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager  # type: ignore
+from django.db import models  # type: ignore
 
+# Προσοχή: ορίζεται ΠΡΙΝ χρησιμοποιηθεί
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -25,8 +24,6 @@ class CustomUserManager(BaseUserManager):
             raise ValueError('Ο Superuser πρέπει να έχει is_superuser=True.')
 
         return self.create_user(email, password, **extra_fields)
-    
-
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
@@ -35,6 +32,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
+
+    ROLE_CHOICES = [
+        ('manager', 'Manager'),
+        ('resident', 'Resident'),
+        ('admin', 'Admin'),
+    ]
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, blank=True, null=True)
 
     objects = CustomUserManager()
 

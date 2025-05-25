@@ -1,81 +1,125 @@
 # backend/buildings/views.py
-from rest_framework import viewsets, permissions # type: ignore
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication # type: ignore
-# from rest_framework.permissions import IsAuthenticated # type: ignore # Το IsAuthenticated είναι ήδη στο permission_classes
-from django.views.decorators.csrf import ensure_csrf_cookie # type: ignore
-from django.http import JsonResponse # type: ignore
 
+from rest_framework import viewsets, permissions, status  # type: ignore
+from rest_framework.response import Response  # type: ignore
+from rest_framework.decorators import action  # type: ignore
+from django.views.decorators.csrf import ensure_csrf_cookie  # type: ignore
+from django.http import JsonResponse  # type: ignore
+from django.utils import timezone # type: ignore
+from .models import Building, BuildingMembership
+from .serializers import BuildingSerializer, BuildingMembershipSerializer
+from users.models import CustomUser
+from rest_framework import viewsets # type: ignore
 from .models import Building
 from .serializers import BuildingSerializer
-from core.permissions import IsManagerOrSuperuser # Βεβαιωθείτε ότι αυτή η κλάση υπάρχει και είναι σωστή
+from rest_framework.permissions import IsAuthenticated # type: ignore
+
+
 
 @ensure_csrf_cookie
 def get_csrf_token(request):
-    """Δίνει CSRF cookie χωρίς να χρειάζεται login"""
+    """Δίνει CSRF cookie χωρίς να απαιτείται login"""
     return JsonResponse({"message": "CSRF cookie set"})
 
-class BuildingViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint που επιτρέπει την προβολή και επεξεργασία κτιρίων.
-    • Superuser ⇒ βλέπει/γράφει τα πάντα  
-    • Office-manager (staff user) ⇒ βλέπει/γράφει μόνο τα κτίρια που του έχουν ανατεθεί.
-    • Residents (non-staff users) ⇒ δεν έχουν πρόσβαση σε αυτό το endpoint για τη λίστα κτιρίων.
-                                      Η πρόσβασή τους σε πληροφορίες κτιρίου γίνεται μέσω άλλων αντικειμένων (π.χ. UserRequest).
-    """
-    # queryset = Building.objects.all().select_related("manager") # Αρχικό queryset
-    serializer_class = BuildingSerializer
 
-    # DRF setup για αυθεντικοποίηση και δικαιώματα
-    # authentication_classes = [SessionAuthentication, BasicAuthentication] # Συνήθως ορίζεται global στο settings.py
-                                                                        # ή αν θέλετε συγκεκριμένη αυθεντικοποίηση για αυτό το viewset.
-                                                                        # Το JWTAuthentication θα πρέπει να είναι το κύριο αν χρησιμοποιείτε tokens.
-    permission_classes = [permissions.IsAuthenticated, IsManagerOrSuperuser] # Πρώτα ελέγχει αν είναι αυθεντικοποιημένος, μετά τα custom δικαιώματα.
+class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
+    queryset = Building.objects.all()
+    serializer_class = BuildingSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Φιλτράρει το queryset ανάλογα με τον χρήστη.
-        Οι Superusers βλέπουν όλα τα κτίρια.
-        Οι Managers (staff users) βλέπουν μόνο τα κτίρια που τους έχουν ανατεθεί.
-        """
         user = self.request.user
-        base_queryset = Building.objects.all().select_related("manager").order_by('name') # Ξεκινάμε πάντα από ένα βασικό queryset
 
-        if not user.is_authenticated: # Αν και το IsAuthenticated permission θα το μπλοκάρει
-            return base_queryset.none()
+        # Superusers & staff -> όλα τα κτίρια
+        if user.is_superuser or user.is_staff:
+            return Building.objects.all()
 
-        if user.is_superuser:
-            return base_queryset
-        elif user.is_staff: # Manager Office
-            return base_queryset.filter(manager=user)
-        else: # Residents ή άλλοι non-staff/non-superuser χρήστες
-            # Για τη γενική λίστα κτιρίων, οι κάτοικοι δεν βλέπουν τίποτα από αυτό το ViewSet.
-            return base_queryset.none()
+        # Managers -> μόνο τα κτίρια που διαχειρίζονται
+        if hasattr(user, "is_manager") and user.is_manager:
+            return Building.objects.filter(manager=user)
+
+        # Residents -> μόνο τα κτίρια στα οποία ανήκουν
+        if BuildingMembership.objects.filter(resident=user).exists():
+            return Building.objects.filter(buildingmembership__resident=user)
+
+        # Αν δεν υπάρχει ρόλος ή δεν υπάρχει αντιστοίχιση
+        return Building.objects.none()
+
 
     def perform_create(self, serializer):
         """
         Κατά τη δημιουργία ενός κτιρίου:
-        - Αν ο χρήστης δεν είναι superuser (δηλαδή είναι manager/staff),
-          το πεδίο 'manager' του νέου κτιρίου ορίζεται αυτόματα στον τρέχοντα χρήστη.
-        - Αν ο χρήστης είναι superuser, μπορεί να ορίσει οποιονδήποτε manager (ή κανέναν) μέσω του payload.
-          Αν δεν οριστεί manager από τον superuser στο payload, το πεδίο manager θα πάρει την τιμή που
-          ορίζεται στο μοντέλο (π.χ., null=True, blank=True ή κάποιο default).
+        - Αν είναι staff αλλά όχι superuser, το πεδίο 'manager' γίνεται ο τρέχων χρήστης.
+        - Αν είναι superuser, μπορεί να καθορίσει οποιονδήποτε manager μέσω του payload.
         """
         if not self.request.user.is_superuser and self.request.user.is_staff:
-            # Αν ο χρήστης είναι staff (manager) αλλά όχι superuser,
-            # τότε αυτός γίνεται αυτόματα ο manager του κτιρίου που δημιουργεί.
-            # Σημείωση: Αυτό προϋποθέτει ότι οι managers μπορούν να δημιουργούν κτίρια.
-            # Αν μόνο οι superusers μπορούν να δημιουργούν, τότε αυτή η συνθήκη πρέπει να αλλάξει
-            # ή η δημιουργία να μπλοκάρεται από την IsManagerOrSuperuser.has_permission.
-            # Η IsManagerOrSuperuser.has_permission (όπως την είχαμε ορίσει) επιτρέπει σε staff.
             serializer.save(manager=self.request.user)
         else:
-            # Superuser: ο manager ορίζεται από τα δεδομένα που στέλνονται ή παραμένει κενός
-            # αν το μοντέλο το επιτρέπει και δεν δόθηκε τιμή.
-            # Αν ο superuser δεν στείλει manager, και το πεδίο manager στο μοντέλο Building
-            # έχει null=True, blank=True, τότε θα δημιουργηθεί χωρίς manager.
-            # Αν το πεδίο manager είναι υποχρεωτικό, ο serializer θα πετάξει σφάλμα αν δεν δοθεί.
             serializer.save()
 
-    # Η IsManagerOrSuperuser.has_object_permission θα χειριστεί τα δικαιώματα για retrieve, update, delete:
-    # - Superuser: μπορεί να κάνει τα πάντα.
-    # - Manager: μπορεί να δει/επεξεργαστεί/διαγράψει ΜΟΝΟ τα κτίρια που έχει manager=request.user.
+    @action(detail=False, methods=["post"], url_path="assign-resident")
+    def assign_resident(self, request):
+        """
+        Επιτρέπει σε staff/superusers να αντιστοιχίσουν έναν κάτοικο σε κτίριο.
+        Payload: { user_email: "", building: id, role: "resident" }
+        """
+        user_email = request.data.get("user_email")
+        building_id = request.data.get("building")
+        role = request.data.get("role", "resident")
+
+        if not request.user.is_authenticated or not (request.user.is_staff or request.user.is_superuser):
+            return Response({"detail": "Απαγορεύεται."}, status=status.HTTP_403_FORBIDDEN)
+
+        if not user_email or not building_id:
+            return Response({"detail": "Απαιτείται email και ID κτιρίου."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = CustomUser.objects.get(email=user_email)
+        except CustomUser.DoesNotExist:
+            return Response({"detail": "Ο χρήστης δεν βρέθηκε."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            building = Building.objects.get(id=building_id)
+        except Building.DoesNotExist:
+            return Response({"detail": "Το κτίριο δεν βρέθηκε."}, status=status.HTTP_404_NOT_FOUND)
+
+        membership, created = BuildingMembership.objects.update_or_create(
+            resident=user,
+            building=building,
+            defaults={"role": role}
+        )
+        if not created:
+            return Response({"detail": "Η αντιστοίχιση υπάρχει ήδη."}, status=status.HTTP_200_OK)   
+        # Αν η αντιστοίχιση δημιουργήθηκε, ενημερώνουμε το πεδίο 'created_at'
+        membership.created_at = membership.created_at or timezone.now()
+        membership.save()
+        # Επιστρέφουμε την απάντηση
+       
+
+
+        return Response({
+            "message": "Η αντιστοίχιση ολοκληρώθηκε επιτυχώς.",
+            "membership_id": membership.id,
+            "created": created
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="memberships")
+    def list_memberships(self, request):
+        """
+        Λίστα μελών κτιρίου για managers.
+        GET payload: { building_id: id }
+        """
+        user = request.user
+        building_id = request.query_params.get("building_id")
+
+        if not (user.is_staff or user.is_superuser):
+            # Manager -> μόνο τα δικά του κτίρια
+            queryset = BuildingMembership.objects.filter(building__manager=user)
+        else:
+            queryset = BuildingMembership.objects.all()
+
+        if building_id:
+            queryset = queryset.filter(building_id=building_id)
+
+        serializer = BuildingMembershipSerializer(queryset, many=True)
+        return Response(serializer.data)

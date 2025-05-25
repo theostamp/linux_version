@@ -1,6 +1,23 @@
 # backend/buildings/serializers.py
-from rest_framework import serializers
+from rest_framework import serializers # type: ignore
 from .models import Building
+from users.models import CustomUser
+from .models import BuildingMembership
+
+class BuildingMembershipSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BuildingMembership
+        fields = ["id", "building", "resident", "role", "created_at"]
+        read_only_fields = ["id", "created_at"]
+
+    def create(self, validated_data):
+        email = validated_data.pop('user_email')
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError({'user_email': 'Δεν βρέθηκε χρήστης με αυτό το email.'})
+
+        return BuildingMembership.objects.create(user=user, **validated_data)
 
 class BuildingSerializer(serializers.ModelSerializer):
     # Ορίζουμε κρυφό πεδίο manager ως τον τρέχον χρήστη

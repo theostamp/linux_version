@@ -1,7 +1,7 @@
 # /home/theo/projects/linux_version/backend/scripts/create_tenant_and_migrate.py
 
 import os
-import django
+import django # type: ignore
 import sys
 import subprocess
 

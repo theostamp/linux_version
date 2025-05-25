@@ -1,4 +1,3 @@
-// frontend/app/requests/[id]/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import ErrorMessage from '@/components/ErrorMessage';
 
 // 👇 Αυτό θα αντικατασταθεί από real auth
-const currentUser = { username: 'demo_user', is_staff: false };
+const currentUser = { username: 'demo_user', is_staff: true };
 
 interface UserRequest {
   id: number;
@@ -40,6 +39,7 @@ export default function RequestDetailPage() {
   const [loading, setLoading] = useState(true);
   const [supporting, setSupporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [changingStatus, setChangingStatus] = useState(false);
 
   const isOwner = request?.created_by_username === currentUser.username || currentUser.is_staff;
 
@@ -92,6 +92,28 @@ export default function RequestDetailPage() {
       setError((err as Error).message);
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function handleStatusChange(newStatus: string) {
+    if (!request) return;
+    setChangingStatus(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/user-requests/${request.id}/change_status/`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+      if (!res.ok) throw new Error('Αποτυχία αλλαγής κατάστασης');
+      await fetchRequest();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setChangingStatus(false);
     }
   }
 
@@ -150,6 +172,24 @@ export default function RequestDetailPage() {
           </>
         )}
       </div>
+
+      {currentUser.is_staff && (
+        <div className="mt-4">
+          <label htmlFor="status-select" className="block text-sm font-medium mb-1">Αλλαγή Κατάστασης:</label>
+          <select
+            id="status-select"
+            value={request.status}
+            onChange={(e) => handleStatusChange(e.target.value)}
+            className="border p-2 rounded"
+            disabled={changingStatus}
+          >
+            <option value="pending">Σε Εκκρεμότητα</option>
+            <option value="in_progress">Σε Εξέλιξη</option>
+            <option value="completed">Ολοκληρώθηκε</option>
+            <option value="rejected">Απορρίφθηκε</option>
+          </select>
+        </div>
+      )}
 
       {request.supporter_usernames.length > 0 && (
         <div className="mt-4 text-sm text-gray-700">

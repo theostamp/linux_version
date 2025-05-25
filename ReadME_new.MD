@@ -15,8 +15,13 @@ docker compose exec backend python manage.py migrate_schemas --tenant --schema=p
 docker compose exec backend python scripts/initial_user_setup.py
 
 
+Για περισσότερους tenants: Μπορείς να δημιουργήσεις όσους Office Managers θέλεις, π.χ.:
 
-στο local 
+docker compose exec backend  python create_tenant.py city1 "Αθήνα Διαχείριση" city1.localhost city1@example.com
+
+
+
+στο local
 sudo rm -rf .next
 sudo rm -rf node_modules
 sudo rm package-lock.json

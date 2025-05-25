@@ -1,16 +1,16 @@
 
 # backend/user_requests/views.py
-from rest_framework import viewsets, permissions, exceptions
-from rest_framework.response import Response
+from rest_framework import viewsets, permissions, exceptions # type: ignore
+from rest_framework.response import Response # type: ignore
 from core.permissions import IsManagerOrSuperuser
 from .models import UserRequest
 from .serializers import UserRequestSerializer
 from buildings.models import Building
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework import status
-from django.db.models import Count
-from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.decorators import action # type: ignore
+from rest_framework.response import Response # type: ignore
+from rest_framework import status # type: ignore
+from django.db.models import Count # type: ignore
+from django.core.exceptions import ObjectDoesNotExist # type: ignore
 
 class UserRequestViewSet(viewsets.ModelViewSet):
     queryset = UserRequest.objects.all().order_by('-created_at')
@@ -85,3 +85,16 @@ class UserRequestViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=["post"], permission_classes=[IsManagerOrSuperuser])
+    def change_status(self, request, pk=None):
+        user_request = self.get_object()
+        new_status = request.data.get("status")
+
+        if new_status not in dict(UserRequest.STATUS_CHOICES):
+            return Response({"detail": "Μη αποδεκτή κατάσταση."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_request.status = new_status
+        user_request.save()
+        serializer = self.get_serializer(user_request)
+        return Response(serializer.data)

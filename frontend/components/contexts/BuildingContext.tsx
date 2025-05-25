@@ -9,12 +9,13 @@ import React, {
 } from 'react';
 import { fetchBuildings, Building } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { toast } from 'react-hot-toast';
 
 interface BuildingContextType {
   buildings: Building[];
   currentBuilding: Building | null;
   setCurrentBuilding: (building: Building | null) => void;
-  setBuildings: React.Dispatch<React.SetStateAction<Building[]>>; // ✅ Προστέθηκε
+  setBuildings: React.Dispatch<React.SetStateAction<Building[]>>;
   isLoading: boolean;
   error: string | null;
 }
@@ -23,7 +24,7 @@ const BuildingContext = createContext<BuildingContextType>({
   buildings: [],
   currentBuilding: null,
   setCurrentBuilding: () => {},
-  setBuildings: () => {}, // ✅ Προστέθηκε
+  setBuildings: () => {},
   isLoading: false,
   error: null,
 });
@@ -44,12 +45,16 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(true);
         const data = await fetchBuildings();
         setBuildings(data);
-        if (data.length > 0) {
-          setCurrentBuilding(data[0]);
-        }
+        setCurrentBuilding(data[0] || null);
         setError(null);
       } catch (err: any) {
         console.error('[BuildingContext] Failed to load buildings:', err);
+
+        if (err?.response?.status === 403) {
+          toast.error("Δεν έχετε δικαίωμα πρόσβασης στα κτίρια. Επικοινωνήστε με τον διαχειριστή.");
+        } else {
+          toast.error("Αποτυχία φόρτωσης κτιρίων.");
+        }
         setError(err?.message ?? 'Αποτυχία φόρτωσης κτιρίων');
         setBuildings([]);
         setCurrentBuilding(null);
@@ -72,7 +77,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       buildings,
       currentBuilding,
       setCurrentBuilding,
-      setBuildings, // ✅ Προστέθηκε
+      setBuildings,
       isLoading,
       error,
     }),
