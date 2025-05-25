@@ -1,3 +1,5 @@
+// frontend/app/page.tsx
+
 'use client';
 
 import { useEffect } from 'react';

@@ -1,4 +1,3 @@
-// frontend/app/votes/page.tsx
 'use client';
 
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -19,49 +18,46 @@ export default function VotesPage() {
   const { currentBuilding, isLoading: buildingLoading } = useBuilding();
   const { isAuthReady, user } = useAuth();
 
-  if (!isAuthReady || buildingLoading || !currentBuilding?.id) {
-    return <p className="p-6">Φόρτωση ψηφοφοριών...</p>;
-  }
+  const buildingId = currentBuilding?.id;
+  const isManager = user?.profile?.role === 'manager' || user?.is_superuser;
 
+  // 💡 Προσοχή: το useVotes καλείται *πάντα*, ανεξάρτητα από loading states
   const {
     data: votes = [],
     isLoading,
     isError,
-  } = useVotes(currentBuilding.id);
+    isSuccess,
+  } = useVotes(buildingId);
 
-  if (isLoading) {
+  if (!isAuthReady || buildingLoading || !buildingId || isLoading) {
     return <p className="p-6">Φόρτωση ψηφοφοριών...</p>;
   }
 
   if (isError) {
-    return <ErrorMessage message="Αδυναμία φόρτωσης ψηφοφοριών για το επιλεγμένο κτήριο." />;
-  }
-
-  if (votes.length === 0) {
-    return (
-      <div className="p-6 text-center space-y-4">
-        <p className="text-gray-500">Δεν υπάρχουν διαθέσιμες ψηφοφορίες.</p>
-
-{(user?.profile?.role === 'manager' || user?.is_superuser) && (
-  <Link href="/votes/new">
-    <Button>➕ Νέα Ψηφοφορία</Button>
-  </Link>
-)}
-        {(user?.profile?.role === 'manager' || user?.is_superuser) && (
-          <p className="text-sm text-gray-400">
-            Δημιουργήστε την πρώτη ψηφοφορία για να ξεκινήσετε.
-          </p>
-        )}
-        <Link href="/votes/new" className="text-blue-600 hover:underline">
-          ➕ Δημιουργία Νέας Ψηφοφορίας
-        </Link>
-      </div>
-    );
+    return <ErrorMessage message="Αδυναμία φόρτωσης ψηφοφοριών." />;
   }
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">🗳️ Ψηφοφορίες</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">🗳️ Ψηφοφορίες</h1>
+        {isManager && (
+          <Link href="/votes/new">
+            <Button>➕ Νέα Ψηφοφορία</Button>
+          </Link>
+        )}
+      </div>
+
+      {isSuccess && votes.length === 0 && (
+        <div className="text-center text-gray-500 space-y-2">
+          <p>Δεν υπάρχουν διαθέσιμες ψηφοφορίες.</p>
+          {isManager && (
+            <p className="text-sm text-gray-400">
+              Δημιουργήστε την πρώτη ψηφοφορία για να ξεκινήσετε.
+            </p>
+          )}
+        </div>
+      )}
 
       {votes.map((vote: Vote) => {
         const active = isActive(vote.start_date, vote.end_date);

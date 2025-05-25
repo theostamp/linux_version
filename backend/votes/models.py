@@ -3,18 +3,28 @@ from django.db import models
 from buildings.models import Building
 from django.conf import settings
 
+from django.db import models
+from django.conf import settings  # για AUTH_USER_MODEL
+from buildings.models import Building
+
 class Vote(models.Model):
-    building = models.ForeignKey(Building, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField()
     start_date = models.DateField()
-    end_date = models.DateField()
-    published = models.BooleanField(default=False)
+    end_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    building = models.ForeignKey(Building, on_delete=models.CASCADE)
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_votes'
+    )
 
     def __str__(self):
         return self.title
-    
 
 
 class VoteSubmission(models.Model):

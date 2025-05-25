@@ -3,13 +3,19 @@ import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { fetchVotes, Vote } from '@/lib/api';
 
 export function useVotes(
-  buildingId: number,
+  buildingId?: number,
   options?: UseQueryOptions<Vote[], Error>
 ) {
   return useQuery<Vote[], Error>({
     queryKey: ['votes', buildingId],
-    queryFn: () => fetchVotes(buildingId),
+    queryFn: () => {
+      if (!buildingId) {
+        throw new Error('Missing building ID');
+      }
+      return fetchVotes(buildingId);
+    },
     enabled: !!buildingId,
-    ...options, // ← δίνει δυνατότητα override
+    staleTime: 1000 * 60, // 1 λεπτό
+    ...options,
   });
 }

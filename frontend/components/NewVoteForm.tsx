@@ -14,7 +14,7 @@ export default function NewVoteForm({ onSubmit, buildingId }: Props) {
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [choices, setChoices] = useState<string[]>(['']);
+  const [choices, setChoices] = useState<string[]>(['Ναι', 'Όχι', 'Λευκό']);
   const [submitting, setSubmitting] = useState(false);
 
   const handleChoiceChange = (index: number, value: string) => {
@@ -27,9 +27,14 @@ export default function NewVoteForm({ onSubmit, buildingId }: Props) {
     setChoices([...choices, '']);
   };
 
-  const removeChoice = (index: number) => {
-    setChoices(choices.filter((_, i) => i !== index));
-  };
+const removeChoice = (index: number) => {
+  if (choices.length <= 1) {
+    toast.error('Πρέπει να υπάρχει τουλάχιστον μία επιλογή');
+    return;
+  }
+  setChoices(choices.filter((_, i) => i !== index));
+};
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

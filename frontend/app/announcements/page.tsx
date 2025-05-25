@@ -1,6 +1,7 @@
-// frontend/app/announcements/page.tsx
+// 📄 frontend/app/announcements/page.tsx
 'use client';
 
+import { useEffect } from 'react'; // ✅ προσθήκη useEffect
 import type { Announcement } from '@/components/AnnouncementCard';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAnnouncements } from '@/hooks/useAnnouncements';
@@ -19,7 +20,11 @@ export default function AnnouncementsPage() {
     isError,
   } = useAnnouncements(currentBuilding?.id);
 
-  // 👇 Ασφαλές conditional rendering μετά τα hooks
+  // ✅ DEBUG LOG για currentBuilding
+  useEffect(() => {
+    console.log('[AnnouncementsPage] currentBuilding:', currentBuilding);
+  }, [currentBuilding]);
+
   if (buildingLoading || !currentBuilding || isLoading) {
     return (
       <div className="p-6 max-w-3xl mx-auto">

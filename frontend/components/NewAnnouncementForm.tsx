@@ -9,23 +9,13 @@ type Props = {
   readonly buildingId: number;
 };
 
-export interface NewAnnouncementFormProps {
-  onSubmit: (data: {
-    title: string;
-    description: string;
-    start_date: string;
-    end_date: string;
-    file?: File | null;
-    is_active?: boolean;
-  }) => void;
-}
-
 export default function NewAnnouncementForm({ buildingId }: Props) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [isActive, setIsActive] = useState(true); // ✅ default true
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
@@ -45,7 +35,8 @@ export default function NewAnnouncementForm({ buildingId }: Props) {
         description: content.trim(),
         start_date: startDate,
         end_date: endDate || '',
-        file: undefined,
+        file: undefined, // αν προσθέσεις υποστήριξη για file upload το προσαρμόζεις
+        is_active: isActive, // ✅ ΠΡΟΣΘΗΚΗ
         building: buildingId,
       };
 
@@ -117,6 +108,20 @@ export default function NewAnnouncementForm({ buildingId }: Props) {
           onChange={(e) => setFileUrl(e.target.value || null)}
           className="mt-1 w-full border rounded-lg px-3 py-2"
         />
+      </div>
+
+      {/* ✅ ΠΡΟΣΘΗΚΗ CHECKBOX */}
+      <div className="flex items-center">
+        <input
+          id="is_active"
+          type="checkbox"
+          checked={isActive}
+          onChange={(e) => setIsActive(e.target.checked)}
+          className="h-4 w-4 text-green-600 border-gray-300 rounded"
+        />
+        <label htmlFor="is_active" className="ml-2 block text-sm text-gray-700">
+          Ενεργή ανακοίνωση (δημοσιευμένη)
+        </label>
       </div>
 
       <button
