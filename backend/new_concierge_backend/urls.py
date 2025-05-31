@@ -1,10 +1,10 @@
 # backend/new_concierge_backend/urls.py
 
-from django.contrib import admin # type: ignore
-from django.urls import path, include # type: ignore
-from django.conf import settings # type: ignore
-from django.conf.urls.static import static # type: ignore
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns # type: ignore
+from django.contrib import admin # type: ignore  # type: ignore  # type: ignore
+from django.urls import path, include # type: ignore  # type: ignore  # type: ignore
+from django.conf import settings # type: ignore  # type: ignore  # type: ignore
+from django.conf.urls.static import static # type: ignore  # type: ignore  # type: ignore
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns # type: ignore  # type: ignore  # type: ignore
 
 urlpatterns = [
     # Admin panel

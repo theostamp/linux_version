@@ -5,6 +5,10 @@ from datetime import timedelta
 
 load_dotenv()
 
+# Helper για μετατροπή από string -> list
+def get_list_env(var_name, default=""):
+    return [v.strip() for v in os.getenv(var_name, default).split(",") if v.strip()]
+
 # ----------------------------------------
 # 📁 Paths & Base
 # ----------------------------------------
@@ -140,7 +144,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # ✅ Προστέθηκε
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -189,22 +193,38 @@ REST_FRAMEWORK = {
 # ----------------------------------------
 # 🌐 CORS
 # ----------------------------------------
+# στο settings.py
+
+# CORS SETTINGS
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
+CORS_ALLOWED_ORIGINS = get_list_env("CORS_ALLOWED_ORIGINS")
+CORS_ALLOWED_ORIGIN_REGEXES = get_list_env("CORS_ALLOWED_ORIGIN_REGEXES")
 CORS_ALLOW_HEADERS = [
-    'accept', 'accept-encoding', 'authorization', 'content-type', 'dnt',
-    'origin', 'user-agent', 'x-csrftoken', 'x-requested-with',
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 CORS_ALLOW_METHODS = ['DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT']
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
 
+# CSRF SETTINGS
+CSRF_TRUSTED_ORIGINS = get_list_env("CSRF_TRUSTED_ORIGINS")
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = os.getenv("CSRF_COOKIE_SAMESITE", "Lax")
+CSRF_COOKIE_SECURE = False if not IS_PRODUCTION else True
+
 # ----------------------------------------
 # 🔒 CSRF
 # ----------------------------------------
-_raw_csrf = os.getenv('CSRF_ORIGINS', 'localhost:3000').split(',')
-CSRF_TRUSTED_ORIGINS = [f'http://{h.strip()}' for h in _raw_csrf] + \
-                       [f'https://{h.strip()}' for h in _raw_csrf] + \
-                       ['http://localhost:3000']
+_raw_csrf = get_list_env("CSRF_ORIGINS", "localhost:3000")
+CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in _raw_csrf] + [f"https://{h}" for h in _raw_csrf]
 
 CSRF_COOKIE_NAME = 'csrftoken'
 CSRF_COOKIE_HTTPONLY = False
@@ -213,7 +233,7 @@ if IS_PRODUCTION:
     CSRF_COOKIE_SAMESITE = SESSION_COOKIE_SAMESITE = 'None'
 else:
     CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SAMESITE = SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SAMESITE = SESSION_COOKIE_SAMESITE = os.getenv('CSRF_COOKIE_SAMESITE', 'Lax')
 
 # ----------------------------------------
 # 📧 Email

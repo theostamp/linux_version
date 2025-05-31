@@ -1,3 +1,8 @@
-from django.contrib import admin
+from django.contrib import admin # type: ignore  # type: ignore  # type: ignore
+from .models import Obligation
 
-# Register your models here.
+@admin.register(Obligation)
+class ObligationAdmin(admin.ModelAdmin):
+    list_display = ('title', 'building', 'amount', 'due_date', 'is_paid')
+    list_filter = ('building', 'is_paid', 'due_date')
+    search_fields = ('title',)

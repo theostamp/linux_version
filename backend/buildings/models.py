@@ -1,7 +1,7 @@
 # backend/buildings/models.py
-from django.db import models  # type: ignore
-from django.conf import settings  # type: ignore
-from django.utils.translation import gettext_lazy as _  # type: ignore
+from django.db import models  # type: ignore  # type: ignore  # type: ignore
+from django.conf import settings  # type: ignore  # type: ignore  # type: ignore
+from django.utils.translation import gettext_lazy as _  # type: ignore  # type: ignore  # type: ignore
 
 from users.models import CustomUser
 
@@ -28,7 +28,6 @@ class Building(models.Model):
 
     internal_manager_name = models.CharField(
         max_length=255,
-
         blank=True
     )
     internal_manager_phone = models.CharField(
@@ -40,15 +39,22 @@ class Building(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.address}"
-    
-    
+
+
 class BuildingMembership(models.Model):
+    RESIDENT_ROLES = [
+        ("resident", "Κάτοικος"),
+        ("representative", "Εκπρόσωπος"),
+    ]
+
     building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name="memberships")
     resident = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="memberships")
     apartment = models.CharField(max_length=10, blank=True)
+    role = models.CharField(max_length=20, choices=RESIDENT_ROLES, default="resident")
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('building', 'resident')
 
     def __str__(self):
-        return f"{self.resident.email} → {self.building.name}"
+        return f"{self.resident.email} → {self.building.name} ({self.get_role_display()})"

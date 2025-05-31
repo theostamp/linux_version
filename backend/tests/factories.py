@@ -1,5 +1,5 @@
 import factory
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model  # type: ignore  # type: ignore
 from buildings.models import Building
 from user_requests.models import UserRequest
 from announcements.models import Announcement

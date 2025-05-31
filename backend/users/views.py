@@ -1,19 +1,19 @@
 # backend/users/views.py
 
-from django.http import JsonResponse
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse  # type: ignore  # type: ignore
+from django.views.decorators.csrf import ensure_csrf_cookie  # type: ignore  # type: ignore
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.contrib.auth import authenticate, login, logout
-from django.views.decorators.csrf import csrf_exempt      #  <-- πρόσθεσε αυτό
+from django.contrib.auth import authenticate, login, logout  # type: ignore  # type: ignore
+from django.views.decorators.csrf import csrf_exempt      #  <-- πρόσθεσε αυτό  # type: ignore  # type: ignore
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model  # type: ignore  # type: ignore
 from .models import CustomUser
 from .serializers import UserSerializer
 

@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from subprocess import check_output, CalledProcessError
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand  # type: ignore  # type: ignore
 
 # Ποιες επεκτάσεις αρχεία θεωρούμε σημαντικές
 IMPORTANT_EXTENSIONS = {'.py', '.html', '.js', '.css', '.json', '.txt', '.env', '.md', '.yml','tsx'}

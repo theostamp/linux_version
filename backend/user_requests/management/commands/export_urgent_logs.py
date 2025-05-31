@@ -3,12 +3,12 @@
 import os
 import csv
 from collections import defaultdict
-from django.core.management.base import BaseCommand
-from django.conf import settings
+from django.core.management.base import BaseCommand  # type: ignore  # type: ignore
+from django.conf import settings  # type: ignore  # type: ignore
 from user_requests.models import UrgentRequestLog
 from openpyxl import Workbook
 from openpyxl.styles import Font
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage  # type: ignore  # type: ignore
 
 
 class Command(BaseCommand):

@@ -58,7 +58,6 @@ export default function Sidebar() {
   const {
     buildings,
     currentBuilding,
-    setCurrentBuilding,
     isLoading: buildingsIsLoading,
   } = useBuilding();
 

@@ -1,3 +1,7 @@
+
+find . -name "*.py" -exec sed -i '/^from django\|^import django/ s/$/  # type: ignore/' {} +
+
+
 docker compose exec backend python manage.py migrate_schemas --shared
 docker compose exec backend python manage.py migrate_schemas --tenant --schema=public
 
@@ -14,6 +18,8 @@ docker compose exec backend python manage.py migrate_schemas --tenant --schema=p
 
 docker compose exec backend python scripts/initial_user_setup.py
 
+
+docker compose exec backend  python  scripts/create_tenant_and_migrate.py --name=manager8
 
 Για περισσότερους tenants: Μπορείς να δημιουργήσεις όσους Office Managers θέλεις, π.χ.:
 

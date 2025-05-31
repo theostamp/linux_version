@@ -1,11 +1,11 @@
 import os
-import django
-from django.core.exceptions import ImproperlyConfigured
+import django  # type: ignore  # type: ignore
+from django.core.exceptions import ImproperlyConfigured  # type: ignore  # type: ignore
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings")
 django.setup()
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model  # type: ignore  # type: ignore
 
 email = os.getenv("DJANGO_SUPERUSER_EMAIL")
 password = os.getenv("DJANGO_SUPERUSER_PASSWORD")

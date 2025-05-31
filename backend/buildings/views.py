@@ -3,9 +3,9 @@
 from rest_framework import viewsets, permissions, status  # type: ignore
 from rest_framework.response import Response  # type: ignore
 from rest_framework.decorators import action  # type: ignore
-from django.views.decorators.csrf import ensure_csrf_cookie  # type: ignore
-from django.http import JsonResponse  # type: ignore
-from django.utils import timezone # type: ignore
+from django.views.decorators.csrf import ensure_csrf_cookie  # type: ignore  # type: ignore  # type: ignore
+from django.http import JsonResponse  # type: ignore  # type: ignore  # type: ignore
+from django.utils import timezone # type: ignore  # type: ignore  # type: ignore
 from .models import Building, BuildingMembership
 from .serializers import BuildingSerializer, BuildingMembershipSerializer
 from users.models import CustomUser

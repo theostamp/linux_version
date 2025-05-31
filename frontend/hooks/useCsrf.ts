@@ -1,4 +1,4 @@
-// frontend/hooks/useEnsureCsrf.ts
+// frontend/hooks/useCsrf.ts
 import { useEffect, useState } from 'react';
 import { getBaseUrl } from '@/lib/config';
 

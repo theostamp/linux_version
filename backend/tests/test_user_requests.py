@@ -1,7 +1,7 @@
 # backend/tests/test_user_requests.py
 
 import pytest
-from django.urls import reverse
+from django.urls import reverse  # type: ignore  # type: ignore
 from rest_framework.test import APIClient
 from user_requests.models import UserRequest
 from tests.factories import UserFactory, UserRequestFactory, BuildingFactory

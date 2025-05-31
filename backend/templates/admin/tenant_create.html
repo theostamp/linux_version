@@ -1,0 +1,21 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+  <h1>Δημιουργία νέου Tenant</h1>
+  <form method="post">{% csrf_token %}
+    <div>
+      <label for="tenant_name">Όνομα Tenant (π.χ. demo15):</label><br>
+      <input type="text" id="tenant_name" name="tenant_name" required>
+    </div><br>
+    <div>
+      <label for="manager_email">Email Διαχειριστή:</label><br>
+      <input type="email" id="manager_email" name="manager_email" required>
+    </div><br>
+    <div>
+      <label for="manager_password">Κωδικός Διαχειριστή:</label><br>
+      <input type="password" id="manager_password" name="manager_password" required>
+    </div><br>
+    <input type="submit" value="Δημιουργία Tenant" class="default">
+  </form>
+{% endblock %}

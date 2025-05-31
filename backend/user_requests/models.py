@@ -1,7 +1,7 @@
 
 # backend/user_requests/models.py
-from django.db import models # type: ignore
-from django.contrib.auth import get_user_model # type: ignore
+from django.db import models # type: ignore  # type: ignore  # type: ignore
+from django.contrib.auth import get_user_model # type: ignore  # type: ignore  # type: ignore
 from buildings.models import Building
 
 User = get_user_model()

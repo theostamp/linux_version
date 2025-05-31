@@ -20,6 +20,13 @@ interface UserRequest {
   created_at: string;
 }
 
+const statusLabels: Record<string, string> = {
+  pending: 'Σε Εκκρεμότητα',
+  in_progress: 'Σε Εξέλιξη',
+  completed: 'Ολοκληρώθηκε',
+  rejected: 'Απορρίφθηκε',
+};
+
 function formatDate(dateString: string): string {
   const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
@@ -136,7 +143,7 @@ export default function RequestDetailPage() {
         <br />
         Ημερομηνία: <strong>{formatDate(request.created_at)}</strong>
         <br />
-        Κατάσταση: <strong>{request.status}</strong>
+        Κατάσταση: <strong>{statusLabels[request.status] || request.status}</strong>
         <br />
         Τύπος: <strong>{request.type ?? '—'}</strong>
         <br />
@@ -174,20 +181,37 @@ export default function RequestDetailPage() {
       </div>
 
       {currentUser.is_staff && (
-        <div className="mt-4">
-          <label htmlFor="status-select" className="block text-sm font-medium mb-1">Αλλαγή Κατάστασης:</label>
-          <select
-            id="status-select"
-            value={request.status}
-            onChange={(e) => handleStatusChange(e.target.value)}
-            className="border p-2 rounded"
-            disabled={changingStatus}
-          >
-            <option value="pending">Σε Εκκρεμότητα</option>
-            <option value="in_progress">Σε Εξέλιξη</option>
-            <option value="completed">Ολοκληρώθηκε</option>
-            <option value="rejected">Απορρίφθηκε</option>
-          </select>
+        <div className="mt-6 space-y-2">
+          <p className="text-sm font-medium">Ενέργειες:</p>
+          <div className="flex flex-wrap gap-2">
+            {request.status !== 'in_progress' && (
+              <button
+                onClick={() => handleStatusChange('in_progress')}
+                disabled={changingStatus}
+                className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 disabled:opacity-50"
+              >
+                🔄 Σε Εξέλιξη
+              </button>
+            )}
+            {request.status !== 'completed' && (
+              <button
+                onClick={() => handleStatusChange('completed')}
+                disabled={changingStatus}
+                className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 disabled:opacity-50"
+              >
+                ✅ Ολοκληρώθηκε
+              </button>
+            )}
+            {request.status !== 'rejected' && (
+              <button
+                onClick={() => handleStatusChange('rejected')}
+                disabled={changingStatus}
+                className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 disabled:opacity-50"
+              >
+                ❌ Απόρριψη
+              </button>
+            )}
+          </div>
         </div>
       )}
 

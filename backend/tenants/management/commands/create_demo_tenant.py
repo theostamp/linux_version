@@ -1,8 +1,8 @@
 # 📄 backend/tenants/management/commands/create_demo_tenant.py
 
-from django.core.management.base import BaseCommand # type: ignore
+from django.core.management.base import BaseCommand # type: ignore  # type: ignore  # type: ignore
 from tenants.models import Client, Domain
-from django.utils.timezone import now # type: ignore
+from django.utils.timezone import now # type: ignore  # type: ignore  # type: ignore
 from datetime import timedelta
 
 

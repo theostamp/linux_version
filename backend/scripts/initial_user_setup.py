@@ -1,8 +1,8 @@
 import os
 import sys
 import subprocess
-import django  # type: ignore
-from django.utils import timezone  # type: ignore
+import django  # type: ignore  # type: ignore  # type: ignore
+from django.utils import timezone  # type: ignore  # type: ignore  # type: ignore
 
 # --------------------------------------------------
 # Django bootstrap
@@ -16,11 +16,11 @@ django.setup()
 # --------------------------------------------------
 # Imports AFTER django.setup()
 # --------------------------------------------------
-from django_tenants.utils import schema_context  # type: ignore
+from django_tenants.utils import schema_context  # type: ignore  # type: ignore  # type: ignore
 from tenants.models import Client, Domain
-from django.contrib.auth import get_user_model  # type: ignore
-from django.contrib.auth.models import Group, Permission  # type: ignore
-from django.contrib.contenttypes.models import ContentType  # type: ignore
+from django.contrib.auth import get_user_model  # type: ignore  # type: ignore  # type: ignore
+from django.contrib.auth.models import Group, Permission  # type: ignore  # type: ignore  # type: ignore
+from django.contrib.contenttypes.models import ContentType  # type: ignore  # type: ignore  # type: ignore
 from buildings.models import Building
 from announcements.models import Announcement
 from votes.models import Vote

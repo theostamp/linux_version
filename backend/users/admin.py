@@ -1,7 +1,7 @@
 # backend/users/admin.py
 
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
+from django.contrib import admin  # type: ignore  # type: ignore
+from django.contrib.auth.admin import UserAdmin  # type: ignore  # type: ignore
 from .models import CustomUser
 
 class CustomUserAdmin(UserAdmin):

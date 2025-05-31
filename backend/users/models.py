@@ -1,7 +1,7 @@
 # backend/users/models.py
 
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager  # type: ignore
-from django.db import models  # type: ignore
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager  # type: ignore  # type: ignore  # type: ignore
+from django.db import models  # type: ignore  # type: ignore  # type: ignore
 
 # Προσοχή: ορίζεται ΠΡΙΝ χρησιμοποιηθεί
 class CustomUserManager(BaseUserManager):
@@ -45,5 +45,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+    
     def __str__(self):
         return self.email

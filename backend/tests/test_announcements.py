@@ -1,6 +1,6 @@
 import pytest
 from rest_framework.test import APIClient
-from django.urls import reverse
+from django.urls import reverse  # type: ignore  # type: ignore
 from tests.factories import UserFactory, AnnouncementFactory
 
 @pytest.mark.django_db
