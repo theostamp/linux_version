@@ -1,9 +1,9 @@
 # backend/user_requests/admin.py
 
 import csv
-from django.contrib import admin # type: ignore  # type: ignore  # type: ignore
-from django.db.models import Count # type: ignore  # type: ignore  # type: ignore
-from django.http import HttpResponse # type: ignore  # type: ignore  # type: ignore
+from django.contrib import admin # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.db.models import Count # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.http import HttpResponse # type: ignore  # type: ignore  # type: ignore  # type: ignore
 
 from .models import UserRequest, UrgentRequestLog
 

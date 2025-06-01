@@ -1,4 +1,4 @@
-from django.contrib import admin # type: ignore  # type: ignore  # type: ignore
+from django.contrib import admin # type: ignore  # type: ignore  # type: ignore  # type: ignore
 from .models import Client, Domain
 from .admin_views import TenantCreatorAdminView
 

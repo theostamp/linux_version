@@ -1,4 +1,4 @@
-from django.contrib import admin  # type: ignore  # type: ignore
+from django.contrib import admin  # type: ignore  # type: ignore  # type: ignore
 from .models import Resident
 from buildings.models import Building
 

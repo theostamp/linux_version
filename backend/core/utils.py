@@ -1,6 +1,6 @@
 
 # backend/core/utils.py
-from django.core.exceptions import ObjectDoesNotExist  # type: ignore  # type: ignore
+from django.core.exceptions import ObjectDoesNotExist  # type: ignore  # type: ignore  # type: ignore
 from rest_framework import exceptions
 from buildings.models import Building
 

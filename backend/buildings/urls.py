@@ -1,5 +1,5 @@
 # backend/buildings/urls.py
-from django.urls import path, include  # type: ignore  # type: ignore  # type: ignore
+from django.urls import path, include  # type: ignore  # type: ignore  # type: ignore  # type: ignore
 from rest_framework.routers import DefaultRouter  # type: ignore
 from .views import BuildingViewSet, get_csrf_token
 

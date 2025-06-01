@@ -1,13 +1,13 @@
 # tenants/admin_views.py
 
-from django.contrib import admin  # type: ignore
-from django.http import HttpResponseRedirect  # type: ignore
-from django.urls import path  # type: ignore
-from django.shortcuts import render  # type: ignore
-from django.contrib import messages  # type: ignore
-from django.utils import timezone  # type: ignore
+from django.contrib import admin  # type: ignore  # type: ignore
+from django.http import HttpResponseRedirect  # type: ignore  # type: ignore
+from django.urls import path  # type: ignore  # type: ignore
+from django.shortcuts import render  # type: ignore  # type: ignore
+from django.contrib import messages  # type: ignore  # type: ignore
+from django.utils import timezone  # type: ignore  # type: ignore
 from datetime import timedelta
-from django_tenants.utils import schema_context  # type: ignore
+from django_tenants.utils import schema_context  # type: ignore  # type: ignore
 from buildings.models import Building, BuildingMembership
 from announcements.models import Announcement
 from user_requests.models import UserRequest
@@ -15,7 +15,7 @@ from votes.models import Vote
 from obligations.models import Obligation
 from tenants.models import Client, Domain
 from users.models import CustomUser
-from django.core.management import call_command  # type: ignore
+from django.core.management import call_command  # type: ignore  # type: ignore
 
 TENANT_CREATE_TEMPLATE = "admin/tenant_create.html"
 

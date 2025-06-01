@@ -1,7 +1,7 @@
-from django.urls import reverse  # type: ignore  # type: ignore
+from django.urls import reverse  # type: ignore  # type: ignore  # type: ignore
 from rest_framework.test import APITestCase
 from rest_framework import status
-from django.contrib.auth import get_user_model  # type: ignore  # type: ignore
+from django.contrib.auth import get_user_model  # type: ignore  # type: ignore  # type: ignore
 
 User = get_user_model()
 

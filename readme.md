@@ -192,7 +192,7 @@ echo "# linux_version" >> README.md
 git init
 
 git add .
-git commit -m "χρηση deepagent για το αρχικό commit"  
+git commit -m "create neo tenant with initial setup"  
 git branch -M main
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
@@ -233,6 +233,8 @@ docker system prune -a --volumes
 docker volume rm $(docker volume ls -q)
 docker network rm $(docker network ls -q)
 docker builder prune -af
+
+
 
 docker-compose down
 docker-compose up --build

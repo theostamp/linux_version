@@ -1,9 +1,10 @@
+# backend/scripts/create_tenant_and_migrate.py
 import os
 import sys
-import django  # type: ignore  # type: ignore  # type: ignore
+import django  # type: ignore  # type: ignore  # type: ignore  # type: ignore
 import argparse
 from datetime import timedelta
-from django.utils import timezone  # type: ignore  # type: ignore  # type: ignore
+from django.utils import timezone  # type: ignore  # type: ignore  # type: ignore  # type: ignore
 
 # ✅ Προσθήκη backend στον PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -12,8 +13,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings")
 django.setup()
 
-from django_tenants.utils import get_tenant_model, get_tenant_domain_model, schema_context  # type: ignore  # type: ignore  # type: ignore
-from django.core.management import call_command  # type: ignore  # type: ignore  # type: ignore
+from django_tenants.utils import get_tenant_model, get_tenant_domain_model, schema_context  # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.core.management import call_command  # type: ignore  # type: ignore  # type: ignore  # type: ignore
 from users.models import CustomUser
 from buildings.models import Building, BuildingMembership
 from announcements.models import Announcement

@@ -9,8 +9,8 @@ from buildings.models import Building
 from rest_framework.decorators import action # type: ignore
 from rest_framework.response import Response # type: ignore
 from rest_framework import status # type: ignore
-from django.db.models import Count # type: ignore  # type: ignore  # type: ignore
-from django.core.exceptions import ObjectDoesNotExist # type: ignore  # type: ignore  # type: ignore
+from django.db.models import Count # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.core.exceptions import ObjectDoesNotExist # type: ignore  # type: ignore  # type: ignore  # type: ignore
 
 class UserRequestViewSet(viewsets.ModelViewSet):
     queryset = UserRequest.objects.all().order_by('-created_at')

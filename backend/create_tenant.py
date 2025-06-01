@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 import os
-import django  # type: ignore  # type: ignore
+import django  # type: ignore  # type: ignore  # type: ignore
 import sys
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings")
 django.setup()
 
 from tenants.models import Client, Domain
-from django.contrib.auth import get_user_model  # type: ignore  # type: ignore
-from django.db import IntegrityError  # type: ignore  # type: ignore
+from django.contrib.auth import get_user_model  # type: ignore  # type: ignore  # type: ignore
+from django.db import IntegrityError  # type: ignore  # type: ignore  # type: ignore
 
 User = get_user_model()
 

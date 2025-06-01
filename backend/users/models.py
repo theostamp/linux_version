@@ -1,7 +1,7 @@
 # backend/users/models.py
 
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager  # type: ignore  # type: ignore  # type: ignore
-from django.db import models  # type: ignore  # type: ignore  # type: ignore
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager  # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.db import models  # type: ignore  # type: ignore  # type: ignore  # type: ignore
 
 # Προσοχή: ορίζεται ΠΡΙΝ χρησιμοποιηθεί
 class CustomUserManager(BaseUserManager):

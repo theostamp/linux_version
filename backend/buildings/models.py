@@ -1,7 +1,7 @@
 # backend/buildings/models.py
-from django.db import models  # type: ignore  # type: ignore  # type: ignore
-from django.conf import settings  # type: ignore  # type: ignore  # type: ignore
-from django.utils.translation import gettext_lazy as _  # type: ignore  # type: ignore  # type: ignore
+from django.db import models  # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.conf import settings  # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.utils.translation import gettext_lazy as _  # type: ignore  # type: ignore  # type: ignore  # type: ignore
 
 from users.models import CustomUser
 

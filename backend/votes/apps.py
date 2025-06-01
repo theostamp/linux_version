@@ -1,5 +1,5 @@
 # backend\votes\apps.py
-from django.apps import AppConfig  # type: ignore  # type: ignore
+from django.apps import AppConfig  # type: ignore  # type: ignore  # type: ignore
 
 
 class VotesConfig(AppConfig):

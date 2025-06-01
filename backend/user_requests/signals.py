@@ -1,10 +1,10 @@
 # backend/user_requests/signals.py
 
-from django.db.models.signals import m2m_changed  # type: ignore  # type: ignore
-from django.dispatch import receiver  # type: ignore  # type: ignore
+from django.db.models.signals import m2m_changed  # type: ignore  # type: ignore  # type: ignore
+from django.dispatch import receiver  # type: ignore  # type: ignore  # type: ignore
 from .models import UserRequest
-from django.core.mail import send_mail  # type: ignore  # type: ignore
-from django.conf import settings  # Import settings to access EMAIL_HOST_USER  # type: ignore  # type: ignore
+from django.core.mail import send_mail  # type: ignore  # type: ignore  # type: ignore
+from django.conf import settings  # Import settings to access EMAIL_HOST_USER  # type: ignore  # type: ignore  # type: ignore
 
 # backend/user_requests/signals.py
 

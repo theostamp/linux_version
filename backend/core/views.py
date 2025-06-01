@@ -1,7 +1,7 @@
-from django.views.decorators.csrf import ensure_csrf_cookie # type: ignore  # type: ignore  # type: ignore
-from django.http import JsonResponse # type: ignore  # type: ignore  # type: ignore
-from django.utils.decorators import method_decorator # type: ignore  # type: ignore  # type: ignore
-from django.views import View # type: ignore  # type: ignore  # type: ignore
+from django.views.decorators.csrf import ensure_csrf_cookie # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.http import JsonResponse # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.utils.decorators import method_decorator # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.views import View # type: ignore  # type: ignore  # type: ignore  # type: ignore
 
 @ensure_csrf_cookie
 def get_csrf_token(request):

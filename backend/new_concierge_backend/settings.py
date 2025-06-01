@@ -17,11 +17,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ----------------------------------------
 # 🔐 Security
 # ----------------------------------------
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'insecure_dev_key')
-DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost').split(',')
-IS_PRODUCTION = os.getenv('ENV', 'development') == 'production'
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY") or 'default_secret_key'  # Πρέπει να οριστεί στο .env
+if not SECRET_KEY:
+    raise ValueError("DJANGO_SECRET_KEY must be set in the environment variables.")
+DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
+# 1️⃣  Δηλώνουμε τη λίστα
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
+
+# 2️⃣  Προσθέτουμε το wildcard μόνο σε dev
+if DEBUG:
+    ALLOWED_HOSTS += [".localhost"]      # οποιοδήποτε sub-domain *.localhost
+
+IS_PRODUCTION = os.getenv("ENV", "development") == "production"
 
 # ----------------------------------------
 # 🏘️ django-tenants split apps
@@ -29,7 +37,7 @@ IS_PRODUCTION = os.getenv('ENV', 'development') == 'production'
 SHARED_APPS = [
     'django_tenants',       # For django-tenants
     'tenants',              # App for managing Client and Domain models (tenant metadata)
-
+    'corsheaders',
     # Django's own apps, generally shared
     'django.contrib.contenttypes',
     'django.contrib.auth',
@@ -39,6 +47,7 @@ SHARED_APPS = [
     'django.contrib.admin',
 
     # Your apps that need to be in the public schema
+    
     'users',
     'buildings',
     'announcements',
@@ -51,7 +60,7 @@ SHARED_APPS = [
 TENANT_APPS = [
     # Django REST framework and related tools, often per-tenant if APIs are tenant-specific
     'rest_framework',
-    'corsheaders',
+ 
     'django_filters',
 
     # Your apps that are specific to each tenant
@@ -193,32 +202,30 @@ REST_FRAMEWORK = {
 # ----------------------------------------
 # 🌐 CORS
 # ----------------------------------------
-# στο settings.py
+CORS_ALLOW_CREDENTIALS = True     # για cookies / JWT
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]  # τα «σκέτα» origins
 
-# CORS SETTINGS
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = get_list_env("CORS_ALLOWED_ORIGINS")
-CORS_ALLOWED_ORIGIN_REGEXES = get_list_env("CORS_ALLOWED_ORIGIN_REGEXES")
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://[\w\-]+\.localhost:3000$",
+]  # ✅ Ο *οποιοσδήποτε* sub-domain *.localhost:3000
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://*.localhost:3000",
 ]
-CORS_ALLOW_METHODS = ['DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT']
-CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
 
-# CSRF SETTINGS
-CSRF_TRUSTED_ORIGINS = get_list_env("CSRF_TRUSTED_ORIGINS")
-CSRF_COOKIE_NAME = 'csrftoken'
-CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = os.getenv("CSRF_COOKIE_SAMESITE", "Lax")
-CSRF_COOKIE_SECURE = False if not IS_PRODUCTION else True
+CORS_EXPOSE_HEADERS  = ["Content-Type", "X-CSRFToken"]
+CORS_ALLOW_HEADERS = get_list_env(
+    "CORS_ALLOW_HEADERS",
+    "accept,accept-encoding,authorization,content-type,dnt,origin,"
+    "user-agent,x-csrftoken,x-requested-with,x-xsrf-token"
+)
+
+CORS_ALLOW_METHODS   = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
 
 # ----------------------------------------
 # 🔒 CSRF

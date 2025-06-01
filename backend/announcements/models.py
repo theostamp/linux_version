@@ -1,5 +1,5 @@
-from django.db import models # type: ignore  # type: ignore  # type: ignore
-from django.conf import settings  # type: ignore # 👈 για AUTH_USER_MODEL  # type: ignore  # type: ignore
+from django.db import models # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.conf import settings  # type: ignore # 👈 για AUTH_USER_MODEL  # type: ignore  # type: ignore  # type: ignore
 from buildings.models import Building
 
 class Announcement(models.Model):
