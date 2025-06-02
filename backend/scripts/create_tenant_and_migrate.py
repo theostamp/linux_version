@@ -1,20 +1,20 @@
 # backend/scripts/create_tenant_and_migrate.py
+
 import os
 import sys
-import django  # type: ignore  # type: ignore  # type: ignore  # type: ignore
+import django
 import argparse
+from getpass import getpass
 from datetime import timedelta
-from django.utils import timezone  # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.utils import timezone
 
 # ✅ Προσθήκη backend στον PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# ✅ Ορισμός settings module
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings")
 django.setup()
 
-from django_tenants.utils import get_tenant_model, get_tenant_domain_model, schema_context  # type: ignore  # type: ignore  # type: ignore  # type: ignore
-from django.core.management import call_command  # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django_tenants.utils import get_tenant_model, get_tenant_domain_model, schema_context, schema_exists
+from django.core.management import call_command
 from users.models import CustomUser
 from buildings.models import Building, BuildingMembership
 from announcements.models import Announcement
@@ -22,17 +22,41 @@ from user_requests.models import UserRequest
 from votes.models import Vote
 from obligations.models import Obligation
 
-# --- CLI input με interactive τρόπο ---
-tenant_name = input("🔹 Όνομα tenant (π.χ. demo14): ").strip().lower()
-manager_email = input(f"📧 Email διαχειριστή [default: {tenant_name}@demo.com]: ").strip() or f"{tenant_name}@demo.com"
-manager_password = input("🔑 Κωδικός διαχειριστή (min 6 χαρακτήρες): ").strip()
-resident_email = f"resident@{tenant_name}.com"
-resident_password = "123456"
-domain_url = f"{tenant_name}.localhost"
+# --- CLI Arguments ---
+parser = argparse.ArgumentParser(description="Δημιουργία tenant/demo δεδομένων (django-tenants)")
+parser.add_argument("name", help="Όνομα tenant (schema/db/user/email/domain)")
+parser.add_argument("-p", "--password", help="Password διαχειριστή (min 6 χαρακτήρες)", required=False)
+parser.add_argument("--manager-email", help="Email διαχειριστή", required=False)
+parser.add_argument("--resident-password", help="Password κατοίκου", required=False)
+parser.add_argument("--resident-email", help="Email κατοίκου", required=False)
+args = parser.parse_args()
 
-# --- Μοντέλα ---
+tenant_name = args.name.strip().lower()
+
+# --- Schema Existence Check ---
 TenantModel = get_tenant_model()
 DomainModel = get_tenant_domain_model()
+
+if schema_exists(tenant_name):
+    print(f"❌ Το schema '{tenant_name}' υπάρχει ήδη! Διέγραψέ το πρώτα αν θες να το ξαναδημιουργήσεις.")
+    sys.exit(1)
+
+manager_email = args.manager_email or f"manager@{tenant_name}.com"
+resident_email = args.resident_email or f"resident@{tenant_name}.com"
+
+# Ασφαλής είσοδος password (αν δεν δόθηκε με flag)
+if args.password:
+    manager_password = args.password
+else:
+    while True:
+        manager_password = getpass("🔑 Password διαχειριστή (min 6 χαρακτήρες): ")
+        if len(manager_password) < 6:
+            print("❌ Τουλάχιστον 6 χαρακτήρες.")
+        else:
+            break
+
+resident_password = args.resident_password or "123456"
+domain_url = f"{tenant_name}.localhost"
 
 # --- Δημιουργία Tenant ---
 tenant = TenantModel(
@@ -63,6 +87,7 @@ with schema_context(tenant.schema_name):
         is_active=True,
         is_staff=True,
         is_superuser=False,
+        role="manager",
     )
 
     building = Building.objects.create(
@@ -88,7 +113,7 @@ with schema_context(tenant.schema_name):
 
     Announcement.objects.create(
         title="Καλωσορίσατε!",
-        content="Αυτή είναι μια δοκιμαστική ανακοίνωση για το νέο σας demo κτίριο.",
+        description="Αυτή είναι μια δοκιμαστική ανακοίνωση για το νέο σας demo κτίριο.",
         building=building,
         author=manager,
     )
@@ -104,8 +129,9 @@ with schema_context(tenant.schema_name):
         title="Αλλαγή διαχειριστή",
         description="Ψηφίστε αν συμφωνείτε να αλλάξει ο διαχειριστής.",
         building=building,
-        created_by=manager,
-        expires_at=timezone.now() + timedelta(days=5),
+        creator=manager,
+        start_date=timezone.now().date(),
+        end_date=timezone.now().date() + timedelta(days=5),
     )
 
     Obligation.objects.create(
@@ -113,7 +139,7 @@ with schema_context(tenant.schema_name):
         title="Ανταλλακτικά θυροτηλεφώνου",
         amount=150.0,
         due_date=timezone.now() + timedelta(days=30),
-        created_by=manager,
+        # created_by=manager,
     )
 
 # --- Καταγραφή credentials ---

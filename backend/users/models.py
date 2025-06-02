@@ -1,9 +1,11 @@
 # backend/users/models.py
 
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager  # type: ignore  # type: ignore  # type: ignore  # type: ignore
-from django.db import models  # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
-# Προσοχή: ορίζεται ΠΡΙΝ χρησιμοποιηθεί
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -25,7 +27,12 @@ class CustomUserManager(BaseUserManager):
 
         return self.create_user(email, password, **extra_fields)
 
+
 class CustomUser(AbstractBaseUser, PermissionsMixin):
+    class SystemRole(models.TextChoices):
+        ADMIN = 'admin', _('Admin')  # Superusers only
+        OFFICE_MANAGER = 'manager', _('Office Manager')  # Γραφείο διαχείρισης (Tenant owner)
+
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
@@ -33,12 +40,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
 
-    ROLE_CHOICES = [
-        ('manager', 'Manager'),
-        ('resident', 'Resident'),
-        ('admin', 'Admin'),
-    ]
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, blank=True, null=True)
+    role = models.CharField(
+        max_length=20,
+        choices=SystemRole.choices,
+        blank=True,
+        null=True,
+        help_text=_("Ρόλος σε επίπεδο tenant (π.χ. γραφείο διαχείρισης)")
+    )
 
     objects = CustomUserManager()
 
@@ -47,6 +55,41 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
-    
+
     def __str__(self):
         return self.email
+
+    # ------- Helper ιδιότητες για ρόλους συστήματος --------
+
+    @property
+    def full_name(self):
+        return self.get_full_name()
+
+    @property
+    def is_office_manager(self):
+        return self.role == self.SystemRole.OFFICE_MANAGER
+
+    @property
+    def is_admin(self):
+        return self.role == self.SystemRole.ADMIN
+
+    # ------- Helper ιδιότητες για ρόλους ανά πολυκατοικία --------
+    def is_manager_of(self, building):
+        """
+        Επιστρέφει True αν ο χρήστης είναι ο manager του δοσμένου κτιρίου.
+        """
+        return hasattr(building, "manager") and building.manager == self
+
+
+    def is_resident_of(self, building):
+        return self.memberships.filter(building=building).exists()
+
+    def is_representative_of(self, building):
+        return self.memberships.filter(building=building, role='representative').exists()
+
+    def get_buildings_as_resident(self):
+        return [m.building for m in self.memberships.all()]
+
+    def get_apartment_in(self, building):
+        membership = self.memberships.filter(building=building).first()
+        return membership.apartment if membership else None

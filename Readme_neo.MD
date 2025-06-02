@@ -1,3 +1,19 @@
+
+
+<!-- Με όλα default (θα ζητήσει μόνο το password του manager) -->
+
+docker compose exec backend python scripts/create_tenant_and_migrate.py galatsi
+
+
+
+<!-- Με όλα CLI παραμέτρους -->
+
+docker compose exec backend python scripts/create_tenant_and_migrate.py mytenant -p mypass123 \
+    --manager-email=admin@mytenant.com \
+    --resident-email=user@mytenant.com \
+    --resident-password=residentpass
+
+
 <!-- A. Κάνε τον manager@neo.com super-user (1 γραμμή) -->
 
 docker compose exec backend \

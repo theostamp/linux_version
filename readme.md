@@ -1,9 +1,18 @@
-# (α) φτιάχνεις το αρχείο migration
+# Οδηγός Εκκίνησης & Διαχείρισης (linux_version)
+
+## 1. Δημιουργία και Εφαρμογή Migrations (Django Tenants)
+
+### (α) Δημιουργία αρχείων migration για tenants
+```sh
 docker compose exec backend python manage.py makemigrations tenants
+```
 
-# (β) τρέχεις μόνο τα shared migrations (Client & Domain)
+### (β) Εκτέλεση μόνο των shared migrations (Client & Domain)
+```sh
 docker compose exec backend python manage.py migrate_schemas --shared --noinput
+```
 
+```python
 docker compose exec backend python manage.py shell -c "
 from tenants.models import Client, Domain
 public, _ = Client.objects.get_or_create(schema_name='public',
@@ -12,8 +21,10 @@ Domain.objects.get_or_create(domain='localhost', tenant=public,
                              defaults={'is_primary':True})
 print('✅ localhost → public tenant ready')
 "
-# (γ) τρέχεις τα migrations για όλα τα tenants
+```
+### (γ) Εκτέλεση migrations για όλους τους tenants
 
+```python
 docker compose exec backend python manage.py shell -c "
 from tenants.models import Client, Domain
 public = Client.objects.get(schema_name='public')
@@ -21,15 +32,14 @@ Domain.objects.get_or_create(domain='localhost', tenant=public,
                              defaults={'is_primary': True})
 print('✅ domain localhost → public tenant added')
 "
+```
+```sh
 docker compose exec backend python manage.py migrate_schemas --tenant --noinput
+```
 
-
-
-
+```sh
 python manage.py createsuperuser
-
-
-
+```
 
 # Makefile για unified commands (root folder) -->
 
@@ -62,19 +72,6 @@ docker-compose exec backend pytest
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 cd C:\Users\thodo\digital_concierge\frontend    
 
 npm install next@14
@@ -100,11 +97,6 @@ docker exec -it new_concierge-backend-1 /bin/sh
 cd /app/backend
 mkdir -p user_requests/migrations
 echo > user_requests/migrations/__init__.py
-
-
-
-
-
 
 
 
@@ -178,8 +170,6 @@ python manage.py createsuperuser
 npm install
 npm run dev 
 
-
-
 python manage.py migrate
 python manage.py makemigrations
 
@@ -192,7 +182,7 @@ echo "# linux_version" >> README.md
 git init
 
 git add .
-git commit -m "create neo tenant with initial setup"  
+git commit -m "2/6 tenants created with create_tenants.py script"  
 git branch -M main
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
@@ -210,8 +200,6 @@ docker compose exec python manage.py shell < scripts/reset_and_create_tenant.py
 
 
 Get-Content scripts/reset_and_create_tenant.py | docker compose exec -T web python manage.py shell
-
-
 
 
 
@@ -238,8 +226,6 @@ docker builder prune -af
 
 docker-compose down
 docker-compose up --build
-
-
 
 
 
