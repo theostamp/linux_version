@@ -1,4 +1,5 @@
-from django.apps import AppConfig  # type: ignore  # type: ignore  # type: ignore
+from django.apps import AppConfig  
+      # type: ignore
 
 
 class TenantsConfig(AppConfig):

@@ -1,7 +1,8 @@
-# backend/buildings/admin.py
+
 # backend/buildings/admin.py
 
-from django.contrib import admin  # type: ignore  # type: ignore  # type: ignore
+from django.contrib import admin  
+      # type: ignore
 from .models import Building
 
 @admin.register(Building)

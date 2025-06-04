@@ -1,6 +1,7 @@
 # backend/user_requests/apps.py
 
-from django.apps import AppConfig  # type: ignore  # type: ignore  # type: ignore
+from django.apps import AppConfig  
+      # type: ignore
 
 class UserRequestsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
