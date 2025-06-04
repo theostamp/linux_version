@@ -1,6 +1,6 @@
 import pytest
 from rest_framework.test import APIClient
-from django.urls import reverse  # type: ignore  # type: ignore  # type: ignore
+from django.urls import reverse
 from tests.factories import UserFactory, AnnouncementFactory
 
 @pytest.mark.django_db
@@ -26,4 +26,5 @@ def test_list_announcements():
     client = APIClient()
     response = client.get(reverse("announcement-list"))
     assert response.status_code == 200
+    assert len(response.data["results"]) == 3
     assert len(response.data["results"]) == 3

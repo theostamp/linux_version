@@ -1,5 +1,5 @@
 import factory
-from django.contrib.auth import get_user_model  # type: ignore  # type: ignore  # type: ignore
+from django.contrib.auth import get_user_model
 from buildings.models import Building
 from user_requests.models import UserRequest
 from announcements.models import Announcement
@@ -54,4 +54,5 @@ class AnnouncementFactory(factory.django.DjangoModelFactory):
     end_date = "2025-05-31"
     published = True
     created_by = factory.SubFactory(UserFactory)
+    building = factory.SubFactory(BuildingFactory)
     building = factory.SubFactory(BuildingFactory)

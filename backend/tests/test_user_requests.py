@@ -1,7 +1,7 @@
 # backend/tests/test_user_requests.py
 
 import pytest
-from django.urls import reverse  # type: ignore  # type: ignore  # type: ignore
+from django.urls import reverse
 from rest_framework.test import APIClient
 from user_requests.models import UserRequest
 from tests.factories import UserFactory, UserRequestFactory, BuildingFactory
@@ -59,5 +59,6 @@ def test_list_user_requests(auth_client, user):
 
     response = auth_client.get(reverse("userrequest-list"))
     assert response.status_code == 200
+    assert len(response.data["results"]) == 1
     assert len(response.data["results"]) == 1
     assert response.data["results"][0]["title"] == "A"  

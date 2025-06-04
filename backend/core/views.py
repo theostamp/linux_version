@@ -12,6 +12,6 @@ def get_csrf_token(request):
     """Απλό view που ενεργοποιεί το CSRF cookie"""
     return JsonResponse({"message": "CSRF cookie set"})
 
-def api_root():
+def api_root(request):
     """Προαιρετικό root endpoint της API"""
     return JsonResponse({"message": "Welcome to the API root."})
