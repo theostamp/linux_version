@@ -3,16 +3,20 @@
 import os
 import csv
 from collections import defaultdict
-from django.core.management.base import BaseCommand  # type: ignore  # type: ignore  # type: ignore
-from django.conf import settings  # type: ignore  # type: ignore  # type: ignore
+from django.core.management.base import BaseCommand
+    #
+from django.conf import settings
+   
 from user_requests.models import UrgentRequestLog
 from openpyxl import Workbook
 from openpyxl.styles import Font
-from django.core.mail import EmailMessage  # type: ignore  # type: ignore  # type: ignore
+from django.core.mail import EmailMessage
+   
 
 
 class Command(BaseCommand):
     help = 'Εξαγωγή όλων ή συγκεκριμένου μήνα/έτους urgent logs σε CSV ή Excel'
+    URGENT_LOG_HEADERS = ['Αίτημα', 'Ημερομηνία Ενεργοποίησης', 'Υποστηρικτές']
 
     def add_arguments(self, parser):
         parser.add_argument('--year', type=int, help='Έτος για φιλτράρισμα')
@@ -46,9 +50,10 @@ class Command(BaseCommand):
 
         if export_format == 'csv':
             filepath = os.path.join(export_dir, filename_base + '.csv')
+            # Removed unused 'csvfile' variable and duplicate header writing
             with open(filepath, mode='w', newline='', encoding='utf-8') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow(['Αίτημα', 'Ημερομηνία Ενεργοποίησης', 'Υποστηρικτές'])
+                writer.writerow(self.URGENT_LOG_HEADERS)
                 for log in logs:
                     writer.writerow([
                         log.user_request.title,
@@ -63,9 +68,8 @@ class Command(BaseCommand):
             ws = wb.active
             ws.title = "Urgent Requests"
 
-            # Header
-            headers = ['Αίτημα', 'Ημερομηνία Ενεργοποίησης', 'Υποστηρικτές']
-            ws.append(headers)
+            ws.append(self.URGENT_LOG_HEADERS)
+            ws.append(self.URGENT_LOG_HEADERS)
 
             for cell in ws[1]:
                 cell.font = Font(bold=True)
@@ -119,8 +123,7 @@ class Command(BaseCommand):
             ws.title = "Urgent Requests"
 
             # Header
-            headers = ['Αίτημα', 'Ημερομηνία Ενεργοποίησης', 'Υποστηρικτές']
-            ws.append(headers)
+            ws.append(self.URGENT_LOG_HEADERS)
             for cell in ws[1]:
                 cell.font = Font(bold=True)
 

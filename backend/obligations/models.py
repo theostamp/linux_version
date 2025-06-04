@@ -1,5 +1,6 @@
 # backend/obligations/models.py
-from django.db import models # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.db import models 
+   
 from buildings.models import Building
 
 

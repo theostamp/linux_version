@@ -1,4 +1,5 @@
-from django.contrib import admin # type: ignore  # type: ignore  # type: ignore  # type: ignore
+from django.contrib import admin 
+   
 from .models import Obligation
 
 @admin.register(Obligation)

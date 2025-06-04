@@ -1,5 +1,3 @@
-# backend/scripts/create_tenant_and_migrate.py
-
 import os
 import sys
 import django
@@ -13,14 +11,25 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings")
 django.setup()
 
-from django_tenants.utils import get_tenant_model, get_tenant_domain_model, schema_context, schema_exists
+from django.db import connection
 from django.core.management import call_command
+from django_tenants.utils import get_tenant_model, get_tenant_domain_model, schema_context, schema_exists
 from users.models import CustomUser
 from buildings.models import Building, BuildingMembership
 from announcements.models import Announcement
 from user_requests.models import UserRequest
 from votes.models import Vote
 from obligations.models import Obligation
+
+# --- Έλεγχος αν έχει γίνει migrate το public schema ---
+with connection.cursor() as cursor:
+    cursor.execute("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'public'")
+    public_exists = cursor.fetchone()
+
+if not public_exists:
+    print("🚨 Δεν υπάρχει το public schema ή δεν έχει γίνει migrate. Εκτέλεσε πρώτα:")
+    print("    python manage.py migrate_schemas --shared")
+    sys.exit(1)
 
 # --- CLI Arguments ---
 parser = argparse.ArgumentParser(description="Δημιουργία tenant/demo δεδομένων (django-tenants)")
@@ -32,11 +41,10 @@ parser.add_argument("--resident-email", help="Email κατοίκου", required=
 args = parser.parse_args()
 
 tenant_name = args.name.strip().lower()
-
-# --- Schema Existence Check ---
 TenantModel = get_tenant_model()
 DomainModel = get_tenant_domain_model()
 
+# --- Έλεγχος αν υπάρχει ήδη το schema ---
 if schema_exists(tenant_name):
     print(f"❌ Το schema '{tenant_name}' υπάρχει ήδη! Διέγραψέ το πρώτα αν θες να το ξαναδημιουργήσεις.")
     sys.exit(1)
@@ -44,7 +52,7 @@ if schema_exists(tenant_name):
 manager_email = args.manager_email or f"manager@{tenant_name}.com"
 resident_email = args.resident_email or f"resident@{tenant_name}.com"
 
-# Ασφαλής είσοδος password (αν δεν δόθηκε με flag)
+# --- Εισαγωγή password ---
 if args.password:
     manager_password = args.password
 else:
@@ -74,10 +82,10 @@ domain.tenant = tenant
 domain.is_primary = True
 domain.save()
 
-# --- Migrations για schema ---
+# --- Migrations για το νέο schema ---
 call_command("migrate_schemas", schema_name=tenant.schema_name, interactive=False)
 
-# --- Demo Δεδομένα ---
+# --- Demo δεδομένα ---
 with schema_context(tenant.schema_name):
     manager = CustomUser.objects.create_user(
         email=manager_email,
@@ -139,7 +147,6 @@ with schema_context(tenant.schema_name):
         title="Ανταλλακτικά θυροτηλεφώνου",
         amount=150.0,
         due_date=timezone.now() + timedelta(days=30),
-        # created_by=manager,
     )
 
 # --- Καταγραφή credentials ---

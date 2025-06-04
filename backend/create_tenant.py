@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 import os
-import django  # type: ignore  # type: ignore  # type: ignore
+import django      
 import sys
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings")
 django.setup()
 
 from tenants.models import Client, Domain
-from django.contrib.auth import get_user_model  # type: ignore  # type: ignore  # type: ignore
-from django.db import IntegrityError  # type: ignore  # type: ignore  # type: ignore
+from django.contrib.auth import get_user_model      
+from django.db import IntegrityError      
 
 User = get_user_model()
 
@@ -38,7 +38,7 @@ def create_tenant(schema_name, name, domain_url, email):
 
     # Δημιουργία διαχειριστή (Office Manager)
     try:
-        user = User.objects.create_user(
+        User.objects.create_user(
             email=email,
             password="changeme123",  # 🔒 Καλό είναι να αλλάξει μετά
             is_staff=True,

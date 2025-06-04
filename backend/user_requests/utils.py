@@ -1,8 +1,9 @@
 # backend/user_requests/utils.py
 
-from django.core.mail import EmailMultiAlternatives  # type: ignore  # type: ignore  # type: ignore
-from django.template.loader import render_to_string  # type: ignore  # type: ignore  # type: ignore
-from django.conf import settings  # type: ignore  # type: ignore  # type: ignore
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.conf import settings
+   
 
 def send_urgent_request_email(user_request):
     subject = f"🚨 Επείγον Αίτημα: {user_request.title}"

@@ -1,6 +1,6 @@
 # backend/core/permissions.py
 
-from rest_framework import permissions # type: ignore
+from rest_framework import permissions 
 
 class IsBuildingAdmin(permissions.BasePermission):
     """

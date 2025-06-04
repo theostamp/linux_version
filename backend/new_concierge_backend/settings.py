@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv  # type: ignore
+from dotenv import load_dotenv  
 from datetime import timedelta
 
 load_dotenv()
@@ -33,45 +33,39 @@ IS_PRODUCTION = os.getenv("ENV", "development") == "production"
 
 # ----------------------------------------
 # 🏘️ django-tenants split apps
+# backend/new_concierge_backend/settings.py
 # ----------------------------------------
+
 SHARED_APPS = [
-    'django_tenants',       # For django-tenants
-    'tenants',              # App for managing Client and Domain models (tenant metadata)
+    'django_tenants',
+    'tenants',
     'corsheaders',
-    # Django's own apps, generally shared
     'django.contrib.contenttypes',
-    'django.contrib.auth',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.admin',
-
-    # Your apps that need to be in the public schema
-    
-    'users',
-    'buildings',
-    'announcements',
-    'user_requests',
-    'votes',
-    'residents',     # Αν οι residents είναι global ή συνδέονται από το public
-    'obligations',   # Μεταφέρθηκε εδώ, υποθέτοντας ότι είναι shared
 ]
 
 TENANT_APPS = [
-    # Django REST framework and related tools, often per-tenant if APIs are tenant-specific
+    'django.contrib.admin',
+    'django.contrib.auth',
     'rest_framework',
- 
     'django_filters',
-
-    # Your apps that are specific to each tenant
-    'core',                 # Assuming core tenant-specific logic
-    # 'residents',          # Αφαιρέθηκε αν μεταφέρθηκε στις SHARED_APPS
-    # 'obligations',        # Αφαιρέθηκε καθώς μεταφέρθηκε στις SHARED_APPS
+    'users',
+    'buildings',         # ✅ ΕΔΩ
+    'announcements',
+    'user_requests',
+    'votes',
+    'residents',
+    'obligations',
+    'core',
 ]
+INSTALLED_APPS = SHARED_APPS + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
-# Ensure no app is listed in both SHARED_APPS and TENANT_APPS if you modify them further.
-# The following line correctly combines them for INSTALLED_APPS.
-INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
+
+
+
+
 # ----------------------------------------
 # 🧩 Middleware
 # ----------------------------------------

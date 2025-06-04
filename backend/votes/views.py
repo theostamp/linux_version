@@ -1,6 +1,6 @@
-from rest_framework import viewsets, permissions, status, exceptions  # type: ignore
-from rest_framework.decorators import action  # type: ignore
-from rest_framework.response import Response  # type: ignore
+from rest_framework import viewsets, permissions, status, exceptions  
+from rest_framework.decorators import action  
+from rest_framework.response import Response  
 from .models import Vote, VoteSubmission
 from .serializers import VoteSerializer, VoteSubmissionSerializer
 from buildings.models import Building

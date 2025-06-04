@@ -1,5 +1,7 @@
-from django.db import models # type: ignore  # type: ignore  # type: ignore  # type: ignore
-from django.conf import settings  # type: ignore # 👈 για AUTH_USER_MODEL  # type: ignore  # type: ignore  # type: ignore
+from django.db import models 
+    
+from django.conf import settings  # 👈 για AUTH_USER_MODEL
+   
 from buildings.models import Building
 
 class Announcement(models.Model):
@@ -24,7 +26,7 @@ class Announcement(models.Model):
 
     @property
     def is_currently_active(self):
-        from django.utils import timezone # type: ignore
+        from django.utils import timezone
         today = timezone.now().date()
         if self.start_date and self.end_date:
             return self.start_date <= today <= self.end_date and self.published

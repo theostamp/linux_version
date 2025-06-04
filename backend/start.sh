@@ -5,7 +5,7 @@ echo "⏳ Περιμένουμε τη βάση..."
 while ! nc -z db 5432; do sleep 1; done
 
 echo "✅ DB έτοιμη. Τρέχουν migrate + collectstatic..."
-python manage.py migrate --noinput
+
 python manage.py collectstatic --noinput
 
 # Εντοπίζουμε το Django project folder (το φάκελο με wsgi.py)

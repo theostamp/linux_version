@@ -182,7 +182,7 @@ echo "# linux_version" >> README.md
 git init
 
 git add .
-git commit -m "2/6 tenants created with create_tenants.py script"  
+git commit -m "codex initial commit"  
 git branch -M main
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
@@ -228,7 +228,7 @@ docker-compose down
 docker-compose up --build
 
 
-
+docker-compose down
 docker image prune -a
 docker image prune -a -f
 docker system prune -a --volumes

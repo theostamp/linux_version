@@ -30,9 +30,9 @@ import os
 import sys
 from datetime import timedelta
 
-import django # type: ignore
-from django.core.management import call_command # type: ignore
-from django.utils import timezone # type: ignore
+import django 
+from django.core.management import call_command 
+from django.utils import timezone 
 
 # --- Django bootstrap -------------------------------------------------------
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -41,7 +41,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings"
 
 django.setup()
 
-from django_tenants.utils import ( # type: ignore
+from django_tenants.utils import ( 
     get_tenant_model,
     get_tenant_domain_model,
     schema_context,

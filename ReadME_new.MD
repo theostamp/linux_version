@@ -4,7 +4,7 @@ docker compose exec backend python scripts/initial_user_setup.py
 <!-- add new tenant     -->
  docker compose exec backend   python scripts/create_tenant_auto.py neo          --manager-email manager@neo.com          --manager-password neo12345     # προαιρετικό
 
-find . -name "*.py" -exec sed -i '/^from django\|^import django/ s/$/  # type: ignore/' {} +
+find . -name "*.py" -exec sed -i '/^from django\|^import django/ s/$/  /' {} +
 
 
 docker compose exec backend python manage.py migrate_schemas --shared

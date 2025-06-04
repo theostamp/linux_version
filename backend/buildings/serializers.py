@@ -1,5 +1,5 @@
 # backend/buildings/serializers.py
-from rest_framework import serializers # type: ignore
+from rest_framework import serializers 
 from .models import Building
 from users.models import CustomUser
 from .models import BuildingMembership

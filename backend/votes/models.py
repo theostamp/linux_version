@@ -1,14 +1,14 @@
 # backend/votes/models.py
-from django.db import models # type: ignore
-  # type: ignore  # type: ignore  # type: ignore
+from django.db import models 
+      
 from buildings.models import Building
-from django.conf import settings # type: ignore
-  # type: ignore  # type: ignore  # type: ignore
+from django.conf import settings 
+      
 
-from django.db import models # type: ignore
-  # type: ignore  # type: ignore  # type: ignore
-from django.conf import settings  # type: ignore # για AUTH_USER_MODEL
-  # type: ignore  # type: ignore  # type: ignore
+from django.db import models 
+      
+from django.conf import settings   # για AUTH_USER_MODEL
+      
 from buildings.models import Building
 
 class Vote(models.Model):

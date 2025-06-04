@@ -1,12 +1,15 @@
 # backend/api/urls.py
 
-from django.urls import path, include # type: ignore  # type: ignore
-from rest_framework.routers import DefaultRouter # type: ignore
+from django.urls import path, include 
+ 
+from rest_framework.routers import DefaultRouter
 from announcements.views import AnnouncementViewSet
 from votes.views import VoteViewSet
 from user_requests.views import UserRequestViewSet  
-from django.views.decorators.csrf import ensure_csrf_cookie # type: ignore  # type: ignore
-from django.http import JsonResponse # type: ignore  # type: ignore
+from django.views.decorators.csrf impf_cignore
+ 
+from django.http import JsonResponse
+ 
 
 
 

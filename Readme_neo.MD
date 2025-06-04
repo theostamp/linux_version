@@ -1,4 +1,7 @@
 
+# Καθάρισε όλα τα migrations εκτός από __init__.py
+find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+find . -path "*/migrations/*.pyc" -delete
 
 <!-- Με όλα default (θα ζητήσει μόνο το password του manager) -->
 

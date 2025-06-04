@@ -1,16 +1,16 @@
 # backend/buildings/views.py
 
-from rest_framework import viewsets, permissions, status  # type: ignore
-from rest_framework.response import Response  # type: ignore
-from rest_framework.decorators import action  # type: ignore
-from django.views.decorators.csrf import ensure_csrf_cookie  # type: ignore
-from django.http import JsonResponse  # type: ignore
-from django.utils import timezone  # type: ignore
+from rest_framework import viewsets, permissions, status  
+from rest_framework.response import Response  
+from rest_framework.decorators import action  
+from django.views.decorators.csrf import ensure_csrf_cookie  
+from django.http import JsonResponse  
+from django.utils import timezone  
 
 from .models import Building, BuildingMembership
 from .serializers import BuildingSerializer, BuildingMembershipSerializer
 from users.models import CustomUser
-from rest_framework.permissions import IsAuthenticated  # type: ignore
+from rest_framework.permissions import IsAuthenticated  
 
 
 @ensure_csrf_cookie
