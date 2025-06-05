@@ -20,7 +20,7 @@ from django.core.management import call_command
 TENANT_CREATE_TEMPLATE = "admin/tenant_create.html"
 
 class TenantCreatorAdminView(admin.ModelAdmin):
-    change_list_template = TENANT_CREATE_TEMPLATE
+    change_list_template = "admin/tenants/change_list_with_create_button.html"
 
     def get_urls(self):
         urls = super().get_urls()

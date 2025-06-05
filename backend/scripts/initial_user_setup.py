@@ -1,9 +1,14 @@
 # backend/scripts/initial_user_setup.py
+#
+# Bootstraps the public schema by creating a default tenant, superuser and
+# permission groups.  It also runs `migrate_schemas --shared` automatically so
+# the required tables (e.g. `auth_group`) exist.
 
 import os, sys, django
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings")
 django.setup()
+from django.core.management import call_command
 
 from tenants.models import Client, Domain
 from django.contrib.auth import get_user_model
@@ -41,7 +46,16 @@ def ensure_groups_and_permissions():
     print("✅ Groups ensured.")
 
 if __name__ == "__main__":
+    # Run shared migrations to ensure auth tables exist
+    call_command("migrate_schemas", shared=True, interactive=False, verbosity=0)
     ensure_public_tenant()
     ensure_superuser()
     ensure_groups_and_permissions()
     print("\n✅ Public schema bootstrap complete.")
+    print("You can now log in with the superuser credentials.")
+    print(f"Superuser email: {SUPERUSER_EMAIL}")
+    print(f"Superuser password: {SUPERUSER_PASSWORD}")
+    print(f"Public tenant domain: {TENANT_DOMAIN}")
+    print("Visit http://localhost:8000/admin to access the admin interface.")
+
+          

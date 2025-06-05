@@ -1,3 +1,4 @@
+# backend/new_concierge_backend/settings.py
 import os
 from pathlib import Path
 from dotenv import load_dotenv  
@@ -36,10 +37,11 @@ IS_PRODUCTION = os.getenv("ENV", "development") == "production"
 # backend/new_concierge_backend/settings.py
 # ----------------------------------------
 SHARED_APPS = [
-    'django_tenants',      # ⬅ must be first
-    'tenants',     # ⬅ Client, Domain models
+    'django_tenants',       # must be first
+    'tenants',              # Client, Domain models
+    'django.contrib.admin', # ✅ μεταφέρθηκε εδώ
     'django.contrib.auth',
-    'users',               # ⬅ CustomUser για superuser στο public
+    'users',
 
     'corsheaders',
     'django.contrib.contenttypes',
@@ -49,12 +51,9 @@ SHARED_APPS = [
 ]
 
 TENANT_APPS = [
-    'django.contrib.admin',
-    
     'rest_framework',
     'django_filters',
 
-    # 👉 Όλα τα apps ανά tenant:
     'buildings',
     'announcements',
     'user_requests',
@@ -63,6 +62,7 @@ TENANT_APPS = [
     'obligations',
     'core',
 ]
+
 
 INSTALLED_APPS = SHARED_APPS + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
