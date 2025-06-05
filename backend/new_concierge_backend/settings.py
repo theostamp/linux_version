@@ -35,10 +35,12 @@ IS_PRODUCTION = os.getenv("ENV", "development") == "production"
 # 🏘️ django-tenants split apps
 # backend/new_concierge_backend/settings.py
 # ----------------------------------------
-
 SHARED_APPS = [
-    'django_tenants',
-    'tenants',
+    'django_tenants',      # ⬅ must be first
+    'tenants',     # ⬅ Client, Domain models
+    'django.contrib.auth',
+    'users',               # ⬅ CustomUser για superuser στο public
+
     'corsheaders',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -48,11 +50,12 @@ SHARED_APPS = [
 
 TENANT_APPS = [
     'django.contrib.admin',
-    'django.contrib.auth',
+    
     'rest_framework',
     'django_filters',
-    'users',
-    'buildings',         # ✅ ΕΔΩ
+
+    # 👉 Όλα τα apps ανά tenant:
+    'buildings',
     'announcements',
     'user_requests',
     'votes',
@@ -60,6 +63,7 @@ TENANT_APPS = [
     'obligations',
     'core',
 ]
+
 INSTALLED_APPS = SHARED_APPS + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 
@@ -110,7 +114,10 @@ PUBLIC_SCHEMA_NAME = 'public'
 # ----------------------------------------
 # 🔑 Custom auth
 # ----------------------------------------
-AUTH_USER_MODEL = 'users.CustomUser'
+
+AUTH_USER_MODEL = 'users.CustomUser'  # Προσαρμοσμένο μοντέλο χρήστη
+
+# ----------------------------------------
 AUTHENTICATION_BACKENDS = [
     'users.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
