@@ -2,12 +2,23 @@
 
 from django.contrib import admin
 from .models import Client, Domain
+from .admin_views import TenantCreatorAdminView  # ✅ αυτό είναι το custom
+from django.contrib import messages
+from django.utils.safestring import mark_safe
 
 @admin.register(Client)
-class ClientAdmin(admin.ModelAdmin):
+class ClientAdmin(TenantCreatorAdminView):  # ✅ ΠΡΟΣΟΧΗ: κληρονομεί από custom view
     list_display = ("schema_name", "name", "status", "paid_until", "on_trial", "is_active", "created_on")
     list_filter = ("on_trial", "is_active")
-    actions = ["activate_tenants", "deactivate_tenants", "start_trial", "end_trial", "extend_payment"]
+    search_fields = ("schema_name", "name")
+    ordering = ("-created_on",)
+    actions = [
+        "activate_tenants",
+        "deactivate_tenants",
+        "start_trial",
+        "end_trial",
+        "extend_payment",
+    ]
 
     def activate_tenants(self, request, queryset):
         updated = queryset.update(is_active=True)
@@ -37,3 +48,13 @@ class ClientAdmin(admin.ModelAdmin):
             tenant.save()
         self.message_user(request, "📅 Ανανεώθηκε η πληρωμή κατά 30 μέρες για τους επιλεγμένους tenants.")
     extend_payment.short_description = "Προσθήκη 30 ημερών πληρωμής"
+
+    def add_view(self, request, form_url="", extra_context=None):
+        messages.warning(
+            request,
+            mark_safe(
+                "⚠️ <b>Μην προσθέτετε tenant από εδώ.</b> "
+                "Χρησιμοποιήστε το κουμπί <b>➕ Δημιουργία Νέου Tenant</b> στη λίστα tenants."
+            )
+        )
+        return super().add_view(request, form_url, extra_context)

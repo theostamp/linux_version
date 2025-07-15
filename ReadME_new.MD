@@ -1,6 +1,14 @@
 
 
 docker compose exec backend python scripts/initial_user_setup.py
+docker compose exec backend python manage.py migrate 
+docker compose exec backend python manage.py makemigrations
+
+
+docker compose exec backend python manage.py migrate_schemas --shared
+docker compose exec backend python manage.py migrate_schemas --tenant --schema=public
+
+
 <!-- add new tenant     -->
  docker compose exec backend   python scripts/create_tenant_auto.py neo          --manager-email manager@neo.com          --manager-password neo12345     # προαιρετικό
 

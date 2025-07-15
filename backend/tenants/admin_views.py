@@ -99,17 +99,19 @@ class TenantCreatorAdminView(admin.ModelAdmin):
                     title="Demo ψηφοφορία",
                     description="Συμμετοχή στη demo ψηφοφορία.",
                     building=building,
-                    created_by=manager,
-                    expires_at=timezone.now() + timedelta(days=5),
+                    creator=manager,
+                    start_date=timezone.now().date(),
+                    end_date=timezone.now().date() + timedelta(days=5),
                 )
+
 
                 Obligation.objects.create(
                     building=building,
                     title="Demo οφειλή",
                     amount=50.0,
-                    due_date=timezone.now() + timedelta(days=30),
-                    created_by=manager,
+                    due_date=timezone.now().date() + timedelta(days=30),
                 )
+
 
             messages.success(request, f"✅ Ο tenant '{tenant_name}' δημιουργήθηκε με επιτυχία.")
             return HttpResponseRedirect("/admin/tenants/client/")
