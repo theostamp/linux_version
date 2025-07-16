@@ -656,3 +656,14 @@ export async function fetchResidents(buildingId: number) {
     ? response.data.filter((m) => m.role === 'resident')
     : [];
 }
+
+// ...μέσα στη handleTokenRefresh, αμέσως μετά το localStorage.setItem('access', data.access);
+
+if (typeof window !== "undefined") {
+  // Next.js App Router: soft reload
+  import("next/navigation").then(({ useRouter }) => {
+    // ΠΡΟΣΟΧΗ: useRouter είναι hook, δεν μπορεί να κληθεί εκτός component.
+    // Εναλλακτικά, κάνε:
+    // window.location.reload(); // fallback αν δεν έχεις πρόσβαση σε router instance
+  });
+}

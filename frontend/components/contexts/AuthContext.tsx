@@ -14,6 +14,7 @@ import {
   loginUser,
   logoutUser as apiLogoutUser,
 } from '@/lib/api';
+import FullPageSpinner from '@/components/FullPageSpinner';
 
 interface AuthCtx {
   user: User | null;
@@ -27,9 +28,19 @@ interface AuthCtx {
 const AuthContext = createContext<AuthCtx | undefined>(undefined);
 
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [userState, setUserState] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
+
+  // Always sync user to localStorage
+  const setUser = useCallback((user: User | null) => {
+    setUserState(user);
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
+    }
+  }, []);
 
   const performClientLogout = useCallback(() => {
     localStorage.removeItem('access');
@@ -37,17 +48,14 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     localStorage.removeItem('user');
     setUser(null);
     console.log('AuthContext: Client-side logout performed.');
-  }, []);
+  }, [setUser]);
 
   const login = useCallback(async (email: string, password: string) => {
     const { user: loggedInUser } = await loginUser(email, password);
-
-    // ⚠️ Περιμένουμε να αποθηκευτεί και να "σταθεροποιηθεί" το access token
     await new Promise((resolve) => setTimeout(resolve, 0));
-
     setUser(loggedInUser);
-    setIsAuthReady(true); // ✅ σηματοδοτεί ότι είμαστε έτοιμοι
-  }, []);
+    // Do not set isAuthReady here; let the effect handle it
+  }, [setUser]);
 
   const logout = useCallback(async () => {
     try {
@@ -78,7 +86,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
           const parsedUser = JSON.parse(cachedUser) as User;
           setUser(parsedUser);
         } catch (e) {
-          console.warn('AuthContext: Failed to parse cached user from localStorage.', e);
+          console.error('AuthContext: Failed to parse cached user', e);
           localStorage.removeItem('user');
           setUser(null);
         }
@@ -88,11 +96,8 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         const me = await getCurrentUser();
         setUser(me);
       } catch (error) {
-        console.warn(
-          'AuthContext: getCurrentUser failed. Relying on axios interceptor to refresh token if needed.',
-          error
-        );
-        // Δεν κάνουμε logout εδώ! Περιμένουμε το interceptor να διαχειριστεί το token refresh.
+        // Wait for axios interceptor to handle refresh
+        console.error('AuthContext: Failed to fetch current user', error);
       } finally {
         setIsLoading(false);
         setIsAuthReady(true);
@@ -100,12 +105,17 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     };
 
     loadUserOnMount();
-  }, [performClientLogout]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const contextValue = React.useMemo(
-    () => ({ user, login, logout, isLoading, isAuthReady, setUser }),
-    [user, login, logout, isLoading, isAuthReady]
+    () => ({ user: userState, login, logout, isLoading, isAuthReady, setUser }),
+    [userState, login, logout, isLoading, isAuthReady, setUser]
   );
+
+  if (isLoading) {
+    return <FullPageSpinner message="Συνδέουμε τον λογαριασμό..." />;
+  }
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }

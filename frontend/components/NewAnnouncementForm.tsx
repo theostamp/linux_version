@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createAnnouncement, CreateAnnouncementPayload } from '@/lib/api';
 import { toast } from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 type Props = {
   readonly buildingId: number;
@@ -18,6 +19,7 @@ export default function NewAnnouncementForm({ buildingId }: Props) {
   const [isActive, setIsActive] = useState(true); // ✅ default true
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,6 +43,7 @@ export default function NewAnnouncementForm({ buildingId }: Props) {
       };
 
       await createAnnouncement(payload);
+      queryClient.invalidateQueries({ queryKey: ['announcements', buildingId] });
 
       toast.success('Η ανακοίνωση δημιουργήθηκε με επιτυχία');
       router.push('/announcements');

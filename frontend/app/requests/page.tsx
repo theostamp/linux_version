@@ -9,6 +9,7 @@ import { useRequests } from '@/hooks/useRequests';
 import RequestCard from '@/components/RequestCard';
 import RequestSkeleton from '@/components/RequestSkeleton';
 import SupportButton from '@/components/SupportButton';
+import { useQueryClient } from '@tanstack/react-query';
 
 const REQUEST_TYPES = [
   { value: 'damage', label: 'Ζημιά' },
@@ -20,6 +21,7 @@ export default function NewRequestPage() {
   const router = useRouter();
   const { currentBuilding } = useBuilding();
   const { data: requests, isLoading: loadingRequests } = useRequests(currentBuilding?.id);
+  const queryClient = useQueryClient();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -46,7 +48,7 @@ export default function NewRequestPage() {
       return;
     }
 
-    setSubmitting(true);
+   setSubmitting(true);
     try {
       await createUserRequest({
         title: title.trim(),
@@ -55,6 +57,7 @@ export default function NewRequestPage() {
         type: type || undefined,
         is_urgent: isUrgent || undefined,
       });
+      queryClient.invalidateQueries({ queryKey: ['requests', currentBuilding.id] });
       router.push('/requests');
     } catch (err: any) {
       const msg = err.response?.data

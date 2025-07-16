@@ -9,26 +9,33 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redirectTo?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const finalRedirect = searchParams.get('redirectTo') ?? redirectTo;
   const { login } = useAuth();
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setStatus('Παρακαλώ περιμένετε...');
     try {
       await login(email, password);
       toast.success('Επιτυχής σύνδεση!');
+      setStatus('Επιτυχής σύνδεση! Μεταφέρεστε...');
+      queryClient.clear();
       router.push(finalRedirect);
     } catch (err: any) {
       console.error('Login error:', err);
       toast.error(err.message ?? 'Κάτι πήγε στραβά!');
+      setStatus(err.message ?? 'Σφάλμα σύνδεσης');
     } finally {
       setLoading(false);
     }
@@ -38,7 +45,7 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
     <Card className="max-w-sm mx-auto mt-10 shadow-xl">
       <CardContent className="p-6 space-y-4">
         <h2 className="text-xl font-semibold text-center">Σύνδεση</h2>
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4">␊
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
@@ -64,6 +71,9 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Φόρτωση...' : 'Σύνδεση'}
           </Button>
+          {status && (
+            <p className="text-center text-sm text-gray-600 mt-2">{status}</p>
+          )}
         </form>
       </CardContent>
     </Card>

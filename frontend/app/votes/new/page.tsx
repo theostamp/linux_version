@@ -10,11 +10,14 @@ import NewVoteForm from '@/components/NewVoteForm';
 import { useSuperUserGuard } from '@/hooks/useSuperUserGuard';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function NewVotePage() {
   const { currentBuilding } = useBuilding();
   const router = useRouter();
   const { isAccessAllowed, isLoading } = useSuperUserGuard();
+
+  const queryClient = useQueryClient();
 
   if (isLoading) {
     return <p className="p-4">Έλεγχος δικαιωμάτων...</p>;
@@ -33,6 +36,7 @@ export default function NewVotePage() {
   async function handleSubmit(data: any) {
     try {
       await createVote({ ...data, building: buildingId });
+      queryClient.invalidateQueries({ queryKey: ['votes', buildingId] });
       toast.success('Η ψηφοφορία δημιουργήθηκε με επιτυχία');
       router.push('/votes');
     } catch (err: any) {
