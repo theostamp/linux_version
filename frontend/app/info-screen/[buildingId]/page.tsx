@@ -1,20 +1,13 @@
 'use client';
 
-import { useParams } from 'next/navigation';
 import { usePublicInfo } from '@/hooks/usePublicInfo';
 import AnnouncementsCarousel from '@/components/AnnouncementsCarousel';
 import PublicInfoSidebar from '@/components/PublicInfoSidebar';
-import ErrorMessage from '@/components/ErrorMessage';
 
-export default function InfoScreenPage() {
-  const { buildingId: buildingIdParam } = useParams<{ buildingId: string }>();
-  const buildingId = Number(buildingIdParam);
-  const { data, isLoading, isError } = usePublicInfo(buildingId);
+export default function InfoScreenPage({ params }: any) {
+  const buildingId = Number(params.buildingId);
+  const { data } = usePublicInfo(buildingId);
   const announcements = data?.announcements ?? [];
-
-  if (!buildingId) return <p className="p-4">Μη έγκυρο κτήριο.</p>;
-  if (isLoading) return <p className="p-4">Φόρτωση...</p>;
-  if (isError || !data) return <ErrorMessage message="Αποτυχία φόρτωσης" />;
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">

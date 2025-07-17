@@ -22,8 +22,7 @@ export default function NewsTicker() {
             {item}
           </span>
         ))}
-        </div>
-      );
+      </div>
     </div>
   );
 }

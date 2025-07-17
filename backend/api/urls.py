@@ -22,8 +22,7 @@ router.register("user-requests", UserRequestViewSet, basename="userrequest")
 def csrf_token_view(request):
     return JsonResponse({"message": "CSRF cookie set"})
   
-urlpatterns = [
-    path('api/', include(router.urls)),
+urlpatterns = [    path('api/', include(router.urls)),
     # π.χ. path('api-auth/', include('rest_framework.urls')),
     path('api/csrf/', csrf_token_view, name='csrf-token'),
     path('api/public-info/', public_info, name='public-info'),

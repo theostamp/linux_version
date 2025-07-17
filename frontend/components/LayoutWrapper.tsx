@@ -6,7 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import { Toaster } from 'react-hot-toast';
 import NewsTicker from '@/components/NewsTicker';
 
-export default function LayoutWrapper({ children }: { children: ReactNode }) {
+export default function LayoutWrapper({ children }: { readonly children: ReactNode }) {
   const pathname = usePathname();
   const isInfoScreen = pathname?.startsWith('/info-screen');
 
