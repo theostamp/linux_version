@@ -7,8 +7,8 @@ import PublicInfoSidebar from '@/components/PublicInfoSidebar';
 import ErrorMessage from '@/components/ErrorMessage';
 
 export default function InfoScreenPage() {
-  const params = useParams();
-  const buildingId = Number(params?.buildingId);
+  const { buildingId: buildingIdParam } = useParams<{ buildingId: string }>();
+  const buildingId = Number(buildingIdParam);
   const { data, isLoading, isError } = usePublicInfo(buildingId);
   const announcements = data?.announcements ?? [];
 

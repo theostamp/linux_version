@@ -1,12 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { fetchPublicInfo } from '@/lib/api';
 
 export function usePublicInfo(buildingId?: number) {
   return useQuery({
     queryKey: ['public-info', buildingId],
-    queryFn: async () => {
-      const res = await api.get(`/public-info/?building=${buildingId}`);
-      return res.data;
+    queryFn: () => {
+      if (!buildingId) {
+        throw new Error('Missing building ID');
+      }
+      return fetchPublicInfo(buildingId);
     },
     enabled: !!buildingId,
   });

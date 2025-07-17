@@ -1,5 +1,3 @@
-# backend/api/urls.py
-
 from django.urls import path, include 
  
 from rest_framework.routers import DefaultRouter
@@ -27,7 +25,6 @@ def csrf_token_view(request):
 urlpatterns = [
     path('api/', include(router.urls)),
     # π.χ. path('api-auth/', include('rest_framework.urls')),
-    path('api/', include(router.urls)),
     path('api/csrf/', csrf_token_view, name='csrf-token'),
     path('api/public-info/', public_info, name='public-info'),
 ]
