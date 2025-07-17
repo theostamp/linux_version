@@ -19,6 +19,7 @@ urlpatterns = [
     path('api/user-requests/', include('user_requests.urls')),
     path('api/obligations/', include('obligations.urls')),
     path('api/votes/', include('votes.urls')),
+    path('api/public-info/', include('public_info.urls')),
 
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),

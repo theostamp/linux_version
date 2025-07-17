@@ -60,6 +60,7 @@ TENANT_APPS = [
     'votes',
     'residents',
     'obligations',
+    'public_info',
     'core',
 ]
 

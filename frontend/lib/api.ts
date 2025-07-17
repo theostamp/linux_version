@@ -414,6 +414,15 @@ export async function createVote(payload: CreateVotePayload): Promise<Vote> {
   return data;
 }
 
+export interface PublicInfoData {
+  announcements: Announcement[];
+  votes: Vote[];
+}
+
+export async function fetchPublicInfo(buildingId: number): Promise<PublicInfoData> {
+  const { data } = await api.get<PublicInfoData>(`/public-info/${buildingId}/`);
+  return data;
+}
 export async function fetchRequests(filters: { status?: string; buildingId?: number } = {}): Promise<UserRequest[]> {
   const params = new URLSearchParams();
   if (filters.status) params.append('status', filters.status);
