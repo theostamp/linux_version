@@ -1,16 +1,24 @@
-// 
 import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
+const fallbackQuotes = [
+  { content: 'Εν αρχή ην ο λόγος.' },
+  { content: 'Keep it simple.' },
+  { content: 'Simplicity is the ultimate sophistication.' },
+];
 
 export async function GET() {
   try {
     const res = await fetch('https://api.quotable.io/random');
-    if (!res.ok) {
-      return NextResponse.json({ error: 'Failed to fetch quote' }, { status: res.status });
+    if (res.ok) {
+      const data = await res.json();
+      return NextResponse.json(data);
     }
-    const data = await res.json();
-    return NextResponse.json(data);
   } catch (err) {
     console.error('quote api error', err);
-    return NextResponse.json({ error: 'Error fetching quote' }, { status: 500 });
   }
+
+  const random = Math.floor(Math.random() * fallbackQuotes.length);
+  return NextResponse.json(fallbackQuotes[random]);
 }
