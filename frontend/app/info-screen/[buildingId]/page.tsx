@@ -1,12 +1,18 @@
 'use client';
 
+import { use } from 'react';
 import { usePublicInfo } from '@/hooks/usePublicInfo';
 import AnnouncementsCarousel from '@/components/AnnouncementsCarousel';
 import PublicInfoSidebar from '@/components/PublicInfoSidebar';
 
-export default function InfoScreenPage({ params }: any) {
-  const buildingId = Number(params.buildingId);
-  const { data } = usePublicInfo(buildingId);
+export default function InfoScreenPage({
+  params,
+}: {
+  params: Promise<{ buildingId: string }>;
+}) {
+  const { buildingId } = use(params);
+  const numericId = Number(buildingId);
+  const { data } = usePublicInfo(numericId);
   const announcements = data?.announcements ?? [];
 
   return (
