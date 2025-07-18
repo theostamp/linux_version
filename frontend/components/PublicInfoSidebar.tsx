@@ -40,7 +40,7 @@ export default function PublicInfoSidebar() {
         const { temperature, weathercode } = wData.current_weather;
         setWeather(`${temperature}°C - ${codeToText(weathercode)}`);
 
-        const msgResp = await fetch('https://api.quotable.io/random');
+        const msgResp = await fetch('/api/quote');
         if (!msgResp.ok) throw new Error('message');
         const msgData = await msgResp.json();
         setMessage(msgData.content);
