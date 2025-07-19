@@ -3,7 +3,7 @@ import axios, { AxiosResponse, AxiosRequestHeaders, AxiosError, InternalAxiosReq
 import type { UserRequest } from '@/types/userRequests';
 export type { UserRequest };
 import type { User } from '@/types/user';
-
+import { apiPublic } from './apiPublic';
 
 
 
@@ -420,7 +420,7 @@ export interface PublicInfoData {
 }
 
 export async function fetchPublicInfo(buildingId: number): Promise<PublicInfoData> {
-  const { data } = await api.get<PublicInfoData>(`/public-info/${buildingId}/`);
+  const { data } = await apiPublic.get(`/public-info/${buildingId}/`);
   return data;
 }
 export async function fetchRequests(filters: { status?: string; buildingId?: number } = {}): Promise<UserRequest[]> {

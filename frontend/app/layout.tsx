@@ -1,9 +1,6 @@
 import './globals.css';
 import React from 'react';
-import { AuthProvider } from '@/components/contexts/AuthContext';
-import { BuildingProvider } from '@/components/contexts/BuildingContext';
-import { ReactQueryProvider } from '@/components/contexts/ReactQueryProvider'; // ✅
-import LayoutWrapper from '@/components/LayoutWrapper';
+import AppProviders from '@/components/AppProviders';
 
 export const metadata = {
   title: 'My App',
@@ -14,13 +11,7 @@ export default function RootLayout({ children }: { readonly children: React.Reac
   return (
     <html lang="el">
       <body>
-        <ReactQueryProvider>
-          <AuthProvider>
-            <BuildingProvider>
-              <LayoutWrapper>{children}</LayoutWrapper>
-            </BuildingProvider>
-          </AuthProvider>
-        </ReactQueryProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
