@@ -5,4 +5,5 @@ export type Vote = {
   start_date: string;
   end_date: string;
   building: number;
+  choices: string[];
 };

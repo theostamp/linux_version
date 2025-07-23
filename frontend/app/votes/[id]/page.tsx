@@ -48,7 +48,7 @@ export default function VoteDetailPage() {
           ✅ Η ψήφος σας: <strong>{myVote.choice}</strong>
         </div>
       ) : (
-        isActive && (
+        isActive && vote.choices && (
           <VoteSubmitForm
             voteId={vote.id}
             choices={vote.choices}
@@ -62,7 +62,7 @@ export default function VoteDetailPage() {
         )
       )}
 
-      {results && (
+      {results && vote.choices && (
         <div className="mt-6">
           <h2 className="text-xl font-semibold mb-2">📊 Αποτελέσματα</h2>
           <div className="space-y-3">

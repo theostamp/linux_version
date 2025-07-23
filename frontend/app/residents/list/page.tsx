@@ -5,9 +5,11 @@ import { useBuilding } from "@/components/contexts/BuildingContext";
 import BuildingFilterIndicator from "@/components/BuildingFilterIndicator";
 import Link from "next/link";
 import { Resident } from "@/lib/api";
+import { useState, useMemo } from "react";
 
 export default function ResidentsListPage() {
   const { currentBuilding, selectedBuilding } = useBuilding();
+  const [searchTerm, setSearchTerm] = useState("");
   
   // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα, ή το currentBuilding αν δεν έχει επιλεγεί κάτι
   const buildingId = selectedBuilding?.id || currentBuilding?.id;
@@ -22,12 +24,42 @@ export default function ResidentsListPage() {
   
   const { data: residents, isLoading, error } = useResidents(buildingId);
 
+  // Φιλτράρισμα και ταξινόμηση των κατοίκων
+  const filteredAndSortedResidents = useMemo(() => {
+    if (!residents || !Array.isArray(residents)) return [];
+    
+    let filtered = residents;
+    
+    // Φιλτράρισμα με βάση το search term
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      filtered = residents.filter((resident: Resident) => 
+        resident.user_first_name.toLowerCase().includes(term) ||
+        resident.user_last_name.toLowerCase().includes(term) ||
+        resident.user_email.toLowerCase().includes(term) ||
+        resident.apartment.toLowerCase().includes(term) ||
+        resident.phone?.toLowerCase().includes(term) ||
+        resident.role.toLowerCase().includes(term)
+      );
+    }
+    
+    // Ταξινόμηση αλφαβητικά (πρώτα επώνυμο, μετά όνομα)
+    return filtered.sort((a: Resident, b: Resident) => {
+      const lastNameA = a.user_last_name.toLowerCase();
+      const lastNameB = b.user_last_name.toLowerCase();
+      
+      if (lastNameA !== lastNameB) {
+        return lastNameA.localeCompare(lastNameB);
+      }
+      
+      // Αν τα επώνυμα είναι ίδια, ταξινόμηση με βάση το όνομα
+      return a.user_first_name.toLowerCase().localeCompare(b.user_first_name.toLowerCase());
+    });
+  }, [residents, searchTerm]);
+
   if (!buildingToUse) return <p>Δεν έχει επιλεγεί κάποιο κτίριο.</p>;
   if (isLoading) return <p>Φόρτωση...</p>;
   if (error) return <p>Σφάλμα φόρτωσης.</p>;
-
-  // Βεβαιωνόμαστε ότι το residents είναι array
-  const residentsArray = Array.isArray(residents) ? residents : [];
 
   const getRoleLabel = (role: string) => {
     switch (role) {
@@ -70,20 +102,69 @@ export default function ResidentsListPage() {
         )}
         <div className="mt-2 ml-6">
           <span className="text-xs text-gray-500">
-            Σύνολο κατοίκων: <strong>{residentsArray.length}</strong>
+            Σύνολο κατοίκων: <strong>{filteredAndSortedResidents.length}</strong>
+            {searchTerm && residents && Array.isArray(residents) && (
+              <span className="ml-2">
+                (από {residents.length} συνολικά)
+              </span>
+            )}
           </span>
         </div>
       </div>
 
-      {residentsArray.length === 0 ? (
+      {/* Πεδίο Αναζήτησης */}
+      <div className="mb-6">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Αναζήτηση κατοίκων (όνομα, επώνυμο, email, διαμέρισμα, τηλέφωνο, ρόλος)..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            >
+              <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {filteredAndSortedResidents.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-gray-500 mb-4">Δεν υπάρχουν κάτοικοι σε αυτό το κτίριο.</p>
-          <Link 
-            href="/residents/new"
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition-colors"
-          >
-            Προσθήκη Πρώτου Κατοίκου
-          </Link>
+          {searchTerm ? (
+            <>
+              <p className="text-gray-500 mb-4">
+                Δεν βρέθηκαν κάτοικοι που να ταιριάζουν με την αναζήτηση "{searchTerm}".
+              </p>
+              <button
+                onClick={() => setSearchTerm("")}
+                className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+              >
+                Καθαρισμός Αναζήτησης
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-gray-500 mb-4">Δεν υπάρχουν κάτοικοι σε αυτό το κτίριο.</p>
+              <Link 
+                href="/residents/new"
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+              >
+                Προσθήκη Πρώτου Κατοίκου
+              </Link>
+            </>
+          )}
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -99,7 +180,7 @@ export default function ResidentsListPage() {
               </tr>
             </thead>
             <tbody>
-              {residentsArray.map((res: Resident) => (
+              {filteredAndSortedResidents.map((res: Resident) => (
                 <tr key={res.id} className="hover:bg-gray-50">
                   <td className="border px-4 py-3">
                     {res.user_first_name} {res.user_last_name}

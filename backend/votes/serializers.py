@@ -6,6 +6,7 @@ from buildings.models import Building
 class VoteSerializer(serializers.ModelSerializer):
     building = serializers.PrimaryKeyRelatedField(queryset=Building.objects.all())
     creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    choices = serializers.SerializerMethodField()
 
     class Meta:
         model = Vote
@@ -18,8 +19,12 @@ class VoteSerializer(serializers.ModelSerializer):
             'created_at',
             'building',
             'creator',
+            'choices',
         ]
-        read_only_fields = ['id', 'created_at', 'creator']
+        read_only_fields = ['id', 'created_at', 'creator', 'choices']
+
+    def get_choices(self, obj):
+        return [choice[0] for choice in VoteSubmission.CHOICES]
 
 
 class VoteSubmissionSerializer(serializers.ModelSerializer):
