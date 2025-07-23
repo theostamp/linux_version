@@ -11,16 +11,18 @@ def _validate_building_param(building_param):
         raise exceptions.ValidationError({"building": "Το ID του κτηρίου πρέπει να είναι αριθμός."})
 
 def _filter_for_superuser(base_queryset, building_param, building_field):
-    if building_param:
+    if building_param and building_param != 'null':
         building_id = _validate_building_param(building_param)
         print(f"Superuser filtered by building_id: {building_id}")
         return base_queryset.filter(**{f"{building_field}_id": building_id})
+    # Αν building_param είναι null ή 'null', επιστρέφουμε όλα τα κτίρια
+    print("Superuser: showing all buildings")
     return base_queryset
 
 def _filter_for_manager(base_queryset, user, building_param, building_field):
     managed_ids = list(Building.objects.filter(manager=user).values_list("id", flat=True))
     print(f"Managed buildings: {managed_ids}")
-    if building_param:
+    if building_param and building_param != 'null':
         building_id = _validate_building_param(building_param)
         if building_id in managed_ids:
             return base_queryset.filter(**{f"{building_field}_id": building_id})
@@ -28,6 +30,8 @@ def _filter_for_manager(base_queryset, user, building_param, building_field):
             print("Manager δεν διαχειρίζεται αυτό το κτήριο.")
             return base_queryset.none()
     else:
+        # Αν building_param είναι null ή 'null', επιστρέφουμε όλα τα κτίρια που διαχειρίζεται
+        print("Manager: showing all managed buildings")
         return base_queryset.filter(**{f"{building_field}_id__in": managed_ids})
 
 def _filter_for_resident(base_queryset, user, building_param, building_field):
@@ -38,7 +42,7 @@ def _filter_for_resident(base_queryset, user, building_param, building_field):
             return base_queryset.none()
         resident_building_id = profile.building.id
         print(f"Resident building id: {resident_building_id}")
-        if building_param:
+        if building_param and building_param != 'null':
             building_id = _validate_building_param(building_param)
             if building_id == resident_building_id:
                 return base_queryset.filter(**{f"{building_field}_id": building_id})
@@ -46,6 +50,8 @@ def _filter_for_resident(base_queryset, user, building_param, building_field):
                 print("Resident δεν ανήκει σε αυτό το κτήριο.")
                 return base_queryset.none()
         else:
+            # Αν building_param είναι null ή 'null', επιστρέφουμε μόνο το κτίριο του resident
+            print("Resident: showing only their building")
             return base_queryset.filter(**{f"{building_field}_id": resident_building_id})
     except (AttributeError, ObjectDoesNotExist) as e:
         print(f"Exception in resident filter: {e}")

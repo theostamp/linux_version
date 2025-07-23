@@ -17,6 +17,8 @@ import LogoutButton from '@/components/LogoutButton';
 import DashboardCards from '@/components/DashboardCards';
 import ErrorMessage from '@/components/ErrorMessage';
 import AnnouncementsCarousel from '@/components/AnnouncementsCarousel';
+import BuildingStats from '@/components/BuildingStats';
+import SelectedBuildingInfo from '@/components/SelectedBuildingInfo';
 import {
   fetchObligationsSummary,
   fetchAnnouncements,
@@ -50,7 +52,7 @@ export default function DashboardPage() {
 
 function DashboardContent() {
   const { user, isLoading: authLoading, isAuthReady } = useAuth();
-  const { currentBuilding } = useBuilding();
+  const { currentBuilding, selectedBuilding, setSelectedBuilding, buildings } = useBuilding();
 
   const [onlyMine, setOnlyMine] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -70,16 +72,19 @@ function DashboardContent() {
     const loadAll = async () => {
       setLoadingData(true);
       try {
+        // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα, ή το currentBuilding αν δεν έχει επιλεγεί κάτι
+        const buildingId = selectedBuilding?.id || currentBuilding.id;
+        
         const [ann, vt, req] = await Promise.all([
-          fetchAnnouncements(currentBuilding.id),
-          fetchVotes(currentBuilding.id),
-          fetchRequests({ buildingId: currentBuilding.id }),
+          fetchAnnouncements(buildingId),
+          fetchVotes(buildingId),
+          fetchRequests({ buildingId }),
         ]);
         setAnnouncements(ann);
         setVotes(vt);
         setRequests(req);
 
-        const top = await fetchTopRequests(currentBuilding.id);
+        const top = await fetchTopRequests(buildingId);
         setTopRequests(top);
 
         setError(false);
@@ -92,7 +97,7 @@ function DashboardContent() {
     };
 
     loadAll();
-  }, [authLoading, isAuthReady, user, currentBuilding]);
+  }, [authLoading, isAuthReady, user, currentBuilding, selectedBuilding]);
 
   useEffect(() => {
     if (!isAuthReady || authLoading || !user?.is_staff) return;
@@ -133,6 +138,22 @@ function DashboardContent() {
   return (
     <div className="p-6 space-y-6 max-w-[85%] mx-auto">
       {error && <ErrorMessage message="Αποτυχία φόρτωσης δεδομένων." />}
+
+      {/* Dashboard Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        {selectedBuilding && (
+          <p className="text-sm text-gray-600 mt-1">
+            Φιλτράρισμα: <span className="font-medium">{selectedBuilding.name}</span>
+          </p>
+        )}
+      </div>
+
+      {/* Πληροφορίες επιλεγμένου κτιρίου */}
+      <SelectedBuildingInfo selectedBuilding={selectedBuilding} />
+
+      {/* Στατιστικά όλων των κτιρίων */}
+      <BuildingStats buildings={buildings} selectedBuilding={selectedBuilding} />
 
       {announcements.length > 0 && (
         <>

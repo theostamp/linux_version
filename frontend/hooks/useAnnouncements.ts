@@ -1,17 +1,14 @@
 // frontend/hooks/useAnnouncements.ts
 
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api'; // Σωστό axios instance με interceptors
+import { fetchAnnouncements } from '@/lib/api';
 
-export function useAnnouncements(buildingId?: number) {
+export function useAnnouncements(buildingId?: number | null) {
   return useQuery({
     queryKey: ['announcements', buildingId],
     queryFn: async () => {
-      const response = await api.get(`/announcements/?building=${buildingId}`);
-      return Array.isArray(response.data)
-        ? response.data
-        : response.data.results ?? [];
+      return await fetchAnnouncements(buildingId);
     },
-    enabled: !!buildingId,
+    enabled: buildingId !== undefined,
   });
 }

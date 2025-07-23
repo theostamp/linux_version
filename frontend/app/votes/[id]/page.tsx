@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import { useVoteDetail } from '@/hooks/useVoteDetail';
 import { useMyVote } from '@/hooks/useMyVote';
 import { useVoteResults } from '@/hooks/useVoteResults';

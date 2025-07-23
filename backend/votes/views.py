@@ -5,6 +5,7 @@ from .models import Vote, VoteSubmission
 from .serializers import VoteSerializer, VoteSubmissionSerializer
 from buildings.models import Building
 from core.permissions import IsManagerOrSuperuser, IsBuildingAdmin
+from core.utils import filter_queryset_by_user_and_building
 
 
 class VoteViewSet(viewsets.ModelViewSet):
@@ -24,28 +25,17 @@ class VoteViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated(), IsManagerOrSuperuser()]
 
     def get_queryset(self):
-        user = self.request.user
-        building_id = self.request.query_params.get('building')
-        queryset = Vote.objects.all()
-
-        if not user.is_authenticated:
+        """
+        Φέρνει μόνο τα votes που δικαιούται να δει ο χρήστης (με βάση το κτήριο και τον ρόλο).
+        """
+        qs = Vote.objects.all().order_by('-created_at')
+        try:
+            return filter_queryset_by_user_and_building(self.request, qs)
+        except Exception as e:
+            print("ERROR in get_queryset:", e)
+            import traceback; traceback.print_exc()
+            # Επιστρέφουμε empty queryset για να μην εμφανίζεται 500 στο frontend
             return Vote.objects.none()
-
-        if user.is_superuser:
-            return queryset.filter(building_id=building_id) if building_id else queryset
-
-        if user.is_staff:
-            # ✅ ΣΩΣΤΟ: manager=user
-            managed_ids = Building.objects.filter(manager=user).values_list('id', flat=True)
-            try:
-                building_id_int = int(building_id) if building_id else None
-            except ValueError:
-                return Vote.objects.none()
-
-            if building_id_int and building_id_int in managed_ids:
-                return queryset.filter(building_id=building_id_int)
-
-        return Vote.objects.none()
 
 
     def get_serializer_class(self):

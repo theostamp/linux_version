@@ -10,7 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response 
 from rest_framework import status 
 from django.db.models import Count 
-   
+from core.utils import filter_queryset_by_user_and_building
 from django.core.exceptions import ObjectDoesNotExist
    
 
@@ -23,62 +23,57 @@ class UserRequestViewSet(viewsets.ModelViewSet):
             return [permissions.IsAuthenticated()]
         return [permissions.IsAuthenticated(), IsManagerOrSuperuser()]
 
-
-
     def get_queryset(self):
-        user = self.request.user
-        building_id_param = self.request.query_params.get("building")
-
-        if not user.is_authenticated:
-            return UserRequest.objects.none()
-
-        base_queryset = UserRequest.objects.all()
-
-        if building_id_param:
-            try:
-                building_id = int(building_id_param)
-                base_queryset = base_queryset.filter(building_id=building_id)
-            except (ValueError, TypeError):
-                raise exceptions.ValidationError({"building": "Το ID του κτηρίου πρέπει να είναι αριθμός."})
-
-        if user.is_superuser:
-            return base_queryset.order_by('-created_at')
-
-        if user.is_staff:
-            managed_ids = Building.objects.filter(manager=user).values_list("id", flat=True)
-            return base_queryset.filter(building_id__in=managed_ids).order_by('-created_at')
-
-        # κατοικος
+        """
+        Φέρνει μόνο τα user requests που δικαιούται να δει ο χρήστης (με βάση το κτήριο και τον ρόλο).
+        """
+        qs = UserRequest.objects.all().order_by('-created_at')
         try:
-            profile = getattr(user, "profile", None)
-            if not profile or not getattr(profile, "building", None):
-                return UserRequest.objects.none()
-            return base_queryset.filter(building=profile.building).order_by("-created_at")
-        except (AttributeError, ObjectDoesNotExist):
+            return filter_queryset_by_user_and_building(self.request, qs)
+        except Exception as e:
+            print("ERROR in get_queryset:", e)
+            import traceback; traceback.print_exc()
+            # Επιστρέφουμε empty queryset για να μην εμφανίζεται 500 στο frontend
             return UserRequest.objects.none()
-
-
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
         
-
-
     @action(detail=False, methods=["get"], url_path="top")
     def top_requests(self, request):
         building_id = request.query_params.get("building")
-        if not building_id:
-            return Response({"detail": "Missing 'building' parameter."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Χειρισμός για "όλα τα κτίρια" (building=null)
+        if building_id == 'null':
+            # Για superuser: όλα τα κτίρια
+            if request.user.is_superuser:
+                qs = UserRequest.objects.all()
+            # Για manager: μόνο τα κτίρια που διαχειρίζεται
+            elif request.user.is_staff:
+                managed_ids = Building.objects.filter(manager=request.user).values_list("id", flat=True)
+                qs = UserRequest.objects.filter(building_id__in=managed_ids)
+            # Για resident: μόνο το κτίριο του
+            else:
+                try:
+                    profile = getattr(request.user, "profile", None)
+                    if not profile or not getattr(profile, "building", None):
+                        return Response({"detail": "No building assigned."}, status=status.HTTP_400_BAD_REQUEST)
+                    qs = UserRequest.objects.filter(building=profile.building)
+                except (AttributeError, ObjectDoesNotExist):
+                    return Response({"detail": "No building assigned."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            if not building_id:
+                return Response({"detail": "Missing 'building' parameter."}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            building_id = int(building_id)
-        except ValueError:
-            return Response({"detail": "Invalid 'building' ID."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                building_id = int(building_id)
+                qs = UserRequest.objects.filter(building_id=building_id)
+            except ValueError:
+                return Response({"detail": "Invalid 'building' ID."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             qs = (
-                UserRequest.objects
-                .filter(building_id=building_id)
+                qs
                 .annotate(supporters_count=Count("supporters"))
                 .order_by("-supporters_count")
                 .distinct()[:5]

@@ -1,5 +1,6 @@
 'use client';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import Link from 'next/link';
 import { deleteBuilding } from '@/lib/api';
 
@@ -34,7 +35,8 @@ const BuildingsPage = () => {
   return (
     <div className="p-6">
       <header className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Διαχείριση Κτιρίων</h1>
+        <h1 className="text-2xl font-bold mb-4">Διαχείριση Κτιρίων</h1>
+      <BuildingFilterIndicator className="mb-4" />
         <Link href="/buildings/new" className="btn btn-primary">Νέο Κτίριο</Link>
       </header>
 

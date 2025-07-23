@@ -5,6 +5,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import { createVote } from '@/lib/api';
 import NewVoteForm from '@/components/NewVoteForm';
 import { useSuperUserGuard } from '@/hooks/useSuperUserGuard';
@@ -51,7 +52,8 @@ export default function NewVotePage() {
       </Link>
 
       {/* Προαιρετικά μπορείς να βάλεις τίτλο εδώ */}
-      {/* <h1 className="text-2xl font-bold">🗳️ Νέα Ψηφοφορία</h1> */}
+      <h1 className="text-2xl font-bold">🗳️ Νέα Ψηφοφορία</h1>
+      <BuildingFilterIndicator className="mb-4" />
 
       <NewVoteForm onSubmit={handleSubmit} buildingId={buildingId} />
     </div>

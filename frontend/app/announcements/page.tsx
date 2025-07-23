@@ -9,26 +9,33 @@ import AnnouncementCard from '@/components/AnnouncementCard';
 import AnnouncementSkeleton from '@/components/AnnouncementSkeleton';
 import ErrorMessage from '@/components/ErrorMessage';
 import { motion } from 'framer-motion';
+import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 
 export default function AnnouncementsPage() {
-  const { currentBuilding, isLoading: buildingLoading } = useBuilding();
+  const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
+
+  // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα, ή το currentBuilding αν δεν έχει επιλεγεί κάτι
+  const buildingId = selectedBuilding?.id || currentBuilding?.id;
 
   // ✅ Καλείται πάντα — ανεξαρτήτως αν έχει φορτώσει το building
   const {
     data: announcements = [],
     isLoading,
     isError,
-  } = useAnnouncements(currentBuilding?.id);
+  } = useAnnouncements(buildingId);
 
-  // ✅ DEBUG LOG για currentBuilding
+  // ✅ DEBUG LOG για currentBuilding και selectedBuilding
   useEffect(() => {
     console.log('[AnnouncementsPage] currentBuilding:', currentBuilding);
-  }, [currentBuilding]);
+    console.log('[AnnouncementsPage] selectedBuilding:', selectedBuilding);
+    console.log('[AnnouncementsPage] buildingId used:', buildingId);
+  }, [currentBuilding, selectedBuilding, buildingId]);
 
   if (buildingLoading || !currentBuilding || isLoading) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">📢 Ανακοινώσεις</h1>
+        <BuildingFilterIndicator className="mb-4" />
         {[...Array(3)].map(() => {
           const uuid = crypto.randomUUID();
           return <AnnouncementSkeleton key={uuid} />;
@@ -41,6 +48,7 @@ export default function AnnouncementsPage() {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">📢 Ανακοινώσεις</h1>
+        <BuildingFilterIndicator className="mb-4" />
         <ErrorMessage message="Αδυναμία φόρτωσης ανακοινώσεων. Παρακαλώ δοκιμάστε ξανά αργότερα." />
       </div>
     );
@@ -50,6 +58,7 @@ export default function AnnouncementsPage() {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">📢 Ανακοινώσεις</h1>
+        <BuildingFilterIndicator className="mb-4" />
         <p className="text-gray-500 text-center">
           Δεν υπάρχουν ενεργές ανακοινώσεις αυτή τη στιγμή.
         </p>
@@ -66,6 +75,7 @@ export default function AnnouncementsPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">📢 Ανακοινώσεις</h1>
+      <BuildingFilterIndicator className="mb-4" />
       <motion.div
         variants={container}
         initial="hidden"

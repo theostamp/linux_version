@@ -302,8 +302,8 @@ export async function deleteBuilding(id: number): Promise<void> {
   await api.delete(`/buildings/${id}/`);
 }
 
-export async function fetchAnnouncements(buildingId?: number): Promise<Announcement[]> {
-  const relativeUrl = buildingId ? `/announcements/?building=${buildingId}` : '/announcements/';
+export async function fetchAnnouncements(buildingId?: number | null): Promise<Announcement[]> {
+  const relativeUrl = buildingId ? `/announcements/?building=${buildingId}` : '/announcements/?building=null';
   
   // --- ΠΡΟΣΘΕΣΕ ΑΥΤΑ ΤΑ DEBUG LOGS ---
   console.log(`%c[DEBUG fetchAnnouncements] Called for announcements page with buildingId: ${buildingId}`, "color: blue; font-weight: bold;");
@@ -369,8 +369,8 @@ export async function createAnnouncement(payload: CreateAnnouncementPayload): Pr
   }
 }
 
-export async function fetchVotes(buildingId?: number): Promise<Vote[]> {
-  const url = buildingId ? `/votes/?building=${buildingId}` : '/votes/';
+export async function fetchVotes(buildingId?: number | null): Promise<Vote[]> {
+  const url = buildingId ? `/votes/?building=${buildingId}` : '/votes/?building=null';
   console.log(`[API CALL] Attempting to fetch ${url}`);
   const resp: AxiosResponse<{ results?: Vote[] } | Vote[]> = await api.get(url);
   const data = resp.data;
@@ -423,10 +423,14 @@ export async function fetchPublicInfo(buildingId: number): Promise<PublicInfoDat
   const { data } = await apiPublic.get(`/public-info/${buildingId}/`);
   return data;
 }
-export async function fetchRequests(filters: { status?: string; buildingId?: number } = {}): Promise<UserRequest[]> {
+export async function fetchRequests(filters: { status?: string; buildingId?: number | null } = {}): Promise<UserRequest[]> {
   const params = new URLSearchParams();
   if (filters.status) params.append('status', filters.status);
-  if (filters.buildingId) params.append('building', String(filters.buildingId));
+  if (filters.buildingId) {
+    params.append('building', String(filters.buildingId));
+  } else {
+    params.append('building', 'null');
+  }
   const queryString = params.toString();
   const url = `/user-requests/${queryString ? '?' + queryString : ''}`;
   
@@ -452,8 +456,8 @@ export async function fetchRequests(filters: { status?: string; buildingId?: num
   }));
 }
 
-export async function fetchTopRequests(buildingId: number): Promise<UserRequest[]> {
-  const url = `/user-requests/top/?building=${buildingId}`;
+export async function fetchTopRequests(buildingId: number | null): Promise<UserRequest[]> {
+  const url = buildingId ? `/user-requests/top/?building=${buildingId}` : '/user-requests/top/?building=null';
   const resp: AxiosResponse<{ results?: any[] } | any[]> = await api.get(url);
   const data = resp.data;
   const rows: any[] = Array.isArray(data) ? data : data.results ?? [];
@@ -658,8 +662,9 @@ function handleLogout(logMessage: string) {
 }
 
 // Νέα συνάρτηση για την ανάκτηση των κατοίκων ενός κτιρίου
-export async function fetchResidents(buildingId: number) {
-  const response = await api.get(`/buildings/memberships/?building=${buildingId}`);
+export async function fetchResidents(buildingId: number | null) {
+  const url = buildingId ? `/buildings/memberships/?building=${buildingId}` : '/buildings/memberships/?building=null';
+  const response = await api.get(url);
   // Φιλτράρει μόνο όσους έχουν role === 'resident'
   return Array.isArray(response.data)
     ? response.data.filter((m) => m.role === 'resident')

@@ -14,7 +14,9 @@ import { toast } from 'react-hot-toast';
 interface BuildingContextType {
   buildings: Building[];
   currentBuilding: Building | null;
+  selectedBuilding: Building | null; // Για φιλτράρισμα - μπορεί να είναι null για "όλα"
   setCurrentBuilding: (building: Building | null) => void;
+  setSelectedBuilding: (building: Building | null) => void; // Για φιλτράρισμα
   setBuildings: React.Dispatch<React.SetStateAction<Building[]>>;
   isLoading: boolean;
   error: string | null;
@@ -23,7 +25,9 @@ interface BuildingContextType {
 const BuildingContext = createContext<BuildingContextType>({
   buildings: [],
   currentBuilding: null,
+  selectedBuilding: null,
   setCurrentBuilding: () => {},
+  setSelectedBuilding: () => {},
   setBuildings: () => {},
   isLoading: false,
   error: null,
@@ -32,6 +36,7 @@ const BuildingContext = createContext<BuildingContextType>({
 export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [currentBuilding, setCurrentBuilding] = useState<Building | null>(null);
+  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null); // Για φιλτράρισμα
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,12 +81,14 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
     () => ({
       buildings,
       currentBuilding,
+      selectedBuilding,
       setCurrentBuilding,
+      setSelectedBuilding,
       setBuildings,
       isLoading,
       error,
     }),
-    [buildings, currentBuilding, setCurrentBuilding, setBuildings, isLoading, error]
+    [buildings, currentBuilding, selectedBuilding, setCurrentBuilding, setSelectedBuilding, setBuildings, isLoading, error]
   );
 
   return (

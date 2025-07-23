@@ -15,10 +15,11 @@ function isActive(start: string, end: string) {
 }
 
 export default function VotesPage() {
-  const { currentBuilding, isLoading: buildingLoading } = useBuilding();
+  const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
   const { isAuthReady, user } = useAuth();
 
-  const buildingId = currentBuilding?.id;
+  // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα, ή το currentBuilding αν δεν έχει επιλεγεί κάτι
+  const buildingId = selectedBuilding?.id || currentBuilding?.id;
   const isManager = user?.profile?.role === 'manager' || user?.is_superuser;
 
   // 💡 Προσοχή: το useVotes καλείται *πάντα*, ανεξάρτητα από loading states
@@ -30,11 +31,31 @@ export default function VotesPage() {
   } = useVotes(buildingId);
 
   if (!isAuthReady || buildingLoading || !buildingId || isLoading) {
-    return <p className="p-6">Φόρτωση ψηφοφοριών...</p>;
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6">🗳️ Ψηφοφορίες</h1>
+        {selectedBuilding && (
+          <p className="text-sm text-gray-600 mb-4">
+            Φιλτράρισμα: <span className="font-medium">{selectedBuilding.name}</span>
+          </p>
+        )}
+        <p>Φόρτωση ψηφοφοριών...</p>
+      </div>
+    );
   }
 
   if (isError) {
-    return <ErrorMessage message="Αδυναμία φόρτωσης ψηφοφοριών." />;
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6">🗳️ Ψηφοφορίες</h1>
+        {selectedBuilding && (
+          <p className="text-sm text-gray-600 mb-4">
+            Φιλτράρισμα: <span className="font-medium">{selectedBuilding.name}</span>
+          </p>
+        )}
+        <ErrorMessage message="Αδυναμία φόρτωσης ψηφοφοριών." />
+      </div>
+    );
   }
 
   return (
@@ -47,6 +68,12 @@ export default function VotesPage() {
           </Link>
         )}
       </div>
+
+      {selectedBuilding && (
+        <p className="text-sm text-gray-600">
+          Φιλτράρισμα: <span className="font-medium">{selectedBuilding.name}</span>
+        </p>
+      )}
 
       {isSuccess && votes.length === 0 && (
         <div className="text-center text-gray-500 space-y-2">

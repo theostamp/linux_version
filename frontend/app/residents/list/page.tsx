@@ -2,20 +2,28 @@
 
 import { useResidents } from "@/hooks/useResidents";
 import { useBuilding } from "@/components/contexts/BuildingContext";
+import BuildingFilterIndicator from "@/components/BuildingFilterIndicator";
 
 export default function ResidentsListPage() {
-  const { currentBuilding } = useBuilding();
-  const { data: residents, isLoading, error } = useResidents();
+  const { currentBuilding, selectedBuilding } = useBuilding();
+  
+  // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα, ή το currentBuilding αν δεν έχει επιλεγεί κάτι
+  const buildingId = selectedBuilding?.id || currentBuilding?.id;
+  const buildingToUse = selectedBuilding || currentBuilding;
+  
+  const { data: residents, isLoading, error } = useResidents(buildingId);
 
-  if (!currentBuilding) return <p>Δεν έχει επιλεγεί κάποιο κτίριο.</p>;
+  if (!buildingToUse) return <p>Δεν έχει επιλεγεί κάποιο κτίριο.</p>;
   if (isLoading) return <p>Φόρτωση...</p>;
   if (error) return <p>Σφάλμα φόρτωσης.</p>;
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">
-        Κάτοικοι για το κτίριο: {currentBuilding.name}
-      </h1>
+      <h1 className="text-xl font-bold mb-4">Κάτοικοι</h1>
+      <BuildingFilterIndicator className="mb-4" />
+      <p className="text-sm text-gray-600 mb-4">
+        Κτίριο: <strong>{buildingToUse.name}</strong>
+      </p>
 
       {residents?.length === 0 ? (
         <p>Δεν υπάρχουν κάτοικοι ή διαχειριστές.</p>
@@ -44,42 +52,3 @@ export default function ResidentsListPage() {
     </div>
   );
 }
-//       </h2>
-//       <div className="space-y-4">
-//         <div>
-//           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-//             Email Κατοίκου:
-//           </label>
-//           <input
-//             type="email"
-//             value={email}
-//             onChange={(e) => setEmail(e.target.value)}
-//             required
-//             className="mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
-
-//           />
-//         </div>
-//         <div>
-//           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-//             Επιλέξτε Κτίριο:
-//           </label>
-//           <select
-//             value={buildingId?.toString()}
-//             onChange={(e) => setBuildingId(parseInt(e.target.value))}
-//             className="mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
-//           >
-//             {buildings.map((b) => (
-//               <option key={b.id} value={b.id}>
-//                 {b.name || `Κτίριο #${b.id}`}
-//               </option>
-//             ))}
-//           </select>
-//         </div>
-//       </div>
-//       <button
-//         type="submit"
-//         disabled={loading}   
-//         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition"
-//       >
-//         {loading ? 'Αποστολή...' : 'Αντιστοίχιση'}
-//       </button>

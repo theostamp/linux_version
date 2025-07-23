@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import { createAnnouncement } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import NewAnnouncementForm from '@/components/NewAnnouncementForm';
@@ -56,6 +57,7 @@ export default function NewAnnouncementPage() {
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">📢 Νέα Ανακοίνωση</h1>
+      <BuildingFilterIndicator className="mb-4" />
       <NewAnnouncementForm buildingId={currentBuilding.id} />
     </div>
   );

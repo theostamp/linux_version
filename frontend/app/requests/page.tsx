@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import ErrorMessage from '@/components/ErrorMessage';
 import { createUserRequest } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import { useRequests } from '@/hooks/useRequests';
 import RequestCard from '@/components/RequestCard';
 import RequestSkeleton from '@/components/RequestSkeleton';
@@ -19,8 +20,13 @@ const REQUEST_TYPES = [
 
 export default function NewRequestPage() {
   const router = useRouter();
-  const { currentBuilding } = useBuilding();
-  const { data: requests, isLoading: loadingRequests } = useRequests(currentBuilding?.id);
+  const { currentBuilding, selectedBuilding } = useBuilding();
+  
+  // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα, ή το currentBuilding αν δεν έχει επιλεγεί κάτι
+  const buildingId = selectedBuilding?.id || currentBuilding?.id;
+  const buildingToUse = selectedBuilding || currentBuilding;
+  
+  const { data: requests, isLoading: loadingRequests } = useRequests(buildingId);
   const queryClient = useQueryClient();
 
   const [title, setTitle] = useState('');
@@ -30,8 +36,8 @@ export default function NewRequestPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  if (!currentBuilding) {
-    return <p>Παρακαλώ επιλέξτε κτίριο από το Sidebar για να συνεχίσετε.</p>;
+  if (!buildingToUse) {
+    return <p>Παρακαλώ επιλέξτε κτίριο για να συνεχίσετε.</p>;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,11 +59,11 @@ export default function NewRequestPage() {
       await createUserRequest({
         title: title.trim(),
         description: description.trim(),
-        building: currentBuilding.id,
+        building: buildingToUse.id,
         type: type || undefined,
         is_urgent: isUrgent || undefined,
       });
-      queryClient.invalidateQueries({ queryKey: ['requests', currentBuilding.id] });
+      queryClient.invalidateQueries({ queryKey: ['requests', buildingId] });
       router.push('/requests');
     } catch (err: any) {
       const msg = err.response?.data
@@ -73,8 +79,14 @@ export default function NewRequestPage() {
   return (
     <div className="max-w-xl mx-auto mt-20 p-6 bg-white rounded-2xl shadow">
       <h1 className="text-2xl font-bold mb-4 text-center">Νέο Αίτημα</h1>
+      <BuildingFilterIndicator className="mb-4" />
       <p className="text-sm text-muted-foreground mb-4 text-center">
-        Κτίριο: <strong>{currentBuilding.name}</strong>
+        Κτίριο: <strong>{buildingToUse.name}</strong>
+        {selectedBuilding && (
+          <span className="block text-xs text-blue-600 mt-1">
+            Φιλτράρισμα ενεργό
+          </span>
+        )}
       </p>
 
       {error && <ErrorMessage message={error} />}

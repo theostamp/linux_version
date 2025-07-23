@@ -5,6 +5,7 @@ import { ReactNode } from 'react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Loader2 } from 'lucide-react';
+import GlobalHeader from '@/components/GlobalHeader';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { isAuthReady, isLoading: authLoading } = useAuth();
@@ -20,7 +21,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <span className="ml-3 text-gray-600">Φόρτωση...</span>
         </div>
       ) : (
-        children
+        <>
+          <GlobalHeader />
+          <main className="pt-4">
+            {children}
+          </main>
+        </>
       )}
     </div>
   );

@@ -7,6 +7,7 @@ import LogoutButton from '@/components/LogoutButton';
 import useCsrf from '@/hooks/useCsrf';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import BuildingSelectorButton from '@/components/BuildingSelectorButton';
 import {
   Home,
   Megaphone,
@@ -58,6 +59,8 @@ export default function Sidebar() {
   const {
     buildings,
     currentBuilding,
+    selectedBuilding,
+    setSelectedBuilding,
     isLoading: buildingsIsLoading,
   } = useBuilding();
 
@@ -126,7 +129,12 @@ if (user?.is_superuser) {
     <aside className="w-64 bg-white dark:bg-gray-900 shadow-md flex flex-col justify-between min-h-screen">
       <div>
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Σύστημα Διαχείρισης</h1>
+          <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Σύστημα Διαχείρισης</h1>
+          <BuildingSelectorButton
+            onBuildingSelect={setSelectedBuilding}
+            selectedBuilding={selectedBuilding}
+            className="w-full text-sm"
+          />
         </div>
         <nav className="p-4 space-y-2">
           {availableLinks.map((link) => (
