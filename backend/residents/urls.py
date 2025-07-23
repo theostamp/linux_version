@@ -1,9 +1,11 @@
 # backend/residents/urls.py
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import ResidentViewSet
 
-# Placeholder for residents URLs
-# TODO: Add actual resident endpoints when needed
+router = DefaultRouter()
+router.register(r'', ResidentViewSet, basename='residents')
 
 urlpatterns = [
-    # Add resident-specific URLs here when needed
+    path('', include(router.urls)),
 ] 

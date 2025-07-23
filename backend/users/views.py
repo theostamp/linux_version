@@ -99,7 +99,7 @@ def me_view(request):
     Επιστρέφει τα στοιχεία του authenticated χρήστη.
     """
     user = request.user
-    role = getattr(getattr(user, "profile", None), "role", None)
+    role = getattr(user, "role", None)
 
     return Response({
         'id': user.id,

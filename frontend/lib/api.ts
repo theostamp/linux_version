@@ -663,15 +663,44 @@ function handleLogout(logMessage: string) {
 
 // Νέα συνάρτηση για την ανάκτηση των κατοίκων ενός κτιρίου
 export async function fetchResidents(buildingId: number | null) {
-  const url = buildingId ? `/buildings/memberships/?building=${buildingId}` : '/buildings/memberships/?building=null';
+  const url = buildingId ? `/residents/?building=${buildingId}` : '/residents/';
   const response = await api.get(url);
-  // Φιλτράρει μόνο όσους έχουν role === 'resident'
-  return Array.isArray(response.data)
-    ? response.data.filter((m) => m.role === 'resident')
-    : [];
+  return response.data;
 }
 
-// ...μέσα στη handleTokenRefresh, αμέσως μετά το localStorage.setItem('access', data.access);
+// Τύποι για τους κατοίκους
+export type Resident = {
+  id: number;
+  user_email: string;
+  user_first_name: string;
+  user_last_name: string;
+  building_name: string;
+  apartment: string;
+  building: number;
+  role: 'manager' | 'owner' | 'tenant';
+  phone: string;
+  created_at: string;
+};
+
+export interface CreateResidentPayload {
+  email: string;
+  first_name: string;
+  last_name: string;
+  password: string;
+  apartment: string;
+  building_id: number;
+  role?: 'manager' | 'owner' | 'tenant';
+  phone?: string;
+}
+
+export async function createResident(payload: CreateResidentPayload): Promise<Resident> {
+  const response = await api.post('/residents/create-with-user/', payload);
+  return response.data.resident;
+}
+
+export async function deleteResident(id: number): Promise<void> {
+  await api.delete(`/residents/${id}/remove/`);
+}
 
 if (typeof window !== "undefined") {
   // Next.js App Router: soft reload

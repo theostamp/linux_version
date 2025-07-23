@@ -8,6 +8,7 @@ export type User = {
   groups?: { id: number; name: string }[];
   is_staff?: boolean;
   is_superuser?: boolean;
+  role?: string;
 
   // ✅ Προσθήκη profile αν το API το επιστρέφει
   profile?: {

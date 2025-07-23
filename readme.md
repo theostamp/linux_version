@@ -1,5 +1,27 @@
 # Οδηγός Εκκίνησης & Διαχείρισης (linux_version)
 
+## 🐧 WSL Ubuntu Terminal Configuration
+
+Το project έχει ρυθμιστεί για να χρησιμοποιεί το WSL Ubuntu ως default terminal αντί για PowerShell.
+
+### Ρυθμίσεις VS Code:
+- **Default Terminal**: WSL Ubuntu
+- **Debugging**: Ρυθμισμένο για WSL environment
+- **Tasks**: Όλες οι εργασίες τρέχουν στο WSL
+
+### Χρήση:
+1. **Terminal**: `Ctrl + `` (ανοίγει το WSL Ubuntu terminal)
+2. **Tasks**: `Ctrl + Shift + P` → "Tasks: Run Task" → επιλέξτε εργασία
+3. **Debugging**: `F5` → επιλέξτε "Python: Current File (WSL)" ή "Django: Run Server (WSL)"
+
+### Διαθέσιμες Εργασίες:
+- `Docker Compose Up`: Εκκίνηση των containers
+- `Docker Compose Down`: Διακοπή των containers  
+- `Django Migrate`: Εκτέλεση migrations
+- `Frontend Dev`: Εκκίνηση του frontend development server
+
+---
+
 ## 1. Δημιουργία και Εφαρμογή Migrations (Django Tenants)
 
 ### (α) Δημιουργία αρχείων migration για tenants
@@ -182,7 +204,7 @@ echo "# linux_version" >> README.md
 git init
 
 git add .
-git commit -m "v2.1"  
+git commit -m "residentes"  
 git branch -M main
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

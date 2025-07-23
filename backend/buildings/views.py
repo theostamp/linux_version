@@ -56,14 +56,14 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
     @action(detail=False, methods=["post"], url_path="assign-resident")
     def assign_resident(self, request):
         """
-        Επιτρέπει σε superusers ή office managers να αντιστοιχίσουν κάτοικο σε δικό τους κτίριο.
+        Επιτρέπει σε superusers, office managers ή staff users να αντιστοιχίσουν κάτοικο σε κτίριο.
         """
         user_email = request.data.get("user_email")
         building_id = request.data.get("building")
         role = request.data.get("role", "resident")
 
         if not request.user.is_authenticated or not (
-            request.user.is_superuser or request.user.is_office_manager
+            request.user.is_superuser or request.user.is_office_manager or request.user.is_staff
         ):
             return Response({"detail": "Απαγορεύεται."}, status=status.HTTP_403_FORBIDDEN)
 
@@ -79,7 +79,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
             return Response({"detail": "Το κτίριο δεν βρέθηκε."}, status=status.HTTP_404_NOT_FOUND)
 
         # Αν δεν είναι superuser, να ελέγξουμε αν είναι manager του συγκεκριμένου κτιρίου
-        if not request.user.is_superuser and not request.user.is_manager_of(building):
+        if not request.user.is_superuser and not request.user.is_staff and not request.user.is_manager_of(building):
             return Response({"detail": "Δεν έχετε δικαίωμα σε αυτό το κτίριο."}, status=status.HTTP_403_FORBIDDEN)
 
         membership, created = BuildingMembership.objects.update_or_create(
