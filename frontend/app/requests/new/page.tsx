@@ -1,86 +1,107 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorMessage from '@/components/ErrorMessage';
-import { fetchBuildings, Building } from '@/lib/api';
-import { useCreateRequest } from '@/hooks/useCreateRequest'; // ✅ νέο hook
+import { createUserRequest } from '@/lib/api';
+import { useBuilding } from '@/components/contexts/BuildingContext';
+import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
+import { useRequests } from '@/hooks/useRequests';
+import RequestCard from '@/components/RequestCard';
+import RequestSkeleton from '@/components/RequestSkeleton';
+import SupportButton from '@/components/SupportButton';
+import { useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
 
 const REQUEST_TYPES = [
-  { value: 'damage', label: 'Ζημιά' },
   { value: 'maintenance', label: 'Συντήρηση' },
+  { value: 'cleaning', label: 'Καθαριότητα' },
+  { value: 'technical', label: 'Τεχνικό' },
   { value: 'other', label: 'Άλλο' },
 ];
 
 export default function NewRequestPage() {
   const router = useRouter();
-  const { mutateAsync: createRequest, isPending, isError } = useCreateRequest(); // ✅
+  const { currentBuilding, selectedBuilding } = useBuilding();
+  
+  const buildingId = selectedBuilding?.id || currentBuilding?.id;
+  const buildingToUse = selectedBuilding || currentBuilding;
+  
+  const { data: requests, isLoading: loadingRequests } = useRequests(buildingId);
+  const queryClient = useQueryClient();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedBuildingId, setSelectedBuildingId] = useState<string>('');
   const [type, setType] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
-  const [buildingOptions, setBuildingOptions] = useState<Building[]>([]);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    async function loadBuildings() {
-      try {
-        const data = await fetchBuildings();
-        if (Array.isArray(data)) {
-          setBuildingOptions(data);
-        } else if (data && Array.isArray((data as any).results)) {
-          setBuildingOptions((data as any).results);
-        } else {
-          console.warn('Unexpected buildings response:', data);
-          setBuildingOptions([]);
-        }
-      } catch (err) {
-        console.error('Load buildings failed:', err);
-        setBuildingOptions([]);
-      }
-    }
-    loadBuildings();
-  }, []);
+  if (!buildingToUse) {
+    return <p>Παρακαλώ επιλέξτε κτίριο για να συνεχίσετε.</p>;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null);
+    setError(null);
 
-    if (!title.trim() || !description.trim() || !selectedBuildingId) {
-      setFormError('Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία.');
+    if (!title.trim() || !description.trim()) {
+      setError('Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία.');
       return;
     }
 
     if (type && !REQUEST_TYPES.some((t) => t.value === type)) {
-      setFormError('Μη έγκυρος τύπος αιτήματος.');
+      setError('Μη έγκυρος τύπος αιτήματος.');
       return;
     }
 
+   setSubmitting(true);
     try {
-      await createRequest({
+      await createUserRequest({
         title: title.trim(),
         description: description.trim(),
-        building: Number(selectedBuildingId),
+        building: buildingToUse.id,
         type: type || undefined,
         is_urgent: isUrgent || undefined,
       });
-      router.push('/requests');
-    } catch (err) {
-      console.error('Create request failed:', err);
-      setFormError('Αποτυχία υποβολής αιτήματος. Δοκιμάστε ξανά.');
+      queryClient.invalidateQueries({ queryKey: ['requests', buildingId] });
+      router.push('/requests/list');
+    } catch (err: any) {
+      const msg = err.response?.data
+        ? JSON.stringify(err.response.data)
+        : err.message;
+      setError(`Σφάλμα: ${msg}`);
+      console.error('CreateUserRequest failed:', err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-2xl shadow">
-      <h1 className="text-2xl font-bold mb-4 text-center">Νέο Αίτημα</h1>
-      {formError && <ErrorMessage message={formError} />}
-      {isError && <ErrorMessage message="Σφάλμα κατά την υποβολή." />}
+    <div className="max-w-xl mx-auto mt-20 p-6 bg-white rounded-2xl shadow">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Νέο Αίτημα</h1>
+        <Button 
+          onClick={() => router.push('/requests/list')}
+          variant="outline"
+          className="text-gray-600"
+        >
+          ← Πίσω στη λίστα
+        </Button>
+      </div>
+      
+      <BuildingFilterIndicator className="mb-4" />
+      <p className="text-sm text-muted-foreground mb-4 text-center">
+        Κτίριο: <strong>{buildingToUse.name}</strong>
+        {selectedBuilding && (
+          <span className="block text-xs text-blue-600 mt-1">
+            Φιλτράρισμα ενεργό
+          </span>
+        )}
+      </p>
 
+      {error && <ErrorMessage message={error} />}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Τίτλος */}
         <div>
           <label htmlFor="title" className="block text-sm font-medium">
             Τίτλος *
@@ -95,7 +116,6 @@ export default function NewRequestPage() {
           />
         </div>
 
-        {/* Περιγραφή */}
         <div>
           <label htmlFor="description" className="block text-sm font-medium">
             Περιγραφή *
@@ -109,28 +129,6 @@ export default function NewRequestPage() {
           />
         </div>
 
-        {/* Κτίριο */}
-        <div>
-          <label htmlFor="building" className="block text-sm font-medium">
-            Κτίριο *
-          </label>
-          <select
-            id="building"
-            value={selectedBuildingId}
-            onChange={(e) => setSelectedBuildingId(e.target.value)}
-            required
-            className="mt-1 w-full border p-2 rounded"
-          >
-            <option value="">-- Επιλέξτε κτίριο --</option>
-            {buildingOptions.map((b) => (
-              <option key={b.id} value={String(b.id)}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Τύπος */}
         <div>
           <label htmlFor="type" className="block text-sm font-medium">
             Τύπος (προαιρετικό)
@@ -150,7 +148,6 @@ export default function NewRequestPage() {
           </select>
         </div>
 
-        {/* Επείγον */}
         <div className="flex items-center">
           <input
             id="urgent"
@@ -164,15 +161,35 @@ export default function NewRequestPage() {
           </label>
         </div>
 
-        {/* Υποβολή */}
         <button
           type="submit"
-          disabled={isPending}
+          disabled={submitting}
           className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 disabled:opacity-50"
         >
-          {isPending ? 'Υποβολή…' : 'Δημιουργία Αιτήματος'}
+          {submitting ? 'Υποβολή…' : 'Δημιουργία Αιτήματος'}
         </button>
       </form>
+
+      <details className="mt-10">
+        <summary className="cursor-pointer text-blue-600 underline">
+          Προβολή υπαρχόντων αιτημάτων για το κτίριο
+        </summary>
+        <div className="mt-4">
+          {loadingRequests && <RequestSkeleton />}
+          {!loadingRequests && requests?.length === 0 && (
+            <p className="text-sm text-muted-foreground">Δεν υπάρχουν άλλα αιτήματα.</p>
+          )}
+          {!loadingRequests &&
+            requests?.map((r) => (
+              <div key={r.id} className="mb-4 border rounded p-3 shadow-sm">
+                <RequestCard request={r} />
+                <div className="mt-2 text-right">
+                  <SupportButton requestId={r.id} />
+                </div>
+              </div>
+            ))}
+        </div>
+      </details>
     </div>
   );
 }

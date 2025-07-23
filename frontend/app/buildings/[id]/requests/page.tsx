@@ -2,19 +2,25 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { fetchUserRequestsForBuilding } from '@/lib/api';
 import type { UserRequest } from '@/types/userRequests';
 import ErrorMessage from '@/components/ErrorMessage';
+import { Button } from '@/components/ui/button';
 // στο τέλος ή δίπλα στον ορισμό
 
 
 export default function BuildingRequestsPage() {
   const { id } = useParams();
+  const router = useRouter();
   const buildingId = parseInt(id as string, 10);
 
   const [requests, setRequests] = useState<UserRequest[]>([]);
   const [error, setError] = useState('');
+
+  const handleCreateNew = () => {
+    router.push('/requests/new');
+  };
 
   useEffect(() => {
     if (!buildingId) return;
@@ -37,7 +43,15 @@ export default function BuildingRequestsPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">📋 Αιτήματα Κτηρίου #{buildingId}</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">📋 Αιτήματα Κτηρίου #{buildingId}</h1>
+        <Button 
+          onClick={handleCreateNew}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+        >
+          + Νέο Αίτημα
+        </Button>
+      </div>
 
       {requests.length === 0 ? (
         <p className="text-gray-500">Δεν υπάρχουν αιτήματα για το επιλεγμένο κτήριο.</p>

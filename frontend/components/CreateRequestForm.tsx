@@ -9,8 +9,9 @@ import { createUserRequest, fetchBuildings, Building } from '@/lib/api';
 
 // Προκαθορισμένες επιλογές για τον τύπο αίτησης
 const REQUEST_TYPES = [
-  { value: 'damage', label: 'Ζημιά' },
   { value: 'maintenance', label: 'Συντήρηση' },
+  { value: 'cleaning', label: 'Καθαριότητα' },
+  { value: 'technical', label: 'Τεχνικό' },
   { value: 'other', label: 'Άλλο' },
 ];
 
