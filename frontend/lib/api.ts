@@ -13,7 +13,7 @@ export const API_BASE_URL =
 
 export const api = axios.create({
   baseURL: typeof window !== 'undefined'
-    ? `http://${window.location.hostname}:8000/api`
+    ? `http://${window.location.hostname}:8000/api`  // Χρησιμοποιούμε το ίδιο hostname με το frontend
     : 'http://localhost:8000/api',
   withCredentials: true,
   headers: {

@@ -93,6 +93,9 @@ ROOT_URLCONF = 'new_concierge_backend.urls'
 WSGI_APPLICATION = 'new_concierge_backend.wsgi.application'
 ASGI_APPLICATION = 'new_concierge_backend.asgi.application'
 
+# Django Tenants URL configuration
+TENANT_APPS_URLS = 'tenant_urls'
+
 # ----------------------------------------
 # 🗄️ Database
 # ----------------------------------------
@@ -208,6 +211,7 @@ CORS_ALLOW_CREDENTIALS = True     # για cookies / JWT
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://top.localhost:3000",  # Προσθήκη του συγκεκριμένου subdomain
 ]  # τα «σκέτα» origins
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
@@ -218,6 +222,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://*.localhost:3000",
+    "http://top.localhost:3000",  # Προσθήκη του συγκεκριμένου subdomain
 ]
 
 CORS_EXPOSE_HEADERS  = ["Content-Type", "X-CSRFToken"]

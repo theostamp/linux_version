@@ -1,29 +1,44 @@
 from django.contrib import admin
-from django.urls import path, include   # ✅ ΕΔΩ η διόρθωση
+from django.urls import path, include
 
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
+from django.http import HttpResponse
+
+
+def home(request):
+    return HttpResponse("""
+    <h1>Django Tenants Project</h1>
+    <p>Welcome to the public tenant!</p>
+    <ul>
+        <li><a href="/admin/">Admin Panel</a></li>
+        <li><a href="/api/">API</a></li>
+    </ul>
+    """)
+
+# Django Tenants URL configuration
 urlpatterns = [
-    # Admin panel
+    # Admin panel (μόνο για public tenant)
     path('admin/', admin.site.urls),
-
-    # Authentication & User endpoints
+    
+    # Root URL for public tenant
+    path('', home, name='home'),
+    
+    # Authentication & User endpoints (διαθέσιμο και στο public tenant)
     path('api/users/', include('users.urls')),
-
-    # άλλα apps
-    path('api/buildings/', include('buildings.urls')),
-    path('api/tenants/', include('tenants.urls')),
-    path('api/announcements/', include('announcements.urls')),
-    path('api/user-requests/', include('user_requests.urls')),
-    path('api/obligations/', include('obligations.urls')),
-    path('api/votes/', include('votes.urls')),
-    path('api/public-info/', include('public_info.urls')),
-
-    # Core endpoints (π.χ. CSRF token)
+    
+    # Core endpoints (CSRF token) - διαθέσιμο στο public tenant
     path('api/', include('core.urls')),
 ]
+
+# Include tenant URLs for tenant-specific endpoints
+try:
+    from tenant_urls import urlpatterns as tenant_urlpatterns
+    urlpatterns += tenant_urlpatterns
+except ImportError:
+    pass
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

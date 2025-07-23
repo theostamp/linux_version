@@ -13,7 +13,7 @@ services:
     build:
       context: ./backend          # ✅ μόνο τον φάκελο backend
       dockerfile: Dockerfile
-    command: ./entrypoint.sh      # τρέχει migrate, collectstatic, κ.λπ.
+    command: /app/entrypoint.sh      # τρέχει migrate, collectstatic, κ.λπ.
     volumes:
       - ./backend/:/app/          # hot-reload κώδικα
       # - static_dev:/app/staticfiles
