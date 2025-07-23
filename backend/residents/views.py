@@ -8,7 +8,6 @@ from .models import Resident
 from .serializers import ResidentSerializer
 from buildings.models import Building
 from core.permissions import IsManagerOrSuperuser
-from core.utils import filter_queryset_by_user_and_building
 
 User = get_user_model()
 
@@ -27,8 +26,30 @@ class ResidentViewSet(viewsets.ModelViewSet):
         """
         Φιλτράρει τους κατοίκους με βάση το κτίριο και τον ρόλο του χρήστη
         """
-        qs = Resident.objects.select_related('user', 'building').all()
-        return filter_queryset_by_user_and_building(self.request, qs)
+        user = self.request.user
+        building_param = self.request.query_params.get('building')
+        
+        queryset = Resident.objects.select_related('user', 'building').all()
+        
+        # Superuser βλέπει όλους
+        if user.is_superuser:
+            if building_param:
+                return queryset.filter(building_id=building_param)
+            return queryset
+        
+        # Staff/Manager βλέπει μόνο τα κτίρια που διαχειρίζεται
+        if user.is_staff:
+            if building_param:
+                # Έλεγχος αν το κτίριο ανήκει στον manager
+                try:
+                    building = Building.objects.get(id=building_param, manager=user)
+                    return queryset.filter(building=building)
+                except Building.DoesNotExist:
+                    return queryset.none()
+            return queryset.filter(building__manager=user)
+        
+        # Resident βλέπει μόνο το κτίριο του
+        return queryset.filter(user=user)
 
     @action(detail=False, methods=['post'], url_path='create-with-user')
     def create_with_user(self, request):

@@ -4,7 +4,11 @@ import { fetchResidents, Resident } from "@/lib/api";
 export function useResidents(buildingId?: number | null) {
   return useQuery({
     queryKey: ["residents", buildingId],
-    queryFn: () => fetchResidents(buildingId || null),
+    queryFn: async () => {
+      const data = await fetchResidents(buildingId || null);
+      console.log('[useResidents] API Response:', { buildingId, data });
+      return data;
+    },
     enabled: buildingId !== undefined && buildingId !== null,
   });
 }

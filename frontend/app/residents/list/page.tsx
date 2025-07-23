@@ -13,11 +13,21 @@ export default function ResidentsListPage() {
   const buildingId = selectedBuilding?.id || currentBuilding?.id;
   const buildingToUse = selectedBuilding || currentBuilding;
   
+  console.log('[ResidentsListPage] Debug:', {
+    selectedBuilding: selectedBuilding?.id,
+    currentBuilding: currentBuilding?.id,
+    buildingId,
+    buildingToUse: buildingToUse?.name
+  });
+  
   const { data: residents, isLoading, error } = useResidents(buildingId);
 
   if (!buildingToUse) return <p>Δεν έχει επιλεγεί κάποιο κτίριο.</p>;
   if (isLoading) return <p>Φόρτωση...</p>;
   if (error) return <p>Σφάλμα φόρτωσης.</p>;
+
+  // Βεβαιωνόμαστε ότι το residents είναι array
+  const residentsArray = Array.isArray(residents) ? residents : [];
 
   const getRoleLabel = (role: string) => {
     switch (role) {
@@ -41,11 +51,31 @@ export default function ResidentsListPage() {
       </div>
       
       <BuildingFilterIndicator className="mb-4" />
-      <p className="text-sm text-gray-600 mb-4">
-        Κτίριο: <strong>{buildingToUse.name}</strong>
-      </p>
+      
+      {/* Ετικέτα Κτιρίου */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center space-x-2">
+          <div className="w-4 h-4 bg-gray-500 rounded-full"></div>
+          <span className="text-sm font-medium text-gray-700">
+            Εμφάνιση κατοίκων για το κτίριο:
+          </span>
+          <span className="text-lg font-bold text-gray-900">
+            {buildingToUse.name}
+          </span>
+        </div>
+        {buildingToUse.address && (
+          <p className="text-sm text-gray-600 mt-1 ml-6">
+            {buildingToUse.address}
+          </p>
+        )}
+        <div className="mt-2 ml-6">
+          <span className="text-xs text-gray-500">
+            Σύνολο κατοίκων: <strong>{residentsArray.length}</strong>
+          </span>
+        </div>
+      </div>
 
-      {residents?.length === 0 ? (
+      {residentsArray.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-gray-500 mb-4">Δεν υπάρχουν κάτοικοι σε αυτό το κτίριο.</p>
           <Link 
@@ -69,7 +99,7 @@ export default function ResidentsListPage() {
               </tr>
             </thead>
             <tbody>
-              {(residents ?? []).map((res: Resident) => (
+              {residentsArray.map((res: Resident) => (
                 <tr key={res.id} className="hover:bg-gray-50">
                   <td className="border px-4 py-3">
                     {res.user_first_name} {res.user_last_name}

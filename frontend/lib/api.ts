@@ -664,8 +664,11 @@ function handleLogout(logMessage: string) {
 // Νέα συνάρτηση για την ανάκτηση των κατοίκων ενός κτιρίου
 export async function fetchResidents(buildingId: number | null) {
   const url = buildingId ? `/residents/?building=${buildingId}` : '/residents/';
+  console.log('[fetchResidents] Making request to:', url);
   const response = await api.get(url);
-  return response.data;
+  console.log('[fetchResidents] Response:', response.data);
+  // Επιστρέφουμε το results array από την paginated response
+  return response.data.results || response.data;
 }
 
 // Τύποι για τους κατοίκους
@@ -694,7 +697,9 @@ export interface CreateResidentPayload {
 }
 
 export async function createResident(payload: CreateResidentPayload): Promise<Resident> {
+  console.log('[createResident] Sending payload:', payload);
   const response = await api.post('/residents/create-with-user/', payload);
+  console.log('[createResident] Response:', response.data);
   return response.data.resident;
 }
 
