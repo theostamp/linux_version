@@ -5,16 +5,23 @@ export type { UserRequest };
 import type { User } from '@/types/user';
 import { apiPublic } from './apiPublic';
 
-
-
 // Βασικό URL του API. Προσαρμόστε το NEXT_PUBLIC_API_URL στο .env.local ή .env.production
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? 'http://localhost:8000/api'; // Default για τοπική ανάπτυξη
+// Χρησιμοποιούμε το tenant subdomain για να πάμε στο σωστό tenant schema
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    // Αν είναι tenant subdomain (π.χ. tap.localhost), χρησιμοποιούμε το ίδιο subdomain για το API
+    if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
+      return `http://${hostname}:8000/api`;
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? 'http://localhost:8000/api';
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 export const api = axios.create({
-  baseURL: typeof window !== 'undefined'
-    ? `http://${window.location.hostname}:8000/api`  // Χρησιμοποιούμε το ίδιο hostname με το frontend
-    : 'http://localhost:8000/api',
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

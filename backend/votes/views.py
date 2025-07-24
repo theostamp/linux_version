@@ -1,11 +1,18 @@
 from rest_framework import viewsets, permissions, status, exceptions  
 from rest_framework.decorators import action  
 from rest_framework.response import Response  
+from django.utils import timezone
+from django.db.models import Q
+from django.core.cache import cache
+import logging
+
 from .models import Vote, VoteSubmission
-from .serializers import VoteSerializer, VoteSubmissionSerializer
+from .serializers import VoteSerializer, VoteSubmissionSerializer, VoteListSerializer
 from buildings.models import Building
 from core.permissions import IsManagerOrSuperuser, IsBuildingAdmin
 from core.utils import filter_queryset_by_user_and_building
+
+logger = logging.getLogger(__name__)
 
 
 class VoteViewSet(viewsets.ModelViewSet):
@@ -28,18 +35,19 @@ class VoteViewSet(viewsets.ModelViewSet):
         """
         Φέρνει μόνο τα votes που δικαιούται να δει ο χρήστης (με βάση το κτήριο και τον ρόλο).
         """
-        qs = Vote.objects.all().order_by('-created_at')
+        qs = Vote.objects.select_related('creator', 'building').order_by('-created_at')
         try:
             return filter_queryset_by_user_and_building(self.request, qs)
         except Exception as e:
-            print("ERROR in get_queryset:", e)
-            import traceback; traceback.print_exc()
+            logger.error(f"Error in get_queryset: {e}")
             # Επιστρέφουμε empty queryset για να μην εμφανίζεται 500 στο frontend
             return Vote.objects.none()
 
 
     def get_serializer_class(self):
-        if self.action in ['list', 'retrieve', 'results']:
+        if self.action == 'list':
+            return VoteListSerializer
+        elif self.action in ['retrieve', 'results']:
             return VoteSerializer
         elif self.action in ['vote', 'my_submission']:
             return VoteSubmissionSerializer
@@ -80,15 +88,71 @@ class VoteViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='results')
     def results(self, request, pk=None):
+        """Αποτελέσματα ψηφοφορίας με επιπλέον πληροφορίες"""
+        try:
+            vote = self.get_object()
+            results = vote.get_results()
+            results['min_participation'] = vote.min_participation
+            return Response(results)
+        except Exception as e:
+            logger.error(f"Error fetching vote results: {e}")
+            return Response(
+                {"error": "Αποτυχία φόρτωσης αποτελεσμάτων"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['get'], url_path='active')
+    def active(self, request):
+        """Ενεργές ψηφοφορίες"""
+        try:
+            today = timezone.now().date()
+            qs = self.get_queryset().filter(
+                is_active=True
+            ).filter(
+                Q(start_date__lte=today) | Q(start_date__isnull=True)
+            ).filter(
+                Q(end_date__gte=today) | Q(end_date__isnull=True)
+            )
+            serializer = self.get_serializer(qs, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error fetching active votes: {e}")
+            return Response(
+                {"error": "Αποτυχία φόρτωσης ενεργών ψηφοφοριών"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['get'], url_path='urgent')
+    def urgent(self, request):
+        """Επείγουσες ψηφοφορίες"""
+        try:
+            qs = self.get_queryset().filter(
+                is_urgent=True,
+                is_active=True
+            )
+            serializer = self.get_serializer(qs, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error fetching urgent votes: {e}")
+            return Response(
+                {"error": "Αποτυχία φόρτωσης επείγουσων ψηφοφοριών"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'], url_path='activate')
+    def activate(self, request, pk=None):
+        """Ενεργοποίηση ψηφοφορίας"""
         vote = self.get_object()
-        subs = vote.submissions.all()
-        yes = subs.filter(choice='ΝΑΙ').count()
-        no = subs.filter(choice='ΟΧΙ').count()
-        white = subs.filter(choice='ΛΕΥΚΟ').count()
-        total = yes + no + white
-        return Response({
-            'ΝΑΙ': yes,
-            'ΟΧΙ': no,
-            'ΛΕΥΚΟ': white,
-            'total': total
-        })
+        vote.is_active = True
+        vote.save()
+        logger.info(f"Vote activated: {vote.title} by {request.user}")
+        return Response({"message": "Η ψηφοφορία ενεργοποιήθηκε επιτυχώς"})
+
+    @action(detail=True, methods=['post'], url_path='deactivate')
+    def deactivate(self, request, pk=None):
+        """Απενεργοποίηση ψηφοφορίας"""
+        vote = self.get_object()
+        vote.is_active = False
+        vote.save()
+        logger.info(f"Vote deactivated: {vote.title} by {request.user}")
+        return Response({"message": "Η ψηφοφορία απενεργοποιήθηκε επιτυχώς"})

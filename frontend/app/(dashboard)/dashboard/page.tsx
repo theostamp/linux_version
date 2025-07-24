@@ -38,6 +38,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import AuthGate from '@/components/AuthGate';
 import LoginForm from '@/components/LoginForm';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
   return (
@@ -60,6 +61,7 @@ export default function DashboardPage() {
 function DashboardContent() {
   const { user, isLoading: authLoading, isAuthReady } = useAuth();
   const { currentBuilding, selectedBuilding, setSelectedBuilding, buildings } = useBuilding();
+  const router = useRouter();
 
   const [onlyMine, setOnlyMine] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -120,6 +122,17 @@ function DashboardContent() {
 
     loadObligations();
   }, [authLoading, isAuthReady, user]);
+
+  useEffect(() => {
+    if (!authLoading && isAuthReady && (!user || !currentBuilding)) {
+      // Καθαρίζουμε τα tokens και κάνουμε redirect στο login
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
+      }
+      router.push('/login');
+    }
+  }, [authLoading, isAuthReady, user, currentBuilding, router]);
 
   const activeVotes = votes.filter(
     (v) => !v.end_date || new Date(v.end_date) > new Date()

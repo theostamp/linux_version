@@ -1,45 +1,59 @@
-from rest_framework import serializers 
+from rest_framework import serializers
+from django.utils import timezone
 from .models import UserRequest
 from buildings.models import Building
+from django.utils import timezone
 
 class UserRequestSerializer(serializers.ModelSerializer):
     # Expose building as a writable PK for creating/updating UserRequests
     building = serializers.PrimaryKeyRelatedField(
         queryset=Building.objects.all(),
     )
-    
+
     # Display username of the creator, read-only
     created_by_username = serializers.CharField(source='created_by.username', read_only=True) 
-    # Το πεδίο created_by στο μοντέλο είναι πιθανώς ForeignKey στον User.
-    # Για να μην εκθέτουμε το ID του χρήστη, αλλά το username.
-
+    assigned_to_username = serializers.CharField(source='assigned_to.username', read_only=True)
+    
     # Use SerializerMethodField for supporter_count to handle annotated field
     supporter_count = serializers.SerializerMethodField()
+    is_urgent = serializers.SerializerMethodField()
+    days_since_creation = serializers.SerializerMethodField()
+    is_overdue = serializers.SerializerMethodField()
+    status_display = serializers.SerializerMethodField()
+    priority_display = serializers.SerializerMethodField()
 
     class Meta:
         model = UserRequest
         fields = [
             'id',
-            'building', # To ID του κτιρίου
+            'building',
             'title',
             'description',
             'type',
             'status',
+            'priority',
             'created_at',
-            'created_by_username', # Το username του δημιουργού
-            'supporter_count',     # Το πλήθος των υποστηρικτών
-            'is_urgent',           # Προσθήκη του is_urgent αν δεν ήταν ήδη
-            'updated_at',          # Προσθήκη του updated_at αν δεν ήταν ήδη
-            # 'supporters' # Αν θέλετε να στέλνετε και τα IDs των supporters (μπορεί να είναι πολλά δεδομένα)
+            'updated_at',
+            'completed_at',
+            'assigned_to',
+            'assigned_to_username',
+            'estimated_completion',
+            'notes',
+            'created_by_username',
+            'supporter_count',
+            'is_urgent',
+            'days_since_creation',
+            'is_overdue',
+            'status_display',
+            'priority_display',
         ]
         read_only_fields = [
             'id',
-            'status', # Συνήθως το status αλλάζει μέσω συγκεκριμένων actions, όχι απευθείας PATCH
             'created_at',
             'updated_at',
-            'created_by_username', # Αυτό ορίζεται από το source και είναι read_only
-            # Το supporter_count είναι τώρα SerializerMethodField, άρα είναι read-only από τη φύση του.
-            # Δεν χρειάζεται να το προσθέσετε εδώ, αλλά δεν βλάπτει.
+            'completed_at',
+            'created_by_username',
+            'assigned_to_username',
         ]
 
     def get_supporter_count(self, obj: UserRequest) -> int:
@@ -49,11 +63,25 @@ class UserRequestSerializer(serializers.ModelSerializer):
         otherwise calculates it from the 'supporters' many-to-many field.
         """
         if hasattr(obj, 'annotated_supporter_count'):
-            # This attribute is added by the .annotate() in the 'top' action
             return obj.annotated_supporter_count
-        if hasattr(obj, 'supporters'): # Check if the instance has the 'supporters' manager
+        if hasattr(obj, 'supporters'):
             return obj.supporters.count()
-        return 0 # Default if something is wrong or no supporters field
+        return 0
+
+    def get_is_urgent(self, obj):
+        return obj.is_urgent
+
+    def get_days_since_creation(self, obj):
+        return obj.days_since_creation
+
+    def get_is_overdue(self, obj):
+        return obj.is_overdue
+
+    def get_status_display(self, obj):
+        return obj.status_display
+
+    def get_priority_display(self, obj):
+        return obj.priority_display
 
     def validate_building(self, building: Building):
         user = self.context['request'].user
@@ -63,26 +91,61 @@ class UserRequestSerializer(serializers.ModelSerializer):
         # Superusers μπορούν πάντα
         if user.is_superuser:
             return building
-        
+
         # Managers μπορούν για τις πολυκατοικίες που διαχειρίζονται
         if user.is_staff and hasattr(building, 'manager') and building.manager == user:
             return building
-        
-        # Κάτοικοι (non-staff) μπορούν για την πολυκατοικία στην οποία ανήκουν
-        # Αυτό προϋποθέτει ότι έχουμε τρόπο να ξέρουμε σε ποια πολυκατοικία ανήκει ο κάτοικος.
-        # Παράδειγμα: αν το CustomUser έχει ένα ForeignKey 'assigned_building' ή ManyToManyField 'resident_in_buildings'
-        # if not user.is_staff and hasattr(user, 'resident_profile') and user.resident_profile.building == building:
-        # return building
-        # Εναλλακτικά, αν ο κάτοικος μπορεί να δημιουργήσει αίτημα για οποιαδήποτε πολυκατοικία
-        # (και μετά η εμφάνιση φιλτράρεται), τότε η παρακάτω συνθήκη είναι πιο απλή.
-        # Προς το παρόν, ας υποθέσουμε ότι ένας κάτοικος μπορεί να δημιουργήσει αίτημα αν είναι απλά κάτοικος.
-        # Η αντιστοίχιση με τη σωστή πολυκατοικία είναι σημαντική.
-        # Αν δεν υπάρχει περιορισμός κτιρίου για κατοίκους κατά τη δημιουργία:
-        if not user.is_staff: # Αν είναι κάτοικος
-             # Εδώ θα μπορούσε να μπει λογική για να επιβεβαιώσει ότι το 'building' είναι έγκυρη επιλογή για τον κάτοικο.
-             # Προς το παρόν, επιτρέπουμε αν είναι κάτοικος και έχει επιλέξει κάποιο building.
-             return building
 
-        raise serializers.ValidationError(
-            "Δεν έχετε δικαίωμα δημιουργίας αιτήματος για αυτό το κτίριο, ή το κτίριο δεν είναι έγκυρο."
-        )
+        # Κάτοικοι μπορούν για την πολυκατοικία στην οποία ανήκουν
+        if hasattr(user, 'resident_profile') and user.resident_profile.building == building:
+            return building
+
+        raise serializers.ValidationError("Δεν έχετε δικαίωμα δημιουργίας αιτήματος για αυτό το κτήριο.")
+
+    def validate(self, data):
+        """Validation για το αίτημα"""
+        status = data.get('status')
+        completed_at = data.get('completed_at')
+        estimated_completion = data.get('estimated_completion')
+
+        if completed_at and status != 'completed':
+            raise serializers.ValidationError("Η ημερομηνία ολοκλήρωσης μπορεί να οριστεί μόνο για ολοκληρωμένα αιτήματα")
+
+        if estimated_completion and estimated_completion < timezone.now().date():
+            raise serializers.ValidationError("Η εκτιμώμενη ημερομηνία ολοκλήρωσης δεν μπορεί να είναι στο παρελθόν")
+
+        return data
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['created_by'] = request.user
+        return super().create(validated_data)
+
+class UserRequestListSerializer(serializers.ModelSerializer):
+    """Simplified serializer for list views"""
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    building_name = serializers.CharField(source='building.name', read_only=True)
+    supporter_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = UserRequest
+        fields = [
+            'id', 'title', 'type', 'status', 'priority', 'created_at',
+            'created_by_username', 'building_name', 'supporter_count',
+            'is_urgent', 'days_since_creation'
+        ]
+
+    def get_supporter_count(self, obj):
+        if hasattr(obj, 'annotated_supporter_count'):
+            return obj.annotated_supporter_count
+        return obj.supporters.count()
+
+class UserRequestSupportSerializer(serializers.Serializer):
+    """Serializer για υποστήριξη/απόσυρση υποστήριξης αιτήματος"""
+    action = serializers.ChoiceField(choices=['support', 'unsupport'])
+    
+    def validate_action(self, value):
+        if value not in ['support', 'unsupport']:
+            raise serializers.ValidationError("Μη έγκυρη ενέργεια")
+        return value

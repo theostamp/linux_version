@@ -10,6 +10,7 @@ import React, {
 import { fetchBuildings, Building } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 interface BuildingContextType {
   buildings: Building[];
@@ -41,6 +42,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
 
   const { isLoading: authLoading, user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const loadBuildings = async () => {
@@ -76,6 +78,17 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     }
   }, [authLoading, user]);
+
+  useEffect(() => {
+    if (!isLoading && (error || buildings.length === 0)) {
+      // Καθαρίζουμε τα tokens και κάνουμε redirect στο login
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
+      }
+      router.push('/login');
+    }
+  }, [isLoading, error, buildings, router]);
 
   const contextValue = React.useMemo(
     () => ({
