@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { createAnnouncement, CreateAnnouncementPayload } from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 type Props = {
-  readonly buildingId: number;
+  readonly buildingId?: number;
 };
 
 export default function NewAnnouncementForm({ buildingId }: Props) {
@@ -16,10 +17,12 @@ export default function NewAnnouncementForm({ buildingId }: Props) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [isActive, setIsActive] = useState(true); // ✅ default true
+  const [isActive, setIsActive] = useState(true);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(buildingId || null);
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { buildings } = useBuilding();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,13 +40,13 @@ export default function NewAnnouncementForm({ buildingId }: Props) {
         description: content.trim(),
         start_date: startDate,
         end_date: endDate || '',
-        file: undefined, // αν προσθέσεις υποστήριξη για file upload το προσαρμόζεις
-        is_active: isActive, // ✅ ΠΡΟΣΘΗΚΗ
-        building: buildingId,
+        file: undefined,
+        is_active: isActive,
+        building: selectedBuildingId || 0, // 0 will be handled as null in backend
       };
 
       await createAnnouncement(payload);
-      queryClient.invalidateQueries({ queryKey: ['announcements', buildingId] });
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
 
       toast.success('Η ανακοίνωση δημιουργήθηκε με επιτυχία');
       router.push('/announcements');
@@ -76,6 +79,27 @@ export default function NewAnnouncementForm({ buildingId }: Props) {
           className="mt-1 w-full border rounded-lg px-3 py-2 h-32"
           required
         />
+      </div>
+
+      {/* Building Selection */}
+      <div>
+        <label htmlFor="building" className="block text-sm font-medium">Κτίριο</label>
+        <select
+          id="building"
+          value={selectedBuildingId || ''}
+          onChange={(e) => setSelectedBuildingId(e.target.value ? Number(e.target.value) : null)}
+          className="mt-1 w-full border rounded-lg px-3 py-2"
+        >
+          <option value="">Όλα τα κτίρια (Καθολική ανακοίνωση)</option>
+          {buildings.map((building) => (
+            <option key={building.id} value={building.id}>
+              {building.name}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-gray-500">
+          Επιλέξτε συγκεκριμένο κτίριο ή αφήστε "Όλα τα κτίρια" για καθολική ανακοίνωση
+        </p>
       </div>
 
       <div className="flex gap-4">

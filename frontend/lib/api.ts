@@ -401,13 +401,19 @@ export interface CreateAnnouncementPayload {
 }
 export async function createAnnouncement(payload: CreateAnnouncementPayload): Promise<Announcement> {
   console.log('[API CALL] Attempting to create announcement:', payload.file ? 'with file' : 'without file');
+  
+  // Handle building=0 as null for global announcements
+  const buildingValue = payload.building === 0 ? null : payload.building;
+  
   if (payload.file && payload.file instanceof File) {
     const formData = new FormData();
     formData.append('title', payload.title);
     formData.append('description', payload.description);
     formData.append('start_date', payload.start_date);
     formData.append('end_date', payload.end_date);
-    formData.append('building', String(payload.building));
+    if (buildingValue !== null) {
+      formData.append('building', String(buildingValue));
+    }
     if (payload.is_active !== undefined) formData.append('is_active', String(payload.is_active));
     formData.append('file', payload.file, payload.file.name);
     const { data } = await api.post<Announcement>('/announcements/', formData, {
@@ -417,6 +423,8 @@ export async function createAnnouncement(payload: CreateAnnouncementPayload): Pr
   } else {
     const jsonData: any = { ...payload };
     if (payload.file === null || payload.file === undefined) delete jsonData.file;
+    // Set building to null for global announcements
+    jsonData.building = buildingValue;
     const { data } = await api.post<Announcement>('/announcements/', jsonData);
     return data;
   }
@@ -474,7 +482,15 @@ export interface CreateVotePayload {
 }
 export async function createVote(payload: CreateVotePayload): Promise<Vote> {
   console.log('[API CALL] Attempting to create vote:', payload);
-  const { data } = await api.post<Vote>('/votes/', { ...payload, is_active: payload.is_active ?? true });
+  
+  // Handle building=0 as null for global votes
+  const buildingValue = payload.building === 0 ? null : payload.building;
+  
+  const { data } = await api.post<Vote>('/votes/', { 
+    ...payload, 
+    building: buildingValue,
+    is_active: payload.is_active ?? true 
+  });
   return data;
 }
 

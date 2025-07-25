@@ -28,16 +28,12 @@ export default function NewVotePage() {
     return <p className="p-4 text-red-600">🚫 Δεν έχετε πρόσβαση σε αυτή τη σελίδα.</p>;
   }
 
-  if (!currentBuilding && !selectedBuilding) {
-    return <p className="p-4">Δεν έχει επιλεγεί κτήριο.</p>;
-  }
-
   const buildingId = selectedBuilding?.id || currentBuilding?.id;
 
   async function handleSubmit(data: any) {
     try {
-      await createVote({ ...data, building: buildingId });
-      queryClient.invalidateQueries({ queryKey: ['votes', buildingId] });
+      await createVote(data);
+      queryClient.invalidateQueries({ queryKey: ['votes'] });
       toast.success('Η ψηφοφορία δημιουργήθηκε με επιτυχία');
       router.push('/votes');
     } catch (err: any) {
@@ -51,7 +47,6 @@ export default function NewVotePage() {
         <Button variant="secondary">⬅ Επιστροφή στις Ψηφοφορίες</Button>
       </Link>
 
-      {/* Προαιρετικά μπορείς να βάλεις τίτλο εδώ */}
       <h1 className="text-2xl font-bold">🗳️ Νέα Ψηφοφορία</h1>
       <BuildingFilterIndicator className="mb-4" />
 

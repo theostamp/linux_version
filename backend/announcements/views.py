@@ -58,8 +58,16 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         logger.info(f"Announcement created: {announcement.title} by {self.request.user}")
         
         # Invalidate cache
-        cache_key = f"announcements_building_{announcement.building.id}"
-        cache.delete(cache_key)
+        if announcement.building:
+            cache_key = f"announcements_building_{announcement.building.id}"
+            cache.delete(cache_key)
+        else:
+            # For global announcements, invalidate all building caches
+            # This ensures global announcements appear in all building views
+            from buildings.models import Building
+            for building in Building.objects.all():
+                cache_key = f"announcements_building_{building.id}"
+                cache.delete(cache_key)
 
     def perform_update(self, serializer):
         """Ενημέρωση ανακοίνωσης με cache invalidation"""
@@ -67,8 +75,15 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         logger.info(f"Announcement updated: {announcement.title} by {self.request.user}")
         
         # Invalidate cache
-        cache_key = f"announcements_building_{announcement.building.id}"
-        cache.delete(cache_key)
+        if announcement.building:
+            cache_key = f"announcements_building_{announcement.building.id}"
+            cache.delete(cache_key)
+        else:
+            # For global announcements, invalidate all building caches
+            from buildings.models import Building
+            for building in Building.objects.all():
+                cache_key = f"announcements_building_{building.id}"
+                cache.delete(cache_key)
 
     def perform_destroy(self, instance):
         """Διαγραφή ανακοίνωσης με cache invalidation"""

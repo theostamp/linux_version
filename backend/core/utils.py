@@ -3,6 +3,7 @@
 from django.core.exceptions import ObjectDoesNotExist      
 from rest_framework import exceptions
 from buildings.models import Building
+from django.db.models import Q
 
 def _validate_building_param(building_param):
     try:
@@ -14,7 +15,10 @@ def _filter_for_superuser(base_queryset, building_param, building_field):
     if building_param and building_param != 'null':
         building_id = _validate_building_param(building_param)
         print(f"Superuser filtered by building_id: {building_id}")
-        return base_queryset.filter(**{f"{building_field}_id": building_id})
+        # Include both specific building and global items (building=null)
+        return base_queryset.filter(
+            Q(**{f"{building_field}_id": building_id}) | Q(**{f"{building_field}": None})
+        )
     # Αν building_param είναι null ή 'null', επιστρέφουμε όλα τα κτίρια
     print("Superuser: showing all buildings")
     return base_queryset
@@ -33,37 +37,49 @@ def _filter_for_manager(base_queryset, user, building_param, building_field):
             print(f"[ERROR] building_id could not be cast to int: {e}")
             return base_queryset.none()
         if building_id in managed_ids:
-            return base_queryset.filter(**{f"{building_field}_id": building_id})
+            # Include both specific building and global items (building=null)
+            return base_queryset.filter(
+                Q(**{f"{building_field}_id": building_id}) | Q(**{f"{building_field}": None})
+            )
         else:
             print("Manager δεν διαχειρίζεται αυτό το κτήριο.")
             return base_queryset.none()
     else:
-        # Αν building_param είναι null ή 'null', επιστρέφουμε όλα τα κτίρια που διαχειρίζεται
+        # Αν building_param είναι null ή 'null', επιστρέφουμε όλα τα κτίρια που διαχειρίζεται + global
         print("Manager: showing all managed buildings")
-        return base_queryset.filter(**{f"{building_field}_id__in": managed_ids})
+        return base_queryset.filter(
+            Q(**{f"{building_field}_id__in": managed_ids}) | Q(**{f"{building_field}": None})
+        )
 
 def _filter_for_resident(base_queryset, user, building_param, building_field):
     try:
         profile = getattr(user, "profile", None)
         if not profile or not getattr(profile, "building", None):
             print("Resident: profile ή building δεν υπάρχει")
-            return base_queryset.none()
+            # Even if resident has no building, they should see global items
+            return base_queryset.filter(**{f"{building_field}": None})
         resident_building_id = profile.building.id
         print(f"Resident building id: {resident_building_id}")
         if building_param and building_param != 'null':
             building_id = _validate_building_param(building_param)
             if building_id == resident_building_id:
-                return base_queryset.filter(**{f"{building_field}_id": building_id})
+                # Include both specific building and global items (building=null)
+                return base_queryset.filter(
+                    Q(**{f"{building_field}_id": building_id}) | Q(**{f"{building_field}": None})
+                )
             else:
                 print("Resident δεν ανήκει σε αυτό το κτήριο.")
                 return base_queryset.none()
         else:
-            # Αν building_param είναι null ή 'null', επιστρέφουμε μόνο το κτίριο του resident
-            print("Resident: showing only their building")
-            return base_queryset.filter(**{f"{building_field}_id": resident_building_id})
+            # Αν building_param είναι null ή 'null', επιστρέφουμε το κτίριο του resident + global
+            print("Resident: showing only their building + global")
+            return base_queryset.filter(
+                Q(**{f"{building_field}_id": resident_building_id}) | Q(**{f"{building_field}": None})
+            )
     except (AttributeError, ObjectDoesNotExist) as e:
         print(f"Exception in resident filter: {e}")
-        return base_queryset.none()
+        # In case of error, still show global items
+        return base_queryset.filter(**{f"{building_field}": None})
 
 def filter_queryset_by_user_and_building(request, base_queryset, building_field='building'):
     """

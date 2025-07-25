@@ -5,7 +5,14 @@ from django.utils import timezone
 from buildings.models import Building
 
 class Announcement(models.Model):
-    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='announcements')
+    building = models.ForeignKey(
+        Building, 
+        on_delete=models.CASCADE, 
+        related_name='announcements',
+        null=True,
+        blank=True,
+        help_text="Αφήστε κενό για ανακοίνωση σε όλα τα κτίρια"
+    )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -29,7 +36,8 @@ class Announcement(models.Model):
         verbose_name_plural = "Ανακοινώσεις"
 
     def __str__(self):
-        return f"{self.title} ({self.building.name})"
+        building_name = self.building.name if self.building else "Όλα τα κτίρια"
+        return f"{self.title} ({building_name})"
 
     def clean(self):
         """Validation για τις ημερομηνίες"""

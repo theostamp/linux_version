@@ -4,7 +4,9 @@ from .models import Announcement
 
 class AnnouncementSerializer(serializers.ModelSerializer):
     building = serializers.PrimaryKeyRelatedField(
-        queryset=Building.objects.all()
+        queryset=Building.objects.all(),
+        required=False,
+        allow_null=True
     )
     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
     is_currently_active = serializers.SerializerMethodField()
@@ -37,6 +39,14 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at', 'author', 'author_name']
 
     def validate_building(self, value):
+        # If building is None (global announcement), allow it for staff users
+        if value is None:
+            user = self.context['request'].user
+            if user.is_superuser or user.is_staff:
+                return value
+            else:
+                raise serializers.ValidationError("Μόνο οι διαχειριστές μπορούν να δημιουργήσουν καθολικές ανακοινώσεις.")
+        
         user = self.context['request'].user
         
         # Superusers can create announcements anywhere
@@ -119,7 +129,7 @@ class AnnouncementListSerializer(serializers.ModelSerializer):
         return obj.author.get_full_name() or obj.author.username
 
     def get_building_name(self, obj):
-        return obj.building.name
+        return obj.building.name if obj.building else "Όλα τα κτίρια"
 
     def get_is_currently_active(self, obj):
         return obj.is_currently_active

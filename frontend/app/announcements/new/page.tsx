@@ -42,23 +42,12 @@ export default function NewAnnouncementPage() {
 
   if (isLoading) return <p className="p-4">Έλεγχος δικαιωμάτων...</p>;
   if (!isAccessAllowed) return <p className="p-4 text-red-600">🚫 Δεν έχετε πρόσβαση σε αυτή τη σελίδα.</p>;
-  if (!currentBuilding) return <p className="p-4">Δεν έχει επιλεγεί κτήριο.</p>;
-
-  async function handleSubmit({ title, description, start_date, end_date, file, is_active }: AnnouncementFormData) {
-    try {
-      await createAnnouncement({ title, description, start_date, end_date, file, is_active, building: currentBuilding!.id });
-      toast.success('Η ανακοίνωση δημιουργήθηκε με επιτυχία');
-      router.push('/announcements');
-    } catch (err: any) {
-      toast.error(err.message ?? 'Αποτυχία δημιουργίας ανακοίνωσης');
-    }
-  }
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">📢 Νέα Ανακοίνωση</h1>
       <BuildingFilterIndicator className="mb-4" />
-      <NewAnnouncementForm buildingId={currentBuilding.id} />
+      <NewAnnouncementForm buildingId={currentBuilding?.id} />
     </div>
   );
 }

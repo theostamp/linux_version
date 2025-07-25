@@ -4,7 +4,11 @@ from .models import Vote, VoteSubmission
 from buildings.models import Building
 
 class VoteSerializer(serializers.ModelSerializer):
-    building = serializers.PrimaryKeyRelatedField(queryset=Building.objects.all())
+    building = serializers.PrimaryKeyRelatedField(
+        queryset=Building.objects.all(),
+        required=False,
+        allow_null=True
+    )
     creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
     choices = serializers.SerializerMethodField()
     is_currently_active = serializers.SerializerMethodField()
@@ -42,6 +46,14 @@ class VoteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at', 'creator', 'creator_name']
 
     def validate_building(self, value):
+        # If building is None (global vote), allow it for staff users
+        if value is None:
+            user = self.context['request'].user
+            if user.is_superuser or user.is_staff:
+                return value
+            else:
+                raise serializers.ValidationError("Μόνο οι διαχειριστές μπορούν να δημιουργήσουν καθολικές ψηφοφορίες.")
+        
         user = self.context['request'].user
         
         # Superusers can create votes anywhere
@@ -89,7 +101,7 @@ class VoteSerializer(serializers.ModelSerializer):
         return obj.creator.get_full_name() or obj.creator.username if obj.creator else "Άγνωστος"
 
     def get_building_name(self, obj):
-        return obj.building.name if obj.building else "Άγνωστο κτίριο"
+        return obj.building.name if obj.building else "Όλα τα κτίρια"
 
     def get_total_votes(self, obj):
         return obj.total_votes
@@ -152,7 +164,7 @@ class VoteListSerializer(serializers.ModelSerializer):
         return obj.creator.get_full_name() or obj.creator.username if obj.creator else "Άγνωστος"
 
     def get_building_name(self, obj):
-        return obj.building.name
+        return obj.building.name if obj.building else "Όλα τα κτίρια"
 
     def get_total_votes(self, obj):
         return obj.total_votes

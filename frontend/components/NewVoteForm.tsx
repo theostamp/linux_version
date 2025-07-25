@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { CreateVotePayload } from '@/lib/api';
 import { toast } from 'react-hot-toast';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 type Props = Readonly<{
   onSubmit: (data: CreateVotePayload) => void;
-  buildingId: number;
+  buildingId?: number;
 }>;
 
 export default function NewVoteForm({ onSubmit, buildingId }: Props) {
@@ -15,7 +16,9 @@ export default function NewVoteForm({ onSubmit, buildingId }: Props) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [choices, setChoices] = useState<string[]>(['Ναι', 'Όχι', 'Λευκό']);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(buildingId || null);
   const [submitting, setSubmitting] = useState(false);
+  const { buildings } = useBuilding();
 
   const handleChoiceChange = (index: number, value: string) => {
     const newChoices = [...choices];
@@ -66,7 +69,7 @@ const removeChoice = (index: number) => {
       start_date: startDate,
       end_date: endDate || undefined,
       choices: trimmedChoices,
-      building: buildingId,
+      building: selectedBuildingId || 0, // 0 will be handled as null in backend
     };
 
     try {
@@ -82,25 +85,46 @@ const removeChoice = (index: number) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="vote-title" className="block font-medium">Τίτλος</label>
+        <label htmlFor="title" className="block text-sm font-medium">Τίτλος Ψηφοφορίας</label>
         <input
-          id="vote-title"
-          className="w-full border rounded px-3 py-2"
+          id="title"
           value={title}
-          onChange={e => setTitle(e.target.value)}
+          onChange={(e) => setTitle(e.target.value)}
+          className="mt-1 w-full border rounded-lg px-3 py-2"
           required
         />
       </div>
 
       <div>
-        <label htmlFor="vote-description" className="block font-medium">Περιγραφή</label>
+        <label htmlFor="description" className="block text-sm font-medium">Περιγραφή</label>
         <textarea
-          id="vote-description"
-          className="w-full border rounded px-3 py-2"
+          id="description"
           value={description}
-          onChange={e => setDescription(e.target.value)}
+          onChange={(e) => setDescription(e.target.value)}
+          className="mt-1 w-full border rounded-lg px-3 py-2 h-24"
           required
         />
+      </div>
+
+      {/* Building Selection */}
+      <div>
+        <label htmlFor="building" className="block text-sm font-medium">Κτίριο</label>
+        <select
+          id="building"
+          value={selectedBuildingId || ''}
+          onChange={(e) => setSelectedBuildingId(e.target.value ? Number(e.target.value) : null)}
+          className="mt-1 w-full border rounded-lg px-3 py-2"
+        >
+          <option value="">Όλα τα κτίρια (Καθολική ψηφοφορία)</option>
+          {buildings.map((building) => (
+            <option key={building.id} value={building.id}>
+              {building.name}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-gray-500">
+          Επιλέξτε συγκεκριμένο κτίριο ή αφήστε "Όλα τα κτίρια" για καθολική ψηφοφορία
+        </p>
       </div>
 
       <div className="flex gap-4">
