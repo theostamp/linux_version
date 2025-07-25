@@ -2,8 +2,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { submitVote, fetchMyVote } from '@/lib/api';
+import { submitVote, fetchMyVote, deleteVote } from '@/lib/api';
 import VoteResults from './VoteResults';
+import { Trash2 } from 'lucide-react';
+import { useAuth } from '@/components/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
 
 type Vote = {
   id: number;
@@ -14,9 +18,12 @@ type Vote = {
 };
 
 export default function VoteCard({ vote }: { readonly vote: Vote }) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [userChoice, setUserChoice] = useState<"ΝΑΙ" | "ΟΧΙ" | "ΛΕΥΚΟ" | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const today = new Date();
   const isActive =
@@ -52,6 +59,27 @@ export default function VoteCard({ vote }: { readonly vote: Vote }) {
     }
   }
 
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!confirm(`Είστε σίγουροι ότι θέλετε να διαγράψετε τη ψηφοφορία "${vote.title}";`)) {
+      return;
+    }
+    
+    setIsDeleting(true);
+    try {
+      await deleteVote(vote.id);
+      toast.success('Η ψηφοφορία διαγράφηκε επιτυχώς');
+      // Invalidate the votes query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['votes'] });
+    } catch (error) {
+      console.error('Error deleting vote:', error);
+      toast.error('Σφάλμα κατά τη διαγραφή της ψηφοφορίας');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString('el-GR', {
       day: '2-digit',
@@ -59,9 +87,23 @@ export default function VoteCard({ vote }: { readonly vote: Vote }) {
       year: 'numeric',
     });
 
+  // Show delete button only for superusers and managers
+  const canDelete = user?.is_superuser || user?.is_staff;
+
   return (
-    <div className="p-4 rounded-2xl shadow-md bg-white dark:bg-gray-800 mb-4">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white">{vote.title}</h2>
+    <div className="p-4 rounded-2xl shadow-md bg-white dark:bg-gray-800 mb-4 relative">
+      {canDelete && (
+        <button
+          onClick={handleDelete}
+          disabled={isDeleting}
+          className="absolute top-3 right-3 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors disabled:opacity-50"
+          title="Διαγραφή ψηφοφορίας"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
+      
+      <h2 className="text-xl font-bold text-gray-900 dark:text-white pr-10">{vote.title}</h2>
       <p className="text-gray-700 dark:text-gray-300 mt-2">{vote.description}</p>
 
       <div className="mt-4">

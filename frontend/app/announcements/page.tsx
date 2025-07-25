@@ -16,8 +16,9 @@ import Link from 'next/link';
 export default function AnnouncementsPage() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
 
-  // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα, ή το currentBuilding αν δεν έχει επιλεγεί κάτι
-  const buildingId = selectedBuilding?.id || currentBuilding?.id;
+  // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα
+  // Αν είναι null, σημαίνει "όλα τα κτίρια" και περνάμε null στο API
+  const buildingId = selectedBuilding?.id ?? null;
 
   // ✅ Καλείται πάντα — ανεξαρτήτως αν έχει φορτώσει το building
   const {

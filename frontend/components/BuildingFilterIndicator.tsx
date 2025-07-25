@@ -11,13 +11,11 @@ interface BuildingFilterIndicatorProps {
 export default function BuildingFilterIndicator({ className = '' }: BuildingFilterIndicatorProps) {
   const { selectedBuilding } = useBuilding();
 
-  if (!selectedBuilding) return null;
-
   return (
     <div className={`flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200 ${className}`}>
       <BuildingIcon className="w-4 h-4" />
       <span>
-        Φιλτράρισμα: <span className="font-medium">{selectedBuilding.name}</span>
+        Φιλτράρισμα: <span className="font-medium">{selectedBuilding ? selectedBuilding.name : 'Όλα τα κτίρια'}</span>
       </span>
     </div>
   );

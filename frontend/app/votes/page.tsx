@@ -8,6 +8,12 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import type { Vote } from '@/lib/api';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
+import { deleteVote } from '@/lib/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
+import { useState } from 'react';
+import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 
 function isActive(start: string, end: string) {
   const today = new Date().toISOString().split('T')[0];
@@ -17,10 +23,15 @@ function isActive(start: string, end: string) {
 export default function VotesPage() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
   const { isAuthReady, user } = useAuth();
+  const queryClient = useQueryClient();
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα, ή το currentBuilding αν δεν έχει επιλεγεί κάτι
-  const buildingId = selectedBuilding?.id || currentBuilding?.id;
-  const isManager = user?.profile?.role === 'manager' || user?.is_superuser;
+  // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα
+  // Αν είναι null, σημαίνει "όλα τα κτίρια" και περνάμε null στο API
+  const buildingId = selectedBuilding?.id ?? null;
+  const isManager = user?.profile?.role === 'manager' || user?.is_superuser || user?.is_staff;
+  const canDelete = user?.is_superuser || user?.is_staff;
+  const canCreateVote = user?.is_superuser || user?.is_staff || user?.profile?.role === 'manager';
 
   // 💡 Προσοχή: το useVotes καλείται *πάντα*, ανεξάρτητα από loading states
   const {
@@ -30,15 +41,11 @@ export default function VotesPage() {
     isSuccess,
   } = useVotes(buildingId);
 
-  if (!isAuthReady || buildingLoading || !buildingId || isLoading) {
+  if (!isAuthReady || buildingLoading || isLoading) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">🗳️ Ψηφοφορίες</h1>
-        {selectedBuilding && (
-          <p className="text-sm text-gray-600 mb-4">
-            Φιλτράρισμα: <span className="font-medium">{selectedBuilding.name}</span>
-          </p>
-        )}
+        <BuildingFilterIndicator className="mb-4" />
         <p>Φόρτωση ψηφοφοριών...</p>
       </div>
     );
@@ -48,37 +55,49 @@ export default function VotesPage() {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">🗳️ Ψηφοφορίες</h1>
-        {selectedBuilding && (
-          <p className="text-sm text-gray-600 mb-4">
-            Φιλτράρισμα: <span className="font-medium">{selectedBuilding.name}</span>
-          </p>
-        )}
+        <BuildingFilterIndicator className="mb-4" />
         <ErrorMessage message="Αδυναμία φόρτωσης ψηφοφοριών." />
       </div>
     );
   }
 
+  const handleDelete = async (vote: Vote) => {
+    if (!confirm(`Είστε σίγουροι ότι θέλετε να διαγράψετε τη ψηφοφορία "${vote.title}";`)) {
+      return;
+    }
+    
+    setDeletingId(vote.id);
+    try {
+      await deleteVote(vote.id);
+      toast.success('Η ψηφοφορία διαγράφηκε επιτυχώς');
+      queryClient.invalidateQueries({ queryKey: ['votes'] });
+    } catch (error) {
+      console.error('Error deleting vote:', error);
+      toast.error('Σφάλμα κατά τη διαγραφή της ψηφοφορίας');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">🗳️ Ψηφοφορίες</h1>
-        {isManager && (
+        {canCreateVote && (
           <Link href="/votes/new">
-            <Button>➕ Νέα Ψηφοφορία</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              ➕ Νέα Ψηφοφορία
+            </Button>
           </Link>
         )}
       </div>
 
-      {selectedBuilding && (
-        <p className="text-sm text-gray-600">
-          Φιλτράρισμα: <span className="font-medium">{selectedBuilding.name}</span>
-        </p>
-      )}
+      <BuildingFilterIndicator />
 
       {isSuccess && votes.length === 0 && (
         <div className="text-center text-gray-500 space-y-2">
           <p>Δεν υπάρχουν διαθέσιμες ψηφοφορίες.</p>
-          {isManager && (
+          {canCreateVote && (
             <p className="text-sm text-gray-400">
               Δημιουργήστε την πρώτη ψηφοφορία για να ξεκινήσετε.
             </p>
@@ -91,9 +110,28 @@ export default function VotesPage() {
         return (
           <div
             key={vote.id}
-            className="p-4 border rounded-lg shadow-sm bg-white space-y-1"
+            className="p-4 border rounded-lg shadow-sm bg-white space-y-1 relative"
           >
-            <h2 className="text-lg font-semibold text-blue-700">{vote.title}</h2>
+            {/* Building badge - show only when viewing all buildings */}
+            {!selectedBuilding && vote.building_name && (
+              <div className="mb-2">
+                <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                  🏢 {vote.building_name}
+                </span>
+              </div>
+            )}
+            
+            {canDelete && (
+              <button
+                onClick={() => handleDelete(vote)}
+                disabled={deletingId === vote.id}
+                className="absolute top-3 right-3 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors disabled:opacity-50"
+                title="Διαγραφή ψηφοφορίας"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+            <h2 className="text-lg font-semibold text-blue-700 pr-10">{vote.title}</h2>
             <p className="text-sm text-gray-600">{vote.description}</p>
             <p className="text-xs text-gray-500">
               Έναρξη: {vote.start_date} • Λήξη: {vote.end_date}
@@ -103,6 +141,19 @@ export default function VotesPage() {
           </div>
         );
       })}
+      
+      {/* Floating Action Button for mobile/better UX */}
+      {canCreateVote && (
+        <Link 
+          href="/votes/new"
+          className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          title="Νέα Ψηφοφορία"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </Link>
+      )}
     </div>
   );
 }

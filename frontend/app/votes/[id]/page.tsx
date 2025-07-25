@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import { useVoteDetail } from '@/hooks/useVoteDetail';
@@ -10,15 +10,44 @@ import ErrorMessage from '@/components/ErrorMessage';
 import VoteSubmitForm from '@/components/VoteSubmitForm';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
+import { deleteVote } from '@/lib/api';
+import { useAuth } from '@/components/contexts/AuthContext';
+import { toast } from 'react-hot-toast';
+import { useState } from 'react';
 
 export default function VoteDetailPage() {
   const { id } = useParams();
+  const router = useRouter();
   const voteId = Number(id);
   const { currentBuilding } = useBuilding();
+  const { user } = useAuth();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: vote, isLoading: loadingVote, error } = useVoteDetail(voteId);
   const { data: myVote, refetch: refetchMyVote } = useMyVote(voteId);
   const { data: results, refetch: refetchResults } = useVoteResults(voteId);
+
+  const canDelete = user?.is_superuser || user?.is_staff;
+
+  const handleDelete = async () => {
+    if (!vote) return;
+    
+    if (!confirm(`Είστε σίγουροι ότι θέλετε να διαγράψετε τη ψηφοφορία "${vote.title}";`)) {
+      return;
+    }
+    
+    setIsDeleting(true);
+    try {
+      await deleteVote(vote.id);
+      toast.success('Η ψηφοφορία διαγράφηκε επιτυχώς');
+      router.push('/votes');
+    } catch (error) {
+      console.error('Error deleting vote:', error);
+      toast.error('Σφάλμα κατά τη διαγραφή της ψηφοφορίας');
+      setIsDeleting(false);
+    }
+  };
 
   if (error) return <ErrorMessage message="Αποτυχία φόρτωσης ψηφοφορίας." />;
   if (loadingVote || !vote) return <p className="p-6">Φόρτωση...</p>;
@@ -103,11 +132,23 @@ export default function VoteDetailPage() {
               {vote.status_display}
             </div>
           </div>
-          {vote.is_urgent && (
-            <div className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
-              🚨 Επείγουσα
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {vote.is_urgent && (
+              <div className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
+                🚨 Επείγουσα
+              </div>
+            )}
+            {canDelete && (
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors disabled:opacity-50"
+                title="Διαγραφή ψηφοφορίας"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
 
         <p className="text-gray-700 text-lg mb-6">{vote.description}</p>

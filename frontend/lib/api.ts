@@ -233,6 +233,7 @@ export async function getCurrentUser(): Promise<User> {
 export type Announcement = { 
   id: number; title: string; description: string; file: string | null; 
   start_date: string; end_date: string; is_active: boolean; building: number; // Building ID
+  building_name?: string; // Building name
   is_currently_active?: boolean; days_remaining?: number | null; status_display?: string;
   created_at: string; updated_at?: string;
 };
@@ -240,7 +241,9 @@ export type Announcement = {
 export type Vote = { 
   id: number; title: string; description: string; start_date: string; end_date: string; 
   building: number; // Building ID
+  building_name?: string; // Building name
   choices?: string[]; is_active?: boolean; created_at?: string; updated_at?: string;
+  status_display?: string; creator_name?: string; is_urgent?: boolean;
 };
 
 export type VoteSubmission = { 
@@ -311,8 +314,8 @@ export async function deleteBuilding(id: number): Promise<void> {
 }
 
 export async function fetchAnnouncements(buildingId?: number | null): Promise<Announcement[]> {
-  // Revert to basic endpoint that was working before
-  const relativeUrl = buildingId ? `/announcements/?building=${buildingId}` : '/announcements/?building=null';
+  // When buildingId is null, fetch from all buildings (no filter)
+  const relativeUrl = buildingId ? `/announcements/?building=${buildingId}` : '/announcements/';
   
   // --- ΠΡΟΣΘΕΣΕ ΑΥΤΑ ΤΑ DEBUG LOGS ---
   console.log(`%c[DEBUG fetchAnnouncements] Called for announcements page with buildingId: ${buildingId}`, "color: blue; font-weight: bold;");
@@ -340,6 +343,7 @@ export async function fetchAnnouncements(buildingId?: number | null): Promise<An
       days_remaining: row.days_remaining ?? null,
       status_display: row.status_display ?? '',
       building: row.building,
+      building_name: row.building_name ?? '',
       created_at: row.created_at,
       updated_at: row.updated_at,
     }));
@@ -377,6 +381,16 @@ export async function fetchAnnouncement(id: string | number): Promise<Announceme
     };
   } catch (error) {
     console.error(`[API CALL] Error fetching announcement ${id}:`, error);
+    throw error;
+  }
+}
+
+export async function deleteAnnouncement(announcementId: number): Promise<void> {
+  try {
+    await api.delete(`/announcements/${announcementId}/`);
+    console.log(`[API] Successfully deleted announcement ${announcementId}`);
+  } catch (error) {
+    console.error(`[API] Error deleting announcement ${announcementId}:`, error);
     throw error;
   }
 }
@@ -441,6 +455,16 @@ export async function fetchVoteResults(voteId: number): Promise<VoteResultsData>
   console.log(`[API CALL] Attempting to fetch results for vote ${voteId}`);
   const { data } = await api.get<VoteResultsData>(`/votes/${voteId}/results/`);
   return data;
+}
+
+export async function deleteVote(voteId: number): Promise<void> {
+  try {
+    await api.delete(`/votes/${voteId}/`);
+    console.log(`[API] Successfully deleted vote ${voteId}`);
+  } catch (error) {
+    console.error(`[API] Error deleting vote ${voteId}:`, error);
+    throw error;
+  }
 }
 
 export interface CreateVotePayload { 
