@@ -490,10 +490,16 @@ export async function fetchPublicInfo(buildingId: number): Promise<PublicInfoDat
 export async function fetchRequests(filters: { status?: string; buildingId?: number | null } = {}): Promise<UserRequest[]> {
   const params = new URLSearchParams();
   if (filters.status) params.append('status', filters.status);
-  if (filters.buildingId) {
-    params.append('building', String(filters.buildingId));
-  } else {
-    params.append('building', 'null');
+  
+  // Handle building parameter: only add it if buildingId is provided
+  // If buildingId is null, we want to show all buildings, so we pass 'null'
+  // If buildingId is undefined, we don't add the parameter at all
+  if (filters.buildingId !== undefined) {
+    if (filters.buildingId === null) {
+      params.append('building', 'null');
+    } else {
+      params.append('building', String(filters.buildingId));
+    }
   }
   const queryString = params.toString();
   const url = `/user-requests/${queryString ? '?' + queryString : ''}`;
@@ -597,6 +603,16 @@ export async function updateUserRequest(id: number, payload: UpdateUserRequestPa
   console.log(`[API CALL] Attempting to update user request ${id}:`, payload);
   const { data } = await api.patch<UserRequest>(`/user-requests/${id}/`, payload);
   return data;
+}
+
+export async function deleteUserRequest(requestId: number): Promise<void> {
+  try {
+    await api.delete(`/user-requests/${requestId}/`);
+    console.log(`[API] Successfully deleted user request ${requestId}`);
+  } catch (error) {
+    console.error(`[API] Error deleting user request ${requestId}:`, error);
+    throw error;
+  }
 }
 
 export async function fetchObligationsSummary(): Promise<ObligationSummary> {

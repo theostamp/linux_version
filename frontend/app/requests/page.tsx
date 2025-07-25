@@ -1,187 +1,166 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import ErrorMessage from '@/components/ErrorMessage';
-import { createUserRequest } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import { useRequests } from '@/hooks/useRequests';
+import ErrorMessage from '@/components/ErrorMessage';
+import { useAuth } from '@/components/contexts/AuthContext';
+import type { UserRequest } from '@/lib/api';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
+import { deleteUserRequest } from '@/lib/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
+import { useState } from 'react';
+import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import RequestCard from '@/components/RequestCard';
 import RequestSkeleton from '@/components/RequestSkeleton';
-import SupportButton from '@/components/SupportButton';
-import { useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 
-const TYPE_CHOICES = [
-  { value: 'maintenance', label: 'Συντήρηση' },
-  { value: 'cleaning', label: 'Καθαριότητα' },
-  { value: 'technical', label: 'Τεχνικό' },
-  { value: 'security', label: 'Ασφάλεια' },
-  { value: 'noise', label: 'Θόρυβος' },
-  { value: 'other', label: 'Άλλο' },
-];
-
-export default function NewRequestPage() {
-  const router = useRouter();
-  const { currentBuilding, selectedBuilding } = useBuilding();
-  
-  // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα, ή το currentBuilding αν δεν έχει επιλεγεί κάτι
-  const buildingId = selectedBuilding?.id || currentBuilding?.id;
-  const buildingToUse = selectedBuilding || currentBuilding;
-  
-  const { data: requests, isLoading: loadingRequests } = useRequests(buildingId);
+export default function RequestsPage() {
+  const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
+  const { isAuthReady, user } = useAuth();
   const queryClient = useQueryClient();
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [type, setType] = useState('');
-  const [isUrgent, setIsUrgent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα
+  // Αν είναι null, σημαίνει "όλα τα κτίρια" και περνάμε null στο API
+  const buildingId = selectedBuilding?.id ?? null;
+  const canDelete = user?.is_superuser || user?.is_staff;
+  const canCreateRequest = true; // Όλοι οι χρήστες μπορούν να δημιουργήσουν αιτήματα
 
-  if (!buildingToUse) {
-    return <p>Παρακαλώ επιλέξτε κτίριο για να συνεχίσετε.</p>;
+  const {
+    data: requests = [],
+    isLoading,
+    isError,
+    isSuccess,
+  } = useRequests(buildingId);
+
+  if (!isAuthReady || buildingLoading || isLoading) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6">📋 Αιτήματα</h1>
+        <BuildingFilterIndicator className="mb-4" />
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <RequestSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  if (isError) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6">📋 Αιτήματα</h1>
+        <BuildingFilterIndicator className="mb-4" />
+        <ErrorMessage message="Αδυναμία φόρτωσης αιτημάτων." />
+      </div>
+    );
+  }
 
-    if (!title.trim() || !description.trim()) {
-      setError('Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία.');
+  const handleDelete = async (request: UserRequest) => {
+    if (!confirm(`Είστε σίγουροι ότι θέλετε να διαγράψετε το αίτημα "${request.title}";`)) {
       return;
     }
-
-    if (type && !TYPE_CHOICES.some((t) => t.value === type)) {
-      setError('Μη έγκυρος τύπος αιτήματος.');
-      return;
-    }
-
-   setSubmitting(true);
+    
+    setDeletingId(request.id);
     try {
-      await createUserRequest({
-        title: title.trim(),
-        description: description.trim(),
-        building: buildingToUse.id,
-        type: type || undefined,
-        is_urgent: isUrgent || undefined,
-      });
-      queryClient.invalidateQueries({ queryKey: ['requests', buildingId] });
-      router.push('/requests');
-    } catch (err: any) {
-      const msg = err.response?.data
-        ? JSON.stringify(err.response.data)
-        : err.message;
-      setError(`Σφάλμα: ${msg}`);
-      console.error('CreateUserRequest failed:', err);
+      await deleteUserRequest(request.id);
+      toast.success('Το αίτημα διαγράφηκε επιτυχώς');
+      queryClient.invalidateQueries({ queryKey: ['requests'] });
+    } catch (error) {
+      console.error('Error deleting request:', error);
+      toast.error('Σφάλμα κατά τη διαγραφή του αιτήματος');
     } finally {
-      setSubmitting(false);
+      setDeletingId(null);
     }
   };
 
+  const container = {
+    hidden: { opacity: 1 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.15 } },
+  };
+  const item = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } };
+
   return (
-    <div className="max-w-xl mx-auto mt-20 p-6 bg-white rounded-2xl shadow">
-      <h1 className="text-2xl font-bold mb-4 text-center">Νέο Αίτημα</h1>
-      <BuildingFilterIndicator className="mb-4" />
-      <p className="text-sm text-muted-foreground mb-4 text-center">
-        Κτίριο: <strong>{buildingToUse.name}</strong>
-        {selectedBuilding && (
-          <span className="block text-xs text-blue-600 mt-1">
-            Φιλτράρισμα ενεργό
-          </span>
+    <div className="p-6 max-w-3xl mx-auto space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">📋 Αιτήματα</h1>
+        {canCreateRequest && (
+          <Link href="/requests/new">
+            <Button className="bg-green-600 hover:bg-green-700 text-white">
+              ➕ Νέο Αίτημα
+            </Button>
+          </Link>
         )}
-      </p>
+      </div>
 
-      {error && <ErrorMessage message={error} />}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium">
-            Τίτλος *
-          </label>
-          <input
-            id="title"
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            className="mt-1 w-full border p-2 rounded"
-          />
-        </div>
+      <BuildingFilterIndicator />
 
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium">
-            Περιγραφή *
-          </label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-            className="mt-1 w-full border p-2 rounded h-24"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="type" className="block text-sm font-medium">
-            Τύπος (προαιρετικό)
-          </label>
-          <select
-            id="type"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="mt-1 w-full border p-2 rounded"
-          >
-            <option value="">-- Επιλέξτε τύπο --</option>
-            {TYPE_CHOICES.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex items-center">
-          <input
-            id="urgent"
-            type="checkbox"
-            checked={isUrgent}
-            onChange={() => setIsUrgent(!isUrgent)}
-            className="mr-2"
-          />
-          <label htmlFor="urgent" className="text-sm">
-            Επείγον
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 disabled:opacity-50"
-        >
-          {submitting ? 'Υποβολή…' : 'Δημιουργία Αιτήματος'}
-        </button>
-      </form>
-
-      <details className="mt-10">
-        <summary className="cursor-pointer text-blue-600 underline">
-          Προβολή υπαρχόντων αιτημάτων για το κτίριο
-        </summary>
-        <div className="mt-4">
-          {loadingRequests && <RequestSkeleton />}
-          {!loadingRequests && requests?.length === 0 && (
-            <p className="text-sm text-muted-foreground">Δεν υπάρχουν άλλα αιτήματα.</p>
+      {isSuccess && requests.length === 0 && (
+        <div className="text-center text-gray-500 space-y-2">
+          <p>Δεν υπάρχουν διαθέσιμα αιτήματα.</p>
+          {canCreateRequest && (
+            <p className="text-sm text-gray-400">
+              Δημιουργήστε το πρώτο αίτημα για να ξεκινήσετε.
+            </p>
           )}
-          {!loadingRequests &&
-            requests?.map((r) => (
-              <div key={r.id} className="mb-4 border rounded p-3 shadow-sm">
-                <RequestCard request={r} />
-                <div className="mt-2 text-right">
-                  <SupportButton requestId={r.id} />
-                </div>
-              </div>
-            ))}
         </div>
-      </details>
+      )}
+
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="visible"
+        className="space-y-4"
+      >
+        {requests.map((request: UserRequest) => (
+          <motion.div
+            key={request.id}
+            variants={item}
+            className="p-4 border rounded-lg shadow-sm bg-white space-y-1 relative"
+          >
+            {/* Building badge - show only when viewing all buildings */}
+            {!selectedBuilding && request.building_name && (
+              <div className="absolute top-3 left-3 z-10">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-medium shadow-sm">
+                  🏢 {request.building_name}
+                </span>
+              </div>
+            )}
+            
+            {canDelete && (
+              <button
+                onClick={() => handleDelete(request)}
+                disabled={deletingId === request.id}
+                className="absolute top-3 right-3 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 z-10"
+                title="Διαγραφή αιτήματος"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+
+            <div className={`${!selectedBuilding && request.building_name ? 'pt-8' : ''}`}>
+              <RequestCard request={request} />
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
+      
+      {/* Floating Action Button for mobile/better UX */}
+      {canCreateRequest && (
+        <Link 
+          href="/requests/new"
+          className="fixed bottom-6 right-6 bg-green-600 hover:bg-green-700 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          title="Νέο Αίτημα"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </Link>
+      )}
     </div>
   );
 }

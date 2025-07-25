@@ -3,27 +3,20 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ErrorMessage from '@/components/ErrorMessage';
-
-// 👇 Αυτό θα αντικατασταθεί από real auth
-const currentUser = { username: 'demo_user', is_staff: true };
-
-interface UserRequest {
-  id: number;
-  title: string;
-  description: string;
-  status: string;
-  created_by_username: string;
-  supporter_count: number;
-  supporter_usernames: string[];
-  is_urgent: boolean;
-  type?: string;
-  created_at: string;
-}
+import { useAuth } from '@/components/contexts/AuthContext';
+import { deleteUserRequest, toggleSupportRequest } from '@/lib/api';
+import type { UserRequest } from '@/types/userRequests';
+import { toast } from 'react-hot-toast';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Trash2, Edit } from 'lucide-react';
 
 const statusLabels: Record<string, string> = {
+  open: 'Ανοιχτό',
   pending: 'Σε Εκκρεμότητα',
   in_progress: 'Σε Εξέλιξη',
   completed: 'Ολοκληρώθηκε',
+  resolved: 'Ολοκληρώθηκε',
   rejected: 'Απορρίφθηκε',
 };
 
@@ -41,6 +34,7 @@ function formatDate(dateString: string): string {
 export default function RequestDetailPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { user, isAuthReady } = useAuth();
   const [request, setRequest] = useState<UserRequest | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -48,14 +42,21 @@ export default function RequestDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
 
-  const isOwner = request?.created_by_username === currentUser.username || currentUser.is_staff;
+  const isOwner = request?.created_by_username === user?.username;
+  const canDelete = user?.is_superuser || user?.is_staff || isOwner;
+  const canChangeStatus = user?.is_superuser || user?.is_staff;
 
   async function fetchRequest() {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user-requests/${id}/`, {
         credentials: 'include',
       });
-      if (!res.ok) throw new Error('Αποτυχία φόρτωσης αιτήματος');
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error('Δεν έχετε δικαίωμα πρόσβασης σε αυτό το αίτημα.');
+        }
+        throw new Error('Αποτυχία φόρτωσης αιτήματος');
+      }
       const data = await res.json();
       setRequest(data);
     } catch (err) {
@@ -69,34 +70,36 @@ export default function RequestDetailPage() {
     if (!request) return;
     setSupporting(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/user-requests/${request.id}/support/`,
-        {
-          method: 'POST',
-          credentials: 'include',
-        }
-      );
-      if (!res.ok) throw new Error('Αποτυχία υποστήριξης');
-      await fetchRequest();
-    } catch (err) {
-      setError((err as Error).message);
+      const result = await toggleSupportRequest(request.id);
+      toast.success(result.status);
+      // Update the request with new supporter count
+      setRequest(prev => prev ? {
+        ...prev,
+        supporter_count: result.supporter_count,
+        is_supported: result.supported
+      } : null);
+    } catch (err: any) {
+      const message = err.response?.data?.detail || err.message || 'Αποτυχία υποστήριξης';
+      toast.error(message);
+      setError(message);
     } finally {
       setSupporting(false);
     }
   }
 
   async function handleDelete() {
-    if (!confirm('Είστε σίγουρος ότι θέλετε να διαγράψετε το αίτημα;')) return;
+    if (!request) return;
+    if (!confirm(`Είστε σίγουρος ότι θέλετε να διαγράψετε το αίτημα "${request.title}";`)) return;
+    
     setDeleting(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user-requests/${request?.id}/`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Αποτυχία διαγραφής');
+      await deleteUserRequest(request.id);
+      toast.success('Το αίτημα διαγράφηκε επιτυχώς');
       router.push('/requests');
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (err: any) {
+      const message = err.response?.data?.detail || err.message || 'Αποτυχία διαγραφής';
+      toast.error(message);
+      setError(message);
     } finally {
       setDeleting(false);
     }
@@ -116,108 +119,194 @@ export default function RequestDetailPage() {
         }
       );
       if (!res.ok) throw new Error('Αποτυχία αλλαγής κατάστασης');
-      await fetchRequest();
-    } catch (err) {
-      setError((err as Error).message);
+      const updatedRequest = await res.json();
+      setRequest(updatedRequest);
+      toast.success('Η κατάσταση ενημερώθηκε επιτυχώς');
+    } catch (err: any) {
+      const message = err.response?.data?.detail || err.message || 'Αποτυχία αλλαγής κατάστασης';
+      toast.error(message);
+      setError(message);
     } finally {
       setChangingStatus(false);
     }
   }
 
   useEffect(() => {
-    fetchRequest();
-  }, [id]);
+    if (isAuthReady) {
+      fetchRequest();
+    }
+  }, [id, isAuthReady]);
 
-  if (loading) return <p className="p-6">Φόρτωση...</p>;
-  if (error) return <ErrorMessage message={error} />;
-  if (!request) return <p>Δεν βρέθηκε το αίτημα.</p>;
+  if (!isAuthReady || loading) {
+    return (
+      <div className="p-6 max-w-2xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-300 rounded w-3/4"></div>
+          <div className="h-20 bg-gray-300 rounded"></div>
+          <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-2xl mx-auto">
+        <Link href="/requests">
+          <Button variant="secondary" className="mb-4">⬅ Επιστροφή στα Αιτήματα</Button>
+        </Link>
+        <ErrorMessage message={error} />
+      </div>
+    );
+  }
+
+  if (!request) {
+    return (
+      <div className="p-6 max-w-2xl mx-auto">
+        <Link href="/requests">
+          <Button variant="secondary" className="mb-4">⬅ Επιστροφή στα Αιτήματα</Button>
+        </Link>
+        <p>Δεν βρέθηκε το αίτημα.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">{request.title}</h1>
+      {/* Navigation */}
+      <Link href="/requests">
+        <Button variant="secondary">⬅ Επιστροφή στα Αιτήματα</Button>
+      </Link>
 
-      <p className="text-gray-800 whitespace-pre-wrap">{request.description}</p>
-
-      <div className="text-sm text-gray-600">
-        Υποβλήθηκε από: <strong>{request.created_by_username}</strong>
-        <br />
-        Ημερομηνία: <strong>{formatDate(request.created_at)}</strong>
-        <br />
-        Κατάσταση: <strong>{statusLabels[request.status] || request.status}</strong>
-        <br />
-        Τύπος: <strong>{request.type ?? '—'}</strong>
-        <br />
-        Επείγον: <strong>{request.is_urgent ? 'Ναι' : 'Όχι'}</strong>
-        <br />
-        Υποστηρικτές: <strong>{request.supporter_count}</strong>
-      </div>
-
-      <div className="flex flex-wrap gap-4">
-        <button
-          onClick={handleSupport}
-          disabled={supporting}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
-        >
-          {supporting ? 'Επεξεργασία...' : 'Υποστηρίζω / Ανάκληση'}
-        </button>
-
-        {isOwner && (
-          <>
-            <button
-              onClick={() => router.push(`/requests/${request.id}/edit`)}
-              className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-            >
-              ✏️ Επεξεργασία
-            </button>
-            <button
+      {/* Header with actions */}
+      <div className="flex justify-between items-start">
+        <h1 className="text-2xl font-bold text-gray-900">
+          {request.title}
+          {request.is_urgent && <span className="ml-2 text-red-600">🚨</span>}
+        </h1>
+        
+        <div className="flex gap-2">
+          {isOwner && (
+            <Link href={`/requests/${request.id}/edit`}>
+              <Button variant="secondary" size="sm">
+                <Edit className="w-4 h-4 mr-1" />
+                Επεξεργασία
+              </Button>
+            </Link>
+          )}
+          
+          {canDelete && (
+            <Button
               onClick={handleDelete}
               disabled={deleting}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50"
+              variant="destructive"
+              size="sm"
             >
-              🗑️ Διαγραφή
-            </button>
-          </>
+              <Trash2 className="w-4 h-4 mr-1" />
+              {deleting ? 'Διαγραφή...' : 'Διαγραφή'}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="bg-white rounded-lg border p-6 space-y-4">
+        <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+          {request.description}
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 border-t pt-4">
+          <div>
+            <strong>Υποβλήθηκε από:</strong> {request.created_by_username}
+          </div>
+          <div>
+            <strong>Ημερομηνία:</strong> {formatDate(request.created_at)}
+          </div>
+          <div>
+            <strong>Κατάσταση:</strong> 
+            <span className={`ml-1 px-2 py-1 rounded text-xs font-medium ${
+              request.status === 'completed' || request.status === 'resolved' 
+                ? 'bg-green-100 text-green-800'
+                : request.status === 'in_progress'
+                ? 'bg-blue-100 text-blue-800'
+                : request.status === 'rejected'
+                ? 'bg-red-100 text-red-800'
+                : 'bg-gray-100 text-gray-800'
+            }`}>
+              {statusLabels[request.status] || request.status}
+            </span>
+          </div>
+          <div>
+            <strong>Κατηγορία:</strong> {request.type || '—'}
+          </div>
+          <div>
+            <strong>Επείγον:</strong> {request.is_urgent ? 'Ναι' : 'Όχι'}
+          </div>
+          <div>
+            <strong>Υποστηρικτές:</strong> {request.supporter_count}
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex flex-wrap gap-4">
+        {user && user.username !== request.created_by_username && (
+          <Button
+            onClick={handleSupport}
+            disabled={supporting}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {supporting ? 'Επεξεργασία...' : request.is_supported ? 'Ανάκληση Υποστήριξης' : '👍 Υποστηρίζω'}
+          </Button>
         )}
       </div>
 
-      {currentUser.is_staff && (
-        <div className="mt-6 space-y-2">
-          <p className="text-sm font-medium">Ενέργειες:</p>
+      {/* Status change actions for staff */}
+      {canChangeStatus && (
+        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+          <p className="text-sm font-medium text-gray-700">Ενέργειες Διαχειριστή:</p>
           <div className="flex flex-wrap gap-2">
             {request.status !== 'in_progress' && (
-              <button
+              <Button
                 onClick={() => handleStatusChange('in_progress')}
                 disabled={changingStatus}
-                className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 disabled:opacity-50"
+                variant="secondary"
+                size="sm"
               >
                 🔄 Σε Εξέλιξη
-              </button>
+              </Button>
             )}
             {request.status !== 'completed' && (
-              <button
+              <Button
                 onClick={() => handleStatusChange('completed')}
                 disabled={changingStatus}
-                className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 disabled:opacity-50"
+                className="bg-green-600 hover:bg-green-700"
+                size="sm"
               >
                 ✅ Ολοκληρώθηκε
-              </button>
+              </Button>
             )}
             {request.status !== 'rejected' && (
-              <button
+              <Button
                 onClick={() => handleStatusChange('rejected')}
                 disabled={changingStatus}
-                className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 disabled:opacity-50"
+                variant="destructive"
+                size="sm"
               >
                 ❌ Απόρριψη
-              </button>
+              </Button>
             )}
           </div>
         </div>
       )}
 
-      {request.supporter_usernames.length > 0 && (
-        <div className="mt-4 text-sm text-gray-700">
-          Υποστηρικτές: {request.supporter_usernames.join(', ')}
+      {/* Supporters list */}
+      {request.supporter_usernames && request.supporter_usernames.length > 0 && (
+        <div className="bg-blue-50 rounded-lg p-4">
+          <p className="text-sm font-medium text-blue-900 mb-2">Υποστηρικτές:</p>
+          <p className="text-sm text-blue-800">
+            {request.supporter_usernames.join(', ')}
+          </p>
         </div>
       )}
     </div>

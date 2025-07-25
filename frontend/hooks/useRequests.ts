@@ -9,6 +9,6 @@ export function useRequests(buildingId?: number | null) {
     queryFn: async () => {
       return await fetchRequests({ buildingId });
     },
-    enabled: buildingId !== undefined,
+    enabled: buildingId !== undefined, // Allow null for all buildings
   });
 }

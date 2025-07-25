@@ -114,8 +114,8 @@ export default function VotesPage() {
           >
             {/* Building badge - show only when viewing all buildings */}
             {!selectedBuilding && vote.building_name && (
-              <div className="mb-2">
-                <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+              <div className="absolute top-3 left-3 z-10">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-medium shadow-sm">
                   🏢 {vote.building_name}
                 </span>
               </div>
@@ -125,19 +125,21 @@ export default function VotesPage() {
               <button
                 onClick={() => handleDelete(vote)}
                 disabled={deletingId === vote.id}
-                className="absolute top-3 right-3 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors disabled:opacity-50"
+                className="absolute top-3 right-3 p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 z-10"
                 title="Διαγραφή ψηφοφορίας"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
-            <h2 className="text-lg font-semibold text-blue-700 pr-10">{vote.title}</h2>
-            <p className="text-sm text-gray-600">{vote.description}</p>
-            <p className="text-xs text-gray-500">
-              Έναρξη: {vote.start_date} • Λήξη: {vote.end_date}
-            </p>
+            <div className={`${!selectedBuilding && vote.building_name ? 'pt-8' : ''}`}>
+              <h2 className="text-lg font-semibold text-blue-700 pr-10">{vote.title}</h2>
+              <p className="text-sm text-gray-600">{vote.description}</p>
+              <p className="text-xs text-gray-500">
+                Έναρξη: {vote.start_date} • Λήξη: {vote.end_date}
+              </p>
 
-            <VoteStatus voteId={vote.id} isActive={active} />
+              <VoteStatus voteId={vote.id} isActive={active} />
+            </div>
           </div>
         );
       })}

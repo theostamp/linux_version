@@ -7,6 +7,7 @@ export interface UserRequest {
   type?: string;
   is_urgent: boolean;
   building: number;
+  building_name?: string; // Building name for display
   created_by: number;
   created_by_username: string;
   status: string;

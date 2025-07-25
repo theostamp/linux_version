@@ -4,7 +4,7 @@ from rest_framework import viewsets, permissions, exceptions
 from rest_framework.response import Response 
 from core.permissions import IsManagerOrSuperuser
 from .models import UserRequest
-from .serializers import UserRequestSerializer
+from .serializers import UserRequestSerializer, UserRequestListSerializer
 from buildings.models import Building
 from rest_framework.decorators import action 
 from rest_framework.response import Response 
@@ -12,22 +12,57 @@ from rest_framework import status
 from django.db.models import Count 
 from core.utils import filter_queryset_by_user_and_building
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import models
    
 
 class UserRequestViewSet(viewsets.ModelViewSet):
     queryset = UserRequest.objects.all().order_by('-created_at')
     serializer_class = UserRequestSerializer
 
+    def get_serializer_class(self):
+        """Use different serializers for different actions."""
+        if self.action == 'list':
+            return UserRequestListSerializer
+        return UserRequestSerializer
+
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [permissions.IsAuthenticated()]
-        return [permissions.IsAuthenticated(), IsManagerOrSuperuser()]
+        elif self.action in ['create']:
+            return [permissions.IsAuthenticated()]
+        else:
+            return [permissions.IsAuthenticated(), IsManagerOrSuperuser()]
 
     def get_queryset(self):
         """
         Φέρνει μόνο τα user requests που δικαιούται να δει ο χρήστης (με βάση το κτήριο και τον ρόλο).
         """
         qs = UserRequest.objects.all().order_by('-created_at')
+        
+        # Για retrieve actions (individual request detail), χρησιμοποιούμε διαφορετική λογική
+        if self.action == 'retrieve':
+            # Για superuser: όλα τα requests
+            if self.request.user.is_superuser:
+                return qs
+            # Για manager: μόνο requests από κτήρια που διαχειρίζεται
+            elif self.request.user.is_staff:
+                managed_building_ids = Building.objects.filter(manager=self.request.user).values_list("id", flat=True)
+                return qs.filter(building_id__in=managed_building_ids)
+            # Για resident: μόνο τα δικά του requests ή requests από το κτήριό του
+            else:
+                try:
+                    profile = getattr(self.request.user, "profile", None)
+                    if profile and getattr(profile, "building", None):
+                        return qs.filter(
+                            models.Q(created_by=self.request.user) |
+                            models.Q(building=profile.building)
+                        )
+                    else:
+                        return qs.filter(created_by=self.request.user)
+                except (AttributeError, ObjectDoesNotExist):
+                    return qs.filter(created_by=self.request.user)
+        
+        # Για όλες τις άλλες actions (list, create, etc.) χρησιμοποιούμε το κανονικό filtering
         try:
             return filter_queryset_by_user_and_building(self.request, qs)
         except Exception as e:
@@ -95,3 +130,32 @@ class UserRequestViewSet(viewsets.ModelViewSet):
         user_request.save()
         serializer = self.get_serializer(user_request)
         return Response(serializer.data)
+
+    @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
+    def support(self, request, pk=None):
+        """Toggle support for a user request."""
+        user_request = self.get_object()
+        user = request.user
+        
+        # Check if user can support this request
+        if user == user_request.created_by:
+            return Response(
+                {"detail": "Δεν μπορείτε να υποστηρίξετε το δικό σας αίτημα."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Toggle support
+        if user in user_request.supporters.all():
+            user_request.supporters.remove(user)
+            supported = False
+            status_message = "Η υποστήριξη αφαιρέθηκε επιτυχώς."
+        else:
+            user_request.supporters.add(user)
+            supported = True
+            status_message = "Η υποστήριξη προστέθηκε επιτυχώς."
+        
+        return Response({
+            "status": status_message,
+            "supporter_count": user_request.supporters.count(),
+            "supported": supported
+        })

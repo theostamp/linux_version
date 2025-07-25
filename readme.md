@@ -204,7 +204,7 @@ echo "# linux_version" >> README.md
 git init
 
 git add .
-git commit -m "announcements and voting http://tap.localhost:3000/requestsεωολ"  
+git commit -m "επισημανση αιτηματων"  
 git branch -M main
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

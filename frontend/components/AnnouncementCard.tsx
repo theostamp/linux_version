@@ -83,8 +83,10 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
     >
       {/* Building badge - show only when viewing all buildings */}
       {!selectedBuilding && announcement.building_name && (
-        <div className="absolute top-3 left-3 px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
-          🏢 {announcement.building_name}
+        <div className="absolute top-3 left-3 z-10">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-medium shadow-sm">
+            🏢 {announcement.building_name}
+          </span>
         </div>
       )}
       

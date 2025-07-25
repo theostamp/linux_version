@@ -16,7 +16,9 @@ class UserRequestSerializer(serializers.ModelSerializer):
     
     # Use SerializerMethodField for supporter_count to handle annotated field
     supporter_count = serializers.SerializerMethodField()
+    supporter_usernames = serializers.SerializerMethodField()
     is_urgent = serializers.SerializerMethodField()
+    is_supported = serializers.SerializerMethodField()
     days_since_creation = serializers.SerializerMethodField()
     is_overdue = serializers.SerializerMethodField()
     status_display = serializers.SerializerMethodField()
@@ -41,7 +43,9 @@ class UserRequestSerializer(serializers.ModelSerializer):
             'notes',
             'created_by_username',
             'supporter_count',
+            'supporter_usernames',
             'is_urgent',
+            'is_supported',
             'days_since_creation',
             'is_overdue',
             'status_display',
@@ -68,8 +72,19 @@ class UserRequestSerializer(serializers.ModelSerializer):
             return obj.supporters.count()
         return 0
 
+    def get_supporter_usernames(self, obj):
+        """Get list of supporter usernames."""
+        return [supporter.username for supporter in obj.supporters.all()]
+
     def get_is_urgent(self, obj):
         return obj.is_urgent
+
+    def get_is_supported(self, obj):
+        """Check if the current user supports this request."""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            return request.user in obj.supporters.all()
+        return False
 
     def get_days_since_creation(self, obj):
         return obj.days_since_creation
@@ -127,19 +142,32 @@ class UserRequestListSerializer(serializers.ModelSerializer):
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
     building_name = serializers.CharField(source='building.name', read_only=True)
     supporter_count = serializers.SerializerMethodField()
+    supporter_usernames = serializers.SerializerMethodField()
+    is_supported = serializers.SerializerMethodField()
     
     class Meta:
         model = UserRequest
         fields = [
             'id', 'title', 'type', 'status', 'priority', 'created_at',
             'created_by_username', 'building_name', 'supporter_count',
-            'is_urgent', 'days_since_creation'
+            'supporter_usernames', 'is_urgent', 'is_supported', 'days_since_creation'
         ]
 
     def get_supporter_count(self, obj):
         if hasattr(obj, 'annotated_supporter_count'):
             return obj.annotated_supporter_count
         return obj.supporters.count()
+
+    def get_supporter_usernames(self, obj):
+        """Get list of supporter usernames."""
+        return [supporter.username for supporter in obj.supporters.all()]
+
+    def get_is_supported(self, obj):
+        """Check if the current user supports this request."""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            return request.user in obj.supporters.all()
+        return False
 
 class UserRequestSupportSerializer(serializers.Serializer):
     """Serializer για υποστήριξη/απόσυρση υποστήριξης αιτήματος"""
