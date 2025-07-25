@@ -91,12 +91,28 @@ class AnnouncementListSerializer(serializers.ModelSerializer):
     """Simplified serializer for list views"""
     author_name = serializers.SerializerMethodField()
     building_name = serializers.SerializerMethodField()
+    is_currently_active = serializers.SerializerMethodField()
+    days_remaining = serializers.SerializerMethodField()
+    status_display = serializers.SerializerMethodField()
     
     class Meta:
         model = Announcement
         fields = [
-            'id', 'title', 'created_at', 'is_urgent', 'priority',
-            'author_name', 'building_name', 'is_currently_active'
+            'id',
+            'title',
+            'description',
+            'file',
+            'start_date',
+            'end_date',
+            'is_active',
+            'created_at',
+            'is_urgent',
+            'priority',
+            'author_name',
+            'building_name',
+            'is_currently_active',
+            'days_remaining',
+            'status_display'
         ]
 
     def get_author_name(self, obj):
@@ -104,3 +120,12 @@ class AnnouncementListSerializer(serializers.ModelSerializer):
 
     def get_building_name(self, obj):
         return obj.building.name
+
+    def get_is_currently_active(self, obj):
+        return obj.is_currently_active
+
+    def get_days_remaining(self, obj):
+        return obj.days_remaining
+
+    def get_status_display(self, obj):
+        return obj.status_display

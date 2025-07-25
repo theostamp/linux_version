@@ -3,21 +3,27 @@
 
 import { motion } from 'framer-motion';
 import React from 'react';
+import Link from 'next/link';
 
 export type Announcement = {
   id: number;
   title: string;
   description: string;
   file: string | null;
-  start_date: string;
-  end_date: string;
+  start_date: string | null;
+  end_date: string | null;
   is_active: boolean;
+  is_currently_active?: boolean;
+  days_remaining?: number | null;
+  status_display?: string;
   created_at: string;
+  updated_at?: string;
 };
 
 export default function AnnouncementCard({ announcement }: { readonly announcement: Announcement }) {
-  const formatDate = (iso: string) => {
-    const date = new Date(iso);
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '—';
+    const date = new Date(dateStr);
     return isNaN(date.getTime())
       ? '—'
       : date.toLocaleDateString('el-GR', {
@@ -27,11 +33,9 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
         });
   };
 
-  const today = new Date().toISOString().split('T')[0];
-  const isCurrentlyActive =
-    announcement.is_active &&
-    announcement.start_date <= today &&
-    announcement.end_date >= today;
+  // Use the backend is_currently_active property directly
+  // Backend already handles all the logic for published, is_active, and date checks
+  const isCurrentlyActive = announcement.is_currently_active === true;
 
   return (
     <motion.div
@@ -49,16 +53,30 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
               : 'bg-gray-200 text-gray-600 border-gray-300'
           }`}
         >
-          {isCurrentlyActive ? '✅ Ενεργή' : '⏸ Ανενεργή'}
+          {announcement.status_display ? announcement.status_display : isCurrentlyActive ? '✅ Ενεργή' : '⏸ Ανενεργή'}
         </span>
       </div>
 
-      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
+      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line line-clamp-3">
         {announcement.description}
       </p>
 
+      <div className="mt-4 flex justify-between items-center">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          Ενεργό από <strong>{formatDate(announcement.start_date)}</strong> έως{' '}
+          <strong>{formatDate(announcement.end_date)}</strong>
+        </div>
+        
+        <Link 
+          href={`/announcements/${announcement.id}`}
+          className="text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline"
+        >
+          Περισσότερα →
+        </Link>
+      </div>
+
       {announcement.file && (
-        <div className="mt-4">
+        <div className="mt-2">
           <a
             href={announcement.file}
             target="_blank"
@@ -69,11 +87,6 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
           </a>
         </div>
       )}
-
-      <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-        Ενεργό από <strong>{formatDate(announcement.start_date)}</strong> έως{' '}
-        <strong>{formatDate(announcement.end_date)}</strong>
-      </div>
     </motion.div>
   );
 }

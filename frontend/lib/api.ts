@@ -233,6 +233,7 @@ export async function getCurrentUser(): Promise<User> {
 export type Announcement = { 
   id: number; title: string; description: string; file: string | null; 
   start_date: string; end_date: string; is_active: boolean; building: number; // Building ID
+  is_currently_active?: boolean; days_remaining?: number | null; status_display?: string;
   created_at: string; updated_at?: string;
 };
 
@@ -310,6 +311,7 @@ export async function deleteBuilding(id: number): Promise<void> {
 }
 
 export async function fetchAnnouncements(buildingId?: number | null): Promise<Announcement[]> {
+  // Revert to basic endpoint that was working before
   const relativeUrl = buildingId ? `/announcements/?building=${buildingId}` : '/announcements/?building=null';
   
   // --- ΠΡΟΣΘΕΣΕ ΑΥΤΑ ΤΑ DEBUG LOGS ---
@@ -331,9 +333,12 @@ export async function fetchAnnouncements(buildingId?: number | null): Promise<An
       title: row.title,
       description: row.description ?? row.content ?? '',
       file: row.file ?? null,
-      start_date: row.start_date,
-      end_date: row.end_date,
+      start_date: row.start_date ?? null,
+      end_date: row.end_date ?? null,
       is_active: row.is_active,
+      is_currently_active: row.is_currently_active,
+      days_remaining: row.days_remaining ?? null,
+      status_display: row.status_display ?? '',
       building: row.building,
       created_at: row.created_at,
       updated_at: row.updated_at,
@@ -349,6 +354,33 @@ export async function fetchAnnouncements(buildingId?: number | null): Promise<An
     throw error;
   }
 }
+
+export async function fetchAnnouncement(id: string | number): Promise<Announcement> {
+  console.log(`[API CALL] Attempting to fetch announcement with ID: ${id}`);
+  
+  try {
+    const { data } = await api.get(`/announcements/${id}/`);
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description ?? data.content ?? '',
+      file: data.file ?? null,
+      start_date: data.start_date,
+      end_date: data.end_date,
+      is_active: data.is_active,
+      is_currently_active: data.is_currently_active,
+      days_remaining: data.days_remaining ?? null,
+      status_display: data.status_display ?? '',
+      building: data.building,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    };
+  } catch (error) {
+    console.error(`[API CALL] Error fetching announcement ${id}:`, error);
+    throw error;
+  }
+}
+
 export interface CreateAnnouncementPayload { 
   title: string; description: string; start_date: string; end_date: string; 
   file?: File | null; building: number; is_active?: boolean; 
@@ -598,14 +630,25 @@ async function handleTokenRefresh(originalRequest: InternalAxiosRequestConfig & 
   }
 
   try {
-    const { data } = await axios.post<{ access: string }>('/users/token/refresh/', { refresh }, {
+    console.log('[handleTokenRefresh] Attempting to refresh token with:', API_BASE_URL);
+    
+    // Χρησιμοποιούμε απευθείας axios αντί για το api instance για να αποφύγουμε κυκλικές κλήσεις
+    const { data } = await axios.post<{ access: string }>(`${API_BASE_URL}/users/token/refresh/`, { refresh }, {
       baseURL: API_BASE_URL,
       headers: { 'Content-Type': 'application/json' },
       withCredentials: true,
     });
 
+    if (!data.access) {
+      console.error('[handleTokenRefresh] Token refresh response did not include access token!', data);
+      throw new Error('Token refresh failed: No access token in response');
+    }
+
+    console.log('[handleTokenRefresh] Token refresh successful, new token received');
+    
     if (typeof window !== 'undefined') {
       localStorage.setItem('access', data.access);
+      console.log('[handleTokenRefresh] New access token saved to localStorage');
     }
 
     // Αποθηκεύουμε το νέο token
@@ -631,8 +674,18 @@ async function handleTokenRefresh(originalRequest: InternalAxiosRequestConfig & 
     return api(originalRequest);
 
   } catch (refreshError: any) {
+    console.error('[handleTokenRefresh] Token refresh failed:', refreshError);
+    
+    // Αν το refresh απέτυχε, πιθανότατα το refresh token είναι άκυρο ή έχει λήξει
     handleLogout('[handleTokenRefresh] Token refresh failed. Logging out.');
     processQueue(refreshError, null);
+    
+    // Ανακατεύθυνση στη σελίδα login
+    if (typeof window !== 'undefined') {
+      console.log('[handleTokenRefresh] Redirecting to login page...');
+      window.location.href = '/login';
+    }
+    
     return Promise.reject(refreshError instanceof Error ? refreshError : new Error(String(refreshError)));
   } finally {
     isRefreshing = false;
@@ -664,8 +717,12 @@ function handleLogout(logMessage: string) {
     localStorage.removeItem('access');
     localStorage.removeItem('refresh');
     localStorage.removeItem('user');
-    // Optionally, redirect to login page:
-    // window.location.href = '/login';
+    
+    // Ανακατεύθυνση στη σελίδα login αν δεν είμαστε ήδη εκεί
+    if (!window.location.pathname.includes('/login')) {
+      console.log('[handleLogout] Redirecting to login page...');
+      window.location.href = '/login';
+    }
   }
 }
 

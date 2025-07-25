@@ -212,6 +212,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://top.localhost:3000",  # Προσθήκη του συγκεκριμένου subdomain
+    "http://tap.localhost:3000",  # Προσθήκη του tap subdomain
 ]  # τα «σκέτα» origins
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
@@ -223,6 +224,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://*.localhost:3000",
     "http://top.localhost:3000",  # Προσθήκη του συγκεκριμένου subdomain
+    "http://tap.localhost:3000",  # Προσθήκη του tap subdomain
 ]
 
 CORS_EXPOSE_HEADERS  = ["Content-Type", "X-CSRFToken"]
@@ -264,7 +266,7 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@example.com')
 # Django REST framework simple JWT settings
 # ----------------------------------------
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),  # π.χ. 30 λεπτά
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # Αυξήθηκε από 1 σε 30 λεπτά
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,

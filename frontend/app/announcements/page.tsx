@@ -10,6 +10,8 @@ import AnnouncementSkeleton from '@/components/AnnouncementSkeleton';
 import ErrorMessage from '@/components/ErrorMessage';
 import { motion } from 'framer-motion';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function AnnouncementsPage() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
@@ -29,7 +31,19 @@ export default function AnnouncementsPage() {
     console.log('[AnnouncementsPage] currentBuilding:', currentBuilding);
     console.log('[AnnouncementsPage] selectedBuilding:', selectedBuilding);
     console.log('[AnnouncementsPage] buildingId used:', buildingId);
-  }, [currentBuilding, selectedBuilding, buildingId]);
+    console.log('[AnnouncementsPage] announcements received:', announcements);
+    console.log('[AnnouncementsPage] announcements count:', announcements.length);
+    announcements.forEach((a, i) => {
+      console.log(`[Announcement ${i}]:`, {
+        title: a.title,
+        is_active: a.is_active,
+        published: a.published,
+        is_currently_active: a.is_currently_active,
+        start_date: a.start_date,
+        end_date: a.end_date
+      });
+    });
+  }, [currentBuilding, selectedBuilding, buildingId, announcements]);
 
   if (buildingLoading || !currentBuilding || isLoading) {
     return (
@@ -74,7 +88,12 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">📢 Ανακοινώσεις</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">📢 Ανακοινώσεις</h1>
+        <Button asChild>
+          <Link href="/announcements/new">Νέα Ανακοίνωση</Link>
+        </Button>
+      </div>
       <BuildingFilterIndicator className="mb-4" />
       <motion.div
         variants={container}
@@ -83,7 +102,7 @@ export default function AnnouncementsPage() {
         className="grid grid-cols-1 md:grid-cols-2 gap-4"
       >
         {announcements
-          .filter((a: Announcement) => a.is_active)
+          // Temporarily removing filter to see all announcements
           .map((a: Announcement) => (
             <motion.div key={a.id} variants={item}>
               <AnnouncementCard announcement={a} />
