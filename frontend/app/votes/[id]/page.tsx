@@ -20,7 +20,7 @@ export default function VoteDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const voteId = Number(id);
-  const { currentBuilding } = useBuilding();
+  const { currentBuilding, buildings } = useBuilding();
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -52,8 +52,23 @@ export default function VoteDetailPage() {
   if (error) return <ErrorMessage message="Αποτυχία φόρτωσης ψηφοφορίας." />;
   if (loadingVote || !vote) return <p className="p-6">Φόρτωση...</p>;
 
-  if (!currentBuilding || vote.building !== currentBuilding.id) {
-    return <ErrorMessage message="Η ψηφοφορία δεν ανήκει στο τρέχον κτήριο." />;
+  // Check if user has access to this vote
+  // Staff users can access votes from any building they manage
+  // Regular users can only access votes from their current building
+  const hasAccessToVote = () => {
+    if (!currentBuilding) return false;
+    
+    // Staff users can access votes from any building they manage
+    if (user?.is_staff || user?.is_superuser) {
+      return buildings.some(building => building.id === vote.building);
+    }
+    
+    // Regular users can only access votes from their current building
+    return vote.building === currentBuilding.id;
+  };
+
+  if (!hasAccessToVote()) {
+    return <ErrorMessage message="Δεν έχετε δικαίωμα πρόσβασης σε αυτή την ψηφοφορία." />;
   }
 
   const today = new Date().toISOString().split('T')[0];

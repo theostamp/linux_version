@@ -520,6 +520,7 @@ export async function fetchRequests(filters: { status?: string; buildingId?: num
     building: r.building,
     supporter_count: r.supporter_count ?? 0,
     supporter_usernames: r.supporter_usernames ?? [],
+    building_name: r.building_name ?? '',
     is_urgent: r.is_urgent ?? false,
     type: r.type ?? '',
     supporters: r.supporters ?? [],
@@ -544,6 +545,7 @@ export async function fetchTopRequests(buildingId: number | null): Promise<UserR
     building: r.building,
     supporter_count: r.supporter_count ?? 0,
     supporter_usernames: Array.isArray(r.supporter_usernames) ? r.supporter_usernames : [], // ✅ εξασφαλίζει string[]
+    building_name: r.building_name ?? '',
     is_urgent: r.is_urgent ?? false,
     type: r.type ?? '',
     is_supported: r.is_supported ?? false,
@@ -568,6 +570,7 @@ export async function fetchUserRequestsForBuilding(buildingId: number): Promise<
     building: r.building,
     supporter_count: r.supporter_count ?? 0,
     supporter_usernames: Array.isArray(r.supporter_usernames) ? r.supporter_usernames : [],
+    building_name: r.building_name ?? '',
     is_urgent: r.is_urgent ?? false,
     type: r.type ?? '',
     is_supported: r.is_supported ?? false,
