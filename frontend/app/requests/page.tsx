@@ -12,9 +12,12 @@ import RequestSkeleton from '@/components/RequestSkeleton';
 import SupportButton from '@/components/SupportButton';
 import { useQueryClient } from '@tanstack/react-query';
 
-const REQUEST_TYPES = [
-  { value: 'damage', label: 'Ζημιά' },
+const TYPE_CHOICES = [
   { value: 'maintenance', label: 'Συντήρηση' },
+  { value: 'cleaning', label: 'Καθαριότητα' },
+  { value: 'technical', label: 'Τεχνικό' },
+  { value: 'security', label: 'Ασφάλεια' },
+  { value: 'noise', label: 'Θόρυβος' },
   { value: 'other', label: 'Άλλο' },
 ];
 
@@ -49,7 +52,7 @@ export default function NewRequestPage() {
       return;
     }
 
-    if (type && !REQUEST_TYPES.some((t) => t.value === type)) {
+    if (type && !TYPE_CHOICES.some((t) => t.value === type)) {
       setError('Μη έγκυρος τύπος αιτήματος.');
       return;
     }
@@ -129,7 +132,7 @@ export default function NewRequestPage() {
             className="mt-1 w-full border p-2 rounded"
           >
             <option value="">-- Επιλέξτε τύπο --</option>
-            {REQUEST_TYPES.map((opt) => (
+            {TYPE_CHOICES.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
