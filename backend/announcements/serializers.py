@@ -38,12 +38,21 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
     def validate_building(self, value):
         user = self.context['request'].user
+        
+        # Superusers can create announcements anywhere
+        if user.is_superuser:
+            return value
+            
+        # Staff users can create announcements in any building
+        if user.is_staff:
+            return value
+            
+        # Regular managers can only create announcements in buildings they manage
         if hasattr(value, 'manager') and value.manager is not None:
-            if not (user.is_superuser or value.manager == user):
-                raise serializers.ValidationError("Δεν έχετε δικαίωμα διαχείρισης για αυτό το κτήριο.")
-        elif not user.is_superuser:
-            raise serializers.ValidationError("Μόνο διαχειριστές ή superusers μπορούν να αντιστοιχίσουν ανακοίνωση σε αυτό το κτήριο.")
-        return value
+            if value.manager == user:
+                return value
+                
+        raise serializers.ValidationError("Δεν έχετε δικαίωμα διαχείρισης για αυτό το κτήριο.")
 
     def validate(self, data):
         """Validation για τις ημερομηνίες και την επείγουσα κατάσταση"""

@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function NewVotePage() {
-  const { currentBuilding } = useBuilding();
+  const { currentBuilding, selectedBuilding } = useBuilding();
   const router = useRouter();
   const { isAccessAllowed, isLoading } = useSuperUserGuard();
 
@@ -28,11 +28,11 @@ export default function NewVotePage() {
     return <p className="p-4 text-red-600">🚫 Δεν έχετε πρόσβαση σε αυτή τη σελίδα.</p>;
   }
 
-  if (!currentBuilding) {
+  if (!currentBuilding && !selectedBuilding) {
     return <p className="p-4">Δεν έχει επιλεγεί κτήριο.</p>;
   }
 
-  const buildingId = currentBuilding.id;
+  const buildingId = selectedBuilding?.id || currentBuilding?.id;
 
   async function handleSubmit(data: any) {
     try {

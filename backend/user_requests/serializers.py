@@ -92,8 +92,8 @@ class UserRequestSerializer(serializers.ModelSerializer):
         if user.is_superuser:
             return building
 
-        # Managers μπορούν για τις πολυκατοικίες που διαχειρίζονται
-        if user.is_staff and hasattr(building, 'manager') and building.manager == user:
+        # Staff users μπορούν σε όλα τα κτίρια
+        if user.is_staff:
             return building
 
         # Κάτοικοι μπορούν για την πολυκατοικία στην οποία ανήκουν

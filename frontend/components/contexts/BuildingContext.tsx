@@ -44,6 +44,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   const { isLoading: authLoading, user } = useAuth();
   const router = useRouter();
 
+  // Load buildings on mount
   useEffect(() => {
     const loadBuildings = async () => {
       if (authLoading || !user) return;
@@ -52,7 +53,10 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(true);
         const data = await fetchBuildings();
         setBuildings(data);
-        setCurrentBuilding(data[0] || null);
+        // Set both current and selected building to the first one
+        const firstBuilding = data[0] || null;
+        setCurrentBuilding(firstBuilding);
+        setSelectedBuilding(firstBuilding);
         setError(null);
       } catch (err: any) {
         console.error('[BuildingContext] Failed to load buildings:', err);
@@ -65,6 +69,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
         setError(err?.message ?? 'Αποτυχία φόρτωσης κτιρίων');
         setBuildings([]);
         setCurrentBuilding(null);
+        setSelectedBuilding(null);
       } finally {
         setIsLoading(false);
       }
@@ -72,6 +77,15 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
 
     loadBuildings();
   }, [authLoading, user]);
+
+  // Keep currentBuilding in sync with selectedBuilding
+  useEffect(() => {
+    if (selectedBuilding) {
+      setCurrentBuilding(selectedBuilding);
+    } else if (buildings.length > 0) {
+      setCurrentBuilding(buildings[0]);
+    }
+  }, [selectedBuilding, buildings]);
 
   useEffect(() => {
     if (!authLoading && !user) {

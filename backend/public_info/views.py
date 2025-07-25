@@ -19,6 +19,7 @@ def building_info(request, building_id: int):
 
     votes = Vote.objects.filter(
         building_id=building_id,
+        is_active=True,
         start_date__lte=today,
         end_date__gte=today,
     ).order_by('-start_date')

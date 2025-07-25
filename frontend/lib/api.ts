@@ -377,7 +377,7 @@ export async function createAnnouncement(payload: CreateAnnouncementPayload): Pr
 }
 
 export async function fetchVotes(buildingId?: number | null): Promise<Vote[]> {
-  const url = buildingId ? `/votes/?building=${buildingId}` : '/votes/?building=null';
+  const url = buildingId ? `/votes/?building=${buildingId}` : '/votes/';
   console.log(`[API CALL] Attempting to fetch ${url}`);
   const resp: AxiosResponse<{ results?: Vote[] } | Vote[]> = await api.get(url);
   const data = resp.data;
@@ -414,10 +414,11 @@ export async function fetchVoteResults(voteId: number): Promise<VoteResultsData>
 export interface CreateVotePayload { 
   title: string; description: string; start_date: string; 
   end_date?: string; choices: string[]; building: number; 
+  is_active?: boolean;
 }
 export async function createVote(payload: CreateVotePayload): Promise<Vote> {
   console.log('[API CALL] Attempting to create vote:', payload);
-  const { data } = await api.post<Vote>('/votes/', payload);
+  const { data } = await api.post<Vote>('/votes/', { ...payload, is_active: payload.is_active ?? true });
   return data;
 }
 

@@ -204,7 +204,7 @@ echo "# linux_version" >> README.md
 git init
 
 git add .
-git commit -m "login ok"  
+git commit -m "βοτσ ok"  
 git branch -M main
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

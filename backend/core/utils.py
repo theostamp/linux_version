@@ -24,6 +24,14 @@ def _filter_for_manager(base_queryset, user, building_param, building_field):
     print(f"Managed buildings: {managed_ids}")
     if building_param and building_param != 'null':
         building_id = _validate_building_param(building_param)
+        print(f"[DEBUG] building_id type: {type(building_id)}, value: {building_id}")
+        print(f"[DEBUG] managed_ids types: {[type(i) for i in managed_ids]}, values: {managed_ids}")
+        # Ensure both are int for comparison
+        try:
+            building_id = int(building_id)
+        except Exception as e:
+            print(f"[ERROR] building_id could not be cast to int: {e}")
+            return base_queryset.none()
         if building_id in managed_ids:
             return base_queryset.filter(**{f"{building_field}_id": building_id})
         else:
@@ -75,6 +83,10 @@ def filter_queryset_by_user_and_building(request, base_queryset, building_field=
     if not user or not getattr(user, "is_authenticated", False):
         print("User not authenticated ή δεν υπάρχει user object.")
         return base_queryset.none()
+
+    # Αν δεν περνάει building parameter, θεωρούμε ότι είναι null
+    if building_param is None:
+        building_param = 'null'
 
     if getattr(user, "is_superuser", False):
         return _filter_for_superuser(base_queryset, building_param, building_field)

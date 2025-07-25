@@ -11,6 +11,7 @@ class VoteSerializer(serializers.ModelSerializer):
     days_remaining = serializers.SerializerMethodField()
     status_display = serializers.SerializerMethodField()
     creator_name = serializers.SerializerMethodField()
+    building_name = serializers.SerializerMethodField()
     total_votes = serializers.SerializerMethodField()
     participation_percentage = serializers.SerializerMethodField()
 
@@ -25,6 +26,7 @@ class VoteSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
             'building',
+            'building_name',
             'creator',
             'creator_name',
             'is_active',
@@ -41,12 +43,21 @@ class VoteSerializer(serializers.ModelSerializer):
 
     def validate_building(self, value):
         user = self.context['request'].user
+        
+        # Superusers can create votes anywhere
+        if user.is_superuser:
+            return value
+            
+        # Staff users can create votes in any building
+        if user.is_staff:
+            return value
+            
+        # Regular managers can only create votes in buildings they manage
         if hasattr(value, 'manager') and value.manager is not None:
-            if not (user.is_superuser or value.manager == user):
-                raise serializers.ValidationError("Δεν έχετε δικαίωμα διαχείρισης για αυτό το κτήριο.")
-        elif not user.is_superuser:
-            raise serializers.ValidationError("Μόνο διαχειριστές ή superusers μπορούν να δημιουργήσουν ψηφοφορία σε αυτό το κτήριο.")
-        return value
+            if value.manager == user:
+                return value
+                
+        raise serializers.ValidationError("Δεν έχετε δικαίωμα διαχείρισης για αυτό το κτήριο.")
 
     def validate(self, data):
         """Validation για τις ημερομηνίες και την ελάχιστη συμμετοχή"""
@@ -76,6 +87,9 @@ class VoteSerializer(serializers.ModelSerializer):
 
     def get_creator_name(self, obj):
         return obj.creator.get_full_name() or obj.creator.username if obj.creator else "Άγνωστος"
+
+    def get_building_name(self, obj):
+        return obj.building.name if obj.building else "Άγνωστο κτίριο"
 
     def get_total_votes(self, obj):
         return obj.total_votes
@@ -124,12 +138,14 @@ class VoteListSerializer(serializers.ModelSerializer):
     creator_name = serializers.SerializerMethodField()
     building_name = serializers.SerializerMethodField()
     total_votes = serializers.SerializerMethodField()
+    days_remaining = serializers.SerializerMethodField()
     
     class Meta:
         model = Vote
         fields = [
             'id', 'title', 'created_at', 'is_urgent', 'is_currently_active',
-            'creator_name', 'building_name', 'total_votes', 'days_remaining'
+            'creator_name', 'building_name', 'total_votes', 'days_remaining',
+            'is_active'
         ]
 
     def get_creator_name(self, obj):
@@ -140,3 +156,6 @@ class VoteListSerializer(serializers.ModelSerializer):
 
     def get_total_votes(self, obj):
         return obj.total_votes
+        
+    def get_days_remaining(self, obj):
+        return obj.days_remaining

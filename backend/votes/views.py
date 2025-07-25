@@ -36,8 +36,17 @@ class VoteViewSet(viewsets.ModelViewSet):
         Φέρνει μόνο τα votes που δικαιούται να δει ο χρήστης (με βάση το κτήριο και τον ρόλο).
         """
         qs = Vote.objects.select_related('creator', 'building').order_by('-created_at')
+        
+        # Debug logging
+        building_param = self.request.query_params.get('building')
+        logger.info(f"[VoteViewSet.get_queryset] Building param: {building_param}")
+        logger.info(f"[VoteViewSet.get_queryset] User: {self.request.user}, is_superuser: {self.request.user.is_superuser}")
+        logger.info(f"[VoteViewSet.get_queryset] Total votes before filtering: {qs.count()}")
+        
         try:
-            return filter_queryset_by_user_and_building(self.request, qs)
+            filtered_qs = filter_queryset_by_user_and_building(self.request, qs)
+            logger.info(f"[VoteViewSet.get_queryset] Votes after filtering: {filtered_qs.count()}")
+            return filtered_qs
         except Exception as e:
             logger.error(f"Error in get_queryset: {e}")
             # Επιστρέφουμε empty queryset για να μην εμφανίζεται 500 στο frontend
