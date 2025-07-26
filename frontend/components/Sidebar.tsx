@@ -14,7 +14,6 @@ import {
   CheckSquare,
   ClipboardList,
   Building2,
-  UserPlus,
   Loader2,
   Building,
 } from 'lucide-react';
@@ -161,39 +160,7 @@ if (user?.is_superuser) {
             </Link>
           ))}
 
-          {/* 🔗 Αντιστοίχιση Κατοίκου */}
-          {userRole && ['manager', 'staff', 'superuser'].includes(userRole) && (
-            <Link
-              href="/residents/assign"
-              className={cn(
-                'flex items-center px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out',
-                'hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-50',
-                pathname === '/residents/assign'
-                  ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-semibold'
-                  : 'text-gray-600 dark:text-gray-300'
-              )}
-            >
-              <UserPlus className="w-5 h-5 mr-2" />
-              Αντιστοίχιση Κατοίκου
-            </Link>
-          )}
 
-          {/* 📋 Λίστα Κατοίκων */}
-          {userRole && ['manager', 'staff', 'superuser'].includes(userRole) && (
-            <Link
-              href="/residents/list"
-              className={cn(
-                'flex items-center px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out',
-                'hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-50',
-                pathname === '/residents/list'
-                  ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-semibold'
-                  : 'text-gray-600 dark:text-gray-300'
-              )}
-            >
-              <ClipboardList className="w-5 h-5 mr-2" />
-              Λίστα Κατοίκων
-            </Link>
-          )}
 
           {/* ...υπόλοιπος κώδικας... */}
         </nav>
