@@ -937,6 +937,7 @@ export interface UpdateTenantPayload {
   tenant_phone2?: string;
   tenant_email?: string;
   is_rented?: boolean;
+  is_closed?: boolean;
   rent_start_date?: string;
   rent_end_date?: string;
 }

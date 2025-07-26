@@ -63,6 +63,8 @@ export default function ApartmentCard({ apartment, onRefresh }: ApartmentCardPro
   const getStatusBadge = () => {
     if (apartment.is_rented) {
       return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Ενοικιασμένο</span>;
+    } else if (apartment.is_closed) {
+      return <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">Κλειστό</span>;
     } else if (apartment.owner_name) {
       return <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">Ιδιοκατοίκηση</span>;
     } else {
@@ -165,60 +167,72 @@ export default function ApartmentCard({ apartment, onRefresh }: ApartmentCardPro
         </div>
       </div>
 
-      {/* Κάτοικος */}
+      {/* Ενοικιαστής */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-1">
             <User className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">Κάτοικος</span>
+            <span className="text-sm font-medium text-gray-700">Ενοικιαστής</span>
           </div>
           <button
             onClick={() => openEditModal('tenant')}
             className="text-green-600 hover:text-green-800"
-            title="Επεξεργασία ενοίκου"
+            title="Επεξεργασία ενοικιαστή"
           >
             <Edit className="w-4 h-4" />
           </button>
         </div>
         <div>
           <div className="text-sm text-gray-900">
-            {apartment.occupant_name || (
-              <span className="text-gray-400 italic">Μη καταχωρημένο</span>
-            )}
-          </div>
-          <div className="mt-1">
-            <span className="text-xs text-gray-500">Τηλ. 1:</span>
-            {apartment.occupant_phone ? (
-              <ContactLink 
-                type="phone" 
-                value={apartment.occupant_phone}
-                className="text-xs ml-1"
-              />
+            {apartment.is_rented ? (
+              apartment.tenant_name || (
+                <span className="text-gray-400 italic">Μη καταχωρημένο</span>
+              )
+            ) : apartment.is_closed ? (
+              <span className="text-orange-600 italic">Κλειστό</span>
+            ) : apartment.owner_name ? (
+              <span className="text-gray-500 italic">Ιδιοκατοίκηση</span>
             ) : (
-              <span className="text-gray-400 italic text-xs ml-1">-</span>
+              <span className="text-gray-400 italic">Κενό</span>
             )}
           </div>
-          <div className="mt-1">
-            <span className="text-xs text-gray-500">Τηλ. 2:</span>
-            {apartment.occupant_phone2 ? (
-              <ContactLink 
-                type="phone" 
-                value={apartment.occupant_phone2}
-                className="text-xs ml-1 font-medium"
-              />
-            ) : (
-              <span className="text-gray-400 italic text-xs ml-1">-</span>
-            )}
-          </div>
-          {apartment.occupant_email && (
-            <div className="mt-1">
-              <span className="text-xs text-gray-500">Email:</span>
-              <ContactLink 
-                type="email" 
-                value={apartment.occupant_email}
-                className="text-xs ml-1"
-              />
-            </div>
+          {apartment.is_rented && (
+            <>
+              <div className="mt-1">
+                <span className="text-xs text-gray-500">Τηλ. 1:</span>
+                {apartment.tenant_phone ? (
+                  <ContactLink 
+                    type="phone" 
+                    value={apartment.tenant_phone}
+                    className="text-xs ml-1"
+                  />
+                ) : (
+                  <span className="text-gray-400 italic text-xs ml-1">-</span>
+                )}
+              </div>
+              <div className="mt-1">
+                <span className="text-xs text-gray-500">Τηλ. 2:</span>
+                {apartment.tenant_phone2 ? (
+                  <ContactLink 
+                    type="phone" 
+                    value={apartment.tenant_phone2}
+                    className="text-xs ml-1 font-medium"
+                  />
+                ) : (
+                  <span className="text-gray-400 italic text-xs ml-1">-</span>
+                )}
+              </div>
+              {apartment.tenant_email && (
+                <div className="mt-1">
+                  <span className="text-xs text-gray-500">Email:</span>
+                  <ContactLink 
+                    type="email" 
+                    value={apartment.tenant_email}
+                    className="text-xs ml-1"
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

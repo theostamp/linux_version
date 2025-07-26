@@ -195,8 +195,10 @@ class ApartmentViewSet(viewsets.ModelViewSet):
         tenant_data = request.data
         apartment.tenant_name = tenant_data.get('tenant_name', apartment.tenant_name)
         apartment.tenant_phone = tenant_data.get('tenant_phone', apartment.tenant_phone)
+        apartment.tenant_phone2 = tenant_data.get('tenant_phone2', apartment.tenant_phone2)
         apartment.tenant_email = tenant_data.get('tenant_email', apartment.tenant_email)
         apartment.is_rented = tenant_data.get('is_rented', apartment.is_rented)
+        apartment.is_closed = tenant_data.get('is_closed', apartment.is_closed)
         apartment.rent_start_date = tenant_data.get('rent_start_date', apartment.rent_start_date)
         apartment.rent_end_date = tenant_data.get('rent_end_date', apartment.rent_end_date)
         

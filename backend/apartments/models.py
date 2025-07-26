@@ -98,6 +98,12 @@ class Apartment(models.Model):
         verbose_name='Είναι Ενοικιασμένο'
     )
     
+    is_closed = models.BooleanField(
+        default=False,
+        verbose_name='Είναι Κλειστό/Μη Κατοικημένο',
+        help_text='Διαμέρισμα με ιδιοκτήτη που δεν κατοικείται'
+    )
+    
     rent_start_date = models.DateField(
         null=True,
         blank=True,
@@ -164,6 +170,8 @@ class Apartment(models.Model):
         """Επιστρέφει το όνομα του κατοίκου (ενοίκου ή ιδιοκτήτη)"""
         if self.is_rented and self.tenant_name:
             return self.tenant_name
+        elif self.is_closed:
+            return "Κλειστό"
         elif self.owner_name:
             return self.owner_name
         return "Μη καταχωρημένο"
@@ -173,6 +181,8 @@ class Apartment(models.Model):
         """Επιστρέφει το τηλέφωνο του κατοίκου"""
         if self.is_rented and self.tenant_phone:
             return self.tenant_phone
+        elif self.is_closed:
+            return ""
         elif self.owner_phone:
             return self.owner_phone
         return ""
@@ -182,6 +192,8 @@ class Apartment(models.Model):
         """Επιστρέφει το δεύτερο τηλέφωνο του κατοίκου"""
         if self.is_rented and self.tenant_phone2:
             return self.tenant_phone2
+        elif self.is_closed:
+            return ""
         elif self.owner_phone2:
             return self.owner_phone2
         return ""
@@ -191,6 +203,8 @@ class Apartment(models.Model):
         """Επιστρέφει το email του κατοίκου"""
         if self.is_rented and self.tenant_email:
             return self.tenant_email
+        elif self.is_closed:
+            return ""
         elif self.owner_email:
             return self.owner_email
         return ""
@@ -200,6 +214,8 @@ class Apartment(models.Model):
         """Επιστρέφει την κατάσταση του διαμερίσματος"""
         if self.is_rented:
             return "Ενοικιασμένο"
+        elif self.is_closed:
+            return "Κλειστό"
         elif self.owner_name:
             return "Ιδιοκατοίκηση"
         else:

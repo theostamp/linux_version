@@ -42,6 +42,7 @@ export default function ApartmentEditModal({
           tenant_phone2: apartment.tenant_phone2 || '',
           tenant_email: apartment.tenant_email || '',
           is_rented: apartment.is_rented || false,
+          is_closed: apartment.is_closed || false,
           rent_start_date: '',
           rent_end_date: ''
         });
@@ -78,10 +79,11 @@ export default function ApartmentEditModal({
           tenant_phone2: formData.tenant_phone2,
           tenant_email: formData.tenant_email,
           is_rented: formData.is_rented,
+          is_closed: formData.is_closed,
           rent_start_date: formData.rent_start_date || undefined,
           rent_end_date: formData.rent_end_date || undefined
         });
-        toast.success('Τα στοιχεία του ενοίκου ενημερώθηκαν επιτυχώς');
+        toast.success('Τα στοιχεία του ενοικιαστή ενημερώθηκαν επιτυχώς');
       }
       onUpdate();
       onClose();
@@ -95,7 +97,7 @@ export default function ApartmentEditModal({
   if (!isOpen) return null;
 
   const isOwner = editType === 'owner';
-  const title = isOwner ? 'Επεξεργασία Στοιχείων Ιδιοκτήτη' : 'Επεξεργασία Στοιχείων Ενοίκου';
+  const title = isOwner ? 'Επεξεργασία Στοιχείων Ιδιοκτήτη' : 'Επεξεργασία Στοιχείων Ενοικιαστή';
   const icon = isOwner ? <User className="w-5 h-5" /> : <UserCheck className="w-5 h-5" />;
 
   return (
@@ -127,7 +129,7 @@ export default function ApartmentEditModal({
               <span className="text-xs text-gray-500 font-normal">Διακριτικό:</span> {apartment.identifier || <span className="text-gray-400 italic text-xs">Δεν έχει οριστεί</span>}
             </div>
             <p className="text-sm text-gray-600">
-              Συμπληρώστε τα στοιχεία {isOwner ? 'του ιδιοκτήτη' : 'του ενοίκου'}:
+              Συμπληρώστε τα στοιχεία {isOwner ? 'του ιδιοκτήτη' : 'του ενοικιαστή'}:
             </p>
           </div>
 
@@ -151,63 +153,71 @@ export default function ApartmentEditModal({
             )}
 
             {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {isOwner ? 'Όνομα Ιδιοκτήτη' : 'Όνομα Ενοίκου'} *
+            {(isOwner || (!isOwner && formData.is_rented && !formData.is_closed)) && (
+              <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                {isOwner ? 'Όνομα Ιδιοκτήτη' : 'Όνομα Ενοικιαστή'} *
               </label>
-              <input
-                type="text"
-                value={formData[isOwner ? 'owner_name' : 'tenant_name'] || ''}
-                onChange={(e) => updateFormData(isOwner ? 'owner_name' : 'tenant_name', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder={`Εισάγετε το όνομα ${isOwner ? 'του ιδιοκτήτη' : 'του ενοίκου'}`}
-              />
-            </div>
+                <input
+                  type="text"
+                  value={formData[isOwner ? 'owner_name' : 'tenant_name'] || ''}
+                  onChange={(e) => updateFormData(isOwner ? 'owner_name' : 'tenant_name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder={`Εισάγετε το όνομα ${isOwner ? 'του ιδιοκτήτη' : 'του ενοικιαστή'}`}
+                />
+              </div>
+            )}
 
             {/* Phone 1 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                <Phone className="w-4 h-4 inline mr-1" />
-                Τηλέφωνο 1
-              </label>
-              <input
-                type="tel"
-                value={formData[isOwner ? 'owner_phone' : 'tenant_phone'] || ''}
-                onChange={(e) => updateFormData(isOwner ? 'owner_phone' : 'tenant_phone', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="π.χ. 210-1234567"
-              />
-            </div>
+            {(isOwner || (!isOwner && formData.is_rented && !formData.is_closed)) && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <Phone className="w-4 h-4 inline mr-1" />
+                  Τηλέφωνο 1
+                </label>
+                <input
+                  type="tel"
+                  value={formData[isOwner ? 'owner_phone' : 'tenant_phone'] || ''}
+                  onChange={(e) => updateFormData(isOwner ? 'owner_phone' : 'tenant_phone', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="π.χ. 210-1234567"
+                />
+              </div>
+            )}
 
             {/* Phone 2 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                <Phone className="w-4 h-4 inline mr-1" />
-                Τηλέφωνο 2
-              </label>
-              <input
-                type="tel"
-                value={formData[isOwner ? 'owner_phone2' : 'tenant_phone2'] || ''}
-                onChange={(e) => updateFormData(isOwner ? 'owner_phone2' : 'tenant_phone2', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="π.χ. 697-1234567"
-              />
-            </div>
+            {(isOwner || (!isOwner && formData.is_rented && !formData.is_closed)) && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <Phone className="w-4 h-4 inline mr-1" />
+                  Τηλέφωνο 2
+                </label>
+                <input
+                  type="tel"
+                  value={formData[isOwner ? 'owner_phone2' : 'tenant_phone2'] || ''}
+                  onChange={(e) => updateFormData(isOwner ? 'owner_phone2' : 'tenant_phone2', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="π.χ. 697-1234567"
+                />
+              </div>
+            )}
 
             {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                <Mail className="w-4 h-4 inline mr-1" />
-                Email
-              </label>
-              <input
-                type="email"
-                value={formData[isOwner ? 'owner_email' : 'tenant_email'] || ''}
-                onChange={(e) => updateFormData(isOwner ? 'owner_email' : 'tenant_email', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder={`π.χ. ${isOwner ? 'owner' : 'tenant'}@example.com`}
-              />
-            </div>
+            {(isOwner || (!isOwner && formData.is_rented && !formData.is_closed)) && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <Mail className="w-4 h-4 inline mr-1" />
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={formData[isOwner ? 'owner_email' : 'tenant_email'] || ''}
+                  onChange={(e) => updateFormData(isOwner ? 'owner_email' : 'tenant_email', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder={`π.χ. ${isOwner ? 'owner' : 'renter'}@example.com`}
+                />
+              </div>
+            )}
 
             {/* Owner specific fields */}
             {isOwner && (
@@ -232,44 +242,89 @@ export default function ApartmentEditModal({
             {/* Tenant specific fields */}
             {!isOwner && (
               <>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="is_rented"
-                    checked={formData.is_rented || false}
-                    onChange={(e) => updateFormData('is_rented', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                  />
-                  <label htmlFor="is_rented" className="text-sm font-medium text-gray-700">
-                    Το διαμέρισμα είναι ενοικιασμένο
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Κατάσταση Διαμερίσματος
                   </label>
-                </div>
-
-                {formData.is_rented && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Έναρξη Ενοικίασης
-                      </label>
+                  <div className="space-y-2">
+                    <div className="flex items-center">
                       <input
-                        type="date"
-                        value={formData.rent_start_date || ''}
-                        onChange={(e) => updateFormData('rent_start_date', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        type="radio"
+                        id="status_rented"
+                        name="apartment_status"
+                        checked={formData.is_rented && !formData.is_closed}
+                        onChange={() => {
+                          updateFormData('is_rented', true);
+                          updateFormData('is_closed', false);
+                        }}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2"
                       />
+                      <label htmlFor="status_rented" className="ml-2 text-sm text-gray-700">
+                        Ενοικιασμένο
+                      </label>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Λήξη Ενοικίασης
-                      </label>
+                    <div className="flex items-center">
                       <input
-                        type="date"
-                        value={formData.rent_end_date || ''}
-                        onChange={(e) => updateFormData('rent_end_date', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        type="radio"
+                        id="status_closed"
+                        name="apartment_status"
+                        checked={formData.is_closed}
+                        onChange={() => {
+                          updateFormData('is_rented', false);
+                          updateFormData('is_closed', true);
+                        }}
+                        className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 focus:ring-orange-500 focus:ring-2"
                       />
+                      <label htmlFor="status_closed" className="ml-2 text-sm text-gray-700">
+                        Κλειστό (Μη κατοικημένο)
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id="status_owner_occupied"
+                        name="apartment_status"
+                        checked={!formData.is_rented && !formData.is_closed}
+                        onChange={() => {
+                          updateFormData('is_rented', false);
+                          updateFormData('is_closed', false);
+                        }}
+                        className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 focus:ring-purple-500 focus:ring-2"
+                      />
+                      <label htmlFor="status_owner_occupied" className="ml-2 text-sm text-gray-700">
+                        Ιδιοκατοίκηση
+                      </label>
                     </div>
                   </div>
+                </div>
+
+                {(formData.is_rented && !formData.is_closed) && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Έναρξη Ενοικίασης
+                        </label>
+                        <input
+                          type="date"
+                          value={formData.rent_start_date || ''}
+                          onChange={(e) => updateFormData('rent_start_date', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Λήξη Ενοικίασης
+                        </label>
+                        <input
+                          type="date"
+                          value={formData.rent_end_date || ''}
+                          onChange={(e) => updateFormData('rent_end_date', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                  </>
                 )}
               </>
             )}
@@ -292,8 +347,8 @@ export default function ApartmentEditModal({
                 </>
               ) : (
                 <>
-                  <div><span className="text-xs text-gray-500">Ένοικος:</span> {apartment.tenant_name || 'Δεν έχει οριστεί'}</div>
-                  <div><span className="text-xs text-gray-500">Κατάσταση:</span> {apartment.is_rented ? 'Ενοικιασμένο' : 'Μη ενοικιασμένο'}</div>
+                  <div><span className="text-xs text-gray-500">Ενοικιαστής:</span> {apartment.tenant_name || 'Δεν έχει οριστεί'}</div>
+                  <div><span className="text-xs text-gray-500">Κατάσταση:</span> {apartment.is_rented ? 'Ενοικιασμένο' : apartment.is_closed ? 'Κλειστό' : 'Ιδιοκατοίκηση'}</div>
                   <div><span className="text-xs text-gray-500">Τηλ. 1:</span> {apartment.tenant_phone || 'Δεν έχει οριστεί'}</div>
                   <div><span className="text-xs text-gray-500">Τηλ. 2:</span> {apartment.tenant_phone2 || 'Δεν έχει οριστεί'}</div>
                   {apartment.tenant_email && <div><span className="text-xs text-gray-500">Email:</span> {apartment.tenant_email}</div>}

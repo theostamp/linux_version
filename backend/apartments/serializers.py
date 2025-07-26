@@ -38,6 +38,7 @@ class ApartmentSerializer(serializers.ModelSerializer):
             'tenant_user',
             'tenant_user_email',
             'is_rented',
+            'is_closed',
             'rent_start_date',
             'rent_end_date',
             'square_meters',
@@ -86,7 +87,8 @@ class ApartmentListSerializer(serializers.ModelSerializer):
             'occupant_phone2',
             'occupant_email',
             'status_display',
-            'is_rented'
+            'is_rented',
+            'is_closed'
         ]
 
 
@@ -110,6 +112,7 @@ class CreateApartmentSerializer(serializers.ModelSerializer):
             'tenant_phone2',
             'tenant_email',
             'is_rented',
+            'is_closed',
             'rent_start_date',
             'rent_end_date',
             'square_meters',

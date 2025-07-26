@@ -32,6 +32,7 @@ export default function NewApartmentPage() {
     tenant_phone2: '',
     tenant_email: '',
     is_rented: false,
+    is_closed: false,
     rent_start_date: '',
     rent_end_date: '',
     square_meters: '',
@@ -78,6 +79,7 @@ export default function NewApartmentPage() {
         tenant_phone2: formData.tenant_phone2.trim(),
         tenant_email: formData.tenant_email.trim(),
         is_rented: formData.is_rented,
+        is_closed: formData.is_closed,
         rent_start_date: formData.rent_start_date || undefined,
         rent_end_date: formData.rent_end_date || undefined,
         square_meters: formData.square_meters ? Number(formData.square_meters) : undefined,
@@ -324,39 +326,82 @@ export default function NewApartmentPage() {
           </div>
         </div>
 
-        {/* Στοιχεία Ενοικίασης */}
+        {/* Στοιχεία Ενοικιαστή */}
         <div className="mt-8 pt-8 border-t border-gray-200">
-          <div className="flex items-center space-x-2 mb-6">
-            <UserCheck className="w-5 h-5 text-gray-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Στοιχεία Ενοικίασης</h2>
-          </div>
+                      <div className="flex items-center space-x-2 mb-6">
+              <UserCheck className="w-5 h-5 text-gray-600" />
+              <h2 className="text-xl font-semibold text-gray-900">Στοιχεία Ενοικιαστή</h2>
+            </div>
 
-          <div className="flex items-center space-x-2 mb-4">
-            <input
-              type="checkbox"
-              id="is_rented"
-              checked={formData.is_rented}
-              onChange={(e) => updateFormData('is_rented', e.target.checked)}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-            />
-            <label htmlFor="is_rented" className="text-sm font-medium text-gray-700">
-              Το διαμέρισμα είναι ενοικιασμένο
-            </label>
-          </div>
+                      <div className="space-y-3 mb-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Κατάσταση Διαμερίσματος
+              </label>
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="status_rented"
+                    name="apartment_status"
+                    checked={formData.is_rented && !formData.is_closed}
+                    onChange={() => {
+                      updateFormData('is_rented', true);
+                      updateFormData('is_closed', false);
+                    }}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="status_rented" className="ml-2 text-sm text-gray-700">
+                    Ενοικιασμένο
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="status_closed"
+                    name="apartment_status"
+                    checked={formData.is_closed}
+                    onChange={() => {
+                      updateFormData('is_rented', false);
+                      updateFormData('is_closed', true);
+                    }}
+                    className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 focus:ring-orange-500 focus:ring-2"
+                  />
+                  <label htmlFor="status_closed" className="ml-2 text-sm text-gray-700">
+                    Κλειστό (Μη κατοικημένο)
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="status_owner_occupied"
+                    name="apartment_status"
+                    checked={!formData.is_rented && !formData.is_closed}
+                    onChange={() => {
+                      updateFormData('is_rented', false);
+                      updateFormData('is_closed', false);
+                    }}
+                    className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 focus:ring-purple-500 focus:ring-2"
+                  />
+                  <label htmlFor="status_owner_occupied" className="ml-2 text-sm text-gray-700">
+                    Ιδιοκατοίκηση
+                  </label>
+                </div>
+              </div>
+            </div>
 
-          {formData.is_rented && (
+                     {(formData.is_rented && !formData.is_closed) && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Όνομα Ενοίκου
+                    Όνομα Ενοικιαστή
                   </label>
                   <input
                     type="text"
                     value={formData.tenant_name}
                     onChange={(e) => updateFormData('tenant_name', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Εισάγετε το όνομα του ενοίκου"
+                    placeholder="Εισάγετε το όνομα του ενοικιαστή"
                   />
                 </div>
 
@@ -391,16 +436,16 @@ export default function NewApartmentPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    <Mail className="w-4 h-4 inline mr-1" />
-                    Email Ενοίκου
-                  </label>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <Mail className="w-4 h-4 inline mr-1" />
+                  Email Ενοικιαστή
+                </label>
                   <input
                     type="email"
                     value={formData.tenant_email}
                     onChange={(e) => updateFormData('tenant_email', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="π.χ. tenant@example.com"
+                    placeholder="π.χ. renter@example.com"
                   />
                 </div>
               </div>
