@@ -16,6 +16,7 @@ import {
   Building2,
   UserPlus,
   Loader2,
+  Building,
 } from 'lucide-react';
 
 const mainLinks = [
@@ -47,6 +48,12 @@ const mainLinks = [
     href: '/buildings',
     label: 'Διαχείριση Κτιρίων',
     icon: <Building2 className="w-5 h-5 mr-2" />,
+    roles: ['manager', 'staff', 'superuser'],
+  },
+  {
+    href: '/apartments',
+    label: 'Διαχείριση Διαμερισμάτων',
+    icon: <Building className="w-5 h-5 mr-2" />,
     roles: ['manager', 'staff', 'superuser'],
   },
 ];

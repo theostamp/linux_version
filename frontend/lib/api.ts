@@ -833,6 +833,210 @@ export async function deleteResident(id: number): Promise<void> {
   await api.delete(`/residents/${id}/remove/`);
 }
 
+// ==================== APARTMENTS API ====================
+
+export type Apartment = {
+  id: number;
+  building: number;
+  building_name: string;
+  number: string;
+  floor?: number;
+  owner_name: string;
+  owner_phone: string;
+  owner_phone2: string;
+  owner_email: string;
+  owner_user?: number;
+  owner_user_email?: string;
+  ownership_percentage?: number;
+  tenant_name: string;
+  tenant_phone: string;
+  tenant_phone2: string;
+  tenant_email: string;
+  tenant_user?: number;
+  tenant_user_email?: string;
+  is_rented: boolean;
+  rent_start_date?: string;
+  rent_end_date?: string;
+  square_meters?: number;
+  bedrooms?: number;
+  notes: string;
+  occupant_name: string;
+  occupant_phone: string;
+  occupant_phone2: string;
+  occupant_email: string;
+  status_display: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ApartmentList = {
+  id: number;
+  building: number;
+  building_name: string;
+  number: string;
+  identifier: string;
+  floor?: number;
+  owner_name: string;
+  owner_phone: string;
+  owner_phone2: string;
+  owner_email: string;
+  ownership_percentage?: number;
+  tenant_name: string;
+  tenant_phone: string;
+  tenant_phone2: string;
+  tenant_email: string;
+  occupant_name: string;
+  occupant_phone: string;
+  occupant_phone2: string;
+  occupant_email: string;
+  status_display: string;
+  is_rented: boolean;
+};
+
+export interface CreateApartmentPayload {
+  building: number;
+  number: string;
+  identifier: string;
+  floor?: number;
+  owner_name?: string;
+  owner_phone?: string;
+  owner_phone2?: string;
+  owner_email?: string;
+  ownership_percentage?: number;
+  tenant_name?: string;
+  tenant_phone?: string;
+  tenant_phone2?: string;
+  tenant_email?: string;
+  is_rented?: boolean;
+  rent_start_date?: string;
+  rent_end_date?: string;
+  square_meters?: number;
+  bedrooms?: number;
+  notes?: string;
+}
+
+export interface BulkCreateApartmentsPayload {
+  building: number;
+  start_number: number;
+  end_number: number;
+  floor_mapping?: Record<string, number>;
+}
+
+export interface UpdateOwnerPayload {
+  identifier?: string;
+  owner_name?: string;
+  owner_phone?: string;
+  owner_phone2?: string;
+  owner_email?: string;
+  ownership_percentage?: number;
+}
+
+export interface UpdateTenantPayload {
+  tenant_name?: string;
+  tenant_phone?: string;
+  tenant_phone2?: string;
+  tenant_email?: string;
+  is_rented?: boolean;
+  rent_start_date?: string;
+  rent_end_date?: string;
+}
+
+export interface ApartmentStatistics {
+  total: number;
+  rented: number;
+  owned: number;
+  empty: number;
+  occupancy_rate: number;
+}
+
+export interface BuildingApartmentsResponse {
+  building: {
+    id: number;
+    name: string;
+    address: string;
+    apartments_count: number;
+  };
+  apartments: ApartmentList[];
+}
+
+// Λήψη διαμερισμάτων
+export async function fetchApartments(buildingId?: number, status?: string, ordering?: string): Promise<ApartmentList[]> {
+  console.log('[API CALL] Attempting to fetch apartments', { buildingId, status, ordering });
+  
+  const params = new URLSearchParams();
+  if (buildingId) params.append('building', buildingId.toString());
+  if (status) params.append('status', status);
+  if (ordering) params.append('ordering', ordering);
+  
+  const { data } = await api.get<ApartmentList[]>(`/apartments/?${params.toString()}`);
+  return data;
+}
+
+// Λήψη συγκεκριμένου διαμερίσματος
+export async function fetchApartment(id: number): Promise<Apartment> {
+  console.log('[API CALL] Attempting to fetch apartment:', id);
+  const { data } = await api.get<Apartment>(`/apartments/${id}/`);
+  return data;
+}
+
+// Λήψη όλων των διαμερισμάτων ενός κτιρίου
+export async function fetchBuildingApartments(buildingId: number): Promise<BuildingApartmentsResponse> {
+  console.log('[API CALL] Attempting to fetch building apartments:', buildingId);
+  const { data } = await api.get<BuildingApartmentsResponse>(`/apartments/by-building/${buildingId}/`);
+  return data;
+}
+
+// Δημιουργία διαμερίσματος
+export async function createApartment(payload: CreateApartmentPayload): Promise<Apartment> {
+  console.log('[API CALL] Attempting to create apartment:', payload);
+  const { data } = await api.post<Apartment>('/apartments/', payload);
+  return data;
+}
+
+// Μαζική δημιουργία διαμερισμάτων
+export async function bulkCreateApartments(payload: BulkCreateApartmentsPayload): Promise<{ message: string; created_count: number; apartments: ApartmentList[] }> {
+  console.log('[API CALL] Attempting to bulk create apartments:', payload);
+  const { data } = await api.post('/apartments/bulk-create/', payload);
+  return data;
+}
+
+// Ενημέρωση διαμερίσματος
+export async function updateApartment(id: number, payload: Partial<CreateApartmentPayload>): Promise<Apartment> {
+  console.log('[API CALL] Attempting to update apartment:', id, payload);
+  const { data } = await api.patch<Apartment>(`/apartments/${id}/`, payload);
+  return data;
+}
+
+// Ενημέρωση στοιχείων ιδιοκτήτη
+export async function updateApartmentOwner(id: number, payload: UpdateOwnerPayload): Promise<{ message: string; apartment: Apartment }> {
+  console.log('[API CALL] Attempting to update apartment owner:', id, payload);
+  const { data } = await api.post(`/apartments/${id}/update-owner/`, payload);
+  return data;
+}
+
+// Ενημέρωση στοιχείων ενοίκου
+export async function updateApartmentTenant(id: number, payload: UpdateTenantPayload): Promise<{ message: string; apartment: Apartment }> {
+  console.log('[API CALL] Attempting to update apartment tenant:', id, payload);
+  const { data } = await api.post(`/apartments/${id}/update-tenant/`, payload);
+  return data;
+}
+
+// Διαγραφή διαμερίσματος
+export async function deleteApartment(id: number): Promise<{ message: string }> {
+  console.log('[API CALL] Attempting to delete apartment:', id);
+  const { data } = await api.delete(`/apartments/${id}/`);
+  return data;
+}
+
+// Στατιστικά διαμερισμάτων
+export async function fetchApartmentStatistics(buildingId?: number): Promise<ApartmentStatistics> {
+  console.log('[API CALL] Attempting to fetch apartment statistics:', buildingId);
+  
+  const params = buildingId ? `?building=${buildingId}` : '';
+  const { data } = await api.get<ApartmentStatistics>(`/apartments/statistics/${params}`);
+  return data;
+}
+
 if (typeof window !== "undefined") {
   // Next.js App Router: soft reload
   import("next/navigation").then(({ useRouter }) => {

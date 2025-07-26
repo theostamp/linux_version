@@ -55,6 +55,7 @@ TENANT_APPS = [
     'django_filters',
 
     'buildings',
+    'apartments',
     'announcements',
     'user_requests',
     'votes',
