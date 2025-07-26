@@ -48,19 +48,18 @@ export default function RequestDetailPage() {
 
   async function fetchRequest() {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user-requests/${id}/`, {
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        if (res.status === 401) {
-          throw new Error('Δεν έχετε δικαίωμα πρόσβασης σε αυτό το αίτημα.');
-        }
-        throw new Error('Αποτυχία φόρτωσης αιτήματος');
+      const { api } = await import('@/lib/api');
+      const res = await api.get(`/user-requests/${id}/`);
+      setRequest(res.data);
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        setError('Δεν έχετε δικαίωμα πρόσβασης σε αυτό το αίτημα.');
+      } else if (err.response?.status === 404) {
+        setError('Το αίτημα δεν βρέθηκε.');
+      } else {
+        setError('Αποτυχία φόρτωσης αιτήματος');
       }
-      const data = await res.json();
-      setRequest(data);
-    } catch (err) {
-      setError((err as Error).message);
+      console.error('Error fetching request:', err);
     } finally {
       setLoading(false);
     }
@@ -109,18 +108,11 @@ export default function RequestDetailPage() {
     if (!request) return;
     setChangingStatus(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/user-requests/${request.id}/change_status/`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
-      if (!res.ok) throw new Error('Αποτυχία αλλαγής κατάστασης');
-      const updatedRequest = await res.json();
-      setRequest(updatedRequest);
+      const { api } = await import('@/lib/api');
+      const res = await api.post(`/user-requests/${request.id}/change_status/`, {
+        status: newStatus
+      });
+      setRequest(res.data);
       toast.success('Η κατάσταση ενημερώθηκε επιτυχώς');
     } catch (err: any) {
       const message = err.response?.data?.detail || err.message || 'Αποτυχία αλλαγής κατάστασης';

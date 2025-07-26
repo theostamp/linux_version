@@ -87,14 +87,39 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         """Διαγραφή ανακοίνωσης με cache invalidation"""
-        building_id = instance.building.id
         title = instance.title
+        building = instance.building
+        is_global = building is None
+        
         instance.delete()
         logger.info(f"Announcement deleted: {title} by {self.request.user}")
         
         # Invalidate cache
-        cache_key = f"announcements_building_{building_id}"
-        cache.delete(cache_key)
+        if building:
+            cache_key = f"announcements_building_{building.id}"
+            cache.delete(cache_key)
+        else:
+            # For global announcements, invalidate all building caches
+            from buildings.models import Building
+            for building_obj in Building.objects.all():
+                cache_key = f"announcements_building_{building_obj.id}"
+                cache.delete(cache_key)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Override destroy to return custom confirmation message"""
+        instance = self.get_object()
+        title = instance.title
+        is_global = instance.building is None
+        
+        self.perform_destroy(instance)
+        
+        if is_global:
+            message = f"Η καθολική ανακοίνωση '{title}' διαγράφηκε επιτυχώς από όλα τα κτίρια."
+        else:
+            building_name = instance.building.name if instance.building else "Άγνωστο κτίριο"
+            message = f"Η ανακοίνωση '{title}' διαγράφηκε επιτυχώς από το κτίριο '{building_name}'."
+        
+        return Response({"message": message}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='urgent')
     def urgent(self, request):

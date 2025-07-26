@@ -74,6 +74,27 @@ class VoteViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
+    def destroy(self, request, *args, **kwargs):
+        """Override destroy to return custom confirmation message"""
+        instance = self.get_object()
+        title = instance.title
+        is_global = instance.building is None
+        
+        # Store building info before deletion
+        building_name = instance.building.name if instance.building else None
+        
+        # Perform the actual deletion
+        instance.delete()
+        logger.info(f"Vote deleted: {title} by {request.user}")
+        
+        # Return appropriate confirmation message
+        if is_global:
+            message = f"Η καθολική ψηφοφορία '{title}' διαγράφηκε επιτυχώς από όλα τα κτίρια."
+        else:
+            message = f"Η ψηφοφορία '{title}' διαγράφηκε επιτυχώς από το κτίριο '{building_name}'."
+        
+        return Response({"message": message}, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=['post'], url_path='vote')
     def vote(self, request, pk=None):
         vote = self.get_object()

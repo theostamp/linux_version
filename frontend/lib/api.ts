@@ -385,10 +385,11 @@ export async function fetchAnnouncement(id: string | number): Promise<Announceme
   }
 }
 
-export async function deleteAnnouncement(announcementId: number): Promise<void> {
+export async function deleteAnnouncement(announcementId: number): Promise<string> {
   try {
-    await api.delete(`/announcements/${announcementId}/`);
+    const { data } = await api.delete<{ message: string }>(`/announcements/${announcementId}/`);
     console.log(`[API] Successfully deleted announcement ${announcementId}`);
+    return data.message || 'Η ανακοίνωση διαγράφηκε επιτυχώς';
   } catch (error) {
     console.error(`[API] Error deleting announcement ${announcementId}:`, error);
     throw error;
@@ -465,10 +466,11 @@ export async function fetchVoteResults(voteId: number): Promise<VoteResultsData>
   return data;
 }
 
-export async function deleteVote(voteId: number): Promise<void> {
+export async function deleteVote(voteId: number): Promise<string> {
   try {
-    await api.delete(`/votes/${voteId}/`);
+    const { data } = await api.delete<{ message: string }>(`/votes/${voteId}/`);
     console.log(`[API] Successfully deleted vote ${voteId}`);
+    return data.message || 'Η ψηφοφορία διαγράφηκε επιτυχώς';
   } catch (error) {
     console.error(`[API] Error deleting vote ${voteId}:`, error);
     throw error;

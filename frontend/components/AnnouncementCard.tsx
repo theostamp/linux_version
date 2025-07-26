@@ -53,14 +53,19 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation if card is clickable
     
-    if (!confirm(`Είστε σίγουροι ότι θέλετε να διαγράψετε την ανακοίνωση "${announcement.title}";`)) {
+    const isGlobal = announcement.building_name === "Όλα τα κτίρια";
+    const confirmMessage = isGlobal 
+      ? `Είστε σίγουροι ότι θέλετε να διαγράψετε την ΚΑΘΟΛΙΚΗ ανακοίνωση "${announcement.title}" από όλα τα κτίρια;`
+      : `Είστε σίγουροι ότι θέλετε να διαγράψετε την ανακοίνωση "${announcement.title}";`;
+    
+    if (!confirm(confirmMessage)) {
       return;
     }
     
     setIsDeleting(true);
     try {
-      await deleteAnnouncement(announcement.id);
-      toast.success('Η ανακοίνωση διαγράφηκε επιτυχώς');
+      const message = await deleteAnnouncement(announcement.id);
+      toast.success(message);
       // Invalidate the announcements query to refresh the list
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
     } catch (error) {

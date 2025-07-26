@@ -61,11 +61,15 @@ class IsManagerOrSuperuser(permissions.BasePermission):
             return True
 
         if user.is_staff or getattr(user, 'role', '') == 'manager':
+            # For global objects (building=null), staff users have permission
+            if hasattr(obj, 'building') and obj.building is None:
+                return True
+            
             # Αν το αντικείμενο έχει manager που είναι ο ίδιος ο χρήστης
             if hasattr(obj, 'manager') and obj.manager == user:
                 return True
             # Αν το αντικείμενο έχει building με manager τον χρήστη
-            if hasattr(obj, 'building') and hasattr(obj.building, 'manager') and obj.building.manager == user:
+            if hasattr(obj, 'building') and obj.building and hasattr(obj.building, 'manager') and obj.building.manager == user:
                 return True
 
         return False

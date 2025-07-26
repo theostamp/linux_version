@@ -33,14 +33,19 @@ export default function VoteDetailPage() {
   const handleDelete = async () => {
     if (!vote) return;
     
-    if (!confirm(`Είστε σίγουροι ότι θέλετε να διαγράψετε τη ψηφοφορία "${vote.title}";`)) {
+    const isGlobal = vote.building_name === "Όλα τα κτίρια";
+    const confirmMessage = isGlobal 
+      ? `Είστε σίγουροι ότι θέλετε να διαγράψετε την ΚΑΘΟΛΙΚΗ ψηφοφορία "${vote.title}" από όλα τα κτίρια;`
+      : `Είστε σίγουροι ότι θέλετε να διαγράψετε τη ψηφοφορία "${vote.title}";`;
+    
+    if (!confirm(confirmMessage)) {
       return;
     }
     
     setIsDeleting(true);
     try {
-      await deleteVote(vote.id);
-      toast.success('Η ψηφοφορία διαγράφηκε επιτυχώς');
+      const message = await deleteVote(vote.id);
+      toast.success(message);
       router.push('/votes');
     } catch (error) {
       console.error('Error deleting vote:', error);
@@ -57,6 +62,11 @@ export default function VoteDetailPage() {
   // Regular users can only access votes from their current building
   const hasAccessToVote = () => {
     if (!currentBuilding) return false;
+    
+    // Global votes (building is null) are accessible to all authenticated users
+    if (vote.building === null) {
+      return true;
+    }
     
     // Staff users can access votes from any building they manage
     if (user?.is_staff || user?.is_superuser) {

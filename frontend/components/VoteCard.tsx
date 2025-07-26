@@ -15,6 +15,7 @@ type Vote = {
   description: string;
   start_date: string;
   end_date: string;
+  building_name: string;
 };
 
 export default function VoteCard({ vote }: { readonly vote: Vote }) {
@@ -62,14 +63,19 @@ export default function VoteCard({ vote }: { readonly vote: Vote }) {
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
     
-    if (!confirm(`Είστε σίγουροι ότι θέλετε να διαγράψετε τη ψηφοφορία "${vote.title}";`)) {
+    const isGlobal = vote.building_name === "Όλα τα κτίρια";
+    const confirmMessage = isGlobal 
+      ? `Είστε σίγουροι ότι θέλετε να διαγράψετε την ΚΑΘΟΛΙΚΗ ψηφοφορία "${vote.title}" από όλα τα κτίρια;`
+      : `Είστε σίγουροι ότι θέλετε να διαγράψετε τη ψηφοφορία "${vote.title}";`;
+    
+    if (!confirm(confirmMessage)) {
       return;
     }
     
     setIsDeleting(true);
     try {
-      await deleteVote(vote.id);
-      toast.success('Η ψηφοφορία διαγράφηκε επιτυχώς');
+      const message = await deleteVote(vote.id);
+      toast.success(message);
       // Invalidate the votes query to refresh the list
       queryClient.invalidateQueries({ queryKey: ['votes'] });
     } catch (error) {

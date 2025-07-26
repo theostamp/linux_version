@@ -82,7 +82,13 @@ class Vote(models.Model):
     @property
     def participation_percentage(self):
         """Ποσοστό συμμετοχής"""
-        total_residents = self.building.residents.count()
+        if self.building is None:
+            # For global votes, calculate based on all residents from all buildings
+            from residents.models import Resident
+            total_residents = Resident.objects.count()
+        else:
+            total_residents = self.building.residents.count()
+        
         if total_residents == 0:
             return 0
         return round((self.total_votes / total_residents) * 100, 1)
