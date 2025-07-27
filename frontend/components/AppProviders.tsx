@@ -10,11 +10,27 @@ import LayoutWrapper from '@/components/LayoutWrapper';
 export default function AppProviders({ children }: { readonly children: ReactNode }) {
   const pathname = usePathname();
   const isPublicDisplay = pathname?.startsWith('/info-screen');
+  const isDashboard = pathname?.startsWith('/dashboard') || pathname?.startsWith('/announcements') || 
+                     pathname?.startsWith('/votes') || pathname?.startsWith('/requests') || 
+                     pathname?.startsWith('/buildings') || pathname?.startsWith('/apartments') ||
+                     pathname?.startsWith('/map-visualization') || pathname?.startsWith('/residents');
 
   if (isPublicDisplay) {
     return (
       <ReactQueryProvider>
         <LayoutWrapper>{children}</LayoutWrapper>
+      </ReactQueryProvider>
+    );
+  }
+
+  if (isDashboard) {
+    return (
+      <ReactQueryProvider>
+        <AuthProvider>
+          <BuildingProvider>
+            {children}
+          </BuildingProvider>
+        </AuthProvider>
       </ReactQueryProvider>
     );
   }
