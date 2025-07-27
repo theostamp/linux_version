@@ -287,6 +287,9 @@ export type Building = {
   created_at: string;
   updated_at?: string;
   street_view_image?: string;
+  latitude?: number;
+  longitude?: number;
+  // Backward compatibility - coordinates field for frontend use
   coordinates?: { lat: number; lng: number };
   // Add other fields as needed based on your backend model
 };
@@ -375,16 +378,41 @@ export async function fetchBuilding(id: number): Promise<Building> {
 }
 
 // Type alias for building creation/update payload
-export type BuildingPayload = Partial<Omit<Building, 'id' | 'created_at' | 'updated_at'>>;
+export type BuildingPayload = Partial<Omit<Building, 'id' | 'created_at' | 'updated_at' | 'latitude' | 'longitude'>> & {
+  latitude?: number | string;
+  longitude?: number | string;
+};
 
 export async function createBuilding(payload: BuildingPayload): Promise<Building> {
   console.log('[API CALL] Attempting to create building:', payload);
+  console.log('[API CALL] Payload type:', typeof payload);
+  console.log('[API CALL] Payload JSON:', JSON.stringify(payload, null, 2));
+  console.log('[API CALL] Latitude in payload:', payload.latitude, 'type:', typeof payload.latitude);
+  console.log('[API CALL] Longitude in payload:', payload.longitude, 'type:', typeof payload.longitude);
+  
   try {
+    // Log the exact request configuration
+    const config = {
+      url: '/buildings/',
+      method: 'POST',
+      data: payload,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('access')}`
+      }
+    };
+    console.log('[API CALL] Request config:', config);
+    console.log('[API CALL] Request data stringified:', JSON.stringify(payload));
+    
     const { data } = await api.post<Building>('/buildings/', payload);
     console.log('[API CALL] Created building successfully:', data);
     return data;
   } catch (error) {
     console.error('[API CALL] Error creating building:', error);
+    if (error && typeof error === 'object' && 'response' in error) {
+      console.error('[API CALL] Error response data:', (error as any).response?.data);
+      console.error('[API CALL] Error response status:', (error as any).response?.status);
+    }
     throw error;
   }
 }

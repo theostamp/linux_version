@@ -3,6 +3,7 @@
 from rest_framework import viewsets, permissions, status  
 from rest_framework.response import Response  
 from rest_framework.decorators import action  
+from rest_framework.parsers import JSONParser
 from django.views.decorators.csrf import ensure_csrf_cookie  
 from django.http import JsonResponse  
 from django.utils import timezone  
@@ -23,6 +24,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
     queryset = Building.objects.all()
     serializer_class = BuildingSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser]  # Explicitly set parser to avoid any issues
 
     def get_queryset(self):
         user = self.request.user
@@ -52,6 +54,24 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
             serializer.save(manager=self.request.user)
         else:
             serializer.save()
+
+    def create(self, request, *args, **kwargs):
+        """Override create method to add debugging"""
+        print(f"🔍 BuildingViewSet.create() called")
+        print(f"🔍 Request data: {request.data}")
+        print(f"🔍 Request data type: {type(request.data)}")
+        print(f"🔍 Request content type: {request.content_type}")
+        print(f"🔍 Request method: {request.method}")
+        print(f"🔍 Latitude from request: {request.data.get('latitude')} (type: {type(request.data.get('latitude'))})")
+        print(f"🔍 Longitude from request: {request.data.get('longitude')} (type: {type(request.data.get('longitude'))})")
+        
+        # Check if data is a QueryDict (which might cause the array issue)
+        if hasattr(request.data, 'getlist'):
+            print(f"⚠️  Request.data is a QueryDict-like object")
+            print(f"🔍 Latitude getlist: {request.data.getlist('latitude')}")
+            print(f"🔍 Longitude getlist: {request.data.getlist('longitude')}")
+        
+        return super().create(request, *args, **kwargs)
 
     @action(detail=False, methods=["post"], url_path="assign-resident")
     def assign_resident(self, request):
@@ -128,3 +148,19 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
 
         serializer = BuildingMembershipSerializer(queryset, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=["post"], url_path="test-coordinates")
+    def test_coordinates(self, request):
+        """Test endpoint to debug coordinate data format"""
+        print(f"🔍 Test coordinates endpoint called")
+        print(f"🔍 Request data: {request.data}")
+        print(f"🔍 Request data type: {type(request.data)}")
+        print(f"🔍 Latitude: {request.data.get('latitude')} (type: {type(request.data.get('latitude'))})")
+        print(f"🔍 Longitude: {request.data.get('longitude')} (type: {type(request.data.get('longitude'))})")
+        
+        return Response({
+            "message": "Test completed",
+            "received_data": request.data,
+            "latitude_type": str(type(request.data.get('latitude'))),
+            "longitude_type": str(type(request.data.get('longitude')))
+        })

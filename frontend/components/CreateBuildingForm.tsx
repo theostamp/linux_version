@@ -20,6 +20,20 @@ interface Props {
   buildingId?: number;
 }
 
+interface BuildingFormData {
+  name?: string;
+  address?: string;
+  city?: string;
+  postal_code?: string;
+  apartments_count?: number;
+  internal_manager_name?: string;
+  internal_manager_phone?: string;
+  street_view_image?: string;
+  latitude?: number | string;
+  longitude?: number | string;
+  coordinates?: { lat: number; lng: number };
+}
+
 export default function CreateBuildingForm({
   initialData = {},
   onSuccessPath = '/buildings',
@@ -29,14 +43,7 @@ export default function CreateBuildingForm({
   useCsrf();
   const router = useRouter();
   const { setBuildings, refreshBuildings } = useBuilding();
-  const [form, setForm] = useState<
-    Partial<Building> & {
-      apartments_count?: number;
-      internal_manager_name?: string;
-      internal_manager_phone?: string;
-      street_view_image?: string;
-    }
-  >(initialData);
+  const [form, setForm] = useState<BuildingFormData>(initialData);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [useGoogleMaps, setUseGoogleMaps] = useState(true);
@@ -154,11 +161,35 @@ export default function CreateBuildingForm({
       return;
     }
     
-    // Αφαιρούμε το street_view_image από το payload για το backend
+    // Προετοιμασία δεδομένων για αποστολή
     const formData = { ...form };
-    delete formData.street_view_image;
     
-    console.log('📤 Submitting building data:', formData); // Debug log
+    // Προσθήκη συντεταγμένων αν υπάρχουν
+    if (coordinates && coordinates.lat && coordinates.lng) {
+      // Try sending as numbers first, then as strings if that doesn't work
+      formData.latitude = coordinates.lat;
+      formData.longitude = coordinates.lng;
+      console.log('📍 Coordinates being added as numbers:', { lat: coordinates.lat, lng: coordinates.lng });
+      console.log('📍 Formatted coordinates:', { latitude: formData.latitude, longitude: formData.longitude });
+    } else {
+      console.log('📍 No coordinates available, skipping coordinate fields');
+      // Ensure coordinates are not sent if they don't exist
+      delete formData.latitude;
+      delete formData.longitude;
+    }
+    
+    // Αφαιρούμε το street_view_image από το payload για το backend
+    delete formData.street_view_image;
+    delete formData.coordinates; // Αφαιρούμε το frontend coordinates field
+    
+    console.log('📤 Submitting building data:', formData);
+    console.log('📤 Data types:', {
+      latitude: typeof formData.latitude,
+      longitude: typeof formData.longitude,
+      name: typeof formData.name,
+      address: typeof formData.address
+    });
+    console.log('📤 Raw formData object:', JSON.stringify(formData, null, 2));
     
     try {
       if (buildingId) {

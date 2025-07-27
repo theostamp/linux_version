@@ -16,6 +16,7 @@ import {
   Building2,
   Loader2,
   Building,
+  MapPin,
 } from 'lucide-react';
 
 const mainLinks = [
@@ -53,6 +54,12 @@ const mainLinks = [
     href: '/apartments',
     label: 'Διαχείριση Διαμερισμάτων',
     icon: <Building className="w-5 h-5 mr-2" />,
+    roles: ['manager', 'staff', 'superuser'],
+  },
+  {
+    href: '/map-visualization',
+    label: 'Οπτικοποίηση Χάρτη',
+    icon: <MapPin className="w-5 h-5 mr-2" />,
     roles: ['manager', 'staff', 'superuser'],
   },
 ];

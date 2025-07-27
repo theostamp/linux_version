@@ -43,6 +43,22 @@ class Building(models.Model):
         blank=True,
         null=True
     )
+    latitude = models.DecimalField(
+        _("Γεωγραφικό Πλάτος"),
+        max_digits=9,
+        decimal_places=6,
+        blank=True,
+        null=True,
+        help_text=_("Γεωγραφικό πλάτος (latitude) από Google Maps")
+    )
+    longitude = models.DecimalField(
+        _("Γεωγραφικό Μήκος"),
+        max_digits=9,
+        decimal_places=6,
+        blank=True,
+        null=True,
+        help_text=_("Γεωγραφικό μήκος (longitude) από Google Maps")
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
