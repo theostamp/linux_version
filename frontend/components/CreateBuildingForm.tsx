@@ -54,15 +54,24 @@ export default function CreateBuildingForm({
     country: string;
     coordinates?: { lat: number; lng: number };
   }) => {
+    // Έλεγχος αν πρέπει να συμπληρωθεί αυτόματα το όνομα
+    const shouldAutoFillName = !form.name || form.name.trim() === '';
+    
     setForm((prev) => ({
       ...prev,
       address: addressDetails.fullAddress,
       city: addressDetails.city,
       postal_code: addressDetails.postalCode,
+      // Συμπλήρωση ονόματος κτηρίου με τη διεύθυνση (editable από χρήστη)
+      name: shouldAutoFillName ? addressDetails.fullAddress : prev.name,
     }));
     
     // Show success feedback
-    toast.success(`Διεύθυνση επιλέχθηκε: ${addressDetails.fullAddress}${addressDetails.city ? `, ${addressDetails.city}` : ''}${addressDetails.postalCode ? `, ${addressDetails.postalCode}` : ''}`);
+    if (shouldAutoFillName) {
+      toast.success(`📍 Διεύθυνση επιλέχθηκε και όνομα κτηρίου συμπληρώθηκε αυτόματα. Μπορείτε να το επεξεργαστείτε!`);
+    } else {
+      toast.success(`📍 Διεύθυνση επιλέχθηκε: ${addressDetails.fullAddress}${addressDetails.city ? `, ${addressDetails.city}` : ''}${addressDetails.postalCode ? `, ${addressDetails.postalCode}` : ''}`);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -131,7 +140,7 @@ export default function CreateBuildingForm({
               value={form.name ?? ''}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="π.χ. Οικοδομή Αθηνάς 25"
+              placeholder="π.χ. Οικοδομή Αθηνάς 25 (θα συμπληρωθεί αυτόματα από τη διεύθυνση)"
               required
             />
           </div>
