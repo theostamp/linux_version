@@ -12,7 +12,7 @@ interface AddressAutocompleteProps {
     postal_code: string;          // Backward compatibility
     country: string;
     coordinates?: { lat: number; lng: number };
-  }) => void;
+  }, isConfirmed?: boolean) => void;
   value?: string;
   required?: boolean;
 }
@@ -29,48 +29,83 @@ interface Prediction {
 // Google Maps Script Loader for modern Places API
 const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
   return new Promise((resolve, reject) => {
+    // Check if already loaded
     if (window.google?.maps?.places?.AutocompleteService) {
       console.log('✅ Google Maps already loaded with Places API');
       resolve();
       return;
     }
 
+    // Check for existing script
     const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
     if (existingScript) {
       console.log('📜 Existing Google Maps script found, waiting for Places API load...');
-      existingScript.addEventListener('load', () => {
-        setTimeout(() => {
+      
+      // If script is already loaded, wait for Places API
+      if (existingScript.getAttribute('data-loaded') === 'true') {
+        const checkPlacesAPI = () => {
           if (window.google?.maps?.places?.AutocompleteService) {
             console.log('✅ Places API loaded from existing script');
             resolve();
           } else {
-            console.error('❌ Places API not available from existing script');
-            reject(new Error('Places API not available'));
+            console.log('⏳ Waiting for Places API...');
+            setTimeout(checkPlacesAPI, 500);
           }
-        }, 1000);
+        };
+        checkPlacesAPI();
+        return;
+      }
+
+      // Wait for script to load
+      existingScript.addEventListener('load', () => {
+        existingScript.setAttribute('data-loaded', 'true');
+        const checkPlacesAPI = () => {
+          if (window.google?.maps?.places?.AutocompleteService) {
+            console.log('✅ Places API loaded from existing script');
+            resolve();
+          } else {
+            console.log('⏳ Waiting for Places API...');
+            setTimeout(checkPlacesAPI, 500);
+          }
+        };
+        setTimeout(checkPlacesAPI, 1000);
       });
-      existingScript.addEventListener('error', () => reject(new Error('Failed to load Google Maps')));
+      
+      existingScript.addEventListener('error', () => {
+        console.error('❌ Failed to load existing Google Maps script');
+        reject(new Error('Failed to load Google Maps'));
+      });
       return;
     }
 
     console.log('📜 Creating new Google Maps script for Places API...');
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&v=weekly&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&v=weekly`;
     script.async = true;
     script.defer = true;
+    
     script.onload = () => {
       console.log('📜 Google Maps script loaded, waiting for Places API...');
-      setTimeout(() => {
+      script.setAttribute('data-loaded', 'true');
+      
+      const checkPlacesAPI = () => {
         if (window.google?.maps?.places?.AutocompleteService) {
           console.log('✅ Places API initialized successfully');
           resolve();
         } else {
-          console.error('❌ Places API failed to initialize');
-          reject(new Error('Places API failed to initialize'));
+          console.log('⏳ Waiting for Places API...');
+          setTimeout(checkPlacesAPI, 500);
         }
-      }, 2000);
+      };
+      
+      setTimeout(checkPlacesAPI, 1000);
     };
-    script.onerror = () => reject(new Error('Failed to load Google Maps script'));
+    
+    script.onerror = () => {
+      console.error('❌ Failed to load Google Maps script');
+      reject(new Error('Failed to load Google Maps script'));
+    };
+    
     document.head.appendChild(script);
   });
 };
@@ -106,19 +141,29 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
         console.log('✅ Google Maps script loaded successfully');
         
         if (window.google?.maps?.places) {
-          // Initialize AutocompleteService for getting predictions
-          autocompleteService.current = new window.google.maps.places.AutocompleteService();
-          
-          // Create a dummy div for PlacesService (required by Google Maps API)
-          const dummyDiv = document.createElement('div');
-          placesService.current = new window.google.maps.places.PlacesService(dummyDiv);
-          
-          console.log('✅ Places services initialized successfully');
+          try {
+            // Initialize AutocompleteService for getting predictions
+            autocompleteService.current = new window.google.maps.places.AutocompleteService();
+            
+            // Create a dummy div for PlacesService (required by Google Maps API)
+            const dummyDiv = document.createElement('div');
+            placesService.current = new window.google.maps.places.PlacesService(dummyDiv);
+            
+            console.log('✅ Places services initialized successfully');
+            setError(null); // Clear any previous errors
+          } catch (initError) {
+            console.error('❌ Error initializing Places services:', initError);
+            setError('Σφάλμα αρχικοποίησης Google Maps services');
+          }
+        } else {
+          console.error('❌ Google Maps Places API not available');
+          setError('Google Maps Places API δεν είναι διαθέσιμο');
         }
       })
       .catch((error) => {
         console.error('Error loading Google Maps:', error);
-        setError('Σφάλμα φόρτωσης Google Maps. Ελέγξτε τη σύνδεσή σας.');
+        setError('Σφάλμα φόρτωσης Google Maps. Ελέγξτε τη σύνδεσή σας και το API key.');
+        isInitializedRef.current = false; // Allow retry
       });
 
     // Cleanup
@@ -173,27 +218,58 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
     const newValue = e.target.value;
     setInputValue(newValue);
     setSelectedIndex(-1);
+    
+    // If Google Maps is not available, allow manual input
+    if (!autocompleteService.current && newValue.trim().length > 0) {
+      // Create a basic address object for manual input
+      const manualAddress = {
+        fullAddress: newValue,
+        address: newValue,
+        city: '',
+        postalCode: '',
+        postal_code: '',
+        country: 'Greece',
+        coordinates: undefined
+      };
+      
+      // Call onAddressSelect with manual input (confirmed)
+      onAddressSelect(manualAddress, true);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showSuggestions || predictions.length === 0) return;
-
     switch (e.key) {
       case 'ArrowDown':
+        if (!showSuggestions || predictions.length === 0) return;
         e.preventDefault();
         setSelectedIndex(prev => (prev < predictions.length - 1 ? prev + 1 : prev));
         break;
       case 'ArrowUp':
+        if (!showSuggestions || predictions.length === 0) return;
         e.preventDefault();
         setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
         break;
       case 'Enter':
         e.preventDefault();
-        if (selectedIndex >= 0 && selectedIndex < predictions.length) {
-          selectPrediction(predictions[selectedIndex]);
-        } else if (predictions.length > 0) {
-          // If no specific selection, use the first prediction
-          selectPrediction(predictions[0]);
+        if (showSuggestions && predictions.length > 0) {
+          if (selectedIndex >= 0 && selectedIndex < predictions.length) {
+            selectPrediction(predictions[selectedIndex], true); // isConfirmed = true
+          } else {
+            // If no specific selection, use the first prediction
+            selectPrediction(predictions[0], true); // isConfirmed = true
+          }
+        } else if (!autocompleteService.current && inputValue.trim().length > 0) {
+          // If Google Maps is not available, confirm manual input
+          const manualAddress = {
+            fullAddress: inputValue,
+            address: inputValue,
+            city: '',
+            postalCode: '',
+            postal_code: '',
+            country: 'Greece',
+            coordinates: undefined
+          };
+          onAddressSelect(manualAddress, true);
         }
         break;
       case 'Escape':
@@ -203,24 +279,24 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
     }
   };
 
-  const selectPrediction = (prediction: Prediction) => {
-    console.log('🎯 Selected prediction:', prediction);
+  const selectPrediction = (prediction: Prediction, isConfirmed: boolean = false) => {
+    console.log('🎯 Selected prediction:', prediction, 'Confirmed:', isConfirmed);
     
     setInputValue(prediction.description);
     setShowSuggestions(false);
     setSelectedIndex(-1);
     
     // Get place details for the selected prediction
-    getPlaceDetails(prediction.place_id);
+    getPlaceDetails(prediction.place_id, isConfirmed);
   };
 
-  const getPlaceDetails = (placeId: string) => {
+  const getPlaceDetails = (placeId: string, isConfirmed: boolean = false) => {
     if (!placesService.current) {
       console.error('❌ PlacesService not initialized');
       return;
     }
 
-    console.log('🔍 Getting place details for:', placeId);
+    console.log('🔍 Getting place details for:', placeId, 'Confirmed:', isConfirmed);
     
     const request = {
       placeId: placeId,
@@ -230,15 +306,15 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
     placesService.current.getDetails(request, (place: any, status: any) => {
       if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
         console.log('✅ Place details received:', place);
-        processPlaceDetails(place);
+        processPlaceDetails(place, isConfirmed);
       } else {
         console.error('❌ Error getting place details:', status);
       }
     });
   };
 
-  const processPlaceDetails = (place: any) => {
-    console.log('📦 Processing place details:', place);
+  const processPlaceDetails = (place: any, isConfirmed: boolean = false) => {
+    console.log('📦 Processing place details:', place, 'Confirmed:', isConfirmed);
 
     const addressComponents = place.address_components || [];
     
@@ -266,9 +342,35 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
     // Construct full address
     const fullAddress = place.formatted_address || `${streetNumber} ${route}`.trim();
     
+    // Fallback: Try to extract postal code from formatted_address if not found in components
+    if (!postalCode && place.formatted_address) {
+      // Try different patterns for Greek postal codes
+      const patterns = [
+        /\b\d{5}\b/,           // Standard 5-digit format
+        /\bΤΚ\s*(\d{5})\b/i,   // ΤΚ format
+        /\b(\d{3})\s*(\d{2})\b/ // 3+2 format
+      ];
+      
+      for (const pattern of patterns) {
+        const match = place.formatted_address.match(pattern);
+        if (match) {
+          if (match[1] && match[2]) {
+            // 3+2 format
+            postalCode = match[1] + match[2];
+          } else {
+            // Standard format
+            postalCode = match[0];
+          }
+          console.log('📍 Extracted postal code from formatted_address:', postalCode);
+          break;
+        }
+      }
+    }
+    
     console.log('📍 Parsed address components:', { 
       streetNumber, route, city, postalCode, country, fullAddress 
     });
+    console.log('📍 Raw address components:', addressComponents);
 
     // Create address data object with correct property names for form compatibility
     const addressData = {
@@ -284,14 +386,14 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
       } : undefined
     };
     
-    console.log('📤 Address data being sent to form:', addressData);
-    onAddressSelect(addressData);
+    console.log('📤 Address data being sent to form:', addressData, 'Confirmed:', isConfirmed);
+    onAddressSelect(addressData, isConfirmed);
     
     console.log('✅ Address selection completed successfully!');
   };
 
   const handleSuggestionClick = (prediction: Prediction) => {
-    selectPrediction(prediction);
+    selectPrediction(prediction, false); // isConfirmed = false for click
   };
 
   const handleFocus = () => {
@@ -327,7 +429,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
           onFocus={handleFocus}
           onBlur={handleBlur}
           className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Πληκτρολογήστε διεύθυνση και πατήστε Enter για επιλογή..."
+          placeholder={error ? "Πληκτρολογήστε διεύθυνση χειροκίνητα..." : "Πληκτρολογήστε διεύθυνση και πατήστε Enter για επιλογή..."}
           required={required}
           autoComplete="off"
         />
@@ -389,12 +491,40 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
         <div className="flex items-center text-red-600 text-sm mt-1">
           <AlertCircle className="w-4 h-4 mr-1" />
           {error}
+          <button 
+            onClick={() => {
+              setError(null);
+              isInitializedRef.current = false;
+              // Retry initialization
+              const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+              if (apiKey) {
+                loadGoogleMapsScript(apiKey)
+                  .then(() => {
+                    if (window.google?.maps?.places) {
+                      autocompleteService.current = new window.google.maps.places.AutocompleteService();
+                      const dummyDiv = document.createElement('div');
+                      placesService.current = new window.google.maps.places.PlacesService(dummyDiv);
+                      setError(null);
+                    }
+                  })
+                  .catch(() => {
+                    setError('Δεν ήταν δυνατή η φόρτωση του Google Maps. Μπορείτε να συνεχίσετε με manual input.');
+                  });
+              }
+            }}
+            className="ml-2 text-blue-600 hover:underline text-xs"
+          >
+            Δοκιμή ξανά
+          </button>
         </div>
       )}
       
       {/* Helper text */}
       <p className="mt-1 text-xs text-gray-500">
-        💡 Πληκτρολογήστε τη διεύθυνση, επιλέξτε με ↑↓ και πατήστε Enter
+        {error ? 
+          '💡 Μπορείτε να συνεχίσετε πληκτρολογώντας τη διεύθυνση χειροκίνητα' :
+          '💡 Πληκτρολογήστε τη διεύθυνση, επιλέξτε με ↑↓ και πατήστε Enter'
+        }
       </p>
     </div>
   );

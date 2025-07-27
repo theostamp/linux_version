@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import BuildingCard from '@/components/BuildingCard';
+import BuildingTable from '@/components/BuildingTable';
+import Pagination from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, Filter, Building as BuildingIcon, Users, Home, TrendingUp } from 'lucide-react';
+import { Plus, Search, Filter, Building as BuildingIcon, Users, Home, TrendingUp, Grid, List } from 'lucide-react';
 import Link from 'next/link';
 import ErrorMessage from '@/components/ErrorMessage';
 
@@ -24,6 +26,9 @@ const BuildingsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [cityFilter, setCityFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'name' | 'city' | 'apartments_count'>('name');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10); // 10 buildings per page
 
   // Calculate statistics
   const statistics = useMemo(() => {
@@ -82,6 +87,18 @@ const BuildingsPage = () => {
     });
   }, [buildings, searchTerm, cityFilter, sortBy]);
 
+  // Pagination logic
+  const totalItems = filteredAndSortedBuildings.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedBuildings = filteredAndSortedBuildings.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, cityFilter, sortBy, pageSize]);
+
   const handleRefresh = () => {
     // Refresh buildings list - this would typically refetch from API
     window.location.reload();
@@ -135,8 +152,30 @@ const BuildingsPage = () => {
       {/* Header */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">🏢 Διαχείριση Κτιρίων</h1>
+          <h1 className="text-2xl font-bold">🏢 Διαχείριση Κτιρίων</h1>
           <div className="flex gap-2">
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              <Button
+                variant={viewMode === 'cards' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('cards')}
+                className="text-xs"
+              >
+                <Grid className="w-4 h-4 mr-1" />
+                Κάρτες
+              </Button>
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('table')}
+                className="text-xs"
+              >
+                <List className="w-4 h-4 mr-1" />
+                Λίστα
+              </Button>
+            </div>
+            
             <Button onClick={handleRefresh} variant="outline">
               Ανανέωση
             </Button>
@@ -150,50 +189,51 @@ const BuildingsPage = () => {
             )}
           </div>
         </div>
-      </div>
-
-      <BuildingFilterIndicator className="mb-4" />
-
-      {/* Statistics */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <BuildingIcon className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Στατιστικά Κτιρίων</h3>
-        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <BuildingIcon className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Συνολικά Κτίρια</p>
-                <p className="text-2xl font-bold text-gray-900">{statistics.total}</p>
+        {/* Filter Indicator - moved here to avoid overlap */}
+        <BuildingFilterIndicator />
+        
+        {/* Statistics - moved here to be part of header section */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <BuildingIcon className="w-4 h-4 text-blue-600" />
+            <h3 className="text-sm font-semibold text-gray-900">Στατιστικά Κτιρίων</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <BuildingIcon className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600">Συνολικά Κτίρια</p>
+                  <p className="text-lg font-bold text-gray-900">{statistics.total}</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <Home className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Συνολικά Διαμερίσματα</p>
-                <p className="text-2xl font-bold text-gray-900">{statistics.totalApartments}</p>
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                  <Home className="w-4 h-4 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600">Συνολικά Διαμερίσματα</p>
+                  <p className="text-lg font-bold text-gray-900">{statistics.totalApartments}</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Πόλεις</p>
-                <p className="text-2xl font-bold text-gray-900">{statistics.cities}</p>
+            <div className="bg-white rounded-lg p-3 shadow-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600">Πόλεις</p>
+                  <p className="text-lg font-bold text-gray-900">{statistics.cities}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -243,60 +283,101 @@ const BuildingsPage = () => {
               <option value="apartments_count">Αριθμός Διαμερισμάτων</option>
             </select>
           </div>
+
+          {/* Page Size */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Ανά σελίδα:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Buildings Grid */}
-      <div className="bg-white rounded-lg shadow-sm border">
-        {filteredAndSortedBuildings.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            {searchTerm || cityFilter !== 'all' ? (
-              <>
-                <p className="mb-4">Δεν βρέθηκαν κτίρια με τα τρέχοντα φίλτρα.</p>
-                <div className="flex justify-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSearchTerm('');
-                      setCityFilter('all');
-                    }}
-                  >
-                    Καθαρισμός Φίλτρων
+      {/* Buildings Display */}
+      {filteredAndSortedBuildings.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm border p-8 text-center text-gray-500">
+          {searchTerm || cityFilter !== 'all' ? (
+            <>
+              <p className="mb-4">Δεν βρέθηκαν κτίρια με τα τρέχοντα φίλτρα.</p>
+              <div className="flex justify-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setCityFilter('all');
+                  }}
+                >
+                  Καθαρισμός Φίλτρων
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <BuildingIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <p className="mb-4">Δεν υπάρχουν κτίρια.</p>
+              {canManage && (
+                <Link href="/buildings/new">
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Δημιουργία Πρώτου Κτιρίου
                   </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <BuildingIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="mb-4">Δεν υπάρχουν κτίρια.</p>
-                {canManage && (
-                  <Link href="/buildings/new">
-                    <Button>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Δημιουργία Πρώτου Κτιρίου
-                    </Button>
-                  </Link>
-                )}
-              </>
-            )}
-          </div>
-        ) : (
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAndSortedBuildings.map(building => (
-              <BuildingCard 
-                key={building.id} 
-                building={building} 
-                onRefresh={handleRefresh}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+                </Link>
+              )}
+            </>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Cards View */}
+          {viewMode === 'cards' && (
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedBuildings.map(building => (
+                  <BuildingCard 
+                    key={building.id} 
+                    building={building} 
+                    onRefresh={handleRefresh}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Table View */}
+          {viewMode === 'table' && (
+            <BuildingTable 
+              buildings={paginatedBuildings}
+              onRefresh={handleRefresh}
+            />
+          )}
+        </>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="bg-white rounded-lg shadow-sm border p-4">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
 
       {/* Results counter */}
       {filteredAndSortedBuildings.length > 0 && (
         <div className="text-center text-sm text-gray-500">
-          Εμφανίζονται {filteredAndSortedBuildings.length} από {buildings.length} κτίρια
+          Εμφανίζονται {startIndex + 1}-{Math.min(endIndex, totalItems)} από {totalItems} κτίρια
         </div>
       )}
     </div>

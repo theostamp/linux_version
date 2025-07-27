@@ -11,6 +11,7 @@ import { Save, Loader2, MapPin, Camera } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 import StreetViewImage from '@/components/StreetViewImage';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 interface Props {
   initialData?: Partial<Building>;
@@ -27,6 +28,7 @@ export default function CreateBuildingForm({
 }: Readonly<Props>) {
   useCsrf();
   const router = useRouter();
+  const { setBuildings, refreshBuildings } = useBuilding();
   const [form, setForm] = useState<
     Partial<Building> & {
       apartments_count?: number;
@@ -56,29 +58,54 @@ export default function CreateBuildingForm({
     fullAddress: string;
     city: string;
     postalCode: string;
+    postal_code: string;
     country: string;
     coordinates?: { lat: number; lng: number };
-  }) => {
+  }, isConfirmed: boolean = false) => {
     // Έλεγχος αν πρέπει να συμπληρωθεί αυτόματα το όνομα
     const shouldAutoFillName = !form.name || form.name.trim() === '';
+    
+    // Δημιουργία καθαρού ονόματος κτηρίου χωρίς ΤΚ και Ελλάδα
+    const cleanBuildingName = (() => {
+      let cleanName = addressDetails.fullAddress;
+      
+      // Αφαίρεση ΤΚ (postal code)
+      if (addressDetails.postalCode) {
+        cleanName = cleanName.replace(new RegExp(`\\s*${addressDetails.postalCode}\\s*`, 'g'), '');
+      }
+      
+      // Αφαίρεση "Ελλάδα" ή "Greece"
+      cleanName = cleanName.replace(/,\s*(Ελλάδα|Greece)\s*$/i, '');
+      cleanName = cleanName.replace(/\s*(Ελλάδα|Greece)\s*$/i, '');
+      
+      // Καθαρισμός διπλών κόμμων και κενών
+      cleanName = cleanName.replace(/,\s*,/g, ',');
+      cleanName = cleanName.replace(/,\s*$/g, '');
+      cleanName = cleanName.trim();
+      
+      return cleanName;
+    })();
     
     setForm((prev) => ({
       ...prev,
       address: addressDetails.fullAddress,
       city: addressDetails.city,
-      postal_code: addressDetails.postalCode,
-      // Συμπλήρωση ονόματος κτηρίου με τη διεύθυνση (editable από χρήστη)
-      name: shouldAutoFillName ? addressDetails.fullAddress : prev.name,
+      postal_code: addressDetails.postal_code || addressDetails.postalCode, // Support both properties
+      // Συμπλήρωση ονόματος κτηρίου μόνο αν είναι οριστικοποιημένη η επιλογή
+      name: (shouldAutoFillName && isConfirmed) ? cleanBuildingName : prev.name,
     }));
     
     // Αποθήκευση των συντεταγμένων για το Street View
     setCoordinates(addressDetails.coordinates);
     
     // Show success feedback
-    if (shouldAutoFillName) {
+    if (shouldAutoFillName && isConfirmed) {
       toast.success(`📍 Διεύθυνση επιλέχθηκε και όνομα κτηρίου συμπληρώθηκε αυτόματα. Μπορείτε να το επεξεργαστείτε!`);
-    } else {
+    } else if (isConfirmed) {
       toast.success(`📍 Διεύθυνση επιλέχθηκε: ${addressDetails.fullAddress}${addressDetails.city ? `, ${addressDetails.city}` : ''}${addressDetails.postalCode ? `, ${addressDetails.postalCode}` : ''}`);
+    } else {
+      // Για προσωρινές επιλογές (κλικ), μην δείχνεις μήνυμα
+      console.log('📍 Προσωρινή επιλογή διεύθυνσης (κλικ)');
     }
   }, [form.name]); // Only depend on form.name since that's what we check
 
@@ -104,20 +131,27 @@ export default function CreateBuildingForm({
     setError(null);
     setIsSubmitting(true);
     
+    // Validation for required fields
+    const missingFields = [];
+    
+    if (!form.name) missingFields.push('όνομα κτιρίου');
+    if (!form.apartments_count) missingFields.push('αριθμός διαμερισμάτων');
+    
     // Validation for Google Maps mode
     if (useGoogleMaps) {
       if (!form.address || !form.city || !form.postal_code) {
-        const missingFields = [];
         if (!form.address) missingFields.push('διεύθυνση');
         if (!form.city) missingFields.push('πόλη');  
         if (!form.postal_code) missingFields.push('ταχυδρομικός κώδικας');
-        
-        const errorMessage = `Παρακαλώ επιλέξτε μια διεύθυνση από τις προτάσεις του Google Maps. Λείπουν: ${missingFields.join(', ')}`;
-        setError(errorMessage);
-        toast.error(errorMessage);
-        setIsSubmitting(false);
-        return;
       }
+    }
+    
+    if (missingFields.length > 0) {
+      const errorMessage = `Παρακαλώ συμπληρώστε τα υποχρεωτικά πεδία: ${missingFields.join(', ')}`;
+      setError(errorMessage);
+      toast.error(errorMessage);
+      setIsSubmitting(false);
+      return;
     }
     
     // Αφαιρούμε το street_view_image από το payload για το backend
@@ -128,11 +162,16 @@ export default function CreateBuildingForm({
     
     try {
       if (buildingId) {
-        await updateBuilding(buildingId, formData);
+        const updatedBuilding = await updateBuilding(buildingId, formData);
         toast.success('Το κτίριο ενημερώθηκε επιτυχώς');
+        // Refresh buildings from server to ensure consistency
+        await refreshBuildings();
       } else {
-        await createBuilding(formData);
+        const newBuilding = await createBuilding(formData);
+        console.log('[CreateBuildingForm] New building created:', newBuilding);
         toast.success('Το κτίριο δημιουργήθηκε επιτυχώς');
+        // Refresh buildings from server to ensure consistency
+        await refreshBuildings();
       }
       router.push(onSuccessPath);
     } catch (e: any) {
@@ -176,7 +215,7 @@ export default function CreateBuildingForm({
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="apartments_count">
-              Αριθμός Διαμερισμάτων
+              Αριθμός Διαμερισμάτων *
             </label>
             <select
               id="apartments_count"
@@ -184,6 +223,7 @@ export default function CreateBuildingForm({
               value={form.apartments_count ?? ''}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
             >
               <option value="">Επιλέξτε αριθμό</option>
               {Array.from({ length: 100 }, (_, i) => i + 1).map((n) => (

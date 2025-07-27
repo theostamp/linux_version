@@ -10,12 +10,18 @@ import { apiPublic } from './apiPublic';
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
+    console.log(`[API] Current hostname: ${hostname}`);
+    
     // Αν είναι tenant subdomain (π.χ. tap.localhost), χρησιμοποιούμε το ίδιο subdomain για το API
     if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
-      return `http://${hostname}:8000/api`;
+      const apiUrl = `http://${hostname}:8000/api`;
+      console.log(`[API] Using tenant-specific API URL: ${apiUrl}`);
+      return apiUrl;
     }
   }
-  return process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? 'http://localhost:8000/api';
+  const defaultUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? 'http://localhost:8000/api';
+  console.log(`[API] Using default API URL: ${defaultUrl}`);
+  return defaultUrl;
 };
 
 export const API_BASE_URL = getApiBaseUrl();
@@ -275,6 +281,9 @@ export type Building = {
   address: string;
   city?: string;
   postal_code?: string;
+  apartments_count?: number;
+  internal_manager_name?: string;
+  internal_manager_phone?: string;
   created_at: string;
   updated_at?: string;
   street_view_image?: string;
@@ -282,11 +291,81 @@ export type Building = {
   // Add other fields as needed based on your backend model
 };
 
-export async function fetchBuildings(): Promise<Building[]> {
-  console.log('[API CALL] Attempting to fetch /buildings/');
-  const resp = await api.get<{ results?: Building[] } | Building[]>('/buildings/');
-  const data = resp.data;
-  return Array.isArray(data) ? data : data.results ?? [];
+export interface BuildingsResponse {
+  results: Building[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+}
+
+export async function fetchBuildings(page: number = 1, pageSize: number = 50): Promise<BuildingsResponse> {
+  console.log(`[API CALL] Attempting to fetch /buildings/ with page=${page}, pageSize=${pageSize}`);
+  console.log('[API CALL] Current API base URL:', API_BASE_URL);
+  try {
+    const resp = await api.get<BuildingsResponse>('/buildings/', {
+      params: {
+        page,
+        page_size: pageSize
+      }
+    });
+    console.log('[API CALL] Fetched buildings response:', resp.data);
+    console.log('[API CALL] Response status:', resp.status);
+    return resp.data;
+  } catch (error) {
+    console.error('[API CALL] Error fetching buildings:', error);
+    if (error && typeof error === 'object' && 'response' in error) {
+      console.error('[API CALL] Error response status:', (error as any).response?.status);
+      console.error('[API CALL] Error response data:', (error as any).response?.data);
+    }
+    throw error;
+  }
+}
+
+// Backward compatibility function
+export async function fetchAllBuildings(): Promise<Building[]> {
+  console.log('[API CALL] Fetching all buildings (no pagination)');
+  try {
+    // Try to disable pagination by requesting a very large page size
+    const resp = await api.get<{ results?: Building[] } | Building[]>('/buildings/', {
+      params: {
+        page_size: 1000, // Request a very large page size to get all buildings
+        page: 1
+      }
+    });
+    const data = resp.data;
+    console.log('[API CALL] Raw API response:', data);
+    console.log('[API CALL] Response type:', typeof data);
+    console.log('[API CALL] Is array:', Array.isArray(data));
+    
+    const buildings = Array.isArray(data) ? data : data.results ?? [];
+    console.log('[API CALL] Processed buildings:', buildings);
+    console.log('[API CALL] Buildings count:', buildings.length);
+    
+    // If we still get paginated results, try to get all pages
+    if (data.next && buildings.length < 1000) {
+      console.log('[API CALL] Pagination detected, fetching all pages...');
+      let allBuildings = [...buildings];
+      let nextUrl = data.next;
+      
+      while (nextUrl && allBuildings.length < 1000) {
+        console.log('[API CALL] Fetching next page:', nextUrl);
+        const nextResp = await api.get(nextUrl);
+        const nextData = nextResp.data;
+        const nextBuildings = Array.isArray(nextData) ? nextData : nextData.results ?? [];
+        allBuildings = [...allBuildings, ...nextBuildings];
+        nextUrl = nextData.next;
+        console.log('[API CALL] Total buildings so far:', allBuildings.length);
+      }
+      
+      console.log('[API CALL] Final total buildings:', allBuildings.length);
+      return allBuildings;
+    }
+    
+    return buildings;
+  } catch (error) {
+    console.error('[API CALL] Error fetching all buildings:', error);
+    throw error;
+  }
 }
 
 export async function fetchBuilding(id: number): Promise<Building> {
@@ -300,8 +379,14 @@ export type BuildingPayload = Partial<Omit<Building, 'id' | 'created_at' | 'upda
 
 export async function createBuilding(payload: BuildingPayload): Promise<Building> {
   console.log('[API CALL] Attempting to create building:', payload);
-  const { data } = await api.post<Building>('/buildings/', payload);
-  return data;
+  try {
+    const { data } = await api.post<Building>('/buildings/', payload);
+    console.log('[API CALL] Created building successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('[API CALL] Error creating building:', error);
+    throw error;
+  }
 }
 
 export async function updateBuilding(id: number, payload: BuildingPayload): Promise<Building> {
@@ -312,7 +397,13 @@ export async function updateBuilding(id: number, payload: BuildingPayload): Prom
 
 export async function deleteBuilding(id: number): Promise<void> {
   console.log(`[API CALL] Attempting to delete building ${id}`);
-  await api.delete(`/buildings/${id}/`);
+  try {
+    await api.delete(`/buildings/${id}/`);
+    console.log(`[API CALL] Successfully deleted building ${id}`);
+  } catch (error) {
+    console.error(`[API CALL] Error deleting building ${id}:`, error);
+    throw error;
+  }
 }
 
 export async function fetchAnnouncements(buildingId?: number | null): Promise<Announcement[]> {

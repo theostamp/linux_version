@@ -37,6 +37,12 @@ class Building(models.Model):
         max_length=20,
         blank=True
     )
+    street_view_image = models.URLField(
+        _("Εικόνα Street View"),
+        max_length=1000,
+        blank=True,
+        null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { fetchBuilding, Building } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building as BuildingIcon, Edit, MapPin, Phone, Settings, Users, FileText, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Building as BuildingIcon, Edit, MapPin, Phone, Settings, Users, FileText, MessageSquare, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import ErrorMessage from '@/components/ErrorMessage';
 import BuildingStreetView from '@/components/BuildingStreetView';
@@ -126,7 +126,31 @@ export default function BuildingDashboardPage() {
               
               <div>
                 <p className="text-sm text-gray-500">Διεύθυνση</p>
-                <p className="font-medium">{building?.address}</p>
+                <div className="flex items-center justify-between">
+                  <p className="font-medium">{building?.address}</p>
+                  {building?.address && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        let googleMapsUrl;
+                        if (building.coordinates?.lat && building.coordinates?.lng) {
+                          // Χρήση συντεταγμένων αν υπάρχουν (πιο ακριβές)
+                          googleMapsUrl = `https://www.google.com/maps?q=${building.coordinates.lat},${building.coordinates.lng}`;
+                        } else {
+                          // Χρήση διεύθυνσης
+                          const address = `${building.address}, ${building.city || ''} ${building.postal_code || ''}`.trim();
+                          googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+                        }
+                        window.open(googleMapsUrl, '_blank');
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      Χάρτες
+                    </Button>
+                  )}
+                </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -176,10 +200,34 @@ export default function BuildingDashboardPage() {
         {/* Street View */}
         <div className="bg-white rounded-lg shadow-sm border">
           <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <MapPin className="w-5 h-5 mr-2 text-green-600" />
-              Προβολή Δρόμου
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center">
+                <MapPin className="w-5 h-5 mr-2 text-green-600" />
+                Προβολή Δρόμου
+              </h2>
+                                {building?.address && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        let googleMapsUrl;
+                        if (building.coordinates?.lat && building.coordinates?.lng) {
+                          // Χρήση συντεταγμένων αν υπάρχουν (πιο ακριβές)
+                          googleMapsUrl = `https://www.google.com/maps?q=${building.coordinates.lat},${building.coordinates.lng}`;
+                        } else {
+                          // Χρήση διεύθυνσης
+                          const address = `${building.address}, ${building.city || ''} ${building.postal_code || ''}`.trim();
+                          googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+                        }
+                        window.open(googleMapsUrl, '_blank');
+                      }}
+                      className="text-xs"
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      {building.coordinates?.lat && building.coordinates?.lng ? 'Χάρτες (ακριβής)' : 'Χάρτες'}
+                    </Button>
+                  )}
+            </div>
             <BuildingStreetView 
               buildingId={id} 
               address={building?.address}
