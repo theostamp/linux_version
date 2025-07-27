@@ -2,14 +2,15 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Building, createBuilding, updateBuilding } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import useCsrf from '@/hooks/useCsrf';
 import { Button } from '@/components/ui/button';
-import { Save, Loader2, MapPin } from 'lucide-react';
+import { Save, Loader2, MapPin, Camera } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
+import StreetViewImage from '@/components/StreetViewImage';
 
 interface Props {
   initialData?: Partial<Building>;
@@ -31,11 +32,15 @@ export default function CreateBuildingForm({
       apartments_count?: number;
       internal_manager_name?: string;
       internal_manager_phone?: string;
+      street_view_image?: string;
     }
   >(initialData);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [useGoogleMaps, setUseGoogleMaps] = useState(true);
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | undefined>(
+    initialData.coordinates
+  );
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -47,7 +52,7 @@ export default function CreateBuildingForm({
     }));
   };
 
-  const handleAddressSelect = (addressDetails: {
+  const handleAddressSelect = useCallback((addressDetails: {
     fullAddress: string;
     city: string;
     postalCode: string;
@@ -66,12 +71,32 @@ export default function CreateBuildingForm({
       name: shouldAutoFillName ? addressDetails.fullAddress : prev.name,
     }));
     
+    // Αποθήκευση των συντεταγμένων για το Street View
+    setCoordinates(addressDetails.coordinates);
+    
     // Show success feedback
     if (shouldAutoFillName) {
       toast.success(`📍 Διεύθυνση επιλέχθηκε και όνομα κτηρίου συμπληρώθηκε αυτόματα. Μπορείτε να το επεξεργαστείτε!`);
     } else {
       toast.success(`📍 Διεύθυνση επιλέχθηκε: ${addressDetails.fullAddress}${addressDetails.city ? `, ${addressDetails.city}` : ''}${addressDetails.postalCode ? `, ${addressDetails.postalCode}` : ''}`);
     }
+  }, [form.name]); // Only depend on form.name since that's what we check
+
+  const handleStreetViewImageSelect = (imageUrl: string) => {
+    setForm((prev) => ({
+      ...prev,
+      street_view_image: imageUrl,
+    }));
+    
+    // Αποθήκευση της εικόνας στο localStorage με το building ID ή διεύθυνση ως κλειδί
+    if (form.address) {
+      // Χρησιμοποιούμε τη διεύθυνση ως μοναδικό αναγνωριστικό για νέα κτίρια
+      const storageKey = buildingId ? `building_street_view_${buildingId}` : `building_street_view_${form.address.replace(/\s+/g, '_')}`;
+      localStorage.setItem(storageKey, imageUrl);
+      console.log(`Street View image stored in localStorage with key: ${storageKey}`);
+    }
+    
+    toast.success('Η εικόνα Street View επιλέχθηκε επιτυχώς!');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,14 +120,18 @@ export default function CreateBuildingForm({
       }
     }
     
-    console.log('📤 Submitting building data:', form); // Debug log
+    // Αφαιρούμε το street_view_image από το payload για το backend
+    const formData = { ...form };
+    delete formData.street_view_image;
+    
+    console.log('📤 Submitting building data:', formData); // Debug log
     
     try {
       if (buildingId) {
-        await updateBuilding(buildingId, form);
+        await updateBuilding(buildingId, formData);
         toast.success('Το κτίριο ενημερώθηκε επιτυχώς');
       } else {
-        await createBuilding(form);
+        await createBuilding(formData);
         toast.success('Το κτίριο δημιουργήθηκε επιτυχώς');
       }
       router.push(onSuccessPath);
@@ -202,8 +231,6 @@ export default function CreateBuildingForm({
               required
             />
             
-
-
             {/* Display current values from form state */}
             {(form.address || form.city || form.postal_code) ? (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -230,6 +257,36 @@ export default function CreateBuildingForm({
                     </p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Street View Image Section */}
+            {coordinates && (
+              <div className="mt-6 space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center">
+                  <Camera className="w-5 h-5 mr-2 text-blue-600" />
+                  Εικόνα από το Street View
+                </h3>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-blue-800">
+                    🏙️ <strong>Οδηγίες:</strong> Περιστρέψτε την εικόνα με τα κουμπιά και επιλέξτε την επιθυμητή προβολή του κτιρίου.
+                  </p>
+                </div>
+                
+                <StreetViewImage 
+                  coordinates={coordinates}
+                  address={form.address}
+                  onImageSelect={handleStreetViewImageSelect}
+                />
+                
+                {form.street_view_image && (
+                  <input 
+                    type="hidden" 
+                    name="street_view_image" 
+                    value={form.street_view_image} 
+                  />
+                )}
               </div>
             )}
 

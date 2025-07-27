@@ -26,26 +26,26 @@ interface Prediction {
   };
 }
 
-// Google Maps Script Loader for NEW Places API
+// Google Maps Script Loader for modern Places API
 const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
   return new Promise((resolve, reject) => {
-    if (window.google?.maps?.places?.PlacesService) {
-      console.log('✅ Google Maps already loaded with NEW Places API');
+    if (window.google?.maps?.places?.AutocompleteService) {
+      console.log('✅ Google Maps already loaded with Places API');
       resolve();
       return;
     }
 
     const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
     if (existingScript) {
-      console.log('📜 Existing Google Maps script found, waiting for NEW Places API load...');
+      console.log('📜 Existing Google Maps script found, waiting for Places API load...');
       existingScript.addEventListener('load', () => {
         setTimeout(() => {
-          if (window.google?.maps?.places?.PlacesService) {
-            console.log('✅ NEW Places API loaded from existing script');
+          if (window.google?.maps?.places?.AutocompleteService) {
+            console.log('✅ Places API loaded from existing script');
             resolve();
           } else {
-            console.error('❌ NEW Places API not available from existing script');
-            reject(new Error('NEW Places API not available'));
+            console.error('❌ Places API not available from existing script');
+            reject(new Error('Places API not available'));
           }
         }, 1000);
       });
@@ -53,21 +53,20 @@ const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
       return;
     }
 
-    console.log('📜 Creating new Google Maps script for NEW Places API...');
+    console.log('📜 Creating new Google Maps script for Places API...');
     const script = document.createElement('script');
-    // IMPORTANT: Use v=weekly to ensure we get the latest Places API with new features
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&v=weekly&loading=async`;
     script.async = true;
     script.defer = true;
     script.onload = () => {
-      console.log('📜 Google Maps script loaded, waiting for NEW Places API...');
+      console.log('📜 Google Maps script loaded, waiting for Places API...');
       setTimeout(() => {
-        if (window.google?.maps?.places?.PlacesService) {
-          console.log('✅ NEW Places API initialized successfully');
+        if (window.google?.maps?.places?.AutocompleteService) {
+          console.log('✅ Places API initialized successfully');
           resolve();
         } else {
-          console.error('❌ NEW Places API failed to initialize');
-          reject(new Error('NEW Places API failed to initialize'));
+          console.error('❌ Places API failed to initialize');
+          reject(new Error('Places API failed to initialize'));
         }
       }, 2000);
     };
@@ -99,7 +98,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
 
     if (isInitializedRef.current) return;
 
-    console.log('🚀 Initializing Editable AddressAutocomplete...');
+    console.log('🚀 Initializing AddressAutocomplete with Places API...');
     isInitializedRef.current = true;
 
     loadGoogleMapsScript(apiKey)

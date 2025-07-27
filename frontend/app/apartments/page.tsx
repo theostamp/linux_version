@@ -40,8 +40,8 @@ export default function ApartmentsPage() {
     const residents: any[] = [];
     
     data.apartments.forEach(apartment => {
-      // Προσθήκη ιδιοκτήτη
-      if (apartment.owner_name) {
+      // Προσθήκη ιδιοκτήτη (μόνο αν δεν είναι ενοικιασμένο ή αν είναι ιδιοκατοίκηση)
+      if (apartment.owner_name && (!apartment.is_rented || apartment.is_closed)) {
         residents.push({
           id: `owner_${apartment.id}`,
           name: apartment.owner_name,
@@ -53,8 +53,8 @@ export default function ApartmentsPage() {
         });
       }
       
-      // Προσθήκη ενοικιαστή
-      if (apartment.tenant_name) {
+      // Προσθήκη ενοικιαστή (μόνο αν είναι ενοικιασμένο)
+      if (apartment.tenant_name && apartment.is_rented && !apartment.is_closed) {
         residents.push({
           id: `tenant_${apartment.id}`,
           name: apartment.tenant_name,
@@ -66,8 +66,12 @@ export default function ApartmentsPage() {
         });
       }
       
-      // Προσθήκη κάτοικου (αν διαφέρει από τον ιδιοκτήτη)
-      if (apartment.occupant_name && apartment.occupant_name !== apartment.owner_name) {
+      // Προσθήκη κάτοικου (μόνο αν είναι διαφορετικός από τον ιδιοκτήτη και τον ενοικιαστή)
+      if (apartment.occupant_name && 
+          apartment.occupant_name !== apartment.owner_name && 
+          apartment.occupant_name !== apartment.tenant_name &&
+          apartment.occupant_name !== 'Μη καταχωρημένο' &&
+          apartment.occupant_name !== 'Κλειστό') {
         residents.push({
           id: `occupant_${apartment.id}`,
           name: apartment.occupant_name,

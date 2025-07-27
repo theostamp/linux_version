@@ -277,6 +277,8 @@ export type Building = {
   postal_code?: string;
   created_at: string;
   updated_at?: string;
+  street_view_image?: string;
+  coordinates?: { lat: number; lng: number };
   // Add other fields as needed based on your backend model
 };
 

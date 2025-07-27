@@ -21,32 +21,56 @@ export default function ApartmentEditModal({
   onUpdate,
   editType 
 }: ApartmentEditModalProps) {
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  // Initialize form data with default values to prevent controlled/uncontrolled input errors
+  const getInitialFormData = () => {
+    if (!apartment) return {};
+    
+    if (editType === 'owner') {
+      return {
+        identifier: apartment.identifier || '',
+        owner_name: apartment.owner_name || '',
+        owner_phone: apartment.owner_phone || '',
+        owner_phone2: apartment.owner_phone2 || '',
+        owner_email: apartment.owner_email || '',
+        ownership_percentage: apartment.ownership_percentage || ''
+      };
+    } else {
+      return {
+        tenant_name: apartment.tenant_name || '',
+        tenant_phone: apartment.tenant_phone || '',
+        tenant_phone2: apartment.tenant_phone2 || '',
+        tenant_email: apartment.tenant_email || '',
+        is_rented: apartment.is_rented || false,
+        is_closed: apartment.is_closed || false,
+        rent_start_date: '',
+        rent_end_date: ''
+      };
+    }
+  };
+
+  const [formData, setFormData] = useState<Record<string, any>>(getInitialFormData());
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen && apartment) {
-      if (editType === 'owner') {
-        setFormData({
-          identifier: apartment.identifier || '',
-          owner_name: apartment.owner_name || '',
-          owner_phone: apartment.owner_phone || '',
-          owner_phone2: apartment.owner_phone2 || '',
-          owner_email: apartment.owner_email || '',
-          ownership_percentage: apartment.ownership_percentage || ''
-        });
-      } else {
-        setFormData({
-          tenant_name: apartment.tenant_name || '',
-          tenant_phone: apartment.tenant_phone || '',
-          tenant_phone2: apartment.tenant_phone2 || '',
-          tenant_email: apartment.tenant_email || '',
-          is_rented: apartment.is_rented || false,
-          is_closed: apartment.is_closed || false,
-          rent_start_date: '',
-          rent_end_date: ''
-        });
-      }
+      const newFormData = editType === 'owner' ? {
+        identifier: apartment.identifier || '',
+        owner_name: apartment.owner_name || '',
+        owner_phone: apartment.owner_phone || '',
+        owner_phone2: apartment.owner_phone2 || '',
+        owner_email: apartment.owner_email || '',
+        ownership_percentage: apartment.ownership_percentage || ''
+      } : {
+        tenant_name: apartment.tenant_name || '',
+        tenant_phone: apartment.tenant_phone || '',
+        tenant_phone2: apartment.tenant_phone2 || '',
+        tenant_email: apartment.tenant_email || '',
+        is_rented: apartment.is_rented || false,
+        is_closed: apartment.is_closed || false,
+        rent_start_date: '',
+        rent_end_date: ''
+      };
+      setFormData(newFormData);
     }
   }, [isOpen, apartment, editType]);
 
