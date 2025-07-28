@@ -39,6 +39,15 @@ export default function MapVisualizationPage() {
   useEffect(() => {
     let filtered = buildings;
 
+    console.log('🔍 [FILTER DEBUG] Starting filter with buildings:', buildings.length);
+    console.log('🔍 [FILTER DEBUG] Buildings data:', buildings.map(b => ({ 
+      id: b.id, 
+      name: b.name, 
+      lat: b.latitude, 
+      lng: b.longitude,
+      hasCoords: !!(b.latitude && b.longitude) || !!(b.coordinates?.lat && b.coordinates?.lng)
+    })));
+
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(building =>
@@ -46,11 +55,13 @@ export default function MapVisualizationPage() {
         building.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (building.city && building.city.toLowerCase().includes(searchTerm.toLowerCase()))
       );
+      console.log('🔍 [FILTER DEBUG] After search filter:', filtered.length);
     }
 
     // Filter by city
     if (selectedCity) {
       filtered = filtered.filter(building => building.city === selectedCity);
+      console.log('🔍 [FILTER DEBUG] After city filter:', filtered.length);
     }
 
     // Filter by coordinates
@@ -58,8 +69,11 @@ export default function MapVisualizationPage() {
       filtered = filtered.filter(building => 
         (building.latitude && building.longitude) || (building.coordinates?.lat && building.coordinates?.lng)
       );
+      console.log('🔍 [FILTER DEBUG] After coordinates filter:', filtered.length);
+      console.log('🔍 [FILTER DEBUG] showOnlyWithCoordinates is:', showOnlyWithCoordinates);
     }
 
+    console.log('🔍 [FILTER DEBUG] Final filtered buildings:', filtered.length);
     setFilteredBuildings(filtered);
   }, [buildings, searchTerm, selectedCity, showOnlyWithCoordinates]);
 
@@ -255,11 +269,15 @@ export default function MapVisualizationPage() {
               </div>
             </div>
           ) : (
+            <>
+              {console.log('🗺️ [MAP DEBUG] About to render GoogleMapsVisualization with buildings:', filteredBuildings.length)}
+              {console.log('🗺️ [MAP DEBUG] Buildings to render:', filteredBuildings.map(b => ({ id: b.id, name: b.name, lat: b.latitude, lng: b.longitude })))}
             <GoogleMapsVisualization
               buildings={filteredBuildings}
               height="600px"
               showInfoWindows={true}
             />
+            </>
           )}
         </div>
 

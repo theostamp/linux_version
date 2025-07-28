@@ -171,6 +171,8 @@ export default function CreateBuildingForm({
       formData.longitude = coordinates.lng;
       console.log('📍 Coordinates being added as numbers:', { lat: coordinates.lat, lng: coordinates.lng });
       console.log('📍 Formatted coordinates:', { latitude: formData.latitude, longitude: formData.longitude });
+      // Pause 2s so the above logs remain visible in DevTools before navigation/rendering cycles
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     } else {
       console.log('📍 No coordinates available, skipping coordinate fields');
       // Ensure coordinates are not sent if they don't exist

@@ -349,8 +349,9 @@ export async function fetchAllBuildings(): Promise<Building[]> {
       console.log('[API CALL] Pagination detected, fetching all pages...');
       let allBuildings = [...buildings];
       let nextUrl = data.next;
+      let totalCount = data.count || 0;
       
-      while (nextUrl && allBuildings.length < 1000) {
+      while (nextUrl && allBuildings.length < totalCount && allBuildings.length < 1000) {
         console.log('[API CALL] Fetching next page:', nextUrl);
         const nextResp = await api.get(nextUrl);
         const nextData = nextResp.data;
@@ -358,6 +359,12 @@ export async function fetchAllBuildings(): Promise<Building[]> {
         allBuildings = [...allBuildings, ...nextBuildings];
         nextUrl = nextData.next;
         console.log('[API CALL] Total buildings so far:', allBuildings.length);
+        
+        // Safety check: if we've reached the total count, stop
+        if (allBuildings.length >= totalCount) {
+          console.log('[API CALL] Reached total count, stopping pagination');
+          break;
+        }
       }
       
       console.log('[API CALL] Final total buildings:', allBuildings.length);

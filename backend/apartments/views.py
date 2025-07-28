@@ -121,50 +121,61 @@ class ApartmentViewSet(viewsets.ModelViewSet):
                 'error': f'Σφάλμα κατά τη δημιουργία: {str(e)}'
             }, status=status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=False, methods=['get'], url_path='by-building/(?P<building_id>[^/.]+)')
+    @action(detail=False, methods=['get'], url_path='by-building/(?P<building_id>[0-9]+)')
     def by_building(self, request, building_id=None):
         """Λήψη όλων των διαμερισμάτων ενός κτιρίου"""
-        building = get_object_or_404(Building, id=building_id)
+        try:
+            building = get_object_or_404(Building, id=building_id)
+        except ValueError:
+            return Response(
+                {'error': 'Μη έγκυρο ID κτιρίου'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Έλεγχος δικαιωμάτων
         user = request.user
-        if not user.is_superuser and not user.is_staff:
-            return Response(
-                {'error': 'Δεν έχετε δικαίωμα πρόσβασης'}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        if user.is_staff and not user.is_superuser:
+        # Άδεια πρόσβαση για superusers και staff
+        if user.is_superuser or user.is_staff:
+            pass  # Άδεια πρόσβαση
+        else:
+            # Έλεγχος αν ο χρήστης είναι manager του κτιρίου
             if building.manager != user:
                 return Response(
                     {'error': 'Δεν έχετε δικαίωμα πρόσβασης σε αυτό το κτίριο'}, 
                     status=status.HTTP_403_FORBIDDEN
                 )
         
-        # Δημιουργία όλων των διαμερισμάτων αν δεν υπάρχουν
-        existing_apartments = Apartment.objects.filter(building=building)
-        
-        if not existing_apartments.exists() and building.apartments_count > 0:
-            # Δημιουργία κενών διαμερισμάτων
-            apartments_to_create = []
-            for i in range(1, building.apartments_count + 1):
-                apartments_to_create.append(
-                    Apartment(building=building, number=str(i))
-                )
-            
-            Apartment.objects.bulk_create(apartments_to_create)
+        try:
+            # Δημιουργία όλων των διαμερισμάτων αν δεν υπάρχουν
             existing_apartments = Apartment.objects.filter(building=building)
-        
-        serializer = ApartmentListSerializer(existing_apartments, many=True)
-        return Response({
-            'building': {
-                'id': building.id,
-                'name': building.name,
-                'address': building.address,
-                'apartments_count': building.apartments_count
-            },
-            'apartments': serializer.data
-        })
+            
+            if not existing_apartments.exists() and building.apartments_count > 0:
+                # Δημιουργία κενών διαμερισμάτων
+                apartments_to_create = []
+                for i in range(1, building.apartments_count + 1):
+                    apartments_to_create.append(
+                        Apartment(building=building, number=str(i))
+                    )
+                
+                Apartment.objects.bulk_create(apartments_to_create)
+                existing_apartments = Apartment.objects.filter(building=building)
+            
+            serializer = ApartmentListSerializer(existing_apartments, many=True)
+            return Response({
+                'building': {
+                    'id': building.id,
+                    'name': building.name,
+                    'address': building.address,
+                    'apartments_count': building.apartments_count
+                },
+                'apartments': serializer.data
+            })
+        except Exception as e:
+            print(f"Error in by_building action: {e}")
+            return Response(
+                {'error': f'Σφάλμα κατά την επεξεργασία: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @action(detail=True, methods=['post'], url_path='update-owner')
     def update_owner(self, request, pk=None):
