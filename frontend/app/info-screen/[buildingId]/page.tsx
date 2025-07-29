@@ -3,7 +3,8 @@
 import { use } from 'react';
 import { usePublicInfo } from '@/hooks/usePublicInfo';
 import AnnouncementsCarousel from '@/components/AnnouncementsCarousel';
-import PublicInfoSidebar from '@/components/PublicInfoSidebar';
+import KioskSidebar from '@/components/KioskSidebar';
+import FullPageSpinner from '@/components/FullPageSpinner';
 
 export default function InfoScreenPage({
   params,
@@ -12,7 +13,28 @@ export default function InfoScreenPage({
 }) {
   const { buildingId } = use(params);
   const numericId = Number(buildingId);
-  const { data } = usePublicInfo(numericId);
+  const { data, isLoading, error } = usePublicInfo(numericId);
+
+  if (isLoading) {
+    return <FullPageSpinner />;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-900 to-red-800 flex items-center justify-center text-white">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Σφάλμα Φόρτωσης</h1>
+          <p className="text-red-200 mb-4">
+            Δεν ήταν δυνατή η φόρτωση των πληροφοριών.
+          </p>
+          <p className="text-sm text-red-300">
+            Παρακαλώ ελέγξτε τη σύνδεση και δοκιμάστε ξανά.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const announcements = data?.announcements ?? [];
   const votes = data?.votes ?? [];
 
@@ -51,7 +73,7 @@ export default function InfoScreenPage({
           </div>
         )}
       </div>
-      <PublicInfoSidebar />
+      <KioskSidebar />
     </div>
   );
 }

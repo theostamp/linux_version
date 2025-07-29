@@ -25,5 +25,6 @@ def csrf_token_view(request):
 urlpatterns = [    path('api/', include(router.urls)),
     # π.χ. path('api-auth/', include('rest_framework.urls')),
     path('api/csrf/', csrf_token_view, name='csrf-token'),
-    path('api/public-info/', public_info, name='public-info'),
+    path('api/public-info/<int:building_id>/', public_info, name='public-info'),
+    path('api/public-info/', public_info, name='public-info-all'),
 ]

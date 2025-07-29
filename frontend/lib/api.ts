@@ -627,6 +627,30 @@ export async function createVote(payload: CreateVotePayload): Promise<Vote> {
 export interface PublicInfoData {
   announcements: Announcement[];
   votes: Vote[];
+  building_info?: {
+    id: number;
+    name: string;
+    address: string;
+    city?: string;
+    postal_code?: string;
+    apartments_count?: number;
+    internal_manager_name?: string;
+    internal_manager_phone?: string;
+  };
+  advertising_banners?: Array<{
+    id: number;
+    title: string;
+    description: string;
+    image_url: string;
+    link: string;
+    duration: number;
+  }>;
+  general_info?: {
+    current_time: string;
+    current_date: string;
+    system_status: string;
+    last_updated: string;
+  };
 }
 
 export async function fetchPublicInfo(buildingId: number): Promise<PublicInfoData> {

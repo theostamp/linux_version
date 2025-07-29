@@ -8,6 +8,7 @@ import time
 
 from .models import CustomUser
 from tenants.models import Client, Domain
+from django_tenants.utils import get_public_schema_name
 
 
 @receiver(post_save, sender=CustomUser)
@@ -21,6 +22,13 @@ def create_tenant_for_user(sender, instance, created, **kwargs):
     
     # Παράλειψη για superusers (δεν χρειάζονται tenant)
     if instance.is_superuser:
+        return
+    
+    # Έλεγχος αν είμαστε σε tenant context - αν ναι, μην δημιουργήσεις tenant
+    from django.db import connection
+    current_schema = connection.schema_name
+    if current_schema != get_public_schema_name():
+        print(f"ℹ️ Παράλειψη δημιουργίας tenant για '{instance.email}' - ήδη σε tenant context ({current_schema})")
         return
     
     try:

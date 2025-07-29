@@ -1,4 +1,3 @@
-from django.contrib import admin
 from django.urls import path, include
 
 from django.conf import settings
@@ -7,9 +6,8 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 # Tenant URL configuration
 urlpatterns = [
-    # Admin panel (για tenants)
-    path('admin/', admin.site.urls),
-
+    # Admin panel removed from tenants - only accessible from public tenant
+    
     # Authentication & User endpoints
     path('api/users/', include('users.urls')),
 

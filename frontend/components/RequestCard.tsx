@@ -9,7 +9,7 @@ import { UserRequest, MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, REQUEST_STATUSES 
 import { toggleSupportRequest } from '@/lib/api';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Calendar, MapPin, User, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, User, Clock, AlertTriangle, CheckCircle, UserPlus } from 'lucide-react';
 
 type Props = {
   request: UserRequest;
@@ -124,11 +124,12 @@ export default function RequestCard({ request }: Readonly<Props>) {
       <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
         <div className="flex items-center gap-4">
           {/* Creator information */}
-          <span className="flex items-center gap-1">
-            <User className="w-4 h-4" />
-            Καταχωρητής: {created_by_username}
-          </span>
-          
+          {created_by_username && (
+            <span className="flex items-center gap-1 text-blue-600">
+              <UserPlus className="w-4 h-4" />
+              Καταχωρητής: <strong>{created_by_username}</strong>
+            </span>
+          )}
           {assigned_to_username && (
             <span className="flex items-center gap-1">
               <User className="w-4 h-4" />

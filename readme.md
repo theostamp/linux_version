@@ -1,5 +1,325 @@
 # Οδηγός Εκκίνησης & Διαχείρισης (linux_version)
 
+## 🚀 Αυτόματη Αρχικοποίηση
+
+Το σύστημα τώρα αρχικοποιείται αυτόματα με την εκκίνηση των containers!
+
+### 🎯 Γρήγορη Εκκίνηση (Fresh Start)
+
+```bash
+# Πλήρες reset και εκκίνηση
+./reset_and_start.sh
+
+# Ή με interactive menu
+./clean_and_restart.sh
+```
+
+### 🔄 Χειροκίνητη Εκκίνηση
+
+```bash
+# 1. Καθαρισμός και εκκίνηση
+docker compose down --volumes --remove-orphans
+docker network prune -f docker system prune -a --volumes
+docker compose up --build -d
+
+# 2. Παρακολούθηση logs
+docker compose logs -f backend
+```
+
+### 🧹 Καθαρισμός και Επανεκκίνηση Containers
+
+#### Πλήρες Reset (Άδειασμα Όλων)
+
+```bash
+# 1. Διακοπή και διαγραφή όλων των containers
+docker compose down --volumes --remove-orphans
+
+# 2. Διαγραφή όλων των images (προαιρετικό)
+docker rmi $(docker images -q) 2>/dev/null || true
+
+# 3. Καθαρισμός volumes
+docker volume prune -f
+
+# 4. Καθαρισμός networks
+docker network prune -f
+
+# 5. Πλήρες καθαρισμός συστήματος (προαιρετικό)
+docker system prune -a --volumes
+
+# 6. Επανεκκίνηση με νέα build
+docker compose up --build -d
+```
+
+#### Γρήγορο Reset (Διατήρηση Images)
+
+```bash
+# 1. Διακοπή containers και καθαρισμός volumes
+docker compose down --volumes
+
+# 2. Καθαρισμός μόνο unused resources
+docker system prune -f
+
+# 3. Επανεκκίνηση
+docker compose up --build -d
+```
+
+#### Reset Μόνο Database (Διατήρηση Κώδικα)
+
+```bash
+# 1. Διακοπή containers
+docker compose down
+
+# 2. Διαγραφή μόνο του database volume
+docker volume rm linux_version_pgdata_dev
+
+# 3. Επανεκκίνηση (νέα βάση δεδομένων)
+docker compose up -d
+```
+
+### 🔍 Έλεγχος Κατάστασης
+
+```bash
+# Έλεγχος containers
+docker compose ps
+
+# Έλεγχος logs
+docker compose logs
+
+# Έλεγχος volumes
+docker volume ls
+
+# Έλεγχος networks
+docker network ls
+```
+
+### 🚨 Troubleshooting
+
+#### Αν δεν ξεκινάνε τα containers:
+
+```bash
+# 1. Έλεγχος αν χρησιμοποιούνται οι ports
+sudo lsof -i :3000  # Frontend port
+sudo lsof -i :8000  # Backend port
+sudo lsof -i :5432  # Database port
+
+# 2. Kill processes που χρησιμοποιούν τα ports
+sudo kill -9 <PID>
+
+# 3. Επανεκκίνηση
+docker compose up --build -d
+```
+
+#### Αν δεν συνδέεται η βάση δεδομένων:
+
+```bash
+# 1. Έλεγχος database container
+docker compose logs db
+
+# 2. Restart μόνο τη βάση
+docker compose restart db
+
+# 3. Έλεγχος σύνδεσης
+docker compose exec db psql -U postgres -c "SELECT 1;"
+```
+
+#### Αν δεν λειτουργεί η αυτόματη αρχικοποίηση:
+
+```bash
+# 1. Έλεγχος backend logs
+docker compose logs backend
+
+# 2. Χειροκίνητη αρχικοποίηση
+docker exec linux_version-backend-1 python backend/scripts/auto_initialization.py
+
+# 3. Έλεγχος αν δημιουργήθηκαν οι χρήστες
+docker exec linux_version-backend-1 python backend/scripts/check_permissions.py --all
+```
+
+### 🛠️ Χρήσιμες Εντολές
+
+#### Διαχείριση Containers
+
+```bash
+# Έλεγχος κατάστασης
+docker compose ps
+
+# Παρακολούθηση logs
+docker compose logs -f
+
+# Restart συγκεκριμένου service
+docker compose restart backend
+docker compose restart frontend
+docker compose restart db
+
+# Έλεγχος χρήσης πόρων
+docker stats
+```
+
+#### Διαχείριση Database
+
+```bash
+# Σύνδεση στη βάση δεδομένων
+docker compose exec db psql -U postgres
+
+# Backup βάσης δεδομένων
+docker compose exec db pg_dump -U postgres > backup.sql
+
+# Restore βάσης δεδομένων
+docker compose exec -T db psql -U postgres < backup.sql
+```
+
+#### Διαχείριση Files
+
+```bash
+# Έλεγχος volumes
+docker volume ls
+
+# Backup volumes
+docker run --rm -v linux_version_pgdata_dev:/data -v $(pwd):/backup alpine tar czf /backup/pgdata_backup.tar.gz -C /data .
+
+# Restore volumes
+docker run --rm -v linux_version_pgdata_dev:/data -v $(pwd):/backup alpine tar xzf /backup/pgdata_backup.tar.gz -C /data
+```
+
+#### Development
+
+```bash
+# Εκτέλεση Django shell
+docker compose exec backend python manage.py shell
+
+# Εκτέλεση migrations
+docker compose exec backend python manage.py migrate_schemas --shared
+docker compose exec backend python manage.py migrate_schemas --tenant
+
+# Δημιουργία superuser
+docker compose exec backend python manage.py createsuperuser
+
+# Έλεγχος static files
+docker compose exec backend python manage.py collectstatic --dry-run
+```
+
+---
+
+## 🌐 Πρόσβαση
+
+Μετά την εκκίνηση, μπορείτε να αποκτήσετε πρόσβαση:
+
+- **Public Admin (Ultra-Superuser)**: http://localhost:8000/admin/
+- **Demo Frontend**: http://demo.localhost:3000
+- **Demo Backend API**: http://demo.localhost:8000/api/
+- **Demo Admin Panel**: http://demo.localhost:8000/admin/
+- **Kiosk Mode (Building-specific)**: http://demo.localhost:3000/info-screen/1
+- **Kiosk Mode (General)**: http://demo.localhost:3000/kiosk
+- **Kiosk Settings**: http://demo.localhost:3000/kiosk-settings
+
+### 👑 Ultra-Superuser (Public Schema)
+
+Ο Ultra-Superuser διαχειρίζεται όλους τους tenants από το public schema:
+
+| Email | Password | Δικαιώματα |
+|-------|----------|------------|
+| 👑 **theostam1966@gmail.com** | **theo123!@#** | **Πλήρη διαχείριση όλων των tenants** |
+
+**Ικανότητες Ultra-Superuser:**
+- ✅ Δημιουργία/διαγραφή tenants
+- ✅ Διαχείριση όλων των χρηστών σε όλα τα schemas
+- ✅ Πλήρη πρόσβαση σε όλα τα δεδομένα
+- ✅ Δημιουργία admin users για κάθε tenant
+
+### 👥 Demo Χρήστες (Demo Tenant)
+
+Το σύστημα δημιουργεί αυτόματα τους εξής χρήστες:
+
+| Ρόλος | Email | Password | Δικαιώματα |
+|-------|-------|----------|------------|
+| 🔧 Admin | admin@demo.localhost | admin123456 | **Superuser** - Πλήρη admin πρόσβαση |
+| 👨‍💼 Manager | manager@demo.localhost | manager123456 | **Staff** - Περιορισμένα admin δικαιώματα |
+| 👤 Resident 1 | resident1@demo.localhost | resident123456 | **User** - Χωρίς admin πρόσβαση |
+| 👤 Resident 2 | resident2@demo.localhost | resident123456 | **User** - Χωρίς admin πρόσβαση |
+
+### 🔐 Δικαιώματα Admin
+
+- **👑 Ultra-Superuser**: Πλήρη διαχείριση όλων των tenants και χρηστών
+- **🔧 Admin (Superuser)**: Μπορεί να διαγράψει/ελέγξει όλους τους χρήστες, έχει πλήρη πρόσβαση στο admin panel
+- **👨‍💼 Manager (Staff)**: Έχει admin πρόσβαση αλλά δεν μπορεί να διαγράψει superusers
+- **👤 Residents**: Κανονικοί χρήστες χωρίς admin πρόσβαση
+
+### 🏗️ Ιεραρχία Δικαιωμάτων
+
+```
+👑 Ultra-Superuser (theostam1966@gmail.com)
+├── Public Schema (localhost:8000/admin/)
+│   ├── Διαχείριση όλων των tenants
+│   ├── Δημιουργία/διαγραφή tenants
+│   └── Πλήρη πρόσβαση σε όλα τα schemas
+│
+├── 🔧 Tenant Admin (admin@demo.localhost)
+│   ├── Demo Tenant (demo.localhost:8000/admin/)
+│   ├── Διαχείριση χρηστών στο tenant
+│   └── Πλήρη πρόσβαση στο tenant schema
+│
+├── 👨‍💼 Tenant Manager (manager@demo.localhost)
+│   ├── Περιορισμένα admin δικαιώματα
+│   └── Διαχείριση δεδομένων του tenant
+│
+└── 👤 Residents (resident1@demo.localhost, resident2@demo.localhost)
+    ├── Κανονικοί χρήστες
+    └── Πρόσβαση μόνο στα δικά τους δεδομένα
+```
+
+### 🛡️ Ασφάλεια
+
+- **👑 Ultra-Superuser** μπορεί να διαχειριστεί όλους τους tenants και χρήστες
+- **🔧 Tenant Superusers** μπορούν να διαγράψουν/ελέγξουν χρήστες μόνο στο δικό τους tenant
+- **👨‍💼 Tenant Managers** μπορούν να διαχειριστούν δεδομένα αλλά όχι να διαγράψουν superusers
+- **👤 Residents** έχουν πρόσβαση μόνο στα δικά τους δεδομένα
+
+### 📊 Demo Δεδομένα
+
+Το σύστημα περιλαμβάνει:
+
+- ✅ **2 κτίρια** (Αθηνών 12, Πατησίων 45)
+- ✅ **4 χρήστες** με διαφορετικούς ρόλους
+- ✅ **12 διαμερίσματα** (2 κτίρια × 2 όροφοι × 3 διαμερίσματα)
+- ✅ **2 ανακοινώσεις**
+- ✅ **2 αιτήματα** (maintenance)
+- ✅ **2 ψηφοφορίες** με επιλογές
+- ✅ **2 υποχρεώσεις** (financial)
+- ✅ **Building memberships** για όλους τους χρήστες
+
+### 🖥️ Kiosk Mode - Οθόνη Προβολής
+
+Το σύστημα διαθέτει μια οθόνη προβολής (kiosk mode) που μπορεί να τοποθετηθεί στην είσοδο της πολυκατοικίας και παρέχει:
+
+#### ✨ Χαρακτηριστικά:
+- **📢 Ανακοινώσεις**: Εμφάνιση ενεργών ανακοινώσεων με προτεραιότητα
+- **🗳️ Ψηφοφορίες**: Προβολή ενεργών ψηφοφοριών με ημερομηνίες λήξης
+- **🏢 Πληροφορίες Κτιρίου**: Στοιχεία κτιρίου, διαχειριστή, αριθμός διαμερισμάτων
+- **🌤️ Καιρός**: Πραγματικές πληροφορίες καιρού για την περιοχή
+- **📰 Ειδήσεις**: Κινούμενο ticker με ειδήσεις και προτροπές
+- **📢 Διαφημιστικά Banners**: Χρήσιμες υπηρεσίες και διαφημίσεις
+- **⏰ Ώρα & Ημερομηνία**: Πραγματικού χρόνου ενημέρωση
+
+#### 🎨 Σχεδιασμός:
+- **Full-screen layout** με gradient background
+- **Auto-sliding** slides κάθε 10 δευτερόλεπτα
+- **Responsive design** για διαφορετικά μεγέθη οθόνης
+- **Touch-friendly** navigation με dots
+- **Professional appearance** κατάλληλο για δημόσιους χώρους
+
+#### 🔧 Διαχείριση:
+- **Ρυθμίσεις Kiosk**: `/kiosk-settings` για διαχείριση banners και ρυθμίσεων
+- **Προεπισκόπηση**: Άμεση προεπισκόπηση των αλλαγών
+- **Building-specific**: Διαφορετικό περιεχόμενο ανά κτίριο
+- **Real-time updates**: Αυτόματη ανανέωση δεδομένων
+
+#### 📱 URLs:
+- **Building-specific kiosk**: `/info-screen/{buildingId}`
+- **General kiosk**: `/kiosk`
+- **Kiosk settings**: `/kiosk-settings`
+
+---
+
 ## 🐧 WSL Ubuntu Terminal Configuration
 
 Το project έχει ρυθμιστεί για να χρησιμοποιεί το WSL Ubuntu ως default terminal αντί για PowerShell.
@@ -22,247 +342,154 @@
 
 ---
 
-## 1. Δημιουργία και Εφαρμογή Migrations (Django Tenants)
+## 🔧 Χειροκίνητη Διαχείριση (Advanced)
 
-### (α) Δημιουργία αρχείων migration για tenants
-```sh
-docker compose exec backend python manage.py makemigrations tenants
+### Δημιουργία νέου tenant
+
+```bash
+# Δημιουργία custom tenant
+docker exec linux_version-backend-1 python backend/scripts/create_tenant_and_migrate.py mycompany
 ```
 
-### (β) Εκτέλεση μόνο των shared migrations (Client & Domain)
-```sh
+### 🔧 Δημιουργία Superuser
+
+```bash
+# Δημιουργία superuser στο public schema
+docker exec linux_version-backend-1 python backend/scripts/create_superuser.py --email myadmin@example.com --password mypassword
+
+# Δημιουργία superuser σε συγκεκριμένο tenant
+docker exec linux_version-backend-1 python backend/scripts/create_superuser.py --email tenantadmin@demo.localhost --password mypassword --tenant demo
+
+# Εμφάνιση όλων των superusers
+docker exec linux_version-backend-1 python backend/scripts/create_superuser.py --list
+```
+
+### 🏢 Διαχείριση Tenants (Ultra-Superuser)
+
+```bash
+# Εμφάνιση όλων των tenants
+docker exec linux_version-backend-1 python backend/scripts/manage_tenants.py --list
+
+# Δημιουργία νέου tenant
+docker exec linux_version-backend-1 python backend/scripts/manage_tenants.py --create mycompany --domain mycompany.localhost
+
+# Δημιουργία admin για tenant
+docker exec linux_version-backend-1 python backend/scripts/manage_tenants.py --create-admin mycompany --admin-email admin@mycompany.localhost --admin-password mypassword
+
+# Διαγραφή tenant
+docker exec linux_version-backend-1 python backend/scripts/manage_tenants.py --delete mycompany
+```
+
+### 🔍 Έλεγχος Δικαιωμάτων
+
+```bash
+# Έλεγχος όλων των χρηστών
+docker exec linux_version-backend-1 python backend/scripts/check_permissions.py --all
+
+# Έλεγχος συγκεκριμένου χρήστη
+docker exec linux_version-backend-1 python backend/scripts/check_permissions.py --email admin@demo.localhost
+
+# Έλεγχος χρήστη σε συγκεκριμένο tenant
+docker exec linux_version-backend-1 python backend/scripts/check_permissions.py --email admin@demo.localhost --tenant demo
+```
+
+### Έλεγχος δεδομένων
+
+```bash
+# Έλεγχος tenants
+docker exec linux_version-backend-1 python manage.py shell -c "from tenants.models import Client, Domain; print('Clients:', Client.objects.count()); print('Domains:', Domain.objects.count())"
+
+# Έλεγχος demo δεδομένων
+docker exec linux_version-backend-1 python backend/check_data.py
+```
+
+### Migrations
+
+```bash
+# Shared migrations
 docker compose exec backend python manage.py migrate_schemas --shared --noinput
-```
 
-```python
-docker compose exec backend python manage.py shell -c "
-from tenants.models import Client, Domain
-public, _ = Client.objects.get_or_create(schema_name='public',
-                                         defaults={'name':'Public'})
-Domain.objects.get_or_create(domain='localhost', tenant=public,
-                             defaults={'is_primary':True})
-print('✅ localhost → public tenant ready')
-"
-```
-### (γ) Εκτέλεση migrations για όλους τους tenants
-
-```python
-docker compose exec backend python manage.py shell -c "
-from tenants.models import Client, Domain
-public = Client.objects.get(schema_name='public')
-Domain.objects.get_or_create(domain='localhost', tenant=public,
-                             defaults={'is_primary': True})
-print('✅ domain localhost → public tenant added')
-"
-```
-```sh
+# Tenant migrations
 docker compose exec backend python manage.py migrate_schemas --tenant --noinput
 ```
 
-```sh
-python manage.py createsuperuser
+---
+
+## 📁 Project Structure
+
+```
+linux_version/
+├── backend/                    # Django backend
+│   ├── scripts/               # Automation scripts
+│   │   ├── auto_initialization.py  # 🎯 Main auto-init script
+│   │   ├── create_superuser.py     # 🔧 Superuser creation
+│   │   ├── manage_tenants.py       # 🏢 Tenant management
+│   │   └── check_permissions.py    # 🔍 Permission checking
+│   ├── logs/                  # Credentials & logs
+│   └── entrypoint.sh          # Container startup script
+├── frontend/                  # Next.js frontend
+├── docker-compose.yml         # Container configuration
+├── reset_and_start.sh         # 🚀 Quick reset script
+├── clean_and_restart.sh       # 🧹 Interactive clean script
+└── readme.md                  # This file
 ```
 
-# Makefile για unified commands (root folder) -->
+---
 
-# Makefile
+## 📜 Διαθέσιμα Scripts
 
-up:
-	docker-compose up --build
+### 🚀 Εκκίνηση & Reset
 
-down:
-	docker-compose down
+| Script | Περιγραφή | Χρήση |
+|--------|-----------|-------|
+| `reset_and_start.sh` | Πλήρες reset και εκκίνηση | `./reset_and_start.sh` |
+| `clean_and_restart.sh` | Interactive καθαρισμός | `./clean_and_restart.sh` |
 
-logs:
-	docker-compose logs -f
+### 🔧 Backend Scripts
 
-migrate:
-	docker-compose exec backend python manage.py migrate
+| Script | Περιγραφή | Χρήση |
+|--------|-----------|-------|
+| `auto_initialization.py` | Αυτόματη αρχικοποίηση | `python backend/scripts/auto_initialization.py` |
+| `create_superuser.py` | Δημιουργία superuser | `python backend/scripts/create_superuser.py --email admin@example.com --password mypassword` |
+| `manage_tenants.py` | Διαχείριση tenants | `python backend/scripts/manage_tenants.py --list` |
+| `check_permissions.py` | Έλεγχος δικαιωμάτων | `python backend/scripts/check_permissions.py --all` |
 
-createsuperuser:
-	docker-compose exec backend python manage.py createsuperuser
+### 🐳 Docker Commands
 
+| Εντολή | Περιγραφή |
+|--------|-----------|
+| `docker compose up -d` | Εκκίνηση containers |
+| `docker compose down` | Διακοπή containers |
+| `docker compose logs -f` | Παρακολούθηση logs |
+| `docker compose ps` | Έλεγχος κατάστασης |
 
+---
 
-//////3
-make up
+## 📄 Credentials File
 
+Τα credentials αποθηκεύονται αυτόματα στο:
+```
+backend/logs/demo_credentials.log
+```
 
+---
 
-# Εκτέλεση test
-docker-compose exec backend pytest
+## 🎉 Επιτυχής Αρχικοποίηση!
 
-
-
-cd C:\Users\thodo\digital_concierge\frontend    
-
-npm install next@14
-
-npm install next@latest
-npm install react@18.2.0 react-dom@18.2.0
-
-
-
-
-cd frontend
-docker start new_concierge-backend-1
-
-docker exec -it new_concierge-backend-1 /bin/sh
-cd /app/backend
-mkdir -p user_requests/migrations
-echo > user_requests/migrations/__init__.py
-
-
-theostam1966@gmail.com
-
-docker exec -it new_concierge-backend-1 /bin/sh
-cd /app/backend
-mkdir -p user_requests/migrations
-echo > user_requests/migrations/__init__.py
-
-
-
-docker exec -it new_concierge-backend-1 /bin/sh
-cd /app/backend
-mkdir -p user_requests/migrations
-echo > user_requests/migrations/__init__.py
-
-
-cd frontend
-Remove-Item -Recurse -Force .next
-npm run build
-npm run dev
-
-cd frontend
-npm run dev
-
-
-<!-- προτεινόμενο flow σε production ή μέσα σε Docker. -->
-npm ci
-npm run build
-npm run start
-
-
-<!-- diagrafh olvn  -->
-
-
-sudo find . -name "*.pyc" -delete
-sudo find . -name "__pycache__" -type d -exec rm -r {} +
-sudo find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
-
-docker compose up -d
-./scripts/reset.sh
-<!-- diagrafh olvn  -->
-Σβήνουμε όλα τα migration αρχεία σε κάθε app
-Σε κάθε φάκελο migrations/ (εκτός __init__.py), διαγράφεις όλα τα αρχεία .py.
-
-find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
-
-
-
--
-
-# Δημιουργούμε όλες τις απαραίτητες migrations
-python manage.py makemigrations
-
-# Κάνουμε migrate στη public βάση (shared apps)
-python manage.py migrate
-python manage.py migrate announcements
-
-# Κάνουμε migrate στο shared schema (δηλαδή τα public tables στους tenants)
-python manage.py migrate_schemas --shared
-
-# Δημιουργούμε tenants (αν δεν υπάρχουν)
-
-# Κάνουμε migrate όλα τα tenants (tenant-specific apps)
-python manage.py migrate_schemas --tenant
-
-
-python manage.py makemigrations user_requests
-python manage.py makemigrations users
-python manage.py migrate
-
-python manage.py makemigrations
-python manage.py migrate
-
-
-# Φτιάχνουμε διαχειριστή
-python manage.py createsuperuser 
-
-npm install
-npm run dev 
-
-python manage.py migrate
-python manage.py makemigrations
-
-python manage.py createsuperuser
+Μετά την εκκίνηση, το σύστημα είναι έτοιμο για χρήση με πλήρη demo δεδομένα και χρήστες!
 
 
 
 
-echo "# linux_version" >> README.md
-git init
+
+
+
+echo "# linux_version" >> README.md git init
 
 git add .
-git commit -m "last stable version 1"  
-git branch -M main
-git remote add origin https://github.com/theostamp/linux_version.git
+git commit -m "kiosk mode 1.0"
+git branch -M main git remote add origin https://github.com/theostamp/linux_version.git 
 git push -u origin main
 
 git push --force
 
-cd frontend
-npm install
-npm run build
-npm run dev
-
-
-
-docker compose exec python manage.py shell < scripts/reset_and_create_tenant.py
-
-
-Get-Content scripts/reset_and_create_tenant.py | docker compose exec -T web python manage.py shell
-
-
-
-
-# Διακοπή και διαγραφή όλων των containers
-docker-compose down --volumes --remove-orphans
-
-# Εάν έχεις standalone containers που δεν είναι μέρος του docker-compose
-docker stop $(docker ps -a -q)
-docker rm $(docker ps -a -q)
-
-# Διαγραφή volumes που δεν χρησιμοποιούνται
-docker volume prune -f
-
-# Διαγραφή δικτύων που δημιουργήθηκαν από το Docker Compose
-docker network prune -f
-docker system prune -a --volumes
-
-docker volume rm $(docker volume ls -q)
-docker network rm $(docker network ls -q)
-docker builder prune -af
-
-
-
-docker-compose down
-docker-compose up --build
-
-
-docker-compose down
-docker image prune -a
-docker image prune -a -f
-docker system prune -a --volumes
-
-docker rm $(docker ps -aq)
-docker rmi $(docker images -q)
-docker volume rm $(docker volume ls -q)
-docker network rm $(docker network ls -q)
-docker system prune -a
-
-docker-compose down
-docker-compose up --build
-
-
-python manage.py exporttree --output dev_tree.md
