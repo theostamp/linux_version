@@ -150,14 +150,24 @@ class ApartmentViewSet(viewsets.ModelViewSet):
             existing_apartments = Apartment.objects.filter(building=building)
             
             if not existing_apartments.exists() and building.apartments_count > 0:
-                # Δημιουργία κενών διαμερισμάτων
-                apartments_to_create = []
+                # Δημιουργία κενών διαμερισμάτων με get_or_create για αποφυγή duplicates
+                apartments_created = []
                 for i in range(1, building.apartments_count + 1):
-                    apartments_to_create.append(
-                        Apartment(building=building, number=str(i))
+                    apartment, created = Apartment.objects.get_or_create(
+                        building=building,
+                        number=str(i),
+                        defaults={
+                            'floor': None,
+                            'owner_name': '',
+                            'tenant_name': '',
+                            'is_rented': False,
+                            'is_closed': False
+                        }
                     )
+                    if created:
+                        apartments_created.append(apartment)
                 
-                Apartment.objects.bulk_create(apartments_to_create)
+                # Ενημέρωση του queryset με τα νέα διαμερίσματα
                 existing_apartments = Apartment.objects.filter(building=building)
             
             serializer = ApartmentListSerializer(existing_apartments, many=True)

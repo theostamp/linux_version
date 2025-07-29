@@ -5,7 +5,8 @@
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
-import { UserRequest, toggleSupportRequest, MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, REQUEST_STATUSES } from '@/types/userRequests';
+import { UserRequest, MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, REQUEST_STATUSES } from '@/types/userRequests';
+import { toggleSupportRequest } from '@/lib/api';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Calendar, MapPin, User, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
