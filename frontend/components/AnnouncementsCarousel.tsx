@@ -4,6 +4,7 @@ import { useKeenSlider } from 'keen-slider/react';
 import { useEffect, useRef } from 'react';
 import { Announcement } from '@/lib/api';
 import Link from 'next/link';
+import { Bell, Calendar, ArrowRight } from 'lucide-react';
 
 interface Props {
   announcements: Announcement[];
@@ -31,7 +32,7 @@ export default function AnnouncementsCarousel({ announcements }: Readonly<Props>
       if (!mouseOver.current) {
         slider.next();
       }
-    }, 6000);
+    }, 8000); // Increased interval for better UX
   
     const container = sliderRef.current;
     if (container) {
@@ -48,12 +49,16 @@ export default function AnnouncementsCarousel({ announcements }: Readonly<Props>
     };
   }, [instanceRef]);
   
+  // If no announcements, don't render anything
+  if (!announcements || announcements.length === 0) {
+    return null;
+  }
 
   return (
-    <div ref={sliderRef}>
+    <div ref={sliderRef} className="relative">
       <div
         ref={sliderContainerRef}
-        className="flex overflow-hidden relative w-full max-w-[1000%] mx-auto h-[300px] rounded-xl"
+        className="flex overflow-hidden relative w-full h-[200px] rounded-lg" // Reduced height
       >
         {announcements.slice(0, 3).map((a) => {
           const start = new Date(a.start_date);
@@ -61,39 +66,60 @@ export default function AnnouncementsCarousel({ announcements }: Readonly<Props>
           const now = new Date();
 
           let status = 'Ενεργή';
+          let statusColor = 'bg-green-100 text-green-700';
           if (now < start) {
             status = 'Προσεχώς';
+            statusColor = 'bg-yellow-100 text-yellow-700';
           } else if (now > end) {
             status = 'Ληγμένη';
+            statusColor = 'bg-gray-100 text-gray-700';
           }
 
           return (
             <Link
               key={a.id}
               href={`/announcements/${a.id}`}
-              className="flex-shrink-0 w-full h-full px-6 py-8 bg-blue-800 text-white transition-all duration-700 ease-in-out"
+              className="flex-shrink-0 w-full h-full px-6 py-6 bg-gradient-to-br from-blue-600 to-blue-700 text-white transition-all duration-700 ease-in-out hover:from-blue-700 hover:to-blue-800"
               style={{ minWidth: '100%' }}
             >
               <div className="flex flex-col justify-between h-full">
                 <div>
-                  <h2 className="text-3xl font-bold mb-3">{a.title}</h2>
-                  <p className="text-sm opacity-80 mb-2">
-                    {start.toLocaleDateString('el-GR')} – {end.toLocaleDateString('el-GR')} ({status})
-                  </p>
-                  <p className="text-base leading-relaxed whitespace-pre-wrap">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      <Bell className="w-5 h-5 mr-2" />
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColor}`}>
+                        {status}
+                      </span>
+                    </div>
+                    <ArrowRight className="w-4 h-4 opacity-70" />
+                  </div>
+                  <h2 className="text-xl font-bold mb-2 line-clamp-2">{a.title}</h2>
+                  <p className="text-sm opacity-90 mb-3 line-clamp-2">
                     {a.description}
                   </p>
                 </div>
-                <div className="mt-6">
-                  <span className="inline-block bg-white text-blue-800 text-xs font-semibold px-3 py-1 rounded">
-                    Δες περισσότερα →
-                  </span>
+                <div className="flex items-center text-xs opacity-80">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  {start.toLocaleDateString('el-GR')} – {end.toLocaleDateString('el-GR')}
                 </div>
               </div>
             </Link>
           );
         })}
       </div>
+      
+      {/* Navigation Dots */}
+      {announcements.length > 1 && (
+        <div className="flex justify-center mt-4 space-x-2">
+          {announcements.slice(0, 3).map((_, index) => (
+            <button
+              key={index}
+              onClick={() => instanceRef.current?.moveToIdx(index)}
+              className="w-2 h-2 rounded-full bg-blue-300 hover:bg-blue-400 transition-colors duration-200"
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

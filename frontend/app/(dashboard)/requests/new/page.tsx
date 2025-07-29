@@ -10,15 +10,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
-
-const TYPE_CHOICES = [
-  { value: 'maintenance', label: 'Συντήρηση' },
-  { value: 'cleaning', label: 'Καθαριότητα' },
-  { value: 'technical', label: 'Τεχνικό' },
-  { value: 'security', label: 'Ασφάλεια' },
-  { value: 'noise', label: 'Θόρυβος' },
-  { value: 'other', label: 'Άλλο' },
-];
+import { MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, LOCATION_TYPES } from '@/types/userRequests';
+import { MapPin, User, AlertTriangle, Calendar } from 'lucide-react';
 
 export default function NewRequestPage() {
   const router = useRouter();
@@ -30,7 +23,10 @@ export default function NewRequestPage() {
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [type, setType] = useState('');
+  const [maintenanceCategory, setMaintenanceCategory] = useState('');
+  const [priority, setPriority] = useState('medium');
+  const [location, setLocation] = useState('');
+  const [apartmentNumber, setApartmentNumber] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -56,8 +52,8 @@ export default function NewRequestPage() {
       return;
     }
 
-    if (type && !TYPE_CHOICES.some((t) => t.value === type)) {
-      setError('Μη έγκυρος τύπος αιτήματος.');
+    if (maintenanceCategory && !MAINTENANCE_CATEGORIES.some((c) => c.value === maintenanceCategory)) {
+      setError('Μη έγκυρη κατηγορία συντήρησης.');
       return;
     }
 
@@ -67,7 +63,11 @@ export default function NewRequestPage() {
         title: title.trim(),
         description: description.trim(),
         building: buildingToUse.id,
-        type: type || undefined,
+        type: maintenanceCategory || undefined,
+        maintenance_category: maintenanceCategory || undefined,
+        priority: priority,
+        location: location || undefined,
+        apartment_number: apartmentNumber || undefined,
         is_urgent: isUrgent || undefined,
       });
       
@@ -87,7 +87,7 @@ export default function NewRequestPage() {
   };
 
   return (
-    <div className="p-6 max-w-xl mx-auto space-y-6">
+    <div className="p-6 max-w-2xl mx-auto space-y-6">
       {/* Navigation */}
       <Link href="/requests">
         <Button variant="secondary">⬅ Επιστροφή στα Αιτήματα</Button>
@@ -95,7 +95,7 @@ export default function NewRequestPage() {
 
       {/* Form */}
       <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h1 className="text-2xl font-bold mb-6 text-center">📋 Νέο Αίτημα</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">🔧 Νέο Αίτημα Συντήρησης</h1>
         
         <BuildingFilterIndicator className="mb-6" />
         
@@ -111,9 +111,10 @@ export default function NewRequestPage() {
         {error && <ErrorMessage message={error} />}
         
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Title */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-              Τίτλος *
+              Τίτλος * <span className="text-red-500">*</span>
             </label>
             <input
               id="title"
@@ -121,14 +122,15 @@ export default function NewRequestPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="Συνοπτική περιγραφή του αιτήματος"
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Συνοπτική περιγραφή του προβλήματος"
             />
           </div>
 
+          {/* Description */}
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-              Περιγραφή *
+              Περιγραφή * <span className="text-red-500">*</span>
             </label>
             <textarea
               id="description"
@@ -136,49 +138,116 @@ export default function NewRequestPage() {
               onChange={(e) => setDescription(e.target.value)}
               required
               rows={4}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="Αναλυτική περιγραφή του προβλήματος ή αιτήματος"
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Αναλυτική περιγραφή του προβλήματος, συμπτώματα, κλπ."
             />
           </div>
 
+          {/* Maintenance Category */}
           <div>
-            <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
-              Κατηγορία (προαιρετικό)
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+              Κατηγορία Συντήρησης
             </label>
             <select
-              id="type"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              id="category"
+              value={maintenanceCategory}
+              onChange={(e) => setMaintenanceCategory(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">-- Επιλέξτε κατηγορία --</option>
-              {TYPE_CHOICES.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
+              {MAINTENANCE_CATEGORIES.map((category) => (
+                <option key={category.value} value={category.value}>
+                  {category.icon} {category.label}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="flex items-center space-x-3">
+          {/* Priority */}
+          <div>
+            <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-2">
+              Προτεραιότητα
+            </label>
+            <select
+              id="priority"
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {PRIORITY_LEVELS.map((level) => (
+                <option key={level.value} value={level.value}>
+                  {level.icon} {level.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Location */}
+          <div>
+            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+              <MapPin className="w-4 h-4 inline mr-1" />
+              Τοποθεσία
+            </label>
+            <select
+              id="location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">-- Επιλέξτε τοποθεσία --</option>
+              {LOCATION_TYPES.map((loc) => (
+                <option key={loc.value} value={loc.value}>
+                  {loc.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Apartment Number */}
+          <div>
+            <label htmlFor="apartment" className="block text-sm font-medium text-gray-700 mb-2">
+              <User className="w-4 h-4 inline mr-1" />
+              Αριθμός Διαμερίσματος (αν ισχύει)
+            </label>
+            <input
+              id="apartment"
+              type="text"
+              value={apartmentNumber}
+              onChange={(e) => setApartmentNumber(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="π.χ. Α1, 2ος όροφος, κλπ."
+            />
+          </div>
+
+          {/* Urgent Checkbox */}
+          <div className="flex items-center space-x-3 p-4 bg-red-50 border border-red-200 rounded-lg">
             <input
               id="urgent"
               type="checkbox"
               checked={isUrgent}
               onChange={() => setIsUrgent(!isUrgent)}
-              className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+              className="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500"
             />
-            <label htmlFor="urgent" className="text-sm font-medium text-gray-700">
-              🚨 Επείγον αίτημα
+            <label htmlFor="urgent" className="text-sm font-medium text-red-700 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              🚨 Επείγον αίτημα (απαιτεί άμεση προσοχή)
             </label>
           </div>
 
+          {/* Submit Button */}
           <Button
             type="submit"
             disabled={submitting}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-medium"
           >
-            {submitting ? 'Δημιουργία...' : '✅ Δημιουργία Αιτήματος'}
+            {submitting ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                Δημιουργία...
+              </div>
+            ) : (
+              '✅ Δημιουργία Αιτήματος Συντήρησης'
+            )}
           </Button>
         </form>
       </div>

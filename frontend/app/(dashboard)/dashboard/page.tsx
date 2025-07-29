@@ -39,6 +39,22 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import AuthGate from '@/components/AuthGate';
 import LoginForm from '@/components/LoginForm';
 import { useRouter } from 'next/navigation';
+import { 
+  Bell, 
+  FileText, 
+  CheckCircle, 
+  Clock, 
+  AlertCircle, 
+  TrendingUp,
+  Users,
+  Calendar,
+  ArrowRight,
+  Thermometer,
+  Cloud,
+  Sun,
+  CloudRain,
+  CloudSnow
+} from 'lucide-react';
 
 export default function DashboardPage() {
   return (
@@ -74,6 +90,121 @@ function DashboardContent() {
   } | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState(false);
+  
+  // Weather state
+  const [weather, setWeather] = useState<{
+    temperature: number;
+    condition: string;
+    icon: string;
+  } | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+
+  // Fetch weather data
+  useEffect(() => {
+    const fetchWeather = async () => {
+      setWeatherLoading(true);
+      try {
+        // Try multiple weather APIs for better reliability
+        const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
+        
+        if (!API_KEY || API_KEY === 'demo') {
+          // Demo data for development
+          setWeather({
+            temperature: 22,
+            condition: 'Αίθριος',
+            icon: 'clear'
+          });
+          return;
+        }
+
+        // Default to Athens coordinates if no building location
+        const lat = 37.9838;
+        const lon = 23.7275;
+        
+        // Try OpenWeatherMap first
+        try {
+          const response = await fetch(
+            `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=el`
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            setWeather({
+              temperature: Math.round(data.main.temp),
+              condition: data.weather[0].description,
+              icon: data.weather[0].main.toLowerCase()
+            });
+            return;
+          }
+        } catch (err) {
+          console.log('OpenWeatherMap failed, trying alternative...');
+        }
+
+        // Fallback: Use a free weather API without key
+        try {
+          const response = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            const temp = Math.round(data.current.temperature_2m);
+            
+            // Convert WMO weather codes to descriptions
+            const weatherCodes: { [key: number]: { description: string; icon: string } } = {
+              0: { description: 'Αίθριος', icon: 'clear' },
+              1: { description: 'Αίθριος', icon: 'clear' },
+              2: { description: 'Νεφελώδης', icon: 'clouds' },
+              3: { description: 'Νεφελώδης', icon: 'clouds' },
+              45: { description: 'Ομίχλη', icon: 'clouds' },
+              48: { description: 'Ομίχλη', icon: 'clouds' },
+              51: { description: 'Ψιλή βροχόπτωση', icon: 'rain' },
+              53: { description: 'Βροχόπτωση', icon: 'rain' },
+              55: { description: 'Ισχυρή βροχόπτωση', icon: 'rain' },
+              61: { description: 'Βροχόπτωση', icon: 'rain' },
+              63: { description: 'Ισχυρή βροχόπτωση', icon: 'rain' },
+              65: { description: 'Ισχυρή βροχόπτωση', icon: 'rain' },
+              71: { description: 'Χιόνι', icon: 'snow' },
+              73: { description: 'Ισχυρό χιόνι', icon: 'snow' },
+              75: { description: 'Ισχυρό χιόνι', icon: 'snow' },
+              95: { description: 'Καταιγίδα', icon: 'rain' },
+            };
+            
+            const weatherInfo = weatherCodes[data.current.weather_code] || { description: 'Αίθριος', icon: 'clear' };
+            
+            setWeather({
+              temperature: temp,
+              condition: weatherInfo.description,
+              icon: weatherInfo.icon
+            });
+            return;
+          }
+        } catch (err) {
+          console.log('Alternative API failed, using demo data...');
+        }
+
+        // Final fallback to demo data
+        setWeather({
+          temperature: 22,
+          condition: 'Αίθριος',
+          icon: 'clear'
+        });
+        
+      } catch (err) {
+        console.error('All weather APIs failed:', err);
+        // Fallback to demo data
+        setWeather({
+          temperature: 22,
+          condition: 'Αίθριος',
+          icon: 'clear'
+        });
+      } finally {
+        setWeatherLoading(false);
+      }
+    };
+
+    fetchWeather();
+  }, []);
 
   useEffect(() => {
     if (!isAuthReady || authLoading || !user || !currentBuilding?.id) return;
@@ -105,313 +236,521 @@ function DashboardContent() {
     };
 
     loadAll();
-  }, [authLoading, isAuthReady, user, currentBuilding, selectedBuilding]);
+  }, [isAuthReady, authLoading, user, currentBuilding, selectedBuilding]);
 
   useEffect(() => {
-    if (!isAuthReady || authLoading || !user?.is_staff) return;
+    if (!user?.is_staff) return;
 
     const loadObligations = async () => {
       try {
-        const summary = await fetchObligationsSummary();
-        setObligations(summary);
+        const buildingId = selectedBuilding?.id || currentBuilding?.id;
+        if (!buildingId) return;
+        
+        const obligationsData = await fetchObligationsSummary(buildingId);
+        setObligations(obligationsData);
       } catch (err) {
-        console.error('Obligations error:', err);
-        setError(true);
+        console.error('Failed to load obligations:', err);
       }
     };
 
     loadObligations();
-  }, [authLoading, isAuthReady, user]);
+  }, [user?.is_staff, selectedBuilding, currentBuilding]);
 
-  useEffect(() => {
-    if (!authLoading && isAuthReady && (!user || !currentBuilding)) {
-      // Καθαρίζουμε τα tokens και κάνουμε redirect στο login
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('access');
-        localStorage.removeItem('refresh');
-      }
-      router.push('/login');
+  // Weather icon component
+  const WeatherIcon = ({ icon }: { icon: string }) => {
+    switch (icon) {
+      case 'clear':
+        return <Sun className="w-4 h-4 text-yellow-400" />;
+      case 'clouds':
+        return <Cloud className="w-4 h-4 text-gray-400" />;
+      case 'rain':
+        return <CloudRain className="w-4 h-4 text-blue-400" />;
+      case 'snow':
+        return <CloudSnow className="w-4 h-4 text-blue-200" />;
+      default:
+        return <Thermometer className="w-4 h-4 text-blue-300" />;
     }
-  }, [authLoading, isAuthReady, user, currentBuilding, router]);
+  };
 
-  const activeVotes = votes.filter(
-    (v) => !v.end_date || new Date(v.end_date) > new Date()
-  );
-
-  const filteredRequests =
-    onlyMine && user
-      ? requests.filter((r) => r.created_by_username === user.email)
-      : requests;
-
-  const requestCards = [
-    { key: 'all', label: 'Όλα τα Αιτήματα', icon: '📨', bgColor: 'bg-gradient-to-r from-blue-500 to-blue-600', link: '/requests' },
-    { key: 'open', label: 'Ανοιχτά', icon: '📂', bgColor: 'bg-gradient-to-r from-orange-400 to-orange-500', link: '/requests?status=open' },
-    { key: 'urgent', label: 'Επείγοντα', icon: '🔥', bgColor: 'bg-gradient-to-r from-red-500 to-red-600', link: '/requests?urgent=1' },
-    { key: 'supported', label: 'Με Υποστήριξη', icon: '🤝', bgColor: 'bg-gradient-to-r from-yellow-400 to-yellow-500', link: '/requests?supported=1' },
-  ];
-
-  if (authLoading || !isAuthReady || !user || !currentBuilding || loadingData) {
+  if (loadingData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Φόρτωση...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-3 text-gray-600">Φόρτωση dashboard...</span>
       </div>
     );
   }
 
+  if (error) {
+    return <ErrorMessage message="Σφάλμα φόρτωσης dashboard" />;
+  }
+
+  const activeVotes = votes.filter((v) => {
+    const now = new Date();
+    const start = new Date(v.start_date);
+    const end = new Date(v.end_date);
+    return now >= start && now <= end;
+  });
+
+  const filteredRequests = onlyMine 
+    ? requests.filter((r) => r.user_id === user?.id)
+    : requests;
+
+  const requestCards = [
+    {
+      key: 'open',
+      label: 'Ανοιχτά',
+      icon: '🔴',
+      bgColor: 'bg-red-500',
+      apiCondition: (r: UserRequest) => r.status === 'open',
+      link: '/requests?status=open'
+    },
+    {
+      key: 'in_progress',
+      label: 'Σε Εξέλιξη',
+      icon: '🟡',
+      bgColor: 'bg-yellow-500',
+      apiCondition: (r: UserRequest) => r.status === 'in_progress',
+      link: '/requests?status=in_progress'
+    },
+    {
+      key: 'resolved',
+      label: 'Ολοκληρωμένα',
+      icon: '🟢',
+      bgColor: 'bg-green-500',
+      apiCondition: (r: UserRequest) => r.status === 'resolved',
+      link: '/requests?status=resolved'
+    },
+    {
+      key: 'total',
+      label: 'Σύνολο',
+      icon: '📊',
+      bgColor: 'bg-blue-500',
+      link: '/requests'
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* Header Section */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-              {selectedBuilding && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Φιλτράρισμα: <span className="font-medium text-blue-600">{selectedBuilding.name}</span>
-                </p>
-              )}
+    <div className="space-y-6">
+      {/* Welcome Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 text-white relative group">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold mb-2">
+              Καλώς ήρθες, {user?.first_name || user?.email}!
+            </h1>
+            <div className="relative">
+              <p className="text-blue-100">
+                Βρίσκεσαι στο κτίριο: <span className="font-semibold">{selectedBuilding?.name || currentBuilding?.name}</span>
+              </p>
+              
+              {/* Hover Tooltip */}
+              <div className="absolute bottom-full left-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+                <div className="bg-white/95 backdrop-blur-sm text-gray-800 text-xs rounded-lg p-2 shadow-lg border border-gray-200 max-w-xs">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full mt-1 flex-shrink-0"></div>
+                    <div>
+                      <p className="font-medium mb-1 text-xs">Πληροφορίες Κτιρίου</p>
+                      <p className="text-gray-600 text-xs leading-relaxed">
+                        Είσαι στο κτίριο <strong>{selectedBuilding?.name || currentBuilding?.name}</strong>. 
+                        Για αλλαγή, χρησιμοποίησε τον επιλογέα στο sidebar.
+                      </p>
+                    </div>
+                  </div>
+                  {/* Arrow */}
+                  <div className="absolute top-full left-4 w-0 h-0 border-l-3 border-r-3 border-t-3 border-transparent border-t-white/95"></div>
+                </div>
+              </div>
             </div>
-            <LogoutButton className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200" />
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-blue-200">Σήμερα</p>
+            <p className="text-lg font-semibold">
+              {new Date().toLocaleDateString('el-GR', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
+            
+            {/* Weather Information */}
+            {weather && (
+              <div className="mt-2 flex items-center justify-end gap-2">
+                <WeatherIcon icon={weather.icon} />
+                <div className="text-right">
+                  <p className="text-sm font-semibold">{weather.temperature}°C</p>
+                  <p className="text-xs text-blue-200 capitalize">{weather.condition}</p>
+                </div>
+              </div>
+            )}
+            
+            {weatherLoading && (
+              <div className="mt-2 flex items-center justify-end gap-2">
+                <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                <span className="text-xs text-blue-200">Φόρτωση...</span>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Info Icon */}
+        <div className="absolute top-4 right-4">
+          <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors duration-200">
+            <span className="text-white text-xs font-bold">i</span>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && <ErrorMessage message="Αποτυχία φόρτωσης δεδομένων." />}
-
-        {/* Building Information Section */}
-        <div className="mb-8">
-          <SelectedBuildingInfo selectedBuilding={selectedBuilding} />
-          <BuildingStats buildings={buildings} selectedBuilding={selectedBuilding} />
-        </div>
-
-        {/* Quick Actions Section */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <span className="mr-2">⚡</span>
-            Γρήγορες Ενέργειες
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/announcements" className="group">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 group-hover:scale-105">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl">📢</span>
-                  <span className="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                    {announcements.length}
-                  </span>
-                </div>
-                <h3 className="font-semibold text-gray-900">Ανακοινώσεις</h3>
-                <p className="text-sm text-gray-600 mt-1">Πρόσφατες ανακοινώσεις</p>
-              </div>
-            </Link>
-            
-            <Link href="/votes" className="group">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 group-hover:scale-105">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl">🗳️</span>
-                  <span className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                    {activeVotes.length}
-                  </span>
-                </div>
-                <h3 className="font-semibold text-gray-900">Ψηφοφορίες</h3>
-                <p className="text-sm text-gray-600 mt-1">Ενεργές ψηφοφορίες</p>
-              </div>
-            </Link>
-            
-            <Link href="/requests" className="group">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 group-hover:scale-105">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl">📨</span>
-                  <span className="text-sm font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
-                    {requests.filter((r) => r.status === 'open').length}
-                  </span>
-                </div>
-                <h3 className="font-semibold text-gray-900">Αιτήματα</h3>
-                <p className="text-sm text-gray-600 mt-1">Εκκρεμή αιτήματα</p>
-              </div>
-            </Link>
-            
-            <Link href="/buildings" className="group">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 group-hover:scale-105">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl">🏢</span>
-                  <span className="text-sm font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
-                    {buildings.length}
-                  </span>
-                </div>
-                <h3 className="font-semibold text-gray-900">Κτίρια</h3>
-                <p className="text-sm text-gray-600 mt-1">Διαχείριση κτιρίων</p>
-              </div>
-            </Link>
+      {/* Quick Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Link href="/announcements" className="group">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-all duration-200 group-hover:scale-105">
+            <div className="flex items-center justify-between mb-2">
+              <Bell className="w-6 h-6 text-blue-600" />
+              <span className="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                {announcements.length}
+              </span>
+            </div>
+            <h3 className="font-semibold text-gray-900">Ανακοινώσεις</h3>
+            <p className="text-sm text-gray-600 mt-1">Πρόσφατες ανακοινώσεις</p>
           </div>
-        </div>
+        </Link>
+        
+        <Link href="/votes" className="group">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-all duration-200 group-hover:scale-105">
+            <div className="flex items-center justify-between mb-2">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+              <span className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                {activeVotes.length}
+              </span>
+            </div>
+            <h3 className="font-semibold text-gray-900">Ψηφοφορίες</h3>
+            <p className="text-sm text-gray-600 mt-1">Ενεργές ψηφοφορίες</p>
+          </div>
+        </Link>
+        
+        <Link href="/requests" className="group">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-all duration-200 group-hover:scale-105">
+            <div className="flex items-center justify-between mb-2">
+              <FileText className="w-6 h-6 text-orange-600" />
+              <span className="text-sm font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
+                {requests.filter((r) => r.status === 'open').length}
+              </span>
+            </div>
+            <h3 className="font-semibold text-gray-900">Αιτήματα</h3>
+            <p className="text-sm text-gray-600 mt-1">Εκκρεμή αιτήματα</p>
+          </div>
+        </Link>
+        
+        <Link href="/buildings" className="group">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-all duration-200 group-hover:scale-105">
+            <div className="flex items-center justify-between mb-2">
+              <Users className="w-6 h-6 text-purple-600" />
+              <span className="text-sm font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+                {buildings.length}
+              </span>
+            </div>
+            <h3 className="font-semibold text-gray-900">Κτίρια</h3>
+            <p className="text-sm text-gray-600 mt-1">Διαχείριση κτιρίων</p>
+          </div>
+        </Link>
+      </div>
 
-        {/* Announcements Section */}
-        {announcements.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <span className="mr-2">📰</span>
+      {/* Compact Announcements Section */}
+      {announcements.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+              <Bell className="w-5 h-5 mr-2 text-blue-600" />
               Πρόσφατες Ανακοινώσεις
             </h2>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <AnnouncementsCarousel announcements={announcements} />
+            <Link 
+              href="/announcements" 
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center"
+            >
+              Δες όλες <ArrowRight className="w-4 h-4 ml-1" />
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {announcements.slice(0, 3).map((announcement) => {
+              const start = new Date(announcement.start_date);
+              const end = new Date(announcement.end_date);
+              const now = new Date();
+              let status = 'Ενεργή';
+              if (now < start) status = 'Προσεχώς';
+              else if (now > end) status = 'Ληγμένη';
+
+              return (
+                <Link 
+                  key={announcement.id} 
+                  href={`/announcements/${announcement.id}`}
+                  className="block p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900 mb-1 line-clamp-1">
+                        {announcement.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {announcement.description}
+                      </p>
+                      <div className="flex items-center mt-2 text-xs text-gray-500">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        {start.toLocaleDateString('el-GR')} - {end.toLocaleDateString('el-GR')}
+                        <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                          status === 'Ενεργή' ? 'bg-green-100 text-green-700' :
+                          status === 'Προσεχώς' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Requests Overview */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+            <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+            Επισκόπηση Αιτημάτων
+          </h2>
+          <div className="flex items-center gap-4">
+            {user && (
+              <label className="inline-flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 hover:bg-gray-100 transition-colors duration-200">
+                <input 
+                  type="checkbox" 
+                  checked={onlyMine} 
+                  onChange={() => setOnlyMine(!onlyMine)}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                />
+                <span className="text-sm font-medium text-gray-700">Μόνο δικά μου</span>
+              </label>
+            )}
+            <Link 
+              href="/requests" 
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center"
+            >
+              Δες όλα <ArrowRight className="w-4 h-4 ml-1" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Request Status Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+              <span className="text-2xl font-bold text-red-600">
+                {filteredRequests.filter((r) => r.status === 'open').length}
+              </span>
+            </div>
+            <h3 className="font-medium text-red-900">Ανοιχτά</h3>
+            <p className="text-sm text-red-600">Αναμένουν απάντηση</p>
+          </div>
+
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <Clock className="w-6 h-6 text-yellow-600" />
+              <span className="text-2xl font-bold text-yellow-600">
+                {filteredRequests.filter((r) => r.status === 'in_progress').length}
+              </span>
+            </div>
+            <h3 className="font-medium text-yellow-900">Σε Εξέλιξη</h3>
+            <p className="text-sm text-yellow-600">Επεξεργάζονται</p>
+          </div>
+
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+              <span className="text-2xl font-bold text-green-600">
+                {filteredRequests.filter((r) => r.status === 'resolved').length}
+              </span>
+            </div>
+            <h3 className="font-medium text-green-900">Ολοκληρωμένα</h3>
+            <p className="text-sm text-green-600">Επιλύθηκαν</p>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <FileText className="w-6 h-6 text-blue-600" />
+              <span className="text-2xl font-bold text-blue-600">
+                {filteredRequests.length}
+              </span>
+            </div>
+            <h3 className="font-medium text-blue-900">Σύνολο</h3>
+            <p className="text-sm text-blue-600">Όλα τα αιτήματα</p>
+          </div>
+        </div>
+
+        {/* Recent Requests */}
+        {filteredRequests.length > 0 && (
+          <div>
+            <h3 className="text-md font-semibold text-gray-900 mb-3">Πρόσφατα Αιτήματα</h3>
+            <div className="space-y-2">
+              {filteredRequests.slice(0, 5).map((request) => (
+                <Link 
+                  key={request.id} 
+                  href={`/requests/${request.id}`}
+                  className="block p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 line-clamp-1">
+                        {request.title}
+                      </h4>
+                      <p className="text-sm text-gray-600 line-clamp-1">
+                        {request.description}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        request.status === 'open' ? 'bg-red-100 text-red-700' :
+                        request.status === 'in_progress' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-green-100 text-green-700'
+                      }`}>
+                        {request.status === 'open' ? 'Ανοιχτό' :
+                         request.status === 'in_progress' ? 'Σε Εξέλιξη' : 'Ολοκληρωμένο'}
+                      </span>
+                      <ArrowRight className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
         )}
+      </div>
 
-        {/* Staff Actions Section */}
-        {user?.is_staff && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <span className="mr-2">👨‍💼</span>
-              Ενέργειες Διαχείρισης
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Link href="/announcements/new" className="group">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white hover:from-blue-600 hover:to-blue-700 transition-all duration-200 group-hover:scale-105 shadow-lg">
-                  <div className="flex items-center">
-                    <span className="text-3xl mr-4">📢</span>
-                    <div>
-                      <h3 className="font-semibold text-lg">Δημιουργία Ανακοίνωσης</h3>
-                      <p className="text-blue-100 text-sm">Νέα ανακοίνωση για τους κατοίκους</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-              
-              <Link href="/votes/new" className="group">
-                <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white hover:from-green-600 hover:to-green-700 transition-all duration-200 group-hover:scale-105 shadow-lg">
-                  <div className="flex items-center">
-                    <span className="text-3xl mr-4">🗳️</span>
-                    <div>
-                      <h3 className="font-semibold text-lg">Νέα Ψηφοφορία</h3>
-                      <p className="text-green-100 text-sm">Δημιουργία νέας ψηφοφορίας</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </div>
-
-            {/* Obligations Section */}
-            {obligations && (
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <span className="mr-2">🧾</span>
-                  Εκκρεμότητες Διαχείρισης
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-600">Απλήρωτες Συνεισφορές</p>
-                        <p className="text-3xl font-bold text-red-600">{obligations.pending_payments}</p>
-                      </div>
-                      <span className="text-3xl">💰</span>
-                    </div>
-                  </div>
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-600">Εκκρεμείς Συντηρήσεις</p>
-                        <p className="text-3xl font-bold text-yellow-600">{obligations.maintenance_tickets}</p>
-                      </div>
-                      <span className="text-3xl">🔧</span>
-                    </div>
+      {/* Staff Actions Section */}
+      {user?.is_staff && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Users className="w-5 h-5 mr-2 text-blue-600" />
+            Ενέργειες Διαχείρισης
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link href="/announcements/new" className="group">
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white hover:from-blue-600 hover:to-blue-700 transition-all duration-200 group-hover:scale-105 shadow-lg">
+                <div className="flex items-center">
+                  <Bell className="w-6 h-6 mr-3" />
+                  <div>
+                    <h3 className="font-semibold">Δημιουργία Ανακοίνωσης</h3>
+                    <p className="text-blue-100 text-sm">Νέα ανακοίνωση για τους κατοίκους</p>
                   </div>
                 </div>
               </div>
-            )}
+            </Link>
+            
+            <Link href="/votes/new" className="group">
+              <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white hover:from-green-600 hover:to-green-700 transition-all duration-200 group-hover:scale-105 shadow-lg">
+                <div className="flex items-center">
+                  <CheckCircle className="w-6 h-6 mr-3" />
+                  <div>
+                    <h3 className="font-semibold">Νέα Ψηφοφορία</h3>
+                    <p className="text-green-100 text-sm">Δημιουργία νέας ψηφοφορίας</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
           </div>
-        )}
 
-        {/* Requests Filter */}
-        {user && (
-          <div className="mb-6">
-            <label className="inline-flex items-center gap-3 bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3 hover:shadow-md transition-shadow duration-200">
-              <input 
-                type="checkbox" 
-                checked={onlyMine} 
-                onChange={() => setOnlyMine(!onlyMine)}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-              />
-              <span className="text-sm font-medium text-gray-700">Μόνο δικά μου αιτήματα</span>
-            </label>
-          </div>
-        )}
-
-        {/* Requests Overview */}
-        {!error && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <span className="mr-2">📊</span>
-              Επισκόπηση Αιτημάτων
-            </h2>
-            <DashboardCards data={filteredRequests} cards={requestCards} />
-          </div>
-        )}
-
-        {/* Analytics Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Requests Distribution Chart */}
-          {filteredRequests.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <span className="mr-2">📈</span>
-                Κατανομή Αιτημάτων
+          {/* Obligations Section */}
+          {obligations && (
+            <div className="mt-6">
+              <h3 className="text-md font-semibold text-gray-900 mb-4 flex items-center">
+                <AlertCircle className="w-5 h-5 mr-2 text-orange-600" />
+                Εκκρεμότητες Διαχείρισης
               </h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    dataKey="value"
-                    data={[
-                      { name: 'Ανοιχτά', value: filteredRequests.filter((r) => r.status === 'open').length },
-                      { name: 'Σε εξέλιξη', value: filteredRequests.filter((r) => r.status === 'in_progress').length },
-                      { name: 'Ολοκληρωμένα', value: filteredRequests.filter((r) => r.status === 'resolved').length },
-                    ]}
-                    cx="50%" 
-                    cy="50%" 
-                    outerRadius={80} 
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    <Cell fill="#f59e0b" />
-                    <Cell fill="#3b82f6" />
-                    <Cell fill="#10b981" />
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {/* Top Supported Requests */}
-          {topRequests.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <span className="mr-2">🏆</span>
-                Top Υποστηριζόμενα Αιτήματα
-              </h3>
-              <div className="space-y-3">
-                {topRequests.slice(0, 5).map((r) => (
-                  <Link key={r.id} href={`/requests/${r.id}`} className="block">
-                    <div className="p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-gray-900 line-clamp-1">{r.title}</h4>
-                        <span className="flex items-center text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                          🤝 {r.supporter_count}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 line-clamp-2">{r.description}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-red-600">Απλήρωτες Συνεισφορές</p>
+                      <p className="text-2xl font-bold text-red-600">{obligations.pending_payments}</p>
                     </div>
-                  </Link>
-                ))}
+                    <span className="text-2xl">💰</span>
+                  </div>
+                </div>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-yellow-600">Εκκρεμείς Συντηρήσεις</p>
+                      <p className="text-2xl font-bold text-yellow-600">{obligations.maintenance_tickets}</p>
+                    </div>
+                    <span className="text-2xl">🔧</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
         </div>
+      )}
+
+      {/* Analytics Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Requests Distribution Chart */}
+        {filteredRequests.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+              Κατανομή Αιτημάτων
+            </h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  dataKey="value"
+                  data={[
+                    { name: 'Ανοιχτά', value: filteredRequests.filter((r) => r.status === 'open').length },
+                    { name: 'Σε εξέλιξη', value: filteredRequests.filter((r) => r.status === 'in_progress').length },
+                    { name: 'Ολοκληρωμένα', value: filteredRequests.filter((r) => r.status === 'resolved').length },
+                  ]}
+                  cx="50%" 
+                  cy="50%" 
+                  outerRadius={70} 
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  <Cell fill="#ef4444" />
+                  <Cell fill="#f59e0b" />
+                  <Cell fill="#10b981" />
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Top Supported Requests */}
+        {topRequests.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+              Top Υποστηριζόμενα Αιτήματα
+            </h3>
+            <div className="space-y-3">
+              {topRequests.slice(0, 5).map((r) => (
+                <Link key={r.id} href={`/requests/${r.id}`} className="block">
+                  <div className="p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-gray-900 line-clamp-1">{r.title}</h4>
+                      <span className="flex items-center text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                        🤝 {r.supporter_count}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 line-clamp-2">{r.description}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
