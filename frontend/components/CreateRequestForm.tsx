@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorMessage from '@/components/ErrorMessage';
 import { createUserRequest, fetchBuildings, Building } from '@/lib/api';
+import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 
 // Προκαθορισμένες επιλογές για τον τύπο αίτησης
 const TYPE_CHOICES = [
@@ -33,6 +34,8 @@ export default function CreateRequestForm() {
   // σφάλματα & loading
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const { navigateWithLoading } = useNavigationWithLoading();
 
   // φορτώνουμε κτίρια
   useEffect(() => {
@@ -70,7 +73,7 @@ export default function CreateRequestForm() {
         type: type || undefined,
         is_urgent: isUrgent || undefined,
       });
-      router.push('/requests');
+      await navigateWithLoading('/requests', 'Μετάβαση στη λίστα αιτημάτων...');
     } catch (err: any) {
       const msg = err.response?.data ? JSON.stringify(err.response.data) : err.message;
       setError(`Σφάλμα: ${msg}`);

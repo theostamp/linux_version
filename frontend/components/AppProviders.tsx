@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { AuthProvider } from '@/components/contexts/AuthContext';
 import { BuildingProvider } from '@/components/contexts/BuildingContext';
 import { ReactQueryProvider } from '@/components/contexts/ReactQueryProvider';
+import { LoadingProvider } from '@/components/contexts/LoadingContext';
 import LayoutWrapper from '@/components/LayoutWrapper';
 
 export default function AppProviders({ children }: { readonly children: ReactNode }) {
@@ -18,7 +19,9 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   if (isPublicDisplay) {
     return (
       <ReactQueryProvider>
-        <LayoutWrapper>{children}</LayoutWrapper>
+        <LoadingProvider>
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </LoadingProvider>
       </ReactQueryProvider>
     );
   }
@@ -26,22 +29,26 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   if (isDashboard) {
     return (
       <ReactQueryProvider>
-        <AuthProvider>
-          <BuildingProvider>
-            {children}
-          </BuildingProvider>
-        </AuthProvider>
+        <LoadingProvider>
+          <AuthProvider>
+            <BuildingProvider>
+              {children}
+            </BuildingProvider>
+          </AuthProvider>
+        </LoadingProvider>
       </ReactQueryProvider>
     );
   }
 
   return (
     <ReactQueryProvider>
-      <AuthProvider>
-        <BuildingProvider>
-          <LayoutWrapper>{children}</LayoutWrapper>
-        </BuildingProvider>
-      </AuthProvider>
+      <LoadingProvider>
+        <AuthProvider>
+          <BuildingProvider>
+            <LayoutWrapper>{children}</LayoutWrapper>
+          </BuildingProvider>
+        </AuthProvider>
+      </LoadingProvider>
     </ReactQueryProvider>
   );
 }

@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 
 interface BuildingTableProps {
   buildings: Building[];
@@ -29,7 +30,7 @@ interface BuildingTableProps {
 const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) => {
   const { user } = useAuth();
   const { setCurrentBuilding, refreshBuildings } = useBuilding();
-  const router = useRouter();
+  const { navigateWithLoading } = useNavigationWithLoading();
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const canManage = user?.is_superuser || user?.is_staff;
@@ -52,9 +53,9 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
     }
   };
 
-  const handleSelectBuilding = (building: Building) => {
+  const handleSelectBuilding = async (building: Building) => {
     setCurrentBuilding(building);
-    router.push(`/buildings/${building.id}/dashboard`);
+    await navigateWithLoading(`/buildings/${building.id}/dashboard`, `Μετάβαση στο ${building.name}...`);
   };
 
   const formatDate = (dateString: string) => {

@@ -5,13 +5,19 @@ import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from 'react-hot-toast';
 import NewsTicker from '@/components/NewsTicker';
+import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
 
 export default function LayoutWrapper({ children }: { readonly children: ReactNode }) {
   const pathname = usePathname();
   const isInfoScreen = pathname?.startsWith('/info-screen');
 
   if (isInfoScreen) {
-    return <div className="min-h-screen">{children}</div>;
+    return (
+      <div className="min-h-screen">
+        {children}
+        <GlobalLoadingOverlay />
+      </div>
+    );
   }
 
   return (
@@ -24,6 +30,7 @@ export default function LayoutWrapper({ children }: { readonly children: ReactNo
         <Toaster position="top-right" />
       </div>
       <NewsTicker />
+      <GlobalLoadingOverlay />
     </div>
   );
 }

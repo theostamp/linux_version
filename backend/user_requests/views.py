@@ -13,6 +13,7 @@ from django.db.models import Count
 from core.utils import filter_queryset_by_user_and_building
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.utils import timezone
    
 
 class UserRequestViewSet(viewsets.ModelViewSet):
@@ -126,7 +127,17 @@ class UserRequestViewSet(viewsets.ModelViewSet):
         if new_status not in dict(UserRequest.STATUS_CHOICES):
             return Response({"detail": "Μη αποδεκτή κατάσταση."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Update status
         user_request.status = new_status
+        
+        # Handle completed_at field based on new status
+        if new_status == 'completed':
+            if not user_request.completed_at:
+                user_request.completed_at = timezone.now()
+        else:
+            # Clear completed_at if status is not completed
+            user_request.completed_at = None
+            
         user_request.save()
         serializer = self.get_serializer(user_request)
         return Response(serializer.data)

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import ErrorMessage from '@/components/ErrorMessage';
 import { createUserRequest } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import { useAuth } from '@/components/contexts/AuthContext';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ import { MapPin, User, AlertTriangle, Calendar } from 'lucide-react';
 export default function NewRequestPage() {
   const router = useRouter();
   const { currentBuilding, selectedBuilding } = useBuilding();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   
   // Χρησιμοποιούμε το selectedBuilding ή το currentBuilding
@@ -64,7 +66,6 @@ export default function NewRequestPage() {
         description: description.trim(),
         building: buildingToUse.id,
         type: maintenanceCategory || undefined,
-        maintenance_category: maintenanceCategory || undefined,
         priority: priority,
         location: location || undefined,
         apartment_number: apartmentNumber || undefined,
@@ -95,7 +96,7 @@ export default function NewRequestPage() {
 
       {/* Form */}
       <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h1 className="text-2xl font-bold mb-6 text-center">🔧 Νέο Αίτημα Συντήρησης</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">🔧 Νέο Αίτημα Ενοικου</h1>
         
         <BuildingFilterIndicator className="mb-6" />
         
@@ -107,6 +108,16 @@ export default function NewRequestPage() {
             </span>
           )}
         </div>
+
+        {/* User Information */}
+        {user && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center gap-2 text-sm text-blue-800">
+              <User className="w-4 h-4" />
+              <span>Δημιουργηθηκε απο: <strong>{user.first_name} {user.last_name}</strong> ({user.email})</span>
+            </div>
+          </div>
+        )}
 
         {error && <ErrorMessage message={error} />}
         

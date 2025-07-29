@@ -9,6 +9,7 @@ import useCsrf from '@/hooks/useCsrf';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import BuildingSelectorButton from '@/components/BuildingSelectorButton';
+import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 import {
   Home,
   Megaphone,
@@ -84,6 +85,7 @@ export default function Sidebar() {
     setSelectedBuilding,
     isLoading: buildingsIsLoading,
   } = useBuilding();
+  const { navigateWithLoading } = useNavigationWithLoading();
 
   // Auto-show tooltip for first-time users
   useEffect(() => {
@@ -139,6 +141,14 @@ export default function Sidebar() {
     if (hasSeenTooltip) {
       setShowTooltip(false);
     }
+  };
+
+  const handleNavigation = async (href: string, message?: string) => {
+    // Close mobile menu if open
+    setIsMobileMenuOpen(false);
+    
+    // Navigate with loading state
+    await navigateWithLoading(href, message);
   };
 
   // Loading state
@@ -365,11 +375,11 @@ export default function Sidebar() {
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {availableLinks.map((link) => (
-            <Link
+            <button
               key={link.href}
-              href={link.href}
+              onClick={() => handleNavigation(link.href, `Μετάβαση στο ${link.label.toLowerCase()}...`)}
               className={cn(
-                'flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ease-in-out group',
+                'flex items-center justify-start w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ease-in-out group text-left',
                 'hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 dark:hover:from-blue-900/50 dark:hover:to-blue-800/50',
                 'hover:shadow-md hover:transform hover:-translate-y-0.5',
                 pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/dashboard')
@@ -378,15 +388,15 @@ export default function Sidebar() {
               )}
             >
               <span className={cn(
-                'mr-3 transition-colors duration-200',
+                'mr-3 transition-colors duration-200 flex-shrink-0',
                 pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/dashboard')
                   ? 'text-white'
                   : 'text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'
               )}>
                 {link.icon}
               </span>
-              {link.label}
-            </Link>
+              <span className="text-left">{link.label}</span>
+            </button>
           ))}
         </nav>
 

@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 
 interface BuildingCardProps {
   building: Building;
@@ -18,7 +19,7 @@ interface BuildingCardProps {
 const BuildingCard: React.FC<BuildingCardProps> = ({ building, onRefresh }) => {
   const { user } = useAuth();
   const { setCurrentBuilding, refreshBuildings } = useBuilding();
-  const router = useRouter();
+  const { navigateWithLoading } = useNavigationWithLoading();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const canManage = user?.is_superuser || user?.is_staff;
@@ -42,9 +43,9 @@ const BuildingCard: React.FC<BuildingCardProps> = ({ building, onRefresh }) => {
     }
   };
 
-  const handleSelectBuilding = () => {
+  const handleSelectBuilding = async () => {
     setCurrentBuilding(building);
-    router.push(`/buildings/${building.id}/dashboard`);
+    await navigateWithLoading(`/buildings/${building.id}/dashboard`, `Μετάβαση στο ${building.name}...`);
   };
 
   return (

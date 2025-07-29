@@ -32,6 +32,7 @@ export default function RequestCard({ request }: Readonly<Props>) {
     location,
     apartment_number,
     maintenance_category,
+    created_by_username,
   } = request;
 
   const [supporting, setSupporting] = useState(false);
@@ -122,6 +123,12 @@ export default function RequestCard({ request }: Readonly<Props>) {
       {/* Assignment and dates */}
       <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
         <div className="flex items-center gap-4">
+          {/* Creator information */}
+          <span className="flex items-center gap-1">
+            <User className="w-4 h-4" />
+            Καταχωρητής: {created_by_username}
+          </span>
+          
           {assigned_to_username && (
             <span className="flex items-center gap-1">
               <User className="w-4 h-4" />

@@ -212,7 +212,9 @@ function DashboardContent() {
     const loadAll = async () => {
       setLoadingData(true);
       try {
-        const buildingId = selectedBuilding?.id || currentBuilding.id;
+        // Χρησιμοποιούμε την ίδια λογική με το requests page
+        // Αν είναι null, σημαίνει "όλα τα κτίρια" και περνάμε null στο API
+        const buildingId = selectedBuilding?.id ?? null;
         
         const [ann, vt, req] = await Promise.all([
           fetchAnnouncements(buildingId),

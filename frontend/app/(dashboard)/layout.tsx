@@ -9,6 +9,7 @@ import GlobalHeader from '@/components/GlobalHeader';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from 'react-hot-toast';
 import NewsTicker from '@/components/NewsTicker';
+import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { isAuthReady, isLoading: authLoading } = useAuth();
@@ -47,6 +48,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {/* News Ticker at Bottom */}
         <NewsTicker />
       </div>
+      
+      {/* Global Loading Overlay */}
+      <GlobalLoadingOverlay />
       
       <Toaster position="top-right" />
     </div>

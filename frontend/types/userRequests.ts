@@ -43,16 +43,10 @@ export interface UserRequestType {
 
 // 🔧 New: Maintenance Categories
 export const MAINTENANCE_CATEGORIES = [
-  { value: 'electrical', label: 'Ηλεκτρικά', icon: '⚡', color: 'text-yellow-600' },
-  { value: 'plumbing', label: 'Υδραυλικά', icon: '🚰', color: 'text-blue-600' },
-  { value: 'heating', label: 'Θέρμανση', icon: '🔥', color: 'text-red-600' },
-  { value: 'elevator', label: 'Ανελκυστήρας', icon: '🛗', color: 'text-purple-600' },
+  { value: 'maintenance', label: 'Συντήρηση', icon: '🔧', color: 'text-blue-600' },
   { value: 'cleaning', label: 'Καθαριότητα', icon: '🧹', color: 'text-green-600' },
-  { value: 'security', label: 'Ασφάλεια', icon: '🔒', color: 'text-gray-600' },
-  { value: 'structural', label: 'Δομικά', icon: '🏗️', color: 'text-orange-600' },
-  { value: 'landscaping', label: 'Κηπουρική', icon: '🌳', color: 'text-emerald-600' },
-  { value: 'pest_control', label: 'Απεντόμωση', icon: '🐜', color: 'text-brown-600' },
-  { value: 'fire_safety', label: 'Πυρασφάλεια', icon: '🚨', color: 'text-red-500' },
+  { value: 'technical', label: 'Τεχνικό', icon: '⚙️', color: 'text-gray-600' },
+  { value: 'security', label: 'Ασφάλεια', icon: '🔒', color: 'text-red-600' },
   { value: 'noise', label: 'Θόρυβος', icon: '🔊', color: 'text-pink-600' },
   { value: 'other', label: 'Άλλο', icon: '📋', color: 'text-gray-500' },
 ];
