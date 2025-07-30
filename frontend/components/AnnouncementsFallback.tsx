@@ -2,6 +2,7 @@
 
 import { Announcement } from '@/lib/api';
 import Link from 'next/link';
+import { isValidDate, safeFormatDate } from '@/lib/utils';
 
 interface Props {
   announcements: Announcement[];
@@ -11,17 +12,17 @@ export default function AnnouncementsFallback({ announcements }: Props) {
   const latest = announcements[0];
   if (!latest) return null;
 
-  const start = new Date(latest.start_date);
-  const end = new Date(latest.end_date);
+  const start = isValidDate(latest.start_date) ? new Date(latest.start_date) : null;
+  const end = isValidDate(latest.end_date) ? new Date(latest.end_date) : null;
   const now = new Date();
 
   let statusLabel = '';
   let statusColor = '';
 
-  if (now < start) {
+  if (start && now < start) {
     statusLabel = 'Προσεχώς';
     statusColor = 'bg-blue-200 text-blue-800';
-  } else if (now > end) {
+  } else if (end && now > end) {
     statusLabel = 'Ληγμένη';
     statusColor = 'bg-gray-300 text-gray-700';
   } else {
@@ -38,7 +39,7 @@ export default function AnnouncementsFallback({ announcements }: Props) {
         </span>
       </div>
       <p className="text-xs text-gray-500 mb-3">
-        Από {start.toLocaleDateString('el-GR')} έως {end.toLocaleDateString('el-GR')}
+        Από {safeFormatDate(latest.start_date, 'dd/MM/yyyy')} έως {safeFormatDate(latest.end_date, 'dd/MM/yyyy')}
       </p>
       <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
         {latest.description}

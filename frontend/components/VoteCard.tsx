@@ -8,6 +8,7 @@ import { Trash2 } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
+import { isValidDate, safeFormatDate } from '@/lib/utils';
 
 type Vote = {
   id: number;
@@ -28,6 +29,7 @@ export default function VoteCard({ vote }: { readonly vote: Vote }) {
 
   const today = new Date();
   const isActive =
+    isValidDate(vote.start_date) && isValidDate(vote.end_date) &&
     new Date(vote.start_date) <= today && today <= new Date(vote.end_date);
 
   useEffect(() => {
@@ -87,11 +89,7 @@ export default function VoteCard({ vote }: { readonly vote: Vote }) {
   };
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('el-GR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+    safeFormatDate(iso, 'dd/MM/yyyy');
 
   // Show delete button only for superusers and managers
   const canDelete = user?.is_superuser || user?.is_staff;

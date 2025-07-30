@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useKeenSlider } from 'keen-slider/react';
-import { Bell, Calendar, Clock, MapPin, Users, Vote, AlertTriangle, Building, ExternalLink } from 'lucide-react';
-import { Announcement, Vote as VoteType } from '@/lib/api';
+import { Bell, Calendar, Clock, MapPin, Users, Vote, AlertTriangle, Building, ExternalLink, Settings } from 'lucide-react';
+import { Announcement, Vote as VoteType, Building as BuildingType } from '@/lib/api';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
+import { safeFormatDate } from '@/lib/utils';
+import BuildingSelector from './BuildingSelector';
 
 interface KioskModeProps {
   announcements: Announcement[];
@@ -45,8 +47,11 @@ export default function KioskMode({
 }: KioskModeProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [weather, setWeather] = useState<string>('');
   const [newsTicker, setNewsTicker] = useState<string>('');
+  const [showBuildingSelector, setShowBuildingSelector] = useState(false);
+  const [currentBuildingId, setCurrentBuildingId] = useState<number | undefined>(
+    buildingInfo?.id
+  );
   
   const sliderRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -95,27 +100,6 @@ export default function KioskMode({
     };
   }, [instanceRef]);
 
-  // Load weather data
-  useEffect(() => {
-    async function loadWeather() {
-      try {
-        const response = await fetch(
-          'https://api.open-meteo.com/v1/forecast?latitude=37.98&longitude=23.72&current_weather=true&timezone=Europe%2FAthens'
-        );
-        if (response.ok) {
-          const data = await response.json();
-          const { temperature, weathercode } = data.current_weather;
-          const weatherText = getWeatherText(weathercode);
-          setWeather(`${temperature}°C - ${weatherText}`);
-        }
-      } catch (error) {
-        console.error('Failed to load weather:', error);
-        setWeather('Αποτυχία φόρτωσης καιρού');
-      }
-    }
-    loadWeather();
-  }, []);
-
   // Load news ticker
   useEffect(() => {
     async function loadNews() {
@@ -132,25 +116,46 @@ export default function KioskMode({
     loadNews();
   }, []);
 
-  function getWeatherText(code: number): string {
-    const weatherMap: Record<number, string> = {
-      0: 'Αίθριος',
-      1: 'Κυρίως καθαρός',
-      2: 'Λίγα σύννεφα',
-      3: 'Συννεφιά',
-      45: 'Ομίχλη',
-      48: 'Ομίχλη',
-      51: 'Ασθενής ψιχάλα',
-      53: 'Ψιχάλα',
-      55: 'Έντονη ψιχάλα',
-      61: 'Ασθενής βροχή',
-      63: 'Μέτρια βροχή',
-      65: 'Ισχυρή βροχή',
-      80: 'Περιστασιακή βροχή',
-      95: 'Καταιγίδα',
+  // Keyboard shortcut handler - Ctrl + Alt + B
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl + Alt + B to open building selector
+      if (event.ctrlKey && event.altKey && event.key === 'b') {
+        event.preventDefault();
+        setShowBuildingSelector(true);
+      }
+      
+      // Escape to close building selector
+      if (event.key === 'Escape') {
+        setShowBuildingSelector(false);
+      }
     };
-    return weatherMap[code] || 'Άγνωστο';
-  }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Handle building selection
+  const handleBuildingSelect = (building: any) => {
+    if (building === null) {
+      // Handle "Όλα τα Κτίρια" selection
+      setCurrentBuildingId(undefined);
+      
+      // Remove building parameter from URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('building');
+      window.location.href = url.toString();
+    } else {
+      // Handle specific building selection
+      const buildingId = typeof building === 'number' ? building : building.id;
+      setCurrentBuildingId(buildingId);
+      
+      // Reload the page with the new building ID
+      const url = new URL(window.location.href);
+      url.searchParams.set('building', buildingId.toString());
+      window.location.href = url.toString();
+    }
+  };
 
   const slides = [
     // Slide 1: Announcements
@@ -160,83 +165,80 @@ export default function KioskMode({
       icon: Bell,
       content: announcements.length > 0 ? (
         <div className="space-y-4">
-          {announcements.slice(0, 3).map((announcement) => (
+          {announcements.map((announcement) => (
             <div
               key={announcement.id}
-              className={`p-4 rounded-lg border-l-4 ${
-                announcement.is_urgent
-                  ? 'bg-red-50 border-red-500'
-                  : 'bg-blue-50 border-blue-500'
-              }`}
+              className="bg-white bg-opacity-10 backdrop-blur-sm p-6 rounded-lg border border-white border-opacity-20"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <Bell className="w-6 h-6 text-blue-300" />
+                </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 mb-1">
+                  <h3 className="text-lg font-semibold mb-3">
                     {announcement.title}
                   </h3>
-                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                    {announcement.description}
+                  <p className="text-sm opacity-90 mb-3 leading-relaxed">
+                    {announcement.content}
                   </p>
-                  <div className="flex items-center text-xs text-gray-500">
-                    <Calendar className="w-3 h-3 mr-1" />
-                    {format(new Date(announcement.start_date), 'dd/MM/yyyy', { locale: el })} - 
-                    {format(new Date(announcement.end_date), 'dd/MM/yyyy', { locale: el })}
+                  <div className="flex items-center text-xs opacity-75">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    {safeFormatDate(announcement.created_at, 'dd/MM/yyyy HH:mm', { locale: el })}
                   </div>
                 </div>
-                {announcement.is_urgent && (
-                  <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                )}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-center text-gray-500 py-8">
+        <div className="text-center text-gray-300 py-8">
           <Bell className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>Δεν υπάρχουν ενεργές ανακοινώσεις</p>
+          <p className="text-lg">Δεν υπάρχουν ανακοινώσεις</p>
         </div>
       ),
     },
     // Slide 2: Votes
     {
       id: 'votes',
-      title: 'Ενεργές Ψηφοφορίες',
+      title: 'Ψηφοφορίες',
       icon: Vote,
       content: votes.length > 0 ? (
         <div className="space-y-4">
           {votes.map((vote) => (
             <div
               key={vote.id}
-              className={`p-4 rounded-lg border-l-4 ${
-                vote.is_urgent
-                  ? 'bg-orange-50 border-orange-500'
-                  : 'bg-green-50 border-green-500'
-              }`}
+              className="bg-white bg-opacity-10 backdrop-blur-sm p-6 rounded-lg border border-white border-opacity-20"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <Vote className="w-6 h-6 text-green-300" />
+                </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 mb-1">
+                  <h3 className="text-lg font-semibold mb-3">
                     {vote.title}
                   </h3>
-                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                  <p className="text-sm opacity-90 mb-3 leading-relaxed">
                     {vote.description}
                   </p>
-                  <div className="flex items-center text-xs text-gray-500">
-                    <Calendar className="w-3 h-3 mr-1" />
-                    Λήξη: {format(new Date(vote.end_date), 'dd/MM/yyyy', { locale: el })}
+                  <div className="flex items-center justify-between text-xs opacity-75">
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      Λήξη: {safeFormatDate(vote.end_date, 'dd/MM/yyyy', { locale: el })}
+                    </div>
+                    <div className="flex items-center">
+                      <Users className="w-4 h-4 mr-1" />
+                      {vote.total_votes || 0} ψήφοι
+                    </div>
                   </div>
                 </div>
-                {vote.is_urgent && (
-                  <AlertTriangle className="w-5 h-5 text-orange-500 flex-shrink-0" />
-                )}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-center text-gray-500 py-8">
+        <div className="text-center text-gray-300 py-8">
           <Vote className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>Δεν υπάρχουν ενεργές ψηφοφορίες</p>
+          <p className="text-lg">Δεν υπάρχουν ενεργές ψηφοφορίες</p>
         </div>
       ),
     },
@@ -248,11 +250,11 @@ export default function KioskMode({
       content: buildingInfo ? (
         <div className="space-y-6">
           <div className="text-center">
-            <Building className="w-16 h-16 mx-auto mb-4 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <Building className="w-16 h-16 mx-auto mb-4 text-blue-300" />
+            <h2 className="text-2xl font-bold text-white mb-3">
               {buildingInfo.name}
             </h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-blue-200 mb-4 text-base">
               <MapPin className="w-4 h-4 inline mr-1" />
               {buildingInfo.address}
               {buildingInfo.city && `, ${buildingInfo.city}`}
@@ -260,19 +262,19 @@ export default function KioskMode({
           </div>
           
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg text-center">
-              <Users className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-              <p className="text-sm text-gray-600">Διαμερίσματα</p>
-              <p className="text-xl font-bold text-blue-900">
+            <div className="bg-white bg-opacity-10 backdrop-blur-sm p-4 rounded-lg text-center">
+              <Users className="w-8 h-8 mx-auto mb-2 text-blue-300" />
+              <p className="text-sm text-blue-200 mb-1">Διαμερίσματα</p>
+              <p className="text-xl font-bold text-white">
                 {buildingInfo.apartments_count || 'N/A'}
               </p>
             </div>
             
             {buildingInfo.internal_manager_name && (
-              <div className="bg-green-50 p-4 rounded-lg text-center">
-                <Users className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                <p className="text-sm text-gray-600">Διαχειριστής</p>
-                <p className="text-sm font-semibold text-green-900">
+              <div className="bg-white bg-opacity-10 backdrop-blur-sm p-4 rounded-lg text-center">
+                <Users className="w-8 h-8 mx-auto mb-2 text-green-300" />
+                <p className="text-sm text-green-200 mb-1">Διαχειριστής</p>
+                <p className="text-sm font-semibold text-white">
                   {buildingInfo.internal_manager_name}
                 </p>
               </div>
@@ -280,9 +282,9 @@ export default function KioskMode({
           </div>
         </div>
       ) : (
-        <div className="text-center text-gray-500 py-8">
+        <div className="text-center text-gray-300 py-8">
           <Building className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>Δεν υπάρχουν πληροφορίες κτιρίου</p>
+          <p className="text-lg">Δεν υπάρχουν πληροφορίες κτιρίου</p>
         </div>
       ),
     },
@@ -300,37 +302,45 @@ export default function KioskMode({
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-2">
+                  <h3 className="text-lg font-semibold mb-3">
                     {banner.title}
                   </h3>
                   <p className="text-sm opacity-90 mb-3">
                     {banner.description}
                   </p>
                   <div className="flex items-center text-xs opacity-75">
-                    <ExternalLink className="w-3 h-3 mr-1" />
+                    <ExternalLink className="w-4 h-4 mr-1" />
                     Περισσότερες πληροφορίες
                   </div>
                 </div>
-                <div className="w-16 h-16 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <ExternalLink className="w-8 h-8" />
+                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                  <ExternalLink className="w-6 h-6" />
                 </div>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-center text-gray-500 py-8">
+        <div className="text-center text-gray-300 py-8">
           <ExternalLink className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>Δεν υπάρχουν διαθέσιμες υπηρεσίες</p>
+          <p className="text-lg">Δεν υπάρχουν διαθέσιμες υπηρεσίες</p>
         </div>
       ),
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white">
-      {/* Header */}
-      <div className="bg-black bg-opacity-30 p-4">
+    <div className="h-screen w-screen text-white flex flex-col overflow-hidden font-ubuntu">
+      {/* Building Selector Modal */}
+      <BuildingSelector
+        isOpen={showBuildingSelector}
+        onClose={() => setShowBuildingSelector(false)}
+        onBuildingSelect={handleBuildingSelect}
+        selectedBuilding={currentBuildingId ? { id: currentBuildingId, name: buildingInfo?.name || '', address: buildingInfo?.address || '' } as BuildingType : null}
+      />
+
+      {/* Building Info Bar - Fixed height for TV */}
+      <div className="bg-black bg-opacity-30 p-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Building className="w-8 h-8" />
@@ -355,18 +365,18 @@ export default function KioskMode({
         </div>
       </div>
 
-      {/* News Ticker */}
+      {/* News Ticker - Fixed height */}
       {newsTicker && (
-        <div className="bg-yellow-600 bg-opacity-90 p-2 overflow-hidden">
+        <div className="bg-yellow-600 bg-opacity-90 p-2 overflow-hidden flex-shrink-0">
           <div className="flex items-center space-x-2 animate-marquee">
-            <span className="font-semibold">📢</span>
-            <span className="whitespace-nowrap">{newsTicker}</span>
+            <span className="font-semibold text-sm">📢</span>
+            <span className="whitespace-nowrap text-sm">{newsTicker}</span>
           </div>
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="flex-1 p-6">
+      {/* Main Content - Flexible height */}
+      <div className="flex-1 p-6 overflow-hidden">
         <div ref={sliderRef} className="h-full">
           <div
             ref={sliderContainerRef}
@@ -375,20 +385,19 @@ export default function KioskMode({
             {slides.map((slide, index) => (
               <div key={slide.id} className="keen-slider__slide">
                 <div className="h-full flex flex-col">
-                  {/* Slide Header */}
-                  <div className="flex items-center justify-between mb-6">
+                  {/* Slide Header - Fixed height */}
+                  <div className="flex items-center mb-6 flex-shrink-0">
                     <div className="flex items-center space-x-3">
                       <slide.icon className="w-8 h-8 text-blue-300" />
                       <h2 className="text-2xl font-bold">{slide.title}</h2>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm opacity-75">{weather}</div>
-                    </div>
                   </div>
 
-                  {/* Slide Content */}
-                  <div className="flex-1 overflow-y-auto">
-                    {slide.content}
+                  {/* Slide Content - Flexible height with proper scrolling */}
+                  <div className="flex-1 overflow-y-auto pr-4 pb-4">
+                    <div className="h-full">
+                      {slide.content}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -397,9 +406,9 @@ export default function KioskMode({
         </div>
       </div>
 
-      {/* Navigation Dots */}
-      <div className="bg-black bg-opacity-30 p-4">
-        <div className="flex justify-center space-x-2">
+      {/* Navigation Dots - Fixed height */}
+      <div className="bg-black bg-opacity-30 p-4 flex-shrink-0">
+        <div className="flex justify-center space-x-3">
           {slides.map((_, index) => (
             <button
               key={index}

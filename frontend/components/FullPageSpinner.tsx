@@ -9,7 +9,8 @@ interface FullPageSpinnerProps {
 export default function FullPageSpinner({ message = "Loading..." }: FullPageSpinnerProps) {
   return (
     <div style={{
-      minHeight: '100vh',
+      height: '100vh',
+      width: '100vw',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -18,7 +19,7 @@ export default function FullPageSpinner({ message = "Loading..." }: FullPageSpin
       zIndex: 1000
     }}>
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4" />
-      <div style={{ color: '#333', fontSize: 18 }}>{message}</div>
+      <div style={{ color: '#333', fontSize: 18, fontWeight: 'bold' }}>{message}</div>
     </div>
   );
 }

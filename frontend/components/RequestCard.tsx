@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { UserRequest, MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, REQUEST_STATUSES } from '@/types/userRequests';
+import { safeFormatDate, isValidDate } from '@/lib/utils';
 import { toggleSupportRequest } from '@/lib/api';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -69,6 +70,7 @@ export default function RequestCard({ request }: Readonly<Props>) {
 
   // Check if overdue
   const isOverdue = estimated_completion && 
+    isValidDate(estimated_completion) &&
     new Date(estimated_completion) < new Date() && 
     status !== 'completed' && 
     status !== 'cancelled';
@@ -138,7 +140,7 @@ export default function RequestCard({ request }: Readonly<Props>) {
           )}
           <span className="flex items-center gap-1">
             <Calendar className="w-4 h-4" />
-            {format(new Date(created_at), 'd MMM yyyy, HH:mm', { locale: el })}
+            {safeFormatDate(created_at, 'd MMM yyyy, HH:mm', { locale: el })}
           </span>
         </div>
         
@@ -152,7 +154,7 @@ export default function RequestCard({ request }: Readonly<Props>) {
                 Καθυστέρηση
               </span>
             ) : (
-              `Εκτιμώμενη: ${format(new Date(estimated_completion), 'd MMM', { locale: el })}`
+              `Εκτιμώμενη: ${safeFormatDate(estimated_completion, 'd MMM', { locale: el })}`
             )}
           </div>
         )}
@@ -162,7 +164,7 @@ export default function RequestCard({ request }: Readonly<Props>) {
       {completed_at && (
         <div className="flex items-center gap-1 text-sm text-green-600 mb-3">
           <CheckCircle className="w-4 h-4" />
-          Ολοκληρώθηκε: {format(new Date(completed_at), 'd MMM yyyy', { locale: el })}
+          Ολοκληρώθηκε: {safeFormatDate(completed_at, 'd MMM yyyy', { locale: el })}
         </div>
       )}
 

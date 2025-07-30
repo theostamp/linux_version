@@ -7,6 +7,10 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        ubuntu: ['var(--font-ubuntu)', 'sans-serif'],
+        roboto: ['var(--font-roboto)', 'sans-serif'],
+      },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
         marquee: 'marquee 20s linear infinite',

@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import { Announcement } from '@/lib/api';
 import Link from 'next/link';
 import { Bell, Calendar, ArrowRight } from 'lucide-react';
+import { isValidDate, safeFormatDate } from '@/lib/utils';
 
 interface Props {
   announcements: Announcement[];
@@ -61,16 +62,16 @@ export default function AnnouncementsCarousel({ announcements }: Readonly<Props>
         className="flex overflow-hidden relative w-full h-[200px] rounded-lg" // Reduced height
       >
         {announcements.slice(0, 3).map((a) => {
-          const start = new Date(a.start_date);
-          const end = new Date(a.end_date);
+          const start = isValidDate(a.start_date) ? new Date(a.start_date) : null;
+          const end = isValidDate(a.end_date) ? new Date(a.end_date) : null;
           const now = new Date();
 
           let status = 'Ενεργή';
           let statusColor = 'bg-green-100 text-green-700';
-          if (now < start) {
+          if (start && now < start) {
             status = 'Προσεχώς';
             statusColor = 'bg-yellow-100 text-yellow-700';
-          } else if (now > end) {
+          } else if (end && now > end) {
             status = 'Ληγμένη';
             statusColor = 'bg-gray-100 text-gray-700';
           }
@@ -100,7 +101,7 @@ export default function AnnouncementsCarousel({ announcements }: Readonly<Props>
                 </div>
                 <div className="flex items-center text-xs opacity-80">
                   <Calendar className="w-3 h-3 mr-1" />
-                  {start.toLocaleDateString('el-GR')} – {end.toLocaleDateString('el-GR')}
+                  {safeFormatDate(a.start_date, 'dd/MM/yyyy')} – {safeFormatDate(a.end_date, 'dd/MM/yyyy')}
                 </div>
               </div>
             </Link>

@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useBuilding } from '@/components/contexts/BuildingContext';
-import { Building } from '@/lib/api';
+import { Building, fetchAllBuildings } from '@/lib/api';
 import { Search, Building as BuildingIcon, Check, X } from 'lucide-react';
 
 interface BuildingSelectorProps {
@@ -18,10 +17,31 @@ export default function BuildingSelector({
   onBuildingSelect,
   selectedBuilding,
 }: BuildingSelectorProps) {
-  const { buildings, isLoading } = useBuilding();
+  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredBuildings, setFilteredBuildings] = useState<Building[]>([]);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Load buildings when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      loadBuildings();
+    }
+  }, [isOpen]);
+
+  const loadBuildings = async () => {
+    setIsLoading(true);
+    try {
+      const buildingsData = await fetchAllBuildings();
+      setBuildings(buildingsData);
+    } catch (error) {
+      console.error('Error loading buildings:', error);
+      setBuildings([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Φιλτράρισμα κτιρίων βάσει του search term
   useEffect(() => {
