@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Building, deleteBuilding } from '@/lib/api';
+import type { Building } from '@/lib/api';
+import { deleteBuilding } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { Building as BuildingIcon, Home, MapPin, User, Edit, Trash, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -95,6 +96,8 @@ const BuildingCard: React.FC<BuildingCardProps> = ({ building, onRefresh }) => {
             </div>
           </div>
         )}
+
+
 
         {/* Actions */}
         <div className="pt-3 mt-3 border-t flex justify-between items-center">

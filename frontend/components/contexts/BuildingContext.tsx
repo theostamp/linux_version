@@ -7,7 +7,8 @@ import React, {
   useState,
   ReactNode,
 } from 'react';
-import { fetchBuildings, fetchAllBuildings, Building, BuildingsResponse } from '@/lib/api';
+import type { Building, BuildingsResponse } from '@/lib/api';
+import { fetchBuildings, fetchAllBuildings } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';

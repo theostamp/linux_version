@@ -37,6 +37,26 @@ class Building(models.Model):
         max_length=20,
         blank=True
     )
+    
+    # Γραφείο Διαχείρισης
+    management_office_name = models.CharField(
+        _("Όνομα Γραφείου Διαχείρισης"),
+        max_length=255,
+        blank=True,
+        help_text=_("Όνομα της εταιρείας/γραφείου διαχείρισης")
+    )
+    management_office_phone = models.CharField(
+        _("Τηλέφωνο Γραφείου Διαχείρισης"),
+        max_length=20,
+        blank=True,
+        help_text=_("Τηλέφωνο επικοινωνίας με το γραφείο διαχείρισης")
+    )
+    management_office_address = models.CharField(
+        _("Διεύθυνση Γραφείου Διαχείρισης"),
+        max_length=255,
+        blank=True,
+        help_text=_("Διεύθυνση του γραφείου διαχείρισης")
+    )
     street_view_image = models.URLField(
         _("Εικόνα Street View"),
         max_length=1000,

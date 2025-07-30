@@ -22,9 +22,16 @@ def public_info(request, building_id=None):
     if building_id is None:
         building_id = request.GET.get('building')
     
+    # Convert building_id to int if it's a string
+    if building_id is not None:
+        try:
+            building_id = int(building_id)
+        except (ValueError, TypeError):
+            building_id = None
+    
     # Get active announcements
     qs_announcements = Announcement.objects.filter(is_active=True, published=True)
-    if building_id:
+    if building_id and building_id != 0:  # 0 means "all buildings"
         qs_announcements = qs_announcements.filter(building_id=building_id)
     
     announcements_data = list(
@@ -36,7 +43,7 @@ def public_info(request, building_id=None):
     
     # Get active votes
     qs_votes = Vote.objects.filter(is_active=True)
-    if building_id:
+    if building_id and building_id != 0:  # 0 means "all buildings"
         qs_votes = qs_votes.filter(building_id=building_id)
     
     votes_data = list(
@@ -51,7 +58,7 @@ def public_info(request, building_id=None):
     
     # Get building information
     building_info = None
-    if building_id:
+    if building_id and building_id != 0:  # 0 means "all buildings"
         try:
             building = Building.objects.get(id=building_id)
             building_info = {
@@ -63,6 +70,9 @@ def public_info(request, building_id=None):
                 'apartments_count': building.apartments_count,
                 'internal_manager_name': building.internal_manager_name,
                 'internal_manager_phone': building.internal_manager_phone,
+                'management_office_name': building.management_office_name,
+                'management_office_phone': building.management_office_phone,
+                'management_office_address': building.management_office_address,
             }
         except Building.DoesNotExist:
             pass

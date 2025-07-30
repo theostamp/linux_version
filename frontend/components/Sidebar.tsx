@@ -344,6 +344,30 @@ export default function Sidebar() {
               <p className="text-xs text-gray-500 dark:text-gray-400">Διαχείριση Κτιρίων</p>
             </div>
           </div>
+          
+          {/* Management Office Info */}
+          {user?.office_name && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-4">
+              <div className="flex items-start space-x-2">
+                <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-blue-800 dark:text-blue-200 truncate">
+                    {user.office_name}
+                  </p>
+                  {user.office_phone && (
+                    <p className="text-xs text-blue-600 dark:text-blue-300 truncate">
+                      {user.office_phone}
+                    </p>
+                  )}
+                  {user.office_address && (
+                    <p className="text-xs text-blue-600 dark:text-blue-300 truncate">
+                      {user.office_address}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           <div className="relative group" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             <BuildingSelectorButton
               onBuildingSelect={setSelectedBuilding}

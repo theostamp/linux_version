@@ -29,6 +29,9 @@ urlpatterns = [
     # Authentication & User endpoints (διαθέσιμο και στο public tenant)
     path('api/users/', include('users.urls')),
     
+    # Public buildings endpoint (διαθέσιμο στο public tenant)
+    path('api/buildings/public/', include('buildings.public_urls')),
+    
     # Core endpoints (CSRF token) - διαθέσιμο στο public tenant
     path('api/', include('core.urls')),
 ]

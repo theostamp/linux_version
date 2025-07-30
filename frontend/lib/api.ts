@@ -284,6 +284,9 @@ export type Building = {
   apartments_count?: number;
   internal_manager_name?: string;
   internal_manager_phone?: string;
+  management_office_name?: string;
+  management_office_phone?: string;
+  management_office_address?: string;
   created_at: string;
   updated_at?: string;
   street_view_image?: string;
@@ -374,6 +377,23 @@ export async function fetchAllBuildings(): Promise<Building[]> {
     return buildings;
   } catch (error) {
     console.error('[API CALL] Error fetching all buildings:', error);
+    throw error;
+  }
+}
+
+// Public version for kiosk mode (no authentication required)
+export async function fetchAllBuildingsPublic(): Promise<Building[]> {
+  console.log('[API CALL] Fetching all buildings (public, no pagination)');
+  try {
+    // Use apiPublic for public access to the public endpoint
+    const resp = await apiPublic.get<Building[]>('/buildings/public/');
+    const buildings = resp.data;
+    console.log('[API CALL] Raw API response (public):', buildings);
+    console.log('[API CALL] Buildings count (public):', buildings.length);
+    
+    return buildings;
+  } catch (error) {
+    console.error('[API CALL] Error fetching all buildings (public):', error);
     throw error;
   }
 }
@@ -636,6 +656,9 @@ export interface PublicInfoData {
     apartments_count?: number;
     internal_manager_name?: string;
     internal_manager_phone?: string;
+    management_office_name?: string;
+    management_office_phone?: string;
+    management_office_address?: string;
   };
   advertising_banners?: Array<{
     id: number;

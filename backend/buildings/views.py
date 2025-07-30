@@ -2,7 +2,8 @@
 
 from rest_framework import viewsets, permissions, status  
 from rest_framework.response import Response  
-from rest_framework.decorators import action  
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import JSONParser
 from django.views.decorators.csrf import ensure_csrf_cookie  
 from django.http import JsonResponse  
@@ -11,13 +12,24 @@ from django.utils import timezone
 from .models import Building, BuildingMembership
 from .serializers import BuildingSerializer, BuildingMembershipSerializer
 from users.models import CustomUser
-from rest_framework.permissions import IsAuthenticated  
 
 
 @ensure_csrf_cookie
 def get_csrf_token(request):
     """Δίνει CSRF cookie χωρίς να απαιτείται login"""
     return JsonResponse({"message": "CSRF cookie set"})
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_buildings_list(request):
+    """
+    Public endpoint for listing buildings (no authentication required)
+    Used by kiosk mode
+    """
+    buildings = Building.objects.all()
+    serializer = BuildingSerializer(buildings, many=True)
+    return Response(serializer.data)
 
 
 class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet

@@ -4,7 +4,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { fetchBuilding, Building } from '@/lib/api';
+import type { Building } from '@/lib/api';
+import { fetchBuilding } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Building as BuildingIcon, Edit, MapPin, Phone } from 'lucide-react';
 import Link from 'next/link';

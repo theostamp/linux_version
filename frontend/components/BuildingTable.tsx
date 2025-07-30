@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Building, deleteBuilding } from '@/lib/api';
+import type { Building } from '@/lib/api';
+import { deleteBuilding } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { 
@@ -101,6 +102,7 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Διαχειριστής
               </th>
+
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Ημ/νία Δημιουργίας
               </th>
@@ -176,6 +178,8 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
                     <span className="text-sm text-gray-500">Δεν έχει οριστεί</span>
                   )}
                 </td>
+
+
 
                 {/* Ημ/νία Δημιουργίας */}
                 <td className="px-6 py-4 whitespace-nowrap">

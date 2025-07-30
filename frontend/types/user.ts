@@ -10,6 +10,11 @@ export type User = {
   is_superuser?: boolean;
   role?: string;
 
+  // Office Management Details
+  office_name?: string;
+  office_phone?: string;
+  office_address?: string;
+
   // ✅ Προσθήκη profile αν το API το επιστρέφει
   profile?: {
     role?: 'resident' | 'manager' | 'superuser';

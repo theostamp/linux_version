@@ -1,38 +1,23 @@
 # backend/users/views.py
 
-from django.http import JsonResponse 
- 
-  
-from django.views.decorators.csrf import ensure_csrf_cookie 
- 
-  
-from rest_framework import status, viewsets 
-from rest_framework.decorators import api_view, permission_classes, authentication_classes 
-from rest_framework.permissions import AllowAny, IsAuthenticated 
-from rest_framework.response import Response 
-from rest_framework_simplejwt.tokens import RefreshToken 
-from rest_framework_simplejwt.authentication import JWTAuthentication 
-from django.contrib.auth import authenticate, login, logout 
- 
-  
-from django.views.decorators.csrf import csrf_exempt       #  <-- πρόσθεσε αυτό
- 
-  
-
-from rest_framework.decorators import api_view 
-from rest_framework.response import Response 
-from django.contrib.auth import get_user_model 
- 
-  
+from django.contrib.auth import authenticate, get_user_model
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.http import JsonResponse
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import CustomUser
-from .serializers import UserSerializer
-
+from .serializers import UserSerializer, OfficeDetailsSerializer
 
 @ensure_csrf_cookie
 def get_csrf_token(request):
     """
-    Endpoint για τοποθέτηση CSRF cookie (εφόσον το χρειάζεστε ακόμα για άλλες φόρμες).
-    GET /api/users/csrf/
+    GET /api/csrf/
+    Επιστρέφει CSRF token για frontend forms.
     """
     return JsonResponse({"message": "CSRF cookie set"})
 
@@ -80,6 +65,9 @@ def login_view(request):
         'email': user.email,
         'first_name': user.first_name,
         'last_name': user.last_name,
+        'office_name': user.office_name,
+        'office_phone': user.office_phone,
+        'office_address': user.office_address,
     }
 
     return Response({
@@ -87,7 +75,6 @@ def login_view(request):
         'refresh': str(refresh),
         'user': user_data,
     }, status=status.HTTP_200_OK)
-
 
 
 @api_view(['GET'])
@@ -109,6 +96,9 @@ def me_view(request):
         'is_staff': user.is_staff,
         'is_superuser': user.is_superuser,
         'role': role,
+        'office_name': user.office_name,
+        'office_phone': user.office_phone,
+        'office_address': user.office_address,
     }, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
@@ -137,7 +127,28 @@ def logout_view(request):
     return Response({'message': 'Αποσυνδεθήκατε επιτυχώς.'}, status=status.HTTP_200_OK)
 
 
-class UserViewSet(viewsets.ModelViewSet):
+@api_view(['PUT', 'PATCH'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def update_office_details(request):
+    """
+    PUT/PATCH /api/users/office-details/
+    Ενημέρωση των στοιχείων γραφείου διαχείρισης του authenticated χρήστη.
+    """
+    user = request.user
+    serializer = OfficeDetailsSerializer(user, data=request.data, partial=True)
+    
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            'message': 'Τα στοιχεία γραφείου διαχείρισης ενημερώθηκαν επιτυχώς.',
+            'office_details': serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserViewSet(ModelViewSet):
     """
     ViewSet για CRUD operations στο CustomUser.
     Protected πίσω από JWT authentication.

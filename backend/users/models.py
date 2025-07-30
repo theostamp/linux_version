@@ -48,6 +48,26 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         help_text=_("Ρόλος σε επίπεδο tenant (π.χ. γραφείο διαχείρισης)")
     )
 
+    # Office Management Details - Auto-filled when creating buildings
+    office_name = models.CharField(
+        _("Όνομα Γραφείου Διαχείρισης"),
+        max_length=255,
+        blank=True,
+        help_text=_("Όνομα της εταιρείας/γραφείου διαχείρισης")
+    )
+    office_phone = models.CharField(
+        _("Τηλέφωνο Γραφείου Διαχείρισης"),
+        max_length=20,
+        blank=True,
+        help_text=_("Τηλέφωνο επικοινωνίας με το γραφείο διαχείρισης")
+    )
+    office_address = models.CharField(
+        _("Διεύθυνση Γραφείου Διαχείρισης"),
+        max_length=255,
+        blank=True,
+        help_text=_("Διεύθυνση του γραφείου διαχείρισης")
+    )
+
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'

@@ -5,7 +5,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorMessage from '@/components/ErrorMessage';
-import { createUserRequest, fetchBuildings, Building } from '@/lib/api';
+import type { Building } from '@/lib/api';
+import { createUserRequest, fetchBuildings } from '@/lib/api';
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 
 // Προκαθορισμένες επιλογές για τον τύπο αίτησης

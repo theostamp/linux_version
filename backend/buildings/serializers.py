@@ -67,6 +67,9 @@ class BuildingSerializer(serializers.ModelSerializer):
             'apartments_count',
             'internal_manager_name',
             'internal_manager_phone',
+            'management_office_name',
+            'management_office_phone',
+            'management_office_address',
             'street_view_image',
             'latitude',
             'longitude',
@@ -75,6 +78,26 @@ class BuildingSerializer(serializers.ModelSerializer):
             'manager'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        """
+        Override create method to automatically populate office details from current user
+        """
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            user = request.user
+            
+            # Auto-populate office details from user if not provided
+            if not validated_data.get('management_office_name') and user.office_name:
+                validated_data['management_office_name'] = user.office_name
+            
+            if not validated_data.get('management_office_phone') and user.office_phone:
+                validated_data['management_office_phone'] = user.office_phone
+            
+            if not validated_data.get('management_office_address') and user.office_address:
+                validated_data['management_office_address'] = user.office_address
+        
+        return super().create(validated_data)
 
     def validate_latitude(self, value):
         """Validate latitude field"""

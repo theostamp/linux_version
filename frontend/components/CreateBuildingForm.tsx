@@ -2,16 +2,24 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Building, createBuilding, updateBuilding } from '@/lib/api';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import useCsrf from '@/hooks/useCsrf';
-import { Button } from '@/components/ui/button';
-import { Save, Loader2, MapPin, Camera } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import AddressAutocomplete from '@/components/AddressAutocomplete';
-import StreetViewImage from '@/components/StreetViewImage';
+import { Button } from '@/components/ui/button';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import { useAuth } from '@/components/contexts/AuthContext';
+import { createBuilding, updateBuilding } from '@/lib/api';
+import { Building } from '@/types/building';
+import AddressAutocomplete from './AddressAutocomplete';
+import StreetViewImage from './StreetViewImage';
+import { 
+  Save, 
+  Loader2, 
+  MapPin, 
+  Camera,
+  Building as BuildingIcon,
+  Info
+} from 'lucide-react';
 
 interface Props {
   initialData?: Partial<Building>;
@@ -28,6 +36,9 @@ interface BuildingFormData {
   apartments_count?: number;
   internal_manager_name?: string;
   internal_manager_phone?: string;
+  management_office_name?: string;
+  management_office_phone?: string;
+  management_office_address?: string;
   street_view_image?: string;
   latitude?: number | string;
   longitude?: number | string;
@@ -40,9 +51,9 @@ export default function CreateBuildingForm({
   submitText,
   buildingId,
 }: Readonly<Props>) {
-  useCsrf();
   const router = useRouter();
   const { setBuildings, refreshBuildings } = useBuilding();
+  const { user } = useAuth();
   const [form, setForm] = useState<BuildingFormData>(initialData);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,92 +66,125 @@ export default function CreateBuildingForm({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+    
+    // Special handling for postal_code field
+    let processedValue = value;
+    if (name === 'postal_code') {
+      // Remove spaces and non-numeric characters
+      processedValue = value.replace(/\s/g, '').replace(/[^0-9]/g, '');
+      // Limit to 5 digits
+      processedValue = processedValue.slice(0, 5);
+    }
+    
     setForm((prev) => ({
       ...prev,
-      [name]: name === 'apartments_count' ? Number(value) : value,
+      [name]: name === 'apartments_count' ? Number(processedValue) : processedValue,
     }));
   };
 
-  const handleAddressSelect = useCallback((addressDetails: {
-    fullAddress: string;
+  const handleAddressSelect = useCallback((addressData: {
+    fullAddress: string; // Added fullAddress
+    address: string;
     city: string;
-    postalCode: string;
+    postalCode: string; // Added postalCode
     postal_code: string;
     country: string;
     coordinates?: { lat: number; lng: number };
-  }, isConfirmed: boolean = false) => {
-    // Έλεγχος αν πρέπει να συμπληρωθεί αυτόματα το όνομα
-    const shouldAutoFillName = !form.name || form.name.trim() === '';
-    
-    // Δημιουργία καθαρού ονόματος κτηρίου χωρίς ΤΚ και Ελλάδα
-    const cleanBuildingName = (() => {
-      let cleanName = addressDetails.fullAddress;
+  }, isConfirmed?: boolean) => { // Added isConfirmed
+    // Auto-populate building name from address if not already set
+    setForm((prev) => {
+      // Clean postal code - remove spaces and ensure 5 digits format
+      let cleanPostalCode = (addressData.postalCode || addressData.postal_code || '').replace(/\s/g, '');
       
-      // Αφαίρεση ΤΚ (postal code)
-      if (addressDetails.postalCode) {
-        cleanName = cleanName.replace(new RegExp(`\\s*${addressDetails.postalCode}\\s*`, 'g'), '');
+      // Ensure postal code is exactly 5 digits
+      if (cleanPostalCode.length === 5 && /^\d{5}$/.test(cleanPostalCode)) {
+        // Valid 5-digit postal code
+      } else if (cleanPostalCode.length === 6 && /^\d{3}\d{3}$/.test(cleanPostalCode)) {
+        // Format like "123 456" - remove space
+        cleanPostalCode = cleanPostalCode.replace(/(\d{3})(\d{3})/, '$1$2');
+      } else {
+        // Invalid format, keep as is for user to correct
+        cleanPostalCode = (addressData.postalCode || addressData.postal_code || '');
       }
-      
-      // Αφαίρεση "Ελλάδα" ή "Greece"
-      cleanName = cleanName.replace(/,\s*(Ελλάδα|Greece)\s*$/i, '');
-      cleanName = cleanName.replace(/\s*(Ελλάδα|Greece)\s*$/i, '');
-      
-      // Καθαρισμός διπλών κόμμων και κενών
-      cleanName = cleanName.replace(/,\s*,/g, ',');
-      cleanName = cleanName.replace(/,\s*$/g, '');
-      cleanName = cleanName.trim();
-      
-      return cleanName;
-    })();
-    
-    setForm((prev) => ({
-      ...prev,
-      address: addressDetails.fullAddress,
-      city: addressDetails.city,
-      postal_code: addressDetails.postal_code || addressDetails.postalCode, // Support both properties
-      // Συμπλήρωση ονόματος κτηρίου μόνο αν είναι οριστικοποιημένη η επιλογή
-      name: (shouldAutoFillName && isConfirmed) ? cleanBuildingName : prev.name,
-    }));
-    
-    // Αποθήκευση των συντεταγμένων για το Street View
-    setCoordinates(addressDetails.coordinates);
-    
-    // Show success feedback
-    if (shouldAutoFillName && isConfirmed) {
-      toast.success(`📍 Διεύθυνση επιλέχθηκε και όνομα κτηρίου συμπληρώθηκε αυτόματα. Μπορείτε να το επεξεργαστείτε!`);
-    } else if (isConfirmed) {
-      toast.success(`📍 Διεύθυνση επιλέχθηκε: ${addressDetails.fullAddress}${addressDetails.city ? `, ${addressDetails.city}` : ''}${addressDetails.postalCode ? `, ${addressDetails.postalCode}` : ''}`);
-    } else {
-      // Για προσωρινές επιλογές (κλικ), μην δείχνεις μήνυμα
-      console.log('📍 Προσωρινή επιλογή διεύθυνσης (κλικ)');
+
+      const updatedForm = {
+        ...prev,
+        address: addressData.fullAddress, // Use fullAddress as the main address
+        city: addressData.city,
+        postal_code: cleanPostalCode,
+      };
+
+      // Auto-populate building name from address EVERY time user confirms an address
+      // This provides a consistent and user-friendly experience
+      if (addressData.fullAddress) {
+        // Create a concise building name: "Διεύθυνση, Αριθμός" (without postal code and country)
+        let buildingName = '';
+        
+        // Start with the street address (which includes the number)
+        if (addressData.address) {
+          buildingName = addressData.address;
+        }
+        
+        // If we don't have an address, try to extract from fullAddress
+        if (!buildingName && addressData.fullAddress) {
+          const addressParts = addressData.fullAddress.split(',');
+          if (addressParts.length > 0) {
+            // Take only the first part (street + number) and clean it
+            buildingName = addressParts[0].trim();
+          }
+        }
+        
+        // Clean up the building name - remove postal code and country references
+        if (buildingName) {
+          // Split by commas and take only the first two parts (street + city)
+          const parts = buildingName.split(',').map(part => part.trim());
+          
+          // Keep only street and city, remove postal code and country
+          if (parts.length >= 2) {
+            // Take street (first part) and city (second part)
+            buildingName = `${parts[0]}, ${parts[1]}`;
+          } else if (parts.length === 1) {
+            // If only one part, keep it as is
+            buildingName = parts[0];
+          }
+          
+          // Additional cleanup - remove any remaining postal codes (5 digits)
+          buildingName = buildingName.replace(/\s+\d{5}\s*/, '').trim();
+          // Remove common country names
+          buildingName = buildingName.replace(/\b(Greece|Ελλάδα)\b/gi, '').trim();
+          // Remove extra commas and spaces
+          buildingName = buildingName.replace(/,\s*,/g, ',').replace(/^,\s*/, '').replace(/\s*,$/, '').trim();
+        }
+        
+        if (buildingName) {
+          updatedForm.name = buildingName;
+        }
+      }
+
+      return updatedForm;
+    });
+
+    if (addressData.coordinates) {
+      setCoordinates(addressData.coordinates);
     }
-  }, [form.name]); // Only depend on form.name since that's what we check
+  }, []);
 
   const handleStreetViewImageSelect = (imageUrl: string) => {
     setForm((prev) => ({
       ...prev,
       street_view_image: imageUrl,
     }));
-    
-    // Αποθήκευση της εικόνας στο localStorage με το building ID ή διεύθυνση ως κλειδί
-    if (form.address) {
-      // Χρησιμοποιούμε τη διεύθυνση ως μοναδικό αναγνωριστικό για νέα κτίρια
-      const storageKey = buildingId ? `building_street_view_${buildingId}` : `building_street_view_${form.address.replace(/\s+/g, '_')}`;
-      localStorage.setItem(storageKey, imageUrl);
-      console.log(`Street View image stored in localStorage with key: ${storageKey}`);
-    }
-    
-    toast.success('Η εικόνα Street View επιλέχθηκε επιτυχώς!');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsSubmitting(true);
+    setError(null);
+
+    // Validation
+    const missingFields: string[] = [];
     
-    // Validation for required fields
-    const missingFields = [];
-    
+    // Basic required fields
     if (!form.name) missingFields.push('όνομα κτιρίου');
     if (!form.apartments_count) missingFields.push('αριθμός διαμερισμάτων');
     
@@ -244,6 +288,11 @@ export default function CreateBuildingForm({
               placeholder="π.χ. Οικοδομή Αθηνάς 25 (θα συμπληρωθεί αυτόματα από τη διεύθυνση)"
               required
             />
+            {useGoogleMaps && (
+              <p className="text-xs text-blue-600 mt-1">
+                💡 Το όνομα του κτιρίου θα συμπληρωθεί αυτόματα όταν επιλέξετε διεύθυνση από το Google Maps
+              </p>
+            )}
           </div>
           
           <div>
@@ -293,7 +342,8 @@ export default function CreateBuildingForm({
             {/* Instructions for Google Maps */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
               <p className="text-sm text-blue-800">
-                📍 <strong>Οδηγίες:</strong> Αρχίστε να πληκτρολογείτε τη διεύθυνση και <strong>επιλέξτε μια από τις προτάσεις</strong> που εμφανίζονται από το Google Maps.
+                📍 <strong>Οδηγίες:</strong> Αρχίστε να πληκτρολογείτε τη διεύθυνση, επιλέξτε με ↑↓ και πατήστε Enter. 
+                Το όνομα του κτιρίου θα συμπληρωθεί αυτόματα από τη διεύθυνση που επιλέξετε.
               </p>
             </div>
             
@@ -333,6 +383,34 @@ export default function CreateBuildingForm({
               </div>
             )}
 
+                        {/* Manual ΤΚ field for Google Maps mode */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="postal_code">
+                Ταχυδρομικός Κώδικας *
+              </label>
+              <input
+                id="postal_code"
+                name="postal_code"
+                value={form.postal_code ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="π.χ. 10552 (5 ψηφία)"
+                maxLength={5}
+                pattern="[0-9]{5}"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                💡 Συμπληρώστε τον Τ.Κ. χειροκίνητα αν δεν συμπληρωθεί αυτόματα από το Google Maps. Μορφή: 5 ψηφία (π.χ. 10552)
+              </p>
+            </div>
+
+            {/* Info about automatic building name update */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-800">
+                💡 <strong>Σημείωση:</strong> Το όνομα του κτιρίου ενημερώνεται αυτόματα κάθε φορά που επιλέγετε διεύθυνση από το Google Maps (μόνο διεύθυνση και αριθμός, χωρίς ΤΚ και χώρα).
+              </p>
+            </div>
+
             {/* Street View Image Section */}
             {coordinates && (
               <div className="mt-6 space-y-4">
@@ -347,56 +425,13 @@ export default function CreateBuildingForm({
                   </p>
                 </div>
                 
-                <StreetViewImage 
+                <StreetViewImage
                   coordinates={coordinates}
                   address={form.address}
                   onImageSelect={handleStreetViewImageSelect}
                 />
-                
-                {form.street_view_image && (
-                  <input 
-                    type="hidden" 
-                    name="street_view_image" 
-                    value={form.street_view_image} 
-                  />
-                )}
               </div>
             )}
-
-            {/* Manual override fields (readonly when Google Maps is active) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="city">
-                  Πόλη *
-                </label>
-                <input
-                  id="city"
-                  name="city"
-                  value={form.city ?? ''}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                  placeholder="Θα συμπληρωθεί αυτόματα"
-                  readOnly
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="postal_code">
-                  Ταχυδρομικός Κώδικας *
-                </label>
-                <input
-                  id="postal_code"
-                  name="postal_code"
-                  value={form.postal_code ?? ''}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                  placeholder="Θα συμπληρωθεί αυτόματα"
-                  readOnly
-                  required
-                />
-              </div>
-            </div>
           </>
         ) : (
           <>
@@ -448,7 +483,7 @@ export default function CreateBuildingForm({
                   value={form.postal_code ?? ''}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="π.χ. 10552"
+                  placeholder="π.χ. 10552 (5 ψηφία)"
                   maxLength={5}
                   pattern="[0-9]{5}"
                   required
@@ -495,6 +530,45 @@ export default function CreateBuildingForm({
             />
           </div>
         </div>
+      </div>
+
+      {/* Management Office Information - Auto-filled from user settings */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+          Στοιχεία Γραφείου Διαχείρισης
+        </h3>
+        
+        {user?.office_name || user?.office_phone || user?.office_address ? (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-start space-x-2">
+              <BuildingIcon className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm text-green-800 font-medium">✅ Αυτόματη συμπλήρωση από ρυθμίσεις χρήστη</p>
+                <div className="text-xs text-green-700 mt-2 space-y-1">
+                  {user.office_name && <p><strong>Γραφείο:</strong> {user.office_name}</p>}
+                  {user.office_phone && <p><strong>Τηλέφωνο:</strong> {user.office_phone}</p>}
+                  {user.office_address && <p><strong>Διεύθυνση:</strong> {user.office_address}</p>}
+                </div>
+                <p className="text-xs text-green-600 mt-2">
+                  Τα στοιχεία θα συμπληρωθούν αυτόματα κατά τη δημιουργία του κτιρίου.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-start space-x-2">
+              <Info className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm text-yellow-800 font-medium">ℹ️ Δεν έχουν οριστεί στοιχεία γραφείου διαχείρισης</p>
+                <p className="text-xs text-yellow-700 mt-1">
+                  Μπορείτε να ορίσετε τα στοιχεία του γραφείου διαχείρισης στις ρυθμίσεις χρήστη 
+                  (εικονίδιο γραναζιού στο header) για αυτόματη συμπλήρωση σε μελλοντικά κτίρια.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Submit Button */}

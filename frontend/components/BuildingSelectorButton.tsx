@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { Building } from '@/lib/api';
+import type { Building } from '@/lib/api';
 import { Building as BuildingIcon, ChevronDown, Info } from 'lucide-react';
 import BuildingSelector from './BuildingSelector';
 

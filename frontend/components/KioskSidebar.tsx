@@ -122,30 +122,30 @@ export default function KioskSidebar() {
   }
 
   function getWeatherIcon(code: number) {
-    if (code === 0) return <Sun className="w-10 h-10 text-yellow-400" />;
-    if (code >= 1 && code <= 3) return <Cloud className="w-10 h-10 text-gray-400" />;
-    if (code >= 45 && code <= 48) return <Cloud className="w-10 h-10 text-gray-500" />;
-    if (code >= 51 && code <= 55) return <CloudRain className="w-10 h-10 text-blue-400" />;
-    if (code >= 61 && code <= 65) return <CloudRain className="w-10 h-10 text-blue-500" />;
-    if (code >= 80 && code <= 95) return <CloudRain className="w-10 h-10 text-blue-600" />;
-    return <Cloud className="w-10 h-10 text-gray-400" />;
+    if (code === 0) return <Sun className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-yellow-400" />;
+    if (code >= 1 && code <= 3) return <Cloud className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-gray-400" />;
+    if (code >= 45 && code <= 48) return <Cloud className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-gray-500" />;
+    if (code >= 51 && code <= 55) return <CloudRain className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-blue-400" />;
+    if (code >= 61 && code <= 65) return <CloudRain className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-blue-500" />;
+    if (code >= 80 && code <= 95) return <CloudRain className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-blue-600" />;
+    return <Cloud className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-gray-400" />;
   }
 
   return (
-    <aside className="w-[400px] bg-gradient-to-b from-blue-900 via-blue-800 to-indigo-900 border-r border-blue-700 p-6 space-y-6 overflow-y-auto text-white flex-shrink-0 font-roboto">
+    <aside className="w-64 sm:w-72 md:w-80 lg:w-96 xl:w-[400px] bg-gradient-to-b from-blue-900 via-blue-800 to-indigo-900 border-r border-blue-700 p-2 sm:p-3 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6 overflow-y-auto text-white flex-shrink-0 font-roboto">
       {/* Current Time */}
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-        <CardContent className="pt-4">
+        <CardContent className="pt-2 sm:pt-3 lg:pt-4">
           <div className="text-center">
-            <div className="text-3xl font-mono font-bold text-white mb-2">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-mono font-bold text-white mb-1 sm:mb-2">
               {currentTime.toLocaleTimeString('el-GR', { 
                 hour: '2-digit', 
                 minute: '2-digit', 
                 second: '2-digit' 
               })}
             </div>
-            <div className="text-sm text-blue-200 flex items-center justify-center">
-              <Calendar className="w-4 h-4 mr-1" />
+            <div className="text-xs sm:text-sm text-blue-200 flex items-center justify-center">
+              <Calendar className="w-3 h-3 lg:w-4 lg:h-4 mr-1" />
               {currentTime.toLocaleDateString('el-GR', { 
                 weekday: 'long', 
                 year: 'numeric', 
@@ -159,27 +159,27 @@ export default function KioskSidebar() {
 
       {/* Weather Widget */}
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center text-lg text-blue-200">
-            <Thermometer className="w-5 h-5 mr-2 text-blue-300" />
+        <CardHeader className="pb-2 lg:pb-3">
+          <CardTitle className="flex items-center text-sm sm:text-base lg:text-lg text-blue-200">
+            <Thermometer className="w-4 h-4 lg:w-5 lg:h-5 mr-2 text-blue-300" />
             Καιρός
           </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-300 mx-auto"></div>
-              <p className="text-sm text-blue-200 mt-2">Φόρτωση καιρού...</p>
+            <div className="text-center py-2 sm:py-3 lg:py-4">
+              <div className="animate-spin rounded-full h-6 w-6 lg:h-8 lg:w-8 border-b-2 border-blue-300 mx-auto"></div>
+              <p className="text-xs sm:text-sm text-blue-200 mt-2">Φόρτωση καιρού...</p>
             </div>
           ) : weather ? (
             <div className="text-center">
-              <div className="flex justify-center mb-4">
+              <div className="flex justify-center mb-2 sm:mb-3 lg:mb-4">
                 {getWeatherIcon(weather.weathercode)}
               </div>
-              <div className="text-2xl font-bold text-white mb-2">
+              <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-1 sm:mb-2">
                 {weather.temperature}°C
               </div>
-              <div className="text-sm text-blue-200 mb-3">
+              <div className="text-xs sm:text-sm text-blue-200 mb-2 lg:mb-3">
                 {weather.description}
               </div>
               <div className="flex items-center justify-center text-xs text-blue-300">
@@ -188,9 +188,9 @@ export default function KioskSidebar() {
               </div>
             </div>
           ) : (
-            <div className="text-center py-4">
-              <Cloud className="w-8 h-8 text-blue-300 mx-auto mb-2" />
-              <p className="text-sm text-blue-200">Δεν ήταν δυνατή η φόρτωση του καιρού</p>
+            <div className="text-center py-2 sm:py-3 lg:py-4">
+              <Cloud className="w-6 h-6 lg:w-8 lg:h-8 text-blue-300 mx-auto mb-2" />
+              <p className="text-xs sm:text-sm text-blue-200">Δεν ήταν δυνατή η φόρτωση του καιρού</p>
             </div>
           )}
         </CardContent>
@@ -198,13 +198,13 @@ export default function KioskSidebar() {
 
       {/* Advertising Banners */}
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg text-blue-200">
+        <CardHeader className="pb-2 lg:pb-3">
+          <CardTitle className="text-sm sm:text-base lg:text-lg text-blue-200">
             Χρήσιμες Υπηρεσίες
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-2 sm:space-y-3 lg:space-y-4">
             {advertisingBanners.map((banner, index) => (
               <div
                 key={banner.id}
@@ -213,9 +213,9 @@ export default function KioskSidebar() {
                 }`}
                 style={{ display: index === currentBanner ? 'block' : 'none' }}
               >
-                <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg p-4 text-white border border-white/20">
-                  <h3 className="font-semibold text-lg mb-2">{banner.title}</h3>
-                  <p className="text-sm opacity-90 mb-3 leading-relaxed">{banner.description}</p>
+                <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg p-2 sm:p-3 lg:p-4 text-white border border-white/20">
+                  <h3 className="font-semibold text-sm sm:text-base lg:text-lg mb-1 sm:mb-2">{banner.title}</h3>
+                  <p className="text-xs sm:text-sm opacity-90 mb-2 lg:mb-3 leading-relaxed">{banner.description}</p>
                   <div className="flex items-center text-xs opacity-75">
                     <Phone className="w-3 h-3 mr-1" />
                     <span>📞 Επικοινωνήστε μαζί μας</span>
@@ -226,12 +226,12 @@ export default function KioskSidebar() {
           </div>
           
           {/* Banner Navigation Dots */}
-          <div className="flex justify-center mt-4 space-x-2">
+          <div className="flex justify-center mt-2 sm:mt-3 lg:mt-4 space-x-1 lg:space-x-2">
             {advertisingBanners.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentBanner(index)}
-                className={`w-2 h-2 rounded-full transition-colors duration-200 ${
+                className={`w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full transition-colors duration-200 ${
                   index === currentBanner
                     ? 'bg-blue-300'
                     : 'bg-blue-600 hover:bg-blue-500'
@@ -244,8 +244,8 @@ export default function KioskSidebar() {
 
       {/* Quick Info */}
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-        <CardContent className="pt-4">
-          <div className="space-y-3 text-sm">
+        <CardContent className="pt-2 sm:pt-3 lg:pt-4">
+          <div className="space-y-2 lg:space-y-3 text-xs sm:text-sm">
             <div className="flex items-center justify-between p-2 bg-white/5 rounded">
               <span className="text-blue-200">Διαχειριστής:</span>
               <span className="font-medium text-white">Γιώργος Παπαδόπουλος</span>

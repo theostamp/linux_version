@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Building } from '@/lib/api';
+import type { Building } from '@/lib/api';
 import { Building as BuildingIcon, Users, FileText, MessageSquare } from 'lucide-react';
 
 interface BuildingStatsProps {

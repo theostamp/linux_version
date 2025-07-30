@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Building, fetchAllBuildings } from '@/lib/api';
+import type { Building } from '@/lib/api';
+import { fetchAllBuildings } from '@/lib/api';
 import { Search, Building as BuildingIcon, Check, X } from 'lucide-react';
 
 interface BuildingSelectorProps {

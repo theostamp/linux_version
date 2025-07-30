@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Building } from '@/lib/api';
+import type { Building } from '@/lib/api';
 import { 
   X, 
   Building as BuildingIcon, 
@@ -118,6 +118,34 @@ export default function BuildingDetailsModal({
                       >
                         {building.internal_manager_phone}
                       </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Management Office Info */}
+            {building.management_office_name && (
+              <div className="flex items-start space-x-3">
+                <Building className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-gray-900 font-medium">Γραφείο Διαχείρισης</p>
+                  <p className="text-gray-600">{building.management_office_name}</p>
+                  {building.management_office_phone && (
+                    <div className="flex items-center space-x-2 mt-1">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                      <a 
+                        href={`tel:${building.management_office_phone}`}
+                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        {building.management_office_phone}
+                      </a>
+                    </div>
+                  )}
+                  {building.management_office_address && (
+                    <div className="flex items-center space-x-2 mt-1">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-600 text-sm">{building.management_office_address}</span>
                     </div>
                   )}
                 </div>

@@ -14,6 +14,9 @@ urlpatterns = [
     # Building management
     path('api/buildings/', include('buildings.urls')),
     
+    # Public buildings endpoint (for kiosk mode)
+    path('api/buildings/public/', include('buildings.public_urls')),
+    
     # Apartments management
     path('api/', include('apartments.urls')),
     
