@@ -98,7 +98,7 @@ class VoteSerializer(serializers.ModelSerializer):
         return obj.status_display
 
     def get_creator_name(self, obj):
-        return obj.creator.get_full_name() or obj.creator.username if obj.creator else "Άγνωστος"
+        return obj.creator.get_full_name() or obj.creator.email if obj.creator else "Άγνωστος"
 
     def get_building_name(self, obj):
         return obj.building.name if obj.building else "Όλα τα κτίρια"
@@ -133,7 +133,7 @@ class VoteSubmissionSerializer(serializers.ModelSerializer):
         return data
 
     def get_user_name(self, obj):
-        return obj.user.get_full_name() or obj.user.username
+        return obj.user.get_full_name() or obj.user.email
 
 class VoteResultsSerializer(serializers.Serializer):
     """Serializer για τα αποτελέσματα ψηφοφορίας"""
@@ -161,7 +161,7 @@ class VoteListSerializer(serializers.ModelSerializer):
         ]
 
     def get_creator_name(self, obj):
-        return obj.creator.get_full_name() or obj.creator.username if obj.creator else "Άγνωστος"
+        return obj.creator.get_full_name() or obj.creator.email if obj.creator else "Άγνωστος"
 
     def get_building_name(self, obj):
         return obj.building.name if obj.building else "Όλα τα κτίρια"

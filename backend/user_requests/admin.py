@@ -15,7 +15,7 @@ from .models import UserRequest, UrgentRequestLog
 class UserRequestAdmin(admin.ModelAdmin):
     list_display = ('title', 'building', 'created_by', 'type', 'status', 'priority', 'supporter_count_cached', 'is_urgent', 'assigned_to', 'created_at')
     list_filter = ('building', 'status', 'type', 'priority', 'created_at')
-    search_fields = ('title', 'description', 'created_by__username', 'building__name', 'assigned_to__username')
+    search_fields = ('title', 'description', 'created_by__email', 'building__name', 'assigned_to__email')
     ordering = ('-priority', '-created_at')
     readonly_fields = ('created_at', 'updated_at', 'completed_at', 'supporter_count_cached', 'days_since_creation', 'is_overdue')
     fieldsets = (

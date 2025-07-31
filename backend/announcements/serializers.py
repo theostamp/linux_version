@@ -89,7 +89,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         return obj.status_display
 
     def get_author_name(self, obj):
-        return obj.author.get_full_name() or obj.author.username
+        return obj.author.get_full_name() or obj.author.email
 
     def create(self, validated_data):
         request = self.context.get('request')
@@ -126,7 +126,7 @@ class AnnouncementListSerializer(serializers.ModelSerializer):
         ]
 
     def get_author_name(self, obj):
-        return obj.author.get_full_name() or obj.author.username
+        return obj.author.get_full_name() or obj.author.email
 
     def get_building_name(self, obj):
         return obj.building.name if obj.building else "Όλα τα κτίρια"

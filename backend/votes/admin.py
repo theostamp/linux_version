@@ -14,7 +14,7 @@ class VoteSubmissionInline(admin.TabularInline):
 class VoteAdmin(admin.ModelAdmin):
     list_display = ('title', 'building', 'creator', 'is_active', 'is_urgent', 'start_date', 'end_date', 'total_votes', 'participation_percentage', 'created_at')
     list_filter = ('building', 'is_active', 'is_urgent', 'start_date', 'end_date', 'created_at')
-    search_fields = ('title', 'description', 'creator__username', 'building__name')
+    search_fields = ('title', 'description', 'creator__email', 'building__name')
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'updated_at', 'total_votes', 'participation_percentage', 'is_valid_result')
     fieldsets = (
@@ -54,7 +54,7 @@ class VoteAdmin(admin.ModelAdmin):
 class VoteSubmissionAdmin(admin.ModelAdmin):
     list_display = ('vote', 'user', 'choice', 'submitted_at')
     list_filter = ('choice', 'submitted_at', 'vote__building')
-    search_fields = ('vote__title', 'user__username')
+    search_fields = ('vote__title', 'user__email')
     ordering = ('-submitted_at',)
     readonly_fields = ('submitted_at', 'updated_at')
 

@@ -11,8 +11,8 @@ class UserRequestSerializer(serializers.ModelSerializer):
     )
 
     # Display username of the creator, read-only
-    created_by_username = serializers.CharField(source='created_by.username', read_only=True) 
-    assigned_to_username = serializers.CharField(source='assigned_to.username', read_only=True)
+    created_by_username = serializers.CharField(source='created_by.email', read_only=True) 
+    assigned_to_username = serializers.CharField(source='assigned_to.email', read_only=True)
     
     # Use SerializerMethodField for supporter_count to handle annotated field
     supporter_count = serializers.SerializerMethodField()
@@ -74,7 +74,7 @@ class UserRequestSerializer(serializers.ModelSerializer):
 
     def get_supporter_usernames(self, obj):
         """Get list of supporter usernames."""
-        return [supporter.username for supporter in obj.supporters.all()]
+        return [supporter.email for supporter in obj.supporters.all()]
 
     def get_is_urgent(self, obj):
         return obj.is_urgent
@@ -139,7 +139,7 @@ class UserRequestSerializer(serializers.ModelSerializer):
 
 class UserRequestListSerializer(serializers.ModelSerializer):
     """Simplified serializer for list views"""
-    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    created_by_username = serializers.CharField(source='created_by.email', read_only=True)
     building_name = serializers.CharField(source='building.name', read_only=True)
     supporter_count = serializers.SerializerMethodField()
     supporter_usernames = serializers.SerializerMethodField()
@@ -160,7 +160,7 @@ class UserRequestListSerializer(serializers.ModelSerializer):
 
     def get_supporter_usernames(self, obj):
         """Get list of supporter usernames."""
-        return [supporter.username for supporter in obj.supporters.all()]
+        return [supporter.email for supporter in obj.supporters.all()]
 
     def get_is_supported(self, obj):
         """Check if the current user supports this request."""

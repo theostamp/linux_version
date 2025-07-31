@@ -7,7 +7,7 @@ from .models import Announcement
 class AnnouncementAdmin(admin.ModelAdmin):
     list_display = ('title', 'building', 'author', 'priority', 'is_urgent', 'published', 'is_active', 'status_display', 'created_at')
     list_filter = ('building', 'published', 'is_active', 'is_urgent', 'priority', 'created_at')
-    search_fields = ('title', 'description', 'author__username', 'building__name')
+    search_fields = ('title', 'description', 'author__email', 'building__name')
     ordering = ('-priority', '-created_at')
     readonly_fields = ('created_at', 'updated_at', 'is_currently_active', 'days_remaining')
     fieldsets = (
