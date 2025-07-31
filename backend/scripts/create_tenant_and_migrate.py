@@ -156,7 +156,7 @@ log_path = os.path.join(log_dir, f"{tenant_name}.log")
 
 with open(log_path, "w") as f:
     f.write(f"TENANT: {tenant_name}\n")
-    f.write(f"DOMAIN: http://{domain_url}:3000\n")
+    f.write(f"DOMAIN: http://{domain_url}:8080\n")
     f.write("\n--- Manager ---\n")
     f.write(f"Email: {manager_email}\nPassword: {manager_password}\n")
     f.write("\n--- Resident ---\n")
@@ -164,4 +164,4 @@ with open(log_path, "w") as f:
 
 print(f"\n✅ Ολοκληρώθηκε η δημιουργία tenant '{tenant_name}' με demo δεδομένα.")
 print(f"📄 Αρχείο credentials: {log_path}")
-print(f"🌐 Πρόσβαση στο frontend μέσω: http://{domain_url}:3000")
+print(f"🌐 Πρόσβαση στο frontend μέσω: http://{domain_url}:8080")

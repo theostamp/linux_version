@@ -83,6 +83,9 @@ class BuildingSerializer(serializers.ModelSerializer):
         """
         Override create method to automatically populate office details from current user
         """
+        print(f"🔍 BuildingSerializer.create() called with validated_data: {validated_data}")
+        print(f"🔍 Street view image in validated_data: {validated_data.get('street_view_image')}")
+        
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             user = request.user
@@ -97,7 +100,10 @@ class BuildingSerializer(serializers.ModelSerializer):
             if not validated_data.get('management_office_address') and user.office_address:
                 validated_data['management_office_address'] = user.office_address
         
-        return super().create(validated_data)
+        result = super().create(validated_data)
+        print(f"🔍 BuildingSerializer.create() result: {result}")
+        print(f"🔍 Result street view image: {result.street_view_image}")
+        return result
 
     def validate_latitude(self, value):
         """Validate latitude field"""
@@ -134,9 +140,11 @@ class BuildingSerializer(serializers.ModelSerializer):
         # If both latitude and longitude are provided, ensure they're both valid
         latitude = data.get('latitude')
         longitude = data.get('longitude')
+        street_view_image = data.get('street_view_image')
         
         print(f"🔍 Latitude: {latitude} (type: {type(latitude)})")
         print(f"🔍 Longitude: {longitude} (type: {type(longitude)})")
+        print(f"🔍 Street view image: {street_view_image} (type: {type(street_view_image)})")
         
         if (latitude is not None and longitude is None) or (latitude is None and longitude is not None):
             raise serializers.ValidationError("Τα γεωγραφικά πλάτος και μήκος πρέπει να παρέχονται μαζί ή κανένα από τα δύο.")

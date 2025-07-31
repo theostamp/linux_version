@@ -56,6 +56,24 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         # Αν δεν υπάρχει ρόλος ή δεν υπάρχει αντιστοίχιση
         return Building.objects.none()
 
+    def retrieve(self, request, *args, **kwargs):
+        """Override retrieve method to add debugging"""
+        print(f"🔍 BuildingViewSet.retrieve() called for building {kwargs.get('pk')}")
+        response = super().retrieve(request, *args, **kwargs)
+        print(f"🔍 BuildingViewSet.retrieve() response: {response.data}")
+        print(f"🔍 Response street view image: {response.data.get('street_view_image')}")
+        return response
+
+    def list(self, request, *args, **kwargs):
+        """Override list method to add debugging"""
+        print(f"🔍 BuildingViewSet.list() called")
+        response = super().list(request, *args, **kwargs)
+        print(f"🔍 BuildingViewSet.list() response count: {len(response.data.get('results', []))}")
+        if response.data.get('results'):
+            first_building = response.data['results'][0]
+            print(f"🔍 First building street view image: {first_building.get('street_view_image')}")
+        return response
+
     def perform_create(self, serializer):
         """
         Κατά τη δημιουργία ενός κτιρίου:
@@ -76,14 +94,19 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         print(f"🔍 Request method: {request.method}")
         print(f"🔍 Latitude from request: {request.data.get('latitude')} (type: {type(request.data.get('latitude'))})")
         print(f"🔍 Longitude from request: {request.data.get('longitude')} (type: {type(request.data.get('longitude'))})")
+        print(f"🔍 Street view image from request: {request.data.get('street_view_image')} (type: {type(request.data.get('street_view_image'))})")
         
         # Check if data is a QueryDict (which might cause the array issue)
         if hasattr(request.data, 'getlist'):
             print(f"⚠️  Request.data is a QueryDict-like object")
             print(f"🔍 Latitude getlist: {request.data.getlist('latitude')}")
             print(f"🔍 Longitude getlist: {request.data.getlist('longitude')}")
+            print(f"🔍 Street view image getlist: {request.data.getlist('street_view_image')}")
         
-        return super().create(request, *args, **kwargs)
+        response = super().create(request, *args, **kwargs)
+        print(f"🔍 BuildingViewSet.create() response: {response.data}")
+        print(f"🔍 Response street view image: {response.data.get('street_view_image')}")
+        return response
 
     @action(detail=False, methods=["post"], url_path="assign-resident")
     def assign_resident(self, request):

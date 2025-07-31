@@ -25,7 +25,7 @@ python manage.py collectstatic --no-input
 # 4. Start Django server
 echo ""
 echo "🚀 Launching Django runserver..."
-echo "   Frontend: http://demo.localhost:3000"
+echo "   Frontend: http://demo.localhost:8080"
 echo "   Backend: http://demo.localhost:8000"
 echo "   Admin: http://demo.localhost:8000/admin/"
 echo ""

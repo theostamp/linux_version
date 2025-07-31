@@ -78,7 +78,7 @@ def show_project_status():
     print("Public Admin: http://localhost:8000/admin/")
     print("Tenant Admin: http://athinon12.localhost:8000/admin/")
     print("API Base: http://localhost:8000/api/")
-    print("Frontend: http://localhost:3000/")
+    print("Frontend: http://localhost:8080/")
     
     # 5. Login Credentials
     print("\n🔑 LOGIN CREDENTIALS")

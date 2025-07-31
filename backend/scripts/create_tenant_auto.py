@@ -179,7 +179,7 @@ os.makedirs(LOG_DIR, exist_ok=True)
 log_file = os.path.join(LOG_DIR, f"{slug}.log")
 with open(log_file, "w") as fh:
     fh.write(f"TENANT  : {slug}\n")
-    fh.write(f"DOMAIN  : http://{FQDN}:3000\n")
+    fh.write(f"DOMAIN  : http://{FQDN}:8080\n")
     fh.write("\n--- Manager ---\n")
     fh.write(f"Email   : {manager_email}\nPassword: {manager_password}\n")
 

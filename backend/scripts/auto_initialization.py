@@ -459,7 +459,7 @@ def save_credentials():
 
 🏢 DEMO TENANT (demo.localhost):
 -------------------------------
-DOMAIN: http://demo.localhost:3000
+DOMAIN: http://demo.localhost:8080
 ADMIN: http://demo.localhost:8000/admin/
 
 👥 ΧΡΗΣΤΕΣ ΚΑΙ ΔΙΚΑΙΩΜΑΤΑ:
@@ -503,7 +503,7 @@ ADMIN: http://demo.localhost:8000/admin/
 🌐 ΠΡΟΣΒΑΣΗ:
 ------------
 Public Admin: http://localhost:8000/admin/
-Demo Frontend: http://demo.localhost:3000
+Demo Frontend: http://demo.localhost:8080
 Demo Backend API: http://demo.localhost:8000/api/
 Demo Admin Panel: http://demo.localhost:8000/admin/
 
@@ -575,7 +575,7 @@ def main():
     print("   Email: theostam1966@gmail.com")
     print("   Password: theo123!@#")
     print()
-    print("🌐 Demo Tenant: http://demo.localhost:3000")
+    print("🌐 Demo Tenant: http://demo.localhost:8080")
     print("🔧 Demo Admin: http://demo.localhost:8000/admin/")
     print("📄 Credentials: backend/logs/demo_credentials.log")
     print("\n👥 Demo χρήστες:")

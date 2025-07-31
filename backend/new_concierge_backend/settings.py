@@ -210,22 +210,22 @@ REST_FRAMEWORK = {
 # ----------------------------------------
 CORS_ALLOW_CREDENTIALS = True     # για cookies / JWT
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://top.localhost:3000",  # Προσθήκη του συγκεκριμένου subdomain
-    "http://tap.localhost:3000",  # Προσθήκη του tap subdomain
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://top.localhost:8080",  # Προσθήκη του συγκεκριμένου subdomain
+    "http://tap.localhost:8080",  # Προσθήκη του tap subdomain
 ]  # τα «σκέτα» origins
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://[\w\-]+\.localhost:3000$",
-]  # ✅ Ο *οποιοσδήποτε* sub-domain *.localhost:3000
+    r"^http://[\w\-]+\.localhost:8080$",
+]  # ✅ Ο *οποιοσδήποτε* sub-domain *.localhost:8080
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://*.localhost:3000",
-    "http://top.localhost:3000",  # Προσθήκη του συγκεκριμένου subdomain
-    "http://tap.localhost:3000",  # Προσθήκη του tap subdomain
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://*.localhost:8080",
+    "http://top.localhost:8080",  # Προσθήκη του συγκεκριμένου subdomain
+    "http://tap.localhost:8080",  # Προσθήκη του tap subdomain
 ]
 
 CORS_EXPOSE_HEADERS  = ["Content-Type", "X-CSRFToken"]
@@ -240,7 +240,7 @@ CORS_ALLOW_METHODS   = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
 # ----------------------------------------
 # 🔒 CSRF
 # ----------------------------------------
-_raw_csrf = get_list_env("CSRF_ORIGINS", "localhost:3000")
+_raw_csrf = get_list_env("CSRF_ORIGINS", "localhost:8080")
 CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in _raw_csrf] + [f"https://{h}" for h in _raw_csrf]
 
 CSRF_COOKIE_NAME = 'csrftoken'

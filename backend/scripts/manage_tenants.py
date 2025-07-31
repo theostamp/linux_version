@@ -91,7 +91,7 @@ def create_tenant(tenant_name, domain_name=None, tenant_display_name=None):
     call_command("migrate_schemas", schema_name=tenant.schema_name, interactive=False)
     
     print(f"\n✅ Tenant δημιουργήθηκε επιτυχώς!")
-    print(f"🌐 Frontend: http://{domain_name}:3000")
+    print(f"🌐 Frontend: http://{domain_name}:8080")
     print(f"🔧 Admin: http://{domain_name}:8000/admin/")
     
     return True
