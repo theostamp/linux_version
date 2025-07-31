@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { createBuilding, updateBuilding } from '@/lib/api';
 import { Building } from '@/types/building';
 import AddressAutocomplete from './AddressAutocomplete';
 import StreetViewImage from './StreetViewImage';
+
 import { 
   Save, 
   Loader2, 
@@ -62,6 +63,8 @@ export default function CreateBuildingForm({
     initialData.coordinates
   );
 
+
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -91,6 +94,7 @@ export default function CreateBuildingForm({
     country: string;
     coordinates?: { lat: number; lng: number };
   }, isConfirmed?: boolean) => { // Added isConfirmed
+    console.log('📍 CreateBuildingForm: handleAddressSelect called with:', addressData);
     // Auto-populate building name from address if not already set
     setForm((prev) => {
       // Clean postal code - remove spaces and ensure 5 digits format
@@ -165,7 +169,10 @@ export default function CreateBuildingForm({
     });
 
     if (addressData.coordinates) {
+      console.log('📍 CreateBuildingForm: Setting coordinates:', addressData.coordinates);
       setCoordinates(addressData.coordinates);
+    } else {
+      console.log('📍 CreateBuildingForm: No coordinates in addressData');
     }
   }, []);
 
@@ -210,32 +217,16 @@ export default function CreateBuildingForm({
     
     // Προσθήκη συντεταγμένων αν υπάρχουν
     if (coordinates && coordinates.lat && coordinates.lng) {
-      // Try sending as numbers first, then as strings if that doesn't work
       formData.latitude = coordinates.lat;
       formData.longitude = coordinates.lng;
-      console.log('📍 Coordinates being added as numbers:', { lat: coordinates.lat, lng: coordinates.lng });
-      console.log('📍 Formatted coordinates:', { latitude: formData.latitude, longitude: formData.longitude });
-      // Pause 2s so the above logs remain visible in DevTools before navigation/rendering cycles
-      await new Promise((resolve) => setTimeout(resolve, 2000));
     } else {
-      console.log('📍 No coordinates available, skipping coordinate fields');
       // Ensure coordinates are not sent if they don't exist
       delete formData.latitude;
       delete formData.longitude;
     }
     
-    // Αφαιρούμε το street_view_image από το payload για το backend
-    delete formData.street_view_image;
-    delete formData.coordinates; // Αφαιρούμε το frontend coordinates field
-    
-    console.log('📤 Submitting building data:', formData);
-    console.log('📤 Data types:', {
-      latitude: typeof formData.latitude,
-      longitude: typeof formData.longitude,
-      name: typeof formData.name,
-      address: typeof formData.address
-    });
-    console.log('📤 Raw formData object:', JSON.stringify(formData, null, 2));
+    // Αφαιρούμε το frontend coordinates field
+    delete formData.coordinates;
     
     try {
       if (buildingId) {
@@ -245,7 +236,6 @@ export default function CreateBuildingForm({
         await refreshBuildings();
       } else {
         const newBuilding = await createBuilding(formData);
-        console.log('[CreateBuildingForm] New building created:', newBuilding);
         toast.success('Το κτίριο δημιουργήθηκε επιτυχώς');
         // Refresh buildings from server to ensure consistency
         await refreshBuildings();
@@ -411,8 +401,10 @@ export default function CreateBuildingForm({
               </p>
             </div>
 
-            {/* Street View Image Section */}
-            {coordinates && (
+                        {/* Street View Image Section */}
+
+            
+            {coordinates ? (
               <div className="mt-6 space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center">
                   <Camera className="w-5 h-5 mr-2 text-blue-600" />
@@ -430,6 +422,30 @@ export default function CreateBuildingForm({
                   address={form.address}
                   onImageSelect={handleStreetViewImageSelect}
                 />
+                
+                {/* Show selected image status */}
+                {form.street_view_image && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-center space-x-2">
+                      <Camera className="w-4 h-4 text-green-600" />
+                      <div>
+                        <p className="text-sm text-green-800 font-medium">✅ Εικόνα Street View επιλέχθηκε</p>
+                        <p className="text-xs text-green-700 mt-1">
+                          URL: {form.street_view_image.substring(0, 80)}...
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+
+              </div>
+            ) : (
+              <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ Δεν υπάρχουν συντεταγμένες για να εμφανιστεί η εικόνα Street View. 
+                  Επιλέξτε μια διεύθυνση από το Google Maps παραπάνω.
+                </p>
               </div>
             )}
           </>

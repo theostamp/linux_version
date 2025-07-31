@@ -98,7 +98,7 @@ docker network ls
 
 ```bash
 # 1. Έλεγχος αν χρησιμοποιούνται οι ports
-sudo lsof -i :3000  # Frontend port
+sudo lsof -i :8080  # Frontend port
 sudo lsof -i :8000  # Backend port
 sudo lsof -i :5432  # Database port
 
@@ -205,12 +205,12 @@ docker compose exec backend python manage.py collectstatic --dry-run
 Μετά την εκκίνηση, μπορείτε να αποκτήσετε πρόσβαση:
 
 - **Public Admin (Ultra-Superuser)**: http://localhost:8000/admin/
-- **Demo Frontend**: http://demo.localhost:3000
+- **Demo Frontend**: http://demo.localhost:8080
 - **Demo Backend API**: http://demo.localhost:8000/api/
 - **Demo Admin Panel**: http://demo.localhost:8000/admin/
-- **Kiosk Mode (Building-specific)**: http://demo.localhost:3000/info-screen/1
-- **Kiosk Mode (General)**: http://demo.localhost:3000/kiosk
-- **Kiosk Settings**: http://demo.localhost:3000/kiosk-settings
+- **Kiosk Mode (Building-specific)**: http://demo.localhost:8080/info-screen/1
+- **Kiosk Mode (General)**: http://demo.localhost:8080/kiosk
+- **Kiosk Settings**: http://demo.localhost:8080/kiosk-settings
 
 ### 👑 Ultra-Superuser (Public Schema)
 
@@ -487,7 +487,7 @@ backend/logs/demo_credentials.log
 echo "# linux_version" >> README.md git init
 
 git add .
-git commit -m "kiosk mode 1.2"
+git commit -m "αιτηματα φωτογραφιες upload  "
 git branch -M main git remote add origin https://github.com/theostamp/linux_version.git 
 git push -u origin main
 

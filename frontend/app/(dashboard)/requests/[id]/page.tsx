@@ -10,6 +10,7 @@ import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Trash2, Edit } from 'lucide-react';
+import PhotoGallery from '@/components/PhotoGallery';
 
 const statusLabels: Record<string, string> = {
   open: 'Ανοιχτό',
@@ -207,6 +208,9 @@ export default function RequestDetailPage() {
           {request.description}
         </p>
 
+        {/* Photos Section */}
+        <PhotoGallery photos={request.photos || []} />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 border-t pt-4">
           <div>
             <strong>Υποβλήθηκε από:</strong> {request.created_by_username}
@@ -237,6 +241,16 @@ export default function RequestDetailPage() {
           <div>
             <strong>Υποστηρικτές:</strong> {request.supporter_count}
           </div>
+          {request.location && (
+            <div>
+              <strong>Τοποθεσία:</strong> {request.location}
+            </div>
+          )}
+          {request.apartment_number && (
+            <div>
+              <strong>Διαμέρισμα:</strong> {request.apartment_number}
+            </div>
+          )}
         </div>
       </div>
 

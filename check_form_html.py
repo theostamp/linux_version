@@ -6,7 +6,7 @@ def check_form_html():
     print("🔍 Checking Building Form HTML")
     print("=" * 40)
     
-    form_url = "http://demo.localhost:3000/buildings/new"
+    form_url = "http://demo.localhost:8080/buildings/new"
     
     try:
         response = requests.get(form_url)

@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, LOCATION_TYPES } from '@/types/userRequests';
-import { MapPin, User, AlertTriangle, Calendar } from 'lucide-react';
+import { MapPin, User, AlertTriangle, Calendar, Camera } from 'lucide-react';
+import PhotoUpload from '@/components/PhotoUpload';
 
 export default function NewRequestPage() {
   const router = useRouter();
@@ -30,6 +31,7 @@ export default function NewRequestPage() {
   const [location, setLocation] = useState('');
   const [apartmentNumber, setApartmentNumber] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
+  const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -49,6 +51,10 @@ export default function NewRequestPage() {
     e.preventDefault();
     setError(null);
 
+    console.log('[NewRequest] handleSubmit called');
+    console.log('[NewRequest] Photos state:', photos);
+    console.log('[NewRequest] Photos length:', photos.length);
+
     if (!title.trim() || !description.trim()) {
       setError('Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία.');
       return;
@@ -61,7 +67,7 @@ export default function NewRequestPage() {
 
     setSubmitting(true);
     try {
-      await createUserRequest({
+      const payload = {
         title: title.trim(),
         description: description.trim(),
         building: buildingToUse.id,
@@ -70,7 +76,13 @@ export default function NewRequestPage() {
         location: location || undefined,
         apartment_number: apartmentNumber || undefined,
         is_urgent: isUrgent || undefined,
-      });
+        photos: photos.length > 0 ? photos : undefined,
+      };
+      
+      console.log('[NewRequest] Creating request with payload:', payload);
+      console.log('[NewRequest] Photos in payload:', payload.photos);
+      
+      await createUserRequest(payload);
       
       // Invalidate queries and show success
       queryClient.invalidateQueries({ queryKey: ['requests'] });
@@ -227,6 +239,20 @@ export default function NewRequestPage() {
               onChange={(e) => setApartmentNumber(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="π.χ. Α1, 2ος όροφος, κλπ."
+            />
+          </div>
+
+          {/* Photo Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Camera className="w-4 h-4 inline mr-1" />
+              Φωτογραφίες του Προβλήματος (προαιρετικό)
+            </label>
+            <PhotoUpload
+              photos={photos}
+              onPhotosChange={setPhotos}
+              maxPhotos={5}
+              maxSizeMB={5}
             />
           </div>
 

@@ -408,6 +408,7 @@ export async function fetchBuilding(id: number): Promise<Building> {
 export type BuildingPayload = Partial<Omit<Building, 'id' | 'created_at' | 'updated_at' | 'latitude' | 'longitude'>> & {
   latitude?: number | string;
   longitude?: number | string;
+  street_view_image?: string;
 };
 
 export async function createBuilding(payload: BuildingPayload): Promise<Building> {
@@ -717,6 +718,20 @@ export async function fetchRequests(filters: { status?: string; buildingId?: num
     is_urgent: r.is_urgent ?? false,
     type: r.type ?? '',
     supporters: r.supporters ?? [],
+    priority: r.priority ?? 'medium',
+    maintenance_category: r.type ?? 'other',
+    photos: r.photos ?? [],
+    assigned_to: r.assigned_to,
+    assigned_to_username: r.assigned_to_username,
+    estimated_completion: r.estimated_completion,
+    completed_at: r.completed_at,
+    notes: r.notes,
+    photos: r.photos,
+    location: r.location,
+    apartment_number: r.apartment_number,
+    cost_estimate: r.cost_estimate,
+    actual_cost: r.actual_cost,
+    contractor_notes: r.contractor_notes,
   }));
 }
 
@@ -742,6 +757,20 @@ export async function fetchTopRequests(buildingId: number | null): Promise<UserR
     is_urgent: r.is_urgent ?? false,
     type: r.type ?? '',
     is_supported: r.is_supported ?? false,
+    priority: r.priority ?? 'medium',
+    maintenance_category: r.type ?? 'other',
+    photos: r.photos ?? [],
+    assigned_to: r.assigned_to,
+    assigned_to_username: r.assigned_to_username,
+    estimated_completion: r.estimated_completion,
+    completed_at: r.completed_at,
+    notes: r.notes,
+    photos: r.photos,
+    location: r.location,
+    apartment_number: r.apartment_number,
+    cost_estimate: r.cost_estimate,
+    actual_cost: r.actual_cost,
+    contractor_notes: r.contractor_notes,
   }));
 }
 
@@ -767,6 +796,20 @@ export async function fetchUserRequestsForBuilding(buildingId: number): Promise<
     is_urgent: r.is_urgent ?? false,
     type: r.type ?? '',
     is_supported: r.is_supported ?? false,
+    priority: r.priority ?? 'medium',
+    maintenance_category: r.type ?? 'other',
+    photos: r.photos ?? [],
+    assigned_to: r.assigned_to,
+    assigned_to_username: r.assigned_to_username,
+    estimated_completion: r.estimated_completion,
+    completed_at: r.completed_at,
+    notes: r.notes,
+    photos: r.photos,
+    location: r.location,
+    apartment_number: r.apartment_number,
+    cost_estimate: r.cost_estimate,
+    actual_cost: r.actual_cost,
+    contractor_notes: r.contractor_notes,
   }));
 }
 
@@ -784,10 +827,57 @@ export async function fetchUserRequestsForBuilding(buildingId: number): Promise<
 export interface CreateUserRequestPayload {
   title: string; description: string; building: number;
   type?: string; is_urgent?: boolean;
+  priority?: string;
+  location?: string;
+  apartment_number?: string;
+  photos?: File[];
 }
 export async function createUserRequest(payload: CreateUserRequestPayload): Promise<UserRequest> {
   console.log('[API CALL] Attempting to create user request:', payload);
-  const { data } = await api.post<UserRequest>('/user-requests/', payload);
+  console.log('[API CALL] Photos count:', payload.photos?.length || 0);
+  
+  // Handle file uploads
+  const formData = new FormData();
+  
+  // Add text fields
+  formData.append('title', payload.title);
+  formData.append('description', payload.description);
+  formData.append('building', payload.building.toString());
+  
+  if (payload.type) formData.append('type', payload.type);
+  if (payload.is_urgent) formData.append('is_urgent', payload.is_urgent.toString());
+  if (payload.priority) formData.append('priority', payload.priority);
+  if (payload.location) formData.append('location', payload.location);
+  if (payload.apartment_number) formData.append('apartment_number', payload.apartment_number);
+  
+  // Add photos
+  if (payload.photos && payload.photos.length > 0) {
+    console.log('[API CALL] Adding photos to FormData:');
+    payload.photos.forEach((photo, index) => {
+      console.log(`[API CALL] Photo ${index + 1}:`, {
+        name: photo.name,
+        size: photo.size,
+        type: photo.type
+      });
+      formData.append(`photos`, photo);
+    });
+  } else {
+    console.log('[API CALL] No photos to add');
+  }
+  
+  console.log('[API CALL] FormData entries:');
+  for (let [key, value] of formData.entries()) {
+    console.log(`[API CALL] ${key}:`, value);
+  }
+  
+  const { data } = await api.post<UserRequest>('/user-requests/', formData, {
+    headers: {
+      // Remove Content-Type for FormData - let the browser set it with boundary
+      'Content-Type': undefined,
+    },
+  });
+  
+  console.log('[API CALL] Response data:', data);
   return data;
 }
 

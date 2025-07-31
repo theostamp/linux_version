@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { safeFormatDate } from '@/lib/utils';
 import BuildingSelector from './BuildingSelector';
+import DataStatusIndicator from './DataStatusIndicator';
 
 interface KioskModeProps {
   announcements: Announcement[];
@@ -40,6 +41,9 @@ interface KioskModeProps {
     last_updated: string;
   };
   onBuildingChange?: (buildingId: number | null) => void;
+  isLoading?: boolean;
+  isError?: boolean;
+  isFetching?: boolean;
 }
 
 export default function KioskMode({
@@ -48,7 +52,10 @@ export default function KioskMode({
   buildingInfo,
   advertisingBanners = [],
   generalInfo,
-  onBuildingChange
+  onBuildingChange,
+  isLoading = false,
+  isError = false,
+  isFetching = false
 }: KioskModeProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -459,6 +466,12 @@ export default function KioskMode({
               <div className="flex items-center space-x-1 min-w-0 overflow-hidden">
                 <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="truncate">{buildingInfo?.address || 'Όλα τα κτίρια'}</span>
+                {isLoading && (
+                  <div className="flex items-center space-x-1 ml-2">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-300"></div>
+                    <span className="text-xs text-blue-300">Φόρτωση...</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -485,6 +498,15 @@ export default function KioskMode({
               </div>
               <div className="text-xs sm:text-sm opacity-75">
                 {format(currentTime, 'EEEE, dd MMMM yyyy', { locale: el })}
+              </div>
+              {/* Data Status Indicator */}
+              <div className="mt-1">
+                <DataStatusIndicator
+                  isFetching={isFetching}
+                  isError={isError}
+                  lastUpdated={generalInfo?.last_updated}
+                  className="text-xs opacity-75"
+                />
               </div>
             </div>
           </div>

@@ -60,7 +60,7 @@
 - **API:** http://athinon12.localhost:8000/api/
 
 ### Frontend
-- **Main:** http://localhost:3000/
+- **Main:** http://localhost:8080/
 
 ## 📊 Sample Data
 

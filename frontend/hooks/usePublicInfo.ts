@@ -15,5 +15,16 @@ export function usePublicInfo(buildingId?: number | null) {
       return fetchPublicInfo(buildingId);
     },
     enabled: buildingId !== undefined, // Don't run query when buildingId is undefined
+    staleTime: 30000, // 30 seconds - data is considered fresh for 30 seconds
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnReconnect: true, // Refetch when internet connection is restored
+    refetchInterval: 60000, // Refetch every minute for real-time updates
+    retry: (failureCount, error: any) => {
+      // Don't retry on 404 errors (building not found)
+      if (error?.response?.status === 404) return false;
+      // Retry up to 3 times for other errors
+      return failureCount < 3;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });
 }

@@ -7,13 +7,20 @@ import { Camera, MapPin } from 'lucide-react';
 interface BuildingStreetViewProps {
   buildingId?: number;
   address?: string;
+  streetViewImageUrl?: string; // Add this prop
 }
 
-export default function BuildingStreetView({ buildingId, address }: BuildingStreetViewProps) {
+export default function BuildingStreetView({ buildingId, address, streetViewImageUrl }: BuildingStreetViewProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    // Προσπαθούμε να βρούμε την εικόνα με βάση το buildingId ή τη διεύθυνση
+    // First priority: Use the streetViewImageUrl prop if provided
+    if (streetViewImageUrl) {
+      setImageUrl(streetViewImageUrl);
+      return;
+    }
+    
+    // Fallback: Try to find the image based on buildingId or address in localStorage
     if (typeof window !== 'undefined') {
       if (buildingId) {
         const storedImage = localStorage.getItem(`building_street_view_${buildingId}`);
@@ -32,7 +39,7 @@ export default function BuildingStreetView({ buildingId, address }: BuildingStre
         }
       }
     }
-  }, [buildingId, address]);
+  }, [buildingId, address, streetViewImageUrl]);
 
   if (!imageUrl) {
     return (

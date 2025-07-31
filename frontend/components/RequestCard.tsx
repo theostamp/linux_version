@@ -34,6 +34,7 @@ export default function RequestCard({ request }: Readonly<Props>) {
     apartment_number,
     maintenance_category,
     created_by_username,
+    photos,
   } = request;
 
   const [supporting, setSupporting] = useState(false);
@@ -100,6 +101,28 @@ export default function RequestCard({ request }: Readonly<Props>) {
           </span>
         </div>
       </div>
+
+      {/* Photos Preview */}
+      {photos && photos.length > 0 && (
+        <div className="mb-3">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {photos.slice(0, 3).map((photo, index) => (
+              <div key={index} className="flex-shrink-0">
+                <img
+                  src={photo}
+                  alt={`Photo ${index + 1}`}
+                  className="w-16 h-16 object-cover rounded-lg border"
+                />
+              </div>
+            ))}
+            {photos.length > 3 && (
+              <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-lg border flex items-center justify-center text-xs text-gray-500">
+                +{photos.length - 3}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Description */}
       <p className="text-gray-700 line-clamp-2 mb-3">{description}</p>

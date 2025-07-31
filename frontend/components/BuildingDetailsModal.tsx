@@ -127,7 +127,7 @@ export default function BuildingDetailsModal({
             {/* Management Office Info */}
             {building.management_office_name && (
               <div className="flex items-start space-x-3">
-                <Building className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                <BuildingIcon className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-gray-900 font-medium">Γραφείο Διαχείρισης</p>
                   <p className="text-gray-600">{building.management_office_name}</p>

@@ -207,14 +207,14 @@ function DashboardContent() {
   }, []);
 
   useEffect(() => {
-    if (!isAuthReady || authLoading || !user || !currentBuilding?.id) return;
+    if (!isAuthReady || authLoading || !user) return;
 
     const loadAll = async () => {
       setLoadingData(true);
       try {
         // Χρησιμοποιούμε την ίδια λογική με το requests page
         // Αν είναι null, σημαίνει "όλα τα κτίρια" και περνάμε null στο API
-        const buildingId = selectedBuilding?.id ?? null;
+        const buildingId = selectedBuilding?.id ?? currentBuilding?.id ?? null;
         
         const [ann, vt, req] = await Promise.all([
           fetchAnnouncements(buildingId),

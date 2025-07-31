@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePublicInfo } from '@/hooks/usePublicInfo';
+import { useBuildingChange } from '@/hooks/useBuildingChange';
 import KioskMode from '@/components/KioskMode';
 import KioskSidebar from '@/components/KioskSidebar';
 import FullPageSpinner from '@/components/FullPageSpinner';
@@ -13,6 +14,20 @@ export default function KioskPage() {
   const [buildings, setBuildings] = useState<any[]>([]);
   const [isLoadingBuildings, setIsLoadingBuildings] = useState(true);
   const searchParams = useSearchParams();
+
+  // Use the selected building ID for data fetching
+  const { data, isLoading, error, isFetching } = usePublicInfo(selectedBuildingId ?? null);
+
+  // Use the building change hook
+  const { isChangingBuilding, changeBuilding } = useBuildingChange({
+    onBuildingChange: (buildingId) => {
+      setSelectedBuildingId(buildingId);
+    },
+    onError: (error) => {
+      console.error('Building change error:', error);
+    },
+    showToast: false // Disable toast notifications for kiosk mode
+  });
 
   // Load all buildings for selection
   useEffect(() => {
@@ -49,26 +64,6 @@ export default function KioskPage() {
     loadBuildings();
   }, [searchParams]);
 
-  // Use the selected building ID for data fetching
-  const { data, isLoading, error } = usePublicInfo(selectedBuildingId ?? null);
-
-  // Handle building selection from KioskMode
-  const handleBuildingChange = (buildingId: number | null) => {
-    if (buildingId === null) {
-      // Remove building parameter from URL
-      const url = new URL(window.location.href);
-      url.searchParams.delete('building');
-      window.history.pushState({}, '', url.toString());
-      setSelectedBuildingId(null);
-    } else {
-      // Set building parameter in URL
-      const url = new URL(window.location.href);
-      url.searchParams.set('building', buildingId.toString());
-      window.history.pushState({}, '', url.toString());
-      setSelectedBuildingId(buildingId);
-    }
-  };
-
   if (isLoadingBuildings) {
     return <FullPageSpinner />;
   }
@@ -95,14 +90,37 @@ export default function KioskPage() {
       <KioskSidebar />
       
       {/* Main Kiosk Content - Right Side */}
-      <div className="flex-1 overflow-hidden min-w-0">
+      <div className="flex-1 overflow-hidden min-w-0 relative">
+        {/* Loading overlay during building change */}
+        {isChangingBuilding && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white bg-opacity-90 rounded-lg p-6 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+              <p className="text-gray-700 font-medium">Αλλαγή κτιρίου...</p>
+            </div>
+          </div>
+        )}
+        
+        {/* Data loading indicator */}
+        {isFetching && !isChangingBuilding && (
+          <div className="absolute top-4 right-4 z-40">
+            <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm flex items-center space-x-2">
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+              <span>Ενημέρωση...</span>
+            </div>
+          </div>
+        )}
+        
         <KioskMode
           announcements={data?.announcements ?? []}
           votes={data?.votes ?? []}
           buildingInfo={data?.building_info}
           advertisingBanners={data?.advertising_banners}
           generalInfo={data?.general_info}
-          onBuildingChange={handleBuildingChange}
+          onBuildingChange={changeBuilding}
+          isLoading={isLoading}
+          isError={!!error}
+          isFetching={isFetching}
         />
       </div>
     </div>

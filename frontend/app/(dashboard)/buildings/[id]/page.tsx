@@ -83,7 +83,7 @@ export default function BuildingDetailPage() {
               <h1 className="text-3xl font-bold text-gray-900">{building?.name}</h1>
               <p className="text-gray-600">
                 <MapPin className="w-4 h-4 inline mr-1" />
-                {building?.address}, {building?.city} {building?.postal_code}
+                {building?.city} {building?.postal_code}
               </p>
             </div>
           </div>
@@ -100,7 +100,7 @@ export default function BuildingDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Building Info */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-xl font-semibold mb-4">Στοιχεία Κτιρίου</h2>
+          <h2 className="text-xl font-semibold mb-4">Πληροφορίες</h2>
           
           <div className="space-y-4">
             <div>
@@ -150,10 +150,11 @@ export default function BuildingDetailPage() {
         
         {/* Street View */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-xl font-semibold mb-4">Προβολή Δρόμου</h2>
+          <h2 className="text-xl font-semibold mb-4">Street View</h2>
           <BuildingStreetView 
             buildingId={id} 
             address={building?.address}
+            streetViewImageUrl={building?.street_view_image}
           />
         </div>
       </div>

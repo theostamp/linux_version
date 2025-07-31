@@ -8,14 +8,14 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import type { UserRequest } from '@/lib/api';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Trash2, Filter, Search, X } from 'lucide-react';
+import { Trash2, Filter, Search, X, SlidersHorizontal } from 'lucide-react';
 import { deleteUserRequest } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import RequestCard from '@/components/RequestCard';
 import RequestSkeleton from '@/components/RequestSkeleton';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, REQUEST_STATUSES } from '@/types/userRequests';
 
 export default function RequestsPage() {
@@ -63,7 +63,7 @@ export default function RequestsPage() {
         return false;
       }
       
-      // Category filter
+      // Category filter - check both maintenance_category and type
       if (categoryFilter && request.maintenance_category !== categoryFilter && request.type !== categoryFilter) {
         return false;
       }
@@ -82,6 +82,9 @@ export default function RequestsPage() {
 
   // Check if any filters are active
   const hasActiveFilters = searchTerm || statusFilter || priorityFilter || categoryFilter;
+
+  // Get active filter count
+  const activeFilterCount = [searchTerm, statusFilter, priorityFilter, categoryFilter].filter(Boolean).length;
 
   if (!isAuthReady || buildingLoading || isLoading) {
     return (
@@ -126,34 +129,58 @@ export default function RequestsPage() {
   };
 
   const container = {
-    hidden: { opacity: 1 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.15 } },
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1, 
+      transition: { 
+        staggerChildren: 0.1,
+        delayChildren: 0.1
+      } 
+    },
   };
-  const item = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } };
+  
+  const item = { 
+    hidden: { opacity: 0, y: 20 }, 
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.3 }
+    } 
+  };
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold">🔧 Αιτήματα Συντήρησης</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <Button
             onClick={() => setShowFilters(!showFilters)}
-            variant="outline"
-            className="flex items-center gap-2"
+            variant={hasActiveFilters ? "default" : "outline"}
+            className={`flex items-center gap-2 transition-all duration-200 flex-1 sm:flex-none ${
+              hasActiveFilters 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg' 
+                : 'hover:bg-gray-50 border-2 border-gray-300 hover:border-blue-400'
+            }`}
           >
-            <Filter className="w-4 h-4" />
-            Φίλτρα
+            <SlidersHorizontal className="w-4 h-4" />
+            <span className="hidden sm:inline">Φίλτρα</span>
+            <span className="sm:hidden">🔍</span>
             {hasActiveFilters && (
-              <span className="bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {[searchTerm, statusFilter, priorityFilter, categoryFilter].filter(Boolean).length}
+              <span className={`text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold ${
+                hasActiveFilters 
+                  ? 'bg-white text-blue-600' 
+                  : 'bg-blue-600 text-white'
+              }`}>
+                {activeFilterCount}
               </span>
             )}
           </Button>
           {canCreateRequest && (
-            <Link href="/requests/new">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                ➕ Νέο Αίτημα
+            <Link href="/requests/new" className="flex-1 sm:flex-none">
+              <Button className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto shadow-lg">
+                <span className="hidden sm:inline">➕ Νέο Αίτημα</span>
+                <span className="sm:hidden">➕</span>
               </Button>
             </Link>
           )}
@@ -163,129 +190,205 @@ export default function RequestsPage() {
       <BuildingFilterIndicator />
 
       {/* Filters Panel */}
-      {showFilters && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="bg-white rounded-lg shadow-sm border p-4 space-y-4"
-        >
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-gray-900">Φίλτρα Αναζήτησης</h3>
-            {hasActiveFilters && (
-              <Button
-                onClick={clearFilters}
-                variant="ghost"
-                size="sm"
-                className="text-red-600 hover:text-red-700"
-              >
-                <X className="w-4 h-4 mr-1" />
-                Καθαρισμός
-              </Button>
-            )}
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Search */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Αναζήτηση
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Τίτλος ή περιγραφή..."
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, y: -20 }}
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 space-y-6"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold text-gray-900 text-lg">Φίλτρα Αναζήτησης</h3>
+              </div>
+              {hasActiveFilters && (
+                <Button
+                  onClick={clearFilters}
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Καθαρισμός Φίλτρων
+                </Button>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+              {/* Search */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  🔍 Αναζήτηση
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Τίτλος ή περιγραφή..."
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  📊 Κατάσταση
+                </label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white text-sm"
+                >
+                  <option value="">Όλες οι καταστάσεις</option>
+                  {REQUEST_STATUSES.map((status) => (
+                    <option key={status.value} value={status.value}>
+                      {status.icon} {status.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Priority Filter */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  ⚡ Προτεραιότητα
+                </label>
+                <select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white text-sm"
+                >
+                  <option value="">Όλες οι προτεραιότητες</option>
+                  {PRIORITY_LEVELS.map((priority) => (
+                    <option key={priority.value} value={priority.value}>
+                      {priority.icon} {priority.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Category Filter */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  🏷️ Κατηγορία
+                </label>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white text-sm"
+                >
+                  <option value="">Όλες οι κατηγορίες</option>
+                  {MAINTENANCE_CATEGORIES.map((category) => (
+                    <option key={category.value} value={category.value}>
+                      {category.icon} {category.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            {/* Status Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Κατάσταση
-              </label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Όλες οι καταστάσεις</option>
-                {REQUEST_STATUSES.map((status) => (
-                  <option key={status.value} value={status.value}>
-                    {status.icon} {status.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Priority Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Προτεραιότητα
-              </label>
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Όλες οι προτεραιότητες</option>
-                {PRIORITY_LEVELS.map((priority) => (
-                  <option key={priority.value} value={priority.value}>
-                    {priority.icon} {priority.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Category Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Κατηγορία
-              </label>
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Όλες οι κατηγορίες</option>
-                {MAINTENANCE_CATEGORIES.map((category) => (
-                  <option key={category.value} value={category.value}>
-                    {category.icon} {category.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </motion.div>
-      )}
+            {/* Active Filters Display */}
+            {hasActiveFilters && (
+              <div className="pt-4 border-t border-gray-200">
+                <div className="flex flex-wrap gap-2">
+                  {searchTerm && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium shadow-sm">
+                      🔍 "{searchTerm}"
+                      <button
+                        onClick={() => setSearchTerm('')}
+                        className="ml-1 hover:text-blue-600 transition-colors"
+                        title="Αφαίρεση φίλτρου"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {statusFilter && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-800 rounded-full text-sm font-medium shadow-sm">
+                      📊 {REQUEST_STATUSES.find(s => s.value === statusFilter)?.label}
+                      <button
+                        onClick={() => setStatusFilter('')}
+                        className="ml-1 hover:text-green-600 transition-colors"
+                        title="Αφαίρεση φίλτρου"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {priorityFilter && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium shadow-sm">
+                      ⚡ {PRIORITY_LEVELS.find(p => p.value === priorityFilter)?.label}
+                      <button
+                        onClick={() => setPriorityFilter('')}
+                        className="ml-1 hover:text-yellow-600 transition-colors"
+                        title="Αφαίρεση φίλτρου"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {categoryFilter && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 text-purple-800 rounded-full text-sm font-medium shadow-sm">
+                      🏷️ {MAINTENANCE_CATEGORIES.find(c => c.value === categoryFilter)?.label}
+                      <button
+                        onClick={() => setCategoryFilter('')}
+                        className="ml-1 hover:text-purple-600 transition-colors"
+                        title="Αφαίρεση φίλτρου"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Results Summary */}
       {hasActiveFilters && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4"
+        >
           <p className="text-sm text-blue-800">
-            Εμφανίζονται <strong>{filteredRequests.length}</strong> από <strong>{requests.length}</strong> αιτήματα
+            📊 Εμφανίζονται <strong>{filteredRequests.length}</strong> από <strong>{requests.length}</strong> αιτήματα
             {searchTerm && ` που περιέχουν "${searchTerm}"`}
           </p>
-        </div>
+        </motion.div>
       )}
+
+
 
       {/* No Results */}
       {isSuccess && filteredRequests.length === 0 && (
-        <div className="text-center text-gray-500 space-y-2 py-8">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center text-gray-500 space-y-4 py-12"
+        >
           {hasActiveFilters ? (
             <>
-              <p>Δεν βρέθηκαν αιτήματα με τα επιλεγμένα φίλτρα.</p>
-              <Button onClick={clearFilters} variant="outline" size="sm">
+              <div className="text-6xl mb-4">🔍</div>
+              <p className="text-lg font-medium">Δεν βρέθηκαν αιτήματα με τα επιλεγμένα φίλτρα.</p>
+              <p className="text-sm text-gray-400">Δοκιμάστε να αλλάξετε τα κριτήρια αναζήτησης.</p>
+              <Button onClick={clearFilters} variant="outline" size="lg" className="mt-4">
+                <X className="w-4 h-4 mr-2" />
                 Καθαρισμός φίλτρων
               </Button>
             </>
           ) : (
             <>
-              <p>Δεν υπάρχουν διαθέσιμα αιτήματα.</p>
+              <div className="text-6xl mb-4">📋</div>
+              <p className="text-lg font-medium">Δεν υπάρχουν διαθέσιμα αιτήματα.</p>
               {canCreateRequest && (
                 <p className="text-sm text-gray-400">
                   Δημιουργήστε το πρώτο αίτημα για να ξεκινήσετε.
@@ -293,7 +396,7 @@ export default function RequestsPage() {
               )}
             </>
           )}
-        </div>
+        </motion.div>
       )}
 
       {/* Requests List */}
@@ -307,7 +410,7 @@ export default function RequestsPage() {
           <motion.div
             key={request.id}
             variants={item}
-            className="p-4 border rounded-lg shadow-sm bg-white space-y-1 relative"
+            className="relative"
           >
             {/* Building badge - show only when viewing all buildings */}
             {!selectedBuilding && request.building_name && (
@@ -340,7 +443,7 @@ export default function RequestsPage() {
       {canCreateRequest && (
         <Link 
           href="/requests/new"
-          className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+          className="fixed bottom-6 right-6 bg-green-600 hover:bg-green-700 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-110 z-50"
           title="Νέο Αίτημα"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

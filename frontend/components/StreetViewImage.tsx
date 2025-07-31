@@ -20,6 +20,11 @@ export default function StreetViewImage({ coordinates, address, onImageSelect }:
   const [selected, setSelected] = useState(false);
   
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  console.log('🔑 StreetViewImage: Component rendered');
+  console.log('🔑 StreetViewImage: API Key available:', !!apiKey);
+  console.log('🔑 StreetViewImage: Coordinates:', coordinates);
+  console.log('🔑 StreetViewImage: Address:', address);
+  console.log('🔑 StreetViewImage: onImageSelect function:', !!onImageSelect);
   
   useEffect(() => {
     if (coordinates && apiKey) {
@@ -32,13 +37,21 @@ export default function StreetViewImage({ coordinates, address, onImageSelect }:
   }, [coordinates, heading, zoom, apiKey]);
 
   const generateStreetViewUrl = () => {
-    if (!coordinates || !apiKey) return;
+    console.log('🔑 StreetViewImage: generateStreetViewUrl called');
+    console.log('🔑 StreetViewImage: coordinates:', coordinates);
+    console.log('🔑 StreetViewImage: apiKey available:', !!apiKey);
+    
+    if (!coordinates || !apiKey) {
+      console.log('🔑 StreetViewImage: Missing coordinates or API key');
+      return;
+    }
     
     setLoading(true);
     setError(null);
     
     // Create Street View Static API URL with FOV parameter for zoom
     const url = `https://maps.googleapis.com/maps/api/streetview?size=600x300&location=${coordinates.lat},${coordinates.lng}&heading=${heading}&pitch=0&fov=${zoom}&key=${apiKey}`;
+    console.log('🔑 StreetViewImage: Generated URL:', url);
     
     // Check if image exists by loading it
     const img = new Image();
@@ -70,9 +83,18 @@ export default function StreetViewImage({ coordinates, address, onImageSelect }:
   };
 
   const handleSelectImage = () => {
+    console.log('📸 StreetViewImage: handleSelectImage called');
+    console.log('📸 StreetViewImage: imageUrl available:', !!imageUrl);
+    console.log('📸 StreetViewImage: onImageSelect function available:', !!onImageSelect);
+    
     if (imageUrl) {
+      console.log('📸 StreetViewImage: Selecting image URL:', imageUrl);
+      console.log('📸 StreetViewImage: Calling onImageSelect with URL:', imageUrl);
       onImageSelect(imageUrl);
       setSelected(true);
+      console.log('📸 StreetViewImage: Image selection completed');
+    } else {
+      console.log('❌ StreetViewImage: No imageUrl available for selection');
     }
   };
 

@@ -83,7 +83,7 @@ export default function BuildingDashboardPage() {
               <h1 className="text-3xl font-bold text-gray-900">Διαχείριση Κτιρίου</h1>
               <p className="text-gray-600">
                 <MapPin className="w-4 h-4 inline mr-1" />
-                {building?.name} - {building?.address}, {building?.city} {building?.postal_code}
+                {building?.name}
               </p>
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function BuildingDashboardPage() {
           <div className="p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
               <BuildingIcon className="w-5 h-5 mr-2 text-blue-600" />
-              Στοιχεία Κτιρίου
+              Πληροφορίες
             </h2>
             
             <div className="space-y-4">
@@ -204,7 +204,7 @@ export default function BuildingDashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center">
                 <MapPin className="w-5 h-5 mr-2 text-green-600" />
-                Προβολή Δρόμου
+                Street View
               </h2>
                                 {building?.address && (
                     <Button
@@ -225,13 +225,14 @@ export default function BuildingDashboardPage() {
                       className="text-xs"
                     >
                       <ExternalLink className="w-3 h-3 mr-1" />
-                      {building.coordinates?.lat && building.coordinates?.lng ? 'Χάρτες (ακριβής)' : 'Χάρτες'}
+                      Χάρτες
                     </Button>
                   )}
             </div>
             <BuildingStreetView 
               buildingId={id} 
               address={building?.address}
+              streetViewImageUrl={building?.street_view_image}
             />
           </div>
         </div>
@@ -251,7 +252,7 @@ export default function BuildingDashboardPage() {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">Ανακοινώσεις</h3>
-                    <p className="text-sm text-gray-600">Διαχείριση ανακοινώσεων</p>
+                    <p className="text-sm text-gray-600">Διαχείριση</p>
                   </div>
                 </div>
               </div>
@@ -265,7 +266,7 @@ export default function BuildingDashboardPage() {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">Αιτήματα</h3>
-                    <p className="text-sm text-gray-600">Διαχείριση αιτημάτων</p>
+                    <p className="text-sm text-gray-600">Διαχείριση</p>
                   </div>
                 </div>
               </div>
@@ -279,7 +280,7 @@ export default function BuildingDashboardPage() {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">Επεξεργασία</h3>
-                    <p className="text-sm text-gray-600">Επεξεργασία στοιχείων</p>
+                    <p className="text-sm text-gray-600">Στοιχεία</p>
                   </div>
                 </div>
               </div>
@@ -293,7 +294,7 @@ export default function BuildingDashboardPage() {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">Όλα τα Κτίρια</h3>
-                    <p className="text-sm text-gray-600">Επιστροφή στη λίστα</p>
+                    <p className="text-sm text-gray-600">Λίστα</p>
                   </div>
                 </div>
               </div>

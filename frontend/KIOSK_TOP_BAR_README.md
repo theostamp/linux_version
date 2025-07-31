@@ -113,7 +113,7 @@ useEffect(() => {
 
 ### Test Page
 A test page has been created at `/test-kiosk` to verify the component functionality:
-- Navigate to `http://localhost:3000/test-kiosk` to test the KioskTopBar in isolation
+- Navigate to `http://localhost:8080/test-kiosk` to test the KioskTopBar in isolation
 - Verify weather loading, banner rotation, and responsive design
 
 ### Features to Test

@@ -38,9 +38,10 @@
 1. Select "HTTP referrers (web sites)"
 2. Add these referrers:
    ```
-   http://localhost:3000/*
+   http://localhost:8080/*
    http://localhost:3001/*
-   http://tap.localhost:3000/*
+   http://demo.localhost:8080/*
+   http://tap.localhost:8080/*
    http://tap.localhost:3001/*
    https://yourdomain.com/*
    ```
@@ -83,7 +84,7 @@ You're calling a legacy API, which is not enabled for your project
 ### **Issue 3: API Key Restrictions**
 - Use **HTTP Referrer restrictions** for web applications
 - Do NOT use IP Address restrictions for localhost development
-- Include both `http://localhost:3000/*` and `http://localhost:3001/*`
+- Include both `http://localhost:8080/*` and `http://localhost:3001/*`
 
 ### **Issue 4: Quota Exceeded**
 - Check your [Google Cloud Console Quotas](https://console.cloud.google.com/iam-admin/quotas)
@@ -97,7 +98,7 @@ You're calling a legacy API, which is not enabled for your project
 
 ## Testing the Setup
 
-1. Navigate to `http://localhost:3001/buildings/new`
+1. Navigate to `http://localhost:8080/buildings/new`
 2. Try typing in the address field
 3. You should see Google Maps autocomplete suggestions
 4. Check browser console for any errors
