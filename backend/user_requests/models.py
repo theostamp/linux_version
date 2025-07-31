@@ -65,6 +65,14 @@ class UserRequest(models.Model):
     )
     estimated_completion = models.DateField(null=True, blank=True)
     notes = models.TextField(blank=True, help_text="Σημειώσεις από διαχειριστές")
+    
+    # Photo fields
+    photos = models.JSONField(default=list, blank=True, help_text="List of photo URLs")
+    location = models.CharField(max_length=100, blank=True, help_text="Specific location in building")
+    apartment_number = models.CharField(max_length=20, blank=True, help_text="Apartment number if applicable")
+    cost_estimate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    actual_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    contractor_notes = models.TextField(blank=True, help_text="Notes from contractor")
 
     created_by = models.ForeignKey(
         User,

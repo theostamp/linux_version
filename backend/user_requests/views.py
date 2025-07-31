@@ -73,7 +73,54 @@ class UserRequestViewSet(viewsets.ModelViewSet):
             return UserRequest.objects.none()
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        # Handle file uploads
+        photos = []
+        print(f"[DEBUG] perform_create called")
+        print(f"[DEBUG] request.FILES: {self.request.FILES}")
+        print(f"[DEBUG] request.FILES.getlist('photos'): {self.request.FILES.getlist('photos') if hasattr(self.request, 'FILES') else 'No FILES'}")
+        print(f"[DEBUG] request.content_type: {self.request.content_type}")
+        print(f"[DEBUG] request.META.get('CONTENT_TYPE'): {self.request.META.get('CONTENT_TYPE')}")
+        print(f"[DEBUG] request.POST: {self.request.POST}")
+        print(f"[DEBUG] request.data: {self.request.data}")
+        
+        if hasattr(self.request, 'FILES'):
+            for file in self.request.FILES.getlist('photos'):
+                print(f"[DEBUG] Processing file: {file.name}, size: {file.size}, type: {file.content_type}")
+                
+                # Save file to media directory
+                import os
+                from django.conf import settings
+                from django.core.files.storage import default_storage
+                
+                # Create a unique filename
+                import uuid
+                filename = f"user_requests/{uuid.uuid4()}_{file.name}"
+                print(f"[DEBUG] Saving file as: {filename}")
+                
+                try:
+                    # Save file
+                    file_path = default_storage.save(filename, file)
+                    file_url = default_storage.url(file_path)
+                    print(f"[DEBUG] File saved successfully: {file_path}")
+                    print(f"[DEBUG] File URL: {file_url}")
+                    photos.append(file_url)
+                except Exception as e:
+                    print(f"[DEBUG] Error saving file: {e}")
+                    import traceback
+                    traceback.print_exc()
+        
+        print(f"[DEBUG] Total photos to save: {len(photos)}")
+        
+        # Save the request with photos
+        user_request = serializer.save(created_by=self.request.user)
+        
+        # Update photos field if we have photos
+        if photos:
+            user_request.photos = photos
+            user_request.save()
+            print(f"[DEBUG] Photos saved to user_request: {user_request.photos}")
+        else:
+            print(f"[DEBUG] No photos to save")
         
     @action(detail=False, methods=["get"], url_path="top")
     def top_requests(self, request):

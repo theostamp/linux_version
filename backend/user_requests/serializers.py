@@ -14,6 +14,16 @@ class UserRequestSerializer(serializers.ModelSerializer):
     created_by_username = serializers.CharField(source='created_by.email', read_only=True) 
     assigned_to_username = serializers.CharField(source='assigned_to.email', read_only=True)
     
+    # Photos field - read-only, handled in perform_create
+    photos = serializers.SerializerMethodField()
+    
+    def get_photos(self, obj):
+        """Return full URLs for photos"""
+        request = self.context.get('request')
+        if request and obj.photos:
+            return [request.build_absolute_uri(photo) for photo in obj.photos]
+        return obj.photos or []
+    
     # Use SerializerMethodField for supporter_count to handle annotated field
     supporter_count = serializers.SerializerMethodField()
     supporter_usernames = serializers.SerializerMethodField()
@@ -50,6 +60,12 @@ class UserRequestSerializer(serializers.ModelSerializer):
             'is_overdue',
             'status_display',
             'priority_display',
+            'photos',
+            'location',
+            'apartment_number',
+            'cost_estimate',
+            'actual_cost',
+            'contractor_notes',
         ]
         read_only_fields = [
             'id',
@@ -135,6 +151,10 @@ class UserRequestSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
             validated_data['created_by'] = request.user
+        
+        # Remove photos from validated_data as we handle them separately in the view
+        validated_data.pop('photos', None)
+        
         return super().create(validated_data)
 
 class UserRequestListSerializer(serializers.ModelSerializer):
@@ -144,13 +164,22 @@ class UserRequestListSerializer(serializers.ModelSerializer):
     supporter_count = serializers.SerializerMethodField()
     supporter_usernames = serializers.SerializerMethodField()
     is_supported = serializers.SerializerMethodField()
+    photos = serializers.SerializerMethodField()
+    
+    def get_photos(self, obj):
+        """Return full URLs for photos"""
+        request = self.context.get('request')
+        if request and obj.photos:
+            return [request.build_absolute_uri(photo) for photo in obj.photos]
+        return obj.photos or []
     
     class Meta:
         model = UserRequest
         fields = [
             'id', 'title', 'type', 'status', 'priority', 'created_at',
             'created_by_username', 'building_name', 'supporter_count',
-            'supporter_usernames', 'is_urgent', 'is_supported', 'days_since_creation'
+            'supporter_usernames', 'is_urgent', 'is_supported', 'days_since_creation',
+            'photos', 'location', 'apartment_number'
         ]
 
     def get_supporter_count(self, obj):
