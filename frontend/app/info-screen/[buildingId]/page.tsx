@@ -74,7 +74,7 @@ export default function InfoScreenPage({
           </div>
         )}
       </div>
-      <KioskSidebar />
+      <KioskSidebar buildingInfo={data?.building_info} />
     </div>
   );
 }

@@ -60,6 +60,9 @@ export default function KioskMode({
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentSlide, setCurrentSlide] = useState(0);
   const [newsTicker, setNewsTicker] = useState<string>('');
+  const [newsItems, setNewsItems] = useState<string[]>([]);
+  const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
+  const [newsOpacity, setNewsOpacity] = useState(1);
   const [showBuildingSelector, setShowBuildingSelector] = useState(false);
   
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -109,21 +112,55 @@ export default function KioskMode({
     };
   }, [instanceRef]);
 
-  // Load news ticker
+  // Load fresh news ticker
   useEffect(() => {
     async function loadNews() {
       try {
-        const response = await fetch('/api/quote');
+        const response = await fetch('/api/news/multiple');
         if (response.ok) {
           const data = await response.json();
-          setNewsTicker(data.content || 'Καλώς ήρθατε στην πολυκατοικία μας!');
+          if (data.items && data.items.length > 0) {
+            setNewsItems(data.items);
+            setNewsTicker(data.items[0]);
+            setCurrentNewsIndex(0);
+          }
         }
       } catch (error) {
-        setNewsTicker('Καλώς ήρθατε στην πολυκατοικία μας!');
+        setNewsTicker('Ενημερωθείτε για τα τελευταία νέα της Ελλάδας! 🇬🇷');
       }
     }
     loadNews();
+    
+    // Refresh news every 3 minutes for fresher content
+    const interval = setInterval(loadNews, 3 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
+
+
+
+  // Rotate news items every 12 seconds (faster for fresh news)
+  useEffect(() => {
+    if (newsItems.length > 1) {
+      const newsInterval = setInterval(() => {
+        setCurrentNewsIndex((prevIndex) => {
+          const nextIndex = (prevIndex + 1) % newsItems.length;
+          
+          // Fade out current text
+          setNewsOpacity(0);
+          
+          // Change text after fade out
+          setTimeout(() => {
+            setNewsTicker(newsItems[nextIndex]);
+            setNewsOpacity(1);
+          }, 500); // Wait 500ms for fade out
+          
+          return nextIndex;
+        });
+      }, 12000); // 12 seconds per news item
+      
+      return () => clearInterval(newsInterval);
+    }
+  }, [newsItems]);
 
   // Keyboard shortcut handler - Ctrl + Alt + B
   useEffect(() => {
@@ -514,15 +551,7 @@ export default function KioskMode({
         </div>
       </div>
 
-      {/* News Ticker - Fixed height */}
-      {newsTicker && (
-        <div className="bg-yellow-600 bg-opacity-90 p-1 sm:p-2 overflow-hidden flex-shrink-0 min-h-0">
-          <div className="flex items-center space-x-1 sm:space-x-2 animate-marquee">
-            <span className="font-semibold text-xs sm:text-sm">📢</span>
-            <span className="whitespace-nowrap text-xs sm:text-sm">{newsTicker}</span>
-          </div>
-        </div>
-      )}
+
 
       {/* Main Content - Flexible height */}
       <div className="flex-1 p-2 sm:p-3 lg:p-6 overflow-hidden min-h-0">
@@ -572,6 +601,37 @@ export default function KioskMode({
         </div>
       </div>
 
+      {/* News Ticker - Bottom of screen */}
+      {newsTicker && (
+        <div className="bg-gradient-to-r from-blue-800 to-blue-900 bg-opacity-95 p-2 sm:p-3 overflow-hidden flex-shrink-0 min-h-0 border-t-2 border-white border-opacity-20 relative">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 sm:space-x-3 animate-marquee flex-1 ml-16">
+              <span 
+                className="whitespace-nowrap text-white text-sm sm:text-base font-medium"
+                style={{ opacity: newsOpacity, transition: 'opacity 0.5s ease-in-out' }}
+              >
+                {newsTicker}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2 flex-shrink-0 ml-4">
+              {newsItems.length > 1 && (
+                <div className="flex items-center space-x-1">
+                  <span className="text-white text-xs opacity-75">
+                    {currentNewsIndex + 1} / {newsItems.length}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          {/* NEWS banner - positioned absolutely on the left */}
+          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10">
+            <div className="bg-white bg-opacity-0 px-2 py-1 rounded text-sm font-bold text-white uppercase tracking-wide">
+              NEWS
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Custom CSS for marquee animation */}
       <style jsx>{`
         @keyframes marquee {
@@ -579,7 +639,12 @@ export default function KioskMode({
           100% { transform: translateX(-100%); }
         }
         .animate-marquee {
-          animation: marquee 20s linear infinite;
+          animation: marquee 30s linear infinite;
+          white-space: nowrap;
+          transition: opacity 0.5s ease-in-out;
+        }
+        .animate-marquee:hover {
+          animation-play-state: paused;
         }
       `}</style>
     </div>

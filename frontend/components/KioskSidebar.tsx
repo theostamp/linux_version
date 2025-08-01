@@ -19,11 +19,29 @@ interface AdvertisingBanner {
   duration: number;
 }
 
-export default function KioskSidebar() {
+interface KioskSidebarProps {
+  buildingInfo?: {
+    id: number;
+    name: string;
+    address: string;
+    city?: string;
+    postal_code?: string;
+    latitude?: number;
+    longitude?: number;
+    internal_manager_name?: string;
+    internal_manager_phone?: string;
+    management_office_name?: string;
+    management_office_phone?: string;
+    management_office_address?: string;
+  };
+}
+
+export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentBanner, setCurrentBanner] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [communityMessage, setCommunityMessage] = useState<string>('');
 
   // Enhanced advertising banners
   const advertisingBanners: AdvertisingBanner[] = [
@@ -70,18 +88,25 @@ export default function KioskSidebar() {
     return () => clearInterval(timer);
   }, []);
 
-  // Load weather data
+  // Load weather data based on building location
   useEffect(() => {
     async function loadWeather() {
       try {
+        // Use building coordinates if available, otherwise fallback to Athens
+        const latitude = buildingInfo?.latitude || 37.98;
+        const longitude = buildingInfo?.longitude || 23.72;
+        const city = buildingInfo?.city || 'Αθήνα';
+        
         const response = await fetch(
-          'https://api.open-meteo.com/v1/forecast?latitude=37.98&longitude=23.72&current_weather=true&timezone=Europe%2FAthens'
+          `/api/weather?latitude=${latitude}&longitude=${longitude}&city=${encodeURIComponent(city)}`
         );
         if (response.ok) {
           const data = await response.json();
-          const { temperature, weathercode } = data.current_weather;
-          const description = getWeatherDescription(weathercode);
-          setWeather({ temperature, weathercode, description });
+          setWeather({ 
+            temperature: data.temperature, 
+            weathercode: data.weathercode, 
+            description: data.description 
+          });
         }
       } catch (error) {
         console.error('Failed to load weather:', error);
@@ -90,7 +115,7 @@ export default function KioskSidebar() {
       }
     }
     loadWeather();
-  }, []);
+  }, [buildingInfo?.latitude, buildingInfo?.longitude, buildingInfo?.city]);
 
   // Rotate advertising banners
   useEffect(() => {
@@ -100,6 +125,26 @@ export default function KioskSidebar() {
 
     return () => clearInterval(interval);
   }, [advertisingBanners.length]);
+
+  // Load community messages
+  useEffect(() => {
+    async function loadCommunityMessage() {
+      try {
+        const response = await fetch('/api/community-messages');
+        if (response.ok) {
+          const data = await response.json();
+          setCommunityMessage(data.content);
+        }
+      } catch (error) {
+        setCommunityMessage('Καλώς ήρθατε στην πολυκατοικία μας! 🏠');
+      }
+    }
+    loadCommunityMessage();
+    
+    // Refresh community message every 30 seconds
+    const interval = setInterval(loadCommunityMessage, 30 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   function getWeatherDescription(code: number): string {
     const weatherMap: Record<number, string> = {
@@ -184,7 +229,7 @@ export default function KioskSidebar() {
               </div>
               <div className="flex items-center justify-center text-xs text-blue-300">
                 <MapPin className="w-3 h-3 mr-1" />
-                Αθήνα, Ελλάδα
+                {buildingInfo?.city || 'Αθήνα'}, Ελλάδα
               </div>
             </div>
           ) : (
@@ -195,6 +240,61 @@ export default function KioskSidebar() {
           )}
         </CardContent>
       </Card>
+
+      {/* Quick Info - Internal Manager */}
+      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+        <CardContent className="pt-2 sm:pt-3 lg:pt-4">
+          <div className="space-y-2 lg:space-y-3 text-xs sm:text-sm">
+            {/* Internal Manager */}
+            {buildingInfo?.internal_manager_name && (
+              <div className="flex items-center justify-between p-2 bg-white/5 rounded">
+                <span className="text-blue-200">Εσωτερικός Διαχειριστής:</span>
+                <span className="font-medium text-white">{buildingInfo.internal_manager_name}</span>
+              </div>
+            )}
+            {buildingInfo?.internal_manager_phone && (
+              <div className="flex items-center justify-between p-2 bg-white/5 rounded">
+                <span className="text-blue-200">Τηλέφωνο:</span>
+                <span className="font-medium text-white">{buildingInfo.internal_manager_phone}</span>
+              </div>
+            )}
+            
+            {/* Management Office */}
+            {buildingInfo?.management_office_name && (
+              <div className="flex items-center justify-between p-2 bg-white/5 rounded">
+                <span className="text-blue-200">Εταιρεία Διαχείρισης:</span>
+                <span className="font-medium text-white">{buildingInfo.management_office_name}</span>
+              </div>
+            )}
+            {buildingInfo?.management_office_phone && (
+              <div className="flex items-center justify-between p-2 bg-white/5 rounded">
+                <span className="text-blue-200">Τηλέφωνο Γραφείου:</span>
+                <span className="font-medium text-white">{buildingInfo.management_office_phone}</span>
+              </div>
+            )}
+            
+            {/* Fallback if no manager info */}
+            {!buildingInfo?.internal_manager_name && !buildingInfo?.management_office_name && (
+              <div className="flex items-center justify-center p-2 bg-white/5 rounded">
+                <span className="text-blue-200 text-center">Δεν υπάρχουν διαθέσιμα στοιχεία διαχείρισης</span>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Community Message */}
+      {communityMessage && (
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <CardContent className="pt-2 sm:pt-3 lg:pt-4">
+            <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-lg p-2 sm:p-3 text-white border border-white/20">
+              <p className="text-xs font-medium leading-relaxed">
+                {communityMessage}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Advertising Banners */}
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
@@ -238,22 +338,6 @@ export default function KioskSidebar() {
                 }`}
               />
             ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Info */}
-      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-        <CardContent className="pt-2 sm:pt-3 lg:pt-4">
-          <div className="space-y-2 lg:space-y-3 text-xs sm:text-sm">
-            <div className="flex items-center justify-between p-2 bg-white/5 rounded">
-              <span className="text-blue-200">Διαχειριστής:</span>
-              <span className="font-medium text-white">Γιώργος Παπαδόπουλος</span>
-            </div>
-            <div className="flex items-center justify-between p-2 bg-white/5 rounded">
-              <span className="text-blue-200">Τηλέφωνο:</span>
-              <span className="font-medium text-white">210 1234567</span>
-            </div>
           </div>
         </CardContent>
       </Card>

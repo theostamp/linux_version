@@ -87,7 +87,7 @@ export default function KioskPage() {
   return (
     <div className="flex h-screen w-screen overflow-hidden max-w-full max-h-full">
       {/* Weather and Advertisement Sidebar - Left Side */}
-      <KioskSidebar />
+      <KioskSidebar buildingInfo={data?.building_info} />
       
       {/* Main Kiosk Content - Right Side */}
       <div className="flex-1 overflow-hidden min-w-0 relative">

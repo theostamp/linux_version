@@ -8,7 +8,6 @@ import { Loader2 } from 'lucide-react';
 import GlobalHeader from '@/components/GlobalHeader';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from 'react-hot-toast';
-import NewsTicker from '@/components/NewsTicker';
 import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -44,9 +43,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {children}
           </div>
         </main>
-        
-        {/* News Ticker at Bottom */}
-        <NewsTicker />
       </div>
       
       {/* Global Loading Overlay */}
