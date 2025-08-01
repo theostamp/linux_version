@@ -145,7 +145,7 @@ export default function ResidentsListPage() {
           {searchTerm ? (
             <>
               <p className="text-gray-500 mb-4">
-                Δεν βρέθηκαν κάτοικοι που να ταιριάζουν με την αναζήτηση "{searchTerm}".
+                Δεν βρέθηκαν κάτοικοι που να ταιριάζουν με την αναζήτηση &quot;{searchTerm}&quot;.
               </p>
               <button
                 onClick={() => setSearchTerm("")}

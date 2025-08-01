@@ -46,7 +46,7 @@ export default function AnnouncementDetailPage() {
         const data = await fetchAnnouncement(id);
         setAnnouncement(data);
         setError(null);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error fetching announcement:', err);
         
         // Handle authentication errors

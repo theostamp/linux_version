@@ -455,6 +455,7 @@ export default function KioskMode({
         onClose={() => setShowBuildingSelector(false)}
         onBuildingSelect={handleBuildingSelect}
         selectedBuilding={buildingInfo ? { id: buildingInfo.id, name: buildingInfo.name || '', address: buildingInfo.address || '' } as BuildingType : null}
+        currentBuilding={buildingInfo ? { id: buildingInfo.id, name: buildingInfo.name || '', address: buildingInfo.address || '' } as BuildingType : null}
       />
 
       {/* Building Info Bar - Fixed height for TV */}

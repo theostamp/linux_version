@@ -90,8 +90,11 @@ export default function NewApartmentPage() {
       await createApartment(payload);
       toast.success('Το διαμέρισμα δημιουργήθηκε επιτυχώς');
       router.push('/apartments');
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Σφάλμα κατά τη δημιουργία του διαμερίσματος');
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error 
+        ? (error.response as any)?.data?.detail 
+        : 'Σφάλμα κατά τη δημιουργία του διαμερίσματος';
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }

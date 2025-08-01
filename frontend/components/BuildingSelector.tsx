@@ -3,13 +3,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Building } from '@/lib/api';
 import { fetchAllBuildings } from '@/lib/api';
-import { Search, Building as BuildingIcon, Check, X } from 'lucide-react';
+import { Search, Building as BuildingIcon, Check, X, MapPin } from 'lucide-react';
 
 interface BuildingSelectorProps {
   isOpen: boolean;
   onClose: () => void;
   onBuildingSelect: (building: Building | null) => void;
   selectedBuilding: Building | null;
+  currentBuilding?: Building | null;
 }
 
 export default function BuildingSelector({
@@ -17,6 +18,7 @@ export default function BuildingSelector({
   onClose,
   onBuildingSelect,
   selectedBuilding,
+  currentBuilding,
 }: BuildingSelectorProps) {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -162,7 +164,51 @@ export default function BuildingSelector({
               {/* Διαχωριστική γραμμή */}
               <div className="border-t border-gray-200 mx-4"></div>
 
+              {/* Τρέχον κτίριο (αν υπάρχει) */}
+              {currentBuilding && (
+                <>
+                  <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
+                    <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                      Τρέχον κτίριο
+                    </div>
+                  </div>
+                  <div
+                    onClick={() => handleBuildingSelect(currentBuilding)}
+                    className={`flex items-center justify-between p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                      selectedBuilding?.id === currentBuilding.id ? 'bg-green-50 border-r-4 border-green-500' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                        <MapPin className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900 flex items-center gap-2">
+                          {currentBuilding.name}
+                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                            Τρέχον
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {currentBuilding.address}
+                          {currentBuilding.city && `, ${currentBuilding.city}`}
+                        </div>
+                      </div>
+                    </div>
+                    {selectedBuilding?.id === currentBuilding.id && (
+                      <Check className="w-5 h-5 text-green-600" />
+                    )}
+                  </div>
+                  <div className="border-t border-gray-200 mx-4"></div>
+                </>
+              )}
+
               {/* Λίστα κτιρίων */}
+              <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
+                <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                  Άλλα κτίρια
+                </div>
+              </div>
               {filteredBuildings.length === 0 ? (
                 <div className="p-4 text-center text-gray-500">
                   {searchTerm ? 'Δεν βρέθηκαν κτίρια' : 'Δεν υπάρχουν διαθέσιμα κτίρια'}

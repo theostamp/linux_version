@@ -8,7 +8,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import type { UserRequest } from '@/lib/api';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Trash2, Filter, Search, X, SlidersHorizontal } from 'lucide-react';
+import { Trash2, Filter, Search, X, SlidersHorizontal, MapPin, Building as BuildingIcon } from 'lucide-react';
 import { deleteUserRequest } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
@@ -17,6 +17,7 @@ import RequestCard from '@/components/RequestCard';
 import RequestSkeleton from '@/components/RequestSkeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, REQUEST_STATUSES } from '@/types/userRequests';
+import BuildingContextHelp from '@/components/BuildingContextHelp';
 
 export default function RequestsPage() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
@@ -152,7 +153,29 @@ export default function RequestsPage() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold">🔧 Αιτήματα Συντήρησης</h1>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">🔧 Αιτήματα Συντήρησης</h1>
+          {/* Current Building Context */}
+          {selectedBuilding === null && (
+            <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+              <BuildingIcon className="w-4 h-4" />
+              <span>
+                <strong>Βλέπετε όλα τα κτίρια</strong>
+              </span>
+            </div>
+          )}
+          {selectedBuilding && (
+            <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+              <MapPin className="w-4 h-4" />
+              <span>
+                Τρέχον κτίριο: <span className="font-medium text-gray-800">{selectedBuilding.name}</span>
+                {selectedBuilding.address && (
+                  <span className="text-gray-500 ml-2">({selectedBuilding.address})</span>
+                )}
+              </span>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <Button
             onClick={() => setShowFilters(!showFilters)}
@@ -187,7 +210,82 @@ export default function RequestsPage() {
         </div>
       </div>
 
-      <BuildingFilterIndicator />
+      {/* Enhanced Building Context Banner */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <BuildingIcon className="w-5 h-5 text-blue-600" />
+              <span className="font-medium text-blue-900">Κατάσταση Προβολής:</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {selectedBuilding ? (
+                <>
+                  {selectedBuilding.id === currentBuilding?.id ? (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                      ✅ Βλέπετε αιτήματα του τρέχοντος κτιρίου
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
+                      🔍 Φιλτράρετε αιτήματα από άλλο κτίριο
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                  🌐 Βλέπετε αιτήματα από όλα τα κτίρια
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-blue-700">
+              <span>
+                {selectedBuilding ? (
+                  <>
+                    Επιλεγμένο: <strong>{selectedBuilding.name}</strong>
+                  </>
+                ) : (
+                  <>
+                    Επιλεγμένο: <strong>Όλα τα Κτίρια</strong>
+                  </>
+                )}
+              </span>
+            </div>
+            <BuildingContextHelp />
+          </div>
+        </div>
+      </div>
+
+      {/* Warning when filtering different building */}
+      {selectedBuilding && selectedBuilding.id !== currentBuilding?.id && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-amber-50 border border-amber-200 rounded-lg p-4"
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-amber-800">
+                Προβολή αιτημάτων από άλλο κτίριο
+              </h3>
+              <p className="text-sm text-amber-700 mt-1">
+                Βλέπετε αιτήματα από το <strong>{selectedBuilding.name}</strong> ενώ βρίσκεστε στο <strong>{currentBuilding?.name || 'Όλα τα κτίρια'}</strong>.
+                {canCreateRequest && (
+                  <span className="block mt-1">
+                    Για να δημιουργήσετε νέο αίτημα στο τρέχον κτίριο, επιλέξτε "Όλα τα κτίρια" και μετά φιλτράρετε ξανά.
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Filters Panel */}
       <AnimatePresence>

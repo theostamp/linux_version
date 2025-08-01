@@ -30,14 +30,15 @@ export default function NewVotePage() {
 
   const buildingId = selectedBuilding?.id || currentBuilding?.id;
 
-  async function handleSubmit(data: any) {
+  async function handleSubmit(data: unknown) {
     try {
-      await createVote(data);
+      await createVote(data as any);
       queryClient.invalidateQueries({ queryKey: ['votes'] });
       toast.success('Η ψηφοφορία δημιουργήθηκε με επιτυχία');
       router.push('/votes');
-    } catch (err: any) {
-      toast.error(err.message ?? 'Αποτυχία δημιουργίας ψηφοφορίας');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Αποτυχία δημιουργίας ψηφοφορίας';
+      toast.error(errorMessage);
     }
   }
 

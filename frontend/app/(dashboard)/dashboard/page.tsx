@@ -245,10 +245,13 @@ function DashboardContent() {
 
     const loadObligations = async () => {
       try {
-        const buildingId = selectedBuilding?.id || currentBuilding?.id;
-        if (!buildingId) return;
+        // Μόνο αν είναι επιλεγμένο συγκεκριμένο κτίριο φορτώνουμε obligations
+        if (!selectedBuilding?.id) {
+          setObligations(null);
+          return;
+        }
         
-        const obligationsData = await fetchObligationsSummary(buildingId);
+        const obligationsData = await fetchObligationsSummary(selectedBuilding.id);
         setObligations(obligationsData);
       } catch (err) {
         console.error('Failed to load obligations:', err);
@@ -343,7 +346,9 @@ function DashboardContent() {
             </h1>
             <div className="relative">
               <p className="text-blue-100">
-                Βρίσκεσαι στο κτίριο: <span className="font-semibold">{selectedBuilding?.name || currentBuilding?.name}</span>
+                Βρίσκεσαι στο κτίριο: <span className="font-semibold">
+                  {selectedBuilding ? selectedBuilding.name : 'Όλα τα Κτίρια'}
+                </span>
               </p>
               
               {/* Hover Tooltip */}
@@ -354,7 +359,9 @@ function DashboardContent() {
                     <div>
                       <p className="font-medium mb-1 text-xs">Πληροφορίες Κτιρίου</p>
                       <p className="text-gray-600 text-xs leading-relaxed">
-                        Είσαι στο κτίριο <strong>{selectedBuilding?.name || currentBuilding?.name}</strong>. 
+                        Είσαι στο κτίριο <strong>
+                          {selectedBuilding ? selectedBuilding.name : 'Όλα τα Κτίρια'}
+                        </strong>. 
                         Για αλλαγή, χρησιμοποίησε τον επιλογέα στο sidebar.
                       </p>
                     </div>

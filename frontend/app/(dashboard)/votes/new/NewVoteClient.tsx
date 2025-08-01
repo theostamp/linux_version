@@ -55,8 +55,10 @@ export default function NewVoteClient() {
       };
       await createVote(payload);
       router.push(`/dashboard?building=${buildingId}`);
-    } catch (err: any) {
-      const msg = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'response' in err 
+        ? JSON.stringify((err as any).response?.data) 
+        : err instanceof Error ? err.message : 'Unknown error';
       setError(`Σφάλμα κατά τη δημιουργία ψηφοφορίας: ${msg}`);
       console.error('CreateVote failed:', err);
     } finally {

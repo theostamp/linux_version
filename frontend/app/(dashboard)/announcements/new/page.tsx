@@ -2,21 +2,10 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-hot-toast';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
-import { createAnnouncement } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import NewAnnouncementForm from '@/components/NewAnnouncementForm';
-
-type AnnouncementFormData = {
-  title: string;
-  description: string;
-  start_date: string;
-  end_date: string;
-  file?: File | null;
-  is_active?: boolean;
-};
 
 function useSuperUserGuard() {
   const { user, isAuthReady } = useAuth();
@@ -37,7 +26,6 @@ function useSuperUserGuard() {
 
 export default function NewAnnouncementPage() {
   const { currentBuilding } = useBuilding();
-  const router = useRouter();
   const { isAccessAllowed, isLoading } = useSuperUserGuard();
 
   if (isLoading) return <p className="p-4">Έλεγχος δικαιωμάτων...</p>;

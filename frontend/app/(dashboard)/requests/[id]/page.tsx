@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Trash2, Edit } from 'lucide-react';
 import PhotoGallery from '@/components/PhotoGallery';
+// import { useQueryClient } from '@tanstack/react-query';
 
 const statusLabels: Record<string, string> = {
   open: 'Ανοιχτό',
@@ -36,6 +37,7 @@ export default function RequestDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user, isAuthReady } = useAuth();
+  // const queryClient = useQueryClient();
   const [request, setRequest] = useState<UserRequest | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -115,6 +117,8 @@ export default function RequestDetailPage() {
       });
       setRequest(res.data);
       toast.success('Η κατάσταση ενημερώθηκε επιτυχώς');
+      // Invalidate related queries
+      // queryClient.invalidateQueries({ queryKey: ['requests'] });
     } catch (err: any) {
       const message = err.response?.data?.detail || err.message || 'Αποτυχία αλλαγής κατάστασης';
       toast.error(message);

@@ -17,6 +17,7 @@ export default function BuildingSelectorButton({
   selectedBuilding,
   className = '',
 }: BuildingSelectorButtonProps) {
+  const { currentBuilding } = useBuilding();
   const [isOpen, setIsOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [hasSeenTooltip, setHasSeenTooltip] = useState(false);
@@ -102,6 +103,7 @@ export default function BuildingSelectorButton({
         onClose={handleClose}
         onBuildingSelect={handleBuildingSelect}
         selectedBuilding={selectedBuilding}
+        currentBuilding={currentBuilding}
       />
     </>
   );
