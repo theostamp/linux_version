@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useKeenSlider } from 'keen-slider/react';
-import { Bell, Calendar, Clock, MapPin, Users, Vote, AlertTriangle, Building, ExternalLink, Settings, Phone } from 'lucide-react';
+import { Bell, Calendar, Clock, MapPin, Users, Vote, AlertTriangle, Building, ExternalLink, Settings, Phone, Euro, Wrench, FileText } from 'lucide-react';
 import { Announcement, Vote as VoteType, Building as BuildingType } from '@/lib/api';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
@@ -40,6 +40,27 @@ interface KioskModeProps {
     system_status: string;
     last_updated: string;
   };
+  // Νέα props για τα νέα modules
+  financialInfo?: {
+    total_payments: number;
+    pending_payments: number;
+    overdue_payments: number;
+    total_collected: number;
+    collection_rate: number;
+  };
+  maintenanceInfo?: {
+    active_contractors: number;
+    pending_receipts: number;
+    scheduled_maintenance: number;
+    urgent_maintenance: number;
+  };
+  projectsInfo?: {
+    active_projects: number;
+    pending_offers: number;
+    active_contracts: number;
+    total_budget: number;
+    total_spent: number;
+  };
   onBuildingChange?: (buildingId: number | null) => void;
   isLoading?: boolean;
   isError?: boolean;
@@ -52,6 +73,9 @@ export default function KioskMode({
   buildingInfo,
   advertisingBanners = [],
   generalInfo,
+  financialInfo,
+  maintenanceInfo,
+  projectsInfo,
   onBuildingChange,
   isLoading = false,
   isError = false,
@@ -339,10 +363,244 @@ export default function KioskMode({
     return [];
   };
 
-  // Create slides with priority: announcements first, then votes, then requests, then other content
+  // Helper function to create financial slides
+  const createFinancialSlides = () => {
+    if (!financialInfo) return [];
+
+    return [{
+      id: 'financial-overview',
+      title: 'Οικονομική Επισκόπηση',
+      icon: Euro,
+      content: (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+          <div className="bg-gradient-to-br from-green-900/40 to-emerald-900/40 backdrop-blur-sm p-6 rounded-xl border border-green-500/30 shadow-lg">
+            <div className="flex items-center space-x-4 mb-4">
+              <Euro className="w-8 h-8 text-green-300" />
+              <h3 className="text-xl font-semibold text-white">Κατάσταση Πληρωμών</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-green-100">Συνολικές Πληρωμές</span>
+                <span className="text-white font-bold text-lg">{financialInfo.total_payments}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-green-100">Εκκρεμείς</span>
+                <span className="text-yellow-300 font-bold">{financialInfo.pending_payments}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-green-100">Ληξιπρόθεσμες</span>
+                <span className="text-red-300 font-bold">{financialInfo.overdue_payments}</span>
+              </div>
+              <div className="pt-2 border-t border-green-500/30">
+                <div className="flex justify-between items-center">
+                  <span className="text-green-100">Συνολικά Εισπραχθέντα</span>
+                  <span className="text-white font-bold">€{financialInfo.total_collected.toLocaleString()}</span>
+                </div>
+                <div className="mt-2">
+                  <div className="flex justify-between text-sm text-green-100">
+                    <span>Ποσοστό Εισπράξεως</span>
+                    <span>{financialInfo.collection_rate}%</span>
+                  </div>
+                  <div className="w-full bg-green-900/50 rounded-full h-2 mt-1">
+                    <div 
+                      className="bg-green-400 h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${financialInfo.collection_rate}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 backdrop-blur-sm p-6 rounded-xl border border-blue-500/30 shadow-lg">
+            <div className="flex items-center space-x-4 mb-4">
+              <Building className="w-8 h-8 text-blue-300" />
+              <h3 className="text-xl font-semibold text-white">Λογαριασμοί Κτιρίου</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="text-center py-4">
+                <div className="text-3xl font-bold text-blue-300 mb-2">3/4</div>
+                <div className="text-blue-100 text-sm">Ενεργοί Λογαριασμοί</div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-green-900/30 rounded-lg">
+                  <div className="text-xl font-bold text-green-300">3</div>
+                  <div className="text-xs text-green-100">Λειτουργικοί</div>
+                </div>
+                <div className="text-center p-3 bg-blue-900/30 rounded-lg">
+                  <div className="text-xl font-bold text-blue-300">1</div>
+                  <div className="text-xs text-blue-100">Αποθεματικό</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+    }];
+  };
+
+  // Helper function to create maintenance slides
+  const createMaintenanceSlides = () => {
+    if (!maintenanceInfo) return [];
+
+    return [{
+      id: 'maintenance-overview',
+      title: 'Τεχνικά & Συντήρηση',
+      icon: Wrench,
+      content: (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+          <div className="bg-gradient-to-br from-orange-900/40 to-amber-900/40 backdrop-blur-sm p-6 rounded-xl border border-orange-500/30 shadow-lg">
+            <div className="flex items-center space-x-4 mb-4">
+              <Wrench className="w-8 h-8 text-orange-300" />
+              <h3 className="text-xl font-semibold text-white">Κατάσταση Συνεργείων</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-orange-100">Ενεργά Συνεργεία</span>
+                <span className="text-white font-bold text-lg">{maintenanceInfo.active_contractors}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-orange-100">Εκκρεμείς Αποδείξεις</span>
+                <span className="text-yellow-300 font-bold">{maintenanceInfo.pending_receipts}</span>
+              </div>
+              <div className="pt-2 border-t border-orange-500/30">
+                <div className="text-center py-2">
+                  <div className="text-sm text-orange-100 mb-1">Τύποι Συνεργείων</div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-orange-900/30 p-2 rounded">
+                      <div className="text-orange-300 font-bold">5</div>
+                      <div className="text-orange-100">Επισκευές</div>
+                    </div>
+                    <div className="bg-orange-900/30 p-2 rounded">
+                      <div className="text-orange-300 font-bold">3</div>
+                      <div className="text-orange-100">Καθαριότητα</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-900/40 to-violet-900/40 backdrop-blur-sm p-6 rounded-xl border border-purple-500/30 shadow-lg">
+            <div className="flex items-center space-x-4 mb-4">
+              <Calendar className="w-8 h-8 text-purple-300" />
+              <h3 className="text-xl font-semibold text-white">Προγραμματισμένα Έργα</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-purple-100">Συνολικά Έργα</span>
+                <span className="text-white font-bold text-lg">{maintenanceInfo.scheduled_maintenance}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-purple-100">Επείγοντα</span>
+                <span className="text-red-300 font-bold">{maintenanceInfo.urgent_maintenance}</span>
+              </div>
+              <div className="pt-2 border-t border-purple-500/30">
+                <div className="text-center py-2">
+                  <div className="text-sm text-purple-100 mb-1">Προσεχείς Έργα</div>
+                  <div className="space-y-2 text-xs">
+                    <div className="bg-purple-900/30 p-2 rounded">
+                      <div className="text-purple-300 font-bold">Συντήρηση Ανελκυστήρα</div>
+                      <div className="text-purple-100">Αύριο 09:00</div>
+                    </div>
+                    <div className="bg-purple-900/30 p-2 rounded">
+                      <div className="text-purple-300 font-bold">Καθαρισμός Κοινοχρήστων</div>
+                      <div className="text-purple-100">Μεθαύριο 14:00</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+    }];
+  };
+
+  // Helper function to create projects slides
+  const createProjectsSlides = () => {
+    if (!projectsInfo) return [];
+
+    return [{
+      id: 'projects-overview',
+      title: 'Προσφορές & Έργα',
+      icon: FileText,
+      content: (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+          <div className="bg-gradient-to-br from-teal-900/40 to-cyan-900/40 backdrop-blur-sm p-6 rounded-xl border border-teal-500/30 shadow-lg">
+            <div className="flex items-center space-x-4 mb-4">
+              <FileText className="w-8 h-8 text-teal-300" />
+              <h3 className="text-xl font-semibold text-white">Κατάσταση Έργων</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-teal-100">Ενεργά Έργα</span>
+                <span className="text-white font-bold text-lg">{projectsInfo.active_projects}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-teal-100">Εκκρεμείς Προσφορές</span>
+                <span className="text-yellow-300 font-bold">{projectsInfo.pending_offers}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-teal-100">Ενεργά Συμβόλαια</span>
+                <span className="text-green-300 font-bold">{projectsInfo.active_contracts}</span>
+              </div>
+              <div className="pt-2 border-t border-teal-500/30">
+                <div className="text-center py-2">
+                  <div className="text-sm text-teal-100 mb-1">Πρόσφατα Έργα</div>
+                  <div className="space-y-2 text-xs">
+                    <div className="bg-teal-900/30 p-2 rounded">
+                      <div className="text-teal-300 font-bold">Ανακαίνιση Κοινοχρήστων</div>
+                      <div className="text-teal-100">75% Ολοκληρωμένο</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-indigo-900/40 to-blue-900/40 backdrop-blur-sm p-6 rounded-xl border border-indigo-500/30 shadow-lg">
+            <div className="flex items-center space-x-4 mb-4">
+              <TrendingUp className="w-8 h-8 text-indigo-300" />
+              <h3 className="text-xl font-semibold text-white">Οικονομική Επισκόπηση</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-indigo-100">Συνολικός Προϋπολογισμός</span>
+                <span className="text-white font-bold">€{projectsInfo.total_budget.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-indigo-100">Συνολικά Έξοδα</span>
+                <span className="text-red-300 font-bold">€{projectsInfo.total_spent.toLocaleString()}</span>
+              </div>
+              <div className="pt-2 border-t border-indigo-500/30">
+                <div className="text-center py-2">
+                  <div className="text-sm text-indigo-100 mb-1">Ποσοστό Χρήσης</div>
+                  <div className="w-full bg-indigo-900/50 rounded-full h-2 mt-1">
+                    <div 
+                      className="bg-indigo-400 h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${Math.round((projectsInfo.total_spent / projectsInfo.total_budget) * 100)}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-indigo-100 mt-1">
+                    Διαθέσιμο: €{(projectsInfo.total_budget - projectsInfo.total_spent).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+    }];
+  };
+
+  // Create slides with priority: announcements first, then votes, then financial, maintenance, projects, then requests
   const slides = [
     ...createAnnouncementSlides(),
     ...createVoteSlides(),
+    ...createFinancialSlides(),
+    ...createMaintenanceSlides(),
+    ...createProjectsSlides(),
     ...createRequestSlides(),
   ];
 

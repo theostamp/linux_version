@@ -1346,3 +1346,374 @@ if (typeof window !== "undefined") {
     // window.location.reload(); // fallback αν δεν έχεις πρόσβαση σε router instance
   });
 }
+
+// ============================================================================
+// 🏦 FINANCIAL API FUNCTIONS
+// ============================================================================
+
+export type Payment = {
+  id: number;
+  apartment: number;
+  apartment_number: string;
+  apartment_identifier: string;
+  building_name: string;
+  payment_type: string;
+  payment_type_display: string;
+  amount: string;
+  due_date: string;
+  status: 'pending' | 'paid' | 'overdue' | 'partial';
+  status_display: string;
+  payment_date?: string;
+  amount_paid: string;
+  payment_method?: string;
+  reference_number?: string;
+  notes?: string;
+  is_overdue: boolean;
+  remaining_amount: string;
+  created_by?: number;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FinancialReceipt = {
+  id: number;
+  payment: number;
+  payment_info: string;
+  apartment_number: string;
+  receipt_type: string;
+  receipt_type_display: string;
+  amount: string;
+  receipt_date: string;
+  receipt_file?: string;
+  reference_number?: string;
+  notes?: string;
+  created_by?: number;
+  created_by_name?: string;
+  created_at: string;
+};
+
+export type BuildingAccount = {
+  id: number;
+  building: number;
+  building_name: string;
+  account_type: string;
+  account_type_display: string;
+  account_number: string;
+  bank_name: string;
+  current_balance: string;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FinancialTransaction = {
+  id: number;
+  building: number;
+  building_name: string;
+  account: number;
+  account_info: string;
+  transaction_type: 'income' | 'expense';
+  transaction_type_display: string;
+  amount: string;
+  description: string;
+  transaction_date: string;
+  reference_number?: string;
+  category?: string;
+  notes?: string;
+  created_by?: number;
+  created_by_name?: string;
+  created_at: string;
+};
+
+export type PaymentStatistics = {
+  total_payments: number;
+  total_amount: number;
+  total_paid: number;
+  pending_payments: number;
+  overdue_payments: number;
+  paid_payments: number;
+  partial_payments: number;
+};
+
+export type TransactionStatistics = {
+  total_transactions: number;
+  total_income: number;
+  total_expenses: number;
+  monthly_income: number;
+  monthly_expenses: number;
+  net_balance: number;
+};
+
+export type AccountSummary = {
+  total_accounts: number;
+  total_balance: number;
+  active_accounts: number;
+  account_types: Record<string, { count: number; total_balance: number }>;
+};
+
+// Payment API functions
+export async function fetchPayments(filters: {
+  buildingId?: number;
+  apartmentId?: number;
+  status?: string;
+  paymentType?: string;
+  overdueOnly?: boolean;
+  startDate?: string;
+  endDate?: string;
+} = {}): Promise<Payment[]> {
+  try {
+    const params = new URLSearchParams();
+    if (filters.buildingId) params.append('building_id', filters.buildingId.toString());
+    if (filters.apartmentId) params.append('apartment_id', filters.apartmentId.toString());
+    if (filters.status) params.append('status', filters.status);
+    if (filters.paymentType) params.append('payment_type', filters.paymentType);
+    if (filters.overdueOnly) params.append('overdue_only', 'true');
+    if (filters.startDate) params.append('start_date', filters.startDate);
+    if (filters.endDate) params.append('end_date', filters.endDate);
+    
+    const response = await api.get(`/financial/payments/?${params}`);
+    return response.data.results || response.data;
+  } catch (error) {
+    console.error('Error fetching payments:', error);
+    throw error;
+  }
+}
+
+export async function fetchPayment(id: number): Promise<Payment> {
+  try {
+    const response = await api.get(`/financial/payments/${id}/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching payment:', error);
+    throw error;
+  }
+}
+
+export async function createPayment(payload: {
+  apartment: number;
+  payment_type: string;
+  amount: number;
+  due_date: string;
+  status?: string;
+  payment_date?: string;
+  amount_paid?: number;
+  payment_method?: string;
+  reference_number?: string;
+  notes?: string;
+}): Promise<Payment> {
+  try {
+    const response = await api.post('/financial/payments/', payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating payment:', error);
+    throw error;
+  }
+}
+
+export async function updatePayment(id: number, payload: Partial<{
+  apartment: number;
+  payment_type: string;
+  amount: number;
+  due_date: string;
+  status: string;
+  payment_date: string;
+  amount_paid: number;
+  payment_method: string;
+  reference_number: string;
+  notes: string;
+}>): Promise<Payment> {
+  try {
+    const response = await api.patch(`/financial/payments/${id}/`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating payment:', error);
+    throw error;
+  }
+}
+
+export async function deletePayment(id: number): Promise<void> {
+  try {
+    await api.delete(`/financial/payments/${id}/`);
+  } catch (error) {
+    console.error('Error deleting payment:', error);
+    throw error;
+  }
+}
+
+export async function markPaymentAsPaid(id: number, payload: {
+  amount_paid?: number;
+  payment_method?: string;
+  reference_number?: string;
+}): Promise<Payment> {
+  try {
+    const response = await api.post(`/financial/payments/${id}/mark_as_paid/`, payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error marking payment as paid:', error);
+    throw error;
+  }
+}
+
+export async function fetchPaymentStatistics(buildingId?: number): Promise<PaymentStatistics> {
+  try {
+    const params = new URLSearchParams();
+    if (buildingId) params.append('building_id', buildingId.toString());
+    
+    const response = await api.get(`/financial/payments/statistics/?${params}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching payment statistics:', error);
+    throw error;
+  }
+}
+
+// Receipt API functions
+export async function fetchReceipts(buildingId?: number): Promise<FinancialReceipt[]> {
+  try {
+    const params = new URLSearchParams();
+    if (buildingId) params.append('building_id', buildingId.toString());
+    
+    const response = await api.get(`/financial/receipts/?${params}`);
+    return response.data.results || response.data;
+  } catch (error) {
+    console.error('Error fetching receipts:', error);
+    throw error;
+  }
+}
+
+export async function createReceipt(payload: {
+  payment: number;
+  receipt_type: string;
+  amount: number;
+  receipt_date: string;
+  receipt_file?: File;
+  reference_number?: string;
+  notes?: string;
+}): Promise<FinancialReceipt> {
+  try {
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined) {
+        if (key === 'receipt_file' && value instanceof File) {
+          formData.append(key, value);
+        } else {
+          formData.append(key, String(value));
+        }
+      }
+    });
+    
+    const response = await api.post('/financial/receipts/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating receipt:', error);
+    throw error;
+  }
+}
+
+// Account API functions
+export async function fetchAccounts(buildingId?: number): Promise<BuildingAccount[]> {
+  try {
+    const params = new URLSearchParams();
+    if (buildingId) params.append('building_id', buildingId.toString());
+    
+    const response = await api.get(`/financial/accounts/?${params}`);
+    return response.data.results || response.data;
+  } catch (error) {
+    console.error('Error fetching accounts:', error);
+    throw error;
+  }
+}
+
+export async function createAccount(payload: {
+  building: number;
+  account_type: string;
+  account_number: string;
+  bank_name: string;
+  current_balance?: number;
+  description?: string;
+  is_active?: boolean;
+}): Promise<BuildingAccount> {
+  try {
+    const response = await api.post('/financial/accounts/', payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating account:', error);
+    throw error;
+  }
+}
+
+export async function fetchAccountSummary(buildingId?: number): Promise<AccountSummary> {
+  try {
+    const params = new URLSearchParams();
+    if (buildingId) params.append('building_id', buildingId.toString());
+    
+    const response = await api.get(`/financial/accounts/summary/?${params}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching account summary:', error);
+    throw error;
+  }
+}
+
+// Transaction API functions
+export async function fetchTransactions(filters: {
+  buildingId?: number;
+  accountId?: number;
+  transactionType?: string;
+  category?: string;
+  startDate?: string;
+  endDate?: string;
+} = {}): Promise<FinancialTransaction[]> {
+  try {
+    const params = new URLSearchParams();
+    if (filters.buildingId) params.append('building_id', filters.buildingId.toString());
+    if (filters.accountId) params.append('account_id', filters.accountId.toString());
+    if (filters.transactionType) params.append('transaction_type', filters.transactionType);
+    if (filters.category) params.append('category', filters.category);
+    if (filters.startDate) params.append('start_date', filters.startDate);
+    if (filters.endDate) params.append('end_date', filters.endDate);
+    
+    const response = await api.get(`/financial/transactions/?${params}`);
+    return response.data.results || response.data;
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    throw error;
+  }
+}
+
+export async function createTransaction(payload: {
+  building: number;
+  account: number;
+  transaction_type: 'income' | 'expense';
+  amount: number;
+  description: string;
+  transaction_date: string;
+  reference_number?: string;
+  category?: string;
+  notes?: string;
+}): Promise<FinancialTransaction> {
+  try {
+    const response = await api.post('/financial/transactions/', payload);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating transaction:', error);
+    throw error;
+  }
+}
+
+export async function fetchTransactionStatistics(buildingId?: number): Promise<TransactionStatistics> {
+  try {
+    const params = new URLSearchParams();
+    if (buildingId) params.append('building_id', buildingId.toString());
+    
+    const response = await api.get(`/financial/transactions/statistics/?${params}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching transaction statistics:', error);
+    throw error;
+  }
+}

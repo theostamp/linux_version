@@ -24,6 +24,9 @@ import {
   X,
   Menu,
   MessageCircle,
+  Wrench,
+  Euro,
+  FileText,
 } from 'lucide-react';
 
 const mainLinks = [
@@ -73,6 +76,26 @@ const mainLinks = [
     href: '/map-visualization',
     label: 'Οπτικοποίηση Χάρτη',
     icon: <MapPin className="w-5 h-5" />,
+    roles: ['manager', 'staff', 'superuser'],
+  },
+  
+  // 🔧 Νέα ενότητες για επέκταση λειτουργιών
+  {
+    href: '/maintenance',
+    label: 'Τεχνικά & Συντήρηση',
+    icon: <Wrench className="w-5 h-5" />,
+    roles: ['manager', 'staff', 'superuser'],
+  },
+  {
+    href: '/financial',
+    label: 'Οικονομικά',
+    icon: <Euro className="w-5 h-5" />,
+    roles: ['manager', 'staff', 'superuser'],
+  },
+  {
+    href: '/projects',
+    label: 'Προσφορές & Έργα',
+    icon: <FileText className="w-5 h-5" />,
     roles: ['manager', 'staff', 'superuser'],
   },
 ];

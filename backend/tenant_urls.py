@@ -32,6 +32,9 @@ urlpatterns = [
     # Votes
     path('api/votes/', include('votes.urls')),
     
+    # Financial management
+    path('api/financial/', include('financial.urls')),
+    
     # Public info
     path('api/public-info/', include('public_info.urls')),
     

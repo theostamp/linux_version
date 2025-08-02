@@ -64,6 +64,11 @@ TENANT_APPS = [
     'public_info',
     'core',
     'chat',
+    
+    # 🔧 Νέα apps για επέκταση λειτουργιών
+    'maintenance',
+    'financial',
+    'projects',
 ]
 
 

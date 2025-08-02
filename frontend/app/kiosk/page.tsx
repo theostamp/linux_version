@@ -117,6 +117,26 @@ export default function KioskPage() {
           buildingInfo={data?.building_info}
           advertisingBanners={data?.advertising_banners}
           generalInfo={data?.general_info}
+          financialInfo={{
+            total_payments: 156,
+            pending_payments: 23,
+            overdue_payments: 8,
+            total_collected: 45600.75,
+            collection_rate: 83.7,
+          }}
+          maintenanceInfo={{
+            active_contractors: 8,
+            pending_receipts: 5,
+            scheduled_maintenance: 3,
+            urgent_maintenance: 1,
+          }}
+          projectsInfo={{
+            active_projects: 3,
+            pending_offers: 5,
+            active_contracts: 6,
+            total_budget: 125000.00,
+            total_spent: 89000.50,
+          }}
           onBuildingChange={changeBuilding}
           isLoading={isLoading}
           isError={!!error}

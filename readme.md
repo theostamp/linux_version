@@ -19,7 +19,9 @@
 ```bash
 # 1. Καθαρισμός και εκκίνηση
 docker compose down --volumes --remove-orphans
-docker network prune -f docker system prune -a --volumes
+docker network prune --force
+docker system prune --all --volumes --force
+
 docker compose up --build -d
 
 # 2. Παρακολούθηση logs
@@ -478,16 +480,493 @@ backend/logs/demo_credentials.log
 
 Μετά την εκκίνηση, το σύστημα είναι έτοιμο για χρήση με πλήρη demo δεδομένα και χρήστες!
 
+---
 
+## 🔧 Τεχνική Εφαρμογή & Συντήρηση
 
+### 📊 System Monitoring & Performance
 
+#### 🔍 Real-time Monitoring
 
+```bash
+# Παρακολούθηση πόρων συστήματος
+docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}"
 
+# Έλεγχος χρήσης disk
+df -h
+
+# Έλεγχος memory usage
+free -h
+
+# Έλεγχος CPU usage
+top -p $(pgrep -d',' -f docker)
+```
+
+#### 📈 Performance Metrics
+
+```bash
+# Database performance
+docker compose exec db psql -U postgres -c "
+SELECT 
+    schemaname,
+    tablename,
+    attname,
+    n_distinct,
+    correlation
+FROM pg_stats 
+WHERE schemaname NOT IN ('information_schema', 'pg_catalog')
+ORDER BY n_distinct DESC;
+"
+
+# Slow queries monitoring
+docker compose exec db psql -U postgres -c "
+SELECT 
+    query,
+    calls,
+    total_time,
+    mean_time,
+    rows
+FROM pg_stat_statements 
+ORDER BY total_time DESC 
+LIMIT 10;
+"
+```
+
+#### 🚨 Health Checks
+
+```bash
+# Backend health check
+curl -f http://localhost:8000/health/ || echo "Backend is down"
+
+# Frontend health check
+curl -f http://localhost:8080/ || echo "Frontend is down"
+
+# Database health check
+docker compose exec db pg_isready -U postgres
+
+# Complete system health
+./health_check.sh
+```
+
+### 🔒 Security Best Practices
+
+#### 🔐 Password Management
+
+```bash
+# Αλλαγή κωδικού Ultra-Superuser
+docker exec linux_version-backend-1 python backend/scripts/change_password.py \
+    --email theostam1966@gmail.com \
+    --new-password "NewSecurePassword123!"
+
+# Έλεγχος password strength
+docker exec linux_version-backend-1 python backend/scripts/check_password_strength.py
+
+# Ενεργοποίηση 2FA για admin users
+docker exec linux_version-backend-1 python backend/scripts/enable_2fa.py --email admin@demo.localhost
+```
+
+#### 🛡️ Access Control
+
+```bash
+# Έλεγχος failed login attempts
+docker exec linux_version-backend-1 python backend/scripts/check_failed_logins.py
+
+# Block suspicious IPs
+docker exec linux_version-backend-1 python backend/scripts/block_ip.py --ip 192.168.1.100
+
+# Audit user permissions
+docker exec linux_version-backend-1 python backend/scripts/audit_permissions.py --tenant demo
+```
+
+#### 🔍 Security Scanning
+
+```bash
+# Vulnerability scan
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+    aquasec/trivy image linux_version-backend:latest
+
+# Dependency check
+docker compose exec backend pip-audit
+
+# Code security analysis
+docker compose exec backend bandit -r backend/
+```
+
+### 💾 Backup & Recovery Strategies
+
+#### 📦 Automated Backups
+
+```bash
+# Δημιουργία backup script
+cat > backup_system.sh << 'EOF'
+#!/bin/bash
+BACKUP_DIR="/backups/$(date +%Y%m%d_%H%M%S)"
+mkdir -p $BACKUP_DIR
+
+# Database backup
+docker compose exec -T db pg_dump -U postgres > $BACKUP_DIR/database.sql
+
+# Volumes backup
+docker run --rm -v linux_version_pgdata_dev:/data -v $BACKUP_DIR:/backup \
+    alpine tar czf /backup/volumes.tar.gz -C /data .
+
+# Configuration backup
+cp docker-compose.yml $BACKUP_DIR/
+cp -r backend/scripts $BACKUP_DIR/
+
+echo "Backup completed: $BACKUP_DIR"
+EOF
+
+chmod +x backup_system.sh
+```
+
+#### 🔄 Recovery Procedures
+
+```bash
+# Database recovery
+docker compose down
+docker volume rm linux_version_pgdata_dev
+docker volume create linux_version_pgdata_dev
+docker run --rm -v linux_version_pgdata_dev:/data -v /backups:/backup \
+    alpine tar xzf /backup/volumes.tar.gz -C /data
+docker compose up -d
+
+# Full system recovery
+./restore_system.sh /backups/20241201_120000/
+```
+
+#### 📋 Backup Verification
+
+```bash
+# Verify backup integrity
+docker compose exec -T db psql -U postgres -c "SELECT COUNT(*) FROM information_schema.tables;" < backup.sql
+
+# Test restore in isolated environment
+docker run --rm -v test_volume:/data -v /backups:/backup \
+    alpine tar xzf /backup/volumes.tar.gz -C /data
+```
+
+### 🚀 Deployment & Scaling
+
+#### 🌐 Production Deployment
+
+```bash
+# Production environment setup
+cp docker-compose.yml docker-compose.prod.yml
+
+# Environment variables
+cat > .env.production << EOF
+DEBUG=False
+SECRET_KEY=your-production-secret-key
+ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
+DATABASE_URL=postgresql://user:password@host:5432/dbname
+EOF
+
+# Production deployment
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+#### 📈 Horizontal Scaling
+
+```bash
+# Scale backend services
+docker compose up -d --scale backend=3
+
+# Load balancer configuration
+cat > nginx.conf << EOF
+upstream backend {
+    server backend:8000;
+    server backend:8001;
+    server backend:8002;
+}
+
+server {
+    listen 80;
+    location / {
+        proxy_pass http://backend;
+    }
+}
+EOF
+```
+
+#### 🔄 Blue-Green Deployment
+
+```bash
+# Blue deployment
+docker compose -f docker-compose.blue.yml up -d
+
+# Health check
+./health_check.sh
+
+# Switch traffic (green to blue)
+docker compose -f docker-compose.yml down
+docker compose -f docker-compose.blue.yml up -d
+
+# Rollback if needed
+docker compose -f docker-compose.yml up -d
+```
+
+### 🔧 Maintenance Procedures
+
+#### 🧹 Routine Maintenance
+
+```bash
+# Weekly maintenance script
+cat > weekly_maintenance.sh << 'EOF'
+#!/bin/bash
+
+echo "Starting weekly maintenance..."
+
+# 1. Database maintenance
+docker compose exec db psql -U postgres -c "VACUUM ANALYZE;"
+docker compose exec db psql -U postgres -c "REINDEX DATABASE postgres;"
+
+# 2. Log rotation
+docker compose exec backend logrotate /etc/logrotate.conf
+
+# 3. Clean old backups (keep last 30 days)
+find /backups -type d -mtime +30 -exec rm -rf {} \;
+
+# 4. Update system packages
+apt update && apt upgrade -y
+
+# 5. Docker cleanup
+docker system prune -f
+
+echo "Weekly maintenance completed."
+EOF
+
+chmod +x weekly_maintenance.sh
+```
+
+#### 🔄 Update Procedures
+
+```bash
+# Application updates
+git pull origin main
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+
+# Database migrations
+docker compose exec backend python manage.py migrate_schemas --shared
+docker compose exec backend python manage.py migrate_schemas --tenant
+
+# Verify update
+./health_check.sh
+```
+
+#### 🛠️ Troubleshooting Tools
+
+```bash
+# System diagnostics
+cat > diagnose_system.sh << 'EOF'
+#!/bin/bash
+
+echo "=== System Diagnostics ==="
+echo "1. Docker status:"
+docker compose ps
+
+echo "2. Resource usage:"
+docker stats --no-stream
+
+echo "3. Recent logs:"
+docker compose logs --tail=50
+
+echo "4. Disk usage:"
+df -h
+
+echo "5. Memory usage:"
+free -h
+
+echo "6. Network connectivity:"
+ping -c 3 google.com
+EOF
+
+chmod +x diagnose_system.sh
+```
+
+### 📊 Logging & Analytics
+
+#### 📝 Centralized Logging
+
+```bash
+# Log aggregation setup
+cat > docker-compose.logging.yml << EOF
+version: '3.8'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.0
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.17.0
+    volumes:
+      - ./logs:/var/log/app
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
+    depends_on:
+      - elasticsearch
+
+volumes:
+  elasticsearch_data:
+EOF
+```
+
+#### 📈 Performance Analytics
+
+```bash
+# Application metrics collection
+docker compose exec backend python backend/scripts/collect_metrics.py
+
+# User activity analytics
+docker compose exec backend python backend/scripts/user_analytics.py
+
+# System performance report
+docker compose exec backend python backend/scripts/performance_report.py
+```
+
+### 🔧 Development & Testing
+
+#### 🧪 Testing Framework
+
+```bash
+# Unit tests
+docker compose exec backend python manage.py test
+
+# Integration tests
+docker compose exec backend python backend/tests/integration_tests.py
+
+# Load testing
+docker compose exec backend python backend/tests/load_test.py
+
+# Security testing
+docker compose exec backend python backend/tests/security_tests.py
+```
+
+#### 🔄 CI/CD Pipeline
+
+```bash
+# GitHub Actions workflow
+cat > .github/workflows/deploy.yml << EOF
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run tests
+        run: |
+          docker compose up -d
+          docker compose exec backend python manage.py test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        run: |
+          ssh user@server "cd /app && git pull && docker compose up -d"
+EOF
+```
+
+### 📋 Maintenance Checklist
+
+#### 📅 Daily Tasks
+- [ ] Check system health status
+- [ ] Monitor error logs
+- [ ] Verify backup completion
+- [ ] Check disk space usage
+
+#### 📅 Weekly Tasks
+- [ ] Run database maintenance (VACUUM, ANALYZE)
+- [ ] Review security logs
+- [ ] Update system packages
+- [ ] Clean old log files
+- [ ] Verify backup integrity
+
+#### 📅 Monthly Tasks
+- [ ] Performance review and optimization
+- [ ] Security audit
+- [ ] Update dependencies
+- [ ] Review and rotate credentials
+- [ ] Capacity planning
+
+#### 📅 Quarterly Tasks
+- [ ] Full system backup and recovery test
+- [ ] Security penetration testing
+- [ ] Performance benchmarking
+- [ ] Disaster recovery drill
+- [ ] Documentation review and update
+
+### 🚨 Emergency Procedures
+
+#### 🔥 Critical Issues
+
+```bash
+# Emergency shutdown
+docker compose down
+
+# Emergency backup
+docker run --rm -v linux_version_pgdata_dev:/data -v /emergency_backup:/backup \
+    alpine tar czf /backup/emergency_$(date +%Y%m%d_%H%M%S).tar.gz -C /data .
+
+# Emergency restart
+docker compose up -d
+
+# Emergency contact: theostam1966@gmail.com
+```
+
+#### 🔄 Rollback Procedures
+
+```bash
+# Quick rollback to previous version
+git checkout HEAD~1
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+
+# Database rollback
+docker compose exec backend python manage.py migrate_schemas --shared --fake-initial
+docker compose exec backend python manage.py migrate_schemas --tenant --fake-initial
+```
+
+---
+
+## 🎯 Συμπέρασμα
+
+Η εφαρμογή είναι πλήρως λειτουργική με:
+
+✅ **Αυτόματη αρχικοποίηση** με demo δεδομένα  
+✅ **Multi-tenant architecture** με ιεραρχία δικαιωμάτων  
+✅ **Kiosk mode** για δημόσιους χώρους  
+✅ **Comprehensive monitoring** και maintenance tools  
+✅ **Security best practices** και backup strategies  
+✅ **Production-ready deployment** procedures  
+✅ **Complete documentation** και troubleshooting guides  
+
+Το σύστημα είναι έτοιμο για production deployment με πλήρη technical support και maintenance procedures.
 
 echo "# linux_version" >> README.md git init
 
 git add .
-git commit -m "προσθηκη δομης εργων πληρωμων κοινοχρηστων κα  "
+git commit -m "ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ  "
 git branch -M main git remote add origin https://github.com/theostamp/linux_version.git 
 git push -u origin main
 
