@@ -234,21 +234,108 @@ class ApartmentViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='statistics')
     def statistics(self, request):
         """Στατιστικά διαμερισμάτων"""
-        building_id = request.query_params.get('building')
-        queryset = self.get_queryset()
+        queryset = self.filter_queryset(self.get_queryset())
         
-        if building_id:
-            queryset = queryset.filter(building_id=building_id)
-        
-        total = queryset.count()
-        rented = queryset.filter(is_rented=True).count()
-        owned = queryset.filter(is_rented=False, owner_name__isnull=False).exclude(owner_name='').count()
-        empty = queryset.filter(owner_name='', tenant_name='').count()
+        total_apartments = queryset.count()
+        rented_apartments = queryset.filter(is_rented=True).count()
+        owned_apartments = queryset.filter(is_rented=False, owner_name__isnull=False).exclude(owner_name='').count()
+        empty_apartments = queryset.filter(owner_name='', tenant_name='').count()
+        closed_apartments = queryset.filter(is_closed=True).count()
         
         return Response({
-            'total': total,
-            'rented': rented,
-            'owned': owned,
-            'empty': empty,
-            'occupancy_rate': round((rented + owned) / total * 100, 1) if total > 0 else 0
+            'total_apartments': total_apartments,
+            'rented_apartments': rented_apartments,
+            'owned_apartments': owned_apartments,
+            'empty_apartments': empty_apartments,
+            'closed_apartments': closed_apartments,
+            'occupancy_rate': round((rented_apartments + owned_apartments) / total_apartments * 100, 1) if total_apartments > 0 else 0
+        })
+
+    @action(detail=False, methods=['get'], url_path='residents/(?P<building_id>[0-9]+)')
+    def residents(self, request, building_id=None):
+        """Λίστα ενοικιαστών για QR code connection (χωρίς authentication)"""
+        try:
+            building = Building.objects.get(id=building_id)
+        except Building.DoesNotExist:
+            return Response(
+                {'error': 'Το κτίριο δεν βρέθηκε'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Φέρνουμε όλα τα διαμερίσματα του κτιρίου
+        apartments = Apartment.objects.filter(building=building)
+        
+        residents = []
+        
+        for apartment in apartments:
+            # Προσθέτουμε ιδιοκτήτη αν υπάρχει
+            if apartment.owner_name and not apartment.is_closed:
+                residents.append({
+                    'id': f"owner_{apartment.id}",
+                    'apartment_id': apartment.id,
+                    'apartment_number': apartment.number,
+                    'name': apartment.owner_name,
+                    'phone': apartment.owner_phone or '',
+                    'email': apartment.owner_email or '',
+                    'type': 'owner',
+                    'is_rented': apartment.is_rented,
+                    'has_email': bool(apartment.owner_email)
+                })
+            
+            # Προσθέτουμε ενοικιαστή αν υπάρχει
+            if apartment.tenant_name and apartment.is_rented:
+                residents.append({
+                    'id': f"tenant_{apartment.id}",
+                    'apartment_id': apartment.id,
+                    'apartment_number': apartment.number,
+                    'name': apartment.tenant_name,
+                    'phone': apartment.tenant_phone or '',
+                    'email': apartment.tenant_email or '',
+                    'type': 'tenant',
+                    'is_rented': True,
+                    'has_email': bool(apartment.tenant_email)
+                })
+        
+        # Ταξινόμηση κατά όνομα
+        residents.sort(key=lambda x: x['name'])
+        
+        return Response({
+            'building': {
+                'id': building.id,
+                'name': building.name,
+                'address': building.address
+            },
+            'residents': residents,
+            'total_residents': len(residents)
+        })
+
+    @action(detail=True, methods=['post'], url_path='update-email')
+    def update_email(self, request, pk=None):
+        """Ενημέρωση email ενοικιαστή/ιδιοκτήτη"""
+        apartment = self.get_object()
+        resident_type = request.data.get('type')  # 'owner' ή 'tenant'
+        email = request.data.get('email')
+        
+        if not email:
+            return Response(
+                {'error': 'Το email είναι υποχρεωτικό'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if resident_type == 'owner':
+            apartment.owner_email = email
+        elif resident_type == 'tenant':
+            apartment.tenant_email = email
+        else:
+            return Response(
+                {'error': 'Μη έγκυρος τύπος ενοικιαστή'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        apartment.save()
+        
+        return Response({
+            'message': 'Το email ενημερώθηκε επιτυχώς',
+            'apartment_id': apartment.id,
+            'email': email
         }) 

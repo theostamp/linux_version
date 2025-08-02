@@ -23,6 +23,7 @@ import {
   Shield,
   X,
   Menu,
+  MessageCircle,
 } from 'lucide-react';
 
 const mainLinks = [
@@ -48,6 +49,12 @@ const mainLinks = [
     href: '/requests',
     label: 'Αιτήματα',
     icon: <ClipboardList className="w-5 h-5" />,
+    roles: ['manager', 'resident', 'staff', 'superuser'],
+  },
+  {
+    href: '/chat',
+    label: 'Chat',
+    icon: <MessageCircle className="w-5 h-5" />,
     roles: ['manager', 'resident', 'staff', 'superuser'],
   },
   {
@@ -188,8 +195,8 @@ export default function Sidebar() {
     );
   }
 
-  // No access state
-  if (!user || !currentBuilding) {
+  // No access state - only show if not loading and user exists but no current building
+  if (!user || (!buildingsIsLoading && !currentBuilding)) {
     return (
       <>
         {/* Mobile Menu Toggle */}
@@ -252,7 +259,8 @@ export default function Sidebar() {
     userRole = user?.profile?.role;
   }
 
-  if (buildings.length === 0 && userRole !== 'superuser') {
+  // Show no buildings message only after loading is complete and no buildings found
+  if (!buildingsIsLoading && buildings.length === 0 && userRole !== 'superuser') {
     return (
       <>
         {/* Mobile Menu Toggle */}

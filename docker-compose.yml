@@ -2,12 +2,15 @@ services:
   db:
     image: postgres:16
     env_file: .env
-
-
-    
     volumes:
       - pgdata_dev:/var/lib/postgresql/data
     ports: ["5432:5432"]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    volumes:
+      - redis_data:/data
 
   backend:
     build:
@@ -37,3 +40,4 @@ volumes:
   pgdata_dev:
   static_dev:
   media_dev:
+  redis_data:

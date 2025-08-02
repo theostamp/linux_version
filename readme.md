@@ -487,7 +487,7 @@ backend/logs/demo_credentials.log
 echo "# linux_version" >> README.md git init
 
 git add .
-git commit -m "διαφορες βελτιωσεις και επιδιορθωσεις  "
+git commit -m "προσθηκη δομης εργων πληρωμων κοινοχρηστων κα  "
 git branch -M main git remote add origin https://github.com/theostamp/linux_version.git 
 git push -u origin main
 

@@ -1,0 +1,1 @@
+# Chat app for real-time communication between residents and managers 

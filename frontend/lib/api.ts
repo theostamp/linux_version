@@ -1259,6 +1259,41 @@ export async function createApartment(payload: CreateApartmentPayload): Promise<
   return data;
 }
 
+// Λήψη λίστας ενοικιαστών για QR code connection
+export async function fetchResidentsForQR(buildingId: number): Promise<{
+  building: { id: number; name: string; address: string };
+  residents: Array<{
+    id: string;
+    apartment_id: number;
+    apartment_number: string;
+    name: string;
+    phone: string;
+    email: string;
+    type: 'owner' | 'tenant';
+    is_rented: boolean;
+    has_email: boolean;
+  }>;
+  total_residents: number;
+}> {
+  console.log('[API CALL] Attempting to fetch residents for QR code:', buildingId);
+  const { data } = await api.get(`/apartments/residents/${buildingId}/`);
+  return data;
+}
+
+// Ενημέρωση email ενοικιαστή/ιδιοκτήτη
+export async function updateResidentEmail(
+  apartmentId: number, 
+  type: 'owner' | 'tenant', 
+  email: string
+): Promise<{ message: string; apartment_id: number; email: string }> {
+  console.log('[API CALL] Attempting to update resident email:', { apartmentId, type, email });
+  const { data } = await api.post(`/apartments/${apartmentId}/update-email/`, {
+    type,
+    email
+  });
+  return data;
+}
+
 // Μαζική δημιουργία διαμερισμάτων
 export async function bulkCreateApartments(payload: BulkCreateApartmentsPayload): Promise<{ message: string; created_count: number; apartments: ApartmentList[] }> {
   console.log('[API CALL] Attempting to bulk create apartments:', payload);

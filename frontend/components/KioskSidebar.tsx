@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sun, Cloud, CloudRain, CloudSnow, Wind, Thermometer, MapPin, Clock, Calendar, Phone } from 'lucide-react';
+import { Sun, Cloud, CloudRain, CloudSnow, Wind, Thermometer, MapPin, Clock, Calendar, Phone, Users, QrCode, Smartphone } from 'lucide-react';
+import QRCodeDisplay from './QRCodeDisplay';
 
 interface WeatherData {
   temperature: number;
@@ -202,6 +203,44 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
         </CardContent>
       </Card>
 
+      {/* QR Code Connection */}
+      {buildingInfo && (
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <CardHeader className="pb-2 lg:pb-3">
+            <CardTitle className="flex items-center text-sm sm:text-base lg:text-lg text-blue-200">
+              <QrCode className="w-4 h-4 lg:w-5 lg:h-5 mr-2 text-blue-300" />
+              Σύνδεση Κινητού
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              {/* Real QR Code Display */}
+              <QRCodeDisplay 
+                buildingId={buildingInfo.id}
+                buildingName={buildingInfo.name}
+                size={128}
+              />
+              
+              {/* Connection Instructions */}
+              <div className="space-y-2 text-xs sm:text-sm">
+                <div className="flex items-center justify-center text-blue-200">
+                  <Smartphone className="w-4 h-4 mr-2" />
+                  <span>Σκανάρετε με το κινητό σας</span>
+                </div>
+                <p className="text-blue-300 leading-relaxed">
+                  Επιλέξτε το όνομά σας και συνδεθείτε για ειδοποιήσεις
+                </p>
+                <div className="bg-blue-800/50 rounded p-2 mt-2">
+                  <p className="text-xs text-blue-200">
+                    <strong>Link:</strong> {window.location.host}/connect?building={buildingInfo.id}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Weather Widget */}
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
         <CardHeader className="pb-2 lg:pb-3">
@@ -243,12 +282,18 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
 
       {/* Quick Info - Internal Manager */}
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-        <CardContent className="pt-2 sm:pt-3 lg:pt-4">
+        <CardHeader className="pb-2 lg:pb-3">
+          <CardTitle className="flex items-center text-sm sm:text-base lg:text-lg text-blue-200">
+            <Users className="w-4 h-4 lg:w-5 lg:h-5 mr-2 text-blue-300" />
+            Εσωτερικός Διαχειριστής
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="space-y-2 lg:space-y-3 text-xs sm:text-sm">
             {/* Internal Manager */}
             {buildingInfo?.internal_manager_name && (
               <div className="flex items-center justify-between p-2 bg-white/5 rounded">
-                <span className="text-blue-200">Εσωτερικός Διαχειριστής:</span>
+                <span className="text-blue-200">Όνομα:</span>
                 <span className="font-medium text-white">{buildingInfo.internal_manager_name}</span>
               </div>
             )}
@@ -259,22 +304,8 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
               </div>
             )}
             
-            {/* Management Office */}
-            {buildingInfo?.management_office_name && (
-              <div className="flex items-center justify-between p-2 bg-white/5 rounded">
-                <span className="text-blue-200">Εταιρεία Διαχείρισης:</span>
-                <span className="font-medium text-white">{buildingInfo.management_office_name}</span>
-              </div>
-            )}
-            {buildingInfo?.management_office_phone && (
-              <div className="flex items-center justify-between p-2 bg-white/5 rounded">
-                <span className="text-blue-200">Τηλέφωνο Γραφείου:</span>
-                <span className="font-medium text-white">{buildingInfo.management_office_phone}</span>
-              </div>
-            )}
-            
             {/* Fallback if no manager info */}
-            {!buildingInfo?.internal_manager_name && !buildingInfo?.management_office_name && (
+            {!buildingInfo?.internal_manager_name && (
               <div className="flex items-center justify-center p-2 bg-white/5 rounded">
                 <span className="text-blue-200 text-center">Δεν υπάρχουν διαθέσιμα στοιχεία διαχείρισης</span>
               </div>

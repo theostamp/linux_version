@@ -193,295 +193,157 @@ export default function KioskMode({
     }
   };
 
-  const slides = [
-    // Slide 1: Announcements
-    {
-      id: 'announcements',
-      title: 'Ανακοινώσεις',
-      icon: Bell,
-      content: announcements.length > 0 ? (
-        <div className="space-y-4">
-          {announcements.map((announcement) => (
-            <div
-              key={announcement.id}
-              className="bg-white bg-opacity-10 backdrop-blur-sm p-6 rounded-lg border border-white border-opacity-20"
-            >
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <Bell className="w-6 h-6 text-blue-300" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-3">
-                    {announcement.title}
-                  </h3>
-                  <p className="text-sm opacity-90 mb-3 leading-relaxed">
-                    {announcement.content}
-                  </p>
-                  <div className="flex items-center text-xs opacity-75">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {safeFormatDate(announcement.created_at, 'dd/MM/yyyy HH:mm', { locale: el })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center text-gray-300 py-8">
-          <Bell className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">Δεν υπάρχουν ανακοινώσεις</p>
-        </div>
-      ),
-    },
-    // Slide 2: Votes
-    {
-      id: 'votes',
-      title: 'Ψηφοφορίες',
-      icon: Vote,
-      content: votes.length > 0 ? (
-        <div className="space-y-4">
-          {votes.map((vote) => (
-            <div
-              key={vote.id}
-              className="bg-white bg-opacity-10 backdrop-blur-sm p-6 rounded-lg border border-white border-opacity-20"
-            >
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <Vote className="w-6 h-6 text-green-300" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-3">
-                    {vote.title}
-                  </h3>
-                  <p className="text-sm opacity-90 mb-3 leading-relaxed">
-                    {vote.description}
-                  </p>
-                  <div className="flex items-center justify-between text-xs opacity-75">
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      Λήξη: {safeFormatDate(vote.end_date, 'dd/MM/yyyy', { locale: el })}
-                    </div>
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-1" />
-                      {vote.total_votes || 0} ψήφοι
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center text-gray-300 py-8">
-          <Vote className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">Δεν υπάρχουν ενεργές ψηφοφορίες</p>
-        </div>
-      ),
-    },
-    // Slide 3: Building Information
-    {
-      id: 'building-info',
-      title: 'Πληροφορίες Κτιρίου',
-      icon: Building,
-      content: buildingInfo ? (
-        <div className="space-y-6">
-          <div className="text-center">
-            <Building className="w-16 h-16 mx-auto mb-4 text-blue-300" />
-            <h2 className="text-2xl font-bold text-white mb-3">
-              {buildingInfo.name}
-            </h2>
-            <p className="text-blue-200 mb-4 text-base">
-              <MapPin className="w-4 h-4 inline mr-1" />
-              {buildingInfo.address}
-              {buildingInfo.city && `, ${buildingInfo.city}`}
-            </p>
+  // Helper function to create announcement slides in pairs
+  const createAnnouncementSlides = () => {
+    if (announcements.length === 0) {
+      return [{
+        id: 'announcements-empty',
+        title: 'Ανακοινώσεις',
+        icon: Bell,
+        content: (
+          <div className="text-center text-gray-300 py-8">
+            <Bell className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg">Δεν υπάρχουν ανακοινώσεις</p>
           </div>
-          
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-white bg-opacity-10 backdrop-blur-sm p-4 rounded-lg text-center">
-              <Users className="w-8 h-8 mx-auto mb-2 text-blue-300" />
-              <p className="text-sm text-blue-200 mb-1">Διαμερίσματα</p>
-              <p className="text-xl font-bold text-white">
-                {buildingInfo.apartments_count || 'N/A'}
-              </p>
-            </div>
-            
-            {buildingInfo.internal_manager_name && (
-              <div className="bg-white bg-opacity-10 backdrop-blur-sm p-4 rounded-lg text-center">
-                <Users className="w-8 h-8 mx-auto mb-2 text-green-300" />
-                <p className="text-sm text-green-200 mb-1">Εσωτερικός Διαχειριστής</p>
-                <p className="text-sm font-semibold text-white">
-                  {buildingInfo.internal_manager_name}
-                </p>
-                {buildingInfo.internal_manager_phone && (
-                  <p className="text-xs text-green-200 mt-1">
-                    <Phone className="w-3 h-3 inline mr-1" />
-                    {buildingInfo.internal_manager_phone}
-                  </p>
-                )}
+        ),
+      }];
+    }
+
+    const slides = [];
+    for (let i = 0; i < announcements.length; i += 2) {
+      const pair = announcements.slice(i, i + 2);
+      slides.push({
+        id: `announcements-${i}`,
+        title: `Ανακοινώσεις ${slides.length + 1}`,
+        icon: Bell,
+        content: (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+            {pair.map((announcement) => (
+              <div
+                key={announcement.id}
+                className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 backdrop-blur-sm p-6 rounded-xl border border-blue-500/30 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                <div className="flex items-start space-x-4 h-full">
+                  <div className="flex-shrink-0">
+                    <Bell className="w-8 h-8 text-blue-300" />
+                  </div>
+                  <div className="flex-1 flex flex-col">
+                    <h3 className="text-xl font-semibold mb-3 text-white">
+                      {announcement.title}
+                    </h3>
+                    <p className="text-sm opacity-90 mb-4 leading-relaxed flex-1 text-blue-100">
+                      {announcement.content}
+                    </p>
+                    <div className="flex items-center text-xs opacity-75 mt-auto">
+                      <Calendar className="w-4 h-4 mr-1 text-blue-300" />
+                      {safeFormatDate(announcement.created_at, 'dd/MM/yyyy HH:mm', { locale: el })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {/* Fill empty space if odd number of announcements */}
+            {pair.length === 1 && (
+              <div className="bg-gradient-to-br from-blue-900/20 to-indigo-900/20 backdrop-blur-sm p-6 rounded-xl border border-blue-500/20 shadow-lg">
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center text-blue-300 opacity-50">
+                    <Bell className="w-12 h-12 mx-auto mb-2" />
+                    <p className="text-sm">Επόμενη ανακοίνωση</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
+        ),
+      });
+    }
+    return slides;
+  };
 
-          {/* Management Office Information */}
-          {(buildingInfo.management_office_name || buildingInfo.management_office_phone || buildingInfo.management_office_address) && (
-            <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 rounded-lg">
-              <div className="text-center mb-4">
-                <Users className="w-8 h-8 mx-auto mb-2 text-white" />
-                <h3 className="text-lg font-bold text-white">Εταιρεία Διαχείρισης</h3>
-              </div>
-              
-              <div className="space-y-3">
-                {buildingInfo.management_office_name && (
-                  <div className="flex items-center justify-center space-x-2">
-                    <Building className="w-5 h-5 text-white" />
-                    <span className="text-white font-semibold">{buildingInfo.management_office_name}</span>
-                  </div>
-                )}
-                
-                {buildingInfo.management_office_phone && (
-                  <div className="flex items-center justify-center space-x-2">
-                    <Phone className="w-5 h-5 text-white" />
-                    <span className="text-white">{buildingInfo.management_office_phone}</span>
-                  </div>
-                )}
-                
-                {buildingInfo.management_office_address && (
-                  <div className="flex items-center justify-center space-x-2">
-                    <MapPin className="w-5 h-5 text-white" />
-                    <span className="text-white text-sm">{buildingInfo.management_office_address}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="text-center text-gray-300 py-8">
-          <Building className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">Δεν υπάρχουν πληροφορίες κτιρίου</p>
-        </div>
-      ),
-    },
-    // Slide 4: Contact Information
-    {
-      id: 'contact-info',
-      title: 'Στοιχεία Επικοινωνίας',
-      icon: Phone,
-      content: buildingInfo ? (
-        <div className="space-y-6">
-          {/* Management Office */}
-          {(buildingInfo.management_office_name || buildingInfo.management_office_phone || buildingInfo.management_office_address) && (
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-lg">
-              <div className="text-center mb-4">
-                <Building className="w-10 h-10 mx-auto mb-2 text-white" />
-                <h3 className="text-xl font-bold text-white">Εταιρεία Διαχείρισης</h3>
-              </div>
-              
-              <div className="space-y-4">
-                {buildingInfo.management_office_name && (
-                  <div className="flex items-center justify-center space-x-3">
-                    <Building className="w-6 h-6 text-white" />
-                    <span className="text-white text-lg font-semibold">{buildingInfo.management_office_name}</span>
-                  </div>
-                )}
-                
-                {buildingInfo.management_office_phone && (
-                  <div className="flex items-center justify-center space-x-3">
-                    <Phone className="w-6 h-6 text-white" />
-                    <span className="text-white text-lg">{buildingInfo.management_office_phone}</span>
-                  </div>
-                )}
-                
-                {buildingInfo.management_office_address && (
-                  <div className="flex items-center justify-center space-x-3">
-                    <MapPin className="w-6 h-6 text-white" />
-                    <span className="text-white text-base">{buildingInfo.management_office_address}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+  // Helper function to create vote slides in pairs
+  const createVoteSlides = () => {
+    if (votes.length === 0) {
+      return [{
+        id: 'votes-empty',
+        title: 'Ψηφοφορίες',
+        icon: Vote,
+        content: (
+          <div className="text-center text-gray-300 py-8">
+            <Vote className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg">Δεν υπάρχουν ενεργές ψηφοφορίες</p>
+          </div>
+        ),
+      }];
+    }
 
-          {/* Internal Manager */}
-          {(buildingInfo.internal_manager_name || buildingInfo.internal_manager_phone) && (
-            <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 rounded-lg">
-              <div className="text-center mb-4">
-                <Users className="w-10 h-10 mx-auto mb-2 text-white" />
-                <h3 className="text-xl font-bold text-white">Εσωτερικός Διαχειριστής</h3>
-              </div>
-              
-              <div className="space-y-4">
-                {buildingInfo.internal_manager_name && (
-                  <div className="flex items-center justify-center space-x-3">
-                    <Users className="w-6 h-6 text-white" />
-                    <span className="text-white text-lg font-semibold">{buildingInfo.internal_manager_name}</span>
+    const slides = [];
+    for (let i = 0; i < votes.length; i += 2) {
+      const pair = votes.slice(i, i + 2);
+      slides.push({
+        id: `votes-${i}`,
+        title: `Ψηφοφορίες ${slides.length + 1}`,
+        icon: Vote,
+        content: (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+            {pair.map((vote) => (
+              <div
+                key={vote.id}
+                className="bg-gradient-to-br from-green-900/40 to-emerald-900/40 backdrop-blur-sm p-6 rounded-xl border border-green-500/30 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                <div className="flex items-start space-x-4 h-full">
+                  <div className="flex-shrink-0">
+                    <Vote className="w-8 h-8 text-green-300" />
                   </div>
-                )}
-                
-                {buildingInfo.internal_manager_phone && (
-                  <div className="flex items-center justify-center space-x-3">
-                    <Phone className="w-6 h-6 text-white" />
-                    <span className="text-white text-lg">{buildingInfo.internal_manager_phone}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {!buildingInfo.management_office_name && !buildingInfo.internal_manager_name && (
-            <div className="text-center text-gray-300 py-8">
-              <Phone className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg">Δεν υπάρχουν διαθέσιμα στοιχεία επικοινωνίας</p>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="text-center text-gray-300 py-8">
-          <Phone className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">Δεν υπάρχουν πληροφορίες κτιρίου</p>
-        </div>
-      ),
-    },
-    // Slide 5: Advertising Banners
-    {
-      id: 'advertising',
-      title: 'Χρήσιμες Υπηρεσίες',
-      icon: ExternalLink,
-      content: advertisingBanners.length > 0 ? (
-        <div className="space-y-4">
-          {advertisingBanners.map((banner) => (
-            <div
-              key={banner.id}
-              className="bg-gradient-to-r from-purple-500 to-blue-600 p-6 rounded-lg text-white"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-3">
-                    {banner.title}
-                  </h3>
-                  <p className="text-sm opacity-90 mb-3">
-                    {banner.description}
-                  </p>
-                  <div className="flex items-center text-xs opacity-75">
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    Περισσότερες πληροφορίες
+                  <div className="flex-1 flex flex-col">
+                    <h3 className="text-xl font-semibold mb-3 text-white">
+                      {vote.title}
+                    </h3>
+                    <p className="text-sm opacity-90 mb-4 leading-relaxed flex-1 text-green-100">
+                      {vote.description}
+                    </p>
+                    <div className="flex items-center justify-between text-xs opacity-75 mt-auto">
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 mr-1 text-green-300" />
+                        Λήξη: {safeFormatDate(vote.end_date, 'dd/MM/yyyy', { locale: el })}
+                      </div>
+                      <div className="flex items-center">
+                        <Users className="w-4 h-4 mr-1 text-green-300" />
+                        {vote.total_votes || 0} ψήφοι
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <ExternalLink className="w-6 h-6" />
+              </div>
+            ))}
+            {/* Fill empty space if odd number of votes */}
+            {pair.length === 1 && (
+              <div className="bg-gradient-to-br from-green-900/20 to-emerald-900/20 backdrop-blur-sm p-6 rounded-xl border border-green-500/20 shadow-lg">
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center text-green-300 opacity-50">
+                    <Vote className="w-12 h-12 mx-auto mb-2" />
+                    <p className="text-sm">Επόμενη ψηφοφορία</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center text-gray-300 py-8">
-          <ExternalLink className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">Δεν υπάρχουν διαθέσιμες υπηρεσίες</p>
-        </div>
-      ),
-    },
+            )}
+          </div>
+        ),
+      });
+    }
+    return slides;
+  };
+
+  // Helper function to create request slides in pairs (placeholder for future implementation)
+  const createRequestSlides = () => {
+    // This will be implemented when requests are added to the component
+    return [];
+  };
+
+  // Create slides with priority: announcements first, then votes, then requests, then other content
+  const slides = [
+    ...createAnnouncementSlides(),
+    ...createVoteSlides(),
+    ...createRequestSlides(),
   ];
 
   return (
@@ -497,13 +359,14 @@ export default function KioskMode({
 
       {/* Building Info Bar - Fixed height for TV */}
       <div className="bg-black bg-opacity-30 p-2 sm:p-3 flex-shrink-0 min-h-0">
-        <div className="flex items-center justify-between max-w-full overflow-hidden">
+        <div className="flex items-center justify-center max-w-full overflow-hidden">
+          {/* Left Side - Building Info */}
           <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1 overflow-hidden">
-            <Building className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
-            <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm opacity-75 min-w-0 overflow-hidden">
+            <Building className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 text-blue-300" />
+            <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm min-w-0 overflow-hidden">
               <div className="flex items-center space-x-1 min-w-0 overflow-hidden">
-                <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate">{buildingInfo?.address || 'Όλα τα κτίρια'}</span>
+                <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 text-blue-300" />
+                <span className="truncate font-medium text-white">{buildingInfo?.address || 'Όλα τα κτίρια'}</span>
                 {isLoading && (
                   <div className="flex items-center space-x-1 ml-2">
                     <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-300"></div>
@@ -514,31 +377,33 @@ export default function KioskMode({
             </div>
           </div>
           
-          <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0 overflow-hidden">
-            {/* Management Office Info - Right Side */}
-            {buildingInfo?.management_office_name && (
-              <div className="flex items-center space-x-1 text-xs sm:text-sm opacity-75 hidden md:flex overflow-hidden">
-                <Users className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate max-w-24 sm:max-w-32">{buildingInfo.management_office_name}</span>
+          {/* Separator */}
+          <div className="w-px h-8 bg-white bg-opacity-20 mx-4 flex-shrink-0"></div>
+          
+          {/* Center - Company Info */}
+          <div className="flex items-center justify-center space-x-4 flex-shrink-0">
+            <div className="text-center">
+              <div className="flex items-center justify-center space-x-1 mb-1">
+                <Users className="w-3 h-3 sm:w-4 sm:h-4 text-blue-300" />
+                <span className="text-xs sm:text-sm opacity-75">Εταιρεία Διαχείρισης</span>
               </div>
-            )}
-            {buildingInfo?.management_office_phone && (
-              <div className="flex items-center space-x-1 text-xs sm:text-sm opacity-75 overflow-hidden">
-                <Phone className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate">{buildingInfo.management_office_phone}</span>
-              </div>
-            )}
-            
-            {/* Time and Date - Right Side */}
-            <div className="text-right flex-shrink-0">
-              <div className="text-lg sm:text-xl lg:text-2xl font-mono">
-                {format(currentTime, 'HH:mm:ss')}
+              <div className="text-sm sm:text-base font-semibold text-white">
+                Compuyterme
               </div>
               <div className="text-xs sm:text-sm opacity-75">
-                {format(currentTime, 'EEEE, dd MMMM yyyy', { locale: el })}
+                21055566368
               </div>
+            </div>
+          </div>
+          
+          {/* Separator */}
+          <div className="w-px h-8 bg-white bg-opacity-20 mx-4 flex-shrink-0"></div>
+          
+          {/* Right Side - Data Status */}
+          <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0 overflow-hidden">
+            <div className="text-right flex-shrink-0">
               {/* Data Status Indicator */}
-              <div className="mt-1">
+              <div>
                 <DataStatusIndicator
                   isFetching={isFetching}
                   isError={isError}
@@ -554,7 +419,7 @@ export default function KioskMode({
 
 
       {/* Main Content - Flexible height */}
-      <div className="flex-1 p-2 sm:p-3 lg:p-6 overflow-hidden min-h-0">
+      <div className="flex-1 p-2 sm:p-3 lg:p-6 overflow-hidden min-h-0 bg-gradient-to-br from-slate-900/50 via-blue-900/30 to-indigo-900/50 backdrop-blur-sm">
         <div ref={sliderRef} className="h-full overflow-hidden">
           <div
             ref={sliderContainerRef}
@@ -567,7 +432,7 @@ export default function KioskMode({
                   <div className="flex items-center mb-3 sm:mb-4 lg:mb-6 flex-shrink-0 overflow-hidden">
                     <div className="flex items-center space-x-2 sm:space-x-2 lg:space-x-3 overflow-hidden">
                       <slide.icon className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-blue-300 flex-shrink-0" />
-                      <h2 className="text-base sm:text-lg lg:text-2xl font-bold truncate">{slide.title}</h2>
+                      <h2 className="text-base sm:text-lg lg:text-2xl font-bold truncate text-white">{slide.title}</h2>
                     </div>
                   </div>
 
@@ -604,8 +469,17 @@ export default function KioskMode({
       {/* News Ticker - Bottom of screen */}
       {newsTicker && (
         <div className="bg-gradient-to-r from-blue-800 to-blue-900 bg-opacity-95 p-2 sm:p-3 overflow-hidden flex-shrink-0 min-h-0 border-t-2 border-white border-opacity-20 relative">
+          {/* NEWS title container with different shade */}
+          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-20">
+            <div className="bg-gradient-to-r from-blue-700 to-blue-800 border border-blue-600 px-3 py-2 rounded-lg shadow-lg">
+              <div className="text-sm font-bold text-white uppercase tracking-wide">
+                NEWS
+              </div>
+            </div>
+          </div>
+          
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 sm:space-x-3 animate-marquee flex-1 ml-16">
+            <div className="flex items-center space-x-2 sm:space-x-3 animate-marquee flex-1 ml-20">
               <span 
                 className="whitespace-nowrap text-white text-sm sm:text-base font-medium"
                 style={{ opacity: newsOpacity, transition: 'opacity 0.5s ease-in-out' }}
@@ -621,12 +495,6 @@ export default function KioskMode({
                   </span>
                 </div>
               )}
-            </div>
-          </div>
-          {/* NEWS banner - positioned absolutely on the left */}
-          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10">
-            <div className="bg-white bg-opacity-0 px-2 py-1 rounded text-sm font-bold text-white uppercase tracking-wide">
-              NEWS
             </div>
           </div>
         </div>

@@ -38,6 +38,9 @@ urlpatterns = [
     # Residents
     path('api/residents/', include('residents.urls')),
 
+    # Chat
+    path('api/chat/', include('chat.urls')),
+
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]

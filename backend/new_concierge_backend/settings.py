@@ -63,6 +63,7 @@ TENANT_APPS = [
     'obligations',
     'public_info',
     'core',
+    'chat',
 ]
 
 
@@ -299,6 +300,18 @@ SIMPLE_JWT = {
 
 # Debug unsafe (για dev περιβάλλον)
 DJANGO_ALLOW_ASYNC_UNSAFE = True
+
+# ----------------------------------------
+# 🔌 Django Channels & WebSocket
+# ----------------------------------------
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 LOGGING = {
     "version": 1,
