@@ -1,23 +1,33 @@
 # backend/users/views.py
 
 from django.contrib.auth import authenticate, get_user_model
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from rest_framework import status
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.views.decorators.http import require_http_methods
+from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import CustomUser
-from .serializers import UserSerializer, OfficeDetailsSerializer
+from .serializers import UserSerializer, OfficeDetailsSerializer, CustomTokenObtainPairSerializer
+
+User = get_user_model()
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Custom JWT token view that uses email instead of username
+    """
+    serializer_class = CustomTokenObtainPairSerializer
 
 @ensure_csrf_cookie
 def get_csrf_token(request):
     """
-    GET /api/csrf/
-    Επιστρέφει CSRF token για frontend forms.
+    GET /api/users/csrf/
+    Επιστρέφει CSRF token για frontend.
     """
     return JsonResponse({"message": "CSRF cookie set"})
 
@@ -148,7 +158,7 @@ def update_office_details(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserViewSet(ModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet για CRUD operations στο CustomUser.
     Protected πίσω από JWT authentication.

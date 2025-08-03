@@ -67,8 +67,10 @@ TENANT_APPS = [
     
     # 🔧 Νέα apps για επέκταση λειτουργιών
     'maintenance',
-    'financial',
     'projects',
+    
+    # 💰 Οικονομικό σύστημα
+    'financial',
 ]
 
 
@@ -91,6 +93,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'financial.audit.AuditMiddleware',  # Audit logging για οικονομικές κινήσεις
 ]
 
 # ----------------------------------------

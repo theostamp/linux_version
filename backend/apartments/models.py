@@ -69,6 +69,22 @@ class Apartment(models.Model):
         help_text='Ποσοστό ιδιοκτησίας σε χιλιοστά'
     )
     
+    # 💰 Οικονομικά πεδία
+    participation_mills = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Χιλιοστά Συμμετοχής',
+        help_text='Χιλιοστά συμμετοχής για κατανομή δαπανών'
+    )
+    
+    current_balance = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name='Τρέχον Υπόλοιπο',
+        help_text='Τρέχον υπόλοιπο διαμερίσματος (+ = πιστωτικό, - = οφειλή)'
+    )
+    
     # Στοιχεία ενοικίασης
     tenant_name = models.CharField(
         max_length=255,

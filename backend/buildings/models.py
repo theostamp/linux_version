@@ -81,6 +81,15 @@ class Building(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # 💰 Οικονομικά πεδία
+    current_reserve = models.DecimalField(
+        _("Τρέχον Αποθεματικό"),
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        help_text=_("Τρέχον αποθεματικό του κτιρίου σε ευρώ")
+    )
 
     def __str__(self):
         return f"{self.name} - {self.address}"

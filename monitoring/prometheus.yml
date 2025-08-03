@@ -1,0 +1,150 @@
+# Prometheus Configuration for Financial Management System
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alerting rules
+rule_files:
+  - "alerts.yml"
+
+# Alert manager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Scrape configurations
+scrape_configs:
+  # ========================================
+  # 📊 Prometheus itself
+  # ========================================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # ========================================
+  # 🐍 Django Backend
+  # ========================================
+  - job_name: 'django-backend'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # ========================================
+  # ⚛️ Next.js Frontend
+  # ========================================
+  - job_name: 'nextjs-frontend'
+    static_configs:
+      - targets: ['frontend:3000']
+    metrics_path: '/api/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # ========================================
+  # 🌐 Nginx
+  # ========================================
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:80']
+    metrics_path: '/nginx_status'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # ========================================
+  # 🗄️ PostgreSQL Database
+  # ========================================
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['db:5432']
+    metrics_path: '/metrics'
+    scrape_interval: 60s
+    scrape_timeout: 15s
+
+  # ========================================
+  # 🔌 Redis Cache
+  # ========================================
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # ========================================
+  # 📈 Node Exporter (System Metrics)
+  # ========================================
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # ========================================
+  # 🐳 Docker Containers
+  # ========================================
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['docker-exporter:9323']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # ========================================
+  # 🔍 Blackbox Exporter (Uptime Monitoring)
+  # ========================================
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://yourdomain.com
+        - https://api.yourdomain.com
+        - https://yourdomain.com/api/health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # ========================================
+  # 📊 Financial System Custom Metrics
+  # ========================================
+  - job_name: 'financial-metrics'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: '/api/financial/metrics'
+    scrape_interval: 60s
+    scrape_timeout: 15s
+    params:
+      include: ['expenses', 'payments', 'meter_readings', 'transactions']
+
+  # ========================================
+  # 🔐 Security Monitoring
+  # ========================================
+  - job_name: 'security-metrics'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: '/api/security/metrics'
+    scrape_interval: 300s
+    scrape_timeout: 30s
+
+  # ========================================
+  # 📋 Application Health Checks
+  # ========================================
+  - job_name: 'health-checks'
+    static_configs:
+      - targets:
+        - 'backend:8000'
+        - 'frontend:3000'
+        - 'nginx:80'
+        - 'db:5432'
+        - 'redis:6379'
+    metrics_path: '/health'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    honor_labels: true 

@@ -1,0 +1,665 @@
+from decimal import Decimal
+from typing import Dict, Any, List
+from django.db.models import Sum
+from .models import Expense, Transaction, Payment
+from apartments.models import Apartment
+from buildings.models import Building
+
+import os
+import uuid
+from django.core.files.uploadedfile import UploadedFile
+from django.core.exceptions import ValidationError
+from django.conf import settings
+import magic
+
+
+class CommonExpenseCalculator:
+    """Υπηρεσία για τον υπολογισμό μεριδίων κοινοχρήστων"""
+    
+    def __init__(self, building_id: int):
+        self.building_id = building_id
+        self.building = Building.objects.get(id=building_id)
+        self.apartments = Apartment.objects.filter(building_id=building_id)
+        self.expenses = Expense.objects.filter(
+            building_id=building_id, 
+            is_issued=False
+        )
+    
+    def calculate_shares(self) -> Dict[str, Any]:
+        """
+        Υπολογισμός μεριδίων για κάθε διαμέρισμα
+        """
+        shares = {}
+        
+        # Αρχικοποίηση μεριδίων για κάθε διαμέρισμα
+        for apartment in self.apartments:
+            shares[apartment.id] = {
+                'apartment_id': apartment.id,
+                'apartment_number': apartment.number,
+                'owner_name': apartment.owner_name or 'Άγνωστος',
+                'participation_mills': apartment.participation_mills or 0,
+                'current_balance': apartment.current_balance or Decimal('0.00'),
+                'total_amount': Decimal('0.00'),
+                'breakdown': [],
+                'previous_balance': apartment.current_balance or Decimal('0.00'),
+                'total_due': Decimal('0.00')
+            }
+        
+        # Υπολογισμός μεριδίων για κάθε δαπάνη
+        for expense in self.expenses:
+            if expense.distribution_type == 'by_participation_mills':
+                self._calculate_by_participation_mills(expense, shares)
+            elif expense.distribution_type == 'equal_share':
+                self._calculate_equal_share(expense, shares)
+            elif expense.distribution_type == 'specific_apartments':
+                self._calculate_specific_apartments(expense, shares)
+            elif expense.distribution_type == 'by_meters':
+                self._calculate_by_meters(expense, shares)
+        
+        # Υπολογισμός συνολικού οφειλόμενου ποσού
+        for apartment_id, share_data in shares.items():
+            share_data['total_due'] = (
+                share_data['total_amount'] + share_data['previous_balance']
+            )
+        
+        return shares
+    
+    def _calculate_by_participation_mills(self, expense: Expense, shares: Dict):
+        """Υπολογισμός μεριδίων ανά χιλιοστά συμμετοχής"""
+        total_mills = sum(
+            apt.participation_mills or 0 for apt in self.apartments
+        )
+        
+        if total_mills == 0:
+            # Αν δεν υπάρχουν χιλιοστά, κατανομή ισόποσα
+            self._calculate_equal_share(expense, shares)
+            return
+        
+        for apartment in self.apartments:
+            if apartment.participation_mills:
+                share_amount = (expense.amount * apartment.participation_mills) / total_mills
+                shares[apartment.id]['total_amount'] += share_amount
+                shares[apartment.id]['breakdown'].append({
+                    'expense_id': expense.id,
+                    'expense_title': expense.title,
+                    'expense_amount': expense.amount,
+                    'apartment_share': share_amount,
+                    'distribution_type': expense.distribution_type,
+                    'distribution_type_display': expense.get_distribution_type_display()
+                })
+    
+    def _calculate_equal_share(self, expense: Expense, shares: Dict):
+        """Υπολογισμός ισόποσων μεριδίων"""
+        share_per_apartment = expense.amount / len(self.apartments)
+        
+        for apartment in self.apartments:
+            shares[apartment.id]['total_amount'] += share_per_apartment
+            shares[apartment.id]['breakdown'].append({
+                'expense_id': expense.id,
+                'expense_title': expense.title,
+                'expense_amount': expense.amount,
+                'apartment_share': share_per_apartment,
+                'distribution_type': expense.distribution_type,
+                'distribution_type_display': expense.get_distribution_type_display()
+            })
+    
+    def _calculate_specific_apartments(self, expense: Expense, shares: Dict):
+        """Υπολογισμός για συγκεκριμένα διαμερίσματα"""
+        # TODO: Υλοποίηση για συγκεκριμένα διαμερίσματα
+        # Αυτή τη στιγμή κατανομή ισόποσα
+        self._calculate_equal_share(expense, shares)
+    
+    def _calculate_by_meters(self, expense: Expense, shares: Dict):
+        """Υπολογισμός με βάση μετρητές (για θέρμανση)"""
+        from .models import MeterReading
+        from datetime import datetime, timedelta
+        
+        # Προσδιορισμός περιόδου μετρήσεων
+        # Αν η δαπάνη είναι για θέρμανση, χρησιμοποιούμε μετρήσεις θέρμανσης
+        meter_type = 'heating'  # Προσωρινά μόνο για θέρμανση
+        
+        # Προσδιορισμός περιόδου (τελευταίος μήνας)
+        end_date = expense.date
+        start_date = end_date - timedelta(days=30)  # Προσωρινά 30 μέρες
+        
+        # Λήψη μετρήσεων για όλα τα διαμερίσματα
+        meter_readings = MeterReading.objects.filter(
+            apartment__building_id=self.building_id,
+            meter_type=meter_type,
+            reading_date__gte=start_date,
+            reading_date__lte=end_date
+        ).order_by('apartment', 'reading_date')
+        
+        # Υπολογισμός κατανάλωσης ανά διαμέρισμα
+        apartment_consumption = {}
+        total_consumption = Decimal('0.00')
+        
+        for apartment in self.apartments:
+            apartment_readings = meter_readings.filter(apartment=apartment).order_by('reading_date')
+            
+            if len(apartment_readings) >= 2:
+                # Υπολογισμός κατανάλωσης
+                first_reading = apartment_readings.first()
+                last_reading = apartment_readings.last()
+                consumption = last_reading.value - first_reading.value
+                
+                apartment_consumption[apartment.id] = consumption
+                total_consumption += consumption
+            else:
+                # Αν δεν υπάρχουν επαρκείς μετρήσεις, μηδενική κατανάλωση
+                apartment_consumption[apartment.id] = Decimal('0.00')
+        
+        # Αν δεν υπάρχει συνολική κατανάλωση, κατανομή ισόποσα
+        if total_consumption == 0:
+            self._calculate_equal_share(expense, shares)
+            return
+        
+        # Κατανομή δαπάνης ανάλογα με την κατανάλωση
+        for apartment in self.apartments:
+            consumption = apartment_consumption.get(apartment.id, Decimal('0.00'))
+            if total_consumption > 0:
+                share_amount = (expense.amount * consumption) / total_consumption
+            else:
+                share_amount = Decimal('0.00')
+            
+            shares[apartment.id]['total_amount'] += share_amount
+            shares[apartment.id]['breakdown'].append({
+                'expense_id': expense.id,
+                'expense_title': expense.title,
+                'expense_amount': expense.amount,
+                'apartment_share': share_amount,
+                'distribution_type': expense.distribution_type,
+                'distribution_type_display': expense.get_distribution_type_display(),
+                'meter_consumption': consumption,
+                'total_meter_consumption': total_consumption
+            })
+    
+    def get_total_expenses(self) -> Decimal:
+        """Επιστρέφει το συνολικό ποσό ανέκδοτων δαπανών"""
+        return sum(exp.amount for exp in self.expenses)
+    
+    def get_apartments_count(self) -> int:
+        """Επιστρέφει τον αριθμό διαμερισμάτων"""
+        return len(self.apartments)
+
+
+class FinancialDashboardService:
+    """Υπηρεσία για τα δεδομένα του οικονομικού dashboard"""
+    
+    def __init__(self, building_id: int):
+        self.building_id = building_id
+        self.building = Building.objects.get(id=building_id)
+    
+    def get_summary(self) -> Dict[str, Any]:
+        """Επιστρέφει σύνοψη οικονομικών στοιχείων"""
+        apartments = Apartment.objects.filter(building_id=self.building_id)
+        
+        # Συνολικές οφειλές (αρνητικά υπόλοιπα)
+        total_obligations = sum(
+            abs(apt.current_balance) for apt in apartments 
+            if apt.current_balance and apt.current_balance < 0
+        )
+        
+        # Δαπάνες αυτού του μήνα
+        from datetime import datetime, timedelta
+        current_month = datetime.now().replace(day=1)
+        total_expenses_this_month = Expense.objects.filter(
+            building_id=self.building_id,
+            date__gte=current_month
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        # Πληρωμές αυτού του μήνα
+        total_payments_this_month = Payment.objects.filter(
+            apartment__building_id=self.building_id,
+            date__gte=current_month
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        # Πρόσφατες κινήσεις
+        recent_transactions = Transaction.objects.filter(
+            building_id=self.building_id
+        ).order_by('-date')[:10]
+        
+        return {
+            'current_reserve': self.building.current_reserve,
+            'total_obligations': total_obligations,
+            'total_expenses_this_month': total_expenses_this_month,
+            'total_payments_this_month': total_payments_this_month,
+            'recent_transactions': recent_transactions
+        }
+    
+    def get_apartment_balances(self) -> List[Dict[str, Any]]:
+        """Επιστρέφει την κατάσταση οφειλών για όλα τα διαμερίσματα"""
+        apartments = Apartment.objects.filter(building_id=self.building_id)
+        balances = []
+        
+        for apartment in apartments:
+            # Τελευταία πληρωμή
+            last_payment = apartment.payments.order_by('-date').first()
+            
+            balances.append({
+                'id': apartment.id,
+                'number': apartment.number,
+                'owner_name': apartment.owner_name or 'Άγνωστος',
+                'current_balance': apartment.current_balance or Decimal('0.00'),
+                'participation_mills': apartment.participation_mills or 0,
+                'last_payment_date': last_payment.date if last_payment else None,
+                'last_payment_amount': last_payment.amount if last_payment else None
+            })
+        
+        return balances
+
+
+class PaymentProcessor:
+    """Υπηρεσία για την επεξεργασία πληρωμών"""
+    
+    @staticmethod
+    def process_payment(payment_data: Dict[str, Any]) -> Transaction:
+        """
+        Επεξεργασία πληρωμής και ενημέρωση συστήματος
+        """
+        from datetime import datetime
+        
+        # 1. Ενημέρωση υπόλοιπου διαμερίσματος
+        apartment = Apartment.objects.get(id=payment_data['apartment_id'])
+        apartment.current_balance += payment_data['amount']
+        apartment.save()
+        
+        # 2. Προσθήκη στο τρέχον αποθεματικό
+        building = apartment.building
+        building.current_reserve += payment_data['amount']
+        building.save()
+        
+        # 3. Δημιουργία εγγραφής κίνησης
+        transaction = Transaction.objects.create(
+            building=building,
+            date=datetime.now(),
+            type='common_expense_payment',
+            description=f"Πληρωμή Κοινοχρήστων - {apartment.number}",
+            apartment_number=apartment.number,
+            amount=payment_data['amount'],
+            balance_after=building.current_reserve,
+            receipt=payment_data.get('receipt')
+        )
+        
+        # 4. Δημιουργία εγγραφής πληρωμής
+        Payment.objects.create(
+            apartment=apartment,
+            amount=payment_data['amount'],
+            date=payment_data['date'],
+            method=payment_data['method'],
+            notes=payment_data.get('notes', ''),
+            receipt=payment_data.get('receipt')
+        )
+        
+        return transaction 
+
+
+class ReportService:
+    """Service για τη δημιουργία αναφορών και exports"""
+    
+    def __init__(self, building_id):
+        self.building_id = building_id
+        self.building = Building.objects.get(id=building_id)
+    
+    def generate_transaction_history_report(self, start_date=None, end_date=None, transaction_type=None, apartment_id=None):
+        """Δημιουργία αναφοράς ιστορικού κινήσεων"""
+        queryset = Transaction.objects.filter(building_id=self.building_id)
+        
+        if start_date:
+            queryset = queryset.filter(date__date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(date__date__lte=end_date)
+        if transaction_type:
+            queryset = queryset.filter(type=transaction_type)
+        if apartment_id:
+            queryset = queryset.filter(apartment_id=apartment_id)
+        
+        return queryset.order_by('-date')
+    
+    def generate_apartment_balance_report(self, apartment_id=None):
+        """Δημιουργία αναφοράς κατάστασης οφειλών"""
+        apartments = Apartment.objects.filter(building_id=self.building_id)
+        
+        if apartment_id:
+            apartments = apartments.filter(id=apartment_id)
+        
+        balance_data = []
+        for apartment in apartments:
+            # Υπολογισμός τρέχοντος υπολοίπου
+            payments = Payment.objects.filter(apartment=apartment)
+            total_payments = payments.aggregate(total=Sum('amount'))['total'] or 0
+            
+            # Υπολογισμός συνολικών χρεώσεων από κοινοχρήστους
+            transactions = Transaction.objects.filter(
+                apartment=apartment,
+                type__in=['common_expense_charge', 'expense_payment']
+            )
+            total_charges = transactions.aggregate(total=Sum('amount'))['total'] or 0
+            
+            current_balance = total_charges - total_payments
+            
+            balance_data.append({
+                'apartment': apartment,
+                'apartment_number': apartment.number,
+                'owner_name': apartment.owner_name,
+                'participation_mills': apartment.participation_mills,
+                'total_charges': total_charges,
+                'total_payments': total_payments,
+                'current_balance': current_balance,
+                'last_payment_date': payments.order_by('-date').first().date if payments.exists() else None,
+                'last_payment_amount': payments.order_by('-date').first().amount if payments.exists() else None,
+            })
+        
+        return balance_data
+    
+    def generate_financial_summary_report(self, period='month'):
+        """Δημιουργία οικονομικής σύνοψης"""
+        from datetime import datetime, timedelta
+        
+        if period == 'month':
+            start_date = datetime.now().replace(day=1)
+        elif period == 'quarter':
+            current_month = datetime.now().month
+            quarter_start_month = ((current_month - 1) // 3) * 3 + 1
+            start_date = datetime.now().replace(month=quarter_start_month, day=1)
+        elif period == 'year':
+            start_date = datetime.now().replace(month=1, day=1)
+        else:
+            start_date = datetime.now() - timedelta(days=30)
+        
+        end_date = datetime.now()
+        
+        # Στατιστικά δαπανών
+        expenses = Expense.objects.filter(
+            building_id=self.building_id,
+            date__range=[start_date, end_date]
+        )
+        total_expenses = expenses.aggregate(total=Sum('amount'))['total'] or 0
+        
+        # Στατιστικά πληρωμών
+        payments = Payment.objects.filter(
+            apartment__building_id=self.building_id,
+            date__range=[start_date, end_date]
+        )
+        total_payments = payments.aggregate(total=Sum('amount'))['total'] or 0
+        
+        # Στατιστικά κινήσεων
+        transactions = Transaction.objects.filter(
+            building_id=self.building_id,
+            date__range=[start_date, end_date]
+        )
+        
+        # Κατανομή ανά κατηγορία δαπάνης
+        expense_by_category = {}
+        for expense in expenses:
+            category = expense.get_category_display()
+            if category not in expense_by_category:
+                expense_by_category[category] = 0
+            expense_by_category[category] += float(expense.amount)
+        
+        # Κατανομή ανά τρόπο πληρωμής
+        payment_by_method = {}
+        for payment in payments:
+            method = payment.get_method_display()
+            if method not in payment_by_method:
+                payment_by_method[method] = 0
+            payment_by_method[method] += float(payment.amount)
+        
+        return {
+            'period': period,
+            'start_date': start_date,
+            'end_date': end_date,
+            'total_expenses': total_expenses,
+            'total_payments': total_payments,
+            'net_cash_flow': total_payments - total_expenses,
+            'expense_by_category': expense_by_category,
+            'payment_by_method': payment_by_method,
+            'transaction_count': transactions.count(),
+            'expense_count': expenses.count(),
+            'payment_count': payments.count(),
+        }
+    
+    def generate_cash_flow_data(self, days=30):
+        """Δημιουργία δεδομένων ταμειακής ροής για γραφήματα"""
+        from datetime import datetime, timedelta
+        
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+        
+        # Δημιουργία ημερολογίου
+        date_list = []
+        current_date = start_date
+        while current_date <= end_date:
+            date_list.append(current_date.date())
+            current_date += timedelta(days=1)
+        
+        # Στατιστικά ανά ημέρα
+        cash_flow_data = []
+        for date in date_list:
+            # Εισροές (πληρωμές)
+            payments = Payment.objects.filter(
+                apartment__building_id=self.building_id,
+                date=date
+            )
+            total_inflow = payments.aggregate(total=Sum('amount'))['total'] or 0
+            
+            # Εκροές (δαπάνες)
+            expenses = Expense.objects.filter(
+                building_id=self.building_id,
+                date=date
+            )
+            total_outflow = expenses.aggregate(total=Sum('amount'))['total'] or 0
+            
+            cash_flow_data.append({
+                'date': date,
+                'inflow': float(total_inflow),
+                'outflow': float(total_outflow),
+                'net_flow': float(total_inflow - total_outflow),
+            })
+        
+        return cash_flow_data
+    
+    def export_to_excel(self, report_type, **kwargs):
+        """Εξαγωγή αναφοράς σε Excel"""
+        import pandas as pd
+        from io import BytesIO
+        
+        if report_type == 'transaction_history':
+            data = self.generate_transaction_history_report(**kwargs)
+            df = pd.DataFrame(list(data.values()))
+            filename = f'transaction_history_{self.building.name}_{datetime.now().strftime("%Y%m%d")}.xlsx'
+        
+        elif report_type == 'apartment_balances':
+            data = self.generate_apartment_balance_report(**kwargs)
+            df = pd.DataFrame(data)
+            filename = f'apartment_balances_{self.building.name}_{datetime.now().strftime("%Y%m%d")}.xlsx'
+        
+        elif report_type == 'financial_summary':
+            data = self.generate_financial_summary_report(**kwargs)
+            df = pd.DataFrame([data])
+            filename = f'financial_summary_{self.building.name}_{datetime.now().strftime("%Y%m%d")}.xlsx'
+        
+        else:
+            raise ValueError(f"Unknown report type: {report_type}")
+        
+        # Δημιουργία Excel file
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='Report', index=False)
+        
+        output.seek(0)
+        return output, filename
+    
+    def generate_pdf_report(self, report_type, **kwargs):
+        """Δημιουργία PDF αναφοράς"""
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.lib import colors
+        from io import BytesIO
+        
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        elements = []
+        
+        # Στυλ
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=16,
+            spaceAfter=30,
+            alignment=1  # Center
+        )
+        
+        # Τίτλος
+        title = Paragraph(f"Αναφορά: {self.building.name}", title_style)
+        elements.append(title)
+        elements.append(Spacer(1, 20))
+        
+        if report_type == 'transaction_history':
+            data = self.generate_transaction_history_report(**kwargs)
+            # Δημιουργία πίνακα κινήσεων
+            table_data = [['Ημερομηνία', 'Τύπος', 'Περιγραφή', 'Ποσό', 'Υπόλοιπο']]
+            for transaction in data:
+                table_data.append([
+                    transaction.date.strftime('%d/%m/%Y'),
+                    transaction.get_type_display(),
+                    transaction.description[:50] + '...' if len(transaction.description) > 50 else transaction.description,
+                    f"€{transaction.amount}",
+                    f"€{transaction.balance_after}"
+                ])
+        
+        elif report_type == 'apartment_balances':
+            data = self.generate_apartment_balance_report(**kwargs)
+            # Δημιουργία πίνακα οφειλών
+            table_data = [['Διαμέρισμα', 'Ιδιοκτήτης', 'Χιλιοστά', 'Οφειλή', 'Τελευταία Πληρωμή']]
+            for item in data:
+                table_data.append([
+                    item['apartment_number'],
+                    item['owner_name'],
+                    item['participation_mills'],
+                    f"€{item['current_balance']}",
+                    item['last_payment_date'].strftime('%d/%m/%Y') if item['last_payment_date'] else '-'
+                ])
+        
+        # Δημιουργία πίνακα
+        table = Table(table_data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        elements.append(table)
+        
+        # Δημιουργία PDF
+        doc.build(elements)
+        buffer.seek(0)
+        
+        filename = f"{report_type}_{self.building.name}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        return buffer, filename 
+
+
+class FileUploadService:
+    """Service για τη διαχείριση file uploads με ασφάλεια και validation"""
+    
+    ALLOWED_EXTENSIONS = {
+        'pdf': 'application/pdf',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'doc': 'application/msword',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls': 'application/vnd.ms-excel',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }
+    
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    MAX_FILES_PER_EXPENSE = 5
+    
+    @classmethod
+    def validate_file(cls, file: UploadedFile) -> dict:
+        """Επιβεβαίωση αρχείου για ασφάλεια και έγκυροτητα"""
+        errors = []
+        
+        # Έλεγχος μεγέθους
+        if file.size > cls.MAX_FILE_SIZE:
+            errors.append(f"Το αρχείο '{file.name}' είναι πολύ μεγάλο. Μέγιστο μέγεθος: {cls.MAX_FILE_SIZE // (1024*1024)}MB")
+        
+        # Έλεγχος επέκτασης
+        file_extension = file.name.split('.')[-1].lower() if '.' in file.name else ''
+        if file_extension not in cls.ALLOWED_EXTENSIONS:
+            errors.append(f"Η επέκταση '{file_extension}' δεν επιτρέπεται. Επιτρεπόμενες: {', '.join(cls.ALLOWED_EXTENSIONS.keys())}")
+        
+        # Έλεγχος MIME type
+        try:
+            mime_type = magic.from_buffer(file.read(1024), mime=True)
+            file.seek(0)  # Reset file pointer
+            
+            expected_mime = cls.ALLOWED_EXTENSIONS.get(file_extension)
+            if expected_mime and mime_type != expected_mime:
+                errors.append(f"Το αρχείο '{file.name}' έχει μη έγκυρο τύπο MIME: {mime_type}")
+        except Exception as e:
+            errors.append(f"Δεν ήταν δυνατή η επαλήθευση του τύπου αρχείου: {str(e)}")
+        
+        return {
+            'is_valid': len(errors) == 0,
+            'errors': errors,
+            'file_extension': file_extension,
+            'mime_type': mime_type if 'mime_type' in locals() else None,
+            'file_size': file.size
+        }
+    
+    @classmethod
+    def generate_safe_filename(cls, original_filename: str, expense_id: int = None) -> str:
+        """Δημιουργία ασφαλούς ονόματος αρχείου"""
+        # Αφαίρεση επεκτάσεων και ειδικών χαρακτήρων
+        name, ext = os.path.splitext(original_filename)
+        safe_name = "".join(c for c in name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        safe_name = safe_name.replace(' ', '_')
+        
+        # Προσθήκη UUID για μοναδικότητα
+        unique_id = str(uuid.uuid4())[:8]
+        
+        # Προσθήκη expense_id αν υπάρχει
+        if expense_id:
+            filename = f"expense_{expense_id}_{safe_name}_{unique_id}{ext}"
+        else:
+            filename = f"{safe_name}_{unique_id}{ext}"
+        
+        return filename.lower()
+    
+    @classmethod
+    def get_upload_path(cls, expense_id: int, filename: str) -> str:
+        """Δημιουργία path για το upload"""
+        return f"expenses/{expense_id}/{filename}"
+    
+    @classmethod
+    def save_file(cls, file: UploadedFile, expense_id: int) -> str:
+        """Αποθήκευση αρχείου με ασφάλεια"""
+        # Επιβεβαίωση αρχείου
+        validation = cls.validate_file(file)
+        if not validation['is_valid']:
+            raise ValidationError(validation['errors'])
+        
+        # Δημιουργία ασφαλούς ονόματος
+        safe_filename = cls.generate_safe_filename(file.name, expense_id)
+        upload_path = cls.get_upload_path(expense_id, safe_filename)
+        
+        # Δημιουργία directory αν δεν υπάρχει
+        full_path = os.path.join(settings.MEDIA_ROOT, upload_path)
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        
+        # Αποθήκευση αρχείου
+        with open(full_path, 'wb+') as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+        
+        return upload_path 

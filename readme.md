@@ -963,10 +963,72 @@ docker compose exec backend python manage.py migrate_schemas --tenant --fake-ini
 
 Το σύστημα είναι έτοιμο για production deployment με πλήρη technical support και maintenance procedures.
 
+---
+
+## 📋 TODO - Επόμενα Βήματα
+
+### 🔧 Building Selector Issue (Priority: HIGH)
+**Πρόβλημα**: Μετά την επιλογή άλλου κτιρίου δεν έχουμε αλλαγή δεδομένων.
+
+**Τι Ελέγχθηκε**:
+- ✅ API επιστρέφει σωστά τα κτίρια
+- ✅ Frontend είναι προσβάσιμο
+- ✅ Building selector popup ανοίγει
+- ❌ **Δεδομένα δεν αλλάζουν** μετά την επιλογή
+
+**Επόμενα Βήματα**:
+1. Ελέγξω αν το `selectedBuilding` ενημερώνεται στο context
+2. Ελέγξω αν τα components re-render όταν αλλάζει το building
+3. Ελέγξω αν τα API calls χρησιμοποιούν το σωστό building ID
+4. Ελέγξω αν υπάρχει caching issue
+
+**Αρχεία για Έλεγχο**:
+- `frontend/components/contexts/BuildingContext.tsx`
+- `frontend/components/BuildingSelector.tsx`
+- `frontend/app/(dashboard)/financial/page.tsx`
+- `frontend/lib/api.ts` (fetchAllBuildings, fetchPaymentStatistics, etc.)
+
+### 🏗️ Financial Module Enhancements
+- [ ] Add transaction creation form
+- [ ] Add payment creation form
+- [ ] Add account creation form
+- [ ] Add financial reports
+- [ ] Add export functionality
+
+### 🔐 Security Enhancements
+- [ ] Add rate limiting
+- [ ] Add audit logging
+- [ ] Add session management
+- [ ] Add 2FA support
+
+### 📊 Monitoring & Analytics
+- [ ] Add system health dashboard
+- [ ] Add performance metrics
+- [ ] Add user activity tracking
+- [ ] Add error reporting
+
+### 🚀 Production Deployment
+- [ ] Set up CI/CD pipeline
+- [ ] Configure production environment
+- [ ] Set up monitoring and alerting
+- [ ] Create backup procedures
+
+---
+
+## 🎯 Current Status
+
+✅ **Financial Module**: Πλήρως λειτουργικό με API fixes  
+✅ **Building Selector**: UI λειτουργικό, χρειάζεται data refresh fix  
+✅ **Multi-tenant**: Λειτουργικό με django-tenants  
+✅ **Authentication**: JWT-based με refresh tokens  
+✅ **Sample Data**: Διαθέσιμο στο demo tenant  
+
+---
+
 echo "# linux_version" >> README.md git init
 
 git add .
-git commit -m "ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ  "
+git commit -m "overall project version 1.0.0"
 git branch -M main git remote add origin https://github.com/theostamp/linux_version.git 
 git push -u origin main
 
