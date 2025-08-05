@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useKeenSlider } from 'keen-slider/react';
-import { Bell, Calendar, Clock, MapPin, Users, Vote, AlertTriangle, Building, ExternalLink, Settings, Phone, Euro, Wrench, FileText } from 'lucide-react';
+import { Bell, Calendar, Clock, MapPin, Users, Vote, AlertTriangle, Building, ExternalLink, Settings, Phone, Euro, Wrench, FileText, TrendingUp } from 'lucide-react';
 import { Announcement, Vote as VoteType, Building as BuildingType } from '@/lib/api';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
@@ -376,11 +376,11 @@ export default function KioskMode({
           <div className="bg-gradient-to-br from-green-900/40 to-emerald-900/40 backdrop-blur-sm p-6 rounded-xl border border-green-500/30 shadow-lg">
             <div className="flex items-center space-x-4 mb-4">
               <Euro className="w-8 h-8 text-green-300" />
-              <h3 className="text-xl font-semibold text-white">Κατάσταση Πληρωμών</h3>
+                              <h3 className="text-xl font-semibold text-white">Κατάσταση Εισπράξεων</h3>
             </div>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-green-100">Συνολικές Πληρωμές</span>
+                <span className="text-green-100">Συνολικές Εισπράξεις</span>
                 <span className="text-white font-bold text-lg">{financialInfo.total_payments}</span>
               </div>
               <div className="flex justify-between items-center">

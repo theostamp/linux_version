@@ -11,7 +11,7 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
-import { useMeterReadings } from '../../hooks/useMeterReadings';
+import { useMeterReadings } from '../../../hooks/useMeterReadings';
 
 interface TrendAnalysisProps {
   apartmentId?: number;

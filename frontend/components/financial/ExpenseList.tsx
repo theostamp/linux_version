@@ -31,38 +31,40 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
     if (!expenses) return [];
 
     return expenses.filter((expense) => {
-      const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           expense.category.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = expense.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (expense.category_display || expense.category).toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter;
       
       const matchesStatus = statusFilter === 'all' || 
-                           (statusFilter === 'active' && !expense.is_distributed) ||
-                           (statusFilter === 'distributed' && expense.is_distributed);
+                           (statusFilter === 'active' && !expense.is_issued) ||
+                           (statusFilter === 'distributed' && expense.is_issued);
 
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [expenses, searchTerm, categoryFilter, statusFilter]);
 
-  const getCategoryColor = (category: ExpenseCategory) => {
-    const colors: Record<ExpenseCategory, string> = {
-      [ExpenseCategory.ELECTRICITY]: 'bg-blue-100 text-blue-800',
-      [ExpenseCategory.WATER]: 'bg-cyan-100 text-cyan-800',
-      [ExpenseCategory.HEATING]: 'bg-orange-100 text-orange-800',
-      [ExpenseCategory.CLEANING]: 'bg-green-100 text-green-800',
-      [ExpenseCategory.MAINTENANCE]: 'bg-purple-100 text-purple-800',
-      [ExpenseCategory.INSURANCE]: 'bg-red-100 text-red-800',
-      [ExpenseCategory.ADMINISTRATION]: 'bg-gray-100 text-gray-800',
-      [ExpenseCategory.OTHER]: 'bg-yellow-100 text-yellow-800',
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      'electricity_common': 'bg-blue-100 text-blue-800',
+      'water_common': 'bg-cyan-100 text-cyan-800',
+      'heating_fuel': 'bg-orange-100 text-orange-800',
+      'heating_gas': 'bg-orange-100 text-orange-800',
+      'cleaning': 'bg-green-100 text-green-800',
+      'building_maintenance': 'bg-purple-100 text-purple-800',
+      'building_insurance': 'bg-red-100 text-red-800',
+      'management_fees': 'bg-gray-100 text-gray-800',
+      'miscellaneous': 'bg-yellow-100 text-yellow-800',
     };
     return colors[category] || 'bg-gray-100 text-gray-800';
   };
 
-  const getDistributionBadge = (distribution: DistributionType) => {
-    const labels: Record<DistributionType, string> = {
-      [DistributionType.EQUAL]: 'Ισόποσα',
-      [DistributionType.MILLS]: 'Χιλιοστά',
-      [DistributionType.METERS]: 'Μετρητές',
+  const getDistributionBadge = (distribution: string) => {
+    const labels: Record<string, string> = {
+      'by_participation_mills': 'Χιλιοστά',
+      'equal_share': 'Ισόποσα',
+      'by_meters': 'Μετρητές',
+      'specific_apartments': 'Συγκεκριμένα',
     };
     return labels[distribution] || 'Άγνωστο';
   };
@@ -118,14 +120,15 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Όλες οι κατηγορίες</SelectItem>
-              <SelectItem value={ExpenseCategory.ELECTRICITY}>Ηλεκτρισμός</SelectItem>
-              <SelectItem value={ExpenseCategory.WATER}>Νερό</SelectItem>
-              <SelectItem value={ExpenseCategory.HEATING}>Θέρμανση</SelectItem>
-              <SelectItem value={ExpenseCategory.CLEANING}>Καθαριότητα</SelectItem>
-              <SelectItem value={ExpenseCategory.MAINTENANCE}>Συντήρηση</SelectItem>
-              <SelectItem value={ExpenseCategory.INSURANCE}>Ασφάλεια</SelectItem>
-              <SelectItem value={ExpenseCategory.ADMINISTRATION}>Διοίκηση</SelectItem>
-              <SelectItem value={ExpenseCategory.OTHER}>Άλλο</SelectItem>
+              <SelectItem value="electricity_common">Ηλεκτρισμός Κοινοχρήστων</SelectItem>
+              <SelectItem value="water_common">Νερό Κοινοχρήστων</SelectItem>
+              <SelectItem value="heating_fuel">Θέρμανση (Πετρέλαιο)</SelectItem>
+              <SelectItem value="heating_gas">Θέρμανση (Φυσικό Αέριο)</SelectItem>
+              <SelectItem value="cleaning">Καθαρισμός</SelectItem>
+              <SelectItem value="building_maintenance">Συντήρηση Κτιρίου</SelectItem>
+              <SelectItem value="building_insurance">Ασφάλεια Κτιρίου</SelectItem>
+              <SelectItem value="management_fees">Διοικητικά Έξοδα</SelectItem>
+              <SelectItem value="miscellaneous">Διάφορες Δαπάνες</SelectItem>
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -134,8 +137,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Όλες οι καταστάσεις</SelectItem>
-              <SelectItem value="active">Ενεργές</SelectItem>
-              <SelectItem value="distributed">Κατανεμημένες</SelectItem>
+              <SelectItem value="active">Ανέκδοτες</SelectItem>
+              <SelectItem value="distributed">Εκδοθείσες</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -156,13 +159,13 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold text-lg">{expense.description}</h3>
+                      <h3 className="font-semibold text-lg">{expense.title}</h3>
                       <Badge className={getCategoryColor(expense.category)}>
-                        {expense.category}
+                        {expense.category_display || expense.category}
                       </Badge>
-                      {expense.is_distributed && (
+                      {expense.is_issued && (
                         <Badge variant="outline" className="text-green-600">
-                          Κατανεμημένη
+                          Εκδοθείσα
                         </Badge>
                       )}
                     </div>
@@ -188,6 +191,14 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                       </div>
                     </div>
 
+                    {/* Προμηθευτής */}
+                    {expense.supplier_name && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        <span className="font-medium">Προμηθευτής:</span>
+                        <span className="ml-1 text-blue-600">{expense.supplier_name}</span>
+                      </div>
+                    )}
+
                     {expense.notes && (
                       <div className="mt-2 text-sm text-gray-500">
                         <span className="font-medium">Σημειώσεις:</span> {expense.notes}
@@ -200,8 +211,12 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                         <span className="text-sm font-medium text-gray-700">Επισύναψη:</span>
                         <div className="mt-2">
                           <FilePreview
-                            file={expense.attachment}
-                            fileName={expense.attachment.split('/').pop()}
+                            file={{
+                              name: expense.attachment.split('/').pop() || 'attachment',
+                              size: 0,
+                              type: 'application/octet-stream',
+                              url: expense.attachment_url || expense.attachment
+                            }}
                             showRemove={false}
                           />
                         </div>

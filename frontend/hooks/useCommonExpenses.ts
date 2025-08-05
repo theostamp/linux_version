@@ -7,8 +7,7 @@ import {
   CommonExpenseIssueRequest,
   MeterReading 
 } from '@/types/financial';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { api } from '@/lib/api';
 
 export const useCommonExpenses = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -22,18 +21,12 @@ export const useCommonExpenses = () => {
       const searchParams = new URLSearchParams();
       if (buildingId) searchParams.append('building_id', buildingId.toString());
 
-      const response = await fetch(`${API_BASE}/financial/common-expense-periods/?${searchParams}`, {
-        credentials: 'include',
-      });
+      const response = await api.get(`/financial/common-expense-periods/?${searchParams}`);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const result = response.data;
       return Array.isArray(result) ? result : result.results || [];
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Σφάλμα κατά τη φόρτωση περιόδων κοινοχρήστων';
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη φόρτωση περιόδων κοινοχρήστων';
       setError(errorMessage);
       throw err;
     } finally {
@@ -51,23 +44,11 @@ export const useCommonExpenses = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${API_BASE}/financial/common-expense-periods/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-        credentials: 'include',
-      });
+      const response = await api.post('/financial/common-expense-periods/', data);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Σφάλμα κατά τη δημιουργία περιόδου κοινοχρήστων';
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη δημιουργία περιόδου κοινοχρήστων';
       setError(errorMessage);
       throw err;
     } finally {
@@ -80,23 +61,11 @@ export const useCommonExpenses = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${API_BASE}/financial/common-expenses/calculate/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-        credentials: 'include',
-      });
+      const response = await api.post('/financial/common-expenses/calculate/', data);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Σφάλμα κατά τον υπολογισμό κοινοχρήστων';
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τον υπολογισμό κοινοχρήστων';
       setError(errorMessage);
       throw err;
     } finally {
@@ -104,28 +73,145 @@ export const useCommonExpenses = () => {
     }
   }, []);
 
-  const issueCommonExpenses = useCallback(async (data: CommonExpenseIssueRequest): Promise<{ message: string }> => {
+  const issueCommonExpenses = useCallback(async (data: CommonExpenseIssueRequest): Promise<any> => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const response = await fetch(`${API_BASE}/financial/common-expenses/issue/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-        credentials: 'include',
-      });
+      const response = await api.post('/financial/common-expenses/issue/', data);
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την έκδοση κοινοχρήστων';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+  // Automation methods
+  const createPeriodAutomatically = useCallback(async (data: {
+    building_id: number;
+    period_type: 'monthly' | 'quarterly' | 'semester' | 'yearly';
+    start_date?: string;
+  }): Promise<any> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await api.post('/financial/common-expenses/create_period_automatically/', data);
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη δημιουργία περιόδου';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-      const result = await response.json();
-      return result;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Σφάλμα κατά την έκδοση κοινοχρήστων';
+  const collectExpensesAutomatically = useCallback(async (data: {
+    building_id: number;
+    period_id: number;
+  }): Promise<any> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await api.post('/financial/common-expenses/collect_expenses_automatically/', data);
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη συλλογή δαπανών';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const calculateAutomatically = useCallback(async (data: {
+    building_id: number;
+    period_id: number;
+  }): Promise<any> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await api.post('/financial/common-expenses/calculate_automatically/', data);
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τον υπολογισμό';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const issueAutomatically = useCallback(async (data: {
+    building_id: number;
+    period_id: number;
+  }): Promise<any> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await api.post('/financial/common-expenses/issue_automatically/', data);
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την έκδοση';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const autoProcessPeriod = useCallback(async (data: {
+    building_id: number;
+    period_type: 'monthly' | 'quarterly' | 'semester' | 'yearly';
+    start_date?: string;
+  }): Promise<any> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await api.post('/financial/common-expenses/auto_process_period/', data);
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την αυτοματοποιημένη επεξεργασία';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const getPeriodStatistics = useCallback(async (building_id: number, period_id: number): Promise<any> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await api.get(`/financial/common-expenses/period_statistics/?building_id=${building_id}&period_id=${period_id}`);
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη στατιστικών';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const getPeriodTemplates = useCallback(async (): Promise<any> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await api.get('/financial/common-expenses/period_templates/');
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη templates';
       setError(errorMessage);
       throw err;
     } finally {
@@ -142,18 +228,12 @@ export const useCommonExpenses = () => {
       if (periodId) searchParams.append('period', periodId.toString());
       if (buildingId) searchParams.append('building_id', buildingId.toString());
 
-      const response = await fetch(`${API_BASE}/financial/apartment-shares/?${searchParams}`, {
-        credentials: 'include',
-      });
+      const response = await api.get(`/financial/apartment-shares/?${searchParams}`);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const result = response.data;
       return Array.isArray(result) ? result : result.results || [];
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Σφάλμα κατά τη φόρτωση μεριδίων διαμερισμάτων';
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη φόρτωση μεριδίων διαμερισμάτων';
       setError(errorMessage);
       throw err;
     } finally {
@@ -171,23 +251,11 @@ export const useCommonExpenses = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${API_BASE}/financial/meter-readings/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-        credentials: 'include',
-      });
+      const response = await api.post('/financial/meter-readings/', data);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Σφάλμα κατά τη δημιουργία μέτρησης';
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη δημιουργία μέτρησης';
       setError(errorMessage);
       throw err;
     } finally {
@@ -205,18 +273,12 @@ export const useCommonExpenses = () => {
       if (apartmentId) searchParams.append('apartment', apartmentId.toString());
       if (meterType) searchParams.append('meter_type', meterType);
 
-      const response = await fetch(`${API_BASE}/financial/meter-readings/?${searchParams}`, {
-        credentials: 'include',
-      });
+      const response = await api.get(`/financial/meter-readings/?${searchParams}`);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const result = response.data;
       return Array.isArray(result) ? result : result.results || [];
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Σφάλμα κατά τη φόρτωση μετρήσεων';
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη φόρτωση μετρήσεων';
       setError(errorMessage);
       throw err;
     } finally {
@@ -232,6 +294,8 @@ export const useCommonExpenses = () => {
     getCommonExpensePeriods,
     createCommonExpensePeriod,
     calculateCommonExpenses,
+    // Backward-compat alias for older components
+    calculateShares: calculateCommonExpenses,
     issueCommonExpenses,
     getApartmentShares,
     createMeterReading,
@@ -239,5 +303,13 @@ export const useCommonExpenses = () => {
     isLoading,
     error,
     clearError,
+    // Automation methods
+    createPeriodAutomatically,
+    collectExpensesAutomatically,
+    calculateAutomatically,
+    issueAutomatically,
+    autoProcessPeriod,
+    getPeriodStatistics,
+    getPeriodTemplates,
   };
 }; 

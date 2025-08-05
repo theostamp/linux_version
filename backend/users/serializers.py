@@ -14,7 +14,16 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
     username_field = 'email'
     
+    # Override the field definitions to use email instead of username
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Replace username field with email field
+        self.fields['email'] = serializers.EmailField()
+        if 'username' in self.fields:
+            del self.fields['username']
+    
     def validate(self, attrs):
+        # Get email and password from the request
         email = attrs.get('email')
         password = attrs.get('password')
         
@@ -32,9 +41,22 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 raise serializers.ValidationError('User account is disabled')
             
             refresh = self.get_token(user)
+            
+            # Include user data in response (matching frontend expectations)
+            user_data = {
+                'id': user.id,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'office_name': user.office_name,
+                'office_phone': user.office_phone,
+                'office_address': user.office_address,
+            }
+            
             data = {
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
+                'user': user_data,
             }
             return data
         else:

@@ -3,6 +3,45 @@ from buildings.models import Building
 from apartments.models import Apartment
 
 
+class Supplier(models.Model):
+    """Μοντέλο για τους προμηθευτές/συναλλασόμενους"""
+    
+    SUPPLIER_CATEGORIES = [
+        ('electricity', 'ΔΕΗ (Ηλεκτρικό Ρεύμα)'),
+        ('water', 'ΕΥΔΑΠ (Νερό)'),
+        ('cleaning', 'Καθαρισμός'),
+        ('elevator', 'Ανελκυστήρας'),
+        ('heating', 'Θέρμανση'),
+        ('insurance', 'Ασφάλεια'),
+        ('administrative', 'Διοικητικά'),
+        ('repairs', 'Επισκευές'),
+        ('other', 'Άλλοι'),
+    ]
+    
+    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='suppliers')
+    name = models.CharField(max_length=255, verbose_name="Όνομα Προμηθευτή")
+    category = models.CharField(max_length=50, choices=SUPPLIER_CATEGORIES, verbose_name="Κατηγορία")
+    account_number = models.CharField(max_length=100, blank=True, verbose_name="Αριθμός Λογαριασμού")
+    phone = models.CharField(max_length=50, blank=True, verbose_name="Τηλέφωνο")
+    email = models.EmailField(blank=True, verbose_name="Email")
+    address = models.TextField(blank=True, verbose_name="Διεύθυνση")
+    vat_number = models.CharField(max_length=50, blank=True, verbose_name="ΑΦΜ")
+    contract_number = models.CharField(max_length=100, blank=True, verbose_name="Αριθμός Συμβολαίου")
+    notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
+    is_active = models.BooleanField(default=True, verbose_name="Ενεργός")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Προμηθευτής"
+        verbose_name_plural = "Προμηθευτές"
+        ordering = ['name']
+        unique_together = ['building', 'name', 'category']
+    
+    def __str__(self):
+        return f"{self.name} - {self.get_category_display()}"
+
+
 class Expense(models.Model):
     """Μοντέλο για τις δαπάνες κτιρίου"""
     
@@ -130,6 +169,7 @@ class Expense(models.Model):
     date = models.DateField(verbose_name="Ημερομηνία")
     category = models.CharField(max_length=50, choices=EXPENSE_CATEGORIES, verbose_name="Κατηγορία")
     distribution_type = models.CharField(max_length=50, choices=DISTRIBUTION_TYPES, verbose_name="Τρόπος Κατανομής")
+    supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True, related_name='expenses', verbose_name="Προμηθευτής")
     attachment = models.FileField(
         upload_to='expenses/',
         null=True, 
@@ -155,11 +195,11 @@ class Transaction(models.Model):
     """Μοντέλο για τις κινήσεις του ταμείου"""
     
     TRANSACTION_TYPES = [
-        ('common_expense_payment', 'Πληρωμή Κοινοχρήστων'),
-        ('expense_payment', 'Πληρωμή Δαπάνης'),
+        ('common_expense_payment', 'Είσπραξη Κοινοχρήστων'),
+        ('expense_payment', 'Είσπραξη Δαπάνης'),
         ('refund', 'Επιστροφή'),
         ('common_expense_charge', 'Χρέωση Κοινοχρήστων'),
-        ('payment_received', 'Πληρωμή Ληφθείσα'),
+        ('payment_received', 'Είσπραξη Ληφθείσα'),
         ('expense_created', 'Δαπάνη Δημιουργήθηκε'),
         ('expense_issued', 'Δαπάνη Εκδόθηκε'),
         ('balance_adjustment', 'Προσαρμογή Υπολοίπου'),
@@ -202,7 +242,7 @@ class Transaction(models.Model):
 
 
 class Payment(models.Model):
-    """Μοντέλο για τις πληρωμές των ιδιοκτητών"""
+    """Μοντέλο για τις εισπράξεις των ιδιοκτητών"""
     
     PAYMENT_METHODS = [
         ('cash', 'Μετρητά'),
@@ -211,21 +251,31 @@ class Payment(models.Model):
         ('card', 'Κάρτα'),
     ]
     
+    PAYMENT_TYPES = [
+        ('common_expense', 'Κοινόχρηστα'),
+        ('reserve_fund', 'Ταμείο Εφεδρείας'),
+        ('special_expense', 'Ειδική Δαπάνη'),
+        ('advance', 'Προκαταβολή'),
+        ('other', 'Άλλο'),
+    ]
+    
     apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Ποσό")
-    date = models.DateField(verbose_name="Ημερομηνία Πληρωμής")
-    method = models.CharField(max_length=20, choices=PAYMENT_METHODS, verbose_name="Τρόπος Πληρωμής")
+    date = models.DateField(verbose_name="Ημερομηνία Εισπράξεως")
+    method = models.CharField(max_length=20, choices=PAYMENT_METHODS, verbose_name="Τρόπος Εισπράξεως")
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPES, default='common_expense', verbose_name="Τύπος Εισπράξεως")
+    reference_number = models.CharField(max_length=100, blank=True, verbose_name="Αριθμός Αναφοράς")
     notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
     receipt = models.FileField(upload_to='payment_receipts/', null=True, blank=True, verbose_name="Απόδειξη")
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        verbose_name = "Πληρωμή"
-        verbose_name_plural = "Πληρωμές"
+        verbose_name = "Είσπραξη"
+        verbose_name_plural = "Εισπράξεις"
         ordering = ['-date', '-created_at']
     
     def __str__(self):
-        return f"Πληρωμή {self.apartment.number} - {self.amount}€ ({self.get_method_display()})"
+        return f"Είσπραξη {self.apartment.number} - {self.amount}€ ({self.get_method_display()})"
 
 
 class ExpenseApartment(models.Model):
@@ -269,6 +319,40 @@ class MeterReading(models.Model):
     def __str__(self):
         return f"{self.apartment.number} - {self.get_meter_type_display()} - {self.value} ({self.reading_date})"
 
+class CommonExpensePeriod(models.Model):
+    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='common_expense_periods')
+    period_name = models.CharField(max_length=255, verbose_name="Όνομα Περιόδου")
+    start_date = models.DateField(verbose_name="Ημερομηνία Έναρξης")
+    end_date = models.DateField(verbose_name="Ημερομηνία Λήξης")
+    is_active = models.BooleanField(default=True, verbose_name="Ενεργή")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Περίοδος Κοινοχρήστων"
+        verbose_name_plural = "Περίοδοι Κοινοχρήστων"
+        ordering = ['-start_date']
+        unique_together = ['building', 'period_name']
+
+    def __str__(self):
+        return f"{self.period_name} ({self.building.name})"
+
+class ApartmentShare(models.Model):
+    period = models.ForeignKey(CommonExpensePeriod, on_delete=models.CASCADE, related_name='apartment_shares')
+    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name='shares')
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Συνολικό Ποσό")
+    previous_balance = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Προηγούμενο Υπόλοιπο")
+    total_due = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Συνολική Οφειλή")
+    breakdown = models.JSONField(default=dict, verbose_name="Ανάλυση Δαπανών")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Μερίδιο Διαμερίσματος"
+        verbose_name_plural = "Μερίδια Διαμερισμάτων"
+        unique_together = ['period', 'apartment']
+
+    def __str__(self):
+        return f"Μερίδιο για {self.apartment.number} - Περίοδος: {self.period.period_name}"
 
 # Import του audit model στο τέλος για να αποφύγουμε circular imports
 from .audit import FinancialAuditLog

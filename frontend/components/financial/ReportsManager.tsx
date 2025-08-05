@@ -17,9 +17,10 @@ import {
   Filter,
   Search
 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface ReportsManagerProps {
-  buildingId: string;
+  buildingId: number;
 }
 
 interface ReportConfig {
@@ -71,25 +72,25 @@ export default function ReportsManager({ buildingId }: ReportsManagerProps) {
     setExporting(true);
     try {
       const params = new URLSearchParams({
-        building_id: buildingId,
+        building_id: buildingId.toString(),
         report_type: selectedReport,
         ...filters,
       });
 
       const endpoint = format === 'excel' ? 'export_excel' : 'export_pdf';
-      const response = await fetch(`/api/financial/reports/${endpoint}/?${params}`);
+      const response = await api.get(`/financial/reports/${endpoint}/?${params}`, {
+        responseType: 'blob'
+      });
       
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${selectedReport}_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${selectedReport}_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
       console.error(`Σφάλμα εξαγωγής ${format}:`, error);
     } finally {
@@ -207,9 +208,9 @@ export default function ReportsManager({ buildingId }: ReportsManagerProps) {
                       <SelectValue placeholder="Όλοι οι τύποι" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Όλοι οι τύποι</SelectItem>
-                      <SelectItem value="common_expense_payment">Πληρωμή Κοινοχρήστων</SelectItem>
-                      <SelectItem value="expense_payment">Πληρωμή Δαπάνης</SelectItem>
+                      <SelectItem value="all">Όλοι οι τύποι</SelectItem>
+                                      <SelectItem value="common_expense_payment">Είσπραξη Κοινοχρήστων</SelectItem>
+                <SelectItem value="expense_payment">Είσπραξη Δαπάνης</SelectItem>
                       <SelectItem value="refund">Επιστροφή</SelectItem>
                       <SelectItem value="common_expense_charge">Χρέωση Κοινοχρήστων</SelectItem>
                     </SelectContent>

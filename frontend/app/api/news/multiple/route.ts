@@ -44,6 +44,20 @@ const NEWS_SOURCES = [
   }
 ];
 
+// Fallback news items when RSS feeds fail
+const FALLBACK_NEWS = [
+  "Καλώς ήρθατε στην πολυκατοικία μας! 🏠",
+  "Ενημερωθείτε για τα τελευταία νέα της Ελλάδας! 🇬🇷",
+  "Συντήρηση και καθαριότητα κτιρίου σε εξέλιξη 🧹",
+  "Νέα συστήματα ασφαλείας εγκαταστάθηκαν 🔒",
+  "Ενημέρωση για τις κοινόχρηστες δαπάνες 💰",
+  "Προγραμματισμένες εργασίες συντήρησης 🔧",
+  "Νέα κανονισμοί πολυκατοικίας 📋",
+  "Ενημέρωση για την ενεργειακή απόδοση ⚡",
+  "Καλοκαιρινά προγράμματα συντήρησης ☀️",
+  "Ενημέρωση για τα συστήματα ανύψωσης 🛗"
+];
+
 // Simple XML parser using regex
 function parseRSSFeedSimple(text: string): string[] {
   const titles: string[] = [];
@@ -86,20 +100,31 @@ async function parseRSSFeed(url: string): Promise<string[]> {
   try {
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+        'Accept-Language': 'el-GR,el;q=0.9,en;q=0.8',
+        'Cache-Control': 'no-cache'
       },
-      next: { revalidate: 180 } // Cache for 3 minutes for fresher news
+      next: { revalidate: 300 } // Cache for 5 minutes to reduce load
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      console.warn(`RSS feed ${url} returned status ${response.status}`);
+      return [];
     }
 
     const text = await response.text();
-    return parseRSSFeedSimple(text);
+    const titles = parseRSSFeedSimple(text);
+    
+    // Only return if we got meaningful content
+    if (titles.length > 0) {
+      return titles;
+    }
+    
+    return [];
     
   } catch (error) {
-    console.error('Error fetching RSS feed:', error);
+    console.warn(`Error fetching RSS feed ${url}:`, error);
     return [];
   }
 }
@@ -107,56 +132,68 @@ async function parseRSSFeed(url: string): Promise<string[]> {
 // Function to fetch fresh news from multiple sources
 async function fetchFreshNews(): Promise<string[]> {
   const allNews: string[] = [];
+  let successfulSources = 0;
   
   // Try to fetch from each news source
   for (const source of NEWS_SOURCES) {
     try {
       if (source.type === 'rss') {
         const titles = await parseRSSFeed(source.url);
-        allNews.push(...titles);
+        if (titles.length > 0) {
+          allNews.push(...titles);
+          successfulSources++;
+          console.log(`✅ Successfully fetched ${titles.length} titles from ${source.name}`);
+        }
       }
     } catch (error) {
-      console.error(`Error fetching from ${source.name}:`, error);
+      console.warn(`❌ Error fetching from ${source.name}:`, error);
     }
   }
   
-  // If no fresh news fetched, return minimal fallback
+  console.log(`📊 Fetched news from ${successfulSources}/${NEWS_SOURCES.length} sources`);
+  
+  // If no fresh news fetched, return fallback news
   if (allNews.length === 0) {
-    return [
-      "Ενημερωθείτε για τα τελευταία νέα της Ελλάδας! 🇬🇷",
-      "Καλώς ήρθατε στην πολυκατοικία μας! 🏠"
-    ];
+    console.log('📰 No RSS news available, using fallback news');
+    return FALLBACK_NEWS;
   }
   
   // Shuffle and return unique news items
   const uniqueNews = [...new Set(allNews)];
-  return uniqueNews.sort(() => Math.random() - 0.5).slice(0, 25);
+  const finalNews = uniqueNews.sort(() => Math.random() - 0.5).slice(0, 25);
+  
+  console.log(`📰 Returning ${finalNews.length} unique news items`);
+  return finalNews;
 }
 
 export async function GET() {
   try {
+    console.log('📰 Starting news API request...');
     const newsItems = await fetchFreshNews();
     
-    return NextResponse.json({
+    const response = {
       items: newsItems,
       timestamp: new Date().toISOString(),
       source: 'fresh-news-api',
       count: newsItems.length
-    });
+    };
+    
+    console.log(`📰 News API response: ${newsItems.length} items`);
+    return NextResponse.json(response);
+    
   } catch (error) {
-    console.error('Error in news API:', error);
+    console.error('❌ Error in news API:', error);
     
-    // Return minimal fallback
-    const fallbackItems = [
-      "Ενημερωθείτε για τα τελευταία νέα της Ελλάδας! 🇬🇷",
-      "Καλώς ήρθατε στην πολυκατοικία μας! 🏠"
-    ];
-    
-    return NextResponse.json({
-      items: fallbackItems,
+    // Return fallback news
+    const response = {
+      items: FALLBACK_NEWS,
       timestamp: new Date().toISOString(),
       source: 'fallback',
-      count: fallbackItems.length
-    });
+      count: FALLBACK_NEWS.length,
+      error: 'RSS feeds unavailable'
+    };
+    
+    console.log('📰 Returning fallback news due to error');
+    return NextResponse.json(response);
   }
 } 

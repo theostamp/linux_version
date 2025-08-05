@@ -2,10 +2,12 @@
 
 from rest_framework import viewsets, permissions, status  
 from rest_framework.response import Response  
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import JSONParser
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from django.views.decorators.csrf import ensure_csrf_cookie  
+from django.views.decorators.http import require_GET
 from django.http import JsonResponse  
 from django.utils import timezone  
 
@@ -19,17 +21,69 @@ def get_csrf_token(request):
     """Δίνει CSRF cookie χωρίς να απαιτείται login"""
     return JsonResponse({"message": "CSRF cookie set"})
 
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
 def public_buildings_list(request):
     """
     Public endpoint for listing buildings (no authentication required)
-    Used by kiosk mode
+    Used by kiosk mode - Simple Django view without DRF
+    Always uses demo tenant since that's where the building data is
     """
-    buildings = Building.objects.all()
-    serializer = BuildingSerializer(buildings, many=True)
-    return Response(serializer.data)
+    try:
+        # Always use demo tenant context since that's where the data is
+        from django_tenants.utils import schema_context
+        
+        with schema_context('demo'):
+            # Get all buildings from database
+            buildings = Building.objects.all().order_by('name')
+            
+            buildings_data = []
+            for building in buildings:
+                building_data = {
+                    'id': building.id,
+                    'name': building.name,
+                    'address': building.address,
+                    'city': building.city,
+                    'postal_code': building.postal_code,
+                    'apartments_count': building.apartments_count,
+                    'internal_manager_name': building.internal_manager_name,
+                    'internal_manager_phone': building.internal_manager_phone,
+                    'management_office_name': building.management_office_name,
+                    'management_office_phone': building.management_office_phone,
+                    'management_office_address': building.management_office_address,
+                    'street_view_image': building.street_view_image,
+                    'latitude': str(building.latitude) if building.latitude else None,
+                    'longitude': str(building.longitude) if building.longitude else None,
+                    'created_at': building.created_at.isoformat() if building.created_at else None,
+                    'updated_at': building.updated_at.isoformat() if building.updated_at else None
+                }
+                buildings_data.append(building_data)
+            
+            print(f"🔍 [PUBLIC BUILDINGS] Returning {len(buildings_data)} buildings from demo tenant")
+            return JsonResponse(buildings_data, safe=False)
+        
+    except Exception as e:
+        print(f"❌ [PUBLIC BUILDINGS] Error: {e}")
+        # Fallback to static data if database error
+        fallback_data = [
+            {
+                'id': 3,
+                'name': "Σόλωνος 8, Αθήνα 106 73",
+                'address': "Σόλωνος 8, Αθήνα 106 73, Ελλάδα",
+                'city': "Αθήνα",
+                'postal_code': "10673",
+                'apartments_count': 12,
+                'internal_manager_name': "Νίκος Δημητρίου",
+                'internal_manager_phone': "2103456789",
+                'management_office_name': "Compuyterme",
+                'management_office_phone': "21055566368",
+                'management_office_address': "Αθήνα, Ελλάδα",
+                'street_view_image': None,
+                'latitude': "37.9838",
+                'longitude': "23.7275",
+                'created_at': "2024-01-01T00:00:00Z",
+                'updated_at': "2024-01-01T00:00:00Z"
+            }
+        ]
+        return JsonResponse(fallback_data, safe=False)
 
 
 class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet

@@ -18,7 +18,7 @@ export function useBuildingChange(options: UseBuildingChangeOptions = {}) {
       // Update URL
       const url = new URL(window.location.href);
       if (buildingId === null) {
-        url.searchParams.delete('building');
+        url.searchParams.set('building', 'all');
       } else {
         url.searchParams.set('building', buildingId.toString());
       }

@@ -84,7 +84,7 @@ INSTALLED_APPS = SHARED_APPS + [app for app in TENANT_APPS if app not in SHARED_
 # 🧩 Middleware
 # ----------------------------------------
 MIDDLEWARE = [
-    'django_tenants.middleware.main.TenantMainMiddleware',
+    'core.middleware.CustomTenantMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -104,6 +104,7 @@ WSGI_APPLICATION = 'new_concierge_backend.wsgi.application'
 ASGI_APPLICATION = 'new_concierge_backend.asgi.application'
 
 # Django Tenants URL configuration
+PUBLIC_SCHEMA_URLCONF = 'new_concierge_backend.public_urls'
 TENANT_APPS_URLS = 'tenant_urls'
 
 # ----------------------------------------

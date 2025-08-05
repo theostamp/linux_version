@@ -11,31 +11,28 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePayments } from '@/hooks/usePayments';
-import { Payment, PaymentMethod, PaymentType } from '@/types/financial';
+import { Payment, PaymentMethod, PaymentType, PaymentFormData } from '@/types/financial';
 import { useToast } from '@/hooks/use-toast';
 
 const paymentFormSchema = z.object({
   apartment_id: z.number().min(1, 'Παρακαλώ επιλέξτε διαμέρισμα'),
   amount: z.number().min(0.01, 'Το ποσό πρέπει να είναι μεγαλύτερο από 0'),
-  payment_date: z.string().min(1, 'Παρακαλώ επιλέξτε ημερομηνία'),
-  payment_method: z.nativeEnum(PaymentMethod, {
-    errorMap: () => ({ message: 'Παρακαλώ επιλέξτε μέθοδο πληρωμής' }),
-  }),
-  payment_type: z.nativeEnum(PaymentType, {
-    errorMap: () => ({ message: 'Παρακαλώ επιλέξτε τύπο πληρωμής' }),
-  }),
+  date: z.string().min(1, 'Παρακαλώ επιλέξτε ημερομηνία'),
+  method: z.string().min(1, 'Παρακαλώ επιλέξτε μέθοδο εισπράξεως'),
+  payment_type: z.string().min(1, 'Παρακαλώ επιλέξτε τύπο εισπράξεως'),
   reference_number: z.string().optional(),
   notes: z.string().optional(),
+  receipt: z.any().optional(),
 });
 
-type PaymentFormData = z.infer<typeof paymentFormSchema>;
+type LocalPaymentFormData = z.infer<typeof paymentFormSchema>;
 
 interface PaymentFormProps {
   buildingId: number;
   apartments: Array<{ id: number; number: string; owner_name?: string }>;
   onSuccess?: (payment: Payment) => void;
   onCancel?: () => void;
-  initialData?: Partial<PaymentFormData>;
+  initialData?: Partial<LocalPaymentFormData>;
 }
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
@@ -46,7 +43,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   initialData,
 }) => {
   const { toast } = useToast();
-  const { createPayment, isLoading } = usePayments(buildingId);
+  const { createPayment, isLoading } = usePayments();
   
   const {
     register,
@@ -55,13 +52,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     setValue,
     watch,
     reset,
-  } = useForm<PaymentFormData>({
+  } = useForm<LocalPaymentFormData>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
       apartment_id: initialData?.apartment_id || 0,
       amount: initialData?.amount || 0,
-      payment_date: initialData?.payment_date || new Date().toISOString().split('T')[0],
-      payment_method: initialData?.payment_method || PaymentMethod.CASH,
+      date: initialData?.date || new Date().toISOString().split('T')[0],
+      method: initialData?.method || PaymentMethod.CASH,
       payment_type: initialData?.payment_type || PaymentType.COMMON_EXPENSE,
       reference_number: initialData?.reference_number || '',
       notes: initialData?.notes || '',
@@ -69,18 +66,26 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   });
 
   const selectedApartmentId = watch('apartment_id');
-  const selectedApartment = apartments.find(apt => apt.id === selectedApartmentId);
+  const selectedApartment = (apartments ?? []).find(apt => apt.id === selectedApartmentId);
 
-  const onSubmit = async (data: PaymentFormData) => {
+  const onSubmit = async (data: LocalPaymentFormData) => {
     try {
-      const payment = await createPayment({
-        ...data,
-        building_id: buildingId,
-      });
+      const paymentData: PaymentFormData = {
+        apartment_id: data.apartment_id,
+        amount: data.amount,
+        date: data.date,
+        method: data.method,
+        payment_type: data.payment_type,
+        reference_number: data.reference_number,
+        notes: data.notes,
+        receipt: data.receipt,
+      };
+
+      const payment = await createPayment(paymentData);
 
       toast({
         title: 'Επιτυχία!',
-        description: 'Η πληρωμή καταχωρήθηκε επιτυχώς.',
+        description: 'Η είσπραξη καταχωρήθηκε επιτυχώς.',
       });
 
       reset();
@@ -88,7 +93,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     } catch (error) {
       toast({
         title: 'Σφάλμα',
-        description: error instanceof Error ? error.message : 'Προέκυψε σφάλμα κατά την καταχώρηση της πληρωμής.',
+        description: error instanceof Error ? error.message : 'Προέκυψε σφάλμα κατά την καταχώρηση της εισπράξεως.',
         variant: 'destructive',
       });
     }
@@ -120,7 +125,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Νέα Πληρωμή</CardTitle>
+        <CardTitle>Νέα Είσπραξη</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -128,14 +133,14 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           <div className="space-y-2">
             <Label htmlFor="apartment_id">Διαμέρισμα *</Label>
             <Select
-              value={selectedApartmentId?.toString() || ''}
+              value={selectedApartmentId ? selectedApartmentId.toString() : ''}
               onValueChange={(value) => setValue('apartment_id', parseInt(value))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Επιλέξτε διαμέρισμα" />
               </SelectTrigger>
               <SelectContent>
-                {apartments.map((apartment) => (
+                {(apartments ?? []).map((apartment) => (
                   <SelectItem key={apartment.id} value={apartment.id.toString()}>
                     {apartment.number}
                     {apartment.owner_name && ` - ${apartment.owner_name}`}
@@ -172,14 +177,14 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="payment_date">Ημερομηνία Πληρωμής *</Label>
+              <Label htmlFor="payment_date">Ημερομηνία Εισπράξεως *</Label>
               <Input
                 id="payment_date"
                 type="date"
-                {...register('payment_date')}
+                {...register('date')}
               />
-              {errors.payment_date && (
-                <p className="text-sm text-red-600">{errors.payment_date.message}</p>
+              {errors.date && (
+                <p className="text-sm text-red-600">{errors.date.message}</p>
               )}
             </div>
           </div>
@@ -187,10 +192,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           {/* Payment Method and Type */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="payment_method">Μέθοδος Πληρωμής *</Label>
+              <Label htmlFor="payment_method">Μέθοδος Εισπράξεως *</Label>
               <Select
-                value={watch('payment_method')}
-                onValueChange={(value) => setValue('payment_method', value as PaymentMethod)}
+                value={watch('method')}
+                onValueChange={(value) => setValue('method', value as PaymentMethod)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Επιλέξτε μέθοδο" />
@@ -203,13 +208,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.payment_method && (
-                <p className="text-sm text-red-600">{errors.payment_method.message}</p>
+              {errors.method && (
+                <p className="text-sm text-red-600">{errors.method.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="payment_type">Τύπος Πληρωμής *</Label>
+              <Label htmlFor="payment_type">Τύπος Εισπράξεως *</Label>
               <Select
                 value={watch('payment_type')}
                 onValueChange={(value) => setValue('payment_type', value as PaymentType)}
@@ -250,7 +255,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             <Textarea
               id="notes"
               {...register('notes')}
-              placeholder="Προαιρετικές σημειώσεις για την πληρωμή"
+              placeholder="Προαιρετικές σημειώσεις για την είσπραξη"
               rows={3}
             />
             {errors.notes && (
@@ -261,7 +266,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           {/* Form Actions */}
           <div className="flex gap-4 pt-4">
             <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? 'Καταχώρηση...' : 'Καταχώρηση Πληρωμής'}
+              {isLoading ? 'Καταχώρηση...' : 'Καταχώρηση Εισπράξεως'}
             </Button>
             {onCancel && (
               <Button type="button" variant="outline" onClick={onCancel}>

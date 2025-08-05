@@ -14,8 +14,8 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { useMeterReadings } from '../../hooks/useMeterReadings';
-import { MeterReading } from '../../types/financial';
+import { useMeterReadings } from '../../../hooks/useMeterReadings';
+import { MeterReading } from '../../../types/financial';
 
 interface MeterReadingChartProps {
   apartmentId?: number;

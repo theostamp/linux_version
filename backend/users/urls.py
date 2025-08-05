@@ -13,7 +13,8 @@ router.register(r'', UserViewSet)
 urlpatterns = [
     path('me/', me_view, name='me'),
     path('office-details/', update_office_details, name='office-details'),
-    path('login/', CustomTokenObtainPairView.as_view(), name='login'),  # Custom JWT login
+    path('login/', CustomTokenObtainPairView.as_view(), name='login'),  # Custom JWT login with trailing slash
+    path('login', CustomTokenObtainPairView.as_view(), name='login-no-slash'),  # Custom JWT login without trailing slash
     path('logout/', logout_view, name='logout'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('', include(router.urls)),

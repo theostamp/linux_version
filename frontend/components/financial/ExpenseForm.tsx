@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { ExpenseFormData, ExpenseCategory, DistributionType } from '@/types/financial';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useFileUpload } from '@/hooks/useFileUpload';
+import { useExpenseTemplates } from '@/hooks/useExpenseTemplates';
+import { useSuppliers } from '@/hooks/useSuppliers';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { FilePreview } from '@/components/ui/FilePreview';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { SupplierSelector } from './SupplierSelector';
+import { ExpenseTitleAutoComplete } from './ExpenseTitleAutoComplete';
 
 interface ExpenseFormProps {
   buildingId: number;
@@ -140,6 +144,10 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
     allowedTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx'],
     maxFiles: 1
   });
+
+  // Hooks for auto-complete functionality
+  const { getSuggestedDate, getSuggestedDistribution, isMonthlyExpense, getTitleSuggestions } = useExpenseTemplates();
+  const { suppliers } = useSuppliers({ buildingId, isActive: true });
   
   const {
     register,
@@ -153,10 +161,37 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
       building: buildingId,
       distribution_type: 'by_participation_mills',
       date: new Date().toISOString().split('T')[0],
-    }
+    },
+    mode: 'onChange'
   });
 
   const selectedCategory = watch('category');
+  const selectedSupplier = watch('supplier');
+  const selectedTitle = watch('title');
+
+  // Get selected supplier details
+  const selectedSupplierDetails = suppliers.find(s => s.id === selectedSupplier);
+
+  // Auto-fill functionality when category changes
+  useEffect(() => {
+    if (selectedCategory) {
+      // Auto-set distribution type
+      const suggestedDistribution = getSuggestedDistribution(selectedCategory);
+      setValue('distribution_type', suggestedDistribution);
+
+      // Auto-set date
+      const suggestedDate = getSuggestedDate(selectedCategory);
+      setValue('date', suggestedDate);
+
+      // Auto-fill title if empty
+      if (!selectedTitle) {
+        const suggestions = getTitleSuggestions(selectedCategory, selectedSupplierDetails);
+        if (suggestions.length > 0) {
+          setValue('title', suggestions[0]);
+        }
+      }
+    }
+  }, [selectedCategory, selectedSupplierDetails, setValue, getSuggestedDistribution, getSuggestedDate, selectedTitle]);
 
   const getDefaultDistributionType = (category: ExpenseCategory): DistributionType => {
     const heatingCategories: ExpenseCategory[] = ['heating_fuel', 'heating_gas'];
@@ -170,6 +205,12 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
     const category = e.target.value as ExpenseCategory;
     setValue('category', category);
     setValue('distribution_type', getDefaultDistributionType(category));
+    // Καθαρίζουμε τον προμηθευτή όταν αλλάζει η κατηγορία
+    setValue('supplier', undefined);
+  };
+
+  const handleSupplierChange = (supplierId: number | undefined) => {
+    setValue('supplier', supplierId);
   };
 
   const handleFilesSelected = (files: File[]) => {
@@ -182,6 +223,12 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
 
   const onSubmit = async (data: ExpenseFormData) => {
     try {
+      // Validate title manually since we're not using register
+      if (!data.title || data.title.trim() === '') {
+        setValue('title', '', { shouldValidate: true });
+        return;
+      }
+
       if (selectedFiles.length > 0) {
         data.attachment = selectedFiles[0]; // Προς το παρόν υποστηρίζουμε μόνο ένα αρχείο
       }
@@ -207,6 +254,27 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-2xl font-bold mb-6 text-gray-800">Νέα Δαπάνη</h2>
       
+      {/* Auto-complete info */}
+      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+        <div className="flex items-start">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-blue-800">
+              Έξυπνοι Αυτοματισμοί
+            </h3>
+            <div className="mt-2 text-sm text-blue-700">
+              <p>• <strong>Αυτόματη συμπλήρωση τίτλου</strong> βάσει κατηγορίας και προμηθευτή</p>
+              <p>• <strong>Αυτόματη ημερομηνία</strong> (τελευταία ημέρα μήνα για μηνιαίες δαπάνες)</p>
+              <p>• <strong>Αυτόματη κατανομή</strong> βάσει τύπου δαπάνης</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       {(error || uploadError) && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
           <p className="text-red-600">{error || uploadError}</p>
@@ -220,15 +288,19 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Τίτλος Δαπάνης *
             </label>
-            <input
-              type="text"
-              {...register('title', { required: 'Απαιτείται' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <ExpenseTitleAutoComplete
+              value={selectedTitle || ''}
+              onChange={(value) => setValue('title', value)}
+              category={selectedCategory}
+              supplier={selectedSupplierDetails}
               placeholder="π.χ. ΔΕΗ Ιανουαρίου 2024"
+              error={errors.title?.message}
             />
-            {errors.title && (
-              <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
-            )}
+            {/* Hidden input for form validation */}
+            <input
+              type="hidden"
+              {...register('title', { required: 'Απαιτείται' })}
+            />
           </div>
 
           {/* Ποσό */}
@@ -256,6 +328,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Ημερομηνία *
+              {selectedCategory && isMonthlyExpense(selectedCategory) && (
+                <span className="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                  Αυτόματη (τελευταία ημέρα μήνα)
+                </span>
+              )}
             </label>
             <input
               type="date"
@@ -297,6 +374,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Τρόπος Κατανομής *
+              {selectedCategory && (
+                <span className="ml-2 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                  Αυτόματη επιλογή
+                </span>
+              )}
             </label>
             <select
               {...register('distribution_type', { required: 'Απαιτείται' })}
@@ -310,6 +392,26 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
             </select>
             {errors.distribution_type && (
               <p className="mt-1 text-sm text-red-600">{errors.distribution_type.message}</p>
+            )}
+          </div>
+
+          {/* Προμηθευτής */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Προμηθευτής/Συναλλασόμενος
+            </label>
+            <SupplierSelector
+              buildingId={buildingId}
+              category={selectedCategory}
+              value={selectedSupplier}
+              onChange={handleSupplierChange}
+              placeholder="Επιλέξτε προμηθευτή (προαιρετικό)"
+              disabled={!selectedCategory}
+            />
+            {!selectedCategory && (
+              <p className="mt-1 text-sm text-gray-500">
+                Επιλέξτε πρώτα κατηγορία για να δείτε τους διαθέσιμους προμηθευτές
+              </p>
             )}
           </div>
 

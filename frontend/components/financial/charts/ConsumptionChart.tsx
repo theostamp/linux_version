@@ -14,7 +14,7 @@ import {
   LineChart,
   Line,
 } from 'recharts';
-import { useMeterReadings } from '../../hooks/useMeterReadings';
+import { useMeterReadings } from '../../../hooks/useMeterReadings';
 
 interface ConsumptionChartProps {
   chartType?: 'bar' | 'pie' | 'line';

@@ -8,11 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Download, Search, Filter, FileText, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
-import { el } from 'date-fns/locale';
+// import { el } from 'date-fns/locale/el';
 import { Transaction } from '@/types/financial';
+import { api } from '@/lib/api';
+import { ApartmentFilter } from './ApartmentFilter';
 
 interface TransactionHistoryProps {
-  buildingId: string;
+  buildingId: number;
+  limit?: number;
+  selectedMonth?: string;
 }
 
 interface FilterOptions {
@@ -23,32 +27,32 @@ interface FilterOptions {
   searchTerm: string;
 }
 
-export default function TransactionHistory({ buildingId }: TransactionHistoryProps) {
+export default function TransactionHistory({ buildingId, limit, selectedMonth }: TransactionHistoryProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterOptions>({
     startDate: '',
     endDate: '',
-    transactionType: '',
-    apartmentId: '',
+    transactionType: 'all',
+    apartmentId: 'all',
     searchTerm: '',
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [apartmentSearchTerm, setApartmentSearchTerm] = useState('');
 
   // Φόρτωση κινήσεων
   const loadTransactions = async (filterParams?: Partial<FilterOptions>) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        building_id: buildingId,
+        building_id: buildingId.toString(),
+        ...(limit && { limit: limit.toString() }),
+        ...(selectedMonth && { month: selectedMonth }),
         ...filterParams,
       });
 
-      const response = await fetch(`/api/financial/reports/transaction_history/?${params}`);
-      if (response.ok) {
-        const data = await response.json();
-        setTransactions(data);
-      }
+      const response = await api.get(`/financial/reports/transaction_history/?${params}`);
+      setTransactions(response.data);
     } catch (error) {
       console.error('Σφάλμα φόρτωσης κινήσεων:', error);
     } finally {
@@ -58,12 +62,12 @@ export default function TransactionHistory({ buildingId }: TransactionHistoryPro
 
   useEffect(() => {
     loadTransactions();
-  }, [buildingId]);
+  }, [buildingId, selectedMonth]);
 
   // Εφαρμογή φίλτρων
   const applyFilters = () => {
     const activeFilters = Object.fromEntries(
-      Object.entries(filters).filter(([_, value]) => value !== '')
+      Object.entries(filters).filter(([key, value]) => value !== '' && value !== 'all')
     );
     loadTransactions(activeFilters);
   };
@@ -72,23 +76,23 @@ export default function TransactionHistory({ buildingId }: TransactionHistoryPro
   const exportToExcel = async () => {
     try {
       const params = new URLSearchParams({
-        building_id: buildingId,
+        building_id: buildingId.toString(),
         report_type: 'transaction_history',
         ...filters,
       });
 
-      const response = await fetch(`/api/financial/reports/export_excel/?${params}`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `transaction_history_${new Date().toISOString().split('T')[0]}.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
+      const response = await api.get(`/financial/reports/export_excel/?${params}`, {
+        responseType: 'blob'
+      });
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `transaction_history_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
       console.error('Σφάλμα εξαγωγής:', error);
     }
@@ -103,18 +107,18 @@ export default function TransactionHistory({ buildingId }: TransactionHistoryPro
         ...filters,
       });
 
-      const response = await fetch(`/api/financial/reports/export_pdf/?${params}`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `transaction_history_${new Date().toISOString().split('T')[0]}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
+      const response = await api.get(`/financial/reports/export_pdf/?${params}`, {
+        responseType: 'blob'
+      });
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `transaction_history_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
       console.error('Σφάλμα εξαγωγής PDF:', error);
     }
@@ -122,12 +126,20 @@ export default function TransactionHistory({ buildingId }: TransactionHistoryPro
 
   // Φιλτραρισμένα αποτελέσματα
   const filteredTransactions = transactions.filter(transaction => {
+    // Filter by apartment search term
+    if (apartmentSearchTerm) {
+      const searchLower = apartmentSearchTerm.toLowerCase();
+      const apartmentMatch = transaction.apartment_number?.toLowerCase().includes(searchLower);
+      if (!apartmentMatch) return false;
+    }
+    
+    // Filter by general search term
     if (filters.searchTerm) {
       const searchLower = filters.searchTerm.toLowerCase();
       return (
         transaction.description.toLowerCase().includes(searchLower) ||
         transaction.apartment_number?.toLowerCase().includes(searchLower) ||
-        transaction.type_display.toLowerCase().includes(searchLower)
+        transaction.type_display?.toLowerCase().includes(searchLower)
       );
     }
     return true;
@@ -191,6 +203,20 @@ export default function TransactionHistory({ buildingId }: TransactionHistoryPro
       </CardHeader>
 
       <CardContent>
+        {/* Apartment Filter - Always visible */}
+        <div className="mb-6 p-4 border rounded-lg bg-blue-50">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-gray-700">Φιλτράρισμα ανά διαμέρισμα</h3>
+          </div>
+          <ApartmentFilter
+            buildingId={parseInt(buildingId)}
+            selectedApartmentId={filters.apartmentId}
+            onApartmentChange={(apartmentId) => setFilters({ ...filters, apartmentId })}
+            searchTerm={apartmentSearchTerm}
+            onSearchChange={setApartmentSearchTerm}
+          />
+        </div>
+
         {/* Φίλτρα */}
         {showFilters && (
           <div className="mb-6 p-4 border rounded-lg bg-gray-50">
@@ -221,9 +247,9 @@ export default function TransactionHistory({ buildingId }: TransactionHistoryPro
                     <SelectValue placeholder="Όλοι οι τύποι" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Όλοι οι τύποι</SelectItem>
-                    <SelectItem value="common_expense_payment">Πληρωμή Κοινοχρήστων</SelectItem>
-                    <SelectItem value="expense_payment">Πληρωμή Δαπάνης</SelectItem>
+                    <SelectItem value="all">Όλοι οι τύποι</SelectItem>
+                                  <SelectItem value="common_expense_payment">Είσπραξη Κοινοχρήστων</SelectItem>
+              <SelectItem value="expense_payment">Είσπραξη Δαπάνης</SelectItem>
                     <SelectItem value="refund">Επιστροφή</SelectItem>
                     <SelectItem value="common_expense_charge">Χρέωση Κοινοχρήστων</SelectItem>
                   </SelectContent>
@@ -253,8 +279,8 @@ export default function TransactionHistory({ buildingId }: TransactionHistoryPro
                   setFilters({
                     startDate: '',
                     endDate: '',
-                    transactionType: '',
-                    apartmentId: '',
+                    transactionType: 'all',
+                    apartmentId: 'all',
                     searchTerm: '',
                   });
                   loadTransactions();
@@ -303,7 +329,7 @@ export default function TransactionHistory({ buildingId }: TransactionHistoryPro
                     <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        {format(new Date(transaction.date), 'dd/MM/yyyy HH:mm', { locale: el })}
+                        {format(new Date(transaction.date), 'dd/MM/yyyy HH:mm')}
                       </span>
                       {transaction.created_by && (
                         <span>Δημιουργήθηκε από: {transaction.created_by}</span>
@@ -354,7 +380,7 @@ export default function TransactionHistory({ buildingId }: TransactionHistoryPro
                 <span className="text-gray-600">Τελευταία κίνηση:</span>
                 <div className="font-medium">
                   {filteredTransactions.length > 0 && 
-                    format(new Date(filteredTransactions[0].date), 'dd/MM/yyyy', { locale: el })
+                    format(new Date(filteredTransactions[0].date), 'dd/MM/yyyy')
                   }
                 </div>
               </div>

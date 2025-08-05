@@ -46,8 +46,8 @@ class ClientAdmin(TenantCreatorAdminView):  # ✅ ΠΡΟΣΟΧΗ: κληρονο
         for tenant in queryset:
             tenant.paid_until = (tenant.paid_until or timezone.now().date()) + timedelta(days=30)
             tenant.save()
-        self.message_user(request, "📅 Ανανεώθηκε η πληρωμή κατά 30 μέρες για τους επιλεγμένους tenants.")
-    extend_payment.short_description = "Προσθήκη 30 ημερών πληρωμής"
+        self.message_user(request, "📅 Ανανεώθηκε η είσπραξη κατά 30 μέρες για τους επιλεγμένους tenants.")
+    extend_payment.short_description = "Προσθήκη 30 ημερών εισπράξεως"
 
     def add_view(self, request, form_url="", extra_context=None):
         messages.warning(

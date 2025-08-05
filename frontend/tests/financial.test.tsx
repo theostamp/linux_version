@@ -191,10 +191,10 @@ describe('Financial Components', () => {
         </MockProviders>
       );
 
-      expect(screen.getByText('Νέα Πληρωμή')).toBeInTheDocument();
+      expect(screen.getByText('Νέα Είσπραξη')).toBeInTheDocument();
       expect(screen.getByLabelText('Διαμέρισμα')).toBeInTheDocument();
       expect(screen.getByLabelText('Ποσό')).toBeInTheDocument();
-      expect(screen.getByLabelText('Μέθοδος Πληρωμής')).toBeInTheDocument();
+      expect(screen.getByLabelText('Μέθοδος Εισπράξεως')).toBeInTheDocument();
     });
 
     it('validates payment amount', async () => {
@@ -237,7 +237,7 @@ describe('Financial Components', () => {
       fireEvent.change(screen.getByLabelText('Ποσό'), {
         target: { value: '300.00' }
       });
-      fireEvent.change(screen.getByLabelText('Μέθοδος Πληρωμής'), {
+      fireEvent.change(screen.getByLabelText('Μέθοδος Εισπράξεως'), {
         target: { value: 'CASH' }
       });
 
@@ -245,7 +245,7 @@ describe('Financial Components', () => {
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Η πληρωμή αποθηκεύτηκε επιτυχώς')).toBeInTheDocument();
+        expect(screen.getByText('Η είσπραξη αποθηκεύτηκε επιτυχώς')).toBeInTheDocument();
       });
     });
   });
@@ -320,7 +320,7 @@ describe('Financial Components', () => {
       await waitFor(() => {
         expect(screen.getByText('Οικονομικό Dashboard')).toBeInTheDocument();
         expect(screen.getByText('Συνολικές Δαπάνες')).toBeInTheDocument();
-        expect(screen.getByText('Συνολικές Πληρωμές')).toBeInTheDocument();
+        expect(screen.getByText('Συνολικές Εισπράξεις')).toBeInTheDocument();
         expect(screen.getByText('Τρέχον Αποθεματικό')).toBeInTheDocument();
       });
     });

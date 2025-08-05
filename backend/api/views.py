@@ -58,6 +58,7 @@ def public_info(request, building_id=None):
     
     # Get building information
     building_info = None
+    financial_info = None
     if building_id and building_id != 0:  # 0 means "all buildings"
         try:
             building = Building.objects.get(id=building_id)
@@ -74,6 +75,69 @@ def public_info(request, building_id=None):
                 'management_office_phone': building.management_office_phone,
                 'management_office_address': building.management_office_address,
             }
+            
+            # Get financial information for the building
+            try:
+                print(f"[DEBUG] Loading financial data for building {building_id}")
+                from financial.services import FinancialDashboardService
+                from financial.models import Apartment, Payment
+                from django.db.models import Sum, Q
+                from datetime import datetime, timedelta
+                
+                # Get apartments for this building
+                apartments = Apartment.objects.filter(building_id=building_id)
+                total_apartments = apartments.count()
+                print(f"[DEBUG] Found {total_apartments} apartments for building {building_id}")
+                
+                # Calculate total payments (all time)
+                total_payments = Payment.objects.filter(
+                    apartment__building_id=building_id
+                ).aggregate(total=Sum('amount'))['total'] or 0
+                print(f"[DEBUG] Total payments: {total_payments}")
+                
+                # Calculate pending payments (apartments with negative balance)
+                pending_payments = apartments.filter(
+                    current_balance__lt=0
+                ).count()
+                print(f"[DEBUG] Pending payments: {pending_payments}")
+                
+                # Calculate overdue payments (apartments with balance < -100)
+                overdue_payments = apartments.filter(
+                    current_balance__lt=-100
+                ).count()
+                print(f"[DEBUG] Overdue payments: {overdue_payments}")
+                
+                # Calculate total collected (positive payments)
+                total_collected = float(total_payments) if total_payments else 0
+                
+                # Calculate collection rate
+                collection_rate = 0
+                if total_apartments > 0:
+                    paid_apartments = apartments.filter(current_balance__gte=0).count()
+                    collection_rate = round((paid_apartments / total_apartments) * 100, 1)
+                
+                financial_info = {
+                    'total_payments': int(total_payments) if total_payments else 0,
+                    'pending_payments': pending_payments,
+                    'overdue_payments': overdue_payments,
+                    'total_collected': total_collected,
+                    'collection_rate': collection_rate,
+                }
+                print(f"[DEBUG] Financial info created: {financial_info}")
+                
+            except Exception as e:
+                # If financial data cannot be loaded, provide default values
+                print(f"Error loading financial data for building {building_id}: {e}")
+                import traceback
+                traceback.print_exc()
+                financial_info = {
+                    'total_payments': 0,
+                    'pending_payments': 0,
+                    'overdue_payments': 0,
+                    'total_collected': 0,
+                    'collection_rate': 0,
+                }
+                
         except Building.DoesNotExist:
             pass
     
@@ -113,10 +177,14 @@ def public_info(request, building_id=None):
         'last_updated': timezone.now().isoformat(),
     }
     
+    # Add debug info
+    print(f"[DEBUG] Final response - financial_info: {financial_info}")
+    
     return JsonResponse({
         'announcements': announcements_data,
         'votes': votes_data,
         'building_info': building_info,
+        'financial_info': financial_info,
         'advertising_banners': advertising_banners,
         'general_info': general_info,
     })

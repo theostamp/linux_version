@@ -5,31 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TrendingUp, TrendingDown, DollarSign, Calendar } from 'lucide-react';
-import { Line, Bar } from 'react-chartjs-2';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
   Legend,
-  Filler,
-} from 'chart.js';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
+  ResponsiveContainer,
+} from 'recharts';
+import { api } from '@/lib/api';
 
 interface CashFlowData {
   date: string;
@@ -39,7 +27,7 @@ interface CashFlowData {
 }
 
 interface CashFlowChartProps {
-  buildingId: string;
+  buildingId: number;
 }
 
 export default function CashFlowChart({ buildingId }: CashFlowChartProps) {
@@ -52,11 +40,8 @@ export default function CashFlowChart({ buildingId }: CashFlowChartProps) {
   const loadCashFlowData = async (days: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/financial/reports/cash_flow/?building_id=${buildingId}&days=${days}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCashFlowData(data);
-      }
+      const response = await api.get(`/financial/reports/cash_flow/?building_id=${buildingId.toString()}&days=${days}`);
+      setCashFlowData(response.data);
     } catch (error) {
       console.error('Σφάλμα φόρτωσης δεδομένων ταμειακής ροής:', error);
     } finally {
@@ -68,65 +53,13 @@ export default function CashFlowChart({ buildingId }: CashFlowChartProps) {
     loadCashFlowData(period);
   }, [buildingId, period]);
 
-  // Προετοιμασία δεδομένων για το γράφημα
-  const chartData = {
-    labels: cashFlowData.map(item => new Date(item.date).toLocaleDateString('el-GR')),
-    datasets: [
-      {
-        label: 'Εισροές (Πληρωμές)',
-        data: cashFlowData.map(item => item.inflow),
-        borderColor: 'rgb(34, 197, 94)',
-        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-        fill: true,
-        tension: 0.4,
-      },
-      {
-        label: 'Εκροές (Δαπάνες)',
-        data: cashFlowData.map(item => item.outflow),
-        borderColor: 'rgb(239, 68, 68)',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        fill: true,
-        tension: 0.4,
-      },
-      {
-        label: 'Καθαρή Ροή',
-        data: cashFlowData.map(item => item.net_flow),
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        fill: false,
-        tension: 0.4,
-        borderDash: [5, 5],
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-      title: {
-        display: true,
-        text: 'Ταμειακή Ροή',
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: function(value: any) {
-            return '€' + value.toLocaleString('el-GR');
-          },
-        },
-      },
-    },
-    interaction: {
-      intersect: false,
-      mode: 'index' as const,
-    },
-  };
+  // Προετοιμασία δεδομένων για το γράφημα (Recharts format)
+  const chartData = cashFlowData.map(item => ({
+    date: new Date(item.date).toLocaleDateString('el-GR'),
+    inflow: item.inflow,
+    outflow: item.outflow,
+    netFlow: item.net_flow,
+  }));
 
   // Υπολογισμός στατιστικών
   const totalInflow = cashFlowData.reduce((sum, item) => sum + item.inflow, 0);
@@ -248,11 +181,76 @@ export default function CashFlowChart({ buildingId }: CashFlowChartProps) {
 
             {/* Γράφημα */}
             <div className="h-80">
-              {chartType === 'line' ? (
-                <Line data={chartData} options={chartOptions} />
-              ) : (
-                <Bar data={chartData} options={chartOptions} />
-              )}
+              <ResponsiveContainer width="100%" height="100%">
+                {chartType === 'line' ? (
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis 
+                      tickFormatter={(value) => `€${value.toLocaleString('el-GR')}`}
+                    />
+                    <Tooltip 
+                      formatter={(value: any) => [`€${value.toLocaleString('el-GR')}`, '']}
+                      labelFormatter={(label) => `Ημερομηνία: ${label}`}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="inflow" 
+                      stroke="#22c55e" 
+                      strokeWidth={2}
+                      fill="#22c55e"
+                      fillOpacity={0.1}
+                      name="Εισροές (Εισπράξεις)"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="outflow" 
+                      stroke="#ef4444" 
+                      strokeWidth={2}
+                      fill="#ef4444"
+                      fillOpacity={0.1}
+                      name="Εκροές (Δαπάνες)"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="netFlow" 
+                      stroke="#3b82f6" 
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      name="Καθαρή Ροή"
+                    />
+                  </LineChart>
+                ) : (
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis 
+                      tickFormatter={(value) => `€${value.toLocaleString('el-GR')}`}
+                    />
+                    <Tooltip 
+                      formatter={(value: any) => [`€${value.toLocaleString('el-GR')}`, '']}
+                      labelFormatter={(label) => `Ημερομηνία: ${label}`}
+                    />
+                    <Legend />
+                    <Bar 
+                      dataKey="inflow" 
+                      fill="#22c55e" 
+                      name="Εισροές (Εισπράξεις)"
+                    />
+                    <Bar 
+                      dataKey="outflow" 
+                      fill="#ef4444" 
+                      name="Εκροές (Δαπάνες)"
+                    />
+                    <Bar 
+                      dataKey="netFlow" 
+                      fill="#3b82f6" 
+                      name="Καθαρή Ροή"
+                    />
+                  </BarChart>
+                )}
+              </ResponsiveContainer>
             </div>
 
             {/* Πίνακας δεδομένων */}

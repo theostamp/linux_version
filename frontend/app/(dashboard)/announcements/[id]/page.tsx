@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { fetchAnnouncement } from '@/lib/api';
+import { fetchAnnouncement, fetchAnnouncements } from '@/lib/api';
 import type { Announcement } from '@/components/AnnouncementCard';
 import ErrorMessage from '@/components/ErrorMessage';
 import { Button } from '@/components/ui/button';
@@ -41,29 +41,43 @@ export default function AnnouncementDetailPage() {
     const fetchAnnouncementData = async () => {
       if (!isAuthenticated || authLoading) return;
       
+      setIsLoading(true);
+      setError(null);
+      
       try {
-        setIsLoading(true);
         const data = await fetchAnnouncement(id);
         setAnnouncement(data);
-        setError(null);
-      } catch (err: unknown) {
-        console.error('Error fetching announcement:', err);
+      } catch (err: any) {
+        console.error('[AnnouncementDetail] Error fetching announcement:', err);
         
         // Handle authentication errors
         if (err?.response?.status === 401 && !hasShownAuthError) {
           toast.error('Η συνεδρία σας έληξε. Παρακαλώ συνδεθείτε ξανά.');
           setHasShownAuthError(true);
           
-          // Μικρή καθυστέρηση για να προλάβει να εμφανιστεί το toast
           setTimeout(() => {
             router.push('/login');
           }, 1000);
           return;
         }
         
-        // Handle not found errors
+        // Enhanced 404 handling
         if (err?.response?.status === 404) {
-          setError('Η ανακοίνωση δεν βρέθηκε');
+          setError('Η ανακοίνωση δεν βρέθηκε. Πιθανώς διαγράφηκε ή μετακινήθηκε.');
+          
+                     // Try to fetch available announcements to suggest alternatives
+           try {
+             const availableAnnouncements = await fetchAnnouncements();
+             if (availableAnnouncements.length > 0) {
+               const firstAnnouncement = availableAnnouncements[0];
+               toast.error(
+                 `Η ανακοίνωση δεν βρέθηκε. Δοκιμάστε την: "${firstAnnouncement.title}"`,
+                 { duration: 5000 }
+               );
+             }
+           } catch (fallbackError) {
+             console.error('[AnnouncementDetail] Error fetching fallback announcements:', fallbackError);
+           }
         } else {
           setError(err?.response?.data?.detail || 'Αδυναμία φόρτωσης ανακοίνωσης');
         }

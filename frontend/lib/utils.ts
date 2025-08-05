@@ -40,3 +40,43 @@ export function safeFormatDate(
     return 'N/A';
   }
 }
+
+/**
+ * Formats a number as currency in EUR
+ * @param amount - The amount to format
+ * @param locale - The locale to use (default: 'el-GR')
+ * @returns Formatted currency string
+ */
+export function formatCurrency(amount: number | string | null | undefined, locale: string = 'el-GR'): string {
+  if (amount === null || amount === undefined) {
+    return '€0,00';
+  }
+  
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  
+  if (isNaN(numAmount)) {
+    return '€0,00';
+  }
+  
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numAmount);
+  } catch (error) {
+    console.warn('Error formatting currency:', error);
+    return `€${numAmount.toFixed(2)}`;
+  }
+}
+
+/**
+ * Formats a date string using date-fns
+ * @param dateString - The date string to format
+ * @param formatString - The format string for date-fns
+ * @returns Formatted date string
+ */
+export function formatDate(dateString: string | null | undefined, formatString: string = 'dd/MM/yyyy'): string {
+  return safeFormatDate(dateString, formatString);
+}

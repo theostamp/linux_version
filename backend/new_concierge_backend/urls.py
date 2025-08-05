@@ -1,47 +1,52 @@
-from django.contrib import admin
-from django.urls import path, include
+# This file should only contain tenant-specific URL routing
+# Public tenant URLs are now in public_urls.py
 
+from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
-from django.http import HttpResponse
-
-
-def home(request):
-    return HttpResponse("""
-    <h1>Django Tenants Project</h1>
-    <p>Welcome to the public tenant!</p>
-    <ul>
-        <li><a href="/admin/">Admin Panel</a></li>
-        <li><a href="/api/">API</a></li>
-    </ul>
-    """)
-
-# Django Tenants URL configuration
+# Tenant-specific URL configuration (automatically routed by django-tenants middleware)
 urlpatterns = [
-    # Admin panel (μόνο για public tenant)
-    path('admin/', admin.site.urls),
-    
-    # Root URL for public tenant
-    path('', home, name='home'),
-    
-    # Authentication & User endpoints (διαθέσιμο και στο public tenant)
+    # Authentication & User endpoints
     path('api/users/', include('users.urls')),
+
+    # Building management
+    path('api/buildings/', include('buildings.urls')),
     
-    # Public buildings endpoint (διαθέσιμο στο public tenant)
+    # Public buildings endpoint (for kiosk mode)
     path('api/buildings/public/', include('buildings.public_urls')),
     
-    # Core endpoints (CSRF token) - διαθέσιμο στο public tenant
+    # Apartments management
+    path('api/', include('apartments.urls')),
+    
+    # Announcements
+    path('api/announcements/', include('announcements.urls')),
+    
+    # User requests
+    path('api/user-requests/', include('user_requests.urls')),
+    
+    # Obligations
+    path('api/obligations/', include('obligations.urls')),
+    
+    # Votes
+    path('api/votes/', include('votes.urls')),
+    
+    # Financial management
+    path('api/financial/', include('financial.urls')),
+    
+    # Public info
+    path('api/public-info/', include('public_info.urls')),
+    
+    # Residents
+    path('api/residents/', include('residents.urls')),
+
+    # Chat
+    path('api/chat/', include('chat.urls')),
+
+    # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]
-
-# Include tenant URLs for tenant-specific endpoints
-try:
-    from tenant_urls import urlpatterns as tenant_urlpatterns
-    urlpatterns += tenant_urlpatterns
-except ImportError:
-    pass
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

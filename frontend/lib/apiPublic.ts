@@ -14,8 +14,9 @@ const getApiBaseUrl = () => {
       return apiUrl;
     }
   }
-  const defaultUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? 'http://localhost:8000/api';
-  console.log(`[API PUBLIC] Using default API URL: ${defaultUrl}`);
+  // Χρησιμοποιούμε το backend container name για το kiosk mode
+  const defaultUrl = 'http://backend:8000/api';
+  console.log(`[API PUBLIC] Using backend container API URL: ${defaultUrl}`);
   return defaultUrl;
 };
 

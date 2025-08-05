@@ -26,7 +26,7 @@ class FinancialAuditLog(models.Model):
         ('UPDATE', 'Ενημέρωση'),
         ('DELETE', 'Διαγραφή'),
         ('ISSUE', 'Έκδοση'),
-        ('PAYMENT', 'Πληρωμή'),
+        ('PAYMENT', 'Είσπραξη'),
         ('CALCULATE', 'Υπολογισμός'),
         ('EXPORT', 'Εξαγωγή'),
         ('LOGIN', 'Σύνδεση'),
@@ -126,8 +126,8 @@ class FinancialAuditLog(models.Model):
     
     @classmethod
     def log_payment_action(cls, user, action, payment, request=None, changes=None):
-        """Ειδική μέθοδος για καταγραφή ενεργειών πληρωμών"""
-        description = f"{cls.get_action_display(action)} πληρωμής: €{payment.amount} για διαμέρισμα {payment.apartment.number}"
+        """Ειδική μέθοδος για καταγραφή ενεργειών εισπράξεων"""
+        description = f"{cls.get_action_display(action)} εισπράξεως: €{payment.amount} για διαμέρισμα {payment.apartment.number}"
         
         return cls.log_action(
             user=user,
@@ -218,7 +218,7 @@ class AuditMiddleware:
             user_agent=request.META.get('HTTP_USER_AGENT', ''),
             request_method=request.method,
             request_path=request.path,
-            session_id=request.session.session_key if request.session else None
+            session_id=request.session.session_key if request.session and request.session.session_key else ''
         )
     
     def is_financial_endpoint(self, path):

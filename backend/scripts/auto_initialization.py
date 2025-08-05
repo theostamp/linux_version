@@ -438,6 +438,88 @@ def create_demo_data(tenant_schema):
             )
             if created:
                 print(f"✅ Δημιουργήθηκε υποχρέωση: {obligation.title}")
+        
+        # 9. Δημιουργία οικονομικών δεδομένων
+        print("\n💰 Δημιουργία οικονομικών δεδομένων...")
+        try:
+            from financial.models import Expense, Transaction, Payment
+            from datetime import datetime
+            from decimal import Decimal
+            import random
+            
+            # Δημιουργία εικονικών δαπανών
+            expenses_data = [
+                {
+                    'title': 'Καθαρισμός Κοινοχρήστων - Ιανουάριος 2024',
+                    'amount': 450.00,
+                    'category': 'cleaning',
+                    'distribution_type': 'by_participation_mills',
+                    'date': datetime(2024, 1, 15).date(),
+                },
+                {
+                    'title': 'ΔΕΗ Κοινοχρήστων - Ιανουάριος 2024',
+                    'amount': 320.00,
+                    'category': 'electricity_common',
+                    'distribution_type': 'by_participation_mills',
+                    'date': datetime(2024, 1, 20).date(),
+                },
+                {
+                    'title': 'Συντήρηση Ανελκυστήρα - Ιανουάριος 2024',
+                    'amount': 280.00,
+                    'category': 'elevator_maintenance',
+                    'distribution_type': 'by_participation_mills',
+                    'date': datetime(2024, 1, 25).date(),
+                }
+            ]
+            
+            for expense_data in expenses_data:
+                for building in created_buildings:
+                    expense, created = Expense.objects.get_or_create(
+                        building=building,
+                        title=expense_data['title'],
+                        defaults={
+                            'amount': expense_data['amount'],
+                            'category': expense_data['category'],
+                            'distribution_type': expense_data['distribution_type'],
+                            'date': expense_data['date'],
+                            'is_issued': True
+                        }
+                    )
+                    if created:
+                        print(f"✅ Δημιουργήθηκε δαπάνη: {expense.title}")
+            
+            # Δημιουργία εικονικών εισπράξεων
+            payment_methods = ['bank_transfer', 'cash']
+            payment_dates = [
+                datetime(2024, 1, 5).date(),
+                datetime(2024, 1, 15).date(),
+                datetime(2024, 2, 5).date(),
+            ]
+            
+            for apartment in Apartment.objects.filter(building__in=created_buildings):
+                # Δημιουργούμε 1-2 εισπράξεις ανά διαμέρισμα
+                num_payments = random.randint(1, 2)
+                for i in range(num_payments):
+                    payment_date = random.choice(payment_dates)
+                    payment_amount = Decimal(random.randint(50, 150))
+                    payment_method = random.choice(payment_methods)
+                    
+                    payment, created = Payment.objects.get_or_create(
+                        apartment=apartment,
+                        amount=payment_amount,
+                        date=payment_date,
+                        method=payment_method,
+                        defaults={
+                            'notes': f'Είσπραξη κοινοχρήστων - {payment_date.strftime("%B %Y")}'
+                        }
+                    )
+                    if created:
+                        print(f"✅ Δημιουργήθηκε είσπραξη: {apartment.number} - {payment_amount}€")
+            
+            print("✅ Ολοκληρώθηκε η δημιουργία οικονομικών δεδομένων")
+            
+        except Exception as e:
+            print(f"⚠️ Προειδοποίηση: Δεν ήταν δυνατή η δημιουργία οικονομικών δεδομένων: {e}")
 
 def save_credentials():
     """Αποθήκευση credentials σε αρχείο"""
@@ -499,6 +581,8 @@ ADMIN: http://demo.localhost:8000/admin/
 - 2 αιτήματα
 - 2 ψηφοφορίες
 - 2 υποχρεώσεις
+- 6 δαπάνες κτιρίου (καθαρισμός, ΔΕΗ, συντήρηση ανελκυστήρα)
+        - 12-24 εισπράξεις ιδιοκτητών (μετρητά, τραπεζική μεταφορά)
 
 🌐 ΠΡΟΣΒΑΣΗ:
 ------------

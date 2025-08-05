@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Dict, Any, List
 from django.db.models import Sum
-from .models import Expense, Transaction, Payment
+from .models import Expense, Transaction, Payment, CommonExpensePeriod, ApartmentShare
 from apartments.models import Apartment
 from buildings.models import Building
 
@@ -190,8 +190,9 @@ class FinancialDashboardService:
         self.building_id = building_id
         self.building = Building.objects.get(id=building_id)
     
-    def get_summary(self) -> Dict[str, Any]:
-        """Επιστρέφει σύνοψη οικονομικών στοιχείων"""
+    def get_summary(self, month: str | None = None) -> Dict[str, Any]:
+        """Επιστρέφει σύνοψη οικονομικών στοιχείων.
+        Αν δοθεί month (YYYY-MM), υπολογίζει για τον συγκεκριμένο μήνα."""
         apartments = Apartment.objects.filter(building_id=self.building_id)
         
         # Συνολικές οφειλές (αρνητικά υπόλοιπα)
@@ -201,14 +202,22 @@ class FinancialDashboardService:
         )
         
         # Δαπάνες αυτού του μήνα
-        from datetime import datetime, timedelta
-        current_month = datetime.now().replace(day=1)
+        from datetime import datetime
+        if month:
+            # Parse YYYY-MM
+            try:
+                year, mon = map(int, month.split('-'))
+                current_month = datetime(year, mon, 1)
+            except Exception:
+                current_month = datetime.now().replace(day=1)
+        else:
+            current_month = datetime.now().replace(day=1)
         total_expenses_this_month = Expense.objects.filter(
             building_id=self.building_id,
             date__gte=current_month
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
-        # Πληρωμές αυτού του μήνα
+        # Εισπράξεις αυτού του μήνα
         total_payments_this_month = Payment.objects.filter(
             apartment__building_id=self.building_id,
             date__gte=current_month
@@ -219,12 +228,28 @@ class FinancialDashboardService:
             building_id=self.building_id
         ).order_by('-date')[:10]
         
+        # Ανέκδοτες δαπάνες (δεν έχουν εκδοθεί ακόμα)
+        pending_expenses = Expense.objects.filter(
+            building_id=self.building_id,
+            is_issued=False
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        # Κατάσταση διαμερισμάτων
+        apartment_balances = self.get_apartment_balances()
+        
+        # Στατιστικά πληρωμών
+        payment_statistics = self.get_payment_statistics()
+        
         return {
-            'current_reserve': self.building.current_reserve,
+            'current_reserve': self.building.current_reserve or Decimal('0.00'),
             'total_obligations': total_obligations,
-            'total_expenses_this_month': total_expenses_this_month,
-            'total_payments_this_month': total_payments_this_month,
-            'recent_transactions': recent_transactions
+            'total_expenses_month': total_expenses_this_month,
+            'total_payments_month': total_payments_this_month,
+            'pending_expenses': pending_expenses,
+            'recent_transactions': list(recent_transactions),
+            'recent_transactions_count': len(recent_transactions),
+            'apartment_balances': apartment_balances,
+            'payment_statistics': payment_statistics
         }
     
     def get_apartment_balances(self) -> List[Dict[str, Any]]:
@@ -233,12 +258,14 @@ class FinancialDashboardService:
         balances = []
         
         for apartment in apartments:
-            # Τελευταία πληρωμή
+            # Τελευταία είσπραξη
             last_payment = apartment.payments.order_by('-date').first()
             
             balances.append({
                 'id': apartment.id,
+                'apartment_id': apartment.id,
                 'number': apartment.number,
+                'apartment_number': apartment.number,
                 'owner_name': apartment.owner_name or 'Άγνωστος',
                 'current_balance': apartment.current_balance or Decimal('0.00'),
                 'participation_mills': apartment.participation_mills or 0,
@@ -247,15 +274,51 @@ class FinancialDashboardService:
             })
         
         return balances
+    
+    def get_payment_statistics(self) -> Dict[str, Any]:
+        """Υπολογισμός στατιστικών πληρωμών"""
+        from django.db.models import Count, Avg
+        
+        # Όλες οι πληρωμές
+        payments = Payment.objects.filter(apartment__building_id=self.building_id)
+        
+        # Συνολικές πληρωμές
+        total_payments_count = payments.count()
+        total_payments_amount = payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        # Μέση πληρωμή
+        average_payment = payments.aggregate(avg=Avg('amount'))['avg'] or Decimal('0.00')
+        
+        # Κατανομή ανά τρόπο πληρωμής
+        payment_methods = payments.values('method').annotate(
+            count=Count('id'),
+            total=Sum('amount')
+        ).order_by('-total')
+        
+        payment_methods_data = []
+        for method_data in payment_methods:
+            method_label = dict(Payment.PAYMENT_METHODS).get(method_data['method'], method_data['method'])
+            payment_methods_data.append({
+                'method': method_label,
+                'count': method_data['count'],
+                'total': float(method_data['total'])
+            })
+        
+        return {
+            'total_payments': total_payments_count,
+            'total_amount': float(total_payments_amount),
+            'average_payment': float(average_payment),
+            'payment_methods': payment_methods_data
+        }
 
 
 class PaymentProcessor:
-    """Υπηρεσία για την επεξεργασία πληρωμών"""
+    """Υπηρεσία για την επεξεργασία εισπράξεων"""
     
     @staticmethod
     def process_payment(payment_data: Dict[str, Any]) -> Transaction:
         """
-        Επεξεργασία πληρωμής και ενημέρωση συστήματος
+        Επεξεργασία εισπράξεως και ενημέρωση συστήματος
         """
         from datetime import datetime
         
@@ -274,14 +337,14 @@ class PaymentProcessor:
             building=building,
             date=datetime.now(),
             type='common_expense_payment',
-            description=f"Πληρωμή Κοινοχρήστων - {apartment.number}",
+            description=f"Είσπραξη Κοινοχρήστων - {apartment.number}",
             apartment_number=apartment.number,
             amount=payment_data['amount'],
             balance_after=building.current_reserve,
             receipt=payment_data.get('receipt')
         )
         
-        # 4. Δημιουργία εγγραφής πληρωμής
+        # 4. Δημιουργία εγγραφής εισπράξεως
         Payment.objects.create(
             apartment=apartment,
             amount=payment_data['amount'],
@@ -376,7 +439,7 @@ class ReportService:
         )
         total_expenses = expenses.aggregate(total=Sum('amount'))['total'] or 0
         
-        # Στατιστικά πληρωμών
+        # Στατιστικά εισπράξεων
         payments = Payment.objects.filter(
             apartment__building_id=self.building_id,
             date__range=[start_date, end_date]
@@ -397,7 +460,7 @@ class ReportService:
                 expense_by_category[category] = 0
             expense_by_category[category] += float(expense.amount)
         
-        # Κατανομή ανά τρόπο πληρωμής
+        # Κατανομή ανά τρόπο εισπράξεως
         payment_by_method = {}
         for payment in payments:
             method = payment.get_method_display()
@@ -436,7 +499,7 @@ class ReportService:
         # Στατιστικά ανά ημέρα
         cash_flow_data = []
         for date in date_list:
-            # Εισροές (πληρωμές)
+            # Εισροές (εισπράξεις)
             payments = Payment.objects.filter(
                 apartment__building_id=self.building_id,
                 date=date
@@ -534,7 +597,7 @@ class ReportService:
         elif report_type == 'apartment_balances':
             data = self.generate_apartment_balance_report(**kwargs)
             # Δημιουργία πίνακα οφειλών
-            table_data = [['Διαμέρισμα', 'Ιδιοκτήτης', 'Χιλιοστά', 'Οφειλή', 'Τελευταία Πληρωμή']]
+            table_data = [['Διαμέρισμα', 'Ιδιοκτήτης', 'Χιλιοστά', 'Οφειλή', 'Τελευταία Είσπραξη']]
             for item in data:
                 table_data.append([
                     item['apartment_number'],
@@ -663,3 +726,320 @@ class FileUploadService:
                 destination.write(chunk)
         
         return upload_path 
+
+
+class CommonExpenseAutomationService:
+    """Υπηρεσία για αυτοματισμούς κοινοχρήστων"""
+    
+    PERIOD_TEMPLATES = {
+        'monthly': {
+            'name': 'Κοινοχρήστα {month_name} {year}',
+            'months': 1
+        },
+        'quarterly': {
+            'name': 'Κοινοχρήστα Q{quarter} {year}',
+            'months': 3
+        },
+        'semester': {
+            'name': 'Κοινοχρήστα {semester} {year}',
+            'months': 6
+        },
+        'yearly': {
+            'name': 'Κοινοχρήστα {year}',
+            'months': 12
+        }
+    }
+    
+    def __init__(self, building_id: int):
+        self.building_id = building_id
+        self.building = Building.objects.get(id=building_id)
+    
+    def create_period_automatically(self, period_type: str = 'monthly', start_date: str = None) -> CommonExpensePeriod:
+        """
+        Αυτόματη δημιουργία περιόδου κοινοχρήστων
+        
+        Args:
+            period_type: 'monthly', 'quarterly', 'semester', 'yearly'
+            start_date: Ημερομηνία έναρξης (YYYY-MM-DD). Αν None, χρησιμοποιείται η τρέχουσα.
+        
+        Returns:
+            CommonExpensePeriod: Η δημιουργηθείσα περίοδος
+        """
+        from datetime import datetime, date
+        from dateutil.relativedelta import relativedelta
+        
+        if start_date:
+            start = datetime.strptime(start_date, '%Y-%m-%d').date()
+        else:
+            start = date.today().replace(day=1)  # Πρώτη ημέρα του τρέχοντος μήνα
+        
+        template = self.PERIOD_TEMPLATES.get(period_type, self.PERIOD_TEMPLATES['monthly'])
+        end = start + relativedelta(months=template['months']) - relativedelta(days=1)
+        
+        # Δημιουργία ονόματος περιόδου
+        if period_type == 'monthly':
+            period_name = template['name'].format(
+                month_name=start.strftime('%B'),
+                year=start.year
+            )
+        elif period_type == 'quarterly':
+            quarter = (start.month - 1) // 3 + 1
+            period_name = template['name'].format(
+                quarter=quarter,
+                year=start.year
+            )
+        elif period_type == 'semester':
+            semester = '1ο' if start.month <= 6 else '2ο'
+            period_name = template['name'].format(
+                semester=semester,
+                year=start.year
+            )
+        else:  # yearly
+            period_name = template['name'].format(year=start.year)
+        
+        # Έλεγχος αν υπάρχει ήδη περίοδος
+        existing_period = CommonExpensePeriod.objects.filter(
+            building_id=self.building_id,
+            period_name=period_name
+        ).first()
+        
+        if existing_period:
+            return existing_period
+        
+        # Δημιουργία νέας περιόδου
+        period = CommonExpensePeriod.objects.create(
+            building_id=self.building_id,
+            period_name=period_name,
+            start_date=start,
+            end_date=end
+        )
+        
+        return period
+    
+    def collect_expenses_for_period(self, period: CommonExpensePeriod) -> List[Expense]:
+        """
+        Αυτόματη συλλογή δαπανών για την περίοδο
+        
+        Args:
+            period: CommonExpensePeriod object
+            
+        Returns:
+            List[Expense]: Λίστα δαπανών που ανήκουν στην περίοδο
+        """
+        expenses = Expense.objects.filter(
+            building_id=self.building_id,
+            date__gte=period.start_date,
+            date__lte=period.end_date,
+            is_issued=False
+        ).order_by('date')
+        
+        return list(expenses)
+    
+    def calculate_shares_for_period(self, period: CommonExpensePeriod, expenses: List[Expense] = None) -> Dict[str, Any]:
+        """
+        Αυτόματος υπολογισμός μεριδίων για την περίοδο
+        
+        Args:
+            period: CommonExpensePeriod object
+            expenses: Λίστα δαπανών (αν None, συλλέγονται αυτόματα)
+            
+        Returns:
+            Dict με τα μερίδια και στατιστικά
+        """
+        if expenses is None:
+            expenses = self.collect_expenses_for_period(period)
+        
+        if not expenses:
+            return {
+                'shares': {},
+                'total_expenses': 0.0,
+                'apartments_count': 0,
+                'period': period.period_name
+            }
+        
+        # Χρήση του υπάρχοντος calculator
+        calculator = CommonExpenseCalculator(self.building_id)
+        
+        # Προσωρινή ενημέρωση των δαπανών για τον υπολογισμό
+        original_expenses = calculator.expenses
+        calculator.expenses = expenses
+        
+        try:
+            shares = calculator.calculate_shares()
+            total_expenses = float(calculator.get_total_expenses())
+            apartments_count = calculator.get_apartments_count()
+            
+            return {
+                'shares': shares,
+                'total_expenses': total_expenses,
+                'apartments_count': apartments_count,
+                'period': period.period_name,
+                'expenses_count': len(expenses)
+            }
+        finally:
+            # Επαναφορά των αρχικών δαπανών
+            calculator.expenses = original_expenses
+    
+    def issue_period_automatically(self, period: CommonExpensePeriod, expenses: List[Expense] = None) -> Dict[str, Any]:
+        """
+        Αυτόματη έκδοση λογαριασμών για την περίοδο
+        
+        Args:
+            period: CommonExpensePeriod object
+            expenses: Λίστα δαπανών (αν None, συλλέγονται αυτόματα)
+            
+        Returns:
+            Dict με τα αποτελέσματα της έκδοσης
+        """
+        from datetime import datetime
+        
+        if expenses is None:
+            expenses = self.collect_expenses_for_period(period)
+        
+        if not expenses:
+            return {
+                'success': False,
+                'message': 'Δεν βρέθηκαν δαπάνες για έκδοση',
+                'period_id': period.id
+            }
+        
+        # Υπολογισμός μεριδίων
+        calculation_result = self.calculate_shares_for_period(period, expenses)
+        shares = calculation_result['shares']
+        
+        if not shares:
+            return {
+                'success': False,
+                'message': 'Δεν μπόρεσαν να υπολογιστούν μερίδια',
+                'period_id': period.id
+            }
+        
+        # Δημιουργία μεριδίων για κάθε διαμέρισμα
+        apartment_shares = []
+        total_amount = Decimal('0.00')
+        
+        for apartment_id, share_data in shares.items():
+            apartment = Apartment.objects.get(id=apartment_id)
+            previous_balance = apartment.current_balance or Decimal('0.00')
+            share_amount = Decimal(str(share_data.get('total_amount', 0)))
+            total_due = previous_balance + share_amount
+            
+            share = ApartmentShare.objects.create(
+                period=period,
+                apartment=apartment,
+                total_amount=share_amount,
+                previous_balance=previous_balance,
+                total_due=total_due,
+                breakdown=share_data.get('breakdown', {})
+            )
+            apartment_shares.append(share)
+            total_amount += share_amount
+            
+            # Δημιουργία κίνησης ταμείου
+            Transaction.objects.create(
+                building_id=self.building_id,
+                date=datetime.now(),
+                type='common_expense_charge',
+                description=f'Χρέωση κοινοχρήστων - {period.period_name}',
+                apartment=apartment,
+                apartment_number=apartment.number,
+                amount=share_amount,
+                balance_before=previous_balance,
+                balance_after=total_due,
+                reference_id=str(period.id),
+                reference_type='common_expense_period'
+            )
+            
+            # Ενημέρωση υπολοίπου διαμερίσματος
+            apartment.current_balance = total_due
+            apartment.save()
+        
+        # Μαρκάρισμα δαπανών ως εκδοθείσες
+        expense_ids = [exp.id for exp in expenses]
+        Expense.objects.filter(
+            id__in=expense_ids,
+            building_id=self.building_id,
+            is_issued=False
+        ).update(is_issued=True)
+        
+        return {
+            'success': True,
+            'message': f'Τα κοινοχρήστα εκδόθηκαν επιτυχώς για την περίοδο {period.period_name}',
+            'period_id': period.id,
+            'apartments_count': len(apartment_shares),
+            'total_amount': float(total_amount),
+            'expenses_count': len(expenses)
+        }
+    
+    def auto_process_period(self, period_type: str = 'monthly', start_date: str = None) -> Dict[str, Any]:
+        """
+        Πλήρης αυτοματοποιημένη επεξεργασία περιόδου
+        
+        Args:
+            period_type: Τύπος περιόδου ('monthly', 'quarterly', 'semester', 'yearly')
+            start_date: Ημερομηνία έναρξης (αν None, τρέχουσα)
+            
+        Returns:
+            Dict με τα αποτελέσματα της επεξεργασίας
+        """
+        try:
+            # 1. Αυτόματη δημιουργία περιόδου
+            period = self.create_period_automatically(period_type, start_date)
+            
+            # 2. Αυτόματη συλλογή δαπανών
+            expenses = self.collect_expenses_for_period(period)
+            
+            if not expenses:
+                return {
+                    'success': False,
+                    'message': f'Δεν βρέθηκαν δαπάνες για την περίοδο {period.period_name}',
+                    'period_id': period.id,
+                    'expenses_count': 0
+                }
+            
+            # 3. Αυτόματη έκδοση
+            result = self.issue_period_automatically(period, expenses)
+            
+            return {
+                **result,
+                'period_name': period.period_name,
+                'start_date': period.start_date,
+                'end_date': period.end_date
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'Σφάλμα κατά την αυτοματοποιημένη επεξεργασία: {str(e)}',
+                'error': str(e)
+            }
+    
+    def get_period_statistics(self, period: CommonExpensePeriod) -> Dict[str, Any]:
+        """
+        Στατιστικά για την περίοδο
+        
+        Args:
+            period: CommonExpensePeriod object
+            
+        Returns:
+            Dict με στατιστικά
+        """
+        expenses = self.collect_expenses_for_period(period)
+        shares = ApartmentShare.objects.filter(period=period)
+        
+        total_expenses = sum(exp.amount for exp in expenses)
+        total_shares = sum(share.total_amount for share in shares)
+        paid_shares = sum(share.total_amount for share in shares if share.total_due <= 0)
+        
+        return {
+            'period_name': period.period_name,
+            'start_date': period.start_date,
+            'end_date': period.end_date,
+            'expenses_count': len(expenses),
+            'total_expenses': float(total_expenses),
+            'apartments_count': shares.count(),
+            'total_shares': float(total_shares),
+            'paid_shares': float(paid_shares),
+            'unpaid_shares': float(total_shares - paid_shares),
+            'payment_rate': float(paid_shares / total_shares * 100) if total_shares > 0 else 0
+        } 

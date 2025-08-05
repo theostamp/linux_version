@@ -252,7 +252,7 @@ class Contract(models.Model):
         default='draft',
         verbose_name="Κατάσταση"
     )
-    payment_terms = models.TextField(blank=True, verbose_name="Όροι Πληρωμής")
+    payment_terms = models.TextField(blank=True, verbose_name="Όροι Εισπράξεως")
     warranty_terms = models.TextField(blank=True, verbose_name="Όροι Εγγύησης")
     contract_file = models.FileField(
         upload_to='contracts/%Y/%m/',

@@ -21,6 +21,7 @@
 docker compose down --volumes --remove-orphans
 docker network prune --force
 docker system prune --all --volumes --force
+docker system prune -a --volumes
 
 docker compose up --build -d
 
@@ -1028,7 +1029,7 @@ docker compose exec backend python manage.py migrate_schemas --tenant --fake-ini
 echo "# linux_version" >> README.md git init
 
 git add .
-git commit -m "overall project version 1.0.0"
+git commit -m "fixed financial module"
 git branch -M main git remote add origin https://github.com/theostamp/linux_version.git 
 git push -u origin main
 

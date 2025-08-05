@@ -1,48 +1,60 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { FinancialSummary } from '@/types/financial';
+import React, { useState, useEffect, useImperativeHandle } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  DollarSign, 
+  AlertTriangle, 
+  TrendingUp, 
+  Users, 
+  Building, 
+  Plus, 
+  FileText,
+  BarChart3,
+  Calculator
+} from 'lucide-react';
+import { api } from '@/lib/api';
 import TransactionHistory from './TransactionHistory';
 import CashFlowChart from './CashFlowChart';
 import ReportsManager from './ReportsManager';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  AlertTriangle,
-  Building,
-  Users,
-  Plus,
-  FileText,
-  BarChart3
-} from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface FinancialDashboardProps {
-  buildingId: string;
+  buildingId: number;
+  selectedMonth?: string;
+  ref?: React.RefObject<{ loadSummary: () => void }>;
 }
 
-export default function FinancialDashboard({ buildingId }: FinancialDashboardProps) {
-  const [summary, setSummary] = useState<FinancialSummary | null>(null);
+const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, FinancialDashboardProps>(
+  ({ buildingId, selectedMonth }, ref) => {
+  const [summary, setSummary] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+  const router = useRouter();
+
   useEffect(() => {
     loadSummary();
-  }, [buildingId]);
-  
+  }, [buildingId, selectedMonth]);
+
+  // Expose loadSummary function via ref
+  useImperativeHandle(ref, () => ({
+    loadSummary
+  }));
+
   const loadSummary = async () => {
     try {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/financial/dashboard/summary/?building_id=${buildingId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setSummary(data);
-      }
+      const params = new URLSearchParams({
+        building_id: buildingId.toString(),
+        ...(selectedMonth && { month: selectedMonth })
+      });
+      
+      const response = await api.get(`/financial/dashboard/summary/?${params}`);
+      setSummary(response.data);
     } catch (error) {
       console.error('Error loading financial summary:', error);
       setError('Σφάλμα κατά τη φόρτωση των οικονομικών στοιχείων');
@@ -50,7 +62,7 @@ export default function FinancialDashboard({ buildingId }: FinancialDashboardPro
       setIsLoading(false);
     }
   };
-  
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -73,7 +85,7 @@ export default function FinancialDashboard({ buildingId }: FinancialDashboardPro
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="space-y-6">
@@ -87,7 +99,7 @@ export default function FinancialDashboard({ buildingId }: FinancialDashboardPro
       </div>
     );
   }
-  
+
   if (!summary) {
     return (
       <div className="space-y-6">
@@ -101,7 +113,7 @@ export default function FinancialDashboard({ buildingId }: FinancialDashboardPro
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-6">
       {/* Κάρτες Στατιστικών */}
@@ -115,7 +127,7 @@ export default function FinancialDashboard({ buildingId }: FinancialDashboardPro
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {summary.current_reserve.toFixed(2)}€
+              {Number(summary.current_reserve).toFixed(2)}€
             </div>
             <p className="text-xs text-muted-foreground">
               Διαθέσιμο ποσό
@@ -126,16 +138,16 @@ export default function FinancialDashboard({ buildingId }: FinancialDashboardPro
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Συνολικές Οφειλές
+              Ανέκδοτες Δαπάνες
             </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            <Calculator className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {summary.total_obligations.toFixed(2)}€
+            <div className="text-2xl font-bold text-orange-600">
+              {Number(summary.pending_expenses || 0).toFixed(2)}€
             </div>
             <p className="text-xs text-muted-foreground">
-              Εκκρεμείς πληρωμές
+              Δεν έχουν εκδοθεί
             </p>
           </CardContent>
         </Card>
@@ -202,13 +214,13 @@ export default function FinancialDashboard({ buildingId }: FinancialDashboardPro
                     </div>
                     <div className="text-right">
                       <p className={`text-sm font-medium ${
-                        apartment.current_balance < 0 ? 'text-red-600' : 'text-green-600'
+                        Number(apartment.current_balance) < 0 ? 'text-red-600' : 'text-green-600'
                       }`}>
-                        {apartment.current_balance.toFixed(2)}€
+                        {Number(apartment.current_balance).toFixed(2)}€
                       </p>
                       {apartment.last_payment_date && (
                         <p className="text-xs text-muted-foreground">
-                          Τελευταία πληρωμή: {new Date(apartment.last_payment_date).toLocaleDateString('el-GR')}
+                          Τελευταία είσπραξη: {new Date(apartment.last_payment_date).toLocaleDateString('el-GR')}
                         </p>
                       )}
                     </div>
@@ -218,32 +230,6 @@ export default function FinancialDashboard({ buildingId }: FinancialDashboardPro
           </CardContent>
         </Card>
       )}
-      
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            Γρήγορες Ενέργειες
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-3">
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Νέα Δαπάνη
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Καταχώρηση Πληρωμής
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Έκδοση Κοινοχρήστων
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Tabs για λεπτομερείς αναφορές */}
       <Tabs defaultValue="transactions" className="w-full">
@@ -292,4 +278,6 @@ export default function FinancialDashboard({ buildingId }: FinancialDashboardPro
       </Tabs>
     </div>
   );
-} 
+});
+
+export default FinancialDashboard; 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import type { Building } from '@/lib/api';
-import { fetchAllBuildings } from '@/lib/api';
+import { fetchAllBuildings, fetchAllBuildingsPublic } from '@/lib/api';
 import { Search, Building as BuildingIcon, Check, X, MapPin } from 'lucide-react';
 
 interface BuildingSelectorProps {
@@ -36,7 +36,7 @@ export default function BuildingSelector({
   const loadBuildings = async () => {
     setIsLoading(true);
     try {
-      const buildingsData = await fetchAllBuildings();
+      const buildingsData = await fetchAllBuildingsPublic();
       setBuildings(buildingsData);
     } catch (error) {
       console.error('Error loading buildings:', error);

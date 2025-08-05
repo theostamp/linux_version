@@ -86,16 +86,16 @@ class ServiceReceipt(models.Model):
         max_length=20,
         choices=[
             ('pending', 'Εκκρεμεί'),
-            ('paid', 'Πληρωμένο'),
+            ('paid', 'Εισπραχθέν'),
             ('overdue', 'Ληξιπρόθεσμο'),
         ],
         default='pending',
-        verbose_name="Κατάσταση Πληρωμής"
+        verbose_name="Κατάσταση Εισπράξεως"
     )
     payment_date = models.DateField(
         null=True, 
         blank=True,
-        verbose_name="Ημερομηνία Πληρωμής"
+        verbose_name="Ημερομηνία Εισπράξεως"
     )
     created_by = models.ForeignKey(
         User,

@@ -9,7 +9,7 @@ router.register(r'', BuildingViewSet, basename='building')
 
 # Public URLs (no authentication required)
 public_urlpatterns = [
-    path('', public_buildings_list, name='public_buildings_list'),
+    path('public/', public_buildings_list, name='public_buildings_list'),
 ]
 
 # Private URLs (authentication required)
@@ -18,5 +18,5 @@ private_urlpatterns = [
     path('', include(router.urls)),
 ]
 
-# Default to private URLs
-urlpatterns = private_urlpatterns
+# Include both public and private URLs
+urlpatterns = public_urlpatterns + private_urlpatterns

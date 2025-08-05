@@ -16,7 +16,7 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { format } from 'date-fns';
-import { el } from 'date-fns/locale';
+// import { el } from 'date-fns/locale/el';
 import { cn } from '../../lib/utils';
 
 interface MeterReadingFormProps {
@@ -200,7 +200,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {selectedDate ? format(selectedDate, 'PPP', { locale: el }) : 'Επιλέξτε ημερομηνία'}
+                        {selectedDate ? format(selectedDate, 'PPP') : 'Επιλέξτε ημερομηνία'}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">

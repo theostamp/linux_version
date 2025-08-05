@@ -33,30 +33,60 @@ export default function KioskPage() {
   useEffect(() => {
     async function loadBuildings() {
       try {
+        console.log('[KIOSK] Loading buildings for selection...');
         const buildingsData = await fetchAllBuildingsPublic();
+        console.log('[KIOSK] Buildings loaded successfully:', buildingsData.length);
         setBuildings(buildingsData);
         
         // Check URL parameter for building ID
         const buildingParam = searchParams.get('building');
         if (buildingParam) {
-          const buildingId = parseInt(buildingParam);
-          if (!isNaN(buildingId)) {
-            setSelectedBuildingId(buildingId);
-          } else {
-            // Fallback to null (all buildings) if invalid ID
+          if (buildingParam === 'all') {
+            // User selected "all buildings"
+            console.log('[KIOSK] Using all buildings from URL');
             setSelectedBuildingId(null);
+          } else {
+            const buildingId = parseInt(buildingParam);
+            if (!isNaN(buildingId)) {
+              console.log('[KIOSK] Using building ID from URL:', buildingId);
+              setSelectedBuildingId(buildingId);
+            } else {
+              console.log('[KIOSK] Invalid building ID in URL, using fallback');
+              setSelectedBuildingId(3); // Default demo building
+            }
           }
         } else {
           // Auto-select first building if no URL parameter
           if (buildingsData.length > 0) {
+            console.log('[KIOSK] Auto-selecting first building:', buildingsData[0].id);
             setSelectedBuildingId(buildingsData[0].id);
           } else {
-            setSelectedBuildingId(null);
+            console.log('[KIOSK] No buildings available, using fallback');
+            setSelectedBuildingId(3); // Default demo building
           }
         }
       } catch (error) {
-        console.error('Failed to load buildings:', error);
-        setSelectedBuildingId(null);
+        console.error('[KIOSK] Failed to load buildings:', error);
+        // Fallback: Use URL parameter or default to building ID 3 (demo building)
+        const buildingParam = searchParams.get('building');
+        if (buildingParam) {
+          if (buildingParam === 'all') {
+            console.log('[KIOSK] Using all buildings from URL (fallback)');
+            setSelectedBuildingId(null);
+          } else {
+            const buildingId = parseInt(buildingParam);
+            if (!isNaN(buildingId)) {
+              console.log('[KIOSK] Using building ID from URL (fallback):', buildingId);
+              setSelectedBuildingId(buildingId);
+            } else {
+              console.log('[KIOSK] Invalid building ID, using default building 3');
+              setSelectedBuildingId(3); // Default demo building
+            }
+          }
+        } else {
+          console.log('[KIOSK] Using default building 3');
+          setSelectedBuildingId(3); // Default demo building
+        }
       } finally {
         setIsLoadingBuildings(false);
       }
@@ -117,13 +147,7 @@ export default function KioskPage() {
           buildingInfo={data?.building_info}
           advertisingBanners={data?.advertising_banners}
           generalInfo={data?.general_info}
-          financialInfo={{
-            total_payments: 156,
-            pending_payments: 23,
-            overdue_payments: 8,
-            total_collected: 45600.75,
-            collection_rate: 83.7,
-          }}
+          financialInfo={data?.financial_info}
           maintenanceInfo={{
             active_contractors: 8,
             pending_receipts: 5,

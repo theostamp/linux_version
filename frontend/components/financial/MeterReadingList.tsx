@@ -46,7 +46,7 @@ import {
   Zap
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { el } from 'date-fns/locale';
+// import { el } from 'date-fns/locale/el';
 import { MeterReadingForm } from './MeterReadingForm';
 
 interface MeterReadingListProps {
@@ -250,7 +250,7 @@ export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId }
                   <SelectValue placeholder="Όλοι οι τύποι" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Όλοι οι τύποι</SelectItem>
+                  <SelectItem value="all">Όλοι οι τύποι</SelectItem>
                   {meterTypes.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
@@ -355,7 +355,7 @@ export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId }
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {format(new Date(reading.reading_date), 'dd/MM/yyyy', { locale: el })}
+                        {format(new Date(reading.reading_date), 'dd/MM/yyyy')}
                       </TableCell>
                       <TableCell className="font-mono">
                         {reading.value.toFixed(2)}

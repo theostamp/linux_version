@@ -1,6 +1,25 @@
 // Frontend types για το οικονομικό σύστημα
 
 // Βασικοί τύποι
+export interface Supplier {
+  id: number;
+  building: number;
+  building_name?: string;
+  name: string;
+  category: string;
+  category_display?: string;
+  account_number?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  vat_number?: string;
+  contract_number?: string;
+  notes?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Expense {
   id: number;
   building: number;
@@ -12,6 +31,9 @@ export interface Expense {
   category_display?: string;
   distribution_type: string;
   distribution_type_display?: string;
+  supplier?: number;
+  supplier_name?: string;
+  supplier_details?: Supplier;
   attachment?: string;
   attachment_url?: string;
   notes?: string;
@@ -44,6 +66,9 @@ export interface Payment {
   date: string;
   method: string;
   method_display?: string;
+  payment_type: string;
+  payment_type_display?: string;
+  reference_number?: string;
   notes?: string;
   receipt?: string;
   created_at: string;
@@ -130,6 +155,7 @@ export interface ExpenseFormData {
   date: string;
   category: string;
   distribution_type: string;
+  supplier?: number;
   notes?: string;
   attachment?: File;
 }
@@ -139,6 +165,8 @@ export interface PaymentFormData {
   amount: number;
   date: string;
   method: string;
+  payment_type: string;
+  reference_number?: string;
   notes?: string;
   receipt?: File;
 }
@@ -191,143 +219,72 @@ export interface PaymentFilters {
   date_to?: string;
 }
 
-// Enum types
-export enum ExpenseCategory {
-  // Πάγιες Δαπάνες Κοινοχρήστων
-  CLEANING = 'cleaning',
-  ELECTRICITY_COMMON = 'electricity_common',
-  WATER_COMMON = 'water_common',
-  GARBAGE_COLLECTION = 'garbage_collection',
-  SECURITY = 'security',
-  CONCIERGE = 'concierge',
-  
-  // Δαπάνες Ανελκυστήρα
-  ELEVATOR_MAINTENANCE = 'elevator_maintenance',
-  ELEVATOR_REPAIR = 'elevator_repair',
-  ELEVATOR_INSPECTION = 'elevator_inspection',
-  ELEVATOR_MODERNIZATION = 'elevator_modernization',
-  
-  // Δαπάνες Θέρμανσης
-  HEATING_FUEL = 'heating_fuel',
-  HEATING_GAS = 'heating_gas',
-  HEATING_MAINTENANCE = 'heating_maintenance',
-  HEATING_REPAIR = 'heating_repair',
-  HEATING_INSPECTION = 'heating_inspection',
-  HEATING_MODERNIZATION = 'heating_modernization',
-  
-  // Δαπάνες Ηλεκτρικών Εγκαταστάσεων
-  ELECTRICAL_MAINTENANCE = 'electrical_maintenance',
-  ELECTRICAL_REPAIR = 'electrical_repair',
-  ELECTRICAL_UPGRADE = 'electrical_upgrade',
-  LIGHTING_COMMON = 'lighting_common',
-  INTERCOM_SYSTEM = 'intercom_system',
-  
-  // Δαπάνες Υδραυλικών Εγκαταστάσεων
-  PLUMBING_MAINTENANCE = 'plumbing_maintenance',
-  PLUMBING_REPAIR = 'plumbing_repair',
-  WATER_TANK_CLEANING = 'water_tank_cleaning',
-  WATER_TANK_MAINTENANCE = 'water_tank_maintenance',
-  SEWAGE_SYSTEM = 'sewage_system',
-  
-  // Δαπάνες Κτιρίου & Εξωτερικών Χώρων
-  BUILDING_INSURANCE = 'building_insurance',
-  BUILDING_MAINTENANCE = 'building_maintenance',
-  ROOF_MAINTENANCE = 'roof_maintenance',
-  ROOF_REPAIR = 'roof_repair',
-  FACADE_MAINTENANCE = 'facade_maintenance',
-  FACADE_REPAIR = 'facade_repair',
-  PAINTING_EXTERIOR = 'painting_exterior',
-  PAINTING_INTERIOR = 'painting_interior',
-  GARDEN_MAINTENANCE = 'garden_maintenance',
-  PARKING_MAINTENANCE = 'parking_maintenance',
-  ENTRANCE_MAINTENANCE = 'entrance_maintenance',
-  
-  // Έκτακτες Δαπάνες & Επισκευές
-  EMERGENCY_REPAIR = 'emergency_repair',
-  STORM_DAMAGE = 'storm_damage',
-  FLOOD_DAMAGE = 'flood_damage',
-  FIRE_DAMAGE = 'fire_damage',
-  EARTHQUAKE_DAMAGE = 'earthquake_damage',
-  VANDALISM_REPAIR = 'vandalism_repair',
-  
-  // Ειδικές Επισκευές
-  LOCKSMITH = 'locksmith',
-  GLASS_REPAIR = 'glass_repair',
-  DOOR_REPAIR = 'door_repair',
-  WINDOW_REPAIR = 'window_repair',
-  BALCONY_REPAIR = 'balcony_repair',
-  STAIRCASE_REPAIR = 'staircase_repair',
-  
-  // Δαπάνες Ασφάλειας & Πρόσβασης
-  SECURITY_SYSTEM = 'security_system',
-  CCTV_INSTALLATION = 'cctv_installation',
-  ACCESS_CONTROL = 'access_control',
-  FIRE_ALARM = 'fire_alarm',
-  FIRE_EXTINGUISHERS = 'fire_extinguishers',
-  
-  // Δαπάνες Διοικητικές & Νομικές
-  LEGAL_FEES = 'legal_fees',
-  NOTARY_FEES = 'notary_fees',
-  SURVEYOR_FEES = 'surveyor_fees',
-  ARCHITECT_FEES = 'architect_fees',
-  ENGINEER_FEES = 'engineer_fees',
-  ACCOUNTING_FEES = 'accounting_fees',
-  MANAGEMENT_FEES = 'management_fees',
-  
-  // Δαπάνες Ειδικών Εργασιών
-  ASBESTOS_REMOVAL = 'asbestos_removal',
-  LEAD_PAINT_REMOVAL = 'lead_paint_removal',
-  MOLD_REMOVAL = 'mold_removal',
-  PEST_CONTROL = 'pest_control',
-  TREE_TRIMMING = 'tree_trimming',
-  SNOW_REMOVAL = 'snow_removal',
-  
-  // Δαπάνες Ενεργειακής Απόδοσης
-  ENERGY_UPGRADE = 'energy_upgrade',
-  INSULATION_WORK = 'insulation_work',
-  SOLAR_PANEL_INSTALLATION = 'solar_panel_installation',
-  LED_LIGHTING = 'led_lighting',
-  SMART_SYSTEMS = 'smart_systems',
-  
-  // Δαπάνες Ιδιοκτητών
-  SPECIAL_CONTRIBUTION = 'special_contribution',
-  RESERVE_FUND = 'reserve_fund',
-  EMERGENCY_FUND = 'emergency_fund',
-  RENOVATION_FUND = 'renovation_fund',
-  
-  // Άλλες Δαπάνες
-  MISCELLANEOUS = 'miscellaneous',
-  CONSULTING_FEES = 'consulting_fees',
-  PERMITS_LICENSES = 'permits_licenses',
-  TAXES_FEES = 'taxes_fees',
-  UTILITIES_OTHER = 'utilities_other'
-}
+// ---------------------------------------------
+// NEW: Union-like constant objects for categories
+// and distribution types to allow value & type
+// usage (enum-style) while keeping string unions.
+// ---------------------------------------------
 
-export enum DistributionType {
-  BY_PARTICIPATION_MILLS = 'by_participation_mills',
-  EQUAL_SHARE = 'equal_share',
-  SPECIFIC_APARTMENTS = 'specific_apartments',
-  BY_METERS = 'by_meters'
-}
+/**
+ * Core expense categories used across the UI.
+ * Keys are semantic names used in code, values
+ * are the exact strings expected by the backend.
+ */
+export const ExpenseCategory = {
+  ELECTRICITY: 'electricity_common',
+  WATER: 'water_common',
+  HEATING: 'heating_fuel',
+  CLEANING: 'cleaning',
+  MAINTENANCE: 'building_maintenance',
+  INSURANCE: 'building_insurance',
+  ADMINISTRATION: 'management_fees',
+  OTHER: 'miscellaneous',
+} as const;
+
+export type ExpenseCategory = typeof ExpenseCategory[keyof typeof ExpenseCategory];
+
+/**
+ * Supported distribution strategies.
+ */
+export const DistributionType = {
+  EQUAL: 'equal_share',
+  MILLS: 'by_participation_mills',
+  METERS: 'by_meters',
+  SPECIFIC: 'specific_apartments',
+} as const;
+
+export type DistributionType = typeof DistributionType[keyof typeof DistributionType];
+
+// ---------------------------------------------
+// Remaining enum & util definitions
+// ---------------------------------------------
 
 export enum TransactionType {
   COMMON_EXPENSE_PAYMENT = 'common_expense_payment',
   EXPENSE_PAYMENT = 'expense_payment',
   REFUND = 'refund',
-  COMMON_EXPENSE_CHARGE = 'common_expense_charge'
+  COMMON_EXPENSE_CHARGE = 'common_expense_charge',
 }
 
 export enum PaymentMethod {
   CASH = 'cash',
   BANK_TRANSFER = 'bank_transfer',
   CHECK = 'check',
-  CARD = 'card'
+  CARD = 'card',
+}
+
+export enum PaymentType {
+  COMMON_EXPENSE = 'common_expense',
+  RESERVE_FUND = 'reserve_fund',
+  SPECIAL_EXPENSE = 'special_expense',
+  ADVANCE = 'advance',
+  OTHER = 'other',
 }
 
 export enum MeterType {
   HEATING = 'heating',
   WATER = 'water',
-  ELECTRICITY = 'electricity'
+  ELECTRICITY = 'electricity',
 }
 
 // Utility types
@@ -358,4 +315,60 @@ export interface ChartData {
     borderColor?: string;
     borderWidth?: number;
   }[];
-} 
+}
+
+// Common Expense Period types
+export interface CommonExpensePeriod {
+  id: number;
+  building: number;
+  building_name?: string;
+  period_name: string;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApartmentShare {
+  id: number;
+  apartment: number;
+  apartment_number: string;
+  owner_name: string;
+  participation_mills: number;
+  current_balance: number;
+  total_amount: number;
+  previous_balance: number;
+  total_due: number;
+  breakdown: ExpenseBreakdown[];
+}
+
+export interface CommonExpenseCalculationRequest {
+  building_id: number;
+  period_id: number;
+  expenses: number[];
+  distribution_type: string;
+}
+
+export interface CommonExpenseCalculationResult {
+  building_id: number;
+  period: string;
+  shares: ApartmentShare[];
+  total_expenses: number;
+  apartments_count: number;
+  pending_expenses: Expense[];
+}
+
+export interface CommonExpenseIssueRequest {
+  building_id: number;
+  period_data: {
+    name: string;
+    start_date: string;
+    end_date: string;
+  };
+  shares: Record<string, {
+    total_amount: number;
+    breakdown: Record<string, any>;
+  }>;
+  expense_ids?: number[];
+}

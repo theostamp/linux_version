@@ -7,10 +7,10 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from django.core.exceptions import ValidationError
 
-from .models import Expense, Transaction, Payment, ExpenseApartment, MeterReading
+from .models import Expense, Transaction, Payment, ExpenseApartment, MeterReading, Supplier, CommonExpensePeriod, ApartmentShare
 from .serializers import (
     ExpenseSerializer, TransactionSerializer, PaymentSerializer,
-    ExpenseApartmentSerializer, MeterReadingSerializer,
+    ExpenseApartmentSerializer, MeterReadingSerializer, SupplierSerializer,
     FinancialSummarySerializer, ApartmentBalanceSerializer,
     CommonExpenseCalculationSerializer
 )
@@ -23,6 +23,80 @@ from .permissions import (
     FinancialReadPermission, FinancialWritePermission, ReportPermission
 )
 from .audit import FinancialAuditLog
+from .services import CommonExpenseAutomationService
+from django.db import models
+
+
+class SupplierViewSet(viewsets.ModelViewSet):
+    """ViewSet για τη διαχείριση προμηθευτών"""
+    
+    queryset = Supplier.objects.all()
+    serializer_class = SupplierSerializer
+    permission_classes = [FinancialWritePermission]
+    filter_backends = [filters.DjangoFilterBackend]
+    filterset_fields = ['building', 'category', 'is_active']
+    
+    def perform_create(self, serializer):
+        """Καταγραφή δημιουργίας προμηθευτή"""
+        supplier = serializer.save()
+        FinancialAuditLog.log_supplier_action(
+            user=self.request.user,
+            action='CREATE',
+            supplier=supplier,
+            request=self.request
+        )
+    
+    def perform_update(self, serializer):
+        """Καταγραφή ενημέρωσης προμηθευτή"""
+        supplier = serializer.save()
+        FinancialAuditLog.log_supplier_action(
+            user=self.request.user,
+            action='UPDATE',
+            supplier=supplier,
+            request=self.request
+        )
+    
+    def perform_destroy(self, instance):
+        """Καταγραφή διαγραφής προμηθευτή"""
+        FinancialAuditLog.log_supplier_action(
+            user=self.request.user,
+            action='DELETE',
+            supplier=instance,
+            request=self.request
+        )
+        instance.delete()
+    
+    def get_queryset(self):
+        """Φιλτράρισμα ανά building"""
+        building_id = self.request.query_params.get('building_id')
+        if building_id:
+            return self.queryset.filter(building_id=building_id)
+        return self.queryset
+    
+    @action(detail=False, methods=['get'])
+    def categories(self, request):
+        """Λήψη διαθέσιμων κατηγοριών προμηθευτών"""
+        categories = [{'value': choice[0], 'label': choice[1]} for choice in Supplier.SUPPLIER_CATEGORIES]
+        return Response(categories)
+    
+    @action(detail=False, methods=['get'])
+    def by_category(self, request):
+        """Λήψη προμηθευτών ανά κατηγορία"""
+        building_id = request.query_params.get('building_id')
+        category = request.query_params.get('category')
+        
+        if not building_id:
+            return Response(
+                {'error': 'Building ID is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        queryset = self.get_queryset().filter(is_active=True)
+        if category:
+            queryset = queryset.filter(category=category)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class ExpenseViewSet(viewsets.ModelViewSet):
@@ -32,7 +106,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     serializer_class = ExpenseSerializer
     permission_classes = [ExpensePermission]
     filter_backends = [filters.DjangoFilterBackend]
-    filterset_fields = ['building', 'category', 'is_issued', 'date', 'distribution_type']
+    filterset_fields = ['building', 'category', 'is_issued', 'date', 'distribution_type', 'supplier']
     
     def perform_create(self, serializer):
         """Καταγραφή δημιουργίας δαπάνης με file upload"""
@@ -220,7 +294,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
-    """ViewSet για τη διαχείριση πληρωμών"""
+    """ViewSet για τη διαχείριση εισπράξεων"""
     
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
@@ -229,8 +303,21 @@ class PaymentViewSet(viewsets.ModelViewSet):
     filterset_fields = ['apartment', 'method', 'date']
     
     def perform_create(self, serializer):
-        """Καταγραφή δημιουργίας πληρωμής"""
+        """Καταγραφή δημιουργίας εισπράξεως με file upload"""
         payment = serializer.save()
+        
+        # Χειρισμός file upload αν υπάρχει
+        if 'receipt' in self.request.FILES:
+            try:
+                file = self.request.FILES['receipt']
+                file_path = FileUploadService.save_file(file, payment.id)
+                payment.receipt = file_path
+                payment.save()
+            except Exception as e:
+                # Αν αποτύχει το file upload, διαγράφουμε την payment
+                payment.delete()
+                raise ValidationError(f"Σφάλμα στο upload αρχείου: {str(e)}")
+        
         FinancialAuditLog.log_payment_action(
             user=self.request.user,
             action='CREATE',
@@ -239,7 +326,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         )
     
     def perform_update(self, serializer):
-        """Καταγραφή ενημέρωσης πληρωμής"""
+        """Καταγραφή ενημέρωσης εισπράξεως"""
         payment = serializer.save()
         FinancialAuditLog.log_payment_action(
             user=self.request.user,
@@ -249,7 +336,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         )
     
     def perform_destroy(self, instance):
-        """Καταγραφή διαγραφής πληρωμής"""
+        """Καταγραφή διαγραφής εισπράξεως"""
         FinancialAuditLog.log_payment_action(
             user=self.request.user,
             action='DELETE',
@@ -267,25 +354,26 @@ class PaymentViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def process_payment(self, request):
-        """Επεξεργασία πληρωμής"""
+        """Επεξεργασία πληρωμής με ενημέρωση υπολοίπων"""
         try:
             payment_data = request.data
-            transaction = PaymentProcessor.process_payment(payment_data)
+            processor = PaymentProcessor()
+            result = processor.process_payment(payment_data)
             
             return Response({
-                'message': 'Payment processed successfully',
-                'transaction_id': transaction.id
-            }, status=status.HTTP_201_CREATED)
-            
+                'success': True,
+                'transaction_id': result.get('transaction_id'),
+                'message': 'Η πληρωμή επεξεργάστηκε επιτυχώς'
+            })
         except Exception as e:
             return Response(
                 {'error': str(e)}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_400_BAD_REQUEST
             )
     
     @action(detail=False, methods=['get'])
     def methods(self, request):
-        """Λήψη διαθέσιμων τρόπων πληρωμής"""
+        """Λήψη διαθέσιμων μεθόδων πληρωμής"""
         methods = [{'value': choice[0], 'label': choice[1]} for choice in Payment.PAYMENT_METHODS]
         return Response(methods)
 
@@ -296,8 +384,10 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['get'])
     def summary(self, request):
-        """Λήψη σύνοψης οικονομικών στοιχείων"""
+        """Λήψη οικονομικού συνόψη"""
         building_id = request.query_params.get('building_id')
+        month = request.query_params.get('month')
+        
         if not building_id:
             return Response(
                 {'error': 'Building ID is required'}, 
@@ -305,17 +395,10 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             )
         
         try:
-            service = FinancialDashboardService(building_id)
-            summary_data = service.get_summary()
-            
-            serializer = FinancialSummarySerializer(summary_data)
+            service = FinancialDashboardService(int(building_id))
+            summary = service.get_summary(month)
+            serializer = FinancialSummarySerializer(summary)
             return Response(serializer.data)
-            
-        except Building.DoesNotExist:
-            return Response(
-                {'error': 'Building not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
         except Exception as e:
             return Response(
                 {'error': str(e)}, 
@@ -324,8 +407,9 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['get'])
     def apartment_balances(self, request):
-        """Λήψη κατάστασης οφειλών διαμερισμάτων"""
+        """Λήψη υπολοίπων διαμερισμάτων"""
         building_id = request.query_params.get('building_id')
+        
         if not building_id:
             return Response(
                 {'error': 'Building ID is required'}, 
@@ -333,16 +417,10 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             )
         
         try:
-            service = FinancialDashboardService(building_id)
+            service = FinancialDashboardService(int(building_id))
             balances = service.get_apartment_balances()
-            
-            return Response(balances)
-            
-        except Building.DoesNotExist:
-            return Response(
-                {'error': 'Building not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
+            serializer = ApartmentBalanceSerializer(balances, many=True)
+            return Response(serializer.data)
         except Exception as e:
             return Response(
                 {'error': str(e)}, 
@@ -356,102 +434,314 @@ class CommonExpenseViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['post'])
     def calculate(self, request):
-        """Υπολογισμός μεριδίων κοινοχρήστων"""
-        building_id = request.data.get('building_id')
-        period = request.data.get('period', '')
-        
-        if not building_id:
-            return Response(
-                {'error': 'Building ID is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
+        """Υπολογισμός κοινοχρήστων"""
         try:
-            calculator = CommonExpenseCalculator(building_id)
-            shares = calculator.calculate_shares()
-            
-            # Μετατροπή σε λίστα για το serializer
-            shares_list = list(shares.values())
-            
-            return Response({
-                'period': period,
-                'shares': shares_list,
-                'total_expenses': calculator.get_total_expenses(),
+            data = request.data
+            building_id = data.get('building_id') or data.get('building')
+            if not building_id:
+                raise ValueError('building_id is required')
+            calculator = CommonExpenseCalculator(int(building_id))
+            result = {
+                'shares': calculator.calculate_shares(),
+                'total_expenses': float(calculator.get_total_expenses()),
                 'apartments_count': calculator.get_apartments_count(),
-                'pending_expenses': ExpenseSerializer(calculator.expenses, many=True).data
-            })
+            }
             
-        except Building.DoesNotExist:
-            return Response(
-                {'error': 'Building not found'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response(result)
         except Exception as e:
             return Response(
                 {'error': str(e)}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_400_BAD_REQUEST
             )
     
     @action(detail=False, methods=['post'])
     def issue(self, request):
         """Έκδοση κοινοχρήστων"""
-        building_id = request.data.get('building_id')
-        period = request.data.get('period', '')
-        shares = request.data.get('shares', {})
-        
-        if not building_id:
-            return Response(
-                {'error': 'Building ID is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
         try:
-            # Ενημέρωση οφειλών διαμερισμάτων
-            for share_data in shares:
-                apartment_id = share_data.get('apartment_id')
-                total_due = share_data.get('total_due', 0)
-                
-                if apartment_id and total_due is not None:
-                    apartment = Apartment.objects.get(id=apartment_id)
-                    apartment.current_balance = total_due
-                    apartment.save()
+            data = request.data
+            building_id = data.get('building_id') or data.get('building')
+            period_data = data.get('period_data', {})
+            shares = data.get('shares', {})
             
-            # Σήμανση δαπανών ως εκδοθείσες
-            expenses = Expense.objects.filter(
-                building_id=building_id, 
-                is_issued=False
+            if not building_id:
+                raise ValueError('building_id is required')
+            
+            # Δημιουργία περιόδου κοινοχρήστων
+            period = CommonExpensePeriod.objects.create(
+                building_id=building_id,
+                period_name=period_data.get('name', f'Κοινοχρήστα {datetime.now().strftime("%m/%Y")}'),
+                start_date=period_data.get('start_date'),
+                end_date=period_data.get('end_date')
             )
-            expenses.update(is_issued=True)
             
-            # Δημιουργία εγγραφών κινήσεων
-            building = Building.objects.get(id=building_id)
-            for share_data in shares:
-                apartment_id = share_data.get('apartment_id')
-                total_amount = share_data.get('total_amount', 0)
-                apartment_number = share_data.get('apartment_number', '')
+            # Δημιουργία μεριδίων για κάθε διαμέρισμα
+            apartment_shares = []
+            for apartment_id, share_data in shares.items():
+                apartment = Apartment.objects.get(id=apartment_id)
+                previous_balance = apartment.current_balance or Decimal('0.00')
+                total_amount = Decimal(str(share_data.get('total_amount', 0)))
+                total_due = previous_balance + total_amount
                 
-                if apartment_id and total_amount > 0:
-                    Transaction.objects.create(
-                        building=building,
-                        date=datetime.now(),
-                        type='common_expense_charge',
-                        description=f"Κοινοχρήστων {period} - {apartment_number}",
-                        apartment_number=apartment_number,
-                        amount=-total_amount,
-                        balance_after=share_data.get('total_due', 0)
-                    )
+                share = ApartmentShare.objects.create(
+                    period=period,
+                    apartment=apartment,
+                    total_amount=total_amount,
+                    previous_balance=previous_balance,
+                    total_due=total_due,
+                    breakdown=share_data.get('breakdown', {})
+                )
+                apartment_shares.append(share)
+                
+                # Δημιουργία κίνησης ταμείου
+                Transaction.objects.create(
+                    building_id=building_id,
+                    date=datetime.now(),
+                    type='common_expense_charge',
+                    description=f'Χρέωση κοινοχρήστων - {period.period_name}',
+                    apartment=apartment,
+                    apartment_number=apartment.number,
+                    amount=total_amount,
+                    balance_before=previous_balance,
+                    balance_after=total_due,
+                    reference_id=str(period.id),
+                    reference_type='common_expense_period'
+                )
+                
+                # Ενημέρωση υπολοίπου διαμερίσματος
+                apartment.current_balance = total_due
+                apartment.save()
+            
+            # Μαρκάρισμα δαπανών ως εκδοθείσες
+            expense_ids = data.get('expense_ids', [])
+            if expense_ids:
+                Expense.objects.filter(
+                    id__in=expense_ids,
+                    building_id=building_id,
+                    is_issued=False
+                ).update(is_issued=True)
             
             return Response({
-                'message': 'Common expenses issued successfully',
-                'period': period,
-                'expenses_count': expenses.count()
+                'success': True,
+                'message': f'Τα κοινοχρήστα εκδόθηκαν επιτυχώς για την περίοδο {period.period_name}',
+                'period_id': period.id,
+                'apartments_count': len(apartment_shares),
+                'total_amount': sum(share.total_amount for share in apartment_shares)
             })
             
         except Exception as e:
             return Response(
                 {'error': str(e)}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_400_BAD_REQUEST
             )
+
+    @action(detail=False, methods=['post'])
+    def create_period_automatically(self, request):
+        """Αυτόματη δημιουργία περιόδου κοινοχρήστων"""
+        try:
+            data = request.data
+            building_id = data.get('building_id') or data.get('building')
+            period_type = data.get('period_type', 'monthly')
+            start_date = data.get('start_date')
+            
+            if not building_id:
+                raise ValueError('building_id is required')
+            
+            automation_service = CommonExpenseAutomationService(building_id)
+            period = automation_service.create_period_automatically(period_type, start_date)
+            
+            return Response({
+                'success': True,
+                'message': f'Η περίοδος {period.period_name} δημιουργήθηκε επιτυχώς',
+                'period': {
+                    'id': period.id,
+                    'name': period.period_name,
+                    'start_date': period.start_date,
+                    'end_date': period.end_date,
+                    'is_active': period.is_active
+                }
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['post'])
+    def collect_expenses_automatically(self, request):
+        """Αυτόματη συλλογή δαπανών για περίοδο"""
+        try:
+            data = request.data
+            building_id = data.get('building_id') or data.get('building')
+            period_id = data.get('period_id')
+            
+            if not building_id:
+                raise ValueError('building_id is required')
+            if not period_id:
+                raise ValueError('period_id is required')
+            
+            period = CommonExpensePeriod.objects.get(id=period_id, building_id=building_id)
+            automation_service = CommonExpenseAutomationService(building_id)
+            expenses = automation_service.collect_expenses_for_period(period)
+            
+            return Response({
+                'success': True,
+                'message': f'Βρέθηκαν {len(expenses)} δαπάνες για την περίοδο {period.period_name}',
+                'expenses': [
+                    {
+                        'id': exp.id,
+                        'title': exp.title,
+                        'amount': float(exp.amount),
+                        'date': exp.date,
+                        'category': exp.category,
+                        'supplier': exp.supplier.name if exp.supplier else None
+                    }
+                    for exp in expenses
+                ],
+                'total_amount': float(sum(exp.amount for exp in expenses)),
+                'expenses_count': len(expenses)
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['post'])
+    def calculate_automatically(self, request):
+        """Αυτόματος υπολογισμός μεριδίων για περίοδο"""
+        try:
+            data = request.data
+            building_id = data.get('building_id') or data.get('building')
+            period_id = data.get('period_id')
+            
+            if not building_id:
+                raise ValueError('building_id is required')
+            if not period_id:
+                raise ValueError('period_id is required')
+            
+            period = CommonExpensePeriod.objects.get(id=period_id, building_id=building_id)
+            automation_service = CommonExpenseAutomationService(building_id)
+            result = automation_service.calculate_shares_for_period(period)
+            
+            return Response({
+                'success': True,
+                'message': f'Υπολογίστηκαν μερίδια για την περίοδο {period.period_name}',
+                'calculation': result
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['post'])
+    def issue_automatically(self, request):
+        """Αυτόματη έκδοση λογαριασμών για περίοδο"""
+        try:
+            data = request.data
+            building_id = data.get('building_id') or data.get('building')
+            period_id = data.get('period_id')
+            
+            if not building_id:
+                raise ValueError('building_id is required')
+            if not period_id:
+                raise ValueError('period_id is required')
+            
+            period = CommonExpensePeriod.objects.get(id=period_id, building_id=building_id)
+            automation_service = CommonExpenseAutomationService(building_id)
+            result = automation_service.issue_period_automatically(period)
+            
+            return Response(result)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['post'])
+    def auto_process_period(self, request):
+        """Πλήρης αυτοματοποιημένη επεξεργασία περιόδου"""
+        try:
+            data = request.data
+            building_id = data.get('building_id') or data.get('building')
+            period_type = data.get('period_type', 'monthly')
+            start_date = data.get('start_date')
+            
+            if not building_id:
+                raise ValueError('building_id is required')
+            
+            automation_service = CommonExpenseAutomationService(building_id)
+            result = automation_service.auto_process_period(period_type, start_date)
+            
+            return Response(result)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['get'])
+    def period_statistics(self, request):
+        """Στατιστικά για περίοδο κοινοχρήστων"""
+        try:
+            building_id = request.query_params.get('building_id')
+            period_id = request.query_params.get('period_id')
+            
+            if not building_id:
+                raise ValueError('building_id is required')
+            if not period_id:
+                raise ValueError('period_id is required')
+            
+            period = CommonExpensePeriod.objects.get(id=period_id, building_id=building_id)
+            automation_service = CommonExpenseAutomationService(building_id)
+            statistics = automation_service.get_period_statistics(period)
+            
+            return Response({
+                'success': True,
+                'statistics': statistics
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['get'])
+    def period_templates(self, request):
+        """Λήψη διαθέσιμων templates περιόδων"""
+        templates = [
+            {
+                'value': 'monthly',
+                'label': 'Μηνιαία',
+                'description': 'Κοινοχρήστα ανά μήνα'
+            },
+            {
+                'value': 'quarterly',
+                'label': 'Τριμηνιαία',
+                'description': 'Κοινοχρήστα ανά τρίμηνο'
+            },
+            {
+                'value': 'semester',
+                'label': 'Εξαμηνιαία',
+                'description': 'Κοινοχρήστα ανά εξάμηνο'
+            },
+            {
+                'value': 'yearly',
+                'label': 'Ετήσια',
+                'description': 'Κοινοχρήστα ανά έτος'
+            }
+        ]
+        
+        return Response({
+            'success': True,
+            'templates': templates
+        })
 
 
 class MeterReadingViewSet(viewsets.ModelViewSet):
@@ -478,7 +768,7 @@ class MeterReadingViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def building_consumption(self, request):
-        """Υπολογισμός συνολικής κατανάλωσης κτιρίου"""
+        """Λήψη κατανάλωσης ανά κτίριο"""
         building_id = request.query_params.get('building_id')
         meter_type = request.query_params.get('meter_type')
         date_from = request.query_params.get('date_from')
@@ -490,36 +780,39 @@ class MeterReadingViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        if not meter_type:
-            return Response(
-                {'error': 'Meter type is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        queryset = self.get_queryset()
         
-        # Μετατροπή ημερομηνιών
-        try:
-            if date_from:
-                date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-            if date_to:
-                date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-        except ValueError:
-            return Response(
-                {'error': 'Invalid date format. Use YYYY-MM-DD'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if meter_type:
+            queryset = queryset.filter(meter_type=meter_type)
+        if date_from:
+            queryset = queryset.filter(reading_date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(reading_date__lte=date_to)
         
-        # Υπολογισμός κατανάλωσης
-        consumption_data = MeterReading.calculate_building_consumption(
-            building_id, meter_type, date_from, date_to
-        )
+        # Ομαδοποίηση ανά διαμέρισμα και τύπο μετρητή
+        consumption_data = {}
+        for reading in queryset:
+            apartment_key = f"{reading.apartment.number}"
+            meter_key = reading.meter_type
+            
+            if apartment_key not in consumption_data:
+                consumption_data[apartment_key] = {}
+            if meter_key not in consumption_data[apartment_key]:
+                consumption_data[apartment_key][meter_key] = []
+            
+            consumption_data[apartment_key][meter_key].append({
+                'date': reading.reading_date,
+                'value': reading.value
+            })
         
         return Response(consumption_data)
     
     @action(detail=False, methods=['get'])
     def apartment_history(self, request):
-        """Ιστορικό μετρήσεων για συγκεκριμένο διαμέρισμα"""
+        """Λήψη ιστορικού μετρήσεων διαμερίσματος"""
         apartment_id = request.query_params.get('apartment_id')
         meter_type = request.query_params.get('meter_type')
+        limit = int(request.query_params.get('limit', 12))
         
         if not apartment_id:
             return Response(
@@ -532,61 +825,42 @@ class MeterReadingViewSet(viewsets.ModelViewSet):
         if meter_type:
             queryset = queryset.filter(meter_type=meter_type)
         
-        readings = queryset.order_by('reading_date')
-        serializer = self.get_serializer(readings, many=True)
-        
+        queryset = queryset.order_by('-reading_date')[:limit]
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['post'])
     def bulk_import(self, request):
         """Μαζική εισαγωγή μετρήσεων"""
-        building_id = request.data.get('building_id')
-        readings_data = request.data.get('readings', [])
-        
-        if not building_id:
-            return Response(
-                {'error': 'Building ID is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        if not readings_data:
-            return Response(
-                {'error': 'Readings data is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        created_readings = []
-        errors = []
-        
-        for reading_data in readings_data:
-            try:
-                # Προσθήκη building_id στο reading_data
-                reading_data['apartment'] = reading_data.get('apartment_id')
-                
+        try:
+            readings_data = request.data.get('readings', [])
+            created_readings = []
+            
+            for reading_data in readings_data:
                 serializer = self.get_serializer(data=reading_data)
                 if serializer.is_valid():
                     reading = serializer.save()
                     created_readings.append(reading)
                 else:
-                    errors.append({
-                        'data': reading_data,
-                        'errors': serializer.errors
-                    })
-            except Exception as e:
-                errors.append({
-                    'data': reading_data,
-                    'errors': str(e)
-                })
-        
-        return Response({
-            'created_count': len(created_readings),
-            'errors': errors,
-            'created_readings': MeterReadingSerializer(created_readings, many=True).data
-        })
+                    return Response(
+                        {'error': f'Σφάλμα σε μετρήση: {serializer.errors}'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            return Response({
+                'success': True,
+                'message': f'Δημιουργήθηκαν {len(created_readings)} μετρήσεις',
+                'created_count': len(created_readings)
+            })
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
     
     @action(detail=False, methods=['get'])
     def statistics(self, request):
-        """Στατιστικά μετρήσεων για το κτίριο"""
+        """Λήψη στατιστικών μετρήσεων"""
         building_id = request.query_params.get('building_id')
         meter_type = request.query_params.get('meter_type')
         
@@ -596,43 +870,31 @@ class MeterReadingViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        queryset = self.queryset.filter(apartment__building_id=building_id)
+        queryset = self.get_queryset()
         
         if meter_type:
             queryset = queryset.filter(meter_type=meter_type)
         
-        # Βασικά στατιστικά
+        # Υπολογισμός στατιστικών
         total_readings = queryset.count()
-        apartments_with_readings = queryset.values('apartment').distinct().count()
+        avg_consumption = queryset.aggregate(avg=models.Avg('value'))['avg'] or 0
+        max_consumption = queryset.aggregate(max=models.Max('value'))['max'] or 0
+        min_consumption = queryset.aggregate(min=models.Min('value'))['min'] or 0
         
-        # Πρόσφατες μετρήσεις
-        recent_readings = queryset.order_by('-reading_date')[:10]
-        
-        # Υπολογισμός συνολικής κατανάλωσης (αν υπάρχουν τουλάχιστον 2 μετρήσεις ανά διαμέρισμα)
-        total_consumption = Decimal('0.00')
-        consumption_by_apartment = {}
-        
-        for apartment in queryset.values('apartment').distinct():
-            apartment_id = apartment['apartment']
-            apartment_readings = queryset.filter(apartment_id=apartment_id).order_by('reading_date')
-            
-            if len(apartment_readings) >= 2:
-                first_reading = apartment_readings.first()
-                last_reading = apartment_readings.last()
-                consumption = last_reading.value - first_reading.value
-                
-                total_consumption += consumption
-                consumption_by_apartment[apartment_id] = {
-                    'apartment_number': first_reading.apartment.number,
-                    'consumption': consumption
-                }
+        # Κατανάλωση ανά διαμέρισμα
+        apartment_consumption = {}
+        for reading in queryset:
+            apartment_key = reading.apartment.number
+            if apartment_key not in apartment_consumption:
+                apartment_consumption[apartment_key] = 0
+            apartment_consumption[apartment_key] += reading.value
         
         return Response({
             'total_readings': total_readings,
-            'apartments_with_readings': apartments_with_readings,
-            'total_consumption': total_consumption,
-            'consumption_by_apartment': consumption_by_apartment,
-            'recent_readings': MeterReadingSerializer(recent_readings, many=True).data
+            'average_consumption': avg_consumption,
+            'max_consumption': max_consumption,
+            'min_consumption': min_consumption,
+            'apartment_consumption': apartment_consumption
         })
 
 
@@ -644,170 +906,158 @@ class ReportViewSet(viewsets.ViewSet):
     def transaction_history(self, request):
         """Αναφορά ιστορικού κινήσεων"""
         building_id = request.query_params.get('building_id')
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        transaction_type = request.query_params.get('type')
+        
         if not building_id:
             return Response(
                 {'error': 'Building ID is required'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Παράμετροι φιλτραρίσματος
-        start_date = request.query_params.get('start_date')
-        end_date = request.query_params.get('end_date')
-        transaction_type = request.query_params.get('transaction_type')
-        apartment_id = request.query_params.get('apartment_id')
-        
-        # Μετατροπή ημερομηνιών
-        if start_date:
-            try:
-                start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-            except ValueError:
-                return Response(
-                    {'error': 'Invalid start_date format. Use YYYY-MM-DD'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        
-        if end_date:
-            try:
-                end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-            except ValueError:
-                return Response(
-                    {'error': 'Invalid end_date format. Use YYYY-MM-DD'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        
-        # Δημιουργία αναφοράς
-        report_service = ReportService(building_id)
-        transactions = report_service.generate_transaction_history_report(
-            start_date=start_date,
-            end_date=end_date,
-            transaction_type=transaction_type,
-            apartment_id=apartment_id
-        )
-        
-        serializer = TransactionSerializer(transactions, many=True)
-        return Response(serializer.data)
+        try:
+            service = ReportService(int(building_id))
+            report_data = service.generate_transaction_history_report(
+                start_date=date_from,
+                end_date=date_to,
+                transaction_type=transaction_type
+            )
+            
+            return Response(report_data)
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @action(detail=False, methods=['get'])
     def apartment_balances(self, request):
-        """Αναφορά κατάστασης οφειλών"""
+        """Αναφορά υπολοίπων διαμερισμάτων"""
         building_id = request.query_params.get('building_id')
+        
         if not building_id:
             return Response(
                 {'error': 'Building ID is required'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        apartment_id = request.query_params.get('apartment_id')
-        
-        report_service = ReportService(building_id)
-        balance_data = report_service.generate_apartment_balance_report(apartment_id=apartment_id)
-        
-        return Response(balance_data)
+        try:
+            service = ReportService(int(building_id))
+            report_data = service.generate_apartment_balance_report()
+            
+            return Response(report_data)
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @action(detail=False, methods=['get'])
     def financial_summary(self, request):
-        """Οικονομική σύνοψη"""
+        """Αναφορά οικονομικού συνόψη"""
         building_id = request.query_params.get('building_id')
+        period = request.query_params.get('period', 'month')
+        
         if not building_id:
             return Response(
                 {'error': 'Building ID is required'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        period = request.query_params.get('period', 'month')
-        
-        report_service = ReportService(building_id)
-        summary_data = report_service.generate_financial_summary_report(period=period)
-        
-        return Response(summary_data)
+        try:
+            service = ReportService(int(building_id))
+            report_data = service.generate_financial_summary_report(
+                period=period
+            )
+            
+            return Response(report_data)
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @action(detail=False, methods=['get'])
     def cash_flow(self, request):
-        """Δεδομένα ταμειακής ροής"""
+        """Αναφορά ταμειακών ροών"""
         building_id = request.query_params.get('building_id')
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        
         if not building_id:
             return Response(
                 {'error': 'Building ID is required'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        days = int(request.query_params.get('days', 30))
-        
-        report_service = ReportService(building_id)
-        cash_flow_data = report_service.generate_cash_flow_data(days=days)
-        
-        return Response(cash_flow_data)
+        try:
+            service = ReportService(int(building_id))
+            days_param = request.query_params.get('days')
+            days = int(days_param) if days_param and days_param.isdigit() else 30
+            report_data = service.generate_cash_flow_data(days=days)
+            
+            return Response(report_data)
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @action(detail=False, methods=['get'])
     def export_excel(self, request):
-        """Εξαγωγή σε Excel"""
+        """Export σε Excel"""
+        report_type = request.query_params.get('type')
         building_id = request.query_params.get('building_id')
-        report_type = request.query_params.get('report_type')
         
         if not building_id or not report_type:
             return Response(
-                {'error': 'Building ID and report_type are required'}, 
+                {'error': 'Report type and Building ID are required'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Παράμετροι φιλτραρίσματος
-        kwargs = {}
-        for param in ['start_date', 'end_date', 'transaction_type', 'apartment_id', 'period']:
-            value = request.query_params.get(param)
-            if value:
-                kwargs[param] = value
-        
         try:
-            report_service = ReportService(building_id)
-            output, filename = report_service.export_to_excel(report_type, **kwargs)
-            
-            from django.http import HttpResponse
-            response = HttpResponse(
-                output.getvalue(),
-                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            service = ReportService(int(building_id))
+            excel_file = service.export_to_excel(
+                report_type=report_type
             )
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            return response
             
+            return Response({
+                'success': True,
+                'file_url': excel_file,
+                'message': 'Η αναφορά εξήχθη επιτυχώς'
+            })
         except Exception as e:
             return Response(
-                {'error': f'Export failed: {str(e)}'}, 
+                {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
     @action(detail=False, methods=['get'])
     def export_pdf(self, request):
-        """Εξαγωγή σε PDF"""
+        """Export σε PDF"""
+        report_type = request.query_params.get('type')
         building_id = request.query_params.get('building_id')
-        report_type = request.query_params.get('report_type')
         
         if not building_id or not report_type:
             return Response(
-                {'error': 'Building ID and report_type are required'}, 
+                {'error': 'Report type and Building ID are required'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Παράμετροι φιλτραρίσματος
-        kwargs = {}
-        for param in ['start_date', 'end_date', 'transaction_type', 'apartment_id', 'period']:
-            value = request.query_params.get(param)
-            if value:
-                kwargs[param] = value
-        
         try:
-            report_service = ReportService(building_id)
-            output, filename = report_service.generate_pdf_report(report_type, **kwargs)
-            
-            from django.http import HttpResponse
-            response = HttpResponse(
-                output.getvalue(),
-                content_type='application/pdf'
+            service = ReportService(int(building_id))
+            pdf_file = service.generate_pdf_report(
+                report_type=report_type
             )
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            return response
             
+            return Response({
+                'success': True,
+                'file_url': pdf_file,
+                'message': 'Η αναφορά εξήχθη επιτυχώς'
+            })
         except Exception as e:
             return Response(
-                {'error': f'PDF generation failed: {str(e)}'}, 
+                {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

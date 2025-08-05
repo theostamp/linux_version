@@ -251,7 +251,7 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
                         </span>
                       </div>
                       <div>
-                        <span className="font-medium">Συνολικές Πληρωμές:</span>
+                        <span className="font-medium">Συνολικές Εισπράξεις:</span>
                         <span className="ml-1 font-semibold text-green-600">
                           {formatCurrency(balance.total_payments || 0)}
                         </span>
@@ -267,7 +267,7 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
                     {/* Payment History Summary */}
                     {balance.recent_payments && balance.recent_payments.length > 0 && (
                       <div className="mt-2 text-sm text-gray-500">
-                        <span className="font-medium">Πρόσφατες πληρωμές:</span>
+                        <span className="font-medium">Πρόσφατες εισπράξεις:</span>
                         <div className="flex gap-2 mt-1">
                           {balance.recent_payments.slice(0, 3).map((payment, index) => (
                             <Badge key={index} variant="outline" className="text-xs">
@@ -305,7 +305,7 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
                             // TODO: Open payment form for this apartment
                           }}
                         >
-                          Πληρωμή
+                                                      Είσπραξη
                         </Button>
                       )}
                     </div>

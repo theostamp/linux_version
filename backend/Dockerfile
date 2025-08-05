@@ -11,7 +11,8 @@ RUN apt-get update && \
         build-essential \
         gcc \
         libpq-dev \
-        postgresql-client && \
+        postgresql-client \
+        libmagic1 && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python deps

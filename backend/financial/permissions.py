@@ -76,9 +76,9 @@ class FinancialWritePermission(permissions.BasePermission, FinancialPermissionMi
     """
     
     def has_permission(self, request, view):
-        # Για POST requests, έλεγχος αν υπάρχει building_id στο request
+        # Για POST requests, έλεγχος αν υπάρχει building_id ή building στο request
         if request.method == 'POST':
-            building_id = request.data.get('building_id') or request.query_params.get('building_id')
+            building_id = request.data.get('building_id') or request.data.get('building') or request.query_params.get('building_id')
             if building_id:
                 from buildings.models import Building
                 try:
@@ -160,7 +160,7 @@ class ExpensePermission(permissions.BasePermission, FinancialPermissionMixin):
 
 class PaymentPermission(permissions.BasePermission, FinancialPermissionMixin):
     """
-    Ειδικό permission για πληρωμές
+    Ειδικό permission για εισπράξεις
     
     - Ανάγνωση: Όλοι οι εξουσιοδοτημένοι χρήστες
     - Δημιουργία/Επεξεργασία: Managers και πάνω

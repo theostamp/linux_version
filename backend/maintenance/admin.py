@@ -43,7 +43,7 @@ class ServiceReceiptAdmin(admin.ModelAdmin):
         ('Αρχείο', {
             'fields': ('receipt_file',)
         }),
-        ('Κατάσταση Πληρωμής', {
+        ('Κατάσταση Εισπράξεως', {
             'fields': ('payment_status', 'payment_date')
         }),
         ('Δημιουργία', {

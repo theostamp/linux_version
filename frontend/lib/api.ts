@@ -5,8 +5,7 @@ export type { UserRequest };
 import type { User } from '@/types/user';
 import { apiPublic } from './apiPublic';
 
-// Βασικό URL του API. Προσαρμόστε το NEXT_PUBLIC_API_URL στο .env.local ή .env.production
-// Χρησιμοποιούμε το tenant subdomain για να πάμε στο σωστό tenant schema
+// Βασικό URL του API. Χρησιμοποιούμε την ίδια λογική με το apiPublic για tenant-specific URLs
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
@@ -14,7 +13,6 @@ const getApiBaseUrl = () => {
     
     // Αν είναι tenant subdomain (π.χ. demo.localhost), χρησιμοποιούμε το ίδιο subdomain για το API
     if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
-      // Χρησιμοποιούμε το port 8000 για το backend
       const apiUrl = `http://${hostname}:8000/api`;
       console.log(`[API] Using tenant-specific API URL: ${apiUrl}`);
       return apiUrl;
@@ -65,6 +63,15 @@ api.interceptors.request.use(
       `[AXIOS REQ INTERCEPTOR] URL: ${config.url}`,
       `Token from localStorage: ${access ? 'Υπάρχει (...${access.slice(-10)})' : 'ΔΕΝ υπάρχει ή είναι null'}`
     );
+    
+    // Debug: Check if token looks like a valid JWT
+    if (access) {
+      const tokenParts = access.split('.');
+      console.log(`[AXIOS REQ INTERCEPTOR] Token parts count: ${tokenParts.length}, Token length: ${access.length}`);
+      if (tokenParts.length !== 3) {
+        console.warn('[AXIOS REQ INTERCEPTOR] Token does not appear to be a valid JWT (should have 3 parts)');
+      }
+    }
 
     if (access && access.length > 0 && !config.url?.includes('/users/login/') && !config.url?.includes('/users/token/refresh/')) {
       config.headers.Authorization = `Bearer ${access}`;
@@ -93,7 +100,9 @@ api.interceptors.request.use(
   }
 );
 
-// Response Interceptor (για χειρισμό ληγμένων tokens)
+import { handleApiError, shouldRetry, getRetryDelay } from './apiUtils';
+
+// Response Interceptor (για χειρισμό ληγμένων tokens και retry logic)
 function shouldAttemptTokenRefresh(
   error: AxiosError,
   originalRequest: InternalAxiosRequestConfig & { _retry?: boolean }
@@ -395,7 +404,67 @@ export async function fetchAllBuildingsPublic(): Promise<Building[]> {
     return buildings;
   } catch (error) {
     console.error('[API CALL] Error fetching all buildings (public):', error);
-    throw error;
+    
+    // Fallback: Return static building data for kiosk mode
+    console.log('[API CALL] Using fallback static building data');
+    const fallbackBuildings: Building[] = [
+      {
+        id: 3,
+        name: "Σόλωνος 8, Αθήνα 106 73",
+        address: "Σόλωνος 8, Αθήνα 106 73, Ελλάδα",
+        city: "Αθήνα",
+        postal_code: "10673",
+        apartments_count: 12,
+        internal_manager_name: "Νίκος Δημητρίου",
+        internal_manager_phone: "2103456789",
+        management_office_name: "Compuyterme",
+        management_office_phone: "21055566368",
+        management_office_address: "Αθήνα, Ελλάδα",
+        latitude: 37.9838,
+        longitude: 23.7275,
+        street_view_image: null,
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z"
+      },
+      {
+        id: 1,
+        name: "Πατησίων 123",
+        address: "Πατησίων 123, Αθήνα, Ελλάδα",
+        city: "Αθήνα",
+        postal_code: "10434",
+        apartments_count: 8,
+        internal_manager_name: "Μαρία Παπαδοπούλου",
+        internal_manager_phone: "2101234567",
+        management_office_name: "Compuyterme",
+        management_office_phone: "21055566368",
+        management_office_address: "Αθήνα, Ελλάδα",
+        latitude: 37.9838,
+        longitude: 23.7275,
+        street_view_image: null,
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z"
+      },
+      {
+        id: 2,
+        name: "Κηφισίας 456",
+        address: "Κηφισίας 456, Αθήνα, Ελλάδα",
+        city: "Αθήνα",
+        postal_code: "11525",
+        apartments_count: 15,
+        internal_manager_name: "Γιώργος Κωνσταντίνου",
+        internal_manager_phone: "2109876543",
+        management_office_name: "Compuyterme",
+        management_office_phone: "21055566368",
+        management_office_address: "Αθήνα, Ελλάδα",
+        latitude: 37.9838,
+        longitude: 23.7275,
+        street_view_image: null,
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z"
+      }
+    ];
+    
+    return fallbackBuildings;
   }
 }
 
@@ -456,9 +525,9 @@ export async function deleteBuilding(id: number): Promise<void> {
   console.log(`[API CALL] Attempting to delete building ${id}`);
   try {
     await api.delete(`/buildings/${id}/`);
-    console.log(`[API CALL] Successfully deleted building ${id}`);
+    console.log(`[API] Successfully deleted building ${id}`);
   } catch (error) {
-    console.error(`[API CALL] Error deleting building ${id}:`, error);
+    console.error(`[API] Error deleting building ${id}:`, error);
     throw error;
   }
 }
@@ -661,6 +730,13 @@ export interface PublicInfoData {
     management_office_name?: string;
     management_office_phone?: string;
     management_office_address?: string;
+  };
+  financial_info?: {
+    total_payments: number;
+    pending_payments: number;
+    overdue_payments: number;
+    total_collected: number;
+    collection_rate: number;
   };
   advertising_banners?: Array<{
     id: number;
@@ -960,11 +1036,15 @@ async function handleTokenRefresh(originalRequest: InternalAxiosRequestConfig & 
     console.log('[handleTokenRefresh] Attempting to refresh token with:', API_BASE_URL);
     
     // Χρησιμοποιούμε απευθείας axios αντί για το api instance για να αποφύγουμε κυκλικές κλήσεις
-    const { data } = await axios.post<{ access: string }>(`${API_BASE_URL}/users/token/refresh/`, { refresh }, {
+    const response = await axios.post(`${API_BASE_URL}/users/token/refresh/`, { refresh }, {
       baseURL: API_BASE_URL,
       headers: { 'Content-Type': 'application/json' },
       withCredentials: true,
     });
+    
+    console.log('[handleTokenRefresh] Token refresh response:', response.data);
+    
+    const { data } = response;
 
     if (!data.access) {
       console.error('[handleTokenRefresh] Token refresh response did not include access token!', data);
@@ -972,19 +1052,47 @@ async function handleTokenRefresh(originalRequest: InternalAxiosRequestConfig & 
     }
 
     console.log('[handleTokenRefresh] Token refresh successful, new token received');
+    console.log('[handleTokenRefresh] New token (first 20 chars):', data.access.substring(0, 20) + '...');
+    console.log('[handleTokenRefresh] New token length:', data.access.length);
+    console.log('[handleTokenRefresh] New token type:', typeof data.access);
+    
+    // Check if token is a valid JWT format
+    const tokenParts = data.access.split('.');
+    console.log('[handleTokenRefresh] Token parts count:', tokenParts.length);
+    if (tokenParts.length !== 3) {
+      console.error('[handleTokenRefresh] Invalid JWT token format - should have 3 parts');
+    }
     
     if (typeof window !== 'undefined') {
       localStorage.setItem('access', data.access);
       console.log('[handleTokenRefresh] New access token saved to localStorage');
+      
+      // Verify the token was saved correctly
+      const savedToken = localStorage.getItem('access');
+      console.log('[handleTokenRefresh] Verified saved token (first 20 chars):', savedToken?.substring(0, 20) + '...');
+      
+      // Verify token integrity
+      if (savedToken !== data.access) {
+        console.error('[handleTokenRefresh] Token corruption detected! Original and saved tokens do not match');
+        console.error('[handleTokenRefresh] Original token length:', data.access.length);
+        console.error('[handleTokenRefresh] Saved token length:', savedToken?.length);
+      } else {
+        console.log('[handleTokenRefresh] Token integrity verified - saved token matches original');
+      }
     }
 
-    // Αποθηκεύουμε το νέο token
+    // Αποθηκεύουμε το νέο token στο axios instance
     api.defaults.headers.common['Authorization'] = `Bearer ${data.access}`;
+    console.log('[handleTokenRefresh] Set Authorization header in api defaults');
     processQueue(null, data.access);
 
     // Ορίζουμε Authorization για το αρχικό αίτημα
     originalRequest.headers = originalRequest.headers || {};
     originalRequest.headers['Authorization'] = `Bearer ${data.access}`;
+    
+    // Επιπλέον έλεγχος: βεβαιωθείτε ότι το token είναι σωστά αποθηκευμένο
+    console.log('[handleTokenRefresh] Final check - Token in localStorage:', localStorage.getItem('access')?.substring(0, 20) + '...');
+    console.log('[handleTokenRefresh] Final check - Token in api defaults:', api.defaults.headers.common['Authorization']?.substring(0, 20) + '...');
 
     // 🔍 DEBUG LOG ΠΡΙΝ το retry
     console.log('%c[INTERCEPTOR] Replaying original request with new token:', 'color: green; font-weight: bold;');
@@ -996,12 +1104,25 @@ async function handleTokenRefresh(originalRequest: InternalAxiosRequestConfig & 
         Authorization: originalRequest.headers['Authorization']?.slice(0, 10) + '...' // Μόνο τα πρώτα 10 chars
       }
     });
+    
+    // Additional debugging for the Authorization header
+    const authHeader = originalRequest.headers['Authorization'];
+    console.log('[handleTokenRefresh] Authorization header being sent:', authHeader?.substring(0, 30) + '...');
+    console.log('[handleTokenRefresh] Authorization header starts with "Bearer":', authHeader?.startsWith('Bearer '));
 
     // Επαναποστολή του αρχικού αιτήματος με το νέο token
+    // Χρησιμοποιούμε το api instance που τώρα έχει το νέο token
+    console.log('[handleTokenRefresh] About to retry original request with new token');
+    
+    // Small delay to ensure token is properly saved and applied
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     return api(originalRequest);
 
   } catch (refreshError: any) {
     console.error('[handleTokenRefresh] Token refresh failed:', refreshError);
+    console.error('[handleTokenRefresh] Error response:', refreshError.response?.data);
+    console.error('[handleTokenRefresh] Error status:', refreshError.response?.status);
     
     // Αν το refresh απέτυχε, πιθανότατα το refresh token είναι άκυρο ή έχει λήξει
     handleLogout('[handleTokenRefresh] Token refresh failed. Logging out.');

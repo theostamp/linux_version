@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePayments } from '@/hooks/usePayments';
-import { Payment, PaymentMethod, PaymentType } from '@/types/financial';
+import { Payment, PaymentMethod } from '@/types/financial';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
 interface PaymentListProps {
@@ -26,7 +26,6 @@ export const PaymentList: React.FC<PaymentListProps> = ({
   const { payments, isLoading, error } = usePayments(buildingId);
   const [searchTerm, setSearchTerm] = useState('');
   const [methodFilter, setMethodFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
 
   const filteredPayments = useMemo(() => {
@@ -34,26 +33,22 @@ export const PaymentList: React.FC<PaymentListProps> = ({
 
     return payments.filter((payment) => {
       // Apartment filter
-      if (apartmentFilter && payment.apartment_id !== apartmentFilter) {
+      if (apartmentFilter && payment.apartment !== apartmentFilter) {
         return false;
       }
 
       // Search filter
       const matchesSearch = 
-        payment.reference_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         payment.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         payment.apartment_number?.toLowerCase().includes(searchTerm.toLowerCase());
 
       // Method filter
-      const matchesMethod = methodFilter === 'all' || payment.payment_method === methodFilter;
-
-      // Type filter
-      const matchesType = typeFilter === 'all' || payment.payment_type === typeFilter;
+      const matchesMethod = methodFilter === 'all' || payment.method === methodFilter;
 
       // Date filter
       let matchesDate = true;
       if (dateFilter !== 'all') {
-        const paymentDate = new Date(payment.payment_date);
+        const paymentDate = new Date(payment.date);
         const today = new Date();
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         const startOfYear = new Date(today.getFullYear(), 0, 1);
@@ -76,54 +71,28 @@ export const PaymentList: React.FC<PaymentListProps> = ({
         }
       }
 
-      return matchesSearch && matchesMethod && matchesType && matchesDate;
+      return matchesSearch && matchesMethod && matchesDate;
     });
-  }, [payments, searchTerm, methodFilter, typeFilter, dateFilter, apartmentFilter]);
+  }, [payments, searchTerm, methodFilter, dateFilter, apartmentFilter]);
 
-  const getMethodColor = (method: PaymentMethod) => {
-    const colors: Record<PaymentMethod, string> = {
-      [PaymentMethod.CASH]: 'bg-green-100 text-green-800',
-      [PaymentMethod.BANK_TRANSFER]: 'bg-blue-100 text-blue-800',
-      [PaymentMethod.CHECK]: 'bg-purple-100 text-purple-800',
-      [PaymentMethod.CREDIT_CARD]: 'bg-orange-100 text-orange-800',
-      [PaymentMethod.DEBIT_CARD]: 'bg-cyan-100 text-cyan-800',
-      [PaymentMethod.OTHER]: 'bg-gray-100 text-gray-800',
+  const getMethodColor = (method: string) => {
+    const colors: Record<string, string> = {
+      'cash': 'bg-green-100 text-green-800',
+      'bank_transfer': 'bg-blue-100 text-blue-800',
+      'check': 'bg-purple-100 text-purple-800',
+      'card': 'bg-orange-100 text-orange-800',
     };
     return colors[method] || 'bg-gray-100 text-gray-800';
   };
 
-  const getTypeColor = (type: PaymentType) => {
-    const colors: Record<PaymentType, string> = {
-      [PaymentType.COMMON_EXPENSE]: 'bg-blue-100 text-blue-800',
-      [PaymentType.RESERVE_FUND]: 'bg-green-100 text-green-800',
-      [PaymentType.SPECIAL_EXPENSE]: 'bg-orange-100 text-orange-800',
-      [PaymentType.ADVANCE]: 'bg-purple-100 text-purple-800',
-      [PaymentType.OTHER]: 'bg-gray-100 text-gray-800',
+  const getMethodLabel = (method: string) => {
+    const labels: Record<string, string> = {
+      'cash': 'Μετρητά',
+      'bank_transfer': 'Τραπεζική Μεταφορά',
+      'check': 'Επιταγή',
+      'card': 'Κάρτα',
     };
-    return colors[type] || 'bg-gray-100 text-gray-800';
-  };
-
-  const getMethodLabel = (method: PaymentMethod) => {
-    const labels: Record<PaymentMethod, string> = {
-      [PaymentMethod.CASH]: 'Μετρητά',
-      [PaymentMethod.BANK_TRANSFER]: 'Τραπεζική Μεταφορά',
-      [PaymentMethod.CHECK]: 'Επιταγή',
-      [PaymentMethod.CREDIT_CARD]: 'Πιστωτική Κάρτα',
-      [PaymentMethod.DEBIT_CARD]: 'Χρεωστική Κάρτα',
-      [PaymentMethod.OTHER]: 'Άλλο',
-    };
-    return labels[method];
-  };
-
-  const getTypeLabel = (type: PaymentType) => {
-    const labels: Record<PaymentType, string> = {
-      [PaymentType.COMMON_EXPENSE]: 'Κοινόχρηστα',
-      [PaymentType.RESERVE_FUND]: 'Ταμείο Εφεδρείας',
-      [PaymentType.SPECIAL_EXPENSE]: 'Ειδική Δαπάνη',
-      [PaymentType.ADVANCE]: 'Προκαταβολή',
-      [PaymentType.OTHER]: 'Άλλο',
-    };
-    return labels[type];
+    return labels[method] || method;
   };
 
   const totalAmount = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
@@ -147,7 +116,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
       <Card>
         <CardContent className="p-6">
           <div className="text-center text-red-600">
-            Σφάλμα κατά τη φόρτωση των πληρωμών: {error}
+            Σφάλμα κατά τη φόρτωση των εισπράξεων: {error}
           </div>
         </CardContent>
       </Card>
@@ -158,10 +127,10 @@ export const PaymentList: React.FC<PaymentListProps> = ({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Λίστα Πληρωμών</span>
+          <span>Λίστα Εισπράξεων</span>
           <div className="flex items-center gap-4">
             <Badge variant="secondary">
-              {filteredPayments.length} πληρωμές
+              {filteredPayments.length} από {payments?.length || 0}
             </Badge>
             <Badge variant="outline" className="text-green-600">
               Σύνολο: {formatCurrency(totalAmount)}
@@ -171,49 +140,35 @@ export const PaymentList: React.FC<PaymentListProps> = ({
       </CardHeader>
       <CardContent>
         {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Input
-            placeholder="Αναζήτηση πληρωμής..."
+            placeholder="Αναζήτηση εισπράξεως..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="md:col-span-2"
           />
           <Select value={methodFilter} onValueChange={setMethodFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Μέθοδος" />
+              <SelectValue placeholder="Τρόπος Πληρωμής" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Όλες οι μέθοδοι</SelectItem>
-              {Object.values(PaymentMethod).map((method) => (
-                <SelectItem key={method} value={method}>
-                  {getMethodLabel(method)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Τύπος" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Όλοι οι τύποι</SelectItem>
-              {Object.values(PaymentType).map((type) => (
-                <SelectItem key={type} value={type}>
-                  {getTypeLabel(type)}
-                </SelectItem>
-              ))}
+              <SelectItem value="all">Όλοι οι τρόποι</SelectItem>
+              <SelectItem value="cash">Μετρητά</SelectItem>
+              <SelectItem value="bank_transfer">Τραπεζική Μεταφορά</SelectItem>
+              <SelectItem value="check">Επιταγή</SelectItem>
+              <SelectItem value="card">Κάρτα</SelectItem>
             </SelectContent>
           </Select>
           <Select value={dateFilter} onValueChange={setDateFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Ημερομηνία" />
+              <SelectValue placeholder="Περίοδος" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Όλες οι ημερομηνίες</SelectItem>
               <SelectItem value="today">Σήμερα</SelectItem>
-              <SelectItem value="this_month">Αυτόν τον μήνα</SelectItem>
-              <SelectItem value="last_month">Τον προηγούμενο μήνα</SelectItem>
-              <SelectItem value="this_year">Φέτος</SelectItem>
+              <SelectItem value="this_month">Αυτός ο μήνας</SelectItem>
+              <SelectItem value="last_month">Προηγούμενος μήνας</SelectItem>
+              <SelectItem value="this_year">Αυτό το έτος</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -222,7 +177,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
         <div className="space-y-4">
           {filteredPayments.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              Δεν βρέθηκαν πληρωμές με τα επιλεγμένα κριτήρια
+              Δεν βρέθηκαν εισπράξεις με τα επιλεγμένα κριτήρια
             </div>
           ) : (
             filteredPayments.map((payment) => (
@@ -235,13 +190,10 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-semibold text-lg">
-                        Διαμέρισμα {payment.apartment_number}
+                        Είσπραξη - {payment.apartment_number || `Διαμέρισμα ${payment.apartment}`}
                       </h3>
-                      <Badge className={getMethodColor(payment.payment_method)}>
-                        {getMethodLabel(payment.payment_method)}
-                      </Badge>
-                      <Badge className={getTypeColor(payment.payment_type)}>
-                        {getTypeLabel(payment.payment_type)}
+                      <Badge className={getMethodColor(payment.method)}>
+                        {getMethodLabel(payment.method)}
                       </Badge>
                     </div>
                     
@@ -254,16 +206,14 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                       </div>
                       <div>
                         <span className="font-medium">Ημερομηνία:</span>
-                        <span className="ml-1">{formatDate(payment.payment_date)}</span>
+                        <span className="ml-1">{formatDate(payment.date)}</span>
                       </div>
                       <div>
-                        <span className="font-medium">Αναφορά:</span>
-                        <span className="ml-1">
-                          {payment.reference_number || 'Δεν υπάρχει'}
-                        </span>
+                        <span className="font-medium">Διαμέρισμα:</span>
+                        <span className="ml-1">{payment.apartment_number || payment.apartment}</span>
                       </div>
                       <div>
-                        <span className="font-medium">Καταχωρήθηκε:</span>
+                        <span className="font-medium">Δημιουργήθηκε:</span>
                         <span className="ml-1">{formatDate(payment.created_at)}</span>
                       </div>
                     </div>

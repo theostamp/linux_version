@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useCommonExpenses } from '@/hooks/useCommonExpenses';
 import { toast } from 'sonner';
-import { Calculator, FileText, Send } from 'lucide-react';
+import { Calculator, FileText, Send, Zap, Calendar, Info } from 'lucide-react';
 
 interface CommonExpenseCalculatorProps {
   buildingId: number;
@@ -40,14 +40,115 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
   const [isCalculating, setIsCalculating] = useState(false);
   const [isIssuing, setIsIssuing] = useState(false);
   const [totalExpenses, setTotalExpenses] = useState(0);
+  const [isQuickMode, setIsQuickMode] = useState(false);
   
   const { calculateShares, issueCommonExpenses } = useCommonExpenses();
+  
+  // Helper function to get current month dates
+  const getCurrentMonthDates = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    
+    // First day of current month
+    const firstDay = new Date(year, month, 1);
+    // Last day of current month
+    const lastDay = new Date(year, month + 1, 0);
+    
+    return {
+      startDate: firstDay.toISOString().split('T')[0],
+      endDate: lastDay.toISOString().split('T')[0],
+      periodName: `${firstDay.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}`
+    };
+  };
+  
+  // Helper function to get previous month dates
+  const getPreviousMonthDates = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() - 1;
+    
+    // First day of previous month
+    const firstDay = new Date(year, month, 1);
+    // Last day of previous month
+    const lastDay = new Date(year, month + 1, 0);
+    
+    return {
+      startDate: firstDay.toISOString().split('T')[0],
+      endDate: lastDay.toISOString().split('T')[0],
+      periodName: `${firstDay.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}`
+    };
+  };
+  
+  // Quick calculation for current month
+  const handleQuickCalculate = async () => {
+    const { startDate: quickStart, endDate: quickEnd, periodName: quickPeriod } = getCurrentMonthDates();
+    
+    setStartDate(quickStart);
+    setEndDate(quickEnd);
+    setPeriodName(quickPeriod);
+    setIsQuickMode(true);
+    
+    try {
+      setIsCalculating(true);
+      
+      const result = await calculateShares({
+        building_id: buildingId,
+        period_name: quickPeriod,
+        start_date: quickStart,
+        end_date: quickEnd
+      });
+      
+      setShares(result.shares);
+      setTotalExpenses(result.total_expenses);
+      
+      toast.success('Γρήγορος υπολογισμός τρέχοντος μήνα ολοκληρώθηκε επιτυχώς');
+    } catch (error) {
+      console.error('Error in quick calculation:', error);
+      toast.error('Σφάλμα κατά τον γρήγορο υπολογισμό');
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+  
+  // Quick calculation for previous month
+  const handlePreviousMonthCalculate = async () => {
+    const { startDate: prevStart, endDate: prevEnd, periodName: prevPeriod } = getPreviousMonthDates();
+    
+    setStartDate(prevStart);
+    setEndDate(prevEnd);
+    setPeriodName(prevPeriod);
+    setIsQuickMode(true);
+    
+    try {
+      setIsCalculating(true);
+      
+      const result = await calculateShares({
+        building_id: buildingId,
+        period_name: prevPeriod,
+        start_date: prevStart,
+        end_date: prevEnd
+      });
+      
+      setShares(result.shares);
+      setTotalExpenses(result.total_expenses);
+      
+      toast.success('Γρήγορος υπολογισμός προηγούμενου μήνα ολοκληρώθηκε επιτυχώς');
+    } catch (error) {
+      console.error('Error in previous month calculation:', error);
+      toast.error('Σφάλμα κατά τον υπολογισμό προηγούμενου μήνα');
+    } finally {
+      setIsCalculating(false);
+    }
+  };
   
   const handleCalculate = async () => {
     if (!periodName || !startDate || !endDate) {
       toast.error('Παρακαλώ συμπληρώστε όλα τα πεδία');
       return;
     }
+    
+    setIsQuickMode(false);
     
     try {
       setIsCalculating(true);
@@ -80,17 +181,36 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
     try {
       setIsIssuing(true);
       
-      // Δημιουργία περιόδου
-      const periodData = {
-        building_id: buildingId,
-        period_name: periodName,
-        start_date: startDate,
-        end_date: endDate
-      };
+      // Μετατροπή των shares σε μορφή που περιμένει το backend
+      const sharesData: Record<string, { total_amount: number; breakdown: Record<string, any> }> = {};
+      
+      Object.entries(shares).forEach(([apartmentId, share]) => {
+        sharesData[apartmentId] = {
+          total_amount: share.total_amount,
+          breakdown: share.breakdown.reduce((acc, item) => {
+            acc[item.expense_id] = {
+              expense_title: item.expense_title,
+              expense_amount: item.expense_amount,
+              apartment_share: item.apartment_share,
+              distribution_type: item.distribution_type,
+              category: item.category
+            };
+            return acc;
+          }, {} as Record<string, any>)
+        };
+      });
       
       await issueCommonExpenses({
-        period_data: periodData,
-        apartment_shares: Object.values(shares)
+        building_id: buildingId,
+        period_data: {
+          name: periodName,
+          start_date: startDate,
+          end_date: endDate
+        },
+        shares: sharesData,
+        expense_ids: Object.values(shares).flatMap(share => 
+          share.breakdown.map(item => item.expense_id)
+        )
       });
       
       toast.success('Κοινοχρήστων εκδόθηκαν επιτυχώς');
@@ -101,6 +221,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
       setEndDate('');
       setShares({});
       setTotalExpenses(0);
+      setIsQuickMode(false);
     } catch (error) {
       console.error('Error issuing common expenses:', error);
       toast.error('Σφάλμα κατά την έκδοση κοινοχρήστων');
@@ -130,13 +251,60 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
   
   return (
     <div className="space-y-6">
+      {/* Quick Calculation Panel */}
+      <Card className="border-blue-200 bg-blue-50/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-blue-800">
+            <Zap className="h-5 w-5" />
+            Γρήγορος Υπολογισμός
+          </CardTitle>
+          <div className="text-sm text-blue-600 flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            Επιλέξτε για αυτόματο υπολογισμό χωρίς manual input
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
+            <Button 
+              onClick={handleQuickCalculate} 
+              disabled={isCalculating}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+            >
+              <Calendar className="h-4 w-4" />
+              {isCalculating ? 'Υπολογισμός...' : 'Υπολογισμός Τρέχοντος Μήνα'}
+            </Button>
+            
+            <Button 
+              onClick={handlePreviousMonthCalculate} 
+              disabled={isCalculating}
+              variant="outline"
+              className="flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-100"
+            >
+              <Calendar className="h-4 w-4" />
+              {isCalculating ? 'Υπολογισμός...' : 'Υπολογισμός Προηγούμενου Μήνα'}
+            </Button>
+          </div>
+          
+          {isQuickMode && (
+            <div className="mt-3 p-3 bg-blue-100 rounded-lg border border-blue-200">
+              <div className="text-sm text-blue-800">
+                <strong>Γρήγορη λειτουργία ενεργή:</strong> Ημερομηνίες συμπληρώθηκαν αυτόματα
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
       {/* Φόρμα Υπολογισμού */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
-            Υπολογισμός Κοινοχρήστων
+            Χειροκίνητος Υπολογισμός Κοινοχρήστων
           </CardTitle>
+          <div className="text-sm text-muted-foreground">
+            Συμπληρώστε τα πεδία για προσαρμοσμένο υπολογισμό
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -147,6 +315,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
                 value={periodName}
                 onChange={(e) => setPeriodName(e.target.value)}
                 placeholder="π.χ. Ιανουάριος 2024"
+                className={isQuickMode ? 'bg-blue-50 border-blue-200' : ''}
               />
             </div>
             <div>
@@ -156,6 +325,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                className={isQuickMode ? 'bg-blue-50 border-blue-200' : ''}
               />
             </div>
             <div>
@@ -165,6 +335,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                className={isQuickMode ? 'bg-blue-50 border-blue-200' : ''}
               />
             </div>
           </div>
@@ -201,6 +372,11 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Αποτελέσματα Υπολογισμού
+              {isQuickMode && (
+                <Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800">
+                  Γρήγορη Λειτουργία
+                </Badge>
+              )}
             </CardTitle>
             <div className="text-sm text-muted-foreground">
               Συνολικές δαπάνες: <span className="font-semibold">{formatAmount(totalExpenses)}€</span>

@@ -11,11 +11,11 @@ urlpatterns = [
     # Authentication & User endpoints
     path('api/users/', include('users.urls')),
 
+    # Public buildings endpoint (for kiosk mode) - must come before general buildings URLs
+    path('api/buildings/public/', include('buildings.public_urls')),
+    
     # Building management
     path('api/buildings/', include('buildings.urls')),
-    
-    # Public buildings endpoint (for kiosk mode)
-    path('api/buildings/public/', include('buildings.public_urls')),
     
     # Apartments management
     path('api/', include('apartments.urls')),
