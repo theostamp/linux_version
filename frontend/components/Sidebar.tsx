@@ -27,6 +27,9 @@ import {
   Wrench,
   Euro,
   FileText,
+  Users,
+  Handshake,
+  Truck,
 } from 'lucide-react';
 
 const mainLinks = [
@@ -96,6 +99,26 @@ const mainLinks = [
     href: '/projects',
     label: 'Προσφορές & Έργα',
     icon: <FileText className="w-5 h-5" />,
+    roles: ['manager', 'staff', 'superuser'],
+  },
+  
+  // 👥 Διαχείριση Ομάδων & Συνεργατών
+  {
+    href: '/teams',
+    label: 'Ομάδες',
+    icon: <Users className="w-5 h-5" />,
+    roles: ['manager', 'staff', 'superuser'],
+  },
+  {
+    href: '/collaborators',
+    label: 'Συνεργάτες',
+    icon: <Handshake className="w-5 h-5" />,
+    roles: ['manager', 'staff', 'superuser'],
+  },
+  {
+    href: '/suppliers',
+    label: 'Προμηθευτές',
+    icon: <Truck className="w-5 h-5" />,
     roles: ['manager', 'staff', 'superuser'],
   },
 ];

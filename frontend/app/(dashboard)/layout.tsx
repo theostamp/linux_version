@@ -7,6 +7,7 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Loader2 } from 'lucide-react';
 import GlobalHeader from '@/components/GlobalHeader';
 import Sidebar from '@/components/Sidebar';
+import Breadcrumb from '@/components/Breadcrumb';
 import { Toaster } from 'react-hot-toast';
 import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
 
@@ -40,6 +41,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Scrollable Main Content */}
         <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950">
           <div className="p-4 sm:p-6 md:p-8 lg:p-10">
+            <Breadcrumb />
             {children}
           </div>
         </main>

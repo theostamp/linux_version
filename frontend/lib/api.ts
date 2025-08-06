@@ -1470,10 +1470,204 @@ if (typeof window !== "undefined") {
 }
 
 // ============================================================================
-// 🏦 FINANCIAL API FUNCTIONS - REMOVED FOR CLEAN REBUILD
+// 👥 TEAMS API FUNCTIONS
 // ============================================================================
 
-// Payment API functions
+export type Team = {
+  id: number;
+  name: string;
+  team_type: string;
+  description: string;
+  status: string;
+  member_count: number;
+  max_members: number;
+  is_full: boolean;
+  leader_name: string;
+  building: number;
+  created_at: string;
+};
+
+export type TeamMember = {
+  id: number;
+  user_name: string;
+  user_email: string;
+  role_name: string;
+  status: string;
+  joined_at: string;
+  team: number;
+};
+
+export type TeamTask = {
+  id: number;
+  title: string;
+  description: string;
+  priority: string;
+  status: string;
+  due_date: string;
+  assigned_to_name: string;
+  team: number;
+};
+
+export async function fetchTeams(buildingId?: number): Promise<Team[]> {
+  const params = new URLSearchParams();
+  if (buildingId) params.append('building', buildingId.toString());
+  
+  const response = await api.get(`/teams/teams/?${params.toString()}`);
+  return response.data.results || response.data;
+}
+
+export async function fetchTeamMembers(buildingId?: number): Promise<TeamMember[]> {
+  const params = new URLSearchParams();
+  if (buildingId) params.append('building', buildingId.toString());
+  
+  const response = await api.get(`/teams/members/?${params.toString()}`);
+  return response.data.results || response.data;
+}
+
+export async function fetchTeamTasks(buildingId?: number): Promise<TeamTask[]> {
+  const params = new URLSearchParams();
+  if (buildingId) params.append('building', buildingId.toString());
+  
+  const response = await api.get(`/teams/tasks/?${params.toString()}`);
+  return response.data.results || response.data;
+}
+
 // ============================================================================
-// 🏦 FINANCIAL API FUNCTIONS - REMOVED FOR CLEAN REBUILD
+// 🤝 COLLABORATORS API FUNCTIONS
 // ============================================================================
+
+export type Collaborator = {
+  id: number;
+  name: string;
+  collaborator_type: string;
+  contact_person: string;
+  phone: string;
+  email: string;
+  rating: number;
+  hourly_rate: number;
+  availability: string;
+  status: string;
+  created_at: string;
+};
+
+export type CollaborationProject = {
+  id: number;
+  title: string;
+  project_type: string;
+  status: string;
+  start_date: string;
+  end_date: string;
+  budget: number;
+  actual_cost: number;
+  progress_percentage: number;
+  building: number;
+  collaborator: number;
+  created_at: string;
+};
+
+export type CollaborationContract = {
+  id: number;
+  contract_number: string;
+  title: string;
+  contract_type: string;
+  status: string;
+  start_date: string;
+  end_date: string;
+  total_amount: number;
+  building: number;
+  collaborator: number;
+  created_at: string;
+};
+
+export type CollaborationInvoice = {
+  id: number;
+  invoice_number: string;
+  description: string;
+  amount: number;
+  status: string;
+  issue_date: string;
+  due_date: string;
+  collaborator: number;
+  contract: number;
+  created_at: string;
+};
+
+export async function fetchCollaborators(): Promise<Collaborator[]> {
+  const response = await api.get('/collaborators/collaborators/');
+  return response.data.results || response.data;
+}
+
+export async function fetchCollaborationProjects(buildingId?: number): Promise<CollaborationProject[]> {
+  const params = new URLSearchParams();
+  if (buildingId) params.append('building', buildingId.toString());
+  
+  const response = await api.get(`/collaborators/projects/?${params.toString()}`);
+  return response.data.results || response.data;
+}
+
+export async function fetchCollaborationContracts(buildingId?: number): Promise<CollaborationContract[]> {
+  const params = new URLSearchParams();
+  if (buildingId) params.append('building', buildingId.toString());
+  
+  const response = await api.get(`/collaborators/contracts/?${params.toString()}`);
+  return response.data.results || response.data;
+}
+
+export async function fetchCollaborationInvoices(): Promise<CollaborationInvoice[]> {
+  const response = await api.get('/collaborators/invoices/');
+  return response.data.results || response.data;
+}
+
+// ============================================================================
+// 🏢 SUPPLIERS & CONTRACTORS API FUNCTIONS
+// ============================================================================
+
+export type Supplier = {
+  id: number;
+  name: string;
+  category: string;
+  status: string;
+  contact_person: string;
+  phone: string;
+  email: string;
+  address: string;
+  vat_number: string;
+  contract_number: string;
+  rating: number;
+  reliability_score: number;
+  response_time_hours: number;
+  emergency_contact: string;
+  emergency_phone: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type Contractor = {
+  id: number;
+  name: string;
+  service_type: string;
+  status: string;
+  contact_person: string;
+  phone: string;
+  email: string;
+  rating: number;
+  reliability_score: number;
+  response_time_hours: number;
+  hourly_rate: number;
+  availability: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+export async function fetchSuppliers(buildingId?: number): Promise<Supplier[]> {
+  const params = new URLSearchParams();
+  if (buildingId) params.append('building', buildingId.toString());
+  
+  const response = await api.get(`/financial/suppliers/?${params.toString()}`);
+  return response.data.results || response.data;
+}
+
+export async function fetchContractors(): Promise<Contractor[]> {
+  const response = await api.get('/maintenance/contractors/');
+  return response.data.results || response.data;
+}

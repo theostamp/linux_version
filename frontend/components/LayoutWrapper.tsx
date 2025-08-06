@@ -4,7 +4,6 @@ import { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from 'react-hot-toast';
-import NewsTicker from '@/components/NewsTicker';
 import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
 
 export default function LayoutWrapper({ children }: { readonly children: ReactNode }) {
@@ -29,7 +28,6 @@ export default function LayoutWrapper({ children }: { readonly children: ReactNo
         </main>
         <Toaster position="top-right" />
       </div>
-      <NewsTicker />
       <GlobalLoadingOverlay />
     </div>
   );
