@@ -17,7 +17,20 @@ class Contractor(models.Model):
         ('heating', 'Θέρμανση/Κλιματισμός'),
         ('elevator', 'Ανελκυστήρες'),
         ('landscaping', 'Κηπουρική'),
+        ('painting', 'Βαψίματα'),
+        ('carpentry', 'Ξυλουργική'),
+        ('masonry', 'Κατασκευές'),
+        ('technical', 'Τεχνικές Υπηρεσίες'),
+        ('maintenance', 'Συντήρηση'),
+        ('emergency', 'Επείγοντα'),
         ('other', 'Άλλο'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('active', 'Ενεργό'),
+        ('inactive', 'Ανενεργό'),
+        ('suspended', 'Ανασταλμένο'),
+        ('terminated', 'Τερματισμένο'),
     ]
     
     name = models.CharField(max_length=255, verbose_name="Όνομα Συνεργείου")
@@ -26,17 +39,63 @@ class Contractor(models.Model):
         choices=SERVICE_TYPES,
         verbose_name="Τύπος Υπηρεσίας"
     )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='active',
+        verbose_name="Κατάσταση"
+    )
     contact_person = models.CharField(max_length=255, verbose_name="Επικοινωνία")
     phone = models.CharField(max_length=20, verbose_name="Τηλέφωνο")
     email = models.EmailField(blank=True, verbose_name="Email")
     address = models.TextField(blank=True, verbose_name="Διεύθυνση")
     tax_number = models.CharField(max_length=20, blank=True, verbose_name="ΑΦΜ")
+    vat_number = models.CharField(max_length=20, blank=True, verbose_name="ΑΦΜ")
+    website = models.URLField(blank=True, verbose_name="Ιστοσελίδα")
+    license_number = models.CharField(max_length=50, blank=True, verbose_name="Αριθμός Άδειας")
+    insurance_number = models.CharField(max_length=50, blank=True, verbose_name="Αριθμός Ασφάλισης")
     rating = models.DecimalField(
         max_digits=3, 
         decimal_places=2, 
         validators=[MinValueValidator(0), MaxValueValidator(5)],
         default=0,
         verbose_name="Αξιολόγηση"
+    )
+    reliability_score = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        default=0,
+        verbose_name="Βαθμός Αξιοπιστίας"
+    )
+    response_time_hours = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Χρόνος Απόκρισης (ώρες)"
+    )
+    emergency_contact = models.CharField(max_length=50, blank=True, verbose_name="Επείγουσα Επικοινωνία")
+    emergency_phone = models.CharField(max_length=50, blank=True, verbose_name="Επείγουσο Τηλέφωνο")
+    hourly_rate = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Ωριαίος Τιμολογιακός Ταρίφ"
+    )
+    availability = models.CharField(
+        max_length=20,
+        choices=[
+            ('available', 'Διαθέσιμο'),
+            ('busy', 'Απασχολημένο'),
+            ('unavailable', 'Μη Διαθέσιμο'),
+        ],
+        default='available',
+        verbose_name="Διαθεσιμότητα"
+    )
+    specializations = models.JSONField(
+        default=list,
+        verbose_name="Εξειδικεύσεις",
+        help_text="List με τις εξειδικεύσεις του συνεργείου"
     )
     is_active = models.BooleanField(default=True, verbose_name="Ενεργό")
     notes = models.TextField(blank=True, verbose_name="Σημειώσεις")

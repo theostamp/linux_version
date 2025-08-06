@@ -44,6 +44,15 @@ urlpatterns = [
     # Chat
     path('api/chat/', include('chat.urls')),
 
+    # Teams management
+    path('api/teams/', include('teams.urls')),
+    
+    # Collaborators management
+    path('api/collaborators/', include('collaborators.urls')),
+    
+    # Maintenance management
+    path('api/maintenance/', include('maintenance.urls')),
+
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]

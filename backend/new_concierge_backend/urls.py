@@ -5,9 +5,13 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.contrib import admin
 
 # Tenant-specific URL configuration (automatically routed by django-tenants middleware)
 urlpatterns = [
+    # Django Admin
+    path('admin/', admin.site.urls),
+    
     # Authentication & User endpoints
     path('api/users/', include('users.urls')),
 
@@ -43,6 +47,15 @@ urlpatterns = [
 
     # Chat
     path('api/chat/', include('chat.urls')),
+
+    # Teams management
+    path('api/teams/', include('teams.urls')),
+    
+    # Collaborators management
+    path('api/collaborators/', include('collaborators.urls')),
+    
+    # Maintenance management
+    path('api/maintenance/', include('maintenance.urls')),
 
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),

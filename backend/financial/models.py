@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 from buildings.models import Building
 from apartments.models import Apartment
 
@@ -15,18 +16,64 @@ class Supplier(models.Model):
         ('insurance', 'Ασφάλεια'),
         ('administrative', 'Διοικητικά'),
         ('repairs', 'Επισκευές'),
+        ('maintenance', 'Συντήρηση'),
+        ('security', 'Ασφάλεια'),
+        ('landscaping', 'Κηπουρική'),
+        ('technical', 'Τεχνικές Υπηρεσίες'),
+        ('legal', 'Νομικές Υπηρεσίες'),
+        ('accounting', 'Λογιστικές Υπηρεσίες'),
         ('other', 'Άλλοι'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('active', 'Ενεργός'),
+        ('inactive', 'Ανενεργός'),
+        ('suspended', 'Ανασταλμένος'),
+        ('terminated', 'Τερματισμένος'),
     ]
     
     building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='suppliers')
     name = models.CharField(max_length=255, verbose_name="Όνομα Προμηθευτή")
     category = models.CharField(max_length=50, choices=SUPPLIER_CATEGORIES, verbose_name="Κατηγορία")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='active',
+        verbose_name="Κατάσταση"
+    )
+    contact_person = models.CharField(max_length=255, blank=True, verbose_name="Επικοινωνία")
     account_number = models.CharField(max_length=100, blank=True, verbose_name="Αριθμός Λογαριασμού")
     phone = models.CharField(max_length=50, blank=True, verbose_name="Τηλέφωνο")
     email = models.EmailField(blank=True, verbose_name="Email")
     address = models.TextField(blank=True, verbose_name="Διεύθυνση")
     vat_number = models.CharField(max_length=50, blank=True, verbose_name="ΑΦΜ")
+    tax_number = models.CharField(max_length=50, blank=True, verbose_name="ΑΦΜ")
+    website = models.URLField(blank=True, verbose_name="Ιστοσελίδα")
     contract_number = models.CharField(max_length=100, blank=True, verbose_name="Αριθμός Συμβολαίου")
+    contract_start_date = models.DateField(null=True, blank=True, verbose_name="Ημερομηνία Έναρξης Συμβολαίου")
+    contract_end_date = models.DateField(null=True, blank=True, verbose_name="Ημερομηνία Λήξης Συμβολαίου")
+    payment_terms = models.CharField(max_length=255, blank=True, verbose_name="Όροι Πληρωμής")
+    rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        default=0,
+        verbose_name="Αξιολόγηση"
+    )
+    reliability_score = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        default=0,
+        verbose_name="Βαθμός Αξιοπιστίας"
+    )
+    response_time_hours = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Χρόνος Απόκρισης (ώρες)"
+    )
+    emergency_contact = models.CharField(max_length=50, blank=True, verbose_name="Επείγουσα Επικοινωνία")
+    emergency_phone = models.CharField(max_length=50, blank=True, verbose_name="Επείγουσο Τηλέφωνο")
     notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
     is_active = models.BooleanField(default=True, verbose_name="Ενεργός")
     created_at = models.DateTimeField(auto_now_add=True)
