@@ -1268,6 +1268,9 @@ export type ApartmentList = {
   owner_phone2: string;
   owner_email: string;
   ownership_percentage?: number;
+  participation_mills?: number;
+  heating_mills?: number;
+  elevator_mills?: number;
   tenant_name: string;
   tenant_phone: string;
   tenant_phone2: string;
@@ -1278,6 +1281,7 @@ export type ApartmentList = {
   occupant_email: string;
   status_display: string;
   is_rented: boolean;
+  is_closed: boolean;
 };
 
 export interface CreateApartmentPayload {

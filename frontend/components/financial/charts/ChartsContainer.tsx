@@ -6,6 +6,8 @@ import { TrendAnalysis } from './TrendAnalysis';
 interface ChartsContainerProps {
   apartmentId?: number;
   height?: number;
+  buildingId?: number; // Add buildingId prop
+  selectedMonth?: string; // Add selectedMonth prop
 }
 
 type ChartType = 'readings' | 'consumption' | 'trends';
@@ -13,6 +15,8 @@ type ChartType = 'readings' | 'consumption' | 'trends';
 export const ChartsContainer: React.FC<ChartsContainerProps> = ({
   apartmentId,
   height = 400,
+  buildingId,
+  selectedMonth,
 }) => {
   const [activeChart, setActiveChart] = useState<ChartType>('readings');
   const [chartSubType, setChartSubType] = useState<string>('line');
@@ -50,6 +54,8 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
   const renderActiveChart = () => {
     const commonProps = {
       apartmentId,
+      buildingId,
+      selectedMonth,
       height,
       period,
     };

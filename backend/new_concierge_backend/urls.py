@@ -57,6 +57,9 @@ urlpatterns = [
     # Maintenance management
     path('api/maintenance/', include('maintenance.urls')),
 
+    # Data migration
+    path('api/data-migration/', include('data_migration.urls')),
+
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]

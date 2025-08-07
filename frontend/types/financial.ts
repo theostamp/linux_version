@@ -331,8 +331,7 @@ export interface CommonExpensePeriod {
 }
 
 export interface ApartmentShare {
-  id: number;
-  apartment: number;
+  apartment_id: number;
   apartment_number: string;
   owner_name: string;
   participation_mills: number;
@@ -340,23 +339,25 @@ export interface ApartmentShare {
   total_amount: number;
   previous_balance: number;
   total_due: number;
-  breakdown: ExpenseBreakdown[];
+  breakdown: Array<{
+    expense_id: number;
+    expense_title: string;
+    expense_amount: number;
+    apartment_share: number;
+    distribution_type: string;
+    distribution_type_display?: string;
+  }>;
 }
 
 export interface CommonExpenseCalculationRequest {
   building_id: number;
-  period_id: number;
-  expenses: number[];
-  distribution_type: string;
 }
 
 export interface CommonExpenseCalculationResult {
   building_id: number;
-  period: string;
-  shares: ApartmentShare[];
+  shares: Record<string, ApartmentShare>;
   total_expenses: number;
   apartments_count: number;
-  pending_expenses: Expense[];
 }
 
 export interface CommonExpenseIssueRequest {

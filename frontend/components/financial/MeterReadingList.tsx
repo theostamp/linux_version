@@ -51,9 +51,10 @@ import { MeterReadingForm } from './MeterReadingForm';
 
 interface MeterReadingListProps {
   buildingId: number;
+  selectedMonth?: string; // Add selectedMonth prop
 }
 
-export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId }) => {
+export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId, selectedMonth }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingReading, setEditingReading] = useState<MeterReading | null>(null);
   const [filters, setFilters] = useState({

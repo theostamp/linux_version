@@ -2,17 +2,17 @@ import { useState, useCallback, useEffect } from 'react';
 import { Expense, ExpenseFormData, ExpenseFilters, ApiResponse } from '@/types/financial';
 import { api } from '@/lib/api';
 
-export const useExpenses = (buildingId?: number) => {
+export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load expenses when buildingId changes
+  // Load expenses when buildingId or selectedMonth changes
   useEffect(() => {
     if (buildingId) {
       loadExpenses();
     }
-  }, [buildingId]);
+  }, [buildingId, selectedMonth]);
 
   // Load expenses for the current building
   const loadExpenses = useCallback(async () => {
@@ -26,6 +26,11 @@ export const useExpenses = (buildingId?: number) => {
         building_id: buildingId.toString()
       });
       
+      // Add selectedMonth parameter if provided
+      if (selectedMonth) {
+        params.append('month', selectedMonth);
+      }
+      
       const response = await api.get(`/financial/expenses/?${params}`);
       const data = response.data.results || response.data;
       setExpenses(Array.isArray(data) ? data : []);
@@ -36,7 +41,7 @@ export const useExpenses = (buildingId?: number) => {
     } finally {
       setIsLoading(false);
     }
-  }, [buildingId]);
+  }, [buildingId, selectedMonth]);
 
   // Δημιουργία νέας δαπάνης
   const createExpense = useCallback(async (data: ExpenseFormData): Promise<Expense | null> => {

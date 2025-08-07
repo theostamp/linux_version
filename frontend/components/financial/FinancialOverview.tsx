@@ -24,6 +24,7 @@ import { el } from 'date-fns/locale/el';
 
 interface FinancialOverviewProps {
   buildingId: number;
+  selectedMonth?: string; // Add selectedMonth prop
 }
 
 interface FinancialStats {
@@ -52,7 +53,7 @@ interface FinancialStats {
 }
 
 const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, FinancialOverviewProps>(
-  ({ buildingId }, ref) => {
+  ({ buildingId, selectedMonth }, ref) => {
   const [stats, setStats] = useState<FinancialStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +61,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
 
   useEffect(() => {
     loadFinancialStats();
-  }, [buildingId, selectedPeriod]);
+  }, [buildingId, selectedPeriod, selectedMonth]); // Add selectedMonth dependency
 
   // Expose loadSummary function via ref
   useImperativeHandle(ref, () => ({
@@ -76,6 +77,11 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
         building_id: buildingId.toString(),
         period: selectedPeriod
       });
+      
+      // Add selectedMonth parameter if provided
+      if (selectedMonth) {
+        params.append('month', selectedMonth);
+      }
       
       const response = await api.get(`/financial/dashboard/summary/?${params}`);
       setStats(response.data);

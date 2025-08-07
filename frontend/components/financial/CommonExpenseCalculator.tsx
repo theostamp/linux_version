@@ -6,33 +6,16 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useCommonExpenses } from '@/hooks/useCommonExpenses';
+import { ApartmentShare } from '@/types/financial';
 import { toast } from 'sonner';
 import { Calculator, FileText, Send, Zap, Calendar, Info } from 'lucide-react';
 
 interface CommonExpenseCalculatorProps {
   buildingId: number;
+  selectedMonth?: string; // Add selectedMonth prop
 }
 
-interface ApartmentShare {
-  apartment_id: number;
-  apartment_number: string;
-  owner_name: string;
-  participation_mills: number;
-  current_balance: number;
-  total_amount: number;
-  previous_balance: number;
-  total_due: number;
-  breakdown: Array<{
-    expense_id: number;
-    expense_title: string;
-    expense_amount: number;
-    apartment_share: number;
-    distribution_type: string;
-    category: string;
-  }>;
-}
-
-export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = ({ buildingId }) => {
+export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = ({ buildingId, selectedMonth }) => {
   const [periodName, setPeriodName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -93,10 +76,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
       setIsCalculating(true);
       
       const result = await calculateShares({
-        building_id: buildingId,
-        period_name: quickPeriod,
-        start_date: quickStart,
-        end_date: quickEnd
+        building_id: buildingId
       });
       
       setShares(result.shares);
@@ -124,10 +104,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
       setIsCalculating(true);
       
       const result = await calculateShares({
-        building_id: buildingId,
-        period_name: prevPeriod,
-        start_date: prevStart,
-        end_date: prevEnd
+        building_id: buildingId
       });
       
       setShares(result.shares);
@@ -154,10 +131,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
       setIsCalculating(true);
       
       const result = await calculateShares({
-        building_id: buildingId,
-        period_name: periodName,
-        start_date: startDate,
-        end_date: endDate
+        building_id: buildingId
       });
       
       setShares(result.shares);
@@ -187,13 +161,13 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
       Object.entries(shares).forEach(([apartmentId, share]) => {
         sharesData[apartmentId] = {
           total_amount: share.total_amount,
-          breakdown: share.breakdown.reduce((acc, item) => {
+          breakdown: share.breakdown.reduce((acc: Record<string, any>, item) => {
             acc[item.expense_id] = {
               expense_title: item.expense_title,
               expense_amount: item.expense_amount,
               apartment_share: item.apartment_share,
               distribution_type: item.distribution_type,
-              category: item.category
+              distribution_type_display: item.distribution_type_display
             };
             return acc;
           }, {} as Record<string, any>)

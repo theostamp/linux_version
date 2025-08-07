@@ -17,13 +17,7 @@
 ### 🔄 Χειροκίνητη Εκκίνηση
 
 ```bash
-# 1. Καθαρισμός και εκκίνηση
-docker compose down --volumes --remove-orphans
-docker network prune --force
-docker system prune --all --volumes --force
-docker system prune -a --volumes
 
-docker compose up --build -d
 
 # 2. Παρακολούθηση logs
 docker compose logs -f backend
@@ -1029,9 +1023,19 @@ docker compose exec backend python manage.py migrate_schemas --tenant --fake-ini
 echo "# linux_version" >> README.md git init
 
 git add .
-git commit -m "συνεργατες"
+git commit -m "layout table  fix"
 git branch -M main git remote add origin https://github.com/theostamp/linux_version.git 
 git push -u origin main
 
 git push --force
 
+
+
+
+# 1. Καθαρισμός και εκκίνηση
+docker compose down --volumes --remove-orphans
+docker network prune --force
+docker system prune --all --volumes --force
+docker system prune -a --volumes
+
+docker compose up --build -d

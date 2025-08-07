@@ -75,6 +75,9 @@ TENANT_APPS = [
     # 👥 Διαχείριση Ομάδων, Προμηθευτών & Συνεργατών
     'teams',
     'collaborators',
+    
+    # 🔄 AI Data Migration
+    'data_migration',
 ]
 
 

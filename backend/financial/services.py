@@ -202,25 +202,44 @@ class FinancialDashboardService:
         )
         
         # Δαπάνες αυτού του μήνα
-        from datetime import datetime
+        from datetime import datetime, date
         if month:
             # Parse YYYY-MM
             try:
                 year, mon = map(int, month.split('-'))
-                current_month = datetime(year, mon, 1)
+                start_date = date(year, mon, 1)
+                if mon == 12:
+                    end_date = date(year + 1, 1, 1)
+                else:
+                    end_date = date(year, mon + 1, 1)
             except Exception:
-                current_month = datetime.now().replace(day=1)
+                # Fallback to current month
+                now = datetime.now()
+                start_date = date(now.year, now.month, 1)
+                if now.month == 12:
+                    end_date = date(now.year + 1, 1, 1)
+                else:
+                    end_date = date(now.year, now.month + 1, 1)
         else:
-            current_month = datetime.now().replace(day=1)
+            # Current month
+            now = datetime.now()
+            start_date = date(now.year, now.month, 1)
+            if now.month == 12:
+                end_date = date(now.year + 1, 1, 1)
+            else:
+                end_date = date(now.year, now.month + 1, 1)
+        
         total_expenses_this_month = Expense.objects.filter(
             building_id=self.building_id,
-            date__gte=current_month
+            date__gte=start_date,
+            date__lt=end_date
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
         # Εισπράξεις αυτού του μήνα
         total_payments_this_month = Payment.objects.filter(
             apartment__building_id=self.building_id,
-            date__gte=current_month
+            date__gte=start_date,
+            date__lt=end_date
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
         # Πρόσφατες κινήσεις
@@ -240,8 +259,19 @@ class FinancialDashboardService:
         # Στατιστικά πληρωμών
         payment_statistics = self.get_payment_statistics()
         
+        # Υπολογισμός τρέχοντος αποθεματικού: Συνολικές εισπράξεις - Συνολικές δαπάνες
+        total_payments_all_time = Payment.objects.filter(
+            apartment__building_id=self.building_id
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        total_expenses_all_time = Expense.objects.filter(
+            building_id=self.building_id
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        current_reserve = total_payments_all_time - total_expenses_all_time
+        
         return {
-            'current_reserve': self.building.current_reserve or Decimal('0.00'),
+            'current_reserve': current_reserve,
             'total_obligations': total_obligations,
             'total_expenses_month': total_expenses_this_month,
             'total_payments_month': total_payments_this_month,
@@ -425,7 +455,7 @@ class ReportService:
             current_month = datetime.now().month
             quarter_start_month = ((current_month - 1) // 3) * 3 + 1
             start_date = datetime.now().replace(month=quarter_start_month, day=1)
-        elif period == 'year':
+        elif period == 'yearly':
             start_date = datetime.now().replace(month=1, day=1)
         else:
             start_date = datetime.now() - timedelta(days=30)

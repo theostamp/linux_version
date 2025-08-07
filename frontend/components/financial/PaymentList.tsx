@@ -14,7 +14,8 @@ interface PaymentListProps {
   buildingId: number;
   onPaymentSelect?: (payment: Payment) => void;
   showActions?: boolean;
-  apartmentFilter?: number;
+  apartmentFilter?: string;
+  selectedMonth?: string; // Add selectedMonth prop
 }
 
 export const PaymentList: React.FC<PaymentListProps> = ({
@@ -22,8 +23,9 @@ export const PaymentList: React.FC<PaymentListProps> = ({
   onPaymentSelect,
   showActions = true,
   apartmentFilter,
+  selectedMonth,
 }) => {
-  const { payments, isLoading, error } = usePayments(buildingId);
+  const { payments, isLoading, error } = usePayments(buildingId, selectedMonth);
   const [searchTerm, setSearchTerm] = useState('');
   const [methodFilter, setMethodFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');

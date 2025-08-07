@@ -2,17 +2,17 @@ import { useState, useCallback, useEffect } from 'react';
 import { Payment, PaymentFormData, PaymentFilters } from '@/types/financial';
 import { api } from '@/lib/api';
 
-export const usePayments = (buildingId?: number) => {
+export const usePayments = (buildingId?: number, selectedMonth?: string) => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load payments when buildingId changes
+  // Load payments when buildingId or selectedMonth changes
   useEffect(() => {
     if (buildingId) {
       loadPayments();
     }
-  }, [buildingId]);
+  }, [buildingId, selectedMonth]);
 
   // Load payments for the current building
   const loadPayments = useCallback(async () => {
@@ -26,6 +26,11 @@ export const usePayments = (buildingId?: number) => {
         building_id: buildingId.toString()
       });
       
+      // Add selectedMonth parameter if provided
+      if (selectedMonth) {
+        params.append('month', selectedMonth);
+      }
+      
       const response = await api.get(`/financial/payments/?${params}`);
       const data = response.data.results || response.data;
       setPayments(Array.isArray(data) ? data : []);
@@ -36,7 +41,7 @@ export const usePayments = (buildingId?: number) => {
     } finally {
       setIsLoading(false);
     }
-  }, [buildingId]);
+  }, [buildingId, selectedMonth]);
 
   // Δημιουργία νέας πληρωμής
   const createPayment = useCallback(async (data: PaymentFormData): Promise<Payment | null> => {

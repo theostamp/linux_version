@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import LogoutButton from '@/components/LogoutButton';
 import useCsrf from '@/hooks/useCsrf';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -19,7 +18,6 @@ import {
   Loader2,
   Building,
   MapPin,
-  User,
   Shield,
   X,
   Menu,
@@ -30,97 +28,137 @@ import {
   Users,
   Handshake,
   Truck,
+  RefreshCw,
 } from 'lucide-react';
 
-const mainLinks = [
+// Grouped navigation links with categories
+const navigationGroups = [
   {
-    href: '/dashboard',
-    label: 'Πίνακας Ελέγχου',
-    icon: <Home className="w-5 h-5" />,
-    roles: ['manager', 'resident', 'staff', 'superuser'],
+    id: 'main',
+    title: 'Κύριες Λειτουργίες',
+    color: 'blue',
+    bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+    borderColor: 'border-blue-200 dark:border-blue-800',
+    links: [
+      {
+        href: '/dashboard',
+        label: 'Πίνακας Ελέγχου',
+        icon: <Home className="w-4 h-4" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+      {
+        href: '/announcements',
+        label: 'Ανακοινώσεις',
+        icon: <Megaphone className="w-4 h-4" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+      {
+        href: '/votes',
+        label: 'Ψηφοφορίες',
+        icon: <CheckSquare className="w-4 h-4" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+      {
+        href: '/requests',
+        label: 'Αιτήματα',
+        icon: <ClipboardList className="w-4 h-4" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+      {
+        href: '/chat',
+        label: 'Chat',
+        icon: <MessageCircle className="w-4 h-4" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+    ]
   },
   {
-    href: '/announcements',
-    label: 'Ανακοινώσεις',
-    icon: <Megaphone className="w-5 h-5" />,
-    roles: ['manager', 'resident', 'staff', 'superuser'],
+    id: 'management',
+    title: 'Διαχείριση Κτιρίων',
+    color: 'green',
+    bgColor: 'bg-green-50 dark:bg-green-900/20',
+    borderColor: 'border-green-200 dark:border-green-800',
+    links: [
+      {
+        href: '/buildings',
+        label: 'Διαχείριση Κτιρίων',
+        icon: <Building2 className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/apartments',
+        label: 'Διαχείριση Διαμερισμάτων',
+        icon: <Building className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/map-visualization',
+        label: 'Οπτικοποίηση Χάρτη',
+        icon: <MapPin className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/data-migration',
+        label: 'Μετανάστευση Δεδομένων',
+        icon: <RefreshCw className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+    ]
   },
   {
-    href: '/votes',
-    label: 'Ψηφοφορίες',
-    icon: <CheckSquare className="w-5 h-5" />,
-    roles: ['manager', 'resident', 'staff', 'superuser'],
+    id: 'operations',
+    title: 'Λειτουργίες & Συντήρηση',
+    color: 'orange',
+    bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+    borderColor: 'border-orange-200 dark:border-orange-800',
+    links: [
+      {
+        href: '/maintenance',
+        label: 'Τεχνικά & Συντήρηση',
+        icon: <Wrench className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/financial',
+        label: 'Οικονομικά',
+        icon: <Euro className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/projects',
+        label: 'Προσφορές & Έργα',
+        icon: <FileText className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+    ]
   },
   {
-    href: '/requests',
-    label: 'Αιτήματα',
-    icon: <ClipboardList className="w-5 h-5" />,
-    roles: ['manager', 'resident', 'staff', 'superuser'],
-  },
-  {
-    href: '/chat',
-    label: 'Chat',
-    icon: <MessageCircle className="w-5 h-5" />,
-    roles: ['manager', 'resident', 'staff', 'superuser'],
-  },
-  {
-    href: '/buildings',
-    label: 'Διαχείριση Κτιρίων',
-    icon: <Building2 className="w-5 h-5" />,
-    roles: ['manager', 'staff', 'superuser'],
-  },
-  {
-    href: '/apartments',
-    label: 'Διαχείριση Διαμερισμάτων',
-    icon: <Building className="w-5 h-5" />,
-    roles: ['manager', 'staff', 'superuser'],
-  },
-  {
-    href: '/map-visualization',
-    label: 'Οπτικοποίηση Χάρτη',
-    icon: <MapPin className="w-5 h-5" />,
-    roles: ['manager', 'staff', 'superuser'],
-  },
-  
-  // 🔧 Νέα ενότητες για επέκταση λειτουργιών
-  {
-    href: '/maintenance',
-    label: 'Τεχνικά & Συντήρηση',
-    icon: <Wrench className="w-5 h-5" />,
-    roles: ['manager', 'staff', 'superuser'],
-  },
-  {
-    href: '/financial',
-    label: 'Οικονομικά',
-    icon: <Euro className="w-5 h-5" />,
-    roles: ['manager', 'staff', 'superuser'],
-  },
-  {
-    href: '/projects',
-    label: 'Προσφορές & Έργα',
-    icon: <FileText className="w-5 h-5" />,
-    roles: ['manager', 'staff', 'superuser'],
-  },
-  
-  // 👥 Διαχείριση Ομάδων & Συνεργατών
-  {
-    href: '/teams',
-    label: 'Ομάδες',
-    icon: <Users className="w-5 h-5" />,
-    roles: ['manager', 'staff', 'superuser'],
-  },
-  {
-    href: '/collaborators',
-    label: 'Συνεργάτες',
-    icon: <Handshake className="w-5 h-5" />,
-    roles: ['manager', 'staff', 'superuser'],
-  },
-  {
-    href: '/suppliers',
-    label: 'Προμηθευτές',
-    icon: <Truck className="w-5 h-5" />,
-    roles: ['manager', 'staff', 'superuser'],
-  },
+    id: 'collaboration',
+    title: 'Συνεργασίες & Ομάδες',
+    color: 'purple',
+    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+    borderColor: 'border-purple-200 dark:border-purple-800',
+    links: [
+      {
+        href: '/teams',
+        label: 'Ομάδες',
+        icon: <Users className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/collaborators',
+        label: 'Συνεργάτες',
+        icon: <Handshake className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/suppliers',
+        label: 'Προμηθευτές',
+        icon: <Truck className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+    ]
+  }
 ];
 
 export default function Sidebar() {
@@ -226,7 +264,7 @@ export default function Sidebar() {
             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
               <Loader2 className="h-6 w-6 animate-spin text-white" />
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Φόρτωση μενού...</p>
+            <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Φόρτωση μενού...</p>
           </div>
         </aside>
 
@@ -271,14 +309,14 @@ export default function Sidebar() {
               <Shield className="h-8 w-8 text-white" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Δεν έχετε πρόσβαση</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">Δεν έχετε πρόσβαση</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-300">
                 Επικοινωνήστε με τον διαχειριστή για να αντιστοιχιστείτε σε κάποιο κτίριο.
               </p>
             </div>
             <Link
               href="/dashboard"
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              className="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
             >
               Επιστροφή στην Αρχική
             </Link>
@@ -335,14 +373,14 @@ export default function Sidebar() {
               <Building2 className="h-8 w-8 text-white" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Δεν υπάρχουν κτίρια</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">Δεν υπάρχουν κτίρια</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-300">
                 Δεν υπάρχουν διαθέσιμα κτίρια για εσάς. Επικοινωνήστε με τον διαχειριστή.
               </p>
             </div>
             <Link
               href="/dashboard"
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              className="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
             >
               Επιστροφή στην Αρχική
             </Link>
@@ -360,9 +398,11 @@ export default function Sidebar() {
     );
   }
 
-  const availableLinks = mainLinks.filter(
-    (link) => userRole && link.roles.includes(userRole)
-  );
+  // Filter available groups and links based on user role
+  const availableGroups = navigationGroups.map(group => ({
+    ...group,
+    links: group.links.filter(link => userRole && link.roles.includes(userRole))
+  })).filter(group => group.links.length > 0);
 
   return (
     <>
@@ -380,32 +420,32 @@ export default function Sidebar() {
         isMobileMenuOpen ? "translate-x-0" : "lg:translate-x-0 -translate-x-full"
       )}>
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
           {/* Close button for mobile */}
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="lg:hidden absolute top-4 right-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="lg:hidden absolute top-3 right-3 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
 
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Building2 className="h-6 w-6 text-white" />
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Building2 className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">Digital Concierge</h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Διαχείριση Κτιρίων</p>
+              <h1 className="text-base font-bold text-gray-800 dark:text-gray-100 tracking-tight">Digital Concierge</h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 tracking-wide">Διαχείριση Κτιρίων</p>
             </div>
           </div>
           
           {/* Management Office Info */}
           {user?.office_name && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2 mb-3">
               <div className="flex items-start space-x-2">
-                <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <Building2 className="w-3 h-3 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-blue-800 dark:text-blue-200 truncate">
+                  <p className="text-xs font-medium text-blue-800 dark:text-blue-200 truncate tracking-wide">
                     {user.office_name}
                   </p>
                   {user.office_phone && (
@@ -426,7 +466,7 @@ export default function Sidebar() {
             <BuildingSelectorButton
               onBuildingSelect={setSelectedBuilding}
               selectedBuilding={selectedBuilding}
-              className="w-full text-sm"
+              className="w-full text-xs"
             />
             
             {/* Hover Tooltip */}
@@ -451,52 +491,49 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {availableLinks.map((link) => (
-            <button
-              key={link.href}
-              onClick={() => handleNavigation(link.href, `Μετάβαση στο ${link.label.toLowerCase()}...`)}
-              className={cn(
-                'flex items-center justify-start w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ease-in-out group text-left',
-                'hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 dark:hover:from-blue-900/50 dark:hover:to-blue-800/50',
-                'hover:shadow-md hover:transform hover:-translate-y-0.5',
-                pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/dashboard')
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform -translate-y-0.5'
-                  : 'text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300'
-              )}
-            >
-              <span className={cn(
-                'mr-3 transition-colors duration-200 flex-shrink-0',
-                pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/dashboard')
-                  ? 'text-white'
-                  : 'text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'
+        <nav className="flex-1 p-3 space-y-3 overflow-y-auto">
+          {availableGroups.map((group) => (
+            <div key={group.id} className={cn(
+              "rounded-lg border p-2",
+              group.bgColor,
+              group.borderColor
+            )}>
+              <h3 className={cn(
+                "text-xs font-semibold mb-2 px-2 py-1 rounded tracking-wide",
+                `text-${group.color}-700 dark:text-${group.color}-300`,
+                `bg-${group.color}-100 dark:bg-${group.color}-900/30`
               )}>
-                {link.icon}
-              </span>
-              <span className="text-left">{link.label}</span>
-            </button>
+                {group.title}
+              </h3>
+              <div className="space-y-1">
+                {group.links.map((link) => (
+                  <button
+                    key={link.href}
+                    onClick={() => handleNavigation(link.href, `Μετάβαση στο ${link.label.toLowerCase()}...`)}
+                    className={cn(
+                      'flex items-center justify-start w-full px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ease-in-out group text-left tracking-wide',
+                      'hover:bg-white/60 dark:hover:bg-gray-800/60',
+                      'hover:shadow-sm hover:transform hover:-translate-y-0.5',
+                      pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/dashboard')
+                        ? `bg-${group.color}-500 text-white shadow-md transform -translate-y-0.5`
+                        : `text-gray-700 dark:text-gray-300 hover:text-${group.color}-700 dark:hover:text-${group.color}-300`
+                    )}
+                  >
+                    <span className={cn(
+                      'mr-2 transition-colors duration-200 flex-shrink-0',
+                      pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/dashboard')
+                        ? 'text-white'
+                        : `text-gray-500 dark:text-gray-400 group-hover:text-${group.color}-600 dark:group-hover:text-${group.color}-400`
+                    )}>
+                      {link.icon}
+                    </span>
+                    <span className="text-left">{link.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
-
-        {/* Footer - User Info */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-          <div className="flex items-center space-x-3 mb-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-gray-500 to-gray-600 rounded-lg flex items-center justify-center">
-              <User className="h-4 w-4 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
-                {user.first_name || user.last_name
-                  ? `${user.first_name} ${user.last_name}`.trim()
-                  : user.email}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                {userRole ? userRole : ''}
-              </p>
-            </div>
-          </div>
-          <LogoutButton className="w-full text-sm" />
-        </div>
       </aside>
 
       {/* Mobile Overlay */}

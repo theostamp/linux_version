@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-08-07T08:33:27.126388",
+  "docker_services": "✅ Λειτουργικά",
+  "database": "✅ Σωστά δεδομένα",
+  "mills_total": "✅ 1000 χιλιοστά",
+  "api_endpoints": "✅ Προσβάσιμα",
+  "frontend": "✅ Λειτουργικό",
+  "calculations": "✅ Ακριβείς"
+}

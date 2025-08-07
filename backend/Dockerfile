@@ -5,19 +5,30 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# System dependencies
+# System dependencies including AI dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
         gcc \
         libpq-dev \
         postgresql-client \
-        libmagic1 && \
+        libmagic1 \
+        # AI dependencies
+        tesseract-ocr \
+        tesseract-ocr-ell \
+        libgl1-mesa-glx \
+        libglib2.0-0 \
+        libsm6 \
+        libxext6 \
+        libxrender-dev \
+        libgomp1 && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python deps
 COPY requirements*.txt ./
-RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    pip install -r requirements-ai.txt
 
 # Copy source code
 COPY . .

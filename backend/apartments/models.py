@@ -77,6 +77,20 @@ class Apartment(models.Model):
         help_text='Χιλιοστά συμμετοχής για κατανομή δαπανών'
     )
     
+    heating_mills = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Χιλιοστά Θέρμανσης',
+        help_text='Χιλιοστά συμμετοχής για δαπάνες θέρμανσης'
+    )
+    
+    elevator_mills = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Χιλιοστά Ανελκυστήρα',
+        help_text='Χιλιοστά συμμετοχής για δαπάνες ανελκυστήρα'
+    )
+    
     current_balance = models.DecimalField(
         max_digits=10,
         decimal_places=2,

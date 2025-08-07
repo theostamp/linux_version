@@ -15,14 +15,16 @@ interface ExpenseListProps {
   buildingId: number;
   onExpenseSelect?: (expense: Expense) => void;
   showActions?: boolean;
+  selectedMonth?: string; // Add selectedMonth prop
 }
 
 export const ExpenseList: React.FC<ExpenseListProps> = ({
   buildingId,
   onExpenseSelect,
   showActions = true,
+  selectedMonth,
 }) => {
-  const { expenses, isLoading, error } = useExpenses(buildingId);
+  const { expenses, isLoading, error } = useExpenses(buildingId, selectedMonth);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');

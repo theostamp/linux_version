@@ -310,4 +310,46 @@
       background-position: 200% 0;
     }
   }
+  
+  /* Resizable table columns - Excel style */
+  .resizable-table {
+    table-layout: fixed;
+    width: 100%;
+  }
+  
+  .resizable-table th {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .resizable-table th::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: transparent;
+    cursor: col-resize;
+    transition: background-color 0.2s ease;
+  }
+  
+  .resizable-table th:hover::after {
+    background: rgba(59, 130, 246, 0.3);
+  }
+  
+  .resizable-table th.resizing::after {
+    background: rgba(59, 130, 246, 0.6);
+  }
+  
+  /* Table header gradient styles */
+  .table-header-gradient {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+    border-bottom: 2px solid #94a3b8;
+  }
+  
+  .table-header-gradient-blue {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #bfdbfe 100%);
+    border-bottom: 2px solid #3b82f6;
+  }
 }

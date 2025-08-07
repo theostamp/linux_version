@@ -257,12 +257,12 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         </TabsList>
         
         <TabsContent value="dashboard" className="space-y-4">
-          <FinancialOverview ref={overviewRef} buildingId={buildingId} />
+          <FinancialOverview ref={overviewRef} buildingId={buildingId} selectedMonth={selectedMonth} />
         </TabsContent>
         
         <TabsContent value="calculator" className="space-y-4">
           <ProtectedFinancialRoute requiredPermission="financial_write">
-            <CommonExpenseCalculator buildingId={buildingId} />
+            <CommonExpenseCalculator buildingId={buildingId} selectedMonth={selectedMonth} />
           </ProtectedFinancialRoute>
         </TabsContent>
         
@@ -300,6 +300,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               
               <ExpenseList 
                 buildingId={buildingId}
+                selectedMonth={selectedMonth}
                 onExpenseSelect={(expense) => {
                   console.log('Selected expense:', expense);
                   // Here you could open an expense detail modal or navigate to expense details
@@ -344,6 +345,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               
               <PaymentList 
                 buildingId={buildingId}
+                selectedMonth={selectedMonth}
                 onPaymentSelect={(payment) => {
                   console.log('Selected payment:', payment);
                   // Here you could open a payment detail modal or navigate to payment details
@@ -357,7 +359,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         <TabsContent value="meters" className="space-y-4">
           <ProtectedFinancialRoute requiredPermission="financial_write">
             <div className="space-y-6">
-              <MeterReadingList buildingId={buildingId} />
+              <MeterReadingList buildingId={buildingId} selectedMonth={selectedMonth} />
               <BulkImportWizard />
             </div>
           </ProtectedFinancialRoute>
@@ -365,7 +367,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         
         <TabsContent value="charts" className="space-y-4">
           <ProtectedFinancialRoute requiredPermission="financial_read">
-            <ChartsContainer buildingId={buildingId} />
+            <ChartsContainer buildingId={buildingId} selectedMonth={selectedMonth} />
           </ProtectedFinancialRoute>
         </TabsContent>
         

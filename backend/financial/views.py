@@ -112,6 +112,11 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         """Καταγραφή δημιουργίας δαπάνης με file upload"""
         expense = serializer.save()
         
+        # Ενημέρωση του τρέχοντος αποθεματικού του κτιρίου
+        building = expense.building
+        building.current_reserve -= expense.amount
+        building.save()
+        
         # Χειρισμός file upload αν υπάρχει
         if 'attachment' in self.request.FILES:
             try:
@@ -120,7 +125,9 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                 expense.attachment = file_path
                 expense.save()
             except Exception as e:
-                # Αν αποτύχει το file upload, διαγράφουμε την expense
+                # Αν αποτύχει το file upload, διαγράφουμε την expense και επαναφέρουμε το αποθεματικό
+                building.current_reserve += expense.amount
+                building.save()
                 expense.delete()
                 raise ValidationError(f"Σφάλμα στο upload αρχείου: {str(e)}")
         
@@ -133,7 +140,19 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     
     def perform_update(self, serializer):
         """Καταγραφή ενημέρωσης δαπάνης"""
+        # Get the old expense amount before update
+        old_expense = self.get_object()
+        old_amount = old_expense.amount
+        
+        # Save the updated expense
         expense = serializer.save()
+        new_amount = expense.amount
+        
+        # Update the building's current reserve
+        building = expense.building
+        building.current_reserve += old_amount - new_amount  # Add back old amount, subtract new amount
+        building.save()
+        
         FinancialAuditLog.log_expense_action(
             user=self.request.user,
             action='UPDATE',
@@ -143,6 +162,11 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     
     def perform_destroy(self, instance):
         """Καταγραφή διαγραφής δαπάνης"""
+        # Add back the expense amount to the building's current reserve
+        building = instance.building
+        building.current_reserve += instance.amount
+        building.save()
+        
         FinancialAuditLog.log_expense_action(
             user=self.request.user,
             action='DELETE',
@@ -152,11 +176,36 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         instance.delete()
     
     def get_queryset(self):
-        """Φιλτράρισμα ανά building"""
+        """Φιλτράρισμα ανά building και μήνα"""
+        queryset = self.queryset
         building_id = self.request.query_params.get('building_id')
+        month = self.request.query_params.get('month')
+        
         if building_id:
-            return self.queryset.filter(building_id=building_id)
-        return self.queryset
+            queryset = queryset.filter(building_id=building_id)
+        
+        # Φιλτράρισμα ανά μήνα
+        if month:
+            try:
+                # Parse month parameter (format: YYYY-MM)
+                year, month_num = month.split('-')
+                year = int(year)
+                month_num = int(month_num)
+                
+                # Create date range for the month
+                from datetime import date
+                start_date = date(year, month_num, 1)
+                if month_num == 12:
+                    end_date = date(year + 1, 1, 1)
+                else:
+                    end_date = date(year, month_num + 1, 1)
+                
+                queryset = queryset.filter(date__gte=start_date, date__lt=end_date)
+            except (ValueError, TypeError):
+                # If month parameter is invalid, ignore it
+                pass
+        
+        return queryset
     
     @action(detail=False, methods=['get'])
     def pending(self, request):
@@ -266,11 +315,36 @@ class TransactionViewSet(viewsets.ModelViewSet):
         instance.delete()
     
     def get_queryset(self):
-        """Φιλτράρισμα ανά building"""
+        """Φιλτράρισμα ανά building και μήνα"""
+        queryset = self.queryset
         building_id = self.request.query_params.get('building_id')
+        month = self.request.query_params.get('month')
+        
         if building_id:
-            return self.queryset.filter(building_id=building_id)
-        return self.queryset
+            queryset = queryset.filter(building_id=building_id)
+        
+        # Φιλτράρισμα ανά μήνα
+        if month:
+            try:
+                # Parse month parameter (format: YYYY-MM)
+                year, month_num = month.split('-')
+                year = int(year)
+                month_num = int(month_num)
+                
+                # Create date range for the month
+                from datetime import date
+                start_date = date(year, month_num, 1)
+                if month_num == 12:
+                    end_date = date(year + 1, 1, 1)
+                else:
+                    end_date = date(year, month_num + 1, 1)
+                
+                queryset = queryset.filter(date__gte=start_date, date__lt=end_date)
+            except (ValueError, TypeError):
+                # If month parameter is invalid, ignore it
+                pass
+        
+        return queryset
     
     @action(detail=False, methods=['get'])
     def recent(self, request):
@@ -306,6 +380,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
         """Καταγραφή δημιουργίας εισπράξεως με file upload"""
         payment = serializer.save()
         
+        # Ενημέρωση του τρέχοντος αποθεματικού του κτιρίου
+        building = payment.apartment.building
+        building.current_reserve += payment.amount
+        building.save()
+        
         # Χειρισμός file upload αν υπάρχει
         if 'receipt' in self.request.FILES:
             try:
@@ -314,7 +393,9 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 payment.receipt = file_path
                 payment.save()
             except Exception as e:
-                # Αν αποτύχει το file upload, διαγράφουμε την payment
+                # Αν αποτύχει το file upload, διαγράφουμε την payment και επαναφέρουμε το αποθεματικό
+                building.current_reserve -= payment.amount
+                building.save()
                 payment.delete()
                 raise ValidationError(f"Σφάλμα στο upload αρχείου: {str(e)}")
         
@@ -327,7 +408,19 @@ class PaymentViewSet(viewsets.ModelViewSet):
     
     def perform_update(self, serializer):
         """Καταγραφή ενημέρωσης εισπράξεως"""
+        # Get the old payment amount before update
+        old_payment = self.get_object()
+        old_amount = old_payment.amount
+        
+        # Save the updated payment
         payment = serializer.save()
+        new_amount = payment.amount
+        
+        # Update the building's current reserve
+        building = payment.apartment.building
+        building.current_reserve -= old_amount - new_amount  # Subtract old amount, add new amount
+        building.save()
+        
         FinancialAuditLog.log_payment_action(
             user=self.request.user,
             action='UPDATE',
@@ -337,6 +430,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
     
     def perform_destroy(self, instance):
         """Καταγραφή διαγραφής εισπράξεως"""
+        # Subtract the payment amount from the building's current reserve
+        building = instance.apartment.building
+        building.current_reserve -= instance.amount
+        building.save()
+        
         FinancialAuditLog.log_payment_action(
             user=self.request.user,
             action='DELETE',
@@ -346,11 +444,36 @@ class PaymentViewSet(viewsets.ModelViewSet):
         instance.delete()
     
     def get_queryset(self):
-        """Φιλτράρισμα ανά building"""
+        """Φιλτράρισμα ανά building και μήνα"""
+        queryset = self.queryset
         building_id = self.request.query_params.get('building_id')
+        month = self.request.query_params.get('month')
+        
         if building_id:
-            return self.queryset.filter(apartment__building_id=building_id)
-        return self.queryset
+            queryset = queryset.filter(apartment__building_id=building_id)
+        
+        # Φιλτράρισμα ανά μήνα
+        if month:
+            try:
+                # Parse month parameter (format: YYYY-MM)
+                year, month_num = month.split('-')
+                year = int(year)
+                month_num = int(month_num)
+                
+                # Create date range for the month
+                from datetime import date
+                start_date = date(year, month_num, 1)
+                if month_num == 12:
+                    end_date = date(year + 1, 1, 1)
+                else:
+                    end_date = date(year, month_num + 1, 1)
+                
+                queryset = queryset.filter(date__gte=start_date, date__lt=end_date)
+            except (ValueError, TypeError):
+                # If month parameter is invalid, ignore it
+                pass
+        
+        return queryset
     
     @action(detail=False, methods=['post'])
     def process_payment(self, request):
@@ -754,11 +877,36 @@ class MeterReadingViewSet(viewsets.ModelViewSet):
     filterset_fields = ['apartment', 'meter_type', 'reading_date']
     
     def get_queryset(self):
-        """Φιλτράρισμα ανά building"""
+        """Φιλτράρισμα ανά building και μήνα"""
+        queryset = self.queryset
         building_id = self.request.query_params.get('building_id')
+        month = self.request.query_params.get('month')
+        
         if building_id:
-            return self.queryset.filter(apartment__building_id=building_id)
-        return self.queryset
+            queryset = queryset.filter(apartment__building_id=building_id)
+        
+        # Φιλτράρισμα ανά μήνα
+        if month:
+            try:
+                # Parse month parameter (format: YYYY-MM)
+                year, month_num = month.split('-')
+                year = int(year)
+                month_num = int(month_num)
+                
+                # Create date range for the month
+                from datetime import date
+                start_date = date(year, month_num, 1)
+                if month_num == 12:
+                    end_date = date(year + 1, 1, 1)
+                else:
+                    end_date = date(year, month_num + 1, 1)
+                
+                queryset = queryset.filter(reading_date__gte=start_date, reading_date__lt=end_date)
+            except (ValueError, TypeError):
+                # If month parameter is invalid, ignore it
+                pass
+        
+        return queryset
     
     @action(detail=False, methods=['get'])
     def types(self, request):
@@ -909,12 +1057,29 @@ class ReportViewSet(viewsets.ViewSet):
         date_from = request.query_params.get('date_from')
         date_to = request.query_params.get('date_to')
         transaction_type = request.query_params.get('type')
+        month = request.query_params.get('month')
         
         if not building_id:
             return Response(
                 {'error': 'Building ID is required'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+        # Αν δοθεί month parameter, υπολογίζουμε τα date_from και date_to
+        if month and not (date_from or date_to):
+            try:
+                year, month_num = month.split('-')
+                year = int(year)
+                month_num = int(month_num)
+                
+                from datetime import date
+                date_from = date(year, month_num, 1).isoformat()
+                if month_num == 12:
+                    date_to = date(year + 1, 1, 1).isoformat()
+                else:
+                    date_to = date(year, month_num + 1, 1).isoformat()
+            except (ValueError, TypeError):
+                pass
         
         try:
             service = ReportService(int(building_id))
