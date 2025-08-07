@@ -243,32 +243,65 @@ class FinancialDashboardService:
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
         # Πρόσφατες κινήσεις
-        recent_transactions = Transaction.objects.filter(
+        recent_transactions_query = Transaction.objects.filter(
             building_id=self.building_id
-        ).order_by('-date')[:10]
+        )
+        
+        # Φιλτράρισμα ανά μήνα αν δοθεί
+        if month:
+            try:
+                year, mon = map(int, month.split('-'))
+                start_date = date(year, mon, 1)
+                if mon == 12:
+                    end_date = date(year + 1, 1, 1)
+                else:
+                    end_date = date(year, mon + 1, 1)
+                recent_transactions_query = recent_transactions_query.filter(
+                    date__gte=start_date, date__lt=end_date
+                )
+            except Exception:
+                # Fallback to all transactions if month parsing fails
+                pass
+        
+        recent_transactions = recent_transactions_query.order_by('-date')[:10]
         
         # Ανέκδοτες δαπάνες (δεν έχουν εκδοθεί ακόμα)
-        pending_expenses = Expense.objects.filter(
+        pending_expenses_query = Expense.objects.filter(
             building_id=self.building_id,
             is_issued=False
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        )
+        
+        # Φιλτράρισμα ανά μήνα αν δοθεί
+        if month:
+            try:
+                year, mon = map(int, month.split('-'))
+                start_date = date(year, mon, 1)
+                if mon == 12:
+                    end_date = date(year + 1, 1, 1)
+                else:
+                    end_date = date(year, mon + 1, 1)
+                pending_expenses_query = pending_expenses_query.filter(
+                    date__gte=start_date, date__lt=end_date
+                )
+            except Exception:
+                # Fallback to all pending expenses if month parsing fails
+                pass
+        
+        pending_expenses = pending_expenses_query.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
         # Κατάσταση διαμερισμάτων
         apartment_balances = self.get_apartment_balances()
         
         # Στατιστικά πληρωμών
-        payment_statistics = self.get_payment_statistics()
+        payment_statistics = self.get_payment_statistics(month)
         
-        # Υπολογισμός τρέχοντος αποθεματικού: Συνολικές εισπράξεις - Συνολικές δαπάνες
-        total_payments_all_time = Payment.objects.filter(
-            apartment__building_id=self.building_id
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        total_expenses_all_time = Expense.objects.filter(
-            building_id=self.building_id
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        current_reserve = total_payments_all_time - total_expenses_all_time
+        # Υπολογισμός τρέχοντος αποθεματικού: Εισπράξεις - Δαπάνες για τον επιλεγμένο μήνα
+        if month:
+            # Για συγκεκριμένο μήνα, χρησιμοποιούμε τα δεδομένα του μήνα
+            current_reserve = total_payments_this_month - total_expenses_this_month
+        else:
+            # Για τρέχον μήνα, χρησιμοποιούμε τα δεδομένα του τρέχοντος μήνα
+            current_reserve = total_payments_this_month - total_expenses_this_month
         
         return {
             'current_reserve': current_reserve,
@@ -305,12 +338,27 @@ class FinancialDashboardService:
         
         return balances
     
-    def get_payment_statistics(self) -> Dict[str, Any]:
+    def get_payment_statistics(self, month: str | None = None) -> Dict[str, Any]:
         """Υπολογισμός στατιστικών πληρωμών"""
         from django.db.models import Count, Avg
+        from datetime import datetime, date
         
         # Όλες οι πληρωμές
         payments = Payment.objects.filter(apartment__building_id=self.building_id)
+        
+        # Φιλτράρισμα ανά μήνα αν δοθεί
+        if month:
+            try:
+                year, mon = map(int, month.split('-'))
+                start_date = date(year, mon, 1)
+                if mon == 12:
+                    end_date = date(year + 1, 1, 1)
+                else:
+                    end_date = date(year, mon + 1, 1)
+                payments = payments.filter(date__gte=start_date, date__lt=end_date)
+            except Exception:
+                # Fallback to all payments if month parsing fails
+                pass
         
         # Συνολικές πληρωμές
         total_payments_count = payments.count()

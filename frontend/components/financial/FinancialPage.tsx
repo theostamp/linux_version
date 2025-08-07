@@ -25,7 +25,8 @@ import {
   DollarSign,
   TrendingUp,
   PieChart,
-  FileText
+  FileText,
+  Calendar
 } from 'lucide-react';
 import { useFinancialPermissions } from '@/hooks/useFinancialPermissions';
 import { ProtectedFinancialRoute, ConditionalRender, PermissionButton } from './ProtectedFinancialRoute';
@@ -163,6 +164,19 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             selectedMonth={selectedMonth}
             onMonthChange={setSelectedMonth}
           />
+          <Button
+            onClick={() => {
+              const now = new Date();
+              const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+              setSelectedMonth(currentMonth);
+            }}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Calendar className="h-4 w-4" />
+            Τρέχων Μήνας
+          </Button>
         </div>
       </div>
       

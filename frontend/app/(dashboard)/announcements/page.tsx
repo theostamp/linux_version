@@ -49,7 +49,17 @@ export default function AnnouncementsPage() {
   if (buildingLoading || !currentBuilding || isLoading) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">📢 Ανακοινώσεις</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">📢 Ανακοινώσεις</h1>
+          <Button asChild>
+            <Link href="/announcements/new">
+              {selectedBuilding 
+                ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
+                : "Νέα Ανακοίνωση"
+              }
+            </Link>
+          </Button>
+        </div>
         <BuildingFilterIndicator className="mb-4" />
         {[...Array(3)].map(() => {
           const uuid = crypto.randomUUID();
@@ -62,7 +72,17 @@ export default function AnnouncementsPage() {
   if (isError) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">📢 Ανακοινώσεις</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">📢 Ανακοινώσεις</h1>
+          <Button asChild>
+            <Link href="/announcements/new">
+              {selectedBuilding 
+                ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
+                : "Νέα Ανακοίνωση"
+              }
+            </Link>
+          </Button>
+        </div>
         <BuildingFilterIndicator className="mb-4" />
         <ErrorMessage message="Αδυναμία φόρτωσης ανακοινώσεων. Παρακαλώ δοκιμάστε ξανά αργότερα." />
       </div>
@@ -72,7 +92,17 @@ export default function AnnouncementsPage() {
   if (announcements.length === 0) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">📢 Ανακοινώσεις</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">📢 Ανακοινώσεις</h1>
+          <Button asChild>
+            <Link href="/announcements/new">
+              {selectedBuilding 
+                ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
+                : "Νέα Ανακοίνωση"
+              }
+            </Link>
+          </Button>
+        </div>
         <BuildingFilterIndicator className="mb-4" />
         <p className="text-gray-500 text-center">
           Δεν υπάρχουν ενεργές ανακοινώσεις αυτή τη στιγμή.
@@ -92,7 +122,12 @@ export default function AnnouncementsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">📢 Ανακοινώσεις</h1>
         <Button asChild>
-          <Link href="/announcements/new">Νέα Ανακοίνωση</Link>
+          <Link href="/announcements/new">
+            {selectedBuilding 
+              ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
+              : "Νέα Ανακοίνωση"
+            }
+          </Link>
         </Button>
       </div>
       <BuildingFilterIndicator className="mb-4" />
