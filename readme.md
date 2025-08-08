@@ -421,7 +421,7 @@ git push -u origin main
 git add .
 
 # Commit με περιγραφικό μήνυμα
-git commit -m "Update: [σύντομη περιγραφή των αλλαγών]"
+git commit -m "αναδιαρθρωση financial calculator"
 
 # Push στο GitHub
 git push origin main

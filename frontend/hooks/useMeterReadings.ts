@@ -117,6 +117,24 @@ export const useMeterReadings = (buildingId?: number) => {
     }
   }, [buildingId]);
 
+  // Λήψη τύπων μετρητών
+  const fetchMeterTypes = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.get('/financial/meter-readings/types/');
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη τύπων μετρητών';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Αυτόματη φόρτωση μετρήσεων όταν αλλάζει το buildingId
   useEffect(() => {
     if (buildingId) {
@@ -140,6 +158,7 @@ export const useMeterReadings = (buildingId?: number) => {
     updateReading,
     deleteReading,
     fetchStatistics,
+    fetchMeterTypes,
     clearError,
   };
 }; 

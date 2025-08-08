@@ -262,7 +262,7 @@ class Transaction(models.Model):
     ]
     
     building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='transactions')
-    date = models.DateTimeField(verbose_name="Ημερομηνία")
+    date = models.DateTimeField(verbose_name="Ημερομηνία", auto_now_add=True)
     type = models.CharField(max_length=50, choices=TRANSACTION_TYPES, verbose_name="Τύπος")
     status = models.CharField(max_length=20, choices=TRANSACTION_STATUS, default='completed', verbose_name="Κατάσταση")
     description = models.TextField(verbose_name="Περιγραφή")
@@ -286,6 +286,13 @@ class Transaction(models.Model):
     
     def __str__(self):
         return f"{self.get_type_display()} - {self.amount}€ ({self.date.strftime('%d/%m/%Y')})"
+    
+    def save(self, *args, **kwargs):
+        # Ensure date is timezone-aware
+        from django.utils import timezone
+        if self.date and timezone.is_naive(self.date):
+            self.date = timezone.make_aware(self.date)
+        super().save(*args, **kwargs)
 
 
 class Payment(models.Model):

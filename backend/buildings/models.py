@@ -108,7 +108,18 @@ class Building(models.Model):
     )
 
     def __str__(self):
-        return f"{self.name} - {self.address}"
+        return self.name
+    
+    def get_street_view_image_url(self):
+        """Returns the street view image URL or a placeholder"""
+        if self.street_view_image:
+            return self.street_view_image
+        # Return a placeholder image if no street view image is set
+        return f"https://picsum.photos/600/300?random={self.id}"
+    
+    def has_street_view_image(self):
+        """Check if building has a street view image"""
+        return bool(self.street_view_image)
 
 
 class BuildingMembership(models.Model):

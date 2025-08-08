@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   FinancialOverview, 
-  CommonExpenseCalculator, 
+  CommonExpenseCalculatorNew, 
   ExpenseForm, 
   TransactionHistory,
   ChartsContainer,
@@ -276,7 +276,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         
         <TabsContent value="calculator" className="space-y-4">
           <ProtectedFinancialRoute requiredPermission="financial_write">
-            <CommonExpenseCalculator buildingId={buildingId} selectedMonth={selectedMonth} />
+            <CommonExpenseCalculatorNew buildingId={buildingId} selectedMonth={selectedMonth} />
           </ProtectedFinancialRoute>
         </TabsContent>
         

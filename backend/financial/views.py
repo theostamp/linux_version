@@ -582,26 +582,57 @@ class CommonExpenseViewSet(viewsets.ViewSet):
         """Προηγμένος υπολογισμός κοινοχρήστων σύμφωνα με το TODO αρχείο"""
         try:
             data = request.data
-            building_id = data.get('building_id') or data.get('building')
-            period_start_date = data.get('period_start_date')
-            period_end_date = data.get('period_end_date')
+            print(f"🔍 calculate_advanced: Received data: {data}")
+            print(f"🔍 calculate_advanced: Data type: {type(data)}")
+            
+            # Handle both JSON and form data
+            if hasattr(data, 'getlist'):
+                # Form data (QueryDict)
+                building_id = data.get('building_id') or data.get('building')
+                period_start_date = data.get('period_start_date')
+                period_end_date = data.get('period_end_date')
+            else:
+                # JSON data
+                building_id = data.get('building_id') or data.get('building')
+                period_start_date = data.get('period_start_date')
+                period_end_date = data.get('period_end_date')
+            
+            print(f"🔍 calculate_advanced: building_id: {building_id}")
+            print(f"🔍 calculate_advanced: period_start_date: {period_start_date}")
+            print(f"🔍 calculate_advanced: period_end_date: {period_end_date}")
             
             if not building_id:
                 raise ValueError('building_id is required')
             
+            # Convert building_id to int if it's a string
+            try:
+                building_id = int(building_id)
+            except (ValueError, TypeError):
+                raise ValueError(f'Invalid building_id: {building_id}')
+            
             calculator = AdvancedCommonExpenseCalculator(
-                building_id=int(building_id),
+                building_id=building_id,
                 period_start_date=period_start_date,
                 period_end_date=period_end_date
             )
             
             result = calculator.calculate_advanced_shares()
+            print(f"🔍 calculate_advanced: Calculation successful, result keys: {list(result.keys())}")
             
             return Response(result)
-        except Exception as e:
+        except ValueError as e:
+            print(f"❌ calculate_advanced: ValueError: {e}")
             return Response(
                 {'error': str(e)}, 
                 status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            print(f"❌ calculate_advanced: Exception: {e}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Internal server error: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
     @action(detail=False, methods=['post'])
