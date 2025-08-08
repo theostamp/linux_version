@@ -90,6 +90,22 @@ class Building(models.Model):
         default=0,
         help_text=_("Τρέχον αποθεματικό του κτιρίου σε ευρώ")
     )
+    
+    heating_fixed_percentage = models.DecimalField(
+        _("Ποσοστό Παγίου Θέρμανσης"),
+        max_digits=5,
+        decimal_places=2,
+        default=30.0,
+        help_text=_("Ποσοστό παγίου κόστους θέρμανσης (π.χ. 30% = 30.00)")
+    )
+    
+    reserve_contribution_per_apartment = models.DecimalField(
+        _("Πάγια Εισφορά Αποθεματικού ανά Διαμέρισμα"),
+        max_digits=6,
+        decimal_places=2,
+        default=5.0,
+        help_text=_("Πάγια εισφορά αποθεματικού ανά διαμέρισμα σε ευρώ")
+    )
 
     def __str__(self):
         return f"{self.name} - {self.address}"

@@ -14,7 +14,7 @@ from .serializers import (
     FinancialSummarySerializer, ApartmentBalanceSerializer,
     CommonExpenseCalculationSerializer
 )
-from .services import CommonExpenseCalculator, FinancialDashboardService, PaymentProcessor, FileUploadService
+from .services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator, FinancialDashboardService, PaymentProcessor, FileUploadService
 from buildings.models import Building
 from apartments.models import Apartment
 from .services import ReportService
@@ -569,6 +569,33 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                 'total_expenses': float(calculator.get_total_expenses()),
                 'apartments_count': calculator.get_apartments_count(),
             }
+            
+            return Response(result)
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    @action(detail=False, methods=['post'])
+    def calculate_advanced(self, request):
+        """Προηγμένος υπολογισμός κοινοχρήστων σύμφωνα με το TODO αρχείο"""
+        try:
+            data = request.data
+            building_id = data.get('building_id') or data.get('building')
+            period_start_date = data.get('period_start_date')
+            period_end_date = data.get('period_end_date')
+            
+            if not building_id:
+                raise ValueError('building_id is required')
+            
+            calculator = AdvancedCommonExpenseCalculator(
+                building_id=int(building_id),
+                period_start_date=period_start_date,
+                period_end_date=period_end_date
+            )
+            
+            result = calculator.calculate_advanced_shares()
             
             return Response(result)
         except Exception as e:

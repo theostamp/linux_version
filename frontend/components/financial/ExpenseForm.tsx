@@ -9,7 +9,7 @@ import { FileUpload } from '@/components/ui/FileUpload';
 import { FilePreview } from '@/components/ui/FilePreview';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { SupplierSelector } from './SupplierSelector';
-import { ExpenseTitleAutoComplete } from './ExpenseTitleAutoComplete';
+import { ExpenseTitleDropdown } from './ExpenseTitleDropdown';
 
 interface ExpenseFormProps {
   buildingId: number;
@@ -267,7 +267,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
               Έξυπνοι Αυτοματισμοί
             </h3>
             <div className="mt-2 text-sm text-blue-700">
-              <p>• <strong>Αυτόματη συμπλήρωση τίτλου</strong> βάσει κατηγορίας και προμηθευτή</p>
+              <p>• <strong>Γρήγορη επιλογή τίτλου</strong> με dropdown βάσει κατηγορίας</p>
               <p>• <strong>Αυτόματη ημερομηνία</strong> (τελευταία ημέρα μήνα για μηνιαίες δαπάνες)</p>
               <p>• <strong>Αυτόματη κατανομή</strong> βάσει τύπου δαπάνης</p>
             </div>
@@ -288,12 +288,12 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Τίτλος Δαπάνης *
             </label>
-            <ExpenseTitleAutoComplete
+            <ExpenseTitleDropdown
               value={selectedTitle || ''}
               onChange={(value) => setValue('title', value)}
               category={selectedCategory}
               supplier={selectedSupplierDetails}
-              placeholder="π.χ. ΔΕΗ Ιανουαρίου 2024"
+              placeholder="Επιλέξτε τίτλο δαπάνης"
               error={errors.title?.message}
             />
             {/* Hidden input for form validation */}

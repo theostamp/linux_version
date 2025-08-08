@@ -73,6 +73,26 @@ export const useCommonExpenses = () => {
     }
   }, []);
 
+  const calculateAdvancedShares = useCallback(async (data: {
+    building_id: number;
+    period_start_date?: string;
+    period_end_date?: string;
+  }): Promise<any> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await api.post('/financial/common-expenses/calculate_advanced/', data);
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τον προηγμένο υπολογισμό κοινοχρήστων';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const issueCommonExpenses = useCallback(async (data: CommonExpenseIssueRequest): Promise<any> => {
     setIsLoading(true);
     setError(null);
@@ -296,6 +316,7 @@ export const useCommonExpenses = () => {
     calculateCommonExpenses,
     // Backward-compat alias for older components
     calculateShares: calculateCommonExpenses,
+    calculateAdvancedShares,
     issueCommonExpenses,
     getApartmentShares,
     createMeterReading,

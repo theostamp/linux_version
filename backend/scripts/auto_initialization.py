@@ -250,7 +250,9 @@ def create_demo_data(tenant_schema):
                 'postal_code': '10431',
                 'apartments_count': 24,
                 'internal_manager_name': 'Γιώργος Παπαδόπουλος',
-                'internal_manager_phone': '2101234567'
+                'internal_manager_phone': '2101234567',
+                'heating_fixed_percentage': 30.0,
+                'reserve_contribution_per_apartment': 5.0
             },
             {
                 'name': 'Πατησίων 45',
@@ -259,7 +261,26 @@ def create_demo_data(tenant_schema):
                 'postal_code': '10432',
                 'apartments_count': 16,
                 'internal_manager_name': 'Μαρία Κωνσταντίνου',
-                'internal_manager_phone': '2102345678'
+                'internal_manager_phone': '2102345678',
+                'heating_fixed_percentage': 30.0,
+                'reserve_contribution_per_apartment': 5.0
+            },
+            {
+                'name': 'Αραχώβης 12',
+                'address': 'Αραχώβης 12, Αθήνα 106 80, Ελλάδα',
+                'city': 'Αθήνα',
+                'postal_code': '10680',
+                'apartments_count': 10,
+                'internal_manager_name': 'Δημήτρης Αραχωβίτης',
+                'internal_manager_phone': '2109876543',
+                'management_office_name': 'Διαχείριση Αραχώβης ΑΕ',
+                'management_office_phone': '2109876544',
+                'management_office_address': 'Αραχώβης 15, Αθήνα 106 80',
+                'heating_fixed_percentage': 30.0,
+                'reserve_contribution_per_apartment': 5.0,
+                'current_reserve': 25000.00,
+                'latitude': 37.9838,
+                'longitude': 23.7275
             }
         ]
         
@@ -304,29 +325,78 @@ def create_demo_data(tenant_schema):
         
         # 4. Δημιουργία διαμερισμάτων
         for building in created_buildings:
-            for floor in range(1, 3):  # 2 όροφοι
-                for apartment_num in range(1, 4):  # 3 διαμερίσματα ανά όροφο
-                    apartment_number = f"{floor}{apartment_num:02d}"
+            if building.name == 'Αραχώβης 12':
+                # Ειδική δημιουργία για Αραχώβης 12 - 10 διαμερίσματα
+                apartments_data = [
+                    # Όροφος 1
+                    {'number': 'A1', 'floor': 1, 'owner_name': 'Γεώργιος Παπαδόπουλος', 'owner_phone': '2101234567', 'owner_email': 'papadopoulos@email.com', 'tenant_name': 'Μαρία Κωνσταντίνου', 'tenant_phone': '2101234568', 'tenant_email': 'maria@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100, 'current_balance': 0.00},
+                    {'number': 'A2', 'floor': 1, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2101234569', 'owner_email': 'eleni@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 3, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105, 'current_balance': -45.50},
+                    {'number': 'A3', 'floor': 1, 'owner_name': 'Νίκος Αλεξίου', 'owner_phone': '2101234570', 'owner_email': 'nikos@email.com', 'tenant_name': 'Αννα Παπαδοπούλου', 'tenant_phone': '2101234571', 'tenant_email': 'anna@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 2, 'participation_mills': 95, 'heating_mills': 95, 'elevator_mills': 95, 'current_balance': 120.00},
+                    
+                    # Όροφος 2
+                    {'number': 'B1', 'floor': 2, 'owner_name': 'Δημήτρης Κωνσταντίνου', 'owner_phone': '2101234572', 'owner_email': 'dimitris@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 110, 'elevator_mills': 110, 'current_balance': -78.30},
+                    {'number': 'B2', 'floor': 2, 'owner_name': 'Κατερίνα Γεωργίου', 'owner_phone': '2101234573', 'owner_email': 'katerina@email.com', 'tenant_name': 'Παύλος Μιχαηλίδης', 'tenant_phone': '2101234574', 'tenant_email': 'pavlos@email.com', 'is_rented': True, 'square_meters': 80, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100, 'current_balance': 0.00},
+                    {'number': 'B3', 'floor': 2, 'owner_name': 'Ανδρέας Παπαδάκης', 'owner_phone': '2101234575', 'owner_email': 'andreas@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100, 'current_balance': 65.20},
+                    
+                    # Όροφος 3
+                    {'number': 'C1', 'floor': 3, 'owner_name': 'Σοφία Νικολάου', 'owner_phone': '2101234576', 'owner_email': 'sofia@email.com', 'tenant_name': 'Γιώργος Δημητρίου', 'tenant_phone': '2101234577', 'tenant_email': 'giorgos@email.com', 'is_rented': True, 'square_meters': 90, 'bedrooms': 3, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105, 'current_balance': -120.80},
+                    {'number': 'C2', 'floor': 3, 'owner_name': 'Μιχάλης Αντωνίου', 'owner_phone': '2101234578', 'owner_email': 'michalis@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 75, 'bedrooms': 2, 'participation_mills': 95, 'heating_mills': 95, 'elevator_mills': 95, 'current_balance': 0.00},
+                    {'number': 'C3', 'floor': 3, 'owner_name': 'Ευαγγελία Παπαδοπούλου', 'owner_phone': '2101234579', 'owner_email': 'evangelia@email.com', 'tenant_name': 'Δημήτρης Κωνσταντίνου', 'tenant_phone': '2101234580', 'tenant_email': 'dimitris2@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100, 'current_balance': 45.60},
+                    
+                    # Όροφος 4
+                    {'number': 'D1', 'floor': 4, 'owner_name': 'Χρήστος Παπαδόπουλος', 'owner_phone': '2101234581', 'owner_email': 'christos@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 110, 'elevator_mills': 110, 'current_balance': -90.25}
+                ]
+                
+                for apt_data in apartments_data:
                     apartment, created = Apartment.objects.get_or_create(
                         building=building,
-                        number=apartment_number,
+                        number=apt_data['number'],
                         defaults={
-                            'identifier': f"{building.name}-{apartment_number}",
-                            'floor': floor,
-                            'owner_name': f"Ιδιοκτήτης {apartment_number}",
-                            'owner_phone': f"210{apartment_number}000",
-                            'owner_email': f"owner{apartment_number}@demo.localhost",
-                            'tenant_name': f"Ενοικιαστής {apartment_number}",
-                            'tenant_phone': f"210{apartment_number}001",
-                            'tenant_email': f"tenant{apartment_number}@demo.localhost",
-                            'is_rented': apartment_num % 2 == 0,  # Ζυγά διαμερίσματα ενοικιάζονται
-                            'square_meters': 80 + (apartment_num * 5),
-                            'bedrooms': 2 + (apartment_num % 3),
-                            'notes': f"Διαμέρισμα {apartment_number} στο κτίριο {building.name}"
+                            'identifier': f"{building.name}-{apt_data['number']}",
+                            'floor': apt_data['floor'],
+                            'owner_name': apt_data['owner_name'],
+                            'owner_phone': apt_data['owner_phone'],
+                            'owner_email': apt_data['owner_email'],
+                            'tenant_name': apt_data['tenant_name'],
+                            'tenant_phone': apt_data['tenant_phone'],
+                            'tenant_email': apt_data['tenant_email'],
+                            'is_rented': apt_data['is_rented'],
+                            'square_meters': apt_data['square_meters'],
+                            'bedrooms': apt_data['bedrooms'],
+                            'participation_mills': apt_data['participation_mills'],
+                            'heating_mills': apt_data['heating_mills'],
+                            'elevator_mills': apt_data['elevator_mills'],
+                            'current_balance': apt_data['current_balance'],
+                            'notes': f"Διαμέρισμα {apt_data['number']} στο κτίριο {building.name} - Όροφος {apt_data['floor']}"
                         }
                     )
                     if created:
-                        print(f"✅ Δημιουργήθηκε διαμέρισμα: {apartment_number}")
+                        print(f"✅ Δημιουργήθηκε διαμέρισμα: {apt_data['number']} (Αραχώβης 12)")
+            else:
+                # Για τα άλλα κτίρια - παλιά λογική
+                for floor in range(1, 3):  # 2 όροφοι
+                    for apartment_num in range(1, 4):  # 3 διαμερίσματα ανά όροφο
+                        apartment_number = f"{floor}{apartment_num:02d}"
+                        apartment, created = Apartment.objects.get_or_create(
+                            building=building,
+                            number=apartment_number,
+                            defaults={
+                                'identifier': f"{building.name}-{apartment_number}",
+                                'floor': floor,
+                                'owner_name': f"Ιδιοκτήτης {apartment_number}",
+                                'owner_phone': f"210{apartment_number}000",
+                                'owner_email': f"owner{apartment_number}@demo.localhost",
+                                'tenant_name': f"Ενοικιαστής {apartment_number}",
+                                'tenant_phone': f"210{apartment_number}001",
+                                'tenant_email': f"tenant{apartment_number}@demo.localhost",
+                                'is_rented': apartment_num % 2 == 0,  # Ζυγά διαμερίσματα ενοικιάζονται
+                                'square_meters': 80 + (apartment_num * 5),
+                                'bedrooms': 2 + (apartment_num % 3),
+                                'notes': f"Διαμέρισμα {apartment_number} στο κτίριο {building.name}"
+                            }
+                        )
+                        if created:
+                            print(f"✅ Δημιουργήθηκε διαμέρισμα: {apartment_number}")
         
         # 5. Δημιουργία ανακοινώσεων
         announcements_data = [
@@ -472,6 +542,59 @@ def create_demo_data(tenant_schema):
                 }
             ]
             
+            # Ειδικές δαπάνες για Αραχώβης 12
+            araxovis_expenses = [
+                {
+                    'title': 'Καθαρισμός Κοινοχρήστων - Ιανουάριος 2024',
+                    'amount': 180.00,
+                    'category': 'cleaning',
+                    'distribution_type': 'by_participation_mills',
+                    'date': datetime(2024, 1, 15).date(),
+                },
+                {
+                    'title': 'ΔΕΗ Κοινοχρήστων - Ιανουάριος 2024',
+                    'amount': 125.00,
+                    'category': 'electricity_common',
+                    'distribution_type': 'by_participation_mills',
+                    'date': datetime(2024, 1, 20).date(),
+                },
+                {
+                    'title': 'Συντήρηση Ανελκυστήρα - Ιανουάριος 2024',
+                    'amount': 95.00,
+                    'category': 'elevator_maintenance',
+                    'distribution_type': 'by_participation_mills',
+                    'date': datetime(2024, 1, 25).date(),
+                },
+                {
+                    'title': 'Θέρμανση - Ιανουάριος 2024',
+                    'amount': 320.00,
+                    'category': 'heating_fuel',
+                    'distribution_type': 'by_participation_mills',
+                    'date': datetime(2024, 1, 30).date(),
+                },
+                {
+                    'title': 'Νερό Κοινοχρήστων - Ιανουάριος 2024',
+                    'amount': 85.00,
+                    'category': 'water_common',
+                    'distribution_type': 'by_participation_mills',
+                    'date': datetime(2024, 2, 5).date(),
+                },
+                {
+                    'title': 'Ασφάλεια Κτιρίου - 2024',
+                    'amount': 450.00,
+                    'category': 'building_insurance',
+                    'distribution_type': 'by_participation_mills',
+                    'date': datetime(2024, 1, 10).date(),
+                },
+                {
+                    'title': 'Συντήρηση Ηλεκτρικών - Ιανουάριος 2024',
+                    'amount': 120.00,
+                    'category': 'electrical_maintenance',
+                    'distribution_type': 'by_participation_mills',
+                    'date': datetime(2024, 2, 10).date(),
+                }
+            ]
+            
             for expense_data in expenses_data:
                 for building in created_buildings:
                     expense, created = Expense.objects.get_or_create(
@@ -487,6 +610,24 @@ def create_demo_data(tenant_schema):
                     )
                     if created:
                         print(f"✅ Δημιουργήθηκε δαπάνη: {expense.title}")
+            
+            # Ειδικές δαπάνες για Αραχώβης 12
+            araxovis_building = next((b for b in created_buildings if b.name == 'Αραχώβης 12'), None)
+            if araxovis_building:
+                for expense_data in araxovis_expenses:
+                    expense, created = Expense.objects.get_or_create(
+                        building=araxovis_building,
+                        title=expense_data['title'],
+                        defaults={
+                            'amount': expense_data['amount'],
+                            'category': expense_data['category'],
+                            'distribution_type': expense_data['distribution_type'],
+                            'date': expense_data['date'],
+                            'is_issued': True
+                        }
+                    )
+                    if created:
+                        print(f"✅ Δημιουργήθηκε δαπάνη Αραχώβης 12: {expense.title}")
             
             # Δημιουργία εικονικών εισπράξεων
             payment_methods = ['bank_transfer', 'cash']
@@ -515,6 +656,60 @@ def create_demo_data(tenant_schema):
                     )
                     if created:
                         print(f"✅ Δημιουργήθηκε είσπραξη: {apartment.number} - {payment_amount}€")
+            
+            # Ειδικές εισπράξεις για Αραχώβης 12
+            if araxovis_building:
+                araxovis_apartments = Apartment.objects.filter(building=araxovis_building)
+                araxovis_payment_data = [
+                    # A1 - Μαρία Κωνσταντίνου (ενοικιαστής)
+                    {'apartment': 'A1', 'amount': 85.50, 'date': datetime(2024, 1, 10).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    {'apartment': 'A1', 'amount': 92.30, 'date': datetime(2024, 2, 8).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Φεβρουαρίου 2024'},
+                    
+                    # A2 - Ελένη Δημητρίου (ιδιοκτήτης) - έχει οφειλή
+                    {'apartment': 'A2', 'amount': 45.50, 'date': datetime(2024, 1, 15).date(), 'method': 'cash', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    
+                    # A3 - Αννα Παπαδοπούλου (ενοικιαστής)
+                    {'apartment': 'A3', 'amount': 78.20, 'date': datetime(2024, 1, 12).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    {'apartment': 'A3', 'amount': 120.00, 'date': datetime(2024, 2, 5).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Φεβρουαρίου 2024'},
+                    
+                    # B1 - Δημήτρης Κωνσταντίνου (ιδιοκτήτης) - έχει οφειλή
+                    {'apartment': 'B1', 'amount': 78.30, 'date': datetime(2024, 1, 20).date(), 'method': 'cash', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    
+                    # B2 - Παύλος Μιχαηλίδης (ενοικιαστής)
+                    {'apartment': 'B2', 'amount': 95.00, 'date': datetime(2024, 1, 8).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    {'apartment': 'B2', 'amount': 88.50, 'date': datetime(2024, 2, 12).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Φεβρουαρίου 2024'},
+                    
+                    # B3 - Ανδρέας Παπαδάκης (ιδιοκτήτης) - έχει πιστωτικό
+                    {'apartment': 'B3', 'amount': 65.20, 'date': datetime(2024, 1, 18).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    
+                    # C1 - Γιώργος Δημητρίου (ενοικιαστής) - έχει οφειλή
+                    {'apartment': 'C1', 'amount': 120.80, 'date': datetime(2024, 1, 25).date(), 'method': 'cash', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    
+                    # C2 - Μιχάλης Αντωνίου (ιδιοκτήτης)
+                    {'apartment': 'C2', 'amount': 72.40, 'date': datetime(2024, 1, 14).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    
+                    # C3 - Δημήτρης Κωνσταντίνου (ενοικιαστής)
+                    {'apartment': 'C3', 'amount': 45.60, 'date': datetime(2024, 1, 16).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    {'apartment': 'C3', 'amount': 82.30, 'date': datetime(2024, 2, 10).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Φεβρουαρίου 2024'},
+                    
+                    # D1 - Χρήστος Παπαδόπουλος (ιδιοκτήτης) - έχει οφειλή
+                    {'apartment': 'D1', 'amount': 90.25, 'date': datetime(2024, 1, 22).date(), 'method': 'cash', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'}
+                ]
+                
+                for payment_data in araxovis_payment_data:
+                    apartment = next((apt for apt in araxovis_apartments if apt.number == payment_data['apartment']), None)
+                    if apartment:
+                        payment, created = Payment.objects.get_or_create(
+                            apartment=apartment,
+                            amount=payment_data['amount'],
+                            date=payment_data['date'],
+                            method=payment_data['method'],
+                            defaults={
+                                'notes': payment_data['notes']
+                            }
+                        )
+                        if created:
+                            print(f"✅ Δημιουργήθηκε είσπραξη Αραχώβης 12: {apartment.number} - {payment_data['amount']}€")
             
             print("✅ Ολοκληρώθηκε η δημιουργία οικονομικών δεδομένων")
             
@@ -571,18 +766,24 @@ ADMIN: http://demo.localhost:8000/admin/
 ----------
 - Αθηνών 12 (24 διαμερίσματα)
 - Πατησίων 45 (16 διαμερίσματα)
+- Αραχώβης 12 (10 διαμερίσματα) - Πλήρη λειτουργικά δεδομένα
 
 📊 DEMO ΔΕΔΟΜΕΝΑ:
 -----------------
-- 2 κτίρια
+- 3 κτίρια
 - 4 χρήστες
-- 12 διαμερίσματα (2 κτίρια × 2 όροφοι × 3 διαμερίσματα)
+- 22 διαμερίσματα συνολικά
+  * Αθηνών 12: 6 διαμερίσματα (2 όροφοι × 3 διαμερίσματα)
+  * Πατησίων 45: 6 διαμερίσματα (2 όροφοι × 3 διαμερίσματα)
+  * Αραχώβης 12: 10 διαμερίσματα (4 όροφοι, πλήρη λειτουργικά δεδομένα)
 - 2 ανακοινώσεις
 - 2 αιτήματα
 - 2 ψηφοφορίες
 - 2 υποχρεώσεις
-- 6 δαπάνες κτιρίου (καθαρισμός, ΔΕΗ, συντήρηση ανελκυστήρα)
-        - 12-24 εισπράξεις ιδιοκτητών (μετρητά, τραπεζική μεταφορά)
+- 13 δαπάνες κτιρίου συνολικά
+  * Γενικές: 6 δαπάνες (καθαρισμός, ΔΕΗ, συντήρηση ανελκυστήρα)
+  * Αραχώβης 12: 7 ειδικές δαπάνες (θέρμανση, νερό, ασφάλεια, ηλεκτρικά)
+- 35+ εισπράξεις ιδιοκτητών (μετρητά, τραπεζική μεταφορά)
 
 🌐 ΠΡΟΣΒΑΣΗ:
 ------------
@@ -590,6 +791,48 @@ Public Admin: http://localhost:8000/admin/
 Demo Frontend: http://demo.localhost:8080
 Demo Backend API: http://demo.localhost:8000/api/
 Demo Admin Panel: http://demo.localhost:8000/admin/
+
+🏢 ΑΡΑΧΩΒΗΣ 12 - ΠΛΗΡΗ ΛΕΙΤΟΥΡΓΙΚΑ ΔΕΔΟΜΕΝΑ:
+---------------------------------------------
+Διεύθυνση: Αραχώβης 12, Αθήνα 106 80, Ελλάδα
+Διαχειριστής: Δημήτρης Αραχωβίτης (2109876543)
+Γραφείο Διαχείρισης: Διαχείριση Αραχώβης ΑΕ (2109876544)
+Τρέχον Αποθεματικό: 25.000,00€
+Διαμερίσματα: 10 (4 όροφοι)
+
+📋 ΔΙΑΜΕΡΙΣΜΑΤΑ ΑΡΑΧΩΒΗΣ 12:
+-----------------------------
+Όροφος 1:
+- A1: Γεώργιος Παπαδόπουλος → Μαρία Κωνσταντίνου (ενοικιαστής)
+- A2: Ελένη Δημητρίου (ιδιοκτήτης) - Οφειλή: -45,50€
+- A3: Νίκος Αλεξίου → Αννα Παπαδοπούλου (ενοικιαστής) - Πιστωτικό: +120,00€
+
+Όροφος 2:
+- B1: Δημήτρης Κωνσταντίνου (ιδιοκτήτης) - Οφειλή: -78,30€
+- B2: Κατερίνα Γεωργίου → Παύλος Μιχαηλίδης (ενοικιαστής)
+- B3: Ανδρέας Παπαδάκης (ιδιοκτήτης) - Πιστωτικό: +65,20€
+
+Όροφος 3:
+- C1: Σοφία Νικολάου → Γιώργος Δημητρίου (ενοικιαστής) - Οφειλή: -120,80€
+- C2: Μιχάλης Αντωνίου (ιδιοκτήτης)
+- C3: Ευαγγελία Παπαδοπούλου → Δημήτρης Κωνσταντίνου (ενοικιαστής) - Πιστωτικό: +45,60€
+
+Όροφος 4:
+- D1: Χρήστος Παπαδόπουλος (ιδιοκτήτης) - Οφειλή: -90,25€
+
+💰 ΟΙΚΟΝΟΜΙΚΑ ΔΕΔΟΜΕΝΑ ΑΡΑΧΩΒΗΣ 12:
+-------------------------------------
+Δαπάνες (Ιανουάριος-Φεβρουάριος 2024):
+- Καθαρισμός Κοινοχρήστων: 180,00€
+- ΔΕΗ Κοινοχρήστων: 125,00€
+- Συντήρηση Ανελκυστήρα: 95,00€
+- Θέρμανση: 320,00€
+- Νερό Κοινοχρήστων: 85,00€
+- Ασφάλεια Κτιρίου: 450,00€
+- Συντήρηση Ηλεκτρικών: 120,00€
+
+Εισπράξεις: 15 εισπράξεις με πραγματικά ποσά και ημερομηνίες
+Χιλιοστά: Πλήρη κατανομή ανά διαμέρισμα (95-110 χιλιοστά)
 
 🔐 ΙΕΡΑΡΧΙΑ ΔΙΚΑΙΩΜΑΤΩΝ:
 -------------------------
@@ -666,6 +909,9 @@ def main():
     print("   Admin: admin@demo.localhost / admin123456")
     print("   Manager: manager@demo.localhost / manager123456")
     print("   Resident: resident1@demo.localhost / resident123456")
+    print("\n🏢 Νέο κτίριο: Αραχώβης 12 (10 διαμερίσματα)")
+    print("   Διεύθυνση: Αραχώβης 12, Αθήνα 106 80, Ελλάδα")
+    print("   Πλήρη λειτουργικά δεδομένα με οικονομικά στοιχεία")
     print("\n🚀 Το σύστημα είναι έτοιμο!")
     print("\n💡 Ultra-Superuser μπορεί να:")
     print("   - Διαχειρίζεται όλους τους tenants")

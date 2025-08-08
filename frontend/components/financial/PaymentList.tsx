@@ -192,7 +192,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-semibold text-lg">
-                        Είσπραξη - {payment.apartment_number || `Διαμέρισμα ${payment.apartment}`}
+                        Είσπραξη - <span className="text-blue-600">{payment.apartment_number || `Διαμέρισμα ${payment.apartment}`}</span>
                       </h3>
                       <Badge className={getMethodColor(payment.method)}>
                         {getMethodLabel(payment.method)}
@@ -212,7 +212,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                       </div>
                       <div>
                         <span className="font-medium">Διαμέρισμα:</span>
-                        <span className="ml-1">{payment.apartment_number || payment.apartment}</span>
+                        <span className="ml-1 text-blue-600">{payment.apartment_number || payment.apartment}</span>
                       </div>
                       <div>
                         <span className="font-medium">Δημιουργήθηκε:</span>

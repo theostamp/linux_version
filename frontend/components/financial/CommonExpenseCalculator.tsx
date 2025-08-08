@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,8 +24,50 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
   const [isIssuing, setIsIssuing] = useState(false);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [isQuickMode, setIsQuickMode] = useState(false);
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
+  const [advancedShares, setAdvancedShares] = useState<any>(null);
   
-  const { calculateShares, issueCommonExpenses } = useCommonExpenses();
+  const { calculateShares, calculateAdvancedShares, issueCommonExpenses } = useCommonExpenses();
+  
+  // Helper function to convert YYYY-MM format to Greek month name
+  const formatSelectedMonth = (monthString: string) => {
+    if (!monthString) return '';
+    
+    const [year, month] = monthString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    return date.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' });
+  };
+  
+  // Helper function to get month start and end dates from YYYY-MM format
+  const getMonthDates = (monthString: string) => {
+    if (!monthString) return { startDate: '', endDate: '' };
+    
+    const [year, month] = monthString.split('-');
+    const yearNum = parseInt(year);
+    const monthNum = parseInt(month) - 1; // JavaScript months are 0-based
+    
+    // First day of the month
+    const firstDay = new Date(yearNum, monthNum, 1);
+    // Last day of the month
+    const lastDay = new Date(yearNum, monthNum + 1, 0);
+    
+    return {
+      startDate: firstDay.toISOString().split('T')[0],
+      endDate: lastDay.toISOString().split('T')[0]
+    };
+  };
+  
+  // Auto-fill period name and dates when selectedMonth changes
+  useEffect(() => {
+    if (selectedMonth) {
+      const formattedMonth = formatSelectedMonth(selectedMonth);
+      const { startDate, endDate } = getMonthDates(selectedMonth);
+      
+      setPeriodName(formattedMonth);
+      setStartDate(startDate);
+      setEndDate(endDate);
+    }
+  }, [selectedMonth]);
   
   // Helper function to get current month dates
   const getCurrentMonthDates = () => {
@@ -75,14 +117,29 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
     try {
       setIsCalculating(true);
       
-      const result = await calculateShares({
-        building_id: buildingId
-      });
-      
-      setShares(result.shares);
-      setTotalExpenses(result.total_expenses);
-      
-      toast.success('Γρήγορος υπολογισμός τρέχοντος μήνα ολοκληρώθηκε επιτυχώς');
+      if (isAdvancedMode) {
+        const result = await calculateAdvancedShares({
+          building_id: buildingId,
+          period_start_date: quickStart,
+          period_end_date: quickEnd
+        });
+        
+        setAdvancedShares(result);
+        setShares(result.shares);
+        setTotalExpenses(result.total_expenses);
+        
+        toast.success('Γρήγορος προηγμένος υπολογισμός τρέχοντος μήνα ολοκληρώθηκε επιτυχώς');
+      } else {
+        const result = await calculateShares({
+          building_id: buildingId
+        });
+        
+        setShares(result.shares);
+        setTotalExpenses(result.total_expenses);
+        setAdvancedShares(null);
+        
+        toast.success('Γρήγορος υπολογισμός τρέχοντος μήνα ολοκληρώθηκε επιτυχώς');
+      }
     } catch (error) {
       console.error('Error in quick calculation:', error);
       toast.error('Σφάλμα κατά τον γρήγορο υπολογισμό');
@@ -103,14 +160,29 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
     try {
       setIsCalculating(true);
       
-      const result = await calculateShares({
-        building_id: buildingId
-      });
-      
-      setShares(result.shares);
-      setTotalExpenses(result.total_expenses);
-      
-      toast.success('Γρήγορος υπολογισμός προηγούμενου μήνα ολοκληρώθηκε επιτυχώς');
+      if (isAdvancedMode) {
+        const result = await calculateAdvancedShares({
+          building_id: buildingId,
+          period_start_date: prevStart,
+          period_end_date: prevEnd
+        });
+        
+        setAdvancedShares(result);
+        setShares(result.shares);
+        setTotalExpenses(result.total_expenses);
+        
+        toast.success('Γρήγορος προηγμένος υπολογισμός προηγούμενου μήνα ολοκληρώθηκε επιτυχώς');
+      } else {
+        const result = await calculateShares({
+          building_id: buildingId
+        });
+        
+        setShares(result.shares);
+        setTotalExpenses(result.total_expenses);
+        setAdvancedShares(null);
+        
+        toast.success('Γρήγορος υπολογισμός προηγούμενου μήνα ολοκληρώθηκε επιτυχώς');
+      }
     } catch (error) {
       console.error('Error in previous month calculation:', error);
       toast.error('Σφάλμα κατά τον υπολογισμό προηγούμενου μήνα');
@@ -130,14 +202,31 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
     try {
       setIsCalculating(true);
       
-      const result = await calculateShares({
-        building_id: buildingId
-      });
-      
-      setShares(result.shares);
-      setTotalExpenses(result.total_expenses);
-      
-      toast.success('Υπολογισμός ολοκληρώθηκε επιτυχώς');
+      if (isAdvancedMode) {
+        // Προηγμένος υπολογιστής
+        const result = await calculateAdvancedShares({
+          building_id: buildingId,
+          period_start_date: startDate,
+          period_end_date: endDate
+        });
+        
+        setAdvancedShares(result);
+        setShares(result.shares);
+        setTotalExpenses(result.total_expenses);
+        
+        toast.success('Προηγμένος υπολογισμός ολοκληρώθηκε επιτυχώς');
+      } else {
+        // Απλός υπολογιστής
+        const result = await calculateShares({
+          building_id: buildingId
+        });
+        
+        setShares(result.shares);
+        setTotalExpenses(result.total_expenses);
+        setAdvancedShares(null);
+        
+        toast.success('Υπολογισμός ολοκληρώθηκε επιτυχώς');
+      }
     } catch (error) {
       console.error('Error calculating shares:', error);
       toast.error('Σφάλμα κατά τον υπολογισμό');
@@ -278,6 +367,30 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
           </CardTitle>
           <div className="text-sm text-muted-foreground">
             Συμπληρώστε τα πεδία για προσαρμοσμένο υπολογισμό
+          </div>
+          
+          {/* Advanced Calculator Toggle */}
+          <div className="flex items-center space-x-2 mt-4">
+            <Label htmlFor="advanced-mode" className="text-sm font-medium">
+              Προηγμένος Υπολογιστής
+            </Label>
+            <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2">
+              <input
+                type="checkbox"
+                id="advanced-mode"
+                checked={isAdvancedMode}
+                onChange={(e) => setIsAdvancedMode(e.target.checked)}
+                className="sr-only"
+              />
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  isAdvancedMode ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {isAdvancedMode ? 'Ενεργό' : 'Απλό'}
+            </span>
           </div>
         </CardHeader>
         <CardContent>
@@ -427,6 +540,115 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
                   </div>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Προηγμένος Υπολογιστής - Λεπτομερής Ανάλυση */}
+      {isAdvancedMode && advancedShares && (
+        <Card className="border-green-200 bg-green-50/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-800">
+              <Calculator className="h-5 w-5" />
+              Προηγμένος Υπολογιστής - Λεπτομερής Ανάλυση
+            </CardTitle>
+            <div className="text-sm text-green-600">
+              Ανάλυση μεριδίων με ειδική διαχείριση θέρμανσης, ανελκυστήρα και αποθεματικού
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Σύνοψη Δαπανών */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-lg border">
+                <h4 className="font-semibold text-gray-800 mb-2">Συνολικές Δαπάνες</h4>
+                <div className="text-2xl font-bold text-blue-600">
+                  {formatAmount(advancedShares.total_expenses)}€
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg border">
+                <h4 className="font-semibold text-gray-800 mb-2">Θέρμανση</h4>
+                <div className="text-2xl font-bold text-orange-600">
+                  {formatAmount(advancedShares.heating_costs?.total || 0)}€
+                </div>
+                <div className="text-sm text-gray-600">
+                  Πάγιο: {formatAmount(advancedShares.heating_costs?.fixed || 0)}€ | 
+                  Μεταβλητό: {formatAmount(advancedShares.heating_costs?.variable || 0)}€
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg border">
+                <h4 className="font-semibold text-gray-800 mb-2">Ανελκυστήρας</h4>
+                <div className="text-2xl font-bold text-purple-600">
+                  {formatAmount(advancedShares.elevator_costs || 0)}€
+                </div>
+              </div>
+            </div>
+            
+            {/* Ανάλυση ανά Κατηγορία */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-gray-800">Ανάλυση ανά Κατηγορία Δαπάνης</h4>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Κατηγορία</TableHead>
+                    <TableHead>Συνολικό Ποσό</TableHead>
+                    <TableHead>Ανά Διαμέρισμα</TableHead>
+                    <TableHead>Μέθοδος Κατανομής</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {advancedShares.expense_breakdown?.map((category: any, index: number) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{category.category}</TableCell>
+                      <TableCell>{formatAmount(category.total_amount)}€</TableCell>
+                      <TableCell>{formatAmount(category.per_apartment)}€</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {category.distribution_method}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            {/* Ειδικά Χιλιοστά Ανελκυστήρα */}
+            {advancedShares.elevator_shares && (
+              <div className="mt-6">
+                <h4 className="font-semibold text-gray-800 mb-3">Ειδικά Χιλιοστά Ανελκυστήρα</h4>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Διαμέρισμα</TableHead>
+                      <TableHead>Χιλιοστά Ανελκυστήρα</TableHead>
+                      <TableHead>Μερίδιο Ανελκυστήρα</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.values(advancedShares.elevator_shares).map((share: any) => (
+                      <TableRow key={share.apartment_id}>
+                        <TableCell className="font-medium">
+                          {share.apartment_number}
+                        </TableCell>
+                        <TableCell>{share.elevator_mills}</TableCell>
+                        <TableCell>{formatAmount(share.elevator_share)}€</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+            
+            {/* Εισφορά Αποθεματικού */}
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-800 mb-2">Εισφορά Αποθεματικού</h4>
+              <div className="text-sm text-blue-700">
+                <strong>5€ ανά διαμέρισμα</strong> - Συνολικά: {formatAmount(advancedShares.reserve_contribution || 0)}€
+              </div>
+              <div className="text-xs text-blue-600 mt-1">
+                Αυτόματη προσθήκη στο συνολικό μερίδιο κάθε διαμερίσματος
+              </div>
             </div>
           </CardContent>
         </Card>
