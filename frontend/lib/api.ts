@@ -1320,6 +1320,9 @@ export interface UpdateOwnerPayload {
   owner_phone2?: string;
   owner_email?: string;
   ownership_percentage?: number;
+  participation_mills?: number;
+  heating_mills?: number;
+  elevator_mills?: number;
 }
 
 export interface UpdateTenantPayload {

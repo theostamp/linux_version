@@ -198,7 +198,19 @@ class ApartmentViewSet(viewsets.ModelViewSet):
         apartment.owner_phone = owner_data.get('owner_phone', apartment.owner_phone)
         apartment.owner_phone2 = owner_data.get('owner_phone2', apartment.owner_phone2)
         apartment.owner_email = owner_data.get('owner_email', apartment.owner_email)
-        apartment.ownership_percentage = owner_data.get('ownership_percentage', apartment.ownership_percentage)
+        
+        # Ενημέρωση χιλιοστών - υποστηρίζουμε και τα δύο πεδία για συμβατότητα
+        if 'participation_mills' in owner_data:
+            apartment.participation_mills = owner_data.get('participation_mills')
+        elif 'ownership_percentage' in owner_data:
+            # Για backward compatibility
+            apartment.ownership_percentage = owner_data.get('ownership_percentage')
+            
+        # Ενημέρωση χιλιοστών θέρμανσης και ανελκυστήρα
+        if 'heating_mills' in owner_data:
+            apartment.heating_mills = owner_data.get('heating_mills')
+        if 'elevator_mills' in owner_data:
+            apartment.elevator_mills = owner_data.get('elevator_mills')
         
         apartment.save()
         

@@ -32,7 +32,7 @@ export default function ApartmentEditModal({
         owner_phone: apartment.owner_phone || '',
         owner_phone2: apartment.owner_phone2 || '',
         owner_email: apartment.owner_email || '',
-        ownership_percentage: apartment.ownership_percentage || ''
+        ownership_percentage: apartment.participation_mills || ''
       };
     } else {
       return {
@@ -59,7 +59,9 @@ export default function ApartmentEditModal({
         owner_phone: apartment.owner_phone || '',
         owner_phone2: apartment.owner_phone2 || '',
         owner_email: apartment.owner_email || '',
-        ownership_percentage: apartment.ownership_percentage || ''
+        ownership_percentage: apartment.participation_mills || '',
+        heating_mills: apartment.heating_mills || '',
+        elevator_mills: apartment.elevator_mills || ''
       } : {
         tenant_name: apartment.tenant_name || '',
         tenant_phone: apartment.tenant_phone || '',
@@ -91,7 +93,9 @@ export default function ApartmentEditModal({
           owner_phone: formData.owner_phone,
           owner_phone2: formData.owner_phone2,
           owner_email: formData.owner_email,
-          ownership_percentage: formData.ownership_percentage ? Number(formData.ownership_percentage) : undefined
+          participation_mills: formData.ownership_percentage ? Number(formData.ownership_percentage) : undefined,
+          heating_mills: formData.heating_mills ? Number(formData.heating_mills) : undefined,
+          elevator_mills: formData.elevator_mills ? Number(formData.elevator_mills) : undefined
         };
         
         await updateApartmentOwner(apartment.id, payload);
@@ -245,21 +249,57 @@ export default function ApartmentEditModal({
 
             {/* Owner specific fields */}
             {isOwner && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <Percent className="w-4 h-4 inline mr-1" />
-                  Χιλιοστά Ιδιοκτησίας (%)
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={formData.ownership_percentage || ''}
-                  onChange={(e) => updateFormData('ownership_percentage', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="π.χ. 12.5"
-                />
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <Percent className="w-4 h-4 inline mr-1" />
+                    Χιλιοστά Ιδιοκτησίας
+                  </label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    max="1000"
+                    value={formData.ownership_percentage || ''}
+                    onChange={(e) => updateFormData('ownership_percentage', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="π.χ. 95"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <Percent className="w-4 h-4 inline mr-1" />
+                    Χιλιοστά Θέρμανσης
+                  </label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    max="1000"
+                    value={formData.heating_mills || ''}
+                    onChange={(e) => updateFormData('heating_mills', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="π.χ. 102"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <Percent className="w-4 h-4 inline mr-1" />
+                    Χιλιοστά Ανελκυστήρα
+                  </label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    max="1000"
+                    value={formData.elevator_mills || ''}
+                    onChange={(e) => updateFormData('elevator_mills', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="π.χ. 98"
+                  />
+                </div>
               </div>
             )}
 
@@ -362,8 +402,14 @@ export default function ApartmentEditModal({
                 <>
                   <div><span className="text-xs text-gray-500">Διακριτικό:</span> <span className="font-medium text-blue-600">{apartment.identifier || 'Δεν έχει οριστεί'}</span></div>
                   <div><span className="text-xs text-gray-500">Ιδιοκτήτης:</span> {apartment.owner_name || 'Δεν έχει οριστεί'}</div>
-                  {apartment.ownership_percentage && (
-                    <div><span className="text-xs text-gray-500">Χιλιοστά:</span> {apartment.ownership_percentage}%</div>
+                  {apartment.participation_mills && (
+                    <div><span className="text-xs text-gray-500">Χιλιοστά Ιδιοκτησίας:</span> {apartment.participation_mills}</div>
+                  )}
+                  {apartment.heating_mills && (
+                    <div><span className="text-xs text-gray-500">Χιλιοστά Θέρμανσης:</span> {apartment.heating_mills}</div>
+                  )}
+                  {apartment.elevator_mills && (
+                    <div><span className="text-xs text-gray-500">Χιλιοστά Ανελκυστήρα:</span> {apartment.elevator_mills}</div>
                   )}
                   <div><span className="text-xs text-gray-500">Τηλ. 1:</span> {apartment.owner_phone || 'Δεν έχει οριστεί'}</div>
                   <div><span className="text-xs text-gray-500">Τηλ. 2:</span> {apartment.owner_phone2 || 'Δεν έχει οριστεί'}</div>

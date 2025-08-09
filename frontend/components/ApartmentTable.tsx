@@ -32,6 +32,18 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
     type: 'owner'
   });
 
+  // Υπολογισμός αθροισμάτων χιλιοστών
+  const totals = {
+    ownership: apartments.reduce((sum, apt) => sum + (apt.participation_mills || 0), 0),
+    heating: apartments.reduce((sum, apt) => sum + (apt.heating_mills || 0), 0),
+    elevator: apartments.reduce((sum, apt) => sum + (apt.elevator_mills || 0), 0)
+  };
+
+  // Έλεγχος αν τα αθροίσματα είναι 1000
+  const isOwnershipCorrect = totals.ownership === 1000;
+  const isHeatingCorrect = totals.heating === 1000;
+  const isElevatorCorrect = totals.elevator === 1000;
+
   const openEditModal = (apartment: ApartmentList, type: 'owner' | 'tenant') => {
     setEditModal({
       isOpen: true,
@@ -85,11 +97,11 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
   };
 
   const renderOwnershipMills = (apartment: ApartmentList) => {
-    const ownershipMills = apartment.ownership_percentage;
+    const ownershipMills = apartment.participation_mills;
     return (
       <div className="text-center">
         <span className="text-sm font-semibold text-blue-600">
-          {ownershipMills && ownershipMills > 0 ? `${ownershipMills}%` : '-'}
+          {ownershipMills && ownershipMills > 0 ? `${ownershipMills}` : '-'}
         </span>
       </div>
     );
@@ -117,46 +129,46 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
     );
   };
 
+  // Keep totals calculations for the summary row at the bottom of the table
+
   return (
-    <div className="overflow-x-auto">
+    <div className="space-y-4">
+      <div className="overflow-x-auto">
       <table ref={tableRef} className="w-full min-w-[900px] resizable-table">
         <thead className="table-header-gradient-blue sticky top-0 z-10">
           <tr>
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider min-w-[55px]">
+            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider w-[55px] min-w-[55px] max-w-[55px]">
               <div className="flex flex-col items-center space-y-1">
-                <span>Διαμέρισμα<br/>/ Διακριτικό</span>
+                <div className="writing-mode-vertical transform -rotate-90 origin-center mt-4">
+                  <span>Διαμέρισμα</span>
+                </div>
               </div>
             </th>
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider min-w-[55px]">
-              <div className="flex flex-col items-center space-y-1">
-                <span>Όροφος</span>
-              </div>
-            </th>
-            <th className="px-4 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-4 py-6 pr-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Ιδιοκτήτης & Επικοινωνία
             </th>
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider min-w-[55px]">
+            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider w-[55px] min-w-[55px] max-w-[55px]">
               <div className="flex flex-col items-center space-y-1">
                 <div className="writing-mode-vertical transform -rotate-90 origin-center mt-4">
                   <span>Χιλιοστά<br/>Ιδιοκτησίας</span>
                 </div>
               </div>
             </th>
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider min-w-[55px]">
+            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider w-[55px] min-w-[55px] max-w-[55px]">
               <div className="flex flex-col items-center space-y-1">
                 <div className="writing-mode-vertical transform -rotate-90 origin-center mt-4">
                   <span>Χιλιοστά<br/>Θέρμανσης</span>
                 </div>
               </div>
             </th>
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider min-w-[55px]">
+            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider w-[55px] min-w-[55px] max-w-[55px]">
               <div className="flex flex-col items-center space-y-1">
                 <div className="writing-mode-vertical transform -rotate-90 origin-center mt-4">
                   <span>Χιλιοστά<br/>Ανελκυστήρα</span>
                 </div>
               </div>
             </th>
-            <th className="px-4 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-4 py-6 pr-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Ενοικιαστής & Επικοινωνία
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -168,24 +180,15 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {apartments.map(apartment => (
-            <tr key={apartment.id} className="hover:bg-gray-50">
-              <td className="px-2 py-4 whitespace-nowrap text-center">
+          {apartments.map((apartment, index) => (
+            <tr key={apartment.id} className={`hover:bg-blue-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+              <td className="px-2 py-4 whitespace-nowrap text-center w-[55px]">
                 <div className="text-sm font-medium text-gray-900">
                   {apartment.number}
                 </div>
-                <div className="text-xs text-blue-600 font-semibold">
-                  {apartment.identifier || <span className="text-gray-400 italic">-</span>}
-                </div>
               </td>
               
-              <td className="px-2 py-4 whitespace-nowrap text-center">
-                <div className="text-sm font-medium text-gray-900">
-                  {apartment.floor ? `${apartment.floor}ος` : '-'}
-                </div>
-              </td>
-              
-              <td className="px-4 py-4 whitespace-nowrap">
+              <td className="px-4 py-4 pr-6 whitespace-nowrap">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <div className="text-sm text-gray-900">
@@ -237,19 +240,19 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
                 </div>
               </td>
               
-              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 w-[55px]">
                 {renderOwnershipMills(apartment)}
               </td>
               
-              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 w-[55px]">
                 {renderHeatingMills(apartment)}
               </td>
               
-              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 w-[55px]">
                 {renderElevatorMills(apartment)}
               </td>
               
-              <td className="px-4 py-4 whitespace-nowrap">
+              <td className="px-4 py-4 pr-6 whitespace-nowrap">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <div className="text-sm text-gray-900">
@@ -338,6 +341,48 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
               </td>
             </tr>
           ))}
+          {/* Γραμμή αθροίσματος */}
+          <tr className="bg-blue-50 border-t-2 border-blue-200 font-semibold">
+            <td className="px-2 py-4 text-center text-sm font-bold text-blue-900 w-[55px]">
+              ΣΎΝΟΛΟ
+            </td>
+            <td className="px-4 py-4 pr-6 text-sm text-blue-700">
+              -
+            </td>
+            <td className={`px-4 py-4 text-center text-sm font-bold w-[55px] ${isOwnershipCorrect ? 'text-green-700' : 'text-red-700'}`}>
+              <div className="flex items-center justify-center gap-1">
+                <span>{totals.ownership}</span>
+                {!isOwnershipCorrect && (
+                  <span className="text-red-500 text-xs" title="Πρέπει να είναι 1000">⚠️</span>
+                )}
+              </div>
+            </td>
+            <td className={`px-4 py-4 text-center text-sm font-bold w-[55px] ${isHeatingCorrect ? 'text-green-700' : 'text-red-700'}`}>
+              <div className="flex items-center justify-center gap-1">
+                <span>{totals.heating}</span>
+                {!isHeatingCorrect && (
+                  <span className="text-red-500 text-xs" title="Πρέπει να είναι 1000">⚠️</span>
+                )}
+              </div>
+            </td>
+            <td className={`px-4 py-4 text-center text-sm font-bold w-[55px] ${isElevatorCorrect ? 'text-green-700' : 'text-red-700'}`}>
+              <div className="flex items-center justify-center gap-1">
+                <span>{totals.elevator}</span>
+                {!isElevatorCorrect && (
+                  <span className="text-red-500 text-xs" title="Πρέπει να είναι 1000">⚠️</span>
+                )}
+              </div>
+            </td>
+            <td className="px-4 py-4 pr-6 text-sm text-blue-700">
+              -
+            </td>
+            <td className="px-4 py-4 text-sm text-blue-700">
+              -
+            </td>
+            <td className="px-4 py-4 text-sm text-blue-700">
+              -
+            </td>
+          </tr>
                  </tbody>
        </table>
        
@@ -371,6 +416,7 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
            }}
          />
        )}
+      </div>
      </div>
    );
  } 

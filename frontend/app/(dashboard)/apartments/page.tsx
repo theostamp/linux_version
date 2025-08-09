@@ -329,6 +329,73 @@ export default function ApartmentsPage() {
               </div>
             </div>
 
+            {/* Χιλιοστά */}
+            {(() => {
+              const ownershipTotal = data.apartments.reduce((sum, apt) => sum + (apt.participation_mills || 0), 0);
+              const heatingTotal = data.apartments.reduce((sum, apt) => sum + (apt.heating_mills || 0), 0);
+              const elevatorTotal = data.apartments.reduce((sum, apt) => sum + (apt.elevator_mills || 0), 0);
+              
+              const isOwnershipCorrect = ownershipTotal === 1000;
+              const isHeatingCorrect = heatingTotal === 1000;
+              const isElevatorCorrect = elevatorTotal === 1000;
+              const hasIssues = !isOwnershipCorrect || !isHeatingCorrect || !isElevatorCorrect;
+              
+              return (
+                <div className="space-y-4">
+                  {/* Μήνυμα προειδοποίησης */}
+                  {hasIssues && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                          <span className="text-red-500 text-lg">⚠️</span>
+                        </div>
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-red-800">
+                            Προσοχή: Λανθασμένα Αθροίσματα Χιλιοστών
+                          </h3>
+                          <div className="mt-2 text-sm text-red-700">
+                            <p>Τα αθροίσματα των χιλιοστών πρέπει να είναι ακριβώς 1000 (100%). Παρακαλώ διορθώστε:</p>
+                            <ul className="mt-1 list-disc list-inside">
+                              {!isOwnershipCorrect && <li>Χιλιοστά Ιδιοκτησίας: {ownershipTotal}/1000</li>}
+                              {!isHeatingCorrect && <li>Χιλιοστά Θέρμανσης: {heatingTotal}/1000</li>}
+                              {!isElevatorCorrect && <li>Χιλιοστά Ανελκυστήρα: {elevatorTotal}/1000</li>}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="bg-white rounded-lg shadow-sm border p-6">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800">Συνολικά Χιλιοστά</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                      <div className={`rounded-lg p-3 ${isOwnershipCorrect ? 'bg-green-50' : 'bg-red-50'}`}>
+                        <div className={`text-2xl font-bold flex items-center justify-center gap-2 ${isOwnershipCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                          <span>{ownershipTotal}</span>
+                          {!isOwnershipCorrect && <span className="text-red-500 text-sm">⚠️</span>}
+                        </div>
+                        <div className={`text-sm ${isOwnershipCorrect ? 'text-green-800' : 'text-red-800'}`}>Χιλιοστά Ιδιοκτησίας</div>
+                      </div>
+                      <div className={`rounded-lg p-3 ${isHeatingCorrect ? 'bg-green-50' : 'bg-red-50'}`}>
+                        <div className={`text-2xl font-bold flex items-center justify-center gap-2 ${isHeatingCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                          <span>{heatingTotal}</span>
+                          {!isHeatingCorrect && <span className="text-red-500 text-sm">⚠️</span>}
+                        </div>
+                        <div className={`text-sm ${isHeatingCorrect ? 'text-green-800' : 'text-red-800'}`}>Χιλιοστά Θέρμανσης</div>
+                      </div>
+                      <div className={`rounded-lg p-3 ${isElevatorCorrect ? 'bg-green-50' : 'bg-red-50'}`}>
+                        <div className={`text-2xl font-bold flex items-center justify-center gap-2 ${isElevatorCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                          <span>{elevatorTotal}</span>
+                          {!isElevatorCorrect && <span className="text-red-500 text-sm">⚠️</span>}
+                        </div>
+                        <div className={`text-sm ${isElevatorCorrect ? 'text-green-800' : 'text-red-800'}`}>Χιλιοστά Ανελκυστήρα</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Φίλτρα και Αναζήτηση */}
             <div className="bg-white rounded-lg shadow-sm border p-4">
               <div className="flex flex-col md:flex-row gap-4 items-center">

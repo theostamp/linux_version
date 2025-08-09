@@ -1284,3 +1284,68 @@ class ReportViewSet(viewsets.ViewSet):
                 {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class ApartmentTransactionViewSet(viewsets.ViewSet):
+    """ViewSet για το ιστορικό συναλλαγών διαμερίσματος"""
+    
+    def retrieve(self, request, pk=None):
+        """Λήψη ιστορικού συναλλαγών για συγκεκριμένο διαμέρισμα"""
+        try:
+            apartment = Apartment.objects.get(id=pk)
+            
+            # Λήψη όλων των πληρωμών
+            payments = Payment.objects.filter(apartment=apartment).order_by('date', 'id')
+            
+            # Λήψη όλων των transactions (χρεώσεων)
+            transactions = Transaction.objects.filter(apartment=apartment).order_by('date', 'id')
+            
+            # Συνδυασμός και ταξινόμηση
+            transaction_history = []
+            running_balance = Decimal('0.00')
+            
+            # Συλλογή όλων των συναλλαγών
+            all_items = []
+            
+            for payment in payments:
+                all_items.append({
+                    'type': 'payment',
+                    'date': payment.date,
+                    'amount': payment.amount,
+                    'description': f'Είσπραξη - {payment.get_method_display()}',
+                    'method': payment.method,
+                    'id': payment.id,
+                    'created_at': payment.created_at
+                })
+            
+            for transaction in transactions:
+                all_items.append({
+                    'type': 'charge',
+                    'date': transaction.date,
+                    'amount': -transaction.amount,  # Negative for charges
+                    'description': transaction.description or 'Χρέωση',
+                    'method': None,
+                    'id': transaction.id,
+                    'created_at': transaction.created_at
+                })
+            
+            # Ταξινόμηση κατά ημερομηνία και δημιουργία
+            all_items.sort(key=lambda x: (x['date'], x['created_at']))
+            
+            # Υπολογισμός προοδευτικού υπολοίπου
+            for item in all_items:
+                running_balance += Decimal(str(item['amount']))
+                item['balance_after'] = float(running_balance)
+            
+            return Response(all_items)
+            
+        except Apartment.DoesNotExist:
+            return Response(
+                {'error': 'Το διαμέρισμα δεν βρέθηκε'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

@@ -1,64 +1,342 @@
-# 🏢 Building Management System - Linux Version
+# 🏢 New Concierge - Building Management System
 
-## 🎯 Επισκόπηση
+## 📋 Επισκόπηση
 
-Πλήρες σύστημα διαχείρισης πολυκατοικιών με multi-tenant αρχιτεκτονική, kiosk mode για δημόσιους χώρους, και comprehensive financial management.
+Το **New Concierge** είναι ένα ολοκληρωμένο σύστημα διαχείρισης κτιρίων που προσφέρει λύσεις για:
+- 🏠 Διαχείριση πολυκατοικιών και διαμερισμάτων
+- 💰 Οικονομική διαχείριση (δαπάνες, εισπράξεις, κοινοχρήστων)
+- 👥 Διαχείριση ιδιοκτητών και ενοικιαστών
+- 📢 Επικοινωνία και ανακοινώσεις
+- 🔧 Συντήρηση και επισκευές
+- 📊 Reports και analytics
 
-## 🚀 Γρήγορη Εκκίνηση
+---
 
-### 🧹 Καθαρισμός και Επανεκκίνηση Docker
+## 🚀 Τελευταίες Ενημερώσεις (August 8, 2025)
 
-#### Πλήρες Reset (Άδειασμα Όλων)
+### 🎯 **Μεγάλες Βελτιώσεις - Payment List & Modals**
 
+#### 💰 **Enhanced Payment List** - NEW FEATURE
+- **Συγκεντρωτική Προβολή**: Μία εγγραφή ανά ενοίκο αντί για μεμονωμένες πληρωμές
+- **Προοδευτικά Υπόλοιπα**: Ακριβής real-time υπολογισμός από transaction history
+- **Smart UI**: Καθαρότερη εμφάνιση χωρίς περιττές ετικέτες
+- **Color-Coded Balances**: Οπτικές ενδείξεις για οφειλές/πιστώσεις
+
+#### 📋 **Payment Detail Modal** - NEW COMPONENT
+- **Μοναδικό Ιστορικό**: Διαφορετικά δεδομένα ανά διαμέρισμα
+- **Print-Ready**: Λειτουργική εκτύπωση με optimized CSS
+- **Real-Time Data**: Σύνδεση με νέο backend API endpoint
+- **Enhanced UX**: Loading states και error handling
+
+#### 🔧 **Backend API Improvements** - ENHANCED
+- **Dynamic Balance Calculation**: Υπολογισμός υπολοίπων από transaction history
+- **New Endpoint**: `/api/financial/apartments/{id}/transactions/`
+- **Enhanced Serializers**: Owner/tenant names και monthly due integration
+
+---
+
+## 🚀 Προηγούμενες Ενημερώσεις (December 5, 2024)
+
+### ✅ **Επιλύθηκαν Κρίσιμα Προβλήματα**
+
+#### 1. **Building Selector Issue** - FIXED
+- **Πρόβλημα**: Type mismatch μεταξύ components
+- **Λύση**: Ενοποίηση τύπων `buildingId` σε `number`
+- **Αποτέλεσμα**: Σωστή λειτουργία multi-building management
+
+#### 2. **CommonExpenseModal TypeError** - FIXED
+- **Πρόβλημα**: `share.breakdown.forEach is not a function`
+- **Λύση**: Array type checking με `Array.isArray()`
+- **Αποτέλεσμα**: Robust error handling
+
+#### 3. **Common Expenses Calculator** - FIXED
+- **Πρόβλημα**: Δαπάνες δεν εμφανίζονταν στον υπολογισμό
+- **Αιτία**: Έλλειψη ανέκδοτων δαπανών και χιλιοστών συμμετοχής
+- **Λύση**: 
+  - Δημιουργία 5 νέων δαπανών (1.050€ συνολικά)
+  - Προσθήκη χιλιοστών συμμετοχής (1.000 συνολικά)
+- **Αποτέλεσμα**: Πλήρης λειτουργικότητα υπολογισμού κοινοχρήστων
+
+#### 4. **CommonExpenseModal UI/UX** - ENHANCED
+- **Βελτιώσεις**:
+  - Μικρότερο ύψος (85% αντί για 95%)
+  - Μεγαλύτερο πλάτος (95% της οθόνης)
+  - 3-Column layout για καλύτερη οργάνωση
+  - Κουμπί "Αποθήκευση" με API integration
+- **Αποθήκευση**: JSON format για ελάχιστη επιβάρυνση πόρων
+
+### 🛠️ **Scripts που Δημιουργήθηκαν**
+- `add_expenses_via_api.py` - Δημιουργία ανέκδοτων δαπανών
+- `add_mills_to_athens_building.py` - Προσθήκη χιλιοστών συμμετοχής
+- `debug_expenses.py` - Εντοπισμός προβλημάτων δαπανών
+
+---
+
+## 🏗️ Αρχιτεκτονική
+
+### Backend (Django + Django Tenants)
+```
+backend/
+├── new_concierge_backend/     # Main Django project
+├── tenants/                   # Multi-tenancy support
+├── buildings/                 # Building management
+├── apartments/                # Apartment management
+├── financial/                 # Financial management
+├── users/                     # User management
+├── announcements/             # Communication
+└── maintenance/               # Maintenance & repairs
+```
+
+### Frontend (React + TypeScript)
+```
+frontend/
+├── components/                # Reusable UI components
+├── pages/                     # Page components
+├── hooks/                     # Custom React hooks
+├── types/                     # TypeScript definitions
+├── lib/                       # Utilities & configurations
+└── styles/                    # CSS & styling
+```
+
+---
+
+## 💰 Οικονομική Διαχείριση
+
+### Διαθέσιμες Λειτουργίες
+- ✅ **Δαπάνες**: Καταχώρηση και διαχείριση δαπανών κτιρίου
+- ✅ **Εισπράξεις**: Διαχείριση πληρωμών ιδιοκτητών
+- ✅ **Κοινοχρήστων**: Υπολογισμός και έκδοση κοινοχρήστων
+- ✅ **Reports**: Οικονομικά reports και analytics
+- ✅ **Αποθεματικό**: Διαχείριση ταμείου εφεδρείας
+
+### Υπολογιστής Κοινοχρήστων
+- **Τύποι Κατανομής**:
+  - Ανά Χιλιοστά (by_participation_mills)
+  - Ισόποσα (equal_share)
+  - Συγκεκριμένα (specific_apartments)
+  - Μετρητές (by_meters)
+
+- **Κατηγορίες Δαπανών**:
+  - Καθαρισμός Κοινοχρήστων
+  - ΔΕΗ Κοινοχρήστων
+  - Συντήρηση Ανελκυστήρα
+  - Θέρμανση
+  - Ασφάλεια Κτιρίου
+  - Και πολλές άλλες...
+
+---
+
+## 🔧 Εγκατάσταση & Εκκίνηση
+
+### Προαπαιτούμενα
+- Python 3.8+
+- Node.js 16+
+- PostgreSQL 12+
+- Docker (προαιρετικό)
+
+### Backend Setup
 ```bash
-# 1. Διακοπή και διαγραφή όλων των containers
-docker compose down --volumes --remove-orphans
+cd backend
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# ή venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
 
-# 2. Διαγραφή όλων των images (προαιρετικό)
-docker rmi $(docker images -q) 2>/dev/null || true
+### Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-# 3. Καθαρισμός volumes
+### Database Setup
+```bash
+# Δημιουργία demo tenant
+python manage.py create_tenant --schema_name=demo --name="Demo Tenant"
+
+# Δημιουργία sample data
+python create_sample_data.py
+```
+
+---
+
+## 🧪 Testing
+
+### Backend Tests
+```bash
+cd backend
+python manage.py test
+```
+
+### Frontend Tests
+```bash
+cd frontend
+npm test
+```
+
+### API Tests
+```bash
+# Test building selector
+python test_building_selector_fix.py
+
+# Test financial calculations
+python test_advanced_calculator.py
+```
+
+---
+
+## 📊 Demo Data
+
+### Διαθέσιμα Κτίρια
+- **Αθηνών 12**: 6 διαμερίσματα (με χιλιοστά συμμετοχής)
+- **Πατησίων 45**: 6 διαμερίσματα
+- **Αραχώβης 12**: 12 διαμερίσματα (με χιλιοστά συμμετοχής)
+
+### Sample Δαπάνες
+- ΔΕΗ Κοινοχρήστων: 280€
+- Καθαρισμός Κοινοχρήστων: 320€
+- Συντήρηση Ανελκυστήρα: 180€
+- Νερό Κοινοχρήστων: 150€
+- Ασφάλεια Κτιρίου: 120€
+
+### Demo Credentials
+```
+Email: admin@demo.localhost
+Password: admin123456
+```
+
+---
+
+## 🔐 Security
+
+### Authentication
+- JWT-based authentication
+- Refresh tokens
+- Role-based access control
+- Multi-tenant isolation
+
+### Data Protection
+- Tenant isolation
+- Encrypted sensitive data
+- Audit logging
+- GDPR compliance
+
+---
+
+## 📈 Performance
+
+### Optimizations
+- Database query optimization
+- Caching strategies
+- Lazy loading
+- Image compression
+- CDN integration
+
+### Monitoring
+- Application performance monitoring
+- Error tracking
+- User analytics
+- System health checks
+
+---
+
+## 🤝 Contributing
+
+### Development Workflow
+1. Fork the repository
+2. Create feature branch
+3. Make changes
+4. Add tests
+5. Submit pull request
+
+### Code Standards
+- TypeScript for frontend
+- Python PEP 8 for backend
+- ESLint + Prettier
+- Black for Python formatting
+
+---
+
+## 📝 Documentation
+
+### Available Documentation
+- [API Documentation](docs/api/)
+- [User Guide](docs/user-guide/)
+- [Developer Guide](docs/developer-guide/)
+- [Deployment Guide](docs/deployment/)
+
+### Architecture Documents
+- [System Architecture](docs/architecture/)
+- [Database Schema](docs/database/)
+- [Security Model](docs/security/)
+
+---
+
+## 🚀 Deployment
+
+### Production Setup
+```bash
+# Backend deployment
+docker-compose -f docker-compose.prod.yml up -d
+
+# Frontend deployment
+npm run build
+# Deploy to CDN/static hosting
+```
+
+### Environment Variables
+```bash
+# Backend
+DATABASE_URL=postgresql://...
+SECRET_KEY=your-secret-key
+DEBUG=False
+
+# Frontend
+NEXT_PUBLIC_API_URL=https://api.yourdomain.com
+```
+
+---
+
+## 📞 Support
+
+### Contact Information
+- **Email**: support@newconcierge.com
+- **Documentation**: [docs.newconcierge.com](https://docs.newconcierge.com)
+- **Issues**: [GitHub Issues](https://github.com/newconcierge/issues)
+
+### Community
+- **Discord**: [Join our community](https://discord.gg/newconcierge)
+- **Blog**: [Latest updates](https://blog.newconcierge.com)
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🧹 Καθαρισμός Docker
+
+### Πλήρης Καθαρισμός Docker
+```bash
+
+docker stop $(docker ps -aq)
+
+docker rm $(docker ps -aq)
 docker volume prune -f
-
-# 4. Καθαρισμός networks
 docker network prune -f
+docker builder prune -af
+docker system prune -af --volumes
 
-# 5. Πλήρες καθαρισμός συστήματος (προαιρετικό)
-docker system prune -a --volumes
-
-# 6. Επανεκκίνηση με νέα build
 docker compose up --build -d
-```
 
-#### Γρήγορο Reset (Διατήρηση Images)
 
-```bash
-# 1. Διακοπή containers και καθαρισμός volumes
-docker compose down --volumes
+docker rmi $(docker images -q)
 
-# 2. Καθαρισμός μόνο unused resources
-docker system prune -f
-
-# 3. Επανεκκίνηση
-docker compose up --build -d
-```
-
-#### Reset Μόνο Database (Διατήρηση Κώδικα)
-
-```bash
-# 1. Διακοπή containers
-docker compose down
-
-# 2. Διαγραφή μόνο του database volume
-docker volume rm linux_version_pgdata_dev
-
-# 3. Επανεκκίνηση (νέα βάση δεδομένων)
-docker compose up -d
-```
-
-### 🔄 Αυτόματη Αρχικοποίηση
-
-```bash
 # Πλήρες reset και εκκίνηση
 ./reset_and_start.sh
 
@@ -66,395 +344,103 @@ docker compose up -d
 ./clean_and_restart.sh
 ```
 
-### 📝 Χειροκίνητη Εκκίνηση
-
+### Επιλεκτικός Καθαρισμός
 ```bash
-# 1. Εκκίνηση containers
-docker compose up -d
+# Διαγραφή μόνο των unused containers
+docker container prune -f
 
-# 2. Παρακολούθηση logs
-docker compose logs -f backend
-```
+# Διαγραφή μόνο των unused images
+docker image prune -af
 
-### 🔍 Έλεγχος Κατάστασης
-
-```bash
-# Έλεγχος containers
-docker compose ps
-
-# Έλεγχος logs
-docker compose logs
-
-# Έλεγχος volumes
-docker volume ls
-
-# Έλεγχος networks
-docker network ls
-```
-
-## 🌐 Πρόσβαση
-
-Μετά την εκκίνηση, μπορείτε να αποκτήσετε πρόσβαση:
-
-- **Public Admin (Ultra-Superuser)**: http://localhost:8000/admin/
-- **Demo Frontend**: http://demo.localhost:8080
-- **Demo Backend API**: http://demo.localhost:8000/api/
-- **Demo Admin Panel**: http://demo.localhost:8000/admin/
-- **Kiosk Mode (Building-specific)**: http://demo.localhost:8080/info-screen/1
-- **Kiosk Mode (General)**: http://demo.localhost:8080/kiosk
-- **Kiosk Settings**: http://demo.localhost:8080/kiosk-settings
-
-## 👑 Διαθέσιμοι Χρήστες
-
-### Ultra-Superuser (Public Schema)
-| Email | Password | Δικαιώματα |
-|-------|----------|------------|
-| 👑 **theostam1966@gmail.com** | **theo123!@#** | **Πλήρη διαχείριση όλων των tenants** |
-
-### Demo Χρήστες (Demo Tenant)
-| Ρόλος | Email | Password | Δικαιώματα |
-|-------|-------|----------|------------|
-| 🔧 Admin | admin@demo.localhost | admin123456 | **Superuser** - Πλήρη admin πρόσβαση |
-| 👨‍💼 Manager | manager@demo.localhost | manager123456 | **Staff** - Περιορισμένα admin δικαιώματα |
-| 👤 Resident 1 | resident1@demo.localhost | resident123456 | **User** - Χωρίς admin πρόσβαση |
-| 👤 Resident 2 | resident2@demo.localhost | resident123456 | **User** - Χωρίς admin πρόσβαση |
-
-## 🏗️ Ιεραρχία Δικαιωμάτων
-
-```
-👑 Ultra-Superuser (theostam1966@gmail.com)
-├── Public Schema (localhost:8000/admin/)
-│   ├── Διαχείριση όλων των tenants
-│   ├── Δημιουργία/διαγραφή tenants
-│   └── Πλήρη πρόσβαση σε όλα τα schemas
-│
-├── 🔧 Tenant Admin (admin@demo.localhost)
-│   ├── Demo Tenant (demo.localhost:8000/admin/)
-│   ├── Διαχείριση χρηστών στο tenant
-│   └── Πλήρη πρόσβαση στο tenant schema
-│
-├── 👨‍💼 Tenant Manager (manager@demo.localhost)
-│   ├── Περιορισμένα admin δικαιώματα
-│   └── Διαχείριση δεδομένων του tenant
-│
-└── 👤 Residents (resident1@demo.localhost, resident2@demo.localhost)
-    ├── Κανονικοί χρήστες
-    └── Πρόσβαση μόνο στα δικά τους δεδομένα
-```
-
-## 📊 Demo Δεδομένα
-
-Το σύστημα περιλαμβάνει:
-
-- ✅ **2 κτίρια** (Αθηνών 12, Πατησίων 45)
-- ✅ **4 χρήστες** με διαφορετικούς ρόλους
-- ✅ **12 διαμερίσματα** (2 κτίρια × 2 όροφοι × 3 διαμερίσματα)
-- ✅ **2 ανακοινώσεις**
-- ✅ **2 αιτήματα** (maintenance)
-- ✅ **2 ψηφοφορίες** με επιλογές
-- ✅ **2 υποχρεώσεις** (financial)
-- ✅ **Building memberships** για όλους τους χρήστες
-
-## 🖥️ Kiosk Mode - Οθόνη Προβολής
-
-Το σύστημα διαθέτει μια οθόνη προβολής (kiosk mode) που μπορεί να τοποθετηθεί στην είσοδο της πολυκατοικίας και παρέχει:
-
-### ✨ Χαρακτηριστικά:
-- **📢 Ανακοινώσεις**: Εμφάνιση ενεργών ανακοινώσεων με προτεραιότητα
-- **🗳️ Ψηφοφορίες**: Προβολή ενεργών ψηφοφοριών με ημερομηνίες λήξης
-- **🏢 Πληροφορίες Κτιρίου**: Στοιχεία κτιρίου, διαχειριστή, αριθμός διαμερισμάτων
-- **🌤️ Καιρός**: Πραγματικές πληροφορίες καιρού για την περιοχή
-- **📰 Ειδήσεις**: Κινούμενο ticker με ειδήσεις και προτροπές
-- **📢 Διαφημιστικά Banners**: Χρήσιμες υπηρεσίες και διαφημίσεις
-- **⏰ Ώρα & Ημερομηνία**: Πραγματικού χρόνου ενημέρωση
-
-### 🎨 Σχεδιασμός:
-- **Full-screen layout** με gradient background
-- **Auto-sliding** slides κάθε 10 δευτερόλεπτα
-- **Responsive design** για διαφορετικά μεγέθη οθόνης
-- **Touch-friendly** navigation με dots
-- **Professional appearance** κατάλληλο για δημόσιους χώρους
-
-### 🔧 Διαχείριση:
-- **Ρυθμίσεις Kiosk**: `/kiosk-settings` για διαχείριση banners και ρυθμίσεων
-- **Προεπισκόπηση**: Άμεση προεπισκόπηση των αλλαγών
-- **Building-specific**: Διαφορετικό περιεχόμενο ανά κτίριο
-- **Real-time updates**: Αυτόματη ανανέωση δεδομένων
-
-## 🐧 WSL Ubuntu Terminal Configuration
-
-Το project έχει ρυθμιστεί για να χρησιμοποιεί το WSL Ubuntu ως default terminal αντί για PowerShell.
-
-### Ρυθμίσεις VS Code:
-- **Default Terminal**: WSL Ubuntu
-- **Debugging**: Ρυθμισμένο για WSL environment
-- **Tasks**: Όλες οι εργασίες τρέχουν στο WSL
-
-### Χρήση:
-1. **Terminal**: `Ctrl + `` (ανοίγει το WSL Ubuntu terminal)
-2. **Tasks**: `Ctrl + Shift + P` → "Tasks: Run Task" → επιλέξτε εργασία
-3. **Debugging**: `F5` → επιλέξτε "Python: Current File (WSL)" ή "Django: Run Server (WSL)"
-
-## 📁 Project Structure
-
-```
-linux_version/
-├── backend/                    # Django backend
-│   ├── scripts/               # Automation scripts
-│   │   ├── auto_initialization.py  # 🎯 Main auto-init script
-│   │   ├── create_superuser.py     # 🔧 Superuser creation
-│   │   ├── manage_tenants.py       # 🏢 Tenant management
-│   │   └── check_permissions.py    # 🔍 Permission checking
-│   ├── logs/                  # Credentials & logs
-│   └── entrypoint.sh          # Container startup script
-├── frontend/                  # Next.js frontend
-├── docs/                      # 📚 Documentation (organized)
-│   ├── index.md              # 🎯 Central documentation index
-│   ├── session-management/   # 🔄 Session guides
-│   ├── implementation-guides/ # 🛠️ Implementation guides
-│   ├── testing/              # 🧪 Testing guides
-│   ├── documentation/        # 📖 General documentation
-│   ├── todo-planning/        # 📋 TODO & planning
-│   ├── completion-summaries/ # ✅ Completion summaries
-│   ├── quick-start-guides/   # 🚀 Quick start guides
-│   └── debug-fixes/          # 🔧 Debug & fixes
-├── docker-compose.yml         # Container configuration
-├── reset_and_start.sh         # 🚀 Quick reset script
-├── clean_and_restart.sh       # 🧹 Interactive clean script
-└── readme.md                  # This file
-```
-
-## 📚 Τεκμηρίωση
-
-### 📖 Κεντρικός Οδηγός Τεκμηρίωσης
-Όλη η λεπτομερής τεκμηρίωση έχει οργανωθεί στο φάκελο `docs/`:
-
-- **[📚 docs/index.md](docs/index.md)** - Κεντρικός οδηγός για όλη την τεκμηρίωση
-- **[📋 README_ORGANIZATION.md](README_ORGANIZATION.md)** - Οδηγός οργάνωσης αρχείων
-
-### 🎯 Γρήγορη Πλοήγηση Τεκμηρίωσης
-
-| Κατηγορία | Περιγραφή | Σύνδεσμος |
-|-----------|-----------|-----------|
-| 🔄 Session Management | Επόμενες συνεδρίες και σύνοψες | [docs/session-management/](docs/session-management/) |
-| 🛠️ Implementation Guides | Οδηγίες υλοποίησης | [docs/implementation-guides/](docs/implementation-guides/) |
-| 🧪 Testing | Testing και validation | [docs/testing/](docs/testing/) |
-| 📖 Documentation | Γενική τεκμηρίωση | [docs/documentation/](docs/documentation/) |
-| 📋 TODO & Planning | Εργασίες και σχεδιασμός | [docs/todo-planning/](docs/todo-planning/) |
-| ✅ Completion Summaries | Σύνοψες ολοκληρωμένων | [docs/completion-summaries/](docs/completion-summaries/) |
-| 🚀 Quick Start Guides | Γρήγοροι οδηγοί | [docs/quick-start-guides/](docs/quick-start-guides/) |
-| 🔧 Debug & Fixes | Διόρθωση προβλημάτων | [docs/debug-fixes/](docs/debug-fixes/) |
-
-## 🔧 Χρήσιμες Εντολές
-
-### 🐳 Docker Commands
-
-```bash
-# Έλεγχος κατάστασης
-docker compose ps
-
-# Παρακολούθηση logs
-docker compose logs -f
-
-# Restart συγκεκριμένου service
-docker compose restart backend
-docker compose restart frontend
-docker compose restart db
-
-# Έλεγχος χρήσης πόρων
-docker stats
-```
-
-### 🔧 Backend Scripts
-
-```bash
-# Δημιουργία superuser
-docker exec linux_version-backend-1 python backend/scripts/create_superuser.py --email admin@example.com --password mypassword
-
-# Διαχείριση tenants
-docker exec linux_version-backend-1 python backend/scripts/manage_tenants.py --list
-
-# Έλεγχος δικαιωμάτων
-docker exec linux_version-backend-1 python backend/scripts/check_permissions.py --all
-```
-
-### 🗄️ Database Commands
-
-```bash
-# Σύνδεση στη βάση δεδομένων
-docker compose exec db psql -U postgres
-
-# Backup βάσης δεδομένων
-docker compose exec db pg_dump -U postgres > backup.sql
-
-# Restore βάσης δεδομένων
-docker compose exec -T db psql -U postgres < backup.sql
-```
-
-## 🚨 Troubleshooting
-
-### Αν δεν ξεκινάνε τα containers:
-
-```bash
-# 1. Έλεγχος αν χρησιμοποιούνται οι ports
-sudo lsof -i :8080  # Frontend port
-sudo lsof -i :8000  # Backend port
-sudo lsof -i :5432  # Database port
-
-# 2. Kill processes που χρησιμοποιούν τα ports
-sudo kill -9 <PID>
-
-# 3. Επανεκκίνηση
-docker compose up --build -d
-```
-
-### Αν δεν συνδέεται η βάση δεδομένων:
-
-```bash
-# 1. Έλεγχος database container
-docker compose logs db
-
-# 2. Restart μόνο τη βάση
-docker compose restart db
-
-# 3. Έλεγχος σύνδεσης
-docker compose exec db psql -U postgres -c "SELECT 1;"
-```
-
-### Αν δεν λειτουργεί η αυτόματη αρχικοποίηση:
-
-```bash
-# 1. Έλεγχος backend logs
-docker compose logs backend
-
-# 2. Χειροκίνητη αρχικοποίηση
-docker exec linux_version-backend-1 python backend/scripts/auto_initialization.py
-
-# 3. Έλεγχος αν δημιουργήθηκαν οι χρήστες
-docker exec linux_version-backend-1 python backend/scripts/check_permissions.py --all
-```
-
-## 📄 Credentials File
-
-Τα credentials αποθηκεύονται αυτόματα στο:
-```
-backend/logs/demo_credentials.log
-```
-
-## 🎯 Current Status
-
-✅ **Financial Module**: Πλήρως λειτουργικό με API fixes  
-✅ **Building Selector**: UI λειτουργικό, χρειάζεται data refresh fix  
-✅ **Multi-tenant**: Λειτουργικό με django-tenants  
-✅ **Authentication**: JWT-based με refresh tokens  
-✅ **Sample Data**: Διαθέσιμο στο demo tenant  
-✅ **Documentation**: Πλήρως οργανωμένη σε 8 κατηγορίες  
-
-## 📋 TODO - Επόμενα Βήματα
-
-### 🔧 Building Selector Issue (Priority: HIGH)
-**Πρόβλημα**: Μετά την επιλογή άλλου κτιρίου δεν έχουμε αλλαγή δεδομένων.
-
-**Επόμενα Βήματα**:
-1. Ελέγξω αν το `selectedBuilding` ενημερώνεται στο context
-2. Ελέγξω αν τα components re-render όταν αλλάζει το building
-3. Ελέγξω αν τα API calls χρησιμοποιούν το σωστό building ID
-4. Ελέγξω αν υπάρχει caching issue
-
-### 🏗️ Financial Module Enhancements
-- [ ] Add transaction creation form
-- [ ] Add payment creation form
-- [ ] Add account creation form
-- [ ] Add financial reports
-- [ ] Add export functionality
-
-### 🔐 Security Enhancements
-- [ ] Add rate limiting
-- [ ] Add audit logging
-- [ ] Add session management
-- [ ] Add 2FA support
-
-### 📊 Monitoring & Analytics
-- [ ] Add system health dashboard
-- [ ] Add performance metrics
-- [ ] Add user activity tracking
-- [ ] Add error reporting
-
-### 🚀 Production Deployment
-- [ ] Set up CI/CD pipeline
-- [ ] Configure production environment
-- [ ] Set up monitoring and alerting
-- [ ] Create backup procedures
-
-## 🎉 Επιτυχής Αρχικοποίηση!
-
-Μετά την εκκίνηση, το σύστημα είναι έτοιμο για χρήση με πλήρη demo δεδομένα και χρήστες!
-
-## 🔄 GitHub Ενημέρωση
-
-### 📤 Εκκίνηση Git Repository
-
-```bash
-# Αρχικοποίηση Git repository
-git init
-
-# Προσθήκη όλων των αρχείων
-git add .
-
-# Πρώτο commit
-git commit -m "Initial commit - Building Management System"
-
-# Ορισμός main branch
-git branch -M main
-
-# Προσθήκη remote repository
-git remote add origin https://github.com/theostamp/linux_version.git
-
-# Push στο GitHub
-git push -u origin main
-```
-
-### 📝 Ενημέρωση Αλλαγών
-
-```bash
-# Προσθήκη αλλαγών
-git add .
-
-# Commit με περιγραφικό μήνυμα
-git commit -m "αναδιαρθρωση financial calculator"
-
-# Push στο GitHub
-git push origin main
-```
-
-### 🚨 Force Push (Προσοχή!)
-
-```bash
-# Force push (χρησιμοποιείται μόνο όταν είναι απαραίτητο)
-git push --force origin main
-```
-
-### 📋 Παραδείγματα Commit Messages
-
-```bash
-# Για νέες λειτουργίες
-git commit -m "Feature: Add advanced calculator functionality"
-
-# Για διορθώσεις
-git commit -m "Fix: Resolve building selector data refresh issue"
-
-# Για βελτιώσεις
-git commit -m "Improve: Enhance documentation organization"
-
-# Για refactoring
-git commit -m "Refactor: Reorganize project structure"
-
-# Για testing
-git commit -m "Test: Add comprehensive test coverage"
+# Διαγραφή μόνο των unused volumes
+docker volume prune -f
 ```
 
 ---
 
-**📅 Τελευταία ενημέρωση:** Δεκέμβριος 2024  
-**🔧 Δημιουργήθηκε από:** AI Assistant  
-**📁 Οργανωμένα αρχεία:** 93 σε 8 κατηγορίες στο `docs/`
+
+
+### Αναλυτική Διαδικασία Ενημέρωσης
+```bash
+# 1. Έλεγχος τρέχουσας κατάστασης
+git status
+git log --oneline -5
+
+# 2. Pull τελευταίων αλλαγών από remote
+git pull origin main
+
+# 3. Προσθήκη αλλαγών
+git add .
+
+# 4. Commit με περιγραφικό μήνυμα
+git commit -m "feat: προσθήκη νέων χαρακτηριστικών οικονομικής διαχείρισης"
+
+# 5. Push στο GitHub
+git push origin main
+
+# 6. Έλεγχος ότι τα πάντα ανέβηκαν σωστά
+git status
+```
+
+### Χρήσιμες Εντολές Git
+```bash
+# Δημιουργία νέου branch
+git checkout -b feature/new-feature
+
+# Αλλαγή branch
+git checkout main
+
+# Merge branch
+git merge feature/new-feature
+
+# Διαγραφή local branch
+git branch -d feature/new-feature
+
+# Διαγραφή remote branch
+git push origin --delete feature/new-feature
+
+# Undo τελευταίου commit (χωρίς να χαθούν οι αλλαγές)
+git reset --soft HEAD~1
+
+# Δημιουργία tag
+git tag -a v2.1.0 -m "Version 2.1.0"
+git push origin v2.1.0
+```
+
+### GitHub CLI (gh) Εντολές
+```bash
+# Εγκατάσταση GitHub CLI (Ubuntu/Debian)
+sudo apt install gh
+
+# Login στο GitHub
+gh auth login
+
+# Δημιουργία pull request
+gh pr create --title "Νέο χαρακτηριστικό" --body "Περιγραφή των αλλαγών"
+
+# Δημιουργία issue
+gh issue create --title "Bug report" --body "Περιγραφή του προβλήματος"
+
+# Clone repository
+gh repo clone username/repository-name
+```
+
+---
+
+## 📤 Ενημέρωση GitHub Repository
+
+### Βασικές Εντολές Git
+```bash
+
+git status
+git add .
+git commit -m "διορθωση Διαχείριση Διαμερισμάτων"
+git push origin main
+```
+
+
+
+
+**Last Updated**: December 5, 2024  
+**Version**: 2.1.0  
+**Status**: Production Ready ✅

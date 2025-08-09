@@ -17,11 +17,13 @@ import {
   TrendingUp,
   Calculator,
   Building,
-  Euro
+  Euro,
+  Eye
 } from 'lucide-react';
 import { CalculatorState } from './CalculatorWizard';
 import { useCommonExpenses } from '@/hooks/useCommonExpenses';
 import { toast } from 'sonner';
+import { CommonExpenseModal } from './CommonExpenseModal';
 
 interface ResultsStepProps {
   state: CalculatorState;
@@ -38,6 +40,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
 }) => {
   const [expandedBreakdown, setExpandedBreakdown] = useState<string | null>(null);
   const [showAdvancedDetails, setShowAdvancedDetails] = useState(false);
+  const [showCommonExpenseModal, setShowCommonExpenseModal] = useState(false);
   const { issueCommonExpenses } = useCommonExpenses();
 
   const formatAmount = (amount: number) => {
@@ -66,15 +69,39 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
     try {
       updateState({ isIssuing: true });
       
+      // Transform shares to match backend expectations
+      const transformedShares: Record<string, { total_amount: number; breakdown: Record<string, any> }> = {};
+      const expenseIds: number[] = [];
+      
+      Object.entries(state.shares).forEach(([apartmentId, share]) => {
+        transformedShares[apartmentId] = {
+          total_amount: share.total_amount,
+          breakdown: share.breakdown ? share.breakdown.reduce((acc: Record<string, any>, item) => {
+            acc[item.expense_id] = {
+              expense_title: item.expense_title,
+              expense_amount: item.expense_amount,
+              apartment_share: item.apartment_share,
+              distribution_type: item.distribution_type,
+              distribution_type_display: item.distribution_type_display
+            };
+            // Collect expense IDs
+            if (!expenseIds.includes(item.expense_id)) {
+              expenseIds.push(item.expense_id);
+            }
+            return acc;
+          }, {} as Record<string, any>) : {}
+        };
+      });
+      
       const params = {
         building_id: buildingId,
-        start_date: state.customPeriod.startDate,
-        end_date: state.customPeriod.endDate,
-        period_name: state.customPeriod.periodName,
-        shares: state.shares,
-        total_expenses: state.totalExpenses,
-        advanced: state.advancedShares !== null,
-        advanced_options: state.advancedOptions
+        period_data: {
+          name: state.customPeriod.periodName,
+          start_date: state.customPeriod.startDate,
+          end_date: state.customPeriod.endDate
+        },
+        shares: transformedShares,
+        expense_ids: expenseIds
       };
 
       await issueCommonExpenses(params);
@@ -238,6 +265,15 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               <Printer className="h-4 w-4" />
               Εκτύπωση
             </Button>
+            
+            <Button 
+              onClick={() => setShowCommonExpenseModal(true)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              Φύλλο Κοινοχρήστων
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -304,7 +340,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                       <div className="mt-2 p-3 bg-gray-50 rounded-lg">
                         <h5 className="font-semibold mb-2">Ανάλυση ανά Δαπάνη</h5>
                         <div className="space-y-1">
-                          {share.breakdown?.map((item: any, index: number) => (
+                          {Array.isArray(share.breakdown) ? share.breakdown.map((item: any, index: number) => (
                             <div key={index} className="flex justify-between items-center text-sm">
                               <span className="flex-1">{item.expense_title}</span>
                               <span className="text-muted-foreground mr-2">
@@ -314,7 +350,11 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                                 {formatAmount(item.apartment_share)}€
                               </span>
                             </div>
-                          ))}
+                          )) : (
+                            <div className="text-sm text-gray-500">
+                              Δεν υπάρχουν λεπτομέρειες διαθέσιμες
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -396,7 +436,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {state.advancedShares.expense_breakdown?.map((category: any, index: number) => (
+                        {Array.isArray(state.advancedShares.expense_breakdown) ? state.advancedShares.expense_breakdown.map((category: any, index: number) => (
                           <TableRow key={index}>
                             <TableCell className="font-medium">{category.category}</TableCell>
                             <TableCell>{formatAmount(category.total_amount)}€</TableCell>
@@ -407,7 +447,13 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                               </Badge>
                             </TableCell>
                           </TableRow>
-                        ))}
+                        )) : (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center text-gray-500">
+                              Δεν υπάρχουν διαθέσιμα δεδομένα ανάλυσης
+                            </TableCell>
+                          </TableRow>
+                        )}
                       </TableBody>
                     </Table>
                   </div>
@@ -425,7 +471,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {Object.values(state.advancedShares.elevator_shares).map((share: any) => (
+                          {state.advancedShares.elevator_shares && typeof state.advancedShares.elevator_shares === 'object' ? Object.values(state.advancedShares.elevator_shares).map((share: any) => (
                             <TableRow key={share.apartment_id}>
                               <TableCell className="font-medium">
                                 {share.apartment_number}
@@ -433,7 +479,13 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                               <TableCell>{share.elevator_mills}</TableCell>
                               <TableCell>{formatAmount(share.elevator_share)}€</TableCell>
                             </TableRow>
-                          ))}
+                          )) : (
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center text-gray-500">
+                                Δεν υπάρχουν διαθέσιμα δεδομένα ανελκυστήρα
+                              </TableCell>
+                            </TableRow>
+                          )}
                         </TableBody>
                       </Table>
                     </div>
@@ -461,6 +513,15 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Common Expense Modal */}
+      <CommonExpenseModal
+        isOpen={showCommonExpenseModal}
+        onClose={() => setShowCommonExpenseModal(false)}
+        state={state}
+        buildingId={buildingId}
+        buildingName="Κτίριο Διαχείρισης"
+      />
     </div>
   );
 };

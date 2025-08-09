@@ -329,22 +329,22 @@ def create_demo_data(tenant_schema):
                 # Ειδική δημιουργία για Αραχώβης 12 - 10 διαμερίσματα
                 apartments_data = [
                     # Όροφος 1
-                    {'number': 'A1', 'floor': 1, 'owner_name': 'Γεώργιος Παπαδόπουλος', 'owner_phone': '2101234567', 'owner_email': 'papadopoulos@email.com', 'tenant_name': 'Μαρία Κωνσταντίνου', 'tenant_phone': '2101234568', 'tenant_email': 'maria@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100, 'current_balance': 0.00},
-                    {'number': 'A2', 'floor': 1, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2101234569', 'owner_email': 'eleni@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 3, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105, 'current_balance': -45.50},
-                    {'number': 'A3', 'floor': 1, 'owner_name': 'Νίκος Αλεξίου', 'owner_phone': '2101234570', 'owner_email': 'nikos@email.com', 'tenant_name': 'Αννα Παπαδοπούλου', 'tenant_phone': '2101234571', 'tenant_email': 'anna@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 2, 'participation_mills': 95, 'heating_mills': 95, 'elevator_mills': 95, 'current_balance': 120.00},
+                    {'number': 'Α1', 'floor': 1, 'owner_name': 'Γεώργιος Παπαδόπουλος', 'owner_phone': '2101234567', 'owner_email': 'papadopoulos@email.com', 'tenant_name': 'Μαρία Κωνσταντίνου', 'tenant_phone': '2101234568', 'tenant_email': 'maria@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 98, 'heating_mills': 102, 'elevator_mills': 95, 'current_balance': 0.00},
+                    {'number': 'Α2', 'floor': 1, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2101234569', 'owner_email': 'eleni@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 3, 'participation_mills': 108, 'heating_mills': 110, 'elevator_mills': 105, 'current_balance': -45.50},
+                    {'number': 'Α3', 'floor': 1, 'owner_name': 'Νίκος Αλεξίου', 'owner_phone': '2101234570', 'owner_email': 'nikos@email.com', 'tenant_name': 'Αννα Παπαδοπούλου', 'tenant_phone': '2101234571', 'tenant_email': 'anna@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 2, 'participation_mills': 92, 'heating_mills': 88, 'elevator_mills': 90, 'current_balance': 120.00},
                     
                     # Όροφος 2
-                    {'number': 'B1', 'floor': 2, 'owner_name': 'Δημήτρης Κωνσταντίνου', 'owner_phone': '2101234572', 'owner_email': 'dimitris@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 110, 'elevator_mills': 110, 'current_balance': -78.30},
-                    {'number': 'B2', 'floor': 2, 'owner_name': 'Κατερίνα Γεωργίου', 'owner_phone': '2101234573', 'owner_email': 'katerina@email.com', 'tenant_name': 'Παύλος Μιχαηλίδης', 'tenant_phone': '2101234574', 'tenant_email': 'pavlos@email.com', 'is_rented': True, 'square_meters': 80, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100, 'current_balance': 0.00},
-                    {'number': 'B3', 'floor': 2, 'owner_name': 'Ανδρέας Παπαδάκης', 'owner_phone': '2101234575', 'owner_email': 'andreas@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100, 'current_balance': 65.20},
+                    {'number': 'Β1', 'floor': 2, 'owner_name': 'Δημήτρης Κωνσταντίνου', 'owner_phone': '2101234572', 'owner_email': 'dimitris@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 115, 'heating_mills': 118, 'elevator_mills': 112, 'current_balance': -78.30},
+                    {'number': 'Β2', 'floor': 2, 'owner_name': 'Κατερίνα Γεωργίου', 'owner_phone': '2101234573', 'owner_email': 'katerina@email.com', 'tenant_name': 'Παύλος Μιχαηλίδης', 'tenant_phone': '2101234574', 'tenant_email': 'pavlos@email.com', 'is_rented': True, 'square_meters': 80, 'bedrooms': 2, 'participation_mills': 96, 'heating_mills': 98, 'elevator_mills': 100, 'current_balance': 0.00},
+                    {'number': 'Β3', 'floor': 2, 'owner_name': 'Ανδρέας Παπαδάκης', 'owner_phone': '2101234575', 'owner_email': 'andreas@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 102, 'heating_mills': 100, 'elevator_mills': 98, 'current_balance': 65.20},
                     
                     # Όροφος 3
-                    {'number': 'C1', 'floor': 3, 'owner_name': 'Σοφία Νικολάου', 'owner_phone': '2101234576', 'owner_email': 'sofia@email.com', 'tenant_name': 'Γιώργος Δημητρίου', 'tenant_phone': '2101234577', 'tenant_email': 'giorgos@email.com', 'is_rented': True, 'square_meters': 90, 'bedrooms': 3, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105, 'current_balance': -120.80},
-                    {'number': 'C2', 'floor': 3, 'owner_name': 'Μιχάλης Αντωνίου', 'owner_phone': '2101234578', 'owner_email': 'michalis@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 75, 'bedrooms': 2, 'participation_mills': 95, 'heating_mills': 95, 'elevator_mills': 95, 'current_balance': 0.00},
-                    {'number': 'C3', 'floor': 3, 'owner_name': 'Ευαγγελία Παπαδοπούλου', 'owner_phone': '2101234579', 'owner_email': 'evangelia@email.com', 'tenant_name': 'Δημήτρης Κωνσταντίνου', 'tenant_phone': '2101234580', 'tenant_email': 'dimitris2@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100, 'current_balance': 45.60},
+                    {'number': 'Γ1', 'floor': 3, 'owner_name': 'Σοφία Νικολάου', 'owner_phone': '2101234576', 'owner_email': 'sofia@email.com', 'tenant_name': 'Γιώργος Δημητρίου', 'tenant_phone': '2101234577', 'tenant_email': 'giorgos@email.com', 'is_rented': True, 'square_meters': 90, 'bedrooms': 3, 'participation_mills': 107, 'heating_mills': 105, 'elevator_mills': 110, 'current_balance': -120.80},
+                    {'number': 'Γ2', 'floor': 3, 'owner_name': 'Μιχάλης Αντωνίου', 'owner_phone': '2101234578', 'owner_email': 'michalis@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 75, 'bedrooms': 2, 'participation_mills': 89, 'heating_mills': 92, 'elevator_mills': 88, 'current_balance': 0.00},
+                    {'number': 'Γ3', 'floor': 3, 'owner_name': 'Ευαγγελία Παπαδοπούλου', 'owner_phone': '2101234579', 'owner_email': 'evangelia@email.com', 'tenant_name': 'Δημήτρης Κωνσταντίνου', 'tenant_phone': '2101234580', 'tenant_email': 'dimitris2@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 101, 'heating_mills': 97, 'elevator_mills': 102, 'current_balance': 45.60},
                     
                     # Όροφος 4
-                    {'number': 'D1', 'floor': 4, 'owner_name': 'Χρήστος Παπαδόπουλος', 'owner_phone': '2101234581', 'owner_email': 'christos@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 110, 'elevator_mills': 110, 'current_balance': -90.25}
+                    {'number': 'Δ1', 'floor': 4, 'owner_name': 'Χρήστος Παπαδόπουλος', 'owner_phone': '2101234581', 'owner_email': 'christos@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 112, 'heating_mills': 115, 'elevator_mills': 108, 'current_balance': -90.25}
                 ]
                 
                 for apt_data in apartments_data:
@@ -662,38 +662,38 @@ def create_demo_data(tenant_schema):
                 araxovis_apartments = Apartment.objects.filter(building=araxovis_building)
                 araxovis_payment_data = [
                     # A1 - Μαρία Κωνσταντίνου (ενοικιαστής)
-                    {'apartment': 'A1', 'amount': 85.50, 'date': datetime(2024, 1, 10).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
-                    {'apartment': 'A1', 'amount': 92.30, 'date': datetime(2024, 2, 8).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Φεβρουαρίου 2024'},
+                    {'apartment': 'Α1', 'amount': 85.50, 'date': datetime(2024, 1, 10).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    {'apartment': 'Α1', 'amount': 92.30, 'date': datetime(2024, 2, 8).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Φεβρουαρίου 2024'},
                     
                     # A2 - Ελένη Δημητρίου (ιδιοκτήτης) - έχει οφειλή
-                    {'apartment': 'A2', 'amount': 45.50, 'date': datetime(2024, 1, 15).date(), 'method': 'cash', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    {'apartment': 'Α2', 'amount': 45.50, 'date': datetime(2024, 1, 15).date(), 'method': 'cash', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
                     
                     # A3 - Αννα Παπαδοπούλου (ενοικιαστής)
-                    {'apartment': 'A3', 'amount': 78.20, 'date': datetime(2024, 1, 12).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
-                    {'apartment': 'A3', 'amount': 120.00, 'date': datetime(2024, 2, 5).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Φεβρουαρίου 2024'},
+                    {'apartment': 'Α3', 'amount': 78.20, 'date': datetime(2024, 1, 12).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    {'apartment': 'Α3', 'amount': 120.00, 'date': datetime(2024, 2, 5).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Φεβρουαρίου 2024'},
                     
                     # B1 - Δημήτρης Κωνσταντίνου (ιδιοκτήτης) - έχει οφειλή
-                    {'apartment': 'B1', 'amount': 78.30, 'date': datetime(2024, 1, 20).date(), 'method': 'cash', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    {'apartment': 'Β1', 'amount': 78.30, 'date': datetime(2024, 1, 20).date(), 'method': 'cash', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
                     
                     # B2 - Παύλος Μιχαηλίδης (ενοικιαστής)
-                    {'apartment': 'B2', 'amount': 95.00, 'date': datetime(2024, 1, 8).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
-                    {'apartment': 'B2', 'amount': 88.50, 'date': datetime(2024, 2, 12).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Φεβρουαρίου 2024'},
+                    {'apartment': 'Β2', 'amount': 95.00, 'date': datetime(2024, 1, 8).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    {'apartment': 'Β2', 'amount': 88.50, 'date': datetime(2024, 2, 12).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Φεβρουαρίου 2024'},
                     
                     # B3 - Ανδρέας Παπαδάκης (ιδιοκτήτης) - έχει πιστωτικό
-                    {'apartment': 'B3', 'amount': 65.20, 'date': datetime(2024, 1, 18).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    {'apartment': 'Β3', 'amount': 65.20, 'date': datetime(2024, 1, 18).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
                     
                     # C1 - Γιώργος Δημητρίου (ενοικιαστής) - έχει οφειλή
-                    {'apartment': 'C1', 'amount': 120.80, 'date': datetime(2024, 1, 25).date(), 'method': 'cash', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    {'apartment': 'Γ1', 'amount': 120.80, 'date': datetime(2024, 1, 25).date(), 'method': 'cash', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
                     
                     # C2 - Μιχάλης Αντωνίου (ιδιοκτήτης)
-                    {'apartment': 'C2', 'amount': 72.40, 'date': datetime(2024, 1, 14).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    {'apartment': 'Γ2', 'amount': 72.40, 'date': datetime(2024, 1, 14).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
                     
                     # C3 - Δημήτρης Κωνσταντίνου (ενοικιαστής)
-                    {'apartment': 'C3', 'amount': 45.60, 'date': datetime(2024, 1, 16).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
-                    {'apartment': 'C3', 'amount': 82.30, 'date': datetime(2024, 2, 10).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Φεβρουαρίου 2024'},
+                    {'apartment': 'Γ3', 'amount': 45.60, 'date': datetime(2024, 1, 16).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'},
+                    {'apartment': 'Γ3', 'amount': 82.30, 'date': datetime(2024, 2, 10).date(), 'method': 'bank_transfer', 'notes': 'Είσπραξη κοινοχρήστων Φεβρουαρίου 2024'},
                     
-                    # D1 - Χρήστος Παπαδόπουλος (ιδιοκτήτης) - έχει οφειλή
-                    {'apartment': 'D1', 'amount': 90.25, 'date': datetime(2024, 1, 22).date(), 'method': 'cash', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'}
+                    # Δ1 - Χρήστος Παπαδόπουλος (ιδιοκτήτης) - έχει οφειλή
+                    {'apartment': 'Δ1', 'amount': 90.25, 'date': datetime(2024, 1, 22).date(), 'method': 'cash', 'notes': 'Είσπραξη κοινοχρήστων Ιανουαρίου 2024'}
                 ]
                 
                 for payment_data in araxovis_payment_data:

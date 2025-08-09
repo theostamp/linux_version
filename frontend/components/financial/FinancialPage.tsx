@@ -42,6 +42,9 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { currentBuilding, selectedBuilding } = useBuilding();
+  
+  // Use selectedBuilding ID if available, otherwise use the passed buildingId
+  const activeBuildingId = selectedBuilding?.id || buildingId;
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -54,6 +57,26 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   
   // Ref for financial overview to refresh data
   const overviewRef = useRef<{ loadSummary: () => void }>(null);
+  
+  // Force refresh when building changes
+  useEffect(() => {
+    // Trigger refresh of all data when activeBuildingId changes
+    if (overviewRef.current) {
+      overviewRef.current.loadSummary();
+    }
+    
+    // Load apartments for the new building
+    const loadApartments = async () => {
+      try {
+        const apartmentsData = await fetchApartments(activeBuildingId);
+        setApartments(apartmentsData);
+      } catch (error) {
+        console.error('Error loading apartments:', error);
+      }
+    };
+    
+    loadApartments();
+  }, [activeBuildingId]);
   
   // Handle URL parameters for tabs and modals
   useEffect(() => {
@@ -80,7 +103,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     params.set('tab', value);
     // Preserve building parameter
     if (!params.has('building')) {
-      params.set('building', buildingId.toString());
+      params.set('building', activeBuildingId.toString());
     }
     router.push(`/financial?${params.toString()}`);
   };
@@ -117,28 +140,28 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   // Quick Actions Handlers
   const handleNewExpense = () => {
     // Navigate to financial page with expense form modal open
-    router.push(`/financial?tab=expenses&modal=expense-form&building=${buildingId}`);
+    router.push(`/financial?tab=expenses&modal=expense-form&building=${activeBuildingId}`);
   };
 
   const handleNewPayment = () => {
     // Navigate to financial page with payment form modal open
-    router.push(`/financial?tab=payments&modal=payment-form&building=${buildingId}`);
+    router.push(`/financial?tab=payments&modal=payment-form&building=${activeBuildingId}`);
   };
 
   const handleCommonExpenses = () => {
     // Navigate to financial page with common expenses calculator tab
-    router.push(`/financial?tab=calculator&building=${buildingId}`);
+    router.push(`/financial?tab=calculator&building=${activeBuildingId}`);
   };
 
   useEffect(() => {
-    fetchApartments(buildingId).then(setApartments).catch(() => setApartments([]));
-  }, [buildingId]);
+    fetchApartments(activeBuildingId).then(setApartments).catch(() => setApartments([]));
+  }, [activeBuildingId]);
   
   // Get current building name
   const currentBuildingName = (selectedBuilding || currentBuilding)?.name || 'Άγνωστο Κτίριο';
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" key={`financial-${activeBuildingId}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -271,12 +294,12 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         </TabsList>
         
         <TabsContent value="dashboard" className="space-y-4">
-          <FinancialOverview ref={overviewRef} buildingId={buildingId} selectedMonth={selectedMonth} />
+          <FinancialOverview ref={overviewRef} buildingId={activeBuildingId} selectedMonth={selectedMonth} />
         </TabsContent>
         
         <TabsContent value="calculator" className="space-y-4">
           <ProtectedFinancialRoute requiredPermission="financial_write">
-            <CommonExpenseCalculatorNew buildingId={buildingId} selectedMonth={selectedMonth} />
+            <CommonExpenseCalculatorNew buildingId={activeBuildingId} selectedMonth={selectedMonth} />
           </ProtectedFinancialRoute>
         </TabsContent>
         
@@ -294,7 +317,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                         params.set('tab', 'expenses');
                         params.set('modal', 'expense-form');
                         if (!params.has('building')) {
-                          params.set('building', buildingId.toString());
+                          params.set('building', activeBuildingId.toString());
                         }
                         router.push(`/financial?${params.toString()}`);
                       }}
@@ -313,7 +336,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               </Card>
               
               <ExpenseList 
-                buildingId={buildingId}
+                buildingId={activeBuildingId}
                 selectedMonth={selectedMonth}
                 onExpenseSelect={(expense) => {
                   console.log('Selected expense:', expense);
@@ -339,7 +362,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                         params.set('tab', 'payments');
                         params.set('modal', 'payment-form');
                         if (!params.has('building')) {
-                          params.set('building', buildingId.toString());
+                          params.set('building', activeBuildingId.toString());
                         }
                         router.push(`/financial?${params.toString()}`);
                       }}
@@ -358,7 +381,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               </Card>
               
               <PaymentList 
-                buildingId={buildingId}
+                buildingId={activeBuildingId}
                 selectedMonth={selectedMonth}
                 onPaymentSelect={(payment) => {
                   console.log('Selected payment:', payment);
@@ -373,7 +396,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         <TabsContent value="meters" className="space-y-4">
           <ProtectedFinancialRoute requiredPermission="financial_write">
             <div className="space-y-6">
-              <MeterReadingList buildingId={buildingId} selectedMonth={selectedMonth} />
+              <MeterReadingList buildingId={activeBuildingId} selectedMonth={selectedMonth} />
               <BulkImportWizard />
             </div>
           </ProtectedFinancialRoute>
@@ -381,13 +404,13 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         
         <TabsContent value="charts" className="space-y-4">
           <ProtectedFinancialRoute requiredPermission="financial_read">
-            <ChartsContainer buildingId={buildingId} selectedMonth={selectedMonth} />
+            <ChartsContainer buildingId={activeBuildingId} selectedMonth={selectedMonth} />
           </ProtectedFinancialRoute>
         </TabsContent>
         
         <TabsContent value="history" className="space-y-4">
           <ProtectedFinancialRoute requiredPermission="financial_read">
-            <TransactionHistory buildingId={buildingId} limit={20} selectedMonth={selectedMonth} />
+            <TransactionHistory buildingId={activeBuildingId} limit={20} selectedMonth={selectedMonth} />
           </ProtectedFinancialRoute>
         </TabsContent>
       </Tabs>
@@ -408,7 +431,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 </Button>
               </div>
               <ExpenseForm 
-                buildingId={buildingId}
+                buildingId={activeBuildingId}
                 onSuccess={handleExpenseSuccess}
                 onCancel={handleExpenseCancel}
               />
@@ -433,7 +456,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 </Button>
               </div>
               <PaymentForm 
-                buildingId={buildingId}
+                buildingId={activeBuildingId}
                 onSuccess={handlePaymentSuccess}
                 onCancel={handlePaymentCancel}
                 apartments={apartments}

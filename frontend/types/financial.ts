@@ -62,6 +62,10 @@ export interface Payment {
   apartment: number;
   apartment_number?: string;
   building_name?: string;
+  owner_name?: string;
+  tenant_name?: string;
+  current_balance?: number;
+  monthly_due?: number;
   amount: number;
   date: string;
   method: string;

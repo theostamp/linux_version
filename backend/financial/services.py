@@ -78,7 +78,9 @@ class CommonExpenseCalculator:
         
         for apartment in self.apartments:
             if apartment.participation_mills:
-                share_amount = (expense.amount * apartment.participation_mills) / total_mills
+                participation_mills_decimal = Decimal(str(apartment.participation_mills))
+                total_mills_decimal = Decimal(str(total_mills))
+                share_amount = (expense.amount * participation_mills_decimal) / total_mills_decimal
                 shares[apartment.id]['total_amount'] += share_amount
                 shares[apartment.id]['breakdown'].append({
                     'expense_id': expense.id,
@@ -142,7 +144,7 @@ class CommonExpenseCalculator:
                 # Υπολογισμός κατανάλωσης
                 first_reading = apartment_readings.first()
                 last_reading = apartment_readings.last()
-                consumption = last_reading.value - first_reading.value
+                consumption = Decimal(str(last_reading.value - first_reading.value))
                 
                 apartment_consumption[apartment.id] = consumption
                 total_consumption += consumption
@@ -1211,7 +1213,7 @@ class AdvancedCommonExpenseCalculator:
                 'heating_breakdown': {
                     'fixed_cost': Decimal('0.00'),
                     'variable_cost': Decimal('0.00'),
-                    'consumption_hours': 0
+                    'consumption_hours': Decimal('0.00')
                 },
                 'previous_balance': apartment.current_balance or Decimal('0.00'),
                 'total_due': Decimal('0.00')
@@ -1321,7 +1323,7 @@ class AdvancedCommonExpenseCalculator:
             if len(apartment_readings) >= 2:
                 first_reading = apartment_readings.first()
                 last_reading = apartment_readings.last()
-                consumption = last_reading.value - first_reading.value
+                consumption = Decimal(str(last_reading.value - first_reading.value))
                 apartment_consumption[apartment.id] = consumption
                 total_consumption_hours += consumption
             else:
@@ -1349,26 +1351,29 @@ class AdvancedCommonExpenseCalculator:
         
         for apartment in self.apartments:
             apartment_id = apartment.id
-            participation_mills = apartment.participation_mills or 0
-            heating_mills = apartment.heating_mills or 0
-            elevator_mills = apartment.elevator_mills or 0
+            participation_mills = Decimal(str(apartment.participation_mills or 0))
+            heating_mills = Decimal(str(apartment.heating_mills or 0))
+            elevator_mills = Decimal(str(apartment.elevator_mills or 0))
             
             # α. Υπολογισμός Γενικών Δαπανών
             if total_participation_mills > 0:
-                general_share = expense_totals['general'] * (participation_mills / total_participation_mills)
+                total_participation_mills_decimal = Decimal(str(total_participation_mills))
+                general_share = expense_totals['general'] * (participation_mills / total_participation_mills_decimal)
                 shares[apartment_id]['breakdown']['general_expenses'] = general_share
                 shares[apartment_id]['total_amount'] += general_share
             
             # β. Υπολογισμός Δαπανών Ανελκυστήρα
             if total_elevator_mills > 0:
-                elevator_share = expense_totals['elevator'] * (elevator_mills / total_elevator_mills)
+                total_elevator_mills_decimal = Decimal(str(total_elevator_mills))
+                elevator_share = expense_totals['elevator'] * (elevator_mills / total_elevator_mills_decimal)
                 shares[apartment_id]['breakdown']['elevator_expenses'] = elevator_share
                 shares[apartment_id]['total_amount'] += elevator_share
             
             # γ. Υπολογισμός Δαπανών Θέρμανσης
             if total_heating_mills > 0:
+                total_heating_mills_decimal = Decimal(str(total_heating_mills))
                 # Πάγιο κόστος
-                fixed_heating_share = heating_costs['fixed_cost'] * (heating_mills / total_heating_mills)
+                fixed_heating_share = heating_costs['fixed_cost'] * (heating_mills / total_heating_mills_decimal)
                 shares[apartment_id]['heating_breakdown']['fixed_cost'] = fixed_heating_share
                 
                 # Μεταβλητό κόστος

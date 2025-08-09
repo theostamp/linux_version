@@ -100,16 +100,72 @@ class PaymentSerializer(serializers.ModelSerializer):
     payment_type_display = serializers.CharField(source='get_payment_type_display', read_only=True)
     apartment_number = serializers.CharField(source='apartment.number', read_only=True)
     building_name = serializers.CharField(source='apartment.building.name', read_only=True)
+    owner_name = serializers.CharField(source='apartment.owner_name', read_only=True)
+    tenant_name = serializers.CharField(source='apartment.tenant_name', read_only=True)
+    current_balance = serializers.SerializerMethodField()
+    monthly_due = serializers.SerializerMethodField()
     receipt_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Payment
         fields = [
-            'id', 'apartment', 'apartment_number', 'building_name', 'amount', 'date',
+            'id', 'apartment', 'apartment_number', 'building_name', 'owner_name', 'tenant_name', 'current_balance', 'monthly_due', 'amount', 'date',
             'method', 'method_display', 'payment_type', 'payment_type_display',
             'reference_number', 'notes', 'receipt', 'receipt_url', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
+    
+    def get_current_balance(self, obj):
+        """Υπολογισμός τρέχοντος υπολοίπου διαμερίσματος βάσει συναλλαγών"""
+        try:
+            from decimal import Decimal
+            from .models import Transaction
+            
+            # Παίρνουμε όλες τις συναλλαγές του διαμερίσματος ταξινομημένες χρονολογικά
+            transactions = Transaction.objects.filter(
+                apartment=obj.apartment
+            ).order_by('date', 'id')
+            
+            # Αρχίζουμε από υπόλοιπο 0 και υπολογίζουμε προοδευτικά
+            running_balance = Decimal('0.00')
+            
+            for transaction in transactions:
+                if transaction.type == 'charge':
+                    # Χρέωση: αφαιρείται από το υπόλοιπο (αυξάνει τη οφειλή)
+                    running_balance -= transaction.amount
+                elif transaction.type == 'payment':
+                    # Πληρωμή: προστίθεται στο υπόλοιπο (μειώνει τη οφειλή)
+                    running_balance += transaction.amount
+            
+            return float(running_balance)
+        except Exception as e:
+            # Fallback στο στατικό current_balance αν κάτι πάει στραβά
+            try:
+                balance = obj.apartment.current_balance
+                if balance is None:
+                    return 0.0
+                return float(balance)
+            except:
+                return 0.0
+    
+    def get_monthly_due(self, obj):
+        """Υπολογισμός μηνιαίας οφειλής από κοινόχρηστα"""
+        try:
+            from decimal import Decimal
+            from .services import CommonExpenseCalculator
+            
+            # Υπολογισμός μηνιαίας οφειλής με βάση τα χιλιοστά και τις δαπάνες
+            calculator = CommonExpenseCalculator(obj.apartment.building_id)
+            shares = calculator.calculate_shares()
+            
+            apartment_share = shares.get(obj.apartment.id)
+            if apartment_share:
+                return float(apartment_share.get('total_due', 0))
+            
+            return 0.0
+        except Exception as e:
+            # Αν υπάρχει σφάλμα, επιστρέφουμε 0
+            return 0.0
     
     def get_receipt_url(self, obj):
         """Λήψη URL για το receipt"""

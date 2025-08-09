@@ -32,6 +32,18 @@ export default function ApartmentTableEnhanced({ apartments, onRefresh }: Apartm
     type: 'owner'
   });
 
+  // Υπολογισμός αθροισμάτων χιλιοστών
+  const totals = {
+    ownership: apartments.reduce((sum, apt) => sum + (apt.participation_mills || 0), 0),
+    heating: apartments.reduce((sum, apt) => sum + (apt.heating_mills || 0), 0),
+    elevator: apartments.reduce((sum, apt) => sum + (apt.elevator_mills || 0), 0)
+  };
+
+  // Έλεγχος αν τα αθροίσματα είναι 1000
+  const isOwnershipCorrect = totals.ownership === 1000;
+  const isHeatingCorrect = totals.heating === 1000;
+  const isElevatorCorrect = totals.elevator === 1000;
+
   const openEditModal = (apartment: ApartmentList, type: 'owner' | 'tenant') => {
     setEditModal({
       isOpen: true,
@@ -85,11 +97,11 @@ export default function ApartmentTableEnhanced({ apartments, onRefresh }: Apartm
 
 
   const renderOwnershipMills = (apartment: ApartmentList) => {
-    const ownershipMills = apartment.ownership_percentage || 0;
+    const ownershipMills = apartment.participation_mills || 0;
     return (
       <div className="text-center">
         <span className="text-sm font-semibold text-blue-600">
-          {ownershipMills > 0 ? `${ownershipMills}%` : '-'}
+          {ownershipMills > 0 ? `${ownershipMills}` : '-'}
         </span>
       </div>
     );
@@ -122,17 +134,10 @@ export default function ApartmentTableEnhanced({ apartments, onRefresh }: Apartm
       <table ref={tableRef} className="w-full min-w-[1200px] resizable-table">
         <thead className="table-header-gradient-blue sticky top-0 z-10">
           <tr>
-            {/* Διαμέρισμα / Διακριτικό */}
+            {/* Διαμέρισμα */}
             <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider min-w-[55px]">
               <div className="flex flex-col items-center space-y-1">
-                <span>Διαμέρισμα<br/>/ Διακριτικό</span>
-              </div>
-            </th>
-            
-            {/* Όροφος */}
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider min-w-[55px]">
-              <div className="flex flex-col items-center space-y-1">
-                <span>Όροφος</span>
+                <span>Διαμέρισμα</span>
               </div>
             </th>
             
@@ -191,20 +196,10 @@ export default function ApartmentTableEnhanced({ apartments, onRefresh }: Apartm
         <tbody className="bg-white divide-y divide-gray-200">
           {apartments.map(apartment => (
             <tr key={apartment.id} className="hover:bg-gray-50">
-              {/* Διαμέρισμα / Διακριτικό */}
+              {/* Διαμέρισμα */}
               <td className="px-2 py-4 whitespace-nowrap text-center">
                 <div className="text-sm font-medium text-gray-900">
                   {apartment.number}
-                </div>
-                <div className="text-xs text-blue-600 font-semibold">
-                  {apartment.identifier || <span className="text-gray-400 italic">-</span>}
-                </div>
-              </td>
-              
-              {/* Όροφος */}
-              <td className="px-2 py-4 whitespace-nowrap text-center">
-                <div className="text-sm font-medium text-gray-900">
-                  {apartment.floor ? `${apartment.floor}ος` : '-'}
                 </div>
               </td>
               
@@ -368,6 +363,48 @@ export default function ApartmentTableEnhanced({ apartments, onRefresh }: Apartm
               </td>
             </tr>
           ))}
+          {/* Γραμμή αθροίσματος */}
+          <tr className="bg-blue-50 border-t-2 border-blue-200 font-semibold">
+            <td className="px-2 py-4 text-center text-sm font-bold text-blue-900">
+              ΣΎΝΟΛΟ
+            </td>
+            <td className="px-4 py-4 text-sm text-blue-700">
+              -
+            </td>
+            <td className={`px-4 py-4 text-center text-sm font-bold ${isOwnershipCorrect ? 'text-green-700' : 'text-red-700'}`}>
+              <div className="flex items-center justify-center gap-1">
+                <span>{totals.ownership}</span>
+                {!isOwnershipCorrect && (
+                  <span className="text-red-500 text-xs" title="Πρέπει να είναι 1000">⚠️</span>
+                )}
+              </div>
+            </td>
+            <td className={`px-4 py-4 text-center text-sm font-bold ${isHeatingCorrect ? 'text-green-700' : 'text-red-700'}`}>
+              <div className="flex items-center justify-center gap-1">
+                <span>{totals.heating}</span>
+                {!isHeatingCorrect && (
+                  <span className="text-red-500 text-xs" title="Πρέπει να είναι 1000">⚠️</span>
+                )}
+              </div>
+            </td>
+            <td className={`px-4 py-4 text-center text-sm font-bold ${isElevatorCorrect ? 'text-green-700' : 'text-red-700'}`}>
+              <div className="flex items-center justify-center gap-1">
+                <span>{totals.elevator}</span>
+                {!isElevatorCorrect && (
+                  <span className="text-red-500 text-xs" title="Πρέπει να είναι 1000">⚠️</span>
+                )}
+              </div>
+            </td>
+            <td className="px-4 py-4 text-sm text-blue-700">
+              -
+            </td>
+            <td className="px-4 py-4 text-sm text-blue-700">
+              -
+            </td>
+            <td className="px-4 py-4 text-sm text-blue-700">
+              -
+            </td>
+          </tr>
         </tbody>
       </table>
       

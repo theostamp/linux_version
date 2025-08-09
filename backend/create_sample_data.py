@@ -118,7 +118,7 @@ def create_sample_data(tenant_schema):
             membership1, created = BuildingMembership.objects.get_or_create(
                 building=created_buildings[0],
                 resident=created_users[0],
-                defaults={'apartment': 'A1', 'role': 'resident'}
+                defaults={'apartment': 'Α1', 'role': 'resident'}
             )
             if created:
                 print(f"✅ Δημιουργήθηκε membership: {created_users[0].email} → {created_buildings[0].name}")
@@ -127,7 +127,7 @@ def create_sample_data(tenant_schema):
             membership2, created = BuildingMembership.objects.get_or_create(
                 building=created_buildings[1],
                 resident=created_users[1],
-                defaults={'apartment': 'B2', 'role': 'resident'}
+                defaults={'apartment': 'Β2', 'role': 'resident'}
             )
             if created:
                 print(f"✅ Δημιουργήθηκε membership: {created_users[1].email} → {created_buildings[1].name}")
@@ -136,7 +136,7 @@ def create_sample_data(tenant_schema):
             membership3, created = BuildingMembership.objects.get_or_create(
                 building=created_buildings[2],
                 resident=created_users[2],
-                defaults={'apartment': 'C3', 'role': 'representative'}
+                defaults={'apartment': 'Γ3', 'role': 'representative'}
             )
             if created:
                 print(f"✅ Δημιουργήθηκε membership: {created_users[2].email} → {created_buildings[2].name}")

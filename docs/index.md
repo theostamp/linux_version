@@ -154,11 +154,12 @@
 ---
 
 ### 🔧 [Debug & Fixes](./debug-fixes/)
-**Διόρθωση προβλημάτων** (2 αρχεία)
+**Διόρθωση προβλημάτων** (3 αρχεία)
 
 Οδηγοί για debugging και διορθώσεις:
 - ✅ **FINANCIAL_API_FIX.md** - Διόρθωση Financial API
 - ✅ **MILLS_FIX_COMPLETE.md** - Ολοκλήρωση διόρθωσης χιλιοστών
+- ✅ **CommonExpenseModal_TypeError_Fix.md** - Fix για TypeError στο CommonExpenseModal
 
 **[📁 Προβολή όλων](./debug-fixes/)**
 

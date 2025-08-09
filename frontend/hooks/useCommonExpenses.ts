@@ -109,6 +109,34 @@ export const useCommonExpenses = () => {
     }
   }, []);
 
+  const saveCommonExpenseSheet = useCallback(async (data: {
+    building_id: number;
+    period_data: {
+      name: string;
+      start_date: string;
+      end_date: string;
+    };
+    shares: any;
+    total_expenses: number;
+    advanced?: boolean;
+    advanced_options?: any;
+  }): Promise<any> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Χρησιμοποιούμε το υπάρχον issue endpoint για την αποθήκευση
+      const response = await api.post('/financial/common-expenses/issue/', data);
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την αποθήκευση του φύλλου κοινοχρήστων';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // Automation methods
   const createPeriodAutomatically = useCallback(async (data: {
     building_id: number;
@@ -318,6 +346,7 @@ export const useCommonExpenses = () => {
     calculateShares: calculateCommonExpenses,
     calculateAdvancedShares,
     issueCommonExpenses,
+    saveCommonExpenseSheet,
     getApartmentShares,
     createMeterReading,
     getMeterReadings,

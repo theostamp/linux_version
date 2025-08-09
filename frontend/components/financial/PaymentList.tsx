@@ -9,6 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { usePayments } from '@/hooks/usePayments';
 import { Payment, PaymentMethod } from '@/types/financial';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { PaymentDetailModal } from './PaymentDetailModal';
+
+interface PaymentWithProgressiveBalance extends Payment {
+  progressiveBalance: number;
+  paymentCount?: number; // Για συγκεντρωτικές εγγραφές
+}
 
 interface PaymentListProps {
   buildingId: number;
@@ -29,6 +35,8 @@ export const PaymentList: React.FC<PaymentListProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [methodFilter, setMethodFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   const filteredPayments = useMemo(() => {
     if (!payments) return [];
@@ -77,6 +85,69 @@ export const PaymentList: React.FC<PaymentListProps> = ({
     });
   }, [payments, searchTerm, methodFilter, dateFilter, apartmentFilter]);
 
+  // Συγκεντρωτικά στοιχεία ανά διαμέρισμα/ενοίκο
+  const apartmentSummaries = useMemo(() => {
+    // Χρησιμοποιούμε τα αρχικά payments από το API (που ήδη φιλτράρονται ανά μήνα)
+    // αντί για τα filteredPayments που περιλαμβάνουν το frontend φιλτράρισμα
+    if (!payments) return [];
+
+    // Ομαδοποίηση πληρωμών ανά διαμέρισμα
+    const paymentsByApartment = payments.reduce((acc, payment) => {
+      const key = payment.apartment;
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(payment);
+      return acc;
+    }, {} as Record<number, Payment[]>);
+
+    // Δημιουργία συγκεντρωτικών εγγραφών ανά διαμέρισμα
+    const summaries: PaymentWithProgressiveBalance[] = [];
+
+    Object.entries(paymentsByApartment).forEach(([apartmentId, apartmentPayments]) => {
+      // Ταξινόμηση κατά ημερομηνία για σωστό υπολογισμό
+      const sortedPayments = apartmentPayments.sort((a, b) => {
+        const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateCompare === 0) {
+          return a.id - b.id;
+        }
+        return dateCompare;
+      });
+
+      // Υπολογισμός συγκεντρωτικών στοιχείων
+      const totalAmount = sortedPayments.reduce((sum, payment) => {
+        const amount = typeof payment.amount === 'string' ? parseFloat(payment.amount) : Number(payment.amount);
+        return sum + (isNaN(amount) ? 0 : amount);
+      }, 0);
+
+      // Χρησιμοποιούμε τα στοιχεία της πιο πρόσφατης πληρωμής ως βάση
+      const latestPayment = sortedPayments[sortedPayments.length - 1];
+      const oldestPayment = sortedPayments[0];
+      
+      // Χρησιμοποιούμε απευθείας το current_balance από το API
+      // Αυτό θα πρέπει να είναι το τρέχον υπόλοιπο του διαμερίσματος
+      const currentBalance = latestPayment.current_balance || 0;
+
+      // Δημιουργία συγκεντρωτικής εγγραφής
+      summaries.push({
+        ...latestPayment, // Χρησιμοποιούμε τα στοιχεία της τελευταίας πληρωμής
+        id: parseInt(apartmentId) * 1000, // Μοναδικό ID για τη συγκεντρωτική εγγραφή
+        amount: totalAmount, // Συνολικό ποσό όλων των πληρωμών
+        date: oldestPayment.date, // Ημερομηνία πρώτης πληρωμής
+        notes: `${sortedPayments.length} πληρωμ${sortedPayments.length === 1 ? 'ή' : 'ές'}`,
+        progressiveBalance: currentBalance, // Τρέχον υπόλοιπο από το API
+        paymentCount: sortedPayments.length // Πλήθος πληρωμών για την καρτέλα
+      });
+    });
+
+    // Ταξινόμηση κατά διαμέρισμα
+    return summaries.sort((a, b) => {
+      const apartmentA = a.apartment_number || `C${a.apartment}`;
+      const apartmentB = b.apartment_number || `C${b.apartment}`;
+      return apartmentA.localeCompare(apartmentB);
+    });
+  }, [payments]);
+
   const getMethodColor = (method: string) => {
     const colors: Record<string, string> = {
       'cash': 'bg-green-100 text-green-800',
@@ -97,7 +168,12 @@ export const PaymentList: React.FC<PaymentListProps> = ({
     return labels[method] || method;
   };
 
-  const totalAmount = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
+  const totalAmount = apartmentSummaries.reduce((sum, summary) => {
+    // Ensure proper number conversion - handle both string and number inputs
+    const amount = typeof summary.amount === 'string' ? parseFloat(summary.amount) : Number(summary.amount);
+    const validAmount = isNaN(amount) ? 0 : amount;
+    return sum + validAmount;
+  }, 0);
 
   if (isLoading) {
     return (
@@ -126,13 +202,14 @@ export const PaymentList: React.FC<PaymentListProps> = ({
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Λίστα Εισπράξεων</span>
           <div className="flex items-center gap-4">
             <Badge variant="secondary">
-              {filteredPayments.length} από {payments?.length || 0}
+              {apartmentSummaries.length} ενοίκο{apartmentSummaries.length === 1 ? 'ς' : 'ι'}
             </Badge>
             <Badge variant="outline" className="text-green-600">
               Σύνολο: {formatCurrency(totalAmount)}
@@ -175,72 +252,76 @@ export const PaymentList: React.FC<PaymentListProps> = ({
           </Select>
         </div>
 
-        {/* Payments List */}
+        {/* Apartments Summary List */}
         <div className="space-y-4">
-          {filteredPayments.length === 0 ? (
+          {apartmentSummaries.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               Δεν βρέθηκαν εισπράξεις με τα επιλεγμένα κριτήρια
             </div>
           ) : (
-            filteredPayments.map((payment) => (
+            apartmentSummaries.map((summary) => (
               <div
-                key={payment.id}
-                className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                onClick={() => onPaymentSelect?.(payment)}
+                key={summary.id}
+                className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-semibold text-lg">
-                        Είσπραξη - <span className="text-blue-600">{payment.apartment_number || `Διαμέρισμα ${payment.apartment}`}</span>
+                        Ενοίκος - <span className="text-blue-600">{summary.apartment_number || `Διαμέρισμα ${summary.apartment}`}</span>
                       </h3>
-                      <Badge className={getMethodColor(payment.method)}>
-                        {getMethodLabel(payment.method)}
+                      <Badge className="bg-blue-100 text-blue-800">
+                        {summary.notes} {/* Εμφανίζει "X πληρωμές" */}
                       </Badge>
                     </div>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm text-gray-600">
                       <div>
-                        <span className="font-medium">Ποσό:</span>
-                        <span className="ml-1 font-semibold text-green-600">
-                          {formatCurrency(payment.amount)}
+                        <span className="font-semibold text-green-600">
+                          {formatCurrency(typeof summary.amount === 'string' ? parseFloat(summary.amount) : Number(summary.amount))}
                         </span>
                       </div>
                       <div>
-                        <span className="font-medium">Ημερομηνία:</span>
-                        <span className="ml-1">{formatDate(payment.date)}</span>
+                        <span>{formatDate(summary.date)}</span>
                       </div>
                       <div>
-                        <span className="font-medium">Διαμέρισμα:</span>
-                        <span className="ml-1 text-blue-600">{payment.apartment_number || payment.apartment}</span>
+                        <span className="text-blue-600">
+                          {summary.tenant_name || summary.owner_name || summary.apartment_number || summary.apartment}
+                        </span>
                       </div>
                       <div>
-                        <span className="font-medium">Δημιουργήθηκε:</span>
-                        <span className="ml-1">{formatDate(payment.created_at)}</span>
+                        <span className="text-orange-600 font-medium">
+                          {summary.monthly_due ? formatCurrency(summary.monthly_due) : '-'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className={`font-medium ${
+                          summary.progressiveBalance < 0 
+                            ? 'text-red-600' 
+                            : summary.progressiveBalance > 0 
+                              ? 'text-green-600' 
+                              : 'text-gray-600'
+                        }`}>
+                          {formatCurrency(summary.progressiveBalance)}
+                        </span>
                       </div>
                     </div>
 
-                    {payment.notes && (
-                      <div className="mt-2 text-sm text-gray-500">
-                        <span className="font-medium">Σημειώσεις:</span> {payment.notes}
-                      </div>
-                    )}
                   </div>
 
-                  {showActions && (
-                    <div className="flex flex-col gap-2 ml-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onPaymentSelect?.(payment);
-                        }}
-                      >
-                        Προβολή
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 ml-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedPayment(summary);
+                        setShowDetailModal(true);
+                      }}
+                    >
+                      Καρτέλα
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))
@@ -248,5 +329,16 @@ export const PaymentList: React.FC<PaymentListProps> = ({
         </div>
       </CardContent>
     </Card>
+    
+    {/* Payment Detail Modal */}
+    <PaymentDetailModal
+      payment={selectedPayment}
+      isOpen={showDetailModal}
+      onClose={() => {
+        setShowDetailModal(false);
+        setSelectedPayment(null);
+      }}
+    />
+    </>
   );
 }; 
