@@ -98,6 +98,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     
     method_display = serializers.CharField(source='get_method_display', read_only=True)
     payment_type_display = serializers.CharField(source='get_payment_type_display', read_only=True)
+    payer_type_display = serializers.CharField(source='get_payer_type_display', read_only=True)
     apartment_number = serializers.CharField(source='apartment.number', read_only=True)
     building_name = serializers.CharField(source='apartment.building.name', read_only=True)
     owner_name = serializers.CharField(source='apartment.owner_name', read_only=True)
@@ -111,6 +112,7 @@ class PaymentSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'apartment', 'apartment_number', 'building_name', 'owner_name', 'tenant_name', 'current_balance', 'monthly_due', 'amount', 'date',
             'method', 'method_display', 'payment_type', 'payment_type_display',
+            'payer_type', 'payer_type_display', 'payer_name',
             'reference_number', 'notes', 'receipt', 'receipt_url', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
@@ -130,12 +132,17 @@ class PaymentSerializer(serializers.ModelSerializer):
             running_balance = Decimal('0.00')
             
             for transaction in transactions:
-                if transaction.type == 'charge':
-                    # Χρέωση: αφαιρείται από το υπόλοιπο (αυξάνει τη οφειλή)
-                    running_balance -= transaction.amount
-                elif transaction.type == 'payment':
-                    # Πληρωμή: προστίθεται στο υπόλοιπο (μειώνει τη οφειλή)
+                # Τύποι που προσθέτουν στο υπόλοιπο (εισπράξεις)
+                if transaction.type in ['common_expense_payment', 'payment_received', 'refund']:
                     running_balance += transaction.amount
+                # Τύποι που αφαιρούν από το υπόλοιπο (χρεώσεις)
+                elif transaction.type in ['common_expense_charge', 'expense_created', 'expense_issued', 
+                                        'interest_charge', 'penalty_charge']:
+                    running_balance -= transaction.amount
+                # Για balance_adjustment χρησιμοποιούμε το balance_after αν υπάρχει
+                elif transaction.type == 'balance_adjustment':
+                    if transaction.balance_after is not None:
+                        running_balance = transaction.balance_after
             
             return float(running_balance)
         except Exception as e:

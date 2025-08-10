@@ -313,11 +313,19 @@ class Payment(models.Model):
         ('other', 'Άλλο'),
     ]
     
+    PAYER_TYPES = [
+        ('owner', 'Ιδιοκτήτης'),
+        ('tenant', 'Ενοικιαστής'),
+        ('other', 'Άλλος'),
+    ]
+    
     apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Ποσό")
     date = models.DateField(verbose_name="Ημερομηνία Εισπράξεως")
     method = models.CharField(max_length=20, choices=PAYMENT_METHODS, verbose_name="Τρόπος Εισπράξεως")
     payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPES, default='common_expense', verbose_name="Τύπος Εισπράξεως")
+    payer_type = models.CharField(max_length=20, choices=PAYER_TYPES, default='owner', verbose_name="Πληρωτής")
+    payer_name = models.CharField(max_length=200, blank=True, verbose_name="Όνομα Πληρωτή")
     reference_number = models.CharField(max_length=100, blank=True, verbose_name="Αριθμός Αναφοράς")
     notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
     receipt = models.FileField(upload_to='payment_receipts/', null=True, blank=True, verbose_name="Απόδειξη")

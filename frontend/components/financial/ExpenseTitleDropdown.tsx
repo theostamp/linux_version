@@ -155,7 +155,7 @@ export const ExpenseTitleDropdown: React.FC<ExpenseTitleDropdownProps> = ({
       {/* Suggestions count */}
       {category && suggestions.length > 0 && !showCustomInput && (
         <p className="text-sm text-gray-500">
-          {suggestions.length} προτάσεις διαθέσιμες
+          {suggestions.length} προτάσεις διαθέσιμες (προαιρετικό)
         </p>
       )}
     </div>

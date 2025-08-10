@@ -31,8 +31,9 @@ import {
 import { useFinancialPermissions } from '@/hooks/useFinancialPermissions';
 import { ProtectedFinancialRoute, ConditionalRender, PermissionButton } from './ProtectedFinancialRoute';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { fetchApartments } from '@/lib/api';
+import { fetchApartments, ApartmentList } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import { useModalState } from '@/hooks/useModalState';
 
 interface FinancialPageProps {
   buildingId: number;
@@ -46,17 +47,32 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   // Use selectedBuilding ID if available, otherwise use the passed buildingId
   const activeBuildingId = selectedBuilding?.id || buildingId;
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [showExpenseForm, setShowExpenseForm] = useState(false);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  
+  // Use custom hook for modal management
+  const expenseModal = useModalState({
+    modalKey: 'expense-form',
+    requiredTab: 'expenses',
+    buildingId: activeBuildingId
+  });
+  
+  const paymentModal = useModalState({
+    modalKey: 'payment-form',
+    requiredTab: 'payments',
+    buildingId: activeBuildingId
+  });
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
-  const [apartments, setApartments] = useState<Array<{ id: number; number: string; owner_name?: string }>>([]);
+  const [apartments, setApartments] = useState<ApartmentList[]>([]);
   const { canCreateExpense, canAccessReports, canCalculateCommonExpenses } = useFinancialPermissions();
   
   // Ref for financial overview to refresh data
   const overviewRef = useRef<{ loadSummary: () => void }>(null);
+  // Ref for expense list to refresh data
+  const expenseListRef = useRef<{ refresh: () => void }>(null);
+  // Ref for payment list to refresh data
+  const paymentListRef = useRef<{ refresh: () => void }>(null);
   
   // Force refresh when building changes
   useEffect(() => {
@@ -78,29 +94,23 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     loadApartments();
   }, [activeBuildingId]);
   
-  // Handle URL parameters for tabs and modals
+  // Handle URL parameters for tabs
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    const modalParam = searchParams.get('modal');
     
     if (tabParam) {
       setActiveTab(tabParam);
-    }
-    
-    if (modalParam === 'expense-form') {
-      setShowExpenseForm(true);
-    }
-    
-    if (modalParam === 'payment-form') {
-      setShowPaymentForm(true);
     }
   }, [searchParams]);
   
   // Update URL when tab changes
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', value);
+    // Remove modal parameter when changing tabs
+    params.delete('modal');
     // Preserve building parameter
     if (!params.has('building')) {
       params.set('building', activeBuildingId.toString());
@@ -109,12 +119,25 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   };
   
   const handleExpenseSuccess = () => {
-    setShowExpenseForm(false);
-    // Εδώ θα μπορούσε να γίνει refresh των δεδομένων
+    expenseModal.closeModal();
+    // Refresh expense list data
+    if (expenseListRef.current) {
+      expenseListRef.current.refresh();
+    }
+    // Refresh financial overview data
+    if (overviewRef.current) {
+      overviewRef.current.loadSummary();
+    }
   };
   
   const handlePaymentSuccess = () => {
-    setShowPaymentForm(false);
+    console.log('Payment success handler called');
+    paymentModal.closeModal();
+    // Refresh payment list data
+    if (paymentListRef.current) {
+      console.log('Refreshing payment list...');
+      paymentListRef.current.refresh();
+    }
     // Refresh financial overview data
     if (overviewRef.current) {
       overviewRef.current.loadSummary();
@@ -122,30 +145,20 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   };
   
   const handleExpenseCancel = () => {
-    setShowExpenseForm(false);
-    // Remove modal parameter from URL
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('modal');
-    router.push(`/financial?${params.toString()}`);
+    expenseModal.closeModal();
   };
   
   const handlePaymentCancel = () => {
-    setShowPaymentForm(false);
-    // Remove modal parameter from URL
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('modal');
-    router.push(`/financial?${params.toString()}`);
+    paymentModal.closeModal();
   };
 
   // Quick Actions Handlers
   const handleNewExpense = () => {
-    // Navigate to financial page with expense form modal open
-    router.push(`/financial?tab=expenses&modal=expense-form&building=${activeBuildingId}`);
+    expenseModal.openModal();
   };
 
   const handleNewPayment = () => {
-    // Navigate to financial page with payment form modal open
-    router.push(`/financial?tab=payments&modal=payment-form&building=${activeBuildingId}`);
+    paymentModal.openModal();
   };
 
   const handleCommonExpenses = () => {
@@ -311,16 +324,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   <CardTitle className="flex items-center justify-between">
                     <span>Διαχείριση Δαπανών</span>
                     <Button 
-                      onClick={() => {
-                        setShowExpenseForm(true);
-                        const params = new URLSearchParams(searchParams.toString());
-                        params.set('tab', 'expenses');
-                        params.set('modal', 'expense-form');
-                        if (!params.has('building')) {
-                          params.set('building', activeBuildingId.toString());
-                        }
-                        router.push(`/financial?${params.toString()}`);
-                      }}
+                      onClick={expenseModal.openModal}
                       className="flex items-center gap-2"
                     >
                       <Plus className="h-4 w-4" />
@@ -336,8 +340,11 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               </Card>
               
               <ExpenseList 
+                ref={expenseListRef}
                 buildingId={activeBuildingId}
+                buildingName={currentBuildingName}
                 selectedMonth={selectedMonth}
+                onMonthChange={setSelectedMonth}
                 onExpenseSelect={(expense) => {
                   console.log('Selected expense:', expense);
                   // Here you could open an expense detail modal or navigate to expense details
@@ -356,16 +363,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   <CardTitle className="flex items-center justify-between">
                     <span>Διαχείριση Εισπράξεων</span>
                     <Button 
-                      onClick={() => {
-                        setShowPaymentForm(true);
-                        const params = new URLSearchParams(searchParams.toString());
-                        params.set('tab', 'payments');
-                        params.set('modal', 'payment-form');
-                        if (!params.has('building')) {
-                          params.set('building', activeBuildingId.toString());
-                        }
-                        router.push(`/financial?${params.toString()}`);
-                      }}
+                      onClick={paymentModal.openModal}
                       className="flex items-center gap-2"
                     >
                       <DollarSign className="h-4 w-4" />
@@ -381,6 +379,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               </Card>
               
               <PaymentList 
+                ref={paymentListRef}
                 buildingId={activeBuildingId}
                 selectedMonth={selectedMonth}
                 onPaymentSelect={(payment) => {
@@ -417,7 +416,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       
       {/* Expense Form Modal */}
       <ConditionalRender permission="expense_manage">
-        {showExpenseForm && (
+        {expenseModal.isOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
@@ -442,7 +441,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       
       {/* Payment Form Modal */}
       <ConditionalRender permission="financial_write">
-        {showPaymentForm && (
+        {paymentModal.isOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">

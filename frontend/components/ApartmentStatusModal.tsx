@@ -118,6 +118,11 @@ export default function ApartmentStatusModal({
     }
   };
 
+  // Prevent modal from affecting URL
+  const handleClose = () => {
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -129,7 +134,7 @@ export default function ApartmentStatusModal({
             Αλλαγή Status Διαμερίσματος
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <X className="w-6 h-6" />
@@ -217,7 +222,7 @@ export default function ApartmentStatusModal({
         {/* Footer */}
         <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
           <Button
-            onClick={onClose}
+            onClick={handleClose}
             variant="outline"
             disabled={saving}
           >

@@ -54,63 +54,9 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
       const response = await api.get(`/financial/apartments/${payment.apartment}/transactions/`);
       setTransactions(response.data);
     } catch (err: any) {
-      // Fallback με mock data για demo
-      console.warn('API call failed, using mock data:', err);
-      console.log('Payment apartment ID:', payment.apartment);
-      
-      // Mock data ανάλογα με το διαμέρισμα (C2 vs C3)
-      // Βάσει apartment_number αντί για apartment ID
-      const isC2 = payment.apartment_number === 'C2' || payment.apartment === 10;
-      const mockTransactions: Transaction[] = isC2 ? [
-        // C2 - Μιχάλης Αντωνίου
-        {
-          id: 1,
-          type: 'charge',
-          amount: -246.25,
-          date: '2025-08-01',
-          description: 'Κοινόχρηστα Αυγούστου 2025',
-          balance_after: -246.25
-        },
-        {
-          id: 2,
-          type: 'payment',
-          amount: 222.00,
-          date: '2025-08-08',
-          description: 'Είσπραξη - Μετρητά',
-          method: 'cash',
-          balance_after: -24.25
-        },
-        {
-          id: 3,
-          type: 'payment',
-          amount: 343.00,
-          date: '2025-08-08',
-          description: 'Είσπραξη - Μετρητά',
-          method: 'cash',
-          balance_after: 318.75
-        }
-      ] : [
-        // C3 - Δημήτρης Κωνσταντίνου  
-        {
-          id: 1,
-          type: 'charge',
-          amount: -176.40,
-          date: '2025-08-01',
-          description: 'Κοινόχρηστα Αυγούστου 2025',
-          balance_after: -176.40
-        },
-        {
-          id: 2,
-          type: 'payment',
-          amount: 222.00,
-          date: '2025-08-08',
-          description: 'Είσπραξη - Μετρητά',
-          method: 'cash',
-          balance_after: 45.60
-        }
-      ];
-      
-      setTransactions(mockTransactions);
+      console.error('Error loading transaction history:', err);
+      setError('Σφάλμα κατά τη φόρτωση του ιστορικού συναλλαγών');
+      setTransactions([]);
     } finally {
       setIsLoading(false);
     }
@@ -474,9 +420,9 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {transactions.map((transaction) => (
+                  {transactions.map((transaction, index) => (
                     <div
-                      key={transaction.id}
+                      key={`${transaction.id}-${index}`}
                       className={`p-4 rounded-lg border-l-4 ${
                         transaction.type === 'payment' 
                           ? 'border-l-green-500 bg-green-50' 

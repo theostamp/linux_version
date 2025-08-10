@@ -19,4 +19,8 @@ router.register(r'apartments', ApartmentTransactionViewSet, basename='apartment-
 
 urlpatterns = [
     path('', include(router.urls)),
+    # Custom URL pattern for apartment transactions
+    path('apartments/<int:apartment_id>/transactions/', 
+         ApartmentTransactionViewSet.as_view({'get': 'list'}), 
+         name='apartment-transactions-list'),
 ] 

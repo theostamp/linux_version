@@ -385,6 +385,29 @@ class PaymentViewSet(viewsets.ModelViewSet):
         building.current_reserve += payment.amount
         building.save()
         
+        # Ενημέρωση του υπολοίπου του διαμερίσματος
+        apartment = payment.apartment
+        previous_balance = apartment.current_balance or 0
+        apartment.current_balance = previous_balance + payment.amount
+        apartment.save()
+        
+        # Δημιουργία αντίστοιχου Transaction record
+        from .models import Transaction
+        Transaction.objects.create(
+            building=building,
+            apartment=apartment,
+            apartment_number=apartment.number,
+            type='common_expense_payment',
+            description=f"Είσπραξη κοινοχρήστων από {apartment.number} - {payment.get_method_display()}",
+            amount=payment.amount,
+            balance_before=previous_balance,
+            balance_after=apartment.current_balance,
+            reference_id=str(payment.id),
+            reference_type='payment',
+            notes=payment.notes,
+            created_by=str(self.request.user) if self.request.user.is_authenticated else 'System'
+        )
+        
         # Χειρισμός file upload αν υπάρχει
         if 'receipt' in self.request.FILES:
             try:
@@ -393,9 +416,21 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 payment.receipt = file_path
                 payment.save()
             except Exception as e:
-                # Αν αποτύχει το file upload, διαγράφουμε την payment και επαναφέρουμε το αποθεματικό
+                # Αν αποτύχει το file upload, διαγράφουμε την payment και επαναφέρουμε τις αλλαγές
                 building.current_reserve -= payment.amount
                 building.save()
+                
+                # Επαναφορά υπολοίπου διαμερίσματος
+                apartment.current_balance = previous_balance
+                apartment.save()
+                
+                # Διαγραφή του transaction που δημιουργήθηκε
+                from .models import Transaction
+                Transaction.objects.filter(
+                    reference_id=str(payment.id),
+                    reference_type='payment'
+                ).delete()
+                
                 payment.delete()
                 raise ValidationError(f"Σφάλμα στο upload αρχείου: {str(e)}")
         
@@ -481,11 +516,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
         try:
             payment_data = request.data
             processor = PaymentProcessor()
-            result = processor.process_payment(payment_data)
+            transaction = processor.process_payment(payment_data)
             
             return Response({
                 'success': True,
-                'transaction_id': result.get('transaction_id'),
+                'transaction_id': getattr(transaction, 'id', None),
                 'message': 'Η πληρωμή επεξεργάστηκε επιτυχώς'
             })
         except Exception as e:
@@ -499,6 +534,46 @@ class PaymentViewSet(viewsets.ModelViewSet):
         """Λήψη διαθέσιμων μεθόδων πληρωμής"""
         methods = [{'value': choice[0], 'label': choice[1]} for choice in Payment.PAYMENT_METHODS]
         return Response(methods)
+
+    @action(detail=True, methods=['get'])
+    def verify(self, request, pk=None):
+        """Επαλήθευση πληρωμής για QR code"""
+        try:
+            payment = self.get_object()
+            
+            # Δημιουργία δεδομένων επαλήθευσης
+            verification_data = {
+                'payment_id': payment.id,
+                'apartment_number': payment.apartment.number,
+                'building_name': payment.apartment.building.name,
+                'amount': float(payment.amount),
+                'date': payment.date.isoformat(),
+                'method': payment.get_method_display(),
+                'payment_type': payment.get_payment_type_display(),
+                'payer_name': payment.payer_name or 'Μη καταχωρημένος',
+                'payer_type': payment.get_payer_type_display(),
+                'reference_number': payment.reference_number or 'Μη διαθέσιμος',
+                'notes': payment.notes or 'Δεν υπάρχουν σημειώσεις',
+                'verified_at': datetime.now().isoformat(),
+                'status': 'verified'
+            }
+            
+            return Response({
+                'success': True,
+                'message': 'Η πληρωμή επαληθεύθηκε επιτυχώς',
+                'data': verification_data
+            })
+            
+        except Payment.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'Η πληρωμή δεν βρέθηκε'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': f'Σφάλμα κατά την επαλήθευση: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class FinancialDashboardViewSet(viewsets.ViewSet):
@@ -1289,56 +1364,20 @@ class ReportViewSet(viewsets.ViewSet):
 class ApartmentTransactionViewSet(viewsets.ViewSet):
     """ViewSet για το ιστορικό συναλλαγών διαμερίσματος"""
     
-    def retrieve(self, request, pk=None):
-        """Λήψη ιστορικού συναλλαγών για συγκεκριμένο διαμέρισμα"""
+    def list(self, request, apartment_id=None):
+        """Λήψη ιστορικού συναλλαγών για συγκεκριμένο διαμέρισμα από URL parameter"""
+        if not apartment_id:
+            # Fallback to query parameter if not in URL
+            apartment_id = request.query_params.get('apartment_id')
+            if not apartment_id:
+                return Response(
+                    {'error': 'Apartment ID is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
         try:
-            apartment = Apartment.objects.get(id=pk)
-            
-            # Λήψη όλων των πληρωμών
-            payments = Payment.objects.filter(apartment=apartment).order_by('date', 'id')
-            
-            # Λήψη όλων των transactions (χρεώσεων)
-            transactions = Transaction.objects.filter(apartment=apartment).order_by('date', 'id')
-            
-            # Συνδυασμός και ταξινόμηση
-            transaction_history = []
-            running_balance = Decimal('0.00')
-            
-            # Συλλογή όλων των συναλλαγών
-            all_items = []
-            
-            for payment in payments:
-                all_items.append({
-                    'type': 'payment',
-                    'date': payment.date,
-                    'amount': payment.amount,
-                    'description': f'Είσπραξη - {payment.get_method_display()}',
-                    'method': payment.method,
-                    'id': payment.id,
-                    'created_at': payment.created_at
-                })
-            
-            for transaction in transactions:
-                all_items.append({
-                    'type': 'charge',
-                    'date': transaction.date,
-                    'amount': -transaction.amount,  # Negative for charges
-                    'description': transaction.description or 'Χρέωση',
-                    'method': None,
-                    'id': transaction.id,
-                    'created_at': transaction.created_at
-                })
-            
-            # Ταξινόμηση κατά ημερομηνία και δημιουργία
-            all_items.sort(key=lambda x: (x['date'], x['created_at']))
-            
-            # Υπολογισμός προοδευτικού υπολοίπου
-            for item in all_items:
-                running_balance += Decimal(str(item['amount']))
-                item['balance_after'] = float(running_balance)
-            
-            return Response(all_items)
-            
+            apartment = Apartment.objects.get(id=apartment_id)
+            return self._get_apartment_transactions(apartment)
         except Apartment.DoesNotExist:
             return Response(
                 {'error': 'Το διαμέρισμα δεν βρέθηκε'}, 
@@ -1349,3 +1388,86 @@ class ApartmentTransactionViewSet(viewsets.ViewSet):
                 {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    def retrieve(self, request, pk=None):
+        """Λήψη ιστορικού συναλλαγών για συγκεκριμένο διαμέρισμα"""
+        try:
+            apartment = Apartment.objects.get(id=pk)
+            return self._get_apartment_transactions(apartment)
+        except Apartment.DoesNotExist:
+            return Response(
+                {'error': 'Το διαμέρισμα δεν βρέθηκε'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _get_apartment_transactions(self, apartment):
+        """Helper method to get apartment transaction history"""
+        # Λήψη όλων των πληρωμών
+        payments = Payment.objects.filter(apartment=apartment).order_by('date', 'id')
+        
+        # Λήψη όλων των transactions (χρεώσεων)
+        transactions = Transaction.objects.filter(apartment=apartment).order_by('date', 'id')
+        
+        # Συνδυασμός και ταξινόμηση
+        transaction_history = []
+        running_balance = Decimal('0.00')
+        
+        # Συλλογή όλων των συναλλαγών
+        all_items = []
+        
+        for payment in payments:
+            all_items.append({
+                'type': 'payment',
+                'date': payment.date,
+                'amount': payment.amount,
+                'description': f'Είσπραξη - {payment.get_method_display()}',
+                'method': payment.method,
+                'id': payment.id,
+                'created_at': payment.created_at
+            })
+        
+        for transaction in transactions:
+            all_items.append({
+                'type': 'charge',
+                'date': transaction.date,
+                'amount': -transaction.amount,  # Negative for charges
+                'description': transaction.description or 'Χρέωση',
+                'method': None,
+                'id': transaction.id,
+                'created_at': transaction.created_at
+            })
+        
+        # Ταξινόμηση κατά ημερομηνία και δημιουργία
+        # Ensure proper datetime comparison by converting dates to datetime objects
+        from datetime import datetime, date
+        
+        def get_sort_key(item):
+            # Convert date to datetime if needed for comparison
+            item_date = item['date']
+            if isinstance(item_date, date) and not isinstance(item_date, datetime):
+                # Convert date to datetime (start of day)
+                item_date = datetime.combine(item_date, datetime.min.time())
+            elif isinstance(item_date, datetime):
+                # Ensure timezone-naive for comparison
+                item_date = item_date.replace(tzinfo=None) if item_date.tzinfo else item_date
+            
+            # Convert created_at to timezone-naive datetime if needed
+            created_at = item['created_at']
+            if isinstance(created_at, datetime) and created_at.tzinfo:
+                created_at = created_at.replace(tzinfo=None)
+            
+            return (item_date, created_at)
+        
+        all_items.sort(key=get_sort_key)
+        
+        # Υπολογισμός προοδευτικού υπολοίπου
+        for item in all_items:
+            running_balance += Decimal(str(item['amount']))
+            item['balance_after'] = float(running_balance)
+        
+        return Response(all_items)

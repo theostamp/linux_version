@@ -1,3 +1,33 @@
+# Payment List & Balances – Final Verification (Building 3)
+
+Date: 2025-08-10
+
+## Scope
+- Verify correctness of payment amounts, apartment balances, and modal transaction history for Building 3.
+- Ensure backend logic creates transactions for payments and computes balances from history.
+- Confirm frontend PaymentList and PaymentDetailModal display consistent data.
+
+## Backend
+- Payment creation now creates a matching `Transaction` and updates balances with rollback on upload errors.
+- `PaymentSerializer.get_current_balance()` calculates from transaction history using correct transaction types.
+- Added minor improvement: `process_payment` returns the actual `transaction_id`.
+
+## Frontend
+- PaymentList: Added payer column and filters; fixed duplicate keys; totals and balances align with API.
+- PaymentDetailModal: Loads real transaction history; print-friendly output.
+- PaymentForm: Enhanced receipt with logo, unique number, QR verification.
+
+## Verification Results
+- API (with auth):
+  - `GET /financial/payments/?building_id=3` → OK, sample total 10,240.00€ for current data slice.
+  - `GET /financial/apartments/{id}/transactions/` → OK, progressive balances consistent.
+  - `POST /financial/expenses/` and `GET /financial/expenses/categories/` → OK.
+- DB (Docker, Django shell):
+  - Building 3: 155 payments, 155 transactions; apartment balances computed = stored for all apartments.
+
+## Conclusion
+System is consistent across API and DB. All balances and transaction-linking for payments verified. The payments page and tenant card modal now reflect accurate, consistent data.
+
 # 💰 Payment List Enhancements - Implementation Summary
 
 ## 📋 Περίληψη Βελτιώσεων

@@ -37,6 +37,22 @@ const BuildingContext = createContext<BuildingContextType>({
   error: null,
 });
 
+// Helper functions for localStorage
+const getStoredSelectedBuildingId = (): number | null => {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem('selectedBuildingId');
+  return stored ? parseInt(stored, 10) : null;
+};
+
+const setStoredSelectedBuildingId = (buildingId: number | null): void => {
+  if (typeof window === 'undefined') return;
+  if (buildingId === null) {
+    localStorage.removeItem('selectedBuildingId');
+  } else {
+    localStorage.setItem('selectedBuildingId', buildingId.toString());
+  }
+};
+
 export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [currentBuilding, setCurrentBuilding] = useState<Building | null>(null);
@@ -58,10 +74,29 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       const data = await fetchAllBuildings();
       console.log('[BuildingContext] Loaded buildings:', data);
       setBuildings(data);
-      // Set both current and selected building to the first one
-      const firstBuilding = data[0] || null;
-      setCurrentBuilding(firstBuilding);
-      setSelectedBuilding(firstBuilding);
+      
+      // Restore selected building from localStorage or default to first building
+      const storedBuildingId = getStoredSelectedBuildingId();
+      let buildingToSelect: Building | null = null;
+      
+      if (storedBuildingId && data.length > 0) {
+        // Try to find the stored building
+        buildingToSelect = data.find(building => building.id === storedBuildingId) || null;
+      }
+      
+      // If stored building not found, default to first building
+      if (!buildingToSelect && data.length > 0) {
+        buildingToSelect = data[0];
+      }
+      
+      setCurrentBuilding(buildingToSelect);
+      setSelectedBuilding(buildingToSelect);
+      
+      // Update localStorage with the selected building
+      if (buildingToSelect) {
+        setStoredSelectedBuildingId(buildingToSelect.id);
+      }
+      
       setError(null);
     } catch (err: any) {
       console.error('[BuildingContext] Failed to load buildings:', err);
@@ -75,6 +110,8 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       setBuildings([]);
       setCurrentBuilding(null);
       setSelectedBuilding(null);
+      // Clear stored building ID on error
+      setStoredSelectedBuildingId(null);
     } finally {
       setIsLoading(false);
     }
@@ -84,6 +121,12 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   const refreshBuildings = async () => {
     console.log('[BuildingContext] Refreshing buildings...');
     await loadBuildings();
+  };
+
+  // Custom setSelectedBuilding that also updates localStorage
+  const setSelectedBuildingWithStorage = (building: Building | null) => {
+    setSelectedBuilding(building);
+    setStoredSelectedBuildingId(building?.id || null);
   };
 
   // Load buildings on mount
@@ -113,6 +156,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('access');
         localStorage.removeItem('refresh');
+        localStorage.removeItem('selectedBuildingId');
       }
       router.push('/login');
     }
@@ -124,13 +168,13 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       currentBuilding,
       selectedBuilding,
       setCurrentBuilding,
-      setSelectedBuilding,
+      setSelectedBuilding: setSelectedBuildingWithStorage, // Use the custom function
       setBuildings,
       refreshBuildings,
       isLoading,
       error,
     }),
-    [buildings, currentBuilding, selectedBuilding, setCurrentBuilding, setSelectedBuilding, setBuildings, refreshBuildings, isLoading, error]
+    [buildings, currentBuilding, selectedBuilding, setCurrentBuilding, setSelectedBuildingWithStorage, setBuildings, refreshBuildings, isLoading, error]
   );
 
   return (

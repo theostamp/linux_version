@@ -10,6 +10,12 @@ import { FilePreview } from '@/components/ui/FilePreview';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { SupplierSelector } from './SupplierSelector';
 import { ExpenseTitleDropdown } from './ExpenseTitleDropdown';
+import { CategorySearchDropdown } from './CategorySearchDropdown';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface ExpenseFormProps {
   buildingId: number;
@@ -154,7 +160,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isValid },
     reset
   } = useForm<ExpenseFormData>({
     defaultValues: {
@@ -204,7 +210,25 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const category = e.target.value as ExpenseCategory;
     setValue('category', category);
-    setValue('distribution_type', getDefaultDistributionType(category));
+    
+    if (category) {
+      // Auto-set distribution type based on category
+      const defaultDistribution = getDefaultDistributionType(category);
+      setValue('distribution_type', defaultDistribution);
+      
+      // Auto-set date for monthly expenses
+      if (isMonthlyExpense(category)) {
+        const suggestedDate = getSuggestedDate(category);
+        setValue('date', suggestedDate);
+      }
+      
+      // Auto-set title to the selected category name
+      const selectedCategoryDetails = EXPENSE_CATEGORIES.find(cat => cat.value === category);
+      if (selectedCategoryDetails) {
+        setValue('title', selectedCategoryDetails.label);
+      }
+    }
+    
     // Καθαρίζουμε τον προμηθευτή όταν αλλάζει η κατηγορία
     setValue('supplier', undefined);
   };
@@ -223,10 +247,10 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
 
   const onSubmit = async (data: ExpenseFormData) => {
     try {
-      // Validate title manually since we're not using register
+      // If no title is provided, use the category name as title
       if (!data.title || data.title.trim() === '') {
-        setValue('title', '', { shouldValidate: true });
-        return;
+        const selectedCategoryDetails = EXPENSE_CATEGORIES.find(cat => cat.value === data.category);
+        data.title = selectedCategoryDetails ? selectedCategoryDetails.label : 'Δαπάνη';
       }
 
       if (selectedFiles.length > 0) {
@@ -251,184 +275,215 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
   }, {} as Record<string, typeof EXPENSE_CATEGORIES>);
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Νέα Δαπάνη</h2>
-      
-      {/* Auto-complete info */}
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-        <div className="flex items-start">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-blue-800">
-              Έξυπνοι Αυτοματισμοί
-            </h3>
-            <div className="mt-2 text-sm text-blue-700">
-              <p>• <strong>Γρήγορη επιλογή τίτλου</strong> με dropdown βάσει κατηγορίας</p>
-              <p>• <strong>Αυτόματη ημερομηνία</strong> (τελευταία ημέρα μήνα για μηνιαίες δαπάνες)</p>
-              <p>• <strong>Αυτόματη κατανομή</strong> βάσει τύπου δαπάνης</p>
-            </div>
-          </div>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Νέα Δαπάνη</h1>
+          <p className="text-gray-600 mt-1">Καταχώρηση νέας δαπάνης για το κτίριο</p>
         </div>
+        {isValid && (
+          <Badge variant="outline" className="text-green-700 border-green-200 bg-green-50">
+            <CheckCircle className="w-4 h-4 mr-1" />
+            Φόρμα έγκυρη
+          </Badge>
+        )}
       </div>
-      
+
+      {/* Error Alerts */}
       {(error || uploadError) && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-red-600">{error || uploadError}</p>
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error || uploadError}</AlertDescription>
+        </Alert>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Τίτλος Δαπάνης */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Τίτλος Δαπάνης *
-            </label>
-            <ExpenseTitleDropdown
-              value={selectedTitle || ''}
-              onChange={(value) => setValue('title', value)}
-              category={selectedCategory}
-              supplier={selectedSupplierDetails}
-              placeholder="Επιλέξτε τίτλο δαπάνης"
-              error={errors.title?.message}
-            />
-            {/* Hidden input for form validation */}
-            <input
-              type="hidden"
-              {...register('title', { required: 'Απαιτείται' })}
-            />
-          </div>
+        {/* Basic Information Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5 text-blue-600" />
+              Βασικές Πληροφορίες
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Κατηγορία */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Κατηγορία Δαπάνης *
+                </label>
+                <CategorySearchDropdown
+                  value={selectedCategory || ''}
+                  onChange={(value) => {
+                    setValue('category', value);
+                    handleCategoryChange({ target: { value } } as React.ChangeEvent<HTMLSelectElement>);
+                  }}
+                  placeholder="Αναζήτηση κατηγορίας..."
+                  error={errors.category?.message}
+                />
+                <input
+                  type="hidden"
+                  {...register('category', { required: 'Απαιτείται' })}
+                />
+                {errors.category && (
+                  <p className="text-sm text-red-600">{errors.category.message}</p>
+                )}
+              </div>
 
-          {/* Ποσό */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Ποσό (€) *
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              {...register('amount', { 
-                required: 'Απαιτείται',
-                min: { value: 0, message: 'Το ποσό πρέπει να είναι θετικό' }
-              })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="0.00"
-            />
-            {errors.amount && (
-              <p className="mt-1 text-sm text-red-600">{errors.amount.message}</p>
-            )}
-          </div>
+              {/* Τίτλος Δαπάνης */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Τίτλος Δαπάνης
+                </label>
+                <ExpenseTitleDropdown
+                  value={selectedTitle || ''}
+                  onChange={(value) => setValue('title', value)}
+                  category={selectedCategory}
+                  supplier={selectedSupplierDetails}
+                  placeholder="Επιλέξτε τίτλο δαπάνης (προαιρετικό)"
+                  error={errors.title?.message}
+                />
+                <input
+                  type="hidden"
+                  {...register('title')}
+                />
+                {errors.title && (
+                  <p className="text-sm text-red-600">{errors.title.message}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Ημερομηνία */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Ημερομηνία *
-              {selectedCategory && isMonthlyExpense(selectedCategory) && (
-                <span className="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                  Αυτόματη (τελευταία ημέρα μήνα)
-                </span>
-              )}
-            </label>
-            <input
-              type="date"
-              {...register('date', { required: 'Απαιτείται' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.date && (
-              <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>
-            )}
-          </div>
+        {/* Financial Details Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5 text-green-600" />
+              Οικονομικά Στοιχεία
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Ποσό */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Ποσό (€) *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register('amount', { 
+                    required: 'Απαιτείται',
+                    min: { value: 0, message: 'Το ποσό πρέπει να είναι θετικό' }
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="0.00"
+                />
+                {errors.amount && (
+                  <p className="text-sm text-red-600">{errors.amount.message}</p>
+                )}
+              </div>
 
-          {/* Κατηγορία */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Κατηγορία *
-            </label>
-            <select
-              {...register('category', { required: 'Απαιτείται' })}
-              onChange={handleCategoryChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Επιλέξτε κατηγορία</option>
-              {Object.entries(groupedCategories).map(([group, categories]) => (
-                <optgroup key={group} label={group}>
-                  {categories.map((category) => (
-                    <option key={category.value} value={category.value}>
-                      {category.label}
+              {/* Ημερομηνία */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Ημερομηνία *
+                  {selectedCategory && isMonthlyExpense(selectedCategory) && (
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      Αυτόματη
+                    </Badge>
+                  )}
+                </label>
+                <input
+                  type="date"
+                  {...register('date', { required: 'Απαιτείται' })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                {errors.date && (
+                  <p className="text-sm text-red-600">{errors.date.message}</p>
+                )}
+              </div>
+
+              {/* Τρόπος Κατανομής */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Τρόπος Κατανομής *
+                  {selectedCategory && (
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      Αυτόματη
+                    </Badge>
+                  )}
+                </label>
+                <select
+                  {...register('distribution_type', { required: 'Απαιτείται' })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {DISTRIBUTION_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
                     </option>
                   ))}
-                </optgroup>
-              ))}
-            </select>
-            {errors.category && (
-              <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>
-            )}
-          </div>
+                </select>
+                {errors.distribution_type && (
+                  <p className="text-sm text-red-600">{errors.distribution_type.message}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Τρόπος Κατανομής */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Τρόπος Κατανομής *
-              {selectedCategory && (
-                <span className="ml-2 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                  Αυτόματη επιλογή
-                </span>
-              )}
-            </label>
-            <select
-              {...register('distribution_type', { required: 'Απαιτείται' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {DISTRIBUTION_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-            {errors.distribution_type && (
-              <p className="mt-1 text-sm text-red-600">{errors.distribution_type.message}</p>
-            )}
-          </div>
+        {/* Supplier Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5 text-purple-600" />
+              Προμηθευτής & Επισύναψη
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Προμηθευτής */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Προμηθευτής/Συναλλασόμενος
+                </label>
+                <SupplierSelector
+                  buildingId={buildingId}
+                  category={selectedCategory}
+                  value={selectedSupplier}
+                  onChange={handleSupplierChange}
+                  placeholder="Επιλέξτε προμηθευτή (προαιρετικό)"
+                  disabled={!selectedCategory}
+                />
+                {!selectedCategory && (
+                  <p className="text-sm text-gray-500">
+                    Επιλέξτε πρώτα κατηγορία για να δείτε τους διαθέσιμους προμηθευτές
+                  </p>
+                )}
+              </div>
 
-          {/* Προμηθευτής */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Προμηθευτής/Συναλλασόμενος
-            </label>
-            <SupplierSelector
-              buildingId={buildingId}
-              category={selectedCategory}
-              value={selectedSupplier}
-              onChange={handleSupplierChange}
-              placeholder="Επιλέξτε προμηθευτή (προαιρετικό)"
-              disabled={!selectedCategory}
-            />
-            {!selectedCategory && (
-              <p className="mt-1 text-sm text-gray-500">
-                Επιλέξτε πρώτα κατηγορία για να δείτε τους διαθέσιμους προμηθευτές
-              </p>
-            )}
-          </div>
+              {/* Επισύναψη */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Επισύναψη Παραστατικού
+                </label>
+                <FileUpload
+                  onFilesSelected={handleFilesSelected}
+                  onFileRemove={handleFileRemove}
+                  selectedFiles={selectedFiles}
+                  placeholder="Κάντε κλικ για επιλογή παραστατικού ή σύρετε εδώ"
+                  multiple={false}
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+                  maxSize={10}
+                  maxFiles={1}
+                />
+              </div>
+            </div>
 
-          {/* Επισύναψη */}
-          <div className="md:col-span-2">
-            <FileUpload
-              onFilesSelected={handleFilesSelected}
-              onFileRemove={handleFileRemove}
-              selectedFiles={selectedFiles}
-              label="Επισύναψη Παραστατικού"
-              placeholder="Κάντε κλικ για επιλογή παραστατικού ή σύρετε εδώ"
-              multiple={false}
-              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
-              maxSize={10}
-              maxFiles={1}
-            />
-            
             {/* Progress Bar */}
             {isUploading && progress && (
               <div className="mt-4">
@@ -454,35 +509,45 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
                 ))}
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Σημειώσεις */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Σημειώσεις
-          </label>
-          <textarea
-            {...register('notes')}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Προαιρετικές σημειώσεις..."
-          />
-        </div>
+        {/* Notes Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5 text-orange-600" />
+              Σημειώσεις
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Προαιρετικές Σημειώσεις
+              </label>
+              <textarea
+                {...register('notes')}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Προσθέστε σημειώσεις για αυτή τη δαπάνη..."
+              />
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Κουμπιά */}
-        <div className="flex justify-end space-x-4">
+        {/* Action Buttons */}
+        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            className="px-6 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
           >
             Ακύρωση
           </button>
           <button
             type="submit"
             disabled={isLoading || isUploading}
-            className="px-4 py-2 text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isLoading || isUploading ? 'Αποθήκευση...' : 'Αποθήκευση Δαπάνης'}
           </button>

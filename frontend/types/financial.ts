@@ -170,6 +170,8 @@ export interface PaymentFormData {
   date: string;
   method: string;
   payment_type: string;
+  payer_type: string;
+  payer_name?: string;
   reference_number?: string;
   notes?: string;
   receipt?: File;
@@ -235,14 +237,98 @@ export interface PaymentFilters {
  * are the exact strings expected by the backend.
  */
 export const ExpenseCategory = {
-  ELECTRICITY: 'electricity_common',
-  WATER: 'water_common',
-  HEATING: 'heating_fuel',
+  // Πάγιες Δαπάνες Κοινοχρήστων
   CLEANING: 'cleaning',
-  MAINTENANCE: 'building_maintenance',
-  INSURANCE: 'building_insurance',
-  ADMINISTRATION: 'management_fees',
-  OTHER: 'miscellaneous',
+  ELECTRICITY_COMMON: 'electricity_common',
+  WATER_COMMON: 'water_common',
+  GARBAGE_COLLECTION: 'garbage_collection',
+  SECURITY: 'security',
+  CONCIERGE: 'concierge',
+  
+  // Δαπάνες Ανελκυστήρα
+  ELEVATOR_MAINTENANCE: 'elevator_maintenance',
+  ELEVATOR_REPAIR: 'elevator_repair',
+  ELEVATOR_INSPECTION: 'elevator_inspection',
+  ELEVATOR_MODERNIZATION: 'elevator_modernization',
+  
+  // Δαπάνες Θέρμανσης
+  HEATING_FUEL: 'heating_fuel',
+  HEATING_GAS: 'heating_gas',
+  HEATING_MAINTENANCE: 'heating_maintenance',
+  HEATING_REPAIR: 'heating_repair',
+  HEATING_INSPECTION: 'heating_inspection',
+  HEATING_MODERNIZATION: 'heating_modernization',
+  
+  // Δαπάνες Συντήρησης
+  MAINTENANCE_GENERAL: 'maintenance_general',
+  MAINTENANCE_PLUMBING: 'maintenance_plumbing',
+  MAINTENANCE_ELECTRICAL: 'maintenance_electrical',
+  MAINTENANCE_STRUCTURAL: 'maintenance_structural',
+  MAINTENANCE_ROOF: 'maintenance_roof',
+  MAINTENANCE_FACADE: 'maintenance_facade',
+  MAINTENANCE_GARDEN: 'maintenance_garden',
+  MAINTENANCE_PARKING: 'maintenance_parking',
+  
+  // Δαπάνες Ασφάλειας
+  INSURANCE_BUILDING: 'insurance_building',
+  INSURANCE_LIABILITY: 'insurance_liability',
+  INSURANCE_EQUIPMENT: 'insurance_equipment',
+  
+  // Δαπάνες Διοίκησης
+  MANAGEMENT_FEES: 'management_fees',
+  ACCOUNTING_FEES: 'accounting_fees',
+  LEGAL_FEES: 'legal_fees',
+  MEETING_EXPENSES: 'meeting_expenses',
+  
+  // Δαπάνες Τηλεπικοινωνιών
+  INTERNET_COMMON: 'internet_common',
+  PHONE_COMMON: 'phone_common',
+  TV_ANTENNA: 'tv_antenna',
+  
+  // Δαπάνες Εξοπλισμού
+  EQUIPMENT_PURCHASE: 'equipment_purchase',
+  EQUIPMENT_REPAIR: 'equipment_repair',
+  EQUIPMENT_MAINTENANCE: 'equipment_maintenance',
+  
+  // Δαπάνες Καθαρισμού
+  CLEANING_SUPPLIES: 'cleaning_supplies',
+  CLEANING_EQUIPMENT: 'cleaning_equipment',
+  CLEANING_SERVICES: 'cleaning_services',
+  
+  // Δαπάνες Ασφάλειας & Πυρασφάλειας
+  FIRE_SAFETY: 'fire_safety',
+  SECURITY_SYSTEMS: 'security_systems',
+  CCTV: 'cctv',
+  ACCESS_CONTROL: 'access_control',
+  
+  // Δαπάνες Ενέργειας
+  ENERGY_AUDIT: 'energy_audit',
+  ENERGY_UPGRADES: 'energy_upgrades',
+  SOLAR_PANELS: 'solar_panels',
+  LED_LIGHTING: 'led_lighting',
+  
+  // Δαπάνες Περιβάλλοντος
+  WASTE_MANAGEMENT: 'waste_management',
+  RECYCLING: 'recycling',
+  GREEN_SPACES: 'green_spaces',
+  
+  // Δαπάνες Τεχνολογίας
+  SMART_HOME: 'smart_home',
+  AUTOMATION: 'automation',
+  SMART_SYSTEMS: 'smart_systems',
+  
+  // Δαπάνες Ιδιοκτητών
+  SPECIAL_CONTRIBUTION: 'special_contribution',
+  RESERVE_FUND: 'reserve_fund',
+  EMERGENCY_FUND: 'emergency_fund',
+  RENOVATION_FUND: 'renovation_fund',
+  
+  // Άλλες Δαπάνες
+  MISCELLANEOUS: 'miscellaneous',
+  CONSULTING_FEES: 'consulting_fees',
+  PERMITS_LICENSES: 'permits_licenses',
+  TAXES_FEES: 'taxes_fees',
+  UTILITIES_OTHER: 'utilities_other',
 } as const;
 
 export type ExpenseCategory = typeof ExpenseCategory[keyof typeof ExpenseCategory];
@@ -282,6 +368,12 @@ export enum PaymentType {
   RESERVE_FUND = 'reserve_fund',
   SPECIAL_EXPENSE = 'special_expense',
   ADVANCE = 'advance',
+  OTHER = 'other',
+}
+
+export enum PayerType {
+  OWNER = 'owner',
+  TENANT = 'tenant',
   OTHER = 'other',
 }
 

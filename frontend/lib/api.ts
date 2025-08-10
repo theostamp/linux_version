@@ -109,7 +109,6 @@ function shouldAttemptTokenRefresh(
 ): boolean {
   const isLogin = originalRequest?.url?.includes('/users/login/');
   const isRefresh = originalRequest?.url?.includes('/users/token/refresh/');
-  const hasAccess = typeof window !== 'undefined' && !!localStorage.getItem('access');
   const hasRefresh = typeof window !== 'undefined' && !!localStorage.getItem('refresh');
 
   return (
@@ -117,7 +116,6 @@ function shouldAttemptTokenRefresh(
     !originalRequest._retry &&
     !isLogin &&
     !isRefresh &&
-    hasAccess &&
     hasRefresh
   );
 }
@@ -153,13 +151,6 @@ api.interceptors.response.use(
 
     if (shouldAttemptTokenRefresh(error, originalRequest)) {
       console.log('[INTERCEPTOR] Προϋποθέσεις για token refresh πληρούνται.');
-
-      const errorData = error.response?.data as any;
-      if (!isTokenExpiredError(errorData)) {
-        console.warn('[INTERCEPTOR] Το token ΔΕΝ έχει λήξει — πιθανώς πρόβλημα άλλης φύσης. Logout...');
-        handleLogout('[AXIOS RES INTERCEPTOR] 401 αλλά όχι για ληγμένο access token. Αποσύνδεση χρήστη.');
-        return Promise.reject(error);
-      }
 
       if (isRefreshing) {
         console.log('[INTERCEPTOR] Ήδη γίνεται refresh από άλλο αίτημα — προσθήκη σε ουρά.');

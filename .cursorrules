@@ -191,6 +191,13 @@ This project has a complex financial management system:
 - **DO NOT run `runserver` locally** - use Docker containers for consistency
 - **Tenant management**: Always consider tenant isolation when writing queries and models
 
+### Database Management
+- **Database is in Docker**: The PostgreSQL database runs exclusively in Docker containers
+- **NO local database setup**: Do NOT attempt to create, configure, or access database locally
+- **Docker database access**: Use `docker exec -it linux_version-backend-1 python manage.py <command>` for Django commands
+- **Database scripts**: Copy scripts to container with `docker cp script.py linux_version-backend-1:/app/` and run inside container
+- **Database queries**: All database operations must be executed within the Docker environment
+
 ### Frontend Development (Next.js)
 - **Working directory**: Always work from `/frontend` directory
 - **Development server**: Use `npm run dev` to start development server
@@ -203,6 +210,8 @@ This project has a complex financial management system:
 - **Migrations**: Do NOT automatically run migrations unless explicitly requested
 - **Service management**: Do NOT restart services automatically unless explicitly requested
 - **Tenant safety**: Always verify tenant isolation when working with database operations
+- **Database access**: NEVER attempt to access database locally - always use Docker containers
+- **Script execution**: For database-related scripts, always copy to container and execute inside Docker environment
 
 ## Common Patterns
 
