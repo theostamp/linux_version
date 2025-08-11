@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='payment',
             name='payer_type',
-            field=models.CharField(choices=[('owner', 'Ιδιοκτήτης'), ('tenant', 'Ενοικιαστής'), ('other', 'Άλλος')], default='owner', max_length=20, verbose_name='Πληρωτής'),
+            field=models.CharField(choices=[('owner', 'Ιδιοκτήτης'), ('tenant', 'Ενοικιαστής'), ('other', 'Άλλος')], default='owner', max_length=20, verbose_name='Ένοικος'),
         ),
         migrations.AlterField(
             model_name='transaction',
