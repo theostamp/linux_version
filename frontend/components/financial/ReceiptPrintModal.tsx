@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Payment, PaymentMethod, PaymentType, PayerType } from '@/types/financial';
 import { useToast } from '@/hooks/use-toast';
@@ -222,6 +222,9 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
           <DialogTitle className="flex items-center gap-2">
             🖨️ Προεπισκόπηση Απόδειξης Εισπράξεως
           </DialogTitle>
+          <DialogDescription>
+            Προεπισκόπηση της απόδειξης εισπράξεως για το διαμέρισμα {apartmentInfo.number}. Μπορείτε να εκτυπώσετε την απόδειξη ή να την κλείσετε.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">

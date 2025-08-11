@@ -434,7 +434,7 @@ gh repo clone username/repository-name
 
 git status
 git add .
-git commit -m "προβλημα εκτυπωσης εισπραξεων1"
+git commit -m "προβλημα εκτυπωσης εισπραξεων- fixed"
 git push origin main
 ```
 

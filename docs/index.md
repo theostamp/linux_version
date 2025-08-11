@@ -118,7 +118,7 @@
 ---
 
 ### ✅ [Completion Summaries](./completion-summaries/)
-**Σύνοψες ολοκληρωμένων εργασιών** (18 αρχεία)
+**Σύνοψες ολοκληρωμένων εργασιών** (19 αρχεία)
 
 Αρχείο των ολοκληρωμένων εργασιών και φάσεων:
 - ✅ **ARAXOVIS_BUILDING_CREATION_SUMMARY.md** - Σύνοψη δημιουργίας κτιρίου Αραχώβης
@@ -132,7 +132,9 @@
 - ✅ **IMPROVEMENTS_SUMMARY.md** - Σύνοψη βελτιώσεων
 - ✅ **MILLS_FIX_SUMMARY.md** - Σύνοψη διόρθωσης χιλιοστών
 - ✅ **MONTHLY_FILTERING_FIX_SUMMARY.md** - Σύνοψη διόρθωσης φίλτρων
+- ✅ **PAYMENT_FORM_PRINT_FIXES_SUMMARY.md** - Σύνοψη διορθώσεων εκτύπωσης PaymentForm
 - ✅ **PAYMENT_ISSUES_FIX_SUMMARY.md** - Σύνοψη διόρθωσης πληρωμών
+- ✅ **PAYMENT_LIST_ENHANCEMENTS_SUMMARY.md** - Σύνοψη βελτιώσεων λίστας πληρωμών
 - ✅ **PHASE4_UI_UX_SUMMARY.md** - Σύνοψη φάσης 4 UI/UX
 - ✅ **PHASE_2_TEST_SUMMARY.md** - Σύνοψη φάσης 2 testing
 - ✅ **PHASE_4_2_COMPLETION_SUMMARY.md** - Σύνοψη ολοκλήρωσης φάσης 4.2
@@ -175,10 +177,10 @@
 | 🧪 Testing | 2 | Testing και validation |
 | 📖 Documentation | 48 | Γενική τεκμηρίωση |
 | 📋 TODO & Planning | 4 | Εργασίες και σχεδιασμός |
-| ✅ Completion Summaries | 18 | Σύνοψες ολοκληρωμένων |
+| ✅ Completion Summaries | 19 | Σύνοψες ολοκληρωμένων |
 | 🚀 Quick Start Guides | 1 | Γρήγοροι οδηγοί |
 | 🔧 Debug & Fixes | 2 | Διόρθωση προβλημάτων |
-| **Σύνολο** | **94** | **Οργανωμένα αρχεία** |
+| **Σύνολο** | **95** | **Οργανωμένα αρχεία** |
 
 ---
 
@@ -191,6 +193,7 @@
 - [Financial User Guide](./documentation/FINANCIAL_USER_GUIDE.md)
 - [Financial Architecture Design](./documentation/FINANCIAL_ARCHITECTURE_DESIGN.md)
 - [Financial Implementation TODO](./implementation-guides/FINANCIAL_IMPLEMENTATION_TODO.md)
+- [PaymentForm Print Fixes Summary](./completion-summaries/PAYMENT_FORM_PRINT_FIXES_SUMMARY.md)
 
 **🏗️ Building Management:**
 - [Building Selector Test](./documentation/BUILDING_SELECTOR_TEST.md)
@@ -235,6 +238,6 @@
 
 ---
 
-**📅 Τελευταία ενημέρωση:** Δεκέμβριος 2024  
+**📅 Τελευταία ενημέρωση:** Δεκέμβριος 2024 (PaymentForm Print Fixes)  
 **🔧 Δημιουργήθηκε από:** AI Assistant  
-**📁 Οργανωμένα αρχεία:** 94 σε 8 κατηγορίες
+**📁 Οργανωμένα αρχεία:** 95 σε 8 κατηγορίες

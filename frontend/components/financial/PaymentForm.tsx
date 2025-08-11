@@ -84,6 +84,21 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const [createdPayment, setCreatedPayment] = useState<Payment | null>(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
   
+  // Store the last created payment for printing purposes
+  const [lastCreatedPayment, setLastCreatedPayment] = useState<Payment | null>(null);
+  const [lastSelectedApartment, setLastSelectedApartment] = useState<typeof apartments[0] | null>(null);
+  const [lastPayerInfo, setLastPayerInfo] = useState<{
+    payer_name: string;
+    payer_type: PayerType;
+  } | null>(null);
+  
+  // Reset print modal when created payment is cleared
+  React.useEffect(() => {
+    if (!createdPayment) {
+      setShowPrintModal(false);
+    }
+  }, [createdPayment]);
+  
   // Auto-fill payer name based on selected apartment and payer type
   React.useEffect(() => {
     if (selectedApartment && selectedPayerType) {
@@ -115,18 +130,36 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       const payment = await createPayment(paymentData);
 
       if (payment) {
-        console.log('Payment created successfully:', payment);
+        // Payment created successfully
         setCreatedPayment(payment);
+        
+        // Store the payment data for future printing
+        setLastCreatedPayment(payment);
+        setLastSelectedApartment(selectedApartment || null);
+        setLastPayerInfo({
+          payer_name: data.payer_name || '',
+          payer_type: data.payer_type as PayerType,
+        });
 
         toast({
           title: 'Επιτυχία!',
-          description: 'Η είσπραξη καταχωρήθηκε επιτυχώς.',
+          description: 'Η είσπραξη καταχωρήθηκε επιτυχώς. Θέλετε να εκτυπώσετε απόδειξη;',
+          action: (
+            <Button 
+              size="sm" 
+              onClick={() => {
+                // Print from toast clicked
+                setShowPrintModal(true);
+              }}
+            >
+              🖨️ Εκτύπωση
+            </Button>
+          ),
         });
 
         reset();
-        if (payment) {
-          onSuccess?.(payment);
-        }
+        // Don't call onSuccess immediately - let user see the success message first
+        // onSuccess?.(payment);
       } else {
         // Payment creation failed
         toast({
@@ -175,8 +208,25 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   };
 
   const handlePrintReceipt = async () => {
-    if (!createdPayment || !selectedApartment) {
-      console.error('Missing payment or apartment data for printing');
+    const paymentToPrint = createdPayment || lastCreatedPayment;
+    const apartmentToPrint = selectedApartment || lastSelectedApartment;
+    
+    if (!paymentToPrint || !apartmentToPrint) {
+      console.error('Missing payment or apartment data for printing', {
+        createdPayment: !!createdPayment,
+        lastCreatedPayment: !!lastCreatedPayment,
+        selectedApartment: !!selectedApartment,
+        lastSelectedApartment: !!lastSelectedApartment,
+        createdPaymentId: createdPayment?.id,
+        lastCreatedPaymentId: lastCreatedPayment?.id,
+        selectedApartmentId: selectedApartment?.id,
+        lastSelectedApartmentId: lastSelectedApartment?.id
+      });
+      toast({
+        title: 'Σφάλμα Εκτύπωσης',
+        description: 'Δεν υπάρχουν δεδομένα για εκτύπωση. Παρακαλώ δημιουργήστε πρώτα μια είσπραξη.',
+        variant: 'destructive',
+      });
       return;
     }
     
@@ -185,10 +235,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       const currentTime = new Date().toLocaleTimeString('el-GR');
       
       // Δημιουργία μοναδικού αριθμού απόδειξης
-      const receiptNumber = `RCP-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}-${createdPayment.id}`;
+      const receiptNumber = `RCP-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}-${paymentToPrint.id}`;
       
       // URL για QR code επαλήθευσης
-      const verificationUrl = `${window.location.origin}/verify-payment/${createdPayment.id}`;
+      const verificationUrl = `${window.location.origin}/verify-payment/${paymentToPrint.id}`;
       
       // Δημιουργία QR Code ως Data URL
       const generateQRCode = async (text: string): Promise<string> => {
@@ -211,7 +261,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               <rect width="100" height="100" fill="white"/>
               <rect x="10" y="10" width="80" height="80" fill="none" stroke="black" stroke-width="2"/>
               <text x="50" y="50" text-anchor="middle" dominant-baseline="middle" font-size="8">QR</text>
-              <text x="50" y="60" text-anchor="middle" dominant-baseline="middle" font-size="6">${createdPayment.id}</text>
+              <text x="50" y="60" text-anchor="middle" dominant-baseline="middle" font-size="6">${paymentToPrint.id}</text>
             </svg>
           `)}`;
         }
@@ -225,7 +275,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         <html>
         <head>
           <meta charset="UTF-8">
-          <title>Απόδειξη Εισπράξεως - ${createdPayment.apartment_number}</title>
+          <title>Απόδειξη Εισπράξεως - ${paymentToPrint.apartment_number}</title>
           <style>
             body {
               font-family: Arial, sans-serif;
@@ -424,7 +474,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               </div>
             </div>
             <h1>ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΕΩΣ</h1>
-            <p><strong>${createdPayment.building_name || 'Κτίριο'}</strong></p>
+                          <p><strong>${paymentToPrint.building_name || 'Κτίριο'}</strong></p>
             <p>Ημερομηνία: ${currentDate} • Ώρα: ${currentTime}</p>
           </div>
 
@@ -433,16 +483,16 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               <h3>Στοιχεία Διαμερίσματος</h3>
               <div class="info-row">
                 <span class="info-label">Διαμέρισμα:</span>
-                <span class="info-value">${createdPayment.apartment_number}</span>
+                <span class="info-value">${paymentToPrint.apartment_number}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Ιδιοκτήτης:</span>
-                <span class="info-value">${createdPayment.owner_name || 'Μη καταχωρημένος'}</span>
+                <span class="info-value">${paymentToPrint.owner_name || 'Μη καταχωρημένος'}</span>
               </div>
-              ${createdPayment.tenant_name ? `
+              ${paymentToPrint.tenant_name ? `
               <div class="info-row">
                 <span class="info-label">Ενοικιαστής:</span>
-                <span class="info-value">${createdPayment.tenant_name}</span>
+                <span class="info-value">${paymentToPrint.tenant_name}</span>
               </div>
               ` : ''}
             </div>
@@ -451,20 +501,20 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               <h3>Στοιχεία Πληρωμής</h3>
               <div class="info-row">
                 <span class="info-label">Ημερομηνία:</span>
-                <span class="info-value">${new Date(createdPayment.date).toLocaleDateString('el-GR')}</span>
+                <span class="info-value">${new Date(paymentToPrint.date).toLocaleDateString('el-GR')}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Μέθοδος:</span>
-                <span class="info-value">${getPaymentMethodLabel(createdPayment.method as PaymentMethod)}</span>
+                <span class="info-value">${getPaymentMethodLabel(paymentToPrint.method as PaymentMethod)}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Τύπος:</span>
-                <span class="info-value">${getPaymentTypeLabel(createdPayment.payment_type as PaymentType)}</span>
+                <span class="info-value">${getPaymentTypeLabel(paymentToPrint.payment_type as PaymentType)}</span>
               </div>
-              ${createdPayment.reference_number ? `
+              ${paymentToPrint.reference_number ? `
               <div class="info-row">
                 <span class="info-label">Αρ. Αναφοράς:</span>
-                <span class="info-value">${createdPayment.reference_number}</span>
+                <span class="info-value">${paymentToPrint.reference_number}</span>
               </div>
               ` : ''}
             </div>
@@ -484,14 +534,14 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
           <div class="amount-section">
             <h2>ΠΟΣΟ ΕΙΣΠΡΑΞΕΩΣ</h2>
-            <div class="amount-value">${createdPayment.amount}€</div>
-            <p>Ολογράφως: ${numberToWords(Number(createdPayment.amount))} ευρώ</p>
+            <div class="amount-value">${paymentToPrint.amount}€</div>
+            <p>Ολογράφως: ${numberToWords(Number(paymentToPrint.amount))} ευρώ</p>
           </div>
 
-          ${createdPayment.notes ? `
+          ${paymentToPrint.notes ? `
           <div class="info-section">
             <h3>Σημειώσεις</h3>
-            <p>${createdPayment.notes}</p>
+            <p>${paymentToPrint.notes}</p>
           </div>
           ` : ''}
 
@@ -681,6 +731,113 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         <CardTitle>Νέα Είσπραξη</CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Print Receipt Controls - Always at top for visibility */}
+        {(createdPayment || lastCreatedPayment) && (
+          <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4 mb-6 shadow-lg">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                ✅
+              </div>
+              <div>
+                <h4 className="font-bold text-green-900 text-lg">🎉 Επιτυχής Καταχώρηση!</h4>
+                <p className="text-green-700">
+                  Η είσπραξη #{(createdPayment || lastCreatedPayment)?.id} καταχωρήθηκε επιτυχώς για το διαμέρισμα {(createdPayment || lastCreatedPayment)?.apartment_number}
+                </p>
+                <p className="text-green-600 text-sm">
+                  Ποσό: <strong>{(createdPayment || lastCreatedPayment)?.amount}€</strong>
+                </p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <Button 
+                type="button" 
+                onClick={() => {
+                  const paymentToPrint = createdPayment || lastCreatedPayment;
+                  const apartmentToPrint = selectedApartment || lastSelectedApartment;
+                  
+                  if (!paymentToPrint || !apartmentToPrint) {
+                    toast({
+                      title: 'Σφάλμα',
+                      description: 'Δεν υπάρχουν δεδομένα για εκτύπωση.',
+                      variant: 'destructive',
+                    });
+                    return;
+                  }
+                  setShowPrintModal(true);
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg font-semibold shadow-lg h-14"
+                size="lg"
+              >
+                🖨️ ΕΚΤΥΠΩΣΗ ΑΠΟΔΕΙΞΗΣ
+              </Button>
+              
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => {
+                  const paymentToPrint = createdPayment || lastCreatedPayment;
+                  const apartmentToPrint = selectedApartment || lastSelectedApartment;
+                  
+                  if (!paymentToPrint || !apartmentToPrint) {
+                    toast({
+                      title: 'Σφάλμα',
+                      description: 'Δεν υπάρχουν δεδομένα για εκτύπωση.',
+                      variant: 'destructive',
+                    });
+                    return;
+                  }
+                  handlePrintReceipt();
+                }}
+                className="bg-green-100 hover:bg-green-200 border-green-300 h-14"
+              >
+                🖨️ Άμεση Εκτύπωση
+              </Button>
+              
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => {
+                  setCreatedPayment(null);
+                  // ΔΕΝ καθαρίζουμε τα lastCreatedPayment, lastSelectedApartment, lastPayerInfo
+                  // για να μπορούμε να εκτυπώσουμε την απόδειξη αργότερα
+                }}
+                className="bg-orange-100 hover:bg-orange-200 border-orange-300 h-14"
+              >
+                ➕ Νέα Είσπραξη
+              </Button>
+              
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => {
+                  // Call onSuccess to close modal and refresh data
+                  if (createdPayment) {
+                    onSuccess?.(createdPayment);
+                  }
+                  // Καθαρίζουμε όλα τα δεδομένα εκτύπωσης
+                  setLastCreatedPayment(null);
+                  setLastSelectedApartment(null);
+                  setLastPayerInfo(null);
+                }}
+                className="bg-gray-100 hover:bg-gray-200 border-gray-300 h-14"
+              >
+                ✕ Κλείσιμο Modal
+              </Button>
+            </div>
+            
+            <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border border-blue-200 mt-3">
+              <p className="font-medium mb-1">💡 Επιλογές:</p>
+              <ul className="space-y-1">
+                <li>• <strong>ΕΚΤΥΠΩΣΗ ΑΠΟΔΕΙΞΗΣ:</strong> Ανοίγει modal με προεπισκόπηση (Προτεινόμενο)</li>
+                <li>• <strong>Άμεση Εκτύπωση:</strong> Ανοίγει νέο παράθυρο για εκτύπωση</li>
+                <li>• <strong>Νέα Είσπραξη:</strong> Καθαρίζει τη φόρμα για νέα είσπραξη (διατηρεί δεδομένα εκτύπωσης)</li>
+                <li>• <strong>Κλείσιμο Modal:</strong> Κλείνει το modal και ανανεώνει τη λίστα (καθαρίζει όλα)</li>
+              </ul>
+            </div>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Apartment Selection */}
           <div className="space-y-2">
@@ -891,219 +1048,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             )}
           </div>
 
-          {/* Success Actions - Print Receipt */}
-          {createdPayment && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                  ✓
-                </div>
-                <div>
-                  <h4 className="font-medium text-green-900">Επιτυχής Καταχώρηση!</h4>
-                  <p className="text-sm text-green-700">
-                    Η είσπραξη καταχωρήθηκε επιτυχώς για το διαμέρισμα {createdPayment.apartment_number}
-                  </p>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex gap-2 flex-wrap">
-                  <Button 
-                    type="button" 
-                    onClick={() => {
-                      console.log('🖨️ Modal button clicked!');
-                      console.log('Current showPrintModal state:', showPrintModal);
-                      console.log('createdPayment:', createdPayment);
-                      console.log('selectedApartment:', selectedApartment);
-                      setShowPrintModal(true);
-                      console.log('After setShowPrintModal(true)');
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    🖨️ Προεπισκόπηση & Εκτύπωση
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={handlePrintReceipt}
-                  >
-                    🖨️ Εκτύπωση (Παλιός Τρόπος)
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => {
-                      // Debug version - just try to open a simple popup
-                      try {
-                        const testWindow = window.open('', '_blank', 'width=400,height=300');
-                        if (testWindow) {
-                          testWindow.document.write(`
-                            <html>
-                              <head><title>Τέστ Εκτύπωσης</title></head>
-                              <body style="font-family: Arial; padding: 20px; text-align: center;">
-                                <h1>Τέστ Εκτύπωσης</h1>
-                                <p>Διαμέρισμα: ${createdPayment.apartment_number}</p>
-                                <p>Ποσό: ${createdPayment.amount}€</p>
-                                <p>Ημερομηνία: ${new Date().toLocaleDateString('el-GR')}</p>
-                                <button onclick="window.print()">Εκτύπωση</button>
-                                <button onclick="window.close()">Κλείσιμο</button>
-                              </body>
-                            </html>
-                          `);
-                          testWindow.document.close();
-                        } else {
-                          alert('Δεν μπόρεσε να ανοίξει παράθυρο. Επιτρέψτε τα pop-ups.');
-                        }
-                      } catch (error: unknown) {
-                        console.error('Test print error:', error);
-                        const errorMessage = error instanceof Error ? error.message : 'Άγνωστο σφάλμα';
-                        alert('Σφάλμα: ' + errorMessage);
-                      }
-                    }}
-                  >
-                    🔧 Τέστ Εκτύπωσης
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => setCreatedPayment(null)}
-                  >
-                    Νέα Είσπραξη
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => {
-                      // Εναλλακτική εκτύπωση: χρησιμοποιώντας iframe
-                      const iframe = document.createElement('iframe');
-                      iframe.style.position = 'fixed';
-                      iframe.style.right = '0';
-                      iframe.style.bottom = '0';
-                      iframe.style.width = '0';
-                      iframe.style.height = '0';
-                      iframe.style.border = '0';
-                      
-                      const receiptContent = `
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                          <meta charset="UTF-8">
-                          <title>Απόδειξη Εισπράξεως</title>
-                          <style>
-                            body {
-                              font-family: Arial, sans-serif;
-                              margin: 20px;
-                              color: #333;
-                              line-height: 1.6;
-                            }
-                            .header {
-                              text-align: center;
-                              border-bottom: 2px solid #333;
-                              padding-bottom: 20px;
-                              margin-bottom: 30px;
-                            }
-                            .header h1 {
-                              margin: 0;
-                              color: #2563eb;
-                              font-size: 24px;
-                            }
-                            .header p {
-                              margin: 5px 0;
-                              color: #666;
-                            }
-                            .amount-section {
-                              text-align: center;
-                              background: #f0f9ff;
-                              border: 2px solid #2563eb;
-                              padding: 20px;
-                              border-radius: 10px;
-                              margin: 30px 0;
-                            }
-                            .amount-value {
-                              font-size: 32px;
-                              font-weight: bold;
-                              color: #2563eb;
-                              margin: 10px 0;
-                            }
-                            .footer {
-                              margin-top: 40px;
-                              border-top: 1px solid #ddd;
-                              padding-top: 20px;
-                              text-align: center;
-                            }
-                            @media print {
-                              body { 
-                                margin: 0; 
-                                -webkit-print-color-adjust: exact !important;
-                                color-adjust: exact !important;
-                                print-color-adjust: exact !important;
-                              }
-                              * {
-                                -webkit-print-color-adjust: exact !important;
-                                color-adjust: exact !important;
-                                print-color-adjust: exact !important;
-                              }
-                            }
-                          </style>
-                        </head>
-                        <body>
-                          <div class="header">
-                            <h1>ΑΠΟΔΕΙΞΗ ΕΙΣΠΡΑΞΕΩΣ</h1>
-                            <p><strong>${createdPayment.building_name || 'Κτίριο'}</strong></p>
-                            <p>Διαμέρισμα: ${createdPayment.apartment_number}</p>
-                            <p>Ημερομηνία: ${new Date().toLocaleDateString('el-GR')}</p>
-                          </div>
-                          
-                          <div class="amount-section">
-                            <h2>ΠΟΣΟ ΕΙΣΠΡΑΞΕΩΣ</h2>
-                            <div class="amount-value">${createdPayment.amount}€</div>
-                            <p>Ολογράφως: ${numberToWords(Number(createdPayment.amount))} ευρώ</p>
-                          </div>
-                          
-                          <div class="footer">
-                            <p style="font-size: 12px; color: #666;">
-                              Αυτή η απόδειξη δημιουργήθηκε αυτόματα από το σύστημα διαχείρισης κτιρίου
-                            </p>
-                          </div>
-                        </body>
-                        </html>
-                      `;
-                      
-                      document.body.appendChild(iframe);
-                      
-                      iframe.onload = () => {
-                        if (iframe.contentDocument) {
-                          iframe.contentDocument.write(receiptContent);
-                          iframe.contentDocument.close();
-                          
-                          setTimeout(() => {
-                            iframe.contentWindow?.print();
-                            
-                            // Αφαιρούμε το iframe μετά την εκτύπωση
-                            setTimeout(() => {
-                              document.body.removeChild(iframe);
-                            }, 1000);
-                          }, 500);
-                        }
-                      };
-                    }}
-                  >
-                    📄 Εκτύπωση Απλή
-                  </Button>
-                </div>
-                
-                <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border border-blue-200">
-                  <p className="font-medium mb-1">💡 Επιλογές Εκτύπωσης:</p>
-                  <ul className="space-y-1">
-                    <li>• <strong>Προεπισκόπηση & Εκτύπωση:</strong> Ανοίγει modal με προεπισκόπηση και επιλογές εκτύπωσης (Προτεινόμενο)</li>
-                    <li>• <strong>Εκτύπωση (Παλιός Τρόπος):</strong> Ανοίγει νέο παράθυρο με πλήρη απόδειξη</li>
-                    <li>• <strong>Τέστ Εκτύπωσης:</strong> Απλό τέστ για να ελέγξετε αν λειτουργούν τα pop-ups</li>
-                    <li>• <strong>Εκτύπωση Απλή:</strong> Εκτυπώνει απευθείας χωρίς νέο παράθυρο</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Form Actions */}
           <div className="flex gap-4 pt-4">
             <Button type="submit" disabled={isLoading || !!createdPayment} className="flex-1">
@@ -1119,41 +1063,25 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       </CardContent>
 
       {/* Receipt Print Modal */}
-      {showPrintModal && createdPayment && selectedApartment && (
+      {showPrintModal && (createdPayment || lastCreatedPayment) && (selectedApartment || lastSelectedApartment) && (
         <ReceiptPrintModal
           isOpen={showPrintModal}
           onClose={() => setShowPrintModal(false)}
-          payment={createdPayment}
+          payment={createdPayment || lastCreatedPayment!}
           apartmentInfo={{
-            number: selectedApartment.number,
-            owner_name: selectedApartment.owner_name || '',
-            tenant_name: selectedApartment.tenant_name || '',
-            building_name: createdPayment.building_name || '',
+            number: (selectedApartment || lastSelectedApartment)!.number,
+            owner_name: (selectedApartment || lastSelectedApartment)!.owner_name || '',
+            tenant_name: (selectedApartment || lastSelectedApartment)!.tenant_name || '',
+            building_name: (createdPayment || lastCreatedPayment)!.building_name || '',
           }}
           payerInfo={{
-            payer_name: watch('payer_name') || '',
-            payer_type: watch('payer_type') as PayerType,
+            payer_name: lastPayerInfo?.payer_name || watch('payer_name') || '',
+            payer_type: lastPayerInfo?.payer_type || (watch('payer_type') as PayerType),
           }}
         />
       )}
 
-      {/* Debug Modal for testing */}
-      {showPrintModal && (!createdPayment || !selectedApartment) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 className="text-lg font-bold mb-4">⚠️ Debug Info</h2>
-            <div className="space-y-2 text-sm">
-              <p><strong>showPrintModal:</strong> {showPrintModal ? 'true' : 'false'}</p>
-              <p><strong>createdPayment exists:</strong> {createdPayment ? 'true' : 'false'}</p>
-              <p><strong>selectedApartment exists:</strong> {selectedApartment ? 'true' : 'false'}</p>
-              <p className="text-red-600">Κάποια από τα απαραίτητα δεδομένα λείπουν για την εκτύπωση.</p>
-            </div>
-            <Button onClick={() => setShowPrintModal(false)} className="mt-4">
-              Κλείσιμο
-            </Button>
-          </div>
-        </div>
-      )}
+
     </Card>
   );
 }; 
