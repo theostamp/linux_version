@@ -15,8 +15,8 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
   onMonthChange,
   className = ''
 }) => {
-  // Generate months for the last 2 years and next 6 months
-  const generateMonthOptions = () => {
+  // Memoize month options to avoid recalculation on every render
+  const monthOptions = React.useMemo(() => {
     const months = [];
     const currentDate = new Date();
     
@@ -43,21 +43,75 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
     }
     
     return months;
-  };
+  }, []); // Empty dependency array - only calculate once
 
-  const monthOptions = generateMonthOptions();
+  // Debounced month change handler to avoid performance issues
+  const handleMonthChange = React.useCallback((newMonth: string) => {
+    if (newMonth !== selectedMonth) {
+      onMonthChange(newMonth);
+    }
+  }, [selectedMonth, onMonthChange]);
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <Calendar className="h-4 w-4 text-muted-foreground" />
-      <Select value={selectedMonth} onValueChange={onMonthChange}>
-        <SelectTrigger className="w-48">
+      <Select value={selectedMonth} onValueChange={handleMonthChange}>
+        <SelectTrigger className="w-56 bg-white border-blue-300 hover:border-blue-400 focus:border-blue-500 transition-colors">
           <SelectValue placeholder="Επιλέξτε μήνα" />
         </SelectTrigger>
-        <SelectContent>
-          {monthOptions.map((month) => (
+        <SelectContent className="max-h-80">
+          {/* Current Month Section */}
+          <div className="px-2 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 border-b">
+            Τρέχων Μήνας
+          </div>
+          {monthOptions.slice(24, 25).map((month) => (
+            <SelectItem 
+              key={month.value} 
+              value={month.value}
+              className="font-semibold text-blue-700 bg-blue-50/50"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                {month.label}
+              </div>
+            </SelectItem>
+          ))}
+          
+          {/* Recent Months Section */}
+          <div className="px-2 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border-b">
+            Πρόσφατοι Μήνες
+          </div>
+          {monthOptions.slice(18, 24).map((month) => (
             <SelectItem key={month.value} value={month.value}>
-              {month.label}
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                {month.label}
+              </div>
+            </SelectItem>
+          ))}
+          
+          {/* Historical Months Section */}
+          <div className="px-2 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border-b">
+            Ιστορικά Δεδομένα
+          </div>
+          {monthOptions.slice(0, 18).map((month) => (
+            <SelectItem key={month.value} value={month.value}>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                {month.label}
+              </div>
+            </SelectItem>
+          ))}
+          
+          {/* Future Months Section */}
+          <div className="px-2 py-1.5 text-xs font-semibold text-green-600 bg-green-50 border-b">
+            Μελλοντικοί Μήνες
+          </div>
+          {monthOptions.slice(25).map((month) => (
+            <SelectItem key={month.value} value={month.value}>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                {month.label}
+              </div>
             </SelectItem>
           ))}
         </SelectContent>

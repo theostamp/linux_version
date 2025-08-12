@@ -77,6 +77,8 @@ export const useCommonExpenses = () => {
     building_id: number;
     period_start_date?: string;
     period_end_date?: string;
+    month_filter?: string; // "YYYY-MM" format για φιλτράρισμα δαπανών συγκεκριμένου μήνα
+    reserve_fund_monthly_total?: number; // συνολικό ποσό αποθεματικού για κατανομή
   }): Promise<any> => {
     setIsLoading(true);
     setError(null);

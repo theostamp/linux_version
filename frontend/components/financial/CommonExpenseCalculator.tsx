@@ -644,7 +644,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
             <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <h4 className="font-semibold text-blue-800 mb-2">Εισφορά Αποθεματικού</h4>
               <div className="text-sm text-blue-700">
-                <strong>5€ ανά διαμέρισμα</strong> - Συνολικά: {formatAmount(advancedShares.reserve_contribution || 0)}€
+                Κατανομή αποθεματικού ανά χιλιοστά - Συνολικά: {formatAmount(advancedShares.reserve_contribution || 0)}€
               </div>
               <div className="text-xs text-blue-600 mt-1">
                 Αυτόματη προσθήκη στο συνολικό μερίδιο κάθε διαμερίσματος

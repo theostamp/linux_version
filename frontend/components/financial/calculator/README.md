@@ -8,54 +8,60 @@ This directory contains the redesigned Common Expense Calculator components that
 
 ```
 calculator/
-├── CalculatorWizard.tsx          # Main wizard container
-├── PeriodSelectionStep.tsx       # Step 1: Period selection
-├── CalculationStep.tsx           # Step 2: Calculation process
-├── ResultsStep.tsx               # Step 3: Results display
+├── CalculatorWizard.tsx          # Main wizard container (simplified)
+├── ResultsStep.tsx               # Results display and calculations
 ├── CommonExpenseCalculatorNew.tsx # Main component wrapper
+├── BuildingOverviewSection.tsx   # Financial overview display
+├── CommonExpenseModal.tsx        # Modal for expense details
 └── index.ts                      # Exports
 ```
 
 ## 🎯 Features
 
-### **Step 1: Period Selection**
-- **Quick Selection**: Current month, previous month buttons
-- **Custom Period**: Manual date range input
-- **Advanced Options**: Reserve fund, heating percentage, elevator mills
-- **Auto-fill**: Integration with selected month from parent component
+### **Simplified Interface**
+- **Immediate Results**: Direct display of calculations without complex wizard steps
+- **Automatic Period Detection**: Uses current month by default with intelligent period selection
+- **Advanced Options**: Built-in reserve fund calculation, heating percentage, elevator mills
+- **Real-time Updates**: Automatic recalculation when parameters change
 
-### **Step 2: Calculation**
-- **Progress Indicators**: Real-time calculation progress
-- **Preview Mode**: Preview results before full calculation
-- **Error Handling**: User-friendly error messages
-- **Loading States**: Visual feedback during processing
-
-### **Step 3: Results**
-- **Summary Cards**: Key metrics display
-- **Detailed Table**: Complete results with breakdown
+### **Results Display**
+- **Summary Cards**: Key metrics with responsive design
+- **Mobile-Optimized Table**: Card layout for mobile, table for desktop
 - **Collapsible Details**: Expandable expense breakdown per apartment
 - **Advanced Analysis**: Special handling for heating and elevator costs
 - **Export Options**: PDF, Excel, Print functionality
 - **Issue Common Expenses**: Direct integration with backend
 
+### **Enhanced UX/UI**
+- **Loading States**: Realistic progress indicators with skeleton components
+- **Error Handling**: Comprehensive error messages with actionable suggestions
+- **Mobile Responsive**: Touch-friendly interface optimized for all devices
+- **Progress Feedback**: Visual feedback during API operations
+- **Success Messages**: Transient success feedback after calculations
+- **Modern Navigation**: Card-based navigation with color coding
+- **Enhanced Actions**: Professional action menu with gradient buttons
+
 ## 🎨 Design Features
 
-### **Wizard Interface**
-- **Progress Bar**: Visual step progression
-- **Step Indicators**: Clear navigation between steps
-- **Validation**: Step-by-step validation
-- **Responsive Design**: Mobile-friendly layout
+### **Simplified Interface**
+- **Single Page Layout**: All information displayed in one streamlined view
+- **Progressive Enhancement**: Content reveals based on data availability
+- **Automatic Calculations**: Real-time updates without manual steps
+- **Responsive Design**: Mobile-first approach with touch-friendly controls
 
 ### **Smart Defaults**
-- **Auto-detection**: Current month selection
-- **Pre-fill**: Period names and dates
-- **Remember Settings**: Advanced options persistence
+- **Intelligent Period Selection**: Automatically uses current month with easy customization
+- **Auto-calculated Values**: Reserve fund amounts calculated from building settings
+- **Context-aware Display**: Shows relevant information based on building configuration
 
 ### **Visual Improvements**
-- **Color-coded Sections**: Different colors for different types of content
-- **Status Badges**: Clear status indicators
-- **Loading Animations**: Smooth transitions
-- **Modern UI**: Clean, professional appearance
+- **Color-coded Sections**: Different colors for different financial states
+- **Status Badges**: Clear indicators for payment status and obligations
+- **Skeleton Loading**: Professional loading states with realistic content preview
+- **Modern UI**: Clean, professional appearance with enhanced accessibility
+- **Card-based Navigation**: Modern navigation with hover effects and color coding
+- **Gradient Buttons**: Professional primary actions with enhanced styling
+- **Responsive Actions**: Color-coded secondary actions (PDF, Excel, Print, View)
 
 ## 🔧 Usage
 
@@ -89,18 +95,20 @@ The calculator uses a centralized state object (`CalculatorState`) that includes
 
 ```typescript
 interface CalculatorState {
-  // Step 1: Period Selection
+  // Period Configuration
   periodMode: 'quick' | 'custom' | 'advanced';
   quickOptions: { currentMonth: boolean; previousMonth: boolean; customRange: boolean; };
   customPeriod: { startDate: string; endDate: string; periodName: string; };
-  advancedOptions: { includeReserveFund: boolean; heatingFixedPercentage: number; elevatorMills: boolean; };
   
-  // Step 2: Calculation
-  isCalculating: boolean;
-  calculationProgress: number;
-  calculationError: string | null;
+  // Advanced Options
+  advancedOptions: { 
+    includeReserveFund: boolean; 
+    reserveFundMonthlyAmount: number;
+    heatingFixedPercentage: number; 
+    elevatorMills: boolean; 
+  };
   
-  // Step 3: Results
+  // Calculation Results
   shares: Record<string, any>;
   totalExpenses: number;
   advancedShares: any;
@@ -119,17 +127,21 @@ The old `CommonExpenseCalculator.tsx` has been:
 ## 🧪 Testing
 
 ### **Manual Testing Checklist**
-- [ ] Quick selection (current month)
-- [ ] Quick selection (previous month)
-- [ ] Custom period input
-- [ ] Advanced options toggle
-- [ ] Calculation process
-- [ ] Preview functionality
-- [ ] Results display
-- [ ] Export options
-- [ ] Issue common expenses
-- [ ] Error handling
-- [ ] Responsive design
+- [ ] Automatic calculation on load
+- [ ] Building overview display
+- [ ] Reserve fund calculations
+- [ ] Mobile responsive layout
+- [ ] Loading states and progress indicators
+- [ ] Error handling and recovery
+- [ ] Results table (mobile cards, desktop table)
+- [ ] Export functionality (PDF, Excel, Print)
+- [ ] Issue common expenses flow
+- [ ] Advanced analysis display
+- [ ] Touch-friendly mobile interface
+- [ ] Success message display after calculations
+- [ ] Modern navigation menu (mobile scroll, desktop cards)
+- [ ] Enhanced action menu with gradient buttons
+- [ ] Color-coded secondary actions
 
 ### **Integration Points**
 - [ ] `useCommonExpenses` hook

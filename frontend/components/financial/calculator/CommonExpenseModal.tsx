@@ -98,6 +98,21 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     });
   };
 
+  const getExpenseDetails = () => {
+    // Use real expense details from advanced shares if available
+    if (state.advancedShares && state.advancedShares.expense_details) {
+      return state.advancedShares.expense_details;
+    }
+    
+    return {
+      general: [],
+      elevator: [],
+      heating: [],
+      equal_share: [],
+      individual: []
+    };
+  };
+
   const calculateExpenseBreakdown = () => {
     const breakdown = {
       common: 0,
@@ -107,30 +122,53 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       coownership: 0
     };
 
-    // Calculate totals from shares
+    // Use real expense data from advanced shares if available
+    if (state.advancedShares && state.advancedShares.expense_totals) {
+      const expenseTotals = state.advancedShares.expense_totals;
+      
+      // Map backend categories to our display categories
+      breakdown.common = parseFloat(expenseTotals.general || 0);
+      breakdown.elevator = parseFloat(expenseTotals.elevator || 0);
+      breakdown.heating = parseFloat(expenseTotals.heating || 0);
+      breakdown.other = parseFloat(expenseTotals.equal_share || 0);
+      breakdown.coownership = parseFloat(expenseTotals.individual || 0);
+      
+      return breakdown;
+    }
+
+    // Calculate totals from shares breakdown (fallback)
     Object.values(state.shares).forEach((share: any) => {
-      if (share.breakdown && Array.isArray(share.breakdown)) {
-        share.breakdown.forEach((item: any) => {
-          const category = item.expense_category?.toLowerCase() || 'other';
-          if (category.includes('καθαριότητα') || category.includes('κοινοχρήστα')) {
-            breakdown.common += item.apartment_share || 0;
-          } else if (category.includes('ανελκυστήρα') || category.includes('ανελκυστήρας')) {
-            breakdown.elevator += item.apartment_share || 0;
-          } else if (category.includes('θέρμανση') || category.includes('θερμάνση')) {
-            breakdown.heating += item.apartment_share || 0;
-          } else if (category.includes('συνιδιοκτησία')) {
-            breakdown.coownership += item.apartment_share || 0;
-          } else {
-            breakdown.other += item.apartment_share || 0;
-          }
-        });
+      if (share.breakdown && typeof share.breakdown === 'object') {
+        // Handle new breakdown format from advanced calculator
+        if (share.breakdown.general_expenses !== undefined) {
+          breakdown.common += parseFloat(share.breakdown.general_expenses || 0);
+          breakdown.elevator += parseFloat(share.breakdown.elevator_expenses || 0);
+          breakdown.heating += parseFloat(share.breakdown.heating_expenses || 0);
+          breakdown.other += parseFloat(share.breakdown.equal_share_expenses || 0);
+          breakdown.coownership += parseFloat(share.breakdown.individual_expenses || 0);
+        } else if (Array.isArray(share.breakdown)) {
+          // Handle legacy array format
+          share.breakdown.forEach((item: any) => {
+            const category = item.expense_category?.toLowerCase() || 'other';
+            if (category.includes('καθαριότητα') || category.includes('κοινοχρήστα')) {
+              breakdown.common += item.apartment_share || 0;
+            } else if (category.includes('ανελκυστήρα') || category.includes('ανελκυστήρας')) {
+              breakdown.elevator += item.apartment_share || 0;
+            } else if (category.includes('θέρμανση') || category.includes('θερμάνση')) {
+              breakdown.heating += item.apartment_share || 0;
+            } else if (category.includes('συνιδιοκτησία')) {
+              breakdown.coownership += item.apartment_share || 0;
+            } else {
+              breakdown.other += item.apartment_share || 0;
+            }
+          });
+        }
       }
     });
 
-    // If no breakdown data, use total expenses divided by categories
-    if (Object.values(breakdown).every(val => val === 0)) {
+    // Last resort fallback to proportional split only if no real data exists
+    if (Object.values(breakdown).every(val => val === 0) && state.totalExpenses > 0) {
       const totalExpenses = state.totalExpenses;
-      const apartmentCount = Object.keys(state.shares).length;
       
       breakdown.common = totalExpenses * 0.3; // 30% for common expenses
       breakdown.elevator = totalExpenses * 0.2; // 20% for elevator
@@ -142,8 +180,39 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     return breakdown;
   };
 
+  const getReserveFundInfo = () => {
+    // Calculate monthly amount from reserve fund goal and duration
+    const reserveFundGoal = state.advancedShares?.reserve_fund_goal || 0;
+    const reserveFundDuration = state.advancedShares?.reserve_fund_duration || 1;
+    const fallbackContribution = state.advancedShares?.reserve_contribution || 0;
+    
+    let monthlyAmount = 0;
+    let totalContribution = 0;
+    let displayText = '';
+    
+    if (reserveFundGoal > 0 && reserveFundDuration > 0) {
+      monthlyAmount = reserveFundGoal / reserveFundDuration;
+      totalContribution = monthlyAmount; // Χρησιμοποιούμε τη μηνιαία δόση
+      displayText = `Στόχος ${formatAmount(reserveFundGoal)}€ σε ${reserveFundDuration} δόσεις = ${formatAmount(monthlyAmount)}€`;
+    } else if (fallbackContribution > 0) {
+      monthlyAmount = fallbackContribution;
+      totalContribution = fallbackContribution;
+      displayText = `Μηνιαία εισφορά αποθεματικού`;
+    }
+    
+    return {
+      monthlyAmount,
+      totalContribution,
+      displayText,
+      goal: reserveFundGoal,
+      duration: reserveFundDuration
+    };
+  };
+
   const expenseBreakdown = calculateExpenseBreakdown();
-  const totalExpenses = Object.values(expenseBreakdown).reduce((sum, val) => sum + val, 0);
+  const expenseDetails = getExpenseDetails();
+  const reserveFundInfo = getReserveFundInfo();
+  const totalExpenses = Object.values(expenseBreakdown).reduce((sum, val) => sum + val, 0) + reserveFundInfo.totalContribution;
 
   const handlePrint = () => {
     window.print();
@@ -300,84 +369,119 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
               <h3 className="font-bold text-gray-800 mb-4 text-center">ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ</h3>
               
               <div className="space-y-3">
-                {/* Common Expenses */}
-                <div className="bg-white p-3 rounded border">
-                  <h4 className="font-semibold text-gray-800 mb-2">Α. ΚΟΙΝΟΧΡΗΣΤΑ</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>1. ΚΑΘΑΡΙΟΤΗΤΑ</span>
-                      <span className="font-medium">{formatAmount(expenseBreakdown.common * 0.8)}€</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>2. ΕΙΔΗ ΚΑΘΑΡΙΟΤΗΤΑΣ</span>
-                      <span className="font-medium">{formatAmount(expenseBreakdown.common * 0.2)}€</span>
-                    </div>
-                    <div className="flex justify-between font-semibold border-t pt-1">
-                      <span>ΣΥΝΟΛΟ</span>
-                      <span>{formatAmount(expenseBreakdown.common)}€</span>
+                {/* General Expenses */}
+                {expenseDetails.general.length > 0 && (
+                  <div className="bg-white p-3 rounded border">
+                    <h4 className="font-semibold text-gray-800 mb-2">Α. ΓΕΝΙΚΕΣ ΔΑΠΑΝΕΣ</h4>
+                    <div className="space-y-1 text-sm">
+                      {expenseDetails.general.map((expense: any, index: number) => (
+                        <div key={expense.id || index} className="flex justify-between">
+                          <span>{index + 1}. {expense.description || expense.title}</span>
+                          <span className="font-medium">{formatAmount(expense.amount)}€</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between font-semibold border-t pt-1">
+                        <span>ΣΥΝΟΛΟ</span>
+                        <span>{formatAmount(expenseBreakdown.common)}€</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Elevator */}
-                <div className="bg-white p-3 rounded border">
-                  <h4 className="font-semibold text-gray-800 mb-2">Β. ΑΝΕΛΚΗΣΤΗΡΑΣ</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>1. Δ.Ε.Η.</span>
-                      <span className="font-medium">{formatAmount(expenseBreakdown.elevator * 0.7)}€</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>2. ΣΥΝΤΗΡΗΣΗ</span>
-                      <span className="font-medium">{formatAmount(expenseBreakdown.elevator * 0.3)}€</span>
-                    </div>
-                    <div className="flex justify-between font-semibold border-t pt-1">
-                      <span>ΣΥΝΟΛΟ</span>
-                      <span>{formatAmount(expenseBreakdown.elevator)}€</span>
+                {expenseDetails.elevator.length > 0 && (
+                  <div className="bg-white p-3 rounded border">
+                    <h4 className="font-semibold text-gray-800 mb-2">Β. ΑΝΕΛΚΥΣΤΗΡΑΣ</h4>
+                    <div className="space-y-1 text-sm">
+                      {expenseDetails.elevator.map((expense: any, index: number) => (
+                        <div key={expense.id || index} className="flex justify-between">
+                          <span>{index + 1}. {expense.description || expense.title}</span>
+                          <span className="font-medium">{formatAmount(expense.amount)}€</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between font-semibold border-t pt-1">
+                        <span>ΣΥΝΟΛΟ</span>
+                        <span>{formatAmount(expenseBreakdown.elevator)}€</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Heating */}
-                <div className="bg-white p-3 rounded border">
-                  <h4 className="font-semibold text-gray-800 mb-2">Γ. ΘΕΡΜΑΝΣΗ</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>1. ΚΑΥΣΙΜΑ</span>
-                      <span className="font-medium">{formatAmount(expenseBreakdown.heating)}€</span>
-                    </div>
-                    <div className="flex justify-between font-semibold border-t pt-1">
-                      <span>ΣΥΝΟΛΟ</span>
-                      <span>{formatAmount(expenseBreakdown.heating)}€</span>
+                {expenseDetails.heating.length > 0 && (
+                  <div className="bg-white p-3 rounded border">
+                    <h4 className="font-semibold text-gray-800 mb-2">Γ. ΘΕΡΜΑΝΣΗ</h4>
+                    <div className="space-y-1 text-sm">
+                      {expenseDetails.heating.map((expense: any, index: number) => (
+                        <div key={expense.id || index} className="flex justify-between">
+                          <span>{index + 1}. {expense.description || expense.title}</span>
+                          <span className="font-medium">{formatAmount(expense.amount)}€</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between font-semibold border-t pt-1">
+                        <span>ΣΥΝΟΛΟ</span>
+                        <span>{formatAmount(expenseBreakdown.heating)}€</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
-                {/* Other Expenses */}
-                <div className="bg-white p-3 rounded border">
-                  <h4 className="font-semibold text-gray-800 mb-2">Δ. ΛΟΙΠΑ ΕΞΟΔΑ</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>1. ΔΕΗ</span>
-                      <span className="font-medium">{formatAmount(expenseBreakdown.other)}€</span>
-                    </div>
-                    <div className="flex justify-between font-semibold border-t pt-1">
-                      <span>ΣΥΝΟΛΟ</span>
-                      <span>{formatAmount(expenseBreakdown.other)}€</span>
+                {/* Equal Share Expenses */}
+                {expenseDetails.equal_share.length > 0 && (
+                  <div className="bg-white p-3 rounded border">
+                    <h4 className="font-semibold text-gray-800 mb-2">Δ. ΙΣΟΠΟΣΕΣ ΔΑΠΑΝΕΣ</h4>
+                    <div className="space-y-1 text-sm">
+                      {expenseDetails.equal_share.map((expense: any, index: number) => (
+                        <div key={expense.id || index} className="flex justify-between">
+                          <span>{index + 1}. {expense.description || expense.title}</span>
+                          <span className="font-medium">{formatAmount(expense.amount)}€</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between font-semibold border-t pt-1">
+                        <span>ΣΥΝΟΛΟ</span>
+                        <span>{formatAmount(expenseBreakdown.other)}€</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
-                {/* Co-ownership */}
-                <div className="bg-white p-3 rounded border">
-                  <h4 className="font-semibold text-gray-800 mb-2">Ε. ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣΙΑΣ</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between font-semibold">
-                      <span>ΣΥΝΟΛΟ</span>
-                      <span>{formatAmount(expenseBreakdown.coownership)}€</span>
+                {/* Individual Expenses */}
+                {expenseDetails.individual.length > 0 && (
+                  <div className="bg-white p-3 rounded border">
+                    <h4 className="font-semibold text-gray-800 mb-2">Ε. ΑΤΟΜΙΚΕΣ ΔΑΠΑΝΕΣ</h4>
+                    <div className="space-y-1 text-sm">
+                      {expenseDetails.individual.map((expense: any, index: number) => (
+                        <div key={expense.id || index} className="flex justify-between">
+                          <span>{index + 1}. {expense.description || expense.title}</span>
+                          <span className="font-medium">{formatAmount(expense.amount)}€</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between font-semibold border-t pt-1">
+                        <span>ΣΥΝΟΛΟ</span>
+                        <span>{formatAmount(expenseBreakdown.coownership)}€</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {/* Reserve Fund Contribution */}
+                {reserveFundInfo.totalContribution > 0 && (
+                  <div className="bg-white p-3 rounded border">
+                    <h4 className="font-semibold text-gray-800 mb-2">ΣΤ. ΕΙΣΦΟΡΑ ΑΠΟΘΕΜΑΤΙΚΟΥ</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-xs">
+                          {reserveFundInfo.displayText || 'ΜΗΝΙΑΙΑ ΔΟΣΗ (κατανομή ανά χιλιοστά)'}
+                        </span>
+                        <span className="font-medium">{formatAmount(reserveFundInfo.monthlyAmount)}€</span>
+                      </div>
+                      <div className="flex justify-between font-semibold border-t pt-1">
+                        <span>ΣΥΝΟΛΟ</span>
+                        <span>{formatAmount(reserveFundInfo.totalContribution)}€</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Grand Total */}
                 <div className="bg-blue-100 p-3 rounded border">

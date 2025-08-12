@@ -126,9 +126,9 @@
             </div>
             
             <div class="form-group">
-                <label for="payer_type">Πληρωτής *</label>
+                <label for="payer_type">Ένοικος *</label>
                 <select id="payer_type" required>
-                    <option value="">Επιλέξτε πληρωτή</option>
+                    <option value="">Επιλέξτε ένοικο</option>
                     <option value="owner">Ιδιοκτήτης</option>
                     <option value="tenant">Ενοικιαστής</option>
                     <option value="other">Άλλος</option>
@@ -136,7 +136,7 @@
             </div>
             
             <div class="form-group">
-                <label for="payer_name">Όνομα Πληρωτή</label>
+                <label for="payer_name">Όνομα Ενοίκου</label>
                 <input type="text" id="payer_name" placeholder="Θα συμπληρωθεί αυτόματα">
             </div>
             
@@ -260,7 +260,7 @@
                 Ποσό: ${createdPayment.amount}€
                 Ημερομηνία: ${createdPayment.date}
                 Μέθοδος: ${createdPayment.method}
-                Πληρωτής: ${createdPayment.payer_name}
+                Ένοικος: ${createdPayment.payer_name}
                 
                 QR Code: /verify-payment/${createdPayment.id}
             `;

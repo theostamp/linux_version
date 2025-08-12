@@ -447,6 +447,7 @@ export interface ApartmentShare {
 
 export interface CommonExpenseCalculationRequest {
   building_id: number;
+  month_filter?: string; // "YYYY-MM" format για φιλτράρισμα δαπανών συγκεκριμένου μήνα
 }
 
 export interface CommonExpenseCalculationResult {

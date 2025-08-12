@@ -172,6 +172,14 @@ export default function TransactionHistory({ buildingId, limit, selectedMonth }:
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
             Ιστορικό Κινήσεων
+            {selectedMonth && (
+              <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">
+                📅 {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { 
+                  month: 'long', 
+                  year: 'numeric' 
+                })}
+              </Badge>
+            )}
           </CardTitle>
           <div className="flex gap-2">
             <Button

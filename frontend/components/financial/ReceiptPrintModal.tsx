@@ -326,11 +326,11 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
             {/* Payer Info */}
             <div className="border border-gray-300 p-4 rounded-lg bg-gray-50 mb-8">
               <h3 className="font-semibold text-gray-800 text-base border-b border-gray-300 pb-2 mb-3">
-                Στοιχεία Πληρωτή
+                Στοιχεία Ενοίκου
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">Πληρωτής:</span>
+                  <span className="font-medium text-gray-600">Ένοικος:</span>
                   <span className="text-gray-900">{payerInfo.payer_name || 'Μη καταχωρημένος'}</span>
                 </div>
                 <div className="flex justify-between">
@@ -361,7 +361,7 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-12 mb-8">
               <div className="text-center">
                 <div className="border-t-2 border-gray-800 pt-3 mt-12">
-                  <strong>Υπογραφή Πληρωτή</strong>
+                  <strong>Υπογραφή Ενοίκου</strong>
                 </div>
               </div>
               <div className="text-center">

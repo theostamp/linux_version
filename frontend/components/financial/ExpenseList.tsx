@@ -138,9 +138,20 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
               <Badge variant="secondary">
                 {filteredExpenses.length} από {expenses?.length || 0}
               </Badge>
+              {selectedMonth && (
+                <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">
+                  📅 {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}
+                </Badge>
+              )}
             </CardTitle>
             <p className="text-sm text-gray-500 mt-1">
-              Διαχείριση και παρακολούθηση όλων των δαπανών του κτιρίου
+              {selectedMonth ? 
+                `Δαπάνες για τον μήνα ${new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}` :
+                'Διαχείριση και παρακολούθηση όλων των δαπανών του κτιρίου'
+              }
             </p>
           </div>
         </div>

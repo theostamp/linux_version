@@ -11,6 +11,7 @@ export { default as FinancialDashboard } from './FinancialDashboard';
 export { default as FinancialOverview } from './FinancialOverview';
 export { CommonExpenseCalculator } from './CommonExpenseCalculator';
 export { CommonExpenseCalculatorNew } from './calculator/CommonExpenseCalculatorNew';
+export { BuildingOverviewSection } from './calculator/BuildingOverviewSection';
 export { MonthSelector } from './MonthSelector';
 export { ApartmentFilter } from './ApartmentFilter';
 export { SharePreview } from './SharePreview';

@@ -432,9 +432,10 @@ gh repo clone username/repository-name
 ### Βασικές Εντολές Git
 ```bash
 
+
 git status
 git add .
-git commit -m "προβλημα εκτυπωσης εισπραξεων- fixed"
+git commit -m "fix http://demo.localhost:8080/financial?tab=calculator&building=4 "
 git push origin main
 ```
 

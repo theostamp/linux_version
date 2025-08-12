@@ -127,7 +127,7 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
       return apartmentA.localeCompare(apartmentB);
     });
     
-    // Φιλτράρισμα ανά τύπο πληρωτή
+    // Φιλτράρισμα ανά τύπο ενοίκου
     const filteredSummaries = sortedSummaries.filter((summary) => {
       // Φίλτρο αναζήτησης
       const matchesSearch = 
@@ -136,7 +136,7 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
         summary.tenant_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         summary.owner_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      // Φίλτρο τύπου πληρωτή
+              // Φίλτρο τύπου ενοίκου
       let matchesPayer = true;
       if (payerFilter !== 'all') {
         switch (payerFilter) {
@@ -215,9 +215,19 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
     <>
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Λίστα Εισπράξεων</span>
-          <div className="flex items-center gap-4">
+        <CardTitle className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span>Λίστα Εισπράξεων</span>
+            {selectedMonth && (
+              <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">
+                📅 {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { 
+                  month: 'long', 
+                  year: 'numeric' 
+                })}
+              </Badge>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 lg:gap-4">
             <Button
               variant="outline"
               size="sm"
@@ -251,7 +261,7 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
           />
           <Select value={payerFilter} onValueChange={setPayerFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="Τύπος Πληρωτή" />
+                              <SelectValue placeholder="Τύπος Ενοίκου" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Όλοι οι πληρωτές</SelectItem>

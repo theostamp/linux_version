@@ -221,7 +221,7 @@ export default function VerifyPaymentPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">Πληρωτής:</span>
+                  <span className="text-sm text-gray-600">Ένοικος:</span>
                   <span className="font-medium">{verification.payer_name}</span>
                 </div>
                 

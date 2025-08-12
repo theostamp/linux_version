@@ -671,6 +671,7 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                 building_id = data.get('building_id') or data.get('building')
                 period_start_date = data.get('period_start_date')
                 period_end_date = data.get('period_end_date')
+                reserve_fund_monthly_total = data.get('reserve_fund_monthly_total')
             
             print(f"🔍 calculate_advanced: building_id: {building_id}")
             print(f"🔍 calculate_advanced: period_start_date: {period_start_date}")
@@ -688,7 +689,8 @@ class CommonExpenseViewSet(viewsets.ViewSet):
             calculator = AdvancedCommonExpenseCalculator(
                 building_id=building_id,
                 period_start_date=period_start_date,
-                period_end_date=period_end_date
+                period_end_date=period_end_date,
+                reserve_fund_monthly_total=reserve_fund_monthly_total
             )
             
             result = calculator.calculate_advanced_shares()
@@ -710,6 +712,44 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
+    @action(detail=False, methods=['post'])
+    def quick_calculate_current(self, request):
+        """Άμεσος υπολογισμός κοινοχρήστων για τον τρέχοντα μήνα.
+
+        Δημιουργεί (ή επαναχρησιμοποιεί) αυτόματα την τρέχουσα μηνιαία περίοδο
+        και επιστρέφει τα μερίδια χωρίς να απαιτείται ορισμός παραμέτρων περιόδου.
+        """
+        try:
+            data = request.data
+            building_id = data.get('building_id') or data.get('building')
+            if not building_id:
+                return Response({'error': 'building_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Ensure int type
+            try:
+                building_id = int(building_id)
+            except (ValueError, TypeError):
+                return Response({'error': 'invalid building_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Create or get current month period and calculate shares
+            automation_service = CommonExpenseAutomationService(building_id)
+            period = automation_service.create_period_automatically(period_type='monthly')
+            calc_result = automation_service.calculate_shares_for_period(period)
+
+            response_payload = {
+                'success': True,
+                'message': f'Ο υπολογισμός κοινοχρήστων ολοκληρώθηκε για την περίοδο {period.period_name}',
+                'period': period.period_name,
+            }
+            response_payload.update(calc_result)
+
+            return Response(response_payload)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     @action(detail=False, methods=['post'])
     def issue(self, request):
         """Έκδοση κοινοχρήστων"""

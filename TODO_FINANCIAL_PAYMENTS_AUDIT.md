@@ -24,8 +24,8 @@
 - **Κατάσταση**: ✅ Ολοκληρώθηκε ανάλυση και δημιουργήθηκαν διαγνωστικά scripts
 
 ### 4. ✅ **ΟΛΟΚΛΗΡΩΘΗΚΕ - Βελτιώσεις Payment System**
-- **Προσθήκη στήλης "Πληρωτής"**: Νέα στήλη με badges για διάκριση ενοικιαστών/ιδιοκτητών
-- **Προσθήκη filters ανά τύπο πληρωτή**: Dropdown με επιλογές "Όλοι", "Ενοικιαστές", "Ιδιοκτήτες", "Μη καταχωρημένοι"
+- **Προσθήκη στήλης "Ένοικος"**: Νέα στήλη με badges για διάκριση ενοικιαστών/ιδιοκτητών
+- **Προσθήκη filters ανά τύπο ενοίκου**: Dropdown με επιλογές "Όλοι", "Ενοικιαστές", "Ιδιοκτήτες", "Μη καταχωρημένοι"
 - **Βελτίωση template απόδειξης**: Logo, μοναδικός αριθμός απόδειξης, QR code επαλήθευσης
 - **Κατάσταση**: ✅ Ολοκληρώθηκε επιτυχώς
 
@@ -49,7 +49,7 @@
 6. **Διόρθωση Backend Logic**: PaymentViewSet.perform_create() & PaymentSerializer ✅
 7. **Δημιουργία Transaction Records**: 347 transactions για όλα τα payments ✅
 8. **Επιβεβαίωση Διορθώσεων**: Όλα τα balances συμφωνούν ✅
-9. **Βελτιώσεις Payment System**: Στήλη πληρωτή, filters, επαγγελματικές αποδείξεις ✅
+9. **Βελτιώσεις Payment System**: Στήλη ενοίκου, filters, επαγγελματικές αποδείξεις ✅
 10. **Διόρθωση React Key Conflicts**: Πλήρης επίλυση duplicate keys ✅
 
 ### 🎯 **Εντοπισμένα και Διορθωμένα Προβλήματα**
@@ -97,8 +97,8 @@
 - ✅ **Transaction integrity**: Κάθε payment έχει αντίστοιχο transaction
 
 #### Βήμα 5: Frontend Improvements ✅
-- ✅ **Προσθήκη στήλης "Πληρωτής"**: Ξεκάθαρη διάκριση με badges
-- ✅ **Προσθήκη filters**: Dropdown για φιλτραρισμό ανά τύπο πληρωτή
+- ✅ **Προσθήκη στήλης "Ένοικος"**: Ξεκάθαρη διάκριση με badges
+- ✅ **Προσθήκη filters**: Dropdown για φιλτραρισμό ανά τύπο ενοίκου
 - ✅ **Βελτίωση αποδείξεων**: Logo, αρίθμηση, QR code επαλήθευσης
 - ✅ **Διόρθωση React keys**: Πλήρης επίλυση duplicate key conflicts
 
@@ -125,7 +125,7 @@
 1. **backend/financial/views.py**: PaymentViewSet.perform_create() - Γραμμές 379-435
 2. **backend/financial/serializers.py**: PaymentSerializer.get_current_balance() - Γραμμές 118-154
 3. **fix_payment_transactions.py**: Script για επιδιόρθωση υπαρχόντων δεδομένων
-4. **frontend/components/financial/PaymentList.tsx**: Στήλη πληρωτή, filters, React key fixes
+4. **frontend/components/financial/PaymentList.tsx**: Στήλη ενοίκου, filters, React key fixes
 5. **frontend/components/financial/PaymentForm.tsx**: Βελτιωμένο receipt template με logo, QR code
 
 ## 📊 Αρχεία που Χρειάζονται Έλεγχο
@@ -166,7 +166,7 @@ cd backend && source ../.venv/bin/activate && python ../debug_building_3_payment
 ✅ Δημιουργήθηκαν διαγνωστικά scripts: diagnostic_building_3.py, frontend_logic_test.py
 ✅ Δημιουργήθηκε ολοκληρωμένη ανάλυση: SOLUTION_FINANCIAL_PAYMENTS_AUDIT.md
 ✅ ΟΛΟΚΛΗΡΩΘΗΚΕ η επίλυση του βασικού προβλήματος (0 transactions)
-✅ ΟΛΟΚΛΗΡΩΘΗΚΕ η βελτίωση του payment system (στήλη πληρωτή, filters, αποδείξεις)
+✅ ΟΛΟΚΛΗΡΩΘΗΚΕ η βελτίωση του payment system (στήλη ενοίκου, filters, αποδείξεις)
 ✅ ΔΙΟΡΘΩΘΗΚΕ το React key conflict error (duplicate keys)
 
 ΧΡΕΙΑΖΟΜΑΙ:

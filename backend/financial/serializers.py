@@ -294,11 +294,17 @@ class ApartmentBalanceSerializer(serializers.Serializer):
 class FinancialSummarySerializer(serializers.Serializer):
     """Serializer για το οικονομικό σύνοψη"""
     
-    current_reserve = serializers.DecimalField(max_digits=10, decimal_places=2)
-    total_obligations = serializers.DecimalField(max_digits=10, decimal_places=2)
-    total_expenses_month = serializers.DecimalField(max_digits=10, decimal_places=2)
-    total_payments_month = serializers.DecimalField(max_digits=10, decimal_places=2)
-    pending_expenses = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total_balance = serializers.FloatField()
+    current_obligations = serializers.FloatField()
+    reserve_fund_contribution = serializers.FloatField()
+    current_reserve = serializers.FloatField()
+    apartments_count = serializers.IntegerField()
+    pending_payments = serializers.IntegerField()
+    average_monthly_expenses = serializers.FloatField()
+    last_calculation_date = serializers.CharField()
+    total_expenses_month = serializers.FloatField()
+    total_payments_month = serializers.FloatField()
+    pending_expenses = serializers.FloatField()
     recent_transactions = TransactionSerializer(many=True, read_only=True)
     recent_transactions_count = serializers.IntegerField()
     apartment_balances = ApartmentBalanceSerializer(many=True, read_only=True)

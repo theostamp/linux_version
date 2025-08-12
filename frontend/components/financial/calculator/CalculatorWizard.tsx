@@ -1,10 +1,4 @@
-import React, { useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
-import { PeriodSelectionStep } from './PeriodSelectionStep';
-import { CalculationStep } from './CalculationStep';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ResultsStep } from './ResultsStep';
 
 export interface CalculatorState {
@@ -22,16 +16,12 @@ export interface CalculatorState {
   };
   advancedOptions: {
     includeReserveFund: boolean;
+    reserveFundMonthlyAmount: number;
     heatingFixedPercentage: number;
     elevatorMills: boolean;
   };
   
-  // Step 2: Calculation
-  isCalculating: boolean;
-  calculationProgress: number;
-  calculationError: string | null;
-  
-  // Step 3: Results
+  // Step 2: Results
   shares: Record<string, any>;
   totalExpenses: number;
   advancedShares: any;
@@ -41,21 +31,32 @@ export interface CalculatorState {
 interface CalculatorWizardProps {
   buildingId: number;
   selectedMonth?: string;
+  reserveFundMonthlyAmount?: number;
   onComplete?: (results: any) => void;
 }
 
-const STEPS = [
-  { id: 1, title: 'Επιλογή Περιόδου', description: 'Επιλέξτε την περίοδο υπολογισμού' },
-  { id: 2, title: 'Υπολογισμός', description: 'Πραγματοποιήστε τον υπολογισμό' },
-  { id: 3, title: 'Αποτελέσματα', description: 'Εξετάστε και εκδώστε τα αποτελέσματα' }
-];
+
 
 export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({ 
   buildingId, 
-  selectedMonth, 
+  selectedMonth,
+  reserveFundMonthlyAmount,
   onComplete 
 }) => {
-  const [currentStep, setCurrentStep] = useState(1);
+  // Auto-calculate current month dates
+  const getCurrentMonthDates = () => {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    return {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+      periodName: now.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })
+    };
+  };
+
+  // Simplified wizard - now just displays results directly
   const [state, setState] = useState<CalculatorState>({
     // Step 1 defaults
     periodMode: 'quick',
@@ -64,23 +65,15 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
       previousMonth: false,
       customRange: false,
     },
-    customPeriod: {
-      startDate: '',
-      endDate: '',
-      periodName: '',
-    },
+    customPeriod: getCurrentMonthDates(),
     advancedOptions: {
-      includeReserveFund: true,
+      includeReserveFund: true, // Auto-enabled when reserve fund amount > 0
+      reserveFundMonthlyAmount: 0.0, // Will be updated from BuildingOverviewSection
       heatingFixedPercentage: 30,
       elevatorMills: false,
     },
     
     // Step 2 defaults
-    isCalculating: false,
-    calculationProgress: 0,
-    calculationError: null,
-    
-    // Step 3 defaults
     shares: {},
     totalExpenses: 0,
     advancedShares: null,
@@ -91,155 +84,75 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
     setState(prev => ({ ...prev, ...updates }));
   }, []);
 
-  const nextStep = useCallback(() => {
-    if (currentStep < 3) {
-      setCurrentStep(currentStep + 1);
+  // Update period when selectedMonth changes
+  useEffect(() => {
+    console.log('🔄 CalculatorWizard: useEffect triggered with selectedMonth:', selectedMonth);
+    
+    if (selectedMonth) {
+      // Parse selectedMonth (format: "2025-03") and create period dates
+      const [year, month] = selectedMonth.split('-').map(Number);
+      const startDate = new Date(year, month - 1, 1); // month - 1 because Date months are 0-indexed
+      const endDate = new Date(year, month, 0); // Last day of the month
+      
+      const periodName = startDate.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' });
+      
+      const newPeriod = {
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        periodName
+      };
+      
+      console.log('🔄 CalculatorWizard: Setting new period:', newPeriod);
+      
+      setState(prev => {
+        console.log('🔄 CalculatorWizard: Previous state customPeriod:', prev.customPeriod);
+        return {
+          ...prev,
+          customPeriod: newPeriod
+        };
+      });
+    } else {
+      console.log('🔄 CalculatorWizard: No selectedMonth, using current month');
+      // When no selectedMonth, use current month as default
+      const currentMonthDates = getCurrentMonthDates();
+      setState(prev => ({
+        ...prev,
+        customPeriod: currentMonthDates
+      }));
     }
-  }, [currentStep]);
+  }, [selectedMonth]);
 
-  const prevStep = useCallback(() => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+  // Update reserve fund monthly amount when prop changes
+  // Auto-enable reserve fund if amount is greater than 0
+  useEffect(() => {
+    if (reserveFundMonthlyAmount !== undefined) {
+      setState(prev => ({
+        ...prev,
+        advancedOptions: {
+          ...prev.advancedOptions,
+          reserveFundMonthlyAmount,
+          includeReserveFund: reserveFundMonthlyAmount > 0
+        }
+      }));
     }
-  }, [currentStep]);
+  }, [reserveFundMonthlyAmount]);
 
-  const canProceedToNext = useCallback(() => {
-    switch (currentStep) {
-      case 1:
-        return state.periodMode === 'quick' || 
-               (state.periodMode === 'custom' && 
-                state.customPeriod.startDate && 
-                state.customPeriod.endDate && 
-                state.customPeriod.periodName);
-      case 2:
-        return Object.keys(state.shares).length > 0;
-      case 3:
-        return true;
-      default:
-        return false;
-    }
-  }, [currentStep, state.periodMode, state.customPeriod, state.shares]);
+
 
   const renderStep = useCallback(() => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <PeriodSelectionStep
-            state={state}
-            updateState={updateState}
-            selectedMonth={selectedMonth}
-          />
-        );
-      case 2:
-        return (
-          <CalculationStep
-            state={state}
-            updateState={updateState}
-            buildingId={buildingId}
-            onComplete={nextStep}
-          />
-        );
-      case 3:
-        return (
-          <ResultsStep
-            state={state}
-            updateState={updateState}
-            buildingId={buildingId}
-            onComplete={onComplete}
-          />
-        );
-      default:
-        return null;
-    }
-  }, [currentStep, state, updateState, selectedMonth, buildingId, nextStep, onComplete]);
+    return (
+      <ResultsStep
+        state={state}
+        updateState={updateState}
+        buildingId={buildingId}
+        onComplete={onComplete}
+      />
+    );
+  }, [state, updateState, buildingId, onComplete]);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Progress Bar */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            {/* Progress Steps */}
-            <div className="flex items-center justify-between">
-              {STEPS.map((step, index) => (
-                <div key={step.id} className="flex items-center">
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-                    currentStep > step.id 
-                      ? 'bg-green-500 border-green-500 text-white' 
-                      : currentStep === step.id 
-                        ? 'bg-blue-500 border-blue-500 text-white' 
-                        : 'bg-gray-100 border-gray-300 text-gray-500'
-                  }`}>
-                    {currentStep > step.id ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <span className="text-sm font-medium">{step.id}</span>
-                    )}
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-sm font-medium text-gray-900">
-                      {step.title}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {step.description}
-                    </div>
-                  </div>
-                  {index < STEPS.length - 1 && (
-                    <div className={`flex-1 h-0.5 mx-4 ${
-                      currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
-                    }`} />
-                  )}
-                </div>
-              ))}
-            </div>
-            
-            {/* Progress Bar */}
-            <Progress 
-              value={(currentStep / STEPS.length) * 100} 
-              className="w-full"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Step Content */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-blue-600">
-              Βήμα {currentStep}
-            </span>
-            <span className="text-lg text-gray-600">
-              {STEPS[currentStep - 1].title}
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {renderStep()}
-        </CardContent>
-      </Card>
-
-      {/* Navigation */}
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={prevStep}
-          disabled={currentStep === 1}
-          className="flex items-center gap-2"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Προηγούμενο
-        </Button>
-        
-        <Button
-          onClick={nextStep}
-          disabled={!canProceedToNext()}
-          className="flex items-center gap-2"
-        >
-          {currentStep === 3 ? 'Ολοκλήρωση' : 'Επόμενο'}
-          {currentStep < 3 && <ChevronRight className="w-4 h-4" />}
-        </Button>
-      </div>
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {renderStep()}
     </div>
   );
 };

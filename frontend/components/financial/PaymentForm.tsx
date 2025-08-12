@@ -21,7 +21,7 @@ const paymentFormSchema = z.object({
   date: z.string().min(1, 'Παρακαλώ επιλέξτε ημερομηνία'),
   method: z.string().min(1, 'Παρακαλώ επιλέξτε μέθοδο εισπράξεως'),
   payment_type: z.string().min(1, 'Παρακαλώ επιλέξτε τύπο εισπράξεως'),
-  payer_type: z.string().min(1, 'Παρακαλώ επιλέξτε πληρωτή'),
+  payer_type: z.string().min(1, 'Παρακαλώ επιλέξτε ένοικο'),
   payer_name: z.string().optional(),
   reference_number: z.string().optional(),
   notes: z.string().optional(),
@@ -521,9 +521,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           </div>
 
           <div class="info-section">
-            <h3>Στοιχεία Πληρωτή</h3>
+                          <h3>Στοιχεία Ενοίκου</h3>
             <div class="info-row">
-              <span class="info-label">Πληρωτής:</span>
+              <span class="info-label">Ένοικος:</span>
               <span class="info-value">${watch('payer_name') || 'Μη καταχωρημένος'}</span>
             </div>
             <div class="info-row">
@@ -547,7 +547,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
           <div class="signature-section">
             <div class="signature-box">
-              <strong>Υπογραφή Πληρωτή</strong>
+                              <strong>Υπογραφή Ενοίκου</strong>
             </div>
             <div class="signature-box">
               <strong>Υπογραφή & Σφραγίδα Διαχειριστή</strong>
@@ -986,13 +986,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           {/* Payer Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Πληρωτής *</Label>
+              <Label>Ένοικος *</Label>
               <Select
                 value={watch('payer_type')}
                 onValueChange={(value) => setValue('payer_type', value as PayerType)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Επιλέξτε πληρωτή" />
+                  <SelectValue placeholder="Επιλέξτε ένοικο" />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.values(PayerType).map((type) => (
@@ -1008,7 +1008,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="payer_name">Όνομα Πληρωτή</Label>
+                              <Label htmlFor="payer_name">Όνομα Ενοίκου</Label>
               <Input
                 id="payer_name"
                 {...register('payer_name')}

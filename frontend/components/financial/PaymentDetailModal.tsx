@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Payment } from '@/types/financial';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { X, User, Home, Calendar, TrendingUp, TrendingDown, Printer } from 'lucide-react';
+import { X, User, Home, Calendar, TrendingUp, TrendingDown, Printer, Filter } from 'lucide-react';
 
 interface Transaction {
   id: number;
@@ -33,12 +35,17 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [showDateRange, setShowDateRange] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [filteredBalance, setFilteredBalance] = useState<number | null>(null);
+  const [isFiltered, setIsFiltered] = useState(false);
 
   useEffect(() => {
     if (isOpen && payment) {
       loadTransactionHistory();
     }
-  }, [isOpen, payment]);
+  }, [isOpen, payment, startDate, endDate]);
 
   const loadTransactionHistory = async () => {
     if (!payment) return;
@@ -50,13 +57,60 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
       // Import api για authenticated request
       const { api } = await import('@/lib/api');
       
+      // Build query parameters for date range
+      const params = new URLSearchParams();
+      if (startDate) {
+        params.append('start_date', startDate);
+      }
+      if (endDate) {
+        params.append('end_date', endDate);
+      }
+      
+      // Check if filtering is active
+      const isFilteringActive = !!(startDate || endDate);
+      setIsFiltered(isFilteringActive);
+      
       // API call για το ιστορικό συναλλαγών
-      const response = await api.get(`/financial/apartments/${payment.apartment}/transactions/`);
-      setTransactions(response.data);
+      const url = `/financial/apartments/${payment.apartment}/transactions/${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await api.get(url);
+      
+      // Filter transactions by date if date range is provided
+      let filteredTransactions = response.data;
+      
+      if (startDate || endDate) {
+        const startDateObj = startDate ? new Date(startDate) : new Date(0); // If no start date, use earliest possible
+        const endDateObj = endDate ? new Date(endDate) : new Date(8640000000000000); // If no end date, use latest possible
+        
+        // Set time to start and end of day for proper comparison
+        startDateObj.setHours(0, 0, 0, 0);
+        endDateObj.setHours(23, 59, 59, 999);
+        
+        filteredTransactions = response.data.filter(transaction => {
+          const transactionDate = new Date(transaction.date);
+          return transactionDate >= startDateObj && transactionDate <= endDateObj;
+        });
+      }
+      
+      // Set transactions
+      setTransactions(filteredTransactions);
+      
+      // Calculate filtered balance if transactions exist
+      if (filteredTransactions.length > 0) {
+        const lastTransaction = filteredTransactions[filteredTransactions.length - 1];
+        setFilteredBalance(lastTransaction.balance_after);
+      } else if (isFilteringActive) {
+        // If filtering is active but no transactions found, set filtered balance to 0
+        // This represents the balance change within the filtered period
+        setFilteredBalance(0);
+      } else {
+        // If no filtering and no transactions, use payment balance
+        setFilteredBalance(null);
+      }
     } catch (err: any) {
       console.error('Error loading transaction history:', err);
       setError('Σφάλμα κατά τη φόρτωση του ιστορικού συναλλαγών');
       setTransactions([]);
+      setFilteredBalance(null);
     } finally {
       setIsLoading(false);
     }
@@ -82,12 +136,30 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
     return labels[method] || method;
   };
 
+  const clearDateRange = () => {
+    setStartDate('');
+    setEndDate('');
+    setIsFiltered(false);
+    setFilteredBalance(null);
+  };
+
+  const setCurrentMonth = () => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    setStartDate(firstDay.toISOString().split('T')[0]);
+    setEndDate(lastDay.toISOString().split('T')[0]);
+  };
+
   if (!isOpen || !payment) return null;
 
   // Υπολογισμός τελευταίου υπολοίπου από το ιστορικό
-  const lastBalance = transactions.length > 0 
-    ? transactions[transactions.length - 1].balance_after 
-    : (payment.current_balance || 0);
+  const lastBalance = filteredBalance !== null 
+    ? filteredBalance 
+    : transactions.length > 0 
+      ? transactions[transactions.length - 1].balance_after 
+      : (payment.current_balance || 0);
 
   const handlePrint = () => {
     setIsPrinting(true);
@@ -136,6 +208,15 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
   const generatePrintableContent = () => {
     const currentDate = new Date().toLocaleDateString('el-GR');
+    
+    // Format date range for display
+    const dateRangeText = startDate && endDate 
+      ? ` • Περίοδος: ${new Date(startDate).toLocaleDateString('el-GR')} - ${new Date(endDate).toLocaleDateString('el-GR')}`
+      : startDate 
+        ? ` • Από: ${new Date(startDate).toLocaleDateString('el-GR')}`
+        : endDate 
+          ? ` • Έως: ${new Date(endDate).toLocaleDateString('el-GR')}`
+          : '';
     
     return `
       <!DOCTYPE html>
@@ -265,7 +346,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
         <div class="header">
           <h1>Καρτέλα Ενοίκου</h1>
           <p><strong>${payment?.tenant_name || payment?.owner_name}</strong></p>
-          <p>Διαμέρισμα ${payment?.apartment_number} • Ημερομηνία Εκτύπωσης: ${currentDate}</p>
+          <p>Διαμέρισμα ${payment?.apartment_number} • Ημερομηνία Εκτύπωσης: ${currentDate}${dateRangeText}</p>
         </div>
 
         <div class="summary">
@@ -278,14 +359,22 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             <div class="value neutral">${payment?.monthly_due ? formatCurrency(payment.monthly_due) : '-'}</div>
           </div>
           <div class="summary-card">
-            <h3>Τρέχον Υπόλοιπο</h3>
+            <h3>${isFiltered ? 'Υπόλοιπο Περιόδου' : 'Τρέχον Υπόλοιπο'}</h3>
             <div class="value ${lastBalance < 0 ? 'negative' : 'positive'}">${formatCurrency(lastBalance)}</div>
+            <div class="text-xs font-medium ${lastBalance < 0 ? 'negative' : 'positive'}">${lastBalance < 0 ? 'Χρεωστικό' : 'Πιστωτικό'}</div>
           </div>
         </div>
 
         <div class="transactions">
-          <h2>Ιστορικό Συναλλαγών</h2>
-          ${transactions.map(transaction => `
+          <h2>${isFiltered ? 'Φιλτραρισμένο Ιστορικό Συναλλαγών' : 'Ιστορικό Συναλλαγών'}</h2>
+          ${transactions.length === 0 
+            ? `<div style="text-align: center; padding: 20px; color: #666;">
+                ${isFiltered 
+                  ? `Δεν βρέθηκαν συναλλαγές για την περίοδο ${startDate ? new Date(startDate).toLocaleDateString('el-GR') : ''} ${startDate && endDate ? '-' : ''} ${endDate ? new Date(endDate).toLocaleDateString('el-GR') : ''}`
+                  : 'Δεν βρέθηκαν συναλλαγές'
+                }
+              </div>`
+            : transactions.map(transaction => `
             <div class="transaction ${transaction.type}">
               <div class="transaction-info">
                 <div><strong>${transaction.description}</strong></div>
@@ -325,10 +414,37 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
               </h2>
               <p className="text-sm text-gray-600">
                 Διαμέρισμα {payment.apartment_number} • Ιστορικό Συναλλαγών
+                {isFiltered && (
+                  <>
+                    {startDate && endDate && (
+                      <span className="ml-2 text-blue-600">
+                        • Περίοδος: {new Date(startDate).toLocaleDateString('el-GR')} - {new Date(endDate).toLocaleDateString('el-GR')}
+                      </span>
+                    )}
+                    {startDate && !endDate && (
+                      <span className="ml-2 text-blue-600">
+                        • Από: {new Date(startDate).toLocaleDateString('el-GR')}
+                      </span>
+                    )}
+                    {!startDate && endDate && (
+                      <span className="ml-2 text-blue-600">
+                        • Έως: {new Date(endDate).toLocaleDateString('el-GR')}
+                      </span>
+                    )}
+                  </>
+                )}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowDateRange(!showDateRange)}
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Χρονικό Εύρος
+            </Button>
             <Button 
               variant="outline" 
               size="sm" 
@@ -353,8 +469,51 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           </div>
         </div>
 
+        {/* Date Range Controls */}
+        {showDateRange && (
+          <div className="bg-gray-50 px-6 py-4 border-b">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="startDate" className="text-sm font-medium">Από:</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-40"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="endDate" className="text-sm font-medium">Έως:</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-40"
+                />
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={setCurrentMonth}
+              >
+                Τρέχων Μήνας
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={clearDateRange}
+                disabled={!startDate && !endDate}
+              >
+                Καθαρισμός
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+        <div className={`p-6 overflow-y-auto ${showDateRange ? 'max-h-[calc(90vh-180px)]' : 'max-h-[calc(90vh-120px)]'}`}>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card>
@@ -387,7 +546,9 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                   ) : (
                     <TrendingUp className="h-4 w-4 text-green-600" />
                   )}
-                  <span className="text-sm font-medium">Τρέχον Υπόλοιπο</span>
+                  <span className="text-sm font-medium">
+                    {isFiltered ? 'Υπόλοιπο Περιόδου' : 'Τρέχον Υπόλοιπο'}
+                  </span>
                 </div>
                 <p className={`text-lg font-semibold ${
                   lastBalance < 0 
@@ -396,6 +557,13 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                 }`}>
                   {formatCurrency(lastBalance)}
                 </p>
+                <p className={`text-xs font-medium ${
+                  lastBalance < 0 
+                    ? 'text-red-600' 
+                    : 'text-green-600'
+                }`}>
+                  {lastBalance < 0 ? 'Χρεωστικό' : 'Πιστωτικό'}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -403,7 +571,9 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           {/* Transaction History */}
           <Card>
             <CardHeader>
-              <CardTitle>Ιστορικό Συναλλαγών</CardTitle>
+              <CardTitle>
+                {isFiltered ? 'Φιλτραρισμένο Ιστορικό Συναλλαγών' : 'Ιστορικό Συναλλαγών'}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -416,7 +586,10 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                 </div>
               ) : transactions.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  Δεν βρέθηκαν συναλλαγές
+                  {isFiltered 
+                    ? `Δεν βρέθηκαν συναλλαγές για την περίοδο ${startDate ? new Date(startDate).toLocaleDateString('el-GR') : ''} ${startDate && endDate ? '-' : ''} ${endDate ? new Date(endDate).toLocaleDateString('el-GR') : ''}`
+                    : 'Δεν βρέθηκαν συναλλαγές'
+                  }
                 </div>
               ) : (
                 <div className="space-y-3">

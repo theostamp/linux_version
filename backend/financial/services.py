@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from django.db.models import Sum
 from datetime import datetime
 from .models import Expense, Transaction, Payment, CommonExpensePeriod, ApartmentShare
@@ -198,11 +198,23 @@ class FinancialDashboardService:
         Αν δοθεί month (YYYY-MM), υπολογίζει για τον συγκεκριμένο μήνα."""
         apartments = Apartment.objects.filter(building_id=self.building_id)
         
-        # Συνολικές οφειλές (αρνητικά υπόλοιπα)
-        total_obligations = sum(
+        # Συνολικές οφειλές: αρνητικά υπόλοιπα + ανέκδοτες δαπάνες
+        apartment_obligations = sum(
             abs(apt.current_balance) for apt in apartments 
             if apt.current_balance and apt.current_balance < 0
         )
+        
+        # Ανέκδοτες δαπάνες που δεν έχουν χρεωθεί ακόμα στα διαμερίσματα
+        # NOTE: For current_obligations, we show ALL pending expenses regardless of month
+        # This gives a complete picture of financial obligations
+        pending_expenses_all = Expense.objects.filter(
+            building_id=self.building_id,
+            is_issued=False
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        # Συνολικές υποχρεώσεις = Υφιστάμενες οφειλές + Ανέκδοτες δαπάνες
+        # This represents the TOTAL financial obligations, not month-specific
+        total_obligations = apartment_obligations + pending_expenses_all
         
         # Δαπάνες αυτού του μήνα
         from datetime import datetime, date
@@ -253,12 +265,19 @@ class FinancialDashboardService:
         # Φιλτράρισμα ανά μήνα αν δοθεί
         if month:
             try:
+                from django.utils import timezone
                 year, mon = map(int, month.split('-'))
-                start_date = date(year, mon, 1)
+                start_date = timezone.make_aware(
+                    datetime(year, mon, 1, 0, 0, 0)
+                )
                 if mon == 12:
-                    end_date = date(year + 1, 1, 1)
+                    end_date = timezone.make_aware(
+                        datetime(year + 1, 1, 1, 0, 0, 0)
+                    )
                 else:
-                    end_date = date(year, mon + 1, 1)
+                    end_date = timezone.make_aware(
+                        datetime(year, mon + 1, 1, 0, 0, 0)
+                    )
                 recent_transactions_query = recent_transactions_query.filter(
                     date__gte=start_date, date__lt=end_date
                 )
@@ -277,6 +296,7 @@ class FinancialDashboardService:
         # Φιλτράρισμα ανά μήνα αν δοθεί
         if month:
             try:
+                from django.utils import timezone
                 year, mon = map(int, month.split('-'))
                 start_date = date(year, mon, 1)
                 if mon == 12:
@@ -298,25 +318,118 @@ class FinancialDashboardService:
         # Στατιστικά πληρωμών
         payment_statistics = self.get_payment_statistics(month)
         
-        # Υπολογισμός τρέχοντος αποθεματικού: Εισπράξεις - Δαπάνες για τον επιλεγμένο μήνα
+        # Calculate financial position based on month parameter
         if month:
-            # Για συγκεκριμένο μήνα, χρησιμοποιούμε τα δεδομένα του μήνα
-            current_reserve = total_payments_this_month - total_expenses_this_month
+            # SNAPSHOT VIEW: Calculate financial position as it would be at the end of the selected month
+            # This provides a "point in time" view of the building's finances
+            
+            # Calculate cumulative totals up to the end of the selected month
+            total_payments_snapshot = Payment.objects.filter(
+                apartment__building_id=self.building_id,
+                date__lte=end_date
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            total_expenses_snapshot = Expense.objects.filter(
+                building_id=self.building_id,
+                date__lte=end_date
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            current_reserve = total_payments_snapshot - total_expenses_snapshot
+            
+            # For snapshot view, recalculate obligations based on what would be pending at month end
+            pending_expenses_snapshot = Expense.objects.filter(
+                building_id=self.building_id,
+                is_issued=False,
+                date__lte=end_date
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            # Update total_obligations for snapshot view
+            total_obligations = apartment_obligations + pending_expenses_snapshot
+            
         else:
-            # Για τρέχον μήνα, χρησιμοποιούμε τα δεδομένα του τρέχοντος μήνα
-            current_reserve = total_payments_this_month - total_expenses_this_month
+            # CURRENT VIEW: Current actual financial position (all time)
+            total_payments_all_time = Payment.objects.filter(
+                apartment__building_id=self.building_id
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            total_expenses_all_time = Expense.objects.filter(
+                building_id=self.building_id
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            current_reserve = total_payments_all_time - total_expenses_all_time
+        
+        # Υπολογισμός εισφοράς αποθεματικού με προτεραιότητα
+        reserve_fund_contribution = self._calculate_reserve_fund_contribution(
+            current_reserve, total_obligations
+        )
+        
+        # Calculate total balance based on view type
+        total_balance = current_reserve
+        
+        # Add debugging info for month-specific calculations
+        calculation_context = "current" if not month else f"snapshot_{month}"
+        
+        print(f"🔍 FinancialDashboard ({calculation_context}): current_reserve={current_reserve}, total_obligations={total_obligations}")
+        print(f"🔍 FinancialDashboard ({calculation_context}): total_balance={total_balance}")
+        
+        # Calculate current obligations (negative balances from apartments)
+        current_obligations = total_obligations
+        
+        # Calculate apartments count
+        apartments_count = Apartment.objects.filter(building_id=self.building_id).count()
+        
+        # Calculate pending payments (apartments with negative balance)
+        pending_payments = Apartment.objects.filter(
+            building_id=self.building_id,
+            current_balance__lt=0
+        ).count()
+        
+        # Calculate average monthly expenses (from the current month)
+        average_monthly_expenses = total_expenses_this_month
         
         return {
-            'current_reserve': current_reserve,
-            'total_obligations': total_obligations,
-            'total_expenses_month': total_expenses_this_month,
-            'total_payments_month': total_payments_this_month,
-            'pending_expenses': pending_expenses,
+            'total_balance': float(total_balance),
+            'current_obligations': float(current_obligations),
+            'reserve_fund_contribution': float(reserve_fund_contribution),
+            'current_reserve': float(current_reserve),
+            'apartments_count': apartments_count,
+            'pending_payments': pending_payments,
+            'average_monthly_expenses': float(average_monthly_expenses),
+            'last_calculation_date': datetime.now().strftime('%Y-%m-%d'),
+            'total_expenses_month': float(total_expenses_this_month),
+            'total_payments_month': float(total_payments_this_month),
+            'pending_expenses': float(pending_expenses),
             'recent_transactions': list(recent_transactions),
             'recent_transactions_count': len(recent_transactions),
             'apartment_balances': apartment_balances,
-            'payment_statistics': payment_statistics
+            'payment_statistics': payment_statistics,
+            # Reserve fund settings - these should come from building settings in the future
+            'reserve_fund_goal': 3000.0,  # Στόχος αποθεματικού σε ευρώ
+            'reserve_fund_duration_months': 5,  # Διάρκεια σε μήνες (31/7/2025 → 30/1/2026)
+            'reserve_fund_monthly_target': 3000.0 / 5  # Μηνιαία δόση: 600€
         }
+    
+    def _calculate_reserve_fund_contribution(self, current_reserve: Decimal, total_obligations: Decimal) -> Decimal:
+        """
+        Υπολογίζει την εισφορά αποθεματικού με βάση την προτεραιότητα:
+        1. Πρώτα πρέπει να καλυφθούν οι τρέχουσες υποχρεώσεις
+        2. Μετά υπολογίζεται η εισφορά αποθεματικού
+        """
+        # Αν υπάρχουν ανέκδοτες δαπάνες, δεν υπολογίζουμε εισφορά αποθεματικού
+        if total_obligations > 0:
+            return Decimal('0.00')
+        
+        # Αν δεν υπάρχουν υποχρεώσεις, υπολογίζουμε την κανονική εισφορά αποθεματικού
+        # Αυτό θα ενημερωθεί με βάση τις ρυθμίσεις αποθεματικού από το frontend
+        apartments = Apartment.objects.filter(building_id=self.building_id)
+        apartments_count = apartments.count()
+        
+        # Προεπιλεγμένη μηνιαία εισφορά αποθεματικού (500€ / 10 διαμερίσματα = 50€ ανά διαμέρισμα μηνιαίως)
+        # Αυτό θα πρέπει να έρχεται από τις ρυθμίσεις του κτιρίου
+        monthly_target_per_apartment = Decimal('50.00')
+        total_monthly_contribution = monthly_target_per_apartment * apartments_count
+        
+        return total_monthly_contribution
     
     def get_apartment_balances(self) -> List[Dict[str, Any]]:
         """Επιστρέφει την κατάσταση οφειλών για όλα τα διαμερίσματα"""
@@ -846,8 +959,7 @@ class CommonExpenseAutomationService:
         Returns:
             CommonExpensePeriod: Η δημιουργηθείσα περίοδος
         """
-        from datetime import datetime, date
-        from dateutil.relativedelta import relativedelta
+        from datetime import datetime, date, timedelta
         
         if start_date:
             start = datetime.strptime(start_date, '%Y-%m-%d').date()
@@ -855,7 +967,16 @@ class CommonExpenseAutomationService:
             start = date.today().replace(day=1)  # Πρώτη ημέρα του τρέχοντος μήνα
         
         template = self.PERIOD_TEMPLATES.get(period_type, self.PERIOD_TEMPLATES['monthly'])
-        end = start + relativedelta(months=template['months']) - relativedelta(days=1)
+
+        # Υπολογισμός τέλους περιόδου χωρίς εξάρτηση από dateutil
+        def add_months_first_day(d: date, months: int) -> date:
+            total_month = d.month - 1 + months
+            year = d.year + total_month // 12
+            month = total_month % 12 + 1
+            return date(year, month, 1)
+
+        first_day_next_period = add_months_first_day(start, template['months'])
+        end = first_day_next_period - timedelta(days=1)
         
         # Δημιουργία ονόματος περιόδου
         if period_type == 'monthly':
@@ -1132,7 +1253,7 @@ class AdvancedCommonExpenseCalculator:
     Υλοποιεί τον πλήρη αλγόριθμο με όλες τις κατηγορίες δαπανών.
     """
     
-    def __init__(self, building_id: int, period_start_date: str = None, period_end_date: str = None):
+    def __init__(self, building_id: int, period_start_date: str = None, period_end_date: str = None, reserve_fund_monthly_total: Optional[Decimal] = None):
         self.building_id = building_id
         self.building = Building.objects.get(id=building_id)
         self.apartments = Apartment.objects.filter(building_id=building_id)
@@ -1156,7 +1277,22 @@ class AdvancedCommonExpenseCalculator:
         
         # Παράμετροι υπολογισμού (προσαρμοσμένες)
         self.heating_fixed_percentage = Decimal('0.30')  # 30% πάγιο θέρμανσης
-        self.reserve_fund_contribution = Decimal('5.00')  # 5€ ανά διαμέρισμα
+        # Συνολική μηνιαία εισφορά αποθεματικού για όλο το κτίριο (όχι ανά διαμέρισμα)
+        # 1) Αν δοθεί  expl. από το frontend, το χρησιμοποιούμε
+        # 2) Αλλιώς, αντλούμε από το FinancialDashboardService (υπολογίζει με προτεραιότητα υποχρεώσεων)
+        if reserve_fund_monthly_total is not None:
+            try:
+                self.reserve_fund_monthly_total = Decimal(str(reserve_fund_monthly_total))
+            except Exception:
+                self.reserve_fund_monthly_total = Decimal('0.00')
+        else:
+            dashboard_service = FinancialDashboardService(self.building_id)
+            summary = dashboard_service.get_summary()
+            monthly_total = summary.get('reserve_fund_contribution', 0) or 0
+            try:
+                self.reserve_fund_monthly_total = Decimal(str(monthly_total))
+            except Exception:
+                self.reserve_fund_monthly_total = Decimal('0.00')
     
     def calculate_advanced_shares(self) -> Dict[str, Any]:
         """
@@ -1180,10 +1316,32 @@ class AdvancedCommonExpenseCalculator:
         # Βήμα 6: Οριστικοποίηση τελικών ποσών
         self._finalize_shares(shares)
         
+        # Βήμα 7: Προσθήκη λεπτομερειών δαπανών για εμφάνιση στο φύλλο
+        expense_details = self._get_expense_details()
+        
+        # Get reserve fund information from building overview
+        dashboard_service = FinancialDashboardService(self.building_id)
+        summary = dashboard_service.get_summary()
+        
+        # Calculate correct monthly reserve fund amount
+        reserve_fund_goal = summary.get('reserve_fund_goal', 0)
+        reserve_fund_duration = summary.get('reserve_fund_duration_months', 1)
+        
+        # Use calculated monthly amount instead of the passed value
+        calculated_monthly_reserve = 0
+        if reserve_fund_goal > 0 and reserve_fund_duration > 0:
+            calculated_monthly_reserve = float(reserve_fund_goal) / float(reserve_fund_duration)
+        else:
+            calculated_monthly_reserve = float(self.reserve_fund_monthly_total)
+        
         return {
             'shares': shares,
             'expense_totals': expense_totals,
+            'expense_details': expense_details,
             'heating_costs': heating_costs,
+            'reserve_contribution': calculated_monthly_reserve,
+            'reserve_fund_goal': reserve_fund_goal,
+            'reserve_fund_duration': reserve_fund_duration,
             'total_apartments': len(self.apartments),
             'calculation_date': datetime.now().isoformat()
         }
@@ -1208,7 +1366,7 @@ class AdvancedCommonExpenseCalculator:
                     'heating_expenses': Decimal('0.00'),
                     'equal_share_expenses': Decimal('0.00'),
                     'individual_expenses': Decimal('0.00'),
-                    'reserve_fund_contribution': self.reserve_fund_contribution
+                    'reserve_fund_contribution': Decimal('0.00')
                 },
                 'heating_breakdown': {
                     'fixed_cost': Decimal('0.00'),
@@ -1390,6 +1548,13 @@ class AdvancedCommonExpenseCalculator:
             equal_share_amount = expense_totals['equal_share'] / len(self.apartments)
             shares[apartment_id]['breakdown']['equal_share_expenses'] = equal_share_amount
             shares[apartment_id]['total_amount'] += equal_share_amount
+            
+            # ε. Υπολογισμός Εισφοράς Αποθεματικού (κατανομή ανά χιλιοστά)
+            if self.reserve_fund_monthly_total > 0 and total_participation_mills > 0:
+                total_participation_mills_decimal = Decimal(str(total_participation_mills))
+                reserve_share = self.reserve_fund_monthly_total * (participation_mills / total_participation_mills_decimal)
+                shares[apartment_id]['breakdown']['reserve_fund_contribution'] = reserve_share
+                shares[apartment_id]['total_amount'] += reserve_share
     
     def _add_individual_charges(self, shares: Dict):
         """Προσθήκη ατομικών χρεώσεων"""
@@ -1397,11 +1562,84 @@ class AdvancedCommonExpenseCalculator:
         # Θα προστεθεί αργότερα όταν υλοποιηθεί το ExpenseApartment model
         pass
     
+    def _get_expense_details(self) -> Dict[str, List[Dict]]:
+        """Επιστρέφει λεπτομέρειες δαπανών για εμφάνιση στο φύλλο κοινοχρήστων"""
+        general_categories = [
+            'cleaning', 'electricity_common', 'water_common', 'garbage_collection',
+            'security', 'concierge', 'electrical_maintenance', 'electrical_repair',
+            'electrical_upgrade', 'lighting_common', 'intercom_system',
+            'plumbing_maintenance', 'plumbing_repair', 'water_tank_cleaning',
+            'water_tank_maintenance', 'sewage_system', 'building_insurance',
+            'building_maintenance', 'roof_maintenance', 'roof_repair',
+            'facade_maintenance', 'facade_repair', 'painting_exterior',
+            'painting_interior', 'garden_maintenance', 'parking_maintenance',
+            'entrance_maintenance', 'emergency_repair', 'storm_damage',
+            'flood_damage', 'fire_damage', 'earthquake_damage', 'vandalism_repair',
+            'locksmith', 'glass_repair', 'door_repair', 'window_repair',
+            'balcony_repair', 'staircase_repair', 'security_system',
+            'cctv_installation', 'access_control', 'fire_alarm', 'fire_extinguishers',
+            'legal_fees', 'notary_fees', 'surveyor_fees', 'architect_fees',
+            'engineer_fees', 'accounting_fees', 'management_fees',
+            'asbestos_removal', 'lead_paint_removal', 'mold_removal',
+            'pest_control', 'tree_trimming', 'snow_removal', 'energy_upgrade',
+            'insulation_work', 'solar_panel_installation', 'led_lighting',
+            'smart_systems', 'miscellaneous', 'consulting_fees',
+            'permits_licenses', 'taxes_fees', 'utilities_other'
+        ]
+        
+        elevator_categories = [
+            'elevator_maintenance', 'elevator_repair', 'elevator_inspection',
+            'elevator_modernization'
+        ]
+        
+        heating_categories = [
+            'heating_fuel', 'heating_gas', 'heating_maintenance',
+            'heating_repair', 'heating_inspection', 'heating_modernization'
+        ]
+        
+        equal_share_categories = [
+            'special_contribution', 'reserve_fund', 'emergency_fund',
+            'renovation_fund'
+        ]
+        
+        expense_details = {
+            'general': [],
+            'elevator': [],
+            'heating': [],
+            'equal_share': [],
+            'individual': []
+        }
+        
+        for expense in self.expenses:
+            expense_data = {
+                'id': expense.id,
+                'title': expense.title,
+                'description': expense.notes or expense.title,
+                'amount': float(expense.amount),
+                'category': expense.category,
+                'distribution_type': expense.distribution_type,
+                'date': expense.date.isoformat() if expense.date else None,
+                'supplier_name': expense.supplier.name if expense.supplier else None
+            }
+            
+            if expense.category in general_categories:
+                expense_details['general'].append(expense_data)
+            elif expense.category in elevator_categories:
+                expense_details['elevator'].append(expense_data)
+            elif expense.category in heating_categories:
+                expense_details['heating'].append(expense_data)
+            elif expense.category in equal_share_categories:
+                expense_details['equal_share'].append(expense_data)
+            elif expense.distribution_type == 'specific_apartments':
+                expense_details['individual'].append(expense_data)
+            else:
+                # Default fallback
+                expense_details['general'].append(expense_data)
+        
+        return expense_details
+
     def _finalize_shares(self, shares: Dict):
         """Οριστικοποίηση τελικών ποσών"""
         for apartment_id, share_data in shares.items():
-            # Προσθήκη εισφοράς αποθεματικού
-            share_data['total_amount'] += self.reserve_fund_contribution
-            
             # Υπολογισμός συνολικού πληρωτέου ποσού
-            share_data['total_due'] = share_data['total_amount'] + share_data['previous_balance'] 
+            share_data['total_due'] = share_data['total_amount'] + share_data['previous_balance']

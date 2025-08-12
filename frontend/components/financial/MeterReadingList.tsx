@@ -308,9 +308,22 @@ export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId, 
       {/* Λίστα Μετρήσεων */}
       <Card>
         <CardHeader>
-          <CardTitle>Λίστα Μετρήσεων</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            Λίστα Μετρήσεων
+            {selectedMonth && (
+              <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">
+                📅 {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { 
+                  month: 'long', 
+                  year: 'numeric' 
+                })}
+              </Badge>
+            )}
+          </CardTitle>
           <CardDescription>
-            {readings.length} μετρήσεις βρέθηκαν
+            {selectedMonth ? 
+              `${readings.length} μετρήσεις για τον μήνα ${new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}` :
+              `${readings.length} μετρήσεις βρέθηκαν`
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>

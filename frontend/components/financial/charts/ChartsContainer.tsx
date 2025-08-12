@@ -92,6 +92,17 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
     <div className="bg-white rounded-lg shadow-md">
       {/* Header Controls */}
       <div className="p-4 border-b border-gray-200">
+        {/* Month indicator */}
+        {selectedMonth && (
+          <div className="mb-3 flex items-center gap-2">
+            <div className="text-sm font-medium text-blue-700">
+              📅 Δεδομένα για: {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { 
+                month: 'long', 
+                year: 'numeric' 
+              })}
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Chart Type Selector */}
           <div className="flex items-center space-x-2">
