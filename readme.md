@@ -430,17 +430,11 @@ gh repo clone username/repository-name
 ## 📤 Ενημέρωση GitHub Repository
 
 ### Βασικές Εντολές Git
-```bash
-
-
-git status
-git add .
-git commit -m "νεα εισπραξη v1.1"  διαγραφη διαμεριμταος"
-```
 
 git add . 
-git commit -m "Ok all" 
-git branch -M main git remote add origin https://github.com/theostamp/linux_version.git
+git commit -m "νεα εισπραξη v1.1 διαγραφη διαμεριμταος1" 
+git branch -M main 
+git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
 
 
