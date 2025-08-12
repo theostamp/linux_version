@@ -435,11 +435,13 @@ gh repo clone username/repository-name
 
 git status
 git add .
-git commit -m "fix http://demo.localhost:8080/financial?tab=calculator&building=4 "
-git push origin main
+git commit -m "νεα εισπραξη v1.1"  διαγραφη διαμεριμταος"
 ```
 
-
+git add . 
+git commit -m "Ok all" 
+git branch -M main git remote add origin https://github.com/theostamp/linux_version.git
+git push -u origin main
 
 
 **Last Updated**: December 5, 2024  

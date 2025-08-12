@@ -35,7 +35,7 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
   selectedMonth,
   onRefresh,
 }, ref) => {
-  const { payments, isLoading, error, loadPayments, deletePayment } = usePayments(buildingId, selectedMonth);
+  const { payments, isLoading, error, loadPayments, deletePayment, deletePaymentsForApartment } = usePayments(buildingId, selectedMonth);
   
   // Expose refresh method to parent component
   useImperativeHandle(ref, () => ({
@@ -62,6 +62,9 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
   const [isDeletingPayment, setIsDeletingPayment] = useState(false);
+  const [showBulkDeleteConfirmation, setShowBulkDeleteConfirmation] = useState(false);
+  const [apartmentForBulkDelete, setApartmentForBulkDelete] = useState<{ id: number; label: string } | null>(null);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // Handle payment deletion
   const handleDeletePayment = (payment: Payment) => {
@@ -166,7 +169,8 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
       // Δημιουργία συγκεντρωτικής εγγραφής
       summaries.push({
         ...latestPayment, // Χρησιμοποιούμε τα στοιχεία της τελευταίας πληρωμής
-        id: `apartment-summary-${apartmentId}` as any, // Σταθερό ID για κάθε διαμέρισμα
+        // Διατηρούμε το πραγματικό numeric ID ώστε οι ενέργειες (π.χ. διαγραφή) να στοχεύουν υπαρκτή πληρωμή
+        id: latestPayment.id,
         amount: totalAmount, // Συνολικό ποσό όλων των πληρωμών
         date: oldestPayment.date, // Ημερομηνία πρώτης πληρωμής
         notes: `${sortedPayments.length} πληρωμ${sortedPayments.length === 1 ? 'ή' : 'ές'}`,
@@ -307,6 +311,17 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               Ανανέωση
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                // Αν υπάρχει επιλεγμένος μήνας, κάνουμε bulk delete για όλον τον μήνα ανά διαμέρισμα με επιλογή από λίστα
+                // Εδώ θα εμφανίσουμε modal αφού ο χρήστης πατήσει το action από την γραμμή του κάθε διαμερίσματος
+              }}
+              className="hidden"
+            >
+              Μαζική Διαγραφή
             </Button>
             <Badge variant="secondary">
               {apartmentSummaries.length} ενοίκο{apartmentSummaries.length === 1 ? 'ς' : 'ι'}
@@ -524,6 +539,19 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
+                            setApartmentForBulkDelete({ id: summary.apartment, label: summary.apartment_number || `Διαμέρισμα ${summary.apartment}` });
+                            setShowBulkDeleteConfirmation(true);
+                          }}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50 text-xs lg:text-sm px-1 lg:px-2"
+                          title="Διαγραφή όλων των εισπράξεων αυτού του διαμερίσματος"
+                        >
+                          Διαγραφή Όλων
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleDeletePayment(summary);
                           }}
                           className="text-red-600 hover:text-red-800 hover:bg-red-50 text-xs lg:text-sm px-1 lg:px-2"
@@ -677,6 +705,80 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
                   Διαγραφή Εισπραξής
                 </>
               )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Bulk Delete Confirmation Modal */}
+    {showBulkDeleteConfirmation && apartmentForBulkDelete && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg max-w-md w-full p-6">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+              <Trash2 className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Διαγραφή Όλων των Εισπράξεων
+              </h3>
+              <p className="text-sm text-gray-600">
+                Η ενέργεια αυτή δεν μπορεί να αναιρεθεί
+              </p>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="mb-6 text-sm text-gray-700">
+            <p>
+              Θα διαγραφούν όλες οι εισπράξεις για {apartmentForBulkDelete.label}
+              {selectedMonth ? (
+                <>
+                  {' '}του μήνα {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}
+                </>
+              ) : (
+                <> για όλο το ιστορικό</>
+              )}.
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowBulkDeleteConfirmation(false);
+                setApartmentForBulkDelete(null);
+              }}
+              disabled={isBulkDeleting}
+            >
+              Ακύρωση
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (!apartmentForBulkDelete) return;
+                setIsBulkDeleting(true);
+                try {
+                  const res = await deletePaymentsForApartment(apartmentForBulkDelete.id, selectedMonth, buildingId);
+                  if (res.success) {
+                    setShowBulkDeleteConfirmation(false);
+                    setApartmentForBulkDelete(null);
+                    // Refresh
+                    loadPayments();
+                    onRefresh?.();
+                    console.log('Bulk delete done', res);
+                  }
+                } finally {
+                  setIsBulkDeleting(false);
+                }
+              }}
+              disabled={isBulkDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isBulkDeleting ? 'Διαγραφή...' : 'Διαγραφή Όλων'}
             </Button>
           </div>
         </div>

@@ -121,3 +121,4 @@ export const useApartmentsWithFinancialData = (buildingId?: number) => {
     clearError: () => setError(null),
   };
 };
+

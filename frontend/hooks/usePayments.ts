@@ -318,6 +318,33 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
     }
   }, [loadPayments]);
 
+  // Μαζική διαγραφή πληρωμών διαμερίσματος (προαιρετικά για συγκεκριμένο μήνα)
+  const deletePaymentsForApartment = useCallback(
+    async (apartmentId: number, month?: string, buildingId?: number): Promise<{success: boolean; deleted_count?: number; total_amount?: number; message?: string}> => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams({ apartment_id: apartmentId.toString() });
+        if (month) params.append('month', month);
+        if (buildingId) params.append('building_id', buildingId.toString());
+
+        const response = await api.delete(`/financial/payments/bulk_delete/?${params.toString()}`);
+
+        // Refresh list after bulk delete
+        await loadPayments();
+
+        return { success: true, ...response.data };
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη μαζική διαγραφή πληρωμών';
+        setError(errorMessage);
+        return { success: false };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [loadPayments]
+  );
+
   // Λήψη μεθόδων πληρωμής
   const getPaymentMethods = useCallback(async (): Promise<Array<{value: string, label: string}>> => {
     try {
@@ -347,6 +374,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
     getPayment,
     updatePayment,
     deletePayment,
+    deletePaymentsForApartment,
     getPaymentMethods,
     clearError,
     loadPayments,

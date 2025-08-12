@@ -535,6 +535,83 @@ class PaymentViewSet(viewsets.ModelViewSet):
         methods = [{'value': choice[0], 'label': choice[1]} for choice in Payment.PAYMENT_METHODS]
         return Response(methods)
 
+    @action(detail=False, methods=['delete'])
+    def bulk_delete(self, request):
+        """Μαζική διαγραφή εισπράξεων για συγκεκριμένο διαμέρισμα.
+
+        Query params:
+        - apartment_id: υποχρεωτικό
+        - month: προαιρετικό (μορφή YYYY-MM) για φιλτράρισμα ανά μήνα
+        - building_id: προαιρετικό για επιπλέον έλεγχο κτιρίου
+        """
+        try:
+            apartment_id = request.query_params.get('apartment_id')
+            month = request.query_params.get('month')
+            building_id = request.query_params.get('building_id')
+
+            if not apartment_id:
+                return Response({'error': 'apartment_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Βεβαίωση ότι το διαμέρισμα υπάρχει και (αν δοθεί) ανήκει στο κτίριο
+            try:
+                if building_id:
+                    apartment = Apartment.objects.get(id=apartment_id, building_id=building_id)
+                else:
+                    apartment = Apartment.objects.get(id=apartment_id)
+            except Apartment.DoesNotExist:
+                return Response({'error': 'Το διαμέρισμα δεν βρέθηκε'}, status=status.HTTP_404_NOT_FOUND)
+
+            # Βασικό queryset πληρωμών για το διαμέρισμα
+            queryset = Payment.objects.filter(apartment_id=apartment_id)
+
+            # Φίλτρο ανά μήνα αν ζητηθεί
+            if month:
+                try:
+                    year_str, month_str = month.split('-')
+                    year = int(year_str)
+                    month_num = int(month_str)
+                    from datetime import date
+                    start_date = date(year, month_num, 1)
+                    if month_num == 12:
+                        end_date = date(year + 1, 1, 1)
+                    else:
+                        end_date = date(year, month_num + 1, 1)
+                    queryset = queryset.filter(date__gte=start_date, date__lt=end_date)
+                except (ValueError, TypeError):
+                    return Response({'error': 'invalid month format, expected YYYY-MM'}, status=status.HTTP_400_BAD_REQUEST)
+
+            payments_to_delete = list(queryset.order_by('date', 'id'))
+
+            if not payments_to_delete:
+                return Response({
+                    'success': True,
+                    'deleted_count': 0,
+                    'total_amount': 0.0,
+                    'apartment_id': int(apartment_id),
+                    'month': month,
+                    'message': 'Δεν βρέθηκαν πληρωμές προς διαγραφή'
+                })
+
+            deleted_count = 0
+            total_amount = Decimal('0.00')
+
+            # Διαγράφουμε μία-μία για να εκτελεστεί το perform_destroy (audit + ενημερώσεις)
+            for payment in payments_to_delete:
+                total_amount += payment.amount
+                self.perform_destroy(payment)
+                deleted_count += 1
+
+            return Response({
+                'success': True,
+                'deleted_count': deleted_count,
+                'total_amount': float(total_amount),
+                'apartment_id': int(apartment_id),
+                'month': month,
+                'message': f'Διαγράφηκαν {deleted_count} πληρωμές συνολικού ποσού {float(total_amount):.2f}'
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=True, methods=['get'])
     def verify(self, request, pk=None):
         """Επαλήθευση πληρωμής για QR code"""
