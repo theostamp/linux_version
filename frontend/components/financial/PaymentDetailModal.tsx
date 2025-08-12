@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Payment } from '@/types/financial';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { X, User, Home, Calendar, TrendingUp, TrendingDown, Printer, Filter } from 'lucide-react';
+import { X, User, Home, Calendar, TrendingUp, TrendingDown, Printer, Filter, Trash2 } from 'lucide-react';
 
 interface Transaction {
   id: number;
@@ -24,12 +24,14 @@ interface PaymentDetailModalProps {
   payment: Payment | null;
   isOpen: boolean;
   onClose: () => void;
+  onPaymentDeleted?: () => void;
 }
 
 export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
   payment,
   isOpen,
   onClose,
+  onPaymentDeleted,
 }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +42,8 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
   const [endDate, setEndDate] = useState('');
   const [filteredBalance, setFilteredBalance] = useState<number | null>(null);
   const [isFiltered, setIsFiltered] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isDeletingPayment, setIsDeletingPayment] = useState(false);
 
   useEffect(() => {
     if (isOpen && payment) {
@@ -150,6 +154,42 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
     
     setStartDate(firstDay.toISOString().split('T')[0]);
     setEndDate(lastDay.toISOString().split('T')[0]);
+  };
+
+  // Handle payment deletion
+  const handleDeletePayment = () => {
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDeletePayment = async () => {
+    if (!payment) return;
+    
+    setIsDeletingPayment(true);
+    try {
+      // Import api για authenticated request
+      const { api } = await import('@/lib/api');
+      
+      // API call για διαγραφή πληρωμής
+      await api.delete(`/financial/payments/${payment.id}/`);
+      
+      // Success - notify parent and close modal
+      if (onPaymentDeleted) {
+        onPaymentDeleted();
+      }
+      
+      // Close modal
+      setShowDeleteConfirmation(false);
+      onClose();
+    } catch (err: any) {
+      console.error('Error deleting payment:', err);
+      setError('Σφάλμα κατά τη διαγραφή της εισπραξής');
+    } finally {
+      setIsDeletingPayment(false);
+    }
+  };
+
+  const cancelDeletePayment = () => {
+    setShowDeleteConfirmation(false);
   };
 
   if (!isOpen || !payment) return null;
@@ -463,6 +503,15 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                 </>
               )}
             </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleDeletePayment}
+              className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Διαγραφή
+            </Button>
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-5 w-5" />
             </Button>
@@ -668,6 +717,94 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Διαγραφή Εισπραξής
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Η ενέργεια αυτή δεν μπορεί να αναιρεθεί
+                </p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="mb-6">
+              <p className="text-gray-700 mb-4">
+                Είστε σίγουροι ότι θέλετε να διαγράψετε την εισπραξή;
+              </p>
+              
+              {/* Payment Details */}
+              <div className="bg-gray-50 rounded-lg p-3 border">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-gray-600">Διαμέρισμα:</span>
+                    <p className="font-medium text-blue-600">
+                      {payment.apartment_number || `Διαμέρισμα ${payment.apartment}`}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Ποσό:</span>
+                    <p className="font-medium text-green-600">
+                      {formatCurrency(typeof payment.amount === 'string' ? parseFloat(payment.amount) : Number(payment.amount))}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Ημερομηνία:</span>
+                    <p className="font-medium">
+                      {formatDate(payment.date)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Ενοίκος:</span>
+                    <p className="font-medium">
+                      {payment.tenant_name || payment.owner_name || 'Μη καταχωρημένος'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={cancelDeletePayment}
+                disabled={isDeletingPayment}
+              >
+                Ακύρωση
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDeletePayment}
+                disabled={isDeletingPayment}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeletingPayment ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Διαγραφή...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Διαγραφή Εισπραξής
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

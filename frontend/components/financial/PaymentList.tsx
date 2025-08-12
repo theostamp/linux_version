@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Plus, Trash2 } from 'lucide-react';
 import { usePayments } from '@/hooks/usePayments';
 import { Payment, PaymentMethod } from '@/types/financial';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { PaymentDetailModal } from './PaymentDetailModal';
+import { AddPaymentModal } from './AddPaymentModal';
 
 interface PaymentWithProgressiveBalance extends Payment {
   progressiveBalance: number;
@@ -34,7 +35,7 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
   selectedMonth,
   onRefresh,
 }, ref) => {
-  const { payments, isLoading, error, loadPayments } = usePayments(buildingId, selectedMonth);
+  const { payments, isLoading, error, loadPayments, deletePayment } = usePayments(buildingId, selectedMonth);
   
   // Expose refresh method to parent component
   useImperativeHandle(ref, () => ({
@@ -57,13 +58,55 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
   const [payerFilter, setPayerFilter] = useState<string>('all');
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
+  const [isDeletingPayment, setIsDeletingPayment] = useState(false);
 
+  // Handle payment deletion
+  const handleDeletePayment = (payment: Payment) => {
+    setPaymentToDelete(payment);
+    setShowDeleteConfirmation(true);
+  };
 
+  const confirmDeletePayment = async () => {
+    if (!paymentToDelete) return;
+    
+    setIsDeletingPayment(true);
+    try {
+      const success = await deletePayment(paymentToDelete.id);
+      if (success) {
+        setShowDeleteConfirmation(false);
+        setPaymentToDelete(null);
+        // Refresh the list
+        loadPayments();
+        onRefresh?.();
+        // Show success message
+        console.log('Payment deleted successfully');
+      } else {
+        console.error('Failed to delete payment');
+      }
+    } catch (error) {
+      console.error('Error deleting payment:', error);
+    } finally {
+      setIsDeletingPayment(false);
+    }
+  };
+
+  const cancelDeletePayment = () => {
+    setShowDeleteConfirmation(false);
+    setPaymentToDelete(null);
+  };
 
   // Συγκεντρωτικά στοιχεία ανά διαμέρισμα/ενοίκο με φιλτραρίσμα
   const apartmentSummaries = useMemo(() => {
     // Χρησιμοποιούμε τα αρχικά payments από το API (που ήδη φιλτράρονται ανά μήνα)
     if (!payments) return [];
+
+    // ΣΗΜΕΙΩΣΗ: Διόρθωση υπολογισμού υπολοίπου
+    // Το current_balance από το API περιέχει μόνο τις καταχωρημένες συναλλαγές
+    // Για να πάρουμε το σωστό υπόλοιπο, αφαιρούμε τη μηνιαία οφειλή (monthly_due)
+    // Αποτέλεσμα: actualBalance = current_balance - monthly_due
     
 
 
@@ -100,9 +143,25 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
       const latestPayment = sortedPayments[sortedPayments.length - 1];
       const oldestPayment = sortedPayments[0];
       
-      // Χρησιμοποιούμε απευθείας το current_balance από το API
-      // Αυτό θα πρέπει να είναι το τρέχον υπόλοιπο του διαμερίσματος
-      const currentBalance = latestPayment.current_balance || 0;
+      // Υπολογισμός σωστού υπολοίπου: current_balance - monthly_due
+      // current_balance = συνολικές πληρωμές - καταχωρημένες χρεώσεις
+      // monthly_due = τρέχουσα μηνιαία οφειλή
+      const currentBalance = (latestPayment.current_balance || 0);
+      const monthlyDue = (latestPayment.monthly_due || 0);
+      
+      // Το πραγματικό υπόλοιπο είναι: πληρωμές - συνολικές οφειλές
+      // Αν monthly_due > 0, σημαίνει ότι υπάρχει εκκρεμής οφειλή που δεν έχει καταχωρηθεί ως transaction
+      const actualBalance = currentBalance - monthlyDue;
+      
+      // Debug log για επαλήθευση της διόρθωσης
+      if (monthlyDue > 0) {
+        console.log(`[PaymentList] Balance calculation for apartment ${apartmentId}:`, {
+          currentBalance,
+          monthlyDue,
+          actualBalance,
+          apartment_number: latestPayment.apartment_number
+        });
+      }
 
       // Δημιουργία συγκεντρωτικής εγγραφής
       summaries.push({
@@ -111,7 +170,7 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
         amount: totalAmount, // Συνολικό ποσό όλων των πληρωμών
         date: oldestPayment.date, // Ημερομηνία πρώτης πληρωμής
         notes: `${sortedPayments.length} πληρωμ${sortedPayments.length === 1 ? 'ή' : 'ές'}`,
-        progressiveBalance: currentBalance, // Τρέχον υπόλοιπο από το API
+        progressiveBalance: actualBalance, // Σωστό υπόλοιπο: πληρωμές - οφειλές
         paymentCount: sortedPayments.length, // Πλήθος πληρωμών για την καρτέλα
         // Διασφαλίζουμε ότι έχουμε τα σωστά δεδομένα διαμερίσματος
         apartment_number: latestPayment.apartment_number || `Διαμέρισμα ${latestPayment.apartment}`,
@@ -229,6 +288,14 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
           </div>
           <div className="flex flex-wrap items-center gap-2 lg:gap-4">
             <Button
+              onClick={() => setShowAddPaymentModal(true)}
+              className="bg-green-600 hover:bg-green-700 text-white"
+              size="sm"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Νέα Εισπραξη
+            </Button>
+            <Button
               variant="outline"
               size="sm"
               onClick={() => {
@@ -296,79 +363,121 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
           </Select>
         </div>
 
-        {/* Apartments Summary List */}
-        <div className="space-y-4">
+        {/* Payments Table */}
+        <div className="overflow-x-auto rounded-lg border border-gray-200">
           {apartmentSummaries.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              Δεν βρέθηκαν εισπράξεις με τα επιλεγμένα κριτήρια
+              Δεν βρέθηκαν εισπράξεις με τα επιλεγμένα κριτήρια.
             </div>
           ) : (
-            apartmentSummaries.map((summary, index) => (
-              <div
+            <table className="min-w-full divide-y divide-gray-200 table-fixed lg:table-auto">
+              {/* Table Header */}
+              <thead className="bg-gray-50 sticky top-0 z-10">
+                <tr>
+                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24 lg:w-auto">
+                    Διαμέρισμα
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 lg:w-auto">
+                    Ενοίκος
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20 lg:w-auto hidden sm:table-cell">
+                    Πληρωμές
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24 lg:w-auto">
+                    Τελ. Καταβολή
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24 lg:w-auto hidden md:table-cell">
+                    Ημερομηνία
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24 lg:w-auto">
+                    Μην. Οφειλή
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28 lg:w-auto">
+                    Υπόλοιπο
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20 lg:w-auto">
+                    Ενέργειες
+                  </th>
+                </tr>
+              </thead>
+              
+              {/* Table Body */}
+              <tbody className="bg-white divide-y divide-gray-200">
+                {apartmentSummaries.map((summary, index) => (
+                  <tr
                 key={`${summary.id}-${index}`}
-                className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold text-lg">
-                        <span className="text-blue-600">{summary.apartment_number || `Διαμέρισμα ${summary.apartment}`}</span>
-                      </h3>
-                      <Badge className="bg-blue-100 text-blue-800">
-                        {summary.notes} {/* Εμφανίζει "X πληρωμές" */}
-                      </Badge>
+                    className={`hover:bg-blue-50 transition-colors duration-150 ${
+                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    }`}
+                  >
+                    {/* Διαμέρισμα */}
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="text-sm font-medium text-blue-600">
+                          {summary.apartment_number || `Διαμέρισμα ${summary.apartment}`}
                     </div>
+                      </div>
+                    </td>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm text-gray-600">
-                      <div>
-                        <div className="text-xs text-gray-500 mb-1">Τελευταία Καταβολή:</div>
-                        <span className="font-semibold text-green-600">
-                          {formatCurrency(typeof summary.amount === 'string' ? parseFloat(summary.amount) : Number(summary.amount))}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500 mb-1">Ημερομηνία:</div>
-                        <span>{formatDate(summary.date)}</span>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500 mb-1">Ενοίκος:</div>
-                        <div className="flex flex-col gap-1">
+                    {/* Ενοίκος */}
+                    <td className="px-3 lg:px-6 py-4">
+                      <div className="text-sm text-gray-900">
                           {summary.tenant_name && summary.tenant_name.trim() !== '' ? (
-                            <>
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300 text-xs">
+                          <div className="flex flex-col space-y-1">
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300 text-xs w-fit">
                                 Ενοικιαστής
                               </Badge>
-                              <span className="text-blue-600 font-medium">{summary.tenant_name}</span>
-                            </>
+                            <span className="text-blue-600 font-medium text-xs lg:text-sm truncate" title={summary.tenant_name}>
+                              {summary.tenant_name}
+                            </span>
+                          </div>
                           ) : summary.owner_name && summary.owner_name.trim() !== '' ? (
-                            <>
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 text-xs">
+                          <div className="flex flex-col space-y-1">
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 text-xs w-fit">
                                 Ιδιοκτήτης
                               </Badge>
-                              <span className="text-green-600 font-medium">{summary.owner_name}</span>
-                            </>
-                          ) : (
-                            <span className="text-gray-400 italic">Μη καταχωρημένο</span>
+                            <span className="text-green-600 font-medium text-xs lg:text-sm truncate" title={summary.owner_name}>
+                              {summary.owner_name}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 italic text-xs">Μη καταχωρημένος</span>
                           )}
                         </div>
+                    </td>
+                    
+                    {/* Πληρωμές */}
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                      <Badge className="bg-blue-100 text-blue-800 text-xs">
+                        {summary.notes}
+                      </Badge>
+                    </td>
+                    
+                    {/* Τελευταία Καταβολή */}
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-right">
+                      <div className="text-xs lg:text-sm font-semibold text-green-600">
+                        {formatCurrency(typeof summary.amount === 'string' ? parseFloat(summary.amount) : Number(summary.amount))}
                       </div>
-                      <div>
-                        <div className="text-xs text-gray-500 mb-1">Κατοικία:</div>
-                        <span className="text-blue-600">
-                          {summary.apartment_number || `Διαμέρισμα ${summary.apartment}`}
-                        </span>
+                    </td>
+                    
+                    {/* Ημερομηνία */}
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                      <div className="text-xs lg:text-sm text-gray-900">
+                        {formatDate(summary.date)}
                       </div>
-                      <div>
-                        <div className="text-xs text-gray-500 mb-1">Μηνιαία Οφειλή:</div>
-                        <span className="text-orange-600 font-medium">
+                    </td>
+                    
+                    {/* Μηνιαία Οφειλή */}
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-right">
+                      <div className="text-xs lg:text-sm font-medium text-orange-600">
                           {summary.monthly_due ? formatCurrency(summary.monthly_due) : '-'}
-                        </span>
                       </div>
-                      <div>
-                        <div className="text-xs text-gray-500 mb-1">
-                          Τρέχον Υπόλοιπο {summary.progressiveBalance < 0 ? '(χρεωστικό)' : summary.progressiveBalance > 0 ? '(πιστωτικό)' : ''}:
-                        </div>
-                        <span className={`font-medium ${
+                    </td>
+                    
+                    {/* Υπόλοιπο */}
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex flex-col items-end space-y-1">
+                        <div className={`text-xs lg:text-sm font-semibold ${
                           summary.progressiveBalance < 0 
                             ? 'text-red-600' 
                             : summary.progressiveBalance > 0 
@@ -376,13 +485,27 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
                               : 'text-gray-600'
                         }`}>
                           {formatCurrency(summary.progressiveBalance)}
-                        </span>
+                        </div>
+                        <div className={`text-xs ${
+                          summary.progressiveBalance < 0 
+                            ? 'text-red-500' 
+                            : summary.progressiveBalance > 0 
+                              ? 'text-green-500' 
+                              : 'text-gray-500'
+                        }`}>
+                          {summary.progressiveBalance < 0 
+                            ? 'Χρεωστικό' 
+                            : summary.progressiveBalance > 0 
+                              ? 'Πιστωτικό' 
+                              : 'Εξοφλημένο'
+                          }
+                        </div>
                       </div>
-                    </div>
-
-                  </div>
-
-                  <div className="flex items-center gap-2 ml-4">
+                    </td>
+                    
+                    {/* Ενέργειες */}
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center gap-1 lg:gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -391,13 +514,55 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
                         setSelectedPayment(summary);
                         setShowDetailModal(true);
                       }}
-                    >
-                      Καρτέλα
+                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 text-xs lg:text-sm px-1 lg:px-2"
+                        >
+                          <span className="hidden lg:inline">Καρτέλα</span>
+                          <span className="lg:hidden">📄</span>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePayment(summary);
+                          }}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50 text-xs lg:text-sm px-1 lg:px-2"
+                          title="Διαγραφή εισπραξής"
+                        >
+                          <Trash2 className="w-3 h-3 lg:w-4 lg:h-4" />
+                          <span className="hidden xl:inline ml-1">Διαγραφή</span>
                     </Button>
                   </div>
-                </div>
-              </div>
-            ))
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              
+              {/* Table Footer - Summary */}
+              <tfoot className="bg-gray-100 border-t-2 border-gray-300">
+                <tr>
+                  <td colSpan={3} className="px-3 lg:px-6 py-3 text-left font-semibold text-gray-700">
+                    Σύνολο ({apartmentSummaries.length} διαμερίσματα)
+                  </td>
+                  <td className="px-3 lg:px-6 py-3 text-right font-semibold text-green-700">
+                    {formatCurrency(totalAmount)}
+                  </td>
+                  <td className="px-3 lg:px-6 py-3 hidden md:table-cell"></td>
+                  <td className="px-3 lg:px-6 py-3 text-right font-semibold text-orange-700">
+                    {formatCurrency(apartmentSummaries.reduce((sum, summary) => {
+                      const amount = summary.monthly_due || 0;
+                      return sum + amount;
+                    }, 0))}
+                  </td>
+                  <td className="px-3 lg:px-6 py-3 text-right font-semibold text-gray-700">
+                    {formatCurrency(apartmentSummaries.reduce((sum, summary) => {
+                      return sum + summary.progressiveBalance;
+                    }, 0))}
+                  </td>
+                  <td className="px-3 lg:px-6 py-3"></td>
+                </tr>
+              </tfoot>
+            </table>
           )}
         </div>
       </CardContent>
@@ -411,7 +576,112 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
         setShowDetailModal(false);
         setSelectedPayment(null);
       }}
+      onPaymentDeleted={() => {
+        loadPayments();
+        onRefresh?.();
+        setShowDetailModal(false);
+        setSelectedPayment(null);
+      }}
     />
+
+    {/* Add Payment Modal */}
+    <AddPaymentModal
+      buildingId={buildingId}
+      isOpen={showAddPaymentModal}
+      onClose={() => setShowAddPaymentModal(false)}
+      onPaymentAdded={() => {
+        loadPayments();
+        onRefresh?.();
+      }}
+    />
+
+    {/* Delete Confirmation Modal */}
+    {showDeleteConfirmation && paymentToDelete && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg max-w-md w-full p-6">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+              <Trash2 className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Διαγραφή Εισπραξής
+              </h3>
+              <p className="text-sm text-gray-600">
+                Η ενέργεια αυτή δεν μπορεί να αναιρεθεί
+              </p>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="mb-6">
+            <p className="text-gray-700 mb-4">
+              Είστε σίγουροι ότι θέλετε να διαγράψετε την εισπραξή;
+            </p>
+            
+            {/* Payment Details */}
+            <div className="bg-gray-50 rounded-lg p-3 border">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-gray-600">Διαμέρισμα:</span>
+                  <p className="font-medium text-blue-600">
+                    {paymentToDelete.apartment_number || `Διαμέρισμα ${paymentToDelete.apartment}`}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-600">Ποσό:</span>
+                  <p className="font-medium text-green-600">
+                    {formatCurrency(typeof paymentToDelete.amount === 'string' ? parseFloat(paymentToDelete.amount) : Number(paymentToDelete.amount))}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-600">Ημερομηνία:</span>
+                  <p className="font-medium">
+                    {formatDate(paymentToDelete.date)}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-600">Ενοίκος:</span>
+                  <p className="font-medium">
+                    {paymentToDelete.tenant_name || paymentToDelete.owner_name || 'Μη καταχωρημένος'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={cancelDeletePayment}
+              disabled={isDeletingPayment}
+            >
+              Ακύρωση
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeletePayment}
+              disabled={isDeletingPayment}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeletingPayment ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Διαγραφή...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Διαγραφή Εισπραξής
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   );
 });
