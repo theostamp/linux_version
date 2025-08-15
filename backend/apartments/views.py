@@ -321,6 +321,57 @@ class ApartmentViewSet(viewsets.ModelViewSet):
             'total_residents': len(residents)
         })
 
+    @action(detail=False, methods=['get'], url_path='building-residents/(?P<building_id>[0-9]+)')
+    def building_residents(self, request, building_id=None):
+        """Λίστα ενοίκων και ιδιοκτητών για επιλογή διαχειριστή"""
+        try:
+            building = Building.objects.get(id=building_id)
+        except Building.DoesNotExist:
+            return Response(
+                {'error': 'Το κτίριο δεν βρέθηκε'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Φέρνουμε όλα τα διαμερίσματα του κτιρίου
+        apartments = Apartment.objects.filter(building=building)
+        
+        residents = []
+        
+        for apartment in apartments:
+            # Προσθέτουμε ιδιοκτήτη αν υπάρχει όνομα και τηλέφωνο
+            if apartment.owner_name and apartment.owner_phone and not apartment.is_closed:
+                residents.append({
+                    'id': f"owner_{apartment.id}",
+                    'apartment_id': apartment.id,
+                    'apartment_number': apartment.number,
+                    'name': apartment.owner_name,
+                    'phone': apartment.owner_phone,
+                    'email': apartment.owner_email or '',
+                    'type': 'owner',
+                    'display_text': f"{apartment.owner_name} (Ιδιοκτήτης - Διαμέρισμα {apartment.number})"
+                })
+            
+            # Προσθέτουμε ενοικιαστή αν υπάρχει όνομα και τηλέφωνο
+            if apartment.tenant_name and apartment.tenant_phone and apartment.is_rented:
+                residents.append({
+                    'id': f"tenant_{apartment.id}",
+                    'apartment_id': apartment.id,
+                    'apartment_number': apartment.number,
+                    'name': apartment.tenant_name,
+                    'phone': apartment.tenant_phone,
+                    'email': apartment.tenant_email or '',
+                    'type': 'tenant',
+                    'display_text': f"{apartment.tenant_name} (Ενοίκος - Διαμέρισμα {apartment.number})"
+                })
+        
+        # Ταξινόμηση κατά όνομα
+        residents.sort(key=lambda x: x['name'])
+        
+        return Response({
+            'residents': residents,
+            'total_residents': len(residents)
+        })
+
     @action(detail=True, methods=['post'], url_path='update-email')
     def update_email(self, request, pk=None):
         """Ενημέρωση email ενοικιαστή/ιδιοκτήτη"""

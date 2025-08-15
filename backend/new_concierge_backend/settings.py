@@ -219,8 +219,8 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '1000/day',
-        'user': '1000/day',
+        'anon': '1000/hour',  # 1000 requests per hour for anonymous users
+        'user': '10000/hour',  # 10000 requests per hour for authenticated users
     },
 }
 
@@ -233,10 +233,16 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8080",
     "http://top.localhost:8080",  # Προσθήκη του συγκεκριμένου subdomain
     "http://tap.localhost:8080",  # Προσθήκη του tap subdomain
+    # ✅ Next.js default dev port
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://top.localhost:3000",
+    "http://tap.localhost:3000",
 ]  # τα «σκέτα» origins
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://[\w\-]+\.localhost:8080$",
+    r"^http://[\w\-]+\.localhost:3000$",
 ]  # ✅ Ο *οποιοσδήποτε* sub-domain *.localhost:8080
 
 CSRF_TRUSTED_ORIGINS = [
@@ -259,7 +265,11 @@ CORS_ALLOW_METHODS   = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
 # ----------------------------------------
 # 🔒 CSRF
 # ----------------------------------------
-_raw_csrf = get_list_env("CSRF_ORIGINS", "localhost:8080")
+_raw_csrf = get_list_env(
+    "CSRF_ORIGINS",
+    # ✅ Cover common dev hosts and ports by default
+    "localhost:8080,localhost:3000,127.0.0.1:8080,127.0.0.1:3000,top.localhost:8080,tap.localhost:8080,top.localhost:3000,tap.localhost:3000"
+)
 CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in _raw_csrf] + [f"https://{h}" for h in _raw_csrf]
 
 CSRF_COOKIE_NAME = 'csrftoken'

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -29,6 +30,7 @@ import { CalculatorState } from './CalculatorWizard';
 import { useCommonExpenses } from '@/hooks/useCommonExpenses';
 import { toast } from 'sonner';
 import { CommonExpenseModal } from './CommonExpenseModal';
+import { useApartmentsWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
 
 interface ResultsStepProps {
   state: CalculatorState;
@@ -51,6 +53,41 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [calculationProgress, setCalculationProgress] = useState(0);
   const [calculationSuccess, setCalculationSuccess] = useState(false);
+
+  // Load occupants (owner/tenant) info to show consistent names
+  const { apartments: aptWithFinancial, building: buildingData } = useApartmentsWithFinancialData(buildingId);
+  const occupantsByApartmentId = useMemo(() => {
+    const map: Record<number, { owner_name?: string; tenant_name?: string }> = {};
+    aptWithFinancial.forEach((apt) => {
+      map[apt.id] = { owner_name: apt.owner_name, tenant_name: apt.tenant_name };
+    });
+    return map;
+  }, [aptWithFinancial]);
+
+  const renderOccupants = (apartmentId: number, fallbackOwner?: string) => {
+    const info = occupantsByApartmentId[apartmentId] || {};
+    const owner = info.owner_name || fallbackOwner;
+    const tenant = info.tenant_name;
+    return (
+      <div className="flex flex-col gap-0.5">
+        {owner && (
+          <div className="text-xs">
+            <span className="inline-block px-1 mr-1 rounded bg-green-50 text-green-700 border border-green-200">Ιδιοκτήτης</span>
+            <span className="text-gray-800">{owner}</span>
+          </div>
+        )}
+        {tenant && (
+          <div className="text-xs">
+            <span className="inline-block px-1 mr-1 rounded bg-blue-50 text-blue-700 border border-blue-200">Ενοικιαστής</span>
+            <span className="text-gray-800">{tenant}</span>
+          </div>
+        )}
+        {!owner && !tenant && (
+          <span className="text-xs text-gray-400 italic">Μη καταχωρημένοι</span>
+        )}
+      </div>
+    );
+  };
 
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('el-GR', {
@@ -85,11 +122,32 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       Object.entries(state.shares).forEach(([apartmentId, share]) => {
         transformedShares[apartmentId] = {
           total_amount: share.total_amount,
-          breakdown: share.breakdown ? share.breakdown.reduce((acc: Record<string, any>, item) => {
-            acc[item.expense_id] = {
-              expense_title: item.expense_title,
-              expense_amount: item.expense_amount,
-              apartment_share: item.apartment_share,
+          breakdown: share.breakdown
+            ? share.breakdown.reduce(
+                (
+                  acc: Record<
+                    number,
+                    {
+                      expense_title: string;
+                      expense_amount: number;
+                      apartment_share: number;
+                      distribution_type: string;
+                      distribution_type_display: string;
+                    }
+                  >,
+                  item: {
+                    expense_id: number;
+                    expense_title: string;
+                    expense_amount: number;
+                    apartment_share: number;
+                    distribution_type: string;
+                    distribution_type_display: string;
+                  }
+                ) => {
+                  acc[item.expense_id] = {
+                    expense_title: item.expense_title,
+                    expense_amount: item.expense_amount,
+                    apartment_share: item.apartment_share,
               distribution_type: item.distribution_type,
               distribution_type_display: item.distribution_type_display
             };
@@ -128,9 +186,344 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
     }
   };
 
-  const handleExport = (format: 'pdf' | 'excel') => {
-    // TODO: Implement export functionality
-    toast.info(`Εξαγωγή σε ${format.toUpperCase()} θα υλοποιηθεί σύντομα`);
+
+
+  const handleExport = async (format: 'pdf' | 'excel') => {
+    try {
+      if (format === 'pdf') {
+        exportToPDF();
+      } else if (format === 'excel') {
+        exportToExcel();
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Σφάλμα κατά την εξαγωγή');
+    }
+  };
+
+  const exportToPDF = async () => {
+    // Ensure we're running on the client side
+    if (typeof window === 'undefined') {
+      toast.error('Η εξαγωγή PDF δεν είναι διαθέσιμη στον server');
+      return;
+    }
+
+    try {
+      // Dynamic import of html2canvas and jsPDF for better Greek support
+      const html2canvas = (await import('html2canvas')).default;
+      const jsPDF = (await import('jspdf')).default;
+      
+      // Calculate stats for the PDF
+      const stats = getSummaryStats();
+      
+      // Create a temporary div to render the content
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.width = '1200px';
+      tempDiv.style.backgroundColor = 'white';
+      tempDiv.style.padding = '20px';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      
+      // Create the HTML content
+      tempDiv.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="font-size: 24px; margin: 0; color: #333;">ΦΥΛΛΟ ΚΟΙΝΟΧΡΗΣΤΩΝ</h1>
+          <h2 style="font-size: 18px; margin: 5px 0; color: #666;">Αποτελέσματα Υπολογισμού</h2>
+          <p style="font-size: 14px; margin: 5px 0; color: #666;">Περίοδος: ${getPeriodInfo()}</p>
+          <p style="font-size: 14px; margin: 5px 0; color: #666;">Ημερομηνία έκδοσης: ${new Date().toLocaleDateString('el-GR')}</p>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+          <p style="font-size: 12px; margin: 2px 0;">Συνολικές δαπάνες: ${formatAmount(stats.totalAmount)} EUR</p>
+          <p style="font-size: 12px; margin: 2px 0;">Αριθμός διαμερισμάτων: ${stats.totalApartments}</p>
+          <p style="font-size: 12px; margin: 2px 0;">Μέσος όρος ανά διαμέρισμα: ${formatAmount(stats.averagePerApartment)} EUR</p>
+        </div>
+        
+        <!-- Ανάλυση Δαπανών -->
+        ${state.advancedShares ? `
+          <div style="margin-bottom: 20px;">
+            <h3 style="font-size: 16px; margin: 10px 0; color: #333; border-bottom: 2px solid #3b82f6; padding-bottom: 5px;">ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ</h3>
+            
+            ${state.advancedShares.heating_costs ? `
+              <div style="margin-bottom: 10px;">
+                <p style="font-size: 11px; margin: 2px 0;"><strong>Θέρμανση:</strong> ${formatAmount(state.advancedShares.heating_costs.total || 0)}€ 
+                  (Πάγιο: ${formatAmount(state.advancedShares.heating_costs.fixed || 0)}€ | 
+                  Μεταβλητό: ${formatAmount(state.advancedShares.heating_costs.variable || 0)}€)</p>
+              </div>
+            ` : ''}
+            
+            ${state.advancedShares.elevator_costs ? `
+              <div style="margin-bottom: 10px;">
+                <p style="font-size: 11px; margin: 2px 0;"><strong>Ανελκυστήρας:</strong> ${formatAmount(state.advancedShares.elevator_costs)}€</p>
+              </div>
+            ` : ''}
+            
+            ${state.advancedShares.reserve_contribution ? `
+              <div style="margin-bottom: 10px;">
+                <p style="font-size: 11px; margin: 2px 0;"><strong>Αποθεματικό Ταμείο:</strong> ${formatAmount(state.advancedShares.reserve_contribution)}€</p>
+              </div>
+            ` : ''}
+            
+            ${Array.isArray(state.advancedShares.expense_breakdown) ? `
+              <table style="width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 10px;">
+                <thead>
+                  <tr style="background-color: #3b82f6; color: white;">
+                    <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΚΑΤΗΓΟΡΙΑ</th>
+                    <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΣΥΝΟΛΙΚΟ ΠΟΣΟ</th>
+                    <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ</th>
+                    <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΜΕΘΟΔΟΣ ΚΑΤΑΝΟΜΗΣ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${state.advancedShares.expense_breakdown.map((category: any, index: number) => `
+                    <tr style="background-color: ${index % 2 === 0 ? '#f8f9fa' : 'white'};">
+                      <td style="border: 1px solid #ddd; padding: 4px; text-align: center;">${category.category}</td>
+                      <td style="border: 1px solid #ddd; padding: 4px; text-align: center;">${formatAmount(category.total_amount)}€</td>
+                      <td style="border: 1px solid #ddd; padding: 4px; text-align: center;">${formatAmount(category.per_apartment)}€</td>
+                      <td style="border: 1px solid #ddd; padding: 4px; text-align: center;">${category.distribution_method}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : ''}
+          </div>
+        ` : ''}
+        
+        <!-- Τμήμα Κατανομής -->
+        <div style="margin-bottom: 20px;">
+          <h3 style="font-size: 16px; margin: 10px 0; color: #333; border-bottom: 2px solid #3b82f6; padding-bottom: 5px;">ΤΜΗΜΑ ΚΑΤΑΝΟΜΗΣ ΔΑΠΑΝΩΝ</h3>
+          
+          <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+            <thead>
+              <tr style="background-color: #3b82f6; color: white;">
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Α/Α</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΔΙΑΜΕΡΙΣΜΑ</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΙΔΙΟΚΤΗΤΗΣ</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΧΙΛΙΟΣΤΑ</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΠΡΟΗΓ. ΥΠΟΛΟΙΠΟ</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΜΕΡΙΔΙΟ ΔΑΠΑΝΩΝ</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΣΥΝΟΛΙΚΟ ΟΦΕΙΛΟΜΕΝΟ</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΚΑΤΑΣΤΑΣΗ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.values(state.shares).map((share: any, index: number) => `
+                <tr style="background-color: ${index % 2 === 0 ? '#f8f9fa' : 'white'};">
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${index + 1}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${share.apartment_number}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${share.owner_name || 'Μη καταγεγραμμένος'}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${share.participation_mills}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${formatAmount(share.previous_balance)}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${formatAmount(share.total_amount)}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${formatAmount(share.total_due)}</td>
+                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${share.total_due < 0 ? 'Οφειλόμενο' : 'Ενεργό'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Ειδικά Χιλιοστά Ανελκυστήρα -->
+        ${state.advancedShares && state.advancedShares.elevator_shares ? `
+          <div style="margin-bottom: 20px;">
+            <h3 style="font-size: 16px; margin: 10px 0; color: #333; border-bottom: 2px solid #3b82f6; padding-bottom: 5px;">ΕΙΔΙΚΑ ΧΙΛΙΟΣΤΑ ΑΝΕΛΚΥΣΤΗΡΑ</h3>
+            
+            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+              <thead>
+                <tr style="background-color: #3b82f6; color: white;">
+                  <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΔΙΑΜΕΡΙΣΜΑ</th>
+                  <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΧΙΛΙΟΣΤΑ ΑΝΕΛΚΥΣΤΗΡΑ</th>
+                  <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΜΕΡΙΔΙΟ ΑΝΕΛΚΥΣΤΗΡΑ</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.values(state.advancedShares.elevator_shares).map((share: any, index: number) => `
+                  <tr style="background-color: ${index % 2 === 0 ? '#f8f9fa' : 'white'};">
+                    <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${share.apartment_number}</td>
+                    <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${share.elevator_mills}</td>
+                    <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${formatAmount(share.elevator_share)}€</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        ` : ''}
+      `;
+      
+      // Add to document
+      document.body.appendChild(tempDiv);
+      
+      // Convert to canvas
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      // Remove temporary div
+      document.body.removeChild(tempDiv);
+      
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('landscape', 'mm', 'a4');
+      const imgWidth = 297; // A4 width in mm
+      const pageHeight = 210; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      // Save the PDF
+      const fileName = `φυλλο_κοινοχρηστων_${getPeriodInfo().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+      toast.success('Εξαγωγή PDF ολοκληρώθηκε επιτυχώς!');
+    } catch (error) {
+      console.error('PDF Export Error:', error);
+      toast.error('Σφάλμα κατά την εξαγωγή PDF');
+    }
+  };
+
+  const exportToExcel = async () => {
+    // Ensure we're running on the client side
+    if (typeof window === 'undefined') {
+      toast.error('Η εξαγωγή Excel δεν είναι διαθέσιμη στον server');
+      return;
+    }
+
+    try {
+      // Dynamic import of xlsx and file-saver to avoid SSR issues
+      const XLSX = await import('xlsx');
+      const fileSaver = await import('file-saver');
+      const { saveAs } = fileSaver;
+      
+      // Προετοιμασία δεδομένων
+      const workbook = XLSX.utils.book_new();
+    
+    // Κύριο φύλλο με τα δεδομένα (Τμήμα Κατανομής)
+    const mainData = Object.values(state.shares).map((share: any, index: number) => {
+      return {
+        'A/A': index + 1,
+        'ΔΙΑΜΕΡΙΣΜΑ': share.apartment_number,
+        'ΙΔΙΟΚΤΗΤΗΣ': share.owner_name || 'Μη καταχωρημένος',
+        'ΧΙΛΙΟΣΤΑ': share.participation_mills,
+        'ΠΡΟΗΓΟΥΜΕΝΟ ΥΠΟΛΟΙΠΟ (€)': share.previous_balance,
+        'ΜΕΡΙΔΙΟ ΔΑΠΑΝΩΝ (€)': share.total_amount,
+        'ΣΥΝΟΛΙΚΟ ΟΦΕΙΛΟΜΕΝΟ (€)': share.total_due,
+        'ΚΑΤΑΣΤΑΣΗ': share.total_due < 0 ? 'Οφειλόμενο' : 'Ενεργό'
+      };
+    });
+    
+    const mainWorksheet = XLSX.utils.json_to_sheet(mainData);
+    
+    // Ανάλυση Δαπανών
+    let expenseBreakdownData: any[] = [];
+    if (state.advancedShares) {
+      // Προσθήκη γενικών πληροφοριών ανάλυσης
+      if (state.advancedShares.heating_costs) {
+        expenseBreakdownData.push({
+          'ΚΑΤΗΓΟΡΙΑ': 'Θέρμανση - Συνολικά',
+          'ΠΟΣΟ (€)': state.advancedShares.heating_costs.total || 0,
+          'ΠΕΡΙΓΡΑΦΗ': 'Συνολικό κόστος θέρμανσης'
+        });
+        expenseBreakdownData.push({
+          'ΚΑΤΗΓΟΡΙΑ': 'Θέρμανση - Πάγιο',
+          'ΠΟΣΟ (€)': state.advancedShares.heating_costs.fixed || 0,
+          'ΠΕΡΙΓΡΑΦΗ': 'Πάγιο κόστος θέρμανσης'
+        });
+        expenseBreakdownData.push({
+          'ΚΑΤΗΓΟΡΙΑ': 'Θέρμανση - Μεταβλητό',
+          'ΠΟΣΟ (€)': state.advancedShares.heating_costs.variable || 0,
+          'ΠΕΡΙΓΡΑΦΗ': 'Μεταβλητό κόστος θέρμανσης'
+        });
+      }
+      
+      if (state.advancedShares.elevator_costs) {
+        expenseBreakdownData.push({
+          'ΚΑΤΗΓΟΡΙΑ': 'Ανελκυστήρας',
+          'ΠΟΣΟ (€)': state.advancedShares.elevator_costs,
+          'ΠΕΡΙΓΡΑΦΗ': 'Κόστος ανελκυστήρα'
+        });
+      }
+      
+      if (state.advancedShares.reserve_contribution) {
+        expenseBreakdownData.push({
+          'ΚΑΤΗΓΟΡΙΑ': 'Αποθεματικό Ταμείο',
+          'ΠΟΣΟ (€)': state.advancedShares.reserve_contribution,
+          'ΠΕΡΙΓΡΑΦΗ': 'Συνεισφορά αποθεματικού ταμείου'
+        });
+      }
+      
+      // Προσθήκη λεπτομερών ανάλυσης αν υπάρχουν
+      if (Array.isArray(state.advancedShares.expense_breakdown)) {
+        state.advancedShares.expense_breakdown.forEach((category: any) => {
+          expenseBreakdownData.push({
+            'ΚΑΤΗΓΟΡΙΑ': category.category,
+            'ΠΟΣΟ (€)': category.total_amount,
+            'ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ (€)': category.per_apartment,
+            'ΜΕΘΟΔΟΣ ΚΑΤΑΝΟΜΗΣ': category.distribution_method
+          });
+        });
+      }
+    }
+    
+    const expenseBreakdownWorksheet = XLSX.utils.json_to_sheet(expenseBreakdownData);
+    
+    // Ειδικά Χιλιοστά Ανελκυστήρα
+    let elevatorData: any[] = [];
+    if (state.advancedShares && state.advancedShares.elevator_shares) {
+      elevatorData = Object.values(state.advancedShares.elevator_shares).map((share: any) => ({
+        'ΔΙΑΜΕΡΙΣΜΑ': share.apartment_number,
+        'ΧΙΛΙΟΣΤΑ ΑΝΕΛΚΥΣΤΗΡΑ': share.elevator_mills,
+        'ΜΕΡΙΔΙΟ ΑΝΕΛΚΥΣΤΗΡΑ (€)': share.elevator_share
+      }));
+    }
+    
+    const elevatorWorksheet = XLSX.utils.json_to_sheet(elevatorData);
+    
+    // Προσθήκη στατιστικών
+    const statsData = [
+      { 'ΣΤΑΤΙΣΤΙΚΑ': 'Συνολικές Δαπάνες', 'ΤΙΜΗ': `${formatAmount(stats.totalAmount)}€` },
+      { 'ΣΤΑΤΙΣΤΙΚΑ': 'Αριθμός Διαμερισμάτων', 'ΤΙΜΗ': stats.totalApartments },
+      { 'ΣΤΑΤΙΣΤΙΚΑ': 'Μέσος Όρος ανά Διαμέρισμα', 'ΤΙΜΗ': `${formatAmount(stats.averagePerApartment)}€` },
+      { 'ΣΤΑΤΙΣΤΙΚΑ': 'Συνολικό Οφειλόμενο', 'ΤΙΜΗ': `${formatAmount(stats.totalDue)}€` },
+      { 'ΣΤΑΤΙΣΤΙΚΑ': 'Περίοδος', 'ΤΙΜΗ': getPeriodInfo() },
+      { 'ΣΤΑΤΙΣΤΙΚΑ': 'Ημερομηνία Έκδοσης', 'ΤΙΜΗ': new Date().toLocaleDateString('el-GR') },
+    ];
+    
+    const statsWorksheet = XLSX.utils.json_to_sheet(statsData);
+    
+    // Προσθήκη φύλλων στο βιβλίο
+    XLSX.utils.book_append_sheet(workbook, mainWorksheet, 'Τμήμα Κατανομής');
+    XLSX.utils.book_append_sheet(workbook, expenseBreakdownWorksheet, 'Ανάλυση Δαπανών');
+    if (elevatorData.length > 0) {
+      XLSX.utils.book_append_sheet(workbook, elevatorWorksheet, 'Χιλιοστά Ανελκυστήρα');
+    }
+    XLSX.utils.book_append_sheet(workbook, statsWorksheet, 'Στατιστικά');
+    
+      // Αποθήκευση αρχείου
+      const fileName = `φυλλο_κοινοχρηστων_${getPeriodInfo().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, fileName);
+      
+      toast.success('Εξαγωγή Excel ολοκληρώθηκε επιτυχώς!');
+    } catch (error) {
+      console.error('Excel Export Error:', error);
+      toast.error('Σφάλμα κατά την εξαγωγή Excel');
+    }
   };
 
   const handlePrint = () => {
@@ -151,8 +544,21 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         }
       };
       
-      const reserveFundStartDate = getFromStorage('start_date', '2025-07-31');
-      const reserveFundEndDate = getFromStorage('target_date', '2026-01-30');
+      // Check if reserve fund goal is set and not zero
+      const reserveFundGoal = getFromStorage('goal', 0);
+      if (!reserveFundGoal || reserveFundGoal === 0) {
+        console.log('🔄 Reserve fund goal is zero or not set, returning false');
+        return false;
+      }
+      
+      const reserveFundStartDate = getFromStorage('start_date', null);
+      const reserveFundEndDate = getFromStorage('target_date', null);
+      
+      // If no dates are set, return false
+      if (!reserveFundStartDate || !reserveFundEndDate) {
+        console.log('🔄 Reserve fund dates not set, returning false');
+        return false;
+      }
       
       const periodStart = new Date(startDate);
       const periodEnd = new Date(endDate);
@@ -163,7 +569,8 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         periodStart: periodStart.toISOString().split('T')[0],
         periodEnd: periodEnd.toISOString().split('T')[0],
         rfStart: rfStart.toISOString().split('T')[0],
-        rfEnd: rfEnd.toISOString().split('T')[0]
+        rfEnd: rfEnd.toISOString().split('T')[0],
+        reserveFundGoal
       });
       
       // Check if the period overlaps with reserve fund timeline
@@ -964,7 +1371,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <h4 className="font-semibold text-lg">{share.apartment_number}</h4>
-                      <p className="text-sm text-gray-600">{share.owner_name}</p>
+                      {renderOccupants(share.apartment_id, share.owner_name)}
                     </div>
                     <Badge variant={share.total_due < 0 ? 'destructive' : 'default'} className="text-xs">
                       {share.total_due < 0 ? 'Οφειλόμενο' : 'Ενεργό'}
@@ -1052,7 +1459,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             <TableHeader>
               <TableRow>
                 <TableHead>Διαμέρισμα</TableHead>
-                <TableHead>Ιδιοκτήτης</TableHead>
+                <TableHead>Ένοικοι</TableHead>
                 <TableHead>Χιλιοστά</TableHead>
                 <TableHead>Προηγούμενο Υπόλοιπο</TableHead>
                 <TableHead>Μερίδιο Δαπανών</TableHead>
@@ -1067,7 +1474,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                   <TableCell className="font-medium">
                     {share.apartment_number}
                   </TableCell>
-                  <TableCell>{share.owner_name}</TableCell>
+                  <TableCell>{renderOccupants(share.apartment_id, share.owner_name)}</TableCell>
                   <TableCell>{share.participation_mills}</TableCell>
                   <TableCell className={share.previous_balance < 0 ? 'text-red-600' : 'text-green-600'}>
                     {formatAmount(share.previous_balance)}€
@@ -1180,7 +1587,25 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                   </div>
                   {!checkIfPeriodInReserveFundTimeline(state.customPeriod.startDate, state.customPeriod.endDate) && (
                     <div className="text-xs text-blue-600 mt-2 bg-blue-50 p-2 rounded">
-                      📅 Ο επιλεγμένος μήνας είναι εκτός της περιόδου συλλογής αποθεματικού
+                      {(() => {
+                        // Check if reserve fund goal is zero or not set
+                        const getStorageKey = (key: string) => `reserve_fund_${buildingId}_${key}`;
+                        const getFromStorage = (key: string, defaultValue: any = null) => {
+                          try {
+                            const stored = localStorage.getItem(getStorageKey(key));
+                            return stored ? JSON.parse(stored) : defaultValue;
+                          } catch {
+                            return defaultValue;
+                          }
+                        };
+                        const reserveFundGoal = getFromStorage('goal', 3000);
+                        
+                        if (!reserveFundGoal || reserveFundGoal === 0) {
+                          return '💰 Δεν έχει οριστεί στόχος αποθεματικού';
+                        } else {
+                          return '📅 Ο επιλεγμένος μήνας είναι εκτός της περιόδου συλλογής αποθεματικού';
+                        }
+                      })()}
                     </div>
                   )}
                 </div>
@@ -1295,7 +1720,9 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         onClose={() => setShowCommonExpenseModal(false)}
         state={state}
         buildingId={buildingId}
-        buildingName="Κτίριο Διαχείρισης"
+        buildingName={buildingData?.name || "Κτίριο Διαχείρισης"}
+        managementFeePerApartment={buildingData?.management_fee_per_apartment || 0}
+        reserveContributionPerApartment={buildingData?.reserve_contribution_per_apartment || 0}
       />
     </div>
   );

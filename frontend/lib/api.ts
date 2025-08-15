@@ -28,11 +28,57 @@ export const API_BASE_URL = getApiBaseUrl();
 export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+  timeout: 30000, // Increased timeout for batch operations
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
 });
+
+// Exponential backoff utility for rate limiting
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const exponentialBackoff = async (attempt: number, maxAttempts: number = 3): Promise<number> => {
+  if (attempt > maxAttempts) {
+    throw new Error('Max retry attempts exceeded');
+  }
+  const baseDelay = 1000; // 1 second
+  const backoffDelay = baseDelay * Math.pow(2, attempt - 1);
+  const jitter = Math.random() * 0.1 * backoffDelay; // Add 10% jitter
+  return backoffDelay + jitter;
+};
+
+// Enhanced request wrapper with retry logic for rate limiting
+export const makeRequestWithRetry = async (requestConfig: any, maxAttempts: number = 3): Promise<any> => {
+  let lastError: AxiosError | null = null;
+  
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await api(requestConfig);
+    } catch (error: any) {
+      lastError = error;
+      
+      // Only retry on 429 (rate limit) or certain network errors
+      if (error.response?.status === 429 || 
+          (error.code === 'ECONNABORTED' && attempt < maxAttempts)) {
+        
+        console.warn(`Request failed (attempt ${attempt}/${maxAttempts}), retrying...`, {
+          status: error.response?.status,
+          url: requestConfig.url,
+        });
+        
+        const delayMs = await exponentialBackoff(attempt, maxAttempts);
+        await delay(delayMs);
+        continue;
+      }
+      
+      // For other errors, don't retry
+      throw error;
+    }
+  }
+  
+  throw lastError;
+};
 
 
 // Flag για να αποφύγουμε πολλαπλές προσπάθειες ανανέωσης ταυτόχρονα
@@ -137,13 +183,30 @@ api.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean; _rateLimitRetry?: boolean };
 
     console.log('%c[AXIOS RES INTERCEPTOR] Σφάλμα:', 'color: red; font-weight: bold;');
     console.log('Status code:', error.response?.status);
     console.log('Αιτία:', error.response?.data);
     console.log('URL Αρχικού Αιτήματος:', originalRequest?.url);
     console.log('Authorization header:', originalRequest?.headers?.Authorization || originalRequest?.headers?.authorization);
+
+    // Handle rate limiting (429 errors) with exponential backoff
+    if (error.response?.status === 429 && !originalRequest._rateLimitRetry) {
+      console.warn('[INTERCEPTOR] Rate limit detected (429). Applying delay before retry...');
+      originalRequest._rateLimitRetry = true;
+      
+      // Get retry-after header or use default delay (2 seconds)
+      const retryAfter = error.response.headers['retry-after'];
+      const delay = retryAfter ? parseInt(retryAfter) * 1000 : 2000; // Convert to milliseconds
+      
+      // Wait for the specified delay
+      await new Promise(resolve => setTimeout(resolve, Math.min(delay, 10000))); // Max 10 seconds
+      
+      console.log(`[INTERCEPTOR] Retrying after ${delay}ms delay...`);
+      return api(originalRequest);
+    }
+
     console.log('[INTERCEPTOR] Replaying original request with new token:', {
       url: originalRequest.url,
       headers: originalRequest.headers,
@@ -275,6 +338,26 @@ export type Obligation = {
     // ... άλλα πεδία που μπορεί να έχει το μοντέλο Obligation
 };
 
+export type ServicePackage = {
+  id: number;
+  name: string;
+  description: string;
+  fee_per_apartment: number;
+  services_included: string[];
+  services_list: string;
+  total_cost_for_building: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export interface ServicePackagesResponse {
+  results: ServicePackage[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+}
+
 // Define the Building type
 export type Building = {
   id: number;
@@ -288,6 +371,8 @@ export type Building = {
   management_office_name?: string;
   management_office_phone?: string;
   management_office_address?: string;
+  management_fee_per_apartment?: number;
+  reserve_contribution_per_apartment?: number;
   created_at: string;
   updated_at?: string;
   street_view_image?: string;
@@ -309,7 +394,9 @@ export async function fetchBuildings(page: number = 1, pageSize: number = 50): P
   console.log(`[API CALL] Attempting to fetch /buildings/ with page=${page}, pageSize=${pageSize}`);
   console.log('[API CALL] Current API base URL:', API_BASE_URL);
   try {
-    const resp = await api.get<BuildingsResponse>('/buildings/', {
+    const resp = await makeRequestWithRetry({
+      method: 'get',
+      url: '/buildings/list/',
       params: {
         page,
         page_size: pageSize
@@ -328,12 +415,14 @@ export async function fetchBuildings(page: number = 1, pageSize: number = 50): P
   }
 }
 
-// Backward compatibility function
+// Backward compatibility function with retry logic
 export async function fetchAllBuildings(): Promise<Building[]> {
   console.log('[API CALL] Fetching all buildings (no pagination)');
   try {
     // Try to disable pagination by requesting a very large page size
-    const resp = await api.get<{ results?: Building[] } | Building[]>('/buildings/', {
+    const resp = await makeRequestWithRetry({
+      method: 'get',
+      url: '/buildings/list/',
       params: {
         page_size: 1000, // Request a very large page size to get all buildings
         page: 1
@@ -357,7 +446,10 @@ export async function fetchAllBuildings(): Promise<Building[]> {
       
       while (nextUrl && allBuildings.length < totalCount && allBuildings.length < 1000) {
         console.log('[API CALL] Fetching next page:', nextUrl);
-        const nextResp = await api.get(nextUrl);
+        const nextResp = await makeRequestWithRetry({
+          method: 'get',
+          url: nextUrl
+        });
         const nextData = nextResp.data;
         const nextBuildings = Array.isArray(nextData) ? nextData : nextData.results ?? [];
         allBuildings = [...allBuildings, ...nextBuildings];
@@ -460,8 +552,11 @@ export async function fetchAllBuildingsPublic(): Promise<Building[]> {
 }
 
 export async function fetchBuilding(id: number): Promise<Building> {
-  console.log(`[API CALL] Attempting to fetch /buildings/${id}/`);
-  const { data } = await api.get<Building>(`/buildings/${id}/`);
+  console.log(`[API CALL] Attempting to fetch /buildings/list/${id}/`);
+  const { data } = await makeRequestWithRetry({
+    method: 'get',
+    url: `/buildings/list/${id}/`
+  });
   return data;
 }
 
@@ -482,7 +577,7 @@ export async function createBuilding(payload: BuildingPayload): Promise<Building
   try {
     // Log the exact request configuration
     const config = {
-      url: '/buildings/',
+      url: '/buildings/list/',
       method: 'POST',
       data: payload,
       headers: {
@@ -493,7 +588,7 @@ export async function createBuilding(payload: BuildingPayload): Promise<Building
     console.log('[API CALL] Request config:', config);
     console.log('[API CALL] Request data stringified:', JSON.stringify(payload));
     
-    const { data } = await api.post<Building>('/buildings/', payload);
+    const { data } = await api.post<Building>('/buildings/list/', payload);
     console.log('[API CALL] Created building successfully:', data);
     return data;
   } catch (error) {
@@ -508,14 +603,18 @@ export async function createBuilding(payload: BuildingPayload): Promise<Building
 
 export async function updateBuilding(id: number, payload: BuildingPayload): Promise<Building> {
   console.log(`[API CALL] Attempting to update building ${id}:`, payload);
-  const { data } = await api.put<Building>(`/buildings/${id}/`, payload);
+  const { data } = await api.put<Building>(`/buildings/list/${id}/`, payload, {
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  });
   return data;
 }
 
 export async function deleteBuilding(id: number): Promise<void> {
   console.log(`[API CALL] Attempting to delete building ${id}`);
   try {
-    await api.delete(`/buildings/${id}/`);
+    await api.delete(`/buildings/list/${id}/`);
     console.log(`[API] Successfully deleted building ${id}`);
   } catch (error) {
     console.error(`[API] Error deleting building ${id}:`, error);
@@ -1354,7 +1453,10 @@ export async function fetchApartments(buildingId?: number, status?: string, orde
   if (status) params.append('status', status);
   if (ordering) params.append('ordering', ordering);
   
-  const { data } = await api.get<ApartmentList[]>(`/apartments/?${params.toString()}`);
+  const { data } = await makeRequestWithRetry({
+    method: 'get',
+    url: `/apartments/?${params.toString()}`
+  });
   return data;
 }
 
@@ -1370,6 +1472,105 @@ export async function fetchBuildingApartments(buildingId: number): Promise<Build
   console.log('[API CALL] Attempting to fetch building apartments:', buildingId);
   const { data } = await api.get<BuildingApartmentsResponse>(`/apartments/by-building/${buildingId}/`);
   return data;
+}
+
+// Λήψη διαμερισμάτων με οικονομικά δεδομένα σε μια κλήση (optimized for rate limiting)
+export async function fetchApartmentsWithFinancialData(buildingId: number): Promise<any[]> {
+  console.log('[API CALL] Attempting to fetch apartments with financial data:', buildingId);
+  
+  try {
+    // Try the optimized endpoint first
+    const { data } = await makeRequestWithRetry({
+      method: 'get',
+      url: `/financial/building/${buildingId}/apartments-summary/`
+    });
+    
+    return data.results || data || [];
+  } catch (error: any) {
+    // If the optimized endpoint doesn't exist, fall back to individual calls with throttling
+    console.warn('Batch endpoint not available, using fallback with throttling');
+    return await fetchApartmentsWithFinancialDataFallback(buildingId);
+  }
+}
+
+// Fallback method with throttling to prevent rate limiting
+async function fetchApartmentsWithFinancialDataFallback(buildingId: number): Promise<any[]> {
+  console.log('[API CALL] Using fallback method with throttling for building:', buildingId);
+  
+  // First get building data and apartments
+  const [buildingResponse, apartmentsResponse] = await Promise.all([
+    makeRequestWithRetry({ method: 'get', url: `/buildings/list/${buildingId}/` }),
+    makeRequestWithRetry({ method: 'get', url: `/apartments/?building=${buildingId}` })
+  ]);
+  
+  const allApartments = apartmentsResponse.data.results || apartmentsResponse.data;
+  
+  // Throttle the financial data requests to prevent rate limiting
+  const apartmentsWithFinancialData = [];
+  const BATCH_SIZE = 3; // Process 3 apartments at a time
+  const DELAY_BETWEEN_BATCHES = 500; // 500ms delay between batches
+  
+  for (let i = 0; i < allApartments.length; i += BATCH_SIZE) {
+    const batch = allApartments.slice(i, i + BATCH_SIZE);
+    
+    const batchPromises = batch.map(async (apartment: any) => {
+      try {
+        const paymentsResponse = await makeRequestWithRetry({
+          method: 'get',
+          url: `/financial/payments/?building_id=${buildingId}&apartment=${apartment.id}`
+        });
+        
+        const payments = paymentsResponse.data.results || paymentsResponse.data || [];
+        const sortedPayments = Array.isArray(payments)
+          ? [...payments].sort((a, b) => {
+              const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+              if (dateDiff !== 0) return dateDiff;
+              const aId = typeof a.id === 'number' ? a.id : parseInt(String(a.id), 10) || 0;
+              const bId = typeof b.id === 'number' ? b.id : parseInt(String(b.id), 10) || 0;
+              return bId - aId;
+            })
+          : [];
+        const latestPayment = sortedPayments.length > 0 ? sortedPayments[0] : null;
+        
+        return {
+          id: apartment.id,
+          number: apartment.number,
+          owner_name: apartment.owner_name,
+          tenant_name: apartment.tenant_name,
+          current_balance: latestPayment?.current_balance || 0,
+          monthly_due: latestPayment?.monthly_due || 0,
+          building_id: apartment.building,
+          building_name: apartment.building_name,
+          participation_mills: apartment.participation_mills,
+          latest_payment_date: latestPayment?.date,
+          latest_payment_amount: latestPayment?.amount,
+        };
+      } catch (err) {
+        console.warn(`Failed to get financial data for apartment ${apartment.id}:`, err);
+        return {
+          id: apartment.id,
+          number: apartment.number,
+          owner_name: apartment.owner_name,
+          tenant_name: apartment.tenant_name,
+          current_balance: 0,
+          monthly_due: 0,
+          building_id: apartment.building,
+          building_name: apartment.building_name,
+          participation_mills: apartment.participation_mills,
+        };
+      }
+    });
+    
+    const batchResults = await Promise.all(batchPromises);
+    apartmentsWithFinancialData.push(...batchResults);
+    
+    // Add delay between batches to prevent rate limiting
+    if (i + BATCH_SIZE < allApartments.length) {
+      await delay(DELAY_BETWEEN_BATCHES);
+    }
+  }
+  
+  return apartmentsWithFinancialData;
 }
 
 // Δημιουργία διαμερίσματος
@@ -1397,6 +1598,25 @@ export async function fetchResidentsForQR(buildingId: number): Promise<{
 }> {
   console.log('[API CALL] Attempting to fetch residents for QR code:', buildingId);
   const { data } = await api.get(`/apartments/residents/${buildingId}/`);
+  return data;
+}
+
+// Λήψη λίστας ενοίκων για επιλογή διαχειριστή
+export async function fetchBuildingResidents(buildingId: number): Promise<{
+  residents: Array<{
+    id: string;
+    apartment_id: number;
+    apartment_number: string;
+    name: string;
+    phone: string;
+    email: string;
+    type: 'owner' | 'tenant';
+    display_text: string;
+  }>;
+  total_residents: number;
+}> {
+  console.log('[API CALL] Attempting to fetch building residents for manager selection:', buildingId);
+  const { data } = await api.get(`/apartments/building-residents/${buildingId}/`);
   return data;
 }
 
@@ -1456,6 +1676,75 @@ export async function fetchApartmentStatistics(buildingId?: number): Promise<Apa
   const params = buildingId ? `?building=${buildingId}` : '';
   const { data } = await api.get<ApartmentStatistics>(`/apartments/statistics/${params}`);
   return data;
+}
+
+// Service Packages API
+export async function fetchServicePackages(buildingId?: number): Promise<ServicePackage[]> {
+  console.log('[API CALL] Fetching service packages');
+  try {
+    const params = new URLSearchParams();
+    if (buildingId) {
+      params.append('building_id', buildingId.toString());
+    }
+    
+    const resp = await api.get<ServicePackagesResponse>(`/buildings/service-packages/?${params}`);
+    console.log('[API CALL] Service packages response:', resp.data);
+    
+    // Επιστρέφει το results array από το paginated response
+    return resp.data.results || [];
+  } catch (error) {
+    console.error('[API CALL] Error fetching service packages:', error);
+    throw error;
+  }
+}
+
+export async function createServicePackage(packageData: Partial<ServicePackage>): Promise<ServicePackage> {
+  console.log('[API CALL] Creating service package:', packageData);
+  try {
+    const resp = await api.post<ServicePackage>('/buildings/service-packages/', packageData);
+    console.log('[API CALL] Create service package response:', resp.data);
+    return resp.data;
+  } catch (error) {
+    console.error('[API CALL] Error creating service package:', error);
+    throw error;
+  }
+}
+
+export async function updateServicePackage(packageId: number, packageData: Partial<ServicePackage>): Promise<ServicePackage> {
+  console.log(`[API CALL] Updating service package ${packageId}:`, packageData);
+  try {
+    const resp = await api.patch<ServicePackage>(`/buildings/service-packages/${packageId}/`, packageData);
+    console.log('[API CALL] Update service package response:', resp.data);
+    return resp.data;
+  } catch (error) {
+    console.error('[API CALL] Error updating service package:', error);
+    throw error;
+  }
+}
+
+export async function deleteServicePackage(packageId: number): Promise<void> {
+  console.log(`[API CALL] Deleting service package ${packageId}`);
+  try {
+    await api.delete(`/buildings/service-packages/${packageId}/`);
+    console.log('[API CALL] Service package deleted successfully');
+  } catch (error) {
+    console.error('[API CALL] Error deleting service package:', error);
+    throw error;
+  }
+}
+
+export async function applyServicePackageToBuilding(packageId: number, buildingId: number): Promise<any> {
+  console.log(`[API CALL] Applying service package ${packageId} to building ${buildingId}`);
+  try {
+    const resp = await api.post(`/buildings/service-packages/${packageId}/apply_to_building/`, {
+      building_id: buildingId
+    });
+    console.log('[API CALL] Apply service package response:', resp.data);
+    return resp.data;
+  } catch (error) {
+    console.error('[API CALL] Error applying service package:', error);
+    throw error;
+  }
 }
 
 if (typeof window !== "undefined") {

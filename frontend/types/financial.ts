@@ -133,6 +133,7 @@ export interface ExpenseBreakdown {
 export interface CommonExpenseShare {
   apartment_id: number;
   apartment_number: string;
+  identifier: string;
   owner_name: string;
   participation_mills: number;
   current_balance: number;
@@ -429,6 +430,7 @@ export interface CommonExpensePeriod {
 export interface ApartmentShare {
   apartment_id: number;
   apartment_number: string;
+  identifier: string;
   owner_name: string;
   participation_mills: number;
   current_balance: number;

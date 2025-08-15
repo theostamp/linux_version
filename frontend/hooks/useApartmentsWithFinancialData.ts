@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { api, fetchApartmentsWithFinancialData } from '@/lib/api';
 
 export interface ApartmentWithFinancialData {
   id: number;
@@ -17,66 +17,54 @@ export interface ApartmentWithFinancialData {
 
 export const useApartmentsWithFinancialData = (buildingId?: number) => {
   const [apartments, setApartments] = useState<ApartmentWithFinancialData[]>([]);
+  const [building, setBuilding] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastRequestTimeRef = useRef<number>(0);
 
-  // Load apartments with financial data
+  // Load apartments with financial data (optimized for rate limiting with debouncing)
   const loadApartments = useCallback(async () => {
     if (!buildingId) return;
     
+    // Debouncing: prevent rapid successive calls
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTimeRef.current;
+    const MIN_INTERVAL = 1000; // Minimum 1 second between requests
+    
+    if (timeSinceLastRequest < MIN_INTERVAL) {
+      console.log('Request debounced, too soon since last request');
+      return;
+    }
+    
+    // Clear any existing timeout
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+    }
+    
+    lastRequestTimeRef.current = now;
     setIsLoading(true);
     setError(null);
     
     try {
-      // First, get all apartments for the building
-      const apartmentsResponse = await api.get(`/apartments/?building=${buildingId}`);
-      const allApartments = apartmentsResponse.data.results || apartmentsResponse.data;
-
-      // Then get financial data for each apartment
-      const apartmentsWithFinancialData = await Promise.all(
-        allApartments.map(async (apartment: any) => {
-          try {
-            // Get the latest payment data for this apartment
-            const paymentsResponse = await api.get(`/financial/payments/?building_id=${buildingId}&apartment_id=${apartment.id}`);
-            const payments = paymentsResponse.data.results || paymentsResponse.data || [];
-            
-            // Get the latest payment if any
-            const latestPayment = payments.length > 0 ? payments[0] : null;
-            
-            return {
-              id: apartment.id,
-              number: apartment.number,
-              owner_name: apartment.owner_name || latestPayment?.owner_name,
-              tenant_name: apartment.tenant_name || latestPayment?.tenant_name,
-              current_balance: latestPayment?.current_balance || 0,
-              monthly_due: latestPayment?.monthly_due || 0,
-              building_id: apartment.building,
-              building_name: apartment.building_name,
-              participation_mills: apartment.participation_mills,
-              latest_payment_date: latestPayment?.date,
-              latest_payment_amount: latestPayment?.amount,
-            } as ApartmentWithFinancialData;
-          } catch (err) {
-            // If we can't get financial data for this apartment, just return basic info
-            return {
-              id: apartment.id,
-              number: apartment.number,
-              owner_name: apartment.owner_name,
-              tenant_name: apartment.tenant_name,
-              current_balance: 0,
-              monthly_due: 0,
-              building_id: apartment.building,
-              building_name: apartment.building_name,
-              participation_mills: apartment.participation_mills,
-            } as ApartmentWithFinancialData;
-          }
-        })
-      );
-
-      setApartments(apartmentsWithFinancialData);
+      // Get building data first
+      const buildingResponse = await api.get(`/buildings/list/${buildingId}/`);
+      setBuilding(buildingResponse.data);
+      
+      // Use the optimized batch API function
+      const apartmentsWithFinancialData = await fetchApartmentsWithFinancialData(buildingId);
+      
+      setApartments(apartmentsWithFinancialData as ApartmentWithFinancialData[]);
     } catch (err: any) {
       console.error('Error loading apartments with financial data:', err);
-      setError('Σφάλμα κατά τη φόρτωση των διαμερισμάτων');
+      
+      // Provide more specific error messages for rate limiting
+      if (err.response?.status === 429) {
+        setError('Πάρα πολλά αιτήματα. Παρακαλώ περιμένετε λίγο και δοκιμάστε ξανά.');
+      } else {
+        setError('Σφάλμα κατά τη φόρτωση των διαμερισμάτων');
+      }
+      
       setApartments([]);
     } finally {
       setIsLoading(false);
@@ -98,22 +86,42 @@ export const useApartmentsWithFinancialData = (buildingId?: number) => {
     setError(null);
     
     try {
-      // Use a more efficient approach - get apartments and their financial summary
-      const response = await api.get(`/financial/building/${buildingId}/apartments-summary/`);
-      const data = response.data.results || response.data || [];
+      // Get building data first
+      const buildingResponse = await api.get(`/buildings/list/${buildingId}/`);
+      setBuilding(buildingResponse.data);
       
-      setApartments(data);
+      // Use the optimized batch API function (same as loadApartments now)
+      const apartmentsWithFinancialData = await fetchApartmentsWithFinancialData(buildingId);
+      
+      setApartments(apartmentsWithFinancialData as ApartmentWithFinancialData[]);
     } catch (err: any) {
-      // Fallback to the original approach if the summary endpoint doesn't exist
-      console.warn('Summary endpoint not available, falling back to individual calls');
-      await loadApartments();
+      console.error('Error loading apartments with financial summary:', err);
+      
+      // Provide more specific error messages for rate limiting
+      if (err.response?.status === 429) {
+        setError('Πάρα πολλά αιτήματα. Παρακαλώ περιμένετε λίγο και δοκιμάστε ξανά.');
+      } else {
+        setError('Σφάλμα κατά τη φόρτωση των διαμερισμάτων');
+      }
+      
+      setApartments([]);
     } finally {
       setIsLoading(false);
     }
-  }, [buildingId, loadApartments]);
+  }, [buildingId]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return {
     apartments,
+    building,
     isLoading,
     error,
     loadApartments,

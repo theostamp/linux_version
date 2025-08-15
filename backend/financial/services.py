@@ -37,6 +37,7 @@ class CommonExpenseCalculator:
             shares[apartment.id] = {
                 'apartment_id': apartment.id,
                 'apartment_number': apartment.number,
+                'identifier': apartment.identifier or apartment.number,
                 'owner_name': apartment.owner_name or 'Άγνωστος',
                 'participation_mills': apartment.participation_mills or 0,
                 'current_balance': apartment.current_balance or Decimal('0.00'),
@@ -378,6 +379,12 @@ class FinancialDashboardService:
         # Calculate apartments count
         apartments_count = Apartment.objects.filter(building_id=self.building_id).count()
         
+        # Get building info for management fees
+        from buildings.models import Building
+        building = Building.objects.get(id=self.building_id)
+        management_fee_per_apartment = building.management_fee_per_apartment
+        total_management_cost = management_fee_per_apartment * apartments_count
+        
         # Calculate pending payments (apartments with negative balance)
         pending_payments = Apartment.objects.filter(
             building_id=self.building_id,
@@ -403,10 +410,13 @@ class FinancialDashboardService:
             'recent_transactions_count': len(recent_transactions),
             'apartment_balances': apartment_balances,
             'payment_statistics': payment_statistics,
-            # Reserve fund settings - these should come from building settings in the future
-            'reserve_fund_goal': 3000.0,  # Στόχος αποθεματικού σε ευρώ
-            'reserve_fund_duration_months': 5,  # Διάρκεια σε μήνες (31/7/2025 → 30/1/2026)
-            'reserve_fund_monthly_target': 3000.0 / 5  # Μηνιαία δόση: 600€
+            # Reserve fund settings - dynamic based on building or 0 for new buildings
+            'reserve_fund_goal': 0.0,  # Not implemented in Building model yet
+            'reserve_fund_duration_months': 0,  # Not implemented in Building model yet
+            'reserve_fund_monthly_target': float(self.building.reserve_contribution_per_apartment or 0.0) * apartments_count,  # From building settings
+            # Management expenses
+            'management_fee_per_apartment': float(management_fee_per_apartment),
+            'total_management_cost': float(total_management_cost)
         }
     
     def _calculate_reserve_fund_contribution(self, current_reserve: Decimal, total_obligations: Decimal) -> Decimal:
@@ -420,14 +430,14 @@ class FinancialDashboardService:
             return Decimal('0.00')
         
         # Αν δεν υπάρχουν υποχρεώσεις, υπολογίζουμε την κανονική εισφορά αποθεματικού
-        # Αυτό θα ενημερωθεί με βάση τις ρυθμίσεις αποθεματικού από το frontend
+        # Χρησιμοποιούμε τις ρυθμίσεις αποθεματικού από το κτίριο
+        building = Building.objects.get(id=self.building_id)
         apartments = Apartment.objects.filter(building_id=self.building_id)
         apartments_count = apartments.count()
         
-        # Προεπιλεγμένη μηνιαία εισφορά αποθεματικού (500€ / 10 διαμερίσματα = 50€ ανά διαμέρισμα μηνιαίως)
-        # Αυτό θα πρέπει να έρχεται από τις ρυθμίσεις του κτιρίου
-        monthly_target_per_apartment = Decimal('50.00')
-        total_monthly_contribution = monthly_target_per_apartment * apartments_count
+        # Χρησιμοποιούμε την εισφορά ανά διαμέρισμα από τις ρυθμίσεις του κτιρίου
+        contribution_per_apartment = building.reserve_contribution_per_apartment or Decimal('0.00')
+        total_monthly_contribution = contribution_per_apartment * apartments_count
         
         return total_monthly_contribution
     
@@ -1354,6 +1364,7 @@ class AdvancedCommonExpenseCalculator:
             shares[apartment.id] = {
                 'apartment_id': apartment.id,
                 'apartment_number': apartment.number,
+                'identifier': apartment.identifier or apartment.number,
                 'owner_name': apartment.owner_name or 'Άγνωστος',
                 'participation_mills': apartment.participation_mills or 0,
                 'heating_mills': apartment.heating_mills or 0,

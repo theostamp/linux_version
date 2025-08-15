@@ -276,7 +276,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '100/hour',  # Reduced for security
-        'user': '1000/hour',
+        'user': '5000/hour',  # Increased for better user experience
     },
 }
 

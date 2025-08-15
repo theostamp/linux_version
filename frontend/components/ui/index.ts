@@ -11,6 +11,7 @@ export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 export { ScrollArea } from './scroll-area';
 export { Avatar, AvatarFallback, AvatarImage } from './avatar';
 export { Switch } from './switch';
+export { Checkbox } from './checkbox';
 export { Toast, ToastAction, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from './toast';
 
 export { Alert, AlertDescription } from './alert';

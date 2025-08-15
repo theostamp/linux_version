@@ -74,7 +74,7 @@ const server = setupServer(
   }),
 
   // Mock apartments endpoint
-  rest.get('/api/buildings/1/apartments/', (req, res, ctx) => {
+  rest.get('/api/buildings/list/1/apartments/', (req, res, ctx) => {
     return res(
       ctx.json([
         {

@@ -5,6 +5,7 @@ import React, {
   useContext,
   useEffect,
   useState,
+  useCallback,
   ReactNode,
 } from 'react';
 import type { Building, BuildingsResponse } from '@/lib/api';
@@ -59,16 +60,18 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null); // Για φιλτράρισμα
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLoadingBuildings, setIsLoadingBuildings] = useState<boolean>(false);
 
   const { isLoading: authLoading, user } = useAuth();
   const router = useRouter();
 
-  // Load buildings function
-  const loadBuildings = async () => {
-    if (authLoading || !user) return;
+  // Load buildings function - wrapped with useCallback to prevent unnecessary re-renders
+  const loadBuildings = useCallback(async () => {
+    if (authLoading || !user || isLoadingBuildings) return;
 
     try {
       setIsLoading(true);
+      setIsLoadingBuildings(true);
       // For now, use fetchAllBuildings to maintain backward compatibility
       // Later we can implement pagination in the UI
       const data = await fetchAllBuildings();
@@ -103,6 +106,8 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
 
       if (err?.response?.status === 403) {
         toast.error("Δεν έχετε δικαίωμα πρόσβασης στα κτίρια. Επικοινωνήστε με τον διαχειριστή.");
+      } else if (err?.response?.status === 429) {
+        toast.error("Πάρα πολλά αιτήματα. Παρακαλώ περιμένετε λίγο και δοκιμάστε ξανά.");
       } else {
         toast.error("Αποτυχία φόρτωσης κτιρίων.");
       }
@@ -114,8 +119,9 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       setStoredSelectedBuildingId(null);
     } finally {
       setIsLoading(false);
+      setIsLoadingBuildings(false);
     }
-  };
+  }, [authLoading, user]);
 
   // Refresh buildings function
   const refreshBuildings = async () => {
@@ -129,10 +135,13 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
     setStoredSelectedBuildingId(building?.id || null);
   };
 
-  // Load buildings on mount
+  // Load buildings on mount - only once when auth is ready and user is available
   useEffect(() => {
-    loadBuildings();
-  }, [authLoading, user]);
+    // Only load buildings when auth is not loading and user is authenticated
+    if (!authLoading && user) {
+      loadBuildings();
+    }
+  }, [authLoading, user, loadBuildings]);
 
   // Keep currentBuilding in sync with selectedBuilding
   useEffect(() => {

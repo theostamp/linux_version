@@ -106,10 +106,7 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
     // Χρησιμοποιούμε τα αρχικά payments από το API (που ήδη φιλτράρονται ανά μήνα)
     if (!payments) return [];
 
-    // ΣΗΜΕΙΩΣΗ: Διόρθωση υπολογισμού υπολοίπου
-    // Το current_balance από το API περιέχει μόνο τις καταχωρημένες συναλλαγές
-    // Για να πάρουμε το σωστό υπόλοιπο, αφαιρούμε τη μηνιαία οφειλή (monthly_due)
-    // Αποτέλεσμα: actualBalance = current_balance - monthly_due
+    // Υπόλοιπο λίστας = καθαρό ιστορικό συναλλαγών (όπως δίνεται από το API στο current_balance)
     
 
 
@@ -146,25 +143,9 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
       const latestPayment = sortedPayments[sortedPayments.length - 1];
       const oldestPayment = sortedPayments[0];
       
-      // Υπολογισμός σωστού υπολοίπου: current_balance - monthly_due
-      // current_balance = συνολικές πληρωμές - καταχωρημένες χρεώσεις
-      // monthly_due = τρέχουσα μηνιαία οφειλή
-      const currentBalance = (latestPayment.current_balance || 0);
-      const monthlyDue = (latestPayment.monthly_due || 0);
-      
-      // Το πραγματικό υπόλοιπο είναι: πληρωμές - συνολικές οφειλές
-      // Αν monthly_due > 0, σημαίνει ότι υπάρχει εκκρεμής οφειλή που δεν έχει καταχωρηθεί ως transaction
-      const actualBalance = currentBalance - monthlyDue;
-      
-      // Debug log για επαλήθευση της διόρθωσης
-      if (monthlyDue > 0) {
-        console.log(`[PaymentList] Balance calculation for apartment ${apartmentId}:`, {
-          currentBalance,
-          monthlyDue,
-          actualBalance,
-          apartment_number: latestPayment.apartment_number
-        });
-      }
+      // Χρησιμοποιούμε το current_balance όπως έρχεται από το backend (καθαρό ιστορικό συναλλαγών)
+      const currentBalanceRaw = latestPayment.current_balance ?? 0;
+      const currentBalance = typeof currentBalanceRaw === 'string' ? parseFloat(currentBalanceRaw) : Number(currentBalanceRaw);
 
       // Δημιουργία συγκεντρωτικής εγγραφής
       summaries.push({
@@ -174,7 +155,7 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
         amount: totalAmount, // Συνολικό ποσό όλων των πληρωμών
         date: oldestPayment.date, // Ημερομηνία πρώτης πληρωμής
         notes: `${sortedPayments.length} πληρωμ${sortedPayments.length === 1 ? 'ή' : 'ές'}`,
-        progressiveBalance: actualBalance, // Σωστό υπόλοιπο: πληρωμές - οφειλές
+        progressiveBalance: isNaN(currentBalance) ? 0 : currentBalance,
         paymentCount: sortedPayments.length, // Πλήθος πληρωμών για την καρτέλα
         // Διασφαλίζουμε ότι έχουμε τα σωστά δεδομένα διαμερίσματος
         apartment_number: latestPayment.apartment_number || `Διαμέρισμα ${latestPayment.apartment}`,
@@ -408,7 +389,7 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
                     Μην. Οφειλή
                   </th>
                   <th className="px-3 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28 lg:w-auto">
-                    Υπόλοιπο
+                    Τρέχον Υπόλοιπο
                   </th>
                   <th className="px-3 lg:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20 lg:w-auto">
                     Ενέργειες
@@ -621,6 +602,7 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
         loadPayments();
         onRefresh?.();
       }}
+      selectedMonth={selectedMonth}
     />
 
     {/* Delete Confirmation Modal */}

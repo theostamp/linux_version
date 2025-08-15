@@ -278,7 +278,21 @@ def create_demo_data(tenant_schema):
                 'management_office_address': 'Αραχώβης 15, Αθήνα 106 80',
                 'heating_fixed_percentage': 30.0,
                 'reserve_contribution_per_apartment': 5.0,
-                'current_reserve': 25000.00,
+                'current_reserve': 0.00,  # Δεν συμπληρώνουμε οικονομικά στοιχεία - θα υπολογιστούν από τις συναλλαγές
+                'latitude': 37.9838,
+                'longitude': 23.7275
+            },
+            {
+                'name': 'Πολυκατοικία Αλκμάνος 22',
+                'address': 'Αλκμάνος 22',
+                'city': 'Αθήνα',
+                'postal_code': '11528',
+                'apartments_count': 10,
+                'internal_manager_name': '',
+                'internal_manager_phone': '',
+                'heating_fixed_percentage': 30.0,
+                'reserve_contribution_per_apartment': 5.0,
+                'current_reserve': 0.00,  # Δεν συμπληρώνουμε οικονομικά στοιχεία - θα υπολογιστούν από τις συναλλαγές
                 'latitude': 37.9838,
                 'longitude': 23.7275
             }
@@ -352,7 +366,7 @@ def create_demo_data(tenant_schema):
                         building=building,
                         number=apt_data['number'],
                         defaults={
-                            'identifier': f"{building.name}-{apt_data['number']}",
+                            'identifier': f"Αραχώβης-{apt_data['number']}",
                             'floor': apt_data['floor'],
                             'owner_name': apt_data['owner_name'],
                             'owner_phone': apt_data['owner_phone'],
@@ -372,6 +386,47 @@ def create_demo_data(tenant_schema):
                     )
                     if created:
                         print(f"✅ Δημιουργήθηκε διαμέρισμα: {apt_data['number']} (Αραχώβης 12)")
+            
+            elif building.name == 'Πολυκατοικία Αλκμάνος 22':
+                # Ειδική δημιουργία για Αλκμάνος 22 - 10 διαμερίσματα
+                apartments_data = [
+                    {'number': '1', 'floor': 0, 'owner_name': 'Γεώργιος Παπαδόπουλος', 'owner_phone': '2101234567', 'owner_email': 'papadopoulos@email.com', 'tenant_name': 'Μαρία Κωνσταντίνου', 'tenant_phone': '2102345678', 'tenant_email': 'maria.k@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 95, 'heating_mills': 98, 'elevator_mills': 95},
+                    {'number': '2', 'floor': 0, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2103456789', 'owner_email': 'eleni.d@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 2, 'participation_mills': 102, 'heating_mills': 105, 'elevator_mills': 102},
+                    {'number': '3', 'floor': 1, 'owner_name': 'Νικόλαος Αλεξίου', 'owner_phone': '2104567890', 'owner_email': 'nikos.alex@email.com', 'tenant_name': 'Ανδρέας Παπαγεωργίου', 'tenant_phone': '2105678901', 'tenant_email': 'andreas.p@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 88, 'heating_mills': 92, 'elevator_mills': 88},
+                    {'number': '4', 'floor': 1, 'owner_name': 'Αικατερίνη Σταματίου', 'owner_phone': '2106789012', 'owner_email': 'katerina.s@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 115, 'elevator_mills': 110},
+                    {'number': '5', 'floor': 2, 'owner_name': 'Δημήτριος Κωνσταντίνου', 'owner_phone': '2107890123', 'owner_email': 'dimitris.k@email.com', 'tenant_name': 'Σοφία Παπαδοπούλου', 'tenant_phone': '2108901234', 'tenant_email': 'sofia.pap@email.com', 'is_rented': True, 'square_meters': 92, 'bedrooms': 2, 'participation_mills': 105, 'heating_mills': 108, 'elevator_mills': 105},
+                    {'number': '6', 'floor': 2, 'owner_name': 'Ιωάννης Μιχαηλίδης', 'owner_phone': '2109012345', 'owner_email': 'giannis.m@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 88, 'bedrooms': 2, 'participation_mills': 98, 'heating_mills': 102, 'elevator_mills': 98},
+                    {'number': '7', 'floor': 3, 'owner_name': 'Αννα Παπαδοπούλου', 'owner_phone': '2100123456', 'owner_email': 'anna.pap@email.com', 'tenant_name': 'Χρήστος Γεωργίου', 'tenant_phone': '2101234567', 'tenant_email': 'christos.g@email.com', 'is_rented': True, 'square_meters': 82, 'bedrooms': 2, 'participation_mills': 92, 'heating_mills': 95, 'elevator_mills': 92},
+                    {'number': '8', 'floor': 3, 'owner_name': 'Παναγιώτης Αντωνίου', 'owner_phone': '2102345678', 'owner_email': 'panagiotis.a@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 100, 'bedrooms': 3, 'participation_mills': 115, 'heating_mills': 120, 'elevator_mills': 115},
+                    {'number': '9', 'floor': 4, 'owner_name': 'Ευαγγελία Κωνσταντίνου', 'owner_phone': '2103456789', 'owner_email': 'evangelia.k@email.com', 'tenant_name': 'Δημήτριος Παπαδόπουλος', 'tenant_phone': '2104567890', 'tenant_email': 'dimitris.pap@email.com', 'is_rented': True, 'square_meters': 96, 'bedrooms': 3, 'participation_mills': 108, 'heating_mills': 112, 'elevator_mills': 108},
+                    {'number': '10', 'floor': 4, 'owner_name': 'Μιχαήλ Γεωργίου', 'owner_phone': '2105678901', 'owner_email': 'michalis.g@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 78, 'bedrooms': 1, 'participation_mills': 87, 'heating_mills': 93, 'elevator_mills': 87}
+                ]
+                
+                for apt_data in apartments_data:
+                    apartment, created = Apartment.objects.get_or_create(
+                        building=building,
+                        number=apt_data['number'],
+                        defaults={
+                            'identifier': f"Αλκμάνος-{apt_data['number']}",
+                            'floor': apt_data['floor'],
+                            'owner_name': apt_data['owner_name'],
+                            'owner_phone': apt_data['owner_phone'],
+                            'owner_email': apt_data['owner_email'],
+                            'tenant_name': apt_data['tenant_name'],
+                            'tenant_phone': apt_data['tenant_phone'],
+                            'tenant_email': apt_data['tenant_email'],
+                            'is_rented': apt_data['is_rented'],
+                            'square_meters': apt_data['square_meters'],
+                            'bedrooms': apt_data['bedrooms'],
+                            'participation_mills': apt_data['participation_mills'],
+                            'heating_mills': apt_data['heating_mills'],
+                            'elevator_mills': apt_data['elevator_mills'],
+                            'notes': f"Διαμέρισμα {apt_data['number']} στο κτίριο {building.name} - Όροφος {apt_data['floor']}"
+                        }
+                    )
+                    if created:
+                        print(f"✅ Δημιουργήθηκε διαμέρισμα: {apt_data['number']} (Αλκμάνος 22)")
+            
             else:
                 # Για τα άλλα κτίρια - παλιά λογική
                 for floor in range(1, 3):  # 2 όροφοι
@@ -381,7 +436,7 @@ def create_demo_data(tenant_schema):
                             building=building,
                             number=apartment_number,
                             defaults={
-                                'identifier': f"{building.name}-{apartment_number}",
+                                'identifier': f"{building.name[:10]}-{apartment_number}",
                                 'floor': floor,
                                 'owner_name': f"Ιδιοκτήτης {apartment_number}",
                                 'owner_phone': f"210{apartment_number}000",
@@ -595,8 +650,11 @@ def create_demo_data(tenant_schema):
                 }
             ]
             
+            # Δημιουργία γενικών δαπανών μόνο για συγκεκριμένα κτίρια (εξαιρούμε το Αλκμάνος 22)
+            buildings_for_expenses = [b for b in created_buildings if b.name != 'Πολυκατοικία Αλκμάνος 22']
+            
             for expense_data in expenses_data:
-                for building in created_buildings:
+                for building in buildings_for_expenses:
                     expense, created = Expense.objects.get_or_create(
                         building=building,
                         title=expense_data['title'],
@@ -609,7 +667,7 @@ def create_demo_data(tenant_schema):
                         }
                     )
                     if created:
-                        print(f"✅ Δημιουργήθηκε δαπάνη: {expense.title}")
+                        print(f"✅ Δημιουργήθηκε δαπάνη: {expense.title} ({building.name})")
             
             # Ειδικές δαπάνες για Αραχώβης 12
             araxovis_building = next((b for b in created_buildings if b.name == 'Αραχώβης 12'), None)
@@ -637,7 +695,10 @@ def create_demo_data(tenant_schema):
                 datetime(2024, 2, 5).date(),
             ]
             
-            for apartment in Apartment.objects.filter(building__in=created_buildings):
+            # Δημιουργία τυχαίων εισπράξεων μόνο για συγκεκριμένα κτίρια (εξαιρουμε το Αλκμάνος 22)
+            buildings_for_payments = [b for b in created_buildings if b.name != 'Πολυκατοικία Αλκμάνος 22']
+            
+            for apartment in Apartment.objects.filter(building__in=buildings_for_payments):
                 # Δημιουργούμε 1-2 εισπράξεις ανά διαμέρισμα
                 num_payments = random.randint(1, 2)
                 for i in range(num_payments):
@@ -767,15 +828,17 @@ ADMIN: http://demo.localhost:8000/admin/
 - Αθηνών 12 (24 διαμερίσματα)
 - Πατησίων 45 (16 διαμερίσματα)
 - Αραχώβης 12 (10 διαμερίσματα) - Πλήρη λειτουργικά δεδομένα
+- Πολυκατοικία Αλκμάνος 22 (10 διαμερίσματα) - Αληθοφανή δεδομένα ενοίκων
 
 📊 DEMO ΔΕΔΟΜΕΝΑ:
 -----------------
-- 3 κτίρια
+- 4 κτίρια
 - 4 χρήστες
-- 22 διαμερίσματα συνολικά
+- 32 διαμερίσματα συνολικά
   * Αθηνών 12: 6 διαμερίσματα (2 όροφοι × 3 διαμερίσματα)
   * Πατησίων 45: 6 διαμερίσματα (2 όροφοι × 3 διαμερίσματα)
   * Αραχώβης 12: 10 διαμερίσματα (4 όροφοι, πλήρη λειτουργικά δεδομένα)
+  * Αλκμάνος 22: 10 διαμερίσματα (5 όροφοι, αληθοφανή δεδομένα ενοίκων)
 - 2 ανακοινώσεις
 - 2 αιτήματα
 - 2 ψηφοφορίες
@@ -912,6 +975,9 @@ def main():
     print("\n🏢 Νέο κτίριο: Αραχώβης 12 (10 διαμερίσματα)")
     print("   Διεύθυνση: Αραχώβης 12, Αθήνα 106 80, Ελλάδα")
     print("   Πλήρη λειτουργικά δεδομένα με οικονομικά στοιχεία")
+    print("\n🏢 Νέο κτίριο: Πολυκατοικία Αλκμάνος 22 (10 διαμερίσματα)")
+    print("   Διεύθυνση: Αλκμάνος 22, Αθήνα 11528")
+    print("   Αληθοφανή δεδομένα ενοίκων και χιλιοστών (χωρίς οικονομικές κινήσεις)")
     print("\n🚀 Το σύστημα είναι έτοιμο!")
     print("\n💡 Ultra-Superuser μπορεί να:")
     print("   - Διαχειρίζεται όλους τους tenants")

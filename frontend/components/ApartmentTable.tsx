@@ -184,7 +184,7 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
             <tr key={apartment.id} className={`hover:bg-blue-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-blue-50/100'}`}>
               <td className="px-2 py-4 whitespace-nowrap text-center w-[55px]">
                 <div className="text-sm font-medium text-gray-900">
-                  {apartment.number}
+                  {apartment.identifier || apartment.number}
                 </div>
               </td>
               

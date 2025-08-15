@@ -15,6 +15,7 @@ export { BuildingOverviewSection } from './calculator/BuildingOverviewSection';
 export { MonthSelector } from './MonthSelector';
 export { ApartmentFilter } from './ApartmentFilter';
 export { SharePreview } from './SharePreview';
+export { ExpenseAnalysisWidget } from './ExpenseAnalysisWidget';
 export { ExpenseBreakdown } from './ExpenseBreakdown';
 export { FinancialPage } from './FinancialPage';
 export { default as CashFlowChart } from './CashFlowChart';

@@ -8,15 +8,18 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { X, Upload, Euro, Calendar, CreditCard, User, Home } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 import { PaymentFormData, PaymentMethod, PaymentType } from '@/types/financial';
 import { api } from '@/lib/api';
 import { useApartmentsWithFinancialData, ApartmentWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 interface AddPaymentModalProps {
   buildingId: number;
   isOpen: boolean;
   onClose: () => void;
   onPaymentAdded: () => void;
+  selectedMonth?: string; // YYYY-MM
 }
 
 export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
@@ -24,6 +27,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
   isOpen,
   onClose,
   onPaymentAdded,
+  selectedMonth,
 }) => {
   const [formData, setFormData] = useState<PaymentFormData>({
     apartment_id: 0,
@@ -40,6 +44,12 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
+  // Advanced calculation cache per modal open (maps apartmentId -> monthly total for selected month)
+  const [monthlyShares, setMonthlyShares] = useState<Record<number, number> | null>(null);
+  const [isCalculatingShares, setIsCalculatingShares] = useState(false);
+  const [calcError, setCalcError] = useState<string | null>(null);
+  const [amountTouched, setAmountTouched] = useState(false);
+
   // Use the new hook for consistent apartment data
   const { 
     apartments, 
@@ -47,6 +57,83 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
     error: apartmentError, 
     loadApartments 
   } = useApartmentsWithFinancialData(isOpen ? buildingId : undefined);
+
+  // Deduplicate apartments by (number + tenant_name + owner_name) to avoid double entries for same unit
+  const dedupedApartments = React.useMemo(() => {
+    const seen = new Set<string>();
+    const result: typeof apartments = [];
+    apartments.forEach((apt) => {
+      const key = `${apt.number}__${apt.owner_name || ''}__${apt.tenant_name || ''}`.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(apt);
+      }
+    });
+    return result;
+  }, [apartments]);
+
+  // Building name for header
+  const { buildings, selectedBuilding, currentBuilding } = useBuilding();
+  const buildingName = React.useMemo(() => {
+    const fromList = buildings.find(b => b.id === buildingId)?.name;
+    return fromList || selectedBuilding?.name || currentBuilding?.name || '';
+  }, [buildings, selectedBuilding, currentBuilding, buildingId]);
+
+  // Compute month date range strings (YYYY-MM-DD) from selectedMonth
+  const monthRange = React.useMemo(() => {
+    if (!selectedMonth) return null;
+    try {
+      const [yearStr, monthStr] = selectedMonth.split('-');
+      const year = parseInt(yearStr, 10);
+      const month = parseInt(monthStr, 10);
+      const start = new Date(Date.UTC(year, month - 1, 1));
+      const end = new Date(Date.UTC(year, month, 0)); // last day of month
+      const toISO = (d: Date) => d.toISOString().slice(0, 10);
+      return { start: toISO(start), end: toISO(end) };
+    } catch {
+      return null;
+    }
+  }, [selectedMonth]);
+
+  // Fetch advanced calculation shares once per open/month change
+  useEffect(() => {
+    const fetchShares = async () => {
+      if (!isOpen || !buildingId || !monthRange) {
+        setMonthlyShares(null);
+        setCalcError(null);
+        return;
+      }
+      setIsCalculatingShares(true);
+      setCalcError(null);
+      try {
+        const payload: any = {
+          building_id: buildingId,
+          period_start_date: monthRange.start,
+          period_end_date: monthRange.end,
+        };
+        const response = await api.post('/financial/common-expenses/calculate_advanced/', payload);
+        const shares = response.data?.shares || {};
+        const map: Record<number, number> = {};
+        // shares is expected as record keyed by apartment_id with total_amount and total_due
+        Object.entries(shares).forEach(([aptId, share]: any) => {
+          const totalAmount = parseFloat(share?.total_amount ?? 0);
+          if (!isNaN(totalAmount)) {
+            map[Number(aptId)] = totalAmount;
+          }
+        });
+        setMonthlyShares(map);
+      } catch (err: any) {
+        console.error('Error fetching monthly shares:', err);
+        setCalcError(err?.response?.data?.error || 'Αποτυχία υπολογισμού κοινοχρήστων μήνα');
+        setMonthlyShares(null);
+      } finally {
+        setIsCalculatingShares(false);
+      }
+    };
+    fetchShares();
+    // Reset amountTouched on month change/open
+    setAmountTouched(false);
+  }, [isOpen, buildingId, monthRange?.start, monthRange?.end]);
 
   // Update error state when apartment loading fails
   useEffect(() => {
@@ -137,6 +224,9 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
     });
     setReceiptFile(null);
     setError(null);
+    setMonthlyShares(null);
+    setCalcError(null);
+    setAmountTouched(false);
     onClose();
   };
 
@@ -163,6 +253,18 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
 
   const selectedApartment = apartments.find(apt => apt.id === formData.apartment_id);
 
+  // When selecting apartment, prefill amount with this month's common expense if available
+  useEffect(() => {
+    if (!selectedApartment) return;
+    if (amountTouched) return; // don't override if user typed
+    // Priority: monthlyShares for the selected month; fallback to apartment.monthly_due
+    const monthAmount = monthlyShares?.[selectedApartment.id];
+    const fallbackAmountRaw = selectedApartment.monthly_due ?? 0;
+    const fallbackAmount = typeof fallbackAmountRaw === 'string' ? parseFloat(fallbackAmountRaw) : Number(fallbackAmountRaw || 0);
+    const prefill = typeof monthAmount === 'number' ? monthAmount : fallbackAmount;
+    setFormData(prev => ({ ...prev, amount: Number(isNaN(prefill) ? 0 : prefill) }));
+  }, [selectedApartment?.id, monthlyShares, amountTouched]);
+
   if (!isOpen) return null;
 
   return (
@@ -173,10 +275,10 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
           <div className="flex items-center gap-3 text-white">
             <Euro className="h-6 w-6" />
             <div>
-              <h2 className="text-xl font-semibold">Νέα Εισπραξη</h2>
-              <p className="text-sm text-green-100">
-                Καταχώρηση νέας πληρωμής από ενοίκο
-              </p>
+              <h2 className="text-xl font-semibold">
+                Νέα Εισπραξη{buildingName ? ` • ${buildingName}` : ''}{selectedMonth ? ` – ${new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}` : ''}
+              </h2>
+              <p className="text-sm text-green-100">Καταχώρηση νέας πληρωμής από ενοίκο</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={handleClose} className="text-white hover:bg-green-700">
@@ -189,6 +291,11 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
               <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
+          {calcError && (
+            <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-md">
+              <p className="text-orange-700 text-sm">{calcError}</p>
             </div>
           )}
 
@@ -209,14 +316,23 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                     <SelectValue placeholder={isLoading ? "Φόρτωση..." : "Επιλέξτε διαμέρισμα"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {apartments.map((apartment) => (
+                    {dedupedApartments.map((apartment) => (
                       <SelectItem key={apartment.id} value={apartment.id.toString()}>
                         <div className="flex items-center justify-between w-full">
-                          <span className="font-medium">{apartment.number}</span>
-                          <div className="text-sm text-gray-500 ml-2 flex flex-col">
-                            <span>
-                              {apartment.tenant_name || apartment.owner_name || 'Μη καταχωρημένος'}
-                            </span>
+                          <span className="font-medium mr-3 min-w-[3rem]">{apartment.number}</span>
+                          <div className="text-sm text-gray-600 ml-2 flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <span className="inline-block px-1 rounded bg-green-50 text-green-700 border border-green-200 text-xs">Ιδιοκτήτης</span>
+                              <span className="truncate max-w-[200px]">
+                                {apartment.owner_name || '—'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="inline-block px-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-xs">Ενοικιαστής</span>
+                              <span className="truncate max-w-[200px]">
+                                {apartment.tenant_name || '—'}
+                              </span>
+                            </div>
                             {(apartment.current_balance !== undefined && apartment.current_balance !== 0) && (
                               <span className={`text-xs ${apartment.current_balance < 0 ? 'text-red-500' : 'text-green-500'}`}>
                                 Υπόλοιπο: {apartment.current_balance?.toFixed(2)}€
@@ -252,14 +368,12 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                       <div>
                         <span className="text-gray-600">Τρέχον Υπόλοιπο:</span>
                         <p className={`font-medium ${
-                          (selectedApartment.current_balance || 0) < 0 ? 'text-red-600' : 'text-green-600'
+                          Number(selectedApartment.current_balance || 0) < 0 ? 'text-red-600' : 'text-green-600'
                         }`}>
-                          {selectedApartment.current_balance !== undefined ? 
-                            `${selectedApartment.current_balance.toFixed(2)}€` : '0,00€'
-                          }
+                          {formatCurrency(typeof selectedApartment.current_balance === 'string' ? parseFloat(selectedApartment.current_balance) : Number(selectedApartment.current_balance || 0))}
                           <span className="text-xs ml-1">
-                            {(selectedApartment.current_balance || 0) < 0 ? '(χρεωστικό)' : 
-                             (selectedApartment.current_balance || 0) > 0 ? '(πιστωτικό)' : '(εξοφλημένο)'}
+                            {Number(selectedApartment.current_balance || 0) < 0 ? '(χρεωστικό)' : 
+                             Number(selectedApartment.current_balance || 0) > 0 ? '(πιστωτικό)' : '(εξοφλημένο)'}
                           </span>
                         </p>
                       </div>
@@ -267,7 +381,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                         <span className="text-gray-600">Μηνιαία Οφειλή:</span>
                         <p className="font-medium text-orange-600">
                           {selectedApartment.monthly_due !== undefined ? 
-                            `${selectedApartment.monthly_due.toFixed(2)}€` : 'Μη διαθέσιμο'
+                            formatCurrency(typeof selectedApartment.monthly_due === 'string' ? parseFloat(selectedApartment.monthly_due) : Number(selectedApartment.monthly_due || 0)) : 'Μη διαθέσιμο'
                           }
                         </p>
                       </div>
@@ -276,9 +390,11 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                       <div className="mt-2 pt-2 border-t border-gray-200">
                         <span className="text-gray-600 text-xs">Τελευταία πληρωμή:</span>
                         <span className="ml-2 text-xs text-gray-700">
-                          {selectedApartment.latest_payment_amount?.toFixed(2)}€ στις {
-                            new Date(selectedApartment.latest_payment_date).toLocaleDateString('el-GR')
-                          }
+                          {formatCurrency(
+                            typeof selectedApartment.latest_payment_amount === 'string'
+                              ? parseFloat(selectedApartment.latest_payment_amount)
+                              : Number(selectedApartment.latest_payment_amount || 0)
+                          )} στις {new Date(selectedApartment.latest_payment_date).toLocaleDateString('el-GR')}
                         </span>
                       </div>
                     )}
@@ -300,10 +416,21 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                   step="0.01"
                   min="0"
                   value={formData.amount || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                  onChange={(e) => {
+                    setAmountTouched(true);
+                    setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }));
+                  }}
                   placeholder="0.00"
                   required
                 />
+                {isCalculatingShares && selectedMonth && (
+                  <p className="text-xs text-gray-500 mt-1">Υπολογισμός προτεινόμενου ποσού κοινοχρήστων για τον επιλεγμένο μήνα...</p>
+                )}
+                {!amountTouched && selectedApartment && (monthlyShares?.[selectedApartment.id] || selectedApartment.monthly_due) ? (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Προτεινόμενο ποσό: {(monthlyShares?.[selectedApartment.id] ?? selectedApartment.monthly_due)?.toFixed(2)}€
+                  </p>
+                ) : null}
               </div>
 
               <div>

@@ -175,7 +175,7 @@ export default function ApartmentEditModal({
                   onChange={(e) => updateFormData('identifier', e.target.value)}
                   maxLength={20}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="π.χ. Α2, Β1, C3 (μέχρι 20 χαρακτήρες)"
+                  placeholder="π.χ. ΙΣ2, Α1, Β4 (μέχρι 20 χαρακτήρες)"
                 />
               </div>
             )}

@@ -316,6 +316,7 @@ class CommonExpenseShareSerializer(serializers.Serializer):
     
     apartment_id = serializers.IntegerField()
     apartment_number = serializers.CharField()
+    identifier = serializers.CharField()
     owner_name = serializers.CharField()
     participation_mills = serializers.IntegerField()
     current_balance = serializers.DecimalField(max_digits=10, decimal_places=2)

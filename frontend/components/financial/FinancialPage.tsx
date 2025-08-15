@@ -425,7 +425,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 <h3 className={`font-semibold text-sm ${
                   activeTab === 'calculator' ? 'text-blue-700' : 'text-gray-700'
                 }`}>
-                  Κοινοχρήστων
+                  Κοινόχρηστα
                 </h3>
                 <p className="text-xs text-gray-500 text-center mt-1">
                   Υπολογισμός & Έκδοση

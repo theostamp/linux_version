@@ -23,4 +23,8 @@ urlpatterns = [
     path('apartments/<int:apartment_id>/transactions/', 
          ApartmentTransactionViewSet.as_view({'get': 'list'}), 
          name='apartment-transactions-list'),
+    # Custom URL pattern for building apartments summary
+    path('building/<int:pk>/apartments-summary/', 
+         FinancialDashboardViewSet.as_view({'get': 'apartments_summary'}), 
+         name='building-apartments-summary'),
 ] 

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Καθαρισμός LocalStorage - Αποθεματικό</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .button {
+            background-color: #dc3545;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background-color: #c82333;
+        }
+        .success {
+            background-color: #28a745;
+        }
+        .success:hover {
+            background-color: #218838;
+        }
+        .info {
+            background-color: #17a2b8;
+        }
+        .info:hover {
+            background-color: #138496;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        .success-result {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Καθαρισμός LocalStorage - Αποθεματικό</h1>
+        <p>Αυτή η σελίδα θα καθαρίσει όλες τις αποθηκευμένες ρυθμίσεις αποθεματικού από το browser σας.</p>
+        
+        <h3>Τι θα καθαριστεί:</h3>
+        <ul>
+            <li>Στόχος αποθεματικού (goal)</li>
+            <li>Ημερομηνία έναρξης (start_date)</li>
+            <li>Ημερομηνία λήξης (target_date)</li>
+            <li>Διάρκεια σε μήνες (duration_months)</li>
+            <li>Μηνιαία δόση (monthly_target)</li>
+        </ul>
+        
+        <div>
+            <button class="button info" onclick="showCurrentValues()">📊 Εμφάνιση Τρέχουσων Τιμών</button>
+            <button class="button" onclick="clearAllReserveFundData()">🗑️ Καθαρισμός Όλων</button>
+            <button class="button success" onclick="clearSpecificBuilding()">🏢 Καθαρισμός για Συγκεκριμένο Κτίριο</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function showCurrentValues() {
+            const resultDiv = document.getElementById('result');
+            let html = '<div class="result"><h4>📊 Τρέχουσες Τιμές LocalStorage:</h4>';
+            
+            // Get all localStorage keys
+            const keys = Object.keys(localStorage);
+            const reserveFundKeys = keys.filter(key => key.includes('reserve_fund'));
+            
+            if (reserveFundKeys.length === 0) {
+                html += '<p>Δεν βρέθηκαν αποθηκευμένες ρυθμίσεις αποθεματικού.</p>';
+            } else {
+                html += '<ul>';
+                reserveFundKeys.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    html += `<li><strong>${key}:</strong> ${value}</li>`;
+                });
+                html += '</ul>';
+            }
+            
+            html += '</div>';
+            resultDiv.innerHTML = html;
+        }
+        
+        function clearAllReserveFundData() {
+            const resultDiv = document.getElementById('result');
+            let clearedCount = 0;
+            
+            // Get all localStorage keys
+            const keys = Object.keys(localStorage);
+            const reserveFundKeys = keys.filter(key => key.includes('reserve_fund'));
+            
+            reserveFundKeys.forEach(key => {
+                localStorage.removeItem(key);
+                clearedCount++;
+            });
+            
+            resultDiv.innerHTML = `
+                <div class="result success-result">
+                    <h4>✅ Καθαρισμός Ολοκληρώθηκε!</h4>
+                    <p>Καθαρίστηκαν ${clearedCount} ρυθμίσεις αποθεματικού.</p>
+                    <p>Μπορείτε τώρα να επιστρέψετε στην εφαρμογή και να δείτε τις σωστές τιμές.</p>
+                </div>
+            `;
+        }
+        
+        function clearSpecificBuilding() {
+            const buildingId = prompt('Εισάγετε το ID του κτιρίου (π.χ. 4 για Αλκμάνος 22):');
+            if (!buildingId) return;
+            
+            const resultDiv = document.getElementById('result');
+            let clearedCount = 0;
+            
+            // Get all localStorage keys for this specific building
+            const keys = Object.keys(localStorage);
+            const buildingKeys = keys.filter(key => key.includes(`reserve_fund_${buildingId}_`));
+            
+            buildingKeys.forEach(key => {
+                localStorage.removeItem(key);
+                clearedCount++;
+            });
+            
+            if (clearedCount === 0) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>⚠️ Δεν βρέθηκαν ρυθμίσεις</h4>
+                        <p>Δεν βρέθηκαν αποθηκευμένες ρυθμίσεις για το κτίριο ID: ${buildingId}</p>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result success-result">
+                        <h4>✅ Καθαρισμός Ολοκληρώθηκε!</h4>
+                        <p>Καθαρίστηκαν ${clearedCount} ρυθμίσεις για το κτίριο ID: ${buildingId}</p>
+                        <p>Μπορείτε τώρα να επιστρέψετε στην εφαρμογή και να δείτε τις σωστές τιμές.</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

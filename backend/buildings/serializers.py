@@ -1,6 +1,6 @@
 # backend/buildings/serializers.py
 from rest_framework import serializers 
-from .models import Building
+from .models import Building, ServicePackage
 from users.models import CustomUser
 from .models import BuildingMembership
 from decimal import Decimal, InvalidOperation
@@ -29,14 +29,30 @@ class CoordinateField(serializers.Field):
         if data is None:
             return None
             
+        # Handle case where data is a list/array (take first element)
+        if isinstance(data, (list, tuple)) and len(data) > 0:
+            print(f"⚠️  CoordinateField received array data: {data}, using first element: {data[0]}")
+            data = data[0]
+            
         try:
             # Convert to Decimal
             if isinstance(data, (int, float)):
-                return Decimal(str(data))
+                decimal_value = Decimal(str(data))
             elif isinstance(data, str):
-                return Decimal(data)
+                decimal_value = Decimal(data)
             else:
                 raise serializers.ValidationError("Η τιμή πρέπει να είναι αριθμός.")
+            
+            # Validate range based on field name
+            field_name = self.field_name if hasattr(self, 'field_name') else ''
+            if 'latitude' in field_name:
+                if decimal_value < -90 or decimal_value > 90:
+                    raise serializers.ValidationError("Το γεωγραφικό πλάτος πρέπει να είναι μεταξύ -90 και 90 μοιρών.")
+            elif 'longitude' in field_name:
+                if decimal_value < -180 or decimal_value > 180:
+                    raise serializers.ValidationError("Το γεωγραφικό μήκος πρέπει να είναι μεταξύ -180 και 180 μοιρών.")
+            
+            return decimal_value
         except (ValueError, InvalidOperation) as e:
             print(f"❌ CoordinateField conversion failed: {e}")
             raise serializers.ValidationError("Η τιμή πρέπει να είναι έγκυρος αριθμός.")
@@ -46,38 +62,67 @@ class CoordinateField(serializers.Field):
             return None
         return str(value)
 
+class ServicePackageSerializer(serializers.ModelSerializer):
+    """Serializer για τα πακέτα υπηρεσιών"""
+    
+    services_list = serializers.SerializerMethodField()
+    total_cost_for_building = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ServicePackage
+        fields = [
+            'id', 'name', 'description', 'fee_per_apartment', 
+            'services_included', 'services_list', 'total_cost_for_building',
+            'is_active', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+    
+    def get_services_list(self, obj):
+        """Επιστρέφει τη λίστα υπηρεσιών ως string"""
+        return obj.get_services_list()
+    
+    def get_total_cost_for_building(self, obj):
+        """Υπολογίζει το συνολικό κόστος για το κτίριο"""
+        building_id = self.context.get('building_id')
+        if building_id:
+            try:
+                building = Building.objects.get(id=building_id)
+                apartments_count = building.apartments_count or 0
+                return obj.get_total_cost_for_building(apartments_count)
+            except Building.DoesNotExist:
+                return 0
+        return 0
+
 class BuildingSerializer(serializers.ModelSerializer):
     # Ορίζουμε κρυφό πεδίο manager ως τον τρέχον χρήστη
-    manager = serializers.HiddenField(
-        default=serializers.CurrentUserDefault()
+    manager = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    
+    # Προσθήκη nested serializer για το service_package
+    service_package = ServicePackageSerializer(read_only=True)
+    service_package_id = serializers.PrimaryKeyRelatedField(
+        queryset=ServicePackage.objects.filter(is_active=True),
+        source='service_package',
+        required=False,
+        allow_null=True,
+        write_only=True
     )
     
-    # Use custom coordinate fields
+    # Use CoordinateField for latitude and longitude to handle proper conversion
     latitude = CoordinateField(required=False, allow_null=True)
     longitude = CoordinateField(required=False, allow_null=True)
-
+    
     class Meta:
         model = Building
         fields = [
-            'id',
-            'name',
-            'address',
-            'city',
-            'postal_code',
-            'apartments_count',
-            'internal_manager_name',
-            'internal_manager_phone',
-            'management_office_name',
-            'management_office_phone',
-            'management_office_address',
-            'street_view_image',
-            'latitude',
-            'longitude',
-            'created_at',
-            'updated_at',
-            'manager'
+            'id', 'name', 'address', 'city', 'postal_code', 
+            'apartments_count', 'internal_manager_name', 'internal_manager_phone',
+            'management_office_name', 'management_office_phone', 'management_office_address',
+            'management_fee_per_apartment', 'service_package', 'service_package_id',
+            'current_reserve', 'heating_fixed_percentage', 'reserve_contribution_per_apartment',
+            'street_view_image', 'latitude', 'longitude', 'manager',
+            'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'current_reserve']
 
     def create(self, validated_data):
         """
@@ -105,33 +150,7 @@ class BuildingSerializer(serializers.ModelSerializer):
         print(f"🔍 Result street view image: {result.street_view_image}")
         return result
 
-    def validate_latitude(self, value):
-        """Validate latitude field"""
-        print(f"🔍 Validating latitude: {value} (type: {type(value)})")
-        
-        if value is None:
-            return value
-        
-        # Check if it's a valid latitude range (-90 to 90)
-        if value < -90 or value > 90:
-            raise serializers.ValidationError("Το γεωγραφικό πλάτος πρέπει να είναι μεταξύ -90 και 90 μοιρών.")
-        
-        print(f"✅ Latitude validation passed: {value}")
-        return value
 
-    def validate_longitude(self, value):
-        """Validate longitude field"""
-        print(f"🔍 Validating longitude: {value} (type: {type(value)})")
-        
-        if value is None:
-            return value
-        
-        # Check if it's a valid longitude range (-180 to 180)
-        if value < -180 or value > 180:
-            raise serializers.ValidationError("Το γεωγραφικό μήκος πρέπει να είναι μεταξύ -180 και 180 μοιρών.")
-        
-        print(f"✅ Longitude validation passed: {value}")
-        return value
 
     def validate(self, data):
         """Additional validation for the entire building data"""

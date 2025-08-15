@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   X, 
   Download, 
@@ -12,11 +13,17 @@ import {
   Calendar,
   User,
   Euro,
-  Save
+  Save,
+  PieChart,
+  Receipt
 } from 'lucide-react';
 import { CalculatorState } from './CalculatorWizard';
+import { ExpenseBreakdownSection } from './ExpenseBreakdownSection';
 import { toast } from 'sonner';
 import { useCommonExpenses } from '@/hooks/useCommonExpenses';
+import { useApartmentsWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 // Print styles
 const printStyles = `
@@ -45,6 +52,8 @@ interface CommonExpenseModalProps {
   state: CalculatorState;
   buildingId: number;
   buildingName?: string;
+  managementFeePerApartment?: number;
+  reserveContributionPerApartment?: number;
 }
 
 export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
@@ -52,10 +61,93 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   onClose,
   state,
   buildingId,
-  buildingName = 'Άγνωστο Κτίριο'
+  buildingName = 'Άγνωστο Κτίριο',
+  managementFeePerApartment = 0,
+  reserveContributionPerApartment = 0
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const { saveCommonExpenseSheet } = useCommonExpenses();
+  const { apartments: aptWithFinancial } = useApartmentsWithFinancialData(buildingId);
+
+  // Occupants map (owner & tenant) by apartment id
+  const occupantsByApartmentId = useMemo(() => {
+    const map: Record<number, { owner_name?: string; tenant_name?: string }> = {};
+    aptWithFinancial.forEach((apt) => {
+      map[apt.id] = { owner_name: apt.owner_name, tenant_name: apt.tenant_name };
+    });
+    return map;
+  }, [aptWithFinancial]);
+
+  // Helpers to read numeric values safely
+  const toNumber = (v: any) => {
+    const n = typeof v === 'string' ? parseFloat(v) : Number(v || 0);
+    return isNaN(n) ? 0 : n;
+  };
+  
+  // Pre-compute per-apartment advanced amounts using share.breakdown when available
+  const perApartmentAmounts = useMemo(() => {
+    const items: Record<number, { common: number; elevator: number; heating: number; other: number; coowner: number; reserve: number; total_due: number } > = {};
+    Object.values(state.shares).forEach((share: any) => {
+      const bd = share.breakdown || {};
+      const common = toNumber(bd.general_expenses);
+      const elevator = toNumber(bd.elevator_expenses);
+      const heating = toNumber(bd.heating_expenses);
+      const other = toNumber(bd.equal_share_expenses);
+      const coowner = toNumber(bd.individual_expenses);
+      const reserve = toNumber(bd.reserve_fund_contribution);
+      items[share.apartment_id] = {
+        common,
+        elevator,
+        heating,
+        other,
+        coowner,
+        reserve,
+        total_due: toNumber(share.total_due)
+      };
+    });
+    return items;
+  }, [state.shares]);
+
+  // Totals per category computed from per-apartment values to validate final sums
+  const totalsFromRows = useMemo(() => {
+    let common = 0, elevator = 0, heating = 0, other = 0, coowner = 0, reserve = 0, grand = 0;
+    Object.values(state.shares).forEach((share: any) => {
+      const row = perApartmentAmounts[share.apartment_id] || { common:0, elevator:0, heating:0, other:0, coowner:0, reserve:0, total_due:0 };
+      common += row.common;
+      elevator += row.elevator;
+      heating += row.heating;
+      other += row.other;
+      coowner += row.coowner;
+      reserve += row.reserve;
+      grand += (row.common + row.elevator + row.heating + row.other + row.coowner + row.reserve);
+    });
+    return { common, elevator, heating, other, coowner, reserve, grand };
+  }, [state.shares, perApartmentAmounts]);
+
+  const renderOccupants = (apartmentId: number, fallbackOwner?: string) => {
+    const info = occupantsByApartmentId[apartmentId] || {};
+    const owner = info.owner_name || fallbackOwner;
+    const tenant = info.tenant_name;
+    return (
+      <div className="flex flex-col gap-0.5">
+        {owner && (
+          <div className="text-xs">
+            <span className="inline-block px-1 mr-1 rounded bg-green-50 text-green-700 border border-green-200">Ιδιοκτήτης</span>
+            <span className="text-gray-800">{owner}</span>
+          </div>
+        )}
+        {tenant && (
+          <div className="text-xs">
+            <span className="inline-block px-1 mr-1 rounded bg-blue-50 text-blue-700 border border-blue-200">Ενοικιαστής</span>
+            <span className="text-gray-800">{tenant}</span>
+          </div>
+        )}
+        {!owner && !tenant && (
+          <span className="text-xs text-gray-400 italic">Μη καταχωρημένοι</span>
+        )}
+      </div>
+    );
+  };
 
   if (!isOpen) return null;
 
@@ -110,6 +202,207 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       heating: [],
       equal_share: [],
       individual: []
+    };
+  };
+
+  // Map expense categories to display names for the analysis section
+  const getCategoryDisplayName = (category: string) => {
+    const categoryMap: Record<string, string> = {
+      // General expenses
+      'cleaning': 'ΚΑΘΑΡΙΟΤΗΤΑ',
+      'cleaning_supplies': 'ΕΙΔΗ ΚΑΘΑΡΙΟΤΗΤΑΣ',
+      'electricity_common': 'Δ.Ε.Η.',
+      'water_common': 'ΝΕΡΟ ΚΟΙΝΟΧΡΗΣΤΩΝ',
+      'garbage_collection': 'ΣΥΛΛΟΓΗ ΑΠΟΡΡΙΜΜΑΤΩΝ',
+      'security': 'ΑΣΦΑΛΕΙΑ',
+      'concierge': 'ΚΑΘΑΡΙΣΤΗΣ/ΠΥΛΩΡΟΣ',
+      'electrical_maintenance': 'ΣΥΝΤΗΡΗΣΗ ΗΛΕΚΤΡΙΚΩΝ',
+      'electrical_repair': 'ΕΠΙΣΚΕΥΗ ΗΛΕΚΤΡΙΚΩΝ',
+      'lighting_common': 'ΦΩΤΙΣΜΟΣ ΚΟΙΝΟΧΡΗΣΤΩΝ',
+      'plumbing_maintenance': 'ΣΥΝΤΗΡΗΣΗ ΥΔΡΑΥΛΙΚΩΝ',
+      'plumbing_repair': 'ΕΠΙΣΚΕΥΗ ΥΔΡΑΥΛΙΚΩΝ',
+      'building_maintenance': 'ΣΥΝΤΗΡΗΣΗ ΚΤΙΡΙΟΥ',
+      'building_insurance': 'ΑΣΦΑΛΕΙΑ ΚΤΙΡΙΟΥ',
+      'roof_maintenance': 'ΣΥΝΤΗΡΗΣΗ ΣΤΕΓΗΣ',
+      'facade_maintenance': 'ΣΥΝΤΗΡΗΣΗ ΠΡΟΣΩΠΙΔΑΣ',
+      'garden_maintenance': 'ΣΥΝΤΗΡΗΣΗ ΚΗΠΟΥ',
+      'parking_maintenance': 'ΣΥΝΤΗΡΗΣΗ ΠΑΡΚΙΝΓΚ',
+      'legal_fees': 'ΝΟΜΙΚΑ ΕΞΟΔΑ',
+      'accounting_fees': 'ΛΟΓΙΣΤΙΚΑ ΕΞΟΔΑ',
+      'management_fees': 'ΔΑΠΑΝΕΣ ΔΙΑΧΕΙΡΙΣΗΣ',
+      'miscellaneous': 'ΔΙΑΦΟΡΑ',
+      
+      // Elevator expenses
+      'elevator_maintenance': 'ΣΥΝΤΗΡΗΣΗ',
+      'elevator_repair': 'ΕΠΙΣΚΕΥΗ',
+      'elevator_inspection': 'ΕΠΙΘΕΩΡΗΣΗ',
+      'elevator_modernization': 'ΜΟΝΤΕΡΝΙΣΗ',
+      
+      // Heating expenses
+      'heating_fuel': 'ΚΑΥΣΙΜΑ',
+      'heating_gas': 'ΦΥΣΙΚΟ ΑΕΡΙΟ',
+      'heating_maintenance': 'ΣΥΝΤΗΡΗΣΗ',
+      'heating_repair': 'ΕΠΙΣΚΕΥΗ',
+      'heating_inspection': 'ΕΠΙΘΕΩΡΗΣΗ',
+      'heating_modernization': 'ΜΟΝΤΕΡΝΙΣΗ',
+      
+      // Equal share expenses
+      'special_contribution': 'ΕΙΔΙΚΗ ΕΙΣΦΟΡΑ',
+      'reserve_fund': 'ΑΠΟΘΕΜΑΤΙΚΟ',
+      'emergency_fund': 'ΕΠΕΙΓΟΝ ΑΠΟΘΕΜΑΤΙΚΟ',
+      'renovation_fund': 'ΑΠΟΘΕΜΑΤΙΚΟ ΑΝΑΝΕΩΣΗΣ',
+      
+      // Individual expenses
+      'individual_charge': 'ΑΤΟΜΙΚΗ ΧΡΕΩΣΗ'
+    };
+    
+    return categoryMap[category] || category.toUpperCase();
+  };
+
+  // Group expenses by category for dynamic display
+  const getGroupedExpenses = () => {
+    const expenseDetails = getExpenseDetails();
+    const grouped: Record<string, { expenses: any[], total: number }> = {};
+    
+    // Define expense type interface
+    interface ExpenseItem {
+      category?: string;
+      amount: number;
+    }
+    
+    // Process general expenses
+    if (expenseDetails.general.length > 0) {
+      const generalGrouped: Record<string, typeof expenseDetails.general> = {};
+      expenseDetails.general.forEach((expense: ExpenseItem) => {
+        const category = expense.category || 'miscellaneous';
+        if (!generalGrouped[category]) {
+          generalGrouped[category] = [];
+        }
+        generalGrouped[category].push(expense);
+      });
+      
+      grouped['general'] = {
+        expenses: Object.entries(generalGrouped).map(([category, expenses]) => ({
+          category,
+          displayName: getCategoryDisplayName(category),
+          expenses,
+          total: expenses.reduce((sum: number, exp: ExpenseItem) => sum + exp.amount, 0)
+        })),
+        total: expenseDetails.general.reduce((sum: number, exp: ExpenseItem) => sum + exp.amount, 0)
+      };
+    }
+    
+    // Process elevator expenses
+    if (expenseDetails.elevator.length > 0) {
+      const elevatorGrouped: Record<string, ExpenseItem[]> = {};
+      expenseDetails.elevator.forEach((expense: ExpenseItem) => {
+        const category = expense.category || 'elevator_maintenance';
+        if (!elevatorGrouped[category]) {
+          elevatorGrouped[category] = [];
+        }
+        elevatorGrouped[category].push(expense);
+      });
+      
+      grouped['elevator'] = {
+        expenses: Object.entries(elevatorGrouped).map(([category, expenses]) => ({
+          category,
+          displayName: getCategoryDisplayName(category),
+          expenses,
+          total: expenses.reduce((sum: number, exp: ExpenseItem) => sum + exp.amount, 0)
+        })),
+        total: expenseDetails.elevator.reduce((sum: number, exp: ExpenseItem) => sum + exp.amount, 0)
+      };
+    }
+    
+    // Process heating expenses
+    if (expenseDetails.heating.length > 0) {
+      const heatingGrouped: Record<string, ExpenseItem[]> = {};
+      expenseDetails.heating.forEach((expense: ExpenseItem) => {
+        const category = expense.category || 'heating_fuel';
+        if (!heatingGrouped[category]) {
+          heatingGrouped[category] = [];
+        }
+        heatingGrouped[category].push(expense);
+      });
+      
+      grouped['heating'] = {
+        expenses: Object.entries(heatingGrouped).map(([category, expenses]) => ({
+          category,
+          displayName: getCategoryDisplayName(category),
+          expenses,
+          total: expenses.reduce((sum: number, exp: ExpenseItem) => sum + exp.amount, 0)
+        })),
+        total: expenseDetails.heating.reduce((sum: number, exp: ExpenseItem) => sum + exp.amount, 0)
+      };
+    }
+    
+    // Process equal share expenses
+    if (expenseDetails.equal_share.length > 0) {
+      const equalShareGrouped: Record<string, ExpenseItem[]> = {};
+      expenseDetails.equal_share.forEach((expense: ExpenseItem) => {
+        const category = expense.category || 'special_contribution';
+        if (!equalShareGrouped[category]) {
+          equalShareGrouped[category] = [];
+        }
+        equalShareGrouped[category].push(expense);
+      });
+      
+      grouped['equal_share'] = {
+        expenses: Object.entries(equalShareGrouped).map(([category, expenses]) => ({
+          category,
+          displayName: getCategoryDisplayName(category),
+          expenses,
+          total: expenses.reduce((sum: number, exp: ExpenseItem) => sum + exp.amount, 0)
+        })),
+        total: expenseDetails.equal_share.reduce((sum: number, exp: ExpenseItem) => sum + exp.amount, 0)
+      };
+    }
+    
+    // Process individual expenses
+    if (expenseDetails.individual.length > 0) {
+      grouped['individual'] = {
+        expenses: expenseDetails.individual.map((expense: ExpenseItem) => ({
+          category: expense.category || 'individual_charge',
+          displayName: getCategoryDisplayName(expense.category || 'individual_charge'),
+          expenses: [expense],
+          total: expense.amount
+        })),
+        total: expenseDetails.individual.reduce((sum: number, exp: ExpenseItem) => sum + exp.amount, 0)
+      };
+    }
+    
+    return grouped;
+  };
+
+  // Get building management fee information
+  const getManagementFeeInfo = () => {
+    // Get management fee from props or state
+    const stateManagementFee = state.advancedShares?.management_fee_per_apartment || 0;
+    const finalManagementFee = stateManagementFee > 0 ? stateManagementFee : managementFeePerApartment;
+    const apartmentsCount = Object.keys(state.shares).length;
+    const totalManagementFee = finalManagementFee * apartmentsCount;
+    
+    return {
+      feePerApartment: finalManagementFee,
+      totalFee: totalManagementFee,
+      apartmentsCount: apartmentsCount,
+      hasFee: finalManagementFee > 0
+    };
+  };
+
+  // Get reserve fund information
+  const getReserveFundDetails = () => {
+    const reserveFundInfo = getReserveFundInfo();
+    const apartmentsCount = Object.keys(state.shares).length;
+    
+    return {
+      monthlyAmount: reserveFundInfo.monthlyAmount,
+      totalContribution: reserveFundInfo.totalContribution,
+      displayText: reserveFundInfo.displayText,
+      goal: reserveFundInfo.goal,
+      duration: reserveFundInfo.duration,
+      apartmentsCount: apartmentsCount,
+      hasReserve: reserveFundInfo.totalContribution > 0
     };
   };
 
@@ -184,7 +477,8 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     // Calculate monthly amount from reserve fund goal and duration
     const reserveFundGoal = state.advancedShares?.reserve_fund_goal || 0;
     const reserveFundDuration = state.advancedShares?.reserve_fund_duration || 1;
-    const fallbackContribution = state.advancedShares?.reserve_contribution || 0;
+    const stateReserveContribution = state.advancedShares?.reserve_contribution || 0;
+    const finalReserveContribution = stateReserveContribution > 0 ? stateReserveContribution : reserveContributionPerApartment;
     
     let monthlyAmount = 0;
     let totalContribution = 0;
@@ -192,11 +486,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     
     if (reserveFundGoal > 0 && reserveFundDuration > 0) {
       monthlyAmount = reserveFundGoal / reserveFundDuration;
-      totalContribution = monthlyAmount; // Χρησιμοποιούμε τη μηνιαία δόση
+      totalContribution = monthlyAmount * Object.keys(state.shares).length; // Συνολική συνεισφορά όλων των διαμερισμάτων
       displayText = `Στόχος ${formatAmount(reserveFundGoal)}€ σε ${reserveFundDuration} δόσεις = ${formatAmount(monthlyAmount)}€`;
-    } else if (fallbackContribution > 0) {
-      monthlyAmount = fallbackContribution;
-      totalContribution = fallbackContribution;
+    } else if (finalReserveContribution > 0) {
+      monthlyAmount = finalReserveContribution;
+      totalContribution = finalReserveContribution * Object.keys(state.shares).length;
       displayText = `Μηνιαία εισφορά αποθεματικού`;
     }
     
@@ -212,15 +506,649 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   const expenseBreakdown = calculateExpenseBreakdown();
   const expenseDetails = getExpenseDetails();
   const reserveFundInfo = getReserveFundInfo();
-  const totalExpenses = Object.values(expenseBreakdown).reduce((sum, val) => sum + val, 0) + reserveFundInfo.totalContribution;
+  const managementFeeInfo = getManagementFeeInfo();
+  const reserveFundDetails = getReserveFundDetails();
+  
+  // Calculate total expenses including management fees and reserve fund
+  const totalExpenses = Object.values(expenseBreakdown).reduce((sum, val) => sum + val, 0) + 
+                       reserveFundInfo.totalContribution + 
+                       managementFeeInfo.totalFee;
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleExport = (format: 'pdf' | 'excel') => {
-    // TODO: Implement export functionality
-    console.log(`Exporting to ${format}`);
+
+
+  const handleExport = async (format: 'pdf' | 'excel') => {
+    
+    try {
+      if (format === 'pdf') {
+        exportToPDF();
+      } else if (format === 'excel') {
+        exportToExcel();
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Σφάλμα κατά την εξαγωγή');
+    }
+  };
+
+  const exportToPDF = async () => {
+    if (typeof window === 'undefined') {
+      toast.error('Η εξαγωγή PDF δεν είναι διαθέσιμη στον server');
+      return;
+    }
+
+    try {
+      // Use existing jsPDF with html2canvas for better compatibility
+      const { jsPDF } = await import('jspdf');
+      const html2canvas = (await import('html2canvas')).default;
+      
+      // Prepare data for rendering
+      const currentDate = getCurrentDate();
+      const paymentDueDate = getPaymentDueDate();
+      const period = getPeriodInfo();
+      const groupedExpenses = getGroupedExpenses();
+      const apartmentCount = Object.keys(state.shares).length;
+      
+      // Enhanced HTML content with better styling and structure
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="el">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Φύλλο Κοινοχρήστων - ${period}</title>
+          <style>
+            @page { 
+              size: A4; 
+              margin: 0.5in; 
+            }
+            
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+            
+            body { 
+              font-family: 'Segoe UI', Arial, sans-serif; 
+              font-size: 11pt; 
+              line-height: 1.4;
+              color: #2d3748; 
+              background: white;
+            }
+            
+            /* Header Section */
+            .header { 
+              text-align: center; 
+              margin-bottom: 25px; 
+              padding-bottom: 20px;
+              border-bottom: 3px solid #2563eb; 
+              background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+              padding: 20px;
+              border-radius: 8px;
+            }
+            
+            .brand { 
+              font-size: 22pt; 
+              font-weight: 700; 
+              color: #2563eb; 
+              margin-bottom: 8px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            }
+            
+            .subtitle { 
+              font-size: 12pt; 
+              color: #64748b; 
+              font-style: italic;
+              margin-bottom: 15px;
+            }
+            
+            .main-title { 
+              font-size: 24pt; 
+              font-weight: 700; 
+              color: #1e293b; 
+              margin: 15px 0;
+              text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            }
+            
+            .period { 
+              font-size: 16pt; 
+              font-weight: 600; 
+              color: #0f172a; 
+              background: #e0e7ff;
+              padding: 8px 16px;
+              border-radius: 20px;
+              display: inline-block;
+            }
+            
+            /* Information Table */
+            .info-section {
+              margin: 25px 0;
+            }
+            
+            .info-table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin: 15px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            
+            .info-table th, .info-table td { 
+              border: 1px solid #e2e8f0; 
+              padding: 12px 16px; 
+              text-align: left; 
+            }
+            
+            .info-table th { 
+              background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+              color: white; 
+              font-weight: 600; 
+              width: 30%;
+              font-size: 10pt;
+            }
+            
+            .info-table td {
+              background: #ffffff;
+              font-weight: 500;
+            }
+            
+            /* Section Titles */
+            .section-title { 
+              font-size: 16pt; 
+              font-weight: 700; 
+              color: #1e293b; 
+              margin: 30px 0 20px 0; 
+              padding: 12px 0 8px 0;
+              border-bottom: 2px solid #3b82f6; 
+              background: linear-gradient(90deg, #f1f5f9 0%, transparent 100%);
+              padding-left: 15px;
+            }
+            
+            /* Expenses Section */
+            .expense-container {
+              background: #f8fafc;
+              border-radius: 8px;
+              padding: 20px;
+              margin: 20px 0;
+              border-left: 5px solid #f59e0b;
+            }
+            
+            .no-expenses { 
+              font-style: italic; 
+              color: #64748b; 
+              text-align: center; 
+              padding: 30px;
+              background: #fef3c7;
+              border-radius: 8px;
+              border: 2px dashed #f59e0b;
+            }
+            
+            .expense-item {
+              margin: 12px 0;
+              padding: 8px 12px;
+              background: white;
+              border-radius: 6px;
+              border-left: 3px solid #3b82f6;
+            }
+            
+            .expense-item strong {
+              color: #1e293b;
+              font-size: 11pt;
+            }
+            
+            .expense-subitem {
+              margin-left: 25px;
+              font-size: 9pt;
+              color: #475569;
+              padding: 4px 0;
+            }
+            
+            /* Total Amount Highlight */
+            .total-highlight { 
+              margin: 25px 0; 
+              padding: 15px; 
+              background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+              color: white; 
+              text-align: center;
+              border-radius: 8px;
+              box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            }
+            
+            .total-highlight strong {
+              font-size: 14pt;
+              text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            }
+            
+            /* Analysis Table */
+            .analysis-table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin: 20px 0; 
+              font-size: 7pt;
+              background: white;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            
+            .analysis-table th, .analysis-table td { 
+              border: 1px solid #cbd5e1; 
+              padding: 6px 4px; 
+              text-align: center; 
+            }
+            
+            .analysis-table th { 
+              background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+              color: white; 
+              font-weight: 600;
+              font-size: 7pt;
+            }
+            
+            .analysis-table tr:nth-child(even) {
+              background: #f8fafc;
+            }
+            
+            .analysis-table tr:hover {
+              background: #e0e7ff;
+            }
+            
+            .totals-row { 
+              background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+              font-weight: 700;
+              border-top: 2px solid #3b82f6;
+            }
+            
+            .totals-row td {
+              font-weight: 600;
+              color: #1e293b;
+            }
+            
+            /* Footer */
+            .footer { 
+              margin-top: 30px; 
+              padding-top: 20px; 
+              border-top: 2px solid #e2e8f0;
+              background: #f8fafc;
+              border-radius: 8px;
+              padding: 20px;
+            }
+            
+            .footer .info-table th {
+              background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            }
+            
+            /* Utility Classes */
+            .text-left { text-align: left !important; }
+            .text-right { text-align: right !important; }
+            .font-bold { font-weight: 700; }
+            .text-primary { color: #2563eb; }
+            
+            /* Print Optimizations */
+            @media print {
+              body { font-size: 10pt; }
+              .header { break-inside: avoid; }
+              .section-title { break-after: avoid; }
+              .analysis-table { font-size: 6pt; }
+            }
+          </style>
+        </head>
+        <body>
+          <!-- Header Section -->
+          <div class="header">
+            <div class="brand">koinoxrista24.gr</div>
+            <div class="subtitle">online έκδοση κοινοχρήστων</div>
+            <div class="main-title">Φύλλο Κοινοχρήστων</div>
+            <div class="period">${period}</div>
+          </div>
+          
+          <!-- Building Information -->
+          <div class="info-section">
+            <table class="info-table">
+              <tr><th>🏢 ΠΟΛΥΚΑΤΟΙΚΙΑ</th><td>${buildingName}</td></tr>
+              <tr><th>📅 ΜΗΝΑΣ</th><td>${period}</td></tr>
+              <tr><th>👤 ΔΙΑΧΕΙΡΙΣΤΗΣ</th><td>Διαχειριστής Κτιρίου</td></tr>
+              <tr><th>⏰ ΛΗΞΗ ΠΛΗΡΩΜΗΣ</th><td>${paymentDueDate}</td></tr>
+              <tr><th>📝 ΠΑΡΑΤΗΡΗΣΕΙΣ</th><td>ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ: ΔΕΥΤΕΡΑ & ΤΕΤΑΡΤΗ ΑΠΟΓΕΥΜΑ</td></tr>
+            </table>
+          </div>
+          
+          <!-- Expenses Analysis -->
+          <div class="section-title">📊 ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ</div>
+          <div class="expense-container">
+            ${Object.keys(groupedExpenses).length === 0 ? 
+              '<div class="no-expenses">❌ Δεν βρέθηκαν δαπάνες για αυτή την περίοδο</div>' : 
+              Object.entries(groupedExpenses).map(([groupKey, groupData]: [string, any]) => {
+                const groupLabels: Record<string, string> = {
+                  'general': 'Α. ΚΟΙΝΟΧΡΗΣΤΑ',
+                  'elevator': 'Β. ΑΝΕΛΚΗΣΤΗΡΑΣ', 
+                  'heating': 'Γ. ΘΕΡΜΑΝΣΗ',
+                  'equal_share': 'Δ. ΛΟΙΠΑ ΕΞΟΔΑ',
+                  'individual': 'Ε. ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣΙΑΣ'
+                };
+                
+                let expenseHtml = `<div class="expense-item"><strong>${groupLabels[groupKey]}: ${formatAmount(groupData.total)}€</strong></div>`;
+                groupData.expenses.forEach((category: any, index: number) => {
+                  expenseHtml += `<div class="expense-subitem">${index + 1}. ${category.displayName}: ${formatAmount(category.total)}€</div>`;
+                });
+                return expenseHtml;
+              }).join('')
+            }
+          </div>
+          
+          <!-- Total Amount -->
+          <div class="total-highlight">
+            <strong>💰 ΣΥΝΟΛΟ ΔΑΠΑΝΩΝ: ${formatAmount(totalExpenses)}€</strong>
+          </div>
+          
+          <!-- Apartments Analysis -->
+          <div class="section-title">🏠 ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ</div>
+          
+          <table class="analysis-table">
+            <thead>
+              <tr>
+                <th rowspan="2">ΑΡΙΘΜΟΣ<br/>ΔΙΑΜΕΡΙΣΜΑΤΟΣ</th>
+                <th rowspan="2">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</th>
+                <th colspan="3">ΘΕΡΜΑΝΣΗ</th>
+                <th colspan="5">ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ</th>
+                <th colspan="5">ΠΟΣΟ ΠΟΥ ΑΝΑΛΟΓΕΙ</th>
+                <th rowspan="2">ΣΤΡΟΓΓ.</th>
+                <th rowspan="2">ΠΛΗΡΩΤΕΟ<br/>ΠΟΣΟ</th>
+                <th rowspan="2">A/A</th>
+              </tr>
+              <tr>
+                <th>ei</th><th>fi</th><th>ΘΕΡΜΙΔΕΣ</th>
+                <th>ΚΟΙΝΟΧΡΗΣΤΑ</th><th>ΑΝΕΛΚΥΡΑΣ</th><th>ΘΕΡΜΑΝΣΗ</th><th>ΛΟΙΠΑ ΕΞΟΔΑ</th><th>ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣ</th>
+                <th>ΚΟΙΝΟΧΡΗΣΤΑ</th><th>ΑΝΕΛΚΥΡΑΣ</th><th>ΘΕΡΜΑΝΣΗ</th><th>ΛΟΙΠΑ ΕΞΟΔΑ</th><th>ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.values(state.shares).map((share: any, index: number) => {
+                const participationMills = toNumber(share.participation_mills);
+                const row = perApartmentAmounts[share.apartment_id] || { common:0, elevator:0, heating:0, other:0, coowner:0, reserve:0, total_due:0 };
+                const managementFee = managementFeeInfo.hasFee ? managementFeeInfo.feePerApartment : 0;
+                const apartmentReserveFund = reserveFundDetails.hasReserve ? (reserveFundDetails.monthlyAmount * (participationMills / 1000)) : 0;
+                const totalWithFees = row.total_due + managementFee + apartmentReserveFund;
+                const heatingBreakdown = share.heating_breakdown || { ei: 0, fi: 0, calories: 0 };
+                
+                const expenseBreakdownValues = {
+                  common: toNumber(expenseBreakdown.common),
+                  elevator: toNumber(expenseBreakdown.elevator),
+                  heating: toNumber(expenseBreakdown.heating),
+                  other: toNumber(expenseBreakdown.other),
+                  coownership: toNumber(expenseBreakdown.coownership)
+                };
+                
+                const commonMills = participationMills * (expenseBreakdownValues.common / totalExpenses || 0);
+                const elevatorMills = participationMills * (expenseBreakdownValues.elevator / totalExpenses || 0);
+                const heatingMills = participationMills * (expenseBreakdownValues.heating / totalExpenses || 0);
+                const otherMills = participationMills * (expenseBreakdownValues.other / totalExpenses || 0);
+                const coownerMills = participationMills * (expenseBreakdownValues.coownership / totalExpenses || 0);
+                
+                return `<tr>
+                  <td class="font-bold text-primary">${share.identifier || share.apartment_number}</td>
+                  <td class="text-left" style="padding-left: 8px;">${share.owner_name || 'Μη καταχωρημένος'}</td>
+                  <td>${heatingBreakdown.ei?.toFixed(3) || '0.000'}</td>
+                  <td>${heatingBreakdown.fi?.toFixed(2) || '0.00'}</td>
+                  <td>${heatingBreakdown.calories?.toFixed(0) || '0'}</td>
+                  <td>${commonMills.toFixed(2)}</td>
+                  <td>${elevatorMills.toFixed(2)}</td>
+                  <td>${heatingMills.toFixed(2)}</td>
+                  <td>${otherMills.toFixed(2)}</td>
+                  <td>${coownerMills.toFixed(2)}</td>
+                  <td>${formatAmount(row.common)}</td>
+                  <td>${formatAmount(row.elevator)}</td>
+                  <td>${formatAmount(row.heating)}</td>
+                  <td>${formatAmount(row.other)}</td>
+                  <td>${formatAmount(row.coowner)}</td>
+                  <td>0,00</td>
+                  <td class="font-bold text-primary">${formatAmount(totalWithFees)}</td>
+                  <td>${index + 1}</td>
+                </tr>`;
+              }).join('')}
+              
+              <tr class="totals-row">
+                <td class="font-bold">ΣΥΝΟΛΑ</td>
+                <td></td>
+                <td>${Object.values(state.shares).reduce((sum: number, s: any) => sum + (s.heating_breakdown?.ei || 0), 0).toFixed(3)}</td>
+                <td>${Object.values(state.shares).reduce((sum: number, s: any) => sum + (s.heating_breakdown?.fi || 0), 0).toFixed(2)}</td>
+                <td>${Object.values(state.shares).reduce((sum: number, s: any) => sum + (s.heating_breakdown?.calories || 0), 0).toFixed(0)}</td>
+                <td>${Object.values(state.shares).reduce((sum: number, s: any) => {
+                  const participationMills = toNumber(s.participation_mills);
+                  return sum + (participationMills * (toNumber(expenseBreakdown.common) / totalExpenses || 0));
+                }, 0).toFixed(2)}</td>
+                <td>${Object.values(state.shares).reduce((sum: number, s: any) => {
+                  const participationMills = toNumber(s.participation_mills);
+                  return sum + (participationMills * (toNumber(expenseBreakdown.elevator) / totalExpenses || 0));
+                }, 0).toFixed(2)}</td>
+                <td>${Object.values(state.shares).reduce((sum: number, s: any) => {
+                  const participationMills = toNumber(s.participation_mills);
+                  return sum + (participationMills * (toNumber(expenseBreakdown.heating) / totalExpenses || 0));
+                }, 0).toFixed(2)}</td>
+                <td>${Object.values(state.shares).reduce((sum: number, s: any) => {
+                  const participationMills = toNumber(s.participation_mills);
+                  return sum + (participationMills * (toNumber(expenseBreakdown.other) / totalExpenses || 0));
+                }, 0).toFixed(2)}</td>
+                <td>${Object.values(state.shares).reduce((sum: number, s: any) => {
+                  const participationMills = toNumber(s.participation_mills);
+                  return sum + (participationMills * (toNumber(expenseBreakdown.coownership) / totalExpenses || 0));
+                }, 0).toFixed(2)}</td>
+                <td class="font-bold">${formatAmount(totalsFromRows.common)}</td>
+                <td class="font-bold">${formatAmount(totalsFromRows.elevator)}</td>
+                <td class="font-bold">${formatAmount(totalsFromRows.heating)}</td>
+                <td class="font-bold">${formatAmount(totalsFromRows.other)}</td>
+                <td class="font-bold">${formatAmount(totalsFromRows.coowner)}</td>
+                <td>0,01</td>
+                <td class="font-bold text-primary">${formatAmount(totalExpenses)}</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <!-- Footer Information -->
+          <div class="footer">
+            <table class="info-table">
+              <tr><th>📅 ΗΜΕΡΟΜΗΝΙΑ ΕΚΔΟΣΗΣ</th><td>${currentDate}</td></tr>
+              <tr><th>🏠 ΣΥΝΟΛΟ ΔΙΑΜΕΡΙΣΜΑΤΩΝ</th><td>${apartmentCount}</td></tr>
+              <tr><th>💰 ΣΥΝΟΛΟ ΔΑΠΑΝΩΝ</th><td class="font-bold text-primary">${formatAmount(totalExpenses)}€</td></tr>
+            </table>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      // Create temporary element for rendering
+      const element = document.createElement('div');
+      element.innerHTML = htmlContent;
+      element.style.position = 'absolute';
+      element.style.left = '-9999px';
+      element.style.top = '0';
+      element.style.width = '210mm'; // A4 width
+      element.style.backgroundColor = 'white';
+      document.body.appendChild(element);
+      
+      // Configure html2canvas options for better Greek text rendering
+      const canvasOptions = {
+        scale: 2,
+        useCORS: true,
+        letterRendering: true,
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: 794, // A4 width in pixels at 96 DPI
+        height: element.scrollHeight
+      };
+      
+      // Convert HTML to canvas
+      const canvas = await html2canvas(element, canvasOptions);
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
+      
+      // Calculate dimensions
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      // Add image to PDF (handle multiple pages if needed)
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      // Save PDF
+      const fileName = `φυλλο_κοινοχρηστων_${period.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+      // Cleanup
+      document.body.removeChild(element);
+      
+      toast.success('✅ Το PDF εξήχθη επιτυχώς!', {
+        description: `Αρχείο: φυλλο_κοινοχρηστων_${period.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+      });
+      
+    } catch (error) {
+      console.error('PDF Export Error:', error);
+      toast.error('❌ Σφάλμα κατά την εξαγωγή PDF', {
+        description: 'Παρακαλώ δοκιμάστε ξανά ή επικοινωνήστε με την υποστήριξη.'
+      });
+    }
+  };
+
+  const exportToExcel = async () => {
+    // Ensure we're running on the client side
+    if (typeof window === 'undefined') {
+      toast.error('Η εξαγωγή Excel δεν είναι διαθέσιμη στον server');
+      return;
+    }
+
+    try {
+      // Dynamic import of xlsx and file-saver to avoid SSR issues
+      const XLSX = await import('xlsx');
+      const fileSaver = await import('file-saver');
+      const { saveAs } = fileSaver;
+      
+      // Προετοιμασία δεδομένων
+      const workbook = XLSX.utils.book_new();
+    
+    // Κύριο φύλλο με τα δεδομένα
+    const mainData = Object.values(state.shares).map((share: any, index: number) => {
+      const participationMills = toNumber(share.participation_mills);
+      const totalMills = Object.values(state.shares).reduce((sum: number, s: any) => sum + toNumber(s.participation_mills), 0);
+      const participationPercentage = totalMills > 0 ? (participationMills / totalMills) * 1000 : 0;
+      const row = perApartmentAmounts[share.apartment_id] || { common:0, elevator:0, heating:0, other:0, coowner:0, total_due:0 };
+      
+      // Προσθήκη δαπανών διαχείρισης και αποθεματικού
+      const managementFee = managementFeeInfo.hasFee ? managementFeeInfo.feePerApartment : 0;
+      const apartmentReserveFund = reserveFundDetails.hasReserve ? 
+        (reserveFundDetails.monthlyAmount * (participationMills / 1000)) : 0;
+      const totalWithFees = row.total_due + managementFee + apartmentReserveFund;
+      
+      // Θέρμανση breakdown (ei, fi, θερμίδες)
+      const heatingBreakdown = share.heating_breakdown || { ei: 0, fi: 0, calories: 0 };
+      
+      // Χιλιοστά συμμετοχής ανά κατηγορία
+      const commonMills = participationMills * (expenseBreakdown.common / totalExpenses || 0);
+      const elevatorMills = participationMills * (expenseBreakdown.elevator / totalExpenses || 0);
+      const heatingMills = participationMills * (expenseBreakdown.heating / totalExpenses || 0);
+      const otherMills = participationMills * (expenseBreakdown.other / totalExpenses || 0);
+      const coownerMills = participationMills * (expenseBreakdown.coownership / totalExpenses || 0);
+      
+      return {
+        'ΑΡΙΘΜΟΣ_ΔΙΑΜΕΡΙΣΜΑΤΟΣ': share.identifier || share.apartment_number,
+        'ΟΝΟΜΑΤΕΠΩΝΥΜΟ': share.owner_name || 'Μη καταχωρημένος',
+        'ΘΕΡΜΑΝΣΗ_ei': heatingBreakdown.ei?.toFixed(3) || '0.000',
+        'ΘΕΡΜΑΝΣΗ_fi': heatingBreakdown.fi?.toFixed(2) || '0.00',
+        'ΘΕΡΜΑΝΣΗ_ΘΕΡΜΙΔΕΣ': heatingBreakdown.calories?.toFixed(0) || '0',
+        'ΧΙΛΙΟΣΤΑ_ΚΟΙΝΟΧΡΗΣΤΑ': commonMills.toFixed(2),
+        'ΧΙΛΙΟΣΤΑ_ΑΝΕΛΚΥΡΑΣ': elevatorMills.toFixed(2),
+        'ΧΙΛΙΟΣΤΑ_ΘΕΡΜΑΝΣΗ': heatingMills.toFixed(2),
+        'ΧΙΛΙΟΣΤΑ_ΛΟΙΠΑ_ΕΞΟΔΑ': otherMills.toFixed(2),
+        'ΧΙΛΙΟΣΤΑ_ΕΞΟΔΑ_ΣΥΝΙΔΙΟΚΤΗΣ': coownerMills.toFixed(2),
+        'ΠΟΣΟ_ΚΟΙΝΟΧΡΗΣΤΑ': row.common,
+        'ΠΟΣΟ_ΑΝΕΛΚΥΡΑΣ': row.elevator,
+        'ΠΟΣΟ_ΘΕΡΜΑΝΣΗ': row.heating,
+        'ΠΟΣΟ_ΛΟΙΠΑ_ΕΞΟΔΑ': row.other,
+        'ΠΟΣΟ_ΕΞΟΔΑ_ΣΥΝΙΔΙΟΚΤΗΣ': row.coowner,
+        'ΣΤΡΟΓΓ.': '0.00',
+        'ΠΛΗΡΩΤΕΟ_ΠΟΣΟ': totalWithFees,
+        'A/A': index + 1
+      };
+    });
+    
+    const mainWorksheet = XLSX.utils.json_to_sheet(mainData);
+    
+    // Προσθήκη στατιστικών στο τέλος
+    const statsData = [
+      { 'ΣΤΑΤΙΣΤΙΚΑ': 'Συνολικές Δαπάνες', 'ΤΙΜΗ': `${formatAmount(totalExpenses)}€` },
+      { 'ΣΤΑΤΙΣΤΙΚΑ': 'Αριθμός Διαμερισμάτων', 'ΤΙΜΗ': Object.keys(state.shares).length },
+      { 'ΣΤΑΤΙΣΤΙΚΑ': 'Περίοδος', 'ΤΙΜΗ': getPeriodInfo() },
+      { 'ΣΤΑΤΙΣΤΙΚΑ': 'Ημερομηνία Έκδοσης', 'ΤΙΜΗ': getCurrentDate() },
+    ];
+    
+    // Προσθήκη δυναμικής ανάλυσης δαπανών
+    const groupedExpenses = getGroupedExpenses();
+    Object.entries(groupedExpenses).forEach(([groupKey, groupData]) => {
+      const groupLabels = {
+        'general': 'Α. ΚΟΙΝΟΧΡΗΣΤΑ',
+        'elevator': 'Β. ΑΝΕΛΚΗΣΤΗΡΑΣ',
+        'heating': 'Γ. ΘΕΡΜΑΝΣΗ',
+        'equal_share': 'Δ. ΛΟΙΠΑ ΕΞΟΔΑ',
+        'individual': 'Ε. ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣΙΑΣ'
+      };
+      
+      statsData.push({ 'ΣΤΑΤΙΣΤΙΚΑ': groupLabels[groupKey as keyof typeof groupLabels], 'ΤΙΜΗ': `${formatAmount(groupData.total)}€` });
+      
+      // Προσθήκη υποκατηγοριών
+      groupData.expenses.forEach((category, index) => {
+        statsData.push({ 
+          'ΣΤΑΤΙΣΤΙΚΑ': `  ${index + 1}. ${category.displayName}`, 
+          'ΤΙΜΗ': `${formatAmount(category.total)}€` 
+        });
+      });
+    });
+    
+    // Προσθήκη δαπανών διαχείρισης και αποθεματικού
+    if (managementFeeInfo.hasFee) {
+      statsData.push({ 'ΣΤΑΤΙΣΤΙΚΑ': 'Δαπάνες Διαχείρισης', 'ΤΙΜΗ': `${formatAmount(managementFeeInfo.totalFee)}€` });
+    }
+    if (reserveFundDetails.hasReserve) {
+      statsData.push({ 'ΣΤΑΤΙΣΤΙΚΑ': 'Αποθεματικό', 'ΤΙΜΗ': `${formatAmount(reserveFundDetails.totalContribution)}€` });
+    }
+    
+    const statsWorksheet = XLSX.utils.json_to_sheet(statsData);
+    
+    // Προσθήκη φύλλων στο βιβλίο
+    XLSX.utils.book_append_sheet(workbook, mainWorksheet, 'Κοινοχρήστα');
+    XLSX.utils.book_append_sheet(workbook, statsWorksheet, 'Στατιστικά');
+    
+      // Αποθήκευση αρχείου
+      const fileName = `κοινοχρηστα_${getPeriodInfo().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, fileName);
+      
+      toast.success('Εξαγωγή Excel ολοκληρώθηκε επιτυχώς!');
+    } catch (error) {
+      console.error('Excel Export Error:', error);
+      toast.error('Σφάλμα κατά την εξαγωγή Excel');
+    }
   };
 
   const handleSave = async () => {
@@ -260,9 +1188,15 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
         {/* Header */}
         <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between no-print">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Building className="h-6 w-6 text-blue-600" />
-              <h2 className="text-xl font-bold text-gray-800">Φύλλο Κοινοχρήστων</h2>
+            <div className="flex items-center gap-4">
+              <div className="text-left">
+                <h2 className="text-lg font-bold text-blue-600">koinoxrista24.gr</h2>
+                <p className="text-sm text-gray-600">online έκδοση κοινοχρήστων</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Building className="h-6 w-6 text-blue-600" />
+                <h2 className="text-xl font-bold text-gray-800">Φύλλο Κοινοχρήστων</h2>
+              </div>
             </div>
             <Badge variant="outline" className="bg-blue-50 text-blue-700">
               {getPeriodInfo()}
@@ -317,13 +1251,39 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
         {/* Print Header */}
         <div className="hidden print:block p-4 border-b">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">Φύλλο Κοινοχρήστων</h1>
-            <p className="text-lg text-gray-600">{getPeriodInfo()}</p>
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="text-left">
+                <h2 className="text-lg font-bold text-blue-600">koinoxrista24.gr</h2>
+                <p className="text-sm text-gray-600">online έκδοση κοινοχρήστων</p>
+              </div>
+              <div className="text-center">
+                <h1 className="text-2xl font-bold text-gray-800">Φύλλο Κοινοχρήστων</h1>
+                <p className="text-lg text-gray-600">{getPeriodInfo()}</p>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-6">
+          <Tabs defaultValue="traditional" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="traditional" className="flex items-center gap-2">
+                <Receipt className="h-4 w-4" />
+                Παραδοσιακή Προβολή
+              </TabsTrigger>
+              <TabsTrigger value="analysis" className="flex items-center gap-2">
+                <PieChart className="h-4 w-4" />
+                Ανάλυση Δαπανών
+              </TabsTrigger>
+              <TabsTrigger value="export" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Εξαγωγή & Εκτύπωση
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Traditional View Tab */}
+            <TabsContent value="traditional" className="space-y-6 mt-6">
           {/* Header Information */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Building Info */}
@@ -343,10 +1303,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 </div>
                 <p className="text-lg font-medium text-green-900">{getPeriodInfo()}</p>
               </div>
-            </div>
-
-            {/* Middle Column - Manager & Due Date */}
-            <div className="space-y-4">
+              
               <div className="bg-purple-50 p-4 rounded-lg border">
                 <div className="flex items-center gap-2 mb-2">
                   <User className="h-5 w-5 text-purple-600" />
@@ -362,129 +1319,148 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 </div>
                 <p className="text-lg font-medium text-orange-900">{getPaymentDueDate()}</p>
               </div>
+              
+              <div className="bg-yellow-50 p-4 rounded-lg border">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="h-5 w-5 text-yellow-600" />
+                  <h3 className="font-semibold text-yellow-800">ΠΑΡΑΤΗΡΗΣΕΙΣ</h3>
+                </div>
+                <p className="text-sm font-medium text-yellow-900">ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ: ΔΕΥΤΕΡΑ & ΤΕΤΑΡΤΗ ΑΠΟΓΕΥΜΑ</p>
+              </div>
             </div>
 
-            {/* Right Column - Expense Breakdown */}
+            {/* Middle Column - Empty for spacing */}
+            <div className="space-y-4">
+            </div>
+
+            {/* Right Column - Dynamic Expense Breakdown */}
             <div className="bg-gray-50 p-4 rounded-lg border">
               <h3 className="font-bold text-gray-800 mb-4 text-center">ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ</h3>
               
               <div className="space-y-3">
-                {/* General Expenses */}
-                {expenseDetails.general.length > 0 && (
-                  <div className="bg-white p-3 rounded border">
-                    <h4 className="font-semibold text-gray-800 mb-2">Α. ΓΕΝΙΚΕΣ ΔΑΠΑΝΕΣ</h4>
-                    <div className="space-y-1 text-sm">
-                      {expenseDetails.general.map((expense: any, index: number) => (
-                        <div key={expense.id || index} className="flex justify-between">
-                          <span>{index + 1}. {expense.description || expense.title}</span>
-                          <span className="font-medium">{formatAmount(expense.amount)}€</span>
+                {(() => {
+                  const groupedExpenses = getGroupedExpenses();
+                  const sections = [];
+                  
+                  // A. ΚΟΙΝΟΧΡΗΣΤΑ
+                  if (groupedExpenses.general) {
+                    sections.push(
+                      <div key="general" className="bg-blue-50 p-3 rounded border">
+                        <h4 className="font-semibold text-gray-800 mb-2">Α. ΚΟΙΝΟΧΡΗΣΤΑ</h4>
+                        <div className="space-y-1 text-sm">
+                          {groupedExpenses.general.expenses.map((category, index) => (
+                            <div key={category.category} className="flex justify-between">
+                              <span>{index + 1}. {category.displayName}</span>
+                              <span className="font-medium">{formatAmount(category.total)}€</span>
+                            </div>
+                          ))}
+                          <div className="flex justify-between font-semibold border-t pt-1">
+                            <span>ΣΥΝΟΛΟ</span>
+                            <span>{formatAmount(groupedExpenses.general.total)}€</span>
+                          </div>
                         </div>
-                      ))}
-                      <div className="flex justify-between font-semibold border-t pt-1">
-                        <span>ΣΥΝΟΛΟ</span>
-                        <span>{formatAmount(expenseBreakdown.common)}€</span>
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Elevator */}
-                {expenseDetails.elevator.length > 0 && (
-                  <div className="bg-white p-3 rounded border">
-                    <h4 className="font-semibold text-gray-800 mb-2">Β. ΑΝΕΛΚΥΣΤΗΡΑΣ</h4>
-                    <div className="space-y-1 text-sm">
-                      {expenseDetails.elevator.map((expense: any, index: number) => (
-                        <div key={expense.id || index} className="flex justify-between">
-                          <span>{index + 1}. {expense.description || expense.title}</span>
-                          <span className="font-medium">{formatAmount(expense.amount)}€</span>
+                    );
+                  }
+                  
+                  // B. ΑΝΕΛΚΗΣΤΗΡΑΣ
+                  if (groupedExpenses.elevator) {
+                    sections.push(
+                      <div key="elevator" className="bg-blue-50 p-3 rounded border">
+                        <h4 className="font-semibold text-gray-800 mb-2">Β. ΑΝΕΛΚΗΣΤΗΡΑΣ</h4>
+                        <div className="space-y-1 text-sm">
+                          {groupedExpenses.elevator.expenses.map((category, index) => (
+                            <div key={category.category} className="flex justify-between">
+                              <span>{index + 1}. {category.displayName}</span>
+                              <span className="font-medium">{formatAmount(category.total)}€</span>
+                            </div>
+                          ))}
+                          <div className="flex justify-between font-semibold border-t pt-1">
+                            <span>ΣΥΝΟΛΟ</span>
+                            <span>{formatAmount(groupedExpenses.elevator.total)}€</span>
+                          </div>
                         </div>
-                      ))}
-                      <div className="flex justify-between font-semibold border-t pt-1">
-                        <span>ΣΥΝΟΛΟ</span>
-                        <span>{formatAmount(expenseBreakdown.elevator)}€</span>
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Heating */}
-                {expenseDetails.heating.length > 0 && (
-                  <div className="bg-white p-3 rounded border">
-                    <h4 className="font-semibold text-gray-800 mb-2">Γ. ΘΕΡΜΑΝΣΗ</h4>
-                    <div className="space-y-1 text-sm">
-                      {expenseDetails.heating.map((expense: any, index: number) => (
-                        <div key={expense.id || index} className="flex justify-between">
-                          <span>{index + 1}. {expense.description || expense.title}</span>
-                          <span className="font-medium">{formatAmount(expense.amount)}€</span>
+                    );
+                  }
+                  
+                  // Γ. ΘΕΡΜΑΝΣΗ
+                  if (groupedExpenses.heating) {
+                    sections.push(
+                      <div key="heating" className="bg-blue-50 p-3 rounded border">
+                        <h4 className="font-semibold text-gray-800 mb-2">Γ. ΘΕΡΜΑΝΣΗ</h4>
+                        <div className="space-y-1 text-sm">
+                          {groupedExpenses.heating.expenses.map((category, index) => (
+                            <div key={category.category} className="flex justify-between">
+                              <span>{index + 1}. {category.displayName}</span>
+                              <span className="font-medium">{formatAmount(category.total)}€</span>
+                            </div>
+                          ))}
+                          <div className="flex justify-between font-semibold border-t pt-1">
+                            <span>ΣΥΝΟΛΟ</span>
+                            <span>{formatAmount(groupedExpenses.heating.total)}€</span>
+                          </div>
                         </div>
-                      ))}
-                      <div className="flex justify-between font-semibold border-t pt-1">
-                        <span>ΣΥΝΟΛΟ</span>
-                        <span>{formatAmount(expenseBreakdown.heating)}€</span>
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Equal Share Expenses */}
-                {expenseDetails.equal_share.length > 0 && (
-                  <div className="bg-white p-3 rounded border">
-                    <h4 className="font-semibold text-gray-800 mb-2">Δ. ΙΣΟΠΟΣΕΣ ΔΑΠΑΝΕΣ</h4>
-                    <div className="space-y-1 text-sm">
-                      {expenseDetails.equal_share.map((expense: any, index: number) => (
-                        <div key={expense.id || index} className="flex justify-between">
-                          <span>{index + 1}. {expense.description || expense.title}</span>
-                          <span className="font-medium">{formatAmount(expense.amount)}€</span>
+                    );
+                  }
+                  
+                  // Δ. ΛΟΙΠΑ ΕΞΟΔΑ (Equal Share)
+                  if (groupedExpenses.equal_share) {
+                    sections.push(
+                      <div key="equal_share" className="bg-blue-50 p-3 rounded border">
+                        <h4 className="font-semibold text-gray-800 mb-2">Δ. ΛΟΙΠΑ ΕΞΟΔΑ</h4>
+                        <div className="space-y-1 text-sm">
+                          {groupedExpenses.equal_share.expenses.map((category, index) => (
+                            <div key={category.category} className="flex justify-between">
+                              <span>{index + 1}. {category.displayName}</span>
+                              <span className="font-medium">{formatAmount(category.total)}€</span>
+                            </div>
+                          ))}
+                          <div className="flex justify-between font-semibold border-t pt-1">
+                            <span>ΣΥΝΟΛΟ</span>
+                            <span>{formatAmount(groupedExpenses.equal_share.total)}€</span>
+                          </div>
                         </div>
-                      ))}
-                      <div className="flex justify-between font-semibold border-t pt-1">
-                        <span>ΣΥΝΟΛΟ</span>
-                        <span>{formatAmount(expenseBreakdown.other)}€</span>
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Individual Expenses */}
-                {expenseDetails.individual.length > 0 && (
-                  <div className="bg-white p-3 rounded border">
-                    <h4 className="font-semibold text-gray-800 mb-2">Ε. ΑΤΟΜΙΚΕΣ ΔΑΠΑΝΕΣ</h4>
-                    <div className="space-y-1 text-sm">
-                      {expenseDetails.individual.map((expense: any, index: number) => (
-                        <div key={expense.id || index} className="flex justify-between">
-                          <span>{index + 1}. {expense.description || expense.title}</span>
-                          <span className="font-medium">{formatAmount(expense.amount)}€</span>
+                    );
+                  }
+                  
+                  // Ε. ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣΙΑΣ (Individual)
+                  if (groupedExpenses.individual) {
+                    sections.push(
+                      <div key="individual" className="bg-blue-50 p-3 rounded border">
+                        <h4 className="font-semibold text-gray-800 mb-2">Ε. ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣΙΑΣ</h4>
+                        <div className="space-y-1 text-sm">
+                          {groupedExpenses.individual.expenses.map((category, index) => (
+                            <div key={category.category} className="flex justify-between">
+                              <span>{index + 1}. {category.displayName}</span>
+                              <span className="font-medium">{formatAmount(category.total)}€</span>
+                            </div>
+                          ))}
+                          <div className="flex justify-between font-semibold border-t pt-1">
+                            <span>ΣΥΝΟΛΟ</span>
+                            <span>{formatAmount(groupedExpenses.individual.total)}€</span>
+                          </div>
                         </div>
-                      ))}
-                      <div className="flex justify-between font-semibold border-t pt-1">
-                        <span>ΣΥΝΟΛΟ</span>
-                        <span>{formatAmount(expenseBreakdown.coownership)}€</span>
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Reserve Fund Contribution */}
-                {reserveFundInfo.totalContribution > 0 && (
-                  <div className="bg-white p-3 rounded border">
-                    <h4 className="font-semibold text-gray-800 mb-2">ΣΤ. ΕΙΣΦΟΡΑ ΑΠΟΘΕΜΑΤΙΚΟΥ</h4>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-xs">
-                          {reserveFundInfo.displayText || 'ΜΗΝΙΑΙΑ ΔΟΣΗ (κατανομή ανά χιλιοστά)'}
-                        </span>
-                        <span className="font-medium">{formatAmount(reserveFundInfo.monthlyAmount)}€</span>
+                    );
+                  }
+                  
+                  // If no expenses found, show a message
+                  if (sections.length === 0) {
+                    sections.push(
+                      <div key="no-expenses" className="bg-blue-50 p-3 rounded border">
+                        <p className="text-sm text-gray-600 text-center">Δεν βρέθηκαν δαπάνες για αυτή την περίοδο</p>
                       </div>
-                      <div className="flex justify-between font-semibold border-t pt-1">
-                        <span>ΣΥΝΟΛΟ</span>
-                        <span>{formatAmount(reserveFundInfo.totalContribution)}€</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                    );
+                  }
+                  
+                  return sections;
+                })()}
 
                 {/* Grand Total */}
-                <div className="bg-blue-100 p-3 rounded border">
+                <div className="bg-blue-600 text-white p-3 rounded border">
                   <div className="flex justify-between font-bold text-lg">
                     <span>ΣΥΝΟΛΟ ΔΑΠΑΝΩΝ</span>
                     <span>{formatAmount(totalExpenses)}€</span>
@@ -501,71 +1477,111 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
             </div>
             
             <div className="overflow-x-auto">
-              <Table className="min-w-full">
+              <Table className="min-w-full common-expense-table" style={{ minWidth: '1100px' }}>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
-                    <TableHead className="text-center font-bold border">A/A</TableHead>
-                    <TableHead className="text-center font-bold border">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</TableHead>
-                    <TableHead className="text-center font-bold border">ΚΩΔ.</TableHead>
-                    <TableHead className="text-center font-bold border">ΜΕΤΡΑ</TableHead>
-                    <TableHead className="text-center font-bold border" colSpan={3}>ΘΕΡΜΑΝΣΗ</TableHead>
-                    <TableHead className="text-center font-bold border" colSpan={5}>ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ</TableHead>
-                    <TableHead className="text-center font-bold border" colSpan={5}>ΠΟΣΟ ΠΟΥ ΑΝΑΛΟΓΕΙ</TableHead>
-                    <TableHead className="text-center font-bold border">ΣΤΡΟΓΓ.</TableHead>
-                    <TableHead className="text-center font-bold border">ΠΛΗΡΩΤΕΟ ΠΟΣΟ</TableHead>
-                    <TableHead className="text-center font-bold border">A/A</TableHead>
+                    <TableHead className="text-center border font-bold text-xs">ΑΡΙΘΜΟΣ ΔΙΑΜΕΡΙΣΜΑΤΟΣ</TableHead>
+                    <TableHead className="text-center border font-bold text-xs">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</TableHead>
+                    
+                    {/* ΘΕΡΜΑΝΣΗ Section */}
+                    <TableHead className="text-center border font-bold text-xs" colSpan={3}>
+                      ΘΕΡΜΑΝΣΗ
+                    </TableHead>
+                    
+                    {/* ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ Section */}
+                    <TableHead className="text-center border font-bold text-xs" colSpan={5}>
+                      ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ
+                    </TableHead>
+                    
+                    {/* ΠΟΣΟ ΠΟΥ ΑΝΑΛΟΓΕΙ Section */}
+                    <TableHead className="text-center border font-bold text-xs" colSpan={5}>
+                      ΠΟΣΟ ΠΟΥ ΑΝΑΛΟΓΕΙ
+                    </TableHead>
+                    
+                    <TableHead className="text-center border font-bold text-xs">ΣΤΡΟΓΓ.</TableHead>
+                    <TableHead className="text-center border font-bold text-xs">ΠΛΗΡΩΤΕΟ ΠΟΣΟ</TableHead>
+                    <TableHead className="text-center border font-bold text-xs">A/A</TableHead>
                   </TableRow>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="border"></TableHead>
-                    <TableHead className="border"></TableHead>
-                    <TableHead className="border"></TableHead>
-                    <TableHead className="border"></TableHead>
-                    <TableHead className="text-center text-xs border">ei</TableHead>
-                    <TableHead className="text-center text-xs border">fi</TableHead>
-                    <TableHead className="text-center text-xs border">ΘΕΡΜΙΔΕΣ</TableHead>
-                    <TableHead className="text-center text-xs border">ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
-                    <TableHead className="text-center text-xs border">ΑΝΕΛΚΥΡΑΣ</TableHead>
-                    <TableHead className="text-center text-xs border">ΘΕΡΜΑΝΣΗ</TableHead>
-                    <TableHead className="text-center text-xs border">ΛΟΙΠΑ ΕΞΟΔΑ</TableHead>
-                    <TableHead className="text-center text-xs border">ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣ</TableHead>
-                    <TableHead className="text-center text-xs border">ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
-                    <TableHead className="text-center text-xs border">ΑΝΕΛΚΥΡΑΣ</TableHead>
-                    <TableHead className="text-center text-xs border">ΘΕΡΜΑΝΣΗ</TableHead>
-                    <TableHead className="text-center text-xs border">ΛΟΙΠΑ ΕΞΟΔΑ</TableHead>
-                    <TableHead className="text-center text-xs border">ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣ</TableHead>
-                    <TableHead className="border"></TableHead>
-                    <TableHead className="border"></TableHead>
-                    <TableHead className="border"></TableHead>
+                  
+                  {/* Sub-headers Row */}
+                  <TableRow className="bg-gray-100">
+                    <TableHead className="text-center border"></TableHead>
+                    <TableHead className="text-center border"></TableHead>
+                    
+                    {/* ΘΕΡΜΑΝΣΗ Sub-headers */}
+                    <TableHead className="text-center border text-xs font-medium">ei</TableHead>
+                    <TableHead className="text-center border text-xs font-medium">fi</TableHead>
+                    <TableHead className="text-center border text-xs font-medium">ΘΕΡΜΙΔΕΣ</TableHead>
+                    
+                    {/* ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ Sub-headers */}
+                    <TableHead className="text-center border text-xs font-medium">ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
+                    <TableHead className="text-center border text-xs font-medium">ΑΝΕΛΚΥΡΑΣ</TableHead>
+                    <TableHead className="text-center border text-xs font-medium">ΘΕΡΜΑΝΣΗ</TableHead>
+                    <TableHead className="text-center border text-xs font-medium">ΛΟΙΠΑ ΕΞΟΔΑ</TableHead>
+                    <TableHead className="text-center border text-xs font-medium">ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣ</TableHead>
+                    
+                    {/* ΠΟΣΟ ΠΟΥ ΑΝΑΛΟΓΕΙ Sub-headers */}
+                    <TableHead className="text-center border text-xs font-medium">ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
+                    <TableHead className="text-center border text-xs font-medium">ΑΝΕΛΚΥΡΑΣ</TableHead>
+                    <TableHead className="text-center border text-xs font-medium">ΘΕΡΜΑΝΣΗ</TableHead>
+                    <TableHead className="text-center border text-xs font-medium">ΛΟΙΠΑ ΕΞΟΔΑ</TableHead>
+                    <TableHead className="text-center border text-xs font-medium">ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣ</TableHead>
+                    
+                    <TableHead className="text-center border"></TableHead>
+                    <TableHead className="text-center border"></TableHead>
+                    <TableHead className="text-center border"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {Object.values(state.shares).map((share: any, index: number) => {
-                    const participationMills = share.participation_mills || 0;
-                    const totalMills = Object.values(state.shares).reduce((sum: number, s: any) => sum + (s.participation_mills || 0), 0);
+                    const participationMills = toNumber(share.participation_mills);
+                    const totalMills = Object.values(state.shares).reduce((sum: number, s: any) => sum + toNumber(s.participation_mills), 0);
                     const participationPercentage = totalMills > 0 ? (participationMills / totalMills) * 1000 : 0;
+                    const row = perApartmentAmounts[share.apartment_id] || { common:0, elevator:0, heating:0, other:0, coowner:0, reserve:0, total_due:0 };
+                    
+                    // Προσθήκη δαπανών διαχείρισης και αποθεματικού
+                    const managementFee = managementFeeInfo.hasFee ? managementFeeInfo.feePerApartment : 0;
+                    const apartmentReserveFund = reserveFundDetails.hasReserve ? 
+                      (reserveFundDetails.monthlyAmount * (participationMills / 1000)) : 0;
+                    const totalWithFees = row.total_due + managementFee + apartmentReserveFund;
+                    
+                    // Θέρμανση breakdown (ei, fi, θερμίδες)
+                    const heatingBreakdown = share.heating_breakdown || { ei: 0, fi: 0, calories: 0 };
+                    
+                    // Χιλιοστά συμμετοχής ανά κατηγορία
+                    const commonMills = participationMills * (expenseBreakdown.common / totalExpenses || 0);
+                    const elevatorMills = participationMills * (expenseBreakdown.elevator / totalExpenses || 0);
+                    const heatingMills = participationMills * (expenseBreakdown.heating / totalExpenses || 0);
+                    const otherMills = participationMills * (expenseBreakdown.other / totalExpenses || 0);
+                    const coownerMills = participationMills * (expenseBreakdown.coownership / totalExpenses || 0);
                     
                     return (
                       <TableRow key={share.apartment_id} className="hover:bg-gray-50">
-                        <TableCell className="text-center border font-medium">{index + 1}</TableCell>
-                        <TableCell className="border font-medium">{share.owner_name}</TableCell>
-                        <TableCell className="text-center border">{share.apartment_number}</TableCell>
-                        <TableCell className="text-center border">{participationMills * 10}</TableCell>
-                        <TableCell className="text-center border text-xs">0.015</TableCell>
-                        <TableCell className="text-center border text-xs">0.25</TableCell>
-                        <TableCell className="text-center border text-xs">2</TableCell>
-                        <TableCell className="text-center border text-xs">{participationPercentage.toFixed(2)}</TableCell>
-                        <TableCell className="text-center border text-xs">{participationPercentage.toFixed(2)}</TableCell>
-                        <TableCell className="text-center border text-xs">{participationPercentage.toFixed(2)}</TableCell>
-                        <TableCell className="text-center border text-xs">{participationPercentage.toFixed(2)}</TableCell>
-                        <TableCell className="text-center border text-xs">0.00</TableCell>
-                        <TableCell className="text-center border font-medium">{formatAmount(expenseBreakdown.common * participationMills / totalMills)}</TableCell>
-                        <TableCell className="text-center border font-medium">{formatAmount(expenseBreakdown.elevator * participationMills / totalMills)}</TableCell>
-                        <TableCell className="text-center border font-medium">{formatAmount(expenseBreakdown.heating * participationMills / totalMills)}</TableCell>
-                        <TableCell className="text-center border font-medium">{formatAmount(expenseBreakdown.other * participationMills / totalMills)}</TableCell>
-                        <TableCell className="text-center border font-medium">0.00</TableCell>
-                        <TableCell className="text-center border text-xs">0.02</TableCell>
-                        <TableCell className="text-center border font-bold">{formatAmount(share.total_due || 0)}</TableCell>
-                        <TableCell className="text-center border">{index + 1}</TableCell>
+                        <TableCell className="text-center border font-medium text-xs">{share.identifier || share.apartment_number}</TableCell>
+                        <TableCell className="border font-medium text-xs">{share.owner_name || 'Μη καταχωρημένος'}</TableCell>
+                        
+                        {/* ΘΕΡΜΑΝΣΗ */}
+                        <TableCell className="text-center border text-xs">{heatingBreakdown.ei?.toFixed(3) || '0.000'}</TableCell>
+                        <TableCell className="text-center border text-xs">{heatingBreakdown.fi?.toFixed(2) || '0.00'}</TableCell>
+                        <TableCell className="text-center border text-xs">{heatingBreakdown.calories?.toFixed(0) || '0'}</TableCell>
+                        
+                        {/* ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ */}
+                        <TableCell className="text-center border text-xs">{commonMills.toFixed(2)}</TableCell>
+                        <TableCell className="text-center border text-xs">{elevatorMills.toFixed(2)}</TableCell>
+                        <TableCell className="text-center border text-xs">{heatingMills.toFixed(2)}</TableCell>
+                        <TableCell className="text-center border text-xs">{otherMills.toFixed(2)}</TableCell>
+                        <TableCell className="text-center border text-xs">{coownerMills.toFixed(2)}</TableCell>
+                        
+                        {/* ΠΟΣΟ ΠΟΥ ΑΝΑΛΟΓΕΙ */}
+                        <TableCell className="text-center border font-medium text-xs">{formatAmount(row.common)}</TableCell>
+                        <TableCell className="text-center border font-medium text-xs">{formatAmount(row.elevator)}</TableCell>
+                        <TableCell className="text-center border font-medium text-xs">{formatAmount(row.heating)}</TableCell>
+                        <TableCell className="text-center border font-medium text-xs">{formatAmount(row.other)}</TableCell>
+                        <TableCell className="text-center border font-medium text-xs">{formatAmount(row.coowner)}</TableCell>
+                        
+                        <TableCell className="text-center border text-xs">{formatAmount(0.00)}</TableCell>
+                        <TableCell className="text-center border font-bold text-xs">{formatAmount(totalWithFees)}</TableCell>
+                        <TableCell className="text-center border text-xs">{index + 1}</TableCell>
                       </TableRow>
                     );
                   })}
@@ -574,24 +1590,62 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                   <TableRow className="bg-gray-100 font-bold">
                     <TableCell className="text-center border">ΣΥΝΟΛΑ</TableCell>
                     <TableCell className="border"></TableCell>
-                    <TableCell className="border"></TableCell>
+                    
+                    {/* ΘΕΡΜΑΝΣΗ Totals */}
+                    <TableCell className="text-center border"></TableCell>
+                    <TableCell className="text-center border"></TableCell>
                     <TableCell className="text-center border">
-                      {Object.values(state.shares).reduce((sum: number, s: any) => sum + ((s.participation_mills || 0) * 10), 0).toFixed(2)}
+                      {Object.values(state.shares).reduce((sum: number, s: any) => {
+                        const heating = s.heating_breakdown?.calories || 0;
+                        return sum + heating;
+                      }, 0).toFixed(0)}
                     </TableCell>
-                    <TableCell className="text-center border"></TableCell>
-                    <TableCell className="text-center border"></TableCell>
-                    <TableCell className="text-center border">5</TableCell>
-                    <TableCell className="text-center border">1000.00</TableCell>
-                    <TableCell className="text-center border">1000.00</TableCell>
-                    <TableCell className="text-center border">1000.00</TableCell>
-                    <TableCell className="text-center border">1000.00</TableCell>
-                    <TableCell className="text-center border">0.00</TableCell>
-                    <TableCell className="text-center border">{formatAmount(expenseBreakdown.common)}</TableCell>
-                    <TableCell className="text-center border">{formatAmount(expenseBreakdown.elevator)}</TableCell>
-                    <TableCell className="text-center border">{formatAmount(expenseBreakdown.heating)}</TableCell>
-                    <TableCell className="text-center border">{formatAmount(expenseBreakdown.other)}</TableCell>
-                    <TableCell className="text-center border">0.00</TableCell>
-                    <TableCell className="text-center border">0.01</TableCell>
+                    
+                    {/* ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ Totals */}
+                    <TableCell className="text-center border">
+                      {Object.values(state.shares).reduce((sum: number, s: any) => {
+                        const participationMills = toNumber(s.participation_mills);
+                        const commonMills = participationMills * (expenseBreakdown.common / totalExpenses || 0);
+                        return sum + commonMills;
+                      }, 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-center border">
+                      {Object.values(state.shares).reduce((sum: number, s: any) => {
+                        const participationMills = toNumber(s.participation_mills);
+                        const elevatorMills = participationMills * (expenseBreakdown.elevator / totalExpenses || 0);
+                        return sum + elevatorMills;
+                      }, 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-center border">
+                      {Object.values(state.shares).reduce((sum: number, s: any) => {
+                        const participationMills = toNumber(s.participation_mills);
+                        const heatingMills = participationMills * (expenseBreakdown.heating / totalExpenses || 0);
+                        return sum + heatingMills;
+                      }, 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-center border">
+                      {Object.values(state.shares).reduce((sum: number, s: any) => {
+                        const participationMills = toNumber(s.participation_mills);
+                        const otherMills = participationMills * (expenseBreakdown.other / totalExpenses || 0);
+                        return sum + otherMills;
+                      }, 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-center border">
+                      {Object.values(state.shares).reduce((sum: number, s: any) => {
+                        const participationMills = toNumber(s.participation_mills);
+                        const coownerMills = participationMills * (expenseBreakdown.coownership / totalExpenses || 0);
+                        return sum + coownerMills;
+                      }, 0).toFixed(2)}
+                    </TableCell>
+                    
+                    {/* ΠΟΣΟ ΠΟΥ ΑΝΑΛΟΓΕΙ Totals */}
+                    <TableCell className="text-center border">{formatAmount(totalsFromRows.common)}</TableCell>
+                    <TableCell className="text-center border">{formatAmount(totalsFromRows.elevator)}</TableCell>
+                    <TableCell className="text-center border">{formatAmount(totalsFromRows.heating)}</TableCell>
+                    <TableCell className="text-center border">{formatAmount(totalsFromRows.other)}</TableCell>
+                    <TableCell className="text-center border">{formatAmount(totalsFromRows.coowner)}</TableCell>
+                    
+                    <TableCell className="text-center border">{formatAmount(0.01)}</TableCell>
                     <TableCell className="text-center border">{formatAmount(totalExpenses)}</TableCell>
                     <TableCell className="text-center border"></TableCell>
                   </TableRow>
@@ -614,6 +1668,140 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
               </div>
             </div>
           </div>
+            </TabsContent>
+
+            {/* Analysis Tab */}
+            <TabsContent value="analysis" className="mt-6">
+              <ExpenseBreakdownSection
+                state={state}
+                buildingName={buildingName}
+                apartmentsCount={Object.keys(state.shares).length}
+                onViewDetails={(categoryId) => {
+                  toast.info(`Προβολή λεπτομερειών για κατηγορία: ${categoryId}`);
+                }}
+              />
+            </TabsContent>
+
+            {/* Export Tab */}
+            <TabsContent value="export" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Download className="h-5 w-5" />
+                    Εξαγωγή και Εκτύπωση
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Export Options */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="border-blue-200 bg-blue-50/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                          <FileText className="h-6 w-6 text-blue-600" />
+                          <h3 className="font-semibold text-blue-800">Εξαγωγή PDF</h3>
+                        </div>
+                        <p className="text-sm text-blue-700 mb-4">
+                          Δημιουργία PDF αρχείου με το φύλλο κοινοχρήστων
+                        </p>
+                        <Button
+                          onClick={() => handleExport('pdf')}
+                          className="w-full bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Λήψη PDF
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-green-200 bg-green-50/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                          <FileText className="h-6 w-6 text-green-600" />
+                          <h3 className="font-semibold text-green-800">Εξαγωγή Excel</h3>
+                        </div>
+                        <p className="text-sm text-green-700 mb-4">
+                          Δημιουργία Excel αρχείου για περαιτέρω επεξεργασία
+                        </p>
+                        <Button
+                          onClick={() => handleExport('excel')}
+                          className="w-full bg-green-600 hover:bg-green-700"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Λήψη Excel
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-purple-200 bg-purple-50/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                          <Printer className="h-6 w-6 text-purple-600" />
+                          <h3 className="font-semibold text-purple-800">Εκτύπωση</h3>
+                        </div>
+                        <p className="text-sm text-purple-700 mb-4">
+                          Άμεση εκτύπωση του φύλλου κοινοχρήστων
+                        </p>
+                        <Button
+                          onClick={handlePrint}
+                          className="w-full bg-purple-600 hover:bg-purple-700"
+                        >
+                          <Printer className="h-4 w-4 mr-2" />
+                          Εκτύπωση
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-orange-200 bg-orange-50/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                          <Save className="h-6 w-6 text-orange-600" />
+                          <h3 className="font-semibold text-orange-800">Αποθήκευση</h3>
+                        </div>
+                        <p className="text-sm text-orange-700 mb-4">
+                          Αποθήκευση φύλλου στη βάση δεδομένων
+                        </p>
+                        <Button
+                          onClick={handleSave}
+                          disabled={isSaving}
+                          className="w-full bg-orange-600 hover:bg-orange-700"
+                        >
+                          <Save className="h-4 w-4 mr-2" />
+                          {isSaving ? 'Αποθήκευση...' : 'Αποθήκευση'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Summary Information */}
+                  <Card className="border-gray-200 bg-gray-50/30">
+                    <CardHeader>
+                      <CardTitle className="text-base">Περίληψη Εξαγωγής</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <p className="font-medium text-gray-600">Κτίριο</p>
+                          <p className="font-bold">{buildingName}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-600">Περίοδος</p>
+                          <p className="font-bold">{getPeriodInfo()}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-600">Διαμερίσματα</p>
+                          <p className="font-bold">{Object.keys(state.shares).length}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-600">Σύνολο Δαπανών</p>
+                          <p className="font-bold text-blue-700">{formatAmount(totalExpenses)}€</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

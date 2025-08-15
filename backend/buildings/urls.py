@@ -1,22 +1,12 @@
 # backend/buildings/urls.py
-from django.urls import path, include  
-   
-from rest_framework.routers import DefaultRouter 
-from .views import BuildingViewSet, get_csrf_token, public_buildings_list
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import BuildingViewSet, ServicePackageViewSet
 
 router = DefaultRouter()
-router.register(r'', BuildingViewSet, basename='building')
+router.register(r'list', BuildingViewSet, basename='building')
+router.register(r'service-packages', ServicePackageViewSet, basename='service-package')
 
-# Public URLs (no authentication required)
-public_urlpatterns = [
-    path('public/', public_buildings_list, name='public_buildings_list'),
-]
-
-# Private URLs (authentication required)
-private_urlpatterns = [
-    path('csrf/', get_csrf_token, name='get_csrf_token'),
+urlpatterns = [
     path('', include(router.urls)),
 ]
-
-# Include both public and private URLs
-urlpatterns = public_urlpatterns + private_urlpatterns

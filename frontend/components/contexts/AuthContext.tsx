@@ -115,6 +115,21 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       const token = localStorage.getItem('access');
       const cachedUser = localStorage.getItem('user');
 
+      // Demo auto-login for demo environment
+      if (!token && typeof window !== 'undefined' && window.location.hostname.includes('demo.localhost')) {
+        console.log('AuthContext: Demo environment detected, attempting auto-login');
+        try {
+          await login('admin@demo.localhost', 'admin123456');
+          console.log('AuthContext: Demo auto-login successful');
+          setIsLoading(false);
+          setIsAuthReady(true);
+          return;
+        } catch (error) {
+          console.error('AuthContext: Demo auto-login failed:', error);
+          // Continue with normal flow
+        }
+      }
+
       if (!token) {
         console.log('AuthContext: No token found on mount');
         setUser(null);

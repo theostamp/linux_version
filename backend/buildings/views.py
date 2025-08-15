@@ -6,13 +6,14 @@ from rest_framework.decorators import action, api_view, permission_classes, auth
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import JSONParser
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from django.views.decorators.csrf import ensure_csrf_cookie  
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt  
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse  
 from django.utils import timezone  
+from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Building, BuildingMembership
-from .serializers import BuildingSerializer, BuildingMembershipSerializer
+from .models import Building, BuildingMembership, ServicePackage
+from .serializers import BuildingSerializer, BuildingMembershipSerializer, ServicePackageSerializer
 from users.models import CustomUser
 
 
@@ -21,6 +22,7 @@ def get_csrf_token(request):
     """Δίνει CSRF cookie χωρίς να απαιτείται login"""
     return JsonResponse({"message": "CSRF cookie set"})
 
+@csrf_exempt
 def public_buildings_list(request):
     """
     Public endpoint for listing buildings (no authentication required)
@@ -84,6 +86,58 @@ def public_buildings_list(request):
             }
         ]
         return JsonResponse(fallback_data, safe=False)
+
+
+class ServicePackageViewSet(viewsets.ModelViewSet):
+    """ViewSet για τα πακέτα υπηρεσιών"""
+    queryset = ServicePackage.objects.filter(is_active=True)
+    serializer_class = ServicePackageSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['is_active']
+    
+    def get_serializer_context(self):
+        """Προσθήκη building_id στο context για τον υπολογισμό κόστους"""
+        context = super().get_serializer_context()
+        building_id = self.request.query_params.get('building_id')
+        if building_id:
+            context['building_id'] = building_id
+        return context
+    
+    @action(detail=True, methods=['post'])
+    def apply_to_building(self, request, pk=None):
+        """Εφαρμογή πακέτου σε κτίριο"""
+        try:
+            service_package = self.get_object()
+            building_id = request.data.get('building_id')
+            
+            if not building_id:
+                return Response(
+                    {'error': 'building_id is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            building = Building.objects.get(id=building_id)
+            building.service_package = service_package
+            building.management_fee_per_apartment = service_package.fee_per_apartment
+            building.save()
+            
+            return Response({
+                'message': f'Πακέτο "{service_package.name}" εφαρμόστηκε επιτυχώς',
+                'building_id': building.id,
+                'service_package_id': service_package.id,
+                'new_fee': float(service_package.fee_per_apartment)
+            })
+            
+        except Building.DoesNotExist:
+            return Response(
+                {'error': 'Building not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
@@ -159,6 +213,29 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         
         response = super().create(request, *args, **kwargs)
         print(f"🔍 BuildingViewSet.create() response: {response.data}")
+        print(f"🔍 Response street view image: {response.data.get('street_view_image')}")
+        return response
+
+    def update(self, request, *args, **kwargs):
+        """Override update method to add debugging"""
+        print(f"🔍 BuildingViewSet.update() called")
+        print(f"🔍 Request data: {request.data}")
+        print(f"🔍 Request data type: {type(request.data)}")
+        print(f"🔍 Request content type: {request.content_type}")
+        print(f"🔍 Request method: {request.method}")
+        print(f"🔍 Latitude from request: {request.data.get('latitude')} (type: {type(request.data.get('latitude'))})")
+        print(f"🔍 Longitude from request: {request.data.get('longitude')} (type: {type(request.data.get('longitude'))})")
+        print(f"🔍 Street view image from request: {request.data.get('street_view_image')} (type: {type(request.data.get('street_view_image'))})")
+        
+        # Check if data is a QueryDict (which might cause the array issue)
+        if hasattr(request.data, 'getlist'):
+            print(f"⚠️  Request.data is a QueryDict-like object")
+            print(f"🔍 Latitude getlist: {request.data.getlist('latitude')}")
+            print(f"🔍 Longitude getlist: {request.data.getlist('longitude')}")
+            print(f"🔍 Street view image getlist: {request.data.getlist('street_view_image')}")
+        
+        response = super().update(request, *args, **kwargs)
+        print(f"🔍 BuildingViewSet.update() response: {response.data}")
         print(f"🔍 Response street view image: {response.data.get('street_view_image')}")
         return response
 

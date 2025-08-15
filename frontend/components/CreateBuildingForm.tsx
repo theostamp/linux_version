@@ -2,25 +2,18 @@
 
 'use client';
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
-import { useBuilding } from '@/components/contexts/BuildingContext';
+import { Loader2, Camera, Building as BuildingIcon, Info, Users, ChevronDown } from 'lucide-react';
+import { createBuilding, updateBuilding, refreshBuildings, fetchBuildingResidents } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { createBuilding, updateBuilding } from '@/lib/api';
+import AddressAutocomplete from '@/components/AddressAutocomplete';
+import StreetViewImage from '@/components/StreetViewImage';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Building } from '@/types/building';
-import AddressAutocomplete from './AddressAutocomplete';
-import StreetViewImage from './StreetViewImage';
 
-import { 
-  Save, 
-  Loader2, 
-  MapPin, 
-  Camera,
-  Building as BuildingIcon,
-  Info
-} from 'lucide-react';
 
 interface Props {
   initialData?: Partial<Building>;
@@ -46,6 +39,17 @@ interface BuildingFormData {
   coordinates?: { lat: number; lng: number };
 }
 
+interface BuildingResident {
+  id: string;
+  apartment_id: number;
+  apartment_number: string;
+  name: string;
+  phone: string;
+  email: string;
+  type: 'owner' | 'tenant';
+  display_text: string;
+}
+
 export default function CreateBuildingForm({
   initialData = {},
   onSuccessPath = '/buildings',
@@ -55,15 +59,83 @@ export default function CreateBuildingForm({
   const router = useRouter();
   const { setBuildings, refreshBuildings } = useBuilding();
   const { user } = useAuth();
-  const [form, setForm] = useState<BuildingFormData>(initialData);
+  const [form, setForm] = useState<BuildingFormData>({
+    name: '',
+    address: '',
+    city: '',
+    postal_code: '',
+    apartments_count: undefined,
+    internal_manager_name: '',
+    internal_manager_phone: '',
+    management_office_name: user?.office_name || '',
+    management_office_phone: user?.office_phone || '',
+    management_office_address: user?.office_address || '',
+    street_view_image: '',
+    ...initialData,
+  });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [useGoogleMaps, setUseGoogleMaps] = useState(true);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | undefined>(
     initialData.coordinates
   );
+  
+  // State για τη λίστα ενοίκων
+  const [residents, setResidents] = useState<BuildingResident[]>([]);
+  const [loadingResidents, setLoadingResidents] = useState(false);
+  const [showResidentsDropdown, setShowResidentsDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Φόρτωση ενοίκων του κτιρίου
+  useEffect(() => {
+    if (buildingId) {
+      loadBuildingResidents();
+    }
+  }, [buildingId]);
 
+  // Κλείσιμο dropdown όταν κάνουμε κλικ έξω
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowResidentsDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const loadBuildingResidents = async () => {
+    if (!buildingId) return;
+    
+    try {
+      setLoadingResidents(true);
+      const data = await fetchBuildingResidents(buildingId);
+      setResidents(data.residents);
+    } catch (error) {
+      console.error('Error loading building residents:', error);
+      toast.error('Σφάλμα φόρτωσης ενοίκων');
+    } finally {
+      setLoadingResidents(false);
+    }
+  };
+
+  const handleResidentSelect = (resident: BuildingResident) => {
+    setForm(prev => ({
+      ...prev,
+      internal_manager_name: resident.name,
+      internal_manager_phone: resident.phone,
+    }));
+    setShowResidentsDropdown(false);
+  };
+
+  const toggleResidentsDropdown = () => {
+    if (residents.length > 0) {
+      setShowResidentsDropdown(!showResidentsDropdown);
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -217,16 +289,30 @@ export default function CreateBuildingForm({
     
     // Προσθήκη συντεταγμένων αν υπάρχουν
     if (coordinates && coordinates.lat && coordinates.lng) {
-      formData.latitude = coordinates.lat;
-      formData.longitude = coordinates.lng;
+      // Ensure coordinates are numbers, not strings
+      formData.latitude = Number(coordinates.lat);
+      formData.longitude = Number(coordinates.lng);
+      console.log('📍 CreateBuildingForm: Setting coordinates in formData:', {
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        latType: typeof formData.latitude,
+        lngType: typeof formData.longitude
+      });
     } else {
       // Ensure coordinates are not sent if they don't exist
       delete formData.latitude;
       delete formData.longitude;
+      console.log('📍 CreateBuildingForm: No coordinates to set');
     }
     
     // Αφαιρούμε το frontend coordinates field
     delete formData.coordinates;
+    
+    console.log('📍 CreateBuildingForm: Final formData being sent:', formData);
+    console.log('📍 CreateBuildingForm: Final coordinates in formData:', {
+      latitude: formData.latitude,
+      longitude: formData.longitude
+    });
     
     try {
       if (buildingId) {
@@ -348,7 +434,7 @@ export default function CreateBuildingForm({
             {(form.address || form.city || form.postal_code) ? (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div className="flex items-start space-x-2">
-                  <MapPin className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  {/* <MapPin className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" /> */}
                   <div>
                     <p className="text-sm text-green-800 font-medium">✅ Επιλεγμένη Διεύθυνση:</p>
                     <div className="text-xs text-green-700 mt-1 space-y-1">
@@ -362,7 +448,7 @@ export default function CreateBuildingForm({
             ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <div className="flex items-start space-x-2">
-                  <MapPin className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  {/* <MapPin className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" /> */}
                   <div>
                     <p className="text-sm text-yellow-800 font-medium">⚠️ Δεν έχει επιλεχθεί διεύθυνση</p>
                     <p className="text-xs text-yellow-700 mt-1">
@@ -516,19 +602,74 @@ export default function CreateBuildingForm({
           Στοιχεία Διαχειριστή (Προαιρετικά)
         </h3>
         
+        {buildingId && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start space-x-2">
+              <Users className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm text-blue-800 font-medium">Επιλογή από ενοίκους του κτιρίου</p>
+                <p className="text-xs text-blue-700 mt-1">
+                  Μπορείτε να επιλέξετε διαχειριστή από τους υπάρχοντες ενοίκους και ιδιοκτήτες του κτιρίου.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+          <div className="relative" ref={dropdownRef}>
             <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="internal_manager_name">
               Όνομα Διαχειριστή
             </label>
-            <input
-              id="internal_manager_name"
-              name="internal_manager_name"
-              value={form.internal_manager_name ?? ''}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="π.χ. Γιάννης Παπαδόπουλος"
-            />
+            
+            {buildingId && residents.length > 0 ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={toggleResidentsDropdown}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white flex items-center justify-between"
+                >
+                  <span className={form.internal_manager_name ? 'text-gray-900' : 'text-gray-500'}>
+                    {form.internal_manager_name || 'Επιλέξτε από ενοίκους...'}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showResidentsDropdown ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {showResidentsDropdown && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {residents.map((resident) => (
+                      <button
+                        key={resident.id}
+                        type="button"
+                        onClick={() => handleResidentSelect(resident)}
+                        className="w-full px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="font-medium text-gray-900">{resident.name}</div>
+                        <div className="text-sm text-gray-600">{resident.display_text}</div>
+                        <div className="text-xs text-gray-500">{resident.phone}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <input
+                id="internal_manager_name"
+                name="internal_manager_name"
+                value={form.internal_manager_name ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="π.χ. Γιάννης Παπαδόπουλος"
+              />
+            )}
+            
+            {buildingId && loadingResidents && (
+              <p className="text-xs text-gray-500 mt-1">Φόρτωση ενοίκων...</p>
+            )}
+            
+            {buildingId && !loadingResidents && residents.length === 0 && (
+              <p className="text-xs text-gray-500 mt-1">Δεν βρέθηκαν ενοίκους με στοιχεία επικοινωνίας</p>
+            )}
           </div>
           
           <div>
@@ -546,6 +687,12 @@ export default function CreateBuildingForm({
             />
           </div>
         </div>
+        
+        {buildingId && residents.length > 0 && (
+          <div className="text-xs text-gray-600">
+            💡 <strong>Σημείωση:</strong> Η επιλογή διαχειριστή από τη λίστα θα συμπληρώσει αυτόματα το όνομα και το τηλέφωνο.
+          </div>
+        )}
       </div>
 
       {/* Management Office Information - Auto-filled from user settings */}
@@ -601,7 +748,7 @@ export default function CreateBuildingForm({
             </>
           ) : (
             <>
-              <Save className="w-4 h-4 mr-2" />
+              {/* <Save className="w-4 h-4 mr-2" /> */}
               {submitText}
             </>
           )}

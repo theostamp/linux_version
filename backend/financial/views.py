@@ -702,6 +702,64 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=True, methods=['get'])
+    def apartments_summary(self, request, pk=None):
+        """Λήψη συνοπτικών οικονομικών δεδομένων όλων των διαμερισμάτων ενός κτιρίου"""
+        building_id = pk
+        
+        if not building_id:
+            return Response(
+                {'error': 'Building ID is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            service = FinancialDashboardService(int(building_id))
+            
+            # Get all apartments for the building
+            apartments = Apartment.objects.filter(building_id=building_id)
+            
+            apartments_summary = []
+            for apartment in apartments:
+                # Get the latest payment for this apartment
+                latest_payment = Payment.objects.filter(
+                    apartment=apartment
+                ).order_by('-date', '-id').first()
+                
+                # Calculate current balance from apartment model
+                current_balance = float(apartment.current_balance or 0)
+                
+                # Calculate monthly due using the service
+                try:
+                    calculator = CommonExpenseCalculator(building_id)
+                    shares = calculator.calculate_shares()
+                    apartment_share = shares.get(apartment.id, {})
+                    monthly_due = float(apartment_share.get('total_due', 0))
+                except Exception:
+                    monthly_due = 0.0
+                
+                apartment_data = {
+                    'id': apartment.id,
+                    'number': apartment.number,
+                    'owner_name': apartment.owner_name,
+                    'tenant_name': apartment.tenant_name,
+                    'current_balance': current_balance,
+                    'monthly_due': monthly_due,
+                    'building_id': apartment.building.id,
+                    'building_name': apartment.building.name,
+                    'participation_mills': apartment.participation_mills,
+                    'latest_payment_date': latest_payment.date.isoformat() if latest_payment else None,
+                    'latest_payment_amount': float(latest_payment.amount) if latest_payment else None,
+                }
+                apartments_summary.append(apartment_data)
+            
+            return Response(apartments_summary)
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class CommonExpenseViewSet(viewsets.ViewSet):
     """ViewSet για τη διαχείριση κοινοχρήστων"""
@@ -1528,7 +1586,8 @@ class ApartmentTransactionViewSet(viewsets.ViewSet):
         payments = Payment.objects.filter(apartment=apartment).order_by('date', 'id')
         
         # Λήψη όλων των transactions (χρεώσεων)
-        transactions = Transaction.objects.filter(apartment=apartment).order_by('date', 'id')
+        # Εξαιρούμε transactions που προήλθαν από πληρωμές για να μην εμφανίζονται διπλά
+        transactions = Transaction.objects.filter(apartment=apartment).exclude(reference_type='payment').order_by('date', 'id')
         
         # Συνδυασμός και ταξινόμηση
         transaction_history = []

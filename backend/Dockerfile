@@ -16,7 +16,7 @@ RUN apt-get update && \
         # AI dependencies
         tesseract-ocr \
         tesseract-ocr-ell \
-        libgl1-mesa-glx \
+        libgl1 \
         libglib2.0-0 \
         libsm6 \
         libxext6 \

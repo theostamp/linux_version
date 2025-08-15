@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useImperativeHandle } from 'react';
+import React, { useState, useEffect, useImperativeHandle, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -34,16 +34,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    loadSummary();
-  }, [buildingId, selectedMonth]);
-
-  // Expose loadSummary function via ref
-  useImperativeHandle(ref, () => ({
-    loadSummary
-  }));
-
-  const loadSummary = async () => {
+  const loadSummary = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -61,7 +52,16 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [buildingId, selectedMonth]);
+
+  useEffect(() => {
+    loadSummary();
+  }, [loadSummary]);
+
+  // Expose loadSummary function via ref
+  useImperativeHandle(ref, () => ({
+    loadSummary
+  }));
 
   if (isLoading) {
     return (

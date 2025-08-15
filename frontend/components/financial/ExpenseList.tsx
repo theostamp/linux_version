@@ -10,6 +10,8 @@ import { useExpenses } from '@/hooks/useExpenses';
 import { Expense, ExpenseCategory, DistributionType } from '@/types/financial';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { FilePreview } from '@/components/ui/FilePreview';
+import { toast } from 'sonner';
+import { ExpenseViewModal } from './ExpenseViewModal';
 
 interface ExpenseListProps {
   buildingId: number;
@@ -29,10 +31,11 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
   selectedMonth,
   onMonthChange,
 }, ref) => {
-  const { expenses, isLoading, error, loadExpenses } = useExpenses(buildingId, selectedMonth);
+  const { expenses, isLoading, error, loadExpenses, deleteExpense } = useExpenses(buildingId, selectedMonth);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   // Generate month options for the last 24 months
   const generateMonthOptions = () => {
@@ -60,6 +63,41 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
     }
   }));
 
+  // Handle expense deletion
+  const handleDeleteExpense = async (expense: Expense, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the expense selection
+    
+    const confirmed = window.confirm(
+      `Είστε σίγουροι ότι θέλετε να διαγράψετε τη δαπάνη "${expense.title}" (${formatCurrency(expense.amount)})?\n\nΑυτή η ενέργεια δεν μπορεί να αναιρεθεί.`
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      const success = await deleteExpense(expense.id);
+      if (success) {
+        toast.success(`Η δαπάνη "${expense.title}" διαγράφηκε επιτυχώς!`);
+      } else {
+        toast.error('Σφάλμα κατά τη διαγραφή της δαπάνης');
+      }
+    } catch (error) {
+      toast.error('Σφάλμα κατά τη διαγραφή της δαπάνης');
+    }
+  };
+
+  // Handle expense view
+  const handleViewExpense = (expense: Expense, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the expense selection
+    setSelectedExpense(expense);
+    setShowViewModal(true);
+  };
+
+  // Handle modal close
+  const handleCloseViewModal = () => {
+    setShowViewModal(false);
+    setSelectedExpense(null);
+  };
+
   const filteredExpenses = useMemo(() => {
     if (!expenses) return [];
 
@@ -68,14 +106,10 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                            (expense.category_display || expense.category).toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter;
-      
-      const matchesStatus = statusFilter === 'all' || 
-                           (statusFilter === 'active' && !expense.is_issued) ||
-                           (statusFilter === 'distributed' && expense.is_issued);
 
-      return matchesSearch && matchesCategory && matchesStatus;
+      return matchesSearch && matchesCategory;
     });
-  }, [expenses, searchTerm, categoryFilter, statusFilter]);
+  }, [expenses, searchTerm, categoryFilter]);
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -129,7 +163,8 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
   }
 
   return (
-    <Card>
+    <>
+      <Card>
       <CardHeader>
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -158,18 +193,12 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
         
         {/* Statistics Row */}
         {expenses && expenses.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-3 bg-blue-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-blue-50 rounded-lg">
             <div className="text-center">
               <div className="text-lg font-bold text-blue-600">
-                {expenses.filter(e => !e.is_issued).length}
+                {expenses.length}
               </div>
-              <div className="text-xs text-gray-600">⏳ Ανέκδοτες</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-green-600">
-                {expenses.filter(e => e.is_issued).length}
-              </div>
-              <div className="text-xs text-gray-600">✅ Εκδοθείσες</div>
+              <div className="text-xs text-gray-600">📋 Σύνολο Δαπανών</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-bold text-purple-600">
@@ -197,7 +226,6 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
               onClick={() => {
                 setSearchTerm('');
                 setCategoryFilter('all');
-                setStatusFilter('all');
                 // Note: We don't clear selectedMonth as it's a primary filter
               }}
               className="text-xs"
@@ -207,7 +235,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
             </Button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-600">Αναζήτηση</label>
               <Input
@@ -273,19 +301,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-600">Κατάσταση</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Επιλέξτε κατάσταση" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">📊 Όλες οι καταστάσεις</SelectItem>
-                  <SelectItem value="active">⏳ Ανέκδοτες</SelectItem>
-                  <SelectItem value="distributed">✅ Εκδοθείσες</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
           </div>
           
           {/* Active Filters Summary */}
@@ -319,11 +335,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                   📂 {categoryFilter}
                 </Badge>
               )}
-              {statusFilter !== 'all' && (
-                <Badge variant="outline" className="text-xs">
-                  {statusFilter === 'active' ? '⏳ Ανέκδοτες' : '✅ Εκδοθείσες'}
-                </Badge>
-              )}
+
             </div>
           </div>
         </div>
@@ -375,15 +387,9 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                         <Badge className={`${getCategoryColor(expense.category)} text-xs`}>
                           {expense.category_display || expense.category}
                         </Badge>
-                        {expense.is_issued ? (
-                          <Badge variant="outline" className="text-green-600 text-xs">
-                            ✓ Εκδοθείσα
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-orange-600 text-xs">
-                            ⏳ Ανέκδοτη
-                          </Badge>
-                        )}
+                        <Badge variant="outline" className="text-blue-600 text-xs">
+                          📋 Καταχωρημένη
+                        </Badge>
                       </div>
                     </div>
                     
@@ -438,12 +444,18 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                         variant="outline"
                         size="sm"
                         className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onExpenseSelect?.(expense);
-                        }}
+                        onClick={(e) => handleViewExpense(expense, e)}
                       >
                         👁️ Προβολή
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                        onClick={(e) => handleDeleteExpense(expense, e)}
+                        title="Διαγραφή δαπάνης"
+                      >
+                        🗑️ Διαγραφή
                       </Button>
                     </div>
                   )}
@@ -454,5 +466,14 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
         </div>
       </CardContent>
     </Card>
+
+    {/* Expense View Modal */}
+    <ExpenseViewModal
+      isOpen={showViewModal}
+      onClose={handleCloseViewModal}
+      expense={selectedExpense}
+      buildingName={buildingName}
+    />
+  </>
   );
 }); 

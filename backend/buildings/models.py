@@ -1,15 +1,55 @@
 # backend/buildings/models.py
-from django.db import models  
-    
-from django.conf import settings 
-   
-from django.utils.translation import gettext_lazy as _ 
-   
+from django.db import models
+from django.core.validators import MinValueValidator
+from decimal import Decimal
+
+from django.conf import settings
+
+from django.utils.translation import gettext_lazy as _
+
 
 from users.models import CustomUser
 
 # Σταθερές επιλογές για αριθμό διαμερισμάτων
 APARTMENT_CHOICES = [(i, str(i)) for i in range(1, 101)]  # 1 έως 100
+
+class ServicePackage(models.Model):
+    """
+    Προκαθορισμένα πακέτα υπηρεσιών που προσφέρει το γραφείο διαχείρισης
+    """
+    name = models.CharField(max_length=100, verbose_name="Όνομα Πακέτου")
+    description = models.TextField(verbose_name="Περιγραφή Υπηρεσιών")
+    fee_per_apartment = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name="Αμοιβή ανά Διαμέρισμα (€)"
+    )
+    services_included = models.JSONField(
+        default=list,
+        verbose_name="Υπηρεσίες που Περιλαμβάνονται"
+    )
+    is_active = models.BooleanField(default=True, verbose_name="Ενεργό")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Πακέτο Υπηρεσιών"
+        verbose_name_plural = "Πακέτα Υπηρεσιών"
+        ordering = ['fee_per_apartment']
+
+    def __str__(self):
+        return f"{self.name} - {self.fee_per_apartment}€/διαμέρισμα"
+
+    def get_total_cost_for_building(self, apartments_count):
+        """Υπολογίζει το συνολικό κόστος για ένα κτίριο"""
+        return self.fee_per_apartment * apartments_count
+
+    def get_services_list(self):
+        """Επιστρέφει τη λίστα υπηρεσιών ως string"""
+        if isinstance(self.services_included, list):
+            return ", ".join(self.services_included)
+        return ""
 
 class Building(models.Model):
     name = models.CharField(_("Όνομα"), max_length=255)
@@ -37,7 +77,7 @@ class Building(models.Model):
         max_length=20,
         blank=True
     )
-    
+
     # Γραφείο Διαχείρισης
     management_office_name = models.CharField(
         _("Όνομα Γραφείου Διαχείρισης"),
@@ -81,7 +121,7 @@ class Building(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     # 💰 Οικονομικά πεδία
     current_reserve = models.DecimalField(
         _("Τρέχον Αποθεματικό"),
@@ -90,7 +130,7 @@ class Building(models.Model):
         default=0,
         help_text=_("Τρέχον αποθεματικό του κτιρίου σε ευρώ")
     )
-    
+
     heating_fixed_percentage = models.DecimalField(
         _("Ποσοστό Παγίου Θέρμανσης"),
         max_digits=5,
@@ -98,7 +138,7 @@ class Building(models.Model):
         default=30.0,
         help_text=_("Ποσοστό παγίου κόστους θέρμανσης (π.χ. 30% = 30.00)")
     )
-    
+
     reserve_contribution_per_apartment = models.DecimalField(
         _("Πάγια Εισφορά Αποθεματικού ανά Διαμέρισμα"),
         max_digits=6,
@@ -107,16 +147,35 @@ class Building(models.Model):
         help_text=_("Πάγια εισφορά αποθεματικού ανά διαμέρισμα σε ευρώ")
     )
 
+    # 💼 Έξοδα Διαχείρισης
+    management_fee_per_apartment = models.DecimalField(
+        _("Αμοιβή Διαχείρισης ανά Διαμέρισμα"),
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        help_text=_("Αμοιβή διαχείρισης ανά διαμέρισμα σε ευρώ")
+    )
+    
+    # 📦 Πακέτο Υπηρεσιών
+    service_package = models.ForeignKey(
+        ServicePackage,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("Πακέτο Υπηρεσιών"),
+        help_text=_("Επιλεγμένο πακέτο υπηρεσιών διαχείρισης")
+    )
+
     def __str__(self):
         return self.name
-    
+
     def get_street_view_image_url(self):
         """Returns the street view image URL or a placeholder"""
         if self.street_view_image:
             return self.street_view_image
         # Return a placeholder image if no street view image is set
         return f"https://picsum.photos/600/300?random={self.id}"
-    
+
     def has_street_view_image(self):
         """Check if building has a street view image"""
         return bool(self.street_view_image)

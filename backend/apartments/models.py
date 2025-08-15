@@ -26,7 +26,7 @@ class Apartment(models.Model):
         max_length=20,
         blank=True,
         verbose_name='Διακριτικό Διαμερίσματος',
-        help_text='π.χ. Α2, Β1, C3'
+        help_text='π.χ. ΙΣ2, Α1, Β4'
     )
     
     floor = models.IntegerField(
