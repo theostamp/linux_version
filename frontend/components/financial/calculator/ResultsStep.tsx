@@ -209,190 +209,379 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
     }
 
     try {
-      // Dynamic import of html2canvas and jsPDF for better Greek support
+      // Use the same PDF generation logic as CommonExpenseModal
+      const { jsPDF } = await import('jspdf');
       const html2canvas = (await import('html2canvas')).default;
-      const jsPDF = (await import('jspdf')).default;
       
-      // Calculate stats for the PDF
-      const stats = getSummaryStats();
+      // Force recalculation of all derived values to ensure fresh data
+      const currentState = state; // Get current state
       
-      // Create a temporary div to render the content
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '-9999px';
-      tempDiv.style.width = '1200px';
-      tempDiv.style.backgroundColor = 'white';
-      tempDiv.style.padding = '20px';
-      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      // Debug logging to check if values are updating
+      console.log('PDF Export Debug (ResultsStep):', {
+        stateShares: Object.keys(currentState.shares).length,
+        totalExpenses: currentState.totalExpenses,
+        period: getPeriodInfo(),
+        timestamp: new Date().toISOString()
+      });
       
-      // Create the HTML content
-      tempDiv.innerHTML = `
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h1 style="font-size: 24px; margin: 0; color: #333;">ΦΥΛΛΟ ΚΟΙΝΟΧΡΗΣΤΩΝ</h1>
-          <h2 style="font-size: 18px; margin: 5px 0; color: #666;">Αποτελέσματα Υπολογισμού</h2>
-          <p style="font-size: 14px; margin: 5px 0; color: #666;">Περίοδος: ${getPeriodInfo()}</p>
-          <p style="font-size: 14px; margin: 5px 0; color: #666;">Ημερομηνία έκδοσης: ${new Date().toLocaleDateString('el-GR')}</p>
-        </div>
-        
-        <div style="margin-bottom: 15px;">
-          <p style="font-size: 12px; margin: 2px 0;">Συνολικές δαπάνες: ${formatAmount(stats.totalAmount)} EUR</p>
-          <p style="font-size: 12px; margin: 2px 0;">Αριθμός διαμερισμάτων: ${stats.totalApartments}</p>
-          <p style="font-size: 12px; margin: 2px 0;">Μέσος όρος ανά διαμέρισμα: ${formatAmount(stats.averagePerApartment)} EUR</p>
-        </div>
-        
-        <!-- Ανάλυση Δαπανών -->
-        ${state.advancedShares ? `
-          <div style="margin-bottom: 20px;">
-            <h3 style="font-size: 16px; margin: 10px 0; color: #333; border-bottom: 2px solid #3b82f6; padding-bottom: 5px;">ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ</h3>
+      // Prepare data for rendering with fresh calculations
+      const currentDate = new Date().toLocaleDateString('el-GR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      const period = getPeriodInfo();
+      const apartmentCount = Object.keys(currentState.shares).length;
+      
+      // Enhanced HTML content with better styling and structure (same as modal)
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="el">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Φύλλο Κοινοχρήστων - ${period}</title>
+          <style>
+            @page { 
+              size: A4 landscape; 
+              margin: 0.5in; 
+            }
             
-            ${state.advancedShares.heating_costs ? `
-              <div style="margin-bottom: 10px;">
-                <p style="font-size: 11px; margin: 2px 0;"><strong>Θέρμανση:</strong> ${formatAmount(state.advancedShares.heating_costs.total || 0)}€ 
-                  (Πάγιο: ${formatAmount(state.advancedShares.heating_costs.fixed || 0)}€ | 
-                  Μεταβλητό: ${formatAmount(state.advancedShares.heating_costs.variable || 0)}€)</p>
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+            
+            body { 
+              font-family: 'Segoe UI', Arial, sans-serif; 
+              font-size: 11pt; 
+              line-height: 1.4;
+              color: #2d3748; 
+              background: white;
+            }
+            
+            /* Header Section */
+            .header { 
+              text-align: center; 
+              margin-bottom: 25px; 
+              padding-bottom: 20px;
+              border-bottom: 3px solid #2563eb; 
+              background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+              padding: 20px;
+              border-radius: 8px;
+            }
+            
+            .brand { 
+              font-size: 22pt; 
+              font-weight: 700; 
+              color: #2563eb; 
+              margin-bottom: 8px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            }
+            
+            .subtitle { 
+              font-size: 12pt; 
+              color: #64748b; 
+              font-style: italic;
+              margin-bottom: 15px;
+            }
+            
+            .main-title { 
+              font-size: 24pt; 
+              font-weight: 700; 
+              color: #1e293b; 
+              margin: 15px 0;
+              text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            }
+            
+            .period { 
+              font-size: 16pt; 
+              font-weight: 600; 
+              color: #0f172a; 
+              background: #e0e7ff;
+              padding: 8px 16px;
+              border-radius: 20px;
+              display: inline-block;
+            }
+            
+            .timestamp {
+              margin-top: 12px;
+              font-size: 11pt;
+              color: #475569;
+              font-style: italic;
+              background: #f1f5f9;
+              padding: 6px 12px;
+              border-radius: 15px;
+              display: inline-block;
+              border: 1px solid #e2e8f0;
+            }
+            
+            /* Information Table */
+            .info-section {
+              margin: 25px 0;
+            }
+            
+            .info-table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin: 15px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            
+            .info-table th, .info-table td { 
+              border: 1px solid #e2e8f0; 
+              padding: 12px 16px; 
+              text-align: left; 
+            }
+            
+            .info-table th { 
+              background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+              color: white; 
+              font-weight: 600; 
+              width: 30%;
+              font-size: 10pt;
+            }
+            
+            .info-table td {
+              background: #ffffff;
+              font-weight: 500;
+            }
+            
+            /* Section Titles */
+            .section-title { 
+              font-size: 16pt; 
+              font-weight: 700; 
+              color: #1e293b; 
+              margin: 30px 0 20px 0; 
+              padding: 12px 0 8px 0;
+              border-bottom: 2px solid #3b82f6; 
+              background: linear-gradient(90deg, #f1f5f9 0%, transparent 100%);
+              padding-left: 15px;
+            }
+            
+            /* Analysis Table */
+            .analysis-table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin: 20px 0; 
+              font-size: 7pt;
+              background: white;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            
+            .analysis-table th, .analysis-table td { 
+              border: 1px solid #cbd5e1; 
+              padding: 6px 4px; 
+              text-align: center; 
+            }
+            
+            .analysis-table th { 
+              background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+              color: white; 
+              font-weight: 600;
+              font-size: 7pt;
+            }
+            
+            .analysis-table tr:nth-child(even) {
+              background: #f8fafc;
+            }
+            
+            .analysis-table tr:hover {
+              background: #e0e7ff;
+            }
+            
+            .totals-row { 
+              background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+              font-weight: 700;
+              border-top: 2px solid #3b82f6;
+            }
+            
+            .totals-row td {
+              font-weight: 600;
+              color: #1e293b;
+            }
+            
+            /* Footer */
+            .footer { 
+              margin-top: 30px; 
+              padding-top: 20px; 
+              border-top: 2px solid #e2e8f0;
+              background: #f8fafc;
+              border-radius: 8px;
+              padding: 20px;
+            }
+            
+            .footer .info-table th {
+              background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            }
+            
+            /* Utility Classes */
+            .text-left { text-align: left !important; }
+            .text-right { text-align: right !important; }
+            .font-bold { font-weight: 700; }
+            .text-primary { color: #2563eb; }
+            
+            /* Print Optimizations */
+            @media print {
+              body { font-size: 10pt; }
+              .header { break-inside: avoid; }
+              .section-title { break-after: avoid; }
+              .analysis-table { font-size: 6pt; }
+            }
+          </style>
+        </head>
+        <body>
+          <!-- Header Section -->
+          <div class="header">
+            <div class="brand">Digital Concierge App</div>
+            <div class="subtitle">online έκδοση κοινοχρήστων</div>
+            <div class="main-title">Φύλλο Κοινοχρήστων</div>
+            <div class="period">${period}</div>
+            <div class="timestamp">
+              ⏰ Εκδόθηκε: ${new Date().toLocaleString('el-GR', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+              })}
               </div>
-            ` : ''}
-            
-            ${state.advancedShares.elevator_costs ? `
-              <div style="margin-bottom: 10px;">
-                <p style="font-size: 11px; margin: 2px 0;"><strong>Ανελκυστήρας:</strong> ${formatAmount(state.advancedShares.elevator_costs)}€</p>
-              </div>
-            ` : ''}
-            
-            ${state.advancedShares.reserve_contribution ? `
-              <div style="margin-bottom: 10px;">
-                <p style="font-size: 11px; margin: 2px 0;"><strong>Αποθεματικό Ταμείο:</strong> ${formatAmount(state.advancedShares.reserve_contribution)}€</p>
-              </div>
-            ` : ''}
-            
-            ${Array.isArray(state.advancedShares.expense_breakdown) ? `
-              <table style="width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 10px;">
-                <thead>
-                  <tr style="background-color: #3b82f6; color: white;">
-                    <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΚΑΤΗΓΟΡΙΑ</th>
-                    <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΣΥΝΟΛΙΚΟ ΠΟΣΟ</th>
-                    <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ</th>
-                    <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΜΕΘΟΔΟΣ ΚΑΤΑΝΟΜΗΣ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${state.advancedShares.expense_breakdown.map((category: any, index: number) => `
-                    <tr style="background-color: ${index % 2 === 0 ? '#f8f9fa' : 'white'};">
-                      <td style="border: 1px solid #ddd; padding: 4px; text-align: center;">${category.category}</td>
-                      <td style="border: 1px solid #ddd; padding: 4px; text-align: center;">${formatAmount(category.total_amount)}€</td>
-                      <td style="border: 1px solid #ddd; padding: 4px; text-align: center;">${formatAmount(category.per_apartment)}€</td>
-                      <td style="border: 1px solid #ddd; padding: 4px; text-align: center;">${category.distribution_method}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            ` : ''}
           </div>
-        ` : ''}
-        
-        <!-- Τμήμα Κατανομής -->
-        <div style="margin-bottom: 20px;">
-          <h3 style="font-size: 16px; margin: 10px 0; color: #333; border-bottom: 2px solid #3b82f6; padding-bottom: 5px;">ΤΜΗΜΑ ΚΑΤΑΝΟΜΗΣ ΔΑΠΑΝΩΝ</h3>
           
-          <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+          <!-- Building Information -->
+          <div class="info-section">
+            <table class="info-table">
+              <tr><th>🏢 ΠΟΛΥΚΑΤΟΙΚΙΑ</th><td>${buildingData?.name || 'Άγνωστο Κτίριο'}</td></tr>
+              <tr><th>📅 ΜΗΝΑΣ</th><td>${period}</td></tr>
+              <tr><th>👤 ΔΙΑΧΕΙΡΙΣΤΗΣ</th><td>Διαχειριστής Κτιρίου</td></tr>
+              <tr><th>⏰ ΛΗΞΗ ΠΛΗΡΩΜΗΣ</th><td>${new Date().toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td></tr>
+              <tr><th>📝 ΠΑΡΑΤΗΡΗΣΕΙΣ</th><td>ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ: ΔΕΥΤΕΡΑ & ΤΕΤΑΡΤΗ ΑΠΟΓΕΥΜΑ</td></tr>
+              </table>
+          </div>
+        
+          <!-- Apartments Analysis -->
+          <div class="section-title">🏠 ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ</div>
+          
+          <table class="analysis-table">
             <thead>
-              <tr style="background-color: #3b82f6; color: white;">
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Α/Α</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΔΙΑΜΕΡΙΣΜΑ</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΙΔΙΟΚΤΗΤΗΣ</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΧΙΛΙΟΣΤΑ</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΠΡΟΗΓ. ΥΠΟΛΟΙΠΟ</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΜΕΡΙΔΙΟ ΔΑΠΑΝΩΝ</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΣΥΝΟΛΙΚΟ ΟΦΕΙΛΟΜΕΝΟ</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ΚΑΤΑΣΤΑΣΗ</th>
+              <tr>
+                <th rowspan="2">ΑΡΙΘΜΟΣ<br/>ΔΙΑΜΕΡΙΣΜΑΤΟΣ</th>
+                <th rowspan="2">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</th>
+                <th rowspan="2">ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ</th>
+                <th rowspan="2">ΠΛΗΡΩΤΕΟ<br/>ΠΟΣΟ</th>
+                <th rowspan="2">A/A</th>
               </tr>
             </thead>
             <tbody>
-              ${Object.values(state.shares).map((share: any, index: number) => `
-                <tr style="background-color: ${index % 2 === 0 ? '#f8f9fa' : 'white'};">
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${index + 1}</td>
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${share.apartment_number}</td>
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${share.owner_name || 'Μη καταγεγραμμένος'}</td>
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${share.participation_mills}</td>
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${formatAmount(share.previous_balance)}</td>
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${formatAmount(share.total_amount)}</td>
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${formatAmount(share.total_due)}</td>
-                  <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${share.total_due < 0 ? 'Οφειλόμενο' : 'Ενεργό'}</td>
+              ${Object.values(currentState.shares).map((share: any, index: number) => {
+                return `<tr>
+                  <td class="font-bold text-primary">${share.identifier || share.apartment_number}</td>
+                  <td class="text-left" style="padding-left: 8px;">${share.owner_name || 'Μη καταχωρημένος'}</td>
+                  <td>${share.participation_mills || 0}</td>
+                  <td class="font-bold text-primary">${formatAmount(share.total_due || 0)}</td>
+                  <td>${index + 1}</td>
+                </tr>`;
+              }).join('')}
+              
+              <tr class="totals-row">
+                <td class="font-bold">ΣΥΝΟΛΑ</td>
+                <td></td>
+                <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => sum + (s.participation_mills || 0), 0)}</td>
+                <td class="font-bold text-primary">${formatAmount(currentState.totalExpenses)}</td>
+                <td></td>
                 </tr>
-              `).join('')}
             </tbody>
           </table>
-        </div>
-        
-        <!-- Ειδικά Χιλιοστά Ανελκυστήρα -->
-        ${state.advancedShares && state.advancedShares.elevator_shares ? `
-          <div style="margin-bottom: 20px;">
-            <h3 style="font-size: 16px; margin: 10px 0; color: #333; border-bottom: 2px solid #3b82f6; padding-bottom: 5px;">ΕΙΔΙΚΑ ΧΙΛΙΟΣΤΑ ΑΝΕΛΚΥΣΤΗΡΑ</h3>
-            
-            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
-              <thead>
-                <tr style="background-color: #3b82f6; color: white;">
-                  <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΔΙΑΜΕΡΙΣΜΑ</th>
-                  <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΧΙΛΙΟΣΤΑ ΑΝΕΛΚΥΣΤΗΡΑ</th>
-                  <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">ΜΕΡΙΔΙΟ ΑΝΕΛΚΥΣΤΗΡΑ</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${Object.values(state.advancedShares.elevator_shares).map((share: any, index: number) => `
-                  <tr style="background-color: ${index % 2 === 0 ? '#f8f9fa' : 'white'};">
-                    <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${share.apartment_number}</td>
-                    <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${share.elevator_mills}</td>
-                    <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${formatAmount(share.elevator_share)}€</td>
-                  </tr>
-                `).join('')}
-              </tbody>
+          
+          <!-- Footer Information -->
+          <div class="footer">
+            <table class="info-table">
+              <tr><th>📅 ΗΜΕΡΟΜΗΝΙΑ ΕΚΔΟΣΗΣ</th><td>${currentDate}</td></tr>
+              <tr><th>🏠 ΣΥΝΟΛΟ ΔΙΑΜΕΡΙΣΜΑΤΩΝ</th><td>${apartmentCount}</td></tr>
+              <tr><th>💰 ΣΥΝΟΛΟ ΔΑΠΑΝΩΝ</th><td class="font-bold text-primary">${formatAmount(currentState.totalExpenses)}€</td></tr>
             </table>
           </div>
-        ` : ''}
+        </body>
+        </html>
       `;
       
-      // Add to document
-      document.body.appendChild(tempDiv);
+      // Create temporary element for rendering
+      const element = document.createElement('div');
+      element.innerHTML = htmlContent;
+      element.style.position = 'absolute';
+      element.style.left = '-9999px';
+      element.style.top = '0';
+      element.style.width = '297mm'; // A4 landscape width
+      element.style.backgroundColor = 'white';
+      document.body.appendChild(element);
       
-      // Convert to canvas
-      const canvas = await html2canvas(tempDiv, {
+      // Configure html2canvas options for better Greek text rendering
+      const canvasOptions = {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
+        letterRendering: true,
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: 1123, // A4 landscape width in pixels at 96 DPI
+        height: element.scrollHeight
+      };
+      
+      // Convert HTML to canvas
+      const canvas = await html2canvas(element, canvasOptions);
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      
+      // Create PDF in landscape format
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
       });
       
-      // Remove temporary div
-      document.body.removeChild(tempDiv);
-      
-      // Create PDF
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('landscape', 'mm', 'a4');
-      const imgWidth = 297; // A4 width in mm
-      const pageHeight = 210; // A4 height in mm
+      // Calculate dimensions for landscape A4
+      const imgWidth = 297; // A4 landscape width in mm
+      const pageHeight = 210; // A4 landscape height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
       let position = 0;
       
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      // Add image to PDF (handle multiple pages if needed)
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
       
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
       
-      // Save the PDF
-      const fileName = `φυλλο_κοινοχρηστων_${getPeriodInfo().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      // Save PDF with timestamp
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+      const safePeriod = period.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_');
+      const fileName = `common_expenses_sheet_${safePeriod}_${dateStr}_${timeStr}.pdf`;
       pdf.save(fileName);
       
-      toast.success('Εξαγωγή PDF ολοκληρώθηκε επιτυχώς!');
+      // Cleanup
+      document.body.removeChild(element);
+      
+      toast.success('✅ Το PDF εξήχθη επιτυχώς!', {
+        description: `Αρχείο: ${fileName}`
+      });
+      
     } catch (error) {
       console.error('PDF Export Error:', error);
-      toast.error('Σφάλμα κατά την εξαγωγή PDF');
+      toast.error('❌ Σφάλμα κατά την εξαγωγή PDF', {
+        description: 'Παρακαλώ δοκιμάστε ξανά ή επικοινωνήστε με την υποστήριξη.'
+      });
     }
   };
 
@@ -1716,6 +1905,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
 
       {/* Common Expense Modal */}
       <CommonExpenseModal
+        key={`expense-modal-${JSON.stringify(state.shares).substring(0, 10)}-${state.totalExpenses}`}
         isOpen={showCommonExpenseModal}
         onClose={() => setShowCommonExpenseModal(false)}
         state={state}

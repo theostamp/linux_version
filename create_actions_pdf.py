@@ -215,7 +215,7 @@ def create_actions_pdf():
     </head>
     <body>
         <div class="header">
-            <div class="brand">koinoxrista24.gr</div>
+            <div class="brand">Digital Concierge App</div>
             <div class="subtitle">online έκδοση κοινοχρήστων</div>
             <div class="main-title">ΕΝΕΡΓΕΙΕΣ ΚΟΙΝΟΧΡΗΣΤΩΝ</div>
             <div class="apartment-count">10 Διαμερίσματα</div>

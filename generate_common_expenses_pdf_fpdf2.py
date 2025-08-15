@@ -18,7 +18,7 @@ class CommonExpensesPDF(FPDF):
         # Header section
         self.set_font('DejaVu', 'B', 16)
         self.set_text_color(30, 64, 175)  # Blue color
-        self.cell(0, 10, 'koinoxrista24.gr', ln=True, align='C')
+        self.cell(0, 10, 'Digital Concierge App', ln=True, align='C')
         
         self.set_font('DejaVu', '', 10)
         self.set_text_color(100, 100, 100)

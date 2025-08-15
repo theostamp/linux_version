@@ -18,7 +18,7 @@ def create_common_expenses_pdf():
     pdf.set_font('Arial', 'B', 16)
     
     # Header Section
-    pdf.cell(0, 10, 'koinoxrista24.gr', ln=True, align='C')
+    pdf.cell(0, 10, 'Digital Concierge App', ln=True, align='C')
     pdf.set_font('Arial', '', 10)
     pdf.cell(0, 8, 'online edition of common expenses', ln=True, align='C')
     pdf.set_font('Arial', 'B', 16)

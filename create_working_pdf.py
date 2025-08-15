@@ -163,7 +163,7 @@ def create_pdf():
     </head>
     <body>
         <div class="header">
-            <div class="brand">koinoxrista24.gr</div>
+            <div class="brand">Digital Concierge App</div>
             <div class="subtitle">online έκδοση κοινοχρήστων</div>
             <div class="main-title">ΦΥΛΛΟ ΚΟΙΝΟΧΡΗΣΤΩΝ</div>
             <div class="period">Αύγουστος 2025</div>

@@ -25,7 +25,7 @@ def create_common_expenses_pdf():
                 size: A4;
                 margin: 2cm;
                 @top-center {
-                    content: "koinoxrista24.gr - online έκδοση κοινοχρήστων";
+                    content: "Digital Concierge App - online έκδοση κοινοχρήστων";
                     font-size: 10pt;
                     color: #666;
                 }
@@ -190,7 +190,7 @@ def create_common_expenses_pdf():
     </head>
     <body>
         <div class="header">
-            <div class="title">koinoxrista24.gr</div>
+            <div class="title">Digital Concierge App</div>
             <div style="color: #666; font-size: 12pt;">online έκδοση κοινοχρήστων</div>
             <div class="title">Φύλλο Κοινοχρήστων</div>
             <div class="subtitle">Αύγουστος 2025</div>

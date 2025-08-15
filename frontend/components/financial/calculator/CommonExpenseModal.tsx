@@ -545,12 +545,43 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       const { jsPDF } = await import('jspdf');
       const html2canvas = (await import('html2canvas')).default;
       
-      // Prepare data for rendering
+      // Force recalculation of all derived values to ensure fresh data
+      const currentState = state; // Get current state
+      const currentExpenseBreakdown = calculateExpenseBreakdown();
+      const currentReserveFundInfo = getReserveFundInfo();
+      const currentManagementFeeInfo = getManagementFeeInfo();
+      const currentTotalsFromRows = totalsFromRows;
+      const currentPerApartmentAmounts = perApartmentAmounts;
+      
+      // Debug logging to check if values are updating
+      console.log('PDF Export Debug:', {
+        stateShares: Object.keys(currentState.shares).length,
+        totalExpenses: currentState.totalExpenses,
+        expenseBreakdown: currentExpenseBreakdown,
+        period: getPeriodInfo(),
+        timestamp: new Date().toISOString()
+      });
+      
+      // Prepare data for rendering with fresh calculations
       const currentDate = getCurrentDate();
       const paymentDueDate = getPaymentDueDate();
       const period = getPeriodInfo();
       const groupedExpenses = getGroupedExpenses();
-      const apartmentCount = Object.keys(state.shares).length;
+      const apartmentCount = Object.keys(currentState.shares).length;
+      
+      // Calculate total expenses with fresh data
+      console.log('Expense breakdown values:', currentExpenseBreakdown);
+      console.log('Reserve fund info:', currentReserveFundInfo);
+      console.log('Management fee info:', currentManagementFeeInfo);
+      
+      const currentTotalExpenses = Object.values(currentExpenseBreakdown).reduce((sum, val) => sum + val, 0) + 
+                                  currentReserveFundInfo.totalContribution + 
+                                  currentManagementFeeInfo.totalFee;
+      
+      // Fallback: use state.totalExpenses if calculated total is 0
+      const finalTotalExpenses = currentTotalExpenses > 0 ? currentTotalExpenses : currentState.totalExpenses;
+      
+      console.log('Calculated total:', currentTotalExpenses, 'State total:', currentState.totalExpenses, 'Final total:', finalTotalExpenses);
       
       // Enhanced HTML content with better styling and structure
       const htmlContent = `
@@ -562,8 +593,8 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
           <title>Φύλλο Κοινοχρήστων - ${period}</title>
           <style>
             @page { 
-              size: A4; 
-              margin: 0.5in; 
+              size: A4 landscape; 
+              margin: 0.3in; 
             }
             
             * {
@@ -583,35 +614,35 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
             /* Header Section */
             .header { 
               text-align: center; 
-              margin-bottom: 25px; 
-              padding-bottom: 20px;
+              margin-bottom: 15px; 
+              padding-bottom: 15px;
               border-bottom: 3px solid #2563eb; 
               background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-              padding: 20px;
+              padding: 15px;
               border-radius: 8px;
             }
             
             .brand { 
-              font-size: 22pt; 
+              font-size: 18pt; 
               font-weight: 700; 
               color: #2563eb; 
-              margin-bottom: 8px;
+              margin-bottom: 6px;
               text-transform: uppercase;
               letter-spacing: 1px;
             }
             
             .subtitle { 
-              font-size: 12pt; 
+              font-size: 10pt; 
               color: #64748b; 
               font-style: italic;
-              margin-bottom: 15px;
+              margin-bottom: 10px;
             }
             
             .main-title { 
-              font-size: 24pt; 
+              font-size: 20pt; 
               font-weight: 700; 
               color: #1e293b; 
-              margin: 15px 0;
+              margin: 10px 0;
               text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
             }
             
@@ -623,6 +654,18 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
               padding: 8px 16px;
               border-radius: 20px;
               display: inline-block;
+            }
+            
+            .timestamp {
+              margin-top: 12px;
+              font-size: 11pt;
+              color: #475569;
+              font-style: italic;
+              background: #f1f5f9;
+              padding: 6px 12px;
+              border-radius: 15px;
+              display: inline-block;
+              border: 1px solid #e2e8f0;
             }
             
             /* Information Table */
@@ -660,11 +703,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
             
             /* Section Titles */
             .section-title { 
-              font-size: 16pt; 
+              font-size: 14pt; 
               font-weight: 700; 
               color: #1e293b; 
-              margin: 30px 0 20px 0; 
-              padding: 12px 0 8px 0;
+              margin: 20px 0 15px 0; 
+              padding: 8px 0 6px 0;
               border-bottom: 2px solid #3b82f6; 
               background: linear-gradient(90deg, #f1f5f9 0%, transparent 100%);
               padding-left: 15px;
@@ -729,15 +772,15 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
             .analysis-table { 
               width: 100%; 
               border-collapse: collapse; 
-              margin: 20px 0; 
-              font-size: 7pt;
+              margin: 15px 0; 
+              font-size: 6pt;
               background: white;
               box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             }
             
             .analysis-table th, .analysis-table td { 
               border: 1px solid #cbd5e1; 
-              padding: 6px 4px; 
+              padding: 4px 2px; 
               text-align: center; 
             }
             
@@ -745,7 +788,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
               background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
               color: white; 
               font-weight: 600;
-              font-size: 7pt;
+              font-size: 6pt;
             }
             
             .analysis-table tr:nth-child(even) {
@@ -769,12 +812,12 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
             
             /* Footer */
             .footer { 
-              margin-top: 30px; 
-              padding-top: 20px; 
+              margin-top: 20px; 
+              padding-top: 15px; 
               border-top: 2px solid #e2e8f0;
               background: #f8fafc;
               border-radius: 8px;
-              padding: 20px;
+              padding: 15px;
             }
             
             .footer .info-table th {
@@ -794,55 +837,92 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
               .section-title { break-after: avoid; }
               .analysis-table { font-size: 6pt; }
             }
+            
+            /* Ensure single page layout */
+            body {
+              max-height: 210mm; /* A4 landscape height */
+              overflow: hidden;
+            }
+            
+            .analysis-table {
+              page-break-inside: avoid;
+            }
+            
+            .info-section {
+              page-break-inside: avoid;
+            }
           </style>
         </head>
         <body>
           <!-- Header Section -->
           <div class="header">
-            <div class="brand">koinoxrista24.gr</div>
+            <div class="brand">Digital Concierge App</div>
             <div class="subtitle">online έκδοση κοινοχρήστων</div>
             <div class="main-title">Φύλλο Κοινοχρήστων</div>
             <div class="period">${period}</div>
+            <div class="timestamp">
+              ⏰ Εκδόθηκε: ${new Date().toLocaleString('el-GR', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+              })}
+            </div>
           </div>
           
-          <!-- Building Information -->
-          <div class="info-section">
-            <table class="info-table">
-              <tr><th>🏢 ΠΟΛΥΚΑΤΟΙΚΙΑ</th><td>${buildingName}</td></tr>
-              <tr><th>📅 ΜΗΝΑΣ</th><td>${period}</td></tr>
-              <tr><th>👤 ΔΙΑΧΕΙΡΙΣΤΗΣ</th><td>Διαχειριστής Κτιρίου</td></tr>
-              <tr><th>⏰ ΛΗΞΗ ΠΛΗΡΩΜΗΣ</th><td>${paymentDueDate}</td></tr>
-              <tr><th>📝 ΠΑΡΑΤΗΡΗΣΕΙΣ</th><td>ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ: ΔΕΥΤΕΡΑ & ΤΕΤΑΡΤΗ ΑΠΟΓΕΥΜΑ</td></tr>
-            </table>
-          </div>
-          
-          <!-- Expenses Analysis -->
-          <div class="section-title">📊 ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ</div>
-          <div class="expense-container">
-            ${Object.keys(groupedExpenses).length === 0 ? 
-              '<div class="no-expenses">❌ Δεν βρέθηκαν δαπάνες για αυτή την περίοδο</div>' : 
-              Object.entries(groupedExpenses).map(([groupKey, groupData]: [string, any]) => {
-                const groupLabels: Record<string, string> = {
-                  'general': 'Α. ΚΟΙΝΟΧΡΗΣΤΑ',
-                  'elevator': 'Β. ΑΝΕΛΚΗΣΤΗΡΑΣ', 
-                  'heating': 'Γ. ΘΕΡΜΑΝΣΗ',
-                  'equal_share': 'Δ. ΛΟΙΠΑ ΕΞΟΔΑ',
-                  'individual': 'Ε. ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣΙΑΣ'
-                };
+          <!-- Building Information and Expenses Side by Side -->
+          <div class="info-section" style="display: flex; gap: 20px; margin: 20px 0;">
+            <!-- Left Column - Building Info -->
+            <div style="flex: 1;">
+              <table class="info-table">
+                <tr><th>🏢 ΠΟΛΥΚΑΤΟΙΚΙΑ</th><td>${buildingName}</td></tr>
+                <tr><th>📅 ΜΗΝΑΣ</th><td>${period}</td></tr>
+                <tr><th>👤 ΔΙΑΧΕΙΡΙΣΤΗΣ</th><td>Διαχειριστής Κτιρίου</td></tr>
+                <tr><th>⏰ ΛΗΞΗ ΠΛΗΡΩΜΗΣ</th><td>${paymentDueDate}</td></tr>
+                <tr><th>📝 ΠΑΡΑΤΗΡΗΣΕΙΣ</th><td>ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ: ΔΕΥΤΕΡΑ & ΤΕΤΑΡΤΗ ΑΠΟΓΕΥΜΑ</td></tr>
+              </table>
+            </div>
+            
+            <!-- Right Column - Expenses Summary -->
+            <div style="flex: 1;">
+              <div style="background: #f8fafc; border-radius: 8px; padding: 15px; border-left: 5px solid #f59e0b;">
+                <h3 style="font-size: 12pt; font-weight: 700; color: #1e293b; margin-bottom: 15px; text-align: center;">📊 ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ</h3>
                 
-                let expenseHtml = `<div class="expense-item"><strong>${groupLabels[groupKey]}: ${formatAmount(groupData.total)}€</strong></div>`;
-                groupData.expenses.forEach((category: any, index: number) => {
-                  expenseHtml += `<div class="expense-subitem">${index + 1}. ${category.displayName}: ${formatAmount(category.total)}€</div>`;
-                });
-                return expenseHtml;
-              }).join('')
-            }
+                ${Object.keys(groupedExpenses).length === 0 ? 
+                  '<div style="font-style: italic; color: #64748b; text-align: center; padding: 20px;">❌ Δεν βρέθηκαν δαπάνες</div>' : 
+                  Object.entries(groupedExpenses).map(([groupKey, groupData]: [string, any]) => {
+                    const groupLabels: Record<string, string> = {
+                      'general': 'Α. ΚΟΙΝΟΧΡΗΣΤΑ',
+                      'elevator': 'Β. ΑΝΕΛΚΗΣΤΗΡΑΣ', 
+                      'heating': 'Γ. ΘΕΡΜΑΝΣΗ',
+                      'equal_share': 'Δ. ΛΟΙΠΑ ΕΞΟΔΑ',
+                      'individual': 'Ε. ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣΙΑΣ'
+                    };
+                    
+                    let expenseHtml = `<div style="margin: 8px 0; padding: 6px 10px; background: white; border-radius: 6px; border-left: 3px solid #3b82f6;">
+                      <strong style="color: #1e293b; font-size: 9pt;">${groupLabels[groupKey]}: ${formatAmount(groupData.total)}€</strong>`;
+                    
+                    if (groupData.expenses && groupData.expenses.length > 0) {
+                      groupData.expenses.forEach((category: any, index: number) => {
+                        expenseHtml += `<div style="margin-left: 15px; font-size: 8pt; color: #475569; padding: 2px 0;">
+                          ${index + 1}. ${category.displayName}: ${formatAmount(category.total)}€</div>`;
+                      });
+                    }
+                    expenseHtml += `</div>`;
+                    return expenseHtml;
+                  }).join('')
+                }
+                
+                <!-- Total Amount Highlight -->
+                <div style="margin: 15px 0; padding: 10px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; text-align: center; border-radius: 6px;">
+                  <strong style="font-size: 11pt;">💰 ΣΥΝΟΛΟ: ${formatAmount(finalTotalExpenses)}€</strong>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <!-- Total Amount -->
-          <div class="total-highlight">
-            <strong>💰 ΣΥΝΟΛΟ ΔΑΠΑΝΩΝ: ${formatAmount(totalExpenses)}€</strong>
-          </div>
+
           
           <!-- Apartments Analysis -->
           <div class="section-title">🏠 ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ</div>
@@ -866,27 +946,28 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
               </tr>
             </thead>
             <tbody>
-              ${Object.values(state.shares).map((share: any, index: number) => {
+              ${Object.values(currentState.shares).map((share: any, index: number) => {
                 const participationMills = toNumber(share.participation_mills);
-                const row = perApartmentAmounts[share.apartment_id] || { common:0, elevator:0, heating:0, other:0, coowner:0, reserve:0, total_due:0 };
-                const managementFee = managementFeeInfo.hasFee ? managementFeeInfo.feePerApartment : 0;
-                const apartmentReserveFund = reserveFundDetails.hasReserve ? (reserveFundDetails.monthlyAmount * (participationMills / 1000)) : 0;
+                const row = currentPerApartmentAmounts[share.apartment_id] || { common:0, elevator:0, heating:0, other:0, coowner:0, reserve:0, total_due:0 };
+                const managementFee = currentManagementFeeInfo.hasFee ? currentManagementFeeInfo.feePerApartment : 0;
+                const currentReserveFundDetails = getReserveFundDetails();
+                const apartmentReserveFund = currentReserveFundDetails.hasReserve ? (currentReserveFundDetails.monthlyAmount * (participationMills / 1000)) : 0;
                 const totalWithFees = row.total_due + managementFee + apartmentReserveFund;
                 const heatingBreakdown = share.heating_breakdown || { ei: 0, fi: 0, calories: 0 };
                 
                 const expenseBreakdownValues = {
-                  common: toNumber(expenseBreakdown.common),
-                  elevator: toNumber(expenseBreakdown.elevator),
-                  heating: toNumber(expenseBreakdown.heating),
-                  other: toNumber(expenseBreakdown.other),
-                  coownership: toNumber(expenseBreakdown.coownership)
+                  common: toNumber(currentExpenseBreakdown.common),
+                  elevator: toNumber(currentExpenseBreakdown.elevator),
+                  heating: toNumber(currentExpenseBreakdown.heating),
+                  other: toNumber(currentExpenseBreakdown.other),
+                  coownership: toNumber(currentExpenseBreakdown.coownership)
                 };
                 
-                const commonMills = participationMills * (expenseBreakdownValues.common / totalExpenses || 0);
-                const elevatorMills = participationMills * (expenseBreakdownValues.elevator / totalExpenses || 0);
-                const heatingMills = participationMills * (expenseBreakdownValues.heating / totalExpenses || 0);
-                const otherMills = participationMills * (expenseBreakdownValues.other / totalExpenses || 0);
-                const coownerMills = participationMills * (expenseBreakdownValues.coownership / totalExpenses || 0);
+                const commonMills = participationMills * (expenseBreakdownValues.common / finalTotalExpenses || 0);
+                const elevatorMills = participationMills * (expenseBreakdownValues.elevator / finalTotalExpenses || 0);
+                const heatingMills = participationMills * (expenseBreakdownValues.heating / finalTotalExpenses || 0);
+                const otherMills = participationMills * (expenseBreakdownValues.other / finalTotalExpenses || 0);
+                const coownerMills = participationMills * (expenseBreakdownValues.coownership / finalTotalExpenses || 0);
                 
                 return `<tr>
                   <td class="font-bold text-primary">${share.identifier || share.apartment_number}</td>
@@ -913,36 +994,36 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
               <tr class="totals-row">
                 <td class="font-bold">ΣΥΝΟΛΑ</td>
                 <td></td>
-                <td>${Object.values(state.shares).reduce((sum: number, s: any) => sum + (s.heating_breakdown?.ei || 0), 0).toFixed(3)}</td>
-                <td>${Object.values(state.shares).reduce((sum: number, s: any) => sum + (s.heating_breakdown?.fi || 0), 0).toFixed(2)}</td>
-                <td>${Object.values(state.shares).reduce((sum: number, s: any) => sum + (s.heating_breakdown?.calories || 0), 0).toFixed(0)}</td>
-                <td>${Object.values(state.shares).reduce((sum: number, s: any) => {
+                <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => sum + (s.heating_breakdown?.ei || 0), 0).toFixed(3)}</td>
+                <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => sum + (s.heating_breakdown?.fi || 0), 0).toFixed(2)}</td>
+                <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => sum + (s.heating_breakdown?.calories || 0), 0).toFixed(0)}</td>
+                <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => {
                   const participationMills = toNumber(s.participation_mills);
-                  return sum + (participationMills * (toNumber(expenseBreakdown.common) / totalExpenses || 0));
+                  return sum + (participationMills * (toNumber(currentExpenseBreakdown.common) / finalTotalExpenses || 0));
                 }, 0).toFixed(2)}</td>
-                <td>${Object.values(state.shares).reduce((sum: number, s: any) => {
+                <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => {
                   const participationMills = toNumber(s.participation_mills);
-                  return sum + (participationMills * (toNumber(expenseBreakdown.elevator) / totalExpenses || 0));
+                  return sum + (participationMills * (toNumber(currentExpenseBreakdown.elevator) / finalTotalExpenses || 0));
                 }, 0).toFixed(2)}</td>
-                <td>${Object.values(state.shares).reduce((sum: number, s: any) => {
+                <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => {
                   const participationMills = toNumber(s.participation_mills);
-                  return sum + (participationMills * (toNumber(expenseBreakdown.heating) / totalExpenses || 0));
+                  return sum + (participationMills * (toNumber(currentExpenseBreakdown.heating) / finalTotalExpenses || 0));
                 }, 0).toFixed(2)}</td>
-                <td>${Object.values(state.shares).reduce((sum: number, s: any) => {
+                <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => {
                   const participationMills = toNumber(s.participation_mills);
-                  return sum + (participationMills * (toNumber(expenseBreakdown.other) / totalExpenses || 0));
+                  return sum + (participationMills * (toNumber(currentExpenseBreakdown.other) / finalTotalExpenses || 0));
                 }, 0).toFixed(2)}</td>
-                <td>${Object.values(state.shares).reduce((sum: number, s: any) => {
+                <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => {
                   const participationMills = toNumber(s.participation_mills);
-                  return sum + (participationMills * (toNumber(expenseBreakdown.coownership) / totalExpenses || 0));
+                  return sum + (participationMills * (toNumber(currentExpenseBreakdown.coownership) / finalTotalExpenses || 0));
                 }, 0).toFixed(2)}</td>
-                <td class="font-bold">${formatAmount(totalsFromRows.common)}</td>
-                <td class="font-bold">${formatAmount(totalsFromRows.elevator)}</td>
-                <td class="font-bold">${formatAmount(totalsFromRows.heating)}</td>
-                <td class="font-bold">${formatAmount(totalsFromRows.other)}</td>
-                <td class="font-bold">${formatAmount(totalsFromRows.coowner)}</td>
+                <td class="font-bold">${formatAmount(currentTotalsFromRows.common)}</td>
+                <td class="font-bold">${formatAmount(currentTotalsFromRows.elevator)}</td>
+                <td class="font-bold">${formatAmount(currentTotalsFromRows.heating)}</td>
+                <td class="font-bold">${formatAmount(currentTotalsFromRows.other)}</td>
+                <td class="font-bold">${formatAmount(currentTotalsFromRows.coowner)}</td>
                 <td>0,01</td>
-                <td class="font-bold text-primary">${formatAmount(totalExpenses)}</td>
+                <td class="font-bold text-primary">${formatAmount(finalTotalExpenses)}</td>
                 <td></td>
               </tr>
             </tbody>
@@ -953,7 +1034,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
             <table class="info-table">
               <tr><th>📅 ΗΜΕΡΟΜΗΝΙΑ ΕΚΔΟΣΗΣ</th><td>${currentDate}</td></tr>
               <tr><th>🏠 ΣΥΝΟΛΟ ΔΙΑΜΕΡΙΣΜΑΤΩΝ</th><td>${apartmentCount}</td></tr>
-              <tr><th>💰 ΣΥΝΟΛΟ ΔΑΠΑΝΩΝ</th><td class="font-bold text-primary">${formatAmount(totalExpenses)}€</td></tr>
+              <tr><th>💰 ΣΥΝΟΛΟ ΔΑΠΑΝΩΝ</th><td class="font-bold text-primary">${formatAmount(finalTotalExpenses)}€</td></tr>
             </table>
           </div>
         </body>
@@ -961,72 +1042,114 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       `;
       
       // Create temporary element for rendering
+      console.log('Creating temporary DOM element...');
       const element = document.createElement('div');
       element.innerHTML = htmlContent;
       element.style.position = 'absolute';
       element.style.left = '-9999px';
       element.style.top = '0';
-      element.style.width = '210mm'; // A4 width
+      element.style.width = '297mm'; // A4 landscape width
       element.style.backgroundColor = 'white';
+      element.style.fontFamily = 'Arial, sans-serif';
+      element.style.fontSize = '11pt';
+      element.style.lineHeight = '1.4';
       document.body.appendChild(element);
+      console.log('Element added to DOM. Content length:', htmlContent.length, 'characters');
+      
+      // Wait a moment for DOM to settle
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Configure html2canvas options for better Greek text rendering
       const canvasOptions = {
-        scale: 2,
+        scale: 1.5, // Reduced scale for better performance
         useCORS: true,
         letterRendering: true,
         allowTaint: false,
         backgroundColor: '#ffffff',
-        logging: false,
-        width: 794, // A4 width in pixels at 96 DPI
-        height: element.scrollHeight
+        logging: true, // Enable logging to debug
+        width: 1123, // A4 landscape width in pixels at 96 DPI
+        height: element.scrollHeight,
+        removeContainer: true,
+        imageTimeout: 30000, // 30 second timeout
+        ignoreElements: (element: any) => {
+          // Skip elements that cause document.write warnings
+          return element.tagName === 'SCRIPT' || element.tagName === 'NOSCRIPT';
+        }
       };
       
       // Convert HTML to canvas
+      console.log('Starting html2canvas conversion...');
       const canvas = await html2canvas(element, canvasOptions);
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      console.log('html2canvas completed. Canvas dimensions:', canvas.width, 'x', canvas.height);
       
-      // Create PDF
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      console.log('Canvas converted to image data. Size:', imgData.length, 'characters');
+      
+      // Create PDF in landscape format
+      console.log('Creating PDF...');
       const pdf = new jsPDF({
-        orientation: 'portrait',
+        orientation: 'landscape',
         unit: 'mm',
         format: 'a4',
         compress: true
       });
+      console.log('PDF instance created');
       
-      // Calculate dimensions
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
+      // Calculate dimensions for landscape A4
+      const imgWidth = 297; // A4 landscape width in mm
+      const pageHeight = 210; // A4 landscape height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
       let position = 0;
       
       // Add image to PDF (handle multiple pages if needed)
+      console.log('Adding image to PDF. Dimensions:', imgWidth, 'x', imgHeight, 'mm');
       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
       
+      let pageCount = 1;
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
+        pageCount++;
         pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
+      console.log('PDF created with', pageCount, 'pages');
       
-      // Save PDF
-      const fileName = `φυλλο_κοινοχρηστων_${period.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      // Save PDF with timestamp - use safe filename without Greek characters
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+      const safePeriod = period.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_');
+      const fileName = `common_expenses_sheet_${safePeriod}_${dateStr}_${timeStr}.pdf`;
+      console.log('Saving PDF as:', fileName);
       pdf.save(fileName);
+      console.log('PDF save command executed');
       
       // Cleanup
       document.body.removeChild(element);
       
       toast.success('✅ Το PDF εξήχθη επιτυχώς!', {
-        description: `Αρχείο: φυλλο_κοινοχρηστων_${period.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+        description: `Αρχείο: ${fileName}`
       });
       
     } catch (error) {
-      console.error('PDF Export Error:', error);
+      console.error('PDF Export Error Details:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      
+      // Cleanup element if it exists
+      try {
+        const existingElement = document.querySelector('[style*="-9999px"]');
+        if (existingElement) {
+          document.body.removeChild(existingElement);
+        }
+      } catch (cleanupError) {
+        console.warn('Cleanup error:', cleanupError);
+      }
+      
       toast.error('❌ Σφάλμα κατά την εξαγωγή PDF', {
-        description: 'Παρακαλώ δοκιμάστε ξανά ή επικοινωνήστε με την υποστήριξη.'
+        description: `Σφάλμα: ${error instanceof Error ? error.message : 'Άγνωστο σφάλμα'}`
       });
     }
   };
@@ -1190,7 +1313,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-4">
               <div className="text-left">
-                <h2 className="text-lg font-bold text-blue-600">koinoxrista24.gr</h2>
+                <h2 className="text-lg font-bold text-blue-600">Digital Concierge App</h2>
                 <p className="text-sm text-gray-600">online έκδοση κοινοχρήστων</p>
               </div>
               <div className="flex items-center gap-2">
@@ -1204,21 +1327,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <Button
-              onClick={handleSave}
-              disabled={isSaving}
+              onClick={() => handleExport('pdf')}
               className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
             >
-              <Save className="h-4 w-4" />
-              {isSaving ? 'Αποθήκευση...' : 'Αποθήκευση'}
-            </Button>
-            <Button
-              onClick={() => handleExport('pdf')}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
               <Download className="h-4 w-4" />
-              PDF
+              Εξαγωγή PDF
             </Button>
             <Button
               onClick={() => handleExport('excel')}
@@ -1253,7 +1366,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
           <div className="text-center">
             <div className="flex items-center justify-center gap-4 mb-4">
               <div className="text-left">
-                <h2 className="text-lg font-bold text-blue-600">koinoxrista24.gr</h2>
+                <h2 className="text-lg font-bold text-blue-600">Digital Concierge App</h2>
                 <p className="text-sm text-gray-600">online έκδοση κοινοχρήστων</p>
               </div>
               <div className="text-center">

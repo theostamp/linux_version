@@ -25,7 +25,7 @@ def create_final_common_expenses_pdf():
                 size: A4;
                 margin: 1.5cm;
                 @top-center {
-                    content: "koinoxrista24.gr - online έκδοση κοινοχρήστων";
+                    content: "Digital Concierge App - online έκδοση κοινοχρήστων";
                     font-size: 9pt;
                     color: #666;
                     font-family: 'DejaVu Sans', Arial, sans-serif;
@@ -275,7 +275,7 @@ def create_final_common_expenses_pdf():
     </head>
     <body>
         <div class="header">
-            <div class="brand">koinoxrista24.gr</div>
+            <div class="brand">Digital Concierge App</div>
             <div class="subtitle">online έκδοση κοινοχρήστων</div>
             <div class="main-title">Φύλλο Κοινοχρήστων</div>
             <div class="period">Αύγουστος 2025</div>
@@ -543,7 +543,7 @@ def create_final_common_expenses_pdf():
     
     print("✅ PDF created successfully: φυλλο_κοινοχρηστων_Αύγουστος_2025_2025-08-15.pdf")
     print("📄 The PDF contains all the exact elements from the Common Expenses Sheet:")
-    print("   • Header with koinoxrista24.gr branding")
+    print("   • Header with Digital Concierge App branding")
     print("   • Building information grid")
     print("   • Complete expense breakdown by category")
     print("   • Detailed apartment analysis table")
