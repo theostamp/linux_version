@@ -460,12 +460,11 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               <tr><th>📅 ΜΗΝΑΣ</th><td>${period}</td></tr>
               <tr><th>👤 ΔΙΑΧΕΙΡΙΣΤΗΣ</th><td>Διαχειριστής Κτιρίου</td></tr>
               <tr><th>⏰ ΛΗΞΗ ΠΛΗΡΩΜΗΣ</th><td>${new Date().toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td></tr>
-              <tr><th>📝 ΠΑΡΑΤΗΡΗΣΕΙΣ</th><td>ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ: ΔΕΥΤΕΡΑ & ΤΕΤΑΡΤΗ ΑΠΟΓΕΥΜΑ</td></tr>
               </table>
           </div>
         
           <!-- Apartments Analysis -->
-          <div class="section-title">🏠 ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ</div>
+          <div class="section-title">🏠 ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ <span style="font-size: 9pt; font-style: italic; color: #666;"> </span></div>
           
           <table class="analysis-table">
             <thead>
@@ -500,6 +499,12 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           
           <!-- Footer Information -->
           <div class="footer">
+            <!-- Παρατηρήσεις στην αρχή του footer -->
+            <div style="background-color: #fef3c7; padding: 12px; margin-bottom: 16px; border-left: 4px solid #f59e0b; border-radius: 4px;">
+              <div style="font-weight: bold; color: #92400e; margin-bottom: 4px;">📝 ΠΑΡΑΤΗΡΗΣΕΙΣ:</div>
+              <div style="color: #92400e; font-style: italic;">ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ: ΔΕΥΤΕΡΑ & ΤΕΤΑΡΤΗ ΑΠΟΓΕΥΜΑ</div>
+            </div>
+            
             <table class="info-table">
               <tr><th>📅 ΗΜΕΡΟΜΗΝΙΑ ΕΚΔΟΣΗΣ</th><td>${currentDate}</td></tr>
               <tr><th>🏠 ΣΥΝΟΛΟ ΔΙΑΜΕΡΙΣΜΑΤΩΝ</th><td>${apartmentCount}</td></tr>
@@ -1293,143 +1298,24 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           </div>
         </CardHeader>
         <CardContent>
-          {/* Primary Action - Issue Common Expenses */}
+          {/* Primary Action - Common Expense Sheet */}
           <div className="mb-6">
             <Button 
-              onClick={handleIssue}
-              disabled={state.isIssuing}
+              onClick={() => setShowCommonExpenseModal(true)}
               className="w-full h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 text-base font-semibold"
             >
               <div className="flex items-center justify-center gap-3">
                 <div className="p-2 bg-white/20 rounded-lg">
-                  {state.isIssuing ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  ) : (
-                    <Send className="h-5 w-5" />
-                  )}
+                  <Eye className="h-5 w-5" />
                 </div>
                 <div className="text-left">
-                  <div>{state.isIssuing ? 'Επεξεργασία έκδοσης...' : 'Έκδοση Κοινοχρήστων'}</div>
+                  <div>Φύλλο Κοινοχρήστων</div>
                   <div className="text-xs text-blue-100 font-normal">
-                    Τελική έκδοση και αποστολή
+                    Λεπτομερή προβολή
                   </div>
                 </div>
               </div>
             </Button>
-          </div>
-
-          {/* Secondary Actions Grid */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <div className="w-4 h-4 bg-gray-200 rounded"></div>
-              Εργαλεία Εξαγωγής & Προβολής
-            </h4>
-            
-            {/* Desktop: 2x2 Grid */}
-            <div className="hidden sm:grid sm:grid-cols-2 gap-3">
-              <button
-              onClick={() => handleExport('pdf')}
-                className="group flex items-center gap-3 p-4 bg-white border-2 border-red-200 rounded-xl hover:border-red-300 hover:bg-red-50/50 transition-all duration-200 hover:shadow-sm"
-              >
-                <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
-                  <Download className="h-5 w-5 text-red-600" />
-                </div>
-                <div className="text-left">
-                  <div className="font-semibold text-gray-800 text-sm">Εξαγωγή PDF</div>
-                  <div className="text-xs text-gray-500">Πλήρες αρχείο</div>
-                </div>
-              </button>
-
-              <button
-              onClick={() => handleExport('excel')}
-                className="group flex items-center gap-3 p-4 bg-white border-2 border-green-200 rounded-xl hover:border-green-300 hover:bg-green-50/50 transition-all duration-200 hover:shadow-sm"
-              >
-                <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
-                  <Download className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="text-left">
-                  <div className="font-semibold text-gray-800 text-sm">Εξαγωγή Excel</div>
-                  <div className="text-xs text-gray-500">Επεξεργάσιμο</div>
-                </div>
-              </button>
-
-              <button
-              onClick={handlePrint}
-                className="group flex items-center gap-3 p-4 bg-white border-2 border-purple-200 rounded-xl hover:border-purple-300 hover:bg-purple-50/50 transition-all duration-200 hover:shadow-sm"
-              >
-                <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
-                  <Printer className="h-5 w-5 text-purple-600" />
-                </div>
-                <div className="text-left">
-                  <div className="font-semibold text-gray-800 text-sm">Εκτύπωση</div>
-                  <div className="text-xs text-gray-500">Άμεση εκτύπωση</div>
-                </div>
-              </button>
-
-              <button
-              onClick={() => setShowCommonExpenseModal(true)}
-                className="group flex items-center gap-3 p-4 bg-white border-2 border-orange-200 rounded-xl hover:border-orange-300 hover:bg-orange-50/50 transition-all duration-200 hover:shadow-sm"
-              >
-                <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
-                  <Eye className="h-5 w-5 text-orange-600" />
-                </div>
-                <div className="text-left">
-                  <div className="font-semibold text-gray-800 text-sm">Φύλλο Κοινοχρήστων</div>
-                  <div className="text-xs text-gray-500">Λεπτομερή προβολή</div>
-                </div>
-              </button>
-            </div>
-
-            {/* Mobile: Vertical Stack */}
-            <div className="sm:hidden space-y-3">
-              <button
-                onClick={() => handleExport('pdf')}
-                className="w-full flex items-center gap-3 p-4 bg-white border-2 border-red-200 rounded-xl hover:border-red-300 hover:bg-red-50/50 transition-all duration-200"
-              >
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <Download className="h-5 w-5 text-red-600" />
-                </div>
-                <div className="text-left flex-1">
-                  <div className="font-semibold text-gray-800">Εξαγωγή PDF</div>
-                  <div className="text-xs text-gray-500">Πλήρες αρχείο για αποθήκευση</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleExport('excel')}
-                className="w-full flex items-center gap-3 p-4 bg-white border-2 border-green-200 rounded-xl hover:border-green-300 hover:bg-green-50/50 transition-all duration-200"
-              >
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Download className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="text-left flex-1">
-                  <div className="font-semibold text-gray-800">Εξαγωγή Excel</div>
-                  <div className="text-xs text-gray-500">Επεξεργάσιμο spreadsheet</div>
-                </div>
-              </button>
-
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={handlePrint}
-                  className="flex items-center justify-center gap-2 p-3 bg-white border-2 border-purple-200 rounded-xl hover:border-purple-300 hover:bg-purple-50/50 transition-all duration-200"
-                >
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Printer className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <div className="text-sm font-semibold text-gray-800">Εκτύπωση</div>
-                </button>
-
-                <button
-                  onClick={() => setShowCommonExpenseModal(true)}
-                  className="flex items-center justify-center gap-2 p-3 bg-white border-2 border-orange-200 rounded-xl hover:border-orange-300 hover:bg-orange-50/50 transition-all duration-200"
-                >
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Eye className="h-4 w-4 text-orange-600" />
-                  </div>
-                  <div className="text-sm font-semibold text-gray-800">Προβολή</div>
-                </button>
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>

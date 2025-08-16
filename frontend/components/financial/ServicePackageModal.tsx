@@ -212,30 +212,65 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
 
   const handleCreateCustomPackage = async () => {
     try {
-      if (!customPackageForm.name.trim() || !customPackageForm.fee_per_apartment) {
-        toast.error('Παρακαλώ συμπληρώστε όλα τα απαραίτητα πεδία');
+      // Enhanced validation
+      const name = customPackageForm.name.trim();
+      const description = customPackageForm.description.trim();
+      const fee = customPackageForm.fee_per_apartment;
+
+      if (!name) {
+        toast.error('Παρακαλώ συμπληρώστε το όνομα του πακέτου');
         return;
       }
 
-      if (calculateBasedOnServices && selectedServices.length === 0) {
-        toast.error('Παρακαλώ επιλέξτε τουλάχιστον μία υπηρεσία');
+      if (name.length < 2) {
+        toast.error('Το όνομα του πακέτου πρέπει να έχει τουλάχιστον 2 χαρακτήρες');
         return;
       }
 
-      setCreatingPackage(true);
-      
+      // Check for valid characters (Greek and English letters, numbers, spaces, and common punctuation)
+      const validNameRegex = /^[α-ωΑ-Ωa-zA-Z0-9\s\-_.,()]+$/;
+      if (!validNameRegex.test(name)) {
+        toast.error('Το όνομα του πακέτου περιέχει μη έγκυρους χαρακτήρες. Χρησιμοποιήστε μόνο γράμματα, αριθμούς και κοινά σύμβολα.');
+        return;
+      }
+
+      if (!description) {
+        toast.error('Παρακαλώ συμπληρώστε την περιγραφή του πακέτου');
+        return;
+      }
+
+      if (!fee || parseFloat(fee) <= 0) {
+        toast.error('Παρακαλώ συμπληρώστε μια έγκυρη τιμή για την αμοιβή ανά διαμέρισμα');
+        return;
+      }
+
       // Χρησιμοποίηση επιλεγμένων υπηρεσιών αν είναι ενεργό το auto-calculate
       const servicesArray = calculateBasedOnServices 
         ? selectedServices.map(id => realBuildingServices.find(s => s.id === id)?.name || '').filter(Boolean)
         : customPackageForm.services_included.split('\n').map(s => s.trim()).filter(s => s.length > 0);
 
-      const newPackage = await createServicePackage({
-        name: customPackageForm.name.trim(),
-        description: customPackageForm.description.trim(),
-        fee_per_apartment: parseFloat(customPackageForm.fee_per_apartment),
+      if (servicesArray.length === 0) {
+        toast.error('Παρακαλώ επιλέξτε τουλάχιστον μία υπηρεσία ή συμπληρώστε τις υπηρεσίες που περιλαμβάνονται');
+        return;
+      }
+
+      setCreatingPackage(true);
+      
+      // Debug logging
+      console.log('Creating service package with data:', {
+        name: name,
+        description: description,
+        fee_per_apartment: parseFloat(fee),
         services_included: servicesArray,
-        is_active: true,
-        total_cost_for_building: parseFloat(customPackageForm.fee_per_apartment) * apartmentsCount
+        is_active: true
+      });
+      
+      const newPackage = await createServicePackage({
+        name: name,
+        description: description,
+        fee_per_apartment: parseFloat(fee),
+        services_included: servicesArray,
+        is_active: true
       });
       
       setPackages(prev => [...prev, newPackage]);
@@ -256,6 +291,15 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
       console.error('Error creating custom service package:', error);
       if (error?.response?.status === 403) {
         toast.error('Δεν έχετε δικαίωμα να δημιουργήσετε πακέτα υπηρεσιών');
+      } else if (error?.response?.status === 400) {
+        // Show more specific error message for validation errors
+        const errorData = error.response?.data;
+        if (errorData && typeof errorData === 'object') {
+          const errorMessages = Object.values(errorData).flat();
+          toast.error(`Σφάλμα επικύρωσης: ${errorMessages.join(', ')}`);
+        } else {
+          toast.error('Σφάλμα επικύρωσης δεδομένων');
+        }
       } else {
         toast.error('Αποτυχία δημιουργίας πακέτου');
       }
