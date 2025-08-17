@@ -762,6 +762,8 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     'building_id': apartment.building.id,
                     'building_name': apartment.building.name,
                     'participation_mills': apartment.participation_mills,
+                    'heating_mills': apartment.heating_mills,
+                    'elevator_mills': apartment.elevator_mills,
                     'latest_payment_date': latest_payment.date.isoformat() if latest_payment else None,
                     'latest_payment_amount': float(latest_payment.amount) if latest_payment else None,
                 }

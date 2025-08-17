@@ -28,6 +28,7 @@ Comprehensive building management system for property administration, built with
 - [ ] Validation for financial amounts
 - [ ] History tracking for fee changes
 - [ ] Notifications for financial updates
+- [ ] 🔥 HeatingAnalysisModal Frontend Integration (API data loading issue)
 
 ### 📝 Planned Features
 - [ ] Advanced expense categorization
@@ -36,6 +37,7 @@ Comprehensive building management system for property administration, built with
 - [ ] Budget planning and forecasting
 - [ ] Invoice generation
 - [ ] Payment method integration
+- [ ] 🔥 Advanced Heating Analysis Features (meter readings, consumption history)
 
 ## 🏢 Building Management
 
@@ -126,6 +128,7 @@ Comprehensive building management system for property administration, built with
 - [ ] Fix permission denied error in frontend build
 - [ ] Resolve multiple lockfiles warning
 - [ ] Improve error handling in financial calculations
+- [ ] 🔥 Fix HeatingAnalysisModal API data loading (heating_mills not received from frontend)
 
 ### Medium Priority
 - [ ] Optimize database queries
@@ -144,6 +147,7 @@ Comprehensive building management system for property administration, built with
 - [ ] Implement validation for financial amounts
 - [ ] Add history tracking for fee changes
 - [ ] Fix frontend build issues
+- [ ] 🔥 Fix HeatingAnalysisModal frontend integration (API data loading)
 
 ### Week 3-4
 - [ ] Implement real-time notifications
@@ -240,6 +244,14 @@ Comprehensive building management system for property administration, built with
 - ✅ Created ServicePackageModal for package selection
 - ✅ Added backend models and API endpoints for service packages
 - ✅ Fixed API authentication issues with demo auto-login
+- 🔥 **HeatingAnalysisModal Implementation**:
+  - ✅ Created HeatingAnalysisModal.tsx with autonomous/central heating support
+  - ✅ Implemented heating cost calculation logic (fixed + variable)
+  - ✅ Added meter readings input for autonomous heating
+  - ✅ Updated AdvancedCommonExpenseCalculator with heating parameters
+  - ✅ Fixed backend API to include heating_mills and elevator_mills
+  - ✅ Verified heating_mills data exists in database (1000 total)
+  - ⚠️ **Pending**: Frontend API integration (heating_mills not loading)
 
 ### Key Decisions
 - Using Django for backend with django-tenants for multi-tenancy
@@ -255,6 +267,6 @@ Comprehensive building management system for property administration, built with
 
 ---
 
-**Last Updated**: December 2024
+**Last Updated**: January 2025
 **Version**: 1.0.0
 **Status**: Active Development

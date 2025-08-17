@@ -19,10 +19,12 @@ import {
   CheckCircle,
   AlertCircle,
   Calculator,
-  PiggyBank
+  PiggyBank,
+  Thermometer
 } from 'lucide-react';
 import { CalculatorState } from './CalculatorWizard';
 import { ExpenseBreakdownSection } from './ExpenseBreakdownSection';
+import { HeatingAnalysisModal } from './HeatingAnalysisModal';
 import { toast } from 'sonner';
 import { useCommonExpenses } from '@/hooks/useCommonExpenses';
 import { useApartmentsWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
@@ -70,6 +72,8 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   reserveContributionPerApartment = 0
 }) => {
   const [isSaving, setIsSaving] = useState(false);
+  const [showHeatingModal, setShowHeatingModal] = useState(false);
+  const [heatingBreakdown, setHeatingBreakdown] = useState<any>(null);
   const [validationResult, setValidationResult] = useState<{
     isValid: boolean;
     message: string;
@@ -552,7 +556,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
 
   
   // Calculate total expenses including management fees - χωρίς αποθεματικό
-  const basicExpenses = 230 + 0 + 1500 + 0 + 0; // Δ.Ε.Η. + Ανελκυστήρας + Καύσιμα + Άλλα + Συνιδιοκτησία
+  const basicExpenses = expenseBreakdown.common + expenseBreakdown.elevator + expenseBreakdown.heating + expenseBreakdown.other + expenseBreakdown.coownership;
   const totalExpenses = basicExpenses + managementFeeInfo.totalFee; // Χωρίς αποθεματικό
 
   const handlePrint = () => {
@@ -610,7 +614,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                                   currentManagementFeeInfo.totalFee;
       
       // Fallback: use state.totalExpenses if calculated total is 0
-      const finalTotalExpenses = currentTotalExpenses > 0 ? currentTotalExpenses : 1730; // Σταθερή τιμή: 230 + 1500
+      const finalTotalExpenses = currentTotalExpenses > 0 ? currentTotalExpenses : state.totalExpenses;
       
 
       
@@ -1033,11 +1037,17 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 const managementFee = toNumber(currentManagementFeeInfo.feePerApartment);
                 const currentReserveFundDetails = getReserveFundDetails();
                 const apartmentReserveFund = toNumber(currentReserveFundDetails.monthlyAmount) * (toNumber(participationMills) / 1000);
-                const commonAmount = toNumber(commonMills) / 1000 * 230; // Δ.Ε.Η. 230€
-                const elevatorAmount = toNumber(elevatorMills) / 1000 * 0; // Δεν έχουμε δαπάνες ανελκυστήρα
-                const heatingAmount = toNumber(heatingMills) / 1000 * 1500; // Καύσιμα 1500€
-                const totalAmount = commonAmount + elevatorAmount + heatingAmount;
-                const totalWithFees = totalAmount + managementFee + apartmentReserveFund;
+                
+                // Χρήση πραγματικών δεδομένων από το backend breakdown
+                const breakdown = share.breakdown || {};
+                const commonAmount = toNumber(breakdown.general_expenses || 0);
+                const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
+                const heatingAmount = toNumber(breakdown.heating_expenses || 0);
+                const equalShareAmount = toNumber(breakdown.equal_share_expenses || 0);
+                const reserveFundAmount = toNumber(breakdown.reserve_fund_contribution || 0);
+                
+                const totalAmount = commonAmount + elevatorAmount + heatingAmount + equalShareAmount + reserveFundAmount;
+                const totalWithFees = totalAmount + managementFee;
                 const finalTotalWithFees = isNaN(totalWithFees) ? 0 : totalWithFees;
                 const heatingBreakdown = share.heating_breakdown || { ei: 0, fi: 0, calories: 0 };
                 const otherMills = participationMills * (expenseBreakdownValues.other / finalTotalExpenses || 0);
@@ -1052,9 +1062,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                   <td class="amount-cell">${formatAmount(commonAmount)}</td>
                   <td class="amount-cell">${formatAmount(elevatorAmount)}</td>
                   <td class="amount-cell">${formatAmount(heatingAmount)}</td>
-                  <td class="amount-cell">-</td>
-                  <td class="amount-cell">-</td>
-                  <td class="amount-cell">-</td>
+                  <td class="amount-cell">${formatAmount(equalShareAmount)}</td>
+                  <td class="amount-cell">${formatAmount(0)}</td>
+                  <td class="amount-cell">${formatAmount(reserveFundAmount)}</td>
                   <td class="total-amount-cell">${formatAmount(finalTotalWithFees)}</td>
                   <td>${index + 1}</td>
                 </tr>`;
@@ -1078,12 +1088,12 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                   const heatingMills = apartmentData?.participation_mills ?? toNumber(s.participation_mills);
                   return sum + heatingMills;
                 }, 0).toFixed(2)}</td>
-                <td class="amount-cell">${formatAmount(230)}</td>
-                <td class="amount-cell">${formatAmount(0)}</td>
-                <td class="amount-cell">${formatAmount(1500)}</td>
-                <td class="amount-cell">-</td>
-                <td class="amount-cell">-</td>
-                <td class="amount-cell">-</td>
+                <td class="amount-cell">${formatAmount(currentExpenseBreakdown.common)}</td>
+                <td class="amount-cell">${formatAmount(currentExpenseBreakdown.elevator)}</td>
+                <td class="amount-cell">${formatAmount(currentExpenseBreakdown.heating)}</td>
+                <td class="amount-cell">${formatAmount(currentExpenseBreakdown.other)}</td>
+                <td class="amount-cell">${formatAmount(currentExpenseBreakdown.coownership)}</td>
+                <td class="amount-cell">${formatAmount(currentReserveFundInfo.totalContribution)}</td>
                 <td class="total-amount-cell">${formatAmount(finalTotalExpenses)}</td>
                 <td></td>
               </tr>
@@ -1239,9 +1249,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       // Προσθήκη δαπανών διαχείρισης και αποθεματικού
       const managementFee = toNumber(managementFeeInfo.feePerApartment);
       const apartmentReserveFund = toNumber(reserveFundDetails.monthlyAmount) * (toNumber(participationMills) / 1000);
-      const commonAmount = toNumber(commonMills) / 1000 * 230; // Δ.Ε.Η. 230€
-      const elevatorAmount = toNumber(elevatorMills) / 1000 * 0; // Δεν έχουμε δαπάνες ανελκυστήρα
-      const heatingAmount = toNumber(heatingMills) / 1000 * 1500; // Καύσιμα 1500€
+      // Χρήση πραγματικών δεδομένων από το backend breakdown
+      const breakdown = share.breakdown || {};
+      const commonAmount = toNumber(breakdown.general_expenses || 0);
+      const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
+      const heatingAmount = toNumber(breakdown.heating_expenses || 0);
       const totalAmount = commonAmount + elevatorAmount + heatingAmount;
       const totalWithFees = totalAmount + managementFee + apartmentReserveFund;
       const finalTotalWithFees = isNaN(totalWithFees) ? 0 : totalWithFees;
@@ -1334,9 +1346,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       const elevatorMills = apartmentData?.participation_mills ?? participationMills;
       const heatingMills = apartmentData?.participation_mills ?? participationMills;
       
-      const commonAmount = toNumber(commonMills) / 1000 * 230; // Δ.Ε.Η. 230€
-      const elevatorAmount = toNumber(elevatorMills) / 1000 * 0; // Δεν έχουμε δαπάνες ανελκυστήρα
-      const heatingAmount = toNumber(heatingMills) / 1000 * 1500; // Καύσιμα 1500€
+      // Χρήση πραγματικών δεδομένων από το backend breakdown
+      const breakdown = share.breakdown || {};
+      const commonAmount = toNumber(breakdown.general_expenses || 0);
+      const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
+      const heatingAmount = toNumber(breakdown.heating_expenses || 0);
       
       tenantExpensesTotal += commonAmount + elevatorAmount + heatingAmount;
     });
@@ -1353,9 +1367,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       const elevatorMills = apartmentData?.participation_mills ?? participationMills;
       const heatingMills = apartmentData?.participation_mills ?? participationMills;
       
-      const commonAmount = toNumber(commonMills) / 1000 * 230;
-      const elevatorAmount = toNumber(elevatorMills) / 1000 * 0;
-      const heatingAmount = toNumber(heatingMills) / 1000 * 1500;
+      // Χρήση πραγματικών δεδομένων από το backend breakdown
+      const breakdown = share.breakdown || {};
+      const commonAmount = toNumber(breakdown.general_expenses || 0);
+      const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
+      const heatingAmount = toNumber(breakdown.heating_expenses || 0);
       
       const managementFee = toNumber(managementFeeInfo.feePerApartment);
       // Αφαιρούμε το αποθεματικό από τον υπολογισμό
@@ -1372,7 +1388,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     const tolerance = 0.01; // Ανοχή 1 λεπτού για στρογγυλοποιήσεις
     
     // Έλεγχος 1: Έλεγχος αν οι δαπάνες ενοικιαστών είναι σωστές
-    const expectedTenantExpenses = 230 + 1500; // Δ.Ε.Η. + Καύσιμα
+    const expectedTenantExpenses = expenseBreakdown.common + expenseBreakdown.heating; // Γενικές + Θέρμανση
     if (Math.abs(tenantExpensesTotal - expectedTenantExpenses) > tolerance) {
       differences.push(`Δαπάνες Ενοικιαστών (${formatAmount(tenantExpensesTotal)}€) ≠ Αναμενόμενες Δαπάνες (${formatAmount(expectedTenantExpenses)}€)`);
     }
@@ -1941,21 +1957,22 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                       console.log('First share participation_mills type:', typeof Object.values(state.shares)[0]?.participation_mills);
                     }
                     
-                    // Υπολογισμός ποσών βάσει χιλιοστών - χρησιμοποιούμε απευθείας τις γνωστές τιμές
-                    const commonAmount = toNumber(commonMills) / 1000 * 230; // Δ.Ε.Η. 230€
-                    const elevatorAmount = toNumber(elevatorMills) / 1000 * 0; // Δεν έχουμε δαπάνες ανελκυστήρα
-                    const heatingAmount = toNumber(heatingMills) / 1000 * 1500; // Καύσιμα 1500€
+                    // Χρήση πραγματικών δεδομένων από το backend breakdown
+                    const breakdown = share.breakdown || {};
+                    const commonAmount = toNumber(breakdown.general_expenses || 0);
+                    const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
+                    const heatingAmount = toNumber(breakdown.heating_expenses || 0);
                     
                     // Debug για το πρώτο διαμέρισμα
                     if (index === 0) {
                       console.log('toNumber debug για Α1:', {
                         commonMills_raw: commonMills,
                         commonMills_toNumber: toNumber(commonMills),
-                        commonAmount_calc: toNumber(commonMills) / 1000 * 230,
+                        commonAmount_calc: toNumber(commonMills) / 1000 * expenseBreakdown.common,
                         commonAmount_final: commonAmount,
                         heatingMills_raw: heatingMills,
                         heatingMills_toNumber: toNumber(heatingMills),
-                        heatingAmount_calc: toNumber(heatingMills) / 1000 * 1500,
+                        heatingAmount_calc: toNumber(heatingMills) / 1000 * expenseBreakdown.heating,
                         heatingAmount_final: heatingAmount
                       });
                     }
@@ -2049,9 +2066,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                       }, 0).toFixed(2)}
                     </TableCell>
                     {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ Totals */}
-                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(230)}</TableCell>
-                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(0)}</TableCell>
-                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(1500)}</TableCell>
+                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(expenseBreakdown.common)}</TableCell>
+                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(expenseBreakdown.elevator)}</TableCell>
+                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(expenseBreakdown.heating)}</TableCell>
                     
                     {/* ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ Totals */}
                     <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
@@ -2244,6 +2261,25 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                         </Button>
                       </CardContent>
                     </Card>
+
+                    <Card className="border-red-200 bg-red-50/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                          <Thermometer className="h-6 w-6 text-red-600" />
+                          <h3 className="font-semibold text-red-800">Ανάλυση Θέρμανσης</h3>
+                        </div>
+                        <p className="text-sm text-red-700 mb-4">
+                          Προηγμένοι υπολογισμοί θέρμανσης με αυτονομία/κεντρική
+                        </p>
+                        <Button
+                          onClick={() => setShowHeatingModal(true)}
+                          className="w-full bg-red-600 hover:bg-red-700"
+                        >
+                          <Thermometer className="h-4 w-4 mr-2" />
+                          Ανάλυση Θέρμανσης
+                        </Button>
+                      </CardContent>
+                    </Card>
                   </div>
 
                   {/* Summary Information */}
@@ -2278,6 +2314,25 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
           </Tabs>
         </div>
       </div>
+
+      {/* Heating Analysis Modal */}
+      <HeatingAnalysisModal
+        isOpen={showHeatingModal}
+        onClose={() => setShowHeatingModal(false)}
+        buildingId={buildingId}
+        totalHeatingCost={expenseBreakdown.heating}
+        apartments={aptWithFinancial.map(apt => ({
+          id: apt.id,
+          number: apt.number,
+          owner_name: apt.owner_name,
+          heating_mills: apt.heating_mills || 0,
+          participation_mills: apt.participation_mills || 0
+        }))}
+        onHeatingCalculated={(breakdown) => {
+          setHeatingBreakdown(breakdown);
+          toast.success('✅ Υπολογισμοί θέρμανσης εφαρμόστηκαν!');
+        }}
+      />
     </div>
   );
 };

@@ -1328,7 +1328,7 @@ class AdvancedCommonExpenseCalculator:
     Υλοποιεί τον πλήρη αλγόριθμο με όλες τις κατηγορίες δαπανών.
     """
     
-    def __init__(self, building_id: int, period_start_date: str = None, period_end_date: str = None, reserve_fund_monthly_total: Optional[Decimal] = None):
+    def __init__(self, building_id: int, period_start_date: str = None, period_end_date: str = None, reserve_fund_monthly_total: Optional[Decimal] = None, heating_type: str = 'autonomous', heating_fixed_percentage: int = 30):
         self.building_id = building_id
         self.building = Building.objects.get(id=building_id)
         self.apartments = Apartment.objects.filter(building_id=building_id)
@@ -1350,8 +1350,10 @@ class AdvancedCommonExpenseCalculator:
                 is_issued=False
             )
         
-        # Παράμετροι υπολογισμού (προσαρμοσμένες)
-        self.heating_fixed_percentage = Decimal('0.30')  # 30% πάγιο θέρμανσης
+        # Παράμετροι υπολογισμού θέρμανσης
+        self.heating_type = heating_type  # 'autonomous' ή 'central'
+        self.heating_fixed_percentage = Decimal(str(heating_fixed_percentage)) / Decimal('100')  # Πάγιο ποσοστό θέρμανσης
+        
         # Συνολική μηνιαία εισφορά αποθεματικού για όλο το κτίριο (όχι ανά διαμέρισμα)
         # 1) Αν δοθεί  expl. από το frontend, το χρησιμοποιούμε
         # 2) Αλλιώς, αντλούμε από το FinancialDashboardService (υπολογίζει με προτεραιότητα υποχρεώσεων)
@@ -1422,6 +1424,7 @@ class AdvancedCommonExpenseCalculator:
             'reserve_fund_duration': reserve_fund_duration,
             'current_reserve': summary.get('current_reserve', 0),  # Current balance (includes obligations)
             'actual_reserve_collected': actual_reserve_collected,  # Only reserve fund money collected
+            'management_fee_per_apartment': float(self.building.management_fee_per_apartment or 0),
             'total_apartments': len(self.apartments),
             'calculation_date': datetime.now().isoformat()
         }
@@ -1542,6 +1545,10 @@ class AdvancedCommonExpenseCalculator:
             elif expense.distribution_type == 'specific_apartments':
                 totals['individual'] += expense.amount
         
+        # Προσθήκη δαπανών διαχείρισης στις γενικές δαπάνες
+        total_management_fees = (self.building.management_fee_per_apartment or Decimal('0.00')) * len(self.apartments)
+        totals['general'] += total_management_fees
+        
         return totals
     
     def _calculate_heating_costs(self, total_heating_cost: Decimal) -> Dict[str, Any]:
@@ -1550,57 +1557,76 @@ class AdvancedCommonExpenseCalculator:
         from datetime import datetime, timedelta
         
         # Υπολογισμός πάγιου και μεταβλητού κόστους
-        fixed_cost = total_heating_cost * self.heating_fixed_percentage
-        variable_cost = total_heating_cost - fixed_cost
-        
-        # Λήψη μετρήσεων θέρμανσης για την περίοδο
-        if self.expenses.exists():
-            # Χρήση της ημερομηνίας της πρώτης δαπάνης ως αναφορά
-            reference_date = self.expenses.first().date
-            start_date = reference_date - timedelta(days=30)
-            end_date = reference_date
+        if self.heating_type == 'autonomous':
+            # Αυτονομία: πάγιο + μεταβλητό
+            fixed_cost = total_heating_cost * self.heating_fixed_percentage
+            variable_cost = total_heating_cost - fixed_cost
         else:
-            # Fallback σε τρέχοντα μήνα
-            now = datetime.now()
-            start_date = now.replace(day=1).date()
-            end_date = now.date()
+            # Κεντρική: 100% ανά χιλιοστά θέρμανσης
+            fixed_cost = total_heating_cost
+            variable_cost = Decimal('0.00')
         
-        # Λήψη μετρήσεων θέρμανσης
-        meter_readings = MeterReading.objects.filter(
-            apartment__building_id=self.building_id,
-            meter_type='heating',
-            reading_date__gte=start_date,
-            reading_date__lte=end_date
-        ).order_by('apartment', 'reading_date')
-        
-        # Υπολογισμός συνολικής κατανάλωσης
+        # Λήψη μετρήσεων θέρμανσης για την περίοδο (μόνο για αυτονομία)
         total_consumption_hours = Decimal('0.00')
         apartment_consumption = {}
         
-        for apartment in self.apartments:
-            apartment_readings = meter_readings.filter(apartment=apartment).order_by('reading_date')
-            
-            if len(apartment_readings) >= 2:
-                first_reading = apartment_readings.first()
-                last_reading = apartment_readings.last()
-                consumption = Decimal(str(last_reading.value - first_reading.value))
-                apartment_consumption[apartment.id] = consumption
-                total_consumption_hours += consumption
+        if self.heating_type == 'autonomous':
+            if self.expenses.exists():
+                # Χρήση της ημερομηνίας της πρώτης δαπάνης ως αναφορά
+                reference_date = self.expenses.first().date
+                start_date = reference_date - timedelta(days=30)
+                end_date = reference_date
             else:
-                apartment_consumption[apartment.id] = Decimal('0.00')
+                # Fallback σε τρέχοντα μήνα
+                now = datetime.now()
+                start_date = now.replace(day=1).date()
+                end_date = now.date()
+            
+            # Λήψη μετρήσεων θέρμανσης
+            meter_readings = MeterReading.objects.filter(
+                apartment__building_id=self.building_id,
+                meter_type='heating',
+                reading_date__gte=start_date,
+                reading_date__lte=end_date
+            ).order_by('apartment', 'reading_date')
+            
+            # Υπολογισμός συνολικής κατανάλωσης
+            for apartment in self.apartments:
+                apartment_readings = meter_readings.filter(apartment=apartment).order_by('reading_date')
+                
+                if len(apartment_readings) >= 2:
+                    first_reading = apartment_readings.first()
+                    last_reading = apartment_readings.last()
+                    consumption = Decimal(str(last_reading.value - first_reading.value))
+                    apartment_consumption[apartment.id] = consumption
+                    total_consumption_hours += consumption
+                else:
+                    apartment_consumption[apartment.id] = Decimal('0.00')
         
-        # Υπολογισμός κόστους ανά ώρα
-        cost_per_hour = Decimal('0.00')
-        if total_consumption_hours > 0:
-            cost_per_hour = variable_cost / total_consumption_hours
+        # Υπολογισμός κόστους ανά μονάδα
+        cost_per_unit = Decimal('0.00')
+        if self.heating_type == 'autonomous' and total_consumption_hours > 0:
+            # Αυτονομία με μετρήσεις: ανά ώρα κατανάλωσης
+            cost_per_unit = variable_cost / total_consumption_hours
+        else:
+            # Κεντρική ή αυτονομία χωρίς μετρήσεις: ανά χιλιοστά θέρμανσης
+            total_heating_mills = sum(apt.heating_mills or 0 for apt in self.apartments)
+            if total_heating_mills > 0:
+                cost_per_unit = (fixed_cost + variable_cost) / total_heating_mills
+            else:
+                # Fallback: κατανομή ανά χιλιοστά συμμετοχής
+                total_participation_mills = sum(apt.participation_mills or 0 for apt in self.apartments)
+                if total_participation_mills > 0:
+                    cost_per_unit = (fixed_cost + variable_cost) / total_participation_mills
         
         return {
             'total_cost': total_heating_cost,
             'fixed_cost': fixed_cost,
             'variable_cost': variable_cost,
             'total_consumption_hours': total_consumption_hours,
-            'cost_per_hour': cost_per_hour,
-            'apartment_consumption': apartment_consumption
+            'cost_per_unit': cost_per_unit,
+            'apartment_consumption': apartment_consumption,
+            'heating_type': self.heating_type
         }
     
     def _distribute_expenses_by_apartment(self, shares: Dict, expense_totals: Dict, heating_costs: Dict):
@@ -1632,17 +1658,33 @@ class AdvancedCommonExpenseCalculator:
             # γ. Υπολογισμός Δαπανών Θέρμανσης
             if total_heating_mills > 0:
                 total_heating_mills_decimal = Decimal(str(total_heating_mills))
-                # Πάγιο κόστος
-                fixed_heating_share = heating_costs['fixed_cost'] * (heating_mills / total_heating_mills_decimal)
-                shares[apartment_id]['heating_breakdown']['fixed_cost'] = fixed_heating_share
                 
-                # Μεταβλητό κόστος
-                consumption_hours = heating_costs['apartment_consumption'].get(apartment_id, Decimal('0.00'))
-                variable_heating_share = consumption_hours * heating_costs['cost_per_hour']
-                shares[apartment_id]['heating_breakdown']['variable_cost'] = variable_heating_share
-                shares[apartment_id]['heating_breakdown']['consumption_hours'] = consumption_hours
+                if heating_costs['heating_type'] == 'autonomous':
+                    # Αυτονομία: πάγιο + μεταβλητό
+                    # Πάγιο κόστος (ανά χιλιοστά θέρμανσης)
+                    fixed_heating_share = heating_costs['fixed_cost'] * (heating_mills / total_heating_mills_decimal)
+                    shares[apartment_id]['heating_breakdown']['fixed_cost'] = fixed_heating_share
+                    
+                    # Μεταβλητό κόστος (ανά μετρήσεις ή χιλιοστά)
+                    consumption_hours = heating_costs['apartment_consumption'].get(apartment_id, Decimal('0.00'))
+                    if heating_costs['total_consumption_hours'] > 0:
+                        # Ανά μετρήσεις
+                        variable_heating_share = consumption_hours * heating_costs['cost_per_unit']
+                    else:
+                        # Ανά χιλιοστά θέρμανσης (fallback)
+                        variable_heating_share = heating_costs['variable_cost'] * (heating_mills / total_heating_mills_decimal)
+                    
+                    shares[apartment_id]['heating_breakdown']['variable_cost'] = variable_heating_share
+                    shares[apartment_id]['heating_breakdown']['consumption_hours'] = consumption_hours
+                    
+                    total_heating_share = fixed_heating_share + variable_heating_share
+                else:
+                    # Κεντρική: 100% ανά χιλιοστά θέρμανσης
+                    total_heating_share = heating_costs['total_cost'] * (heating_mills / total_heating_mills_decimal)
+                    shares[apartment_id]['heating_breakdown']['fixed_cost'] = total_heating_share
+                    shares[apartment_id]['heating_breakdown']['variable_cost'] = Decimal('0.00')
+                    shares[apartment_id]['heating_breakdown']['consumption_hours'] = Decimal('0.00')
                 
-                total_heating_share = fixed_heating_share + variable_heating_share
                 shares[apartment_id]['breakdown']['heating_expenses'] = total_heating_share
                 shares[apartment_id]['total_amount'] += total_heating_share
             
@@ -1657,6 +1699,12 @@ class AdvancedCommonExpenseCalculator:
                 reserve_share = self.reserve_fund_monthly_total * (participation_mills / total_participation_mills_decimal)
                 shares[apartment_id]['breakdown']['reserve_fund_contribution'] = reserve_share
                 shares[apartment_id]['total_amount'] += reserve_share
+            
+            # στ. Υπολογισμός Δαπανών Διαχείρισης (προσθήκη στις γενικές δαπάνες)
+            management_fee = self.building.management_fee_per_apartment or Decimal('0.00')
+            shares[apartment_id]['breakdown']['management_fee'] = management_fee
+            shares[apartment_id]['breakdown']['general_expenses'] += management_fee  # Προσθήκη στις γενικές δαπάνες
+            shares[apartment_id]['total_amount'] += management_fee
     
     def _add_individual_charges(self, shares: Dict):
         """Προσθήκη ατομικών χρεώσεων"""

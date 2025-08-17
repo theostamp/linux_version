@@ -17,6 +17,7 @@
 ```
 frontend/components/financial/calculator/
 ├── CommonExpenseModal.tsx          # Κύριο modal component
+├── HeatingAnalysisModal.tsx        # 🆕 Modal ανάλυσης θέρμανσης
 ├── ExpenseBreakdownSection.tsx     # Καρτέλα ανάλυσης με γραφήματα
 ├── CalculatorWizard.tsx            # Wizard για υπολογισμούς
 ├── ResultsStep.tsx                 # Βήμα αποτελεσμάτων
@@ -27,7 +28,7 @@ frontend/components/financial/calculator/
 
 ```
 backend/financial/
-├── services.py                     # Υπηρεσίες υπολογισμών
+├── services.py                     # Υπηρεσίες υπολογισμών (🆕 ενημερωμένο)
 ├── models.py                       # Οικονομικά models
 ├── views.py                        # API endpoints
 └── serializers.py                  # Data serializers
@@ -53,21 +54,21 @@ interface CommonExpenseModalProps {
 
 ### 🎯 Βασικές Λειτουργίες
 
-#### 1. **Υπολογισμός Μεριδίων**
+#### 1. **Υπολογισμός Μεριδίων** (🆕 Ενημερωμένο)
 ```typescript
 const calculateExpenseBreakdown = () => {
   // Υπολογισμός ανά κατηγορία δαπανών
   return {
-    common: 230,      // Δ.Ε.Η. Κοινοχρήστων
+    common: 280,      // Δ.Ε.Η. + Δαπάνες διαχείρισης (230€ + 50€)
     elevator: 0,      // Ανελκυστήρας
-    heating: 1500,    // Θέρμανση
+    heating: 1500,    // Θέρμανση (προέρχεται από HeatingAnalysisModal)
     other: 0,         // Άλλες δαπάνες
     coownership: 0    // Συνιδιοκτησία
   };
 };
 ```
 
-#### 2. **Πίνακας ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ**
+#### 2. **Πίνακας ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ** (🆕 Ενημερωμένο)
 ```typescript
 // Δομή πίνακα ανάλυσης
 const analysisTableStructure = {
@@ -75,7 +76,7 @@ const analysisTableStructure = {
     'Α/Δ',                    // Αριθμός διαμερίσματος
     'ΟΝΟΜΑΤΕΠΩΝΥΜΟ',         // Όνομα ιδιοκτήτη
     'ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ',   // Χιλιοστά συμμετοχής
-    'ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ',   // Δαπάνες ενοικιαστών
+    'ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ',   // Δαπάνες ενοικιαστών (🆕 συμπεριλαμβάνει διαχείριση)
     'ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ',    // Δαπάνες ιδιοκτητών
     'ΠΛΗΡΩΤΕΟ ΠΟΣΟ',         // Συνολικό πληρωτέο
     'A/A'                     // Αύξων αριθμός
@@ -83,23 +84,24 @@ const analysisTableStructure = {
 };
 ```
 
-#### 3. **Κατηγορίες Δαπανών**
+#### 3. **Κατηγορίες Δαπανών** (🆕 Ενημερωμένο)
 ```typescript
 const EXPENSE_CATEGORIES = {
-  // Γενικές δαπάνες
+  // Γενικές δαπάνες (🆕 συμπεριλαμβάνει διαχείριση)
   'cleaning': 'Καθαρισμός Κοινοχρήστων Χώρων',
   'electricity_common': 'ΔΕΗ Κοινοχρήστων',
   'water_common': 'Νερό Κοινοχρήστων',
   'garbage_collection': 'Συλλογή Απορριμμάτων',
   'security': 'Ασφάλεια Κτιρίου',
   'concierge': 'Καθαριστής/Πυλωρός',
+  'management_fees': 'Δαπάνες Διαχείρισης', // 🆕 Προσθήκη
   
   // Ανελκυστήρας
   'elevator_maintenance': 'Ετήσια Συντήρηση Ανελκυστήρα',
   'elevator_repair': 'Επισκευή Ανελκυστήρα',
   'elevator_inspection': 'Επιθεώρηση Ανελκυστήρα',
   
-  // Θέρμανση
+  // Θέρμανση (🆕 προέρχεται από HeatingAnalysisModal)
   'heating_fuel': 'Πετρέλαιο Θέρμανσης',
   'heating_gas': 'Φυσικό Αέριο Θέρμανσης',
   'heating_maintenance': 'Συντήρηση Καυστήρα',
@@ -113,7 +115,49 @@ const EXPENSE_CATEGORIES = {
 
 ---
 
-## 📊 Πίνακας ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ
+## 🔥 🆕 HeatingAnalysisModal.tsx
+
+### 📋 Επισκόπηση
+Το **HeatingAnalysisModal** είναι ένα νέο modal που επιτρέπει την προηγμένη ανάλυση και κατανομή των δαπανών θέρμανσης με δύο διαφορετικούς τρόπους υπολογισμού.
+
+### 🎯 Props Interface
+```typescript
+interface HeatingAnalysisModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  buildingId: number;
+  totalHeatingCost: number;
+  apartments: Array<{
+    id: number;
+    number: string;
+    owner_name: string;
+    heating_mills: number;
+    participation_mills: number;
+  }>;
+  onHeatingCalculated: (heatingBreakdown: HeatingBreakdown) => void;
+}
+```
+
+### 🔧 Τρόποι Υπολογισμού Θέρμανσης
+
+#### 1️⃣ **Αυτονομία Θέρμανσης**
+- **Πάγιο κόστος**: 30% × συνολικό κόστος → κατανομή ανά χιλιοστά θέρμανσης
+- **Μεταβλητό κόστος**: 70% × συνολικό κόστος → κατανομή ανά μετρήσεις
+- **Σύνολο**: πάγιο + μεταβλητό
+
+#### 2️⃣ **Κεντρική Θέρμανση**
+- **100% του κόστους** → κατανομή ανά χιλιοστά θέρμανσης
+
+### 🎨 UI Components
+- **HeatingTypeSelector**: Επιλογή τύπου θέρμανσης
+- **FixedCostPercentage**: Ρύθμιση πάγιου ποσοστού
+- **MeterReadingsSection**: Εισαγωγή μετρήσεων ανά διαμέρισμα
+- **HeatingBreakdownTable**: Ανάλυση κατανομής κόστους
+- **HeatingDistributionChart**: Γραφήματα κατανομής
+
+---
+
+## 📊 Πίνακας ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ (🆕 Ενημερωμένο)
 
 ### 🎯 Δομή Πίνακα
 
@@ -126,12 +170,12 @@ const EXPENSE_CATEGORIES = {
 | **Α/Δ** | Αριθμός διαμερίσματος | String | "A1", "B2", "Γ1" |
 | **ΟΝΟΜΑΤΕΠΩΝΥΜΟ** | Όνομα ιδιοκτήτη | String | "Γεώργιος Παπαδόπουλος" |
 | **ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ** | Χιλιοστά συμμετοχής | Decimal | 95.00 |
-| **ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ** | Κοινόχρηστα ενοικιαστών | Decimal | 26.85€ |
+| **ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ** | Κοινόχρηστα ενοικιαστών (🆕 συμπεριλαμβάνει διαχείριση) | Decimal | 280.00€ |
 | **ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ** | Κοινόχρηστα ιδιοκτητών | Decimal | 0.00€ |
-| **ΠΛΗΡΩΤΕΟ ΠΟΣΟ** | Συνολικό πληρωτέο | Decimal | 201.02€ |
+| **ΠΛΗΡΩΤΕΟ ΠΟΣΟ** | Συνολικό πληρωτέο | Decimal | 1.780.00€ |
 | **A/A** | Αύξων αριθμός | Integer | 1, 2, 3... |
 
-#### 🔢 Υπολογισμοί
+#### 🔢 Υπολογισμοί (🆕 Ενημερωμένο)
 
 ```typescript
 // Υπολογισμός μεριδίων ανά διαμέρισμα
@@ -140,9 +184,10 @@ const calculateApartmentShare = (apartment, totalExpenses) => {
   const totalMills = 1000; // Συνολικά χιλιοστά κτιρίου
   
   return {
-    commonExpenses: (230 * participationMills) / totalMills,      // Δ.Ε.Η.
+    // 🆕 Δαπάνες ενοικιαστών (συμπεριλαμβάνει διαχείριση)
+    commonExpenses: (280 * participationMills) / totalMills,      // Δ.Ε.Η. + Διαχείριση
     elevatorExpenses: (0 * participationMills) / totalMills,      // Ανελκυστήρας
-    heatingExpenses: (1500 * participationMills) / totalMills,    // Θέρμανση
+    heatingExpenses: (1500 * participationMills) / totalMills,    // Θέρμανση (από HeatingAnalysisModal)
     totalAmount: commonExpenses + elevatorExpenses + heatingExpenses
   };
 };
@@ -158,7 +203,7 @@ const calculateApartmentShare = (apartment, totalExpenses) => {
 
 **Χαρακτηριστικά**:
 - Πίνακας με όλα τα διαμερίσματα
-- Υπολογισμοί μεριδίων
+- Υπολογισμοί μεριδίων (🆕 συμπεριλαμβάνει διαχείριση)
 - Σύνολα ανά κατηγορία
 - Πληροφορίες αποθεματικού
 - Ημερομηνίες έκδοσης και πληρωμής
@@ -183,41 +228,37 @@ const calculateApartmentShare = (apartment, totalExpenses) => {
 - Excel export με λεπτομερή δεδομένα
 - Αυτόματη ονοματοδοσία αρχείων
 - Επιλογές μορφοποίησης
+- 🆕 **Ανάλυση Θέρμανσης**: Κουμπί για άνοιγμα HeatingAnalysisModal
 
 ---
 
-## 🔧 Backend Integration
+## 🔧 Backend Integration (🆕 Ενημερωμένο)
 
 ### 📡 API Endpoints
 
 ```typescript
-// Υπολογισμός κοινοχρήστων
-POST /api/financial/common-expenses/calculate/
+// Υπολογισμός κοινοχρήστων (🆕 ενημερωμένο)
+POST /api/financial/common-expenses/calculate_advanced/
 {
   building_id: number,
-  include_reserve_fund: boolean,
   period_start_date?: string,
-  period_end_date?: string
+  period_end_date?: string,
+  heating_type?: 'autonomous' | 'central',        // 🆕 Τύπος θέρμανσης
+  heating_fixed_percentage?: number,              // 🆕 Πάγιο ποσοστό
+  reserve_fund_monthly_total?: number
 }
 
-// Αποθήκευση φύλλου
-POST /api/financial/common-expenses/save/
+// 🆕 Υπολογισμός θέρμανσης
+POST /api/financial/heating/calculate/
 {
   building_id: number,
-  shares: ApartmentShare[],
-  total_expenses: number,
-  period: string
-}
-
-// Εκδήλωση κοινοχρήστων
-POST /api/financial/common-expenses/issue/
-{
-  building_id: number,
-  period: string
+  heating_type: 'autonomous' | 'central',
+  fixed_percentage: number,
+  meter_readings: Record<number, number>
 }
 ```
 
-### 🗄️ Models
+### 🗄️ Models (🆕 Ενημερωμένο)
 
 ```python
 # backend/financial/models.py
@@ -231,46 +272,62 @@ class CommonExpensePeriod(models.Model):
     is_issued = models.BooleanField(default=False)
 
 class ApartmentShare(models.Model):
-    """Μερίδιο διαμερίσματος"""
+    """Μερίδιο διαμερίσματος (🆕 ενημερωμένο)"""
     period = models.ForeignKey(CommonExpensePeriod, on_delete=models.CASCADE)
     apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     breakdown = models.JSONField(default=dict)  # Λεπτομερής ανάλυση
+    # 🆕 Νέα πεδία για θέρμανση
+    heating_fixed_share = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    heating_variable_share = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    heating_consumption = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 ```
 
 ---
 
-## 🎯 Χρήση και Ροή Εργασίας
+## 🎯 Χρήση και Ροή Εργασίας (🆕 Ενημερωμένο)
 
 ### 📋 Τυπική Ροή Εργασίας
 
 1. **Εκκίνηση**: Χρήστης επιλέγει κτίριο και περίοδο
 2. **Υπολογισμός**: Σύστημα υπολογίζει μερίδια ανά διαμέρισμα
-3. **Προβολή**: Modal εμφανίζει πίνακα ανάλυσης
-4. **Επιβεβαίωση**: Χρήστης ελέγχει υπολογισμούς
-5. **Εκδήλωση**: Σύστημα εκδίδει κοινοχρήστα
-6. **Εξαγωγή**: PDF/Excel για διανομή
+3. **🆕 Ανάλυση Θέρμανσης**: Χρήστης ανοίγει HeatingAnalysisModal
+4. **Ρύθμιση Θέρμανσης**: Επιλογή τύπου και παραμέτρων
+5. **Εισαγωγή Μετρήσεων**: Εισαγωγή μετρήσεων ανά διαμέρισμα
+6. **Εφαρμογή**: Υπολογισμοί εφαρμόζονται στο κύριο modal
+7. **Προβολή**: Modal εμφανίζει πίνακα ανάλυσης
+8. **Επιβεβαίωση**: Χρήστης ελέγχει υπολογισμούς
+9. **Εκδήλωση**: Σύστημα εκδίδει κοινοχρήστα
+10. **Εξαγωγή**: PDF/Excel για διανομή
 
-### 🔍 Validation Rules
+### 🔍 Validation Rules (🆕 Ενημερωμένο)
 
 ```typescript
 const validationRules = {
   // Συνολικά χιλιοστά πρέπει να είναι 1000
   totalMills: (mills: number[]) => mills.reduce((a, b) => a + b, 0) === 1000,
   
-  // Συνολικές δαπάνες πρέπει να ταιριάζουν
+  // Συνολικές δαπάνες πρέπει να ταιριάζουν (🆕 συμπεριλαμβάνει διαχείριση)
   totalExpenses: (calculated: number, expected: number) => 
     Math.abs(calculated - expected) < 0.01,
   
   // Όλα τα διαμερίσματα πρέπει να έχουν δεδομένα
   allApartmentsHaveData: (shares: any[]) => 
-    shares.every(share => share.total_amount > 0)
+    shares.every(share => share.total_amount > 0),
+  
+  // 🆕 Έλεγχος θέρμανσης
+  heatingValidation: (heatingBreakdown: any) => {
+    if (heatingBreakdown.type === 'autonomous') {
+      return heatingBreakdown.totalDistributed === heatingBreakdown.totalCost;
+    }
+    return true;
+  }
 };
 ```
 
 ---
 
-## 🎨 Styling και UI/UX
+## 🎨 Styling και UI/UX (🆕 Ενημερωμένο)
 
 ### 🎨 Χρωματική Σχέδιο
 
@@ -282,6 +339,8 @@ const validationRules = {
   --heating-expenses: #F59E0B;     /* Πορτοκαλί - Θέρμανση */
   --reserve-fund: #6B7280;         /* Γκρι - Αποθεματικό */
   --management-fee: #EC4899;       /* Ροζ - Διαχείριση */
+  --heating-fixed: #F97316;        /* 🆕 Πορτοκαλί - Πάγιο θέρμανσης */
+  --heating-variable: #EA580C;     /* 🆕 Κόκκινο - Μεταβλητό θέρμανσης */
 }
 ```
 
@@ -293,7 +352,7 @@ const validationRules = {
 
 ---
 
-## 🔧 Προσαρμογές και Επεκτάσεις
+## 🔧 Προσαρμογές και Επεκτάσεις (🆕 Ενημερωμένο)
 
 ### 🎯 Προσαρμοσμένες Κατηγορίες
 
@@ -302,7 +361,9 @@ const validationRules = {
 const CUSTOM_EXPENSE_CATEGORIES = {
   'smart_home': 'Έξυπνα Συστήματα',
   'renewable_energy': 'Ανανεώσιμες Πηγές',
-  'accessibility': 'Προσβασιμότητα'
+  'accessibility': 'Προσβασιμότητα',
+  'heating_autonomous': 'Αυτονομία Θέρμανσης',    // 🆕
+  'heating_central': 'Κεντρική Θέρμανση'          // 🆕
 };
 ```
 
@@ -313,13 +374,15 @@ const CUSTOM_EXPENSE_CATEGORIES = {
 const CUSTOM_CHART_TYPES = {
   'trend_analysis': 'Ανάλυση Τάσεων',
   'comparison_chart': 'Συγκριτική Ανάλυση',
-  'forecast_chart': 'Πρόγνωση Δαπανών'
+  'forecast_chart': 'Πρόγνωση Δαπανών',
+  'heating_distribution': 'Κατανομή Θέρμανσης',   // 🆕
+  'heating_consumption': 'Κατανάλωση Θέρμανσης'   // 🆕
 };
 ```
 
 ---
 
-## 🐛 Troubleshooting
+## 🐛 Troubleshooting (🆕 Ενημερωμένο)
 
 ### 🔍 Συχνά Προβλήματα
 
@@ -338,14 +401,23 @@ const CUSTOM_CHART_TYPES = {
    - Επιβεβαίωση building permissions
    - Validation API responses
 
-### 🔧 Debug Tools
+4. **🆕 Πρόβλημα θέρμανσης**
+   - Έλεγχος τύπου θέρμανσης (αυτονομία/κεντρική)
+   - Επιβεβαίωση μετρήσεων
+   - Validation πάγιου ποσοστού
+
+### 🔧 Debug Tools (🆕 Ενημερωμένο)
 
 ```typescript
 // Debug helper functions
 const debugHelpers = {
   logCalculationSteps: (state) => console.log('Calculation steps:', state),
   validateData: (shares) => console.log('Data validation:', shares),
-  exportDebugInfo: () => console.log('Export debug info')
+  exportDebugInfo: () => console.log('Export debug info'),
+  // 🆕 Νέες συναρτήσεις
+  validateHeating: (heatingBreakdown) => console.log('Heating validation:', heatingBreakdown),
+  logMeterReadings: (readings) => console.log('Meter readings:', readings),
+  validateHeatingType: (type) => console.log('Heating type:', type)
 };
 ```
 
@@ -364,6 +436,7 @@ const debugHelpers = {
 - `CalculatorWizard.tsx` - Wizard υπολογισμών
 - `ResultsStep.tsx` - Αποτελέσματα
 - `CommonExpenseCalculator.tsx` - Κύριο calculator
+- `HeatingAnalysisModal.tsx` - 🆕 Ανάλυση θέρμανσης
 
 ---
 
@@ -387,7 +460,73 @@ const debugHelpers = {
    - Native mobile application
    - Offline functionality
 
+5. **🆕 Προηγμένες Λειτουργίες Θέρμανσης**
+   - Υποστήριξη πολλαπλών τύπων καυσίμων
+   - Αυτόματη εισαγωγή μετρήσεων από εξωτερικά συστήματα
+   - Ιστορικό καταναλώσεων και προγνώσεις
+   - Ειδοποιήσεις για ασυνήθιστες καταναλώσεις
+
+---
+
+## ✅ Επόμενα Βήματα
+
+### 🔧 Άμεσες Εργασίες
+
+1. **🔄 Ενσωμάτωση HeatingAnalysisModal**
+   - Σύνδεση με το κύριο CommonExpenseModal
+   - Επιβεβαίωση ροής δεδομένων
+   - Testing διαφορετικών σεναρίων
+
+2. **📊 Ενημέρωση Backend API**
+   - Προσθήκη παραμέτρων θέρμανσης στο calculate_advanced endpoint
+   - Υποστήριξη meter readings
+   - Validation και error handling
+
+3. **🎨 UI/UX Βελτιώσεις**
+   - Responsive design για HeatingAnalysisModal
+   - Loading states και error handling
+   - Accessibility improvements
+
+4. **🧪 Testing**
+   - Unit tests για heating calculations
+   - Integration tests για modal interaction
+   - End-to-end testing
+
+### 🚀 Μεσοπρόθεσμες Εργασίες
+
+1. **📈 Analytics Dashboard**
+   - Γραφήματα κατανομής θέρμανσης
+   - Ιστορικό καταναλώσεων
+   - Προγνώσεις και trends
+
+2. **🔗 External Integrations**
+   - Σύνδεση με συστήματα μετρήσεων
+   - API για αυτόματη εισαγωγή δεδομένων
+   - Notifications για ασυνήθιστες καταναλώσεις
+
+3. **📱 Mobile Optimization**
+   - Mobile-friendly interface
+   - Touch gestures για μετρήσεις
+   - Offline functionality
+
+### 🎯 Μακροπρόθεσμοι Στόχοι
+
+1. **🤖 AI/ML Integration**
+   - Προγνώσεις καταναλώσεων
+   - Αυτόματη ανίχνευση ανωμαλιών
+   - Προτάσεις βελτιστοποιήσεων
+
+2. **🌍 Sustainability Features**
+   - Carbon footprint tracking
+   - Energy efficiency recommendations
+   - Green building certifications
+
+3. **🔐 Advanced Security**
+   - Multi-factor authentication
+   - Audit trails για αλλαγές
+   - Data encryption
+
 ---
 
 *Τελευταία ενημέρωση: Ιανουάριος 2025*
-*Έκδοση: 1.0.0*
+*Έκδοση: 2.0.0* 🆕
