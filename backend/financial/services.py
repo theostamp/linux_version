@@ -26,9 +26,12 @@ class CommonExpenseCalculator:
             is_issued=False
         )
     
-    def calculate_shares(self) -> Dict[str, Any]:
+    def calculate_shares(self, include_reserve_fund: bool = True) -> Dict[str, Any]:
         """
         Υπολογισμός μεριδίων για κάθε διαμέρισμα
+        
+        Args:
+            include_reserve_fund: Αν θα συμπεριλαμβάνεται η εισφορά αποθεματικού
         """
         shares = {}
         
@@ -42,6 +45,7 @@ class CommonExpenseCalculator:
                 'participation_mills': apartment.participation_mills or 0,
                 'current_balance': apartment.current_balance or Decimal('0.00'),
                 'total_amount': Decimal('0.00'),
+                'reserve_fund_amount': Decimal('0.00'),  # Νέα: Εισφορά αποθεματικού
                 'breakdown': [],
                 'previous_balance': apartment.current_balance or Decimal('0.00'),
                 'total_due': Decimal('0.00')
@@ -58,10 +62,14 @@ class CommonExpenseCalculator:
             elif expense.distribution_type == 'by_meters':
                 self._calculate_by_meters(expense, shares)
         
+        # Υπολογισμός εισφοράς αποθεματικού αν ζητηθεί
+        if include_reserve_fund:
+            self._calculate_reserve_fund_contribution(shares)
+        
         # Υπολογισμός συνολικού οφειλόμενου ποσού
         for apartment_id, share_data in shares.items():
             share_data['total_due'] = (
-                share_data['total_amount'] + share_data['previous_balance']
+                share_data['total_amount'] + share_data['reserve_fund_amount'] + share_data['previous_balance']
             )
         
         return shares
@@ -177,6 +185,61 @@ class CommonExpenseCalculator:
                 'meter_consumption': consumption,
                 'total_meter_consumption': total_consumption
             })
+    
+    def _calculate_reserve_fund_contribution(self, shares: Dict):
+        """Υπολογισμός εισφοράς αποθεματικού ανά χιλιοστά"""
+        # Έλεγχος αν υπάρχει στόχος αποθεματικού
+        if not self.building.reserve_fund_goal or self.building.reserve_fund_goal <= 0:
+            return
+        
+        # Έλεγχος αν η συλλογή αποθεματικού έχει ξεκινήσει
+        if not self.building.reserve_fund_start_date:
+            return
+        
+        # Έλεγχος αν υπάρχουν εκκρεμότητες (αν ναι, δεν συλλέγουμε αποθεματικό)
+        total_obligations = sum(abs(apt.current_balance or 0) for apt in self.apartments)
+        if total_obligations > 0:
+            return
+        
+        # Υπολογισμός μηνιαίας εισφοράς αποθεματικού
+        monthly_target = 0
+        if self.building.reserve_fund_goal and self.building.reserve_fund_duration_months:
+            monthly_target = float(self.building.reserve_fund_goal) / float(self.building.reserve_fund_duration_months)
+        else:
+            # Χρήση της εισφοράς ανά διαμέρισμα
+            monthly_target = float(self.building.reserve_contribution_per_apartment or 0) * len(self.apartments)
+        
+        if monthly_target <= 0:
+            return
+        
+        # Υπολογισμός συνολικών χιλιοστών
+        total_mills = sum(apt.participation_mills or 0 for apt in self.apartments)
+        
+        if total_mills == 0:
+            # Αν δεν υπάρχουν χιλιοστά, κατανομή ισόποσα
+            share_per_apartment = Decimal(str(monthly_target)) / len(self.apartments)
+            for apartment in self.apartments:
+                shares[apartment.id]['reserve_fund_amount'] = share_per_apartment
+        else:
+            # Κατανομή ανά χιλιοστά
+            for apartment in self.apartments:
+                if apartment.participation_mills:
+                    participation_mills_decimal = Decimal(str(apartment.participation_mills))
+                    total_mills_decimal = Decimal(str(total_mills))
+                    reserve_share = (Decimal(str(monthly_target)) * participation_mills_decimal) / total_mills_decimal
+                    shares[apartment.id]['reserve_fund_amount'] = reserve_share
+        
+        # Προσθήκη στο breakdown
+        for apartment in self.apartments:
+            if shares[apartment.id]['reserve_fund_amount'] > 0:
+                shares[apartment.id]['breakdown'].append({
+                    'expense_id': None,
+                    'expense_title': 'Εισφορά Αποθεματικού',
+                    'expense_amount': shares[apartment.id]['reserve_fund_amount'],
+                    'apartment_share': shares[apartment.id]['reserve_fund_amount'],
+                    'distribution_type': 'reserve_fund',
+                    'distribution_type_display': 'Εισφορά Αποθεματικού'
+                })
     
     def get_total_expenses(self) -> Decimal:
         """Επιστρέφει το συνολικό ποσό ανέκδοτων δαπανών"""
@@ -411,13 +474,15 @@ class FinancialDashboardService:
             'apartment_balances': apartment_balances,
             'payment_statistics': payment_statistics,
             # Reserve fund settings - dynamic based on building or 0 for new buildings
-            'reserve_fund_goal': 0.0,  # Not implemented in Building model yet
-            'reserve_fund_duration_months': 0,  # Not implemented in Building model yet
-            'reserve_fund_monthly_target': float(self.building.reserve_contribution_per_apartment or 0.0) * apartments_count,  # From building settings
+            'reserve_fund_goal': float(self.building.reserve_fund_goal or Decimal('0.0')),  # From building settings
+            'reserve_fund_duration_months': int(self.building.reserve_fund_duration_months or 0),  # From building settings
+            'reserve_fund_monthly_target': float(self.building.reserve_fund_goal or Decimal('0.0')) / float(self.building.reserve_fund_duration_months or 1),  # Calculate: goal / duration
             # Management expenses
             'management_fee_per_apartment': float(management_fee_per_apartment),
             'total_management_cost': float(total_management_cost)
         }
+    
+
     
     def _calculate_reserve_fund_contribution(self, current_reserve: Decimal, total_obligations: Decimal) -> Decimal:
         """
@@ -1344,6 +1409,9 @@ class AdvancedCommonExpenseCalculator:
         else:
             calculated_monthly_reserve = float(self.reserve_fund_monthly_total)
         
+        # Calculate actual reserve fund collected (separate from current balance)
+        actual_reserve_collected = self._calculate_actual_reserve_collected()
+        
         return {
             'shares': shares,
             'expense_totals': expense_totals,
@@ -1352,9 +1420,32 @@ class AdvancedCommonExpenseCalculator:
             'reserve_contribution': calculated_monthly_reserve,
             'reserve_fund_goal': reserve_fund_goal,
             'reserve_fund_duration': reserve_fund_duration,
+            'current_reserve': summary.get('current_reserve', 0),  # Current balance (includes obligations)
+            'actual_reserve_collected': actual_reserve_collected,  # Only reserve fund money collected
             'total_apartments': len(self.apartments),
             'calculation_date': datetime.now().isoformat()
         }
+    
+    def _calculate_actual_reserve_collected(self) -> float:
+        """
+        Υπολογίζει το πραγματικό ποσό αποθεματικού που έχει μαζευτεί
+        (χωρίς να περιλαμβάνει οφειλές ή άλλες δαπάνες)
+        """
+        from financial.models import Payment
+        
+        # Get all reserve fund payments (positive amounts = money collected)
+        reserve_payments = Payment.objects.filter(
+            apartment__building_id=self.building_id,
+            payment_type='reserve_fund',
+            amount__gt=0  # Only positive amounts (money collected)
+        )
+        
+        # Sum all reserve fund collections
+        total_collected = reserve_payments.aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
+        
+        return float(total_collected)
     
     def _initialize_shares(self) -> Dict[str, Any]:
         """Αρχικοποίηση μεριδίων για κάθε διαμέρισμα"""

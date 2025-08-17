@@ -378,7 +378,15 @@ class PaymentViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """Καταγραφή δημιουργίας εισπράξεως με file upload"""
+        # Get reserve_fund_amount from request data if provided
+        reserve_fund_amount = self.request.data.get('reserve_fund_amount', 0)
+        
         payment = serializer.save()
+        
+        # Set reserve_fund_amount if provided
+        if reserve_fund_amount:
+            payment.reserve_fund_amount = reserve_fund_amount
+            payment.save()
         
         # Ενημέρωση του τρέχοντος αποθεματικού του κτιρίου
         building = payment.apartment.building
@@ -393,12 +401,18 @@ class PaymentViewSet(viewsets.ModelViewSet):
         
         # Δημιουργία αντίστοιχου Transaction record
         from .models import Transaction
+        
+        # Προσθήκη πληροφοριών αποθεματικού στις σημειώσεις αν υπάρχει
+        description = f"Είσπραξη κοινοχρήστων από {apartment.number} - {payment.get_method_display()}"
+        if payment.reserve_fund_amount and payment.reserve_fund_amount > 0:
+            description += f" (Αποθεματικό: {payment.reserve_fund_amount}€)"
+        
         Transaction.objects.create(
             building=building,
             apartment=apartment,
             apartment_number=apartment.number,
             type='common_expense_payment',
-            description=f"Είσπραξη κοινοχρήστων από {apartment.number} - {payment.get_method_display()}",
+            description=description,
             amount=payment.amount,
             balance_before=previous_balance,
             balance_after=apartment.current_balance,
@@ -771,13 +785,17 @@ class CommonExpenseViewSet(viewsets.ViewSet):
         try:
             data = request.data
             building_id = data.get('building_id') or data.get('building')
+            include_reserve_fund = data.get('include_reserve_fund', True)  # Προεπιλογή True
+            
             if not building_id:
                 raise ValueError('building_id is required')
+            
             calculator = CommonExpenseCalculator(int(building_id))
             result = {
-                'shares': calculator.calculate_shares(),
+                'shares': calculator.calculate_shares(include_reserve_fund=include_reserve_fund),
                 'total_expenses': float(calculator.get_total_expenses()),
                 'apartments_count': calculator.get_apartments_count(),
+                'include_reserve_fund': include_reserve_fund,
             }
             
             return Response(result)

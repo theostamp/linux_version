@@ -67,6 +67,7 @@ export interface Payment {
   current_balance?: number;
   monthly_due?: number;
   amount: number;
+  reserve_fund_amount?: number;
   date: string;
   method: string;
   method_display?: string;
@@ -176,6 +177,7 @@ export interface PaymentFormData {
   reference_number?: string;
   notes?: string;
   receipt?: File;
+  reserve_fund_amount?: number;
 }
 
 export interface MeterReadingFormData {

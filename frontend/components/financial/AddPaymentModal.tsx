@@ -32,6 +32,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
   const [formData, setFormData] = useState<PaymentFormData>({
     apartment_id: 0,
     amount: 0,
+    reserve_fund_amount: 0,
     date: new Date().toISOString().split('T')[0],
     method: PaymentMethod.CASH,
     payment_type: PaymentType.COMMON_EXPENSE,
@@ -154,8 +155,12 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
     setError(null);
 
     try {
+      // Calculate total amount (common expenses + reserve fund)
+      const totalAmount = formData.amount + (formData.reserve_fund_amount || 0);
+      
       const submitData: PaymentFormData = {
         ...formData,
+        amount: totalAmount,
         receipt: receiptFile || undefined,
       };
 
@@ -168,7 +173,8 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
       if (receiptFile) {
         const formDataPayload = new FormData();
         formDataPayload.append('apartment', formData.apartment_id.toString());
-        formDataPayload.append('amount', formData.amount.toString());
+        formDataPayload.append('amount', totalAmount.toString());
+        formDataPayload.append('reserve_fund_amount', (formData.reserve_fund_amount || 0).toString());
         formDataPayload.append('date', formData.date);
         formDataPayload.append('method', formData.method);
         formDataPayload.append('payment_type', formData.payment_type);
@@ -185,7 +191,8 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
       } else {
         requestData = {
           apartment: formData.apartment_id,
-          amount: formData.amount,
+          amount: totalAmount,
+          reserve_fund_amount: formData.reserve_fund_amount || 0,
           date: formData.date,
           method: formData.method,
           payment_type: formData.payment_type,
@@ -215,6 +222,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
     setFormData({
       apartment_id: 0,
       amount: 0,
+      reserve_fund_amount: 0,
       date: new Date().toISOString().split('T')[0],
       method: PaymentMethod.CASH,
       payment_type: PaymentType.COMMON_EXPENSE,
@@ -408,7 +416,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
               <div>
                 <Label htmlFor="amount" className="flex items-center gap-2">
                   <Euro className="h-4 w-4" />
-                  Ποσό *
+                  Ποσό Κοινόχρηστων *
                 </Label>
                 <Input
                   id="amount"
@@ -433,6 +441,45 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                 ) : null}
               </div>
 
+              <div>
+                <Label htmlFor="reserve_fund_amount" className="flex items-center gap-2">
+                  <Euro className="h-4 w-4" />
+                  Ποσό Αποθεματικού
+                </Label>
+                <Input
+                  id="reserve_fund_amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.reserve_fund_amount || ''}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, reserve_fund_amount: parseFloat(e.target.value) || 0 }));
+                  }}
+                  placeholder="0.00"
+                />
+                {selectedApartment && selectedApartment.participation_mills && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Προτεινόμενο: {((selectedApartment.participation_mills / 1000) * 5).toFixed(2)}€ (βάσει χιλιοστών)
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Total Amount Display */}
+            <div className="space-y-2">
+              <Label>Συνολικό Ποσό Εισπράξεως</Label>
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="text-lg font-semibold text-blue-900">
+                  {(formData.amount || 0) + (formData.reserve_fund_amount || 0)}€
+                </div>
+                <div className="text-sm text-blue-700">
+                  Κοινόχρηστα: {formData.amount || 0}€ + Αποθεματικό: {formData.reserve_fund_amount || 0}€
+                </div>
+              </div>
+            </div>
+
+            {/* Date */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="date" className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />

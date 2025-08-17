@@ -15,7 +15,11 @@ import {
   Euro,
   Save,
   PieChart,
-  Receipt
+  Receipt,
+  CheckCircle,
+  AlertCircle,
+  Calculator,
+  PiggyBank
 } from 'lucide-react';
 import { CalculatorState } from './CalculatorWizard';
 import { ExpenseBreakdownSection } from './ExpenseBreakdownSection';
@@ -66,6 +70,17 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   reserveContributionPerApartment = 0
 }) => {
   const [isSaving, setIsSaving] = useState(false);
+  const [validationResult, setValidationResult] = useState<{
+    isValid: boolean;
+    message: string;
+    details: {
+      totalExpenses: number;
+      tenantExpensesTotal: number;
+      ownerExpensesTotal: number;
+      payableTotal: number;
+      differences: string[];
+    };
+  } | null>(null);
   const { saveCommonExpenseSheet } = useCommonExpenses();
   const { apartments: aptWithFinancial } = useApartmentsWithFinancialData(buildingId);
 
@@ -495,7 +510,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     
     if (reserveFundGoal > 0 && reserveFundDuration > 0) {
       monthlyAmount = reserveFundGoal / reserveFundDuration;
-      totalContribution = monthlyAmount * Object.keys(state.shares).length; // Συνολική συνεισφορά όλων των διαμερισμάτων
+      totalContribution = reserveFundGoal; // Συνολική εισφορά = ο στόχος
       displayText = `Στόχος ${formatAmount(reserveFundGoal)}€ σε ${reserveFundDuration} δόσεις = ${formatAmount(monthlyAmount)}€`;
     } else if (finalReserveContribution > 0) {
       monthlyAmount = finalReserveContribution;
@@ -503,13 +518,27 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       displayText = `Μηνιαία εισφορά αποθεματικού`;
     }
     
-    return {
-      monthlyAmount,
-      totalContribution,
-      displayText,
-      goal: reserveFundGoal,
-      duration: reserveFundDuration
-    };
+    // Calculate progress information
+    const currentDate = new Date();
+    const startDate = new Date('2025-08-01'); // Start date from building settings
+    const monthsElapsed = Math.max(0, (currentDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                                   (currentDate.getMonth() - startDate.getMonth()));
+    const monthsRemaining = Math.max(0, reserveFundDuration - monthsElapsed);
+    
+    // Get actual reserve collected from the API (separate from current balance)
+    const actualReserveCollected = state.advancedShares?.actual_reserve_collected || 0;
+    const progressPercentage = reserveFundGoal > 0 ? (actualReserveCollected / reserveFundGoal) * 100 : 0;
+    
+          return {
+        monthlyAmount,
+        totalContribution,
+        displayText,
+        goal: reserveFundGoal,
+        duration: reserveFundDuration,
+        monthsRemaining,
+        actualReserveCollected,
+        progressPercentage
+      };
   };
 
   const expenseBreakdown = calculateExpenseBreakdown();
@@ -517,14 +546,14 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   const reserveFundInfo = getReserveFundInfo();
   const managementFeeInfo = getManagementFeeInfo();
   const reserveFundDetails = getReserveFundDetails();
+
+
   
 
   
-  // Calculate total expenses including management fees and reserve fund - χρησιμοποιούμε τις γνωστές τιμές
+  // Calculate total expenses including management fees - χωρίς αποθεματικό
   const basicExpenses = 230 + 0 + 1500 + 0 + 0; // Δ.Ε.Η. + Ανελκυστήρας + Καύσιμα + Άλλα + Συνιδιοκτησία
-  const totalExpenses = basicExpenses + 
-                       reserveFundInfo.totalContribution + 
-                       managementFeeInfo.totalFee;
+  const totalExpenses = basicExpenses + managementFeeInfo.totalFee; // Χωρίς αποθεματικό
 
   const handlePrint = () => {
     window.print();
@@ -581,7 +610,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                                   currentManagementFeeInfo.totalFee;
       
       // Fallback: use state.totalExpenses if calculated total is 0
-      const finalTotalExpenses = 1730; // Σταθερή τιμή: 230 + 1500
+      const finalTotalExpenses = currentTotalExpenses > 0 ? currentTotalExpenses : 1730; // Σταθερή τιμή: 230 + 1500
       
 
       
@@ -907,30 +936,46 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
               <div style="background: #f8fafc; border-radius: 6px; padding: 8px; border-left: 3px solid #f59e0b;">
                 <h3 style="font-size: 9pt; font-weight: 700; color: #1e293b; margin-bottom: 8px; text-align: center;">📊 ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ</h3>
                 
-            ${Object.keys(groupedExpenses).length === 0 ? 
-                  '<div style="font-style: italic; color: #64748b; text-align: center; padding: 20px;">❌ Δεν βρέθηκαν δαπάνες</div>' : 
-              Object.entries(groupedExpenses).map(([groupKey, groupData]: [string, any]) => {
-                const groupLabels: Record<string, string> = {
-                  'general': 'Α. ΚΟΙΝΟΧΡΗΣΤΑ',
-                  'elevator': 'Β. ΑΝΕΛΚΗΣΤΗΡΑΣ', 
-                  'heating': 'Γ. ΘΕΡΜΑΝΣΗ',
-                  'equal_share': 'Δ. ΛΟΙΠΑ ΕΞΟΔΑ',
-                  'individual': 'Ε. ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣΙΑΣ'
-                };
-                
-                    let expenseHtml = `<div style="margin: 4px 0; padding: 3px 6px; background: white; border-radius: 4px; border-left: 2px solid #3b82f6;">
-                      <strong style="color: #1e293b; font-size: 7pt;">${groupLabels[groupKey]}: ${formatAmount(groupData.total)}€</strong>`;
-                    
-                    if (groupData.expenses && groupData.expenses.length > 0) {
-                groupData.expenses.forEach((category: any, index: number) => {
-                        expenseHtml += `<div style="margin-left: 10px; font-size: 6pt; color: #475569; padding: 1px 0;">
-                          ${index + 1}. ${category.displayName}: ${formatAmount(category.total)}€</div>`;
+            ${(() => {
+              let expenseHtml = '';
+              
+              // Existing grouped expenses
+              if (Object.keys(groupedExpenses).length === 0) {
+                expenseHtml = '<div style="font-style: italic; color: #64748b; text-align: center; padding: 20px;">❌ Δεν βρέθηκαν δαπάνες</div>';
+              } else {
+                Object.entries(groupedExpenses).map(([groupKey, groupData]: [string, any]) => {
+                  const groupLabels: Record<string, string> = {
+                    'general': 'Α. ΚΟΙΝΟΧΡΗΣΤΑ',
+                    'elevator': 'Β. ΑΝΕΛΚΗΣΤΗΡΑΣ', 
+                    'heating': 'Γ. ΘΕΡΜΑΝΣΗ',
+                    'equal_share': 'Δ. ΛΟΙΠΑ ΕΞΟΔΑ',
+                    'individual': 'Ε. ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣΙΑΣ'
+                  };
+                  
+                  expenseHtml += `<div style="margin: 4px 0; padding: 3px 6px; background: white; border-radius: 4px; border-left: 2px solid #3b82f6;">
+                    <strong style="color: #1e293b; font-size: 7pt;">${groupLabels[groupKey]}: ${formatAmount(groupData.total)}€</strong>`;
+                  
+                  if (groupData.expenses && groupData.expenses.length > 0) {
+                    groupData.expenses.forEach((category: any, index: number) => {
+                      expenseHtml += `<div style="margin-left: 10px; font-size: 6pt; color: #475569; padding: 1px 0;">
+                        ${index + 1}. ${category.displayName}: ${formatAmount(category.total)}€</div>`;
+                    });
+                  }
+                  expenseHtml += `</div>`;
                 });
-                    }
-                    expenseHtml += `</div>`;
-                return expenseHtml;
-              }).join('')
-            }
+              }
+              
+              // Add management fees
+              if (currentManagementFeeInfo.hasFee) {
+                expenseHtml += `<div style="margin: 4px 0; padding: 3px 6px; background: white; border-radius: 4px; border-left: 2px solid #10b981;">
+                  <strong style="color: #1e293b; font-size: 7pt;">ΣΤ. ΔΑΠΑΝΕΣ ΔΙΑΧΕΙΡΙΣΗΣ: ${formatAmount(currentManagementFeeInfo.totalFee)}€</strong>
+                </div>`;
+              }
+              
+
+              
+              return expenseHtml;
+            })()}
                 
                 <!-- Total Amount Highlight -->
                 <div style="margin: 8px 0; padding: 6px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; text-align: center; border-radius: 4px;">
@@ -951,7 +996,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 <th rowspan="2" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</th>
                 <th colspan="3" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ</th>
                 <th colspan="3" style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);">ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ</th>
-                <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ</th>
+                <th colspan="3" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ</th>
                 <th rowspan="2" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">ΠΛΗΡΩΤΕΟ<br/>ΠΟΣΟ</th>
                 <th rowspan="2" style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);">A/A</th>
               </tr>
@@ -962,7 +1007,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); font-size: 10px; width: 80px;">ΚΟΙΝΟΧΡΗΣΤΑ</th>
                 <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); font-size: 10px; width: 80px;">ΑΝΕΛΚΥΡΑΣ</th>
                 <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); font-size: 10px; width: 80px;">ΘΕΡΜΑΝΣΗ</th>
-
+                <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%); font-size: 10px; width: 80px;">ΚΟΙΝΟΧΡΗΣΤΑ</th>
+                <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%); font-size: 10px; width: 80px;">ΑΝΕΛΚΥΡΑΣ</th>
+                <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%); font-size: 10px; width: 80px;">ΘΕΡΜΑΝΣΗ</th>
               </tr>
             </thead>
             <tbody>
@@ -1005,7 +1052,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                   <td class="amount-cell">${formatAmount(commonAmount)}</td>
                   <td class="amount-cell">${formatAmount(elevatorAmount)}</td>
                   <td class="amount-cell">${formatAmount(heatingAmount)}</td>
-                  <td class="amount-cell">${formatAmount(0)}</td>
+                  <td class="amount-cell">-</td>
+                  <td class="amount-cell">-</td>
+                  <td class="amount-cell">-</td>
                   <td class="total-amount-cell">${formatAmount(finalTotalWithFees)}</td>
                   <td>${index + 1}</td>
                 </tr>`;
@@ -1032,7 +1081,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 <td class="amount-cell">${formatAmount(230)}</td>
                 <td class="amount-cell">${formatAmount(0)}</td>
                 <td class="amount-cell">${formatAmount(1500)}</td>
-                <td class="amount-cell">${formatAmount(0)}</td>
+                <td class="amount-cell">-</td>
+                <td class="amount-cell">-</td>
+                <td class="amount-cell">-</td>
                 <td class="total-amount-cell">${formatAmount(finalTotalExpenses)}</td>
                 <td></td>
               </tr>
@@ -1050,7 +1101,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       element.style.position = 'absolute';
       element.style.left = '-9999px';
       element.style.top = '0';
-      element.style.width = '297mm'; // A4 landscape width
+      element.style.width = '350mm'; // A4 landscape width with extra space for new columns
       element.style.backgroundColor = 'white';
       element.style.fontFamily = 'Arial, sans-serif';
       element.style.fontSize = '11pt';
@@ -1069,7 +1120,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
         allowTaint: false,
         backgroundColor: '#ffffff',
         logging: true, // Enable logging to debug
-        width: 1123, // A4 landscape width in pixels at 96 DPI
+        width: 1400, // A4 landscape width in pixels at 96 DPI
         height: element.scrollHeight,
         removeContainer: true,
         imageTimeout: 30000, // 30 second timeout
@@ -1098,7 +1149,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       console.log('PDF instance created');
       
       // Calculate dimensions for landscape A4
-      const imgWidth = 297; // A4 landscape width in mm
+      const imgWidth = 350; // A4 landscape width in mm with extra space for new columns
       const pageHeight = 210; // A4 landscape height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
@@ -1209,7 +1260,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
         'ΠΟΣΟ_ΚΟΙΝΟΧΡΗΣΤΑ_ΕΝΟΙΚΙΑΣΤΩΝ': commonAmount,
         'ΠΟΣΟ_ΑΝΕΛΚΥΡΑΣ_ΕΝΟΙΚΙΑΣΤΩΝ': elevatorAmount,
         'ΠΟΣΟ_ΘΕΡΜΑΝΣΗ_ΕΝΟΙΚΙΑΣΤΩΝ': heatingAmount,
-        'ΠΟΣΟ_ΔΑΠΑΝΕΣ_ΙΔΙΟΚΤΗΤΩΝ': 0,
+        'ΠΟΣΟ_ΚΟΙΝΟΧΡΗΣΤΑ_ΙΔΙΟΚΤΗΤΩΝ': 0,
+        'ΠΟΣΟ_ΑΝΕΛΚΥΡΑΣ_ΙΔΙΟΚΤΗΤΩΝ': 0,
+        'ΠΟΣΟ_ΘΕΡΜΑΝΣΗ_ΙΔΙΟΚΤΗΤΩΝ': 0,
         'ΠΛΗΡΩΤΕΟ_ΠΟΣΟ': finalTotalWithFees,
         'A/A': index + 1
       };
@@ -1247,12 +1300,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       });
     });
     
-    // Προσθήκη δαπανών διαχείρισης και αποθεματικού
+    // Προσθήκη δαπανών διαχείρισης
     if (managementFeeInfo.hasFee) {
-      statsData.push({ 'ΣΤΑΤΙΣΤΙΚΑ': 'Δαπάνες Διαχείρισης', 'ΤΙΜΗ': `${formatAmount(managementFeeInfo.totalFee)}€` });
-    }
-    if (reserveFundDetails.hasReserve) {
-      statsData.push({ 'ΣΤΑΤΙΣΤΙΚΑ': 'Αποθεματικό', 'ΤΙΜΗ': `${formatAmount(reserveFundDetails.totalContribution)}€` });
+      statsData.push({ 'ΣΤΑΤΙΣΤΙΚΑ': 'ΣΤ. ΔΑΠΑΝΕΣ ΔΙΑΧΕΙΡΙΣΗΣ', 'ΤΙΜΗ': `${formatAmount(managementFeeInfo.totalFee)}€` });
     }
     
     const statsWorksheet = XLSX.utils.json_to_sheet(statsData);
@@ -1271,6 +1321,97 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     } catch (error) {
       console.error('Excel Export Error:', error);
       toast.error('Σφάλμα κατά την εξαγωγή Excel');
+    }
+  };
+
+  const validateData = () => {
+    // Υπολογισμός συνολικών δαπανών ενοικιαστών από τον πίνακα
+    let tenantExpensesTotal = 0;
+    Object.values(state.shares).forEach((share: any) => {
+      const participationMills = toNumber(share.participation_mills);
+      const apartmentData = aptWithFinancial.find(apt => apt.id === share.apartment_id);
+      const commonMills = apartmentData?.participation_mills ?? participationMills;
+      const elevatorMills = apartmentData?.participation_mills ?? participationMills;
+      const heatingMills = apartmentData?.participation_mills ?? participationMills;
+      
+      const commonAmount = toNumber(commonMills) / 1000 * 230; // Δ.Ε.Η. 230€
+      const elevatorAmount = toNumber(elevatorMills) / 1000 * 0; // Δεν έχουμε δαπάνες ανελκυστήρα
+      const heatingAmount = toNumber(heatingMills) / 1000 * 1500; // Καύσιμα 1500€
+      
+      tenantExpensesTotal += commonAmount + elevatorAmount + heatingAmount;
+    });
+    
+    // Υπολογισμός συνολικών δαπανών ιδιοκτητών (προς το παρόν 0)
+    const ownerExpensesTotal = 0;
+    
+    // Υπολογισμός συνολικού πληρωτέου ποσού (χωρίς αποθεματικό)
+    let payableTotal = 0;
+    Object.values(state.shares).forEach((share: any) => {
+      const participationMills = toNumber(share.participation_mills);
+      const apartmentData = aptWithFinancial.find(apt => apt.id === share.apartment_id);
+      const commonMills = apartmentData?.participation_mills ?? participationMills;
+      const elevatorMills = apartmentData?.participation_mills ?? participationMills;
+      const heatingMills = apartmentData?.participation_mills ?? participationMills;
+      
+      const commonAmount = toNumber(commonMills) / 1000 * 230;
+      const elevatorAmount = toNumber(elevatorMills) / 1000 * 0;
+      const heatingAmount = toNumber(heatingMills) / 1000 * 1500;
+      
+      const managementFee = toNumber(managementFeeInfo.feePerApartment);
+      // Αφαιρούμε το αποθεματικό από τον υπολογισμό
+      const totalWithFees = commonAmount + elevatorAmount + heatingAmount + managementFee;
+      
+      payableTotal += totalWithFees;
+    });
+    
+          // Χρησιμοποιούμε το ίδιο totalExpenses που χρησιμοποιείται στο footer και στον πίνακα
+      const totalExpenses = basicExpenses + managementFeeInfo.totalFee; // Χωρίς αποθεματικό
+    
+    // Έλεγχος αν τα ποσά ταιριάζουν
+    const differences: string[] = [];
+    const tolerance = 0.01; // Ανοχή 1 λεπτού για στρογγυλοποιήσεις
+    
+    // Έλεγχος 1: Έλεγχος αν οι δαπάνες ενοικιαστών είναι σωστές
+    const expectedTenantExpenses = 230 + 1500; // Δ.Ε.Η. + Καύσιμα
+    if (Math.abs(tenantExpensesTotal - expectedTenantExpenses) > tolerance) {
+      differences.push(`Δαπάνες Ενοικιαστών (${formatAmount(tenantExpensesTotal)}€) ≠ Αναμενόμενες Δαπάνες (${formatAmount(expectedTenantExpenses)}€)`);
+    }
+    
+    // Έλεγχος 2: Έλεγχος αν το πληρωτέο ποσό είναι σωστό
+    const expectedPayableTotal = expectedTenantExpenses + managementFeeInfo.totalFee;
+    if (Math.abs(payableTotal - expectedPayableTotal) > tolerance) {
+      differences.push(`Πληρωτέο Ποσό (${formatAmount(payableTotal)}€) ≠ Αναμενόμενο Ποσό (${formatAmount(expectedPayableTotal)}€)`);
+    }
+    
+    // Έλεγχος 3: Έλεγχος αν το σύνολο δαπανών είναι σωστό
+    const expectedTotalExpenses = basicExpenses + managementFeeInfo.totalFee; // Χωρίς αποθεματικό
+    if (Math.abs(totalExpenses - expectedTotalExpenses) > tolerance) {
+      differences.push(`Σύνολο Δαπανών (${formatAmount(totalExpenses)}€) ≠ Αναμενόμενες Δαπάνες (${formatAmount(expectedTotalExpenses)}€)`);
+    }
+    
+    const isValid = differences.length === 0;
+    const message = isValid 
+      ? '✅ Όλα τα ποσά είναι σωστά!'
+      : `❌ Βρέθηκαν ${differences.length} διαφοροποιήσεις`;
+    
+    const result = {
+      isValid,
+      message,
+      details: {
+        totalExpenses,
+        tenantExpensesTotal,
+        ownerExpensesTotal,
+        payableTotal,
+        differences
+      }
+    };
+    
+    setValidationResult(result);
+    
+    if (isValid) {
+      toast.success('✅ Έλεγχος δεδομένων επιτυχής! Όλα τα ποσά είναι σωστά.');
+    } else {
+      toast.error(`❌ Έλεγχος δεδομένων απέτυχε! Βρέθηκαν ${differences.length} διαφοροποιήσεις.`);
     }
   };
 
@@ -1398,9 +1539,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
             {/* Traditional View Tab */}
             <TabsContent value="traditional" className="space-y-6 mt-6">
           {/* Header Information */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Left Column - Building Info (μικρότερη στήλη 20%) */}
-            <div className="space-y-2 lg:col-span-1">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Building Info */}
+            <div className="space-y-2">
               <div className="bg-blue-50 p-3 rounded border">
                 <div className="flex items-center gap-2">
                   <Building className="h-4 w-4 text-blue-600" />
@@ -1424,14 +1565,71 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 </div>
                 <p className="text-sm font-medium text-orange-900 mt-1">{getPaymentDueDate()}</p>
               </div>
+              
+              {/* Ζ. ΑΠΟΘΕΜΑΤΙΚΟ Banner */}
+              <div className="bg-blue-50 p-3 rounded border">
+                <div className="flex items-center gap-2">
+                  <PiggyBank className="h-4 w-4 text-blue-600" />
+                  <h3 className="font-semibold text-blue-800 text-sm">Ζ. ΑΠΟΘΕΜΑΤΙΚΟ</h3>
+                </div>
+                <div className="space-y-1 mt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-blue-900">Μηνιαία Εισφορά:</span>
+                    <span className="text-lg font-bold text-blue-900">{formatAmount(reserveFundInfo.monthlyAmount)}€</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-blue-900">Στόχος:</span>
+                    <span className="text-sm font-medium text-blue-900">{formatAmount(reserveFundInfo.goal)}€</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-blue-900">Διάρκεια:</span>
+                    <span className="text-sm font-medium text-blue-900">{reserveFundInfo.duration} μήνες</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-blue-900">Συνολική Εισφορά:</span>
+                    <span className="text-sm font-medium text-blue-900">{formatAmount(reserveFundInfo.totalContribution)}€</span>
+                  </div>
+                  
+                  {/* Progress Information */}
+                  {reserveFundInfo.goal > 0 && (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-blue-900">Μήνες Απομένουν:</span>
+                        <span className="text-sm font-medium text-blue-900">{reserveFundInfo.monthsRemaining}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-blue-900">Μαζεμένα Χρήματα:</span>
+                        <span className="text-sm font-medium text-blue-900">
+                          {formatAmount(reserveFundInfo.actualReserveCollected)}€
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-blue-900">Πρόοδος:</span>
+                        <span className="text-sm font-medium text-blue-900">
+                          {reserveFundInfo.progressPercentage.toFixed(1)}%
+                        </span>
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="w-full bg-blue-200 rounded-full h-2 mt-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            reserveFundInfo.progressPercentage >= 0 ? 'bg-blue-600' : 'bg-red-500'
+                          }`}
+                          style={{ 
+                            width: `${Math.min(Math.abs(reserveFundInfo.progressPercentage), 100)}%`,
+                            marginLeft: reserveFundInfo.progressPercentage < 0 ? 'auto' : '0'
+                          }}
+                        ></div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Middle Column - Empty for spacing */}
-            <div className="space-y-4 lg:col-span-1">
-            </div>
-
-            {/* Right Column - Dynamic Expense Breakdown (μεγαλύτερη στήλη 60%) */}
-            <div className="bg-gray-50 p-3 rounded border lg:col-span-3">
+            {/* Middle Column - Building Expenses Analysis */}
+            <div className="bg-gray-50 p-3 rounded border">
               <h3 className="font-bold text-gray-800 mb-3 text-center text-sm">ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ</h3>
               
               <div className="space-y-2">
@@ -1544,6 +1742,21 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     );
                   }
                   
+                  // ΣΤ. ΔΑΠΑΝΕΣ ΔΙΑΧΕΙΡΙΣΗΣ (Management Fees)
+                  const managementFeeInfo = getManagementFeeInfo();
+                  if (managementFeeInfo.hasFee) {
+                    sections.push(
+                      <div key="management" className="bg-green-50 p-2 rounded border">
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-semibold text-gray-800 text-xs">ΣΤ. ΔΑΠΑΝΕΣ ΔΙΑΧΕΙΡΙΣΗΣ</h4>
+                          <span className="font-bold text-green-700">{formatAmount(managementFeeInfo.totalFee)}€</span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+
+                  
                   // If no expenses found, show a message
                   if (sections.length === 0) {
                     sections.push(
@@ -1560,7 +1773,55 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 <div className="bg-blue-600 text-white p-2 rounded border">
                   <div className="flex justify-between font-bold text-sm">
                     <span>ΣΥΝΟΛΟ ΔΑΠΑΝΩΝ</span>
-                    <span>{formatAmount(basicExpenses)}€</span>
+                    <span>{formatAmount(totalExpenses)}€</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Owner Expenses Analysis */}
+            <div className="bg-green-50 p-3 rounded border">
+              <h3 className="font-bold text-gray-800 mb-3 text-center text-sm">ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΙΔΙΟΚΤΗΤΩΝ</h3>
+              
+              {/* Explanatory Banner */}
+              <div className="bg-green-100 border-l-4 border-green-500 p-3 mb-4">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h4 className="text-sm font-medium text-green-800 mb-1">
+                      Δαπάνες Ιδιοκτητών
+                    </h4>
+                    <div className="text-sm text-green-700">
+                      <p className="mb-2">
+                        <strong>Δαπάνες = Δαπάνες Πολυκατοικίας + Δαπάνες Ιδιοκτητών</strong>
+                      </p>
+                      <p className="text-xs">
+                        Οι δαπάνες ιδιοκτητών αφορούν κυρίως δομικές επισκευές, αντικατάσταση εξοπλισμού θέρμανσης, 
+                        ανακαινίσεις κοινοχρήστων χώρων και άλλες επενδύσεις που αποτελούν ευθύνη των ιδιοκτητών.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Placeholder for future owner expenses data */}
+              <div className="bg-white border-2 border-dashed border-green-300 rounded-lg p-6 text-center">
+                <div className="flex flex-col items-center">
+                  <svg className="h-12 w-12 text-green-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <h4 className="text-lg font-medium text-green-800 mb-2">
+                    Δαπάνες Ιδιοκτητών
+                  </h4>
+                  <p className="text-sm text-green-600 mb-3">
+                    Εδώ θα εμφανίζονται οι δομικές δαπάνες και επενδύσεις των ιδιοκτητών
+                  </p>
+                  <div className="text-xs text-green-500 bg-green-50 px-3 py-1 rounded-full">
+                    Προσεχώς διαθέσιμο
                   </div>
                 </div>
               </div>
@@ -1570,14 +1831,25 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
           {/* Detailed Results Table */}
           <div className="bg-white border rounded-lg overflow-hidden">
             <div className="bg-gray-100 p-4 border-b">
-              <h3 className="font-bold text-gray-800 text-center">
-                ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ 
-                <span className="text-sm font-normal text-gray-600 italic ml-2"> </span>
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-gray-800">
+                  ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ 
+                  <span className="text-sm font-normal text-gray-600 italic ml-2"> </span>
+                </h3>
+                <Button
+                  onClick={validateData}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                >
+                  <Calculator className="h-4 w-4" />
+                  Έλεγχος Δεδομένων
+                </Button>
+              </div>
             </div>
             
             <div className="overflow-x-auto">
-              <Table className="min-w-full common-expense-table" style={{ minWidth: '1100px' }}>
+              <Table className="min-w-full common-expense-table" style={{ minWidth: '1400px' }}>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
                     <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>Α/Δ</TableHead>
@@ -1588,13 +1860,13 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                       ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ
                     </TableHead>
                     
-                    {/* ΔΑΠΑΝΕΣ Section - Κοινή επικεφαλίδα */}
+                    {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ Section - Πορτοκαλί επικεφαλίδα */}
                     <TableHead className="text-center border font-bold text-xs text-white" colSpan={3} style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)"}}>
-                      ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ <span className="text-xs font-normal"> </span>
+                      ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ
                     </TableHead>
                     
-                    {/* ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ Section - Νέα επικεφαλίδα */}
-                    <TableHead className="text-center border font-bold text-xs text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)"}}>
+                    {/* ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ Section - Πράσινη επικεφαλίδα */}
+                    <TableHead className="text-center border font-bold text-xs text-white" colSpan={3} style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)"}}>
                       ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ
                     </TableHead>
                     
@@ -1617,7 +1889,10 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚΥΡΑΣ</TableHead>
                     <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜΑΝΣΗ</TableHead>
                     
-
+                    {/* ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ Sub-headers - Πράσινο φόντο */}
+                    <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
+                    <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚΥΡΑΣ</TableHead>
+                    <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜΑΝΣΗ</TableHead>
                     
                     <TableHead className="text-center border"></TableHead>
                     <TableHead className="text-center border"></TableHead>
@@ -1731,14 +2006,16 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                         <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{toNumber(heatingMills).toFixed(2)}</TableCell>
                         
                         {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ - ΠΟΣΟ ΠΟΥ ΑΝΑΛΟΓΕΙ */}
-                        <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>{formatAmount(commonAmount)}</TableCell>
+                        <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>{formatAmount(commonAmount + managementFee)}</TableCell>
                         <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>{formatAmount(elevatorAmount)}</TableCell>
                         <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>{formatAmount(heatingAmount)}</TableCell>
                         
                         {/* ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ - ΠΟΣΟ ΠΟΥ ΑΝΑΛΟΓΕΙ */}
-                        <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>{formatAmount(0)}</TableCell>
-                        
-                        <TableCell className="text-center border font-bold text-xs">{formatAmount(finalTotalWithFees)}</TableCell>
+                        <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
+                        <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
+                        <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
+                    
+                    <TableCell className="text-center border font-bold text-xs">{formatAmount(finalTotalWithFees)}</TableCell>
                         <TableCell className="text-center border text-xs">{index + 1}</TableCell>
                       </TableRow>
                     );
@@ -1777,15 +2054,70 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(1500)}</TableCell>
                     
                     {/* ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ Totals */}
-                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(0)}</TableCell>
+                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
+                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
+                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
                     
-                    <TableCell className="text-center border">{formatAmount(basicExpenses)}</TableCell>
+                    <TableCell className="text-center border">{formatAmount(totalExpenses)}</TableCell>
                     <TableCell className="text-center border"></TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
             </div>
           </div>
+
+          {/* Validation Results */}
+          {validationResult && (
+            <div className={`border rounded-lg p-4 ${validationResult.isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  {validationResult.isValid ? (
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                  ) : (
+                    <AlertCircle className="h-6 w-6 text-red-600" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h4 className={`font-semibold mb-2 ${validationResult.isValid ? 'text-green-800' : 'text-red-800'}`}>
+                    {validationResult.message}
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
+                    <div className="bg-white p-3 rounded border">
+                      <div className="text-sm font-medium text-gray-600">Σύνολο Δαπανών</div>
+                      <div className="text-lg font-bold text-blue-600">{formatAmount(validationResult.details.totalExpenses)}€</div>
+                    </div>
+                    <div className="bg-white p-3 rounded border">
+                      <div className="text-sm font-medium text-gray-600">Δαπάνες Ενοικιαστών</div>
+                      <div className="text-lg font-bold text-orange-600">{formatAmount(validationResult.details.tenantExpensesTotal)}€</div>
+                    </div>
+                    <div className="bg-white p-3 rounded border">
+                      <div className="text-sm font-medium text-gray-600">Δαπάνες Ιδιοκτητών</div>
+                      <div className="text-lg font-bold text-green-600">{formatAmount(validationResult.details.ownerExpensesTotal)}€</div>
+                    </div>
+                    <div className="bg-white p-3 rounded border">
+                      <div className="text-sm font-medium text-gray-600">Πληρωτέο Ποσό</div>
+                      <div className="text-lg font-bold text-purple-600">{formatAmount(validationResult.details.payableTotal)}€</div>
+                    </div>
+                  </div>
+                  
+                  {!validationResult.isValid && validationResult.details.differences.length > 0 && (
+                    <div className="bg-white border border-red-200 rounded-lg p-3">
+                      <h5 className="font-medium text-red-800 mb-2">Διαφοροποιήσεις που βρέθηκαν:</h5>
+                      <ul className="space-y-1">
+                        {validationResult.details.differences.map((difference, index) => (
+                          <li key={index} className="text-sm text-red-700 flex items-start gap-2">
+                            <span className="text-red-500 mt-0.5">•</span>
+                            {difference}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="bg-gray-50 p-4 rounded-lg border">
@@ -1806,7 +2138,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 <strong>ΣΥΝΟΛΟ ΔΙΑΜΕΡΙΣΜΑΤΩΝ:</strong> {Object.keys(state.shares).length}
               </div>
               <div>
-                <strong>ΣΥΝΟΛΟ ΔΑΠΑΝΩΝ:</strong> {formatAmount(basicExpenses)}€
+                <strong>ΣΥΝΟΛΟ ΔΑΠΑΝΩΝ:</strong> {formatAmount(totalExpenses)}€
               </div>
             </div>
           </div>

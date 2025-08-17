@@ -64,7 +64,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
   const [apartments, setApartments] = useState<ApartmentList[]>([]);
-  const [reserveFundMonthlyAmount, setReserveFundMonthlyAmount] = useState<number>(5.0); // Default value
+  const [reserveFundMonthlyAmount, setReserveFundMonthlyAmount] = useState<number>(0); // No hardcoded default - will be set from building data
   const { canCreateExpense, canAccessReports, canCalculateCommonExpenses } = useFinancialPermissions();
   
   // Ref for building overview section to refresh data
@@ -88,6 +88,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         setApartments(apartmentsData);
       } catch (error) {
         console.error('Error loading apartments:', error);
+        setApartments([]);
       }
     };
     

@@ -110,7 +110,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = [
-            'id', 'apartment', 'apartment_number', 'building_name', 'owner_name', 'tenant_name', 'current_balance', 'monthly_due', 'amount', 'date',
+            'id', 'apartment', 'apartment_number', 'building_name', 'owner_name', 'tenant_name', 'current_balance', 'monthly_due', 'amount', 'reserve_fund_amount', 'date',
             'method', 'method_display', 'payment_type', 'payment_type_display',
             'payer_type', 'payer_type_display', 'payer_name',
             'reference_number', 'notes', 'receipt', 'receipt_url', 'created_at'
@@ -309,6 +309,13 @@ class FinancialSummarySerializer(serializers.Serializer):
     recent_transactions_count = serializers.IntegerField()
     apartment_balances = ApartmentBalanceSerializer(many=True, read_only=True)
     payment_statistics = serializers.DictField(read_only=True)
+    # Reserve fund settings
+    reserve_fund_goal = serializers.FloatField()
+    reserve_fund_duration_months = serializers.IntegerField()
+    reserve_fund_monthly_target = serializers.FloatField()
+    # Management expenses
+    management_fee_per_apartment = serializers.FloatField()
+    total_management_cost = serializers.FloatField()
 
 
 class CommonExpenseShareSerializer(serializers.Serializer):

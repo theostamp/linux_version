@@ -454,6 +454,11 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
                       <div className="text-xs lg:text-sm font-semibold text-green-600">
                         {formatCurrency(typeof summary.amount === 'string' ? parseFloat(summary.amount) : Number(summary.amount))}
                       </div>
+                      {summary.reserve_fund_amount && summary.reserve_fund_amount > 0 && (
+                        <div className="text-xs text-blue-600">
+                          Αποθεματικό: {formatCurrency(summary.reserve_fund_amount)}
+                        </div>
+                      )}
                     </td>
                     
                     {/* Ημερομηνία */}

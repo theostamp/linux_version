@@ -147,6 +147,39 @@ class Building(models.Model):
         help_text=_("Πάγια εισφορά αποθεματικού ανά διαμέρισμα σε ευρώ")
     )
 
+    # 🎯 Στόχος Αποθεματικού
+    reserve_fund_goal = models.DecimalField(
+        _("Στόχος Αποθεματικού"),
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        null=True,
+        blank=True,
+        help_text=_("Στόχος αποθεματικού σε ευρώ")
+    )
+
+    reserve_fund_duration_months = models.PositiveIntegerField(
+        _("Διάρκεια Συλλογής (μήνες)"),
+        default=0,
+        null=True,
+        blank=True,
+        help_text=_("Διάρκεια συλλογής αποθεματικού σε μήνες")
+    )
+
+    reserve_fund_start_date = models.DateField(
+        _("Ημερομηνία Έναρξης Συλλογής"),
+        null=True,
+        blank=True,
+        help_text=_("Ημερομηνία έναρξης συλλογής αποθεματικού")
+    )
+
+    reserve_fund_target_date = models.DateField(
+        _("Ημερομηνία Ολοκλήρωσης Στόχου"),
+        null=True,
+        blank=True,
+        help_text=_("Ημερομηνία ολοκλήρωσης του στόχου αποθεματικού")
+    )
+
     # 💼 Έξοδα Διαχείρισης
     management_fee_per_apartment = models.DecimalField(
         _("Αμοιβή Διαχείρισης ανά Διαμέρισμα"),

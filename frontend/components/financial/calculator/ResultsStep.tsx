@@ -1673,7 +1673,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                             return defaultValue;
                           }
                         };
-                        const reserveFundGoal = getFromStorage('goal', 3000);
+                        const reserveFundGoal = getFromStorage('goal', 0);
                         
                         if (!reserveFundGoal || reserveFundGoal === 0) {
                           return '💰 Δεν έχει οριστεί στόχος αποθεματικού';

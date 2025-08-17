@@ -4,14 +4,14 @@ import { api, fetchApartmentsWithFinancialData } from '@/lib/api';
 export interface ApartmentWithFinancialData {
   id: number;
   number: string;
-  owner_name?: string;
-  tenant_name?: string;
-  current_balance?: number;
-  monthly_due?: number;
-  building_id?: number;
-  building_name?: string;
+  owner_name: string;
+  tenant_name: string;
   participation_mills?: number;
-  latest_payment_date?: string;
+  heating_mills?: number;
+  elevator_mills?: number;
+  current_balance: number;
+  monthly_due: number;
+  last_payment_date?: string;
   latest_payment_amount?: number;
 }
 

@@ -173,7 +173,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       if (financialSummary.reserve_fund_duration_months) {
         setNewDurationMonths(financialSummary.reserve_fund_duration_months.toString());
         // Αρχικοποίηση δόσεων από τη διάρκεια σε μήνες
-        setNewInstallments(financialSummary.reserve_fund_duration_months.toString());
+        setNewInstallments((financialSummary.reserve_fund_duration_months || 0).toString());
       }
     }
     
@@ -324,7 +324,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         // Reserve Fund Period Tracking - Use saved values with fallbacks
         reserve_fund_start_date: savedStartDate,
         reserve_fund_target_date: savedTargetDate,
-        reserve_fund_monthly_target: apiData.reserve_fund_contribution !== undefined ? apiData.reserve_fund_contribution : savedMonthlyTarget, // Use API value with priority logic
+        reserve_fund_monthly_target: savedGoal > 0 && savedDurationMonths > 0 ? savedGoal / savedDurationMonths : 0, // Calculate correctly: goal ÷ duration
         reserve_fund_duration_months: savedDurationMonths,
         // Management Expenses
         management_fee_per_apartment: buildingData?.management_fee_per_apartment || 0,
@@ -377,16 +377,16 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         total_balance: 0,
         current_obligations: 0,
         reserve_fund_debt: 0,
-        reserve_fund_goal: 15000,
+        reserve_fund_goal: 0, // No hardcoded value - will be set by user
         current_reserve: 0,
         apartments_count: buildingData?.apartments_count || 0,
         pending_payments: 0,
         last_calculation_date: new Date().toISOString().split('T')[0],
         average_monthly_expenses: 0,
-        reserve_fund_start_date: '2025-08-01',  // Updated to August 2025
-        reserve_fund_target_date: '2026-07-31',  // 12 months from start
-        reserve_fund_monthly_target: 1250,
-        reserve_fund_duration_months: 12,
+        reserve_fund_start_date: '', // No hardcoded date - will be set by user
+        reserve_fund_target_date: '', // No hardcoded date - will be set by user
+        reserve_fund_monthly_target: 0, // No hardcoded value - calculated from goal/duration
+        reserve_fund_duration_months: 0, // No hardcoded value - will be set by user
         management_fee_per_apartment: buildingData?.management_fee_per_apartment || 0,
         total_management_cost: (buildingData?.management_fee_per_apartment || 0) * (buildingData?.apartments_count || 0)
       };
@@ -666,8 +666,14 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     }
   };
 
-  // Dynamic financial health colors based on balance
-  const getFinancialHealthColors = (balance: number) => {
+  // Balance color thresholds - configurable
+  const BALANCE_THRESHOLDS = {
+    HIGH_DEBT: 5000,
+    MEDIUM_DEBT: 2000
+  };
+
+  // Dynamic card colors for Total Balance based on amount
+  const getBalanceCardColors = (balance: number) => {
     if (balance >= 0) {
       // Positive balance - Green shades
       return {
@@ -679,7 +685,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     } else {
       // Negative balance - Red to Orange based on severity
       const absBalance = Math.abs(balance);
-      if (absBalance >= 5000) {
+      if (absBalance >= BALANCE_THRESHOLDS.HIGH_DEBT) {
         // High debt - Red
         return {
           amount: 'text-red-700',
@@ -687,7 +693,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
           icon: 'text-red-600',
           cardBg: 'border-red-200 bg-red-50/50'
         };
-      } else if (absBalance >= 2000) {
+      } else if (absBalance >= BALANCE_THRESHOLDS.MEDIUM_DEBT) {
         // Medium debt - Orange/Red
         return {
           amount: 'text-red-600',
@@ -867,6 +873,40 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     };
   };
 
+  // Calculate reserve fund progress based on actual reserve fund contributions only
+  const calculateReserveFundProgress = () => {
+    if (!financialSummary?.reserve_fund_goal || financialSummary.reserve_fund_goal === 0) {
+      return 0;
+    }
+
+    // Get reserve fund start date and duration
+    const startDate = financialSummary?.reserve_fund_start_date ? new Date(financialSummary.reserve_fund_start_date) : null;
+    const durationMonths = financialSummary?.reserve_fund_duration_months || 0;
+    const monthlyTarget = financialSummary?.reserve_fund_monthly_target || 0;
+
+    if (!startDate || durationMonths === 0 || monthlyTarget === 0) {
+      return 0;
+    }
+
+    // Calculate how many months have passed since start
+    const currentDate = new Date();
+    const monthsPassed = Math.max(0, 
+      (currentDate.getFullYear() - startDate.getFullYear()) * 12 + 
+      (currentDate.getMonth() - startDate.getMonth())
+    );
+
+    // Calculate expected reserve fund contributions so far
+    const expectedContributions = monthsPassed * monthlyTarget;
+    
+    // Calculate progress based on expected vs actual
+    // We use the reserve fund goal as the target, not the current_reserve
+    const progress = (expectedContributions / financialSummary.reserve_fund_goal) * 100;
+    
+    return Math.min(100, Math.max(0, progress));
+  };
+
+  const reserveProgress = calculateReserveFundProgress();
+
   if (loading) {
     return (
       <Card className="border-l-4 border-l-blue-500">
@@ -928,8 +968,6 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   }
 
   const isPositiveBalance = (financialSummary?.total_balance || 0) >= 0;
-  const reserveProgress = (financialSummary?.reserve_fund_goal || 0) > 0 ? 
-    ((financialSummary?.current_reserve || 0) / (financialSummary?.reserve_fund_goal || 0)) * 100 : 0;
   const reserveAnalytics = getReserveFundAnalytics();
 
   return (
@@ -1027,15 +1065,15 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
             </Card>
 
             {/* Total Balance Card */}
-            <Card className={`border-2 ${getFinancialHealthColors(financialSummary?.total_balance || 0).cardBg}`}>
+            <Card className={`border-2 ${getBalanceCardColors(financialSummary?.total_balance || 0).cardBg}`}>
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2 mb-3">
                   {isPositiveBalance ? (
-                    <TrendingUp className={`h-5 w-5 ${getFinancialHealthColors(financialSummary?.total_balance || 0).icon}`} />
+                    <TrendingUp className={`h-5 w-5 ${getBalanceCardColors(financialSummary?.total_balance || 0).icon}`} />
                   ) : (
-                    <TrendingDown className={`h-5 w-5 ${getFinancialHealthColors(financialSummary?.total_balance || 0).icon}`} />
+                    <TrendingDown className={`h-5 w-5 ${getBalanceCardColors(financialSummary?.total_balance || 0).icon}`} />
                   )}
-                  <h3 className={`font-semibold text-sm ${getFinancialHealthColors(financialSummary?.total_balance || 0).title}`}>
+                  <h3 className={`font-semibold text-sm ${getBalanceCardColors(financialSummary?.total_balance || 0).title}`}>
                     {selectedMonth ? `Υπόλοιπο (${selectedMonth})` : 'Τρέχον Υπόλοιπο'}
                   </h3>
                 </div>
@@ -1043,7 +1081,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 <div className="space-y-3">
                   {/* Συνολικό υπόλοιπο */}
                   <div className="space-y-1">
-                    <div className={`text-xl font-bold ${getFinancialHealthColors(financialSummary?.total_balance || 0).amount}`}>
+                    <div className={`text-xl font-bold ${getBalanceCardColors(financialSummary?.total_balance || 0).amount}`}>
                       {formatCurrency(Math.abs(financialSummary?.total_balance || 0))}
                     </div>
                     
@@ -1109,7 +1147,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <Target className={`h-5 w-5 ${getProgressColors(reserveProgress).text}`} />
-                      <h3 className={`font-semibold text-sm ${getProgressColors(reserveProgress).text}`}>Στόχος Αποθεματικού</h3>
+                      <h3 className={`font-semibold text-base ${getProgressColors(reserveProgress).text}`}>Στόχος Αποθεματικού</h3>
                     </div>
                     <div className="flex items-center gap-1">
                       <Button
@@ -1138,9 +1176,9 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   
                   {editingGoal ? (
                     <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <Label htmlFor="new-goal" className="text-xs">Νέος στόχος (€)</Label>
+                          <Label htmlFor="new-goal" className="text-sm font-medium">Νέος στόχος (€)</Label>
                           <Input
                             id="new-goal"
                             type="number"
@@ -1151,7 +1189,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           />
                         </div>
                         <div>
-                          <Label htmlFor="new-installments" className="text-xs">Δόσεις (μήνες)</Label>
+                          <Label htmlFor="new-installments" className="text-sm font-medium">Δόσεις (μήνες)</Label>
                           <Input
                             id="new-installments"
                             type="number"
@@ -1166,14 +1204,19 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       </div>
                       {/* Εμφάνιση μηνιαίας εισφοράς */}
                       {newGoal && newInstallments && parseFloat(newGoal) > 0 && parseInt(newInstallments) > 0 && (
-                        <div className="p-2 bg-blue-50 rounded border border-blue-200">
-                          <div className="text-xs text-blue-700 font-medium">
-                            Μηνιαία εισφορά: {(parseFloat(newGoal) / parseInt(newInstallments)).toFixed(2)}€
+                        <div className="p-3 bg-blue-50 rounded border border-blue-200">
+                          <div className="text-sm text-blue-700 font-medium mb-1">
+                            Προεπισκόπηση:
+                          </div>
+                          <div className="text-xs text-blue-600 space-y-1">
+                            <div>• Μηνιαία εισφορά: {(parseFloat(newGoal) / parseInt(newInstallments)).toFixed(2)}€</div>
+                            <div>• Συνολικό ποσό: {parseFloat(newGoal).toFixed(2)}€</div>
+                            <div>• Διάρκεια: {newInstallments} μήνες</div>
                           </div>
                         </div>
                       )}
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={handleSaveGoal} className="flex-1">
+                      <div className="flex gap-2 pt-2">
+                        <Button size="sm" onClick={handleSaveGoal} className="flex-1 bg-orange-600 hover:bg-orange-700">
                           <Check className="h-4 w-4 mr-1" />
                           Αποθήκευση
                         </Button>
@@ -1183,10 +1226,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           onClick={() => {
                             setEditingGoal(false);
                             setNewGoal((financialSummary?.reserve_fund_goal || 0).toString());
-                            setNewInstallments((financialSummary?.reserve_fund_duration_months || 12).toString());
+                            setNewInstallments((financialSummary?.reserve_fund_duration_months || 0).toString());
                           }}
+                          className="border-orange-200 text-orange-600 hover:bg-orange-50"
                         >
                           <X className="h-4 w-4" />
+                          Ακύρωση
                         </Button>
                       </div>
                     </div>
@@ -1199,8 +1244,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           {formatCurrency(financialSummary?.reserve_fund_goal || 0)}
                         </div>
                         {financialSummary?.reserve_fund_duration_months && (
-                          <div className="text-xs text-orange-600 space-y-1">
-                            <div>σε {financialSummary.reserve_fund_duration_months} δόσεις</div>
+                          <div className="text-xs text-orange-600 space-y-2">
+                            <div className="font-medium">σε {financialSummary.reserve_fund_duration_months} δόσεις</div>
                             {(() => {
                               const installments = getReserveFundInstallmentMonths();
                               const hasStarted = installments.length > 0 && !installments[0]?.isFuture;
@@ -1213,16 +1258,16 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                                     </div>
                                   )}
                                   {installments.length > 0 && (
-                                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 max-h-24 overflow-y-auto">
+                                    <div className="space-y-1 max-h-32 overflow-y-auto">
                                       {installments.map((installment, index) => (
                                         <div 
                                           key={index}
-                                          className={`text-xs ${
+                                          className={`text-xs px-2 py-1 rounded ${
                                             installment.isCurrent 
-                                              ? 'font-bold text-orange-800 bg-orange-100 px-1 rounded' 
+                                              ? 'font-bold text-orange-800 bg-orange-100 border border-orange-200' 
                                               : installment.isFuture 
-                                                ? 'text-gray-500 italic' 
-                                                : 'text-orange-600'
+                                                ? 'text-gray-500 italic bg-gray-50' 
+                                                : 'text-orange-600 bg-orange-50'
                                           }`}
                                           title={
                                             installment.isCurrent 
@@ -1244,34 +1289,73 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         )}
                       </div>
 
-                      {/* Current Amount */}
+                      {/* Monthly Installment Amount */}
                       <div className="space-y-1">
-                        <div className="text-xs text-orange-700 font-medium">Τρέχον:</div>
+                        <div className="text-xs text-orange-700 font-medium">Μηνιαία Δόση:</div>
                         <div className={`text-lg font-bold ${getProgressColors(reserveProgress).text}`}>
-                          {formatCurrency(financialSummary?.current_reserve || 0)}
+                          {formatCurrency(financialSummary?.reserve_fund_monthly_target || 0)}
                         </div>
-                        <div className={`text-xs font-semibold ${getProgressColors(reserveProgress).text}`}>
-                          {reserveProgress.toFixed(1)}% του στόχου
+                        <div className="text-xs text-gray-500">
+                          ανά διαμέρισμα (κατανομή ανά χιλιοστά)
                         </div>
                       </div>
 
                       {/* Progress Bar - Only show if goal > 0 */}
                       {(financialSummary?.reserve_fund_goal || 0) > 0 && (
                         <div className="space-y-2">
+                          <div className="flex justify-between text-xs text-orange-600">
+                            <span>Πρόοδος</span>
+                            <span>{Math.round(reserveProgress)}%</span>
+                          </div>
                           <div className={`w-full rounded-full h-2 ${getProgressColors(reserveProgress).bg}`}>
                             <div 
                               className={`h-2 rounded-full transition-all duration-300 ${getProgressColors(reserveProgress).fill}`}
                               style={{ width: `${Math.min(100, Math.max(0, reserveProgress))}%` }}
                             ></div>
                           </div>
+                          <div className="text-xs text-gray-500 text-center">
+                            {(() => {
+                              const startDate = financialSummary?.reserve_fund_start_date ? new Date(financialSummary.reserve_fund_start_date) : null;
+                              const monthlyTarget = financialSummary?.reserve_fund_monthly_target || 0;
+                              const currentDate = new Date();
+                              
+                              if (!startDate || monthlyTarget === 0) {
+                                return `${formatCurrency(0)} από ${formatCurrency(financialSummary?.reserve_fund_goal || 0)}`;
+                              }
+                              
+                              const monthsPassed = Math.max(0, 
+                                (currentDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                                (currentDate.getMonth() - startDate.getMonth())
+                              );
+                              
+                              const expectedContributions = monthsPassed * monthlyTarget;
+                              return `${formatCurrency(expectedContributions)} από ${formatCurrency(financialSummary?.reserve_fund_goal || 0)}`;
+                            })()}
+                          </div>
+                          <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-200">
+                            💡 Αυτόνομο ποσό - δεν περιλαμβάνει κοινοχρήστων
+                          </div>
                         </div>
                       )}
 
                       {/* Message when no goal is set */}
                       {(!financialSummary?.reserve_fund_goal || financialSummary.reserve_fund_goal === 0) && (
-                        <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                          <div className="text-xs text-gray-600 text-center">
-                            💡 Δεν έχει οριστεί στόχος αποθεματικού
+                        <div className="mt-3 p-3 bg-gray-50 rounded border border-gray-200">
+                          <div className="text-xs text-gray-600 text-center space-y-1">
+                            <div>💡 Δεν έχει οριστεί στόχος αποθεματικού</div>
+                            <div className="text-gray-500">Κάντε κλικ στο εικονίδιο επεξεργασίας για να ορίσετε στόχο</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Info about reserve fund autonomy */}
+                      {(financialSummary?.reserve_fund_goal || 0) > 0 && (
+                        <div className="mt-2 p-2 bg-orange-50 rounded border border-orange-200">
+                          <div className="text-xs text-orange-700 space-y-1">
+                            <div className="font-medium">ℹ️ Σχετικά με το Αποθεματικό:</div>
+                            <div>• Το αποθεματικό είναι αυτόνομο ποσό</div>
+                            <div>• Δεν περιλαμβάνει τα κοινοχρήστων</div>
+                            <div>• Η πρόοδος υπολογίζεται βάσει των εισφορών</div>
                           </div>
                         </div>
                       )}
@@ -1279,8 +1363,11 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   )}
 
                   {refreshingReserve && (
-                    <div className="mt-2 text-xs text-orange-500 italic">
-                      Ενημέρωση δεδομένων...
+                    <div className="mt-3 p-2 bg-orange-50 rounded border border-orange-200">
+                      <div className="text-xs text-orange-600 text-center flex items-center justify-center gap-2">
+                        <RefreshCw className="h-3 w-3 animate-spin" />
+                        Ενημέρωση δεδομένων...
+                      </div>
                     </div>
                   )}
                 </CardContent>

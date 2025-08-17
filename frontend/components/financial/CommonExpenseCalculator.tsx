@@ -465,8 +465,17 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
                 </Badge>
               )}
             </CardTitle>
-            <div className="text-sm text-muted-foreground">
-              Συνολικές δαπάνες: <span className="font-semibold">{formatAmount(totalExpenses)}€</span>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <div>
+                Συνολικές δαπάνες: <span className="font-semibold">{formatAmount(totalExpenses)}€</span>
+              </div>
+              {Object.values(shares).some((share: any) => share.reserve_fund_amount > 0) && (
+                <div>
+                  Συνολικό αποθεματικό: <span className="font-semibold text-blue-600">
+                    {formatAmount(Object.values(shares).reduce((sum: number, share: any) => sum + (share.reserve_fund_amount || 0), 0))}€
+                  </span>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -478,6 +487,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
                   <TableHead>Χιλιοστά</TableHead>
                   <TableHead>Προηγούμενο Υπόλοιπο</TableHead>
                   <TableHead>Μερίδιο Δαπανών</TableHead>
+                  <TableHead>Αποθεματικό</TableHead>
                   <TableHead>Συνολικό Οφειλόμενο</TableHead>
                   <TableHead>Κατάσταση</TableHead>
                 </TableRow>
@@ -494,6 +504,9 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
                       {formatAmount(share.previous_balance)}€
                     </TableCell>
                     <TableCell>{formatAmount(share.total_amount)}€</TableCell>
+                    <TableCell className="text-blue-600 font-medium">
+                      {share.reserve_fund_amount ? formatAmount(share.reserve_fund_amount) + '€' : '-'}
+                    </TableCell>
                     <TableCell className={`font-semibold ${
                       share.total_due < 0 ? 'text-red-600' : 'text-green-600'
                     }`}>

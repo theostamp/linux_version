@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Payment } from '@/types/financial';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { X, User, Home, Calendar, TrendingUp, TrendingDown, Printer, Filter, Trash2 } from 'lucide-react';
+import { X, User, Home, Calendar, TrendingUp, TrendingDown, Printer, Filter, Trash2, Euro } from 'lucide-react';
 
 interface Transaction {
   id: number;
@@ -564,7 +564,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
         {/* Content */}
         <div className={`p-6 overflow-y-auto ${showDateRange ? 'max-h-[calc(90vh-180px)]' : 'max-h-[calc(90vh-120px)]'}`}>
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
@@ -584,6 +584,23 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                 <p className="text-lg font-semibold text-orange-600">
                   {payment.monthly_due ? formatCurrency(payment.monthly_due) : '-'}
                 </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Euro className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium">Ποσό Εισπράξεως</span>
+                </div>
+                <p className="text-lg font-semibold text-green-600">
+                  {formatCurrency(payment.amount)}
+                </p>
+                {payment.reserve_fund_amount && payment.reserve_fund_amount > 0 && (
+                  <p className="text-xs text-blue-600">
+                    Αποθεματικό: {formatCurrency(payment.reserve_fund_amount)}
+                  </p>
+                )}
               </CardContent>
             </Card>
             

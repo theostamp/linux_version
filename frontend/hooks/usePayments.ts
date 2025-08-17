@@ -57,6 +57,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
         const formData = new FormData();
         formData.append('apartment', data.apartment_id.toString());
         formData.append('amount', data.amount.toString());
+        formData.append('reserve_fund_amount', (data.reserve_fund_amount || 0).toString());
         formData.append('date', data.date);
         formData.append('method', data.method);
         formData.append('payment_type', data.payment_type);
@@ -77,6 +78,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
         requestData = {
           apartment: data.apartment_id,
           amount: data.amount,
+          reserve_fund_amount: data.reserve_fund_amount || 0,
           date: data.date,
           method: data.method,
           payment_type: data.payment_type,

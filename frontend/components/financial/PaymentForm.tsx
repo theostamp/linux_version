@@ -17,7 +17,8 @@ import { ReceiptPrintModal } from './ReceiptPrintModal';
 
 const paymentFormSchema = z.object({
   apartment_id: z.number().min(1, 'Παρακαλώ επιλέξτε διαμέρισμα'),
-  amount: z.number().min(0.01, 'Το ποσό πρέπει να είναι μεγαλύτερο από 0'),
+  common_expense_amount: z.number().min(0.01, 'Το ποσό πρέπει να είναι μεγαλύτερο από 0'),
+  reserve_fund_amount: z.number().min(0, 'Το ποσό αποθεματικού δεν μπορεί να είναι αρνητικό').optional(),
   date: z.string().min(1, 'Παρακαλώ επιλέξτε ημερομηνία'),
   method: z.string().min(1, 'Παρακαλώ επιλέξτε μέθοδο εισπράξεως'),
   payment_type: z.string().min(1, 'Παρακαλώ επιλέξτε τύπο εισπράξεως'),
@@ -39,6 +40,7 @@ interface PaymentFormProps {
     tenant_name: string;
     occupant_name: string;
     is_rented: boolean;
+    participation_mills?: number;
   }>;
   onSuccess?: (payment: Payment) => void;
   onCancel?: () => void;
@@ -55,6 +57,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const { toast } = useToast();
   const { createPayment, isLoading } = usePayments();
   
+  // State for building data
+  const [buildingData, setBuildingData] = useState<{ reserve_contribution_per_apartment?: number } | null>(null);
+  
   const {
     register,
     handleSubmit,
@@ -66,7 +71,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
       apartment_id: initialData?.apartment_id || 0,
-      amount: initialData?.amount || 0,
+      common_expense_amount: initialData?.common_expense_amount || 0,
+      reserve_fund_amount: initialData?.reserve_fund_amount || 0,
       date: initialData?.date || new Date().toISOString().split('T')[0],
       method: initialData?.method || PaymentMethod.CASH,
       payment_type: initialData?.payment_type || PaymentType.COMMON_EXPENSE,
@@ -99,6 +105,23 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
   }, [createdPayment]);
   
+  // Fetch building data for reserve fund calculation
+  React.useEffect(() => {
+    const fetchBuildingData = async () => {
+      try {
+        const response = await fetch(`/api/buildings/${buildingId}/`);
+        if (response.ok) {
+          const data = await response.json();
+          setBuildingData(data);
+        }
+      } catch (error) {
+        console.error('Error fetching building data:', error);
+      }
+    };
+    
+    fetchBuildingData();
+  }, [buildingId]);
+  
   // Auto-fill payer name based on selected apartment and payer type
   React.useEffect(() => {
     if (selectedApartment && selectedPayerType) {
@@ -112,11 +135,30 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
   }, [selectedApartment, selectedPayerType, setValue]);
 
+  // Calculate default reserve fund amount based on participation mills
+  React.useEffect(() => {
+    if (selectedApartment && selectedApartment.participation_mills && buildingData) {
+      // Get building reserve contribution per apartment from building settings
+      const reserveContributionPerApartment = buildingData.reserve_contribution_per_apartment || 5; // Default 5€ if not set
+      const participationMills = selectedApartment.participation_mills;
+      
+      // Calculate reserve fund amount based on mills (assuming 1000 mills = 100%)
+      const reserveFundAmount = (participationMills / 1000) * reserveContributionPerApartment;
+      
+      // Set the calculated amount as default
+      setValue('reserve_fund_amount', reserveFundAmount);
+    }
+  }, [selectedApartment, buildingData, setValue]);
+
   const onSubmit = async (data: LocalPaymentFormData) => {
     try {
+      // Calculate total amount (common expenses + reserve fund)
+      const totalAmount = data.common_expense_amount + (data.reserve_fund_amount || 0);
+      
       const paymentData: PaymentFormData = {
         apartment_id: data.apartment_id,
-        amount: data.amount,
+        amount: totalAmount,
+        reserve_fund_amount: data.reserve_fund_amount || 0,
         date: data.date,
         method: data.method,
         payment_type: data.payment_type,
@@ -143,7 +185,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
         toast({
           title: 'Επιτυχία!',
-          description: 'Η είσπραξη καταχωρήθηκε επιτυχώς. Θέλετε να εκτυπώσετε απόδειξη;',
+          description: `Η είσπραξη καταχωρήθηκε επιτυχώς. Συνολικό ποσό: ${totalAmount}€${data.reserve_fund_amount && data.reserve_fund_amount > 0 ? ` (Αποθεματικό: ${data.reserve_fund_amount}€)` : ''}. Θέλετε να εκτυπώσετε απόδειξη;`,
           action: (
             <Button 
               size="sm" 
@@ -744,7 +786,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   Η είσπραξη #{(createdPayment || lastCreatedPayment)?.id} καταχωρήθηκε επιτυχώς για το διαμέρισμα {(createdPayment || lastCreatedPayment)?.apartment_number}
                 </p>
                 <p className="text-green-600 text-sm">
-                  Ποσό: <strong>{(createdPayment || lastCreatedPayment)?.amount}€</strong>
+                  Συνολικό Ποσό: <strong>{(createdPayment || lastCreatedPayment)?.amount}€</strong>
+                  {(createdPayment || lastCreatedPayment)?.reserve_fund_amount && (createdPayment || lastCreatedPayment)?.reserve_fund_amount > 0 && (
+                    <span> (Αποθεματικό: {(createdPayment || lastCreatedPayment)?.reserve_fund_amount}€)</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -909,31 +954,60 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           {/* Amount and Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Ποσό (€) *</Label>
+              <Label htmlFor="common_expense_amount">Ποσό Κοινόχρηστων (€) *</Label>
               <Input
-                id="amount"
+                id="common_expense_amount"
                 type="number"
                 step="0.01"
                 min="0"
-                {...register('amount', { valueAsNumber: true })}
+                {...register('common_expense_amount', { valueAsNumber: true })}
                 placeholder="0.00"
               />
-              {errors.amount && (
-                <p className="text-sm text-red-600">{errors.amount.message}</p>
+              {errors.common_expense_amount && (
+                <p className="text-sm text-red-600">{errors.common_expense_amount.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="payment_date">Ημερομηνία Εισπράξεως *</Label>
+              <Label htmlFor="reserve_fund_amount">Ποσό Αποθεματικού (€)</Label>
               <Input
-                id="payment_date"
-                type="date"
-                {...register('date')}
+                id="reserve_fund_amount"
+                type="number"
+                step="0.01"
+                min="0"
+                {...register('reserve_fund_amount', { valueAsNumber: true })}
+                placeholder="0.00"
               />
-              {errors.date && (
-                <p className="text-sm text-red-600">{errors.date.message}</p>
+              {errors.reserve_fund_amount && (
+                <p className="text-sm text-red-600">{errors.reserve_fund_amount.message}</p>
               )}
             </div>
+          </div>
+
+          {/* Total Amount Display */}
+          <div className="space-y-2">
+            <Label>Συνολικό Ποσό Εισπράξεως</Label>
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-lg font-semibold text-blue-900">
+                {(watch('common_expense_amount') || 0) + (watch('reserve_fund_amount') || 0)}€
+              </div>
+              <div className="text-sm text-blue-700">
+                Κοινόχρηστα: {watch('common_expense_amount') || 0}€ + Αποθεματικό: {watch('reserve_fund_amount') || 0}€
+              </div>
+            </div>
+          </div>
+
+          {/* Date */}
+          <div className="space-y-2">
+            <Label htmlFor="payment_date">Ημερομηνία Εισπράξεως *</Label>
+            <Input
+              id="payment_date"
+              type="date"
+              {...register('date')}
+            />
+            {errors.date && (
+              <p className="text-sm text-red-600">{errors.date.message}</p>
+            )}
           </div>
 
           {/* Payment Method and Type */}

@@ -49,8 +49,20 @@ def test_management_expenses():
             # Έλεγχος αποθεματικού
             print(f"   Τρέχον αποθεματικό: {building.current_reserve}€")
             
+            # Υπολογισμός μηνιαίας δόσης αποθεματικού από τις ρυθμίσεις του κτιρίου
+            reserve_fund_monthly = 0.0
+            if hasattr(building, 'reserve_fund_goal') and hasattr(building, 'reserve_fund_duration_months'):
+                if building.reserve_fund_goal and building.reserve_fund_duration_months:
+                    reserve_fund_monthly = float(building.reserve_fund_goal) / float(building.reserve_fund_duration_months)
+                    print(f"   Στόχος αποθεματικού: {building.reserve_fund_goal}€")
+                    print(f"   Διάρκεια συλλογής: {building.reserve_fund_duration_months} μήνες")
+                    print(f"   Μηνιαία δόση αποθεματικού: {reserve_fund_monthly:.2f}€")
+                else:
+                    print(f"   Δεν έχει οριστεί στόχος αποθεματικού")
+            else:
+                print(f"   Τα πεδία αποθεματικού δεν υπάρχουν στο μοντέλο")
+            
             # Υπολογισμός συνολικών μηνιαίων εξόδων (διαχείριση + αποθεματικό)
-            reserve_fund_monthly = 500.00  # Προσωρινό ποσό
             total_monthly_expenses = total_management_cost + reserve_fund_monthly
             
             print(f"   Συνολικά μηνιαία έξοδα: {total_monthly_expenses}€")
