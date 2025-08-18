@@ -1339,9 +1339,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                               return `${formatCurrency(expectedContributions)} από ${formatCurrency(financialSummary?.reserve_fund_goal || 0)}`;
                             })()}
                           </div>
-                          <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-200">
-                            💡 Αυτόνομο ποσό - δεν περιλαμβάνει κοινοχρήστων
-                          </div>
+
                         </div>
                       )}
 
@@ -1358,12 +1356,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       {/* Info about reserve fund autonomy */}
                       {(financialSummary?.reserve_fund_goal || 0) > 0 && (
                         <div className="mt-2 p-2 bg-orange-50 rounded border border-orange-200">
-                          <div className="text-xs text-orange-700 space-y-1">
-                            <div className="font-medium">ℹ️ Σχετικά με το Αποθεματικό:</div>
-                            <div>• Το αποθεματικό είναι αυτόνομο ποσό</div>
-                            <div>• Δεν περιλαμβάνει τα κοινοχρήστων</div>
-                            <div>• Η πρόοδος υπολογίζεται βάσει των εισφορών</div>
-                          </div>
+
                         </div>
                       )}
                     </div>

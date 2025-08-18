@@ -424,11 +424,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     const apartmentsCount = Object.keys(state.shares).length;
     
     return {
-      monthlyAmount: reserveFundInfo.monthlyAmount,
-      totalContribution: reserveFundInfo.totalContribution,
+      monthlyAmount: Number(reserveFundInfo.monthlyAmount || 0),
+      totalContribution: Number(reserveFundInfo.totalContribution || 0),
       displayText: reserveFundInfo.displayText,
-      goal: reserveFundInfo.goal,
-      duration: reserveFundInfo.duration,
+      goal: Number(reserveFundInfo.goal || 0),
+      duration: Number(reserveFundInfo.duration || 0),
       apartmentsCount: apartmentsCount,
       hasReserve: reserveFundInfo.totalContribution > 0
     };
@@ -507,47 +507,70 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   };
 
   const getReserveFundInfo = () => {
-    // Calculate monthly amount from reserve fund goal and duration
-    const reserveFundGoal = state.advancedShares?.reserve_fund_goal || 0;
-    const reserveFundDuration = state.advancedShares?.reserve_fund_duration || 1;
-    const stateReserveContribution = state.advancedShares?.reserve_contribution || 0;
-    const finalReserveContribution = stateReserveContribution > 0 ? stateReserveContribution : reserveContributionPerApartment;
-    
+    // Prefer backend-provided goal/duration; fallback to localStorage (from BuildingOverviewSection)
+    const goalFromState = Number(state.advancedShares?.reserve_fund_goal || 0);
+    const durationFromState = Number(state.advancedShares?.reserve_fund_duration || 0);
+    const perApartmentContribution = Number(state.advancedShares?.reserve_contribution || reserveContributionPerApartment || 0);
+    const apartmentsCount = Object.keys(state.shares).length;
+
+    const getStorageKey = (key: string) => `reserve_fund_${buildingId}_${key}`;
+    const getFromStorage = (key: string, defaultValue: any = null) => {
+      try {
+        const raw = typeof window !== 'undefined' ? localStorage.getItem(getStorageKey(key)) : null;
+        return raw ? JSON.parse(raw) : defaultValue;
+      } catch {
+        return defaultValue;
+      }
+    };
+
+    const savedGoal = Number(getFromStorage('goal', 0));
+    const savedDuration = Number(getFromStorage('duration_months', 0));
+    const savedMonthlyTarget = Number(getFromStorage('monthly_target', 0));
+    const savedStartDate = getFromStorage('start_date', null);
+
+    const reserveFundGoal = goalFromState > 0 ? goalFromState : savedGoal;
+    const reserveFundDuration = durationFromState > 0 ? durationFromState : (savedDuration > 0 ? savedDuration : 0);
+
     let monthlyAmount = 0;
     let totalContribution = 0;
     let displayText = '';
-    
+
     if (reserveFundGoal > 0 && reserveFundDuration > 0) {
       monthlyAmount = reserveFundGoal / reserveFundDuration;
-      totalContribution = reserveFundGoal; // Συνολική εισφορά = ο στόχος
+      totalContribution = reserveFundGoal; // συνολικός στόχος κτιρίου
       displayText = `Στόχος ${formatAmount(reserveFundGoal)}€ σε ${reserveFundDuration} δόσεις = ${formatAmount(monthlyAmount)}€`;
-    } else if (finalReserveContribution > 0) {
-      monthlyAmount = finalReserveContribution;
-      totalContribution = finalReserveContribution * Object.keys(state.shares).length;
+    } else if (savedMonthlyTarget > 0 && savedDuration > 0) {
+      // Χρήση αποθηκευμένου monthly target (goal/duration από Overview)
+      monthlyAmount = savedMonthlyTarget;
+      totalContribution = savedMonthlyTarget * savedDuration;
+      displayText = `Μηνιαία δόση ${formatAmount(monthlyAmount)}€ για ${savedDuration} μήνες`;
+    } else if (perApartmentContribution > 0) {
+      // Fallback: per-apartment contribution → συνολική μηνιαία δόση κτιρίου
+      monthlyAmount = perApartmentContribution * apartmentsCount;
+      totalContribution = monthlyAmount * (reserveFundDuration > 0 ? reserveFundDuration : 1);
       displayText = `Μηνιαία εισφορά αποθεματικού`;
     }
-    
-    // Calculate progress information
-    const currentDate = new Date();
-    const startDate = new Date('2025-08-01'); // Start date from building settings
-    const monthsElapsed = Math.max(0, (currentDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                                   (currentDate.getMonth() - startDate.getMonth()));
-    const monthsRemaining = Math.max(0, reserveFundDuration - monthsElapsed);
-    
-    // Get actual reserve collected from the API (separate from current balance)
-    const actualReserveCollected = state.advancedShares?.actual_reserve_collected || 0;
-    const progressPercentage = reserveFundGoal > 0 ? (actualReserveCollected / reserveFundGoal) * 100 : 0;
-    
-          return {
-        monthlyAmount,
-        totalContribution,
-        displayText,
-        goal: reserveFundGoal,
-        duration: reserveFundDuration,
-        monthsRemaining,
-        actualReserveCollected,
-        progressPercentage
-      };
+
+    // Progress / months remaining based on timeline
+    const now = new Date();
+    const startDate = savedStartDate ? new Date(savedStartDate) : now;
+    const monthsElapsed = Math.max(0, (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth()));
+    const monthsRemaining = Math.max(0, (reserveFundDuration > 0 ? reserveFundDuration : savedDuration) - monthsElapsed);
+
+    // Actual reserve collected (separate from current balance)
+    const actualReserveCollected = Number(state.advancedShares?.actual_reserve_collected || 0);
+    const progressPercentage = reserveFundGoal > 0 ? Math.min(100, Math.max(0, (actualReserveCollected / reserveFundGoal) * 100)) : 0;
+
+    return {
+      monthlyAmount,
+      totalContribution,
+      displayText,
+      goal: reserveFundGoal,
+      duration: (reserveFundDuration > 0 ? reserveFundDuration : savedDuration),
+      monthsRemaining,
+      actualReserveCollected,
+      progressPercentage
+    };
   };
 
   const expenseBreakdown = calculateExpenseBreakdown();
@@ -560,12 +583,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   
 
   
-  // Calculate total expenses - οι δαπάνες διαχείρισης είναι ξεχωριστές από τις γενικές δαπάνες
-  const basicExpenses = expenseBreakdown.common + expenseBreakdown.elevator + expenseBreakdown.heating + expenseBreakdown.other + expenseBreakdown.coownership;
-  // Όταν υπάρχουν μόνο δαπάνες διαχείρισης, το σύνολο είναι μόνο οι δαπάνες διαχείρισης
+  // Calculate total expenses - εμφανιστικό σύνολο modal
+  const basicExpenses = Number(expenseBreakdown.common || 0) + Number(expenseBreakdown.elevator || 0) + Number(expenseBreakdown.heating || 0) + Number(expenseBreakdown.other || 0) + Number(expenseBreakdown.coownership || 0);
   const hasOtherExpenses = expenseBreakdown.heating > 0 || expenseBreakdown.elevator > 0 || expenseBreakdown.other > 0 || expenseBreakdown.coownership > 0;
-  // Το σύνολο δαπανών είναι ίσο με τις βασικές δαπάνες + δαπάνες διαχείρισης
-  const totalExpenses = basicExpenses + managementFeeInfo.totalFee; // Χωρίς αποθεματικό
+  // Το σύνολο δαπανών = βασικές + διαχείριση + (αποθεματικό αν ισχύει)
+  const totalExpenses = Number(basicExpenses) + Number(managementFeeInfo.totalFee || 0) + (hasOtherExpenses ? Number(reserveFundDetails.monthlyAmount || 0) : 0);
 
   const handlePrint = () => {
     window.print();
@@ -1353,89 +1375,79 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   };
 
   const validateData = () => {
-    // Υπολογισμός συνολικών δαπανών ενοικιαστών από τον πίνακα
-    let tenantExpensesTotal = 0;
+    // Συγκεντρωτικά αθροίσματα ανά κατηγορία από τα rows (με σωστό χειρισμό διαχείρισης)
+    let sumCommonPure = 0; // Γενικά χωρίς διαχείριση
+    let sumElevator = 0;
+    let sumHeating = 0;
+    let sumOther = 0; // Ισόποσες/λοιπές
+    let sumCoowner = 0; // Συνιδιοκτησίας/ατομικές
+    let sumManagement = 0; // Διαχείριση (ισόποσα)
+    let sumReserve = 0; // Αποθεματικό (ανά χιλιοστά)
+    
     Object.values(state.shares).forEach((share: any) => {
-      const participationMills = toNumber(share.participation_mills);
-      const apartmentData = aptWithFinancial.find(apt => apt.id === share.apartment_id);
-      const commonMills = apartmentData?.participation_mills ?? participationMills;
-      const elevatorMills = apartmentData?.participation_mills ?? participationMills;
-      const heatingMills = apartmentData?.heating_mills ?? participationMills;
-      
-      // Χρήση πραγματικών δεδομένων από το backend breakdown
       const breakdown = share.breakdown || {};
-      // Το backend περιλαμβάνει το management_fee μέσα στα general_expenses, οπότε το αφαιρούμε
-      const managementFeeInBreakdown = toNumber(breakdown.management_fee || 0);
-      const commonAmount = Math.max(0, toNumber(breakdown.general_expenses || 0) - managementFeeInBreakdown);
-      const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
-      const heatingAmount = toNumber(breakdown.heating_expenses || 0);
-      const otherAmount = toNumber(breakdown.equal_share_expenses || 0);
-      const coownershipAmount = toNumber(breakdown.individual_expenses || 0);
+      const mgmt = toNumber(breakdown.management_fee || 0);
+      const general = toNumber(breakdown.general_expenses || 0);
+      const commonPure = Math.max(0, general - mgmt);
+      const elevator = toNumber(breakdown.elevator_expenses || 0);
+      const heating = toNumber(breakdown.heating_expenses || 0);
+      const other = toNumber(breakdown.equal_share_expenses || 0);
+      const coowner = toNumber(breakdown.individual_expenses || 0);
+      const reserve = toNumber(breakdown.reserve_fund_contribution || 0);
       
-      // Συνολικές δαπάνες ενοικιαστών (συμπεριλαμβανομένων των δαπανών διαχείρισης που είναι ήδη στο general_expenses)
-      tenantExpensesTotal += commonAmount + elevatorAmount + heatingAmount + otherAmount + coownershipAmount;
+      sumManagement += mgmt;
+      sumCommonPure += commonPure;
+      sumElevator += elevator;
+      sumHeating += heating;
+      sumOther += other;
+      sumCoowner += coowner;
+      sumReserve += reserve;
     });
     
-    // Υπολογισμός συνολικών δαπανών ιδιοκτητών (προς το παρόν 0)
-    const ownerExpensesTotal = 0;
+    // Βασικές δαπάνες (όπως εμφανίζονται στο modal χωρίς αποθεματικό): κοινόχρηστα καθαρά + ανελκυστήρας + θέρμανση + λοιπά + συνιδιοκτησίας
+    const basicFromRows = sumCommonPure + sumElevator + sumHeating + sumOther + sumCoowner;
+    const basicFromBackend = expenseBreakdown.common + expenseBreakdown.elevator + expenseBreakdown.heating + expenseBreakdown.other + expenseBreakdown.coownership;
     
-    // Υπολογισμός συνολικού πληρωτέου ποσού (οι δαπάνες διαχείρισης είναι ήδη συμπεριλαμβανμένες)
-    let payableTotal = 0;
-    Object.values(state.shares).forEach((share: any) => {
-      const participationMills = toNumber(share.participation_mills);
-      const apartmentData = aptWithFinancial.find(apt => apt.id === share.apartment_id);
-      const commonMills = apartmentData?.participation_mills ?? participationMills;
-      const elevatorMills = apartmentData?.participation_mills ?? participationMills;
-      const heatingMills = apartmentData?.heating_mills ?? participationMills;
-      
-      // Χρήση πραγματικών δεδομένων από το backend breakdown
-      const breakdown = share.breakdown || {};
-      // Το backend περιλαμβάνει το management_fee μέσα στα general_expenses, οπότε το αφαιρούμε
-      const managementFeeInBreakdown = toNumber(breakdown.management_fee || 0);
-      const commonAmount = Math.max(0, toNumber(breakdown.general_expenses || 0) - managementFeeInBreakdown);
-      const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
-      const heatingAmount = toNumber(breakdown.heating_expenses || 0);
-      const otherAmount = toNumber(breakdown.equal_share_expenses || 0);
-      const coownershipAmount = toNumber(breakdown.individual_expenses || 0);
-      
-      // Συνολικό πληρωτέο = δαπάνες ενοικιαστών (οι δαπάνες διαχείρισης είναι ήδη συμπεριλαμβανμένες στο general_expenses)
-      const totalWithFees = commonAmount + elevatorAmount + heatingAmount + otherAmount + coownershipAmount;
-      
-      payableTotal += totalWithFees;
-    });
+    // Δαπάνες ενοικιαστών (για εμφάνιση): κοινόχρηστα καθαρά + ανελκυστήρας + θέρμανση + διαχείριση
+    const tenantExpensesTotal = sumCommonPure + sumElevator + sumHeating + sumManagement;
+    // Δαπάνες ιδιοκτητών (για εμφάνιση): ισόποσες + συνιδιοκτησίας
+    const ownerExpensesTotal = sumOther + sumCoowner;
+    // Πληρωτέο (με αποθεματικό): ίσο με το σύνολο που εμφανίζεται στο modal
+    const monthlyReserveTarget = hasOtherExpenses ? reserveFundDetails.monthlyAmount : 0;
+    const effectiveReserve = (sumReserve && sumReserve > 0) ? sumReserve : monthlyReserveTarget;
+    const payableTotal = tenantExpensesTotal + ownerExpensesTotal + effectiveReserve;
     
-    // Χρησιμοποιούμε το ίδιο totalExpenses που χρησιμοποιείται στο footer και στον πίνακα
-    const totalExpenses = basicExpenses + managementFeeInfo.totalFee; // Χωρίς αποθεματικό
+    // Σύνολο δαπανών στο modal: βασικές + διαχείριση + (αποθεματικό αν υπάρχει)
+    const totalExpenses = Number(basicExpenses) + Number(managementFeeInfo.totalFee || 0) + Number(effectiveReserve || 0);
     
-    // Έλεγχος αν τα ποσά ταιριάζουν
+    // Έλεγχοι συνέπειας
     const differences: string[] = [];
-    const tolerance = 0.01; // Ανοχή 1 λεπτού για στρογγυλοποιήσεις
+    const tolerance = 0.01;
     
-    // Έλεγχος 1: Έλεγχος αν οι δαπάνες ενοικιαστών είναι σωστές
-    // Χρησιμοποιούμε τα δεδομένα από τον πίνακα (backend breakdown) για συνοπτικότητα
-    // Οι δαπάνες διαχείρισης είναι ήδη συμπεριλαμβανμένες στο backend breakdown.general_expenses
-    // Το backend επιστρέφει το management fee ανά διαμέρισμα, οπότε το σύνολο είναι managementFeeInfo.totalFee
-    const expectedTenantExpenses = managementFeeInfo.totalFee; // Χρησιμοποιούμε το συνολικό management fee
-    if (Math.abs(tenantExpensesTotal - expectedTenantExpenses) > tolerance) {
-      differences.push(`Δαπάνες Ενοικιαστών (${formatAmount(tenantExpensesTotal)}€) ≠ Αναμενόμενες Δαπάνες (${formatAmount(expectedTenantExpenses)}€)`);
+    // 1) Βασικές δαπάνες: backend vs rows
+    if (Math.abs(basicFromRows - basicFromBackend) > tolerance) {
+      differences.push(`Βασικές Δαπάνες (rows: ${formatAmount(basicFromRows)}€) ≠ Backend (${formatAmount(basicFromBackend)}€)`);
     }
     
-    // Έλεγχος 2: Έλεγχος αν το πληρωτέο ποσό είναι σωστό
-    // Το πληρωτέο ποσό είναι ίσο με τις δαπάνες ενοικιαστών
-    const expectedPayableTotal = managementFeeInfo.totalFee; // Χρησιμοποιούμε το συνολικό management fee
-    if (Math.abs(payableTotal - expectedPayableTotal) > tolerance) {
-      differences.push(`Πληρωτέο Ποσό (${formatAmount(payableTotal)}€) ≠ Αναμενόμενο Ποσό (${formatAmount(expectedPayableTotal)}€)`);
+    // 2) Διαχείριση: άθροισμα ανά διαμέρισμα vs συνολικό
+    if (Math.abs(sumManagement - managementFeeInfo.totalFee) > tolerance) {
+      differences.push(`Δαπάνες Διαχείρισης (rows: ${formatAmount(sumManagement)}€) ≠ Αναμενόμενες (${formatAmount(managementFeeInfo.totalFee)}€)`);
     }
     
-    // Έλεγχος 3: Έλεγχος αν το σύνολο δαπανών είναι σωστό
-    // Το σύνολο δαπανών πρέπει να ταιριάζει με το σύνολο του πίνακα
-    const expectedTotalExpenses = totalExpenses; // Χρησιμοποιούμε το σύνολο δαπανών που εμφανίζεται στο display
-    if (Math.abs(totalExpenses - expectedTotalExpenses) > tolerance) {
-      differences.push(`Σύνολο Δαπανών (${formatAmount(totalExpenses)}€) ≠ Αναμενόμενες Δαπάνες (${formatAmount(expectedTotalExpenses)}€)`);
+    // 3) Σύνολο δαπανών modal: rows vs display (βασικές + διαχείριση)
+    const totalFromRows = basicFromRows + sumManagement;
+    if (Math.abs(totalFromRows - totalExpenses) > tolerance) {
+      differences.push(`Σύνολο Δαπανών (rows: ${formatAmount(totalFromRows)}€) ≠ Εμφανιζόμενο (${formatAmount(totalExpenses)}€)`);
+    }
+    
+    // 4) Αποθεματικό: έλεγχος μόνο όταν όντως έχει κατανεμηθεί στα rows
+    // Αν τα rows δεν έχουν αποθεματικό (sumReserve=0), δεν το θεωρούμε απόκλιση ακόμη κι αν υπάρχει θεωρητικός μηνιαίος στόχος
+    if (sumReserve > 0 && monthlyReserveTarget > 0 && Math.abs(sumReserve - monthlyReserveTarget) > tolerance) {
+      differences.push(`Αποθεματικό (rows: ${formatAmount(sumReserve)}€) ≠ Υπολογισμένος στόχος (${formatAmount(monthlyReserveTarget)}€)`);
     }
     
     const isValid = differences.length === 0;
-    const message = isValid 
+    const message = isValid
       ? '✅ Όλα τα ποσά είναι σωστά!'
       : `❌ Βρέθηκαν ${differences.length} διαφοροποιήσεις`;
     

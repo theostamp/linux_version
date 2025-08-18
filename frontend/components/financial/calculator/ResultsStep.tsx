@@ -853,7 +853,21 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const getSummaryStats = () => {
     const shares = Object.values(state.shares);
     const totalApartments = shares.length;
-    const totalAmount = state.totalExpenses;
+
+    // Reserve handling: if reserve is already included in shares, don't add again.
+    const reserveIncludedInShares = shares.some((s: any) => Number((s.breakdown || {}).reserve_fund_contribution || 0) > 0);
+    const advancedTotals = (state.advancedShares && state.advancedShares.expense_totals) || null;
+    const hasOtherExpenses = advancedTotals
+      ? (Number(advancedTotals.heating || 0) > 0 ||
+         Number(advancedTotals.elevator || 0) > 0 ||
+         Number(advancedTotals.equal_share || 0) > 0 ||
+         Number(advancedTotals.individual || 0) > 0)
+      : false;
+    const reserveMonthlyCandidate = Number(state.advancedShares?.reserve_contribution || 0); // building-level monthly
+    const reserveExtra = !reserveIncludedInShares && hasOtherExpenses ? reserveMonthlyCandidate : 0;
+
+    const baseTotalAmount = Number(state.totalExpenses || 0);
+    const totalAmount = baseTotalAmount + reserveExtra;
     const averagePerApartment = totalApartments > 0 ? totalAmount / totalApartments : 0;
     const totalDue = shares.reduce((sum: number, share: any) => sum + (share.total_due || 0), 0);
     const totalCredits = shares.reduce((sum: number, share: any) => sum + Math.max(0, share.total_due || 0), 0);
@@ -907,8 +921,22 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       return effectiveDue < 0 ? sum + Math.abs(effectiveDue) : sum;
     }, 0);
 
-    const overallCoveragePercentage = totalMonthlyObligations > 0
-      ? Math.min(100, Math.max(0, ((totalMonthlyObligations - totalPendingAmount) / totalMonthlyObligations) * 100))
+    // Include reserve in monthly obligations if not already in shares
+    const reserveIncludedInShares = shares.some((s: any) => Number((s.breakdown || {}).reserve_fund_contribution || 0) > 0);
+    const advancedTotals = (state.advancedShares && state.advancedShares.expense_totals) || null;
+    const hasOtherExpenses = advancedTotals
+      ? (Number(advancedTotals.heating || 0) > 0 ||
+         Number(advancedTotals.elevator || 0) > 0 ||
+         Number(advancedTotals.equal_share || 0) > 0 ||
+         Number(advancedTotals.individual || 0) > 0)
+      : false;
+    const reserveMonthlyCandidate = Number(state.advancedShares?.reserve_contribution || 0);
+    const reserveExtra = !reserveIncludedInShares && hasOtherExpenses ? reserveMonthlyCandidate : 0;
+
+    const overallMonthlyObligationsWithReserve = totalMonthlyObligations + reserveExtra;
+
+    const overallCoveragePercentage = overallMonthlyObligationsWithReserve > 0
+      ? Math.min(100, Math.max(0, ((overallMonthlyObligationsWithReserve - totalPendingAmount) / overallMonthlyObligationsWithReserve) * 100))
       : 0;
     
     return {
@@ -916,7 +944,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       behindApartments,
       criticalApartments,
       totalPendingAmount,
-      totalMonthlyObligations,
+      totalMonthlyObligations: overallMonthlyObligationsWithReserve,
       overallCoveragePercentage
     };
   };
