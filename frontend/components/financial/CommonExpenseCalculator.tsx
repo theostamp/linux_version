@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { useCommonExpenses } from '@/hooks/useCommonExpenses';
 import { ApartmentShare } from '@/types/financial';
 import { toast } from 'sonner';
 import { Calculator, FileText, Send, Zap, Calendar, Info } from 'lucide-react';
+import { usePayments } from '@/hooks/usePayments';
 
 interface CommonExpenseCalculatorProps {
   buildingId: number;
@@ -28,6 +29,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
   const [advancedShares, setAdvancedShares] = useState<any>(null);
   
   const { calculateShares, calculateAdvancedShares, issueCommonExpenses } = useCommonExpenses();
+  const { payments } = usePayments(buildingId, selectedMonth);
   
   // Helper function to convert YYYY-MM format to Greek month name
   const formatSelectedMonth = (monthString: string) => {
@@ -296,6 +298,20 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
   const formatAmount = (amount: number) => {
     return amount.toFixed(2);
   };
+
+  // Derived metrics for summary cards
+  const apartmentsCount = useMemo(() => Object.keys(shares).length, [shares]);
+  const reservePlanned = useMemo(() => {
+    return Object.values(shares).reduce((sum: number, s: any) => sum + (s.reserve_fund_amount || 0), 0);
+  }, [shares]);
+  const paymentsCommonTotal = useMemo(() => {
+    return (payments || []).reduce((sum: number, p: any) => sum + (p.payment_type === 'common_expense' ? (p.amount || 0) : 0), 0);
+  }, [payments]);
+  const paymentsReserveTotal = useMemo(() => {
+    return (payments || []).reduce((sum: number, p: any) => sum + (p.payment_type === 'reserve_fund' ? (p.amount || 0) : 0), 0);
+  }, [payments]);
+  const cashNow = useMemo(() => paymentsCommonTotal + paymentsReserveTotal, [paymentsCommonTotal, paymentsReserveTotal]);
+  const reserveRemaining = useMemo(() => Math.max(0, reservePlanned - paymentsReserveTotal), [reservePlanned, paymentsReserveTotal]);
   
   const getDistributionTypeLabel = (type: string) => {
     switch (type) {
@@ -465,17 +481,27 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
                 </Badge>
               )}
             </CardTitle>
-            <div className="text-sm text-muted-foreground space-y-1">
-              <div>
-                Συνολικές δαπάνες: <span className="font-semibold">{formatAmount(totalExpenses)}€</span>
+            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="p-3 rounded-lg border bg-white">
+                <div className="text-xs text-gray-600">Κοινοχρήστες Δαπάνες (χωρίς αποθεματικό)</div>
+                <div className="text-xl font-bold text-blue-700">{formatAmount(totalExpenses)}€</div>
+                <div className="text-xs text-gray-500">Διαμερίσματα: {apartmentsCount}</div>
               </div>
-              {Object.values(shares).some((share: any) => share.reserve_fund_amount > 0) && (
-                <div>
-                  Συνολικό αποθεματικό: <span className="font-semibold text-blue-600">
-                    {formatAmount(Object.values(shares).reduce((sum: number, share: any) => sum + (share.reserve_fund_amount || 0), 0))}€
-                  </span>
-                </div>
-              )}
+              <div className="p-3 rounded-lg border bg-white">
+                <div className="text-xs text-gray-600">Αποθεματικό</div>
+                <div className="text-xl font-bold text-teal-700">{formatAmount(paymentsReserveTotal)}€</div>
+                <div className="text-xs text-gray-500">Στόχος: {formatAmount(reservePlanned)}€ • Υπόλοιπο: {formatAmount(reserveRemaining)}€</div>
+              </div>
+              <div className="p-3 rounded-lg border bg-white">
+                <div className="text-xs text-gray-600">Εισπράξεις Κοινοχρήστων (χωρίς αποθεματικό)</div>
+                <div className="text-xl font-bold text-green-700">{formatAmount(paymentsCommonTotal)}€</div>
+                <div className="text-xs text-gray-500">Περίοδος: {selectedMonth ? new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' }) : '-'}</div>
+              </div>
+              <div className="p-3 rounded-lg border bg-white">
+                <div className="text-xs text-gray-600">Ταμείο (εισπραχθέντα με αποθεματικό)</div>
+                <div className="text-xl font-bold text-purple-700">{formatAmount(cashNow)}€</div>
+                <div className="text-xs text-gray-500">Κοιν.: {formatAmount(paymentsCommonTotal)}€ • Αποθ.: {formatAmount(paymentsReserveTotal)}€</div>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
