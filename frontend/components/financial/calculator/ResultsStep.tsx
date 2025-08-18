@@ -24,13 +24,16 @@ import {
   Users,
   AlertTriangle,
   RefreshCw,
-  X
+  X,
+  Info
 } from 'lucide-react';
 import { CalculatorState } from './CalculatorWizard';
 import { useCommonExpenses } from '@/hooks/useCommonExpenses';
 import { toast } from 'sonner';
 import { CommonExpenseModal } from './CommonExpenseModal';
 import { useApartmentsWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
+import { api } from '@/lib/api';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface ResultsStepProps {
   state: CalculatorState;
@@ -53,6 +56,16 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [calculationProgress, setCalculationProgress] = useState(0);
   const [calculationSuccess, setCalculationSuccess] = useState(false);
+
+  // Dashboard summary (up to today)
+  interface DashboardSummary {
+    current_reserve: number;
+    current_obligations: number;
+    last_calculation_date?: string;
+    apartments_count?: number;
+  }
+  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
   // Load occupants (owner/tenant) info to show consistent names
   const { apartments: aptWithFinancial, building: buildingData } = useApartmentsWithFinancialData(buildingId);
@@ -88,6 +101,32 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       </div>
     );
   };
+
+  // Fetch up-to-today summary once per building
+  useEffect(() => {
+    let mounted = true;
+    const fetchSummary = async () => {
+      try {
+        setIsSummaryLoading(true);
+        const params = new URLSearchParams();
+        params.append('building_id', String(buildingId));
+        const { data } = await api.get(`/financial/dashboard/summary/?${params.toString()}`);
+        if (!mounted) return;
+        setDashboardSummary({
+          current_reserve: Number(data.current_reserve || 0),
+          current_obligations: Number(data.current_obligations || 0),
+          last_calculation_date: data.last_calculation_date,
+          apartments_count: data.apartments_count
+        });
+      } catch (err) {
+        // Silent fail; UI will fallback to 0
+      } finally {
+        if (mounted) setIsSummaryLoading(false);
+      }
+    };
+    fetchSummary();
+    return () => { mounted = false; };
+  }, [buildingId]);
 
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('el-GR', {
@@ -831,27 +870,45 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const getPaymentAnalytics = () => {
     const shares = Object.values(state.shares);
     const totalApartments = shares.length;
+    const graceDay = (buildingData?.grace_day_of_month as number) || 15;
+    const now = new Date();
+    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const selectedMonthStr = state.customPeriod?.startDate?.substring(0, 7) || currentMonthStr;
+    const isCurrentMonth = selectedMonthStr === currentMonthStr;
+    const isPastGracePeriod = isCurrentMonth ? now.getDate() > graceDay : true;
+
+    // Helper: effective due for classification respecting grace period
+    const getEffectiveTotalDue = (share: any): number => {
+      const totalDue = share.total_due || 0; // negative means owes
+      const previousBalance = share.previous_balance || 0; // negative means owes
+      // Before/On grace day of current month: count only previous arrears
+      if (!isPastGracePeriod) {
+        return Math.min(0, previousBalance);
+      }
+      // After grace day or other months: count full due
+      return Math.min(0, totalDue);
+    };
     
     // Κατηγοριοποίηση διαμερισμάτων βάσει οφειλών
-    const currentApartments = shares.filter((share: any) => (share.total_due || 0) >= 0).length;
+    const currentApartments = shares.filter((share: any) => getEffectiveTotalDue(share) >= 0).length;
     const behindApartments = shares.filter((share: any) => {
-      const totalDue = share.total_due || 0;
-      return totalDue < 0 && Math.abs(totalDue) <= (share.total_amount || 0) * 2; // Έως 2 μήνες καθυστέρηση
+      const effectiveDue = getEffectiveTotalDue(share);
+      return effectiveDue < 0 && Math.abs(effectiveDue) <= (share.total_amount || 0) * 2; // Έως 2 μήνες καθυστέρηση
     }).length;
     const criticalApartments = shares.filter((share: any) => {
-      const totalDue = share.total_due || 0;
-      return totalDue < 0 && Math.abs(totalDue) > (share.total_amount || 0) * 2; // Πάνω από 2 μήνες καθυστέρηση
+      const effectiveDue = getEffectiveTotalDue(share);
+      return effectiveDue < 0 && Math.abs(effectiveDue) > (share.total_amount || 0) * 2; // Πάνω από 2 μήνες καθυστέρηση
     }).length;
     
     // Υπολογισμός συνολικής κάλυψης
     const totalMonthlyObligations = shares.reduce((sum: number, share: any) => sum + (share.total_amount || 0), 0);
     const totalPendingAmount = shares.reduce((sum: number, share: any) => {
-      const totalDue = share.total_due || 0;
-      return sum + Math.max(0, Math.abs(totalDue));
+      const effectiveDue = getEffectiveTotalDue(share);
+      return effectiveDue < 0 ? sum + Math.abs(effectiveDue) : sum;
     }, 0);
-    
-    const overallCoveragePercentage = totalApartments > 0 
-      ? ((currentApartments / totalApartments) * 100)
+
+    const overallCoveragePercentage = totalMonthlyObligations > 0
+      ? Math.min(100, Math.max(0, ((totalMonthlyObligations - totalPendingAmount) / totalMonthlyObligations) * 100))
       : 0;
     
     return {
@@ -987,7 +1044,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="bg-white p-3 sm:p-4 rounded-lg border animate-pulse">
                 <div className="flex items-center gap-2 mb-2">
@@ -1268,16 +1325,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 {formatAmount(stats.averagePerApartment)}€
               </div>
             </div>
-            
-            <div className="bg-white p-3 sm:p-4 rounded-lg border">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-4 w-4 text-purple-600" />
-                <span className="font-semibold text-sm sm:text-base text-gray-800">Συνολικό Οφειλόμενο</span>
-              </div>
-              <div className="text-xl sm:text-2xl font-bold text-purple-600">
-                {formatAmount(stats.totalDue)}€
-              </div>
-            </div>
+            {/* Removed duplicate debt card to avoid confusion; detailed debts appear in Analytics below */}
           </div>
         </CardContent>
       </Card>
@@ -1376,14 +1424,23 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             <div className="bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-200 col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="h-4 w-4 text-blue-600" />
-                <span className="font-semibold text-xs sm:text-sm text-blue-800">Συνολική Κάλυψη</span>
+                <span className="font-semibold text-xs sm:text-sm text-blue-800">Κάλυψη Μηνιαίων Υποχρεώσεων</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button aria-label="Πληροφορίες" className="p-1 rounded hover:bg-blue-100">
+                      <Info className="h-3.5 w-3.5 text-blue-600" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 text-xs">
+                    Υπολογίζεται ως: (Μηνιαίες Υποχρεώσεις − Συνολικές Εκκρεμότητες) / Μηνιαίες Υποχρεώσεις.
+                    Αφορά τον επιλεγμένο μήνα και δείχνει το ποσοστό εξόφλησης· ενδέχεται να επηρεάζεται από προϋπάρχουσες οφειλές.
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="text-xl sm:text-2xl font-bold text-blue-700">
                 {analytics.overallCoveragePercentage.toFixed(1)}%
               </div>
-              <div className="text-xs sm:text-sm text-blue-600">
-                των υποχρεώσεων
-              </div>
+              <div className="text-xs sm:text-sm text-blue-600">ποσοστό εξόφλησης του τρέχοντος μήνα (καθυστέρηση μετά τις 15)</div>
             </div>
           </div>
 
@@ -1393,6 +1450,17 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               <div className="flex items-center gap-2 mb-2">
                 <Euro className="h-4 w-4 text-red-600" />
                 <span className="font-semibold text-gray-800">Συνολικές Εκκρεμότητες</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button aria-label="Πληροφορίες" className="p-1 rounded hover:bg-gray-100">
+                      <Info className="h-3.5 w-3.5 text-red-600" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 text-xs">
+                    Άθροισμα των αρνητικών υπολοίπων (οφειλών) για την επιλεγμένη περίοδο.
+                    Πριν/στην 15η του τρέχοντος μήνα μετράμε μόνο προϋπάρχουσες οφειλές· μετά την 15η μετράμε και τον τρέχοντα μήνα.
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="text-xl font-bold text-red-700">
                 {formatAmount(analytics.totalPendingAmount)}€
@@ -1406,12 +1474,71 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               <div className="flex items-center gap-2 mb-2">
                 <Calculator className="h-4 w-4 text-blue-600" />
                 <span className="font-semibold text-gray-800">Μηνιαίες Υποχρεώσεις</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button aria-label="Πληροφορίες" className="p-1 rounded hover:bg-gray-100">
+                      <Info className="h-3.5 w-3.5 text-blue-600" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 text-xs">
+                    Σύνολο μηνιαίου κόστους όλων των διαμερισμάτων (άθροισμα των μεριδίων δαπανών του μήνα).
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="text-xl font-bold text-blue-700">
                 {formatAmount(analytics.totalMonthlyObligations)}€
               </div>
               <div className="text-sm text-gray-600 mt-1">
                 Συνολικό μηνιαίο κόστος όλων των διαμερισμάτων
+              </div>
+            </div>
+          </div>
+
+          {/* Up-to-date Overview */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-4">
+            <div className="bg-white p-4 rounded-lg border">
+              <div className="flex items-center gap-2 mb-2">
+                <Euro className="h-4 w-4 text-green-600" />
+                <span className="font-semibold text-gray-800">Τρέχον Αποθεματικό</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button aria-label="Πληροφορίες" className="p-1 rounded hover:bg-gray-100">
+                      <Info className="h-3.5 w-3.5 text-green-600" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 text-xs">
+                    Διαφορά συνολικών πληρωμών και συνολικών δαπανών έως σήμερα (όχι μόνο του μήνα).
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="text-xl font-bold text-green-700">
+                {formatAmount(dashboardSummary?.current_reserve || 0)}€
+              </div>
+              <div className="text-sm text-gray-600 mt-1">
+                Διαφορά πληρωμών - δαπανών έως σήμερα
+              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-lg border">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <span className="font-semibold text-gray-800">Συνολικές Υποχρεώσεις</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button aria-label="Πληροφορίες" className="p-1 rounded hover:bg-gray-100">
+                      <Info className="h-3.5 w-3.5 text-red-600" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 text-xs">
+                    Υφιστάμενες οφειλές από αρνητικά υπόλοιπα διαμερισμάτων + ανέκδοτες δαπάνες (έως σήμερα).
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="text-xl font-bold text-red-700">
+                {formatAmount(dashboardSummary?.current_obligations || 0)}€
+              </div>
+              <div className="text-sm text-gray-600 mt-1">
+                Υφιστάμενες οφειλές + ανέκδοτες δαπάνες έως σήμερα
               </div>
             </div>
           </div>

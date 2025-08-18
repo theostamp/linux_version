@@ -1485,7 +1485,22 @@ export async function fetchApartmentsWithFinancialData(buildingId: number): Prom
       url: `/financial/building/${buildingId}/apartments-summary/`
     });
     
-    return data.results || data || [];
+    console.log('[API CALL] Successfully fetched apartments with financial data:', {
+      dataType: typeof data,
+      isArray: Array.isArray(data),
+      length: Array.isArray(data) ? data.length : 'N/A',
+      sampleData: Array.isArray(data) && data.length > 0 ? data[0] : 'No data'
+    });
+    
+    const result = data.results || data || [];
+    console.log('[API CALL] Processed result:', {
+      resultType: typeof result,
+      isArray: Array.isArray(result),
+      length: Array.isArray(result) ? result.length : 'N/A',
+      sampleResult: Array.isArray(result) && result.length > 0 ? result[0] : 'No data'
+    });
+    
+    return result;
   } catch (error: any) {
     // If the optimized endpoint doesn't exist, fall back to individual calls with throttling
     console.warn('Batch endpoint not available, using fallback with throttling');
@@ -1542,6 +1557,8 @@ async function fetchApartmentsWithFinancialDataFallback(buildingId: number): Pro
           building_id: apartment.building,
           building_name: apartment.building_name,
           participation_mills: apartment.participation_mills,
+          heating_mills: apartment.heating_mills,
+          elevator_mills: apartment.elevator_mills,
           latest_payment_date: latestPayment?.date,
           latest_payment_amount: latestPayment?.amount,
         };
@@ -1557,6 +1574,8 @@ async function fetchApartmentsWithFinancialDataFallback(buildingId: number): Pro
           building_id: apartment.building,
           building_name: apartment.building_name,
           participation_mills: apartment.participation_mills,
+          heating_mills: apartment.heating_mills,
+          elevator_mills: apartment.elevator_mills,
         };
       }
     });

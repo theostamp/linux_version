@@ -488,7 +488,7 @@ git push origin v2.1.0
 ### Βασικές Εντολές Git
 
 git add . 
-git commit -m "διορθωση εμφανισης αποθεματικου στο modal" 
+git commit -m "διορθωση εμφανισης υπολοιπων dashboard" 
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

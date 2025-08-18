@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script για έλεγχο πεδίων αμοιβής διαχείρισης στη βάση δεδομένων
+Script για έλεγχο διαχειριστικών δαπανών
 """
 
 import os
@@ -8,101 +8,61 @@ import sys
 import django
 
 # Setup Django
+sys.path.append('/app')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
 django.setup()
 
-from django_tenants.utils import tenant_context
-from tenants.models import Client
+from django_tenants.utils import schema_context
 from buildings.models import Building
-from apartments.models import Apartment
-from financial.models import Expense, Payment
-from django.db import connection
-from decimal import Decimal
 
-def check_management_fee_fields():
-    """Ελέγχει τα πεδία σχετικά με την αμοιβή διαχείρισης"""
+def check_management_fees():
+    """Έλεγχος διαχειριστικών δαπανών"""
     
-    print("🔍 ΕΛΕΓΧΟΣ ΠΕΔΙΩΝ ΑΜΟΙΒΗΣ ΔΙΑΧΕΙΡΙΣΗΣ")
-    print("=" * 60)
+    print("💰 ΕΛΕΓΧΟΣ ΔΙΑΧΕΙΡΙΣΤΙΚΩΝ ΔΑΠΑΝΩΝ")
+    print("=" * 50)
     
-    # Get demo tenant
-    try:
-        client = Client.objects.get(schema_name='demo')
-        print(f"✅ Βρέθηκε tenant: {client.name}")
-    except Client.DoesNotExist:
-        print("❌ Δεν βρέθηκε demo tenant")
-        return
-    
-    # Check in tenant context
-    with tenant_context(client):
-        buildings = Building.objects.all()
-        print(f"📊 Βρέθηκαν {buildings.count()} κτίρια")
-        
-        for building in buildings:
-            print(f"\n🏢 Κτίριο: {building.name}")
-            print(f"   ID: {building.id}")
+    with schema_context('demo'):
+        try:
+            # Get building by address
+            building = Building.objects.get(address__icontains='Αλκμάνος 22, Αθήνα 115 28')
+            building_id = building.id
+            print(f"🏢 Κτίριο: {building.name}, {building.address} (ID: {building_id})")
+            print()
             
-            # Check Building model fields
-            print(f"   📋 Πεδία Building model:")
-            building_fields = [field.name for field in Building._meta.get_fields()]
-            management_related_fields = [field for field in building_fields if 'management' in field.lower() or 'fee' in field.lower() or 'cost' in field.lower()]
+            # Check management fees
+            management_fee = building.management_fee_per_apartment or 0
+            apartments_count = building.apartments_count or 0
+            total_management = management_fee * apartments_count
             
-            if management_related_fields:
-                print(f"      ✅ Βρέθηκαν σχετικά πεδία: {management_related_fields}")
-                for field in management_related_fields:
-                    try:
-                        value = getattr(building, field)
-                        print(f"         - {field}: {value}")
-                    except:
-                        print(f"         - {field}: [δεν μπορεί να διαβαστεί]")
+            print("📋 Διαχειριστικές Δαπάνες:")
+            print("-" * 30)
+            print(f"   Αμοιβή ανά διαμέρισμα: {management_fee}€")
+            print(f"   Αριθμός διαμερισμάτων: {apartments_count}")
+            print(f"   Συνολική αμοιβή: {total_management}€")
+            print()
+            
+            # Check if this explains the 50€ difference
+            print("🔍 ΕΛΕΓΧΟΣ ΔΙΑΦΟΡΑΣ:")
+            print("-" * 20)
+            print(f"   Συνολικές δαπάνες: 1780€")
+            print(f"   Διαχειριστικές δαπάνες: {total_management}€")
+            print(f"   Σύνολο με διαχείριση: {1780 + total_management}€")
+            print(f"   Αναμενόμενο σύνολο: 1830€")
+            
+            difference = abs((1780 + total_management) - 1830)
+            print(f"   Διαφορά: {difference}€")
+            
+            if difference < 0.01:
+                print("✅ Η διαφορά των 50€ εξηγείται από τις διαχειριστικές δαπάνες!")
             else:
-                print(f"      ❌ Δεν βρέθηκαν πεδία σχετικά με διαχείριση")
+                print("❌ Η διαφορά δεν εξηγείται από τις διαχειριστικές δαπάνες")
             
-            # Check apartments count
-            apartments_count = Apartment.objects.filter(building_id=building.id).count()
-            print(f"   🏠 Αριθμός διαμερισμάτων: {apartments_count}")
-            
-            # Check if there are any management fee expenses
-            management_expenses = Expense.objects.filter(
-                building_id=building.id,
-                title__icontains='διαχείριση'
-            )
-            print(f"   💰 Δαπάνες διαχείρισης: {management_expenses.count()}")
-            for expense in management_expenses:
-                print(f"      - {expense.title}: {expense.amount}€ ({expense.date})")
-        
-        # Check database schema for management fee fields
-        print(f"\n🔍 ΕΛΕΓΧΟΣ SCHEMA ΒΑΣΗΣ ΔΕΔΟΜΕΝΩΝ:")
-        with connection.cursor() as cursor:
-            # Get table info for buildings table
-            cursor.execute("""
-                SELECT column_name, data_type, is_nullable 
-                FROM information_schema.columns 
-                WHERE table_name = 'buildings_building' 
-                AND column_name ILIKE '%management%' OR column_name ILIKE '%fee%' OR column_name ILIKE '%cost%'
-                ORDER BY column_name;
-            """)
-            
-            management_columns = cursor.fetchall()
-            if management_columns:
-                print(f"   ✅ Βρέθηκαν σχετικές στήλες στη βάση:")
-                for column in management_columns:
-                    print(f"      - {column[0]} ({column[1]}, nullable: {column[2]})")
-            else:
-                print(f"   ❌ Δεν βρέθηκαν σχετικές στήλες στη βάση")
-            
-            # Check all columns in buildings table
-            cursor.execute("""
-                SELECT column_name, data_type 
-                FROM information_schema.columns 
-                WHERE table_name = 'buildings_building' 
-                ORDER BY column_name;
-            """)
-            
-            all_columns = cursor.fetchall()
-            print(f"   📋 Όλες οι στήλες του πίνακα buildings:")
-            for column in all_columns:
-                print(f"      - {column[0]} ({column[1]})")
+        except Building.DoesNotExist:
+            print("❌ Δεν βρέθηκε το κτίριο Αλκμάνος 22, Αθήνα 115 28")
+        except Exception as e:
+            print(f"❌ Σφάλμα: {e}")
+            import traceback
+            traceback.print_exc()
 
 if __name__ == "__main__":
-    check_management_fee_fields()
+    check_management_fees()

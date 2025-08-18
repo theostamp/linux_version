@@ -448,7 +448,12 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       const expenseTotals = state.advancedShares.expense_totals;
       
       // Map backend categories to our display categories
-      breakdown.common = parseFloat(expenseTotals.general || 0);
+      // Note: Backend includes management fees in general expenses, so we need to separate them
+      const managementFeeInfo = getManagementFeeInfo();
+      const totalManagementFees = managementFeeInfo.totalFee;
+      
+      // Subtract management fees from general expenses to get pure common expenses
+      breakdown.common = parseFloat(expenseTotals.general || 0) - totalManagementFees;
       breakdown.elevator = parseFloat(expenseTotals.elevator || 0);
       breakdown.heating = parseFloat(expenseTotals.heating || 0);
       breakdown.other = parseFloat(expenseTotals.equal_share || 0);
@@ -555,8 +560,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   
 
   
-  // Calculate total expenses including management fees - χωρίς αποθεματικό
+  // Calculate total expenses - οι δαπάνες διαχείρισης είναι ξεχωριστές από τις γενικές δαπάνες
   const basicExpenses = expenseBreakdown.common + expenseBreakdown.elevator + expenseBreakdown.heating + expenseBreakdown.other + expenseBreakdown.coownership;
+  // Όταν υπάρχουν μόνο δαπάνες διαχείρισης, το σύνολο είναι μόνο οι δαπάνες διαχείρισης
+  const hasOtherExpenses = expenseBreakdown.heating > 0 || expenseBreakdown.elevator > 0 || expenseBreakdown.other > 0 || expenseBreakdown.coownership > 0;
+  // Το σύνολο δαπανών είναι ίσο με τις βασικές δαπάνες + δαπάνες διαχείρισης
   const totalExpenses = basicExpenses + managementFeeInfo.totalFee; // Χωρίς αποθεματικό
 
   const handlePrint = () => {
@@ -608,10 +616,14 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       const apartmentCount = Object.keys(currentState.shares).length;
       
       // Calculate total expenses with fresh data
+      // Οι δαπάνες διαχείρισης είναι ξεχωριστές από τις γενικές δαπάνες
+      
+      // Όταν υπάρχουν μόνο δαπάνες διαχείρισης, δεν προσθέτουμε ξανά το managementFeeInfo.totalFee
+      const currentHasOtherExpenses = currentExpenseBreakdown.heating > 0 || currentExpenseBreakdown.elevator > 0 || currentExpenseBreakdown.other > 0 || currentExpenseBreakdown.coownership > 0;
       
       const currentTotalExpenses = Object.values(currentExpenseBreakdown).reduce((sum, val) => sum + val, 0) + 
                                   currentReserveFundInfo.totalContribution + 
-                                  currentManagementFeeInfo.totalFee;
+                                  (currentHasOtherExpenses ? currentManagementFeeInfo.totalFee : 0);
       
       // Fallback: use state.totalExpenses if calculated total is 0
       const finalTotalExpenses = currentTotalExpenses > 0 ? currentTotalExpenses : state.totalExpenses;
@@ -1032,7 +1044,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 const apartmentData = aptWithFinancial.find(apt => apt.id === share.apartment_id);
                 const commonMills = apartmentData?.participation_mills ?? participationMills;
                 const elevatorMills = apartmentData?.participation_mills ?? participationMills;
-                const heatingMills = apartmentData?.participation_mills ?? participationMills;
+                const heatingMills = apartmentData?.heating_mills ?? participationMills;
                 
                 const managementFee = toNumber(currentManagementFeeInfo.feePerApartment);
                 const currentReserveFundDetails = getReserveFundDetails();
@@ -1085,7 +1097,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 }, 0).toFixed(2)}</td>
                 <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => {
                   const apartmentData = aptWithFinancial.find(apt => apt.id === s.apartment_id);
-                  const heatingMills = apartmentData?.participation_mills ?? toNumber(s.participation_mills);
+                  const heatingMills = apartmentData?.heating_mills ?? toNumber(s.participation_mills);
                   return sum + heatingMills;
                 }, 0).toFixed(2)}</td>
                 <td class="amount-cell">${formatAmount(currentExpenseBreakdown.common)}</td>
@@ -1244,11 +1256,13 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       const apartmentData = aptWithFinancial.find(apt => apt.id === share.apartment_id);
       const commonMills = apartmentData?.participation_mills ?? participationMills;
       const elevatorMills = apartmentData?.participation_mills ?? participationMills;
-      const heatingMills = apartmentData?.participation_mills ?? participationMills;
+      const heatingMills = apartmentData?.heating_mills ?? participationMills;
       
       // Προσθήκη δαπανών διαχείρισης και αποθεματικού
       const managementFee = toNumber(managementFeeInfo.feePerApartment);
-      const apartmentReserveFund = toNumber(reserveFundDetails.monthlyAmount) * (toNumber(participationMills) / 1000);
+      const apartmentReserveFund = (expenseBreakdown.heating > 0 || expenseBreakdown.elevator > 0 || expenseBreakdown.other > 0 || expenseBreakdown.coownership > 0)
+        ? toNumber(reserveFundDetails.monthlyAmount) * (toNumber(participationMills) / 1000)
+        : 0;
       // Χρήση πραγματικών δεδομένων από το backend breakdown
       const breakdown = share.breakdown || {};
       const commonAmount = toNumber(breakdown.general_expenses || 0);
@@ -1272,9 +1286,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
         'ΠΟΣΟ_ΚΟΙΝΟΧΡΗΣΤΑ_ΕΝΟΙΚΙΑΣΤΩΝ': commonAmount,
         'ΠΟΣΟ_ΑΝΕΛΚΥΡΑΣ_ΕΝΟΙΚΙΑΣΤΩΝ': elevatorAmount,
         'ΠΟΣΟ_ΘΕΡΜΑΝΣΗ_ΕΝΟΙΚΙΑΣΤΩΝ': heatingAmount,
+        'ΠΟΣΟ_ΔΙΑΧΕΙΡΙΣΗ_ΕΝΟΙΚΙΑΣΤΩΝ': managementFee,
         'ΠΟΣΟ_ΚΟΙΝΟΧΡΗΣΤΑ_ΙΔΙΟΚΤΗΤΩΝ': 0,
         'ΠΟΣΟ_ΑΝΕΛΚΥΡΑΣ_ΙΔΙΟΚΤΗΤΩΝ': 0,
         'ΠΟΣΟ_ΘΕΡΜΑΝΣΗ_ΙΔΙΟΚΤΗΤΩΝ': 0,
+        'ΑΠΟΘΕΜΑΤΙΚΟ': apartmentReserveFund,
         'ΠΛΗΡΩΤΕΟ_ΠΟΣΟ': finalTotalWithFees,
         'A/A': index + 1
       };
@@ -1344,63 +1360,76 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       const apartmentData = aptWithFinancial.find(apt => apt.id === share.apartment_id);
       const commonMills = apartmentData?.participation_mills ?? participationMills;
       const elevatorMills = apartmentData?.participation_mills ?? participationMills;
-      const heatingMills = apartmentData?.participation_mills ?? participationMills;
+      const heatingMills = apartmentData?.heating_mills ?? participationMills;
       
       // Χρήση πραγματικών δεδομένων από το backend breakdown
       const breakdown = share.breakdown || {};
-      const commonAmount = toNumber(breakdown.general_expenses || 0);
+      // Το backend περιλαμβάνει το management_fee μέσα στα general_expenses, οπότε το αφαιρούμε
+      const managementFeeInBreakdown = toNumber(breakdown.management_fee || 0);
+      const commonAmount = Math.max(0, toNumber(breakdown.general_expenses || 0) - managementFeeInBreakdown);
       const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
       const heatingAmount = toNumber(breakdown.heating_expenses || 0);
+      const otherAmount = toNumber(breakdown.equal_share_expenses || 0);
+      const coownershipAmount = toNumber(breakdown.individual_expenses || 0);
       
-      tenantExpensesTotal += commonAmount + elevatorAmount + heatingAmount;
+      // Συνολικές δαπάνες ενοικιαστών (συμπεριλαμβανομένων των δαπανών διαχείρισης που είναι ήδη στο general_expenses)
+      tenantExpensesTotal += commonAmount + elevatorAmount + heatingAmount + otherAmount + coownershipAmount;
     });
     
     // Υπολογισμός συνολικών δαπανών ιδιοκτητών (προς το παρόν 0)
     const ownerExpensesTotal = 0;
     
-    // Υπολογισμός συνολικού πληρωτέου ποσού (χωρίς αποθεματικό)
+    // Υπολογισμός συνολικού πληρωτέου ποσού (οι δαπάνες διαχείρισης είναι ήδη συμπεριλαμβανμένες)
     let payableTotal = 0;
     Object.values(state.shares).forEach((share: any) => {
       const participationMills = toNumber(share.participation_mills);
       const apartmentData = aptWithFinancial.find(apt => apt.id === share.apartment_id);
       const commonMills = apartmentData?.participation_mills ?? participationMills;
       const elevatorMills = apartmentData?.participation_mills ?? participationMills;
-      const heatingMills = apartmentData?.participation_mills ?? participationMills;
+      const heatingMills = apartmentData?.heating_mills ?? participationMills;
       
       // Χρήση πραγματικών δεδομένων από το backend breakdown
       const breakdown = share.breakdown || {};
-      const commonAmount = toNumber(breakdown.general_expenses || 0);
+      // Το backend περιλαμβάνει το management_fee μέσα στα general_expenses, οπότε το αφαιρούμε
+      const managementFeeInBreakdown = toNumber(breakdown.management_fee || 0);
+      const commonAmount = Math.max(0, toNumber(breakdown.general_expenses || 0) - managementFeeInBreakdown);
       const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
       const heatingAmount = toNumber(breakdown.heating_expenses || 0);
+      const otherAmount = toNumber(breakdown.equal_share_expenses || 0);
+      const coownershipAmount = toNumber(breakdown.individual_expenses || 0);
       
-      const managementFee = toNumber(managementFeeInfo.feePerApartment);
-      // Αφαιρούμε το αποθεματικό από τον υπολογισμό
-      const totalWithFees = commonAmount + elevatorAmount + heatingAmount + managementFee;
+      // Συνολικό πληρωτέο = δαπάνες ενοικιαστών (οι δαπάνες διαχείρισης είναι ήδη συμπεριλαμβανμένες στο general_expenses)
+      const totalWithFees = commonAmount + elevatorAmount + heatingAmount + otherAmount + coownershipAmount;
       
       payableTotal += totalWithFees;
     });
     
-          // Χρησιμοποιούμε το ίδιο totalExpenses που χρησιμοποιείται στο footer και στον πίνακα
-      const totalExpenses = basicExpenses + managementFeeInfo.totalFee; // Χωρίς αποθεματικό
+    // Χρησιμοποιούμε το ίδιο totalExpenses που χρησιμοποιείται στο footer και στον πίνακα
+    const totalExpenses = basicExpenses + managementFeeInfo.totalFee; // Χωρίς αποθεματικό
     
     // Έλεγχος αν τα ποσά ταιριάζουν
     const differences: string[] = [];
     const tolerance = 0.01; // Ανοχή 1 λεπτού για στρογγυλοποιήσεις
     
     // Έλεγχος 1: Έλεγχος αν οι δαπάνες ενοικιαστών είναι σωστές
-    const expectedTenantExpenses = expenseBreakdown.common + expenseBreakdown.heating; // Γενικές + Θέρμανση
+    // Χρησιμοποιούμε τα δεδομένα από τον πίνακα (backend breakdown) για συνοπτικότητα
+    // Οι δαπάνες διαχείρισης είναι ήδη συμπεριλαμβανμένες στο backend breakdown.general_expenses
+    // Το backend επιστρέφει το management fee ανά διαμέρισμα, οπότε το σύνολο είναι managementFeeInfo.totalFee
+    const expectedTenantExpenses = managementFeeInfo.totalFee; // Χρησιμοποιούμε το συνολικό management fee
     if (Math.abs(tenantExpensesTotal - expectedTenantExpenses) > tolerance) {
       differences.push(`Δαπάνες Ενοικιαστών (${formatAmount(tenantExpensesTotal)}€) ≠ Αναμενόμενες Δαπάνες (${formatAmount(expectedTenantExpenses)}€)`);
     }
     
     // Έλεγχος 2: Έλεγχος αν το πληρωτέο ποσό είναι σωστό
-    const expectedPayableTotal = expectedTenantExpenses + managementFeeInfo.totalFee;
+    // Το πληρωτέο ποσό είναι ίσο με τις δαπάνες ενοικιαστών
+    const expectedPayableTotal = managementFeeInfo.totalFee; // Χρησιμοποιούμε το συνολικό management fee
     if (Math.abs(payableTotal - expectedPayableTotal) > tolerance) {
       differences.push(`Πληρωτέο Ποσό (${formatAmount(payableTotal)}€) ≠ Αναμενόμενο Ποσό (${formatAmount(expectedPayableTotal)}€)`);
     }
     
     // Έλεγχος 3: Έλεγχος αν το σύνολο δαπανών είναι σωστό
-    const expectedTotalExpenses = basicExpenses + managementFeeInfo.totalFee; // Χωρίς αποθεματικό
+    // Το σύνολο δαπανών πρέπει να ταιριάζει με το σύνολο του πίνακα
+    const expectedTotalExpenses = totalExpenses; // Χρησιμοποιούμε το σύνολο δαπανών που εμφανίζεται στο display
     if (Math.abs(totalExpenses - expectedTotalExpenses) > tolerance) {
       differences.push(`Σύνολο Δαπανών (${formatAmount(totalExpenses)}€) ≠ Αναμενόμενες Δαπάνες (${formatAmount(expectedTotalExpenses)}€)`);
     }
@@ -1877,7 +1906,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     </TableHead>
                     
                     {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ Section - Πορτοκαλί επικεφαλίδα */}
-                    <TableHead className="text-center border font-bold text-xs text-white" colSpan={3} style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)"}}>
+                    <TableHead className="text-center border font-bold text-xs text-white" colSpan={4} style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)"}}>
                       ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ
                     </TableHead>
                     
@@ -1886,6 +1915,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                       ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ
                     </TableHead>
                     
+                    <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #7e22ce 0%, #6d28d9 100%)", color: "white"}}>ΑΠΟΘΕΜΑΤΙΚΟ</TableHead>
                     <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΠΛΗΡΩΤΕΟ ΠΟΣΟ</TableHead>
                     <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", color: "white"}}>A/A</TableHead>
                   </TableRow>
@@ -1904,6 +1934,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
                     <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚΥΡΑΣ</TableHead>
                     <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜΑΝΣΗ</TableHead>
+                    <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΔΙΑΧΕΙΡΙΣΗ</TableHead>
                     
                     {/* ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ Sub-headers - Πράσινο φόντο */}
                     <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
@@ -1925,7 +1956,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     const apartmentData = aptWithFinancial.find(apt => apt.id === share.apartment_id);
                     const commonMills = apartmentData?.participation_mills ?? participationMills;
                     const elevatorMills = apartmentData?.participation_mills ?? participationMills;
-                    const heatingMills = apartmentData?.participation_mills ?? participationMills;
+                    const heatingMills = apartmentData?.heating_mills ?? participationMills;
                     
                     // Debug για τις τιμές των mills
                     if (index === 0) {
@@ -1959,7 +1990,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     
                     // Χρήση πραγματικών δεδομένων από το backend breakdown
                     const breakdown = share.breakdown || {};
-                    const commonAmount = toNumber(breakdown.general_expenses || 0);
+                    // Υπολογίζουμε τα καθαρά κοινόχρηστα από το συνολικό common breakdown, βάσει χιλιοστών
+                    const commonShareRatio = (toNumber(commonMills) || 0) / ((toNumber(totalMills) || 1));
+                    const commonAmount = commonShareRatio * toNumber(expenseBreakdown.common || 0);
                     const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
                     const heatingAmount = toNumber(breakdown.heating_expenses || 0);
                     
@@ -1979,8 +2012,13 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     const totalAmount = commonAmount + elevatorAmount + heatingAmount;
                     
                     // Προσθήκη δαπανών διαχείρισης και αποθεματικού
-                    const managementFee = toNumber(managementFeeInfo.feePerApartment);
-                    const apartmentReserveFund = toNumber(reserveFundDetails.monthlyAmount) * (toNumber(participationMills) / 1000);
+                    // Χρησιμοποιούμε ρητά το management_fee από το breakdown όταν υπάρχει
+                    const managementFee = toNumber((breakdown as any).management_fee ?? managementFeeInfo.feePerApartment);
+                    
+                    // Αποθεματικό μόνο αν υπάρχουν άλλες δαπάνες (όχι μόνο διαχείριση)
+                    const hasOtherExpenses = expenseBreakdown.heating > 0 || expenseBreakdown.elevator > 0 || expenseBreakdown.other > 0 || expenseBreakdown.coownership > 0;
+                    const apartmentReserveFund = hasOtherExpenses ? toNumber(reserveFundDetails.monthlyAmount) * (toNumber(participationMills) / 1000) : 0;
+                    
                     const totalWithFees = totalAmount + managementFee + apartmentReserveFund;
                     
                     // Ensure totalWithFees is not NaN
@@ -2006,6 +2044,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     console.log(`Διαμέρισμα ${share.identifier || share.apartment_number}:`, {
                       commonAmount,
                       heatingAmount,
+                      managementFee,
                       totalAmount,
                       finalTotalWithFees
                     });
@@ -2023,16 +2062,18 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                         <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{toNumber(heatingMills).toFixed(2)}</TableCell>
                         
                         {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ - ΠΟΣΟ ΠΟΥ ΑΝΑΛΟΓΕΙ */}
-                        <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>{formatAmount(commonAmount + managementFee)}</TableCell>
+                        <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>{formatAmount(commonAmount)}</TableCell>
                         <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>{formatAmount(elevatorAmount)}</TableCell>
                         <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>{formatAmount(heatingAmount)}</TableCell>
+                        <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>{formatAmount(managementFee)}</TableCell>
                         
                         {/* ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ - ΠΟΣΟ ΠΟΥ ΑΝΑΛΟΓΕΙ */}
                         <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
                         <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
                         <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
-                    
-                    <TableCell className="text-center border font-bold text-xs">{formatAmount(finalTotalWithFees)}</TableCell>
+                        {/* ΑΠΟΘΕΜΑΤΙΚΟ ανά διαμέρισμα */}
+                        <TableCell className="text-center border font-medium text-xs">{formatAmount(apartmentReserveFund)}</TableCell>
+                        <TableCell className="text-center border font-bold text-xs">{formatAmount(finalTotalWithFees)}</TableCell>
                         <TableCell className="text-center border text-xs">{index + 1}</TableCell>
                       </TableRow>
                     );
@@ -2061,7 +2102,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>
                       {Object.values(state.shares).reduce((sum: number, s: any) => {
                         const apartmentData = aptWithFinancial.find(apt => apt.id === s.apartment_id);
-                        const heatingMills = apartmentData?.participation_mills ?? toNumber(s.participation_mills);
+                        const heatingMills = apartmentData?.heating_mills ?? toNumber(s.participation_mills);
                         return sum + heatingMills;
                       }, 0).toFixed(2)}
                     </TableCell>
@@ -2069,12 +2110,16 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(expenseBreakdown.common)}</TableCell>
                     <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(expenseBreakdown.elevator)}</TableCell>
                     <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(expenseBreakdown.heating)}</TableCell>
+                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(managementFeeInfo.totalFee)}</TableCell>
                     
                     {/* ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ Totals */}
                     <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
                     <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
                     <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
-                    
+
+                    {/* ΑΠΟΘΕΜΑΤΙΚΟ Totals */}
+                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(hasOtherExpenses ? reserveFundDetails.monthlyAmount : 0)}</TableCell>
+
                     <TableCell className="text-center border">{formatAmount(totalExpenses)}</TableCell>
                     <TableCell className="text-center border"></TableCell>
                   </TableRow>

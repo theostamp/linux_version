@@ -931,7 +931,8 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                 apartment = Apartment.objects.get(id=apartment_id)
                 previous_balance = apartment.current_balance or Decimal('0.00')
                 total_amount = Decimal(str(share_data.get('total_amount', 0)))
-                total_due = previous_balance + total_amount
+                # Χρέωση αυξάνει οφειλή => πιο αρνητικό υπόλοιπο
+                total_due = previous_balance - total_amount
                 
                 share = ApartmentShare.objects.create(
                     period=period,
@@ -951,7 +952,7 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                     description=f'Χρέωση κοινοχρήστων - {period.period_name}',
                     apartment=apartment,
                     apartment_number=apartment.number,
-                    amount=total_amount,
+                    amount=-total_amount,
                     balance_before=previous_balance,
                     balance_after=total_due,
                     reference_id=str(period.id),

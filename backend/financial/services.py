@@ -67,9 +67,10 @@ class CommonExpenseCalculator:
             self._calculate_reserve_fund_contribution(shares)
         
         # Υπολογισμός συνολικού οφειλόμενου ποσού
+        # Σημείωση: χρησιμοποιούμε αρνητικό πρόσημο για οφειλές
         for apartment_id, share_data in shares.items():
             share_data['total_due'] = (
-                share_data['total_amount'] + share_data['reserve_fund_amount'] + share_data['previous_balance']
+                share_data['previous_balance'] - (share_data['total_amount'] + share_data['reserve_fund_amount'])
             )
         
         return shares
@@ -1199,7 +1200,8 @@ class CommonExpenseAutomationService:
             apartment = Apartment.objects.get(id=apartment_id)
             previous_balance = apartment.current_balance or Decimal('0.00')
             share_amount = Decimal(str(share_data.get('total_amount', 0)))
-            total_due = previous_balance + share_amount
+            # Χρέωση αυξάνει την οφειλή => πιο αρνητικό υπόλοιπο
+            total_due = previous_balance - share_amount
             
             share = ApartmentShare.objects.create(
                 period=period,
@@ -1220,7 +1222,7 @@ class CommonExpenseAutomationService:
                 description=f'Χρέωση κοινοχρήστων - {period.period_name}',
                 apartment=apartment,
                 apartment_number=apartment.number,
-                amount=share_amount,
+                amount=-share_amount,  # αρνητική κίνηση για χρέωση
                 balance_before=previous_balance,
                 balance_after=total_due,
                 reference_id=str(period.id),
@@ -1642,9 +1644,19 @@ class AdvancedCommonExpenseCalculator:
             elevator_mills = Decimal(str(apartment.elevator_mills or 0))
             
             # α. Υπολογισμός Γενικών Δαπανών
+            # Σημαντικό: το expense_totals['general'] περιλαμβάνει και τις δαπάνες διαχείρισης (management)
+            # για λόγους συνολικών στατιστικών. Ωστόσο, η διαχείριση χρεώνεται ισόποσα ανά διαμέρισμα
+            # και δεν πρέπει να κατανέμεται δεύτερη φορά ανά χιλιοστά μέσω των γενικών δαπανών.
+            # Άρα, από τα γενικά αφαιρούμε το συνολικό ποσό διαχείρισης και κατανέμουμε μόνο το «καθαρό» γενικό ποσό.
             if total_participation_mills > 0:
                 total_participation_mills_decimal = Decimal(str(total_participation_mills))
-                general_share = expense_totals['general'] * (participation_mills / total_participation_mills_decimal)
+                # Υπολογισμός συνολικού ποσού διαχείρισης για όλο το κτίριο
+                management_total = (self.building.management_fee_per_apartment or Decimal('0.00')) * len(self.apartments)
+                # «Καθαρό» γενικό ποσό προς κατανομή (χωρίς διαχείριση)
+                pure_general_total = expense_totals['general'] - management_total
+                if pure_general_total < 0:
+                    pure_general_total = Decimal('0.00')
+                general_share = pure_general_total * (participation_mills / total_participation_mills_decimal)
                 shares[apartment_id]['breakdown']['general_expenses'] = general_share
                 shares[apartment_id]['total_amount'] += general_share
             
@@ -1792,4 +1804,5 @@ class AdvancedCommonExpenseCalculator:
         """Οριστικοποίηση τελικών ποσών"""
         for apartment_id, share_data in shares.items():
             # Υπολογισμός συνολικού πληρωτέου ποσού
-            share_data['total_due'] = share_data['total_amount'] + share_data['previous_balance']
+            # Χρέωση αυξάνει οφειλή => πιο αρνητικό υπόλοιπο
+            share_data['total_due'] = share_data['previous_balance'] - share_data['total_amount']

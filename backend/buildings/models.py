@@ -188,6 +188,14 @@ class Building(models.Model):
         default=Decimal('0.00'),
         help_text=_("Αμοιβή διαχείρισης ανά διαμέρισμα σε ευρώ")
     )
+
+    # ⏳ Grace period για καθυστέρηση πληρωμών (ημέρα μήνα)
+    grace_day_of_month = models.PositiveSmallIntegerField(
+        _("Ημέρα Έναρξης Καθυστέρησης"),
+        default=15,
+        validators=[MinValueValidator(1)],
+        help_text=_("Ημέρα του μήνα μετά την οποία οι οφειλές θεωρούνται καθυστερημένες")
+    )
     
     # 📦 Πακέτο Υπηρεσιών
     service_package = models.ForeignKey(

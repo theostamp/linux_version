@@ -239,8 +239,8 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
         return;
       }
 
-      if (!fee || parseFloat(fee) <= 0) {
-        toast.error('Παρακαλώ συμπληρώστε μια έγκυρη τιμή για την αμοιβή ανά διαμέρισμα');
+      if (!fee || parseFloat(fee) < 0) {
+        toast.error('Παρακαλώ συμπληρώστε μια έγκυρη τιμή για την αμοιβή ανά διαμέρισμα (0 ή μεγαλύτερη)');
         return;
       }
 

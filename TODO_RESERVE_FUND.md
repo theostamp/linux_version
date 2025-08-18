@@ -1,3 +1,23 @@
+# Reserve Fund - Notes (January 2025)
+
+## UI/Exports Alignment
+- Added visible column «ΑΠΟΘΕΜΑΤΙΚΟ» in the per-apartment table before «ΠΛΗΡΩΤΕΟ ΠΟΣΟ»
+- Per-apartment reserve: monthly_amount × (participation_mills / 1000)
+- Only applied when there are other expenses in the period (heating/elevator/other/coownership)
+- Totals row shows the monthly reserve total (or 0 when not applicable)
+
+## Validation
+- Validation totals use the same logic as display: reserve included only when other expenses exist
+
+## Excel Export
+- Added columns: «ΠΟΣΟ_ΔΙΑΧΕΙΡΙΣΗ_ΕΝΟΙΚΙΑΣΤΩΝ», «ΑΠΟΘΕΜΑΤΙΚΟ»
+- «ΠΛΗΡΩΤΕΟ_ΠΟΣΟ» includes management + reserve + other tenant expenses
+
+## Next Steps
+- Include reserve details in PDF export table
+- Add toggle to include/exclude reserve for special periods
+- Persist reserve inclusion rule in backend snapshot for audit
+
 # TODO: Αποθεματικό (Reserve Fund) - Building Management System
 
 ## 📋 Επισκόπηση

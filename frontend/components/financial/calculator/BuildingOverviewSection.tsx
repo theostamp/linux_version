@@ -255,15 +255,22 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         console.log('✅ Old reserve fund data from 2024 has been cleared. Using new defaults.');
       }
       
-      // Load saved data from localStorage for reserve fund settings
-      // For new buildings, use 0 as default instead of hardcoded values
-      const savedGoal = loadFromLocalStorage('goal', 0); // Default to 0 for new buildings
-      const savedStartDate = loadFromLocalStorage('start_date', null) || '2025-08-01'; // Use default if null
-      const savedTargetDate = loadFromLocalStorage('target_date', null) || '2026-07-31'; // Use default if null
-      const savedDurationMonths = loadFromLocalStorage('duration_months', 0) || 12; // Use default if 0
-      const savedMonthlyTarget = loadFromLocalStorage('monthly_target', 0);
+      // Load reserve fund data from API (primary) with localStorage fallback
+      const apiGoal = apiData.reserve_fund_goal || 0;
+      const apiDurationMonths = apiData.reserve_fund_duration_months || 0;
+      const apiMonthlyTarget = apiData.reserve_fund_monthly_target || 0;
       
-      console.log('BuildingOverviewSection: localStorage data:', {
+      // Use API data if available, otherwise fallback to localStorage
+      const savedGoal = apiGoal > 0 ? apiGoal : loadFromLocalStorage('goal', 0);
+      const savedStartDate = loadFromLocalStorage('start_date', null) || '2025-08-01';
+      const savedTargetDate = loadFromLocalStorage('target_date', null) || '2026-07-31';
+      const savedDurationMonths = apiDurationMonths > 0 ? apiDurationMonths : (loadFromLocalStorage('duration_months', 0) || 12);
+      const savedMonthlyTarget = apiMonthlyTarget > 0 ? apiMonthlyTarget : loadFromLocalStorage('monthly_target', 0);
+      
+      console.log('BuildingOverviewSection: Reserve fund data:', {
+        apiGoal,
+        apiDurationMonths,
+        apiMonthlyTarget,
         savedGoal,
         savedStartDate,
         savedTargetDate,
