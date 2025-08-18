@@ -69,3 +69,4 @@ async function debugHeatingData() {
 
 // Run the debug
 debugHeatingData();
+

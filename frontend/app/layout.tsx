@@ -1,18 +1,18 @@
 import './globals.css';
 import React from 'react';
 import AppProviders from '@/components/AppProviders';
-import { Ubuntu, Roboto } from 'next/font/google';
-
-const ubuntu = Ubuntu({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '700'],
-  variable: '--font-ubuntu',
-});
+import { Roboto, Roboto_Condensed } from 'next/font/google';
 
 const roboto = Roboto({
   subsets: ['latin'],
   weight: ['300', '400', '500', '700'],
   variable: '--font-roboto',
+});
+
+const robotoCondensed = Roboto_Condensed({
+  subsets: ['latin'],
+  weight: ['700'],
+  variable: '--font-roboto-condensed',
 });
 
 export const metadata = {
@@ -23,7 +23,7 @@ export const metadata = {
 export default function RootLayout({ children }: { readonly children: React.ReactNode }) {
   return (
     <html lang="el">
-      <body className={`${ubuntu.variable} ${roboto.variable}`}>
+      <body className={`${roboto.variable} ${robotoCondensed.variable}`}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

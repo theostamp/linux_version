@@ -81,6 +81,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       totalExpenses: number;
       tenantExpensesTotal: number;
       ownerExpensesTotal: number;
+      reserveFundTotal: number;
       payableTotal: number;
       differences: string[];
     };
@@ -578,6 +579,10 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   const reserveFundInfo = getReserveFundInfo();
   const managementFeeInfo = getManagementFeeInfo();
   const reserveFundDetails = getReserveFundDetails();
+
+  // Owner expenses (equal share + coownership) total used to decide visibility of owner columns/section
+  const ownerExpensesTotalDisplay = toNumber(expenseBreakdown.other || 0) + toNumber(expenseBreakdown.coownership || 0);
+  const showOwnerExpenses = ownerExpensesTotalDisplay > 0;
 
 
   
@@ -1382,7 +1387,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     let sumOther = 0; // Ισόποσες/λοιπές
     let sumCoowner = 0; // Συνιδιοκτησίας/ατομικές
     let sumManagement = 0; // Διαχείριση (ισόποσα)
-    let sumReserve = 0; // Αποθεματικό (ανά χιλιοστά)
+    let sumReserve = 0; // Αποθεματικό (όπως εμφανίζεται στις σειρές)
     
     Object.values(state.shares).forEach((share: any) => {
       const breakdown = share.breakdown || {};
@@ -1393,7 +1398,10 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       const heating = toNumber(breakdown.heating_expenses || 0);
       const other = toNumber(breakdown.equal_share_expenses || 0);
       const coowner = toNumber(breakdown.individual_expenses || 0);
-      const reserve = toNumber(breakdown.reserve_fund_contribution || 0);
+      // Υπολογίζουμε το αποθεματικό όπως εμφανίζεται στον πίνακα (με βάση τα χιλιοστά),
+      // όχι από το breakdown, καθώς συχνά δεν υφίσταται εκεί ως πεδίο.
+      const participation = toNumber(share.participation_mills || 0);
+      const reserve = hasOtherExpenses ? toNumber(reserveFundDetails.monthlyAmount || 0) * (participation / 1000) : 0;
       
       sumManagement += mgmt;
       sumCommonPure += commonPure;
@@ -1434,14 +1442,13 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       differences.push(`Δαπάνες Διαχείρισης (rows: ${formatAmount(sumManagement)}€) ≠ Αναμενόμενες (${formatAmount(managementFeeInfo.totalFee)}€)`);
     }
     
-    // 3) Σύνολο δαπανών modal: rows vs display (βασικές + διαχείριση)
-    const totalFromRows = basicFromRows + sumManagement;
+    // 3) Σύνολο δαπανών modal: rows vs display (βασικές + διαχείριση + αποθεματικό αν εμφανίζεται)
+    const totalFromRows = basicFromRows + sumManagement + (hasOtherExpenses ? toNumber(reserveFundDetails.monthlyAmount || 0) : 0);
     if (Math.abs(totalFromRows - totalExpenses) > tolerance) {
       differences.push(`Σύνολο Δαπανών (rows: ${formatAmount(totalFromRows)}€) ≠ Εμφανιζόμενο (${formatAmount(totalExpenses)}€)`);
     }
     
-    // 4) Αποθεματικό: έλεγχος μόνο όταν όντως έχει κατανεμηθεί στα rows
-    // Αν τα rows δεν έχουν αποθεματικό (sumReserve=0), δεν το θεωρούμε απόκλιση ακόμη κι αν υπάρχει θεωρητικός μηνιαίος στόχος
+    // 4) Αποθεματικό: έλεγχος όταν έχει κατανεμηθεί στα rows ή όταν υπάρχει θεωρητικός μηνιαίος στόχος
     if (sumReserve > 0 && monthlyReserveTarget > 0 && Math.abs(sumReserve - monthlyReserveTarget) > tolerance) {
       differences.push(`Αποθεματικό (rows: ${formatAmount(sumReserve)}€) ≠ Υπολογισμένος στόχος (${formatAmount(monthlyReserveTarget)}€)`);
     }
@@ -1458,6 +1465,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
         totalExpenses,
         tenantExpensesTotal,
         ownerExpensesTotal,
+        reserveFundTotal: monthlyReserveTarget,
         payableTotal,
         differences
       }
@@ -1837,6 +1845,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
             </div>
 
             {/* Right Column - Owner Expenses Analysis */}
+            {showOwnerExpenses && (
             <div className="bg-green-50 p-3 rounded border">
               <h3 className="font-bold text-gray-800 mb-3 text-center text-sm">ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΙΔΙΟΚΤΗΤΩΝ</h3>
               
@@ -1883,6 +1892,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 </div>
               </div>
             </div>
+            )}
           </div>
 
           {/* Detailed Results Table */}
@@ -1923,9 +1933,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     </TableHead>
                     
                     {/* ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ Section - Πράσινη επικεφαλίδα */}
-                    <TableHead className="text-center border font-bold text-xs text-white" colSpan={3} style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)"}}>
-                      ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ
-                    </TableHead>
+                    {showOwnerExpenses && (
+                      <TableHead className="text-center border font-bold text-xs text-white" colSpan={3} style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)"}}>
+                        ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ
+                      </TableHead>
+                    )}
                     
                     <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #7e22ce 0%, #6d28d9 100%)", color: "white"}}>ΑΠΟΘΕΜΑΤΙΚΟ</TableHead>
                     <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΠΛΗΡΩΤΕΟ ΠΟΣΟ</TableHead>
@@ -1949,9 +1961,13 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΔΙΑΧΕΙΡΙΣΗ</TableHead>
                     
                     {/* ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ Sub-headers - Πράσινο φόντο */}
-                    <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
-                    <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚΥΡΑΣ</TableHead>
-                    <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜΑΝΣΗ</TableHead>
+                    {showOwnerExpenses && (
+                      <>
+                        <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
+                        <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚΥΡΑΣ</TableHead>
+                        <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜΑΝΣΗ</TableHead>
+                      </>
+                    )}
                     
                     <TableHead className="text-center border"></TableHead>
                     <TableHead className="text-center border"></TableHead>
@@ -2080,9 +2096,13 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                         <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>{formatAmount(managementFee)}</TableCell>
                         
                         {/* ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ - ΠΟΣΟ ΠΟΥ ΑΝΑΛΟΓΕΙ */}
-                        <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
-                        <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
-                        <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
+                        {showOwnerExpenses && (
+                          <>
+                            <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
+                            <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
+                            <TableCell className="text-center border font-medium" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
+                          </>
+                        )}
                         {/* ΑΠΟΘΕΜΑΤΙΚΟ ανά διαμέρισμα */}
                         <TableCell className="text-center border font-medium text-xs">{formatAmount(apartmentReserveFund)}</TableCell>
                         <TableCell className="text-center border font-bold text-xs">{formatAmount(finalTotalWithFees)}</TableCell>
@@ -2125,9 +2145,13 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(managementFeeInfo.totalFee)}</TableCell>
                     
                     {/* ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ Totals */}
-                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
-                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
-                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
+                    {showOwnerExpenses && (
+                      <>
+                        <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
+                        <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
+                        <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>-</TableCell>
+                      </>
+                    )}
 
                     {/* ΑΠΟΘΕΜΑΤΙΚΟ Totals */}
                     <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(hasOtherExpenses ? reserveFundDetails.monthlyAmount : 0)}</TableCell>
@@ -2168,6 +2192,10 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     <div className="bg-white p-3 rounded border">
                       <div className="text-sm font-medium text-gray-600">Δαπάνες Ιδιοκτητών</div>
                       <div className="text-lg font-bold text-green-600">{formatAmount(validationResult.details.ownerExpensesTotal)}€</div>
+                    </div>
+                    <div className="bg-white p-3 rounded border">
+                      <div className="text-sm font-medium text-gray-600">Αποθεματικό</div>
+                      <div className="text-lg font-bold text-teal-600">{formatAmount(validationResult.details.reserveFundTotal)}€</div>
                     </div>
                     <div className="bg-white p-3 rounded border">
                       <div className="text-sm font-medium text-gray-600">Πληρωτέο Ποσό</div>

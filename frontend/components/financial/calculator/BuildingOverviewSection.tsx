@@ -978,87 +978,28 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const reserveAnalytics = getReserveFundAnalytics();
 
   return (
-    <Card className="border-l-4 border-l-blue-500">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-3 text-lg">
-          <Building2 className="h-6 w-6 text-blue-600" />
-          <span>
-            Βρίσκεστε στο κτίριο <span className="font-bold text-blue-700">{currentBuilding?.name || 'Άγνωστο Κτίριο'}</span>
-          </span>
-        </CardTitle>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            {currentBuilding?.address}
-          </p>
-          {selectedMonth && (
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-blue-600 font-medium">
-                Δεδομένα για: {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}
-              </span>
-            </div>
-          )}
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-6">
-        {/* Main Financial Overview Cards - Two Rows Layout (3+2) */}
+    <Card className="border-none shadow-none"> {/* Removed border and shadow to blend in */}
+      <CardContent className="space-y-8 pt-0"> {/* Removed top padding */}
+        {/* Section 1: Period Overview */}
         <div className="space-y-4">
-          {/* First Row - 3 Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            
-            {/* Current Obligations Card */}
-            <Card className={`border-2 ${financialSummary.current_obligations > 0 ? 'border-red-200 bg-red-50/30' : 'border-green-200 bg-green-50/30'}`}>
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle className={`h-5 w-5 ${financialSummary.current_obligations > 0 ? 'text-red-600' : 'text-green-600'}`} />
-                  <h3 className={`font-semibold text-sm ${financialSummary.current_obligations > 0 ? 'text-red-900' : 'text-green-900'}`}>
-                    Συνολικές Υποχρεώσεις
-                  </h3>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className={`text-2xl font-bold ${financialSummary.current_obligations > 0 ? 'text-red-700' : 'text-green-700'}`}>
-                    {formatCurrency(financialSummary.current_obligations || 0)}
-                  </div>
-                  
-                  <Badge 
-                    variant={financialSummary.current_obligations > 0 ? "destructive" : "default"}
-                    className="text-xs"
-                  >
-                    {financialSummary.current_obligations > 0 ? 'Εκκρεμείς Δαπάνες' : 'Καμία Εκκρεμότητα'}
-                  </Badge>
-                  
-                  <div className="text-xs text-gray-600 mt-2">
-                    <strong>Σημείωση:</strong> Συνολικές υποχρεώσεις κτιρίου (όλοι οι μήνες)
-                  </div>
-                  
-                  {financialSummary.current_obligations > 0 && (
-                    <div className="text-xs text-red-700 mt-2">
-                      <strong>Προτεραιότητα:</strong> Κάλυψη δαπανών πριν το αποθεματικό
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {/* Month-Specific Data Card */}
             <Card className="border-2 border-blue-200 bg-blue-50/30">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Receipt className="h-5 w-5 text-blue-600" />
                   <h3 className="font-semibold text-sm text-blue-900">
-                    Δεδομένα Μήνα
+                    Δαπάνες Περιόδου
                   </h3>
                 </div>
                 
                 <div className="space-y-2">
-                  <div className="text-lg font-bold text-blue-700">
+                  <div className="text-2xl font-bold text-blue-700">
                     {formatCurrency(financialSummary.average_monthly_expenses || 0)}
                   </div>
                   
                   <Badge variant="outline" className="text-xs border-blue-300 text-blue-700">
-                    Έξοδα Μήνα
+                    Σύνολο Εξόδων
                   </Badge>
                   
                   <div className="text-xs text-blue-600 mt-2">
@@ -1081,14 +1022,14 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     <TrendingDown className={`h-5 w-5 ${getBalanceCardColors(financialSummary?.total_balance || 0).icon}`} />
                   )}
                   <h3 className={`font-semibold text-sm ${getBalanceCardColors(financialSummary?.total_balance || 0).title}`}>
-                    {selectedMonth ? `Υπόλοιπο (${selectedMonth})` : 'Τρέχον Υπόλοιπο'}
+                    {selectedMonth ? `Υπόλοιπο Περιόδου` : 'Τρέχον Υπόλοιπο'}
                   </h3>
                 </div>
                 
                 <div className="space-y-3">
                   {/* Συνολικό υπόλοιπο */}
                   <div className="space-y-1">
-                    <div className={`text-xl font-bold ${getBalanceCardColors(financialSummary?.total_balance || 0).amount}`}>
+                    <div className={`text-2xl font-bold ${getBalanceCardColors(financialSummary?.total_balance || 0).amount}`}>
                       {formatCurrency(Math.abs(financialSummary?.total_balance || 0))}
                     </div>
                     
@@ -1143,239 +1084,239 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
               </CardContent>
             </Card>
           </div>
+        </div>
 
-          {/* Second Row - 2 Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            
-            {/* Reserve Fund Goal Card - Only show if month is within collection period */}
-            {isMonthWithinReserveFundPeriod() && (
-              <Card className={`${getReserveFundCardColors(reserveProgress)} relative ${refreshingReserve ? 'opacity-75' : ''}`}>
-                <CardContent className="p-3 sm:p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Target className={`h-5 w-5 ${getProgressColors(reserveProgress).text}`} />
-                      <h3 className={`font-semibold text-base ${getProgressColors(reserveProgress).text}`}>Στόχος Αποθεματικού</h3>
-                    </div>
-                    <div className="flex items-center gap-1">
+        {/* Section 2: Overall Financial Health */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+            Συνολική Οικονομική Υγεία Κτιρίου
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {/* Reserve Fund Goal Card - Full Width */}
+            <Card className={`col-span-1 sm:col-span-2 lg:col-span-3 ${getReserveFundCardColors(reserveProgress)} relative ${refreshingReserve ? 'opacity-75' : ''}`}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Target className={`h-5 w-5 ${getProgressColors(reserveProgress).text}`} />
+                    <h3 className={`font-semibold text-base ${getProgressColors(reserveProgress).text}`}>Στόχος Αποθεματικού</h3>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRefreshReserve}
+                      disabled={refreshingReserve}
+                      className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
+                      title="Ανανέωση δεδομένων"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${refreshingReserve ? 'animate-spin' : ''}`} />
+                    </Button>
+                    {!editingGoal && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={handleRefreshReserve}
-                        disabled={refreshingReserve}
+                        onClick={() => setEditingGoal(true)}
                         className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
-                        title="Ανανέωση δεδομένων"
+                        title="Επεξεργασία στόχου"
                       >
-                        <RefreshCw className={`h-4 w-4 ${refreshingReserve ? 'animate-spin' : ''}`} />
+                        <Edit3 className="h-4 w-4" />
                       </Button>
-                      {!editingGoal && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingGoal(true)}
-                          className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
-                          title="Επεξεργασία στόχου"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                      )}
+                    )}
+                  </div>
+                </div>
+                
+                {editingGoal ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="new-goal" className="text-sm font-medium">Νέος στόχος (€)</Label>
+                        <Input
+                          id="new-goal"
+                          type="number"
+                          value={newGoal}
+                          onChange={(e) => setNewGoal(e.target.value)}
+                          placeholder="0.00"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="new-installments" className="text-sm font-medium">Δόσεις (μήνες)</Label>
+                        <Input
+                          id="new-installments"
+                          type="number"
+                          value={newInstallments}
+                          onChange={(e) => setNewInstallments(e.target.value)}
+                          placeholder="12"
+                          min="1"
+                          max="60"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                    {/* Preview */}
+                    {newGoal && newInstallments && parseFloat(newGoal) > 0 && parseInt(newInstallments) > 0 && (
+                      <div className="p-3 bg-blue-50 rounded border border-blue-200">
+                        <div className="text-sm text-blue-700 font-medium mb-1">
+                          Προεπισκόπηση:
+                        </div>
+                        <div className="text-xs text-blue-600 space-y-1">
+                          <div>• Μηνιαία εισφορά: {(parseFloat(newGoal) / parseInt(newInstallments)).toFixed(2)}€</div>
+                          <div>• Συνολικό ποσό: {parseFloat(newGoal).toFixed(2)}€</div>
+                          <div>• Διάρκεια: {newInstallments} μήνες</div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex gap-2 pt-2">
+                      <Button size="sm" onClick={handleSaveGoal} className="flex-1 bg-orange-600 hover:bg-orange-700">
+                        <Check className="h-4 w-4 mr-1" />
+                        Αποθήκευση
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditingGoal(false);
+                          setNewGoal((financialSummary?.reserve_fund_goal || 0).toString());
+                          setNewInstallments((financialSummary?.reserve_fund_duration_months || 0).toString());
+                        }}
+                        className="border-orange-200 text-orange-600 hover:bg-orange-50"
+                      >
+                        <X className="h-4 w-4" />
+                        Ακύρωση
+                      </Button>
                     </div>
                   </div>
-                  
-                  {editingGoal ? (
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Column 1: Goal and Installments */}
                     <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label htmlFor="new-goal" className="text-sm font-medium">Νέος στόχος (€)</Label>
-                          <Input
-                            id="new-goal"
-                            type="number"
-                            value={newGoal}
-                            onChange={(e) => setNewGoal(e.target.value)}
-                            placeholder="0.00"
-                            className="mt-1"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="new-installments" className="text-sm font-medium">Δόσεις (μήνες)</Label>
-                          <Input
-                            id="new-installments"
-                            type="number"
-                            value={newInstallments}
-                            onChange={(e) => setNewInstallments(e.target.value)}
-                            placeholder="12"
-                            min="1"
-                            max="60"
-                            className="mt-1"
-                          />
-                        </div>
-                      </div>
-                      {/* Εμφάνιση μηνιαίας εισφοράς */}
-                      {newGoal && newInstallments && parseFloat(newGoal) > 0 && parseInt(newInstallments) > 0 && (
-                        <div className="p-3 bg-blue-50 rounded border border-blue-200">
-                          <div className="text-sm text-blue-700 font-medium mb-1">
-                            Προεπισκόπηση:
-                          </div>
-                          <div className="text-xs text-blue-600 space-y-1">
-                            <div>• Μηνιαία εισφορά: {(parseFloat(newGoal) / parseInt(newInstallments)).toFixed(2)}€</div>
-                            <div>• Συνολικό ποσό: {parseFloat(newGoal).toFixed(2)}€</div>
-                            <div>• Διάρκεια: {newInstallments} μήνες</div>
-                          </div>
-                        </div>
-                      )}
-                      <div className="flex gap-2 pt-2">
-                        <Button size="sm" onClick={handleSaveGoal} className="flex-1 bg-orange-600 hover:bg-orange-700">
-                          <Check className="h-4 w-4 mr-1" />
-                          Αποθήκευση
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setEditingGoal(false);
-                            setNewGoal((financialSummary?.reserve_fund_goal || 0).toString());
-                            setNewInstallments((financialSummary?.reserve_fund_duration_months || 0).toString());
-                          }}
-                          className="border-orange-200 text-orange-600 hover:bg-orange-50"
-                        >
-                          <X className="h-4 w-4" />
-                          Ακύρωση
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {/* Goal Amount */}
                       <div className="space-y-1">
                         <div className="text-xs text-orange-700 font-medium">Στόχος:</div>
                         <div className={`text-xl font-bold ${getProgressColors(reserveProgress).text}`}>
                           {formatCurrency(financialSummary?.reserve_fund_goal || 0)}
                         </div>
-                        {financialSummary?.reserve_fund_duration_months && (
-                          <div className="text-xs text-orange-600 space-y-2">
-                            <div className="font-medium">σε {financialSummary.reserve_fund_duration_months} δόσεις</div>
-                            {(() => {
-                              const installments = getReserveFundInstallmentMonths();
-                              const hasStarted = installments.length > 0 && !installments[0]?.isFuture;
-                              
-                              return (
-                                <>
-                                  {!hasStarted && installments.length > 0 && (
-                                    <div className="text-xs text-blue-600 italic bg-blue-50 px-2 py-1 rounded">
-                                      ⏳ Η συλλογή ξεκινάει {installments[0]?.displayText?.split(': ')[1]}
-                                    </div>
-                                  )}
-                                  {installments.length > 0 && (
-                                    <div className="space-y-1 max-h-32 overflow-y-auto">
-                                      {installments.map((installment, index) => (
-                                        <div 
-                                          key={index}
-                                          className={`text-xs px-2 py-1 rounded ${
-                                            installment.isCurrent 
-                                              ? 'font-bold text-orange-800 bg-orange-100 border border-orange-200' 
-                                              : installment.isFuture 
-                                                ? 'text-gray-500 italic bg-gray-50' 
-                                                : 'text-orange-600 bg-orange-50'
-                                          }`}
-                                          title={
-                                            installment.isCurrent 
-                                              ? 'Τρέχουσα δόση' 
-                                              : installment.isFuture 
-                                                ? 'Μελλοντική δόση' 
-                                                : 'Παρελθούσα δόση'
-                                          }
-                                        >
-                                          {installment.displayText}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </>
-                              );
-                            })()}
-                          </div>
-                        )}
                       </div>
-
-                      {/* Monthly Installment Amount */}
                       <div className="space-y-1">
                         <div className="text-xs text-orange-700 font-medium">Μηνιαία Δόση:</div>
                         <div className={`text-lg font-bold ${getProgressColors(reserveProgress).text}`}>
                           {formatCurrency(financialSummary?.reserve_fund_monthly_target || 0)}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          ανά διαμέρισμα (κατανομή ανά χιλιοστά)
-                        </div>
                       </div>
+                    </div>
 
-                      {/* Progress Bar - Only show if goal > 0 */}
-                      {(financialSummary?.reserve_fund_goal || 0) > 0 && (
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-xs text-orange-600">
-                            <span>Πρόοδος</span>
-                            <span>{Math.round(reserveProgress)}%</span>
-                          </div>
-                          <div className={`w-full rounded-full h-2 ${getProgressColors(reserveProgress).bg}`}>
-                            <div 
-                              className={`h-2 rounded-full transition-all duration-300 ${getProgressColors(reserveProgress).fill}`}
-                              style={{ width: `${Math.min(100, Math.max(0, reserveProgress))}%` }}
-                            ></div>
-                          </div>
-                          <div className="text-xs text-gray-500 text-center">
-                            {(() => {
-                              const startDate = financialSummary?.reserve_fund_start_date ? new Date(financialSummary.reserve_fund_start_date) : null;
-                              const monthlyTarget = financialSummary?.reserve_fund_monthly_target || 0;
-                              const currentDate = new Date();
-                              
-                              if (!startDate || monthlyTarget === 0) {
-                                return `${formatCurrency(0)} από ${formatCurrency(financialSummary?.reserve_fund_goal || 0)}`;
-                              }
-                              
-                              const monthsPassed = Math.max(0, 
-                                (currentDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                                (currentDate.getMonth() - startDate.getMonth())
+                    {/* Column 2: Progress */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs text-orange-600">
+                        <span>Πρόοδος</span>
+                        <span>{Math.round(reserveProgress)}%</span>
+                      </div>
+                      <div className={`w-full rounded-full h-2 ${getProgressColors(reserveProgress).bg}`}>
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${getProgressColors(reserveProgress).fill}`}
+                          style={{ width: `${Math.min(100, Math.max(0, reserveProgress))}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-xs text-gray-500 text-center">
+                        {(() => {
+                          const expectedContributions = (financialSummary?.reserve_fund_monthly_target || 0) * (getReserveFundAnalytics()?.elapsedMonths || 0);
+                          return `${formatCurrency(financialSummary?.current_reserve || 0)} / ${formatCurrency(financialSummary?.reserve_fund_goal || 0)}`;
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Column 3: Installment Schedule */}
+                    <div className="space-y-1">
+                      {financialSummary?.reserve_fund_duration_months && (
+                        <div className="text-xs text-orange-600 space-y-2">
+                          <div className="font-medium">Πρόγραμμα {financialSummary.reserve_fund_duration_months} δόσεων:</div>
+                          {(() => {
+                            const installments = getReserveFundInstallmentMonths();
+                            const hasStarted = installments.length > 0 && !installments[0]?.isFuture;
+                            
+                            if (installments.length === 0) {
+                              return (
+                                <div className="text-xs text-gray-500 italic bg-gray-50 px-2 py-1 rounded">
+                                  Δεν έχει οριστεί πρόγραμμα.
+                                </div>
                               );
-                              
-                              const expectedContributions = monthsPassed * monthlyTarget;
-                              return `${formatCurrency(expectedContributions)} από ${formatCurrency(financialSummary?.reserve_fund_goal || 0)}`;
-                            })()}
-                          </div>
+                            }
 
-                        </div>
-                      )}
-
-                      {/* Message when no goal is set */}
-                      {(!financialSummary?.reserve_fund_goal || financialSummary.reserve_fund_goal === 0) && (
-                        <div className="mt-3 p-3 bg-gray-50 rounded border border-gray-200">
-                          <div className="text-xs text-gray-600 text-center space-y-1">
-                            <div>💡 Δεν έχει οριστεί στόχος αποθεματικού</div>
-                            <div className="text-gray-500">Κάντε κλικ στο εικονίδιο επεξεργασίας για να ορίσετε στόχο</div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Info about reserve fund autonomy */}
-                      {(financialSummary?.reserve_fund_goal || 0) > 0 && (
-                        <div className="mt-2 p-2 bg-orange-50 rounded border border-orange-200">
-
+                            return (
+                              <>
+                                {!hasStarted && (
+                                  <div className="text-xs text-blue-600 italic bg-blue-50 px-2 py-1 rounded">
+                                    ⏳ Η συλλογή ξεκινάει {installments[0]?.displayText?.split(': ')[1]}
+                                  </div>
+                                )}
+                                <div className="space-y-1 max-h-24 overflow-y-auto">
+                                  {installments.map((installment, index) => (
+                                    <div 
+                                      key={index}
+                                      className={`text-xs px-2 py-1 rounded ${
+                                        installment.isCurrent 
+                                          ? 'font-bold text-orange-800 bg-orange-100 border border-orange-200' 
+                                          : installment.isFuture 
+                                            ? 'text-gray-500 italic bg-gray-50' 
+                                            : 'text-orange-600 bg-orange-50'
+                                      }`}
+                                      title={installment.isCurrent ? 'Τρέχουσα δόση' : installment.isFuture ? 'Μελλοντική δόση' : 'Παρελθούσα δόση'}
+                                    >
+                                      {installment.displayText}
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
-                  )}
-
-                  {refreshingReserve && (
-                    <div className="mt-3 p-2 bg-orange-50 rounded border border-orange-200">
-                      <div className="text-xs text-orange-600 text-center flex items-center justify-center gap-2">
-                        <RefreshCw className="h-3 w-3 animate-spin" />
-                        Ενημέρωση δεδομένων...
-                      </div>
+                  </div>
+                )}
+                
+                {refreshingReserve && (
+                  <div className="mt-3 p-2 bg-orange-50 rounded border border-orange-200">
+                    <div className="text-xs text-orange-600 text-center flex items-center justify-center gap-2">
+                      <RefreshCw className="h-3 w-3 animate-spin" />
+                      Ενημέρωση δεδομένων...
                     </div>
-                  )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Pending Payments Card (converted from banner) */}
+            {(financialSummary?.pending_payments || 0) > 0 && (
+              <Card className="border-yellow-200 bg-yellow-50/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                    <div>
+                      <h3 className="text-sm font-semibold text-yellow-900">
+                        Εκκρεμείς Πληρωμές
+                      </h3>
+                      <p className="text-xs text-yellow-800 mt-1">
+                        Υπάρχουν <span className="font-bold">{financialSummary?.pending_payments || 0}</span> πληρωμές που δεν έχουν επιβεβαιωθεί.
+                      </p>
+                      <p className="text-xs text-yellow-700 mt-2">
+                        Ελέγξτε τα οικονομικά στοιχεία για λεπτομέρειες.
+                      </p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             )}
+          </div>
+        </div>
 
-            {/* Management Fees Card */}
-            <Card className="border-purple-200 bg-purple-50/30">
+        {/* Section 3: Management & Services */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+            Διαχείριση & Υπηρεσίες
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {/* Management Fees Card - Full Width */}
+            <Card className="col-span-1 sm:col-span-2 lg:col-span-3 border-purple-200 bg-purple-50/30">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -1438,65 +1379,59 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {/* Management Fee per Apartment */}
-                    <div className="space-y-1">
-                      <div className="text-xs text-purple-700 font-medium">Αμοιβή ανά διαμέρισμα:</div>
-                      <div className="text-xl font-bold text-purple-700">
-                        {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}
-                      </div>
-                    </div>
-
-                    {/* Total Management Cost */}
-                    <div className="space-y-1">
-                      <div className="text-xs text-purple-700 font-medium">Συνολικό κόστος διαχείρισης:</div>
-                      <div className="text-lg font-bold text-purple-700">
-                        {formatCurrency((financialSummary?.management_fee_per_apartment || 0) * (financialSummary?.apartments_count || 0))}
-                      </div>
-                      <div className="text-xs text-purple-600">
-                        {financialSummary?.apartments_count || 0} διαμερίσματα × {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}
-                      </div>
-                    </div>
-
-                    {/* Management Office Info */}
-                    {currentBuilding?.management_office_name && (
-                      <div className="pt-2 border-t border-purple-200">
-                        <div className="text-xs text-purple-700 font-medium mb-1">Γραφείο Διαχείρισης:</div>
-                        <div className="text-xs text-purple-600">
-                          {currentBuilding.management_office_name}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Column 1: Management Fee per Apartment */}
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <div className="text-xs text-purple-700 font-medium">Αμοιβή ανά διαμέρισμα:</div>
+                        <div className="text-xl font-bold text-purple-700">
+                          {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}
                         </div>
-                        {currentBuilding.management_office_phone && (
-                          <div className="text-xs text-purple-600">
-                            📞 {currentBuilding.management_office_phone}
-                          </div>
-                        )}
                       </div>
-                    )}
+                    </div>
+
+                    {/* Column 2: Total Management Cost */}
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <div className="text-xs text-purple-700 font-medium">Συνολικό κόστος διαχείρισης:</div>
+                        <div className="text-lg font-bold text-purple-700">
+                          {formatCurrency((financialSummary?.management_fee_per_apartment || 0) * (financialSummary?.apartments_count || 0))}
+                        </div>
+                        <div className="text-xs text-purple-600">
+                          {financialSummary?.apartments_count || 0} διαμερίσματα × {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Column 3: Management Office Info */}
+                    <div className="space-y-3">
+                      {currentBuilding?.management_office_name ? (
+                        <div className="space-y-1">
+                          <div className="text-xs text-purple-700 font-medium">Γραφείο Διαχείρισης:</div>
+                          <div className="text-xs text-purple-600">
+                            {currentBuilding.management_office_name}
+                          </div>
+                          {currentBuilding.management_office_phone && (
+                            <div className="text-xs text-purple-600">
+                              📞 {currentBuilding.management_office_phone}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <div className="text-xs text-purple-700 font-medium">Γραφείο Διαχείρισης:</div>
+                          <div className="text-xs text-gray-500 italic">
+                            Δεν έχει οριστεί γραφείο διαχείρισης.
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
         </div>
-
-        {/* Additional Info Banner */}
-        {(financialSummary?.pending_payments || 0) > 0 && (
-          <Card className="border-yellow-200 bg-yellow-50/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                <div>
-                  <p className="text-xs font-medium text-yellow-900">
-                    Υπάρχουν {financialSummary?.pending_payments || 0} εκκρεμείς πληρωμές
-                  </p>
-                  <p className="text-xs text-yellow-700">
-                    Παρακαλώ ελέγξτε τα οικονομικά στοιχεία για περισσότερες λεπτομέρειες
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </CardContent>
 
       {/* Service Package Modal */}

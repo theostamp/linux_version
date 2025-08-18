@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Expense, ExpenseFormData, ExpenseFilters, ApiResponse } from '@/types/financial';
+import { parseAmount } from '@/lib/utils';
 import { api } from '@/lib/api';
 
 export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
@@ -33,7 +34,11 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
       
       const response = await api.get(`/financial/expenses/?${params}`);
       const data = response.data.results || response.data;
-      setExpenses(Array.isArray(data) ? data : []);
+      const normalize = (e: any): Expense => ({
+        ...e,
+        amount: parseAmount(e?.amount),
+      });
+      setExpenses(Array.isArray(data) ? data.map(normalize) : []);
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη των δαπανών';
       setError(errorMessage);
@@ -118,8 +123,12 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
       }
 
       const response = await api.get(`/financial/expenses/?${params}`);
-
-      return response.data.results || response.data;
+      const data = response.data.results || response.data;
+      const normalize = (e: any): Expense => ({
+        ...e,
+        amount: parseAmount(e?.amount),
+      });
+      return Array.isArray(data) ? data.map(normalize) : [];
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη των δαπανών';
       setError(errorMessage);
@@ -136,8 +145,12 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
     
     try {
       const response = await api.get(`/financial/expenses/pending/?building_id=${buildingId}`);
-
-      return response.data;
+      const data = response.data;
+      const normalize = (e: any): Expense => ({
+        ...e,
+        amount: parseAmount(e?.amount),
+      });
+      return Array.isArray(data) ? data.map(normalize) : [];
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη των ανέκδοτων δαπανών';
       setError(errorMessage);
@@ -154,8 +167,12 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
     
     try {
       const response = await api.get(`/financial/expenses/issued/?building_id=${buildingId}`);
-
-      return response.data;
+      const data = response.data;
+      const normalize = (e: any): Expense => ({
+        ...e,
+        amount: parseAmount(e?.amount),
+      });
+      return Array.isArray(data) ? data.map(normalize) : [];
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη των εκδοθέντων δαπανών';
       setError(errorMessage);

@@ -80,3 +80,49 @@ export function formatCurrency(amount: number | string | null | undefined, local
 export function formatDate(dateString: string | null | undefined, formatString: string = 'dd/MM/yyyy'): string {
   return safeFormatDate(dateString, formatString);
 }
+
+/**
+ * Parses an amount that may be a number or a localized currency string (e.g. "1.225,50", "1225.50", "€1.225,50")
+ * into a JavaScript number.
+ * - Handles Greek/Euro formats with comma decimal separators and optional thousand separators
+ * - Removes currency symbols and spaces
+ * - Falls back to 0 for invalid inputs
+ */
+export function parseAmount(value: number | string | null | undefined): number {
+  if (value === null || value === undefined) return 0;
+  if (typeof value === 'number') {
+    return isNaN(value) ? 0 : value;
+  }
+
+  let str = String(value).trim();
+  if (!str) return 0;
+
+  // Remove currency symbols and non-numeric separators except comma/dot and minus
+  str = str.replace(/[€\s]/g, '');
+
+  const hasComma = str.includes(',');
+  const hasDot = str.includes('.');
+
+  if (hasComma && hasDot) {
+    // Decide decimal separator as the last occurring symbol among comma or dot
+    const lastComma = str.lastIndexOf(',');
+    const lastDot = str.lastIndexOf('.');
+    if (lastComma > lastDot) {
+      // Comma is decimal -> remove dots (thousands), replace comma with dot
+      str = str.replace(/\./g, '').replace(',', '.');
+    } else {
+      // Dot is decimal -> remove commas (thousands)
+      str = str.replace(/,/g, '');
+    }
+  } else if (hasComma) {
+    // Only comma present -> treat as decimal separator
+    str = str.replace(/\./g, ''); // just in case
+    str = str.replace(',', '.');
+  } else {
+    // Only dot or none -> remove stray commas
+    str = str.replace(/,/g, '');
+  }
+
+  const num = parseFloat(str);
+  return isNaN(num) ? 0 : num;
+}
