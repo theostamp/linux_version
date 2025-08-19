@@ -29,7 +29,7 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
   const filteredAndSortedBalances = useMemo(() => {
     if (!apartmentBalances) return [];
 
-    let filtered = apartmentBalances.filter((balance) => {
+    const filtered = apartmentBalances.filter((balance) => {
       // Search filter
       const matchesSearch = 
         balance.apartment_number.toLowerCase().includes(searchTerm.toLowerCase()) ||

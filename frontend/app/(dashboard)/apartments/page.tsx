@@ -189,7 +189,7 @@ export default function ApartmentsPage() {
   if (!isAuthReady || buildingLoading) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">🏠 Διαχείριση Διαμερισμάτων</h1>
+        <h1 className="text-2xl font-bold mb-6">🏠 Διαχείριση Διαμερισμάτων</h1>
         <BuildingFilterIndicator className="mb-4" />
         <p>Φόρτωση...</p>
       </div>
@@ -199,7 +199,7 @@ export default function ApartmentsPage() {
   if (!canManage) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">🏠 Διαχείριση Διαμερισμάτων</h1>
+        <h1 className="text-2xl font-bold mb-6">🏠 Διαχείριση Διαμερισμάτων</h1>
         <BuildingFilterIndicator className="mb-4" />
         <ErrorMessage message="Δεν έχετε δικαίωμα πρόσβασης στη διαχείριση διαμερισμάτων." />
       </div>
@@ -209,7 +209,7 @@ export default function ApartmentsPage() {
   if (!selectedBuilding) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">🏠 Διαχείριση Διαμερισμάτων</h1>
+        <h1 className="text-2xl font-bold mb-6">🏠 Διαχείριση Διαμερισμάτων</h1>
         <BuildingFilterIndicator className="mb-4" />
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-blue-800">
@@ -225,7 +225,7 @@ export default function ApartmentsPage() {
       {/* Header */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">🏠 Διαχείριση Διαμερισμάτων</h1>
+          <h1 className="text-2xl font-bold">🏠 Διαχείριση Διαμερισμάτων</h1>
           <div className="flex gap-2">
             <Button onClick={handleRefresh} variant="outline">
               Ανανέωση

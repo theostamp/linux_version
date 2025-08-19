@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
@@ -34,6 +35,7 @@ import { CommonExpenseModal } from './CommonExpenseModal';
 import { useApartmentsWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
 import { api } from '@/lib/api';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { usePayments } from '@/hooks/usePayments';
 
 interface ResultsStepProps {
   state: CalculatorState;
@@ -51,6 +53,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const [expandedBreakdown, setExpandedBreakdown] = useState<string | null>(null);
   const [showAdvancedDetails, setShowAdvancedDetails] = useState(false);
   const [showCommonExpenseModal, setShowCommonExpenseModal] = useState(false);
+  const [isDetailedResultsOpen, setIsDetailedResultsOpen] = useState(false);
   const { issueCommonExpenses, calculateAdvancedShares, calculateShares } = useCommonExpenses();
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -76,6 +79,22 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
     });
     return map;
   }, [aptWithFinancial]);
+
+  // Payments for the selected month (YYYY-MM)
+  const selectedMonthStr = useMemo(() => {
+    const start = state.customPeriod?.startDate;
+    return start ? start.substring(0, 7) : undefined;
+  }, [state.customPeriod?.startDate]);
+  const { payments } = usePayments(buildingId, selectedMonthStr);
+  const paymentsCommonTotal = useMemo(() => {
+    return (payments || []).reduce((sum: number, p: any) => sum + (p.payment_type === 'common_expense' ? (p.amount || 0) : 0), 0);
+  }, [payments]);
+  const { payments: allReservePayments } = usePayments(buildingId);
+  const paymentsReserveTotal = useMemo(() => {
+    return (allReservePayments || []).reduce((sum: number, p: any) => sum + (p.payment_type === 'reserve_fund' ? (p.amount || 0) : 0), 0);
+  }, [allReservePayments]);
+  const reserveMonthlyTarget = useMemo(() => Number(state.advancedShares?.reserve_contribution || 0), [state.advancedShares]);
+  const reserveRemaining = useMemo(() => Math.max(0, reserveMonthlyTarget - paymentsReserveTotal), [reserveMonthlyTarget, paymentsReserveTotal]);
 
   const renderOccupants = (apartmentId: number, fallbackOwner?: string) => {
     const info = occupantsByApartmentId[apartmentId] || {};
@@ -662,7 +681,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
     const mainWorksheet = XLSX.utils.json_to_sheet(mainData);
     
     // Ανάλυση Δαπανών
-    let expenseBreakdownData: any[] = [];
+    const expenseBreakdownData: any[] = [];
     if (state.advancedShares) {
       // Προσθήκη γενικών πληροφοριών ανάλυσης
       if (state.advancedShares.heating_costs) {
@@ -1309,54 +1328,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       {/* Success Message - shown after successful calculation */}
       {calculationSuccess && <SuccessMessage />}
       
-      {/* Results Summary */}
-      <Card className="border-green-200 bg-green-50/50">
-        <CardHeader>
-          <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-green-800">
-              <CheckCircle className="h-5 w-5" />
-              Αποτελέσματα Υπολογισμού
-            </div>
-            <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50 self-start sm:self-center">
-              📅 {getPeriodInfo()}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div className="bg-white p-3 sm:p-4 rounded-lg border">
-              <div className="flex items-center gap-2 mb-2">
-                <Building className="h-4 w-4 text-blue-600" />
-                <span className="font-semibold text-sm sm:text-base text-gray-800">Διαμερίσματα</span>
-              </div>
-              <div className="text-xl sm:text-2xl font-bold text-blue-600">
-                {stats.totalApartments}
-              </div>
-            </div>
-            
-            <div className="bg-white p-3 sm:p-4 rounded-lg border">
-              <div className="flex items-center gap-2 mb-2">
-                <Euro className="h-4 w-4 text-green-600" />
-                <span className="font-semibold text-sm sm:text-base text-gray-800">Συνολικές Δαπάνες</span>
-              </div>
-              <div className="text-xl sm:text-2xl font-bold text-green-600">
-                {formatAmount(stats.totalAmount)}€
-              </div>
-            </div>
-            
-            <div className="bg-white p-3 sm:p-4 rounded-lg border">
-              <div className="flex items-center gap-2 mb-2">
-                <Calculator className="h-4 w-4 text-orange-600" />
-                <span className="font-semibold text-sm sm:text-base text-gray-800">Μέσο Όρο</span>
-              </div>
-              <div className="text-xl sm:text-2xl font-bold text-orange-600">
-                {formatAmount(stats.averagePerApartment)}€
-              </div>
-            </div>
-            {/* Removed duplicate debt card to avoid confusion; detailed debts appear in Analytics below */}
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Enhanced Action Menu */}
       <Card className="border-blue-200 bg-gradient-to-r from-blue-50/50 to-indigo-50/50">
@@ -1586,13 +1558,24 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
 
       {/* Results Table */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Λεπτομερή Αποτελέσματα
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <Collapsible defaultOpen={false}>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+              <CardTitle className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Λεπτομερή Αποτελέσματα
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {Object.keys(state.shares).length} διαμερίσματα
+                  </Badge>
+                </div>
+              </CardTitle>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent>
           {/* Mobile: Card Layout */}
           <div className="block lg:hidden space-y-3">
             {Object.values(state.shares).map((share: any) => (
@@ -1763,169 +1746,11 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           </Table>
           </div>
         </CardContent>
-      </Card>
-
-      {/* Advanced Analysis */}
-      {state.advancedShares && (
-        <Card className="border-orange-200 bg-orange-50/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-800">
-              <Calculator className="h-5 w-5" />
-              Προηγμένη Ανάλυση
-            </CardTitle>
-            <div className="text-sm text-orange-600">
-              Λεπτομερής ανάλυση με ειδική διαχείριση θέρμανσης και ανελκυστήρα
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-lg border">
-                  <h4 className="font-semibold text-gray-800 mb-2">Θέρμανση</h4>
-                  <div className="text-2xl font-bold text-orange-600">
-                    {formatAmount(state.advancedShares.heating_costs?.total || 0)}€
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Πάγιο: {formatAmount(state.advancedShares.heating_costs?.fixed || 0)}€ | 
-                    Μεταβλητό: {formatAmount(state.advancedShares.heating_costs?.variable || 0)}€
-                  </div>
-                </div>
-                
-                <div className="bg-white p-4 rounded-lg border">
-                  <h4 className="font-semibold text-gray-800 mb-2">Ανελκυστήρας</h4>
-                  <div className="text-2xl font-bold text-purple-600">
-                    {formatAmount(state.advancedShares.elevator_costs || 0)}€
-                  </div>
-                </div>
-                
-                <div className="bg-white p-4 rounded-lg border">
-                  <h4 className="font-semibold text-gray-800 mb-2">Αποθεματικό</h4>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {formatAmount(
-                      checkIfPeriodInReserveFundTimeline(state.customPeriod.startDate, state.customPeriod.endDate) 
-                        ? (state.advancedShares.reserve_contribution || 0)
-                        : 0
-                    )}€
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Στόχος αποθεματικού (μήνας): {
-                      checkIfPeriodInReserveFundTimeline(state.customPeriod.startDate, state.customPeriod.endDate)
-                        ? (state.advancedOptions.reserveFundMonthlyAmount?.toFixed(2) || '0,00')
-                        : '0,00'
-                    }€ (κατανομή ανά χιλιοστά)
-                  </div>
-                  {!checkIfPeriodInReserveFundTimeline(state.customPeriod.startDate, state.customPeriod.endDate) && (
-                    <div className="text-xs text-blue-600 mt-2 bg-blue-50 p-2 rounded">
-                      {(() => {
-                        // Check if reserve fund goal is zero or not set
-                        const getStorageKey = (key: string) => `reserve_fund_${buildingId}_${key}`;
-                        const getFromStorage = (key: string, defaultValue: any = null) => {
-                          try {
-                            const stored = localStorage.getItem(getStorageKey(key));
-                            return stored ? JSON.parse(stored) : defaultValue;
-                          } catch {
-                            return defaultValue;
-                          }
-                        };
-                        const reserveFundGoal = getFromStorage('goal', 0);
-                        
-                        if (!reserveFundGoal || reserveFundGoal === 0) {
-                          return '💰 Δεν έχει οριστεί στόχος αποθεματικού';
-                        } else {
-                          return '📅 Ο επιλεγμένος μήνας είναι εκτός της περιόδου συλλογής αποθεματικού';
-                        }
-                      })()}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Advanced Details Toggle */}
-              <Button
-                variant="outline"
-                onClick={() => setShowAdvancedDetails(!showAdvancedDetails)}
-                className="flex items-center gap-2"
-              >
-                {showAdvancedDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                {showAdvancedDetails ? 'Απόκρυψη' : 'Εμφάνιση'} Λεπτομερειών
-              </Button>
-
-              {showAdvancedDetails && (
-                <div className="space-y-4">
-                  {/* Category Breakdown */}
-                  <div>
-                    <h4 className="font-semibold text-gray-800 mb-3">Ανάλυση ανά Κατηγορία</h4>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Κατηγορία</TableHead>
-                          <TableHead>Συνολικό Ποσό</TableHead>
-                          <TableHead>Ανά Διαμέρισμα</TableHead>
-                          <TableHead>Μέθοδος Κατανομής</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {Array.isArray(state.advancedShares.expense_breakdown) ? state.advancedShares.expense_breakdown.map((category: any, index: number) => (
-                          <TableRow key={index}>
-                            <TableCell className="font-medium">{category.category}</TableCell>
-                            <TableCell>{formatAmount(category.total_amount)}€</TableCell>
-                            <TableCell>{formatAmount(category.per_apartment)}€</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="text-xs">
-                                {category.distribution_method}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        )) : (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center text-gray-500">
-                              Δεν υπάρχουν διαθέσιμα δεδομένα ανάλυσης
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  {/* Elevator Shares */}
-                  {state.advancedShares.elevator_shares && (
-                    <div>
-                      <h4 className="font-semibold text-gray-800 mb-3">Ειδικά Χιλιοστά Ανελκυστήρα</h4>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Διαμέρισμα</TableHead>
-                            <TableHead>Χιλιοστά Ανελκυστήρα</TableHead>
-                            <TableHead>Μερίδιο Ανελκυστήρα</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {state.advancedShares.elevator_shares && typeof state.advancedShares.elevator_shares === 'object' ? Object.values(state.advancedShares.elevator_shares).map((share: any) => (
-                            <TableRow key={share.apartment_id}>
-                              <TableCell className="font-medium">
-                                {share.apartment_number}
-                              </TableCell>
-                              <TableCell>{share.elevator_mills}</TableCell>
-                              <TableCell>{formatAmount(share.elevator_share)}€</TableCell>
-                            </TableRow>
-                          )) : (
-                            <TableRow>
-                              <TableCell colSpan={3} className="text-center text-gray-500">
-                                Δεν υπάρχουν διαθέσιμα δεδομένα ανελκυστήρα
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
         </Card>
-      )}
+
+
 
       {/* Completion Status */}
       <Card className="border-blue-200 bg-blue-50/50">

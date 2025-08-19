@@ -42,6 +42,25 @@ export function safeFormatDate(
 }
 
 /**
+ * Formats a number to 2 decimal places without currency symbol
+ * @param amount - The amount to format
+ * @returns Formatted number string with 2 decimal places
+ */
+export function formatAmount(amount: number | string | null | undefined): string {
+  if (amount === null || amount === undefined) {
+    return '0,00';
+  }
+  
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  
+  if (isNaN(numAmount)) {
+    return '0,00';
+  }
+  
+  return numAmount.toFixed(2).replace('.', ',');
+}
+
+/**
  * Formats a number as currency in EUR
  * @param amount - The amount to format
  * @param locale - The locale to use (default: 'el-GR')

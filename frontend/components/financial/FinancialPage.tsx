@@ -209,8 +209,8 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       <div className="flex flex-col space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Οικονομική Διαχείριση</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-bold">Οικονομική Διαχείριση</h1>
+            <p className="text-sm text-muted-foreground">
               Διαχείριση δαπανών, κοινοχρήστων και εισπράξεων
             </p>
           </div>

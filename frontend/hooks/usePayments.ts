@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Payment, PaymentFormData, PaymentFilters } from '@/types/financial';
 import { api } from '@/lib/api';
+import { parseAmount } from '@/lib/utils';
 
 export const usePayments = (buildingId?: number, selectedMonth?: string) => {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -33,7 +34,14 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
       
       const response = await api.get(`/financial/payments/?${params}`);
       const data = response.data.results || response.data;
-      setPayments(Array.isArray(data) ? data : []);
+      
+      // Normalize payment amounts to ensure they are numbers
+      const normalize = (p: any): Payment => ({
+        ...p,
+        amount: parseAmount(p?.amount),
+      });
+      
+      setPayments(Array.isArray(data) ? data.map(normalize) : []);
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη των εισπράξεων';
       setError(errorMessage);
@@ -189,8 +197,15 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
       }
 
       const response = await api.get(`/financial/payments/?${params}`);
-
-      return response.data.results || response.data;
+      const data = response.data.results || response.data;
+      
+      // Normalize payment amounts to ensure they are numbers
+      const normalize = (p: any): Payment => ({
+        ...p,
+        amount: parseAmount(p?.amount),
+      });
+      
+      return Array.isArray(data) ? data.map(normalize) : [];
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη των πληρωμών';
       setError(errorMessage);
@@ -207,8 +222,13 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
     
     try {
       const response = await api.get(`/financial/payments/${id}/`);
-
-      return response.data;
+      const data = response.data;
+      
+      // Normalize payment amount to ensure it is a number
+      return {
+        ...data,
+        amount: parseAmount(data?.amount),
+      };
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη της πληρωμής';
       setError(errorMessage);

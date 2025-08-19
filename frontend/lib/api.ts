@@ -442,7 +442,7 @@ export async function fetchAllBuildings(): Promise<Building[]> {
       console.log('[API CALL] Pagination detected, fetching all pages...');
       let allBuildings = [...buildings];
       let nextUrl = data.next;
-      let totalCount = data.count || 0;
+      const totalCount = data.count || 0;
       
       while (nextUrl && allBuildings.length < totalCount && allBuildings.length < 1000) {
         console.log('[API CALL] Fetching next page:', nextUrl);
@@ -1033,7 +1033,7 @@ export async function createUserRequest(payload: CreateUserRequestPayload): Prom
   }
   
   console.log('[API CALL] FormData entries:');
-  for (let [key, value] of formData.entries()) {
+  for (const [key, value] of formData.entries()) {
     console.log(`[API CALL] ${key}:`, value);
   }
   
