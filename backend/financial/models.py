@@ -225,7 +225,7 @@ class Expense(models.Model):
         help_text="Παραστατικό ή άλλο σχετικό αρχείο"
     )
     notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
-    is_issued = models.BooleanField(default=False, verbose_name="Εκδοθείσα")
+    is_issued = models.BooleanField(default=True, verbose_name="Εκδοθείσα")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

@@ -146,7 +146,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.apartment_id || formData.amount <= 0) {
+    if (!formData.apartment_id || Number(formData.amount || 0) <= 0) {
       setError('Παρακαλώ συμπληρώστε όλα τα απαιτούμενα πεδία');
       return;
     }
@@ -156,7 +156,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
 
     try {
       // Calculate total amount (common expenses + reserve fund)
-      const totalAmount = formData.amount + (formData.reserve_fund_amount || 0);
+      const totalAmount = Number((formData.amount + (formData.reserve_fund_amount || 0)).toFixed(2));
       
       const submitData: PaymentFormData = {
         ...formData,
@@ -174,7 +174,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         const formDataPayload = new FormData();
         formDataPayload.append('apartment', formData.apartment_id.toString());
         formDataPayload.append('amount', totalAmount.toString());
-        formDataPayload.append('reserve_fund_amount', (formData.reserve_fund_amount || 0).toString());
+        formDataPayload.append('reserve_fund_amount', Number(formData.reserve_fund_amount || 0).toFixed(2));
         formDataPayload.append('date', formData.date);
         formDataPayload.append('method', formData.method);
         formDataPayload.append('payment_type', formData.payment_type);
@@ -194,7 +194,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         requestData = {
           apartment: formData.apartment_id,
           amount: totalAmount,
-          reserve_fund_amount: formData.reserve_fund_amount || 0,
+          reserve_fund_amount: Number(formData.reserve_fund_amount || 0).toFixed(2),
           date: formData.date,
           method: formData.method,
           payment_type: formData.payment_type,
@@ -277,6 +277,44 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
     setFormData(prev => ({ ...prev, amount: Number(isNaN(prefill) ? 0 : prefill) }));
   }, [selectedApartment?.id, monthlyShares, amountTouched]);
 
+  // Auto-fill reserve fund amount based on participation mills when apartment is selected
+  useEffect(() => {
+    if (!selectedApartment || !selectedApartment.participation_mills) return;
+    
+    // Get building data for reserve fund calculation
+    const building = buildings.find(b => b.id === buildingId) || selectedBuilding || currentBuilding;
+    
+    // Calculate monthly reserve fund target based on goal and duration
+    let monthlyReserveTarget = 0;
+    if (building?.reserve_fund_goal && building?.reserve_fund_duration_months) {
+      monthlyReserveTarget = Number(building.reserve_fund_goal) / Number(building.reserve_fund_duration_months);
+    } else {
+      // Fallback to reserve_contribution_per_apartment if available
+      monthlyReserveTarget = building?.reserve_contribution_per_apartment ?? 5;
+    }
+    
+    // Calculate reserve fund amount based on participation mills
+    const participationMills = selectedApartment.participation_mills;
+    const reserveFundAmount = (participationMills / 1000) * monthlyReserveTarget;
+    
+    // Debug logging
+    console.log('🔍 Reserve Fund Calculation Debug:', {
+      apartmentId: selectedApartment.id,
+      apartmentNumber: selectedApartment.number,
+      participationMills,
+      buildingId,
+      buildingName: building?.name,
+      reserveFundGoal: building?.reserve_fund_goal,
+      reserveFundDuration: building?.reserve_fund_duration_months,
+      monthlyReserveTarget,
+      calculatedAmount: reserveFundAmount,
+      finalAmount: Number(reserveFundAmount.toFixed(2))
+    });
+    
+    // Auto-fill the reserve fund amount
+    setFormData(prev => ({ ...prev, reserve_fund_amount: Number(reserveFundAmount.toFixed(2)) }));
+  }, [selectedApartment?.id, selectedApartment?.participation_mills, buildings, selectedBuilding, currentBuilding, buildingId]);
+
   if (!isOpen) return null;
 
   return (
@@ -347,7 +385,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                             </div>
                             {(apartment.current_balance !== undefined && apartment.current_balance !== 0) && (
                               <span className={`text-xs ${apartment.current_balance < 0 ? 'text-red-500' : 'text-green-500'}`}>
-                                Υπόλοιπο: {apartment.current_balance?.toFixed(2)}€
+                                Υπόλοιπο: {Number(apartment.current_balance || 0).toFixed(2)}€
                               </span>
                             )}
                           </div>
@@ -427,7 +465,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                   type="number"
                   step="0.01"
                   min="0"
-                  value={formData.amount || ''}
+                  value={formData.amount ? Number(formData.amount).toFixed(2) : ''}
                   onChange={(e) => {
                     setAmountTouched(true);
                     setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }));
@@ -440,7 +478,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                 )}
                 {!amountTouched && selectedApartment && (monthlyShares?.[selectedApartment.id] || selectedApartment.monthly_due) ? (
                   <p className="text-xs text-gray-500 mt-1">
-                    Προτεινόμενο ποσό: {(monthlyShares?.[selectedApartment.id] ?? selectedApartment.monthly_due)?.toFixed(2)}€
+                    Προτεινόμενο ποσό: {Number((monthlyShares?.[selectedApartment.id] ?? selectedApartment.monthly_due) || 0).toFixed(2)}€
                   </p>
                 ) : null}
               </div>
@@ -455,7 +493,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                   type="number"
                   step="0.01"
                   min="0"
-                  value={formData.reserve_fund_amount || ''}
+                  value={formData.reserve_fund_amount ? Number(formData.reserve_fund_amount).toFixed(2) : ''}
                   onChange={(e) => {
                     setFormData(prev => ({ ...prev, reserve_fund_amount: parseFloat(e.target.value) || 0 }));
                   }}
@@ -463,7 +501,17 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                 />
                 {selectedApartment && selectedApartment.participation_mills && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Προτεινόμενο: {((selectedApartment.participation_mills / 1000) * 5).toFixed(2)}€ (βάσει χιλιοστών)
+                    Προτεινόμενο: {(() => {
+                      const building = buildings.find(b => b.id === buildingId) || selectedBuilding || currentBuilding;
+                      let monthlyReserveTarget = 0;
+                      if (building?.reserve_fund_goal && building?.reserve_fund_duration_months) {
+                        monthlyReserveTarget = Number(building.reserve_fund_goal) / Number(building.reserve_fund_duration_months);
+                      } else {
+                        monthlyReserveTarget = building?.reserve_contribution_per_apartment ?? 5;
+                      }
+                      const suggestedAmount = (selectedApartment.participation_mills / 1000) * monthlyReserveTarget;
+                      return Number(suggestedAmount).toFixed(2);
+                    })()}€ (βάσει χιλιοστών)
                   </p>
                 )}
               </div>
@@ -474,10 +522,10 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
               <Label>Συνολικό Ποσό Εισπράξεως</Label>
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="text-lg font-semibold text-blue-900">
-                  {(formData.amount || 0) + (formData.reserve_fund_amount || 0)}€
+                  {Number((formData.amount || 0) + (formData.reserve_fund_amount || 0)).toFixed(2)}€
                 </div>
                 <div className="text-sm text-blue-700">
-                  Κοινόχρηστα: {formData.amount || 0}€ + Αποθεματικό: {formData.reserve_fund_amount || 0}€
+                  Κοινόχρηστα: {Number(formData.amount || 0).toFixed(2)}€ + Αποθεματικό: {Number(formData.reserve_fund_amount || 0).toFixed(2)}€
                 </div>
               </div>
             </div>
@@ -601,7 +649,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={isSubmitting || !formData.apartment_id || formData.amount <= 0}
+            disabled={isSubmitting || !formData.apartment_id || Number(formData.amount || 0) <= 0}
             className="bg-green-600 hover:bg-green-700"
           >
             {isSubmitting ? (

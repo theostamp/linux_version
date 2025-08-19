@@ -66,6 +66,9 @@ class CommonExpenseCalculator:
         if include_reserve_fund:
             self._calculate_reserve_fund_contribution(shares)
         
+        # Υπολογισμός δαπανών διαχείρισης (management fee)
+        self._calculate_management_fee(shares)
+        
         # Υπολογισμός συνολικού οφειλόμενου ποσού
         # Σημείωση: χρησιμοποιούμε αρνητικό πρόσημο για οφειλές
         for apartment_id, share_data in shares.items():
@@ -230,7 +233,8 @@ class CommonExpenseCalculator:
                     reserve_share = (Decimal(str(monthly_target)) * participation_mills_decimal) / total_mills_decimal
                     shares[apartment.id]['reserve_fund_amount'] = reserve_share
         
-        # Προσθήκη στο breakdown
+        # Προσθήκη στο breakdown και στο total_amount μόνο αν δεν υπάρχουν εκκρεμότητες
+        total_obligations = sum(abs(apt.current_balance or 0) for apt in self.apartments)
         for apartment in self.apartments:
             if shares[apartment.id]['reserve_fund_amount'] > 0:
                 shares[apartment.id]['breakdown'].append({
@@ -241,10 +245,30 @@ class CommonExpenseCalculator:
                     'distribution_type': 'reserve_fund',
                     'distribution_type_display': 'Εισφορά Αποθεματικού'
                 })
+                
+                # Προσθήκη στο total_amount μόνο αν δεν υπάρχουν εκκρεμότητες
+                if total_obligations == 0:
+                    shares[apartment.id]['total_amount'] += shares[apartment.id]['reserve_fund_amount']
     
     def get_total_expenses(self) -> Decimal:
         """Επιστρέφει το συνολικό ποσό ανέκδοτων δαπανών"""
         return sum(exp.amount for exp in self.expenses)
+    
+    def _calculate_management_fee(self, shares: Dict):
+        """Υπολογισμός δαπανών διαχείρισης (management fee)"""
+        management_fee = self.building.management_fee_per_apartment or Decimal('0.00')
+        
+        if management_fee > 0:
+            for apartment in self.apartments:
+                shares[apartment.id]['total_amount'] += management_fee
+                shares[apartment.id]['breakdown'].append({
+                    'expense_id': None,
+                    'expense_title': 'Δαπάνες Διαχείρισης',
+                    'expense_amount': management_fee,
+                    'apartment_share': management_fee,
+                    'distribution_type': 'management_fee',
+                    'distribution_type_display': 'Δαπάνες Διαχείρισης'
+                })
     
     def get_apartments_count(self) -> int:
         """Επιστρέφει τον αριθμό διαμερισμάτων"""
@@ -1706,11 +1730,19 @@ class AdvancedCommonExpenseCalculator:
             shares[apartment_id]['total_amount'] += equal_share_amount
             
             # ε. Υπολογισμός Εισφοράς Αποθεματικού (κατανομή ανά χιλιοστά)
-            if self.reserve_fund_monthly_total > 0 and total_participation_mills > 0:
+            # FIXED: Add obligations check like Basic Calculator
+            total_obligations = sum(abs(apt.current_balance or 0) for apt in self.apartments)
+            if (self.reserve_fund_monthly_total > 0 and 
+                total_participation_mills > 0 and 
+                total_obligations == 0):  # Only collect reserve fund if no obligations
                 total_participation_mills_decimal = Decimal(str(total_participation_mills))
-                reserve_share = self.reserve_fund_monthly_total * (participation_mills / total_participation_mills_decimal)
+                participation_mills_decimal = Decimal(str(participation_mills))
+                reserve_share = self.reserve_fund_monthly_total * (participation_mills_decimal / total_participation_mills_decimal)
                 shares[apartment_id]['breakdown']['reserve_fund_contribution'] = reserve_share
                 shares[apartment_id]['total_amount'] += reserve_share
+            else:
+                # No reserve fund if there are obligations
+                shares[apartment_id]['breakdown']['reserve_fund_contribution'] = Decimal('0.00')
             
             # στ. Υπολογισμός Δαπανών Διαχείρισης (προσθήκη στις γενικές δαπάνες)
             management_fee = self.building.management_fee_per_apartment or Decimal('0.00')

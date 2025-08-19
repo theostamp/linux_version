@@ -265,12 +265,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const apiDurationMonths = apiData.reserve_fund_duration_months || 0;
       const apiMonthlyTarget = apiData.reserve_fund_monthly_target || 0;
       
-      // Use API data if available, otherwise fallback to localStorage
-      const savedGoal = apiGoal > 0 ? apiGoal : loadFromLocalStorage('goal', 0);
-      const savedStartDate = loadFromLocalStorage('start_date', null) || '2025-08-01';
-      const savedTargetDate = loadFromLocalStorage('target_date', null) || '2026-07-31';
-      const savedDurationMonths = apiDurationMonths > 0 ? apiDurationMonths : (loadFromLocalStorage('duration_months', 0) || 12);
-      const savedMonthlyTarget = apiMonthlyTarget > 0 ? apiMonthlyTarget : loadFromLocalStorage('monthly_target', 0);
+      // Use API data only - no localStorage fallback to prevent hardcoded values
+      const savedGoal = apiGoal;
+      const savedStartDate = apiData.reserve_fund_start_date || null;
+      const savedTargetDate = apiData.reserve_fund_target_date || null;
+      const savedDurationMonths = apiDurationMonths;
+      const savedMonthlyTarget = apiMonthlyTarget;
       
       console.log('BuildingOverviewSection: Reserve fund data:', {
         apiGoal,
@@ -521,11 +521,11 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const currentReserve = financialSummary?.current_reserve || 0;
       const newReserveFundDebt = Math.max(0, expectedSoFar - currentReserve);
 
-      // TODO: Implement API call to save goal and duration
-      // await api.patch(`/buildings/${buildingId}/`, { 
-      //   reserve_fund_goal: goalValue,
-      //   reserve_fund_duration_months: installmentsValue
-      // });
+      // Save to API
+      await api.patch(`/buildings/list/${buildingId}/`, { 
+        reserve_fund_goal: goalValue,
+        reserve_fund_duration_months: installmentsValue
+      });
       
       setFinancialSummary(prev => prev ? { 
         ...prev, 
@@ -580,8 +580,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const currentReserve = financialSummary?.current_reserve || 0;
       const newReserveFundDebt = Math.max(0, expectedSoFar - currentReserve);
 
-      // TODO: Implement API call to save timeline
-      // await api.patch(`/buildings/${buildingId}/reserve-fund-timeline/`, { ... });
+      // Save to API
+      await api.patch(`/buildings/list/${buildingId}/`, { 
+        reserve_fund_start_date: startDate,
+        reserve_fund_target_date: endDate,
+        reserve_fund_duration_months: durationValue
+      });
       
       setFinancialSummary(prev => prev ? {
         ...prev,
@@ -616,8 +620,10 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const totalManagementCost = feeValue * (currentBuilding?.apartments_count || 0);
       saveToLocalStorage('total_management_cost', totalManagementCost);
 
-      // TODO: Implement API call to save management fee
-      // await api.patch(`/buildings/${buildingId}/`, { management_fee_per_apartment: feeValue });
+      // Save to API
+      await api.patch(`/buildings/list/${buildingId}/`, { 
+        management_fee_per_apartment: feeValue 
+      });
       
       setFinancialSummary(prev => prev ? {
         ...prev,

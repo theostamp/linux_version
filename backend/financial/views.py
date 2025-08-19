@@ -109,7 +109,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     filterset_fields = ['building', 'category', 'is_issued', 'date', 'distribution_type', 'supplier']
     
     def perform_create(self, serializer):
-        """Καταγραφή δημιουργίας δαπάνης με file upload"""
+        """Καταγραφή δημιουργίας δαπάνης με αυτόματη έκδοση και χρέωση διαμερισμάτων"""
         expense = serializer.save()
         
         # Ενημέρωση του τρέχοντος αποθεματικού του κτιρίου
@@ -130,6 +130,42 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                 building.save()
                 expense.delete()
                 raise ValidationError(f"Σφάλμα στο upload αρχείου: {str(e)}")
+        
+        # Αυτόματη χρέωση διαμερισμάτων αν η δαπάνη είναι εκδοθείσα
+        if expense.is_issued:
+            try:
+                from financial.services import CommonExpenseCalculator
+                calculator = CommonExpenseCalculator(expense.building.id)
+                shares = calculator.calculate_shares()
+                
+                # Ενημέρωση υπολοίπων διαμερισμάτων
+                for apartment_id, share_data in shares.items():
+                    apartment = Apartment.objects.get(id=apartment_id)
+                    expense_share = share_data.get('total_amount', 0)
+                    
+                    if expense_share > 0:
+                        # Ενημέρωση υπόλοιπου διαμερίσματος
+                        apartment.current_balance = (apartment.current_balance or Decimal('0.00')) - expense_share
+                        apartment.save()
+                        
+                        # Δημιουργία transaction
+                        Transaction.objects.create(
+                            building=expense.building,
+                            date=datetime.now(),
+                            type='expense_issued',
+                            description=f"Αυτόματη χρέωση: {expense.title} - {apartment.number}",
+                            apartment_number=apartment.number,
+                            apartment=apartment,
+                            amount=-expense_share,
+                            balance_before=(apartment.current_balance or Decimal('0.00')) + expense_share,
+                            balance_after=apartment.current_balance,
+                            reference_id=str(expense.id),
+                            reference_type='expense',
+                            created_by=self.request.user.username if self.request.user else 'System'
+                        )
+            except Exception as e:
+                # Αν αποτύχει η αυτόματη χρέωση, καταγράφουμε το σφάλμα αλλά δεν διακόπτουμε τη δημιουργία
+                print(f"Σφάλμα στην αυτόματη χρέωση διαμερισμάτων: {str(e)}")
         
         FinancialAuditLog.log_expense_action(
             user=self.request.user,
@@ -1612,7 +1648,8 @@ class ApartmentTransactionViewSet(viewsets.ViewSet):
         
         # Συνδυασμός και ταξινόμηση
         transaction_history = []
-        running_balance = Decimal('0.00')
+        # Χρησιμοποιούμε το τρέχον υπόλοιπο του διαμερίσματος ως αρχικό σημείο
+        running_balance = apartment.current_balance or Decimal('0.00')
         
         # Συλλογή όλων των συναλλαγών
         all_items = []

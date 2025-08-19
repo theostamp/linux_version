@@ -75,6 +75,35 @@ docker exec -it linux_version-backend-1 python manage.py <command>
 # For complex database scripts
 docker cp script.py linux_version-backend-1:/app/
 docker exec -it linux_version-backend-1 python /app/script.py
+
+# For Django scripts with tenant context
+docker cp script.py linux_version-backend-1:/app/
+docker exec -it linux_version-backend-1 python /app/script.py
+```
+
+### Django Setup Requirements
+- **Settings Module**: Always use `new_concierge_backend.settings`
+- **Python Path**: Add `/app` to sys.path
+- **Tenant Context**: Use `schema_context('demo')` for all database operations
+- **Multi-tenancy**: All database queries must be within tenant context
+
+### Django Script Template
+```python
+import os
+import sys
+import django
+
+# Setup Django environment
+sys.path.append('/app')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
+django.setup()
+
+from django_tenants.utils import schema_context
+
+# All database operations must be within schema_context
+with schema_context('demo'):
+    # Your database queries here
+    pass
 ```
 
 ## Code Quality Standards
@@ -117,6 +146,14 @@ This project has complex financial calculations:
 - Real-time balance calculations from transaction history
 - Common expenses (κοινόχρηστα) with proper breakdowns
 - Reserve fund management with audit trails
+
+### Financial Analysis Requirements
+- **Building ID 4**: Αλκμάνος 22, Αθήνα 115 28 (Demo building)
+- **Tenant Schema**: Always use `schema_context('demo')` for financial data
+- **Participation Mills**: Total must equal 1000 across all apartments
+- **Reserve Fund**: Complex calculation with monthly targets and duration
+- **Calculation Services**: Use `CommonExpenseCalculator` and `AdvancedCommonExpenseCalculator`
+- **Data Validation**: Check for balance discrepancies and calculation accuracy
 
 ## File Organization & Naming
 - **Python**: snake_case for files and variables

@@ -584,6 +584,9 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                 <p className="text-lg font-semibold text-orange-600">
                   {payment.monthly_due ? formatCurrency(payment.monthly_due) : '-'}
                 </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Τρέχουσα μηνιαία υποχρέωση
+                </p>
               </CardContent>
             </Card>
             
@@ -601,6 +604,9 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                     Αποθεματικό: {formatCurrency(payment.reserve_fund_amount)}
                   </p>
                 )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Συνολικό ποσό που εισπράχθηκε
+                </p>
               </CardContent>
             </Card>
             

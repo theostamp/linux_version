@@ -1457,8 +1457,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-72 text-xs">
-                    Άθροισμα των αρνητικών υπολοίπων (οφειλών) για την επιλεγμένη περίοδο.
-                    Πριν/στην 15η του τρέχοντος μήνα μετράμε μόνο προϋπάρχουσες οφειλές· μετά την 15η μετράμε και τον τρέχοντα μήνα.
+                    Άθροισμα των οφειλών από διαμερίσματα που έχουν αρνητικό υπόλοιπο. Περιλαμβάνει τόσο παλιές οφειλές όσο και τρέχουσες υποχρεώσεις βάσει του επιλεγμένου μήνα. Αυτό το ποσό αντιπροσωπεύει το συνολικό χρέος προς την πολυκατοικία.
                   </PopoverContent>
                 </Popover>
               </div>
@@ -1466,7 +1465,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 {formatAmount(analytics.totalPendingAmount)}€
               </div>
               <div className="text-sm text-gray-600 mt-1">
-                Ποσά που οφείλονται από διαμερίσματα
+                Συνολικό χρέος προς την πολυκατοικία
               </div>
             </div>
 
@@ -1495,7 +1494,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           </div>
 
           {/* Up-to-date Overview */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-4">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 mt-4">
             <div className="bg-white p-4 rounded-lg border">
               <div className="flex items-center gap-2 mb-2">
                 <Euro className="h-4 w-4 text-green-600" />
@@ -1507,7 +1506,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-72 text-xs">
-                    Διαφορά συνολικών πληρωμών και συνολικών δαπανών έως σήμερα (όχι μόνο του μήνα).
+                    Διαφορά συνολικών πληρωμών και συνολικών δαπανών έως σήμερα. Αρνητικό υπόλοιπο σημαίνει ότι οι δαπάνες υπερβαίνουν τις εισπράξεις και πρέπει να υπάρξει εισροή χρημάτων για την κάλυψη των εξόδων.
                   </PopoverContent>
                 </Popover>
               </div>
@@ -1516,29 +1515,6 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
               </div>
               <div className="text-sm text-gray-600 mt-1">
                 Διαφορά πληρωμών - δαπανών έως σήμερα
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="h-4 w-4 text-red-600" />
-                <span className="font-semibold text-gray-800">Συνολικές Υποχρεώσεις</span>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button aria-label="Πληροφορίες" className="p-1 rounded hover:bg-gray-100">
-                      <Info className="h-3.5 w-3.5 text-red-600" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-72 text-xs">
-                    Υφιστάμενες οφειλές από αρνητικά υπόλοιπα διαμερισμάτων + ανέκδοτες δαπάνες (έως σήμερα).
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="text-xl font-bold text-red-700">
-                {formatAmount(dashboardSummary?.current_obligations || 0)}€
-              </div>
-              <div className="text-sm text-gray-600 mt-1">
-                Υφιστάμενες οφειλές + ανέκδοτες δαπάνες έως σήμερα
               </div>
             </div>
           </div>
