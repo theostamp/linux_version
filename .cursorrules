@@ -1,287 +1,179 @@
-# New Concierge - Building Management System - Cursor Rules
+# New Concierge - Building Management System - Cursor AI Rules
 
-## Project Overview
-This is a comprehensive building management system for property administration, built with Django (backend) and Next.js (frontend). The system handles multi-tenancy, financial management, maintenance, and communication for residential buildings.
+## Project Context
+You are an AI assistant working on a comprehensive building management system built with Django (backend) and Next.js (frontend). This system handles multi-tenancy, financial management, maintenance, and communication for residential buildings in Greece.
 
-## Tech Stack
+## Critical Development Rules
 
-### Backend
+### 🐳 Docker Environment Requirements
+- **NEVER execute database operations outside Docker containers**
+- **ALL database scripts MUST run inside Docker**: `docker exec -it linux_version-backend-1 python manage.py <command>`
+- **Copy scripts to container BEFORE execution**: `docker cp script.py linux_version-backend-1:/app/`
+- **Database queries/migrations ONLY through Docker containers**
+- **NO local PostgreSQL connections allowed**
+
+### 🐍 Python Virtual Environment Rules
+- **ALWAYS activate .venv before ANY Python operations**: `source .venv/bin/activate`
+- **NEVER run Django commands without virtual environment activation**
+- **Virtual environment is MANDATORY for**: pip installs, Django management commands, Python script execution
+- **Check venv activation with**: `which python` (should show .venv path)
+
+### 🚫 Forbidden Actions
+- **DO NOT** run `python manage.py` commands directly without Docker for database operations
+- **DO NOT** execute migrations outside Docker environment
+- **DO NOT** install packages without explicit user request
+- **DO NOT** restart services automatically without permission
+- **DO NOT** run database queries on local PostgreSQL
+- **DO NOT** create files in restricted directories without confirmation
+
+### ✅ Required Actions Before Commands
+1. **For Database Operations**: Ensure Docker containers are running, copy scripts to container
+2. **For Python Development**: Activate virtual environment first
+3. **For Frontend Work**: Navigate to `/frontend` directory
+4. **For Any Terminal Command**: Request user confirmation first
+
+## Tech Stack & Architecture
+
+### Backend (Django + DRF)
 - **Framework**: Django 4.2+ with Django REST Framework
-- **Database**: PostgreSQL with django-tenants for multi-tenancy
+- **Database**: PostgreSQL with django-tenants (multi-tenancy)
 - **Authentication**: JWT with djangorestframework-simplejwt
-- **Language**: Python 3.8+
 - **Key Libraries**: psycopg2, django-cors-headers, gunicorn, whitenoise
+- **Language**: Python 3.8+ with type hints
 
-### Frontend
-- **Framework**: Next.js 15+ with React 18+
-- **Language**: TypeScript 5+
-- **UI**: Radix UI components with Tailwind CSS
-- **State Management**: TanStack React Query (React Query v5)
-- **Forms**: React Hook Form with Zod validation
-- **Maps**: Google Maps API
+### Frontend (Next.js + TypeScript)
+- **Framework**: Next.js 15+ with App Router
+- **Language**: TypeScript 5+ (strict mode)
+- **UI**: Radix UI + Tailwind CSS
+- **State Management**: TanStack React Query v5
+- **Forms**: React Hook Form + Zod validation
 - **Real-time**: Socket.io client
-- **Charts**: Recharts
-- **Rich Text**: Tiptap editor
 
-## Code Style & Standards
+### Infrastructure
+- **Containerization**: Docker + Docker Compose
+- **Database**: PostgreSQL in Docker
+- **Reverse Proxy**: Nginx (production)
+- **Environment**: .env files for configuration
+
+## Development Workflow
+
+### Working Directory Guidelines
+- **Backend work**: Use project root directory, activate .venv
+- **Frontend work**: Always `cd frontend/` first
+- **Database scripts**: Copy to Docker container, execute inside
+- **Testing**: Use virtual environment for Python, Docker for database tests
+
+### Command Execution Pattern
+```bash
+# For Python development (non-database)
+source .venv/bin/activate
+python manage.py <command>
+
+# For database operations
+docker exec -it linux_version-backend-1 python manage.py <command>
+
+# For complex database scripts
+docker cp script.py linux_version-backend-1:/app/
+docker exec -it linux_version-backend-1 python /app/script.py
+```
+
+## Code Quality Standards
 
 ### Python/Django Backend
-- Follow PEP 8 standards strictly
-- Use Black for code formatting
-- Use type hints where applicable
-- Write descriptive docstrings for all functions and classes
-- Use Django's built-in validators and serializers
+- Follow PEP 8 strictly
+- Use Black for formatting
+- Implement type hints
+- Write descriptive docstrings
+- Use Django ORM with select_related/prefetch_related
+- Implement proper error handling
 - Follow Django REST Framework best practices
-- Use environment variables for configuration via python-decouple
-- Implement proper error handling with custom exceptions
 
 ### TypeScript/React Frontend
 - Use TypeScript strict mode
 - Follow Next.js App Router conventions
-- Use functional components with hooks
 - Implement proper error boundaries
-- Use React Query for server state management
+- Use React Query for server state
 - Validate forms with Zod schemas
-- Use Tailwind CSS for styling with CSS modules for complex components
-- Follow component composition patterns
-- Use proper TypeScript interfaces and types
-
-## Project Structure
-
-### Backend Structure
-```
-backend/
-├── new_concierge_backend/     # Main Django project
-├── tenants/                   # Multi-tenancy app
-├── buildings/                 # Building management
-├── apartments/                # Apartment management  
-├── financial/                 # Financial operations
-├── users/                     # User management
-├── announcements/             # Communication
-├── maintenance/               # Maintenance requests
-├── obligations/               # Financial obligations
-├── residents/                 # Resident management
-├── teams/                     # Team collaboration
-└── api/                       # API endpoints
-```
-
-### Frontend Structure
-```
-frontend/
-├── app/                       # Next.js App Router pages
-├── components/                # Reusable UI components
-├── hooks/                     # Custom React hooks
-├── types/                     # TypeScript definitions
-├── lib/                       # Utilities & configurations
-└── public/                    # Static assets
-```
-
-## Development Guidelines
-
-### API Development
-- Use ViewSets for CRUD operations
-- Implement proper pagination for list endpoints
-- Use serializers for data validation and transformation
-- Follow RESTful naming conventions
-- Implement proper filtering with django-filter
-- Use proper HTTP status codes
-- Document APIs with proper docstrings
-
-### Frontend Development
-- Use Server Components where possible for better performance
-- Implement proper loading states and error handling
-- Use React Query for data fetching and caching
-- Create reusable components in the components directory
-- Use proper TypeScript types for all props and state
-- Implement responsive design with Tailwind CSS
-- Use proper form validation with React Hook Form + Zod
+- Create reusable components
+- Use proper TypeScript interfaces
 
 ### Database & Models
-- Use Django's ORM effectively
-- Implement proper model relationships
-- Use database constraints and validations
-- Follow tenant isolation patterns with django-tenants
+- Always consider tenant isolation
+- Use proper model relationships
+- Implement database constraints
 - Use migrations for schema changes
-- Implement proper indexing for performance
+- Optimize queries with proper indexing
 
-### Security
-- Always validate user input
-- Use Django's CSRF protection
-- Implement proper JWT token handling
-- Follow tenant isolation security
-- Sanitize data for XSS prevention
-- Use HTTPS in production
-- Implement proper CORS settings
+## Multi-Tenancy & Security
+- **Tenant Isolation**: All database queries must be tenant-aware
+- **Security**: Validate all user input, use CSRF protection
+- **JWT Handling**: Implement proper token management
+- **Data Sanitization**: Prevent XSS attacks
+- **Environment Variables**: Use for all sensitive configuration
 
 ## Financial Module Specifics
-This project has a complex financial management system:
-
-### Payment Calculations
+This project has complex financial calculations:
 - Support multiple allocation types: by_participation_mills, equal_share, specific_apartments, by_meters
-- Implement real-time balance calculations from transaction history
-- Handle common expenses (κοινόχρηστα) with proper breakdowns
-- Support reserve fund management
+- Real-time balance calculations from transaction history
+- Common expenses (κοινόχρηστα) with proper breakdowns
+- Reserve fund management with audit trails
 
-### Transaction Management
-- Track all financial transactions with proper audit trails
-- Support different payment methods
-- Implement proper receipt generation
-- Handle partial payments and adjustments
+## File Organization & Naming
+- **Python**: snake_case for files and variables
+- **React Components**: PascalCase
+- **Component Files**: kebab-case
+- **Constants**: UPPER_CASE
+- **Descriptive names** that indicate purpose
 
-## Multi-Tenancy Guidelines
-- Always use tenant-aware queries
+## Error Handling & Debugging
+- Implement proper error boundaries in React
+- Use structured logging
+- Show user-friendly error messages
+- Handle network errors gracefully
 - Test tenant isolation thoroughly
-- Use proper tenant middleware
-- Handle tenant switching in frontend
-- Implement tenant-specific configurations
-
-## Testing Standards
-- Write unit tests for all business logic
-- Use pytest for backend testing with pytest-django
-- Test API endpoints thoroughly
-- Mock external services properly
-- Test tenant isolation
-- Write integration tests for complex workflows
 
 ## Performance Guidelines
-- Use database query optimization (select_related, prefetch_related)
+- Use database query optimization
 - Implement proper caching strategies
 - Use React Query for client-side caching
 - Optimize images and static assets
-- Use lazy loading for heavy components
 - Monitor database query performance
 
-## File Naming Conventions
-- Use snake_case for Python files and variables
-- Use kebab-case for component files
-- Use PascalCase for React components
-- Use UPPER_CASE for constants
-- Use descriptive names that indicate purpose
-
-## Git Workflow
-- Use feature branches for new development
-- Write clear commit messages in present tense
-- Include type prefixes: feat:, fix:, docs:, refactor:, test:
-- Keep commits focused and atomic
-- Update documentation with code changes
-
-## Environment Setup
-- Use virtual environments for Python development (`.venv` directory)
-- Activate virtual environment: `source .venv/bin/activate` (Linux/Mac) or `.venv\Scripts\activate` (Windows)
-- Install dependencies: `pip install -r requirements.txt`
-- Use .env files for environment variables
-- Never commit sensitive information or virtual environment directories
-- Add `.venv/` to .gitignore
-- Use Docker for consistent development environments
-- Document setup procedures clearly
-
-## Virtual Environment Management
-- Always work within the virtual environment for Python development
-- Keep requirements.txt updated with exact versions
-- Use `pip freeze > requirements.txt` to update dependencies
-- Test with fresh virtual environments before deployment
-
-## Development Workflow & Docker
-
-### Backend Development (Django with django-tenants)
-- **ALWAYS activate virtual environment FIRST**: `source .venv/bin/activate` before running any Django management commands
-- **Django commands**: After activating venv, run `python manage.py <command>` (e.g., `python manage.py migrate`)
-- **Docker deployment**: The application runs inside Docker containers
-- **Service restart**: Use `docker-compose restart <backend-service-name>` for backend restarts
-- **DO NOT run `runserver` locally** - use Docker containers for consistency
-- **Tenant management**: Always consider tenant isolation when writing queries and models
-
-### Database Management
-- **Database is in Docker**: The PostgreSQL database runs exclusively in Docker containers
-- **NO local database setup**: Do NOT attempt to create, configure, or access database locally
-- **Docker database access**: Use `docker exec -it linux_version-backend-1 python manage.py <command>` for Django commands
-- **Database scripts**: Copy scripts to container with `docker cp script.py linux_version-backend-1:/app/` and run inside container
-- **Database queries**: All database operations must be executed within the Docker environment
-
-### Frontend Development (Next.js)
-- **Working directory**: Always work from `/frontend` directory
-- **Development server**: Use `npm run dev` to start development server
-- **Package management**: DO NOT run `npm install` unless explicitly requested
-- **Dependencies**: Only install new packages when specifically asked
-
-### General AI Behavior Guidelines
-- **Terminal commands**: ALWAYS request confirmation before executing terminal commands
-- **File focus**: Focus only on files provided with '@' symbol in context
-- **Migrations**: Do NOT automatically run migrations unless explicitly requested
-- **Service management**: Do NOT restart services automatically unless explicitly requested
-- **Tenant safety**: Always verify tenant isolation when working with database operations
-- **Database access**: NEVER attempt to access database locally - always use Docker containers
-- **Script execution**: For database-related scripts, always copy to container and execute inside Docker environment
-
-## Common Patterns
-
-### API Response Format
-```python
-# Successful response
-{
-    "success": True,
-    "data": {...},
-    "message": "Operation completed successfully"
-}
-
-# Error response
-{
-    "success": False,
-    "error": "Error description",
-    "details": {...}
-}
-```
-
-### Component Props Pattern
-```typescript
-interface ComponentProps {
-  children?: React.ReactNode;
-  className?: string;
-  variant?: 'primary' | 'secondary';
-  // Other specific props
-}
-```
-
-### API Hook Pattern
-```typescript
-export function useApiData() {
-  return useQuery({
-    queryKey: ['api-data'],
-    queryFn: () => apiCall(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-}
-```
-
-## Error Handling
-- Use proper error boundaries in React
-- Implement global error handlers
-- Log errors appropriately
-- Show user-friendly error messages
-- Handle network errors gracefully
-- Implement retry mechanisms where appropriate
-
-## Deployment Considerations
-- Use Docker for containerization
-- Configure proper environment variables
-- Use proper static file serving
-- Implement proper logging
-- Configure database migrations
-- Use proper reverse proxy setup (nginx)
-
-## Accessibility
-- Use semantic HTML elements
-- Implement proper ARIA labels
-- Ensure keyboard navigation
-- Test with screen readers
-- Maintain proper color contrast
-- Use focus indicators
-
-## Localization
-The system supports Greek language:
-- Use proper Greek text encoding (UTF-8)
+## Greek Language Support
+- Use proper UTF-8 encoding
 - Handle Greek date/time formatting
 - Support Greek currency formatting (€)
 - Consider Greek keyboard layouts
 
-When working on this project, always consider the multi-tenant architecture, financial complexity, and Greek language requirements. Focus on creating maintainable, scalable code that follows the established patterns and conventions.
+## Testing Standards
+- Write unit tests for business logic
+- Use pytest for backend testing
+- Test API endpoints thoroughly
+- Mock external services
+- Test tenant isolation
+- Write integration tests for complex workflows
+
+## Git Workflow
+- Use feature branches for development
+- Write clear commit messages with prefixes: feat:, fix:, docs:, refactor:, test:
+- Keep commits focused and atomic
+- Update documentation with code changes
+
+## AI Assistant Behavior
+- **Always activate virtual environment** before Python operations
+- **Always use Docker** for database operations
+- **Request confirmation** before executing terminal commands
+- **Focus on requested files** when provided with @ symbol
+- **Never run migrations automatically** unless explicitly requested
+- **Never restart services automatically** unless explicitly requested
+- **Provide clear explanations** for technical decisions
+- **Follow Greek language requirements** when applicable
+
+## Emergency Procedures
+If you encounter issues:
+1. **Database Problems**: Check Docker container status, verify tenant isolation
+2. **Virtual Environment Issues**: Deactivate and reactivate .venv
+3. **Permission Errors**: Verify Docker permissions and file ownership
+4. **Import Errors**: Check if all dependencies are installed in virtual environment
+
+Remember: This is a production system handling real financial data for Greek buildings. Precision, security, and tenant isolation are paramount.

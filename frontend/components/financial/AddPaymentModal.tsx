@@ -178,6 +178,8 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         formDataPayload.append('date', formData.date);
         formDataPayload.append('method', formData.method);
         formDataPayload.append('payment_type', formData.payment_type);
+        formDataPayload.append('payer_type', formData.payer_type);
+        formDataPayload.append('payer_name', formData.payer_name || '');
         
         if (formData.reference_number) {
           formDataPayload.append('reference_number', formData.reference_number);
@@ -196,6 +198,8 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
           date: formData.date,
           method: formData.method,
           payment_type: formData.payment_type,
+          payer_type: formData.payer_type,
+          payer_name: formData.payer_name || '',
           reference_number: formData.reference_number,
           notes: formData.notes
         };

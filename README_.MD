@@ -1,701 +1,587 @@
-Skip to content
-Navigation Menu
-theostamp
-linux_version
+# 🏢 New Concierge - Building Management System
 
-Type / to search
-Code
-Issues
-Pull requests
-2
-Actions
-Projects
-Security
-Insights
-Settings
-Owner avatar
-linux_version
-Private
-theostamp/linux_version
-Your main branch isn't protected
-Protect this branch from force pushing or deletion, or require status checks before merging. View documentation.
-Go to file
-t
-Name		
-theostamp
-theostamp
-αναδιαρθρωση financial calculator
-85913be
- · 
-13 hours ago
-.vscode
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-backend
-αναδιαρθρωση financial calculator
-13 hours ago
-docs
-αναδιαρθρωση financial calculator
-13 hours ago
-frontend
-αναδιαρθρωση financial calculator
-13 hours ago
-infra
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-monitoring
-overall project version 1.0.0
-last week
-nginx
-overall project version 1.0.0
-last week
-node_modules/react
-overall project version 1.0.0
-last week
-scripts
-overall project version 1.0.0
-last week
-.dockerignore
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-.env
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-.gitignore
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-README_ORGANIZATION.md
-Update: [σύντομη περιγραφή των αλλαγών]
-15 hours ago
-ReadME_new.MD
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-Readme_neo.MD
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-Readme_sql.MD
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-add_mills_data.py
-layout table fix
-yesterday
-building_form.html
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-check_financial_balance.py
-layout table fix
-yesterday
-check_form_html.py
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-check_payment_simple.py
-fixed financial module
-3 days ago
-check_test_data.py
-fixed financial module
-3 days ago
-check_updated_financial_data.py
-layout table fix
-yesterday
-clean_and_restart.sh
-αιτηματα φωτογραφιες upload
-last week
-cookies.txt
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-create_request_with_photos.py
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-d______docker-compose.prod.yml
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-debug_apartment_balances.py
-fixed financial module
-3 days ago
-debug_authentication.html
-fixed financial module
-3 days ago
-debug_payment_issue.py
-fixed financial module
-3 days ago
-debug_payment_total.py
-fixed financial module
-3 days ago
-debug_photos.py
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-debug_user_view.py
-layout table fix
-yesterday
-docker-compose.prod.yml
-overall project version 1.0.0
-last week
-docker-compose.yml
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-env.example
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-env.production
-overall project version 1.0.0
-last week
-final_verification.py
-layout table fix
-yesterday
-fix_financial_balances.py
-layout table fix
-yesterday
-fix_mills_to_1000.py
-layout table fix
-yesterday
-get_building_id.py
-Update: [σύντομη περιγραφή των αλλαγών]
-15 hours ago
-map-page.html
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-next.config.sample.js
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-package-lock.json
-overall project version 1.0.0
-last week
-package.json
-overall project version 1.0.0
-last week
-quick_financial_check.py
-layout table fix
-yesterday
-readme.md
-αναδιαρθρωση financial calculator
-13 hours ago
-requirements.txt
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-reset_and_start.sh
-αιτηματα φωτογραφιες upload
-last week
-run_financial_tests.py
-overall project version 1.0.0
-last week
-simple_financial_test.py
-overall project version 1.0.0
-last week
-simple_meter_test.py
-overall project version 1.0.0
-last week
-test_advanced_calculator.py
-Update: [σύντομη περιγραφή των αλλαγών]
-15 hours ago
-test_advanced_calculator_simple.py
-Update: [σύντομη περιγραφή των αλλαγών]
-15 hours ago
-test_api_endpoint.py
-fixed financial module
-3 days ago
-test_araxovis_building.py
-Update: [σύντομη περιγραφή των αλλαγών]
-15 hours ago
-test_building_selector.html
-overall project version 1.0.0
-last week
-test_building_selector_simple.html
-overall project version 1.0.0
-last week
-test_calculator_logic.py
-Update: [σύντομη περιγραφή των αλλαγών]
-15 hours ago
-test_charts.py
-overall project version 1.0.0
-last week
-test_charts_frontend.py
-overall project version 1.0.0
-last week
-test_dashboard_api.py
-fixed financial module
-3 days ago
-test_file_upload.py
-overall project version 1.0.0
-last week
-test_financial_api.py
-overall project version 1.0.0
-last week
-test_financial_basic.py
-overall project version 1.0.0
-last week
-test_financial_reorganization.py
-overall project version 1.0.0
-last week
-test_financial_simple.py
-overall project version 1.0.0
-last week
-test_frontend_financial.html
-overall project version 1.0.0
-last week
-test_image.svg
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-test_meter_readings.py
-overall project version 1.0.0
-last week
-test_mills_calculation.py
-layout table fix
-yesterday
-test_monthly_filtering_fix.py
-layout table fix 1
-yesterday
-test_monthly_filters.py
-layout table fix
-yesterday
-test_payment_frontend.html
-fixed financial module
-3 days ago
-test_payment_model_only.py
-fixed financial module
-3 days ago
-test_payment_phase2.py
-fixed financial module
-3 days ago
-test_payment_phase2_simple.py
-fixed financial module
-3 days ago
-test_payment_refresh.py
-fixed financial module
-3 days ago
-test_payment_transaction_fix.py
-fixed financial module
-3 days ago
-test_phase3_automation.py
-fixed financial module
-3 days ago
-test_phase3_simple.py
-fixed financial module
-3 days ago
-test_photo.svg
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-test_photos.py
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-test_quick_calculation.py
-fixed financial module
-3 days ago
-test_street_view_debug.html
-ΗΜΙΤΕΛΗ ΟΙΚΟΝΟΜΙΚΑ ΣΥΝΕΡΓΕΙΑ ΠΡΣΦΟΡΕΣ
-last week
-test_token_refresh.html
-fixed financial module
-3 days ago
-Στοιχεια Συνδεσης Admin
-fixed financial module
-3 days ago
-Repository files navigation
-README
-🏢 Building Management System - Linux Version
-🎯 Επισκόπηση
-Πλήρες σύστημα διαχείρισης πολυκατοικιών με multi-tenant αρχιτεκτονική, kiosk mode για δημόσιους χώρους, και comprehensive financial management.
+## 📋 Επισκόπηση
 
-🚀 Γρήγορη Εκκίνηση
-🧹 Καθαρισμός και Επανεκκίνηση Docker
-Πλήρες Reset (Άδειασμα Όλων)
-# 1. Διακοπή και διαγραφή όλων των containers
-docker compose down --volumes --remove-orphans
+Το **New Concierge** είναι ένα ολοκληρωμένο σύστημα διαχείρισης κτιρίων που προσφέρει λύσεις για:
+- 🏠 Διαχείριση πολυκατοικιών και διαμερισμάτων
+- 💰 Οικονομική διαχείριση (δαπάνες, εισπράξεις, κοινοχρήστων)
+- 👥 Διαχείριση ιδιοκτητών και ενοικιαστών
+- 📢 Επικοινωνία και ανακοινώσεις
+- 🔧 Συντήρηση και επισκευές
+- 📊 Reports και analytics
 
-# 2. Διαγραφή όλων των images (προαιρετικό)
-docker rmi $(docker images -q) 2>/dev/null || true
+---
 
-# 3. Καθαρισμός volumes
+## 🚀 Τελευταίες Ενημερώσεις (January 2025)
+
+### 🎯 **Service Package Management System** - NEW MAJOR FEATURE
+
+#### 📦 **Smart Service Package Creation** - NEW COMPONENT
+- **Professional Service Builder**: 21 πραγματικές υπηρεσίες διαχείρισης κτιρίων
+- **Market-Based Pricing**: Τιμές βάσει ελληνικής αγοράς 2024 (1.00€-8.00€/διαμέρισμα)
+- **4 Service Categories**: Βασικές, Επεκταμένες, Premium, Ειδικές υπηρεσίες
+- **Auto-Cost Calculation**: Έξυπνος υπολογισμός με real-time preview
+- **Custom Package Builder**: Checkbox selector με descriptions
+
+#### 🏗️ **Service Categories & Pricing**
+- **🟢 Βασικές (2.50-4.00€)**: Διαχείριση κοινόχρηστων, Τήρηση λογαριασμών, Εξόφληση, Συντήρηση
+- **🔵 Επεκταμένες (0.80-2.00€)**: Επίβλεψη εργασιών, Νομικές συμβουλές, 24/7 υποστήριξη
+- **🟣 Premium (1.50-3.00€)**: Ασφάλειες, Προγραμματισμός συντηρήσεων, Ψηφιακό αρχείο
+- **🟠 Ειδικές (2.50-8.00€)**: Φορολογικές υπηρεσίες, Ανακαινίσεις, Smart building
+
+#### 🔧 **Backend Enhancements** - UPDATED
+- **Full CRUD Operations**: ServicePackageViewSet με create/update/delete
+- **Dynamic Cost Calculation**: Auto-calculation με building context
+- **Professional API**: Πλήρης REST API για service package management
+- **Model Validation**: Robust data validation και error handling
+
+#### 🎨 **UX/UI Improvements** - ENHANCED
+- **Empty State → Creation Flow**: Προτεινόμενα templates αντί για error messages
+- **Two-Mode Interface**: Auto-calculate vs Manual entry modes
+- **Accessibility Compliant**: DialogDescription για screen readers
+- **Visual Categories**: Color-coded service categories με icons
+
+#### 🔥 **Σημερινές Αλλαγές (Detailed Implementation)**
+
+**Frontend Changes:**
+- ✅ `ServicePackageModal.tsx`: Πλήρης rebuild με service selector interface
+- ✅ `checkbox.tsx`: Custom checkbox component (καινούργιο αρχείο)
+- ✅ `api.ts`: Νέες functions (createServicePackage, updateServicePackage, deleteServicePackage)
+- ✅ 21 Real Services: Professional list με market-based pricing
+- ✅ Auto-calculation logic: Smart cost calculation βάσει επιλεγμένων υπηρεσιών
+
+**Backend Changes:**
+- ✅ `ServicePackageViewSet`: ReadOnlyModelViewSet → ModelViewSet (full CRUD)
+- ✅ Models & Serializers: Already compatible με τη νέα λειτουργικότητα
+- ✅ API Endpoints: Πλήρης support για create/update/delete operations
+
+**Accessibility & UI:**
+- ✅ DialogDescription: Fixed accessibility warnings
+- ✅ Category-based UI: Color-coded service categories
+- ✅ Real-time Preview: Live cost updates και validation
+- ✅ Professional UX: Empty state → creation flow transformation
+
+---
+
+### 🎯 **Προηγούμενες Βελτιώσεις - Payment List & Modals** (August 2025)
+
+#### 💰 **Enhanced Payment List** - NEW FEATURE
+- **Συγκεντρωτική Προβολή**: Μία εγγραφή ανά ενοίκο αντί για μεμονωμένες πληρωμές
+- **Προοδευτικά Υπόλοιπα**: Ακριβής real-time υπολογισμός από transaction history
+- **Smart UI**: Καθαρότερη εμφάνιση χωρίς περιττές ετικέτες
+- **Color-Coded Balances**: Οπτικές ενδείξεις για οφειλές/πιστώσεις
+
+#### 📋 **Payment Detail Modal** - NEW COMPONENT
+- **Μοναδικό Ιστορικό**: Διαφορετικά δεδομένα ανά διαμέρισμα
+- **Print-Ready**: Λειτουργική εκτύπωση με optimized CSS
+- **Real-Time Data**: Σύνδεση με νέο backend API endpoint
+- **Enhanced UX**: Loading states και error handling
+
+#### 🔧 **Backend API Improvements** - ENHANCED
+- **Dynamic Balance Calculation**: Υπολογισμός υπολοίπων από transaction history
+- **New Endpoint**: `/api/financial/apartments/{id}/transactions/`
+- **Enhanced Serializers**: Owner/tenant names και monthly due integration
+
+---
+
+## 🚀 Προηγούμενες Ενημερώσεις (December 5, 2024)
+
+### ✅ **Επιλύθηκαν Κρίσιμα Προβλήματα**
+
+#### 1. **Building Selector Issue** - FIXED
+- **Πρόβλημα**: Type mismatch μεταξύ components
+- **Λύση**: Ενοποίηση τύπων `buildingId` σε `number`
+- **Αποτέλεσμα**: Σωστή λειτουργία multi-building management
+
+#### 2. **CommonExpenseModal TypeError** - FIXED
+- **Πρόβλημα**: `share.breakdown.forEach is not a function`
+- **Λύση**: Array type checking με `Array.isArray()`
+- **Αποτέλεσμα**: Robust error handling
+
+#### 3. **Common Expenses Calculator** - FIXED
+- **Πρόβλημα**: Δαπάνες δεν εμφανίζονταν στον υπολογισμό
+- **Αιτία**: Έλλειψη ανέκδοτων δαπανών και χιλιοστών συμμετοχής
+- **Λύση**: 
+  - Δημιουργία 5 νέων δαπανών (1.050€ συνολικά)
+  - Προσθήκη χιλιοστών συμμετοχής (1.000 συνολικά)
+- **Αποτέλεσμα**: Πλήρης λειτουργικότητα υπολογισμού κοινοχρήστων
+
+#### 4. **CommonExpenseModal UI/UX** - ENHANCED
+- **Βελτιώσεις**:
+  - Μικρότερο ύψος (85% αντί για 95%)
+  - Μεγαλύτερο πλάτος (95% της οθόνης)
+  - 3-Column layout για καλύτερη οργάνωση
+  - Κουμπί "Αποθήκευση" με API integration
+- **Αποθήκευση**: JSON format για ελάχιστη επιβάρυνση πόρων
+
+### 🛠️ **Scripts που Δημιουργήθηκαν**
+- `add_expenses_via_api.py` - Δημιουργία ανέκδοτων δαπανών
+- `add_mills_to_athens_building.py` - Προσθήκη χιλιοστών συμμετοχής
+- `debug_expenses.py` - Εντοπισμός προβλημάτων δαπανών
+
+---
+
+## 🏗️ Αρχιτεκτονική
+
+### Backend (Django + Django Tenants)
+```
+backend/
+├── new_concierge_backend/     # Main Django project
+├── tenants/                   # Multi-tenancy support
+├── buildings/                 # Building management
+├── apartments/                # Apartment management
+├── financial/                 # Financial management
+├── users/                     # User management
+├── announcements/             # Communication
+└── maintenance/               # Maintenance & repairs
+```
+
+### Frontend (React + TypeScript)
+```
+frontend/
+├── components/                # Reusable UI components
+├── pages/                     # Page components
+├── hooks/                     # Custom React hooks
+├── types/                     # TypeScript definitions
+├── lib/                       # Utilities & configurations
+└── styles/                    # CSS & styling
+```
+
+---
+
+## 💰 Οικονομική Διαχείριση
+
+### Διαθέσιμες Λειτουργίες
+- ✅ **Δαπάνες**: Καταχώρηση και διαχείριση δαπανών κτιρίου
+- ✅ **Εισπράξεις**: Διαχείριση πληρωμών ιδιοκτητών
+- ✅ **Κοινοχρήστων**: Υπολογισμός και έκδοση κοινοχρήστων
+- ✅ **Reports**: Οικονομικά reports και analytics
+- ✅ **Αποθεματικό**: Διαχείριση ταμείου εφεδρείας με δόσεις
+- 🆕 **Service Packages**: Δημιουργία και διαχείριση πακέτων υπηρεσιών
+
+### 🆕 Service Package Management
+- **Professional Templates**: 3 προτεινόμενα πακέτα (Βασικό, Πρότυπο, Premium)
+- **Custom Package Builder**: Δημιουργία με 21 πραγματικές υπηρεσίες
+- **Market-Based Pricing**: Αυτόματος υπολογισμός βάσει επιλεγμένων υπηρεσιών
+- **Building-Specific Costs**: Υπολογισμός ανά αριθμό διαμερισμάτων
+- **Real-Time Preview**: Live cost calculation και service selection
+
+#### 📖 **Οδηγός Χρήσης Service Packages**
+
+**Για Administrators:**
+1. **Πρόσβαση**: Πηγαίνετε στο Building Overview → κουμπί "📦" δίπλα από Management Fee
+2. **Δημιουργία Πακέτου**: 
+   - Επιλέξτε ένα από τα 3 προτεινόμενα templates ή
+   - Πατήστε "Προσαρμοσμένο Πακέτο" για custom creation
+3. **Service Selection**: Ενεργοποιήστε "Auto-υπολογισμός τιμής" και επιλέξτε υπηρεσίες
+4. **Price Review**: Δείτε real-time το συνολικό κόστος ανά κτίριο
+5. **Apply Package**: Πατήστε "Εφαρμογή Πακέτου" για immediate activation
+
+**Market-Based Service Examples:**
+- 🟢 **Διαχείριση κοινόχρηστων**: 2.50€ (βασική υπηρεσία)
+- 🔵 **24/7 τηλεφωνική υποστήριξη**: 1.00€ (επεκταμένη)
+- 🟣 **Προγραμματισμός συντηρήσεων**: 3.00€ (premium)
+- 🟠 **Smart building υπηρεσίες**: 5.00€ (ειδική)
+
+### Υπολογιστής Κοινοχρήστων
+- **Τύποι Κατανομής**:
+  - Ανά Χιλιοστά (by_participation_mills)
+  - Ισόποσα (equal_share)
+  - Συγκεκριμένα (specific_apartments)
+  - Μετρητές (by_meters)
+
+- **Κατηγορίες Δαπανών**:
+  - Καθαρισμός Κοινοχρήστων
+  - ΔΕΗ Κοινοχρήστων
+  - Συντήρηση Ανελκυστήρα
+  - Θέρμανση
+  - Ασφάλεια Κτιρίου
+  - Και πολλές άλλες...
+
+---
+
+## 🔧 Εγκατάσταση & Εκκίνηση
+
+### Προαπαιτούμενα
+- Python 3.8+
+- Node.js 16+
+- PostgreSQL 12+
+- Docker (προαιρετικό)
+
+### Backend Setup
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# ή venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+### Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Database Setup
+```bash
+# Δημιουργία demo tenant
+python manage.py create_tenant --schema_name=demo --name="Demo Tenant"
+
+# Δημιουργία sample data
+python create_sample_data.py
+```
+
+---
+
+## 🧪 Testing
+
+### Backend Tests
+```bash
+cd backend
+python manage.py test
+```
+
+### Frontend Tests
+```bash
+cd frontend
+npm test
+```
+
+### API Tests
+```bash
+# Test building selector
+python test_building_selector_fix.py
+
+# Test financial calculations
+python test_advanced_calculator.py
+```
+
+---
+
+## 📊 Demo Data
+
+### Διαθέσιμα Κτίρια
+- **Αθηνών 12**: 6 διαμερίσματα (με χιλιοστά συμμετοχής)
+- **Πατησίων 45**: 6 διαμερίσματα
+- **Αραχώβης 12**: 12 διαμερίσματα (με χιλιοστά συμμετοχής)
+
+### Sample Δαπάνες
+- ΔΕΗ Κοινοχρήστων: 280€
+- Καθαρισμός Κοινοχρήστων: 320€
+- Συντήρηση Ανελκυστήρα: 180€
+- Νερό Κοινοχρήστων: 150€
+- Ασφάλεια Κτιρίου: 120€
+
+### Demo Credentials
+```
+Email: admin@demo.localhost
+Password: admin123456
+```
+
+---
+
+## 🔐 Security
+
+### Authentication
+- JWT-based authentication
+- Refresh tokens
+- Role-based access control
+- Multi-tenant isolation
+
+### Data Protection
+- Tenant isolation
+- Encrypted sensitive data
+- Audit logging
+- GDPR compliance
+
+---
+
+## 📈 Performance
+
+### Optimizations
+- Database query optimization
+- Caching strategies
+- Lazy loading
+- Image compression
+- CDN integration
+
+### Monitoring
+- Application performance monitoring
+- Error tracking
+- User analytics
+- System health checks
+
+---
+
+## 🤝 Contributing
+
+### Development Workflow
+1. Fork the repository
+2. Create feature branch
+3. Make changes
+4. Add tests
+5. Submit pull request
+
+### Code Standards
+- TypeScript for frontend
+- Python PEP 8 for backend
+- ESLint + Prettier
+- Black for Python formatting
+
+---
+
+## 📝 Documentation
+
+### Available Documentation
+- [API Documentation](docs/api/)
+- [User Guide](docs/user-guide/)
+- [Developer Guide](docs/developer-guide/)
+- [Deployment Guide](docs/deployment/)
+
+### Architecture Documents
+- [System Architecture](docs/architecture/)
+- [Database Schema](docs/database/)
+- [Security Model](docs/security/)
+
+---
+
+## 🚀 Deployment
+
+### Production Setup
+```bash
+# Backend deployment
+docker-compose -f docker-compose.prod.yml up -d
+
+# Frontend deployment
+npm run build
+# Deploy to CDN/static hosting
+```
+
+### Environment Variables
+```bash
+# Backend
+DATABASE_URL=postgresql://...
+SECRET_KEY=your-secret-key
+DEBUG=False
+
+# Frontend
+NEXT_PUBLIC_API_URL=https://api.yourdomain.com
+```
+
+---
+
+## 📞 Support
+
+### Contact Information
+- **Email**: support@newconcierge.com
+- **Documentation**: [docs.newconcierge.com](https://docs.newconcierge.com)
+- **Issues**: [GitHub Issues](https://github.com/newconcierge/issues)
+
+### Community
+- **Discord**: [Join our community](https://discord.gg/newconcierge)
+- **Blog**: [Latest updates](https://blog.newconcierge.com)
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🧹 Καθαρισμός Docker
+
+### Πλήρης Καθαρισμός Docker
+```bash
+
+docker stop $(docker ps -aq)
+
+docker rm $(docker ps -aq)
 docker volume prune -f
-
-# 4. Καθαρισμός networks
 docker network prune -f
+docker builder prune -af
+docker system prune -af --volumes
 
-# 5. Πλήρες καθαρισμός συστήματος (προαιρετικό)
-docker system prune -a --volumes
-
-# 6. Επανεκκίνηση με νέα build
 docker compose up --build -d
-Γρήγορο Reset (Διατήρηση Images)
-# 1. Διακοπή containers και καθαρισμός volumes
-docker compose down --volumes
 
-# 2. Καθαρισμός μόνο unused resources
-docker system prune -f
 
-# 3. Επανεκκίνηση
-docker compose up --build -d
-Reset Μόνο Database (Διατήρηση Κώδικα)
-# 1. Διακοπή containers
-docker compose down
+docker rmi $(docker images -q)
 
-# 2. Διαγραφή μόνο του database volume
-docker volume rm linux_version_pgdata_dev
-
-# 3. Επανεκκίνηση (νέα βάση δεδομένων)
-docker compose up -d
-🔄 Αυτόματη Αρχικοποίηση
 # Πλήρες reset και εκκίνηση
 ./reset_and_start.sh
 
 # Ή με interactive menu
 ./clean_and_restart.sh
-📝 Χειροκίνητη Εκκίνηση
-# 1. Εκκίνηση containers
-docker compose up -d
+```
 
-# 2. Παρακολούθηση logs
-docker compose logs -f backend
-🔍 Έλεγχος Κατάστασης
-# Έλεγχος containers
-docker compose ps
+### Επιλεκτικός Καθαρισμός
+```bash
+# Διαγραφή μόνο των unused containers
+docker container prune -f
 
-# Έλεγχος logs
-docker compose logs
+# Διαγραφή μόνο των unused images
+docker image prune -af
 
-# Έλεγχος volumes
-docker volume ls
+# Διαγραφή μόνο των unused volumes
+docker volume prune -f
+```
 
-# Έλεγχος networks
-docker network ls
-🌐 Πρόσβαση
-Μετά την εκκίνηση, μπορείτε να αποκτήσετε πρόσβαση:
+---
 
-Public Admin (Ultra-Superuser): http://localhost:8000/admin/
-Demo Frontend: http://demo.localhost:8080
-Demo Backend API: http://demo.localhost:8000/api/
-Demo Admin Panel: http://demo.localhost:8000/admin/
-Kiosk Mode (Building-specific): http://demo.localhost:8080/info-screen/1
-Kiosk Mode (General): http://demo.localhost:8080/kiosk
-Kiosk Settings: http://demo.localhost:8080/kiosk-settings
-👑 Διαθέσιμοι Χρήστες
-Ultra-Superuser (Public Schema)
-Email	Password	Δικαιώματα
-👑 theostam1966@gmail.com	theo123!@#	Πλήρη διαχείριση όλων των tenants
-Demo Χρήστες (Demo Tenant)
-Ρόλος	Email	Password	Δικαιώματα
-🔧 Admin	admin@demo.localhost	admin123456	Superuser - Πλήρη admin πρόσβαση
-👨‍💼 Manager	manager@demo.localhost	manager123456	Staff - Περιορισμένα admin δικαιώματα
-👤 Resident 1	resident1@demo.localhost	resident123456	User - Χωρίς admin πρόσβαση
-👤 Resident 2	resident2@demo.localhost	resident123456	User - Χωρίς admin πρόσβαση
-🏗️ Ιεραρχία Δικαιωμάτων
-👑 Ultra-Superuser (theostam1966@gmail.com)
-├── Public Schema (localhost:8000/admin/)
-│   ├── Διαχείριση όλων των tenants
-│   ├── Δημιουργία/διαγραφή tenants
-│   └── Πλήρη πρόσβαση σε όλα τα schemas
-│
-├── 🔧 Tenant Admin (admin@demo.localhost)
-│   ├── Demo Tenant (demo.localhost:8000/admin/)
-│   ├── Διαχείριση χρηστών στο tenant
-│   └── Πλήρη πρόσβαση στο tenant schema
-│
-├── 👨‍💼 Tenant Manager (manager@demo.localhost)
-│   ├── Περιορισμένα admin δικαιώματα
-│   └── Διαχείριση δεδομένων του tenant
-│
-└── 👤 Residents (resident1@demo.localhost, resident2@demo.localhost)
-    ├── Κανονικοί χρήστες
-    └── Πρόσβαση μόνο στα δικά τους δεδομένα
-📊 Demo Δεδομένα
-Το σύστημα περιλαμβάνει:
 
-✅ 2 κτίρια (Αθηνών 12, Πατησίων 45)
-✅ 4 χρήστες με διαφορετικούς ρόλους
-✅ 12 διαμερίσματα (2 κτίρια × 2 όροφοι × 3 διαμερίσματα)
-✅ 2 ανακοινώσεις
-✅ 2 αιτήματα (maintenance)
-✅ 2 ψηφοφορίες με επιλογές
-✅ 2 υποχρεώσεις (financial)
-✅ Building memberships για όλους τους χρήστες
-🖥️ Kiosk Mode - Οθόνη Προβολής
-Το σύστημα διαθέτει μια οθόνη προβολής (kiosk mode) που μπορεί να τοποθετηθεί στην είσοδο της πολυκατοικίας και παρέχει:
 
-✨ Χαρακτηριστικά:
-📢 Ανακοινώσεις: Εμφάνιση ενεργών ανακοινώσεων με προτεραιότητα
-🗳️ Ψηφοφορίες: Προβολή ενεργών ψηφοφοριών με ημερομηνίες λήξης
-🏢 Πληροφορίες Κτιρίου: Στοιχεία κτιρίου, διαχειριστή, αριθμός διαμερισμάτων
-🌤️ Καιρός: Πραγματικές πληροφορίες καιρού για την περιοχή
-📰 Ειδήσεις: Κινούμενο ticker με ειδήσεις και προτροπές
-📢 Διαφημιστικά Banners: Χρήσιμες υπηρεσίες και διαφημίσεις
-⏰ Ώρα & Ημερομηνία: Πραγματικού χρόνου ενημέρωση
-🎨 Σχεδιασμός:
-Full-screen layout με gradient background
-Auto-sliding slides κάθε 10 δευτερόλεπτα
-Responsive design για διαφορετικά μεγέθη οθόνης
-Touch-friendly navigation με dots
-Professional appearance κατάλληλο για δημόσιους χώρους
-🔧 Διαχείριση:
-Ρυθμίσεις Kiosk: /kiosk-settings για διαχείριση banners και ρυθμίσεων
-Προεπισκόπηση: Άμεση προεπισκόπηση των αλλαγών
-Building-specific: Διαφορετικό περιεχόμενο ανά κτίριο
-Real-time updates: Αυτόματη ανανέωση δεδομένων
-🐧 WSL Ubuntu Terminal Configuration
-Το project έχει ρυθμιστεί για να χρησιμοποιεί το WSL Ubuntu ως default terminal αντί για PowerShell.
+### Αναλυτική Διαδικασία Ενημέρωσης
+```bash
+# 1. Έλεγχος τρέχουσας κατάστασης
+git status
+git log --oneline -5
 
-Ρυθμίσεις VS Code:
-Default Terminal: WSL Ubuntu
-Debugging: Ρυθμισμένο για WSL environment
-Tasks: Όλες οι εργασίες τρέχουν στο WSL
-Χρήση:
-Terminal: `Ctrl + `` (ανοίγει το WSL Ubuntu terminal)
-Tasks: Ctrl + Shift + P → "Tasks: Run Task" → επιλέξτε εργασία
-Debugging: F5 → επιλέξτε "Python: Current File (WSL)" ή "Django: Run Server (WSL)"
-📁 Project Structure
-linux_version/
-├── backend/                    # Django backend
-│   ├── scripts/               # Automation scripts
-│   │   ├── auto_initialization.py  # 🎯 Main auto-init script
-│   │   ├── create_superuser.py     # 🔧 Superuser creation
-│   │   ├── manage_tenants.py       # 🏢 Tenant management
-│   │   └── check_permissions.py    # 🔍 Permission checking
-│   ├── logs/                  # Credentials & logs
-│   └── entrypoint.sh          # Container startup script
-├── frontend/                  # Next.js frontend
-├── docs/                      # 📚 Documentation (organized)
-│   ├── index.md              # 🎯 Central documentation index
-│   ├── session-management/   # 🔄 Session guides
-│   ├── implementation-guides/ # 🛠️ Implementation guides
-│   ├── testing/              # 🧪 Testing guides
-│   ├── documentation/        # 📖 General documentation
-│   ├── todo-planning/        # 📋 TODO & planning
-│   ├── completion-summaries/ # ✅ Completion summaries
-│   ├── quick-start-guides/   # 🚀 Quick start guides
-│   └── debug-fixes/          # 🔧 Debug & fixes
-├── docker-compose.yml         # Container configuration
-├── reset_and_start.sh         # 🚀 Quick reset script
-├── clean_and_restart.sh       # 🧹 Interactive clean script
-└── readme.md                  # This file
-📚 Τεκμηρίωση
-📖 Κεντρικός Οδηγός Τεκμηρίωσης
-Όλη η λεπτομερής τεκμηρίωση έχει οργανωθεί στο φάκελο docs/:
+# 2. Pull τελευταίων αλλαγών από remote
+git pull origin main
 
-📚 docs/index.md - Κεντρικός οδηγός για όλη την τεκμηρίωση
-📋 README_ORGANIZATION.md - Οδηγός οργάνωσης αρχείων
-🎯 Γρήγορη Πλοήγηση Τεκμηρίωσης
-Κατηγορία	Περιγραφή	Σύνδεσμος
-🔄 Session Management	Επόμενες συνεδρίες και σύνοψες	docs/session-management/
-🛠️ Implementation Guides	Οδηγίες υλοποίησης	docs/implementation-guides/
-🧪 Testing	Testing και validation	docs/testing/
-📖 Documentation	Γενική τεκμηρίωση	docs/documentation/
-📋 TODO & Planning	Εργασίες και σχεδιασμός	docs/todo-planning/
-✅ Completion Summaries	Σύνοψες ολοκληρωμένων	docs/completion-summaries/
-🚀 Quick Start Guides	Γρήγοροι οδηγοί	docs/quick-start-guides/
-🔧 Debug & Fixes	Διόρθωση προβλημάτων	docs/debug-fixes/
-🔧 Χρήσιμες Εντολές
-🐳 Docker Commands
-# Έλεγχος κατάστασης
-docker compose ps
-
-# Παρακολούθηση logs
-docker compose logs -f
-
-# Restart συγκεκριμένου service
-docker compose restart backend
-docker compose restart frontend
-docker compose restart db
-
-# Έλεγχος χρήσης πόρων
-docker stats
-🔧 Backend Scripts
-# Δημιουργία superuser
-docker exec linux_version-backend-1 python backend/scripts/create_superuser.py --email admin@example.com --password mypassword
-
-# Διαχείριση tenants
-docker exec linux_version-backend-1 python backend/scripts/manage_tenants.py --list
-
-# Έλεγχος δικαιωμάτων
-docker exec linux_version-backend-1 python backend/scripts/check_permissions.py --all
-🗄️ Database Commands
-# Σύνδεση στη βάση δεδομένων
-docker compose exec db psql -U postgres
-
-# Backup βάσης δεδομένων
-docker compose exec db pg_dump -U postgres > backup.sql
-
-# Restore βάσης δεδομένων
-docker compose exec -T db psql -U postgres < backup.sql
-🚨 Troubleshooting
-Αν δεν ξεκινάνε τα containers:
-# 1. Έλεγχος αν χρησιμοποιούνται οι ports
-sudo lsof -i :8080  # Frontend port
-sudo lsof -i :8000  # Backend port
-sudo lsof -i :5432  # Database port
-
-# 2. Kill processes που χρησιμοποιούν τα ports
-sudo kill -9 <PID>
-
-# 3. Επανεκκίνηση
-docker compose up --build -d
-Αν δεν συνδέεται η βάση δεδομένων:
-# 1. Έλεγχος database container
-docker compose logs db
-
-# 2. Restart μόνο τη βάση
-docker compose restart db
-
-# 3. Έλεγχος σύνδεσης
-docker compose exec db psql -U postgres -c "SELECT 1;"
-Αν δεν λειτουργεί η αυτόματη αρχικοποίηση:
-# 1. Έλεγχος backend logs
-docker compose logs backend
-
-# 2. Χειροκίνητη αρχικοποίηση
-docker exec linux_version-backend-1 python backend/scripts/auto_initialization.py
-
-# 3. Έλεγχος αν δημιουργήθηκαν οι χρήστες
-docker exec linux_version-backend-1 python backend/scripts/check_permissions.py --all
-📄 Credentials File
-Τα credentials αποθηκεύονται αυτόματα στο:
-
-backend/logs/demo_credentials.log
-🎯 Current Status
-✅ Financial Module: Πλήρως λειτουργικό με API fixes
-✅ Building Selector: UI λειτουργικό, χρειάζεται data refresh fix
-✅ Multi-tenant: Λειτουργικό με django-tenants
-✅ Authentication: JWT-based με refresh tokens
-✅ Sample Data: Διαθέσιμο στο demo tenant
-✅ Documentation: Πλήρως οργανωμένη σε 8 κατηγορίες
-
-📋 TODO - Επόμενα Βήματα
-🔧 Building Selector Issue (Priority: HIGH)
-Πρόβλημα: Μετά την επιλογή άλλου κτιρίου δεν έχουμε αλλαγή δεδομένων.
-
-Επόμενα Βήματα:
-
-Ελέγξω αν το selectedBuilding ενημερώνεται στο context
-Ελέγξω αν τα components re-render όταν αλλάζει το building
-Ελέγξω αν τα API calls χρησιμοποιούν το σωστό building ID
-Ελέγξω αν υπάρχει caching issue
-🏗️ Financial Module Enhancements
- Add transaction creation form
- Add payment creation form
- Add account creation form
- Add financial reports
- Add export functionality
-🔐 Security Enhancements
- Add rate limiting
- Add audit logging
- Add session management
- Add 2FA support
-📊 Monitoring & Analytics
- Add system health dashboard
- Add performance metrics
- Add user activity tracking
- Add error reporting
-🚀 Production Deployment
- Set up CI/CD pipeline
- Configure production environment
- Set up monitoring and alerting
- Create backup procedures
-🎉 Επιτυχής Αρχικοποίηση!
-Μετά την εκκίνηση, το σύστημα είναι έτοιμο για χρήση με πλήρη demo δεδομένα και χρήστες!
-
-🔄 GitHub Ενημέρωση
-📤 Εκκίνηση Git Repository
-# Αρχικοποίηση Git repository
-git init
-
-# Προσθήκη όλων των αρχείων
+# 3. Προσθήκη αλλαγών
 git add .
 
-# Πρώτο commit
-git commit -m "Initial commit - Building Management System"
+# 4. Commit με περιγραφικό μήνυμα
+git commit -m "feat: προσθήκη νέων χαρακτηριστικών οικονομικής διαχείρισης"
 
-# Ορισμός main branch
-git branch -M main
-
-# Προσθήκη remote repository
-git remote add origin https://github.com/theostamp/linux_version.git
-
-# Push στο GitHub
-git push -u origin main
-📝 Ενημέρωση Αλλαγών
-# Προσθήκη αλλαγών
-git add .
-
-# Commit με περιγραφικό μήνυμα
-git commit -m "αναδιαρθρωση financial calculator"
-
-# Push στο GitHub
+# 5. Push στο GitHub
 git push origin main
-🚨 Force Push (Προσοχή!)
-# Force push (χρησιμοποιείται μόνο όταν είναι απαραίτητο)
-git push --force origin main
-📋 Παραδείγματα Commit Messages
-# Για νέες λειτουργίες
-git commit -m "Feature: Add advanced calculator functionality"
 
-# Για διορθώσεις
-git commit -m "Fix: Resolve building selector data refresh issue"
+# 6. Έλεγχος ότι τα πάντα ανέβηκαν σωστά
+git status
+```
 
-# Για βελτιώσεις
-git commit -m "Improve: Enhance documentation organization"
+### Χρήσιμες Εντολές Git
+```bash
+# Δημιουργία νέου branch
+git checkout -b feature/new-feature
 
-# Για refactoring
-git commit -m "Refactor: Reorganize project structure"
+# Αλλαγή branch
+git checkout main
 
-# Για testing
-git commit -m "Test: Add comprehensive test coverage"
-📅 Τελευταία ενημέρωση: Δεκέμβριος 2024
-🔧 Δημιουργήθηκε από: AI Assistant
-📁 Οργανωμένα αρχεία: 93 σε 8 κατηγορίες στο docs/
+# Merge branch
+git merge feature/new-feature
 
-About
-linux_v
+# Διαγραφή local branch
+git branch -d feature/new-feature
 
-Resources
- Readme
- Activity
-Stars
- 0 stars
-Watchers
- 1 watching
-Forks
- 0 forks
-Releases
-No releases published
-Create a new release
-Packages
-No packages published
-Publish your first package
-Languages
-TypeScript
-46.6%
- 
-Python
-40.4%
- 
-CSS
-4.8%
- 
-JavaScript
-3.7%
- 
-HTML
-3.1%
- 
-Shell
-1.4%
-Suggested workflows
-Based on your tech stack
-Publish Node.js Package to GitHub Packages logo
-Publish Node.js Package to GitHub Packages
-Publishes a Node.js package to GitHub Packages.
-Publish Python Package logo
-Publish Python Package
-Publish a Python Package to PyPI on release.
-Jekyll using Docker image logo
-Jekyll using Docker image
-Package a Jekyll site using the jekyll/builder Docker image.
-More workflows
-Footer
-© 2025 GitHub, Inc.
-Footer navigation
-Terms
-Privacy
-Security
-Status
-Docs
-Contact
-Manage cookies
-Do not share my personal information
+# Διαγραφή remote branch
+git push origin --delete feature/new-feature
+
+# Undo τελευταίου commit (χωρίς να χαθούν οι αλλαγές)
+git reset --soft HEAD~1
+
+# Δημιουργία tag
+git tag -a v2.1.0 -m "Version 2.1.0"
+git push origin v2.1.0
+```
+
+
+
+## 📤 Ενημέρωση GitHub Repository
+
+### Βασικές Εντολές Git
+
+git add . 
+git commit -m "ξεκινημα οικονομικου ελεγχου " 
+git branch -M main 
+git remote add origin https://github.com/theostamp/linux_version.git
+git push -u origin main
+---
+
+### Πλήρης Καθαρισμός Docker
+```bash
+
+docker stop $(docker ps -aq)
+
+docker rm $(docker ps -aq)
+docker volume prune -f
+docker network prune -f
+docker builder prune -af
+docker system prune -af --volumes
+
+docker compose up --build -d
+
+## 🔮 Επόμενα Βήματα & Μελλοντικές Βελτιώσεις
+
+### 🎯 **Phase 1: Service Package Enhancements** (Q1 2025)
+- ✅ ~~Service Package Creation με real services~~
+- ✅ ~~Market-based pricing calculator~~
+- ✅ ~~Custom package builder~~
+- 🔄 **Package Templates Library**: Βιβλιοθήκη με προκατασκευασμένα packages
+- 🔄 **Package Versioning**: Version control για service packages
+- 🔄 **Package Cloning**: Αντιγραφή και προσαρμογή υπαρχόντων packages
+
+### 🎯 **Phase 2: Advanced Financial Tools** (Q2 2025)
+- 📋 **Service Package Analytics**: Reports για χρήση και απόδοση packages
+- 💰 **Dynamic Pricing**: Εποχιακές προσαρμογές τιμών
+- 📊 **Cost Comparison Tool**: Σύγκριση κόστους μεταξύ packages
+- 🎯 **ROI Calculator**: Υπολογισμός απόδοσης επένδυσης
+- 📈 **Pricing Trends**: Ανάλυση τάσεων τιμών αγοράς
+
+### 🎯 **Phase 3: AI & Automation** (Q3 2025)
+- 🤖 **Smart Package Recommendations**: AI-powered προτάσεις packages
+- 📱 **Mobile Package Builder**: Native mobile app για package creation
+- 🔄 **Auto-Renewal System**: Αυτόματη ανανέωση packages
+- 📧 **Package Notifications**: Email alerts για updates και renewals
+- 🎨 **Custom Branding**: Προσαρμογή branding για service packages
+
+### 🎯 **Phase 4: Integration & Expansion** (Q4 2025)
+- 🔗 **Third-Party Integrations**: Σύνδεση με external service providers
+- 🌐 **Multi-Language Support**: Υποστήριξη πολλαπλών γλωσσών
+- 📱 **Client Portal**: Πύλη για clients να βλέπουν τα packages τους
+- 🎭 **White-Label Solution**: Λύση για property management companies
+- 🌍 **International Markets**: Επέκταση σε διεθνείς αγορές
+
+### 🛠️ **Technical Debt & Improvements**
+- 🔧 **Performance Optimization**: Βελτίωση ταχύτητας calculation engines
+- 🔒 **Enhanced Security**: Multi-factor authentication, audit logs
+- 📊 **Advanced Analytics**: Deep insights με machine learning
+- 🎨 **UI/UX Redesign**: Modernization του interface
+- 📱 **PWA Support**: Progressive Web App capabilities
+
+### 🚀 **Innovation Features**
+- 🎯 **Predictive Maintenance**: AI για πρόβλεψη συντηρήσεων
+- 🏠 **IoT Integration**: Smart building sensors και automation
+- 🔍 **Computer Vision**: Αυτόματη αναγνώριση προβλημάτων από φωτογραφίες
+- 💬 **Chatbot Support**: AI assistant για property management
+- 🌱 **Sustainability Metrics**: Green building tracking
+
+---
+
+## 📋 Development Roadmap
+
+### 🎯 **Immediate Actions** (Next 2 weeks)
+1. **Service Package Testing**: Comprehensive testing σε production environment
+2. **User Documentation**: Δημιουργία user guides για service packages
+3. **Performance Monitoring**: Monitoring για package creation performance
+4. **Bug Fixes**: Addressing any issues από user feedback
+
+### 🎯 **Short Term** (Next month)
+1. **Package Templates**: Δημιουργία library με προκατασκευασμένα packages
+2. **Export Functionality**: PDF/Excel export για service packages
+3. **Audit Trail**: Logging για όλες τις package operations
+4. **API Documentation**: Complete API docs για service package endpoints
+
+### 🎯 **Medium Term** (Next quarter)
+1. **Analytics Dashboard**: Comprehensive analytics για service packages
+2. **Mobile Optimization**: Mobile-first design για package management
+3. **Integration APIs**: Webhooks και third-party integrations
+4. **Multi-tenant Enhancements**: Advanced tenant isolation features
+
+### 🎯 **Long Term** (Next year)
+1. **AI Recommendations**: Machine learning για package optimization
+2. **Market Intelligence**: Real-time market data integration
+3. **Compliance Automation**: Automated regulatory compliance checking
+4. **International Expansion**: Multi-currency και multi-market support
+
+---
+
+**Last Updated**: January 15, 2025  
+**Version**: 2.2.0  
+**Status**: Production Ready with Service Packages ✅
