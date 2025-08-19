@@ -1648,8 +1648,7 @@ class ApartmentTransactionViewSet(viewsets.ViewSet):
         
         # Συνδυασμός και ταξινόμηση
         transaction_history = []
-        # Χρησιμοποιούμε το τρέχον υπόλοιπο του διαμερίσματος ως αρχικό σημείο
-        running_balance = apartment.current_balance or Decimal('0.00')
+        running_balance = Decimal('0.00')
         
         # Συλλογή όλων των συναλλαγών
         all_items = []

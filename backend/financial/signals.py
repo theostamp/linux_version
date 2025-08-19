@@ -96,6 +96,46 @@ def recalculate_apartment_balance_on_transaction_delete(sender, instance, **kwar
 
 
 @receiver(post_save, sender=Payment)
+def update_apartment_balance_on_payment(sender, instance, created, **kwargs):
+    """
+    Αυτόματη ενημέρωση υπολοίπου διαμερίσματος όταν δημιουργείται/ενημερώνεται πληρωμή
+    """
+    try:
+        with transaction.atomic():
+            apartment = instance.apartment
+            
+            # Υπολογισμός νέου υπολοίπου από πληρωμές
+            payments = Payment.objects.filter(apartment=apartment)
+            total_payments = payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            # Υπολογισμός χρεώσεων από CommonExpenseCalculator
+            try:
+                from financial.services import CommonExpenseCalculator
+                calculator = CommonExpenseCalculator(apartment.building.id)
+                shares = calculator.calculate_shares()
+                apartment_charges = shares.get(apartment.id, {}).get('total_amount', Decimal('0.00'))
+            except Exception:
+                # Fallback: χρήση transactions αν ο calculator αποτύχει
+                transactions = Transaction.objects.filter(apartment=apartment, type__in=[
+                    'common_expense_charge', 'expense_created', 'expense_issued'
+                ])
+                apartment_charges = transactions.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            # Νέο υπόλοιπο = πληρωμές - χρεώσεις
+            new_balance = total_payments - apartment_charges
+            
+            if apartment.current_balance != new_balance:
+                old_balance = apartment.current_balance
+                apartment.current_balance = new_balance
+                apartment.save(update_fields=['current_balance'])
+                
+                print(f"✅ Payment Signal: Διαμέρισμα {apartment.number}: {old_balance:,.2f}€ → {new_balance:,.2f}€")
+    
+    except Exception as e:
+        print(f"❌ Σφάλμα στην ενημέρωση υπολοίπου διαμερίσματος από payment: {e}")
+
+
+@receiver(post_save, sender=Payment)
 def update_building_reserve_on_payment(sender, instance, created, **kwargs):
     """
     Αυτόματη ενημέρωση αποθεματικού κτιρίου όταν δημιουργείται/ενημερώνεται πληρωμή
@@ -125,6 +165,44 @@ def update_building_reserve_on_payment(sender, instance, created, **kwargs):
     
     except Exception as e:
         print(f"❌ Σφάλμα στην ενημέρωση αποθεματικού κτιρίου: {e}")
+
+
+@receiver(post_delete, sender=Payment)
+def recalculate_apartment_balance_on_payment_delete(sender, instance, **kwargs):
+    """
+    Επαναυπολογισμός υπολοίπου διαμερίσματος όταν διαγράφεται πληρωμή
+    """
+    try:
+        with transaction.atomic():
+            apartment = instance.apartment
+            
+            # Υπολογισμός νέου υπολοίπου από εναπομείναντες πληρωμές
+            payments = Payment.objects.filter(apartment=apartment)
+            total_payments = payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            # Υπολογισμός χρεώσεων
+            try:
+                from financial.services import CommonExpenseCalculator
+                calculator = CommonExpenseCalculator(apartment.building.id)
+                shares = calculator.calculate_shares()
+                apartment_charges = shares.get(apartment.id, {}).get('total_amount', Decimal('0.00'))
+            except Exception:
+                transactions = Transaction.objects.filter(apartment=apartment, type__in=[
+                    'common_expense_charge', 'expense_created', 'expense_issued'
+                ])
+                apartment_charges = transactions.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            # Νέο υπόλοιπο = πληρωμές - χρεώσεις
+            new_balance = total_payments - apartment_charges
+            
+            old_balance = apartment.current_balance
+            apartment.current_balance = new_balance
+            apartment.save(update_fields=['current_balance'])
+            
+            print(f"✅ Payment Delete Signal: Διαμέρισμα {apartment.number}: {old_balance:,.2f}€ → {new_balance:,.2f}€")
+    
+    except Exception as e:
+        print(f"❌ Σφάλμα στον επαναυπολογισμό υπολοίπου διαμερίσματος από payment delete: {e}")
 
 
 @receiver(post_delete, sender=Payment)

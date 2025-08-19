@@ -44,12 +44,31 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
   const [isFiltered, setIsFiltered] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [isDeletingPayment, setIsDeletingPayment] = useState(false);
+  const [currentApartmentBalance, setCurrentApartmentBalance] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen && payment) {
       loadTransactionHistory();
+      loadCurrentApartmentBalance();
     }
   }, [isOpen, payment, startDate, endDate]);
+
+  const loadCurrentApartmentBalance = async () => {
+    if (!payment) return;
+    
+    try {
+      // Import api για authenticated request
+      const { api } = await import('@/lib/api');
+      
+      // API call για το τρέχον υπόλοιπο του διαμερίσματος
+      const response = await api.get(`/apartments/${payment.apartment}/`);
+      setCurrentApartmentBalance(response.data.current_balance || 0);
+    } catch (err: any) {
+      console.error('Error loading apartment balance:', err);
+      // Fallback to payment balance
+      setCurrentApartmentBalance(payment.current_balance || 0);
+    }
+  };
 
   const loadTransactionHistory = async () => {
     if (!payment) return;
@@ -199,7 +218,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
     ? filteredBalance 
     : transactions.length > 0 
       ? transactions[transactions.length - 1].balance_after 
-      : (payment.current_balance || 0);
+      : (currentApartmentBalance !== null ? currentApartmentBalance : (payment.current_balance || 0));
 
   const handlePrint = () => {
     setIsPrinting(true);
