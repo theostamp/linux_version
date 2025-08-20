@@ -81,6 +81,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const [editingManagementFee, setEditingManagementFee] = useState(false);
   const [newManagementFee, setNewManagementFee] = useState('');
   const [showServicePackageModal, setShowServicePackageModal] = useState(false);
+  const [applyingServicePackage, setApplyingServicePackage] = useState(false);
 
 
   const currentBuilding = buildings.find(b => b.id === buildingId);
@@ -960,37 +961,50 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 <div className="flex items-center gap-2 mb-3">
                   <Receipt className="h-5 w-5 text-blue-600" />
                   <h3 className="font-semibold text-sm text-blue-900">
-                    Δαπάνες Περιόδου
+                    Οικονομικές Υποχρεώσεις Περιόδου
                   </h3>
                 </div>
                 
                 <div className="space-y-3">
                   {/* Τρέχοντα έξοδα */}
                   <div className="space-y-1">
-                    <div className="text-xs text-blue-600 font-medium">Τρέχοντα έξοδα:</div>
-                    <div className="text-lg font-bold text-blue-700">
+                    <div className="text-xs text-red-600 font-medium">Πραγματικά έξοδα:</div>
+                    <div className="text-lg font-bold text-red-700">
                     {formatCurrency(financialSummary.average_monthly_expenses || 0)}
                     </div>
+                    {(financialSummary.average_monthly_expenses || 0) === 0 && (
+                      <div className="text-xs text-gray-500 italic">Δεν υπάρχουν δαπάνες</div>
+                    )}
                   </div>
                   
                   {/* Εισφορά αποθεματικού */}
                   <div className="space-y-1">
-                    <div className="text-xs text-orange-600 font-medium">Εισφορά αποθεματικού:</div>
-                    <div className="text-lg font-bold text-orange-700">
+                    <div className="text-xs text-green-600 font-medium">Εισφορά αποθεματικού:</div>
+                    <div className="text-lg font-bold text-green-700">
                       {formatCurrency(financialSummary.reserve_fund_monthly_target || 0)}
                     </div>
+                    {(financialSummary.reserve_fund_monthly_target || 0) > 0 && (
+                      <div className="text-xs text-green-600 italic">Συσσώρευση κεφαλαίων</div>
+                    )}
                   </div>
                   
-                  {/* Συνολικά έξοδα */}
-                  <div className="space-y-1 pt-2 border-t border-gray-200">
-                    <div className="text-xs text-gray-700 font-medium">Συνολικά έξοδα:</div>
-                    <div className="text-xl font-bold text-gray-800">
-                      {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.reserve_fund_monthly_target || 0))}
+                  {/* Συνολικές Υποχρεώσεις (μόνο αν υπάρχουν πραγματικές δαπάνες ή αποθεματικό) */}
+                  {((financialSummary.average_monthly_expenses || 0) > 0 || (financialSummary.reserve_fund_monthly_target || 0) > 0) && (
+                    <div className="space-y-1 pt-2 border-t border-gray-200">
+                      <div className="text-xs text-gray-700 font-medium">Συνολικές υποχρεώσεις μήνα:</div>
+                      <div className="text-xl font-bold text-gray-800">
+                        {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.reserve_fund_monthly_target || 0))}
+                      </div>
+                      <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">
+                        {(financialSummary.average_monthly_expenses || 0) > 0 && (financialSummary.reserve_fund_monthly_target || 0) > 0 
+                          ? 'Έξοδα + Εισφορά'
+                          : (financialSummary.average_monthly_expenses || 0) > 0 
+                            ? 'Μόνο έξοδα'
+                            : 'Μόνο εισφορά'
+                        }
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">
-                      Τρέχοντα + Αποθεματικό
-                  </Badge>
-                  </div>
+                  )}
                   
                   <div className="text-xs text-blue-600 mt-2">
                     <strong>Περίοδος:</strong> {selectedMonth ? 
@@ -1295,7 +1309,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
             </Card>
 
             {/* Management & Services Card - 30% width */}
-            <Card className="col-span-1 lg:col-span-3 border-purple-200 bg-purple-50/30">
+            <Card className={`col-span-1 lg:col-span-3 border-purple-200 bg-purple-50/30 relative ${applyingServicePackage ? 'opacity-75' : ''}`}>
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -1383,6 +1397,16 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     </div>
                   </div>
                 )}
+                
+                {/* Loading overlay for service package application */}
+                {applyingServicePackage && (
+                  <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
+                    <div className="flex items-center gap-2 text-purple-600">
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <span className="text-sm font-medium">Ενημέρωση δαπανών διαχείρισης...</span>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -1420,10 +1444,33 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         buildingId={buildingId}
         apartmentsCount={financialSummary?.apartments_count || 0}
         currentFee={financialSummary?.management_fee_per_apartment || 0}
-        onPackageApplied={(result) => {
-          // Refresh financial data after package application
-          fetchFinancialSummary(true);
-          toast.success(`Εφαρμόστηκε πακέτο: ${result.new_fee}€/διαμέρισμα`);
+        onPackageApplied={async (result) => {
+          try {
+            setApplyingServicePackage(true);
+            
+            // Immediately update the financial summary with new management fee
+            setFinancialSummary(prev => prev ? {
+              ...prev,
+              management_fee_per_apartment: result.new_fee || result.fee_per_apartment,
+              total_management_cost: (result.new_fee || result.fee_per_apartment) * (prev.apartments_count || 0)
+            } : null);
+            
+            // Show success with detailed info
+            toast.success(
+              `✅ Πακέτο εφαρμόστηκε!\n💰 Νέα αμοιβή: ${result.new_fee || result.fee_per_apartment}€/διαμέρισμα\n🏢 Συνολικό κόστος: ${((result.new_fee || result.fee_per_apartment) * (financialSummary?.apartments_count || 0)).toFixed(2)}€`,
+              { duration: 4000 }
+            );
+            
+            // Refresh financial data after immediate update for consistency
+            await fetchFinancialSummary(true);
+          } catch (error) {
+            console.error('Error updating dashboard after package application:', error);
+            toast.error('Το πακέτο εφαρμόστηκε, αλλά προκλήθηκε σφάλμα στην ενημέρωση του dashboard');
+            // Fallback: force refresh anyway
+            fetchFinancialSummary(true);
+          } finally {
+            setApplyingServicePackage(false);
+          }
         }}
       />
     </Card>

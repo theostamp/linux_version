@@ -989,7 +989,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 Object.entries(groupedExpenses).map(([groupKey, groupData]: [string, any]) => {
                   const groupLabels: Record<string, string> = {
                     'general': 'Α. ΚΟΙΝΟΧΡΗΣΤΑ',
-                    'elevator': 'Β. ΑΝΕΛΚΗΣΤΗΡΑΣ', 
+                    'elevator': 'Β.  ΑΝΕΛΚΥΣΤΗΡΑΣ', 
                     'heating': 'Γ. ΘΕΡΜΑΝΣΗ',
                     'equal_share': 'Δ. ΛΟΙΠΑ ΕΞΟΔΑ',
                     'individual': 'Ε. ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣΙΑΣ'
@@ -1045,13 +1045,13 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
               </tr>
               <tr>
                 <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); font-size: 10px; width: 80px;">ΚΟΙΝΟΧΡΗΣΤΑ</th>
-                <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); font-size: 10px; width: 80px;">ΑΝΕΛΚΥΡΑΣ</th>
+                <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); font-size: 10px; width: 80px;">ΑΝΕΛΚ/ΡΑΣ</th>
                 <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); font-size: 10px; width: 80px;">ΘΕΡΜΑΝΣΗ</th>
                 <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); font-size: 10px; width: 80px;">ΚΟΙΝΟΧΡΗΣΤΑ</th>
-                <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); font-size: 10px; width: 80px;">ΑΝΕΛΚΥΡΑΣ</th>
+                <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); font-size: 10px; width: 80px;">ΑΝΕΛΚ/ΡΑΣ</th>
                 <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); font-size: 10px; width: 80px;">ΘΕΡΜΑΝΣΗ</th>
                 <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%); font-size: 10px; width: 80px;">ΚΟΙΝΟΧΡΗΣΤΑ</th>
-                <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%); font-size: 10px; width: 80px;">ΑΝΕΛΚΥΡΑΣ</th>
+                <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%); font-size: 10px; width: 80px;">ΑΝΕΛΚ/ΡΑΣ</th>
                 <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%); font-size: 10px; width: 80px;">ΘΕΡΜΑΝΣΗ</th>
               </tr>
             </thead>
@@ -1308,14 +1308,14 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
         'Α/Δ': share.identifier || share.apartment_number,
         'ΟΝΟΜΑΤΕΠΩΝΥΜΟ': share.owner_name || 'Μη καταχωρημένος',
         'ΧΙΛΙΟΣΤΑ_ΚΟΙΝΟΧΡΗΣΤΑ': toNumber(commonMills).toFixed(2),
-        'ΧΙΛΙΟΣΤΑ_ΑΝΕΛΚΥΡΑΣ': toNumber(elevatorMills).toFixed(2),
+        'ΧΙΛΙΟΣΤΑ_ΑΝΕΛΚ/ΡΑΣ': toNumber(elevatorMills).toFixed(2),
         'ΧΙΛΙΟΣΤΑ_ΘΕΡΜΑΝΣΗ': toNumber(heatingMills).toFixed(2),
         'ΠΟΣΟ_ΚΟΙΝΟΧΡΗΣΤΑ_ΕΝΟΙΚΙΑΣΤΩΝ': commonAmount,
-        'ΠΟΣΟ_ΑΝΕΛΚΥΡΑΣ_ΕΝΟΙΚΙΑΣΤΩΝ': elevatorAmount,
+        'ΠΟΣΟ_ΑΝΕΛΚ/ΡΑΣ_ΕΝΟΙΚΙΑΣΤΩΝ': elevatorAmount,
         'ΠΟΣΟ_ΘΕΡΜΑΝΣΗ_ΕΝΟΙΚΙΑΣΤΩΝ': heatingAmount,
         'ΠΟΣΟ_ΔΙΑΧΕΙΡΙΣΗ_ΕΝΟΙΚΙΑΣΤΩΝ': managementFee,
         'ΠΟΣΟ_ΚΟΙΝΟΧΡΗΣΤΑ_ΙΔΙΟΚΤΗΤΩΝ': 0,
-        'ΠΟΣΟ_ΑΝΕΛΚΥΡΑΣ_ΙΔΙΟΚΤΗΤΩΝ': 0,
+        'ΠΟΣΟ_ΑΝΕΛΚ/ΡΑΣ_ΙΔΙΟΚΤΗΤΩΝ': 0,
         'ΠΟΣΟ_ΘΕΡΜΑΝΣΗ_ΙΔΙΟΚΤΗΤΩΝ': 0,
         'ΑΠΟΘΕΜΑΤΙΚΟ': apartmentReserveFund,
         'ΠΛΗΡΩΤΕΟ_ΠΟΣΟ': finalTotalWithFees,
@@ -1338,7 +1338,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     Object.entries(groupedExpenses).forEach(([groupKey, groupData]) => {
       const groupLabels = {
         'general': 'Α. ΚΟΙΝΟΧΡΗΣΤΑ',
-        'elevator': 'Β. ΑΝΕΛΚΗΣΤΗΡΑΣ',
+        'elevator': 'Β.  ΑΝΕΛΚΥΣΤΗΡΑΣ',
         'heating': 'Γ. ΘΕΡΜΑΝΣΗ',
         'equal_share': 'Δ. ΛΟΙΠΑ ΕΞΟΔΑ',
         'individual': 'Ε. ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣΙΑΣ'
@@ -1723,11 +1723,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     );
                   }
                   
-                  // B. ΑΝΕΛΚΗΣΤΗΡΑΣ
+                  // B.  ΑΝΕΛΚΥΣΤΗΡΑΣ
                   if (groupedExpenses.elevator) {
                     sections.push(
                       <div key="elevator" className="bg-blue-50 p-2 rounded border">
-                        <h4 className="font-semibold text-gray-800 mb-1 text-xs">Β. ΑΝΕΛΚΗΣΤΗΡΑΣ</h4>
+                        <h4 className="font-semibold text-gray-800 mb-1 text-xs">Β.  ΑΝΕΛΚΥΣΤΗΡΑΣ</h4>
                         <div className="space-y-0.5 text-xs">
                           {groupedExpenses.elevator.expenses.map((category, index) => (
                             <div key={category.category} className="flex justify-between">
@@ -1814,7 +1814,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                       <div key="management" className="bg-green-50 p-2 rounded border">
                         <div className="flex justify-between items-center">
                           <h4 className="font-semibold text-gray-800 text-xs">ΣΤ. ΔΑΠΑΝΕΣ ΔΙΑΧΕΙΡΙΣΗΣ</h4>
-                          <span className="font-bold text-green-700">{formatAmount(managementFeeInfo.totalFee)}€</span>
+                          <span className="font-semibold text-gray-700">{formatAmount(managementFeeInfo.totalFee)}€</span>
                         </div>
                       </div>
                     );
@@ -1834,11 +1834,32 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                   return sections;
                 })()}
 
-                {/* Grand Total */}
-                <div className="bg-blue-600 text-white p-2 rounded border">
-                  <div className="flex justify-between font-bold text-sm">
-                    <span>ΣΥΝΟΛΟ ΔΑΠΑΝΩΝ</span>
-                    <span>{formatAmount(totalExpenses)}€</span>
+                {/* Grand Total with Breakdown */}
+                <div className="space-y-1">
+                  {/* Current Expenses Total */}
+                  <div className="bg-blue-100 text-blue-800 p-2 rounded border">
+                    <div className="flex justify-between font-medium text-xs">
+                      <span>ΣΥΝΟΛΟ ΤΡΕΧΟΥΣΩΝ ΔΑΠΑΝΩΝ</span>
+                      <span>{formatAmount(Number(basicExpenses) + Number(managementFeeInfo.totalFee || 0))}€</span>
+                    </div>
+                  </div>
+                  
+                  {/* Reserve Fund (if applicable) */}
+                  {hasOtherExpenses && Number(reserveFundDetails.monthlyAmount || 0) > 0 && (
+                    <div className="bg-green-100 text-green-800 p-2 rounded border">
+                      <div className="flex justify-between font-medium text-xs">
+                        <span>ΑΠΟΘΕΜΑΤΙΚΟ ΤΑΜΕΙΟ</span>
+                        <span>{formatAmount(Number(reserveFundDetails.monthlyAmount || 0))}€</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Final Total */}
+                  <div className="bg-blue-600 text-white p-2 rounded border">
+                    <div className="flex justify-between font-bold text-sm">
+                      <span>ΣΥΝΟΛΟ ΔΑΠΑΝΩΝ</span>
+                      <span>{formatAmount(totalExpenses)}€</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1951,12 +1972,12 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     
                     {/* ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ Sub-headers - Κόκκινο φόντο */}
                     <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", fontSize: "10px", width: "80px"}}>ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
-                    <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚΥΡΑΣ</TableHead>
+                    <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚ/ΡΑΣ</TableHead>
                     <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜΑΝΣΗ</TableHead>
                     
                     {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ Sub-headers - Πορτοκαλί φόντο */}
                     <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
-                    <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚΥΡΑΣ</TableHead>
+                    <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚ/ΡΑΣ</TableHead>
                     <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜΑΝΣΗ</TableHead>
                     <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΔΙΑΧΕΙΡΙΣΗ</TableHead>
                     
@@ -1964,7 +1985,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     {showOwnerExpenses && (
                       <>
                         <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
-                        <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚΥΡΑΣ</TableHead>
+                        <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚ/ΡΑΣ</TableHead>
                         <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜΑΝΣΗ</TableHead>
                       </>
                     )}

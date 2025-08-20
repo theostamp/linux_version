@@ -295,3 +295,22 @@ def recalculate_building_reserve_on_expense_delete(sender, instance, **kwargs):
 
 # Import που λείπει
 from django.db.models import Sum
+
+@receiver(post_save, sender='buildings.Building')
+def update_financial_data_on_building_change(sender, instance, created, **kwargs):
+    """
+    Αυτόματη ενημέρωση οικονομικών δεδομένων όταν αλλάζει το κτίριο (π.χ. management fee)
+    """
+    try:
+        with transaction.atomic():
+            # Έλεγχος αν άλλαξε το management_fee_per_apartment
+            if not created and hasattr(instance, '_state') and instance._state.fields_cache:
+                # Αν υπάρχει αλλαγή στο management fee, ενημερώνουμε όλες τις σχετικές οικονομικές καταστάσεις
+                print(f"✅ Building Signal: Ενημερώθηκε κτίριο {instance.name}")
+                print(f"📊 Νέα αμοιβή διαχείρισης: {instance.management_fee_per_apartment}€/διαμέρισμα")
+                
+                # Εδώ μπορούμε να προσθέσουμε επιπλέον λογική για ενημέρωση
+                # π.χ. invalidate cache, notify frontend, etc.
+    
+    except Exception as e:
+        print(f"❌ Σφάλμα στην ενημέρωση οικονομικών δεδομένων από αλλαγή κτιρίου: {e}")

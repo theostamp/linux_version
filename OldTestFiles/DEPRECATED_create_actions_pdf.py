@@ -284,7 +284,7 @@ def create_actions_pdf():
             </tr>
             
             <tr class="expense-category">
-                <td colspan="2">Β. ΑΝΕΛΚΗΣΤΗΡΑΣ</td>
+                <td colspan="2">Β.  ΑΝΕΛΚΥΣΤΗΡΑΣ</td>
             </tr>
             <tr>
                 <td>1. Συντήρηση ανελκυστήρα</td>
@@ -387,12 +387,12 @@ def create_actions_pdf():
                 <th>fi</th>
                 <th>ΘΕΡΜΙΔΕΣ</th>
                 <th>ΚΟΙΝΟΧΡΗΣΤΑ</th>
-                <th>ΑΝΕΛΚΥΡΑΣ</th>
+                <th>ΑΝΕΛΚ/ΡΑΣ</th>
                 <th>ΘΕΡΜΑΝΣΗ</th>
                 <th>ΛΟΙΠΑ ΕΞΟΔΑ</th>
                 <th>ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣ</th>
                 <th>ΚΟΙΝΟΧΡΗΣΤΑ</th>
-                <th>ΑΝΕΛΚΥΡΑΣ</th>
+                <th>ΑΝΕΛΚ/ΡΑΣ</th>
                 <th>ΘΕΡΜΑΝΣΗ</th>
                 <th>ΛΟΙΠΑ ΕΞΟΔΑ</th>
                 <th>ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣ</th>

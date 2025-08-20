@@ -301,9 +301,16 @@ class FinancialDashboardService:
             is_issued=False
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
-        # Συνολικές υποχρεώσεις = Υφιστάμενες οφειλές + Ανέκδοτες δαπάνες
+        # Get building info for management fees (moved up for earlier use)
+        from buildings.models import Building
+        building = Building.objects.get(id=self.building_id)
+        management_fee_per_apartment = building.management_fee_per_apartment
+        apartments_count = Apartment.objects.filter(building_id=self.building_id).count()
+        total_management_cost = management_fee_per_apartment * apartments_count
+        
+        # Συνολικές υποχρεώσεις = Υφιστάμενες οφειλές + Ανέκδοτες δαπάνες + Διαχειριστικά τέλη
         # This represents the TOTAL financial obligations, not month-specific
-        total_obligations = apartment_obligations + pending_expenses_all
+        total_obligations = apartment_obligations + pending_expenses_all + total_management_cost
         
         # Δαπάνες αυτού του μήνα
         from datetime import datetime, date
@@ -423,7 +430,7 @@ class FinancialDashboardService:
                 date__lte=end_date
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
-            current_reserve = total_payments_snapshot - total_expenses_snapshot
+            current_reserve = total_payments_snapshot - total_expenses_snapshot - total_management_cost
             
             # For snapshot view, recalculate obligations based on what would be pending at month end
             pending_expenses_snapshot = Expense.objects.filter(
@@ -432,8 +439,8 @@ class FinancialDashboardService:
                 date__lte=end_date
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
-            # Update total_obligations for snapshot view
-            total_obligations = apartment_obligations + pending_expenses_snapshot
+            # Update total_obligations for snapshot view (include management fees)
+            total_obligations = apartment_obligations + pending_expenses_snapshot + total_management_cost
             
         else:
             # CURRENT VIEW: Current actual financial position (all time)
@@ -445,7 +452,7 @@ class FinancialDashboardService:
                 building_id=self.building_id
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
-            current_reserve = total_payments_all_time - total_expenses_all_time
+            current_reserve = total_payments_all_time - total_expenses_all_time - total_management_cost
         
         # Υπολογισμός εισφοράς αποθεματικού με προτεραιότητα
         reserve_fund_contribution = self._calculate_reserve_fund_contribution(
@@ -464,14 +471,7 @@ class FinancialDashboardService:
         # Calculate current obligations (negative balances from apartments)
         current_obligations = total_obligations
         
-        # Calculate apartments count
-        apartments_count = Apartment.objects.filter(building_id=self.building_id).count()
-        
-        # Get building info for management fees
-        from buildings.models import Building
-        building = Building.objects.get(id=self.building_id)
-        management_fee_per_apartment = building.management_fee_per_apartment
-        total_management_cost = management_fee_per_apartment * apartments_count
+        # (apartments_count, building, management_fee_per_apartment, total_management_cost already calculated above)
         
         # Calculate pending payments (apartments with negative balance)
         pending_payments = Apartment.objects.filter(
@@ -479,8 +479,9 @@ class FinancialDashboardService:
             current_balance__lt=0
         ).count()
         
-        # Calculate average monthly expenses (from the current month)
-        average_monthly_expenses = total_expenses_this_month
+        # Calculate average monthly expenses (from the current month + management fees)
+        # Include management fees as they are part of the monthly recurring costs
+        average_monthly_expenses = total_expenses_this_month + total_management_cost
         
         return {
             'total_balance': float(total_balance),

@@ -168,11 +168,23 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
       setApplying(packageId);
       const result = await applyServicePackageToBuilding(packageId, buildingId);
       
-      toast.success(result.message || 'Πακέτο εφαρμόστηκε επιτυχώς');
+      // Enhanced success message with more details
+      const newFee = result.new_fee || result.fee_per_apartment;
+      const totalCost = newFee * apartmentsCount;
+      
+      toast.success(
+        `🎉 Πακέτο εφαρμόστηκε επιτυχώς!\n💰 Αμοιβή: ${newFee}€/διαμέρισμα\n🏢 Συνολικό: ${totalCost.toFixed(2)}€`,
+        { duration: 3000 }
+      );
       
       // Call callback if provided
       if (onPackageApplied) {
-        onPackageApplied(result);
+        onPackageApplied({
+          ...result,
+          new_fee: newFee,
+          total_cost: totalCost,
+          apartments_count: apartmentsCount
+        });
       }
       
       onClose();

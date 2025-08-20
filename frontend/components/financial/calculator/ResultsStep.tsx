@@ -1465,7 +1465,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 {formatAmount(analytics.totalPendingAmount)}€
               </div>
               <div className="text-sm text-gray-600 mt-1">
-                Συνολικό χρέος προς την πολυκατοικία
+                Συνολικό χρέος της πολυκατοικίας
               </div>
             </div>
 
@@ -1488,7 +1488,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 {formatAmount(analytics.totalMonthlyObligations)}€
               </div>
               <div className="text-sm text-gray-600 mt-1">
-                Συνολικό μηνιαίο κόστος όλων των διαμερισμάτων
+                Συνολικό μηνιαίο κόστος όλων των διαμερισμάτων + Αποθεματικό
               </div>
             </div>
           </div>
@@ -1498,7 +1498,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             <div className="bg-white p-4 rounded-lg border">
               <div className="flex items-center gap-2 mb-2">
                 <Euro className="h-4 w-4 text-green-600" />
-                <span className="font-semibold text-gray-800">Τρέχον Αποθεματικό</span>
+                <span className="font-semibold text-gray-800">Ταμείο Πολυκατοικίας</span>
                 <Popover>
                   <PopoverTrigger asChild>
                     <button aria-label="Πληροφορίες" className="p-1 rounded hover:bg-gray-100">
