@@ -488,7 +488,7 @@ git push origin v2.1.0
 ### Βασικές Εντολές Git
 
 git add . 
-git commit -m "διορθωθηκε η εμφανιση του αποθεματικου μονο τους ενεργους μηνες" 
+git commit -m "διορθωθηκε πληρως η εμφανιση του αποθεματικου μονο τους ενεργους μηνες" 
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

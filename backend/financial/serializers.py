@@ -298,6 +298,7 @@ class FinancialSummarySerializer(serializers.Serializer):
     current_obligations = serializers.FloatField()
     reserve_fund_contribution = serializers.FloatField()
     current_reserve = serializers.FloatField()
+    has_monthly_activity = serializers.BooleanField()  # ← ΝΕΟ FIELD
     apartments_count = serializers.IntegerField()
     pending_payments = serializers.IntegerField()
     average_monthly_expenses = serializers.FloatField()

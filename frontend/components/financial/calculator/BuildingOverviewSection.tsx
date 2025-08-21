@@ -1000,26 +1000,30 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     )}
                   </div>
                   
-                  {/* Εισφορά αποθεματικού */}
-                  <div className="space-y-1">
-                    <div className="text-xs text-green-600 font-medium">Εισφορά αποθεματικού:</div>
-                    <div className="text-lg font-bold text-green-700">
-                      {formatCurrency(financialSummary.reserve_fund_contribution || 0)}
+                  {/* Εισφορά αποθεματικού - μόνο σε ενεργούς μήνες */}
+                  {financialSummary.has_monthly_activity !== false && (
+                    <div className="space-y-1">
+                      <div className="text-xs text-green-600 font-medium">Εισφορά αποθεματικού:</div>
+                      <div className="text-lg font-bold text-green-700">
+                        {formatCurrency(financialSummary.reserve_fund_monthly_target || 0)}
+                      </div>
+                      {(financialSummary.reserve_fund_monthly_target || 0) > 0 && (
+                        <div className="text-xs text-green-600 italic">
+                          {financialSummary.reserve_fund_contribution === 0 ? 'Δεν συλλέγεται (pending obligations)' : 'Συσσώρευση κεφαλαίων'}
+                        </div>
+                      )}
                     </div>
-                    {(financialSummary.reserve_fund_contribution || 0) > 0 && (
-                      <div className="text-xs text-green-600 italic">Συσσώρευση κεφαλαίων</div>
-                    )}
-                  </div>
+                  )}
                   
                   {/* Συνολικές Υποχρεώσεις (μόνο αν υπάρχουν πραγματικές δαπάνες ή αποθεματικό) */}
-                  {((financialSummary.average_monthly_expenses || 0) > 0 || (financialSummary.reserve_fund_contribution || 0) > 0) && (
+                  {((financialSummary.average_monthly_expenses || 0) > 0 || ((financialSummary.reserve_fund_monthly_target || 0) > 0 && financialSummary.has_monthly_activity !== false)) && (
                     <div className="space-y-1 pt-2 border-t border-gray-200">
                       <div className="text-xs text-gray-700 font-medium">Συνολικές υποχρεώσεις μήνα:</div>
                       <div className="text-xl font-bold text-gray-800">
-                        {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.reserve_fund_contribution || 0))}
+                        {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.has_monthly_activity !== false ? (financialSummary.reserve_fund_monthly_target || 0) : 0))}
                       </div>
                       <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">
-                        {(financialSummary.average_monthly_expenses || 0) > 0 && (financialSummary.reserve_fund_contribution || 0) > 0 
+                        {(financialSummary.average_monthly_expenses || 0) > 0 && (financialSummary.reserve_fund_monthly_target || 0) > 0 && financialSummary.has_monthly_activity !== false
                           ? 'Έξοδα + Εισφορά'
                           : (financialSummary.average_monthly_expenses || 0) > 0 
                             ? 'Μόνο έξοδα'
@@ -1086,22 +1090,29 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       </div>
                       </div>
                       
-                    {/* Εισφορά αποθεματικού */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-orange-700 font-medium">Εισφορά αποθεματικού:</span>
-                        <span className="font-semibold text-lg text-orange-800">
-                          {formatCurrency(financialSummary.reserve_fund_contribution || 0)}
-                        </span>
+                    {/* Εισφορά αποθεματικού - μόνο σε ενεργούς μήνες */}
+                    {financialSummary.has_monthly_activity !== false && (
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-orange-700 font-medium">Εισφορά αποθεματικού:</span>
+                          <span className="font-semibold text-lg text-orange-800">
+                            {formatCurrency(financialSummary.reserve_fund_monthly_target || 0)}
+                          </span>
+                        </div>
+                        {(financialSummary.reserve_fund_contribution === 0 && (financialSummary.reserve_fund_monthly_target ?? 0) > 0) && (
+                          <div className="text-xs text-orange-600 italic">
+                            Δεν συλλέγεται (pending obligations)
+                          </div>
+                        )}
                       </div>
-                      </div>
+                    )}
                       
                     {/* Συνολική κάλυψη */}
                     <div className="space-y-1 pt-2 border-t border-gray-200">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-700 font-medium">Συνολική κάλυψη:</span>
                         <span className="font-semibold text-lg text-gray-800">
-                          {formatCurrency((Math.abs(financialSummary.current_obligations || 0)) + (financialSummary.reserve_fund_contribution || 0))}
+                          {formatCurrency((Math.abs(financialSummary.current_obligations || 0)) + (financialSummary.has_monthly_activity !== false ? (financialSummary.reserve_fund_monthly_target || 0) : 0))}
                         </span>
                       </div>
                       <div className="text-xs text-gray-600">
