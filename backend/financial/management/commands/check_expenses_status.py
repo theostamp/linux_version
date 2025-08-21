@@ -67,3 +67,4 @@ class Command(BaseCommand):
             if len(all_expenses) == 0 and building.reserve_fund_goal > 0:
                 self.stdout.write(self.style.SUCCESS("\n🎯 ΕΠΙΒΕΒΑΙΩΣΗ: Χωρίς δαπάνες, τα 'Τρέχοντα έξοδα' πρέπει να είναι 0€!"))
 
+

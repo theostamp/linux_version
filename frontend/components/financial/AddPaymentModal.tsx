@@ -176,7 +176,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         const formDataPayload = new FormData();
         formDataPayload.append('apartment', formData.apartment_id.toString());
         formDataPayload.append('amount', totalAmount.toString());
-        formDataPayload.append('reserve_fund_amount', Number(formData.reserve_fund_amount || 0).toFixed(2));
+        formDataPayload.append('reserve_fund_amount', Number(formData.reserve_fund_amount || 0));
         formDataPayload.append('date', formData.date);
         formDataPayload.append('method', formData.method);
         formDataPayload.append('payment_type', formData.payment_type);
@@ -196,7 +196,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         requestData = {
           apartment: formData.apartment_id,
           amount: totalAmount,
-          reserve_fund_amount: Number(formData.reserve_fund_amount || 0).toFixed(2),
+          reserve_fund_amount: Number(formData.reserve_fund_amount || 0),
           date: formData.date,
           method: formData.method,
           payment_type: formData.payment_type,

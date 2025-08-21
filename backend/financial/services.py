@@ -2067,3 +2067,179 @@ class AdvancedCommonExpenseCalculator:
             # Υπολογισμός συνολικού πληρωτέου ποσού
             # Χρέωση αυξάνει οφειλή => πιο αρνητικό υπόλοιπο
             share_data['total_due'] = share_data['previous_balance'] - share_data['total_amount']
+
+
+class DataIntegrityService:
+    """Υπηρεσία για αυτόματο έλεγχο και καθαρισμό δεδομένων"""
+    
+    def __init__(self, building_id: int):
+        self.building_id = building_id
+        self.building = Building.objects.get(id=building_id)
+    
+    def cleanup_orphaned_transactions(self) -> dict:
+        """Καθαρισμός orphaned transactions και επαναυπολογισμός υπολοίπων"""
+        try:
+            # Find orphaned transactions
+            orphaned_transactions = []
+            transactions = Transaction.objects.filter(
+                building_id=self.building_id, 
+                reference_type='payment'
+            )
+            
+            for transaction in transactions:
+                try:
+                    Payment.objects.get(id=transaction.reference_id)
+                except Payment.DoesNotExist:
+                    orphaned_transactions.append(transaction)
+            
+            # Delete orphaned transactions
+            total_orphaned_amount = 0
+            deleted_transactions = []
+            
+            for transaction in orphaned_transactions:
+                total_orphaned_amount += transaction.amount
+                deleted_transactions.append({
+                    'id': transaction.id,
+                    'type': transaction.type,
+                    'amount': float(transaction.amount),
+                    'description': transaction.description,
+                    'apartment': transaction.apartment.number if transaction.apartment else None
+                })
+                transaction.delete()
+            
+            # Recalculate apartment balances
+            apartments = Apartment.objects.filter(building_id=self.building_id)
+            updated_balances = {}
+            
+            for apartment in apartments:
+                old_balance = apartment.current_balance or 0
+                new_balance = self._calculate_apartment_balance(apartment)
+                apartment.current_balance = new_balance
+                apartment.save()
+                
+                if old_balance != new_balance:
+                    updated_balances[apartment.number] = {
+                        'old': float(old_balance),
+                        'new': float(new_balance)
+                    }
+            
+            return {
+                'success': True,
+                'orphaned_transactions_found': len(orphaned_transactions),
+                'orphaned_transactions_deleted': deleted_transactions,
+                'total_orphaned_amount': float(total_orphaned_amount),
+                'apartments_updated': len(updated_balances),
+                'balance_updates': updated_balances
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'orphaned_transactions_found': 0,
+                'orphaned_transactions_deleted': [],
+                'total_orphaned_amount': 0.0,
+                'apartments_updated': 0,
+                'balance_updates': {}
+            }
+    
+    def _calculate_apartment_balance(self, apartment: Apartment) -> Decimal:
+        """Υπολογισμός υπολοίπου διαμερίσματος από transactions"""
+        transactions = Transaction.objects.filter(apartment=apartment).order_by('date', 'id')
+        running_balance = Decimal('0.00')
+        
+        for transaction in transactions:
+            if transaction.type in ['common_expense_payment', 'payment_received', 'refund']:
+                running_balance += transaction.amount
+            elif transaction.type in ['common_expense_charge', 'expense_created', 'expense_issued', 
+                                    'interest_charge', 'penalty_charge']:
+                running_balance -= transaction.amount
+            elif transaction.type == 'balance_adjustment' and transaction.balance_after is not None:
+                running_balance = transaction.balance_after
+        
+        return running_balance
+    
+    def verify_data_integrity(self) -> dict:
+        """Επιβεβαίωση ακεραιότητας δεδομένων"""
+        try:
+            # Check for orphaned transactions
+            orphaned_count = 0
+            transactions = Transaction.objects.filter(
+                building_id=self.building_id, 
+                reference_type='payment'
+            )
+            
+            for transaction in transactions:
+                try:
+                    Payment.objects.get(id=transaction.reference_id)
+                except Payment.DoesNotExist:
+                    orphaned_count += 1
+            
+            # Check apartment balance consistency
+            apartments = Apartment.objects.filter(building_id=self.building_id)
+            inconsistent_balances = []
+            
+            for apartment in apartments:
+                stored_balance = apartment.current_balance or 0
+                calculated_balance = self._calculate_apartment_balance(apartment)
+                
+                if abs(stored_balance - calculated_balance) > Decimal('0.01'):
+                    inconsistent_balances.append({
+                        'apartment': apartment.number,
+                        'stored': float(stored_balance),
+                        'calculated': float(calculated_balance),
+                        'difference': float(calculated_balance - stored_balance)
+                    })
+            
+            return {
+                'success': True,
+                'orphaned_transactions': orphaned_count,
+                'inconsistent_balances': len(inconsistent_balances),
+                'balance_details': inconsistent_balances,
+                'needs_cleanup': orphaned_count > 0 or len(inconsistent_balances) > 0
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'orphaned_transactions': 0,
+                'inconsistent_balances': 0,
+                'balance_details': [],
+                'needs_cleanup': False
+            }
+    
+    def auto_cleanup_and_refresh(self) -> dict:
+        """Αυτόματος καθαρισμός και ανανέωση dashboard"""
+        try:
+            # First verify integrity
+            integrity_check = self.verify_data_integrity()
+            
+            if not integrity_check['needs_cleanup']:
+                return {
+                    'success': True,
+                    'message': 'Δεδομένα ήδη καθαρά',
+                    'cleanup_performed': False,
+                    'integrity_check': integrity_check
+                }
+            
+            # Perform cleanup
+            cleanup_result = self.cleanup_orphaned_transactions()
+            
+            # Re-verify after cleanup
+            final_check = self.verify_data_integrity()
+            
+            return {
+                'success': True,
+                'message': 'Καθαρισμός ολοκληρώθηκε',
+                'cleanup_performed': True,
+                'cleanup_result': cleanup_result,
+                'final_integrity_check': final_check
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'cleanup_performed': False
+            }

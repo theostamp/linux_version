@@ -17,6 +17,7 @@ import {
 } from './index';
 import ReserveFundDebug from './test/ReserveFundDebug';
 import SimpleAPITest from './test/SimpleAPITest';
+import { DataIntegrityCleanup } from './DataIntegrityCleanup';
 import { MeterReadingList } from './MeterReadingList';
 import { MonthSelector } from './MonthSelector';
 import { 
@@ -673,14 +674,28 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </ProtectedFinancialRoute>
         </TabsContent>
         
-        <TabsContent value="debug" className="space-y-4">
-          <ProtectedFinancialRoute requiredPermission="financial_read">
-            <div className="space-y-6">
-              <SimpleAPITest buildingId={activeBuildingId} />
-              <ReserveFundDebug buildingId={activeBuildingId} />
-            </div>
-          </ProtectedFinancialRoute>
-        </TabsContent>
+                    <TabsContent value="debug" className="space-y-4">
+              <ProtectedFinancialRoute requiredPermission="financial_read">
+                <div className="space-y-6">
+                  <DataIntegrityCleanup 
+                    buildingId={activeBuildingId} 
+                    onCleanupComplete={() => {
+                      // Refresh all data after cleanup
+                      if (paymentListRef.current) {
+                        paymentListRef.current.refresh();
+                      }
+                      if (expenseListRef.current) {
+                        expenseListRef.current.refresh();
+                      }
+                      // Force re-render of financial overview
+                      setRefreshKey(prev => prev + 1);
+                    }}
+                  />
+                  <SimpleAPITest buildingId={activeBuildingId} />
+                  <ReserveFundDebug buildingId={activeBuildingId} />
+                </div>
+              </ProtectedFinancialRoute>
+            </TabsContent>
       </Tabs>
       
       {/* Expense Form Modal */}

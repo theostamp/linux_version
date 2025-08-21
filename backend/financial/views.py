@@ -173,6 +173,17 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             expense=expense,
             request=self.request
         )
+        
+        # Auto cleanup and refresh after expense creation
+        try:
+            from .services import DataIntegrityService
+            integrity_service = DataIntegrityService(expense.building.id)
+            cleanup_result = integrity_service.auto_cleanup_and_refresh()
+            
+            if cleanup_result['cleanup_performed']:
+                print(f"🧹 Auto cleanup performed after expense creation: {cleanup_result['message']}")
+        except Exception as e:
+            print(f"⚠️ Auto cleanup failed after expense creation: {str(e)}")
     
     def perform_update(self, serializer):
         """Καταγραφή ενημέρωσης δαπάνης"""
@@ -195,6 +206,17 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             expense=expense,
             request=self.request
         )
+        
+        # Auto cleanup and refresh after expense update
+        try:
+            from .services import DataIntegrityService
+            integrity_service = DataIntegrityService(expense.building.id)
+            cleanup_result = integrity_service.auto_cleanup_and_refresh()
+            
+            if cleanup_result['cleanup_performed']:
+                print(f"🧹 Auto cleanup performed after expense update: {cleanup_result['message']}")
+        except Exception as e:
+            print(f"⚠️ Auto cleanup failed after expense update: {str(e)}")
     
     def perform_destroy(self, instance):
         """Καταγραφή διαγραφής δαπάνης"""
@@ -210,6 +232,17 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             request=self.request
         )
         instance.delete()
+        
+        # Auto cleanup and refresh after expense deletion
+        try:
+            from .services import DataIntegrityService
+            integrity_service = DataIntegrityService(instance.building.id)
+            cleanup_result = integrity_service.auto_cleanup_and_refresh()
+            
+            if cleanup_result['cleanup_performed']:
+                print(f"🧹 Auto cleanup performed after expense deletion: {cleanup_result['message']}")
+        except Exception as e:
+            print(f"⚠️ Auto cleanup failed after expense deletion: {str(e)}")
     
     def get_queryset(self):
         """Φιλτράρισμα ανά building και μήνα"""
@@ -440,7 +473,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         
         # Προσθήκη πληροφοριών αποθεματικού στις σημειώσεις αν υπάρχει
         description = f"Είσπραξη κοινοχρήστων από {apartment.number} - {payment.get_method_display()}"
-        if payment.reserve_fund_amount and payment.reserve_fund_amount > 0:
+        if payment.reserve_fund_amount and float(payment.reserve_fund_amount) > 0:
             description += f" (Αποθεματικό: {payment.reserve_fund_amount}€)"
         
         Transaction.objects.create(
@@ -490,6 +523,17 @@ class PaymentViewSet(viewsets.ModelViewSet):
             payment=payment,
             request=self.request
         )
+        
+        # Auto cleanup and refresh after payment creation
+        try:
+            from .services import DataIntegrityService
+            integrity_service = DataIntegrityService(building.id)
+            cleanup_result = integrity_service.auto_cleanup_and_refresh()
+            
+            if cleanup_result['cleanup_performed']:
+                print(f"🧹 Auto cleanup performed after payment creation: {cleanup_result['message']}")
+        except Exception as e:
+            print(f"⚠️ Auto cleanup failed after payment creation: {str(e)}")
     
     def perform_update(self, serializer):
         """Καταγραφή ενημέρωσης εισπράξεως"""
@@ -512,6 +556,17 @@ class PaymentViewSet(viewsets.ModelViewSet):
             payment=payment,
             request=self.request
         )
+        
+        # Auto cleanup and refresh after payment update
+        try:
+            from .services import DataIntegrityService
+            integrity_service = DataIntegrityService(building.id)
+            cleanup_result = integrity_service.auto_cleanup_and_refresh()
+            
+            if cleanup_result['cleanup_performed']:
+                print(f"🧹 Auto cleanup performed after payment update: {cleanup_result['message']}")
+        except Exception as e:
+            print(f"⚠️ Auto cleanup failed after payment update: {str(e)}")
     
     def perform_destroy(self, instance):
         """Καταγραφή διαγραφής εισπράξεως"""
@@ -527,6 +582,17 @@ class PaymentViewSet(viewsets.ModelViewSet):
             request=self.request
         )
         instance.delete()
+        
+        # Auto cleanup and refresh after payment deletion
+        try:
+            from .services import DataIntegrityService
+            integrity_service = DataIntegrityService(instance.apartment.building.id)
+            cleanup_result = integrity_service.auto_cleanup_and_refresh()
+            
+            if cleanup_result['cleanup_performed']:
+                print(f"🧹 Auto cleanup performed after payment deletion: {cleanup_result['message']}")
+        except Exception as e:
+            print(f"⚠️ Auto cleanup failed after payment deletion: {str(e)}")
     
     def get_queryset(self):
         """Φιλτράρισμα ανά building και μήνα"""
@@ -584,6 +650,29 @@ class PaymentViewSet(viewsets.ModelViewSet):
         """Λήψη διαθέσιμων μεθόδων πληρωμής"""
         methods = [{'value': choice[0], 'label': choice[1]} for choice in Payment.PAYMENT_METHODS]
         return Response(methods)
+    
+    @action(detail=False, methods=['post'])
+    def cleanup_data_integrity(self, request):
+        """Manual cleanup of data integrity issues"""
+        try:
+            building_id = request.data.get('building_id')
+            if not building_id:
+                return Response(
+                    {'error': 'building_id is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            from .services import DataIntegrityService
+            integrity_service = DataIntegrityService(building_id)
+            result = integrity_service.auto_cleanup_and_refresh()
+            
+            return Response(result, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=['delete'])
     def bulk_delete(self, request):

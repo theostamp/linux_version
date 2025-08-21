@@ -163,3 +163,4 @@ const refreshTimeoutRef = setTimeout(..., 300); // στο useMonthRefresh
 ---
 
 **Συμπέρασμα**: Η υλοποίηση λύνει πλήρως το πρόβλημα του manual refresh και παρέχει μια καλή βάση για μελλοντικές βελτιώσεις στην UX του financial module.
+

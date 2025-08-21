@@ -156,20 +156,50 @@ class PaymentSerializer(serializers.ModelSerializer):
                 return 0.0
     
     def get_monthly_due(self, obj):
-        """Υπολογισμός μηνιαίας οφειλής από κοινόχρηστα"""
+        """Υπολογισμός μηνιαίας οφειλής (κοινόχρηστα + αποθεματικό)"""
         try:
             from decimal import Decimal
             from .services import CommonExpenseCalculator
+            from buildings.models import Building
+            from .models import Expense
+            from datetime import datetime
             
-            # Υπολογισμός μηνιαίας οφειλής με βάση τα χιλιοστά και τις δαπάνες
-            calculator = CommonExpenseCalculator(obj.apartment.building_id)
-            shares = calculator.calculate_shares()
+            # Υπολογισμός κοινόχρηστων χειροκίνητα ανεξάρτητα από distribution_type
+            current_month = datetime.now().month
+            current_year = datetime.now().year
             
-            apartment_share = shares.get(obj.apartment.id)
-            if apartment_share:
-                return float(apartment_share.get('total_due', 0))
+            expenses = Expense.objects.filter(
+                building_id=obj.apartment.building_id,
+                date__year=current_year,
+                date__month=current_month,
+                is_issued=False
+            )
             
-            return 0.0
+            total_expenses = sum(exp.amount for exp in expenses)
+            
+            # Υπολογισμός μερίδιου ανά χιλιοστά
+            from apartments.models import Apartment
+            apartments = Apartment.objects.filter(building_id=obj.apartment.building_id)
+            total_mills = sum(apt.participation_mills or 0 for apt in apartments)
+            
+            if total_mills > 0:
+                apartment_share = (total_expenses * obj.apartment.participation_mills) / total_mills
+            else:
+                apartment_share = Decimal('0.00')
+            
+            # Αποθεματικό - υπολογίζουμε χειροκίνητα ανεξάρτητα από εκκρεμότητες
+            building = Building.objects.get(id=obj.apartment.building_id)
+            reserve_fund_amount = Decimal('0.00')
+            
+            if building.reserve_fund_goal and building.reserve_fund_duration_months:
+                monthly_target = building.reserve_fund_goal / building.reserve_fund_duration_months
+                apartment_reserve_share = (monthly_target * obj.apartment.participation_mills) / 1000
+                reserve_fund_amount = apartment_reserve_share
+            
+            # Μηνιαία οφειλή = κοινόχρηστα + αποθεματικό
+            monthly_due = apartment_share + reserve_fund_amount
+            return float(monthly_due)
+            
         except Exception as e:
             # Αν υπάρχει σφάλμα, επιστρέφουμε 0
             return 0.0

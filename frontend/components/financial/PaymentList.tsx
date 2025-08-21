@@ -14,7 +14,9 @@ import { PaymentDetailModal } from './PaymentDetailModal';
 import { AddPaymentModal } from './AddPaymentModal';
 
 interface PaymentWithProgressiveBalance extends Payment {
-  progressiveBalance: number;
+  progressiveBalance: number; // Καθολικό υπόλοιπο (προηγούμενο + μηνιαίο)
+  monthlyBalance: number; // Μηνιαίο υπόλοιπο (καταβολές - οφειλή μήνα)
+  previousBalance: number; // Προηγούμενο υπόλοιπο (μέχρι τέλος προηγούμενου μήνα)
   paymentCount?: number; // Για συγκεντρωτικές εγγραφές
 }
 
@@ -147,6 +149,51 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
       const currentBalanceRaw = latestPayment.current_balance ?? 0;
       const currentBalance = typeof currentBalanceRaw === 'string' ? parseFloat(currentBalanceRaw) : Number(currentBalanceRaw);
 
+      // Υπολογισμός μηνιαίου υπολοίπου (καταβολές μήνα - μηνιαία οφειλή)
+      const monthlyDue = latestPayment.monthly_due || 0;
+      const monthlyBalance = totalAmount - monthlyDue;
+
+      // 🚀 FEATURE FLAG: Αυτόματη έκδοση χρεώσεων (προσωρινή λύση)
+      const TREAT_ALL_CHARGES_AS_ISSUED = true; // TODO: Move to backend
+      
+      let previousBalance = 0;
+      let globalBalance = 0;
+      
+      if (TREAT_ALL_CHARGES_AS_ISSUED) {
+        // ✅ ΝΕΑ ΛΟΓΙΚΗ: Όλες οι χρεώσεις είναι εκδομένες
+        // Καθολικό υπόλοιπο = Πληρωμές - Χρεώσεις (απλό και σωστό)
+        
+        if (selectedMonth) {
+          // Έλεγχος αν έχουμε μόνο πληρωμές του τρέχοντος μήνα
+          const currentMonthPayments = sortedPayments.filter(payment => {
+            const paymentMonth = payment.date.substring(0, 7); // YYYY-MM format
+            return paymentMonth === selectedMonth;
+          });
+          
+          if (currentMonthPayments.length === sortedPayments.length) {
+            // Δεν υπάρχει προηγούμενο ιστορικό
+            previousBalance = 0;
+            globalBalance = previousBalance + monthlyBalance; // 0 + μηνιαίο
+          } else {
+            // Υπάρχει ιστορικό - χρήση πιο σύνθετης λογικής
+            // Προς το παρόν χρησιμοποιούμε το backend balance
+            const backendBalance = typeof currentBalanceRaw === 'string' ? parseFloat(currentBalanceRaw) : Number(currentBalanceRaw);
+            globalBalance = backendBalance;
+            previousBalance = globalBalance - monthlyBalance;
+          }
+        } else {
+          // Χωρίς επιλεγμένο μήνα - χρήση backend balance
+          const backendBalance = typeof currentBalanceRaw === 'string' ? parseFloat(currentBalanceRaw) : Number(currentBalanceRaw);
+          globalBalance = backendBalance;
+          previousBalance = globalBalance - monthlyBalance;
+        }
+      } else {
+        // 🔴 ΠΑΛΙΑ ΛΟΓΙΚΗ: Backend balance as-is (fallback)
+        const backendBalance = typeof currentBalanceRaw === 'string' ? parseFloat(currentBalanceRaw) : Number(currentBalanceRaw);
+        globalBalance = backendBalance;
+        previousBalance = globalBalance - monthlyBalance;
+      }
+
       // Δημιουργία συγκεντρωτικής εγγραφής
       summaries.push({
         ...latestPayment, // Χρησιμοποιούμε τα στοιχεία της τελευταίας πληρωμής
@@ -155,7 +202,9 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
         amount: totalAmount, // Συνολικό ποσό όλων των πληρωμών
         date: oldestPayment.date, // Ημερομηνία πρώτης πληρωμής
         notes: `${sortedPayments.length} πληρωμ${sortedPayments.length === 1 ? 'ή' : 'ές'}`,
-        progressiveBalance: isNaN(currentBalance) ? 0 : currentBalance,
+        previousBalance: isNaN(previousBalance) ? 0 : previousBalance, // Προηγούμενο υπόλοιπο
+        monthlyBalance: isNaN(monthlyBalance) ? 0 : monthlyBalance, // Μηνιαίο υπόλοιπο
+        progressiveBalance: isNaN(globalBalance) ? 0 : globalBalance, // Καθολικό υπόλοιπο
         paymentCount: sortedPayments.length, // Πλήθος πληρωμών για την καρτέλα
         // Διασφαλίζουμε ότι έχουμε τα σωστά δεδομένα διαμερίσματος
         apartment_number: latestPayment.apartment_number || `Διαμέρισμα ${latestPayment.apartment}`,
@@ -389,7 +438,13 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
                     Μην. Οφειλή
                   </th>
                   <th className="px-3 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28 lg:w-auto">
-                    Τρέχον Υπόλοιπο
+                    Προηγ. Υπόλοιπο
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28 lg:w-auto">
+                    Υπόλοιπο Μήνα
+                  </th>
+                  <th className="px-3 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28 lg:w-auto">
+                    Καθολικό Υπόλοιπο
                   </th>
                   <th className="px-3 lg:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20 lg:w-auto">
                     Ενέργειες
@@ -475,7 +530,65 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
                       </div>
                     </td>
                     
-                    {/* Υπόλοιπο */}
+                    {/* Προηγούμενο Υπόλοιπο */}
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex flex-col items-end space-y-1">
+                        <div className={`text-xs lg:text-sm font-medium ${
+                          summary.previousBalance < 0 
+                            ? 'text-red-600' 
+                            : summary.previousBalance > 0 
+                              ? 'text-green-600' 
+                              : 'text-gray-600'
+                        }`}>
+                          {formatCurrency(summary.previousBalance)}
+                        </div>
+                        <div className={`text-xs ${
+                          summary.previousBalance < 0 
+                            ? 'text-red-500' 
+                            : summary.previousBalance > 0 
+                              ? 'text-green-500' 
+                              : 'text-gray-500'
+                        }`}>
+                          {summary.previousBalance < 0 
+                            ? 'Χρεωστικό' 
+                            : summary.previousBalance > 0 
+                              ? 'Πιστωτικό' 
+                              : 'Μηδέν'
+                          }
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Υπόλοιπο Μήνα */}
+                    <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex flex-col items-end space-y-1">
+                        <div className={`text-xs lg:text-sm font-semibold ${
+                          summary.monthlyBalance < 0 
+                            ? 'text-red-600' 
+                            : summary.monthlyBalance > 0 
+                              ? 'text-green-600' 
+                              : 'text-gray-600'
+                        }`}>
+                          {formatCurrency(summary.monthlyBalance)}
+                        </div>
+                        <div className={`text-xs ${
+                          summary.monthlyBalance < 0 
+                            ? 'text-red-500' 
+                            : summary.monthlyBalance > 0 
+                              ? 'text-green-500' 
+                              : 'text-gray-500'
+                        }`}>
+                          {summary.monthlyBalance < 0 
+                            ? 'Χρεωστικό' 
+                            : summary.monthlyBalance > 0 
+                              ? 'Πιστωτικό' 
+                              : 'Εξοφλημένο'
+                          }
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Καθολικό Υπόλοιπο */}
                     <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex flex-col items-end space-y-1">
                         <div className={`text-xs lg:text-sm font-semibold ${
@@ -566,6 +679,16 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
                     {formatCurrency(apartmentSummaries.reduce((sum, summary) => {
                       const amount = summary.monthly_due || 0;
                       return sum + amount;
+                    }, 0))}
+                  </td>
+                  <td className="px-3 lg:px-6 py-3 text-right font-semibold text-purple-700">
+                    {formatCurrency(apartmentSummaries.reduce((sum, summary) => {
+                      return sum + summary.previousBalance;
+                    }, 0))}
+                  </td>
+                  <td className="px-3 lg:px-6 py-3 text-right font-semibold text-blue-700">
+                    {formatCurrency(apartmentSummaries.reduce((sum, summary) => {
+                      return sum + summary.monthlyBalance;
                     }, 0))}
                   </td>
                   <td className="px-3 lg:px-6 py-3 text-right font-semibold text-gray-700">
