@@ -197,3 +197,4 @@ class Expense(models.Model):
 
 if __name__ == "__main__":
     implement_auto_issue_model()
+

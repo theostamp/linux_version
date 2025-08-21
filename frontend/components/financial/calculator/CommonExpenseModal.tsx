@@ -28,6 +28,7 @@ import { HeatingAnalysisModal } from './HeatingAnalysisModal';
 import { toast } from 'sonner';
 import { useCommonExpenses } from '@/hooks/useCommonExpenses';
 import { useApartmentsWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
+import { useMonthRefresh } from '@/hooks/useMonthRefresh';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -87,7 +88,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     };
   } | null>(null);
   const { saveCommonExpenseSheet } = useCommonExpenses();
-  const { apartments: aptWithFinancial } = useApartmentsWithFinancialData(buildingId);
+  // Extract month from state's customPeriod
+  const selectedMonth = state.customPeriod?.startDate ? state.customPeriod.startDate.substring(0, 7) : undefined;
+  const { apartments: aptWithFinancial, forceRefresh } = useApartmentsWithFinancialData(buildingId, selectedMonth);
 
   // Occupants map (owner & tenant) by apartment id
   const occupantsByApartmentId = useMemo(() => {
@@ -97,6 +100,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     });
     return map;
   }, [aptWithFinancial]);
+
+  // Auto-refresh when selectedMonth changes using custom hook
+  useMonthRefresh(selectedMonth, forceRefresh, 'CommonExpenseModal');
 
   // Helpers to read numeric values safely
   const toNumber = (v: any) => {

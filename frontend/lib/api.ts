@@ -1475,14 +1475,21 @@ export async function fetchBuildingApartments(buildingId: number): Promise<Build
 }
 
 // Λήψη διαμερισμάτων με οικονομικά δεδομένα σε μια κλήση (optimized for rate limiting)
-export async function fetchApartmentsWithFinancialData(buildingId: number): Promise<any[]> {
-  console.log('[API CALL] Attempting to fetch apartments with financial data:', buildingId);
+export async function fetchApartmentsWithFinancialData(buildingId: number, month?: string): Promise<any[]> {
+  console.log('[API CALL] Attempting to fetch apartments with financial data:', buildingId, 'month:', month);
   
   try {
     // Try the optimized endpoint first
+    const params = new URLSearchParams();
+    if (month) {
+      params.append('month', month);
+    }
+    const queryString = params.toString();
+    const url = `/financial/building/${buildingId}/apartments-summary/${queryString ? `?${queryString}` : ''}`;
+    
     const { data } = await makeRequestWithRetry({
       method: 'get',
-      url: `/financial/building/${buildingId}/apartments-summary/`
+      url
     });
     
     console.log('[API CALL] Successfully fetched apartments with financial data:', {

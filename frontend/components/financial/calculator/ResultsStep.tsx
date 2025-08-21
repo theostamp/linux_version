@@ -33,6 +33,7 @@ import { useCommonExpenses } from '@/hooks/useCommonExpenses';
 import { toast } from 'sonner';
 import { CommonExpenseModal } from './CommonExpenseModal';
 import { useApartmentsWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
+import { useMonthRefresh } from '@/hooks/useMonthRefresh';
 import { api } from '@/lib/api';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { usePayments } from '@/hooks/usePayments';
@@ -70,8 +71,13 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
+  // Extract month from state's customPeriod
+  const selectedMonth = state.customPeriod?.startDate ? state.customPeriod.startDate.substring(0, 7) : undefined;
   // Load occupants (owner/tenant) info to show consistent names
-  const { apartments: aptWithFinancial, building: buildingData } = useApartmentsWithFinancialData(buildingId);
+  const { apartments: aptWithFinancial, building: buildingData, forceRefresh } = useApartmentsWithFinancialData(buildingId, selectedMonth);
+  
+  // Auto-refresh when selectedMonth changes
+  useMonthRefresh(selectedMonth, forceRefresh, 'ResultsStep');
   const occupantsByApartmentId = useMemo(() => {
     const map: Record<number, { owner_name?: string; tenant_name?: string }> = {};
     aptWithFinancial.forEach((apt) => {

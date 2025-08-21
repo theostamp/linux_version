@@ -52,11 +52,15 @@ interface FinancialSummary {
   pending_payments: number;
   last_calculation_date?: string;
   average_monthly_expenses: number;
+  // Monthly Activity Flag
+  has_monthly_activity?: boolean; // ← ΝΕΟ FIELD
   // Reserve Fund Period Tracking
   reserve_fund_start_date?: string;
   reserve_fund_target_date?: string;
   reserve_fund_monthly_target?: number;
   reserve_fund_duration_months?: number;
+  // Reserve Fund Contribution (from API)
+  reserve_fund_contribution?: number; // ← ΝΕΟ FIELD
   // Management Expenses
   management_fee_per_apartment: number;
   total_management_cost: number;
@@ -191,19 +195,30 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
   // Notify parent component when reserve fund monthly target changes
   // Calculate correct monthly target from goal and duration
+  // CONDITIONAL: Only calculate if there's monthly activity
   useEffect(() => {
     if (financialSummary && onReserveFundAmountChange) {
       const goal = financialSummary.reserve_fund_goal || 0;
       const duration = financialSummary.reserve_fund_duration_months || 1;
+      const hasActivity = financialSummary.has_monthly_activity;
       
       let correctMonthlyTarget = 0;
-      if (goal > 0 && duration > 0) {
+      
+      // Only calculate reserve fund amount if there's monthly activity
+      if (goal > 0 && duration > 0 && hasActivity !== false) {
         correctMonthlyTarget = goal / duration;
       }
       
+      console.log('🔄 BuildingOverviewSection: Reserve fund calculation:', {
+        goal,
+        duration,
+        hasActivity,
+        correctMonthlyTarget
+      });
+      
       onReserveFundAmountChange(correctMonthlyTarget);
     }
-  }, [financialSummary?.reserve_fund_goal, financialSummary?.reserve_fund_duration_months, onReserveFundAmountChange]);
+  }, [financialSummary?.reserve_fund_goal, financialSummary?.reserve_fund_duration_months, financialSummary?.has_monthly_activity, onReserveFundAmountChange]);
 
   // Fetch financial summary data
   const fetchFinancialSummary = async (isRefresh = false) => {
@@ -254,6 +269,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       console.log('📊 BuildingOverviewSection: API response status:', response.status);
       console.log('📊 BuildingOverviewSection: API total_expenses_month:', apiData.total_expenses_month);
       console.log('📊 BuildingOverviewSection: API average_monthly_expenses:', apiData.average_monthly_expenses);
+      console.log('📊 BuildingOverviewSection: API has_monthly_activity:', apiData.has_monthly_activity);
       
       // Clean old data before loading
       const wasOldDataCleared = cleanOldReserveFundData();
@@ -334,11 +350,15 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         pending_payments: apiData.pending_payments || 0,
         last_calculation_date: apiData.last_calculation_date || new Date().toISOString().split('T')[0],
         average_monthly_expenses: apiData.average_monthly_expenses || 0, // ALWAYS use API data for month-specific values
+        // Monthly Activity Flag
+        has_monthly_activity: apiData.has_monthly_activity, // ← ΝΕΟ FIELD
         // Reserve Fund Period Tracking - Use saved values with fallbacks
         reserve_fund_start_date: savedStartDate,
         reserve_fund_target_date: savedTargetDate,
         reserve_fund_monthly_target: savedGoal > 0 && savedDurationMonths > 0 ? savedGoal / savedDurationMonths : 0, // Calculate correctly: goal ÷ duration
         reserve_fund_duration_months: savedDurationMonths,
+        // Reserve Fund Contribution (from API)
+        reserve_fund_contribution: apiData.reserve_fund_contribution || 0, // ← ΝΕΟ FIELD
         // Management Expenses
         management_fee_per_apartment: buildingData?.management_fee_per_apartment || 0,
         total_management_cost: (buildingData?.management_fee_per_apartment || 0) * (buildingData?.apartments_count || 0)
@@ -346,6 +366,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       
       console.log('🔄 BuildingOverviewSection: Transformed financial data:', financialData);
       console.log('🔄 BuildingOverviewSection: buildingData:', buildingData);
+      console.log('🔄 BuildingOverviewSection: has_monthly_activity from API:', apiData.has_monthly_activity);
+      console.log('🔄 BuildingOverviewSection: has_monthly_activity in financialData:', financialData.has_monthly_activity);
       console.log('🔄 BuildingOverviewSection: management_fee_per_apartment:', buildingData?.management_fee_per_apartment);
       console.log('🔄 BuildingOverviewSection: API average_monthly_expenses:', apiData.average_monthly_expenses);
       console.log('🔄 BuildingOverviewSection: Final average_monthly_expenses:', financialData.average_monthly_expenses);
@@ -400,6 +422,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         reserve_fund_target_date: '', // No hardcoded date - will be set by user
         reserve_fund_monthly_target: 0, // No hardcoded value - calculated from goal/duration
         reserve_fund_duration_months: 0, // No hardcoded value - will be set by user
+        reserve_fund_contribution: 0, // No hardcoded value - from API
         management_fee_per_apartment: buildingData?.management_fee_per_apartment || 0,
         total_management_cost: (buildingData?.management_fee_per_apartment || 0) * (buildingData?.apartments_count || 0)
       };
@@ -981,22 +1004,22 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   <div className="space-y-1">
                     <div className="text-xs text-green-600 font-medium">Εισφορά αποθεματικού:</div>
                     <div className="text-lg font-bold text-green-700">
-                      {formatCurrency(financialSummary.reserve_fund_monthly_target || 0)}
+                      {formatCurrency(financialSummary.reserve_fund_contribution || 0)}
                     </div>
-                    {(financialSummary.reserve_fund_monthly_target || 0) > 0 && (
+                    {(financialSummary.reserve_fund_contribution || 0) > 0 && (
                       <div className="text-xs text-green-600 italic">Συσσώρευση κεφαλαίων</div>
                     )}
                   </div>
                   
                   {/* Συνολικές Υποχρεώσεις (μόνο αν υπάρχουν πραγματικές δαπάνες ή αποθεματικό) */}
-                  {((financialSummary.average_monthly_expenses || 0) > 0 || (financialSummary.reserve_fund_monthly_target || 0) > 0) && (
+                  {((financialSummary.average_monthly_expenses || 0) > 0 || (financialSummary.reserve_fund_contribution || 0) > 0) && (
                     <div className="space-y-1 pt-2 border-t border-gray-200">
                       <div className="text-xs text-gray-700 font-medium">Συνολικές υποχρεώσεις μήνα:</div>
                       <div className="text-xl font-bold text-gray-800">
-                        {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.reserve_fund_monthly_target || 0))}
+                        {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.reserve_fund_contribution || 0))}
                       </div>
                       <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">
-                        {(financialSummary.average_monthly_expenses || 0) > 0 && (financialSummary.reserve_fund_monthly_target || 0) > 0 
+                        {(financialSummary.average_monthly_expenses || 0) > 0 && (financialSummary.reserve_fund_contribution || 0) > 0 
                           ? 'Έξοδα + Εισφορά'
                           : (financialSummary.average_monthly_expenses || 0) > 0 
                             ? 'Μόνο έξοδα'
@@ -1068,7 +1091,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-orange-700 font-medium">Εισφορά αποθεματικού:</span>
                         <span className="font-semibold text-lg text-orange-800">
-                          {formatCurrency(financialSummary.reserve_fund_monthly_target || 0)}
+                          {formatCurrency(financialSummary.reserve_fund_contribution || 0)}
                         </span>
                       </div>
                       </div>
@@ -1078,7 +1101,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-700 font-medium">Συνολική κάλυψη:</span>
                         <span className="font-semibold text-lg text-gray-800">
-                          {formatCurrency((Math.abs(financialSummary.current_obligations || 0)) + (financialSummary.reserve_fund_monthly_target || 0))}
+                          {formatCurrency((Math.abs(financialSummary.current_obligations || 0)) + (financialSummary.reserve_fund_contribution || 0))}
                         </span>
                       </div>
                       <div className="text-xs text-gray-600">

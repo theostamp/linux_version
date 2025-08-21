@@ -20,6 +20,7 @@ import TransactionHistory from './TransactionHistory';
 import CashFlowChart from './CashFlowChart';
 import ReportsManager from './ReportsManager';
 import { useRouter } from 'next/navigation';
+import { useMonthRefresh } from '@/hooks/useMonthRefresh';
 
 interface FinancialDashboardProps {
   buildingId: number;
@@ -39,6 +40,8 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
       setIsLoading(true);
       setError(null);
       
+      console.log(`🔄 FinancialDashboard: Loading summary for building ${buildingId}, month: ${selectedMonth || 'current'}`);
+      
       const params = new URLSearchParams({
         building_id: buildingId.toString(),
         ...(selectedMonth && { month: selectedMonth })
@@ -46,6 +49,15 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
       
       const response = await api.get(`/financial/dashboard/summary/?${params}`);
       setSummary(response.data);
+      
+      console.log(`✅ FinancialDashboard: Summary loaded successfully for ${selectedMonth || 'current'}`);
+      console.log(`📊 FinancialDashboard: Reserve Fund Data:`, {
+        current_reserve: response.data.current_reserve,
+        total_balance: response.data.total_balance,
+        reserve_fund_contribution: response.data.reserve_fund_contribution,
+        has_monthly_activity: response.data.has_monthly_activity,
+        selectedMonth: selectedMonth || 'current'
+      });
     } catch (error) {
       console.error('Error loading financial summary:', error);
       setError('Σφάλμα κατά τη φόρτωση των οικονομικών στοιχείων');
@@ -57,6 +69,9 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
   useEffect(() => {
     loadSummary();
   }, [loadSummary]);
+
+  // Auto-refresh when selectedMonth changes
+  useMonthRefresh(selectedMonth, loadSummary, 'FinancialDashboard');
 
   // Expose loadSummary function via ref
   useImperativeHandle(ref, () => ({
@@ -120,18 +135,40 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
               Τρέχον Αποθεματικό
+              {selectedMonth && (
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                  {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'short', year: 'numeric' })}
+                </span>
+              )}
+              {selectedMonth && summary.has_monthly_activity === false && (
+                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                  Χωρίς διακανονισμό
+                </span>
+              )}
             </CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {Number(summary.current_reserve).toFixed(2)}€
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Διαθέσιμο ποσό
-            </p>
+            {/* Conditional display based on monthly activity */}
+            {selectedMonth && summary.has_monthly_activity === false ? (
+              <div className="text-center py-4">
+                <div className="text-lg text-gray-400 mb-2">—</div>
+                <p className="text-xs text-gray-500">
+                  Δεν υπάρχει διακανονισμός για αυτόν τον μήνα
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">
+                  {Number(summary.current_reserve).toFixed(2)}€
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {selectedMonth ? 'Ιστορικό υπόλοιπο' : 'Διαθέσιμο ποσό'}
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
         

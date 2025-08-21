@@ -17,7 +17,7 @@ import magic
 class CommonExpenseCalculator:
     """Υπηρεσία για τον υπολογισμό μεριδίων κοινοχρήστων"""
     
-    def __init__(self, building_id: int):
+    def __init__(self, building_id: int, month: str = None):
         self.building_id = building_id
         self.building = Building.objects.get(id=building_id)
         self.apartments = Apartment.objects.filter(building_id=building_id)
@@ -25,6 +25,56 @@ class CommonExpenseCalculator:
             building_id=building_id, 
             is_issued=False
         )
+        self.month = month  # Format: YYYY-MM
+        self.period_end_date = None
+        
+        # Calculate period end date if month is provided
+        if month:
+            try:
+                from datetime import date
+                year, mon = map(int, month.split('-'))
+                if mon == 12:
+                    self.period_end_date = date(year + 1, 1, 1)
+                else:
+                    self.period_end_date = date(year, mon + 1, 1)
+            except Exception:
+                pass
+    
+    def _get_historical_balance(self, apartment, end_date):
+        """
+        Υπολογίζει το ιστορικό υπόλοιπο διαμερίσματος μέχρι την δοθείσα ημερομηνία
+        """
+        from datetime import datetime
+        from django.utils import timezone
+        
+        if not end_date:
+            return apartment.current_balance or Decimal('0.00')
+        
+        # Μετατροπή end_date σε timezone-aware datetime
+        end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
+        
+        # Υπολογισμός από πληρωμές και συναλλαγές
+        total_payments = Payment.objects.filter(
+            apartment=apartment,
+            date__lt=end_date
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        # Υπολογισμός χρεώσεων μέχρι την ημερομηνία από συναλλαγές
+        total_charges = Transaction.objects.filter(
+            apartment=apartment,
+            date__lt=end_datetime,
+            type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
+                     'interest_charge', 'penalty_charge']
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        # Υπολογισμός επιπλέον εισπράξεων από συναλλαγές
+        additional_payments = Transaction.objects.filter(
+            apartment=apartment,
+            date__lt=end_datetime,
+            type__in=['common_expense_payment', 'payment_received', 'refund']
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        return total_payments + additional_payments - total_charges
     
     def calculate_shares(self, include_reserve_fund: bool = True) -> Dict[str, Any]:
         """
@@ -37,17 +87,20 @@ class CommonExpenseCalculator:
         
         # Αρχικοποίηση μεριδίων για κάθε διαμέρισμα
         for apartment in self.apartments:
+            # Χρήση ιστορικού υπολοίπου αν έχουμε period_end_date
+            historical_balance = self._get_historical_balance(apartment, self.period_end_date)
+            
             shares[apartment.id] = {
                 'apartment_id': apartment.id,
                 'apartment_number': apartment.number,
                 'identifier': apartment.identifier or apartment.number,
                 'owner_name': apartment.owner_name or 'Άγνωστος',
                 'participation_mills': apartment.participation_mills or 0,
-                'current_balance': apartment.current_balance or Decimal('0.00'),
+                'current_balance': historical_balance,
                 'total_amount': Decimal('0.00'),
                 'reserve_fund_amount': Decimal('0.00'),  # Νέα: Εισφορά αποθεματικού
                 'breakdown': [],
-                'previous_balance': apartment.current_balance or Decimal('0.00'),
+                'previous_balance': historical_balance,
                 'total_due': Decimal('0.00')
             }
         
@@ -201,7 +254,10 @@ class CommonExpenseCalculator:
             return
         
         # Έλεγχος αν υπάρχουν εκκρεμότητες (αν ναι, δεν συλλέγουμε αποθεματικό)
-        total_obligations = sum(abs(apt.current_balance or 0) for apt in self.apartments)
+        # Χρήση ιστορικών υπολοίπων για τον έλεγχο εκκρεμοτήτων
+        total_obligations = sum(abs(self._get_historical_balance(apt, self.period_end_date)) 
+                              for apt in self.apartments 
+                              if self._get_historical_balance(apt, self.period_end_date) < 0)
         if total_obligations > 0:
             return
         
@@ -234,7 +290,7 @@ class CommonExpenseCalculator:
                     shares[apartment.id]['reserve_fund_amount'] = reserve_share
         
         # Προσθήκη στο breakdown και στο total_amount μόνο αν δεν υπάρχουν εκκρεμότητες
-        total_obligations = sum(abs(apt.current_balance or 0) for apt in self.apartments)
+        # Χρήση του ίδιου υπολογισμού με πριν για συνέπεια
         for apartment in self.apartments:
             if shares[apartment.id]['reserve_fund_amount'] > 0:
                 shares[apartment.id]['breakdown'].append({
@@ -409,7 +465,7 @@ class FinancialDashboardService:
         pending_expenses = pending_expenses_query.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
         # Κατάσταση διαμερισμάτων
-        apartment_balances = self.get_apartment_balances()
+        apartment_balances = self.get_apartment_balances(month)
         
         # Στατιστικά πληρωμών
         payment_statistics = self.get_payment_statistics(month)
@@ -454,10 +510,17 @@ class FinancialDashboardService:
             
             current_reserve = total_payments_all_time - total_expenses_all_time - total_management_cost
         
+        # Check if there's any financial activity for this month (διακανονισμός)
+        has_monthly_activity = self._has_monthly_activity(month) if month else True
+        
         # Υπολογισμός εισφοράς αποθεματικού με προτεραιότητα
-        reserve_fund_contribution = self._calculate_reserve_fund_contribution(
-            current_reserve, total_obligations
-        )
+        # Αν δεν υπάρχει δραστηριότητα για συγκεκριμένο μήνα, δεν υπολογίζουμε εισφορά
+        if month and not has_monthly_activity:
+            reserve_fund_contribution = Decimal('0.00')
+        else:
+            reserve_fund_contribution = self._calculate_reserve_fund_contribution(
+                current_reserve, total_obligations
+            )
         
         # Calculate total balance based on view type
         total_balance = current_reserve
@@ -488,6 +551,7 @@ class FinancialDashboardService:
             'current_obligations': float(current_obligations),
             'reserve_fund_contribution': float(reserve_fund_contribution),
             'current_reserve': float(current_reserve),
+            'has_monthly_activity': has_monthly_activity,
             'apartments_count': apartments_count,
             'pending_payments': pending_payments,
             'average_monthly_expenses': float(average_monthly_expenses),
@@ -532,14 +596,93 @@ class FinancialDashboardService:
         
         return total_monthly_contribution
     
-    def get_apartment_balances(self) -> List[Dict[str, Any]]:
-        """Επιστρέφει την κατάσταση οφειλών για όλα τα διαμερίσματα"""
+    def _has_monthly_activity(self, month: str) -> bool:
+        """
+        Ελέγχει αν υπάρχει οικονομική δραστηριότητα (διακανονισμός) για τον συγκεκριμένο μήνα
+        
+        Args:
+            month: Μήνας σε μορφή YYYY-MM
+            
+        Returns:
+            bool: True αν υπάρχει δραστηριότητα (δαπάνες ή πληρωμές), False αλλιώς
+        """
+        from datetime import date
+        
+        try:
+            year, mon = map(int, month.split('-'))
+            start_date = date(year, mon, 1)
+            if mon == 12:
+                end_date = date(year + 1, 1, 1)
+            else:
+                end_date = date(year, mon + 1, 1)
+        except Exception:
+            # Αν δεν μπορούμε να parse τον μήνα, επιστρέφουμε True για ασφάλεια
+            return True
+        
+        # Ελέγχουμε για δαπάνες στον μήνα
+        has_expenses = Expense.objects.filter(
+            building_id=self.building_id,
+            date__gte=start_date,
+            date__lt=end_date
+        ).exists()
+        
+        # Ελέγχουμε για πληρωμές στον μήνα
+        has_payments = Payment.objects.filter(
+            apartment__building_id=self.building_id,
+            date__gte=start_date,
+            date__lt=end_date
+        ).exists()
+        
+        # Ελέγχουμε για εκδοθείσες δαπάνες (χρησιμοποιούμε created_at αντί για issue_date)
+        has_issued_expenses = Expense.objects.filter(
+            building_id=self.building_id,
+            is_issued=True,
+            created_at__gte=start_date,
+            created_at__lt=end_date
+        ).exists()
+        
+        activity_found = has_expenses or has_payments or has_issued_expenses
+        
+        print(f"🔍 Monthly Activity Check for {month}:")
+        print(f"   📤 Has expenses: {has_expenses}")
+        print(f"   📥 Has payments: {has_payments}")
+        print(f"   📋 Has issued expenses: {has_issued_expenses}")
+        print(f"   ✅ Overall activity: {activity_found}")
+        
+        return activity_found
+    
+    def get_apartment_balances(self, month: str | None = None) -> List[Dict[str, Any]]:
+        """Επιστρέφει την κατάσταση οφειλών για όλα τα διαμερίσματα
+        
+        Args:
+            month: Προαιρετικός μήνας σε μορφή YYYY-MM για ιστορικό snapshot
+        """
         apartments = Apartment.objects.filter(building_id=self.building_id)
         balances = []
         
+        # Υπολογισμός end_date αν δοθεί month
+        end_date = None
+        if month:
+            try:
+                from datetime import date
+                year, mon = map(int, month.split('-'))
+                if mon == 12:
+                    end_date = date(year + 1, 1, 1)
+                else:
+                    end_date = date(year, mon + 1, 1)
+            except Exception:
+                end_date = None
+        
         for apartment in apartments:
-            # Τελευταία είσπραξη
-            last_payment = apartment.payments.order_by('-date').first()
+            # Υπολογισμός υπολοίπου με βάση την ημερομηνία
+            if end_date:
+                calculated_balance = self._calculate_historical_balance(apartment, end_date)
+                # Τελευταία πληρωμή μέχρι την ημερομηνία
+                last_payment = apartment.payments.filter(date__lt=end_date).order_by('-date').first()
+            else:
+                calculated_balance = apartment.current_balance or Decimal('0.00')
+                # Τελευταία πληρωμή συνολικά
+                last_payment = apartment.payments.order_by('-date').first()
             
             balances.append({
                 'id': apartment.id,
@@ -547,13 +690,53 @@ class FinancialDashboardService:
                 'number': apartment.number,
                 'apartment_number': apartment.number,
                 'owner_name': apartment.owner_name or 'Άγνωστος',
-                'current_balance': apartment.current_balance or Decimal('0.00'),
+                'current_balance': calculated_balance,
                 'participation_mills': apartment.participation_mills or 0,
                 'last_payment_date': last_payment.date if last_payment else None,
                 'last_payment_amount': last_payment.amount if last_payment else None
             })
         
         return balances
+    
+    def _calculate_historical_balance(self, apartment, end_date) -> Decimal:
+        """
+        Υπολογισμός ιστορικού υπολοίπου διαμερίσματος μέχρι συγκεκριμένη ημερομηνία
+        
+        Args:
+            apartment: Το διαμέρισμα για το οποίο υπολογίζουμε το υπόλοιπο
+            end_date: Η ημερομηνία μέχρι την οποία υπολογίζουμε
+            
+        Returns:
+            Decimal: Το υπόλοιπο του διαμερίσματος μέχρι την δοθείσα ημερομηνία
+        """
+        from decimal import Decimal
+        from .models import Transaction, Payment
+        
+        # Υπολογισμός πληρωμών μέχρι την ημερομηνία
+        total_payments = Payment.objects.filter(
+            apartment=apartment,
+            date__lt=end_date
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        # Υπολογισμός χρεώσεων μέχρι την ημερομηνία από συναλλαγές
+        total_charges = Transaction.objects.filter(
+            apartment=apartment,
+            date__lt=end_date,
+            type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
+                     'interest_charge', 'penalty_charge']
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        # Υπολογισμός επιπλέον εισπράξεων από συναλλαγές (εκτός από τις κανονικές πληρωμές)
+        additional_payments = Transaction.objects.filter(
+            apartment=apartment,
+            date__lt=end_date,
+            type__in=['common_expense_payment', 'payment_received', 'refund']
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        # Υπολογισμός τελικού υπολοίπου: (πληρωμές + επιπλέον εισπράξεις) - χρεώσεις
+        historical_balance = total_payments + additional_payments - total_charges
+        
+        return historical_balance
     
     def get_payment_statistics(self, month: str | None = None) -> Dict[str, Any]:
         """Υπολογισμός στατιστικών πληρωμών"""
@@ -1359,12 +1542,15 @@ class AdvancedCommonExpenseCalculator:
         self.building_id = building_id
         self.building = Building.objects.get(id=building_id)
         self.apartments = Apartment.objects.filter(building_id=building_id)
+        self.period_end_date = None
         
         # Φιλτράρισμα δαπανών ανά περίοδο
         if period_start_date and period_end_date:
             from datetime import datetime
             start_date = datetime.strptime(period_start_date, '%Y-%m-%d').date()
             end_date = datetime.strptime(period_end_date, '%Y-%m-%d').date()
+            # Αποθήκευση για χρήση στους υπολογισμούς ιστορικών υπολοίπων
+            self.period_end_date = end_date
             self.expenses = Expense.objects.filter(
                 building_id=building_id,
                 date__gte=start_date,
@@ -1397,6 +1583,42 @@ class AdvancedCommonExpenseCalculator:
                 self.reserve_fund_monthly_total = Decimal(str(monthly_total))
             except Exception:
                 self.reserve_fund_monthly_total = Decimal('0.00')
+    
+    def _get_historical_balance(self, apartment, end_date):
+        """
+        Υπολογίζει το ιστορικό υπόλοιπο διαμερίσματος μέχρι την δοθείσα ημερομηνία
+        """
+        from datetime import datetime
+        from django.utils import timezone
+        
+        if not end_date:
+            return apartment.current_balance or Decimal('0.00')
+        
+        # Μετατροπή end_date σε timezone-aware datetime
+        end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
+        
+        # Υπολογισμός από πληρωμές και συναλλαγές
+        total_payments = Payment.objects.filter(
+            apartment=apartment,
+            date__lt=end_date
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        # Υπολογισμός χρεώσεων μέχρι την ημερομηνία από συναλλαγές
+        total_charges = Transaction.objects.filter(
+            apartment=apartment,
+            date__lt=end_datetime,
+            type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
+                     'interest_charge', 'penalty_charge']
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        # Υπολογισμός επιπλέον εισπράξεων από συναλλαγές
+        additional_payments = Transaction.objects.filter(
+            apartment=apartment,
+            date__lt=end_datetime,
+            type__in=['common_expense_payment', 'payment_received', 'refund']
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        
+        return total_payments + additional_payments - total_charges
     
     def calculate_advanced_shares(self) -> Dict[str, Any]:
         """
@@ -1482,6 +1704,9 @@ class AdvancedCommonExpenseCalculator:
         shares = {}
         
         for apartment in self.apartments:
+            # Χρήση ιστορικού υπολοίπου αν έχουμε period_end_date
+            historical_balance = self._get_historical_balance(apartment, self.period_end_date)
+            
             shares[apartment.id] = {
                 'apartment_id': apartment.id,
                 'apartment_number': apartment.number,
@@ -1490,7 +1715,7 @@ class AdvancedCommonExpenseCalculator:
                 'participation_mills': apartment.participation_mills or 0,
                 'heating_mills': apartment.heating_mills or 0,
                 'elevator_mills': apartment.elevator_mills or 0,
-                'current_balance': apartment.current_balance or Decimal('0.00'),
+                'current_balance': historical_balance,
                 'total_amount': Decimal('0.00'),
                 'breakdown': {
                     'general_expenses': Decimal('0.00'),
@@ -1732,7 +1957,10 @@ class AdvancedCommonExpenseCalculator:
             
             # ε. Υπολογισμός Εισφοράς Αποθεματικού (κατανομή ανά χιλιοστά)
             # FIXED: Add obligations check like Basic Calculator
-            total_obligations = sum(abs(apt.current_balance or 0) for apt in self.apartments)
+            # Χρήση ιστορικών υπολοίπων για τον έλεγχο εκκρεμοτήτων
+            total_obligations = sum(abs(self._get_historical_balance(apt, self.period_end_date)) 
+                                  for apt in self.apartments 
+                                  if self._get_historical_balance(apt, self.period_end_date) < 0)
             if (self.reserve_fund_monthly_total > 0 and 
                 total_participation_mills > 0 and 
                 total_obligations == 0):  # Only collect reserve fund if no obligations

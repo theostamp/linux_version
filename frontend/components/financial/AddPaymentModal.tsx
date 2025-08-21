@@ -12,6 +12,7 @@ import { formatCurrency } from '@/lib/utils';
 import { PaymentFormData, PaymentMethod, PaymentType } from '@/types/financial';
 import { api } from '@/lib/api';
 import { useApartmentsWithFinancialData, ApartmentWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
+import { useSmartDateDefault } from '@/hooks/useSmartDateDefault';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 
 interface AddPaymentModalProps {
@@ -56,8 +57,9 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
     apartments, 
     isLoading, 
     error: apartmentError, 
-    loadApartments 
-  } = useApartmentsWithFinancialData(isOpen ? buildingId : undefined);
+    loadApartments,
+    forceRefresh
+  } = useApartmentsWithFinancialData(isOpen ? buildingId : undefined, selectedMonth);
 
   // Deduplicate apartments by (number + tenant_name + owner_name) to avoid double entries for same unit
   const dedupedApartments = React.useMemo(() => {
@@ -221,13 +223,16 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
     }
   };
 
+  // Use smart date default hook
+  const { smartDefaultDate, monthContext, isHistoricalEntry } = useSmartDateDefault(selectedMonth);
+
   const handleClose = () => {
     // Reset form
     setFormData({
       apartment_id: 0,
       amount: 0,
       reserve_fund_amount: 0,
-      date: new Date().toISOString().split('T')[0],
+      date: smartDefaultDate,
       method: PaymentMethod.CASH,
       payment_type: PaymentType.COMMON_EXPENSE,
       payer_type: 'owner',
@@ -276,6 +281,16 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
     const prefill = typeof monthAmount === 'number' ? monthAmount : fallbackAmount;
     setFormData(prev => ({ ...prev, amount: Number(isNaN(prefill) ? 0 : prefill) }));
   }, [selectedApartment?.id, monthlyShares, amountTouched]);
+
+  // Auto-update date when selectedMonth changes
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(prev => ({
+        ...prev,
+        date: smartDefaultDate
+      }));
+    }
+  }, [selectedMonth, isOpen, smartDefaultDate]);
 
   // Auto-fill reserve fund amount based on participation mills when apartment is selected
   useEffect(() => {
@@ -536,6 +551,11 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                 <Label htmlFor="date" className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   Ημερομηνία *
+                  {monthContext && (
+                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                      📅 {monthContext.label}
+                    </span>
+                  )}
                 </Label>
                 <Input
                   id="date"
@@ -544,6 +564,21 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                   onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
                   required
                 />
+                {monthContext && !monthContext.type.includes('current') && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    💡 {monthContext.description} ({
+                      selectedMonth ? new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' }) : ''
+                    })
+                  </p>
+                )}
+                {isHistoricalEntry && (
+                  <div className="flex items-center gap-2 mt-2 p-2 bg-orange-50 border border-orange-200 rounded">
+                    <span className="text-orange-600 text-xs">⚠️</span>
+                    <span className="text-xs text-orange-700">
+                      Καταχωρείτε ιστορικά δεδομένα. Βεβαιωθείτε ότι η ημερομηνία είναι σωστή.
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

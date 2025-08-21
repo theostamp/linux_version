@@ -15,6 +15,8 @@ import {
   PaymentList,
   BuildingOverviewSection
 } from './index';
+import ReserveFundDebug from './test/ReserveFundDebug';
+import SimpleAPITest from './test/SimpleAPITest';
 import { MeterReadingList } from './MeterReadingList';
 import { MonthSelector } from './MonthSelector';
 import { 
@@ -402,6 +404,19 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   <span className="text-sm font-medium whitespace-nowrap">Ιστορικό</span>
                 </button>
               </ConditionalRender>
+              <ConditionalRender permission="financial_read">
+                <button
+                  onClick={() => handleTabChange('debug')}
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
+                    activeTab === 'debug' 
+                      ? 'bg-red-100 border-red-300 text-red-700 shadow-sm' 
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                  }`}
+                >
+                  🔍
+                  <span className="text-sm font-medium whitespace-nowrap">Debug</span>
+                </button>
+              </ConditionalRender>
             </div>
           </div>
 
@@ -655,6 +670,15 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         <TabsContent value="history" className="space-y-4">
           <ProtectedFinancialRoute requiredPermission="financial_read">
             <TransactionHistory buildingId={activeBuildingId} limit={20} selectedMonth={selectedMonth} />
+          </ProtectedFinancialRoute>
+        </TabsContent>
+        
+        <TabsContent value="debug" className="space-y-4">
+          <ProtectedFinancialRoute requiredPermission="financial_read">
+            <div className="space-y-6">
+              <SimpleAPITest buildingId={activeBuildingId} />
+              <ReserveFundDebug buildingId={activeBuildingId} />
+            </div>
           </ProtectedFinancialRoute>
         </TabsContent>
       </Tabs>

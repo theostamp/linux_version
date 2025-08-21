@@ -734,6 +734,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
     def apartment_balances(self, request):
         """Λήψη υπολοίπων διαμερισμάτων"""
         building_id = request.query_params.get('building_id')
+        month = request.query_params.get('month')  # Προσθήκη παραμέτρου month
         
         if not building_id:
             return Response(
@@ -743,7 +744,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
         
         try:
             service = FinancialDashboardService(int(building_id))
-            balances = service.get_apartment_balances()
+            balances = service.get_apartment_balances(month)  # Περάσμα παραμέτρου month
             serializer = ApartmentBalanceSerializer(balances, many=True)
             return Response(serializer.data)
         except Exception as e:
@@ -756,6 +757,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
     def apartments_summary(self, request, pk=None):
         """Λήψη συνοπτικών οικονομικών δεδομένων όλων των διαμερισμάτων ενός κτιρίου"""
         building_id = pk
+        month = request.query_params.get('month')  # Προσθήκη παραμέτρου month
         
         if not building_id:
             return Response(
@@ -765,6 +767,10 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
         
         try:
             service = FinancialDashboardService(int(building_id))
+            
+            # Get apartment balances with month filtering
+            apartment_balances = service.get_apartment_balances(month)
+            balance_dict = {b['id']: b['current_balance'] for b in apartment_balances}
             
             # Get all apartments for the building
             apartments = Apartment.objects.filter(building_id=building_id)
@@ -776,12 +782,12 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     apartment=apartment
                 ).order_by('-date', '-id').first()
                 
-                # Calculate current balance from apartment model
-                current_balance = float(apartment.current_balance or 0)
+                # Use balance from service (which handles historical filtering)
+                current_balance = float(balance_dict.get(apartment.id, 0))
                 
                 # Calculate monthly due using the service
                 try:
-                    calculator = CommonExpenseCalculator(building_id)
+                    calculator = CommonExpenseCalculator(building_id, month)
                     shares = calculator.calculate_shares()
                     apartment_share = shares.get(apartment.id, {})
                     monthly_due = float(apartment_share.get('total_due', 0))
