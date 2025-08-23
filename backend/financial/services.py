@@ -22,8 +22,7 @@ class CommonExpenseCalculator:
         self.building = Building.objects.get(id=building_id)
         self.apartments = Apartment.objects.filter(building_id=building_id)
         self.expenses = Expense.objects.filter(
-            building_id=building_id, 
-            is_issued=False
+            building_id=building_id
         )
         self.month = month  # Format: YYYY-MM
         self.period_end_date = None
@@ -349,13 +348,9 @@ class FinancialDashboardService:
             if apt.current_balance and apt.current_balance < 0
         )
         
-        # Ανέκδοτες δαπάνες που δεν έχουν χρεωθεί ακόμα στα διαμερίσματα
-        # NOTE: For current_obligations, we show ALL pending expenses regardless of month
-        # This gives a complete picture of financial obligations
-        pending_expenses_all = Expense.objects.filter(
-            building_id=self.building_id,
-            is_issued=False
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        # Σημείωση: Όλες οι δαπάνες θεωρούνται πλέον εκδομένες
+        # Δεν υπάρχουν πια "ανέκδοτες" δαπάνες
+        pending_expenses_all = Decimal('0.00')
         
         # Get building info for management fees (moved up for earlier use)
         from buildings.models import Building
@@ -439,11 +434,11 @@ class FinancialDashboardService:
         
         recent_transactions = recent_transactions_query.order_by('-date')[:10]
         
-        # Ανέκδοτες δαπάνες (δεν έχουν εκδοθεί ακόμα)
+        # Σημείωση: Όλες οι δαπάνες θεωρούνται εκδομένες
+        # Επιστρέφουμε άδειο queryset για backwards compatibility
         pending_expenses_query = Expense.objects.filter(
-            building_id=self.building_id,
-            is_issued=False
-        )
+            building_id=self.building_id
+        ).none()
         
         # Φιλτράρισμα ανά μήνα αν δοθεί
         if month:
@@ -488,12 +483,9 @@ class FinancialDashboardService:
             
             current_reserve = total_payments_snapshot - total_expenses_snapshot - total_management_cost
             
-            # For snapshot view, recalculate obligations based on what would be pending at month end
-            pending_expenses_snapshot = Expense.objects.filter(
-                building_id=self.building_id,
-                is_issued=False,
-                date__lte=end_date
-            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            # Σημείωση: Όλες οι δαπάνες θεωρούνται εκδομένες
+            # Δεν υπάρχουν πια "ανέκδοτες" δαπάνες
+            pending_expenses_snapshot = Decimal('0.00')
             
             # Update total_obligations for snapshot view (include management fees)
             total_obligations = apartment_obligations + pending_expenses_snapshot + total_management_cost
@@ -523,7 +515,15 @@ class FinancialDashboardService:
             )
         
         # Calculate total balance based on view type
-        total_balance = current_reserve
+        if month:
+            # For snapshot view, total balance should be negative of total monthly obligations
+            # This includes expenses + reserve fund contribution
+            reserve_fund_monthly_target = (self.building.reserve_fund_goal or Decimal('0.0')) / (self.building.reserve_fund_duration_months or 1)
+            total_monthly_obligations = total_expenses_this_month + total_management_cost + reserve_fund_monthly_target
+            total_balance = -total_monthly_obligations
+        else:
+            # For current view, use current reserve
+            total_balance = current_reserve
         
         # Add debugging info for month-specific calculations
         calculation_context = "current" if not month else f"snapshot_{month}"
@@ -531,8 +531,13 @@ class FinancialDashboardService:
         print(f"🔍 FinancialDashboard ({calculation_context}): current_reserve={current_reserve}, total_obligations={total_obligations}")
         print(f"🔍 FinancialDashboard ({calculation_context}): total_balance={total_balance}")
         
-        # Calculate current obligations (negative balances from apartments)
-        current_obligations = total_obligations
+        # Calculate current obligations (should be the monthly expenses for snapshot view)
+        if month:
+            # For snapshot view, current obligations are the monthly expenses
+            current_obligations = total_expenses_this_month
+        else:
+            # For current view, use total obligations
+            current_obligations = total_obligations
         
         # (apartments_count, building, management_fee_per_apartment, total_management_cost already calculated above)
         
@@ -633,10 +638,9 @@ class FinancialDashboardService:
             date__lt=end_date
         ).exists()
         
-        # Ελέγχουμε για εκδοθείσες δαπάνες (χρησιμοποιούμε created_at αντί για issue_date)
+        # Ελέγχουμε για δαπάνες (όλες θεωρούνται εκδομένες)
         has_issued_expenses = Expense.objects.filter(
             building_id=self.building_id,
-            is_issued=True,
             created_at__gte=start_date,
             created_at__lt=end_date
         ).exists()
@@ -1315,8 +1319,7 @@ class CommonExpenseAutomationService:
         expenses = Expense.objects.filter(
             building_id=self.building_id,
             date__gte=period.start_date,
-            date__lte=period.end_date,
-            is_issued=False
+            date__lte=period.end_date
         ).order_by('date')
         
         return list(expenses)
@@ -1441,13 +1444,8 @@ class CommonExpenseAutomationService:
             apartment.current_balance = total_due
             apartment.save()
         
-        # Μαρκάρισμα δαπανών ως εκδοθείσες
-        expense_ids = [exp.id for exp in expenses]
-        Expense.objects.filter(
-            id__in=expense_ids,
-            building_id=self.building_id,
-            is_issued=False
-        ).update(is_issued=True)
+        # Σημείωση: Οι δαπάνες θεωρούνται αυτόματα εκδομένες
+        # Δεν χρειάζεται πλέον μαρκάρισμα ως εκδοθείσες
         
         return {
             'success': True,
@@ -1554,13 +1552,11 @@ class AdvancedCommonExpenseCalculator:
             self.expenses = Expense.objects.filter(
                 building_id=building_id,
                 date__gte=start_date,
-                date__lte=end_date,
-                is_issued=False
+                date__lte=end_date
             )
         else:
             self.expenses = Expense.objects.filter(
-                building_id=building_id, 
-                is_issued=False
+                building_id=building_id
             )
         
         # Παράμετροι υπολογισμού θέρμανσης

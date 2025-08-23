@@ -109,9 +109,7 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
       if (filters.category) {
         params.append('category', filters.category);
       }
-      if (filters.is_issued !== undefined) {
-        params.append('is_issued', filters.is_issued.toString());
-      }
+
       if (filters.date_from) {
         params.append('date__gte', filters.date_from);
       }
@@ -138,49 +136,17 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
     }
   }, []);
 
-  // Λήψη ανέκδοτων δαπανών
+  // Λήψη ανέκδοτων δαπανών - DEPRECATED: Όλες οι δαπάνες θεωρούνται εκδομένες
   const getPendingExpenses = useCallback(async (buildingId: number): Promise<Expense[]> => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await api.get(`/financial/expenses/pending/?building_id=${buildingId}`);
-      const data = response.data;
-      const normalize = (e: any): Expense => ({
-        ...e,
-        amount: parseAmount(e?.amount),
-      });
-      return Array.isArray(data) ? data.map(normalize) : [];
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη των ανέκδοτων δαπανών';
-      setError(errorMessage);
-      return [];
-    } finally {
-      setIsLoading(false);
-    }
+    // Για backwards compatibility, επιστρέφουμε άδεια λίστα
+    return [];
   }, []);
 
-  // Λήψη εκδοθέντων δαπανών
+  // Λήψη εκδοθέντων δαπανών - Επιστρέφει όλες τις δαπάνες
   const getIssuedExpenses = useCallback(async (buildingId: number): Promise<Expense[]> => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await api.get(`/financial/expenses/issued/?building_id=${buildingId}`);
-      const data = response.data;
-      const normalize = (e: any): Expense => ({
-        ...e,
-        amount: parseAmount(e?.amount),
-      });
-      return Array.isArray(data) ? data.map(normalize) : [];
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη των εκδοθέντων δαπανών';
-      setError(errorMessage);
-      return [];
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    // Όλες οι δαπάνες θεωρούνται πλέον εκδομένες
+    return getExpenses({ building_id: buildingId });
+  }, [getExpenses]);
 
   // Ενημέρωση δαπάνης
   const updateExpense = useCallback(async (id: number, data: Partial<ExpenseFormData>): Promise<Expense | null> => {

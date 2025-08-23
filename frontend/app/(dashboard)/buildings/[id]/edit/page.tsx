@@ -6,19 +6,23 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CreateBuildingForm from '@/components/CreateBuildingForm';
 import type { Building } from '@/lib/api';
-import { fetchBuilding } from '@/lib/api';
+import { fetchBuilding, deleteBuilding } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building as BuildingIcon } from 'lucide-react';
+import { ArrowLeft, Building as BuildingIcon, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import ErrorMessage from '@/components/ErrorMessage';
+import { toast } from 'react-hot-toast';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 export default function EditBuildingPage() {
   const params = useParams();
   const router = useRouter();
   const id = Number(params.id);
+  const { refreshBuildings } = useBuilding();
   const [initialData, setInitialData] = useState<Building | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -36,6 +40,37 @@ export default function EditBuildingPage() {
     }
     load();
   }, [id]);
+
+  const handleDelete = async () => {
+    if (!initialData) return;
+    
+    const confirmed = window.confirm(
+      `Είστε βέβαιοι ότι θέλετε να διαγράψετε το κτίριο "${initialData.name}";\n\n` +
+      `⚠️ Προειδοποίηση: Αυτή η ενέργεια θα διαγράψει επίσης:\n` +
+      `• Όλα τα διαμερίσματα του κτιρίου\n` +
+      `• Όλες τις ανακοινώσεις\n` +
+      `• Όλα τα αιτήματα\n` +
+      `• Όλες τις ψηφοφορίες\n` +
+      `• Όλες τις οικονομικές κινήσεις\n\n` +
+      `Αυτή η ενέργεια δεν μπορεί να αναιρεθεί!`
+    );
+    
+    if (!confirmed) return;
+    
+    setDeleting(true);
+    try {
+      await deleteBuilding(id);
+      toast.success('Το κτίριο διαγράφηκε επιτυχώς');
+      await refreshBuildings();
+      router.push('/buildings');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.detail || 'Σφάλμα κατά τη διαγραφή του κτιρίου';
+      toast.error(errorMessage);
+      setError(errorMessage);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -87,6 +122,17 @@ export default function EditBuildingPage() {
             </div>
           </div>
         </div>
+        
+        {/* Delete Button */}
+        <Button
+          variant="destructive"
+          onClick={handleDelete}
+          disabled={deleting}
+          className="flex items-center space-x-2"
+        >
+          <Trash2 className="w-4 h-4" />
+          <span>{deleting ? 'Διαγραφή...' : 'Διαγραφή Κτιρίου'}</span>
+        </Button>
       </div>
 
       {/* Form Container */}

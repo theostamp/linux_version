@@ -31,6 +31,7 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import { api, makeRequestWithRetry } from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { ServicePackageModal } from '../ServicePackageModal';
+import { AmountDetailsModal } from '../AmountDetailsModal';
 
 interface BuildingOverviewSectionProps {
   buildingId: number;
@@ -86,6 +87,10 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const [newManagementFee, setNewManagementFee] = useState('');
   const [showServicePackageModal, setShowServicePackageModal] = useState(false);
   const [applyingServicePackage, setApplyingServicePackage] = useState(false);
+  const [showAmountDetailsModal, setShowAmountDetailsModal] = useState(false);
+  const [selectedAmountType, setSelectedAmountType] = useState<'current_reserve' | 'total_balance' | 'current_obligations' | 'reserve_fund_contribution'>('current_reserve');
+  const [selectedAmount, setSelectedAmount] = useState(0);
+  const [selectedAmountTitle, setSelectedAmountTitle] = useState('');
 
 
   const currentBuilding = buildings.find(b => b.id === buildingId);
@@ -192,6 +197,18 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       setNewManagementFee((financialSummary.management_fee_per_apartment || 0).toString());
     }
   }, [financialSummary, editingTimeline, currentBuilding]);
+
+  // Function to handle showing amount details modal
+  const handleShowAmountDetails = (
+    amountType: 'current_reserve' | 'total_balance' | 'current_obligations' | 'reserve_fund_contribution',
+    amount: number,
+    title: string
+  ) => {
+    setSelectedAmountType(amountType);
+    setSelectedAmount(amount);
+    setSelectedAmountTitle(title);
+    setShowAmountDetailsModal(true);
+  };
 
   // Notify parent component when reserve fund monthly target changes
   // Calculate correct monthly target from goal and duration
@@ -1060,8 +1077,19 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 <div className="space-y-3">
                   {/* Συνολικό υπόλοιπο */}
                   <div className="space-y-1">
-                    <div className={`text-xl font-bold ${getBalanceCardColors(financialSummary?.total_balance || 0).amount}`}>
-                      {formatCurrency(Math.abs(financialSummary?.total_balance || 0))}
+                    <div className="flex items-center justify-between">
+                      <div className={`text-xl font-bold ${getBalanceCardColors(financialSummary?.total_balance || 0).amount}`}>
+                        {formatCurrency(Math.abs(financialSummary?.total_balance || 0))}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleShowAmountDetails('total_balance', financialSummary?.total_balance || 0, 'Συνολικό Υπόλοιπο')}
+                        className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700"
+                        title="Δείτε λεπτομέρειες"
+                      >
+                        Λεπτομέρειες
+                      </Button>
                     </div>
                     
                     <Badge 
@@ -1084,20 +1112,42 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-red-700 font-medium">Τρέχουσες υποχρεώσεις:</span>
-                        <span className="font-semibold text-lg text-red-800">
-                          {formatCurrency(Math.abs(financialSummary.current_obligations || 0))}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-lg text-red-800">
+                            {formatCurrency(Math.abs(financialSummary.current_obligations || 0))}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleShowAmountDetails('current_obligations', financialSummary?.average_monthly_expenses || 0, 'Τρέχουσες Υποχρεώσεις')}
+                            className="h-6 px-2 text-xs text-red-600 hover:text-red-700"
+                            title="Δείτε λεπτομέρειες"
+                          >
+                            Λεπτομέρειες
+                          </Button>
+                        </div>
                       </div>
-                      </div>
+                    </div>
                       
                     {/* Εισφορά αποθεματικού - μόνο σε ενεργούς μήνες */}
                     {financialSummary.has_monthly_activity !== false && (
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-orange-700 font-medium">Εισφορά αποθεματικού:</span>
-                          <span className="font-semibold text-lg text-orange-800">
-                            {formatCurrency(financialSummary.reserve_fund_monthly_target || 0)}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-lg text-orange-800">
+                              {formatCurrency(financialSummary.reserve_fund_monthly_target || 0)}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleShowAmountDetails('reserve_fund_contribution', financialSummary?.reserve_fund_monthly_target || 0, 'Εισφορά Αποθεματικού')}
+                              className="h-6 px-2 text-xs text-orange-600 hover:text-orange-700"
+                              title="Δείτε λεπτομέρειες"
+                            >
+                              Λεπτομέρειες
+                            </Button>
+                          </div>
                         </div>
                         {(financialSummary.reserve_fund_contribution === 0 && (financialSummary.reserve_fund_monthly_target ?? 0) > 0) && (
                           <div className="text-xs text-orange-600 italic">
@@ -1106,6 +1156,85 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         )}
                       </div>
                     )}
+
+                    {/* Αναλυτικά δεδομένα υπολοίπου */}
+                    <div className="pt-2 border-t border-gray-200 space-y-2">
+                      <div className="text-xs font-medium text-gray-700 mb-2">Αναλυτική Ανάλυση:</div>
+                      
+                      {/* Οφειλές προηγούμενων μηνών */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-purple-700 font-medium">Οφειλές προηγούμενων μηνών:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm text-purple-800">
+                              {formatCurrency(Math.abs(financialSummary?.total_balance || 0) - Math.abs(financialSummary?.current_obligations || 0))}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleShowAmountDetails('previous_obligations', Math.abs(financialSummary?.total_balance || 0) - Math.abs(financialSummary?.current_obligations || 0), 'Οφειλές Προηγούμενων Μηνών')}
+                              className="h-6 px-2 text-xs text-purple-600 hover:text-purple-700"
+                              title="Δείτε λεπτομέρειες"
+                            >
+                              Λεπτομέρειες
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="text-xs text-purple-600 italic">
+                          Συσσωρευμένες οφειλές από προηγούμενες περιόδους
+                        </div>
+                      </div>
+
+                      {/* Ταμείο Πολυκατοικίας */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-blue-700 font-medium">Ταμείο Πολυκατοικίας:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm text-blue-800">
+                              {formatCurrency(financialSummary?.current_reserve || 0)}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleShowAmountDetails('current_reserve', financialSummary?.current_reserve || 0, 'Ταμείο Πολυκατοικίας')}
+                              className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700"
+                              title="Δείτε λεπτομέρειες"
+                            >
+                              Λεπτομέρειες
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="text-xs text-blue-600 italic">
+                          Καθαρή θέση της πολυκατοικίας
+                        </div>
+                      </div>
+
+                      {/* Στόχος αποθεματικού */}
+                      {(financialSummary?.reserve_fund_goal || 0) > 0 && (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-green-700 font-medium">Στόχος αποθεματικού:</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-sm text-green-800">
+                                {formatCurrency(financialSummary?.reserve_fund_goal || 0)}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleShowAmountDetails('reserve_fund_goal', financialSummary?.reserve_fund_goal || 0, 'Στόχος Αποθεματικού')}
+                                className="h-6 px-2 text-xs text-green-600 hover:text-green-700"
+                                title="Δείτε λεπτομέρειες"
+                              >
+                                Λεπτομέρειες
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="text-xs text-green-600 italic">
+                            Συνολικός στόχος αποθεματικού
+                          </div>
+                        </div>
+                      )}
+                    </div>
                       
                     {/* Συνολική κάλυψη */}
                     <div className="space-y-1 pt-2 border-t border-gray-200">
@@ -1277,7 +1406,18 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         ></div>
                       </div>
                       <div className="text-xs text-gray-500 text-center">
-                        {`${formatCurrency(financialSummary?.current_reserve || 0)} / ${formatCurrency(financialSummary?.reserve_fund_goal || 0)}`}
+                        <div className="flex items-center justify-center gap-2">
+                          <span>{`${formatCurrency(financialSummary?.current_reserve || 0)} / ${formatCurrency(financialSummary?.reserve_fund_goal || 0)}`}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleShowAmountDetails('current_reserve', financialSummary?.current_reserve || 0, 'Τρέχον Ισοζύγιο')}
+                            className="h-4 px-1 text-xs text-orange-600 hover:text-orange-700"
+                            title="Δείτε λεπτομέρειες ισοζυγίου"
+                          >
+                            Λεπτομέρειες
+                          </Button>
+                        </div>
                       </div>
                     </div>
 
@@ -1506,6 +1646,17 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
             setApplyingServicePackage(false);
           }
         }}
+      />
+
+      {/* Amount Details Modal */}
+      <AmountDetailsModal
+        isOpen={showAmountDetailsModal}
+        onClose={() => setShowAmountDetailsModal(false)}
+        buildingId={buildingId}
+        amountType={selectedAmountType}
+        amount={selectedAmount}
+        title={selectedAmountTitle}
+        selectedMonth={selectedMonth}
       />
     </Card>
   );

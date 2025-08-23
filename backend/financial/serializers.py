@@ -37,7 +37,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
             'id', 'building', 'building_name', 'title', 'amount', 'date', 
             'category', 'category_display', 'distribution_type', 'distribution_type_display',
             'supplier', 'supplier_name', 'supplier_details', 'attachment', 'attachment_url',
-            'notes', 'is_issued', 'created_at', 'updated_at'
+            'notes', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
     
@@ -171,8 +171,7 @@ class PaymentSerializer(serializers.ModelSerializer):
             expenses = Expense.objects.filter(
                 building_id=obj.apartment.building_id,
                 date__year=current_year,
-                date__month=current_month,
-                is_issued=False
+                date__month=current_month
             )
             
             total_expenses = sum(exp.amount for exp in expenses)

@@ -106,7 +106,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     serializer_class = ExpenseSerializer
     permission_classes = [ExpensePermission]
     filter_backends = [filters.DjangoFilterBackend]
-    filterset_fields = ['building', 'category', 'is_issued', 'date', 'distribution_type', 'supplier']
+    filterset_fields = ['building', 'category', 'date', 'distribution_type', 'supplier']
     
     def perform_create(self, serializer):
         """Καταγραφή δημιουργίας δαπάνης με αυτόματη έκδοση και χρέωση διαμερισμάτων"""
@@ -132,7 +132,8 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                 raise ValidationError(f"Σφάλμα στο upload αρχείου: {str(e)}")
         
         # Αυτόματη χρέωση διαμερισμάτων αν η δαπάνη είναι εκδοθείσα
-        if expense.is_issued:
+        # Σημείωση: Όλες οι δαπάνες θεωρούνται πλέον εκδομένες
+        if True:  # expense.is_issued removed
             try:
                 from financial.services import CommonExpenseCalculator
                 calculator = CommonExpenseCalculator(expense.building.id)
@@ -278,21 +279,13 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def pending(self, request):
-        """Λήψη ανέκδοτων δαπανών"""
-        building_id = request.query_params.get('building_id')
-        if not building_id:
-            return Response(
-                {'error': 'Building ID is required'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        queryset = self.get_queryset().filter(is_issued=False)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        """Λήψη ανέκδοτων δαπανών - DEPRECATED: Όλες οι δαπάνες θεωρούνται εκδομένες"""
+        # Για backwards compatibility, επιστρέφουμε άδεια λίστα
+        return Response([])
     
     @action(detail=False, methods=['get'])
     def issued(self, request):
-        """Λήψη εκδοθεισών δαπανών"""
+        """Λήψη εκδοθεισών δαπανών - Επιστρέφει όλες τις δαπάνες"""
         building_id = request.query_params.get('building_id')
         if not building_id:
             return Response(
@@ -300,7 +293,8 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        queryset = self.get_queryset().filter(is_issued=True)
+        # Όλες οι δαπάνες θεωρούνται πλέον εκδομένες
+        queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     
@@ -1094,14 +1088,8 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                 apartment.current_balance = total_due
                 apartment.save()
             
-            # Μαρκάρισμα δαπανών ως εκδοθείσες
-            expense_ids = data.get('expense_ids', [])
-            if expense_ids:
-                Expense.objects.filter(
-                    id__in=expense_ids,
-                    building_id=building_id,
-                    is_issued=False
-                ).update(is_issued=True)
+            # Σημείωση: Οι δαπάνες θεωρούνται αυτόματα εκδομένες
+            # Δεν χρειάζεται πλέον μαρκάρισμα ως εκδοθείσες
             
             return Response({
                 'success': True,

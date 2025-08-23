@@ -37,7 +37,6 @@ export interface Expense {
   attachment?: string;
   attachment_url?: string;
   notes?: string;
-  is_issued: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -206,7 +205,6 @@ export interface PaginatedResponse<T> {
 export interface ExpenseFilters {
   building_id?: number;
   category?: string;
-  is_issued?: boolean;
   date_from?: string;
   date_to?: string;
   distribution_type?: string;
