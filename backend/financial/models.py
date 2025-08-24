@@ -261,7 +261,7 @@ class Transaction(models.Model):
     ]
     
     building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='transactions')
-    date = models.DateTimeField(verbose_name="Ημερομηνία", auto_now_add=True)
+    date = models.DateTimeField(verbose_name="Ημερομηνία")
     type = models.CharField(max_length=50, choices=TRANSACTION_TYPES, verbose_name="Τύπος")
     status = models.CharField(max_length=20, choices=TRANSACTION_STATUS, default='completed', verbose_name="Κατάσταση")
     description = models.TextField(verbose_name="Περιγραφή")

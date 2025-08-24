@@ -213,12 +213,10 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
   if (!isOpen || !payment) return null;
 
-  // Υπολογισμός τελευταίου υπολοίπου από το ιστορικό
+  // Υπολογισμός τελευταίου υπολοίπου - χρησιμοποιούμε το σωστό current_balance του διαμερίσματος
   const lastBalance = filteredBalance !== null 
     ? filteredBalance 
-    : transactions.length > 0 
-      ? transactions[transactions.length - 1].balance_after 
-      : (currentApartmentBalance !== null ? currentApartmentBalance : (payment.current_balance || 0));
+    : (currentApartmentBalance !== null ? currentApartmentBalance : (payment.current_balance || 0));
 
   const handlePrint = () => {
     setIsPrinting(true);

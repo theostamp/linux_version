@@ -487,8 +487,17 @@ git push origin v2.1.0
 
 ### Βασικές Εντολές Git
 
-git add . 
-git commit -m "feat: enhance financial modals with balance breakdown and month display 1" 
+git add .
+git commit -m "fix: resolve transaction date discrepancy and clean test data
+
+- Fixed date mismatch between payment (2025-07-30) and transaction (2025-08-24)
+- Synchronized transaction date with payment date for consistent filtering
+- Cleaned all test data from demo tenant (4 transactions, 3 payments, 3 expenses)
+- Reset apartment balances and building reserves to 0.00€
+- Verified no other date discrepancies exist
+- Demo tenant ready for fresh test data entry
+
+Building 6 (Αλκμάνος 22), Apartment 3 - Payment ID: 88, Transaction ID: 62"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

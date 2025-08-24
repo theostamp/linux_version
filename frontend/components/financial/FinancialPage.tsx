@@ -17,6 +17,7 @@ import {
 } from './index';
 import ReserveFundDebug from './test/ReserveFundDebug';
 import SimpleAPITest from './test/SimpleAPITest';
+import AutoRefreshTest from './test/AutoRefreshTest';
 import { DataIntegrityCleanup } from './DataIntegrityCleanup';
 import { MeterReadingList } from './MeterReadingList';
 import { MonthSelector } from './MonthSelector';
@@ -28,7 +29,8 @@ import {
   TrendingUp,
   PieChart,
   Calendar,
-  Building2
+  Building2,
+  RefreshCw
 } from 'lucide-react';
 import { useFinancialPermissions } from '@/hooks/useFinancialPermissions';
 import { ProtectedFinancialRoute, ConditionalRender, PermissionButton } from './ProtectedFinancialRoute';
@@ -36,6 +38,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { fetchApartments, ApartmentList } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useModalState } from '@/hooks/useModalState';
+import useFinancialAutoRefresh from '@/hooks/useFinancialAutoRefresh';
 
 interface FinancialPageProps {
   buildingId: number;
@@ -77,6 +80,24 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   // Ref for payment list to refresh data
   const paymentListRef = useRef<{ refresh: () => void }>(null);
   
+  // Auto-refresh financial data when expenses/payments change
+  useFinancialAutoRefresh(
+    {
+      loadSummary: () => buildingOverviewRef.current?.refresh(),
+      loadExpenses: () => expenseListRef.current?.refresh(),
+      loadPayments: () => paymentListRef.current?.refresh(),
+    },
+    {
+      buildingId: activeBuildingId,
+      selectedMonth,
+    },
+    {
+      enableAutoRefresh: false, // Απενεργοποιημένο auto-refresh
+      refreshInterval: 15000, // 15 seconds
+      componentName: 'FinancialPage'
+    }
+  );
+  
   // Force refresh when building changes
   useEffect(() => {
     // Trigger refresh of all data when activeBuildingId changes
@@ -105,38 +126,39 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   useEffect(() => {
     console.log('Selected month changed to:', selectedMonth);
     
+    // Αφαιρέθηκε το notification για αλλαγή μήνα
     // Show a brief notification for month change
-    const showNotification = () => {
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full';
-      notification.innerHTML = `
-        <div class="flex items-center gap-2">
-          <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-          <span>Ενημέρωση δεδομένων για ${new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}</span>
-        </div>
-      `;
-      document.body.appendChild(notification);
-      
-      // Animate in
-      requestAnimationFrame(() => {
-        notification.classList.remove('translate-x-full');
-      });
-      
-      // Remove after 3 seconds
-      setTimeout(() => {
-        notification.classList.add('translate-x-full');
-        setTimeout(() => {
-          if (document.body.contains(notification)) {
-            document.body.removeChild(notification);
-          }
-        }, 300);
-      }, 3000);
-    };
+    // const showNotification = () => {
+    //   const notification = document.createElement('div');
+    //   notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full';
+    //   notification.innerHTML = `
+    //     <div class="flex items-center gap-2">
+    //       <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+    //       <span>Ενημέρωση δεδομένων για ${new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}</span>
+    //     </div>
+    //   `;
+    //   document.body.appendChild(notification);
+    //   
+    //   // Animate in
+    //   requestAnimationFrame(() => {
+    //     notification.classList.remove('translate-x-full');
+    //   });
+    //   
+    //   // Remove after 3 seconds
+    //   setTimeout(() => {
+    //     notification.classList.add('translate-x-full');
+    //     setTimeout(() => {
+    //       if (document.body.contains(notification)) {
+    //         document.body.removeChild(notification);
+    //       }
+    //     }, 300);
+    //   }, 3000);
+    // };
 
     // Only show notification if month actually changed (not on initial load)
-    if (selectedMonth) {
-      showNotification();
-    }
+    // if (selectedMonth) {
+    //   showNotification();
+    // }
   }, [selectedMonth]);
   
   // Handle URL parameters for tabs
@@ -217,6 +239,19 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               Διαχείριση δαπανών, κοινοχρήστων και εισπράξεων
             </p>
           </div>
+          <Button
+            onClick={() => {
+              if (buildingOverviewRef.current) buildingOverviewRef.current.refresh();
+              if (expenseListRef.current) expenseListRef.current.refresh();
+              if (paymentListRef.current) paymentListRef.current.refresh();
+            }}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Ενημέρωση Δεδομένων
+          </Button>
         </div>
         
         {/* Context Banner - Building & Month */}
@@ -691,6 +726,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                       setRefreshKey(prev => prev + 1);
                     }}
                   />
+                  <AutoRefreshTest buildingId={activeBuildingId} />
                   <SimpleAPITest buildingId={activeBuildingId} />
                   <ReserveFundDebug buildingId={activeBuildingId} />
                 </div>

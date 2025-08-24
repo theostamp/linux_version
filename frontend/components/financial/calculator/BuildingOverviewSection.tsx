@@ -411,18 +411,20 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       setFinancialSummary(finalData);
       setNewGoal(financialData.reserve_fund_goal.toString());
       
-      if (isRefresh) {
-        toast.success('Οικονομικά στοιχεία ανανεώθηκαν');
-      }
+      // Αφαιρέθηκε το notification για auto-refresh
+      // if (isRefresh) {
+      //   toast.success('Οικονομικά στοιχεία ανανεώθηκαν');
+      // }
     } catch (error: any) {
       console.error('Error fetching financial summary:', error);
       
+      // Αφαιρέθηκαν τα error notifications
       // Provide specific error messages for rate limiting
-      if (error.response?.status === 429) {
-        toast.error('Πάρα πολλά αιτήματα. Παρακαλώ περιμένετε λίγο και δοκιμάστε ξανά.');
-      } else {
-        toast.error('Αποτυχία φόρτωσης οικονομικών στοιχείων');
-      }
+      // if (error.response?.status === 429) {
+      //   toast.error('Πάρα πολλά αιτήματα. Παρακαλώ περιμένετε λίγο και δοκιμάστε ξανά.');
+      // } else {
+      //   toast.error('Αποτυχία φόρτωσης οικονομικών στοιχείων');
+      // }
       
       // Fallback to empty data for new buildings
       const emptyData: FinancialSummary = {
@@ -514,10 +516,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         reserve_fund_duration_months: prev.reserve_fund_duration_months
       } : null);
       
-      toast.success('Δεδομένα αποθεματικού ενημερώθηκαν');
+      // Αφαιρέθηκε το notification
+      // toast.success('Δεδομένα αποθεματικού ενημερώθηκαν');
     } catch (error) {
       console.error('Error refreshing reserve fund data:', error);
-      toast.error('Αποτυχία ενημέρωσης δεδομένων αποθεματικού');
+      // Αφαιρέθηκε το error notification
+      // toast.error('Αποτυχία ενημέρωσης δεδομένων αποθεματικού');
     } finally {
       setRefreshingReserve(false);
     }
@@ -529,12 +533,14 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const installmentsValue = parseInt(newInstallments);
       
       if (isNaN(goalValue) || goalValue < 0) {
-        toast.error('Παρακαλώ εισάγετε έγκυρο ποσό');
+        // Αφαιρέθηκε το error notification
+        // toast.error('Παρακαλώ εισάγετε έγκυρο ποσό');
         return;
       }
 
       if (isNaN(installmentsValue) || installmentsValue < 1 || installmentsValue > 60) {
-        toast.error('Ο αριθμός δόσεων πρέπει να είναι μεταξύ 1 και 60');
+        // Αφαιρέθηκε το error notification
+        // toast.error('Ο αριθμός δόσεων πρέπει να είναι μεταξύ 1 και 60');
         return;
       }
 
@@ -578,23 +584,27 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         total_balance: (prev.current_reserve || 0) // Current reserve already reflects the true balance
       } : null);
       setEditingGoal(false);
-      toast.success('Ο στόχος αποθεματικού ενημερώθηκε και αποθηκεύτηκε επιτυχώς');
+      // Αφαιρέθηκε το notification
+      // toast.success('Ο στόχος αποθεματικού ενημερώθηκε και αποθηκεύτηκε επιτυχώς');
     } catch (error) {
       console.error('Error updating reserve fund goal:', error);
-      toast.error('Αποτυχία ενημέρωσης στόχου αποθεματικού');
+      // Αφαιρέθηκε το error notification
+      // toast.error('Αποτυχία ενημέρωσης στόχου αποθεματικού');
     }
   };
 
   const handleSaveTimeline = async () => {
     try {
       if (!newStartMonth || !newDurationMonths) {
-        toast.error('Παρακαλώ συμπληρώστε όλα τα πεδία');
+        // Αφαιρέθηκε το error notification
+        // toast.error('Παρακαλώ συμπληρώστε όλα τα πεδία');
         return;
       }
 
       const durationValue = parseInt(newDurationMonths);
       if (isNaN(durationValue) || durationValue < 3 || durationValue > 24) {
-        toast.error('Η διάρκεια πρέπει να είναι μεταξύ 3 και 24 μηνών');
+        // Αφαιρέθηκε το error notification
+        // toast.error('Η διάρκεια πρέπει να είναι μεταξύ 3 και 24 μηνών');
         return;
       }
 
@@ -639,18 +649,21 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       } : null);
       
       setEditingTimeline(false);
-      toast.success('Το πρόγραμμα συλλογής ενημερώθηκε και αποθηκεύτηκε επιτυχώς');
-    } catch (error) {
-      console.error('Error updating timeline:', error);
-      toast.error('Αποτυχία ενημέρωσης προγράμματος');
-    }
+      // Αφαιρέθηκε το notification
+      // toast.success('Το πρόγραμμα συλλογής ενημερώθηκε και αποθηκεύτηκε επιτυχώς');
+          } catch (error) {
+        console.error('Error updating timeline:', error);
+        // Αφαιρέθηκε το error notification
+        // toast.error('Αποτυχία ενημέρωσης προγράμματος');
+      }
   };
 
   const handleSaveManagementFee = async () => {
     try {
       const feeValue = parseFloat(newManagementFee);
       if (isNaN(feeValue) || feeValue < 0) {
-        toast.error('Παρακαλώ εισάγετε έγκυρο ποσό');
+        // Αφαιρέθηκε το error notification
+        // toast.error('Παρακαλώ εισάγετε έγκυρο ποσό');
         return;
       }
 
@@ -672,10 +685,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         total_management_cost: totalManagementCost
       } : null);
       setEditingManagementFee(false);
-      toast.success('Η αμοιβή διαχείρισης ενημερώθηκε και αποθηκεύτηκε επιτυχώς');
+      // Αφαιρέθηκε το notification
+      // toast.success('Η αμοιβή διαχείρισης ενημερώθηκε και αποθηκεύτηκε επιτυχώς');
     } catch (error) {
       console.error('Error updating management fee:', error);
-      toast.error('Αποτυχία ενημέρωσης αμοιβής διαχείρισης');
+      // Αφαιρέθηκε το error notification
+      // toast.error('Αποτυχία ενημέρωσης αμοιβής διαχείρισης');
     }
   };
 
@@ -1629,17 +1644,19 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
               total_management_cost: (result.new_fee || result.fee_per_apartment) * (prev.apartments_count || 0)
             } : null);
             
+            // Αφαιρέθηκε το notification
             // Show success with detailed info
-            toast.success(
-              `✅ Πακέτο εφαρμόστηκε!\n💰 Νέα αμοιβή: ${result.new_fee || result.fee_per_apartment}€/διαμέρισμα\n🏢 Συνολικό κόστος: ${((result.new_fee || result.fee_per_apartment) * (financialSummary?.apartments_count || 0)).toFixed(2)}€`,
-              { duration: 4000 }
-            );
+            // toast.success(
+            //   `✅ Πακέτο εφαρμόστηκε!\n💰 Νέα αμοιβή: ${result.new_fee || result.fee_per_apartment}€/διαμέρισμα\n🏢 Συνολικό κόστος: ${((result.new_fee || result.fee_per_apartment) * (financialSummary?.apartments_count || 0)).toFixed(2)}€`,
+            //   { duration: 4000 }
+            // );
             
             // Refresh financial data after immediate update for consistency
             await fetchFinancialSummary(true);
           } catch (error) {
             console.error('Error updating dashboard after package application:', error);
-            toast.error('Το πακέτο εφαρμόστηκε, αλλά προκλήθηκε σφάλμα στην ενημέρωση του dashboard');
+            // Αφαιρέθηκε το error notification
+            // toast.error('Το πακέτο εφαρμόστηκε, αλλά προκλήθηκε σφάλμα στην ενημέρωση του dashboard');
             // Fallback: force refresh anyway
             fetchFinancialSummary(true);
           } finally {

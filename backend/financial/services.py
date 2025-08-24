@@ -848,6 +848,8 @@ class ReportService:
     
     def generate_transaction_history_report(self, start_date=None, end_date=None, transaction_type=None, apartment_id=None):
         """Δημιουργία αναφοράς ιστορικού κινήσεων"""
+        from financial.serializers import TransactionSerializer
+        
         queryset = Transaction.objects.filter(building_id=self.building_id)
         
         if start_date:
@@ -859,7 +861,9 @@ class ReportService:
         if apartment_id:
             queryset = queryset.filter(apartment_id=apartment_id)
         
-        return queryset.order_by('-date')
+        # Serialize the queryset
+        serializer = TransactionSerializer(queryset.order_by('-date'), many=True)
+        return serializer.data
     
     def generate_apartment_balance_report(self, apartment_id=None):
         """Δημιουργία αναφοράς κατάστασης οφειλών"""

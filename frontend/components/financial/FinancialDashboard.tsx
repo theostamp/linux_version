@@ -13,7 +13,8 @@ import {
   Plus, 
   FileText,
   BarChart3,
-  Calculator
+  Calculator,
+  RefreshCw
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import TransactionHistory from './TransactionHistory';
@@ -21,6 +22,7 @@ import CashFlowChart from './CashFlowChart';
 import ReportsManager from './ReportsManager';
 import { useRouter } from 'next/navigation';
 import { useMonthRefresh } from '@/hooks/useMonthRefresh';
+import useFinancialAutoRefresh from '@/hooks/useFinancialAutoRefresh';
 
 interface FinancialDashboardProps {
   buildingId: number;
@@ -72,6 +74,22 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
 
   // Auto-refresh when selectedMonth changes
   useMonthRefresh(selectedMonth, loadSummary, 'FinancialDashboard');
+
+  // Auto-refresh financial dashboard when expenses/payments change
+  useFinancialAutoRefresh(
+    {
+      loadSummary,
+    },
+    {
+      buildingId,
+      selectedMonth,
+    },
+    {
+      enableAutoRefresh: false, // Απενεργοποιημένο auto-refresh
+      refreshInterval: 10000, // 10 seconds
+      componentName: 'FinancialDashboard'
+    }
+  );
 
   // Expose loadSummary function via ref
   useImperativeHandle(ref, () => ({
@@ -131,6 +149,19 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
 
   return (
     <div className="space-y-6">
+      {/* Κουμπί Manual Refresh */}
+      <div className="flex justify-end">
+        <Button
+          onClick={loadSummary}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Ενημέρωση Δεδομένων
+        </Button>
+      </div>
+      
       {/* Κάρτες Στατιστικών */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
