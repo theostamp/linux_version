@@ -5,6 +5,7 @@ export { ExpenseTitleAutoComplete } from './ExpenseTitleAutoComplete';
 export { PaymentForm } from './PaymentForm';
 export { PaymentList } from './PaymentList';
 export { PaymentDetailModal } from './PaymentDetailModal';
+export { MonthlyTransactionsModal } from './MonthlyTransactionsModal';
 export { ApartmentBalances } from './ApartmentBalances';
 export { default as TransactionHistory } from './TransactionHistory';
 export { default as FinancialDashboard } from './FinancialDashboard';

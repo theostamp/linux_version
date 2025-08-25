@@ -177,6 +177,7 @@ export interface PaymentFormData {
   notes?: string;
   receipt?: File;
   reserve_fund_amount?: number;
+  previous_obligations_amount?: number;
 }
 
 export interface MeterReadingFormData {

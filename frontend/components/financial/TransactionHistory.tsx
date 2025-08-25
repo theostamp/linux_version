@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 // import { el } from 'date-fns/locale/el';
 import { Transaction } from '@/types/financial';
 import { api } from '@/lib/api';
+import { formatCurrency } from '@/lib/utils';
 import { ApartmentFilter } from './ApartmentFilter';
 
 interface TransactionHistoryProps {
@@ -346,10 +347,10 @@ export default function TransactionHistory({ buildingId, limit, selectedMonth }:
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-bold">
-                      €{parseFloat(transaction.amount).toFixed(2)}
+                      {formatCurrency(transaction.amount)}
                     </div>
                     <div className="text-sm text-gray-600">
-                      Υπόλοιπο: €{parseFloat(transaction.balance_after).toFixed(2)}
+                      Υπόλοιπο: {formatCurrency(transaction.balance_after)}
                     </div>
                   </div>
                 </div>
@@ -375,13 +376,13 @@ export default function TransactionHistory({ buildingId, limit, selectedMonth }:
               <div>
                 <span className="text-gray-600">Συνολικό ποσό:</span>
                 <div className="font-medium">
-                  €{filteredTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0).toFixed(2)}
+                  {formatCurrency(filteredTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0))}
                 </div>
               </div>
               <div>
                 <span className="text-gray-600">Μέσο ποσό:</span>
                 <div className="font-medium">
-                  €{(filteredTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0) / filteredTransactions.length).toFixed(2)}
+                  {formatCurrency((filteredTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0) / filteredTransactions.length))}
                 </div>
               </div>
               <div>

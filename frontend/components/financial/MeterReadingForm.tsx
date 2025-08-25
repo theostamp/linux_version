@@ -246,7 +246,16 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
                   type="number"
                   step="0.01"
                   min="0"
+                  max="999999.99"
                   placeholder="π.χ. 123.45"
+                  onChange={(e) => {
+                    // Limit to 2 decimal places
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                      e.target.value = value.toFixed(2);
+                      field.onChange(value);
+                    }
+                  }}
                 />
               )}
             />

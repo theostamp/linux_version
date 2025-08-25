@@ -40,6 +40,7 @@ import { fetchApartments, ApartmentList } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useModalState } from '@/hooks/useModalState';
 import useFinancialAutoRefresh from '@/hooks/useFinancialAutoRefresh';
+import { useToast } from '@/hooks/use-toast';
 
 interface FinancialPageProps {
   buildingId: number;
@@ -49,6 +50,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { currentBuilding, selectedBuilding } = useBuilding();
+  const { toast } = useToast();
   
   // Use selectedBuilding ID if available, otherwise use the passed buildingId
   const activeBuildingId = selectedBuilding?.id || buildingId;
@@ -104,8 +106,8 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       selectedMonth,
     },
     {
-      enableAutoRefresh: false, // Απενεργοποιημένο auto-refresh
-      refreshInterval: 15000, // 15 seconds
+      enableAutoRefresh: true, // Ενεργοποιημένο auto-refresh για δαπάνες διαχείρισης
+      refreshInterval: 10000, // 10 seconds
       componentName: 'FinancialPage'
     }
   );
@@ -162,41 +164,56 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   useEffect(() => {
     console.log('Selected month changed to:', selectedMonth);
     
-    // Αφαιρέθηκε το notification για αλλαγή μήνα
-    // Show a brief notification for month change
-    // const showNotification = () => {
-    //   const notification = document.createElement('div');
-    //   notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full';
-    //   notification.innerHTML = `
-    //     <div class="flex items-center gap-2">
-    //       <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-    //       <span>Ενημέρωση δεδομένων για ${new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}</span>
-    //     </div>
-    //   `;
-    //   document.body.appendChild(notification);
-    //   
-    //   // Animate in
-    //   requestAnimationFrame(() => {
-    //     notification.classList.remove('translate-x-full');
-    //   });
-    //   
-    //   // Remove after 3 seconds
-    //   setTimeout(() => {
-    //     notification.classList.add('translate-x-full');
-    //     setTimeout(() => {
-    //       if (document.body.contains(notification)) {
-    //         document.body.removeChild(notification);
-    //       }
-    //     }, 300);
-    //   }, 3000);
-    // };
-
-    // Only show notification if month actually changed (not on initial load)
-    // if (selectedMonth) {
-    //   showNotification();
-    // }
+    // Trigger refresh when month changes
+    if (buildingOverviewRef.current) {
+      buildingOverviewRef.current.refresh();
+    }
+    if (expenseListRef.current) {
+      expenseListRef.current.refresh();
+    }
+    if (paymentListRef.current) {
+      paymentListRef.current.refresh();
+    }
   }, [selectedMonth]);
-  
+
+  // Monitor management expenses changes and trigger auto refresh
+  useEffect(() => {
+    const handleManagementExpenseChange = () => {
+      console.log('🔄 Management expense change detected, triggering auto refresh...');
+      
+      // Show notification
+      toast({
+        title: 'Ενημέρωση Δεδομένων',
+        description: 'Εντοπίστηκε αλλαγή στις δαπάνες διαχείρισης. Ενημερώνονται τα δεδομένα...',
+        duration: 2000,
+      });
+
+      // Trigger refresh of all components
+      if (buildingOverviewRef.current) {
+        buildingOverviewRef.current.refresh();
+      }
+      if (expenseListRef.current) {
+        expenseListRef.current.refresh();
+      }
+      if (paymentListRef.current) {
+        paymentListRef.current.refresh();
+      }
+    };
+
+    // Listen for custom events from expense forms
+    window.addEventListener('management-expense-updated', handleManagementExpenseChange);
+    window.addEventListener('expense-created', handleManagementExpenseChange);
+    window.addEventListener('expense-updated', handleManagementExpenseChange);
+    window.addEventListener('expense-deleted', handleManagementExpenseChange);
+
+    return () => {
+      window.removeEventListener('management-expense-updated', handleManagementExpenseChange);
+      window.removeEventListener('expense-created', handleManagementExpenseChange);
+      window.removeEventListener('expense-updated', handleManagementExpenseChange);
+      window.removeEventListener('expense-deleted', handleManagementExpenseChange);
+    };
+  }, [toast]);
+
   // Handle URL parameters (initial load and browser navigation)
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -210,7 +227,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       setSelectedMonth(monthParam);
     }
   }, [searchParams]);
-  
+
   // Update URL when tab changes
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -281,10 +298,198 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   const handleOpenPaymentModal = (apartment: any) => {
     setPaymentModalData({
       apartment_id: apartment.apartment_id,
-      common_expense_amount: Math.round((apartment.expense_share || 0) * 100) / 100,
-      previous_obligations_amount: apartment.previous_balance > 0 ? Math.round(apartment.previous_balance * 100) / 100 : 0,
+      common_expense_amount: apartment.net_obligation > 0 ? apartment.net_obligation : 0,
+      previous_obligations_amount: apartment.net_obligation > 0 ? apartment.net_obligation : 0,
     });
     paymentModal.openModal();
+  };
+
+  const handleRefreshData = async () => {
+    try {
+      // Show loading state
+      const button = document.querySelector('[data-refresh-button]') as HTMLButtonElement;
+      if (button) {
+        button.disabled = true;
+        button.innerHTML = `
+          <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Ενημέρωση...
+        `;
+      }
+
+      // Refresh all components
+      const refreshPromises = [];
+      
+      if (buildingOverviewRef.current) {
+        refreshPromises.push(buildingOverviewRef.current.refresh());
+      }
+      if (expenseListRef.current) {
+        refreshPromises.push(expenseListRef.current.refresh());
+      }
+      if (paymentListRef.current) {
+        refreshPromises.push(paymentListRef.current.refresh());
+      }
+
+      // Wait for all refreshes to complete
+      await Promise.allSettled(refreshPromises);
+
+      // Show success message
+      toast({
+        title: 'Επιτυχία!',
+        description: 'Τα δεδομένα ενημερώθηκαν επιτυχώς.',
+        duration: 3000,
+      });
+
+    } catch (error) {
+      // Show error message
+      toast({
+        title: 'Σφάλμα',
+        description: 'Προέκυψε σφάλμα κατά την ενημέρωση των δεδομένων. Παρακαλώ δοκιμάστε ξανά.',
+        variant: 'destructive',
+        duration: 5000,
+      });
+    } finally {
+      // Reset button state
+      const button = document.querySelector('[data-refresh-button]') as HTMLButtonElement;
+      if (button) {
+        button.disabled = false;
+        button.innerHTML = `
+          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Ενημέρωση Δεδομένων
+        `;
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchApartments(activeBuildingId).then(setApartments).catch(() => setApartments([]));
+  }, [activeBuildingId]);
+  
+  // Get current building name
+  const currentBuildingName = (selectedBuilding || currentBuilding)?.name || 'Άγνωστο Κτίριο';
+  
+  // Handle URL parameters (initial load and browser navigation)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    const monthParam = searchParams.get('month');
+    
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+    
+    if (monthParam) {
+      setSelectedMonth(monthParam);
+    }
+  }, [searchParams]);
+  
+  const handleExpenseSuccess = () => {
+    expenseModal.closeModal();
+    // Refresh expense list data
+    if (expenseListRef.current) {
+      expenseListRef.current.refresh();
+    }
+    // Refresh building overview section data
+    if (buildingOverviewRef.current) {
+      buildingOverviewRef.current.refresh();
+    }
+  };
+  
+  const handlePaymentSuccess = () => {
+    console.log('Payment success handler called');
+    paymentModal.closeModal();
+    setPaymentModalData(null);
+    // Refresh payment list data
+    if (paymentListRef.current) {
+      console.log('Refreshing payment list...');
+      paymentListRef.current.refresh();
+    }
+    // Refresh building overview section data
+    if (buildingOverviewRef.current) {
+      buildingOverviewRef.current.refresh();
+    }
+  };
+  
+  const handleExpenseCancel = () => {
+    expenseModal.closeModal();
+  };
+  
+  const handlePaymentCancel = () => {
+    paymentModal.closeModal();
+    setPaymentModalData(null);
+  };
+  
+  const handleOpenPaymentModal = (apartment: any) => {
+    setPaymentModalData({
+      apartment_id: apartment.apartment_id,
+      common_expense_amount: apartment.net_obligation > 0 ? apartment.net_obligation : 0,
+      previous_obligations_amount: apartment.net_obligation > 0 ? apartment.net_obligation : 0,
+    });
+    paymentModal.openModal();
+  };
+
+  const handleRefreshData = async () => {
+    try {
+      // Show loading state
+      const button = document.querySelector('[data-refresh-button]') as HTMLButtonElement;
+      if (button) {
+        button.disabled = true;
+        button.innerHTML = `
+          <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Ενημέρωση...
+        `;
+      }
+
+      // Refresh all components
+      const refreshPromises = [];
+      
+      if (buildingOverviewRef.current) {
+        refreshPromises.push(buildingOverviewRef.current.refresh());
+      }
+      if (expenseListRef.current) {
+        refreshPromises.push(expenseListRef.current.refresh());
+      }
+      if (paymentListRef.current) {
+        refreshPromises.push(paymentListRef.current.refresh());
+      }
+
+      // Wait for all refreshes to complete
+      await Promise.allSettled(refreshPromises);
+
+      // Show success message
+      toast({
+        title: 'Επιτυχία!',
+        description: 'Τα δεδομένα ενημερώθηκαν επιτυχώς.',
+        duration: 3000,
+      });
+
+    } catch (error) {
+      // Show error message
+      toast({
+        title: 'Σφάλμα',
+        description: 'Προέκυψε σφάλμα κατά την ενημέρωση των δεδομένων. Παρακαλώ δοκιμάστε ξανά.',
+        variant: 'destructive',
+        duration: 5000,
+      });
+    } finally {
+      // Reset button state
+      const button = document.querySelector('[data-refresh-button]') as HTMLButtonElement;
+      if (button) {
+        button.disabled = false;
+        button.innerHTML = `
+          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Ενημέρωση Δεδομένων
+        `;
+      }
+    }
   };
 
 
@@ -308,14 +513,11 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             </p>
           </div>
           <Button
-            onClick={() => {
-              if (buildingOverviewRef.current) buildingOverviewRef.current.refresh();
-              if (expenseListRef.current) expenseListRef.current.refresh();
-              if (paymentListRef.current) paymentListRef.current.refresh();
-            }}
+            onClick={handleRefreshData}
             variant="outline"
             size="sm"
             className="flex items-center gap-2"
+            data-refresh-button
           >
             <RefreshCw className="h-4 w-4" />
             Ενημέρωση Δεδομένων
@@ -855,14 +1057,8 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       {/* Expense Form Modal */}
       <ConditionalRender permission="expense_manage">
         {expenseModal.isOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={handleExpenseCancel}
-          >
-            <div 
-              className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Νέα Δαπάνη</h2>
                 <Button 
@@ -886,14 +1082,8 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       {/* Payment Form Modal */}
       <ConditionalRender permission="financial_write">
         {paymentModal.isOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={handlePaymentCancel}
-          >
-            <div 
-              className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Νέα Είσπραξη</h2>
                 <Button 
@@ -911,8 +1101,8 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 apartments={apartments}
                 initialData={paymentModalData || {
                   apartment_id: parseInt(new URLSearchParams(window.location.search).get('apartment') || '0'),
-                  common_expense_amount: Math.round(parseFloat(new URLSearchParams(window.location.search).get('amount') || '0') * 100) / 100,
-                  previous_obligations_amount: Math.round(parseFloat(new URLSearchParams(window.location.search).get('previous_obligations') || '0') * 100) / 100,
+                  common_expense_amount: parseFloat(new URLSearchParams(window.location.search).get('amount') || '0'),
+                  previous_obligations_amount: parseFloat(new URLSearchParams(window.location.search).get('previous_obligations') || '0'),
                 }}
               />
             </div>

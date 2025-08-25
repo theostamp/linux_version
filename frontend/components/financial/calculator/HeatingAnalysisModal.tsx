@@ -258,10 +258,20 @@ export const HeatingAnalysisModal: React.FC<HeatingAnalysisModalProps> = ({
                         id={`meter-${apartment.id}`}
                         type="number"
                         min="0"
+                        max="999999.99"
                         step="0.01"
                         placeholder="0.00"
-                        value={meterReadings[apartment.id] || ''}
-                        onChange={(e) => handleMeterReadingChange(apartment.id, e.target.value)}
+                        value={meterReadings[apartment.id] ? Number(meterReadings[apartment.id]).toFixed(2) : ''}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
+                          if (!isNaN(value)) {
+                            // Limit to 2 decimal places
+                            const roundedValue = Math.round(value * 100) / 100;
+                            handleMeterReadingChange(apartment.id, roundedValue.toString());
+                          } else {
+                            handleMeterReadingChange(apartment.id, '');
+                          }
+                        }}
                       />
                     </div>
                   ))}

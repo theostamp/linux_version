@@ -376,9 +376,17 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
                   type="number"
                   step="0.01"
                   min="0"
+                  max="999999.99"
                   {...register('amount', { 
                     required: 'Απαιτείται',
-                    min: { value: 0, message: 'Το ποσό πρέπει να είναι θετικό' }
+                    min: { value: 0, message: 'Το ποσό πρέπει να είναι θετικό' },
+                    onChange: (e) => {
+                      // Limit to 2 decimal places
+                      const value = parseFloat(e.target.value);
+                      if (!isNaN(value)) {
+                        e.target.value = value.toFixed(2);
+                      }
+                    }
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="0.00"

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale/el';
+import { formatCurrency } from '@/lib/utils';
 
 interface FinancialSearchProps {
   buildingId: number;
@@ -381,7 +382,7 @@ export default function FinancialSearch({ buildingId, onSearch, onClear }: Finan
                     <div className={`text-lg font-bold ${
                       result.type === 'expense' ? 'text-red-600' : 'text-green-600'
                     }`}>
-                      {result.type === 'expense' ? '-' : '+'}{Number(result.amount).toFixed(2)}€
+                      {result.type === 'expense' ? '-' : '+'}{formatCurrency(result.amount)}
                     </div>
                     <div className="text-sm text-gray-500">
                       {format(new Date(result.date), 'dd/MM/yyyy', { locale: el })}

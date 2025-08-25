@@ -681,8 +681,18 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                   type="number"
                   step="0.01"
                   min="0"
-                  value={customPackageForm.fee_per_apartment}
-                  onChange={(e) => setCustomPackageForm(prev => ({ ...prev, fee_per_apartment: e.target.value }))}
+                  max="999999.99"
+                  value={customPackageForm.fee_per_apartment ? Number(customPackageForm.fee_per_apartment).toFixed(2) : ''}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                      // Limit to 2 decimal places
+                      const roundedValue = Math.round(value * 100) / 100;
+                      setCustomPackageForm(prev => ({ ...prev, fee_per_apartment: roundedValue.toString() }));
+                    } else {
+                      setCustomPackageForm(prev => ({ ...prev, fee_per_apartment: '' }));
+                    }
+                  }}
                   placeholder="0.00"
                   className="mt-1"
                   disabled={calculateBasedOnServices}

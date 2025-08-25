@@ -17,6 +17,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { formatCurrency } from '@/lib/utils';
 import TransactionHistory from './TransactionHistory';
 import CashFlowChart from './CashFlowChart';
 import ReportsManager from './ReportsManager';
@@ -193,7 +194,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
             ) : (
               <>
                 <div className="text-2xl font-bold">
-                  {Number(summary.current_reserve).toFixed(2)}€
+                  {formatCurrency(summary.current_reserve)}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {selectedMonth ? 'Ιστορικό υπόλοιπο' : 'Διαθέσιμο ποσό'}
@@ -212,7 +213,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
-              {Number(summary.pending_expenses || 0).toFixed(2)}€
+              {formatCurrency(summary.pending_expenses || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               Δεν έχουν εκδοθεί
@@ -284,7 +285,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
                       <p className={`text-sm font-medium ${
                         Number(apartment.current_balance) < 0 ? 'text-red-600' : 'text-green-600'
                       }`}>
-                        {Number(apartment.current_balance).toFixed(2)}€
+                        {formatCurrency(apartment.current_balance)}
                       </p>
                       {apartment.last_payment_date && (
                         <p className="text-xs text-muted-foreground">

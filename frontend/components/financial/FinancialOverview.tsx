@@ -19,6 +19,7 @@ import {
   Calculator
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale/el';
 
@@ -191,7 +192,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {Number(stats.current_reserve).toFixed(2)}€
+              {formatCurrency(stats.current_reserve)}
             </div>
             <p className="text-xs text-muted-foreground">
               Διαθέσιμο ποσό
@@ -208,7 +209,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
-              {Number(stats.pending_expenses).toFixed(2)}€
+              {formatCurrency(stats.pending_expenses)}
             </div>
             <p className="text-xs text-muted-foreground">
               Δεν έχουν εκδοθεί
@@ -225,7 +226,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
-              {Number(stats.total_expenses_month).toFixed(2)}€
+              {formatCurrency(stats.total_expenses_month)}
             </div>
             <p className="text-xs text-muted-foreground">
               Συνολικές δαπάνες
@@ -242,7 +243,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {Number(stats.total_payments_month).toFixed(2)}€
+              {formatCurrency(stats.total_payments_month)}
             </div>
             <p className="text-xs text-muted-foreground">
               Συνολικές εισπράξεις
@@ -283,7 +284,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
                       {getBalanceIcon(apartment.current_balance)}
                       <div className="text-right">
                         <p className={`text-sm font-medium ${getBalanceColor(apartment.current_balance)}`}>
-                          {Number(apartment.current_balance).toFixed(2)}€
+                          {formatCurrency(apartment.current_balance)}
                         </p>
                         {apartment.last_payment_date && (
                           <p className="text-xs text-muted-foreground">
@@ -318,7 +319,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  {Number(stats.payment_statistics.average_payment).toFixed(2)}€
+                  {formatCurrency(stats.payment_statistics.average_payment)}
                 </div>
                 <p className="text-sm text-muted-foreground">Μέση Πληρωμή</p>
               </div>
@@ -341,7 +342,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
                       <div className="flex items-center space-x-2">
                         <Badge variant="secondary">{method.count}</Badge>
                         <span className="text-sm text-muted-foreground">
-                          {Number(method.total).toFixed(2)}€
+                          {formatCurrency(method.total)}
                         </span>
                       </div>
                     </div>

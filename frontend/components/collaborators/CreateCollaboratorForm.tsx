@@ -178,9 +178,19 @@ export default function CreateCollaboratorForm({ onCollaboratorCreated }: Create
                 id="hourly_rate"
                 type="number"
                 min="0"
+                max="999999.99"
                 step="0.01"
-                value={formData.hourly_rate}
-                onChange={(e) => handleInputChange('hourly_rate', parseFloat(e.target.value) || 0)}
+                value={formData.hourly_rate ? Number(formData.hourly_rate).toFixed(2) : ''}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  if (!isNaN(value)) {
+                    // Limit to 2 decimal places
+                    const roundedValue = Math.round(value * 100) / 100;
+                    handleInputChange('hourly_rate', roundedValue);
+                  } else {
+                    handleInputChange('hourly_rate', 0);
+                  }
+                }}
                 placeholder="25.00"
               />
             </div>

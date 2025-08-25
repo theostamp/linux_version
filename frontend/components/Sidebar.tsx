@@ -29,6 +29,7 @@ import {
   Handshake,
   Truck,
   RefreshCw,
+  Activity,
 } from 'lucide-react';
 
 // Grouped navigation links with categories
@@ -155,6 +156,21 @@ const navigationGroups = [
         href: '/suppliers',
         label: 'Προμηθευτές',
         icon: <Truck className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+    ]
+  },
+  {
+    id: 'system',
+    title: 'Σύστημα & Ελέγχοι',
+    color: 'red',
+    bgColor: 'bg-red-50 dark:bg-red-900/20',
+    borderColor: 'border-red-200 dark:border-red-800',
+    links: [
+      {
+        href: '/system-health',
+        label: 'Έλεγχος Υγείας Συστήματος',
+        icon: <Activity className="w-4 h-4" />,
         roles: ['manager', 'staff', 'superuser'],
       },
     ]

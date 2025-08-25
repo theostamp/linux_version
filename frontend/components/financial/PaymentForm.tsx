@@ -14,11 +14,12 @@ import { usePayments } from '@/hooks/usePayments';
 import { Payment, PaymentMethod, PaymentType, PayerType, PaymentFormData } from '@/types/financial';
 import { useToast } from '@/hooks/use-toast';
 import { ReceiptPrintModal } from './ReceiptPrintModal';
+import { formatCurrency } from '@/lib/utils';
 
 const paymentFormSchema = z.object({
   apartment_id: z.number().min(1, 'Παρακαλώ επιλέξτε διαμέρισμα'),
-  common_expense_amount: z.number().min(0.01, 'Το ποσό πρέπει να είναι μεγαλύτερο από 0'),
-  reserve_fund_amount: z.number().min(0, 'Το ποσό αποθεματικού δεν μπορεί να είναι αρνητικό').optional(),
+  common_expense_amount: z.number().min(0.1, 'Το ποσό πρέπει να είναι μεγαλύτερο από 0'),
+  previous_obligations_amount: z.number().min(0, 'Το ποσό παλαιότερων οφειλών δεν μπορεί να είναι αρνητικό').optional(),
   date: z.string().min(1, 'Παρακαλώ επιλέξτε ημερομηνία'),
   method: z.string().min(1, 'Παρακαλώ επιλέξτε μέθοδο εισπράξεως'),
   payment_type: z.string().min(1, 'Παρακαλώ επιλέξτε τύπο εισπράξεως'),
@@ -72,7 +73,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     defaultValues: {
       apartment_id: initialData?.apartment_id || 0,
       common_expense_amount: initialData?.common_expense_amount || 0,
-      reserve_fund_amount: initialData?.reserve_fund_amount || 0,
+      previous_obligations_amount: initialData?.previous_obligations_amount || 0,
       date: initialData?.date || new Date().toISOString().split('T')[0],
       method: initialData?.method || PaymentMethod.CASH,
       payment_type: initialData?.payment_type || PaymentType.COMMON_EXPENSE,
@@ -135,30 +136,37 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
   }, [selectedApartment, selectedPayerType, setValue]);
 
-  // Calculate default reserve fund amount based on participation mills
+
+
+  // Update form fields when initialData changes (for pre-filled data from apartment balances)
   React.useEffect(() => {
-    if (selectedApartment && selectedApartment.participation_mills && buildingData) {
-      // Get building reserve contribution per apartment from building settings
-      const reserveContributionPerApartment = buildingData.reserve_contribution_per_apartment || 5; // Default 5€ if not set
-      const participationMills = selectedApartment.participation_mills;
-      
-      // Calculate reserve fund amount based on mills (assuming 1000 mills = 100%)
-      const reserveFundAmount = (participationMills / 1000) * reserveContributionPerApartment;
-      
-      // Set the calculated amount as default
-      setValue('reserve_fund_amount', reserveFundAmount);
+    if (initialData) {
+      if (initialData.apartment_id) {
+        setValue('apartment_id', initialData.apartment_id);
+      }
+      if (initialData.common_expense_amount) {
+        setValue('common_expense_amount', initialData.common_expense_amount);
+      }
+      if (initialData.previous_obligations_amount) {
+        setValue('previous_obligations_amount', initialData.previous_obligations_amount);
+      }
     }
-  }, [selectedApartment, buildingData, setValue]);
+  }, [initialData, setValue]);
 
   const onSubmit = async (data: LocalPaymentFormData) => {
     try {
-      // Calculate total amount (common expenses + reserve fund)
-      const totalAmount = data.common_expense_amount + (data.reserve_fund_amount || 0);
+      // Calculate total amount (common expenses + previous obligations)
+      // Reserve fund is now included in the common_expense_amount
+      const totalAmount = data.common_expense_amount + (data.previous_obligations_amount || 0);
+      
+      // Calculate reserve fund amount from building settings if available
+      const reserveFundAmount = buildingData?.reserve_contribution_per_apartment || 0;
       
       const paymentData: PaymentFormData = {
         apartment_id: data.apartment_id,
         amount: totalAmount,
-        reserve_fund_amount: data.reserve_fund_amount || 0,
+        reserve_fund_amount: reserveFundAmount,
+        previous_obligations_amount: data.previous_obligations_amount || 0,
         date: data.date,
         method: data.method,
         payment_type: data.payment_type,
@@ -185,7 +193,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
         toast({
           title: 'Επιτυχία!',
-          description: `Η είσπραξη καταχωρήθηκε επιτυχώς. Συνολικό ποσό: ${totalAmount}€${data.reserve_fund_amount && data.reserve_fund_amount > 0 ? ` (Αποθεματικό: ${data.reserve_fund_amount}€)` : ''}. Θέλετε να εκτυπώσετε απόδειξη;`,
+          description: `Η είσπραξη καταχωρήθηκε επιτυχώς. Συνολικό ποσό: ${formatCurrency(totalAmount)}${reserveFundAmount > 0 ? ` (Αποθεματικό: ${formatCurrency(reserveFundAmount)})` : ''}${data.previous_obligations_amount && data.previous_obligations_amount > 0 ? ` (Παλαιότερες οφειλές: ${formatCurrency(data.previous_obligations_amount)})` : ''}. Θέλετε να εκτυπώσετε απόδειξη;`,
           action: (
             <Button 
               size="sm" 
@@ -786,9 +794,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   Η είσπραξη #{(createdPayment || lastCreatedPayment)?.id} καταχωρήθηκε επιτυχώς για το διαμέρισμα {(createdPayment || lastCreatedPayment)?.apartment_number}
                 </p>
                 <p className="text-green-600 text-sm">
-                  Συνολικό Ποσό: <strong>{(createdPayment || lastCreatedPayment)?.amount}€</strong>
+                  Συνολικό Ποσό: <strong>{formatCurrency((createdPayment || lastCreatedPayment)?.amount)}</strong>
                   {(createdPayment || lastCreatedPayment)?.reserve_fund_amount && (createdPayment || lastCreatedPayment)?.reserve_fund_amount > 0 && (
-                    <span> (Αποθεματικό: {(createdPayment || lastCreatedPayment)?.reserve_fund_amount}€)</span>
+                    <span> (συμπεριλαμβανομένου αποθεματικού {formatCurrency((createdPayment || lastCreatedPayment)?.reserve_fund_amount)})</span>
                   )}
                 </p>
               </div>
@@ -959,27 +967,54 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 id="common_expense_amount"
                 type="number"
                 step="0.01"
-                min="0"
-                {...register('common_expense_amount', { valueAsNumber: true })}
-                placeholder="0.00"
+                min="0.01"
+                max="999999.99"
+                {...register('common_expense_amount', { 
+                  valueAsNumber: true,
+                  onChange: (e) => {
+                    // Limit to 2 decimal places
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                      e.target.value = value.toFixed(2);
+                      setValue('common_expense_amount', value);
+                    }
+                  }
+                })}
+                placeholder="0,00"
               />
               {errors.common_expense_amount && (
                 <p className="text-sm text-red-600">{errors.common_expense_amount.message}</p>
               )}
+              {buildingData?.reserve_contribution_per_apartment && buildingData.reserve_contribution_per_apartment > 0 && (
+                <p className="text-xs text-blue-600 mt-1">
+                  💡 Το ποσό περιλαμβάνει και αποθεματικό {formatCurrency(buildingData.reserve_contribution_per_apartment)}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reserve_fund_amount">Ποσό Αποθεματικού (€)</Label>
+              <Label htmlFor="previous_obligations_amount">Παλαιότερες Οφειλές (€)</Label>
               <Input
-                id="reserve_fund_amount"
+                id="previous_obligations_amount"
                 type="number"
                 step="0.01"
                 min="0"
-                {...register('reserve_fund_amount', { valueAsNumber: true })}
-                placeholder="0.00"
+                max="999999.99"
+                {...register('previous_obligations_amount', { 
+                  valueAsNumber: true,
+                  onChange: (e) => {
+                    // Limit to 2 decimal places
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                      e.target.value = value.toFixed(2);
+                      setValue('previous_obligations_amount', value);
+                    }
+                  }
+                })}
+                placeholder="0,00"
               />
-              {errors.reserve_fund_amount && (
-                <p className="text-sm text-red-600">{errors.reserve_fund_amount.message}</p>
+              {errors.previous_obligations_amount && (
+                <p className="text-sm text-red-600">{errors.previous_obligations_amount.message}</p>
               )}
             </div>
           </div>
@@ -989,10 +1024,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             <Label>Συνολικό Ποσό Εισπράξεως</Label>
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="text-lg font-semibold text-blue-900">
-                {(watch('common_expense_amount') || 0) + (watch('reserve_fund_amount') || 0)}€
+                {formatCurrency((watch('common_expense_amount') || 0) + (watch('previous_obligations_amount') || 0))}
               </div>
               <div className="text-sm text-blue-700">
-                Κοινόχρηστα: {watch('common_expense_amount') || 0}€ + Αποθεματικό: {watch('reserve_fund_amount') || 0}€
+                Κοινόχρηστα: {formatCurrency(watch('common_expense_amount') || 0)} + Παλαιότερες Οφειλές: {formatCurrency(watch('previous_obligations_amount') || 0)}
+                {buildingData?.reserve_contribution_per_apartment && buildingData.reserve_contribution_per_apartment > 0 && (
+                  <span> (συμπεριλαμβανομένου αποθεματικού {formatCurrency(buildingData.reserve_contribution_per_apartment)})</span>
+                )}
               </div>
             </div>
           </div>

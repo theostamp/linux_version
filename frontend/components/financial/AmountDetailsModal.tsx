@@ -21,10 +21,13 @@ import {
   Target,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  ExternalLink
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { MonthlyTransactionsModal } from '@/components/financial/MonthlyTransactionsModal';
 
 interface Transaction {
   id: number;
@@ -48,7 +51,7 @@ interface AmountDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   buildingId: number;
-  amountType: 'current_reserve' | 'total_balance' | 'current_obligations' | 'reserve_fund_contribution';
+  amountType: 'current_reserve' | 'total_balance' | 'current_obligations' | 'previous_obligations' | 'reserve_fund_contribution';
   amount: number;
   title: string;
   selectedMonth?: string;
@@ -63,11 +66,20 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
   title,
   selectedMonth
 }) => {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [monthlyBreakdown, setMonthlyBreakdown] = useState<MonthlyBreakdown[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [summary, setSummary] = useState<any>(null);
+  const [monthlyModalOpen, setMonthlyModalOpen] = useState(false);
+  const [selectedMonthForModal, setSelectedMonthForModal] = useState<{ month: string; displayName: string } | null>(null);
+
+  // Function to open monthly transactions modal
+  const openMonthlyTransactionsModal = (month: string, displayName: string) => {
+    setSelectedMonthForModal({ month, displayName });
+    setMonthlyModalOpen(true);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -234,6 +246,8 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
       // Generate monthly breakdown
       const breakdown = generateMonthlyBreakdown(transactions);
       console.log('📅 Monthly breakdown:', breakdown);
+      console.log('📅 Monthly breakdown length:', breakdown.length);
+      console.log('📅 Monthly breakdown details:', breakdown.map(b => ({ month: b.month, balance: b.balance, transactions: b.transactions.length })));
       setMonthlyBreakdown(breakdown);
 
     } catch (err: any) {
@@ -302,6 +316,14 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
           formula: 'Οφειλές Διαμερισμάτων + Εκκρεμείς Δαπάνες',
           icon: <TrendingDown className="h-5 w-5 text-red-600" />,
           color: 'red'
+        };
+      case 'previous_obligations':
+        return {
+          title: 'Οφειλές Προηγούμενων Μηνών',
+          description: 'Συσσωρευμένες οφειλές από προηγούμενες περιόδους που δεν έχουν εξοφληθεί.',
+          formula: 'Άθροισμα αρνητικών υπολοίπων διαμερισμάτων',
+          icon: <Clock className="h-5 w-5 text-purple-600" />,
+          color: 'purple'
         };
       case 'reserve_fund_contribution':
         return {
@@ -389,12 +411,16 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
   if (amountType === 'current_obligations') {
     // For current obligations, use the sum of expenses as the real obligation
     displayAmount = totalExpenses;
+  } else if (amountType === 'previous_obligations') {
+    // For previous obligations, use the amount as is (it's already calculated correctly)
+    displayAmount = amount;
   }
   
   const maxAmount = Math.max(totalPayments, totalExpenses, Math.abs(displayAmount));
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
@@ -436,7 +462,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                     <div className={`text-3xl font-bold ${
                       displayAmount > 0 ? 'text-green-600' : displayAmount < 0 ? 'text-red-600' : 'text-gray-600'
                     }`}>
-                      {displayAmount.toFixed(2)}€
+                      {formatCurrency(displayAmount)}
                     </div>
                     <Badge variant={displayAmount >= 0 ? "default" : "destructive"} className="mt-1">
                       {explanation.title}
@@ -518,7 +544,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                       <span className="font-medium text-green-800">Εισπράξεις</span>
                     </div>
                     <div className="text-2xl font-bold text-green-600">
-                      {totalPayments.toFixed(2)}€
+                      {formatCurrency(totalPayments)}
                     </div>
                     <Progress 
                       value={(totalPayments / maxAmount) * 100} 
@@ -534,7 +560,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                       <span className="font-medium text-red-800">Δαπάνες</span>
                     </div>
                     <div className="text-2xl font-bold text-red-600">
-                      {totalExpenses.toFixed(2)}€
+                      {formatCurrency(totalExpenses)}
                     </div>
                     <Progress 
                       value={(totalExpenses / maxAmount) * 100} 
@@ -552,7 +578,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                     <div className={`text-2xl font-bold ${
                       (totalPayments - totalExpenses) >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {(totalPayments - totalExpenses).toFixed(2)}€
+                      {formatCurrency(totalPayments - totalExpenses)}
                     </div>
                     <Progress 
                       value={Math.abs((totalPayments - totalExpenses) / maxAmount) * 100} 
@@ -598,9 +624,20 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                           {monthlyBreakdown.slice(0, 6).map((month) => (
                             <div key={month.month} className="space-y-2">
                               <div className="flex items-center justify-between text-sm">
-                                <span className="font-medium">{formatMonth(month.month)}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{formatMonth(month.month)}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openMonthlyTransactionsModal(month.month, formatMonth(month.month))}
+                                    className="h-5 px-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                    title={`Δείτε όλες τις κινήσεις για τον ${formatMonth(month.month)}`}
+                                  >
+                                    <ExternalLink className="h-3 w-3" />
+                                  </Button>
+                                </div>
                                 <Badge variant={month.balance >= 0 ? "default" : "destructive"}>
-                                  {month.balance.toFixed(2)}€
+                                  {formatCurrency(month.balance)}
                                 </Badge>
                               </div>
                               <div className="flex gap-1 h-4">
@@ -631,7 +668,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                           <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                           <p>Δεν υπάρχουν δεδομένα για μηνιαία εξέλιξη</p>
                           <p className="text-sm mt-2">
-                            Το ποσό {amount.toFixed(2)}€ προέρχεται από τον τρέχοντα υπολογισμό
+                            Το ποσό {formatCurrency(amount)} προέρχεται από τον τρέχοντα υπολογισμό
                           </p>
                         </div>
                       )}
@@ -670,7 +707,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                           <PieChart className="h-12 w-12 mx-auto mb-4 opacity-50" />
                           <p>Δεν υπάρχουν συναλλαγές</p>
                           <p className="text-sm mt-2">
-                            Το ποσό {amount.toFixed(2)}€ είναι το τρέχον υπόλοιπο
+                            Το ποσό {formatCurrency(amount)} είναι το τρέχον υπόλοιπο
                           </p>
                         </div>
                       )}
@@ -687,7 +724,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                         <div>
                           <h4 className="font-medium text-yellow-800">Πληροφορίες για το Ποσό</h4>
                           <p className="text-sm text-yellow-700 mt-1">
-                            Το ποσό {amount.toFixed(2)}€ προέρχεται από τον τρέχοντα υπολογισμό του συστήματος. 
+                            Το ποσό {formatCurrency(amount)} προέρχεται από τον τρέχοντα υπολογισμό του συστήματος. 
                             Δεν υπάρχουν συναλλαγές στη βάση δεδομένων για να δείξουμε λεπτομερείς πληροφορίες.
                           </p>
                         </div>
@@ -711,19 +748,30 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                       {monthlyBreakdown.map((month) => (
                           <div key={month.month} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                           <div className="flex items-center justify-between mb-3">
-                            <h4 className="font-medium">{formatMonth(month.month)}</h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium">{formatMonth(month.month)}</h4>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openMonthlyTransactionsModal(month.month, formatMonth(month.month))}
+                                className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                title={`Δείτε όλες τις κινήσεις για τον ${formatMonth(month.month)}`}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
+                            </div>
                             <Badge variant={month.balance >= 0 ? "default" : "destructive"}>
-                              {month.balance.toFixed(2)}€
+                              {formatCurrency(month.balance)}
                             </Badge>
                           </div>
                           
                             <div className="grid grid-cols-3 gap-4 text-sm mb-3">
                               <div className="text-center p-2 bg-green-50 rounded">
-                                <div className="text-green-600 font-medium">+{month.payments.toFixed(2)}€</div>
+                                <div className="text-green-600 font-medium">+{formatCurrency(month.payments)}</div>
                                 <div className="text-xs text-green-600">Εισπράξεις</div>
                               </div>
                               <div className="text-center p-2 bg-red-50 rounded">
-                                <div className="text-red-600 font-medium">-{month.expenses.toFixed(2)}€</div>
+                                <div className="text-red-600 font-medium">-{formatCurrency(month.expenses)}</div>
                                 <div className="text-xs text-red-600">Δαπάνες</div>
                               </div>
                               <div className="text-center p-2 bg-blue-50 rounded">
@@ -756,7 +804,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                                         <div className={`font-medium text-xs ${
                                         getAmountAsNumber(transaction.amount) > 0 ? 'text-green-600' : 'text-red-600'
                                       }`}>
-                                        {getAmountAsNumber(transaction.amount) > 0 ? '+' : ''}{getAmountAsNumber(transaction.amount).toFixed(2)}€
+                                        {getAmountAsNumber(transaction.amount) > 0 ? '+' : ''}{formatCurrency(getAmountAsNumber(transaction.amount))}
                                         </div>
                                         <div className="text-xs text-muted-foreground">
                                           {getTransactionTypeLabel(transaction.type)}
@@ -780,7 +828,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                         <Calendar className="h-16 w-16 mx-auto mb-4 opacity-50" />
                         <h3 className="text-lg font-medium mb-2">Δεν υπάρχουν δεδομένα μηνιαίας εξέλιξης</h3>
                         <p className="text-sm">
-                          Το ποσό {amount.toFixed(2)}€ προέρχεται από τον τρέχοντα υπολογισμό του συστήματος.
+                          Το ποσό {formatCurrency(amount)} προέρχεται από τον τρέχοντα υπολογισμό του συστήματος.
                         </p>
                         <p className="text-sm mt-2">
                           Όταν προστεθούν συναλλαγές, θα εμφανιστούν εδώ με λεπτομερείς πληροφορίες ανά μήνα.
@@ -833,7 +881,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                               <div className={`font-bold text-lg ${
                               getAmountAsNumber(transaction.amount) > 0 ? 'text-green-600' : 'text-red-600'
                             }`}>
-                              {getAmountAsNumber(transaction.amount) > 0 ? '+' : ''}{getAmountAsNumber(transaction.amount).toFixed(2)}€
+                              {getAmountAsNumber(transaction.amount) > 0 ? '+' : ''}{formatCurrency(getAmountAsNumber(transaction.amount))}
                             </div>
                             <div className="text-xs text-muted-foreground">
                               {getTransactionTypeLabel(transaction.type)}
@@ -847,7 +895,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                         <Clock className="h-16 w-16 mx-auto mb-4 opacity-50" />
                         <h3 className="text-lg font-medium mb-2">Δεν υπάρχουν συναλλαγές</h3>
                         <p className="text-sm">
-                          Το ποσό {amount.toFixed(2)}€ είναι το τρέχον υπόλοιπο του συστήματος.
+                          Το ποσό {formatCurrency(amount)} είναι το τρέχον υπόλοιπο του συστήματος.
                         </p>
                         <p className="text-sm mt-2">
                           Όταν προστεθούν εισπράξεις ή δαπάνες, θα εμφανιστούν εδώ με λεπτομερείς πληροφορίες.
@@ -868,5 +916,20 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
         )}
       </DialogContent>
     </Dialog>
+
+    {/* Monthly Transactions Modal */}
+    {selectedMonthForModal && (
+      <MonthlyTransactionsModal
+        isOpen={monthlyModalOpen}
+        onClose={() => {
+          setMonthlyModalOpen(false);
+          setSelectedMonthForModal(null);
+        }}
+        buildingId={buildingId}
+        month={selectedMonthForModal.month}
+        monthDisplayName={selectedMonthForModal.displayName}
+      />
+    )}
+    </>
   );
 };

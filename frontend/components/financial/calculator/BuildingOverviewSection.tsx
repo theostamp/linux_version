@@ -25,13 +25,15 @@ import {
   Package,
   BarChart3,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Info
 } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { api, makeRequestWithRetry } from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { ServicePackageModal } from '../ServicePackageModal';
 import { AmountDetailsModal } from '../AmountDetailsModal';
+import { PreviousObligationsModal } from '../PreviousObligationsModal';
 
 interface BuildingOverviewSectionProps {
   buildingId: number;
@@ -46,6 +48,7 @@ interface BuildingOverviewSectionRef {
 interface FinancialSummary {
   total_balance: number;
   current_obligations: number; // Τρέχουσες υποχρεώσεις (κύριο χρέος)
+  previous_obligations: number; // ← ΝΕΟ FIELD - Οφειλές προηγούμενων μηνών
   reserve_fund_debt: number; // Χρέος από εισφορά αποθεματικού
   reserve_fund_goal: number;
   current_reserve: number;
@@ -91,6 +94,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const [selectedAmountType, setSelectedAmountType] = useState<'current_reserve' | 'total_balance' | 'current_obligations' | 'reserve_fund_contribution'>('current_reserve');
   const [selectedAmount, setSelectedAmount] = useState(0);
   const [selectedAmountTitle, setSelectedAmountTitle] = useState('');
+  const [showPreviousObligationsModal, setShowPreviousObligationsModal] = useState(false);
+  const [showReserveFundInfoModal, setShowReserveFundInfoModal] = useState(false);
 
 
   const currentBuilding = buildings.find(b => b.id === buildingId);
@@ -200,42 +205,43 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
   // Function to handle showing amount details modal
   const handleShowAmountDetails = (
-    amountType: 'current_reserve' | 'total_balance' | 'current_obligations' | 'reserve_fund_contribution',
+    amountType: 'current_reserve' | 'total_balance' | 'current_obligations' | 'previous_obligations' | 'reserve_fund_contribution',
     amount: number,
     title: string
   ) => {
-    setSelectedAmountType(amountType);
-    setSelectedAmount(amount);
-    setSelectedAmountTitle(title);
-    setShowAmountDetailsModal(true);
+    if (amountType === 'previous_obligations') {
+      setShowPreviousObligationsModal(true);
+    } else {
+      setSelectedAmountType(amountType);
+      setSelectedAmount(amount);
+      setSelectedAmountTitle(title);
+      setShowAmountDetailsModal(true);
+    }
   };
 
   // Notify parent component when reserve fund monthly target changes
   // Calculate correct monthly target from goal and duration
-  // CONDITIONAL: Only calculate if there's monthly activity
   useEffect(() => {
     if (financialSummary && onReserveFundAmountChange) {
       const goal = financialSummary.reserve_fund_goal || 0;
       const duration = financialSummary.reserve_fund_duration_months || 1;
-      const hasActivity = financialSummary.has_monthly_activity;
       
       let correctMonthlyTarget = 0;
       
-      // Only calculate reserve fund amount if there's monthly activity
-      if (goal > 0 && duration > 0 && hasActivity !== false) {
+      // Calculate reserve fund amount if there's a goal and duration
+      if (goal > 0 && duration > 0) {
         correctMonthlyTarget = goal / duration;
       }
       
       console.log('🔄 BuildingOverviewSection: Reserve fund calculation:', {
         goal,
         duration,
-        hasActivity,
         correctMonthlyTarget
       });
       
       onReserveFundAmountChange(correctMonthlyTarget);
     }
-  }, [financialSummary?.reserve_fund_goal, financialSummary?.reserve_fund_duration_months, financialSummary?.has_monthly_activity, onReserveFundAmountChange]);
+  }, [financialSummary?.reserve_fund_goal, financialSummary?.reserve_fund_duration_months, onReserveFundAmountChange]);
 
   // Fetch financial summary data
   const fetchFinancialSummary = async (isRefresh = false) => {
@@ -360,6 +366,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const financialData: FinancialSummary = {
         total_balance: apiData.total_balance || 0,
         current_obligations: apiData.current_obligations || 0,
+        previous_obligations: apiData.previous_obligations || 0, // ← ΝΕΟ FIELD
         reserve_fund_debt: -calculatedReserveFundDebt, // Χρέος από εισφορά αποθεματικού - DYNAMIC
         reserve_fund_goal: savedGoal,
         current_reserve: apiData.current_reserve || 0,
@@ -372,7 +379,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         // Reserve Fund Period Tracking - Use saved values with fallbacks
         reserve_fund_start_date: savedStartDate,
         reserve_fund_target_date: savedTargetDate,
-        reserve_fund_monthly_target: savedGoal > 0 && savedDurationMonths > 0 ? savedGoal / savedDurationMonths : 0, // Calculate correctly: goal ÷ duration
+        reserve_fund_monthly_target: apiMonthlyTarget, // Use API value directly (already calculated based on period)
         reserve_fund_duration_months: savedDurationMonths,
         // Reserve Fund Contribution (from API)
         reserve_fund_contribution: apiData.reserve_fund_contribution || 0, // ← ΝΕΟ FIELD
@@ -1032,30 +1039,39 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     )}
                   </div>
                   
-                  {/* Εισφορά αποθεματικού - μόνο σε ενεργούς μήνες */}
-                  {financialSummary.has_monthly_activity !== false && (
+                  {/* Εισφορά αποθεματικού - εμφανίζεται αν υπάρχει στόχος και είμαστε στην περίοδο εφαρμογής */}
+                  {(financialSummary.reserve_fund_monthly_target || 0) > 0 && (
                     <div className="space-y-1">
                       <div className="text-xs text-green-600 font-medium">Εισφορά αποθεματικού:</div>
                       <div className="text-lg font-bold text-green-700">
                         {formatCurrency(financialSummary.reserve_fund_monthly_target || 0)}
                       </div>
-                      {(financialSummary.reserve_fund_monthly_target || 0) > 0 && (
+                      <div className="flex items-center gap-1">
                         <div className="text-xs text-green-600 italic">
                           {financialSummary.reserve_fund_contribution === 0 ? 'Δεν συλλέγεται (pending obligations)' : 'Συσσώρευση κεφαλαίων'}
                         </div>
-                      )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowReserveFundInfoModal(true)}
+                          className="h-4 w-4 p-0 text-green-600 hover:text-green-700"
+                          title="Πληροφορίες για την εισφορά αποθεματικού"
+                        >
+                          <Info className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   )}
                   
-                  {/* Συνολικές Υποχρεώσεις (μόνο αν υπάρχουν πραγματικές δαπάνες ή αποθεματικό) */}
-                  {((financialSummary.average_monthly_expenses || 0) > 0 || ((financialSummary.reserve_fund_monthly_target || 0) > 0 && financialSummary.has_monthly_activity !== false)) && (
+                  {/* Συνολικές Υποχρεώσεις (αν υπάρχουν πραγματικές δαπάνες ή αποθεματικό) */}
+                  {((financialSummary.average_monthly_expenses || 0) > 0 || (financialSummary.reserve_fund_monthly_target || 0) > 0) && (
                     <div className="space-y-1 pt-2 border-t border-gray-200">
                       <div className="text-xs text-gray-700 font-medium">Συνολικές υποχρεώσεις μήνα:</div>
                       <div className="text-xl font-bold text-gray-800">
-                        {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.has_monthly_activity !== false ? (financialSummary.reserve_fund_monthly_target || 0) : 0))}
+                        {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.reserve_fund_monthly_target || 0))}
                       </div>
                       <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">
-                        {(financialSummary.average_monthly_expenses || 0) > 0 && (financialSummary.reserve_fund_monthly_target || 0) > 0 && financialSummary.has_monthly_activity !== false
+                        {(financialSummary.average_monthly_expenses || 0) > 0 && (financialSummary.reserve_fund_monthly_target || 0) > 0
                           ? 'Έξοδα + Εισφορά'
                           : (financialSummary.average_monthly_expenses || 0) > 0 
                             ? 'Μόνο έξοδα'
@@ -1128,7 +1144,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-red-700 font-medium">Τρέχουσες υποχρεώσεις:</span>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-lg text-red-800">
+                          <span className="font-semibold text-sm text-red-800">
                             {formatCurrency(Math.abs(financialSummary.current_obligations || 0))}
                           </span>
                           <Button
@@ -1144,13 +1160,13 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       </div>
                     </div>
                       
-                    {/* Εισφορά αποθεματικού - μόνο σε ενεργούς μήνες */}
-                    {financialSummary.has_monthly_activity !== false && (
+                    {/* Εισφορά αποθεματικού - εμφανίζεται αν υπάρχει στόχος */}
+                    {(financialSummary.reserve_fund_monthly_target || 0) > 0 && (
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-orange-700 font-medium">Εισφορά αποθεματικού:</span>
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-lg text-orange-800">
+                            <span className="font-semibold text-sm text-orange-800">
                               {formatCurrency(financialSummary.reserve_fund_monthly_target || 0)}
                             </span>
                             <Button
@@ -1174,20 +1190,20 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
                     {/* Αναλυτικά δεδομένα υπολοίπου */}
                     <div className="pt-2 border-t border-gray-200 space-y-2">
-                      <div className="text-xs font-medium text-gray-700 mb-2">Αναλυτική Ανάλυση:</div>
+                      <div className="text-xs font-medium text-gray-700 mb-2">Αναλυτική Εξέταση:</div>
                       
                       {/* Οφειλές προηγούμενων μηνών */}
-                      <div className="space-y-1">
+                      <div className="space-y-1 pt-2 border-t border-gray-200">
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-purple-700 font-medium">Οφειλές προηγούμενων μηνών:</span>
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-sm text-purple-800">
-                              {formatCurrency(Math.abs(financialSummary?.total_balance || 0) - Math.abs(financialSummary?.current_obligations || 0))}
+                              {formatCurrency(financialSummary?.previous_obligations || 0)}
                             </span>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleShowAmountDetails('previous_obligations', Math.abs(financialSummary?.total_balance || 0) - Math.abs(financialSummary?.current_obligations || 0), 'Οφειλές Προηγούμενων Μηνών')}
+                              onClick={() => handleShowAmountDetails('previous_obligations', financialSummary?.previous_obligations || 0, 'Οφειλές Προηγούμενων Μηνών')}
                               className="h-6 px-2 text-xs text-purple-600 hover:text-purple-700"
                               title="Δείτε λεπτομέρειες"
                             >
@@ -1201,7 +1217,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       </div>
 
                       {/* Ταμείο Πολυκατοικίας */}
-                      <div className="space-y-1">
+                      <div className="space-y-1 pt-2 border-t border-gray-200">
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-blue-700 font-medium">Ταμείο Πολυκατοικίας:</span>
                           <div className="flex items-center gap-2">
@@ -1255,12 +1271,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     <div className="space-y-1 pt-2 border-t border-gray-200">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-700 font-medium">Συνολική κάλυψη:</span>
-                        <span className="font-semibold text-lg text-gray-800">
-                          {formatCurrency((Math.abs(financialSummary.current_obligations || 0)) + (financialSummary.has_monthly_activity !== false ? (financialSummary.reserve_fund_monthly_target || 0) : 0))}
+                        <span className="font-semibold text-sm text-gray-800">
+                          {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.reserve_fund_monthly_target || 0))}
                         </span>
                       </div>
                       <div className="text-xs text-gray-600">
-                        Υποχρεώσεις + Αποθεματικό
+                        Έξοδα + Αποθεματικό
                       </div>
                     </div>
                     
@@ -1396,13 +1412,13 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     <div className="space-y-3">
                       <div className="space-y-1">
                         <div className="text-xs text-orange-700 font-medium">Στόχος:</div>
-                        <div className={`text-xl font-bold ${getProgressColors(reserveProgress).text}`}>
+                        <div className={`text-lg font-bold ${getProgressColors(reserveProgress).text}`}>
                           {formatCurrency(financialSummary?.reserve_fund_goal || 0)}
                         </div>
                       </div>
                       <div className="space-y-1">
                         <div className="text-xs text-orange-700 font-medium">Μηνιαία Δόση:</div>
-                        <div className={`text-lg font-bold ${getProgressColors(reserveProgress).text}`}>
+                        <div className={`text-sm font-bold ${getProgressColors(reserveProgress).text}`}>
                           {formatCurrency(financialSummary?.reserve_fund_monthly_target || 0)}
                         </div>
                       </div>
@@ -1566,7 +1582,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     <div className="space-y-3">
                       <div className="space-y-1">
                         <div className="text-xs text-purple-700 font-medium">Αμοιβή ανά διαμέρισμα:</div>
-                        <div className="text-lg font-bold text-purple-700">
+                        <div className="text-sm font-bold text-purple-700">
                           {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}
                         </div>
                       </div>
@@ -1576,7 +1592,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     <div className="space-y-3">
                       <div className="space-y-1">
                         <div className="text-xs text-purple-700 font-medium">Συνολικό κόστος διαχείρισης:</div>
-                        <div className="text-lg font-bold text-purple-700">
+                        <div className="text-sm font-bold text-purple-700">
                           {formatCurrency((financialSummary?.management_fee_per_apartment || 0) * (financialSummary?.apartments_count || 0))}
                         </div>
                         <div className="text-xs text-purple-600">
@@ -1675,6 +1691,80 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         title={selectedAmountTitle}
         selectedMonth={selectedMonth}
       />
+
+      {/* Previous Obligations Modal */}
+      <PreviousObligationsModal
+        isOpen={showPreviousObligationsModal}
+        onClose={() => setShowPreviousObligationsModal(false)}
+        buildingId={buildingId}
+        selectedMonth={selectedMonth}
+      />
+
+      {/* Reserve Fund Info Modal */}
+      {showReserveFundInfoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-green-800 flex items-center gap-2">
+                <Info className="h-5 w-5" />
+                Εισφορά Αποθεματικού
+              </h2>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowReserveFundInfoModal(false)}
+              >
+                ✕
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="text-sm text-gray-700 leading-relaxed">
+                {financialSummary?.reserve_fund_contribution === 0 ? (
+                  <>
+                    <p className="mb-3">
+                      <strong>Δεν συλλέγεται εισφορά αποθεματικού</strong> επειδή υπάρχουν εκκρεμείς υποχρεώσεις.
+                    </p>
+                    <p className="mb-3">
+                      Η εισφορά αποθεματικού θα αρχίσει να συλλέγεται μόλις μηδενιστούν οι τρέχουσες υποχρεώσεις των διαμερισμάτων.
+                    </p>
+                    <p>
+                      Αυτό εξασφαλίζει ότι <strong>πρώτα καλύπτονται τα άμεσα έξοδα</strong> και μετά συσσωρεύεται το αποθεματικό ταμείο για μελλοντικές ανάγκες.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="mb-3">
+                      <strong>Η εισφορά αποθεματικού συλλέγεται κανονικά</strong> καθώς δεν υπάρχουν εκκρεμείς υποχρεώσεις.
+                    </p>
+                    <p>
+                      Το αποθεματικό ταμείο συσσωρεύεται για την κάλυψη μελλοντικών έκτακτων εξόδων και συντήρησης του κτιρίου.
+                    </p>
+                  </>
+                )}
+              </div>
+              
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <h4 className="text-sm font-semibold text-green-800 mb-2">Πληροφορίες:</h4>
+                <ul className="text-xs text-green-700 space-y-1">
+                  <li>• Μηνιαία εισφορά: {formatCurrency(financialSummary?.reserve_fund_monthly_target || 0)}</li>
+                  <li>• Τρέχον αποθεματικό: {formatCurrency(financialSummary?.current_reserve || 0)}</li>
+                  <li>• Στόχος αποθεματικού: {formatCurrency(financialSummary?.reserve_fund_goal || 0)}</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="flex justify-end mt-6">
+              <Button 
+                onClick={() => setShowReserveFundInfoModal(false)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Κατάλαβα
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 });
