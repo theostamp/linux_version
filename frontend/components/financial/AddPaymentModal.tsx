@@ -48,6 +48,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
 
   // Advanced calculation cache per modal open (maps apartmentId -> monthly total for selected month)
   const [monthlyShares, setMonthlyShares] = useState<Record<number, number> | null>(null);
+  const [monthlySharesData, setMonthlySharesData] = useState<any>(null); // Full calculation data
   const [isCalculatingShares, setIsCalculatingShares] = useState(false);
   const [calcError, setCalcError] = useState<string | null>(null);
   const [amountTouched, setAmountTouched] = useState(false);
@@ -125,6 +126,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
           }
         });
         setMonthlyShares(map);
+        setMonthlySharesData(response.data); // Store full calculation data
       } catch (err: any) {
         console.error('Error fetching monthly shares:', err);
         setCalcError(err?.response?.data?.error || 'Αποτυχία υπολογισμού κοινοχρήστων μήνα');
@@ -242,6 +244,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
     setReceiptFile(null);
     setError(null);
     setMonthlyShares(null);
+    setMonthlySharesData(null);
     setCalcError(null);
     setAmountTouched(false);
     onClose();
@@ -514,9 +517,23 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                 {(() => {
                   const building = buildings.find(b => b.id === buildingId) || selectedBuilding || currentBuilding;
                   const reserveAmount = building?.reserve_contribution_per_apartment || 0;
-                  return reserveAmount > 0 ? (
+                  
+                  // Check if reserve fund is actually included in the current amount
+                  // Use the actual calculation data from the backend
+                  const currentAmount = formData.amount || 0;
+                  
+                  // Get the actual reserve fund contribution for this apartment from the calculation
+                  const apartmentShare = monthlySharesData?.shares?.[selectedApartment?.id];
+                  const actualReserveContribution = apartmentShare?.breakdown?.reserve_fund_contribution || 0;
+                  const hasReserveFund = actualReserveContribution > 0;
+                  
+                  return reserveAmount > 0 && hasReserveFund ? (
                     <p className="text-xs text-blue-600 mt-1">
-                      💡 Το ποσό περιλαμβάνει και αποθεματικό {formatCurrency(reserveAmount)}
+                      💡 Το ποσό περιλαμβάνει και αποθεματικό {formatCurrency(actualReserveContribution)}
+                    </p>
+                  ) : reserveAmount > 0 && !hasReserveFund ? (
+                    <p className="text-xs text-orange-600 mt-1">
+                      ⚠️ Αποθεματικό δεν συλλέγεται λόγω εκκρεμοτήτων
                     </p>
                   ) : null;
                 })()}
@@ -537,7 +554,17 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                   {(() => {
                     const building = buildings.find(b => b.id === buildingId) || selectedBuilding || currentBuilding;
                     const reserveAmount = building?.reserve_contribution_per_apartment || 0;
-                    return reserveAmount > 0 ? ` (συμπεριλαμβανομένου αποθεματικού ${formatCurrency(reserveAmount)})` : '';
+                    
+                    // Check if reserve fund is actually included in the current amount
+                    // Use the actual calculation data from the backend
+                    const currentAmount = formData.amount || 0;
+                    
+                    // Get the actual reserve fund contribution for this apartment from the calculation
+                    const apartmentShare = monthlySharesData?.shares?.[selectedApartment?.id];
+                    const actualReserveContribution = apartmentShare?.breakdown?.reserve_fund_contribution || 0;
+                    const hasReserveFund = actualReserveContribution > 0;
+                    
+                    return reserveAmount > 0 && hasReserveFund ? ` (συμπεριλαμβανομένου αποθεματικού ${formatCurrency(actualReserveContribution)})` : '';
                   })()}
                 </div>
               </div>

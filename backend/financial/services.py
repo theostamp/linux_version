@@ -2,6 +2,7 @@ from decimal import Decimal
 from typing import Dict, Any, List, Optional
 from django.db.models import Sum
 from datetime import datetime
+from django.utils import timezone
 from .models import Expense, Transaction, Payment, CommonExpensePeriod, ApartmentShare
 from apartments.models import Apartment
 from buildings.models import Building
@@ -44,7 +45,6 @@ class CommonExpenseCalculator:
         Υπολογίζει το ιστορικό υπόλοιπο διαμερίσματος μέχρι την δοθείσα ημερομηνία
         """
         from datetime import datetime
-        from django.utils import timezone
         
         if not end_date:
             return apartment.current_balance or Decimal('0.00')
@@ -365,6 +365,7 @@ class FinancialDashboardService:
         
         # Δαπάνες αυτού του μήνα
         from datetime import datetime, date
+        
         if month:
             # Parse YYYY-MM
             try:
@@ -376,7 +377,7 @@ class FinancialDashboardService:
                     end_date = date(year, mon + 1, 1)
             except Exception:
                 # Fallback to current month
-                now = datetime.now()
+                now = timezone.now()
                 start_date = date(now.year, now.month, 1)
                 if now.month == 12:
                     end_date = date(now.year + 1, 1, 1)
@@ -384,7 +385,7 @@ class FinancialDashboardService:
                     end_date = date(now.year, now.month + 1, 1)
         else:
             # Current month
-            now = datetime.now()
+            now = timezone.now()
             start_date = date(now.year, now.month, 1)
             if now.month == 12:
                 end_date = date(now.year + 1, 1, 1)
@@ -412,7 +413,6 @@ class FinancialDashboardService:
         # Φιλτράρισμα ανά μήνα αν δοθεί
         if month:
             try:
-                from django.utils import timezone
                 year, mon = map(int, month.split('-'))
                 start_date = timezone.make_aware(
                     datetime(year, mon, 1, 0, 0, 0)
@@ -443,7 +443,6 @@ class FinancialDashboardService:
         # Φιλτράρισμα ανά μήνα αν δοθεί
         if month:
             try:
-                from django.utils import timezone
                 year, mon = map(int, month.split('-'))
                 start_date = date(year, mon, 1)
                 if mon == 12:
@@ -514,11 +513,18 @@ class FinancialDashboardService:
                 current_reserve, total_obligations
             )
         
+        # Calculate reserve fund monthly target based on whether the month is within the collection period
+        if month and self._is_month_within_reserve_fund_period(month):
+            # Month is within reserve fund collection period
+            reserve_fund_monthly_target = (self.building.reserve_fund_goal or Decimal('0.0')) / (self.building.reserve_fund_duration_months or 1)
+        else:
+            # Month is outside reserve fund collection period or no month specified
+            reserve_fund_monthly_target = Decimal('0.0')
+        
         # Calculate total balance based on view type
         if month:
             # For snapshot view, total balance should be negative of total monthly obligations
-            # This includes expenses + reserve fund contribution
-            reserve_fund_monthly_target = (self.building.reserve_fund_goal or Decimal('0.0')) / (self.building.reserve_fund_duration_months or 1)
+            # This includes expenses + reserve fund contribution (only if within period)
             total_monthly_obligations = total_expenses_this_month + total_management_cost + reserve_fund_monthly_target
             total_balance = -total_monthly_obligations
         else:
@@ -547,20 +553,24 @@ class FinancialDashboardService:
             current_balance__lt=0
         ).count()
         
-        # Calculate average monthly expenses (from the current month + management fees)
-        # Include management fees as they are part of the monthly recurring costs
-        average_monthly_expenses = total_expenses_this_month + total_management_cost
+        # Calculate average monthly expenses (only actual expenses, NOT including management fees)
+        # Management fees are handled separately and should not be included in "actual expenses"
+        average_monthly_expenses = total_expenses_this_month
+        
+        # Calculate previous obligations (accumulated apartment debts)
+        previous_obligations = apartment_obligations
         
         return {
             'total_balance': float(total_balance),
             'current_obligations': float(current_obligations),
+            'previous_obligations': float(previous_obligations),  # ← ΝΕΟ FIELD
             'reserve_fund_contribution': float(reserve_fund_contribution),
             'current_reserve': float(current_reserve),
             'has_monthly_activity': has_monthly_activity,
             'apartments_count': apartments_count,
             'pending_payments': pending_payments,
             'average_monthly_expenses': float(average_monthly_expenses),
-            'last_calculation_date': datetime.now().strftime('%Y-%m-%d'),
+            'last_calculation_date': timezone.now().strftime('%Y-%m-%d'),
             'total_expenses_month': float(total_expenses_this_month),
             'total_payments_month': float(total_payments_this_month),
             'pending_expenses': float(pending_expenses),
@@ -571,7 +581,7 @@ class FinancialDashboardService:
             # Reserve fund settings - dynamic based on building or 0 for new buildings
             'reserve_fund_goal': float(self.building.reserve_fund_goal or Decimal('0.0')),  # From building settings
             'reserve_fund_duration_months': int(self.building.reserve_fund_duration_months or 0),  # From building settings
-            'reserve_fund_monthly_target': float(self.building.reserve_fund_goal or Decimal('0.0')) / float(self.building.reserve_fund_duration_months or 1),  # Calculate: goal / duration
+            'reserve_fund_monthly_target': float(reserve_fund_monthly_target),  # Use calculated value based on period
             # Management expenses
             'management_fee_per_apartment': float(management_fee_per_apartment),
             'total_management_cost': float(total_management_cost)
@@ -601,6 +611,52 @@ class FinancialDashboardService:
         
         return total_monthly_contribution
     
+    def _is_month_within_reserve_fund_period(self, month: str) -> bool:
+        """
+        Ελέγχει αν ο συγκεκριμένος μήνας είναι μέσα στην περίοδο συλλογής αποθεματικού
+        
+        Args:
+            month: Μήνας σε μορφή YYYY-MM
+            
+        Returns:
+            bool: True αν ο μήνας είναι μέσα στην περίοδο συλλογής, False αλλιώς
+        """
+        from datetime import date
+        from dateutil.relativedelta import relativedelta
+        
+        # Αν δεν υπάρχουν ρυθμίσεις αποθεματικού, επιστρέφουμε False
+        if not self.building.reserve_fund_start_date or not self.building.reserve_fund_duration_months:
+            return False
+        
+        try:
+            # Parse τον επιλεγμένο μήνα
+            year, mon = map(int, month.split('-'))
+            selected_month_date = date(year, mon, 1)
+            
+            # Ημερομηνία έναρξης συλλογής αποθεματικού
+            start_date = self.building.reserve_fund_start_date
+            
+            # Υπολογισμός ημερομηνίας λήξης βάσει της διάρκειας
+            # Αν έχουμε target_date, το χρησιμοποιούμε, αλλιώς το υπολογίζουμε
+            if self.building.reserve_fund_target_date:
+                target_date = self.building.reserve_fund_target_date
+            else:
+                # Υπολογισμός: start_date + duration_months
+                target_date = start_date + relativedelta(months=self.building.reserve_fund_duration_months)
+            
+            print(f"🔍 Reserve Fund Period Check: month={month}, start={start_date}, target={target_date}, selected={selected_month_date}")
+            
+            # Ελέγχουμε αν ο επιλεγμένος μήνας είναι μέσα στην περίοδο
+            is_within = start_date <= selected_month_date <= target_date
+            print(f"🔍 Reserve Fund Period Check: is_within={is_within}")
+            
+            return is_within
+            
+        except Exception as e:
+            print(f"🔍 Reserve Fund Period Check: Error - {e}")
+            # Αν δεν μπορούμε να parse τον μήνα, επιστρέφουμε False για ασφάλεια
+            return False
+
     def _has_monthly_activity(self, month: str) -> bool:
         """
         Ελέγχει αν υπάρχει οικονομική δραστηριότητα (διακανονισμός) για τον συγκεκριμένο μήνα
@@ -688,6 +744,19 @@ class FinancialDashboardService:
                 # Τελευταία πληρωμή συνολικά
                 last_payment = apartment.payments.order_by('-date').first()
             
+            # Υπολογισμός κατάστασης βασισμένη στο υπόλοιπο
+            if calculated_balance > 0:
+                if calculated_balance > 100:  # More than 100€ debt
+                    status = 'Κρίσιμο'
+                elif calculated_balance > 50:  # More than 50€ debt
+                    status = 'Καθυστέρηση'
+                else:
+                    status = 'Ενεργό'
+            elif calculated_balance < 0:
+                status = 'Πιστωτικό'
+            else:
+                status = 'Ενεργό'
+            
             balances.append({
                 'id': apartment.id,
                 'apartment_id': apartment.id,
@@ -696,6 +765,7 @@ class FinancialDashboardService:
                 'owner_name': apartment.owner_name or 'Άγνωστος',
                 'current_balance': calculated_balance,
                 'participation_mills': apartment.participation_mills or 0,
+                'status': status,
                 'last_payment_date': last_payment.date if last_payment else None,
                 'last_payment_amount': last_payment.amount if last_payment else None
             })
@@ -817,7 +887,7 @@ class PaymentProcessor:
         # 3. Δημιουργία εγγραφής κίνησης
         transaction = Transaction.objects.create(
             building=building,
-            date=datetime.now(),
+            date=timezone.now(),
             type='common_expense_payment',
             description=f"Είσπραξη Κοινοχρήστων - {apartment.number}",
             apartment_number=apartment.number,
@@ -867,6 +937,9 @@ class ReportService:
     
     def generate_apartment_balance_report(self, apartment_id=None):
         """Δημιουργία αναφοράς κατάστασης οφειλών"""
+        from datetime import date
+        from decimal import Decimal
+        
         apartments = Apartment.objects.filter(building_id=self.building_id)
         
         if apartment_id:
@@ -887,6 +960,19 @@ class ReportService:
             
             current_balance = total_charges - total_payments
             
+            # Υπολογισμός κατάστασης βασισμένη στο υπόλοιπο
+            if current_balance > 0:
+                if current_balance > 100:  # More than 100€ debt
+                    status = 'Κρίσιμο'
+                elif current_balance > 50:  # More than 50€ debt
+                    status = 'Καθυστέρηση'
+                else:
+                    status = 'Ενεργό'
+            elif current_balance < 0:
+                status = 'Πιστωτικό'
+            else:
+                status = 'Ενεργό'
+            
             balance_data.append({
                 'apartment': apartment,
                 'apartment_number': apartment.number,
@@ -895,28 +981,30 @@ class ReportService:
                 'total_charges': total_charges,
                 'total_payments': total_payments,
                 'current_balance': current_balance,
+                'status': status,
                 'last_payment_date': payments.order_by('-date').first().date if payments.exists() else None,
                 'last_payment_amount': payments.order_by('-date').first().amount if payments.exists() else None,
             })
         
         return balance_data
+
     
     def generate_financial_summary_report(self, period='month'):
         """Δημιουργία οικονομικής σύνοψης"""
         from datetime import datetime, timedelta
         
         if period == 'month':
-            start_date = datetime.now().replace(day=1)
+            start_date = timezone.now().replace(day=1)
         elif period == 'quarter':
-            current_month = datetime.now().month
+            current_month = timezone.now().month
             quarter_start_month = ((current_month - 1) // 3) * 3 + 1
-            start_date = datetime.now().replace(month=quarter_start_month, day=1)
+            start_date = timezone.now().replace(month=quarter_start_month, day=1)
         elif period == 'yearly':
-            start_date = datetime.now().replace(month=1, day=1)
+            start_date = timezone.now().replace(month=1, day=1)
         else:
-            start_date = datetime.now() - timedelta(days=30)
+            start_date = timezone.now() - timedelta(days=30)
         
-        end_date = datetime.now()
+        end_date = timezone.now()
         
         # Στατιστικά δαπανών
         expenses = Expense.objects.filter(
@@ -972,7 +1060,7 @@ class ReportService:
         """Δημιουργία δεδομένων ταμειακής ροής για γραφήματα"""
         from datetime import datetime, timedelta
         
-        end_date = datetime.now()
+        end_date = timezone.now()
         start_date = end_date - timedelta(days=days)
         
         # Δημιουργία ημερολογίου
@@ -1016,17 +1104,17 @@ class ReportService:
         if report_type == 'transaction_history':
             data = self.generate_transaction_history_report(**kwargs)
             df = pd.DataFrame(list(data.values()))
-            filename = f'transaction_history_{self.building.name}_{datetime.now().strftime("%Y%m%d")}.xlsx'
+            filename = f'transaction_history_{self.building.name}_{timezone.now().strftime("%Y%m%d")}.xlsx'
         
         elif report_type == 'apartment_balances':
             data = self.generate_apartment_balance_report(**kwargs)
             df = pd.DataFrame(data)
-            filename = f'apartment_balances_{self.building.name}_{datetime.now().strftime("%Y%m%d")}.xlsx'
+            filename = f'apartment_balances_{self.building.name}_{timezone.now().strftime("%Y%m%d")}.xlsx'
         
         elif report_type == 'financial_summary':
             data = self.generate_financial_summary_report(**kwargs)
             df = pd.DataFrame([data])
-            filename = f'financial_summary_{self.building.name}_{datetime.now().strftime("%Y%m%d")}.xlsx'
+            filename = f'financial_summary_{self.building.name}_{timezone.now().strftime("%Y%m%d")}.xlsx'
         
         else:
             raise ValueError(f"Unknown report type: {report_type}")
@@ -1112,7 +1200,7 @@ class ReportService:
         doc.build(elements)
         buffer.seek(0)
         
-        filename = f"{report_type}_{self.building.name}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        filename = f"{report_type}_{self.building.name}_{timezone.now().strftime('%Y%m%d')}.pdf"
         return buffer, filename 
 
 
@@ -1432,7 +1520,7 @@ class CommonExpenseAutomationService:
             # Δημιουργία κίνησης ταμείου
             Transaction.objects.create(
                 building_id=self.building_id,
-                date=datetime.now(),
+                date=timezone.now(),
                 type='common_expense_charge',
                 description=f'Χρέωση κοινοχρήστων - {period.period_name}',
                 apartment=apartment,
@@ -1589,7 +1677,6 @@ class AdvancedCommonExpenseCalculator:
         Υπολογίζει το ιστορικό υπόλοιπο διαμερίσματος μέχρι την δοθείσα ημερομηνία
         """
         from datetime import datetime
-        from django.utils import timezone
         
         if not end_date:
             return apartment.current_balance or Decimal('0.00')
@@ -1675,7 +1762,7 @@ class AdvancedCommonExpenseCalculator:
             'actual_reserve_collected': actual_reserve_collected,  # Only reserve fund money collected
             'management_fee_per_apartment': float(self.building.management_fee_per_apartment or 0),
             'total_apartments': len(self.apartments),
-            'calculation_date': datetime.now().isoformat()
+            'calculation_date': timezone.now().isoformat()
         }
     
     def _calculate_actual_reserve_collected(self) -> float:
@@ -1830,7 +1917,7 @@ class AdvancedCommonExpenseCalculator:
                 end_date = reference_date
             else:
                 # Fallback σε τρέχοντα μήνα
-                now = datetime.now()
+                now = timezone.now()
                 start_date = now.replace(day=1).date()
                 end_date = now.date()
             

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Frontend Authentication</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        textarea { width: 100%; height: 200px; margin: 10px 0; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Test Frontend Authentication & Service Packages</h1>
+        
+        <div class="section info">
+            <h3>📋 Test Status</h3>
+            <div id="status">Ready to test...</div>
+        </div>
+
+        <div class="section">
+            <h3>🚀 Actions</h3>
+            <button onclick="testLogin()">1. Test Login</button>
+            <button onclick="testServicePackages()">2. Test Service Packages</button>
+            <button onclick="testCreatePackage()">3. Test Create Package</button>
+            <button onclick="clearStorage()">🗑️ Clear Storage</button>
+        </div>
+
+        <div class="section">
+            <h3>📊 Results</h3>
+            <textarea id="results" readonly></textarea>
+        </div>
+
+        <div class="section">
+            <h3>🔍 localStorage Info</h3>
+            <pre id="localStorage"></pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        const results = document.getElementById('results');
+        const status = document.getElementById('status');
+        const localStorageDiv = document.getElementById('localStorage');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            results.value += `[${timestamp}] ${message}\n`;
+            results.scrollTop = results.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            status.innerHTML = `<span class="${type}">${message}</span>`;
+        }
+
+        function updateLocalStorage() {
+            const storage = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                storage[key] = localStorage.getItem(key);
+            }
+            localStorageDiv.textContent = JSON.stringify(storage, null, 2);
+        }
+
+        async function testLogin() {
+            updateStatus('Testing login...', 'info');
+            log('🔐 Starting login test...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/users/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@demo.localhost',
+                        password: 'admin123456'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Login successful!');
+                    log(`Access token: ${data.access?.substring(0, 20)}...`);
+                    log(`Refresh token: ${data.refresh?.substring(0, 20)}...`);
+                    
+                    // Store tokens
+                    localStorage.setItem('access', data.access);
+                    localStorage.setItem('refresh', data.refresh);
+                    
+                    updateStatus('Login successful!', 'success');
+                } else {
+                    log('❌ Login failed:');
+                    log(JSON.stringify(data, null, 2));
+                    updateStatus('Login failed!', 'error');
+                }
+            } catch (error) {
+                log('❌ Login error: ' + error.message);
+                updateStatus('Login error!', 'error');
+            }
+            
+            updateLocalStorage();
+        }
+
+        async function testServicePackages() {
+            updateStatus('Testing service packages...', 'info');
+            log('📦 Starting service packages test...');
+            
+            const token = localStorage.getItem('access');
+            if (!token) {
+                log('❌ No access token found! Please login first.');
+                updateStatus('No token found!', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/buildings/service-packages/`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Service packages fetched successfully!');
+                    log(`Found ${data.results?.length || 0} packages:`);
+                    
+                    if (data.results) {
+                        data.results.forEach(pkg => {
+                            log(`  - ${pkg.name}: ${pkg.fee_per_apartment}€/διαμέρισμα`);
+                        });
+                    }
+                    
+                    updateStatus('Service packages loaded!', 'success');
+                } else {
+                    log('❌ Service packages failed:');
+                    log(`Status: ${response.status}`);
+                    log(JSON.stringify(data, null, 2));
+                    updateStatus('Service packages failed!', 'error');
+                }
+            } catch (error) {
+                log('❌ Service packages error: ' + error.message);
+                updateStatus('Service packages error!', 'error');
+            }
+        }
+
+        async function testCreatePackage() {
+            updateStatus('Testing package creation...', 'info');
+            log('🆕 Starting package creation test...');
+            
+            const token = localStorage.getItem('access');
+            if (!token) {
+                log('❌ No access token found! Please login first.');
+                updateStatus('No token found!', 'error');
+                return;
+            }
+
+            const packageData = {
+                name: 'Browser Test Πακέτο',
+                description: 'Πακέτο δημιουργημένο από browser test',
+                fee_per_apartment: '15.75',
+                services_included: [
+                    'Browser test υπηρεσία 1',
+                    'Browser test υπηρεσία 2',
+                    'Browser test υπηρεσία 3'
+                ],
+                is_active: true
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/buildings/service-packages/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(packageData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Package created successfully!');
+                    log(`Package ID: ${data.id}`);
+                    log(`Package name: ${data.name}`);
+                    log(`Package fee: ${data.fee_per_apartment}€`);
+                    updateStatus('Package created!', 'success');
+                } else {
+                    log('❌ Package creation failed:');
+                    log(`Status: ${response.status}`);
+                    log(JSON.stringify(data, null, 2));
+                    updateStatus('Package creation failed!', 'error');
+                }
+            } catch (error) {
+                log('❌ Package creation error: ' + error.message);
+                updateStatus('Package creation error!', 'error');
+            }
+        }
+
+        function clearStorage() {
+            localStorage.clear();
+            log('🗑️ localStorage cleared');
+            updateStatus('Storage cleared', 'info');
+            updateLocalStorage();
+        }
+
+        // Initialize
+        updateLocalStorage();
+        
+        // Auto-refresh localStorage display every 2 seconds
+        setInterval(updateLocalStorage, 2000);
+    </script>
+</body>
+</html>

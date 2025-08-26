@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Link Feature Preview</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .month-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: background-color 0.2s;
+        }
+        .month-item:hover {
+            background-color: #f9fafb;
+        }
+        .month-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .month-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .month-name {
+            font-weight: 500;
+            color: #374151;
+        }
+        .link-button {
+            background: none;
+            border: none;
+            color: #2563eb;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .link-button:hover {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+        }
+        .balance-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .balance-positive {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .balance-negative {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 8px;
+            border-radius: 6px;
+        }
+        .stat-payments {
+            background-color: #f0fdf4;
+        }
+        .stat-expenses {
+            background-color: #fef2f2;
+        }
+        .stat-transactions {
+            background-color: #eff6ff;
+        }
+        .stat-value {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .payments {
+            color: #059669;
+        }
+        .expenses {
+            color: #dc2626;
+        }
+        .transactions {
+            color: #2563eb;
+        }
+        .title {
+            color: #1f2937;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">
+            📅 Μηνιαία Εξέλιξη (Τελευταίοι 12 Μήνες)
+        </h1>
+        
+        <!-- Φεβρουάριος 2025 -->
+        <div class="month-item">
+            <div class="month-header">
+                <div class="month-title">
+                    <span class="month-name">Φεβρουάριος 2025</span>
+                    <button class="link-button" title="Δείτε λεπτομέρειες για τον Φεβρουάριος 2025">
+                        🔗
+                    </button>
+                </div>
+                <span class="balance-badge balance-negative">-100.00€</span>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-item stat-payments">
+                    <div class="stat-value payments">+0.00€</div>
+                    <div class="stat-label">Εισπράξεις</div>
+                </div>
+                <div class="stat-item stat-expenses">
+                    <div class="stat-value expenses">-100.00€</div>
+                    <div class="stat-label">Δαπάνες</div>
+                </div>
+                <div class="stat-item stat-transactions">
+                    <div class="stat-value transactions">1</div>
+                    <div class="stat-label">Συναλλαγές</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ιανουάριος 2025 -->
+        <div class="month-item">
+            <div class="month-header">
+                <div class="month-title">
+                    <span class="month-name">Ιανουάριος 2025</span>
+                    <button class="link-button" title="Δείτε λεπτομέρειες για τον Ιανουάριος 2025">
+                        🔗
+                    </button>
+                </div>
+                <span class="balance-badge balance-positive">+50.00€</span>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-item stat-payments">
+                    <div class="stat-value payments">+150.00€</div>
+                    <div class="stat-label">Εισπράξεις</div>
+                </div>
+                <div class="stat-item stat-expenses">
+                    <div class="stat-value expenses">-100.00€</div>
+                    <div class="stat-label">Δαπάνες</div>
+                </div>
+                <div class="stat-item stat-transactions">
+                    <div class="stat-value transactions">3</div>
+                    <div class="stat-label">Συναλλαγές</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Δεκέμβριος 2024 -->
+        <div class="month-item">
+            <div class="month-header">
+                <div class="month-title">
+                    <span class="month-name">Δεκέμβριος 2024</span>
+                    <button class="link-button" title="Δείτε λεπτομέρειες για τον Δεκέμβριος 2024">
+                        🔗
+                    </button>
+                </div>
+                <span class="balance-badge balance-negative">-25.00€</span>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-item stat-payments">
+                    <div class="stat-value payments">+75.00€</div>
+                    <div class="stat-label">Εισπράξεις</div>
+                </div>
+                <div class="stat-item stat-expenses">
+                    <div class="stat-value expenses">-100.00€</div>
+                    <div class="stat-label">Δαπάνες</div>
+                </div>
+                <div class="stat-item stat-transactions">
+                    <div class="stat-value transactions">2</div>
+                    <div class="stat-label">Συναλλαγές</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate link button clicks
+        document.querySelectorAll('.link-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const monthName = this.parentElement.querySelector('.month-name').textContent;
+                alert(`Θα μεταβείτε στην καρτέλα dashboard για τον ${monthName}`);
+            });
+        });
+    </script>
+</body>
+</html>

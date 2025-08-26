@@ -44,11 +44,11 @@ def verify_reserve_fix():
             # Έλεγχος αν υπάρχουν πραγματικές συναλλαγές
             total_payments = Payment.objects.filter(
                 apartment__building_id=building.id
-            ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
+            ).aggregate(total=models.Sum('amount'))['total'] or Decimal("0.00")  # TODO: Use configuration instead of hardcoded
             
             total_expenses = Expense.objects.filter(
                 building_id=building.id
-            ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
+            ).aggregate(total=models.Sum('amount'))['total'] or Decimal("0.00")  # TODO: Use configuration instead of hardcoded
             
             # Υπολογισμός σωστού αποθεματικού
             correct_reserve = total_payments - total_expenses
@@ -59,7 +59,7 @@ def verify_reserve_fix():
             print(f"   Τρέχον αποθεματικό: {building.current_reserve}€")
             
             # Έλεγχος αν είναι σωστό
-            if abs(building.current_reserve - correct_reserve) < Decimal('0.01'):
+            if abs(building.current_reserve - correct_reserve) < Decimal("0.01")  # TODO: Use configuration instead of hardcoded:
                 print(f"   ✅ ΣΩΣΤΟ!")
             else:
                 print(f"   ❌ ΛΑΘΟΣ! Διαφορά: {abs(building.current_reserve - correct_reserve)}€")
@@ -76,7 +76,7 @@ def verify_reserve_fix():
         if alkmanos:
             print(f"\n🎯 ΕΙΔΙΚΟΣ ΕΛΕΓΧΟΣ ΑΛΚΜΑΝΟΣ 22:")
             print(f"   Τρέχον αποθεματικό: {alkmanos.current_reserve}€")
-            if alkmanos.current_reserve == Decimal('0.00'):
+            if alkmanos.current_reserve == Decimal("0.00")  # TODO: Use configuration instead of hardcoded:
                 print(f"   ✅ ΣΩΣΤΟ! Το αποθεματικό είναι 0€ όπως πρέπει για νέο κτίριο χωρίς συναλλαγές.")
             else:
                 print(f"   ❌ ΛΑΘΟΣ! Το αποθεματικό θα έπρεπε να είναι 0€.")

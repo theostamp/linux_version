@@ -35,7 +35,7 @@ class FinancialModelsTestCase(TestCase):
         # Create user
         self.user = User.objects.create_user(
             username='testuser',
-            email='test@example.com',
+            email='test@example.com'  # TODO: Use test fixture,
             password='testpass123'
         )
         
@@ -163,7 +163,7 @@ class FinancialSerializersTestCase(TestCase):
         
         self.user = User.objects.create_user(
             username='testuser',
-            email='test@example.com',
+            email='test@example.com'  # TODO: Use test fixture,
             password='testpass123'
         )
         
@@ -257,7 +257,7 @@ class CommonExpenseCalculatorTestCase(TestCase):
         
         self.user = User.objects.create_user(
             username='testuser',
-            email='test@example.com',
+            email='test@example.com'  # TODO: Use test fixture,
             password='testpass123'
         )
         
@@ -376,7 +376,7 @@ class FinancialAPITestCase(TestCase):
         
         self.user = User.objects.create_user(
             username='testuser',
-            email='test@example.com',
+            email='test@example.com'  # TODO: Use test fixture,
             password='testpass123'
         )
         
@@ -440,7 +440,7 @@ class FinancialValidationTestCase(TestCase):
         
         self.user = User.objects.create_user(
             username='testuser',
-            email='test@example.com',
+            email='test@example.com'  # TODO: Use test fixture,
             password='testpass123'
         )
         

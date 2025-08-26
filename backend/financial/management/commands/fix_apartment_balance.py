@@ -9,7 +9,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         with schema_context('demo'):
             # Βρες το διαμέρισμα 10
-            apartment = Apartment.objects.filter(building_id=4, number='10').first()
+            apartment = Apartment.objects.filter(building_id=building_id, number=apartment_number).first()
             if not apartment:
                 self.stdout.write(self.style.ERROR("❌ Δεν βρέθηκε διαμέρισμα 10"))
                 return

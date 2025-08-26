@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ExpenseViewSet, TransactionViewSet, PaymentViewSet,
     FinancialDashboardViewSet, CommonExpenseViewSet, MeterReadingViewSet,
-    ReportViewSet, SupplierViewSet, ApartmentTransactionViewSet
+    ReportViewSet, SupplierViewSet, ApartmentTransactionViewSet,
+    SystemHealthCheckView, auto_fix_system_issues
 )
 
 router = DefaultRouter()
@@ -27,4 +28,8 @@ urlpatterns = [
     path('building/<int:pk>/apartments-summary/', 
          FinancialDashboardViewSet.as_view({'get': 'apartments_summary'}), 
          name='building-apartments-summary'),
+    # System health check endpoint
+    path('system-health/', SystemHealthCheckView.as_view(), name='system-health-check'),
+    # Auto fix system issues endpoint
+    path('auto-fix/', auto_fix_system_issues, name='auto-fix-system-issues'),
 ] 

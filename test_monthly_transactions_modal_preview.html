@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Transactions Modal Preview</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .modal-subtitle {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .summary-card {
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid;
+        }
+        .summary-card.green {
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+        .summary-card.red {
+            background-color: #fef2f2;
+            border-color: #fecaca;
+        }
+        .summary-card.blue {
+            background-color: #eff6ff;
+            border-color: #bfdbfe;
+        }
+        .summary-card.purple {
+            background-color: #faf5ff;
+            border-color: #c4b5fd;
+        }
+        .summary-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .summary-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .summary-title {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .summary-amount {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .summary-count {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        .transactions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .transaction-section {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .section-header {
+            padding: 16px;
+            background-color: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .section-count {
+            background-color: #e5e7eb;
+            color: #374151;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .transaction-list {
+            padding: 16px;
+        }
+        .transaction-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .transaction-item.expense {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+        .transaction-item.payment {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+        .transaction-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+        .transaction-content {
+            flex: 1;
+        }
+        .transaction-title {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .transaction-details {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        .transaction-badge {
+            background-color: #e5e7eb;
+            color: #374151;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+        .transaction-amount {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .close-button {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background-color: white;
+            color: #374151;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover {
+            background-color: #f9fafb;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 32px 16px;
+            color: #6b7280;
+        }
+        .empty-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            background-color: #f3f4f6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Modal Header -->
+        <div class="modal-header">
+            <div class="summary-icon blue">📅</div>
+            <div>
+                <div class="modal-title">Κινήσεις Μήνα: Φεβρουάριος 2025</div>
+                <div class="modal-subtitle">Κτίριο ID: 4</div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+            <div class="summary-card green">
+                <div class="summary-header">
+                    <div class="summary-icon green">↗️</div>
+                    <div class="summary-title green">Εισπράξεις</div>
+                </div>
+                <div class="summary-amount green">€1,250.00</div>
+                <div class="summary-count green">8 συναλλαγές</div>
+            </div>
+
+            <div class="summary-card red">
+                <div class="summary-header">
+                    <div class="summary-icon red">↘️</div>
+                    <div class="summary-title red">Δαπάνες</div>
+                </div>
+                <div class="summary-amount red">€850.00</div>
+                <div class="summary-count red">5 συναλλαγές</div>
+            </div>
+
+            <div class="summary-card blue">
+                <div class="summary-header">
+                    <div class="summary-icon blue">€</div>
+                    <div class="summary-title blue">Υπόλοιπο</div>
+                </div>
+                <div class="summary-amount blue" style="color: #059669;">€400.00</div>
+                <div class="summary-count blue">Εισπράξεις - Δαπάνες</div>
+            </div>
+
+            <div class="summary-card purple">
+                <div class="summary-header">
+                    <div class="summary-icon purple">📊</div>
+                    <div class="summary-title purple">Σύνολο</div>
+                </div>
+                <div class="summary-amount purple">13</div>
+                <div class="summary-count purple">συναλλαγές</div>
+            </div>
+        </div>
+
+        <!-- Transactions Grid -->
+        <div class="transactions-grid">
+            <!-- Expenses Section -->
+            <div class="transaction-section">
+                <div class="section-header">
+                    <div class="summary-icon red">↘️</div>
+                    <div class="section-title">Δαπάνες</div>
+                    <div class="section-count">5</div>
+                </div>
+                <div class="transaction-list">
+                    <div class="transaction-item expense">
+                        <div class="transaction-icon red">↘️</div>
+                        <div class="transaction-content">
+                            <div class="transaction-title">ΔΕΗ Κοινοχρήστων</div>
+                            <div class="transaction-details">15/02/2025 • Διαμ. Α1</div>
+                            <div class="transaction-badge">Ηλεκτρική Ενέργεια</div>
+                        </div>
+                        <div class="transaction-amount" style="color: #dc2626;">-€150.00</div>
+                    </div>
+
+                    <div class="transaction-item expense">
+                        <div class="transaction-icon red">↘️</div>
+                        <div class="transaction-content">
+                            <div class="transaction-title">Καθαρισμός Κοινοχρήστων</div>
+                            <div class="transaction-details">10/02/2025 • Διαμ. Β2</div>
+                            <div class="transaction-badge">Καθαρισμός</div>
+                        </div>
+                        <div class="transaction-amount" style="color: #dc2626;">-€120.00</div>
+                    </div>
+
+                    <div class="transaction-item expense">
+                        <div class="transaction-icon red">↘️</div>
+                        <div class="transaction-content">
+                            <div class="transaction-title">Συντήρηση Ανελκυστήρα</div>
+                            <div class="transaction-details">05/02/2025 • Διαμ. Γ3</div>
+                            <div class="transaction-badge">Συντήρηση</div>
+                        </div>
+                        <div class="transaction-amount" style="color: #dc2626;">-€200.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payments Section -->
+            <div class="transaction-section">
+                <div class="section-header">
+                    <div class="summary-icon green">↗️</div>
+                    <div class="section-title">Εισπράξεις</div>
+                    <div class="section-count">8</div>
+                </div>
+                <div class="transaction-list">
+                    <div class="transaction-item payment">
+                        <div class="transaction-icon green">↗️</div>
+                        <div class="transaction-content">
+                            <div class="transaction-title">Είσπραξη - Γεώργιος Παπαδόπουλος</div>
+                            <div class="transaction-details">10/02/2025 • Διαμ. Α1</div>
+                            <div class="transaction-badge">Τραπεζική Μεταφορά</div>
+                        </div>
+                        <div class="transaction-amount" style="color: #059669;">+€200.00</div>
+                    </div>
+
+                    <div class="transaction-item payment">
+                        <div class="transaction-icon green">↗️</div>
+                        <div class="transaction-content">
+                            <div class="transaction-title">Είσπραξη - Μαρία Κωνσταντίνου</div>
+                            <div class="transaction-details">12/02/2025 • Διαμ. Β2</div>
+                            <div class="transaction-badge">Μετρητά</div>
+                        </div>
+                        <div class="transaction-amount" style="color: #059669;">+€180.00</div>
+                    </div>
+
+                    <div class="transaction-item payment">
+                        <div class="transaction-icon green">↗️</div>
+                        <div class="transaction-content">
+                            <div class="transaction-title">Είσπραξη - Νικόλαος Αλεξίου</div>
+                            <div class="transaction-details">14/02/2025 • Διαμ. Γ3</div>
+                            <div class="transaction-badge">Τραπεζική Μεταφορά</div>
+                        </div>
+                        <div class="transaction-amount" style="color: #059669;">+€220.00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Close Button -->
+        <div class="close-button">
+            <button class="btn">
+                <span>✕</span>
+                Κλείσιμο
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Simulate modal interactions
+        document.querySelector('.btn').addEventListener('click', function() {
+            alert('Το modal θα κλείσει');
+        });
+
+        // Simulate transaction item clicks
+        document.querySelectorAll('.transaction-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const title = this.querySelector('.transaction-title').textContent;
+                const amount = this.querySelector('.transaction-amount').textContent;
+                alert(`Επιλέξατε: ${title}\nΠοσό: ${amount}`);
+            });
+        });
+    </script>
+</body>
+</html>

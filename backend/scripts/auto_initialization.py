@@ -173,6 +173,36 @@ def create_demo_tenant():
     
     return tenant
 
+def validate_all_mills(apartments_data, building_name):
+    """Επικύρωση ότι όλα τα χιλιοστά έχουν συνολικό άθροισμα 1000"""
+    total_participation = sum(apt['participation_mills'] for apt in apartments_data)
+    total_heating = sum(apt['heating_mills'] for apt in apartments_data)
+    total_elevator = sum(apt['elevator_mills'] for apt in apartments_data)
+    
+    print(f"🔍 Επικύρωση χιλιοστών για {building_name}:")
+    print(f"   Συμμετοχή: {total_participation} χιλιοστά")
+    print(f"   Θέρμανση: {total_heating} χιλιοστά")
+    print(f"   Ανελκυστήρας: {total_elevator} χιλιοστά")
+    
+    all_correct = True
+    
+    if total_participation != 1000:
+        print(f"❌ ΣΦΑΛΜΑ: Χιλιοστά συμμετοχής = {total_participation} (πρέπει να είναι 1000)")
+        all_correct = False
+    
+    if total_heating != 1000:
+        print(f"❌ ΣΦΑΛΜΑ: Χιλιοστά θέρμανσης = {total_heating} (πρέπει να είναι 1000)")
+        all_correct = False
+    
+    if total_elevator != 1000:
+        print(f"❌ ΣΦΑΛΜΑ: Χιλιοστά ανελκυστήρα = {total_elevator} (πρέπει να είναι 1000)")
+        all_correct = False
+    
+    if all_correct:
+        print(f"✅ Όλα τα χιλιοστά είναι σωστά για {building_name}")
+    
+    return all_correct
+
 def create_demo_data(tenant_schema):
     """Δημιουργία πλήρων demo δεδομένων"""
     print(f"\n🎨 Δημιουργία demo δεδομένων για {tenant_schema}...")
@@ -255,8 +285,6 @@ def create_demo_data(tenant_schema):
                 'management_office_phone': '2109876544',
                 'management_office_address': 'Αραχώβης 15, Αθήνα 106 80',
                 'heating_fixed_percentage': 30.0,
-                'reserve_contribution_per_apartment': 5.0,
-                'current_reserve': 0.00,
                 'latitude': 37.9838,
                 'longitude': 23.7275
             },
@@ -269,8 +297,6 @@ def create_demo_data(tenant_schema):
                 'internal_manager_name': 'Μαρία Κωνσταντίνου',
                 'internal_manager_phone': '2101234567',
                 'heating_fixed_percentage': 30.0,
-                'reserve_contribution_per_apartment': 5.0,
-                'current_reserve': 0.00,
                 'latitude': 37.9838,
                 'longitude': 23.7275
             }
@@ -318,26 +344,30 @@ def create_demo_data(tenant_schema):
         # 4. Δημιουργία διαμερισμάτων
         for building in created_buildings:
             if building.name == 'Αραχώβης 12':
-                # Ειδική δημιουργία για Αραχώβης 12 - 10 διαμερίσματα
+                # Ειδική δημιουργία για Αραχώβης 12 - 10 διαμερίσματα (ΣΥΝΟΛΟ ΧΙΛΙΟΣΤΑ = 1000)
                 apartments_data = [
                     # Όροφος 1
-                    {'number': 'Α1', 'floor': 1, 'owner_name': 'Γεώργιος Παπαδόπουλος', 'owner_phone': '2101234567', 'owner_email': 'papadopoulos@email.com', 'tenant_name': 'Μαρία Κωνσταντίνου', 'tenant_phone': '2101234568', 'tenant_email': 'maria@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 98, 'heating_mills': 102, 'elevator_mills': 95, 'current_balance': 0.00},
-                    {'number': 'Α2', 'floor': 1, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2101234569', 'owner_email': 'eleni@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 3, 'participation_mills': 108, 'heating_mills': 110, 'elevator_mills': 105, 'current_balance': 0.00},
-                    {'number': 'Α3', 'floor': 1, 'owner_name': 'Νίκος Αλεξίου', 'owner_phone': '2101234570', 'owner_email': 'nikos@email.com', 'tenant_name': 'Αννα Παπαδοπούλου', 'tenant_phone': '2101234571', 'tenant_email': 'anna@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 2, 'participation_mills': 92, 'heating_mills': 88, 'elevator_mills': 90, 'current_balance': 0.00},
+                    {'number': 'Α1', 'floor': 1, 'owner_name': 'Γεώργιος Παπαδόπουλος', 'owner_phone': '2101234567', 'owner_email': 'papadopoulos@email.com', 'tenant_name': 'Μαρία Κωνσταντίνου', 'tenant_phone': '2101234568', 'tenant_email': 'maria@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 96, 'heating_mills': 100, 'elevator_mills': 103},
+                    {'number': 'Α2', 'floor': 1, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2101234569', 'owner_email': 'eleni@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 3, 'participation_mills': 106, 'heating_mills': 108, 'elevator_mills': 105},
+                    {'number': 'Α3', 'floor': 1, 'owner_name': 'Νίκος Αλεξίου', 'owner_phone': '2101234570', 'owner_email': 'nikos@email.com', 'tenant_name': 'Αννα Παπαδοπούλου', 'tenant_phone': '2101234571', 'tenant_email': 'anna@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 2, 'participation_mills': 90, 'heating_mills': 86, 'elevator_mills': 88},
                     
                     # Όροφος 2
-                    {'number': 'Β1', 'floor': 2, 'owner_name': 'Δημήτρης Κωνσταντίνου', 'owner_phone': '2101234572', 'owner_email': 'dimitris@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 115, 'heating_mills': 118, 'elevator_mills': 112, 'current_balance': 0.00},
-                    {'number': 'Β2', 'floor': 2, 'owner_name': 'Κατερίνα Γεωργίου', 'owner_phone': '2101234573', 'owner_email': 'katerina@email.com', 'tenant_name': 'Παύλος Μιχαηλίδης', 'tenant_phone': '2101234574', 'tenant_email': 'pavlos@email.com', 'is_rented': True, 'square_meters': 80, 'bedrooms': 2, 'participation_mills': 96, 'heating_mills': 98, 'elevator_mills': 100, 'current_balance': 0.00},
-                    {'number': 'Β3', 'floor': 2, 'owner_name': 'Ανδρέας Παπαδάκης', 'owner_phone': '2101234575', 'owner_email': 'andreas@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 102, 'heating_mills': 100, 'elevator_mills': 98, 'current_balance': 0.00},
+                    {'number': 'Β1', 'floor': 2, 'owner_name': 'Δημήτρης Κωνσταντίνου', 'owner_phone': '2101234572', 'owner_email': 'dimitris@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 113, 'heating_mills': 111, 'elevator_mills': 110},
+                    {'number': 'Β2', 'floor': 2, 'owner_name': 'Κατερίνα Γεωργίου', 'owner_phone': '2101234573', 'owner_email': 'katerina@email.com', 'tenant_name': 'Παύλος Μιχαηλίδης', 'tenant_phone': '2101234574', 'tenant_email': 'pavlos@email.com', 'is_rented': True, 'square_meters': 80, 'bedrooms': 2, 'participation_mills': 94, 'heating_mills': 96, 'elevator_mills': 98},
+                    {'number': 'Β3', 'floor': 2, 'owner_name': 'Ανδρέας Παπαδάκης', 'owner_phone': '2101234575', 'owner_email': 'andreas@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 98, 'elevator_mills': 96},
                     
                     # Όροφος 3
-                    {'number': 'Γ1', 'floor': 3, 'owner_name': 'Σοφία Νικολάου', 'owner_phone': '2101234576', 'owner_email': 'sofia@email.com', 'tenant_name': 'Γιώργος Δημητρίου', 'tenant_phone': '2101234577', 'tenant_email': 'giorgos@email.com', 'is_rented': True, 'square_meters': 90, 'bedrooms': 3, 'participation_mills': 107, 'heating_mills': 105, 'elevator_mills': 110, 'current_balance': 0.00},
-                    {'number': 'Γ2', 'floor': 3, 'owner_name': 'Μιχάλης Αντωνίου', 'owner_phone': '2101234578', 'owner_email': 'michalis@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 75, 'bedrooms': 2, 'participation_mills': 89, 'heating_mills': 92, 'elevator_mills': 88, 'current_balance': 0.00},
-                    {'number': 'Γ3', 'floor': 3, 'owner_name': 'Ευαγγελία Παπαδοπούλου', 'owner_phone': '2101234579', 'owner_email': 'evangelia@email.com', 'tenant_name': 'Δημήτρης Κωνσταντίνου', 'tenant_phone': '2101234580', 'tenant_email': 'dimitris2@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 101, 'heating_mills': 97, 'elevator_mills': 102, 'current_balance': 0.00},
+                    {'number': 'Γ1', 'floor': 3, 'owner_name': 'Σοφία Νικολάου', 'owner_phone': '2101234576', 'owner_email': 'sofia@email.com', 'tenant_name': 'Γιώργος Δημητρίου', 'tenant_phone': '2101234577', 'tenant_email': 'giorgos@email.com', 'is_rented': True, 'square_meters': 90, 'bedrooms': 3, 'participation_mills': 105, 'heating_mills': 103, 'elevator_mills': 108},
+                    {'number': 'Γ2', 'floor': 3, 'owner_name': 'Μιχάλης Αντωνίου', 'owner_phone': '2101234578', 'owner_email': 'michalis@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 75, 'bedrooms': 2, 'participation_mills': 87, 'heating_mills': 90, 'elevator_mills': 86},
+                    {'number': 'Γ3', 'floor': 3, 'owner_name': 'Ευαγγελία Παπαδοπούλου', 'owner_phone': '2101234579', 'owner_email': 'evangelia@email.com', 'tenant_name': 'Δημήτρης Κωνσταντίνου', 'tenant_phone': '2101234580', 'tenant_email': 'dimitris2@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 99, 'heating_mills': 95, 'elevator_mills': 100},
                     
                     # Όροφος 4
-                    {'number': 'Δ1', 'floor': 4, 'owner_name': 'Χρήστος Παπαδόπουλος', 'owner_phone': '2101234581', 'owner_email': 'christos@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 112, 'heating_mills': 115, 'elevator_mills': 108, 'current_balance': 0.00}
+                    {'number': 'Δ1', 'floor': 4, 'owner_name': 'Χρήστος Παπαδόπουλος', 'owner_phone': '2101234581', 'owner_email': 'christos@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 113, 'elevator_mills': 106}
                 ]
+                
+                # Επικύρωση χιλιοστών πριν τη δημιουργία
+                if not validate_all_mills(apartments_data, building.name):
+                    raise ValueError(f"Λανθασμένα χιλιοστά για κτίριο {building.name}")
                 
                 for apt_data in apartments_data:
                     apartment, created = Apartment.objects.get_or_create(
@@ -358,7 +388,6 @@ def create_demo_data(tenant_schema):
                             'participation_mills': apt_data['participation_mills'],
                             'heating_mills': apt_data['heating_mills'],
                             'elevator_mills': apt_data['elevator_mills'],
-                            'current_balance': apt_data['current_balance'],
                             'notes': f"Διαμέρισμα {apt_data['number']} στο κτίριο {building.name} - Όροφος {apt_data['floor']}"
                         }
                     )
@@ -366,19 +395,23 @@ def create_demo_data(tenant_schema):
                         print(f"✅ Δημιουργήθηκε διαμέρισμα: {apt_data['number']} (Αραχώβης 12)")
             
             elif building.name == 'Αλκμάνος 22':
-                # Ειδική δημιουργία για Αλκμάνος 22 - 10 διαμερίσματα
+                # Ειδική δημιουργία για Αλκμάνος 22 - 10 διαμερίσματα (ΣΥΝΟΛΟ ΧΙΛΙΟΣΤΑ = 1000)
                 apartments_data = [
-                    {'number': '1', 'floor': 0, 'owner_name': 'Γεώργιος Παπαδόπουλος', 'owner_phone': '2101234567', 'owner_email': 'papadopoulos@email.com', 'tenant_name': 'Μαρία Κωνσταντίνου', 'tenant_phone': '2102345678', 'tenant_email': 'maria.k@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 95, 'heating_mills': 98, 'elevator_mills': 95, 'current_balance': 0.00},
-                    {'number': '2', 'floor': 0, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2103456789', 'owner_email': 'eleni.d@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 2, 'participation_mills': 102, 'heating_mills': 105, 'elevator_mills': 102, 'current_balance': 0.00},
-                    {'number': '3', 'floor': 1, 'owner_name': 'Νικόλαος Αλεξίου', 'owner_phone': '2104567890', 'owner_email': 'nikos.alex@email.com', 'tenant_name': 'Ανδρέας Παπαγεωργίου', 'tenant_phone': '2105678901', 'tenant_email': 'andreas.p@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 88, 'heating_mills': 92, 'elevator_mills': 88, 'current_balance': 0.00},
-                    {'number': '4', 'floor': 1, 'owner_name': 'Αικατερίνη Σταματίου', 'owner_phone': '2106789012', 'owner_email': 'katerina.s@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 115, 'elevator_mills': 110, 'current_balance': 0.00},
-                    {'number': '5', 'floor': 2, 'owner_name': 'Δημήτριος Κωνσταντίνου', 'owner_phone': '2107890123', 'owner_email': 'dimitris.k@email.com', 'tenant_name': 'Σοφία Παπαδοπούλου', 'tenant_phone': '2108901234', 'tenant_email': 'sofia.pap@email.com', 'is_rented': True, 'square_meters': 92, 'bedrooms': 2, 'participation_mills': 105, 'heating_mills': 108, 'elevator_mills': 105, 'current_balance': 0.00},
-                    {'number': '6', 'floor': 2, 'owner_name': 'Ιωάννης Μιχαηλίδης', 'owner_phone': '2109012345', 'owner_email': 'giannis.m@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 88, 'bedrooms': 2, 'participation_mills': 98, 'heating_mills': 102, 'elevator_mills': 98, 'current_balance': 0.00},
-                    {'number': '7', 'floor': 3, 'owner_name': 'Αννα Παπαδοπούλου', 'owner_phone': '2100123456', 'owner_email': 'anna.pap@email.com', 'tenant_name': 'Χρήστος Γεωργίου', 'tenant_phone': '2101234567', 'tenant_email': 'christos.g@email.com', 'is_rented': True, 'square_meters': 82, 'bedrooms': 2, 'participation_mills': 92, 'heating_mills': 95, 'elevator_mills': 92, 'current_balance': 0.00},
-                    {'number': '8', 'floor': 3, 'owner_name': 'Παναγιώτης Αντωνίου', 'owner_phone': '2102345678', 'owner_email': 'panagiotis.a@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 100, 'bedrooms': 3, 'participation_mills': 115, 'heating_mills': 120, 'elevator_mills': 115, 'current_balance': 0.00},
-                    {'number': '9', 'floor': 4, 'owner_name': 'Ευαγγελία Κωνσταντίνου', 'owner_phone': '2103456789', 'owner_email': 'evangelia.k@email.com', 'tenant_name': 'Δημήτριος Παπαδόπουλος', 'tenant_phone': '2104567890', 'tenant_email': 'dimitris.pap@email.com', 'is_rented': True, 'square_meters': 96, 'bedrooms': 3, 'participation_mills': 108, 'heating_mills': 112, 'elevator_mills': 108, 'current_balance': 0.00},
-                    {'number': '10', 'floor': 4, 'owner_name': 'Μιχαήλ Γεωργίου', 'owner_phone': '2105678901', 'owner_email': 'michalis.g@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 78, 'bedrooms': 1, 'participation_mills': 87, 'heating_mills': 93, 'elevator_mills': 87, 'current_balance': 0.00}
+                    {'number': '1', 'floor': 0, 'owner_name': 'Γεώργιος Παπαδόπουλος', 'owner_phone': '2101234567', 'owner_email': 'papadopoulos@email.com', 'tenant_name': 'Μαρία Κωνσταντίνου', 'tenant_phone': '2102345678', 'tenant_email': 'maria.k@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 95, 'heating_mills': 100, 'elevator_mills': 95},
+                    {'number': '2', 'floor': 0, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2103456789', 'owner_email': 'eleni.d@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 2, 'participation_mills': 102, 'heating_mills': 105, 'elevator_mills': 102},
+                    {'number': '3', 'floor': 1, 'owner_name': 'Νικόλαος Αλεξίου', 'owner_phone': '2104567890', 'owner_email': 'nikos.alex@email.com', 'tenant_name': 'Ανδρέας Παπαγεωργίου', 'tenant_phone': '2105678901', 'tenant_email': 'andreas.p@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 88, 'heating_mills': 92, 'elevator_mills': 88},
+                    {'number': '4', 'floor': 1, 'owner_name': 'Αικατερίνη Σταματίου', 'owner_phone': '2106789012', 'owner_email': 'katerina.s@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 115, 'elevator_mills': 110},
+                    {'number': '5', 'floor': 2, 'owner_name': 'Δημήτριος Κωνσταντίνου', 'owner_phone': '2107890123', 'owner_email': 'dimitris.k@email.com', 'tenant_name': 'Σοφία Παπαδοπούλου', 'tenant_phone': '2108901234', 'tenant_email': 'sofia.pap@email.com', 'is_rented': True, 'square_meters': 92, 'bedrooms': 2, 'participation_mills': 105, 'heating_mills': 108, 'elevator_mills': 105},
+                    {'number': '6', 'floor': 2, 'owner_name': 'Ιωάννης Μιχαηλίδης', 'owner_phone': '2109012345', 'owner_email': 'giannis.m@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 88, 'bedrooms': 2, 'participation_mills': 98, 'heating_mills': 102, 'elevator_mills': 98},
+                    {'number': '7', 'floor': 3, 'owner_name': 'Αννα Παπαδοπούλου', 'owner_phone': '2100123456', 'owner_email': 'anna.pap@email.com', 'tenant_name': 'Χρήστος Γεωργίου', 'tenant_phone': '2101234567', 'tenant_email': 'christos.g@email.com', 'is_rented': True, 'square_meters': 82, 'bedrooms': 2, 'participation_mills': 92, 'heating_mills': 95, 'elevator_mills': 92},
+                    {'number': '8', 'floor': 3, 'owner_name': 'Παναγιώτης Αντωνίου', 'owner_phone': '2102345678', 'owner_email': 'panagiotis.a@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 100, 'bedrooms': 3, 'participation_mills': 115, 'heating_mills': 100, 'elevator_mills': 115},
+                    {'number': '9', 'floor': 4, 'owner_name': 'Ευαγγελία Κωνσταντίνου', 'owner_phone': '2103456789', 'owner_email': 'evangelia.k@email.com', 'tenant_name': 'Δημήτριος Παπαδόπουλος', 'tenant_phone': '2104567890', 'tenant_email': 'dimitris.pap@email.com', 'is_rented': True, 'square_meters': 96, 'bedrooms': 3, 'participation_mills': 108, 'heating_mills': 100, 'elevator_mills': 108},
+                    {'number': '10', 'floor': 4, 'owner_name': 'Μιχαήλ Γεωργίου', 'owner_phone': '2105678901', 'owner_email': 'michalis.g@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 78, 'bedrooms': 1, 'participation_mills': 87, 'heating_mills': 83, 'elevator_mills': 87}
                 ]
+                
+                # Επικύρωση χιλιοστών πριν τη δημιουργία
+                if not validate_all_mills(apartments_data, building.name):
+                    raise ValueError(f"Λανθασμένα χιλιοστά για κτίριο {building.name}")
                 
                 for apt_data in apartments_data:
                     apartment, created = Apartment.objects.get_or_create(
@@ -399,7 +432,6 @@ def create_demo_data(tenant_schema):
                             'participation_mills': apt_data['participation_mills'],
                             'heating_mills': apt_data['heating_mills'],
                             'elevator_mills': apt_data['elevator_mills'],
-                            'current_balance': apt_data['current_balance'],
                             'notes': f"Διαμέρισμα {apt_data['number']} στο κτίριο {building.name} - Όροφος {apt_data['floor']}"
                         }
                     )
@@ -492,30 +524,9 @@ def create_demo_data(tenant_schema):
                 print(f"✅ Δημιουργήθηκε ψηφοφορία: {vote.title}")
         
         # 8. Δημιουργία υποχρεώσεων
-        obligations_data = [
-            {
-                'title': 'Ανταλλακτικά θυροτηλεφώνου',
-                'description': 'Αγορά ανταλλακτικών για τον θυροτηλέφωνο',
-                'amount': 150.0
-            },
-            {
-                'title': 'Καθαρισμός κοινοχρήστων',
-                'description': 'Μηνιαίος καθαρισμός κοινοχρήστων χώρων',
-                'amount': 300.0
-            }
-        ]
-        
-        for obligation_data in obligations_data:
-            obligation, created = Obligation.objects.get_or_create(
-                title=obligation_data['title'],
-                defaults={
-                    'building': created_buildings[0],
-                    'amount': obligation_data['amount'],
-                    'due_date': timezone.now() + timedelta(days=30)
-                }
-            )
-            if created:
-                print(f"✅ Δημιουργήθηκε υποχρέωση: {obligation.title}")
+        print("\n📋 Δημιουργία υποχρεώσεων...")
+        print("ℹ️ Δεν δημιουργούνται υποχρεώσεις με hardcoded ποσά")
+        print("✅ Ολοκληρώθηκε η δημιουργία υποχρεώσεων")
         
         # 9. Δημιουργία οικονομικών δεδομένων
         print("\n💰 Δημιουργία οικονομικών δεδομένων...")
@@ -584,8 +595,6 @@ ADMIN: http://demo.localhost:8000/admin/
 - 2 αιτήματα
 - 2 ψηφοφορίες
 - 2 υποχρεώσεις
-- 0 δαπάνες κτιρίου (μηδενικά demo ποσά)
-- 0 εισπράξεις ιδιοκτητών (μηδενικά demo ποσά)
 
 🌐 ΠΡΟΣΒΑΣΗ:
 ------------
@@ -599,7 +608,7 @@ Demo Admin Panel: http://demo.localhost:8000/admin/
 Διεύθυνση: Αραχώβης 12, Αθήνα 106 80, Ελλάδα
 Διαχειριστής: Δημήτρης Αραχωβίτης (2109876543)
 Γραφείο Διαχείρισης: Διαχείριση Αραχώβης ΑΕ (2109876544)
-Τρέχον Αποθεματικό: 0,00€ (μηδενικά demo ποσά)
+Τρέχον Αποθεματικό: Δεν ορίζεται
 Διαμερίσματα: 10 (4 όροφοι)
 
 📋 ΔΙΑΜΕΡΙΣΜΑΤΑ ΑΡΑΧΩΒΗΣ 12:
@@ -622,10 +631,8 @@ Demo Admin Panel: http://demo.localhost:8000/admin/
 Όροφος 4:
 - D1: Χρήστος Παπαδόπουλος (ιδιοκτήτης)
 
-💰 ΟΙΚΟΝΟΜΙΚΑ ΔΕΔΟΜΕΝΑ ΑΡΑΧΩΒΗΣ 12:
+📊 ΧΑΡΑΚΤΗΡΙΣΤΙΚΑ ΑΡΑΧΩΒΗΣ 12:
 -------------------------------------
-Δαπάνες: 0 (μηδενικά demo ποσά)
-Εισπράξεις: 0 (μηδενικά demo ποσά)
 Χιλιοστά: Πλήρη κατανομή ανά διαμέρισμα (87-115 χιλιοστά)
 
 🔐 ΙΕΡΑΡΧΙΑ ΔΙΚΑΙΩΜΑΤΩΝ:

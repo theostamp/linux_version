@@ -9,6 +9,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import BuildingSelectorButton from '@/components/BuildingSelectorButton';
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
+import { CalculatorModal } from '@/components/ui/CalculatorModal';
 import {
   Home,
   Megaphone,
@@ -30,6 +31,7 @@ import {
   Truck,
   RefreshCw,
   Activity,
+  Calculator,
 } from 'lucide-react';
 
 // Grouped navigation links with categories
@@ -550,6 +552,21 @@ export default function Sidebar() {
             </div>
           ))}
         </nav>
+
+        {/* Calculator Section */}
+        <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+          <div className="rounded-lg border border-gray-200 dark:border-gray-600 p-2 bg-white dark:bg-gray-800">
+            <h3 className="text-xs font-semibold mb-2 px-2 py-1 rounded tracking-wide text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700">
+              Εργαλεία
+            </h3>
+            <CalculatorModal>
+              <button className="flex items-center justify-start w-full px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ease-in-out group text-left tracking-wide text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm hover:transform hover:-translate-y-0.5">
+                <Calculator className="w-4 h-4 mr-2 transition-colors duration-200 flex-shrink-0 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                <span className="text-left">Αριθμομηχανή</span>
+              </button>
+            </CalculatorModal>
+          </div>
+        </div>
       </aside>
 
       {/* Mobile Overlay */}

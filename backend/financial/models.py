@@ -92,6 +92,14 @@ class Supplier(models.Model):
 class Expense(models.Model):
     """Μοντέλο για τις δαπάνες κτιρίου"""
     
+    # Expense Type choices for easy identification and reversal
+    EXPENSE_TYPE_CHOICES = [
+        ('regular', 'Κανονική Δαπάνη'),
+        ('management_fee', 'Διαχειριστικά Έξοδα'),
+        ('reserve_fund', 'Εισφορά Αποθεματικού'),
+        ('auto_generated', 'Αυτόματη Δαπάνη'),
+    ]
+    
     EXPENSE_CATEGORIES = [
         # Πάγιες Δαπάνες Κοινοχρήστων
         ('cleaning', 'Καθαρισμός Κοινοχρήστων Χώρων'),
@@ -215,6 +223,13 @@ class Expense(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Ποσό (€)")
     date = models.DateField(verbose_name="Ημερομηνία")
     category = models.CharField(max_length=50, choices=EXPENSE_CATEGORIES, verbose_name="Κατηγορία")
+    expense_type = models.CharField(
+        max_length=20, 
+        choices=EXPENSE_TYPE_CHOICES, 
+        default='regular',
+        verbose_name="Τύπος Δαπάνης",
+        help_text="Χρησιμοποιείται για αναγνώριση αυτόματων δαπανών"
+    )
     distribution_type = models.CharField(max_length=50, choices=DISTRIBUTION_TYPES, verbose_name="Τρόπος Κατανομής")
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True, related_name='expenses', verbose_name="Προμηθευτής")
     attachment = models.FileField(
@@ -321,6 +336,7 @@ class Payment(models.Model):
     apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Ποσό")
     reserve_fund_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Ποσό Αποθεματικού")
+    previous_obligations_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Παλαιότερες Οφειλές")
     date = models.DateField(verbose_name="Ημερομηνία Εισπράξεως")
     method = models.CharField(max_length=20, choices=PAYMENT_METHODS, verbose_name="Τρόπος Εισπράξεως")
     payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPES, default='common_expense', verbose_name="Τύπος Εισπράξεως")

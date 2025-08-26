@@ -26,8 +26,10 @@ import {
   BarChart3,
   ChevronDown,
   ChevronUp,
-  Info
+  Info,
+  PieChart
 } from 'lucide-react';
+import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { api, makeRequestWithRetry } from '@/lib/api';
 import { toast } from 'react-hot-toast';
@@ -1304,7 +1306,194 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
           </div>
         </div>
 
-
+        {/* Section 1.5: Payment Coverage Chart */}
+        <div className="space-y-4">
+          <Card className="border-2 border-blue-200 bg-blue-50/30">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <PieChart className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold text-sm text-blue-900">
+                  Κάλυψη Υποχρεώσεων με Εισπράξεις
+                </h3>
+                <div className="text-xs text-blue-700 mb-2">
+                  Ανάλυση ποσοστού κάλυψης των τρέχουσων υποχρεώσεων βάσει των εισπράξεων
+                </div>
+              </div>
+              
+              {(() => {
+                // Calculate data for pie chart
+                const totalObligations = Math.abs(financialSummary.current_obligations || 0) + Math.abs(financialSummary.reserve_fund_monthly_target || 0);
+                
+                // Calculate payments based on the financial context
+                // For snapshot view (selectedMonth), total_balance represents the monthly obligations
+                // For current view, we need to calculate based on current reserve vs obligations
+                let totalPayments = 0;
+                let pendingPayments = totalObligations;
+                
+                if (selectedMonth) {
+                  // Snapshot view: total_balance is negative of monthly obligations
+                  // If total_balance is positive, it means we have collected more than monthly obligations
+                  if (financialSummary.total_balance && financialSummary.total_balance > 0) {
+                    totalPayments = Math.min(financialSummary.total_balance, totalObligations);
+                    pendingPayments = Math.max(0, totalObligations - totalPayments);
+                  }
+                } else {
+                  // Current view: use current_reserve as collected amount
+                  if (financialSummary.current_reserve && financialSummary.current_reserve > 0) {
+                    totalPayments = Math.min(financialSummary.current_reserve, totalObligations);
+                    pendingPayments = Math.max(0, totalObligations - totalPayments);
+                  }
+                }
+                
+                const pieData = [
+                  {
+                    name: 'Εισπράξεις',
+                    value: totalPayments,
+                    color: '#10b981', // green-500
+                    percentage: totalObligations > 0 ? (totalPayments / totalObligations * 100).toFixed(1) : '0'
+                  },
+                  {
+                    name: 'Εκκρεμείς Πληρωμές',
+                    value: pendingPayments,
+                    color: '#ef4444', // red-500
+                    percentage: totalObligations > 0 ? (pendingPayments / totalObligations * 100).toFixed(1) : '0'
+                  }
+                ].filter(item => item.value > 0); // Only show segments with values > 0
+                
+                const coveragePercentage = totalObligations > 0 ? (totalPayments / totalObligations * 100) : 0;
+                
+                return (
+                  <div className="space-y-4">
+                    {/* Summary Stats */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-gray-800">
+                          {formatCurrency(totalObligations)}
+                        </div>
+                        <div className="text-xs text-gray-600">Συνολικές Υποχρεώσεις</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-green-600">
+                          {formatCurrency(totalPayments)}
+                        </div>
+                        <div className="text-xs text-gray-600">Εισπράξεις</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-red-600">
+                          {formatCurrency(pendingPayments)}
+                        </div>
+                        <div className="text-xs text-gray-600">Εκκρεμείς Πληρωμές</div>
+                      </div>
+                    </div>
+                    
+                    {/* Pie Chart */}
+                    {pieData.length > 0 ? (
+                      <div className="flex flex-col lg:flex-row items-center gap-6">
+                        <div className="w-full lg:w-1/2 h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <RechartsPieChart>
+                              <Pie
+                                data={pieData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={40}
+                                outerRadius={80}
+                                paddingAngle={2}
+                                dataKey="value"
+                              >
+                                {pieData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip 
+                                formatter={(value: number) => [formatCurrency(value), 'Ποσό']}
+                                labelFormatter={(label) => `${label}`}
+                              />
+                              <Legend 
+                                verticalAlign="bottom" 
+                                height={36}
+                                formatter={(value, entry, index) => (
+                                  <span className="text-sm font-medium">
+                                    {value} ({pieData[index]?.percentage}%)
+                                  </span>
+                                )}
+                              />
+                            </RechartsPieChart>
+                          </ResponsiveContainer>
+                        </div>
+                        
+                        {/* Coverage Summary */}
+                        <div className="w-full lg:w-1/2 space-y-4">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-600">
+                              {coveragePercentage.toFixed(1)}%
+                            </div>
+                            <div className="text-sm text-gray-600">Ποσοστό Κάλυψης</div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-700">Εισπράξεις:</span>
+                              <span className="text-sm font-semibold text-green-600">
+                                {formatCurrency(totalPayments)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-700">Εκκρεμείς:</span>
+                              <span className="text-sm font-semibold text-red-600">
+                                {formatCurrency(pendingPayments)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between border-t pt-2">
+                              <span className="text-sm font-medium text-gray-800">Σύνολο:</span>
+                              <span className="text-sm font-bold text-gray-800">
+                                {formatCurrency(totalObligations)}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Status Message */}
+                          <div className={`p-3 rounded-lg text-sm ${
+                            coveragePercentage >= 100 
+                              ? 'bg-green-50 text-green-800 border border-green-200' 
+                              : coveragePercentage >= 80 
+                                ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+                                : 'bg-red-50 text-red-800 border border-red-200'
+                          }`}>
+                            {coveragePercentage >= 100 ? (
+                              <div className="flex items-center gap-2">
+                                <Check className="h-4 w-4" />
+                                <span>Όλες οι υποχρεώσεις έχουν καλυφθεί!</span>
+                              </div>
+                            ) : coveragePercentage >= 80 ? (
+                              <div className="flex items-center gap-2">
+                                <AlertTriangle className="h-4 w-4" />
+                                <span>Καλή κάλυψη - χρειάζεται επιπλέον εισπράξεις</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <AlertTriangle className="h-4 w-4" />
+                                <span>Χαμηλή κάλυψη - απαιτούνται άμεσες εισπράξεις</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <PieChart className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <div className="text-sm">Δεν υπάρχουν δεδομένα για κάλυψη</div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          Προσθέστε δαπάνες ή εισπράξεις για να δείτε την ανάλυση
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Section 2: Overall Financial Health */}
         <div className="space-y-4">

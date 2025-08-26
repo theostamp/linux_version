@@ -27,65 +27,52 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 interface HealthCheckResult {
-  overall_health: 'excellent' | 'good' | 'fair' | 'poor';
-  checks_performed: number;
-  issues_found: number;
-  warnings: number;
-  successes: number;
   timestamp: string;
-  recommendations: string[];
-  details: {
-    buildings?: {
-      total: number;
-      issues: string[];
-      warnings: string[];
-      successes: number;
+  building: any;
+  checks: {
+    building_data?: {
+      building_exists: boolean;
+      apartments_count: number;
+      apartments_with_mills: number;
+      total_mills: number;
+      expected_mills: number;
     };
-    apartments?: {
-      total: number;
-      issues: string[];
-      warnings: string[];
-      successes: number;
-    };
-    financial?: {
-      expenses: number;
-      payments: number;
-      transactions: number;
-      issues: string[];
-      warnings: string[];
-      successes: number;
-    };
-    balance_consistency?: {
-      total_apartments: number;
-      issues: string[];
-      warnings: string[];
-      successes: number;
-    };
-    reserve_funds?: {
-      total_buildings: number;
-      issues: string[];
-      warnings: string[];
-      successes: number;
-    };
-    participation_mills?: {
-      total_buildings: number;
-      issues: string[];
-      warnings: string[];
-      successes: number;
-    };
-    transaction_integrity?: {
+    financial_data?: {
+      expenses_count: number;
+      transactions_count: number;
+      payments_count: number;
+      total_expenses: number;
       total_transactions: number;
-      issues: string[];
-      warnings: string[];
-      successes: number;
+      total_payments: number;
+      months_with_data: number;
     };
-    data_completeness?: {
-      total_records: number;
-      issues: string[];
-      warnings: string[];
-      successes: number;
+    balance_transfer?: {
+      apartments_checked: number;
+      months_checked: number;
+      balance_issues: number;
+      transfer_issues: number;
+    };
+    duplicate_charges?: {
+      expense_duplicates: number;
+      payment_duplicates: number;
+      total_duplicates: number;
+    };
+    data_integrity?: {
+      orphaned_expenses: number;
+      orphaned_payments: number;
+      invalid_amounts: number;
+      missing_titles: number;
     };
   };
+  summary: {
+    total_checks: number;
+    passed: number;
+    failed: number;
+    warnings: number;
+  };
+  status: 'healthy' | 'issues_found';
+  success_rate: number;
+  output: string;
 }
 
 const SystemHealthCheck: React.FC = () => {
@@ -99,7 +86,10 @@ const SystemHealthCheck: React.FC = () => {
   } = useQuery<{ status: string; data: HealthCheckResult; message: string }>({
     queryKey: ['system-health'],
     queryFn: async () => {
-      const response = await api.get('/financial/system-health/');
+      const response = await api.post('/financial/system-health/', {
+        detailed: true,
+        auto_fix: false
+      });
       return response.data;
     },
     enabled: false, // Don't run automatically
@@ -134,48 +124,39 @@ const SystemHealthCheck: React.FC = () => {
     }
   };
 
-  const getHealthStatusIcon = (health: string) => {
-    switch (health) {
-      case 'excellent':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'good':
-        return <CheckCircle className="h-5 w-5 text-yellow-500" />;
-      case 'fair':
-        return <AlertTriangle className="h-5 w-5 text-orange-500" />;
-      case 'poor':
-        return <XCircle className="h-5 w-5 text-red-500" />;
-      default:
-        return <Activity className="h-5 w-5 text-gray-500" />;
+  const getHealthStatusIcon = (status: string, successRate: number) => {
+    if (status === 'healthy' || successRate === 100) {
+      return <CheckCircle className="h-5 w-5 text-green-500" />;
+    } else if (successRate >= 80) {
+      return <CheckCircle className="h-5 w-5 text-yellow-500" />;
+    } else if (successRate >= 60) {
+      return <AlertTriangle className="h-5 w-5 text-orange-500" />;
+    } else {
+      return <XCircle className="h-5 w-5 text-red-500" />;
     }
   };
 
-  const getHealthStatusColor = (health: string) => {
-    switch (health) {
-      case 'excellent':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'good':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'fair':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'poor':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+  const getHealthStatusColor = (status: string, successRate: number) => {
+    if (status === 'healthy' || successRate === 100) {
+      return 'bg-green-100 text-green-800 border-green-200';
+    } else if (successRate >= 80) {
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    } else if (successRate >= 60) {
+      return 'bg-orange-100 text-orange-800 border-orange-200';
+    } else {
+      return 'bg-red-100 text-red-800 border-red-200';
     }
   };
 
-  const getHealthStatusText = (health: string) => {
-    switch (health) {
-      case 'excellent':
-        return 'Άριστη';
-      case 'good':
-        return 'Καλή';
-      case 'fair':
-        return 'Μέτρια';
-      case 'poor':
-        return 'Κακή';
-      default:
-        return 'Άγνωστη';
+  const getHealthStatusText = (status: string, successRate: number) => {
+    if (status === 'healthy' || successRate === 100) {
+      return 'Άριστη';
+    } else if (successRate >= 80) {
+      return 'Καλή';
+    } else if (successRate >= 60) {
+      return 'Μέτρια';
+    } else {
+      return 'Κακή';
     }
   };
 
@@ -187,10 +168,50 @@ const SystemHealthCheck: React.FC = () => {
   ) => {
     if (!data) return null;
 
-    const issues = data.issues || [];
-    const warnings = data.warnings || [];
-    const successes = data.successes || 0;
-    const total = data.total || data.total_buildings || data.total_apartments || data.total_transactions || data.total_records || 0;
+    // Προσαρμογή για το νέο format
+    let issues: string[] = [];
+    let warnings: string[] = [];
+    let successes = 0;
+    let total = 0;
+
+    if (key === 'building_data') {
+      if (data.total_mills !== data.expected_mills) {
+        issues.push(`Λάθος χιλιοστά: ${data.total_mills} αντί για ${data.expected_mills}`);
+      } else {
+        successes = 1;
+      }
+      total = 1;
+    } else if (key === 'financial_data') {
+      const balance = data.total_payments - data.total_expenses;
+      if (Math.abs(balance) > 0.01) {
+        issues.push(`Ανισορροπία: ${balance.toFixed(2)}€`);
+      } else {
+        successes = 1;
+      }
+      total = 1;
+    } else if (key === 'balance_transfer') {
+      if (data.transfer_issues > 0) {
+        issues.push(`${data.transfer_issues} προβλήματα μεταφοράς υπολοίπων`);
+      } else {
+        successes = 1;
+      }
+      total = 1;
+    } else if (key === 'duplicate_charges') {
+      if (data.total_duplicates > 0) {
+        issues.push(`${data.total_duplicates} διπλές χρεώσεις`);
+      } else {
+        successes = 1;
+      }
+      total = 1;
+    } else if (key === 'data_integrity') {
+      const totalIssues = data.orphaned_expenses + data.orphaned_payments + data.invalid_amounts + data.missing_titles;
+      if (totalIssues > 0) {
+        issues.push(`${totalIssues} προβλήματα ακεραιότητας`);
+      } else {
+        successes = 1;
+      }
+      total = 1;
+    }
 
     return (
       <Card key={key} className="mb-4">
@@ -210,14 +231,9 @@ const SystemHealthCheck: React.FC = () => {
               <AlertDescription>
                 <strong>Προβλήματα ({issues.length}):</strong>
                 <ul className="mt-2 space-y-1">
-                  {issues.slice(0, 3).map((issue: string, index: number) => (
+                  {issues.map((issue: string, index: number) => (
                     <li key={index} className="text-sm">• {issue}</li>
                   ))}
-                  {issues.length > 3 && (
-                    <li className="text-sm text-muted-foreground">
-                      ... και {issues.length - 3} ακόμα
-                    </li>
-                  )}
                 </ul>
               </AlertDescription>
             </Alert>
@@ -229,14 +245,9 @@ const SystemHealthCheck: React.FC = () => {
               <AlertDescription>
                 <strong>Προειδοποιήσεις ({warnings.length}):</strong>
                 <ul className="mt-2 space-y-1">
-                  {warnings.slice(0, 3).map((warning: string, index: number) => (
+                  {warnings.map((warning: string, index: number) => (
                     <li key={index} className="text-sm">• {warning}</li>
                   ))}
-                  {warnings.length > 3 && (
-                    <li className="text-sm text-muted-foreground">
-                      ... και {warnings.length - 3} ακόμα
-                    </li>
-                  )}
                 </ul>
               </AlertDescription>
             </Alert>
@@ -274,7 +285,7 @@ const SystemHealthCheck: React.FC = () => {
             {isRunning ? 'Εκτέλεση...' : 'Εκτέλεση Ελέγχου'}
           </Button>
           
-          {healthData && healthData.data.issues_found > 0 && (
+          {healthData && healthData.data.summary.failed > 0 && (
             <Button 
               onClick={runAutoFix}
               disabled={isRunning || isLoading}
@@ -303,47 +314,44 @@ const SystemHealthCheck: React.FC = () => {
           <Card className="border-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                {getHealthStatusIcon(healthData.data.overall_health)}
+                {getHealthStatusIcon(healthData.data.status, healthData.data.success_rate)}
                 Συνολική Κατάσταση Υγείας
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <Badge className={`${getHealthStatusColor(healthData.data.overall_health)} text-lg px-4 py-2`}>
-                    {getHealthStatusText(healthData.data.overall_health)}
+                  <Badge className={`${getHealthStatusColor(healthData.data.status, healthData.data.success_rate)} text-lg px-4 py-2`}>
+                    {getHealthStatusText(healthData.data.status, healthData.data.success_rate)}
                   </Badge>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {healthData.data.checks_performed}
+                    {healthData.data.summary.total_checks}
                   </div>
                   <div className="text-sm text-muted-foreground">Ελέγχοι</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-600">
-                    {healthData.data.issues_found}
+                    {healthData.data.summary.failed}
                   </div>
                   <div className="text-sm text-muted-foreground">Προβλήματα</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {healthData.data.successes}
+                    {healthData.data.summary.passed}
                   </div>
                   <div className="text-sm text-muted-foreground">Επιτυχίες</div>
                 </div>
               </div>
               
-              {healthData.data.recommendations.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="font-semibold mb-2">💡 Συστάσεις:</h4>
-                  <ul className="space-y-1">
-                    {healthData.data.recommendations.map((rec, index) => (
-                      <li key={index} className="text-sm">• {rec}</li>
-                    ))}
-                  </ul>
+              <div className="mt-4">
+                <h4 className="font-semibold mb-2">📊 Στατιστικά:</h4>
+                <div className="text-sm space-y-1">
+                  <div>• Ποσοστό επιτυχίας: {healthData.data.success_rate.toFixed(1)}%</div>
+                  <div>• Προειδοποιήσεις: {healthData.data.summary.warnings}</div>
                 </div>
-              )}
+              </div>
               
               <div className="mt-4 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 inline mr-1" />
@@ -361,58 +369,49 @@ const SystemHealthCheck: React.FC = () => {
             {renderCheckSection(
               '🏢 Δεδομένα Κτιρίων',
               <Building className="h-5 w-5" />,
-              healthData.data.details.buildings,
-              'buildings'
-            )}
-            
-            {renderCheckSection(
-              '🏠 Δεδομένα Διαμερισμάτων',
-              <Home className="h-5 w-5" />,
-              healthData.data.details.apartments,
-              'apartments'
+              healthData.data.checks.building_data,
+              'building_data'
             )}
             
             {renderCheckSection(
               '💰 Οικονομικά Δεδομένα',
               <Euro className="h-5 w-5" />,
-              healthData.data.details.financial,
-              'financial'
+              healthData.data.checks.financial_data,
+              'financial_data'
             )}
             
             {renderCheckSection(
-              '⚖️ Συνέπεια Υπολοίπων',
+              '🔄 Μεταφορά Υπολοίπων',
               <Scale className="h-5 w-5" />,
-              healthData.data.details.balance_consistency,
-              'balance_consistency'
+              healthData.data.checks.balance_transfer,
+              'balance_transfer'
             )}
             
             {renderCheckSection(
-              '🏦 Αποθεματικά Ταμεία',
-              <PiggyBank className="h-5 w-5" />,
-              healthData.data.details.reserve_funds,
-              'reserve_funds'
-            )}
-            
-            {renderCheckSection(
-              '📊 Χιλιόστιμα Συμμετοχής',
-              <BarChart3 className="h-5 w-5" />,
-              healthData.data.details.participation_mills,
-              'participation_mills'
-            )}
-            
-            {renderCheckSection(
-              '🔒 Ακεραιότητα Συναλλαγών',
+              '🔍 Διπλές Χρεώσεις',
               <Shield className="h-5 w-5" />,
-              healthData.data.details.transaction_integrity,
-              'transaction_integrity'
+              healthData.data.checks.duplicate_charges,
+              'duplicate_charges'
             )}
             
             {renderCheckSection(
-              '📋 Πληρότητα Δεδομένων',
+              '🔒 Ακεραιότητα Δεδομένων',
               <FileText className="h-5 w-5" />,
-              healthData.data.details.data_completeness,
-              'data_completeness'
+              healthData.data.checks.data_integrity,
+              'data_integrity'
             )}
+            
+            {/* Raw Output */}
+            <div className="mt-6">
+              <h2 className="text-xl font-semibold mb-4">📄 Λεπτομερής Έξοδος</h2>
+              <Card>
+                <CardContent className="p-4">
+                  <pre className="text-sm bg-gray-50 p-4 rounded-lg overflow-x-auto whitespace-pre-wrap">
+                    {healthData.data.output}
+                  </pre>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       )}

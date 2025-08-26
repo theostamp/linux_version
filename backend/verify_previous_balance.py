@@ -61,7 +61,7 @@ def verify_previous_balance():
             date__lte=previous_month_end
         ).order_by('date', 'id')
         
-        running_balance = Decimal('0.00')
+        running_balance = Decimal("0.00")  # TODO: Use configuration instead of hardcoded
         print(f"\n📜 Συναλλαγές μέχρι {previous_month_end}:")
         
         for i, transaction in enumerate(transactions, 1):
@@ -93,7 +93,7 @@ def verify_previous_balance():
             date__month=8
         ).order_by('date', 'id')
         
-        total_august_payments = Decimal('0.00')
+        total_august_payments = Decimal("0.00")  # TODO: Use configuration instead of hardcoded
         for payment in august_payments:
             total_august_payments += payment.amount
             print(f"   💵 {payment.date}: {payment.amount}€ ({payment.get_method_display()})")
@@ -138,11 +138,11 @@ def verify_previous_balance():
         print("🔍 ΣΥΓΚΡΙΣΗ ΜΕ ΥΠΑΡΧΟΝ ΣΥΣΤΗΜΑ")
         
         apartment.refresh_from_db()
-        current_system_balance = apartment.current_balance or Decimal('0.00')
+        current_system_balance = apartment.current_balance or Decimal("0.00")  # TODO: Use configuration instead of hardcoded
         print(f"💾 Current balance από DB: {current_system_balance}€")
         print(f"🧮 Υπολογισμένο καθολικό: {global_balance}€")
         
-        if abs(current_system_balance - global_balance) < Decimal('0.01'):
+        if abs(current_system_balance - global_balance) < Decimal("0.01")  # TODO: Use configuration instead of hardcoded:
             print("✅ Τα υπόλοιπα ταιριάζουν!")
         else:
             print(f"❌ Διαφορά: {abs(current_system_balance - global_balance)}€")
@@ -151,7 +151,7 @@ def verify_previous_balance():
         print("🎯 ΣΥΜΠΕΡΑΣΜΑΤΑ")
         
         # Ελέγχει αν το προηγούμενο υπόλοιπο είναι 38,13€ όπως υποπτεύεται ο χρήστης
-        if abs(previous_balance - Decimal('38.13')) < Decimal('0.01'):
+        if abs(previous_balance - Decimal("38.13")  # TODO: Use configuration instead of hardcoded) < Decimal("0.01")  # TODO: Use configuration instead of hardcoded:
             print(f"✅ Το προηγούμενο υπόλοιπο είναι όντως 38,13€")
         else:
             print(f"❌ Το προηγούμενο υπόλοιπο ΔΕΝ είναι 38,13€, είναι {previous_balance}€")

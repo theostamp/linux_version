@@ -316,6 +316,7 @@ class ApartmentBalanceSerializer(serializers.Serializer):
     owner_name = serializers.CharField()
     current_balance = serializers.DecimalField(max_digits=10, decimal_places=2)
     participation_mills = serializers.IntegerField()
+    status = serializers.CharField()  # Νέα κατάσταση βασισμένη στον χρόνο καθυστέρησης
     last_payment_date = serializers.DateField(allow_null=True)
     last_payment_amount = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
 
@@ -325,6 +326,7 @@ class FinancialSummarySerializer(serializers.Serializer):
     
     total_balance = serializers.FloatField()
     current_obligations = serializers.FloatField()
+    previous_obligations = serializers.FloatField()  # ← ΝΕΟ FIELD
     reserve_fund_contribution = serializers.FloatField()
     current_reserve = serializers.FloatField()
     has_monthly_activity = serializers.BooleanField()  # ← ΝΕΟ FIELD

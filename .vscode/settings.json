@@ -11,5 +11,6 @@
             "args": ["-d", "Ubuntu"],
             "icon": "terminal-ubuntu"
         }
-    }
+    },
+    "cursor.composer.shouldAllowCustomModes": true
 }
