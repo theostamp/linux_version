@@ -512,6 +512,10 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                 {!amountTouched && selectedApartment && (monthlyShares?.[selectedApartment.id] || selectedApartment.monthly_due) ? (
                   <p className="text-xs text-gray-500 mt-1">
                     Προτεινόμενο ποσό: {formatCurrency((monthlyShares?.[selectedApartment.id] ?? selectedApartment.monthly_due) || 0)}
+                    <br />
+                    <span className="text-xs text-blue-600">
+                      (Έξοδα + Διαχείριση + Αποθεματικό με βάση χιλιοστά)
+                    </span>
                   </p>
                 ) : null}
                 {(() => {

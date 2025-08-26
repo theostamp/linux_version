@@ -86,7 +86,7 @@ class FinancialDataValidator:
                     'difference': abs(1000 - total_mills)
                 }
             })
-            print(f"   ❌ ΚΡΙΤΙΚΟ: Συνολικό χιλιοστά = {total_mills} (πρέπει να είναι 1000)")
+            print(f"   ❌ Κρίσιμο!: Συνολικό χιλιοστά = {total_mills} (πρέπει να είναι 1000)")
         else:
             print(f"   ✅ Συνολικό χιλιοστά = {total_mills}")
         
@@ -125,7 +125,7 @@ class FinancialDataValidator:
                         'discrepancy': float(discrepancy)
                     }
                 })
-                print(f"   ❌ ΚΡΙΤΙΚΟ: Διαμέρισμα {apartment.number} - Ασυμφωνία {discrepancy:,.2f}€")
+                print(f"   ❌ Κρίσιμο!: Διαμέρισμα {apartment.number} - Ασυμφωνία {discrepancy:,.2f}€")
             else:
                 print(f"   ✅ Διαμέρισμα {apartment.number} - Υπόλοιπο συνεπές")
     
@@ -152,7 +152,7 @@ class FinancialDataValidator:
                         'reserve_contribution': float(reserve_contribution)
                     }
                 })
-                print(f"   ❌ ΚΡΙΤΙΚΟ: Συλλέγεται αποθεματικό ({reserve_contribution:,.2f}€) ενώ υπάρχουν εκκρεμότητες ({total_obligations:,.2f}€)")
+                print(f"   ❌ Κρίσιμο!: Συλλέγεται αποθεματικό ({reserve_contribution:,.2f}€) ενώ υπάρχουν εκκρεμότητες ({total_obligations:,.2f}€)")
             else:
                 print(f"   ✅ Δεν συλλέγεται αποθεματικό (εκκρεμότητες: {total_obligations:,.2f}€)")
         else:
@@ -232,7 +232,7 @@ class FinancialDataValidator:
                     'expense_count': invalid_distribution_expenses.count()
                 }
             })
-            print(f"   ❌ ΚΡΙΤΙΚΟ: {invalid_distribution_expenses.count()} δαπάνες χωρίς τρόπο κατανομής")
+            print(f"   ❌ Κρίσιμο!: {invalid_distribution_expenses.count()} δαπάνες χωρίς τρόπο κατανομής")
         else:
             print(f"   ✅ Όλες οι δαπάνες έχουν έγκυρο τρόπο κατανομής")
     
@@ -287,7 +287,7 @@ class FinancialDataValidator:
                         'expected_previous_balance': float(expected_previous_balance)
                     }
                 })
-                print(f"   ❌ ΚΡΙΤΙΚΟ: Διαμέρισμα {apartment.number} - Λανθασμένο previous_balance")
+                print(f"   ❌ Κρίσιμο!: Διαμέρισμα {apartment.number} - Λανθασμένο previous_balance")
     
     def _validate_reserve_fund_data(self):
         """Έλεγχος δεδομένων αποθεματικού"""

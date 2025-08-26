@@ -513,13 +513,20 @@ class FinancialDashboardService:
                 current_reserve, total_obligations
             )
         
-        # Calculate reserve fund monthly target based on whether the month is within the collection period
-        if month and self._is_month_within_reserve_fund_period(month):
-            # Month is within reserve fund collection period
-            reserve_fund_monthly_target = (self.building.reserve_fund_goal or Decimal('0.0')) / (self.building.reserve_fund_duration_months or 1)
+        # Calculate reserve fund monthly target
+        # For overview display (no month specified), always show the calculated monthly target
+        # For specific months, only show if within the collection period
+        if month:
+            # For specific month view, check if within collection period
+            if self._is_month_within_reserve_fund_period(month):
+                reserve_fund_monthly_target = (self.building.reserve_fund_goal or Decimal('0.0')) / (self.building.reserve_fund_duration_months or 1)
+            else:
+                # Month is outside reserve fund collection period
+                reserve_fund_monthly_target = Decimal('0.0')
         else:
-            # Month is outside reserve fund collection period or no month specified
-            reserve_fund_monthly_target = Decimal('0.0')
+            # For overview display (current view), always show the calculated monthly target
+            # This allows users to see what the monthly target will be even if collection hasn't started
+            reserve_fund_monthly_target = (self.building.reserve_fund_goal or Decimal('0.0')) / (self.building.reserve_fund_duration_months or 1)
         
         # Calculate total balance based on view type
         if month:
@@ -537,10 +544,11 @@ class FinancialDashboardService:
         print(f"🔍 FinancialDashboard ({calculation_context}): current_reserve={current_reserve}, total_obligations={total_obligations}")
         print(f"🔍 FinancialDashboard ({calculation_context}): total_balance={total_balance}")
         
-        # Calculate current obligations (should be the monthly expenses for snapshot view)
+        # Calculate current obligations (should include management costs and reserve fund for consistency)
         if month:
-            # For snapshot view, current obligations are the monthly expenses
-            current_obligations = total_expenses_this_month
+            # For snapshot view, current obligations should include management costs and reserve fund
+            # This ensures consistency between "Οικονομικές Υποχρεώσεις Περιόδου" and "Υπόλοιπο Περιόδου"
+            current_obligations = total_expenses_this_month + total_management_cost + reserve_fund_monthly_target
         else:
             # For current view, use total obligations
             current_obligations = total_obligations

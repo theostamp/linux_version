@@ -1030,7 +1030,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 </div>
                 
                 <div className="space-y-3">
-                  {/* Τρέχοντα έξοδα */}
+                  {/* Πραγματικά έξοδα */}
                   <div className="space-y-1">
                     <div className="text-xs text-red-600 font-medium">Πραγματικά έξοδα:</div>
                     <div className="text-lg font-bold text-red-700">
@@ -1040,6 +1040,19 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       <div className="text-xs text-gray-500 italic">Δεν υπάρχουν δαπάνες</div>
                     )}
                   </div>
+                  
+                  {/* Κόστος διαχείρισης */}
+                  {(financialSummary.total_management_cost || 0) > 0 && (
+                    <div className="space-y-1">
+                      <div className="text-xs text-blue-600 font-medium">Κόστος διαχείρισης:</div>
+                      <div className="text-lg font-bold text-blue-700">
+                        {formatCurrency(financialSummary.total_management_cost || 0)}
+                      </div>
+                      <div className="text-xs text-blue-600 italic">
+                        {financialSummary.apartments_count || 0} διαμερίσματα × {formatCurrency(financialSummary.management_fee_per_apartment || 0)}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Εισφορά αποθεματικού - εμφανίζεται αν υπάρχει στόχος και είμαστε στην περίοδο εφαρμογής */}
                   {(financialSummary.reserve_fund_monthly_target || 0) > 0 && (
@@ -1065,20 +1078,28 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     </div>
                   )}
                   
-                  {/* Συνολικές Υποχρεώσεις (αν υπάρχουν πραγματικές δαπάνες ή αποθεματικό) */}
-                  {((financialSummary.average_monthly_expenses || 0) > 0 || (financialSummary.reserve_fund_monthly_target || 0) > 0) && (
+                  {/* Συνολικές Υποχρεώσεις (αν υπάρχουν πραγματικές δαπάνες, κόστος διαχείρισης ή αποθεματικό) */}
+                  {((financialSummary.average_monthly_expenses || 0) > 0 || (financialSummary.total_management_cost || 0) > 0 || (financialSummary.reserve_fund_monthly_target || 0) > 0) && (
                     <div className="space-y-1 pt-2 border-t border-gray-200">
                       <div className="text-xs text-gray-700 font-medium">Συνολικές υποχρεώσεις μήνα:</div>
                       <div className="text-xl font-bold text-gray-800">
-                        {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.reserve_fund_monthly_target || 0))}
+                        {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (financialSummary.reserve_fund_monthly_target || 0))}
                       </div>
                       <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">
-                        {(financialSummary.average_monthly_expenses || 0) > 0 && (financialSummary.reserve_fund_monthly_target || 0) > 0
-                          ? 'Έξοδα + Εισφορά'
-                          : (financialSummary.average_monthly_expenses || 0) > 0 
-                            ? 'Μόνο έξοδα'
-                            : 'Μόνο εισφορά'
-                        }
+                        {(() => {
+                          const hasExpenses = (financialSummary.average_monthly_expenses || 0) > 0;
+                          const hasManagement = (financialSummary.total_management_cost || 0) > 0;
+                          const hasReserve = (financialSummary.reserve_fund_monthly_target || 0) > 0;
+                          
+                          if (hasExpenses && hasManagement && hasReserve) return 'Έξοδα + Διαχείριση + Εισφορά';
+                          if (hasExpenses && hasManagement) return 'Έξοδα + Διαχείριση';
+                          if (hasExpenses && hasReserve) return 'Έξοδα + Εισφορά';
+                          if (hasManagement && hasReserve) return 'Διαχείριση + Εισφορά';
+                          if (hasExpenses) return 'Μόνο έξοδα';
+                          if (hasManagement) return 'Μόνο διαχείριση';
+                          if (hasReserve) return 'Μόνο εισφορά';
+                          return 'Δεν υπάρχουν υποχρεώσεις';
+                        })()}
                       </Badge>
                     </div>
                   )}
@@ -1093,6 +1114,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
               </CardContent>
             </Card>
 
+
+
             {/* Total Balance Card */}
             <Card className={`border-2 ${getBalanceCardColors(financialSummary?.total_balance || 0).cardBg}`}>
               <CardContent className="p-3 sm:p-4">
@@ -1103,7 +1126,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     <TrendingDown className={`h-5 w-5 ${getBalanceCardColors(financialSummary?.total_balance || 0).icon}`} />
                   )}
                   <h3 className={`font-semibold text-sm ${getBalanceCardColors(financialSummary?.total_balance || 0).title}`}>
-                    {selectedMonth ? `Υπόλοιπο Περιόδου` : 'Τρέχον Υπόλοιπο'}
+                    {selectedMonth ? `Οικονομική Κατάσταση Μήνα` : 'Τρέχον Υπόλοιπο'}
                   </h3>
                 </div>
                 
@@ -1129,22 +1152,22 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       variant={isPositiveBalance ? "default" : "destructive"}
                       className="text-xs"
                     >
-                      {isPositiveBalance ? 'Πιστωτικό' : 'Χρεωστικό'} Υπόλοιπο
+                      {isPositiveBalance ? 'Θετικό Υπόλοιπο' : 'Αρνητικό Υπόλοιπο'}
                     </Badge>
                     
                     <div className="text-xs text-gray-600 mt-2">
-                      <strong>Τύπος:</strong> {selectedMonth ? 'Snapshot view μέχρι τέλος μήνα' : 'Τρέχουσα κατάσταση'}
+                      <strong>Τύπος:</strong> {selectedMonth ? 'Προβολή για τον επιλεγμένο μήνα' : 'Τρέχουσα κατάσταση'}
                     </div>
                   </div>
 
                   {/* Ανάλυση κάλυψης υποχρεώσεων */}
                   <div className="pt-2 border-t border-gray-200 space-y-3">
-                    <div className="text-xs font-medium text-gray-700 mb-2">Κάλυψη Υποχρεώσεων:</div>
+                    <div className="text-xs font-medium text-gray-700 mb-2">Τι πρέπει να πληρωθεί αυτόν τον μήνα:</div>
                     
                     {/* Τρέχουσες υποχρεώσεις */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-red-700 font-medium">Τρέχουσες υποχρεώσεις:</span>
+                        <span className="text-xs text-red-700 font-medium">Μηνιαίες υποχρεώσεις:</span>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm text-red-800">
                             {formatCurrency(Math.abs(financialSummary.current_obligations || 0))}
@@ -1152,13 +1175,16 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleShowAmountDetails('current_obligations', financialSummary?.average_monthly_expenses || 0, 'Τρέχουσες Υποχρεώσεις')}
+                            onClick={() => handleShowAmountDetails('current_obligations', financialSummary?.average_monthly_expenses || 0, 'Μηνιαίες Υποχρεώσεις')}
                             className="h-6 px-2 text-xs text-red-600 hover:text-red-700"
                             title="Δείτε λεπτομέρειες"
                           >
                             Λεπτομέρειες
                           </Button>
                         </div>
+                      </div>
+                      <div className="text-xs text-red-600 italic">
+                        Έξοδα + Διαχείριση + Αποθεματικό
                       </div>
                     </div>
                       
@@ -1192,12 +1218,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
                     {/* Αναλυτικά δεδομένα υπολοίπου */}
                     <div className="pt-2 border-t border-gray-200 space-y-2">
-                      <div className="text-xs font-medium text-gray-700 mb-2">Αναλυτική Εξέταση:</div>
+                      <div className="text-xs font-medium text-gray-700 mb-2">Περισσότερες πληροφορίες:</div>
                       
                       {/* Οφειλές προηγούμενων μηνών */}
                       <div className="space-y-1 pt-2 border-t border-gray-200">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-purple-700 font-medium">Οφειλές προηγούμενων μηνών:</span>
+                          <span className="text-xs text-purple-700 font-medium">Παλαιότερες οφειλές:</span>
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-sm text-purple-800">
                               {formatCurrency(financialSummary?.previous_obligations || 0)}
@@ -1205,7 +1231,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleShowAmountDetails('previous_obligations', financialSummary?.previous_obligations || 0, 'Οφειλές Προηγούμενων Μηνών')}
+                              onClick={() => handleShowAmountDetails('previous_obligations', financialSummary?.previous_obligations || 0, 'Παλαιότερες Οφειλές')}
                               className="h-6 px-2 text-xs text-purple-600 hover:text-purple-700"
                               title="Δείτε λεπτομέρειες"
                             >
@@ -1214,14 +1240,14 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           </div>
                         </div>
                         <div className="text-xs text-purple-600 italic">
-                          Συσσωρευμένες οφειλές από προηγούμενες περιόδους
+                          Οφειλές από προηγούμενους μήνες που δεν έχουν εξοφληθεί
                         </div>
                       </div>
 
                       {/* Ταμείο Πολυκατοικίας */}
                       <div className="space-y-1 pt-2 border-t border-gray-200">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-blue-700 font-medium">Ταμείο Πολυκατοικίας:</span>
+                          <span className="text-xs text-blue-700 font-medium">Τρέχον ταμείο:</span>
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-sm text-blue-800">
                               {formatCurrency(financialSummary?.current_reserve || 0)}
@@ -1229,7 +1255,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleShowAmountDetails('current_reserve', financialSummary?.current_reserve || 0, 'Ταμείο Πολυκατοικίας')}
+                              onClick={() => handleShowAmountDetails('current_reserve', financialSummary?.current_reserve || 0, 'Τρέχον Ταμείο')}
                               className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700"
                               title="Δείτε λεπτομέρειες"
                             >
@@ -1238,7 +1264,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           </div>
                         </div>
                         <div className="text-xs text-blue-600 italic">
-                          Καθαρή θέση της πολυκατοικίας
+                          Διαθέσιμο ποσό από εισπράξεις μείον δαπάνες
                         </div>
                       </div>
 
@@ -1272,13 +1298,26 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     {/* Συνολική κάλυψη */}
                     <div className="space-y-1 pt-2 border-t border-gray-200">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-700 font-medium">Συνολική κάλυψη:</span>
+                        <span className="text-xs text-gray-700 font-medium">Συνολικό ποσό που χρειάζεται:</span>
                         <span className="font-semibold text-sm text-gray-800">
-                          {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.reserve_fund_monthly_target || 0))}
+                          {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (financialSummary.reserve_fund_monthly_target || 0))}
                         </span>
                       </div>
                       <div className="text-xs text-gray-600">
-                        Έξοδα + Αποθεματικό
+                        {(() => {
+                          const hasExpenses = (financialSummary.average_monthly_expenses || 0) > 0;
+                          const hasManagement = (financialSummary.total_management_cost || 0) > 0;
+                          const hasReserve = (financialSummary.reserve_fund_monthly_target || 0) > 0;
+                          
+                          if (hasExpenses && hasManagement && hasReserve) return 'Έξοδα + Διαχείριση + Αποθεματικό';
+                          if (hasExpenses && hasManagement) return 'Έξοδα + Διαχείριση';
+                          if (hasExpenses && hasReserve) return 'Έξοδα + Αποθεματικό';
+                          if (hasManagement && hasReserve) return 'Διαχείριση + Αποθεματικό';
+                          if (hasExpenses) return 'Μόνο έξοδα';
+                          if (hasManagement) return 'Μόνο διαχείριση';
+                          if (hasReserve) return 'Μόνο αποθεματικό';
+                          return 'Δεν υπάρχουν υποχρεώσεις';
+                        })()}
                       </div>
                     </div>
                     
@@ -1286,18 +1325,18 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     {!isPositiveBalance && (
                       <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
                         <div className="text-xs text-yellow-800 font-medium">
-                          <strong>Προτεραιότητα:</strong> Τρέχουσες υποχρεώσεις
+                          <strong>⚠️ Σημαντικό:</strong> Το κτίριο έχει αρνητικό υπόλοιπο
                         </div>
                         <div className="text-xs text-yellow-700 mt-1">
-                          Το κτίριο χρωστάει χρήματα
+                          Χρειάζεται να πληρωθούν οι τρέχουσες υποχρεώσεις πρώτα
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                   </div>
                   
                   {isPositiveBalance && (
                     <div className="text-xs text-green-700 bg-green-50 p-2 rounded">
-                      <strong>Εξαιρετικά!</strong> Το κτίριο δεν έχει αρνητικό υπόλοιπο
+                      <strong>✅ Καλή κατάσταση!</strong> Το κτίριο δεν έχει αρνητικό υπόλοιπο
                     </div>
                   )}
                 </div>

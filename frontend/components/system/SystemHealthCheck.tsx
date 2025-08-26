@@ -186,14 +186,14 @@ const SystemHealthCheck: React.FC = () => {
         // Έλεγχος για scaling issue
         if (data.apartments_with_mills === data.apartments_count && scaling_factor > 1.5) {
           // Πιθανό scaling issue - όλα τα διαμερίσματα έχουν διπλάσια/τριπλάσια χιλιοστά
-          issues.push(`🚨 Scaling Issue: Όλα τα διαμερίσματα έχουν ${scaling_factor.toFixed(1)}x περισσότερα χιλιοστά`);
+          issues.push(`Scaling Factor: Όλα τα διαμερίσματα έχουν ${scaling_factor.toFixed(1)}x περισσότερα χιλιοστά`);
           issues.push(`• Τρέχον σύνολο: ${data.total_mills} (${scaling_factor.toFixed(1)}x το αναμενόμενο)`);
           issues.push(`• Αναμενόμενο σύνολο: ${data.expected_mills}`);
           issues.push(`• Διαμερίσματα με χιλιοστά: ${data.apartments_with_mills}/${data.apartments_count}`);
           
-          warnings.push(`💡 Σύστημα: Χρησιμοποιήστε "Αυτόματη Διόρθωση" για έξυπνη διόρθωση`);
-          warnings.push(`💡 Σύστημα: Το σύστημα θα εφαρμόσει scaling factor ${(1/scaling_factor).toFixed(2)}`);
-          warnings.push(`💡 Σύστημα: Όλα τα χιλιοστά θα μειωθούν αναλογικά`);
+          warnings.push(`Σύστημα: Το σύστημα λειτουργεί κανονικά με οποιοδήποτε σύνολο χιλιοστών`);
+          warnings.push(`Σύστημα: Προαιρετικά μπορείτε να χρησιμοποιήσετε "Αυτόματη Διόρθωση"`);
+          warnings.push(`Σύστημα: Αυτό θα εφαρμόσει scaling factor ${(1/scaling_factor).toFixed(2)}`);
         } else {
           // Κανονικό πρόβλημα
           const explanation = difference > 0 
@@ -206,9 +206,9 @@ const SystemHealthCheck: React.FC = () => {
           issues.push(`• Συνολικά διαμερίσματα: ${data.apartments_count}`);
           issues.push(`• Διαμερίσματα με χιλιοστά: ${data.apartments_with_mills}`);
           
-          warnings.push(`💡 Σύστημα: Ελέγξτε τα χιλιοστά σε κάθε διαμέρισμα`);
-          warnings.push(`💡 Σύστημα: Το σύνολο πρέπει να είναι ακριβώς 1000`);
-          warnings.push(`💡 Σύστημα: Χρησιμοποιήστε τη λειτουργία επεξεργασίας διαμερισμάτων`);
+          warnings.push(`Σύστημα: Ελέγξτε τα χιλιοστά σε κάθε διαμέρισμα`);
+          warnings.push(`Σύστημα: Το σύνολο πρέπει να είναι ακριβώς 1000`);
+          warnings.push(`Σύστημα: Χρησιμοποιήστε τη λειτουργία επεξεργασίας διαμερισμάτων`);
         }
       } else {
         successes = 1;
@@ -222,8 +222,8 @@ const SystemHealthCheck: React.FC = () => {
         issues.push(`• Συνολικές δαπάνες: ${data.total_expenses.toFixed(2)}€`);
         issues.push(`• Διαφορά: ${balance > 0 ? 'Περισσότερες πληρωμές' : 'Περισσότερες δαπάνες'}`);
         
-        warnings.push(`💡 Σύστηση: Ελέγξτε τις καταχωρήσεις δαπανών και πληρωμών`);
-        warnings.push(`💡 Σύστηση: Βεβαιωθείτε ότι όλες οι συναλλαγές είναι σωστά καταχωρημένες`);
+        warnings.push(`Σύστημα: Ελέγξτε τις καταχωρήσεις δαπανών και πληρωμών`);
+        warnings.push(`Σύστημα: Βεβαιωθείτε ότι όλες οι συναλλαγές είναι σωστά καταχωρημένες`);
       } else {
         successes = 1;
       }
@@ -235,8 +235,8 @@ const SystemHealthCheck: React.FC = () => {
         issues.push(`• Μήνες με δεδομένα: ${data.months_checked}`);
         issues.push(`• Προβλήματα μεταφοράς: ${data.transfer_issues}`);
         
-        warnings.push(`💡 Σύστημα: Ελέγξτε τη μεταφορά υπολοίπων μεταξύ μηνών`);
-        warnings.push(`💡 Σύστημα: Βεβαιωθείτε ότι τα previous_balance υπολογίζονται σωστά`);
+        warnings.push(`Σύστημα: Ελέγξτε τη μεταφορά υπολοίπων μεταξύ μηνών`);
+        warnings.push(`Σύστημα: Βεβαιωθείτε ότι τα previous_balance υπολογίζονται σωστά`);
       } else {
         successes = 1;
       }
@@ -248,8 +248,8 @@ const SystemHealthCheck: React.FC = () => {
         issues.push(`• Διπλές πληρωμές: ${data.payment_duplicates}`);
         issues.push(`• Συνολικές διπλές: ${data.total_duplicates}`);
         
-        warnings.push(`💡 Σύστημα: Ελέγξτε για διπλές καταχωρήσεις`);
-        warnings.push(`💡 Σύστημα: Χρησιμοποιήστε τη λειτουργία αναζήτησης για διπλές εγγραφές`);
+        warnings.push(`Σύστημα: Ελέγξτε για διπλές καταχωρήσεις`);
+        warnings.push(`Σύστημα: Χρησιμοποιήστε τη λειτουργία αναζήτησης για διπλές εγγραφές`);
       } else {
         successes = 1;
       }
@@ -263,8 +263,8 @@ const SystemHealthCheck: React.FC = () => {
         issues.push(`• Λάθος ποσά: ${data.invalid_amounts}`);
         issues.push(`• Λείπουσες περιγραφές: ${data.missing_titles}`);
         
-        warnings.push(`💡 Σύστημα: Ελέγξτε τις σχέσεις μεταξύ εγγραφών`);
-        warnings.push(`💡 Σύστημα: Βεβαιωθείτε ότι όλες οι εγγραφές έχουν σωστές αναφορές`);
+        warnings.push(`Σύστημα: Ελέγξτε τις σχέσεις μεταξύ εγγραφών`);
+        warnings.push(`Σύστημα: Βεβαιωθείτε ότι όλες οι εγγραφές έχουν σωστές αναφορές`);
       } else {
         successes = 1;
       }
@@ -274,10 +274,10 @@ const SystemHealthCheck: React.FC = () => {
     return (
       <Card key={key} className="mb-4">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
+          <CardTitle className="flex items-center gap-2 text-base">
             {icon}
             {title}
-            <Badge variant="outline" className="ml-auto">
+            <Badge variant="outline" className="ml-auto text-xs">
               {successes}/{total}
             </Badge>
           </CardTitle>
@@ -287,10 +287,10 @@ const SystemHealthCheck: React.FC = () => {
             <Alert variant="destructive">
               <XCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Προβλήματα ({issues.length}):</strong>
+                <strong className="text-sm">Προβλήματα ({issues.length}):</strong>
                 <ul className="mt-2 space-y-1">
                   {issues.map((issue: string, index: number) => (
-                    <li key={index} className="text-sm">• {issue}</li>
+                    <li key={index} className="text-xs">• {issue}</li>
                   ))}
                 </ul>
               </AlertDescription>
@@ -301,10 +301,10 @@ const SystemHealthCheck: React.FC = () => {
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Προειδοποιήσεις ({warnings.length}):</strong>
+                <strong className="text-sm">Προειδοποιήσεις ({warnings.length}):</strong>
                 <ul className="mt-2 space-y-1">
                   {warnings.map((warning: string, index: number) => (
-                    <li key={index} className="text-sm">• {warning}</li>
+                    <li key={index} className="text-xs">• {warning}</li>
                   ))}
                 </ul>
               </AlertDescription>
@@ -315,7 +315,7 @@ const SystemHealthCheck: React.FC = () => {
             <Alert>
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
-                Όλα τα ελέγχους πέτυχαν!
+                Ολοι οι έλεγχοι πέτυχαν
               </AlertDescription>
             </Alert>
           )}
@@ -412,7 +412,7 @@ const SystemHealthCheck: React.FC = () => {
               </div>
               
               <div className="mt-4">
-                <h4 className="font-semibold mb-2">💡 Γενικές Συστάσεις:</h4>
+                <h4 className="font-semibold mb-2 text-sm">Γενικές Συστάσεις:</h4>
                 <div className="text-sm space-y-1">
                   <div>• Εκτελέστε τον έλεγχο τακτικά (τουλάχιστον μία φορά την εβδομάδα)</div>
                   <div>• Ελέγξτε τα αποτελέσματα μετά από κάθε μεγάλη αλλαγή δεδομένων</div>
@@ -473,12 +473,12 @@ const SystemHealthCheck: React.FC = () => {
             {healthData.data.checks.building_data && 
              healthData.data.checks.building_data.total_mills !== healthData.data.checks.building_data.expected_mills && (
               <div className="mt-6">
-                <h2 className="text-xl font-semibold mb-4">📊 Επεξήγηση Χιλιοστών</h2>
+                <h2 className="text-lg font-semibold mb-4">Επεξήγηση Χιλιοστών</h2>
                 <Card>
                   <CardContent className="p-4">
                     <div className="space-y-4">
                       <div>
-                        <h4 className="font-semibold text-red-600 mb-2">🚨 Τι σημαίνει αυτό το πρόβλημα;</h4>
+                        <h4 className="font-semibold text-red-600 mb-2 text-sm">Τι σημαίνει αυτό το πρόβλημα;</h4>
                         <p className="text-sm text-gray-700 mb-3">
                           Τα χιλιοστά (mills) είναι το σύστημα κατανομής κοινόχρηστων εξόδων. 
                           Το σύνολο των χιλιοστών σε όλα τα διαμερίσματα πρέπει να είναι ακριβώς 1000.
@@ -486,7 +486,7 @@ const SystemHealthCheck: React.FC = () => {
                       </div>
                       
                       <div>
-                        <h4 className="font-semibold text-blue-600 mb-2">🔍 Τρέχουσα κατάσταση:</h4>
+                        <h4 className="font-semibold text-blue-600 mb-2 text-sm">Τρέχουσα κατάσταση:</h4>
                         <div className="text-sm space-y-1">
                           <div>• Συνολικά χιλιοστά: <strong>{healthData.data.checks.building_data.total_mills}</strong></div>
                           <div>• Αναμενόμενα χιλιοστά: <strong>{healthData.data.checks.building_data.expected_mills}</strong></div>
@@ -500,7 +500,7 @@ const SystemHealthCheck: React.FC = () => {
                       </div>
                       
                       <div>
-                        <h4 className="font-semibold text-green-600 mb-2">✅ Πώς να το διορθώσετε:</h4>
+                        <h4 className="font-semibold text-green-600 mb-2 text-sm">Πώς να το διορθώσετε:</h4>
                         <div className="text-sm space-y-2">
                           <div>1. <strong>Ελέγξτε τα διαμερίσματα:</strong> Πηγαίνετε στη λίστα διαμερισμάτων</div>
                           <div>2. <strong>Επιβεβαιώστε τα χιλιοστά:</strong> Βεβαιωθείτε ότι κάθε διαμέρισμα έχει χιλιοστά</div>
@@ -510,7 +510,7 @@ const SystemHealthCheck: React.FC = () => {
                       </div>
                       
                       <div>
-                        <h4 className="font-semibold text-orange-600 mb-2">⚠️ Προσοχή:</h4>
+                        <h4 className="font-semibold text-orange-600 mb-2 text-sm">Προσοχή:</h4>
                         <div className="text-sm space-y-1">
                           <div>• Η αλλαγή χιλιοστών επηρεάζει τη κατανομή κοινόχρηστων</div>
                           <div>• Κάντε backup πριν από αλλαγές</div>
@@ -525,7 +525,7 @@ const SystemHealthCheck: React.FC = () => {
             
             {/* Raw Output */}
             <div className="mt-6">
-              <h2 className="text-xl font-semibold mb-4">📄 Λεπτομερής Έξοδος</h2>
+              <h2 className="text-lg font-semibold mb-4">Λεπτομερής Έξοδος</h2>
               
               {/* Summary of Issues */}
               {(() => {
@@ -540,11 +540,11 @@ const SystemHealthCheck: React.FC = () => {
                 
                 if (errorLines.length > 0) {
                   return (
-                    <div className="mb-4">
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <h3 className="text-red-800 font-semibold mb-2">
-                          🚨 Σύνοψη Προβλημάτων ({errorLines.length} γραμμές)
-                        </h3>
+                                  <div className="mb-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <h3 className="text-red-800 font-semibold mb-2 text-xs">
+                    Σύνοψη Προβλημάτων ({errorLines.length} γραμμές)
+                  </h3>
                         <div className="space-y-1">
                           {errorLines.slice(0, 5).map((line, index) => (
                             <div key={index} className="text-red-700 text-sm">
@@ -571,14 +571,14 @@ const SystemHealthCheck: React.FC = () => {
                     variant={showOnlyErrors ? "default" : "outline"}
                     size="sm"
                     onClick={() => setShowOnlyErrors(!showOnlyErrors)}
-                    className="flex items-center space-x-2"
+                    className="flex items-center space-x-2 text-sm"
                   >
                     {showOnlyErrors ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     <span>{showOnlyErrors ? "Εμφάνιση Όλων" : "Μόνο Προβλήματα"}</span>
                   </Button>
                   
                   {showOnlyErrors && (
-                    <Badge variant="destructive" className="ml-2">
+                    <Badge variant="destructive" className="ml-2 text-xs">
                       Φιλτραρισμένο
                     </Badge>
                   )}
