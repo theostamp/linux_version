@@ -21,7 +21,10 @@ import {
   Shield,
   FileText,
   Clock,
-  Wrench
+  Wrench,
+  Filter,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -77,6 +80,7 @@ interface HealthCheckResult {
 
 const SystemHealthCheck: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
+  const [showOnlyErrors, setShowOnlyErrors] = useState(false);
 
   const {
     data: healthData,
@@ -176,7 +180,36 @@ const SystemHealthCheck: React.FC = () => {
 
     if (key === 'building_data') {
       if (data.total_mills !== data.expected_mills) {
-        issues.push(`Λάθος χιλιοστά: ${data.total_mills} αντί για ${data.expected_mills}`);
+        const difference = data.total_mills - data.expected_mills;
+        const scaling_factor = data.total_mills / data.expected_mills;
+        
+        // Έλεγχος για scaling issue
+        if (data.apartments_with_mills === data.apartments_count && scaling_factor > 1.5) {
+          // Πιθανό scaling issue - όλα τα διαμερίσματα έχουν διπλάσια/τριπλάσια χιλιοστά
+          issues.push(`🚨 Scaling Issue: Όλα τα διαμερίσματα έχουν ${scaling_factor.toFixed(1)}x περισσότερα χιλιοστά`);
+          issues.push(`• Τρέχον σύνολο: ${data.total_mills} (${scaling_factor.toFixed(1)}x το αναμενόμενο)`);
+          issues.push(`• Αναμενόμενο σύνολο: ${data.expected_mills}`);
+          issues.push(`• Διαμερίσματα με χιλιοστά: ${data.apartments_with_mills}/${data.apartments_count}`);
+          
+          warnings.push(`💡 Σύστημα: Χρησιμοποιήστε "Αυτόματη Διόρθωση" για έξυπνη διόρθωση`);
+          warnings.push(`💡 Σύστημα: Το σύστημα θα εφαρμόσει scaling factor ${(1/scaling_factor).toFixed(2)}`);
+          warnings.push(`💡 Σύστημα: Όλα τα χιλιοστά θα μειωθούν αναλογικά`);
+        } else {
+          // Κανονικό πρόβλημα
+          const explanation = difference > 0 
+            ? `Υπάρχουν ${difference} επιπλέον χιλιοστά. Αυτό μπορεί να οφείλεται σε:`
+            : `Λείπουν ${Math.abs(difference)} χιλιοστά. Αυτό μπορεί να οφείλεται σε:`;
+          
+          issues.push(`Λάθος χιλιοστά: ${data.total_mills} αντί για ${data.expected_mills}`);
+          issues.push(explanation);
+          issues.push(`• Διαμερίσματα χωρίς χιλιοστά: ${data.apartments_count - data.apartments_with_mills}`);
+          issues.push(`• Συνολικά διαμερίσματα: ${data.apartments_count}`);
+          issues.push(`• Διαμερίσματα με χιλιοστά: ${data.apartments_with_mills}`);
+          
+          warnings.push(`💡 Σύστημα: Ελέγξτε τα χιλιοστά σε κάθε διαμέρισμα`);
+          warnings.push(`💡 Σύστημα: Το σύνολο πρέπει να είναι ακριβώς 1000`);
+          warnings.push(`💡 Σύστημα: Χρησιμοποιήστε τη λειτουργία επεξεργασίας διαμερισμάτων`);
+        }
       } else {
         successes = 1;
       }
@@ -185,6 +218,12 @@ const SystemHealthCheck: React.FC = () => {
       const balance = data.total_payments - data.total_expenses;
       if (Math.abs(balance) > 0.01) {
         issues.push(`Ανισορροπία: ${balance.toFixed(2)}€`);
+        issues.push(`• Συνολικές πληρωμές: ${data.total_payments.toFixed(2)}€`);
+        issues.push(`• Συνολικές δαπάνες: ${data.total_expenses.toFixed(2)}€`);
+        issues.push(`• Διαφορά: ${balance > 0 ? 'Περισσότερες πληρωμές' : 'Περισσότερες δαπάνες'}`);
+        
+        warnings.push(`💡 Σύστηση: Ελέγξτε τις καταχωρήσεις δαπανών και πληρωμών`);
+        warnings.push(`💡 Σύστηση: Βεβαιωθείτε ότι όλες οι συναλλαγές είναι σωστά καταχωρημένες`);
       } else {
         successes = 1;
       }
@@ -192,6 +231,12 @@ const SystemHealthCheck: React.FC = () => {
     } else if (key === 'balance_transfer') {
       if (data.transfer_issues > 0) {
         issues.push(`${data.transfer_issues} προβλήματα μεταφοράς υπολοίπων`);
+        issues.push(`• Ελεγχθέντα διαμερίσματα: ${data.apartments_checked}`);
+        issues.push(`• Μήνες με δεδομένα: ${data.months_checked}`);
+        issues.push(`• Προβλήματα μεταφοράς: ${data.transfer_issues}`);
+        
+        warnings.push(`💡 Σύστημα: Ελέγξτε τη μεταφορά υπολοίπων μεταξύ μηνών`);
+        warnings.push(`💡 Σύστημα: Βεβαιωθείτε ότι τα previous_balance υπολογίζονται σωστά`);
       } else {
         successes = 1;
       }
@@ -199,6 +244,12 @@ const SystemHealthCheck: React.FC = () => {
     } else if (key === 'duplicate_charges') {
       if (data.total_duplicates > 0) {
         issues.push(`${data.total_duplicates} διπλές χρεώσεις`);
+        issues.push(`• Διπλές δαπάνες: ${data.expense_duplicates}`);
+        issues.push(`• Διπλές πληρωμές: ${data.payment_duplicates}`);
+        issues.push(`• Συνολικές διπλές: ${data.total_duplicates}`);
+        
+        warnings.push(`💡 Σύστημα: Ελέγξτε για διπλές καταχωρήσεις`);
+        warnings.push(`💡 Σύστημα: Χρησιμοποιήστε τη λειτουργία αναζήτησης για διπλές εγγραφές`);
       } else {
         successes = 1;
       }
@@ -207,6 +258,13 @@ const SystemHealthCheck: React.FC = () => {
       const totalIssues = data.orphaned_expenses + data.orphaned_payments + data.invalid_amounts + data.missing_titles;
       if (totalIssues > 0) {
         issues.push(`${totalIssues} προβλήματα ακεραιότητας`);
+        issues.push(`• Δαπάνες χωρίς κτίριο: ${data.orphaned_expenses}`);
+        issues.push(`• Πληρωμές χωρίς διαμέρισμα: ${data.orphaned_payments}`);
+        issues.push(`• Λάθος ποσά: ${data.invalid_amounts}`);
+        issues.push(`• Λείπουσες περιγραφές: ${data.missing_titles}`);
+        
+        warnings.push(`💡 Σύστημα: Ελέγξτε τις σχέσεις μεταξύ εγγραφών`);
+        warnings.push(`💡 Σύστημα: Βεβαιωθείτε ότι όλες οι εγγραφές έχουν σωστές αναφορές`);
       } else {
         successes = 1;
       }
@@ -353,6 +411,16 @@ const SystemHealthCheck: React.FC = () => {
                 </div>
               </div>
               
+              <div className="mt-4">
+                <h4 className="font-semibold mb-2">💡 Γενικές Συστάσεις:</h4>
+                <div className="text-sm space-y-1">
+                  <div>• Εκτελέστε τον έλεγχο τακτικά (τουλάχιστον μία φορά την εβδομάδα)</div>
+                  <div>• Ελέγξτε τα αποτελέσματα μετά από κάθε μεγάλη αλλαγή δεδομένων</div>
+                  <div>• Χρησιμοποιήστε το "Αυτόματη Διόρθωση" μόνο μετά από backup</div>
+                  <div>• Επικοινωνήστε με τον διαχειριστή για κρίσιμα προβλήματα</div>
+                </div>
+              </div>
+              
               <div className="mt-4 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 inline mr-1" />
                 Τελευταία ενημέρωση: {new Date(healthData.data.timestamp).toLocaleString('el-GR')}
@@ -401,14 +469,218 @@ const SystemHealthCheck: React.FC = () => {
               'data_integrity'
             )}
             
+            {/* Χιλιοστά Επεξήγηση */}
+            {healthData.data.checks.building_data && 
+             healthData.data.checks.building_data.total_mills !== healthData.data.checks.building_data.expected_mills && (
+              <div className="mt-6">
+                <h2 className="text-xl font-semibold mb-4">📊 Επεξήγηση Χιλιοστών</h2>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-red-600 mb-2">🚨 Τι σημαίνει αυτό το πρόβλημα;</h4>
+                        <p className="text-sm text-gray-700 mb-3">
+                          Τα χιλιοστά (mills) είναι το σύστημα κατανομής κοινόχρηστων εξόδων. 
+                          Το σύνολο των χιλιοστών σε όλα τα διαμερίσματα πρέπει να είναι ακριβώς 1000.
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-semibold text-blue-600 mb-2">🔍 Τρέχουσα κατάσταση:</h4>
+                        <div className="text-sm space-y-1">
+                          <div>• Συνολικά χιλιοστά: <strong>{healthData.data.checks.building_data.total_mills}</strong></div>
+                          <div>• Αναμενόμενα χιλιοστά: <strong>{healthData.data.checks.building_data.expected_mills}</strong></div>
+                          <div>• Διαφορά: <strong className="text-red-600">
+                            {healthData.data.checks.building_data.total_mills > healthData.data.checks.building_data.expected_mills ? '+' : ''}
+                            {healthData.data.checks.building_data.total_mills - healthData.data.checks.building_data.expected_mills}
+                          </strong></div>
+                          <div>• Συνολικά διαμερίσματα: <strong>{healthData.data.checks.building_data.apartments_count}</strong></div>
+                          <div>• Διαμερίσματα με χιλιοστά: <strong>{healthData.data.checks.building_data.apartments_with_mills}</strong></div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-semibold text-green-600 mb-2">✅ Πώς να το διορθώσετε:</h4>
+                        <div className="text-sm space-y-2">
+                          <div>1. <strong>Ελέγξτε τα διαμερίσματα:</strong> Πηγαίνετε στη λίστα διαμερισμάτων</div>
+                          <div>2. <strong>Επιβεβαιώστε τα χιλιοστά:</strong> Βεβαιωθείτε ότι κάθε διαμέρισμα έχει χιλιοστά</div>
+                          <div>3. <strong>Υπολογίστε το σύνολο:</strong> Το σύνολο πρέπει να είναι ακριβώς 1000</div>
+                          <div>4. <strong>Διορθώστε αν χρειάζεται:</strong> Αλλάξτε τα χιλιοστά στα διαμερίσματα</div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-semibold text-orange-600 mb-2">⚠️ Προσοχή:</h4>
+                        <div className="text-sm space-y-1">
+                          <div>• Η αλλαγή χιλιοστών επηρεάζει τη κατανομή κοινόχρηστων</div>
+                          <div>• Κάντε backup πριν από αλλαγές</div>
+                          <div>• Ενημερώστε τους ιδιοκτήτες για αλλαγές</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+            
             {/* Raw Output */}
             <div className="mt-6">
               <h2 className="text-xl font-semibold mb-4">📄 Λεπτομερής Έξοδος</h2>
+              
+              {/* Summary of Issues */}
+              {(() => {
+                const lines = healthData.data.output.split('\n');
+                const errorLines = lines.filter(line => 
+                  line.includes('❌') || 
+                  line.includes('ΠΡΟΒΛΗΜΑ') || 
+                  line.includes('ΛΑΘΟΣ') ||
+                  line.includes('ΑΠΟΤΥΧΙΑ') ||
+                  line.includes('ΣΦΑΛΜΑ')
+                );
+                
+                if (errorLines.length > 0) {
+                  return (
+                    <div className="mb-4">
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <h3 className="text-red-800 font-semibold mb-2">
+                          🚨 Σύνοψη Προβλημάτων ({errorLines.length} γραμμές)
+                        </h3>
+                        <div className="space-y-1">
+                          {errorLines.slice(0, 5).map((line, index) => (
+                            <div key={index} className="text-red-700 text-sm">
+                              • {line.trim()}
+                            </div>
+                          ))}
+                          {errorLines.length > 5 && (
+                            <div className="text-red-600 text-sm italic">
+                              ... και {errorLines.length - 5} ακόμα προβλήματα
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+              
+              {/* Filter Toggle */}
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant={showOnlyErrors ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowOnlyErrors(!showOnlyErrors)}
+                    className="flex items-center space-x-2"
+                  >
+                    {showOnlyErrors ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <span>{showOnlyErrors ? "Εμφάνιση Όλων" : "Μόνο Προβλήματα"}</span>
+                  </Button>
+                  
+                  {showOnlyErrors && (
+                    <Badge variant="destructive" className="ml-2">
+                      Φιλτραρισμένο
+                    </Badge>
+                  )}
+                </div>
+                
+                <div className="text-sm text-gray-500">
+                  {(() => {
+                    const lines = healthData.data.output.split('\n');
+                    const errorLines = lines.filter(line => 
+                      line.includes('❌') || 
+                      line.includes('ΠΡΟΒΛΗΜΑ') || 
+                      line.includes('ΛΑΘΟΣ') ||
+                      line.includes('ΑΠΟΤΥΧΙΑ') ||
+                      line.includes('ΣΦΑΛΜΑ')
+                    );
+                    return `${errorLines.length} προβλήματα από ${lines.length} γραμμές`;
+                  })()}
+                </div>
+              </div>
+              
               <Card>
                 <CardContent className="p-4">
-                  <pre className="text-sm bg-gray-50 p-4 rounded-lg overflow-x-auto whitespace-pre-wrap">
-                    {healthData.data.output}
-                  </pre>
+                  <div className="text-sm bg-gray-50 p-4 rounded-lg overflow-x-auto max-h-96 overflow-y-auto">
+                    {(() => {
+                      const lines = healthData.data.output.split('\n');
+                      const filteredLines = showOnlyErrors 
+                        ? lines.filter(line => 
+                            line.includes('❌') || 
+                            line.includes('ΠΡΟΒΛΗΜΑ') || 
+                            line.includes('ΛΑΘΟΣ') ||
+                            line.includes('ΑΠΟΤΥΧΙΑ') ||
+                            line.includes('ΣΦΑΛΜΑ') ||
+                            line.includes('🚨') ||
+                            line.includes('⚠️')
+                          )
+                        : lines;
+                      
+                      return filteredLines.map((line, index) => {
+                      // Έλεγχος για αποτυχημένες γραμμές
+                      const isError = line.includes('❌') || 
+                                    line.includes('ΠΡΟΒΛΗΜΑ') || 
+                                    line.includes('ΛΑΘΟΣ') ||
+                                    line.includes('ΑΠΟΤΥΧΙΑ') ||
+                                    line.includes('ΣΦΑΛΜΑ');
+                      
+                      // Έλεγχος για επιτυχημένες γραμμές
+                      const isSuccess = line.includes('✅') || 
+                                      line.includes('ΕΠΙΤΥΧΙΑ') ||
+                                      line.includes('ΣΩΣΤΑ') ||
+                                      line.includes('ΕΠΙΛΥΘΗΚΕ');
+                      
+                      // Έλεγχος για προειδοποιήσεις
+                      const isWarning = line.includes('⚠️') || 
+                                      line.includes('ΠΡΟΕΙΔΟΠΟΙΗΣΗ') ||
+                                      line.includes('ΠΡΟΣΟΧΗ');
+                      
+                      // Έλεγχος για headers/sections
+                      const isHeader = line.includes('===') || 
+                                     line.includes('---') ||
+                                     line.includes('🔍') ||
+                                     line.includes('📊') ||
+                                     line.includes('💰') ||
+                                     line.includes('🏢') ||
+                                     line.includes('⚖️') ||
+                                     line.includes('🔍') ||
+                                     line.includes('📋');
+                      
+                      // Έλεγχος για bullet points
+                      const isBullet = line.trim().startsWith('•') || 
+                                     line.trim().startsWith('-') ||
+                                     line.trim().startsWith('*');
+                      
+                      // Έλεγχος για αριθμημένες λίστες
+                      const isNumbered = /^\d+\./.test(line.trim());
+                      
+                      // Προσδιορισμός CSS classes
+                      let className = 'py-1';
+                      
+                      if (isError) {
+                        className += ' text-red-700 bg-red-50 border-l-4 border-red-500 pl-3 font-semibold';
+                      } else if (isSuccess) {
+                        className += ' text-green-700 bg-green-50 border-l-4 border-green-500 pl-3';
+                      } else if (isWarning) {
+                        className += ' text-orange-700 bg-orange-50 border-l-4 border-orange-500 pl-3';
+                      } else if (isHeader) {
+                        className += ' text-blue-700 bg-blue-50 border-l-4 border-blue-500 pl-3 font-bold text-base';
+                      } else if (isBullet || isNumbered) {
+                        className += ' pl-6 text-gray-700';
+                      } else if (line.trim() === '') {
+                        className += ' h-2'; // Empty line spacing
+                      } else {
+                        className += ' text-gray-800';
+                      }
+                      
+                      return (
+                        <div key={index} className={className}>
+                          {line || '\u00A0'} {/* Non-breaking space for empty lines */}
+                        </div>
+                      );
+                      });
+                    })()}
+                  </div>
                 </CardContent>
               </Card>
             </div>
