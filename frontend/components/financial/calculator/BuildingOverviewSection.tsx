@@ -27,7 +27,8 @@ import {
   ChevronDown,
   ChevronUp,
   Info,
-  PieChart
+  PieChart,
+  Eye
 } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -1092,7 +1093,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                                       {/* Μηνιαίες Υποχρεώσεις (αν υπάρχουν πραγματικές δαπάνες, κόστος διαχείρισης ή αποθεματικό) */}
                   {((financialSummary.average_monthly_expenses || 0) > 0 || (financialSummary.total_management_cost || 0) > 0 || (financialSummary.reserve_fund_monthly_target || 0) > 0) && (
                     <div className="space-y-1 pt-2 border-t border-gray-200">
-                                              <div className="text-xs text-gray-700 font-medium">Μηνιαίες υποχρεώσεις:</div>
+                      <div className="text-xs text-gray-700 font-medium">Μηνιαίες υποχρεώσεις (τρέχοντος μήνα):</div>
                       <div className="text-xl font-bold text-gray-800">
                         {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (financialSummary.reserve_fund_monthly_target || 0))}
                       </div>
@@ -1146,7 +1147,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <div className={`text-xl font-bold ${getBalanceCardColors(financialSummary?.total_balance || 0).amount}`}>
-                        {formatCurrency(Math.abs(financialSummary?.total_balance || 0))}
+                        {formatCurrency(Math.abs((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (financialSummary.reserve_fund_monthly_target || 0) + (financialSummary.previous_obligations || 0)))}
                       </div>
                       <Button
                         variant="ghost"
@@ -1178,7 +1179,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     {/* Τρέχουσες υποχρεώσεις */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-red-700 font-medium">Μηνιαίες υποχρεώσεις:</span>
+                        <span className="text-xs text-red-700 font-medium">Οικονομικές Υποχρεώσεις Περιόδου:</span>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm text-red-800">
                             {formatCurrency(Math.abs(financialSummary.current_obligations || 0))}
@@ -1186,7 +1187,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleShowAmountDetails('current_obligations', financialSummary?.average_monthly_expenses || 0, 'Μηνιαίες Υποχρεώσεις')}
+                            onClick={() => handleShowAmountDetails('current_obligations', financialSummary?.average_monthly_expenses || 0, 'Οικονομικές Υποχρεώσεις Περιόδου')}
                             className="h-6 px-2 text-xs text-red-600 hover:text-red-700"
                             title="Δείτε λεπτομέρειες"
                           >
@@ -1194,44 +1195,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           </Button>
                         </div>
                       </div>
-                      <div className="text-xs text-red-600 italic">
-                        Έξοδα + Διαχείριση + Αποθεματικό
-                      </div>
                     </div>
                       
-                    {/* Εισφορά αποθεματικού - εμφανίζεται αν υπάρχει στόχος */}
-                    {(financialSummary.reserve_fund_monthly_target || 0) > 0 && (
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-orange-700 font-medium">Εισφορά αποθεματικού:</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm text-orange-800">
-                              {formatCurrency(financialSummary.reserve_fund_monthly_target || 0)}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleShowAmountDetails('reserve_fund_contribution', financialSummary?.reserve_fund_monthly_target || 0, 'Εισφορά Αποθεματικού')}
-                              className="h-6 px-2 text-xs text-orange-600 hover:text-orange-700"
-                              title="Δείτε λεπτομέρειες"
-                            >
-                              Λεπτομέρειες
-                            </Button>
-                          </div>
-                        </div>
-                        {(financialSummary.reserve_fund_contribution === 0 && (financialSummary.reserve_fund_monthly_target ?? 0) > 0) && (
-                          <div className="text-xs text-orange-600 italic">
-                            Δεν συλλέγεται (pending obligations)
-                          </div>
-                        )}
-                      </div>
-                    )}
 
-                    {/* Αναλυτικά δεδομένα υπολοίπου */}
-                    <div className="pt-2 border-t border-gray-200 space-y-2">
-                      <div className="text-xs font-medium text-gray-700 mb-2">Περισσότερες πληροφορίες:</div>
-                      
-                      {/* Οφειλές προηγούμενων μηνών */}
+
+                    {/* Παλαιότερες οφειλές */}
+                    {(financialSummary?.previous_obligations || 0) > 0 && (
                       <div className="space-y-1 pt-2 border-t border-gray-200">
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-purple-700 font-medium">Παλαιότερες οφειλές:</span>
@@ -1250,95 +1219,78 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                             </Button>
                           </div>
                         </div>
-                        <div className="text-xs text-purple-600 italic">
-                          Οφειλές από προηγούμενους μήνες που δεν έχουν εξοφληθεί
-                        </div>
-                      </div>
 
-                      {/* Ταμείο Πολυκατοικίας */}
-                      <div className="space-y-1 pt-2 border-t border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-blue-700 font-medium">Τρέχον ταμείο:</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm text-blue-800">
-                              {formatCurrency(financialSummary?.current_reserve || 0)}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleShowAmountDetails('current_reserve', financialSummary?.current_reserve || 0, 'Τρέχον Ταμείο')}
-                              className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700"
-                              title="Δείτε λεπτομέρειες"
-                            >
-                              Λεπτομέρειες
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="text-xs text-blue-600 italic">
-                          Διαθέσιμο ποσό από εισπράξεις μείον δαπάνες
-                        </div>
                       </div>
+                    )}
 
-                      {/* Στόχος αποθεματικού */}
-                      {(financialSummary?.reserve_fund_goal || 0) > 0 && (
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-green-700 font-medium">Στόχος αποθεματικού:</span>
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-sm text-green-800">
-                                {formatCurrency(financialSummary?.reserve_fund_goal || 0)}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="text-xs text-green-600 italic">
-                            Συνολικός στόχος αποθεματικού
-                          </div>
-                        </div>
-                      )}
-                    </div>
+
                       
                     {/* Συνολική κάλυψη */}
-                    <div className="space-y-1 pt-2 border-t border-gray-200">
+                    <div className="space-y-1 pt-2 border-t-2 border-gray-300 bg-gray-50 p-2 rounded">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-700 font-medium">Συνολικό ποσό που χρειάζεται:</span>
-                        <span className="font-semibold text-sm text-gray-800">
-                          {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (financialSummary.reserve_fund_monthly_target || 0))}
+                        <span className="text-sm font-semibold text-gray-800">Μηνιαίο σύνολο:</span>
+                        <span className="text-lg font-bold text-gray-900">
+                          {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (financialSummary.reserve_fund_monthly_target || 0) + (financialSummary.previous_obligations || 0))}
                         </span>
                       </div>
-                      <div className="text-xs text-gray-600">
+                      <div className="text-xs text-gray-500 mt-1 text-[10px]">
                         {(() => {
                           const hasExpenses = (financialSummary.average_monthly_expenses || 0) > 0;
                           const hasManagement = (financialSummary.total_management_cost || 0) > 0;
                           const hasReserve = (financialSummary.reserve_fund_monthly_target || 0) > 0;
+                          const hasPreviousObligations = (financialSummary.previous_obligations || 0) > 0;
                           
-                          if (hasExpenses && hasManagement && hasReserve) return 'Έξοδα + Διαχείριση + Αποθεματικό';
-                          if (hasExpenses && hasManagement) return 'Έξοδα + Διαχείριση';
-                          if (hasExpenses && hasReserve) return 'Έξοδα + Αποθεματικό';
-                          if (hasManagement && hasReserve) return 'Διαχείριση + Αποθεματικό';
-                          if (hasExpenses) return 'Μόνο έξοδα';
-                          if (hasManagement) return 'Μόνο διαχείριση';
-                          if (hasReserve) return 'Μόνο αποθεματικό';
-                          return 'Δεν υπάρχουν υποχρεώσεις';
+                          let description = '';
+                          const parts = [];
+                          
+                          // Προσθήκη "Οικονομικές Υποχρεώσεις Περιόδου" αν υπάρχουν τρέχουσες υποχρεώσεις
+                          if (hasExpenses || hasManagement || hasReserve) {
+                            parts.push('Οικονομικές Υποχρεώσεις Περιόδου');
+                          }
+                          
+                          // Προσθήκη "παλαιότερες οφειλές" αν υπάρχουν
+                          if (hasPreviousObligations) {
+                            parts.push('παλαιότερες οφειλές');
+                          }
+                          
+                          if (parts.length > 0) {
+                            description = parts.join(' + ');
+                          } else {
+                            description = 'Δεν υπάρχουν υποχρεώσεις';
+                          }
+                          
+                          return description;
                         })()}
                       </div>
                     </div>
                     
-                    {/* Προτεραιότητα */}
+                    {/* Προειδοποιήσεις */}
                     {!isPositiveBalance && (
-                      <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
-                        <div className="text-xs text-yellow-800 font-medium">
-                          <strong>⚠️ Σημαντικό:</strong> Το κτίριο έχει αρνητικό υπόλοιπο
+                      <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                        <div className="flex items-center gap-2 mb-1">
+                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                          <div className="text-sm text-red-800 font-semibold">
+                            Προσοχή: Αρνητικό Υπόλοιπο
+                          </div>
                         </div>
-                        <div className="text-xs text-yellow-700 mt-1">
-                          Χρειάζεται να πληρωθούν οι τρέχουσες υποχρεώσεις πρώτα
+                        <div className="text-xs text-red-700">
+                          Το κτίριο έχει αρνητικό υπόλοιπο. Χρειάζεται να πληρωθούν οι τρέχουσες υποχρεώσεις πρώτα.
                         </div>
                       </div>
                     )}
                   </div>
                   
                   {isPositiveBalance && (
-                    <div className="text-xs text-green-700 bg-green-50 p-2 rounded">
-                      <strong>✅ Καλή κατάσταση!</strong> Το κτίριο δεν έχει αρνητικό υπόλοιπο
+                    <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center gap-2 mb-1">
+                        <TrendingUp className="h-4 w-4 text-green-600" />
+                        <div className="text-sm text-green-800 font-semibold">
+                          Καλή Κατάσταση
+                        </div>
+                      </div>
+                      <div className="text-xs text-green-700">
+                        Το κτίριο δεν έχει αρνητικό υπόλοιπο.
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1347,27 +1299,27 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
           </div>
         </div>
 
-        {/* Section 1.5: Payment Coverage Chart */}
+        {/* Section 1.5: Με μια ματιά - Progress Bar */}
         <div className="space-y-4">
-          <Card className="border-2 border-blue-200 bg-blue-50/30">
-            <Collapsible defaultOpen={false}>
+          <Card className="border-2 border-green-200 bg-green-50/30">
+            <Collapsible defaultOpen={true}>
               <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-blue-50 transition-colors">
+                <CardHeader className="cursor-pointer hover:bg-green-50 transition-colors">
                   <CardTitle className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <PieChart className="h-5 w-5 text-blue-600" />
-                      <span className="font-semibold text-sm text-blue-900">
-                        Κάλυψη Υποχρεώσεων με Εισπράξεις
+                      <Eye className="h-5 w-5 text-green-600" />
+                      <span className="font-semibold text-sm text-green-900">
+                        Με μια ματιά
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="text-xs text-blue-700">
-                        Ανάλυση κάλυψης μηνιαίων υποχρεώσεων με βάση τις πραγματικές εισπράξεις
+                      <div className="text-xs text-green-700">
+                        Προβολή κάλυψης υποχρεώσεων με progress bar
                       </div>
-                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                        Γράφημα + Στατιστικά
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                        Progress Bar
                       </Badge>
-                      <ChevronDown className="h-4 w-4 text-blue-600 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                      <ChevronDown className="h-4 w-4 text-green-600 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                     </div>
                   </CardTitle>
                 </CardHeader>
@@ -1376,197 +1328,109 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 <CardContent className="p-4">
               
               {(() => {
-                // Calculate data for pie chart using actual payment and expense data
-                // Use total_payments_month and total_expenses_month for accurate coverage analysis
-                const totalObligations = Math.abs(financialSummary.current_obligations || 0);
+                // Υπολογισμός συνολικού ποσού που οφείλεται (0-1100)
+                const totalObligations = (financialSummary.average_monthly_expenses || 0) + 
+                                        (financialSummary.total_management_cost || 0) + 
+                                        (financialSummary.reserve_fund_monthly_target || 0) + 
+                                        (financialSummary.previous_obligations || 0);
                 
-                // Get actual payments and expenses for the selected month
+                // Πληρωμές που έχουν γίνει για τον τρέχοντα μήνα
                 const actualPayments = financialSummary.total_payments_month || 0;
-                const actualExpenses = financialSummary.total_expenses_month || 0;
                 
-                // Calculate coverage based on actual data
-                // If payments exceed obligations, show 100% coverage
-                let totalPayments = 0;
-                let pendingPayments = 0;
+                // Υπολογισμός ποσοστού κάλυψης
+                const coveragePercentage = totalObligations > 0 ? Math.min(100, (actualPayments / totalObligations * 100)) : 0;
                 
-                if (selectedMonth) {
-                  // Snapshot view: Use actual payments vs obligations for the selected month
-                  if (actualPayments >= totalObligations) {
-                    totalPayments = totalObligations;
-                    pendingPayments = 0;
-                  } else {
-                    totalPayments = actualPayments;
-                    pendingPayments = totalObligations - actualPayments;
-                  }
-                } else {
-                  // Current view: Use current month's actual payments vs obligations
-                  if (actualPayments >= totalObligations) {
-                    totalPayments = totalObligations;
-                    pendingPayments = 0;
-                  } else {
-                    totalPayments = actualPayments;
-                    pendingPayments = totalObligations - actualPayments;
-                  }
-                }
-                
-                const pieData = [
-                  {
-                    name: 'Εισπράξεις',
-                    value: totalPayments,
-                    color: '#10b981', // green-500
-                    percentage: totalObligations > 0 ? (totalPayments / totalObligations * 100).toFixed(1) : '0'
-                  },
-                  {
-                    name: 'Εκκρεμείς Πληρωμές',
-                    value: pendingPayments,
-                    color: '#ef4444', // red-500
-                    percentage: totalObligations > 0 ? (pendingPayments / totalObligations * 100).toFixed(1) : '0'
-                  }
-                ].filter(item => item.value > 0); // Only show segments with values > 0
-                
-                const coveragePercentage = totalObligations > 0 ? Math.min(100, (totalPayments / totalObligations * 100)) : 0;
+                // Υπολογισμός εκκρεμών πληρωμών
+                const pendingPayments = Math.max(0, totalObligations - actualPayments);
                 
                 return (
-                  <div className="space-y-4">
-                    {/* Summary Stats */}
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-gray-800">
-                          {formatCurrency(totalObligations)}
-                        </div>
-                        <div className="text-xs text-gray-600">Μηνιαίες Υποχρεώσεις</div>
+                  <div className="space-y-6">
+                    {/* Progress Bar */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">Κάλυψη Υποχρεώσεων</span>
+                        <span className="text-sm font-bold text-green-600">
+                          {coveragePercentage.toFixed(1)}%
+                        </span>
                       </div>
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-green-600">
-                          {formatCurrency(actualPayments)}
+                      
+                      <div className="w-full bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-500 ease-out"
+                          style={{ width: `${coveragePercentage}%` }}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-xs font-bold text-white drop-shadow-sm">
+                            {formatCurrency(actualPayments)} / {formatCurrency(totalObligations)}
+                          </span>
                         </div>
-                        <div className="text-xs text-gray-600">Πραγματικές Εισπράξεις</div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-blue-600">
-                          {formatCurrency(actualExpenses)}
-                        </div>
-                        <div className="text-xs text-gray-600">Πραγματικές Δαπάνες</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-red-600">
-                          {formatCurrency(pendingPayments)}
-                        </div>
-                        <div className="text-xs text-gray-600">Εκκρεμείς Πληρωμές</div>
+                      
+                      <div className="flex items-center justify-between text-xs text-gray-600">
+                        <span>0€</span>
+                        <span>{formatCurrency(totalObligations)}</span>
                       </div>
                     </div>
                     
-                    {/* Pie Chart */}
-                    {pieData.length > 0 ? (
-                      <div className="flex flex-col lg:flex-row items-center gap-6">
-                        <div className="w-full lg:w-1/2 h-64">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <RechartsPieChart>
-                              <Pie
-                                data={pieData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={40}
-                                outerRadius={80}
-                                paddingAngle={2}
-                                dataKey="value"
-                              >
-                                {pieData.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                              </Pie>
-                              <Tooltip 
-                                formatter={(value: number) => [formatCurrency(value), 'Ποσό']}
-                                labelFormatter={(label) => `${label}`}
-                              />
-                              <Legend 
-                                verticalAlign="bottom" 
-                                height={36}
-                                formatter={(value, entry, index) => (
-                                  <span className="text-sm font-medium">
-                                    {value} ({pieData[index]?.percentage}%)
-                                  </span>
-                                )}
-                              />
-                            </RechartsPieChart>
-                          </ResponsiveContainer>
+                    {/* Στατιστικά */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div className="text-lg font-bold text-green-700">
+                          {formatCurrency(actualPayments)}
                         </div>
-                        
-                        {/* Coverage Summary */}
-                        <div className="w-full lg:w-1/2 space-y-4">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-blue-600">
-                              {coveragePercentage.toFixed(1)}%
-                            </div>
-                            <div className="text-sm text-gray-600">Ποσοστό Κάλυψης</div>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-700">Εισπράξεις:</span>
-                              <span className="text-sm font-semibold text-green-600">
-                                {formatCurrency(actualPayments)}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-700">Δαπάνες:</span>
-                              <span className="text-sm font-semibold text-blue-600">
-                                {formatCurrency(actualExpenses)}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-700">Εκκρεμείς:</span>
-                              <span className="text-sm font-semibold text-red-600">
-                                {formatCurrency(pendingPayments)}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between border-t pt-2">
-                              <span className="text-sm font-medium text-gray-800">Υποχρεώσεις:</span>
-                              <span className="text-sm font-bold text-gray-800">
-                                {formatCurrency(totalObligations)}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {/* Status Message */}
-                          <div className={`p-3 rounded-lg text-sm ${
-                            coveragePercentage >= 100 
-                              ? 'bg-green-50 text-green-800 border border-green-200' 
-                              : coveragePercentage >= 80 
-                                ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-                                : 'bg-red-50 text-red-800 border border-red-200'
-                          }`}>
-                            {coveragePercentage >= 100 ? (
-                              <div className="flex items-center gap-2">
-                                <Check className="h-4 w-4" />
-                                <span>Όλες οι μηνιαίες υποχρεώσεις έχουν καλυφθεί!</span>
-                              </div>
-                            ) : coveragePercentage >= 80 ? (
-                              <div className="flex items-center gap-2">
-                                <AlertTriangle className="h-4 w-4" />
-                                <span>Καλή κάλυψη - χρειάζεται επιπλέον εισπράξεις</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <AlertTriangle className="h-4 w-4" />
-                                <span>Χαμηλή κάλυψη - απαιτούνται άμεσες εισπράξεις</span>
-                              </div>
-                            )}
-                            <div className="mt-2 text-xs opacity-75">
-                              Πραγματικές εισπράξεις: {formatCurrency(actualPayments)} | Υποχρεώσεις: {formatCurrency(totalObligations)}
-                            </div>
-                          </div>
-                        </div>
+                        <div className="text-xs text-green-600">Πληρωμένες</div>
                       </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        <PieChart className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <div className="text-sm">Δεν υπάρχουν δεδομένα για κάλυψη</div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          Προσθέστε δαπάνες και εισπράξεις για να δείτε την ανάλυση κάλυψης
+                      
+                      <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
+                        <div className="text-lg font-bold text-red-700">
+                          {formatCurrency(pendingPayments)}
                         </div>
+                        <div className="text-xs text-red-600">Εκκρεμείς</div>
                       </div>
-                    )}
+                      
+                      <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="text-lg font-bold text-blue-700">
+                          {formatCurrency(totalObligations)}
+                        </div>
+                        <div className="text-xs text-blue-600">Σύνολο</div>
+                      </div>
+                    </div>
+                    
+                    {/* Status Message */}
+                    <div className={`p-4 rounded-lg text-sm ${
+                      coveragePercentage >= 100 
+                        ? 'bg-green-50 text-green-800 border border-green-200' 
+                        : coveragePercentage >= 80 
+                          ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+                          : coveragePercentage >= 50
+                            ? 'bg-orange-50 text-orange-800 border border-orange-200'
+                            : 'bg-red-50 text-red-800 border border-red-200'
+                    }`}>
+                      {coveragePercentage >= 100 ? (
+                        <div className="flex items-center gap-2">
+                          <Check className="h-4 w-4" />
+                          <span className="font-medium">Όλες οι υποχρεώσεις έχουν καλυφθεί!</span>
+                        </div>
+                      ) : coveragePercentage >= 80 ? (
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span className="font-medium">Καλή κάλυψη - χρειάζεται επιπλέον εισπράξεις</span>
+                        </div>
+                      ) : coveragePercentage >= 50 ? (
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span className="font-medium">Μέτρια κάλυψη - απαιτούνται εισπράξεις</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span className="font-medium">Χαμηλή κάλυψη - απαιτούνται άμεσες εισπράξεις</span>
+                        </div>
+                      )}
+                      <div className="mt-2 text-xs opacity-75">
+                        Εισπράξεις: {formatCurrency(actualPayments)} | Υποχρεώσεις: {formatCurrency(totalObligations)}
+                      </div>
+                    </div>
                   </div>
                 );
               })()}
@@ -2036,163 +1900,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         </div>
       )}
 
-      {/* Section 1.6: Stable Financial Progression Structure */}
-      <div className="space-y-4">
-        <Card className="border-2 border-indigo-200 bg-indigo-50/30">
-          <Collapsible defaultOpen={false}>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-indigo-50 transition-colors">
-                <CardTitle className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-indigo-600" />
-                    <span className="font-semibold text-sm text-indigo-900">
-                      Συνολική Εικόνα Οικονομικών Ποσών
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200">
-                      4 Στοιχεία
-                    </Badge>
-                    <ChevronDown className="h-4 w-4 text-indigo-600 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                  </div>
-                </CardTitle>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent className="p-4">
-            
-            <div className="space-y-4">
-              {/* Row 1: Historical Balance */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-white rounded-lg border border-indigo-100">
-                <div className="text-center">
-                  <div className="text-xs font-medium text-indigo-700 mb-1">Παλαιότερες Οφειλές</div>
-                  <div className="text-lg font-bold text-purple-800">
-                    {formatCurrency(financialSummary?.previous_obligations || 0)}
-                  </div>
-                  <div className="text-xs text-purple-600">Συσσωρευμένες οφειλές</div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-xs font-medium text-indigo-700 mb-1">Τρέχον Ταμείο</div>
-                  <div className="text-lg font-bold text-blue-800">
-                    {formatCurrency(financialSummary?.current_reserve || 0)}
-                  </div>
-                  <div className="text-xs text-blue-600">Διαθέσιμο ποσό</div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-xs font-medium text-indigo-700 mb-1">Στόχος Αποθεματικού</div>
-                  <div className="text-lg font-bold text-green-800">
-                    {formatCurrency(financialSummary?.reserve_fund_goal || 0)}
-                  </div>
-                  <div className="text-xs text-green-600">Συνολικός στόχος</div>
-                </div>
-              </div>
 
-              {/* Row 2: Current Monthly Obligations */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-white rounded-lg border border-indigo-100">
-                <div className="text-center">
-                  <div className="text-xs font-medium text-indigo-700 mb-1">Μηνιαία Έξοδα</div>
-                  <div className="text-lg font-bold text-orange-800">
-                    {formatCurrency(financialSummary?.average_monthly_expenses || 0)}
-                  </div>
-                  <div className="text-xs text-orange-600">Κοινόχρηστα</div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-xs font-medium text-indigo-700 mb-1">Κόστος Διαχείρισης</div>
-                  <div className="text-lg font-bold text-blue-800">
-                    {formatCurrency(financialSummary?.total_management_cost || 0)}
-                  </div>
-                  <div className="text-xs text-blue-600">Μηνιαία διαχείριση</div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-xs font-medium text-indigo-700 mb-1">Εισφορά Αποθεματικού</div>
-                  <div className="text-lg font-bold text-green-800">
-                    {formatCurrency(financialSummary?.reserve_fund_monthly_target || 0)}
-                  </div>
-                  <div className="text-xs text-green-600">Μηνιαία εισφορά</div>
-                </div>
-              </div>
-
-              {/* Row 3: Total Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
-                <div className="text-center">
-                  <div className="text-xs font-medium text-indigo-700 mb-1">Συνολικές Μηνιαίες Υποχρεώσεις</div>
-                  <div className="text-xl font-bold text-indigo-800">
-                    {formatCurrency((financialSummary?.average_monthly_expenses || 0) + (financialSummary?.total_management_cost || 0) + (financialSummary?.reserve_fund_monthly_target || 0))}
-                  </div>
-                  <div className="text-xs text-indigo-600">
-                    {(() => {
-                      const hasExpenses = (financialSummary?.average_monthly_expenses || 0) > 0;
-                      const hasManagement = (financialSummary?.total_management_cost || 0) > 0;
-                      const hasReserve = (financialSummary?.reserve_fund_monthly_target || 0) > 0;
-                      
-                      if (hasExpenses && hasManagement && hasReserve) return 'Έξοδα + Διαχείριση + Αποθεματικό';
-                      if (hasExpenses && hasManagement) return 'Έξοδα + Διαχείριση';
-                      if (hasExpenses && hasReserve) return 'Έξοδα + Αποθεματικό';
-                      if (hasManagement && hasReserve) return 'Διαχείριση + Αποθεματικό';
-                      if (hasExpenses) return 'Μόνο έξοδα';
-                      if (hasManagement) return 'Μόνο διαχείριση';
-                      if (hasReserve) return 'Μόνο αποθεματικό';
-                      return 'Δεν υπάρχουν υποχρεώσεις';
-                    })()}
-                  </div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-xs font-medium text-indigo-700 mb-1">Τελικό Υπόλοιπο</div>
-                  <div className={`text-xl font-bold ${isPositiveBalance ? 'text-green-800' : 'text-red-800'}`}>
-                    {formatCurrency(financialSummary?.total_balance || 0)}
-                  </div>
-                  <div className={`text-xs ${isPositiveBalance ? 'text-green-600' : 'text-red-600'}`}>
-                    {isPositiveBalance ? 'Θετικό υπόλοιπο' : 'Αρνητικό υπόλοιπο'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 4: Status Indicators */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className={`p-3 rounded-lg border ${isPositiveBalance ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                  <div className="text-center">
-                    <div className={`text-sm font-medium ${isPositiveBalance ? 'text-green-700' : 'text-red-700'}`}>
-                      {isPositiveBalance ? '✅ Καλή Κατάσταση' : '⚠️ Προσοχή'}
-                    </div>
-                    <div className={`text-xs ${isPositiveBalance ? 'text-green-600' : 'text-red-600'}`}>
-                      {isPositiveBalance ? 'Το κτίριο δεν έχει αρνητικό υπόλοιπο' : 'Το κτίριο έχει αρνητικό υπόλοιπο'}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="text-center">
-                    <div className="text-sm font-medium text-blue-700">
-                      📊 Προβολή
-                    </div>
-                    <div className="text-xs text-blue-600">
-                      {selectedMonth ? `Για τον ${new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}` : 'Τρέχων μήνας'}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                  <div className="text-center">
-                    <div className="text-sm font-medium text-purple-700">
-                      🏢 Διαμερίσματα
-                    </div>
-                    <div className="text-xs text-purple-600">
-                      {financialSummary?.apartments_count || 0} διαμερίσματα
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-      </div>
     </Card>
   );
 });
