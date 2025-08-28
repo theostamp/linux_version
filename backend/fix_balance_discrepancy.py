@@ -1,8 +1,22 @@
+#!/usr/bin/env python3
+"""
+🔧 ΔΙΟΡΘΩΣΗ ΔΙΑΦΟΡΑΣ ΥΠΟΛΟΙΠΩΝ - New Concierge
+
+Στόχος: Διόρθωση της διαφοράς 1,800.00€ μεταξύ transactions και apartment balances
+Προτεραιότητα: ΚΡΙΣΙΜΗ - Ακρίβεια οικονομικών δεδομένων
+
+Αυτό το script:
+1. Εντοπίζει τη διαφορά υπολοίπων
+2. Επαναυπολογίζει τα balances από transactions
+3. Διορθώνει τα apartment balances
+4. Επιβεβαιώνει τη διόρθωση
+"""
+
 import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
+from datetime import datetime
 from django.db.models import Sum
 
 # Setup Django environment
@@ -11,189 +25,231 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Payment, Expense, Transaction
-from apartments.models import Apartment
+from financial.models import Expense, Transaction, Payment, Apartment
 from buildings.models import Building
 
-def fix_balance_discrepancy():
-    """Fix balance discrepancy by recalculating apartment balances"""
+def print_header(title):
+    """Εκτυπώνει επικεφαλίδα με διαχωριστικά"""
+    print("\n" + "="*80)
+    print(f"🔧 {title}")
+    print("="*80)
+
+def print_section(title):
+    """Εκτυπώνει τμήμα με διαχωριστικά"""
+    print(f"\n📋 {title}")
+    print("-" * 60)
+
+def format_currency(amount):
+    """Μορφοποίηση ποσού σε ευρώ"""
+    return f"{float(amount):,.2f}€"
+
+class BalanceDiscrepancyFixer:
+    """Κλάση για τη διόρθωση της διαφοράς υπολοίπων"""
     
-    building_id = 4  # Αλκμάνος 22
+    def __init__(self, building_id: int):
+        self.building_id = building_id
+        self.building = Building.objects.get(id=building_id)
+        self.apartments = Apartment.objects.filter(building_id=building_id)
+        
+        print_header(f"ΔΙΟΡΘΩΣΗ ΔΙΑΦΟΡΑΣ ΥΠΟΛΟΙΠΩΝ - {self.building.name}")
+        print(f"🏢 Κτίριο: {self.building.name}")
+        print(f"📍 Διεύθυνση: {self.building.address}")
+        print(f"🏠 Αριθμός διαμερισμάτων: {self.apartments.count()}")
+        print(f"📅 Ημερομηνία διόρθωσης: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
     
-    with schema_context('demo'):
-        print("🔧 ΔΙΟΡΘΩΣΗ ΑΣΥΜΦΩΝΙΑΣ ΥΠΟΛΟΙΠΩΝ")
-        print("=" * 60)
-        print(f"🏢 Κτίριο: Αλκμάνος 22 (ID: {building_id})")
-        print()
+    def analyze_discrepancy(self):
+        """Ανάλυση της διαφοράς υπολοίπων"""
+        print_section("🔍 ΑΝΑΛΥΣΗ ΔΙΑΦΟΡΑΣ ΥΠΟΛΟΙΠΩΝ")
         
-        # 1. Τρέχον κατάσταση
-        print("📊 1. ΤΡΕΧΟΝ ΚΑΤΑΣΤΑΣΗ")
-        print("-" * 50)
-        
-        apartments = Apartment.objects.filter(building_id=building_id).order_by('number')
-        total_balance = sum(apt.current_balance or Decimal('0.00') for apt in apartments)
-        
-        total_expenses = Expense.objects.filter(building_id=building_id).aggregate(
+        # Υπολογισμός συνολικού υπολοίπου από transactions
+        transactions = Transaction.objects.filter(building_id=self.building_id)
+        total_balance_from_transactions = transactions.aggregate(
             total=Sum('amount')
         )['total'] or Decimal('0.00')
         
-        total_payments = Payment.objects.filter(
-            apartment__building_id=building_id
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        expected_balance = total_payments - total_expenses
-        discrepancy = abs(total_balance - expected_balance)
-        
-        print(f"💰 Συνολικό υπόλοιπο διαμερισμάτων: €{total_balance:,.2f}")
-        print(f"💸 Συνολικές δαπάνες: €{total_expenses:,.2f}")
-        print(f"💳 Συνολικές πληρωμές: €{total_payments:,.2f}")
-        print(f"📊 Αναμενόμενο υπόλοιπο: €{expected_balance:,.2f}")
-        print(f"🔍 Ασυμφωνία: €{discrepancy:,.2f}")
-        print()
-        
-        # 2. Ανάλυση transactions ανά διαμέρισμα
-        print("📊 2. ΑΝΑΛΥΣΗ TRANSACTIONS ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ")
-        print("-" * 50)
-        
-        apartment_transactions = {}
-        apartment_payments = {}
-        
-        for apartment in apartments:
-            # Συλλογή transactions
-            transactions = Transaction.objects.filter(
-                building_id=building_id,
-                apartment_number=apartment.number
-            ).order_by('date')
-            
-            apartment_transactions[apartment.id] = transactions
-            
-            # Συλλογή payments
-            payments = Payment.objects.filter(apartment=apartment)
-            apartment_payments[apartment.id] = payments
-            
-            # Υπολογισμός από transactions
-            transaction_balance = Decimal('0.00')
-            for trans in transactions:
-                if trans.type in ['expense_issued', 'expense_created']:
-                    transaction_balance -= trans.amount
-                elif trans.type in ['payment_received', 'common_expense_payment']:
-                    transaction_balance += trans.amount
-            
-            # Υπολογισμός από payments
-            payment_balance = sum(pay.amount for pay in payments)
-            
-            # Τρέχον υπόλοιπο
-            current_balance = apartment.current_balance or Decimal('0.00')
-            
-            print(f"🏠 Διαμέρισμα {apartment.number}:")
-            print(f"   📊 Τρέχον υπόλοιπο: €{current_balance:,.2f}")
-            print(f"   💳 Πληρωμές: €{payment_balance:,.2f}")
-            print(f"   📋 Transactions: €{transaction_balance:,.2f}")
-            print()
-        
-        # 3. Υπολογισμός σωστών υπολοίπων
-        print("📊 3. ΥΠΟΛΟΓΙΣΜΟΣ ΣΩΣΤΩΝ ΥΠΟΛΟΙΠΩΝ")
-        print("-" * 50)
-        
-        correct_balances = {}
-        total_correct_balance = Decimal('0.00')
-        
-        for apartment in apartments:
-            # Υπολογισμός από πληρωμές και δαπάνες
-            payments_total = sum(pay.amount for pay in apartment_payments[apartment.id])
-            
-            # Υπολογισμός μεριδίου δαπανών
-            from financial.services import CommonExpenseCalculator
-            calculator = CommonExpenseCalculator(building_id)
-            shares = calculator.calculate_shares()
-            apartment_share = shares.get(apartment.id, {})
-            expenses_share = apartment_share.get('total_amount', 0)
-            
-            correct_balance = payments_total - expenses_share
-            correct_balances[apartment.id] = correct_balance
-            total_correct_balance += correct_balance
-            
-            current_balance = apartment.current_balance or Decimal('0.00')
-            
-            print(f"🏠 Διαμέρισμα {apartment.number}:")
-            print(f"   💳 Πληρωμές: €{payments_total:,.2f}")
-            print(f"   💸 Μερίδιο δαπανών: €{expenses_share:,.2f}")
-            print(f"   📊 Σωστό υπόλοιπο: €{correct_balance:,.2f}")
-            print(f"   📊 Τρέχον υπόλοιπο: €{current_balance:,.2f}")
-            
-            if abs(correct_balance - current_balance) > Decimal('0.01'):
-                print(f"   ⚠️  Διαφορά: €{correct_balance - current_balance:,.2f}")
-            else:
-                print(f"   ✅ Σωστό")
-            print()
-        
-        print(f"📈 Συνολικό σωστό υπόλοιπο: €{total_correct_balance:,.2f}")
-        print(f"📈 Αναμενόμενο υπόλοιπο: €{expected_balance:,.2f}")
-        
-        new_discrepancy = abs(total_correct_balance - expected_balance)
-        print(f"🔍 Νέα ασυμφωνία: €{new_discrepancy:,.2f}")
-        
-        if new_discrepancy <= Decimal('0.01'):
-            print("✅ Η διόρθωση θα λύσει το πρόβλημα!")
-        else:
-            print("❌ Χρειάζεται περαιτέρω ανάλυση")
-        
-        print()
-        
-        # 4. Εφαρμογή διορθώσεων
-        print("📊 4. ΕΦΑΡΜΟΓΗ ΔΙΟΡΘΩΣΕΩΝ")
-        print("-" * 50)
-        
-        updated_count = 0
-        for apartment in apartments:
-            current_balance = apartment.current_balance or Decimal('0.00')
-            correct_balance = correct_balances[apartment.id]
-            
-            if abs(correct_balance - current_balance) > Decimal('0.01'):
-                apartment.current_balance = correct_balance
-                apartment.save()
-                updated_count += 1
-                print(f"✅ Διορθώθηκε διαμέρισμα {apartment.number}: €{current_balance:,.2f} → €{correct_balance:,.2f}")
-        
-        print(f"\n📊 Ενημερώθηκαν {updated_count} διαμερίσματα")
-        
-        # 5. Validation τελικών αποτελεσμάτων
-        print("\n📊 5. VALIDATION ΤΕΛΙΚΩΝ ΑΠΟΤΕΛΕΣΜΑΤΩΝ")
-        print("-" * 50)
-        
-        final_balance = sum(
-            apt.current_balance or Decimal('0.00') 
-            for apt in Apartment.objects.filter(building_id=building_id)
+        # Υπολογισμός συνολικού υπολοίπου από διαμερίσματα
+        total_balance_from_apartments = sum(
+            apt.current_balance or Decimal('0.00') for apt in self.apartments
         )
         
-        final_discrepancy = abs(final_balance - expected_balance)
+        print(f"📊 Υπόλοιπο από συναλλαγές: {format_currency(total_balance_from_transactions)}")
+        print(f"📊 Υπόλοιπο από διαμερίσματα: {format_currency(total_balance_from_apartments)}")
         
-        print(f"💰 Τελικό υπόλοιπο διαμερισμάτων: €{final_balance:,.2f}")
-        print(f"📊 Αναμενόμενο υπόλοιπο: €{expected_balance:,.2f}")
-        print(f"🔍 Τελική ασυμφωνία: €{final_discrepancy:,.2f}")
+        # Υπολογισμός διαφοράς
+        discrepancy = total_balance_from_apartments - total_balance_from_transactions
+        print(f"⚠️  Διαφορά: {format_currency(discrepancy)}")
         
-        if final_discrepancy <= Decimal('0.01'):
-            print("✅ Η ασυμφωνία διορθώθηκε επιτυχώς!")
+        if abs(discrepancy) > Decimal('0.01'):
+            print(f"❌ ΠΡΟΒΛΗΜΑ: Υπάρχει διαφορά υπολοίπων!")
+            return True, discrepancy
         else:
-            print("❌ Παραμένει ασυμφωνία")
+            print(f"✅ Δεν υπάρχει διαφορά υπολοίπων")
+            return False, Decimal('0.00')
+    
+    def analyze_apartment_balances(self):
+        """Ανάλυση υπολοίπων ανά διαμέρισμα"""
+        print_section("🏠 ΑΝΑΛΥΣΗ ΥΠΟΛΟΙΠΩΝ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ")
         
-        print()
+        apartment_issues = []
         
-        # 6. Συμπέρασμα
-        print("📋 6. ΣΥΜΠΕΡΑΣΜΑ")
-        print("-" * 50)
+        for apt in self.apartments:
+            # Υπολογισμός υπολοίπου από συναλλαγές
+            apt_transactions = Transaction.objects.filter(apartment=apt)
+            calculated_balance = apt_transactions.aggregate(
+                total=Sum('amount')
+            )['total'] or Decimal('0.00')
+            
+            # Τρέχον υπόλοιπο
+            current_balance = apt.current_balance or Decimal('0.00')
+            
+            # Υπολογισμός διαφοράς
+            difference = current_balance - calculated_balance
+            
+            print(f"🏠 {apt.number}:")
+            print(f"   📊 Τρέχον: {format_currency(current_balance)}")
+            print(f"   🔄 Υπολογισμένο: {format_currency(calculated_balance)}")
+            print(f"   ⚠️  Διαφορά: {format_currency(difference)}")
+            
+            if abs(difference) > Decimal('0.01'):
+                apartment_issues.append({
+                    'apartment': apt,
+                    'current_balance': current_balance,
+                    'calculated_balance': calculated_balance,
+                    'difference': difference
+                })
+                print(f"   ❌ ΧΡΕΙΑΖΕΤΑΙ ΔΙΟΡΘΩΣΗ")
+            else:
+                print(f"   ✅ ΣΩΣΤΟ")
         
-        print("🎉 ΔΙΟΡΘΩΣΗ ΟΛΟΚΛΗΡΩΘΗΚΕ!")
-        print()
-        print("✅ Τα αποτελέσματα:")
-        print(f"   • Αρχική ασυμφωνία: €{discrepancy:,.2f}")
-        print(f"   • Τελική ασυμφωνία: €{final_discrepancy:,.2f}")
-        print(f"   • Ενημερώθηκαν: {updated_count} διαμερίσματα")
-        print()
-        print("🚀 Το σύστημα είναι τώρα:")
-        print("   • Απλούστερο (όλες οι δαπάνες εκδοθείσες)")
-        print("   • Ακριβές (σωστά υπόλοιπα)")
-        print("   • Συνεπές (δεν υπάρχουν ασυμφωνίες)")
+        return apartment_issues
+    
+    def fix_apartment_balances(self, apartment_issues):
+        """Διόρθωση υπολοίπων διαμερισμάτων"""
+        print_section("🔧 ΔΙΟΡΘΩΣΗ ΥΠΟΛΟΙΠΩΝ ΔΙΑΜΕΡΙΣΜΑΤΩΝ")
+        
+        if not apartment_issues:
+            print("✅ Δεν χρειάζεται διόρθωση")
+            return
+        
+        print(f"🔧 Θα διορθωθούν {len(apartment_issues)} διαμερίσματα")
+        
+        for issue in apartment_issues:
+            apt = issue['apartment']
+            old_balance = issue['current_balance']
+            new_balance = issue['calculated_balance']
+            
+            print(f"🏠 Διόρθωση {apt.number}:")
+            print(f"   📊 Παλιό: {format_currency(old_balance)}")
+            print(f"   📊 Νέο: {format_currency(new_balance)}")
+            print(f"   🔄 Διαφορά: {format_currency(issue['difference'])}")
+            
+            # Ενημέρωση υπολοίπου
+            apt.current_balance = new_balance
+            apt.save()
+            
+            print(f"   ✅ ΔΙΟΡΘΩΘΗΚΕ")
+    
+    def verify_fix(self):
+        """Επιβεβαίωση της διόρθωσης"""
+        print_section("✅ ΕΠΙΒΕΒΑΙΩΣΗ ΔΙΟΡΘΩΣΗΣ")
+        
+        # Επαναληπτική ανάλυση διαφοράς
+        has_discrepancy, discrepancy = self.analyze_discrepancy()
+        
+        if not has_discrepancy:
+            print("✅ Η διόρθωση ήταν επιτυχής!")
+            print("✅ Όλα τα υπολοίπα είναι συνεπή")
+            return True
+        else:
+            print(f"❌ Η διόρθωση απέτυχε!")
+            print(f"❌ Παραμένει διαφορά: {format_currency(discrepancy)}")
+            return False
+    
+    def generate_fix_report(self):
+        """Δημιουργία αναφοράς διόρθωσης"""
+        print_section("📊 ΑΝΑΦΟΡΑ ΔΙΟΡΘΩΣΗΣ")
+        
+        # Στατιστικά πριν τη διόρθωση
+        print("📈 ΣΤΑΤΙΣΤΙΚΑ ΠΡΙΝ ΤΗ ΔΙΟΡΘΩΣΗ:")
+        
+        transactions = Transaction.objects.filter(building_id=self.building_id)
+        total_transactions = transactions.count()
+        total_transaction_amount = transactions.aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
+        
+        print(f"   📊 Συνολικές συναλλαγές: {total_transactions}")
+        print(f"   💰 Συνολικό ποσό συναλλαγών: {format_currency(total_transaction_amount)}")
+        
+        # Στατιστικά μετά τη διόρθωση
+        print("\n📈 ΣΤΑΤΙΣΤΙΚΑ ΜΕΤΑ ΤΗ ΔΙΟΡΘΩΣΗ:")
+        
+        total_apartment_balance = sum(
+            apt.current_balance or Decimal('0.00') for apt in self.apartments
+        )
+        
+        print(f"   💰 Συνολικό υπόλοιπο διαμερισμάτων: {format_currency(total_apartment_balance)}")
+        
+        # Έλεγχος συνέπειας
+        balance_difference = abs(total_transaction_amount - total_apartment_balance)
+        if balance_difference < Decimal('0.01'):
+            print(f"   ✅ Υπολοίπα συνεπή (διαφορά < 0.01€)")
+        else:
+            print(f"   ❌ Υπολοίπα μη συνεπή (διαφορά: {format_currency(balance_difference)})")
+    
+    def run_complete_fix(self):
+        """Εκτέλεση πλήρους διόρθωσης"""
+        print_header("🚀 ΕΝΑΡΞΗ ΔΙΟΡΘΩΣΗΣ")
+        
+        try:
+            # 1. Ανάλυση διαφοράς
+            has_discrepancy, discrepancy = self.analyze_discrepancy()
+            
+            if not has_discrepancy:
+                print("✅ Δεν χρειάζεται διόρθωση")
+                return True
+            
+            # 2. Ανάλυση ανά διαμέρισμα
+            apartment_issues = self.analyze_apartment_balances()
+            
+            # 3. Διόρθωση υπολοίπων
+            self.fix_apartment_balances(apartment_issues)
+            
+            # 4. Επιβεβαίωση διόρθωσης
+            fix_successful = self.verify_fix()
+            
+            # 5. Αναφορά διόρθωσης
+            self.generate_fix_report()
+            
+            if fix_successful:
+                print_header("✅ ΔΙΟΡΘΩΣΗ ΟΛΟΚΛΗΡΩΘΗΚΕ ΕΠΙΤΥΧΩΣ")
+                print("🎯 Όλα τα υπολοίπα είναι τώρα συνεπή!")
+                print("📊 Η οικονομική αρχιτεκτονική είναι πλήρως επαληθεύσιμη!")
+            else:
+                print_header("❌ ΔΙΟΡΘΩΣΗ ΑΠΕΤΥΧΕ")
+                print("⚠️  Χρειάζεται περαιτέρω έρευνα")
+            
+            return fix_successful
+            
+        except Exception as e:
+            print(f"❌ Σφάλμα κατά τη διόρθωση: {str(e)}")
+            raise
+
+def main():
+    """Κύρια συνάρτηση"""
+    print_header("🔧 ΔΙΟΡΘΩΣΗ ΔΙΑΦΟΡΑΣ ΥΠΟΛΟΙΠΩΝ - New Concierge")
+    
+    # Εκτέλεση διόρθωσης για το demo building
+    with schema_context('demo'):
+        fixer = BalanceDiscrepancyFixer(building_id=1)  # Αραχώβης 12
+        success = fixer.run_complete_fix()
+        
+        if success:
+            print("\n🎯 Η οικονομική αρχιτεκτονική είναι τώρα πλήρως σωστή!")
+        else:
+            print("\n⚠️  Χρειάζεται περαιτέρω έρευνα για τη διόρθωση")
 
 if __name__ == "__main__":
-    fix_balance_discrepancy()
+    main()
+
+

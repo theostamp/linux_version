@@ -13,6 +13,7 @@ export { default as FinancialOverview } from './FinancialOverview';
 export { CommonExpenseCalculator } from './CommonExpenseCalculator';
 export { CommonExpenseCalculatorNew } from './calculator/CommonExpenseCalculatorNew';
 export { BuildingOverviewSection } from './calculator/BuildingOverviewSection';
+export { PaymentProgressVisualization } from './PaymentProgressVisualization';
 export { MonthSelector } from './MonthSelector';
 export { ApartmentFilter } from './ApartmentFilter';
 export { SharePreview } from './SharePreview';
@@ -21,6 +22,7 @@ export { ExpenseBreakdown } from './ExpenseBreakdown';
 export { FinancialPage } from './FinancialPage';
 export { default as CashFlowChart } from './CashFlowChart';
 export { default as ReportsManager } from './ReportsManager';
+export { FinancialOverviewTab } from './FinancialOverviewTab';
 
 // Meter Reading components
 export { MeterReadingForm } from './MeterReadingForm';

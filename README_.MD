@@ -208,6 +208,9 @@ frontend/
 - PostgreSQL 12+
 - Docker (προαιρετικό)
 
+sudo rm -rf node_modules package-lock.json && npm install
+
+
 ### Backend Setup
 ```bash
 cd backend
@@ -488,7 +491,7 @@ git push origin v2.1.0
 ### Βασικές Εντολές Git
 
 git add .
-git commit -m "fix: κατανομη στην ατομικη καρτελα πληρωμης"
+git commit -m "fix: μετατροπη πληρωμων->συναλλαγες"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

@@ -235,6 +235,21 @@ def recalculate_building_reserve_on_payment_delete(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=Expense)
+def create_transactions_for_expense(sender, instance, created, **kwargs):
+    """
+    Αυτόματη δημιουργία συναλλαγών όταν δημιουργείται δαπάνη
+    """
+    if created:  # Όλες οι δαπάνες θεωρούνται εκδοθείσες
+        try:
+            with transaction.atomic():
+                # Καλούμε τη μέθοδο που δημιουργεί συναλλαγές για όλα τα διαμερίσματα
+                instance._create_apartment_transactions()
+                print(f"✅ Expense Signal: Δημιουργήθηκαν συναλλαγές για δαπάνη '{instance.title}'")
+        except Exception as e:
+            print(f"❌ Σφάλμα στη δημιουργία συναλλαγών για δαπάνη: {e}")
+
+
+@receiver(post_save, sender=Expense)
 def update_building_reserve_on_expense(sender, instance, created, **kwargs):
     """
     Αυτόματη ενημέρωση αποθεματικού κτιρίου όταν δημιουργείται/ενημερώνεται δαπάνη
@@ -258,7 +273,7 @@ def update_building_reserve_on_expense(sender, instance, created, **kwargs):
                 building.current_reserve = new_reserve
                 building.save(update_fields=['current_reserve'])
                 
-                print(f"✅ Ενημερώθηκε αποθεματικό κτιρίου {building.name}: {new_reserve:,.2f}€")
+                print(f"✅ Ενημερώθηκε αποθεματικού κτιρίου {building.name}: {new_reserve:,.2f}€")
     
     except Exception as e:
         print(f"❌ Σφάλμα στην ενημέρωση αποθεματικού κτιρίου: {e}")

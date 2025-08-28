@@ -13,7 +13,9 @@ import {
   PaymentForm,
   ExpenseList,
   PaymentList,
-  BuildingOverviewSection
+  BuildingOverviewSection,
+  PaymentProgressVisualization,
+  FinancialOverviewTab
 } from './index';
 import { ApartmentBalancesTab } from './ApartmentBalancesTab';
 import ReserveFundDebug from './test/ReserveFundDebug';
@@ -31,7 +33,8 @@ import {
   PieChart,
   Calendar,
   Building2,
-  RefreshCw
+  RefreshCw,
+  BarChart3
 } from 'lucide-react';
 import { useFinancialPermissions } from '@/hooks/useFinancialPermissions';
 import { ProtectedFinancialRoute, ConditionalRender, PermissionButton } from './ProtectedFinancialRoute';
@@ -55,7 +58,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   const [activeTab, setActiveTab] = useState(() => {
     // Check URL parameters for tab, apartment, and amount
     const params = new URLSearchParams(window.location.search);
-    return params.get('tab') || 'calculator';
+    return params.get('tab') || 'overview';
   });
   
   // Use custom hook for modal management
@@ -211,6 +214,26 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     }
   }, [searchParams]);
   
+  // Scroll to tab content when page loads with a specific tab
+  useEffect(() => {
+    if (activeTab && activeTab !== 'calculator') {
+      // Small delay to ensure DOM is fully rendered
+      setTimeout(() => {
+        const tabContent = document.querySelector(`[data-tab="${activeTab}"]`);
+        if (tabContent) {
+          // Scroll to just before the tab content, keeping tabs visible
+          const elementTop = tabContent.getBoundingClientRect().top + window.pageYOffset;
+          const offsetPosition = elementTop - 120; // Keep tabs visible with some padding
+          
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+        }
+      }, 200);
+    }
+  }, [activeTab]);
+  
   // Update URL when tab changes
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -224,6 +247,21 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       params.set('building', activeBuildingId.toString());
     }
     router.push(`/financial?${params.toString()}`);
+    
+    // Scroll to the tab content after a short delay to ensure DOM is updated
+    setTimeout(() => {
+      const tabContent = document.querySelector(`[data-tab="${value}"]`);
+      if (tabContent) {
+        // Scroll to just before the tab content, keeping tabs visible
+        const elementTop = tabContent.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementTop - 120; // Keep tabs visible with some padding
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
   };
   
   // Update URL when month changes
@@ -424,12 +462,25 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 
       
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        {/* Enhanced Navigation with Cards */}
-        <div className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6" data-tabs-container>
+        {/* Enhanced Navigation with Cards - Sticky */}
+        <div className="w-full sticky top-0 bg-white z-10 pb-4 shadow-sm">
           {/* Mobile: Scrollable horizontal menu */}
           <div className="block lg:hidden">
             <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-2">
+              <ConditionalRender permission="financial_read">
+                <button
+                  onClick={() => handleTabChange('overview')}
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
+                    activeTab === 'overview' 
+                      ? 'bg-indigo-100 border-indigo-300 text-indigo-700 shadow-sm' 
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                  }`}
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="text-sm font-medium whitespace-nowrap">Συνοπτική Εικόνα</span>
+                </button>
+              </ConditionalRender>
               <ConditionalRender permission="financial_write">
                 <button
                   onClick={() => handleTabChange('calculator')}
@@ -510,6 +561,19 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               </ConditionalRender>
               <ConditionalRender permission="financial_read">
                 <button
+                  onClick={() => handleTabChange('payment-progress')}
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
+                    activeTab === 'payment-progress' 
+                      ? 'bg-cyan-100 border-cyan-300 text-cyan-700 shadow-sm' 
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                  }`}
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  <span className="text-sm font-medium whitespace-nowrap">Εικόνα Εισπράξεων</span>
+                </button>
+              </ConditionalRender>
+              <ConditionalRender permission="financial_read">
+                <button
                   onClick={() => handleTabChange('balances')}
                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
                     activeTab === 'balances' 
@@ -538,7 +602,33 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </div>
 
           {/* Desktop: Card Grid Layout */}
-          <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-7 gap-3">
+          <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-8 gap-3">
+            <ConditionalRender permission="financial_read">
+              <button
+                onClick={() => handleTabChange('overview')}
+                className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
+                  activeTab === 'overview' 
+                    ? 'bg-indigo-50 border-indigo-200 shadow-sm' 
+                    : 'bg-white border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/30'
+                }`}
+              >
+                <div className={`mb-3 p-3 rounded-full transition-colors ${
+                  activeTab === 'overview' 
+                    ? 'bg-indigo-100 text-indigo-600' 
+                    : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600'
+                }`}>
+                  <TrendingUp className="h-6 w-6" />
+                </div>
+                <h3 className={`font-semibold text-sm ${
+                  activeTab === 'overview' ? 'text-indigo-700' : 'text-gray-700'
+                }`}>
+                  Συνοπτική Εικόνα
+                </h3>
+                <p className="text-xs text-gray-500 text-center mt-1">
+                  Καλυψη & Προοδος
+                </p>
+              </button>
+            </ConditionalRender>
             <ConditionalRender permission="financial_write">
               <button
                 onClick={() => handleTabChange('calculator')}
@@ -703,6 +793,32 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 
             <ConditionalRender permission="financial_read">
               <button
+                onClick={() => handleTabChange('payment-progress')}
+                className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
+                  activeTab === 'payment-progress' 
+                    ? 'bg-cyan-50 border-cyan-200 shadow-sm' 
+                    : 'bg-white border-gray-200 hover:border-cyan-200 hover:bg-cyan-50/30'
+                }`}
+              >
+                <div className={`mb-3 p-3 rounded-full transition-colors ${
+                  activeTab === 'payment-progress' 
+                    ? 'bg-cyan-100 text-cyan-600' 
+                    : 'bg-gray-100 text-gray-500 group-hover:bg-cyan-100 group-hover:text-cyan-600'
+                }`}>
+                  <BarChart3 className="h-6 w-6" />
+                </div>
+                <h3 className={`font-semibold text-sm ${
+                  activeTab === 'payment-progress' ? 'text-cyan-700' : 'text-gray-700'
+                }`}>
+                  Εικόνα Εισπράξεων
+                </h3>
+                <p className="text-xs text-gray-500 text-center mt-1">
+                  Προοδος & Κατανομή
+                </p>
+              </button>
+            </ConditionalRender>
+            <ConditionalRender permission="financial_read">
+              <button
                 onClick={() => handleTabChange('balances')}
                 className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
                   activeTab === 'balances' 
@@ -732,7 +848,16 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         
 
         
-        <TabsContent value="calculator" className="space-y-4">
+        <TabsContent value="overview" className="space-y-4" data-tab="overview">
+          <ProtectedFinancialRoute requiredPermission="financial_read">
+            <FinancialOverviewTab 
+              buildingId={activeBuildingId} 
+              selectedMonth={selectedMonth}
+            />
+          </ProtectedFinancialRoute>
+        </TabsContent>
+        
+        <TabsContent value="calculator" className="space-y-4" data-tab="calculator">
           <ProtectedFinancialRoute requiredPermission="financial_write">
             <CommonExpenseCalculatorNew 
               buildingId={activeBuildingId} 
@@ -742,7 +867,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </ProtectedFinancialRoute>
         </TabsContent>
         
-        <TabsContent value="expenses" className="space-y-4">
+        <TabsContent value="expenses" className="space-y-4" data-tab="expenses">
           <ProtectedFinancialRoute requiredPermission="expense_manage">
             <div className="space-y-4">
               <Card>
@@ -781,7 +906,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </ProtectedFinancialRoute>
         </TabsContent>
         
-        <TabsContent value="payments" className="space-y-4">
+        <TabsContent value="payments" className="space-y-4" data-tab="payments">
           <ProtectedFinancialRoute requiredPermission="financial_write">
             <PaymentList 
               ref={paymentListRef}
@@ -796,7 +921,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </ProtectedFinancialRoute>
         </TabsContent>
         
-        <TabsContent value="meters" className="space-y-4">
+        <TabsContent value="meters" className="space-y-4" data-tab="meters">
           <ProtectedFinancialRoute requiredPermission="financial_write">
             <div className="space-y-6">
               <MeterReadingList buildingId={activeBuildingId} selectedMonth={selectedMonth} />
@@ -805,19 +930,28 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </ProtectedFinancialRoute>
         </TabsContent>
         
-        <TabsContent value="charts" className="space-y-4">
+        <TabsContent value="charts" className="space-y-4" data-tab="charts">
           <ProtectedFinancialRoute requiredPermission="financial_read">
             <ChartsContainer buildingId={activeBuildingId} selectedMonth={selectedMonth} />
           </ProtectedFinancialRoute>
         </TabsContent>
         
-        <TabsContent value="history" className="space-y-4">
+        <TabsContent value="history" className="space-y-4" data-tab="history">
           <ProtectedFinancialRoute requiredPermission="financial_read">
             <TransactionHistory buildingId={activeBuildingId} limit={20} selectedMonth={selectedMonth} />
           </ProtectedFinancialRoute>
         </TabsContent>
         
-        <TabsContent value="balances" className="space-y-4">
+        <TabsContent value="payment-progress" className="space-y-4" data-tab="payment-progress">
+          <ProtectedFinancialRoute requiredPermission="financial_read">
+            <PaymentProgressVisualization 
+              buildingId={activeBuildingId} 
+              selectedMonth={selectedMonth}
+            />
+          </ProtectedFinancialRoute>
+        </TabsContent>
+        
+        <TabsContent value="balances" className="space-y-4" data-tab="balances">
           <ProtectedFinancialRoute requiredPermission="financial_read">
             <ApartmentBalancesTab 
               buildingId={activeBuildingId} 
@@ -827,7 +961,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </ProtectedFinancialRoute>
         </TabsContent>
         
-                    <TabsContent value="debug" className="space-y-4">
+                    <TabsContent value="debug" className="space-y-4" data-tab="debug">
               <ProtectedFinancialRoute requiredPermission="financial_read">
                 <div className="space-y-6">
                   <DataIntegrityCleanup 

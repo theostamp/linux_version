@@ -11,8 +11,8 @@ You are an AI assistant working on a comprehensive building management system bu
 - **Copy scripts to container BEFORE execution**: `docker cp script.py linux_version-backend-1:/app/`
 - **Database queries/migrations ONLY through Docker containers**
 - **NO local PostgreSQL connections allowed**
-
-### 🐍 Python Virtual Environment Rules
+ 
+### 🐍 Python Virtual Environment Rulesωμ
 - **ALWAYS activate .venv before ANY Python operations**: `source .venv/bin/activate`
 - **NEVER run Django commands without virtual environment activation**
 - **Virtual environment is MANDATORY for**: pip installs, Django management commands, Python script execution
@@ -176,8 +176,8 @@ This project has complex financial calculations:
 - Reserve fund management with audit trails
 
 ### Financial Analysis Requirements
-- **Building ID 1**: Αραχώβης 12, Αθήνα 106 80 (Main demo building)
-- **Building ID 2**: Αλκμάνος 22, Αθήνα 115 28 (Secondary demo building)
+- **Building ID 1**: Αλκμάνος 22, Αθήνα 115 28 (Main demo building)
+- **No secondary building** - Only Αλκμάνος 22 exists
 - **Tenant Schema**: Always use `schema_context('demo')` for financial data
 - **Participation Mills**: Total must equal 1000 across all apartments
 - **Reserve Fund**: Complex calculation with monthly targets and duration

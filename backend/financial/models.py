@@ -250,6 +250,76 @@ class Expense(models.Model):
     
     def __str__(self):
         return f"{self.title} - {self.amount}€ ({self.get_category_display()})"
+    
+    def _create_apartment_transactions(self):
+        """Δημιουργεί συναλλαγές για όλα τα διαμερίσματα"""
+        from apartments.models import Apartment
+        from decimal import Decimal
+        from datetime import datetime
+        from django.utils import timezone
+        
+        # Get all apartments in the building
+        apartments = Apartment.objects.filter(building=self.building)
+        
+        # Calculate share for each apartment based on distribution type
+        for apartment in apartments:
+            share_amount = self._calculate_apartment_share(apartment)
+            
+            if share_amount > 0:
+                # Calculate balances
+                current_balance = apartment.current_balance or Decimal('0.00')
+                new_balance = current_balance - share_amount
+                
+                # Convert expense.date (DateField) to DateTimeField for Transaction
+                expense_datetime = datetime.combine(self.date, datetime.min.time())
+                if timezone.is_naive(expense_datetime):
+                    expense_datetime = timezone.make_aware(expense_datetime)
+                
+                # Create transaction for this apartment
+                Transaction.objects.create(
+                    apartment=apartment,
+                    building=self.building,
+                    amount=share_amount,
+                    type='expense_created',
+                    description=f"Δαπάνη: {self.title}",
+                    date=expense_datetime,
+                    reference_id=str(self.id),
+                    reference_type='expense',
+                    balance_before=current_balance,
+                    balance_after=new_balance
+                )
+                
+                # Update apartment balance
+                apartment.current_balance = new_balance
+                apartment.save()
+    
+    def _calculate_apartment_share(self, apartment):
+        """Υπολογίζει το μερίδιο διαμερίσματος για τη δαπάνη"""
+        from decimal import Decimal
+        
+        if self.distribution_type == 'equal_share':
+            # Ισόποσα κατανομή
+            total_apartments = Apartment.objects.filter(building=self.building).count()
+            return self.amount / total_apartments if total_apartments > 0 else Decimal('0.00')
+        
+        elif self.distribution_type == 'by_participation_mills':
+            # Κατανομή βάσει χιλιοστών
+            total_mills = sum(apt.participation_mills or 0 for apt in Apartment.objects.filter(building=self.building))
+            if total_mills > 0:
+                apartment_mills = apartment.participation_mills or 0
+                return (self.amount * apartment_mills) / total_mills
+            return Decimal('0.00')
+        
+        elif self.distribution_type == 'by_meters':
+            # Κατανομή βάσει τετραγωνικών μέτρων
+            total_meters = sum(apt.square_meters or 0 for apt in Apartment.objects.filter(building=self.building))
+            if total_meters > 0:
+                apartment_meters = apartment.square_meters or 0
+                return (self.amount * apartment_meters) / total_meters
+            return Decimal('0.00')
+        
+        else:
+            return Decimal('0.00')
 
 
 class Transaction(models.Model):
@@ -307,6 +377,69 @@ class Transaction(models.Model):
         if self.date and timezone.is_naive(self.date):
             self.date = timezone.make_aware(self.date)
         super().save(*args, **kwargs)
+    
+    def _create_apartment_transactions(self):
+        """Δημιουργεί συναλλαγές για όλα τα διαμερίσματα"""
+        from apartments.models import Apartment
+        from decimal import Decimal
+        
+        # Get all apartments in the building
+        apartments = Apartment.objects.filter(building=self.building)
+        
+        # Calculate share for each apartment based on allocation type
+        for apartment in apartments:
+            share_amount = self._calculate_apartment_share(apartment)
+            
+            if share_amount > 0:
+                # Calculate balances
+                current_balance = apartment.current_balance or Decimal('0.00')
+                new_balance = current_balance - share_amount
+                
+                # Create transaction for this apartment
+                Transaction.objects.create(
+                    apartment=apartment,
+                    building=self.building,
+                    amount=share_amount,
+                    type='expense_created',
+                    description=f"Δαπάνη: {self.title}",
+                    date=self.date,
+                    reference_id=str(self.id),
+                    reference_type='expense',
+                    balance_before=current_balance,
+                    balance_after=new_balance
+                )
+                
+                # Update apartment balance
+                apartment.current_balance = new_balance
+                apartment.save()
+    
+    def _calculate_apartment_share(self, apartment):
+        """Υπολογίζει το μερίδιο διαμερίσματος για τη δαπάνη"""
+        from decimal import Decimal
+        
+        if self.allocation_type == 'equal_share':
+            # Ισόποσα κατανομή
+            total_apartments = Apartment.objects.filter(building=self.building).count()
+            return self.amount / total_apartments if total_apartments > 0 else Decimal('0.00')
+        
+        elif self.allocation_type == 'by_participation_mills':
+            # Κατανομή βάσει χιλιοστών
+            total_mills = sum(apt.participation_mills or 0 for apt in Apartment.objects.filter(building=self.building))
+            if total_mills > 0:
+                apartment_mills = apartment.participation_mills or 0
+                return (self.amount * apartment_mills) / total_mills
+            return Decimal('0.00')
+        
+        elif self.allocation_type == 'by_meters':
+            # Κατανομή βάσει τετραγωνικών μέτρων
+            total_meters = sum(apt.square_meters or 0 for apt in Apartment.objects.filter(building=self.building))
+            if total_meters > 0:
+                apartment_meters = apartment.square_meters or 0
+                return (self.amount * apartment_meters) / total_meters
+            return Decimal('0.00')
+        
+        else:
+            return Decimal('0.00')
 
 
 class Payment(models.Model):
@@ -354,6 +487,41 @@ class Payment(models.Model):
     
     def __str__(self):
         return f"Είσπραξη {self.apartment.number} - {self.amount}€ ({self.get_method_display()})"
+    
+    def save(self, *args, **kwargs):
+        # Save first to get the ID
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        # If this is a new payment, create transaction
+        if is_new:
+            self._create_payment_transaction()
+    
+    def _create_payment_transaction(self):
+        """Δημιουργεί συναλλαγή για την πληρωμή"""
+        from decimal import Decimal
+        
+        # Calculate balances
+        current_balance = self.apartment.current_balance or Decimal('0.00')
+        new_balance = current_balance + self.amount
+        
+        # Create transaction for this payment
+        Transaction.objects.create(
+            apartment=self.apartment,
+            building=self.apartment.building,
+            amount=self.amount,
+            type='payment_received',
+            description=f"Είσπραξη: {self.get_payment_type_display()}",
+            date=self.date,
+            reference_id=str(self.id),
+            reference_type='payment',
+            balance_before=current_balance,
+            balance_after=new_balance
+        )
+        
+        # Update apartment balance
+        self.apartment.current_balance = new_balance
+        self.apartment.save()
 
 
 class ExpenseApartment(models.Model):

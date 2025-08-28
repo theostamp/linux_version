@@ -972,11 +972,19 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 {...register('common_expense_amount', { 
                   valueAsNumber: true,
                   onChange: (e) => {
-                    // Limit to 2 decimal places
+                    // Allow user to type freely
                     const value = parseFloat(e.target.value);
                     if (!isNaN(value)) {
-                      e.target.value = value.toFixed(2);
                       setValue('common_expense_amount', value);
+                    }
+                  },
+                  onBlur: (e) => {
+                    // Round to 2 decimal places when user finishes editing
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                      const roundedValue = Math.round(value * 100) / 100;
+                      e.target.value = roundedValue.toFixed(2);
+                      setValue('common_expense_amount', roundedValue);
                     }
                   }
                 })}
@@ -1003,11 +1011,19 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 {...register('previous_obligations_amount', { 
                   valueAsNumber: true,
                   onChange: (e) => {
-                    // Limit to 2 decimal places
+                    // Allow user to type freely
                     const value = parseFloat(e.target.value);
                     if (!isNaN(value)) {
-                      e.target.value = value.toFixed(2);
                       setValue('previous_obligations_amount', value);
+                    }
+                  },
+                  onBlur: (e) => {
+                    // Round to 2 decimal places when user finishes editing
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                      const roundedValue = Math.round(value * 100) / 100;
+                      e.target.value = roundedValue.toFixed(2);
+                      setValue('previous_obligations_amount', roundedValue);
                     }
                   }
                 })}

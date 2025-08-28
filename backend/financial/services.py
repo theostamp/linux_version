@@ -288,8 +288,9 @@ class CommonExpenseCalculator:
                     reserve_share = (Decimal(str(monthly_target)) * participation_mills_decimal) / total_mills_decimal
                     shares[apartment.id]['reserve_fund_amount'] = reserve_share
         
-        # Προσθήκη στο breakdown και στο total_amount μόνο αν δεν υπάρχουν εκκρεμότητες
-        # Χρήση του ίδιου υπολογισμού με πριν για συνέπεια
+        # Προσθήκη στο breakdown μόνο αν δεν υπάρχουν εκκρεμότητες
+        # ΣΗΜΕΙΩΣΗ: Το αποθεματικό ΔΕΝ προστίθεται στο total_amount
+        # γιατί το total_amount περιέχει μόνο τις δαπάνες
         for apartment in self.apartments:
             if shares[apartment.id]['reserve_fund_amount'] > 0:
                 shares[apartment.id]['breakdown'].append({
@@ -300,10 +301,6 @@ class CommonExpenseCalculator:
                     'distribution_type': 'reserve_fund',
                     'distribution_type_display': 'Εισφορά Αποθεματικού'
                 })
-                
-                # Προσθήκη στο total_amount μόνο αν δεν υπάρχουν εκκρεμότητες
-                if total_obligations == 0:
-                    shares[apartment.id]['total_amount'] += shares[apartment.id]['reserve_fund_amount']
     
     def get_total_expenses(self) -> Decimal:
         """Επιστρέφει το συνολικό ποσό ανέκδοτων δαπανών"""
@@ -501,6 +498,11 @@ class FinancialDashboardService:
             
             current_reserve = total_payments_all_time - total_expenses_all_time - total_management_cost
         
+        # Calculate reserve fund monthly target FIRST
+        # Always show the calculated monthly target for all months
+        # The system will stop collecting when the goal is reached
+        reserve_fund_monthly_target = (self.building.reserve_fund_goal or Decimal('0.0')) / (self.building.reserve_fund_duration_months or 1)
+        
         # Check if there's any financial activity for this month (διακανονισμός)
         has_monthly_activity = self._has_monthly_activity(month) if month else True
         
@@ -509,24 +511,14 @@ class FinancialDashboardService:
         if month and not has_monthly_activity:
             reserve_fund_contribution = Decimal('0.00')
         else:
-            reserve_fund_contribution = self._calculate_reserve_fund_contribution(
-                current_reserve, total_obligations
-            )
-        
-        # Calculate reserve fund monthly target
-        # For overview display (no month specified), always show the calculated monthly target
-        # For specific months, only show if within the collection period
-        if month:
-            # For specific month view, check if within collection period
-            if self._is_month_within_reserve_fund_period(month):
-                reserve_fund_monthly_target = (self.building.reserve_fund_goal or Decimal('0.0')) / (self.building.reserve_fund_duration_months or 1)
+            # Για month-specific view, χρησιμοποιούμε το reserve_fund_monthly_target
+            if month:
+                reserve_fund_contribution = reserve_fund_monthly_target
             else:
-                # Month is outside reserve fund collection period
-                reserve_fund_monthly_target = Decimal('0.0')
-        else:
-            # For overview display (current view), always show the calculated monthly target
-            # This allows users to see what the monthly target will be even if collection hasn't started
-            reserve_fund_monthly_target = (self.building.reserve_fund_goal or Decimal('0.0')) / (self.building.reserve_fund_duration_months or 1)
+                # Για current view, χρησιμοποιούμε την παλιά λογική
+                reserve_fund_contribution = self._calculate_reserve_fund_contribution(
+                    current_reserve, total_obligations
+                )
         
         # Calculate total balance based on view type
         if month:
@@ -566,7 +558,29 @@ class FinancialDashboardService:
         average_monthly_expenses = total_expenses_this_month
         
         # Calculate previous obligations (accumulated apartment debts)
-        previous_obligations = apartment_obligations
+        if month:
+            # For month-specific view, calculate previous balance as of the end of the previous month
+            try:
+                year, mon = map(int, month.split('-'))
+                if mon == 1:
+                    # January - previous month is December of previous year
+                    previous_month_end = date(year - 1, 12, 31)
+                else:
+                    # Other months - previous month end
+                    previous_month_end = date(year, mon - 1, 31)
+                
+                # Calculate total previous obligations across all apartments
+                previous_obligations = Decimal('0.00')
+                for apartment in apartments:
+                    historical_balance = self._calculate_historical_balance(apartment, previous_month_end)
+                    if historical_balance < 0:
+                        previous_obligations += abs(historical_balance)
+            except Exception as e:
+                print(f"⚠️ Error calculating previous obligations for {month}: {e}")
+                previous_obligations = apartment_obligations
+        else:
+            # For current view, use current apartment obligations
+            previous_obligations = apartment_obligations
         
         return {
             'total_balance': float(total_balance),
@@ -600,22 +614,32 @@ class FinancialDashboardService:
     def _calculate_reserve_fund_contribution(self, current_reserve: Decimal, total_obligations: Decimal) -> Decimal:
         """
         Υπολογίζει την εισφορά αποθεματικού με βάση την προτεραιότητα:
-        1. Πρώτα πρέπει να καλυφθούν οι τρέχουσες υποχρεώσεις
+        1. Πρώτα πρέπει να καλυφθούν οι τρέχουσες υποχρεώσεις (εκτός από διαχείριση)
         2. Μετά υπολογίζεται η εισφορά αποθεματικού
         """
-        # Αν υπάρχουν ανέκδοτες δαπάνες, δεν υπολογίζουμε εισφορά αποθεματικού
-        if total_obligations > 0:
-            return Decimal('0.00')
-        
-        # Αν δεν υπάρχουν υποχρεώσεις, υπολογίζουμε την κανονική εισφορά αποθεματικού
-        # Χρησιμοποιούμε τις ρυθμίσεις αποθεματικού από το κτίριο
+        # Υπολογίζουμε τις εκκρεμότητες ΕΚΤΟΣ από το κόστος διαχείρισης
+        # Το κόστος διαχείρισης είναι τακτική υποχρέωση, όχι εκκρεμότητα
         building = Building.objects.get(id=self.building_id)
         apartments = Apartment.objects.filter(building_id=self.building_id)
         apartments_count = apartments.count()
+        management_cost = (building.management_fee_per_apartment or Decimal('0.00')) * apartments_count
         
-        # Χρησιμοποιούμε την εισφορά ανά διαμέρισμα από τις ρυθμίσεις του κτιρίου
-        contribution_per_apartment = building.reserve_contribution_per_apartment or Decimal('0.00')
-        total_monthly_contribution = contribution_per_apartment * apartments_count
+        # Εκκρεμότητες = total_obligations - management_cost
+        actual_obligations = total_obligations - management_cost
+        
+        # Αν υπάρχουν πραγματικές εκκρεμότητες (εκτός διαχείρισης), δεν υπολογίζουμε αποθεματικό
+        if actual_obligations > 0:
+            return Decimal('0.00')
+        
+        # Αν δεν υπάρχουν πραγματικές εκκρεμότητες, υπολογίζουμε την κανονική εισφορά αποθεματικού
+        # Χρησιμοποιούμε τον ίδιο υπολογισμό με το CommonExpenseCalculator
+        if building.reserve_fund_goal and building.reserve_fund_duration_months:
+            monthly_target = building.reserve_fund_goal / building.reserve_fund_duration_months
+            total_monthly_contribution = monthly_target
+        else:
+            # Fallback στην εισφορά ανά διαμέρισμα
+            contribution_per_apartment = building.reserve_contribution_per_apartment or Decimal('0.00')
+            total_monthly_contribution = contribution_per_apartment * apartments_count
         
         return total_monthly_contribution
     

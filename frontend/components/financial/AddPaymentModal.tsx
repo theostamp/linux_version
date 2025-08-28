@@ -120,9 +120,10 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         const map: Record<number, number> = {};
         // shares is expected as record keyed by apartment_id with total_amount and total_due
         Object.entries(shares).forEach(([aptId, share]: any) => {
-          const totalAmount = parseFloat(share?.total_amount ?? 0);
-          if (!isNaN(totalAmount)) {
-            map[Number(aptId)] = totalAmount;
+          // Use total_due for monthly obligation instead of total_amount
+          const monthlyDue = parseFloat(share?.total_due ?? 0);
+          if (!isNaN(monthlyDue)) {
+            map[Number(aptId)] = monthlyDue;
           }
         });
         setMonthlyShares(map);
@@ -160,7 +161,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
 
     try {
       // Calculate total amount (common expenses only, reserve fund is included in amount)
-      const totalAmount = Number(formData.amount.toFixed(2));
+      const totalAmount = Math.round(Number(formData.amount || 0) * 100) / 100;
       
       const submitData: PaymentFormData = {
         ...formData,
@@ -277,7 +278,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
   useEffect(() => {
     if (!selectedApartment) return;
     if (amountTouched) return; // don't override if user typed
-    // Priority: monthlyShares for the selected month; fallback to apartment.monthly_due
+    // Priority: monthlyShares for the selected month (which now contains total_due); fallback to apartment.monthly_due
     const monthAmount = monthlyShares?.[selectedApartment.id];
     const fallbackAmountRaw = selectedApartment.monthly_due ?? 0;
     const fallbackAmount = typeof fallbackAmountRaw === 'string' ? parseFloat(fallbackAmountRaw) : Number(fallbackAmountRaw || 0);
@@ -491,16 +492,23 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                   step="0.01"
                   min="0"
                   max="999999.99"
-                  value={formData.amount ? Number(formData.amount).toFixed(2) : ''}
+                  value={formData.amount || ''}
                   onChange={(e) => {
                     setAmountTouched(true);
                     const value = parseFloat(e.target.value);
                     if (!isNaN(value)) {
-                      // Limit to 2 decimal places
-                      const roundedValue = Math.round(value * 100) / 100;
-                      setFormData(prev => ({ ...prev, amount: roundedValue }));
+                      // Allow user to type freely, only round when submitting
+                      setFormData(prev => ({ ...prev, amount: value }));
                     } else {
                       setFormData(prev => ({ ...prev, amount: 0 }));
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // Round to 2 decimal places when user finishes editing
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                      const roundedValue = Math.round(value * 100) / 100;
+                      setFormData(prev => ({ ...prev, amount: roundedValue }));
                     }
                   }}
                   placeholder="0,00"
@@ -514,7 +522,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                     Προτεινόμενο ποσό: {formatCurrency((monthlyShares?.[selectedApartment.id] ?? selectedApartment.monthly_due) || 0)}
                     <br />
                     <span className="text-xs text-blue-600">
-                      (Έξοδα + Διαχείριση + Αποθεματικό με βάση χιλιοστά)
+                      (Μηνιαία οφειλή κοινοχρήστων με βάση χιλιοστά)
                     </span>
                   </p>
                 ) : null}

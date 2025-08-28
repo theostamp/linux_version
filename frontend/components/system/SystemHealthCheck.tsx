@@ -173,8 +173,8 @@ const SystemHealthCheck: React.FC = () => {
     if (!data) return null;
 
     // Προσαρμογή για το νέο format
-    let issues: string[] = [];
-    let warnings: string[] = [];
+    const issues: string[] = [];
+    const warnings: string[] = [];
     let successes = 0;
     let total = 0;
 
@@ -215,19 +215,32 @@ const SystemHealthCheck: React.FC = () => {
       }
       total = 1;
     } else if (key === 'financial_data') {
-      const balance = data.total_payments - data.total_expenses;
-      if (Math.abs(balance) > 0.01) {
-        issues.push(`Ανισορροπία: ${balance.toFixed(2)}€`);
-        issues.push(`• Συνολικές πληρωμές: ${data.total_payments.toFixed(2)}€`);
+      // Χρήση της νέας λογικής από το backend
+      const expenseBalance = data.expense_balance || 0;
+      const paymentBalance = data.payment_balance || 0;
+      
+      if (Math.abs(expenseBalance) > 0.01) {
+        issues.push(`Ανισορροπία δαπανών: ${expenseBalance.toFixed(2)}€`);
         issues.push(`• Συνολικές δαπάνες: ${data.total_expenses.toFixed(2)}€`);
-        issues.push(`• Διαφορά: ${balance > 0 ? 'Περισσότερες πληρωμές' : 'Περισσότερες δαπάνες'}`);
+        issues.push(`• Συναλλαγές δαπανών: ${(data.total_expenses + expenseBalance).toFixed(2)}€`);
+        issues.push(`• Διαφορά: ${expenseBalance > 0 ? 'Περισσότερες συναλλαγές' : 'Λιγότερες συναλλαγές'}`);
         
-        warnings.push(`Σύστημα: Ελέγξτε τις καταχωρήσεις δαπανών και πληρωμών`);
-        warnings.push(`Σύστημα: Βεβαιωθείτε ότι όλες οι συναλλαγές είναι σωστά καταχωρημένες`);
+        warnings.push(`Σύστημα: Ελέγξτε τις καταχωρήσεις δαπανών και συναλλαγών`);
+        warnings.push(`Σύστημα: Βεβαιωθείτε ότι όλες οι δαπάνες έχουν αντίστοιχες συναλλαγές`);
       } else {
         successes = 1;
       }
-      total = 1;
+      
+      if (paymentBalance > 0.01) {
+        warnings.push(`Πληρωμές χωρίς συναλλαγές: ${paymentBalance.toFixed(2)}€`);
+        warnings.push(`• Συνολικές πληρωμές: ${data.total_payments.toFixed(2)}€`);
+        warnings.push(`• Συναλλαγές πληρωμών: ${(data.total_payments - paymentBalance).toFixed(2)}€`);
+        warnings.push(`• Σύστημα: Αυτό είναι φυσιολογικό για πληρωμές που μόλις καταχωρήθηκαν`);
+      } else {
+        successes += 1;
+      }
+      
+      total = 2; // Δύο ελέγχους: δαπάνες και πληρωμές
     } else if (key === 'balance_transfer') {
       if (data.transfer_issues > 0) {
         issues.push(`${data.transfer_issues} προβλήματα μεταφοράς υπολοίπων`);

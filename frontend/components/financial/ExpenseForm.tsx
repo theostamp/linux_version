@@ -381,10 +381,18 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
                     required: 'Απαιτείται',
                     min: { value: 0, message: 'Το ποσό πρέπει να είναι θετικό' },
                     onChange: (e) => {
-                      // Limit to 2 decimal places
+                      // Allow user to type freely
                       const value = parseFloat(e.target.value);
                       if (!isNaN(value)) {
-                        e.target.value = value.toFixed(2);
+                        // Don't force formatting during typing
+                      }
+                    },
+                    onBlur: (e) => {
+                      // Round to 2 decimal places when user finishes editing
+                      const value = parseFloat(e.target.value);
+                      if (!isNaN(value)) {
+                        const roundedValue = Math.round(value * 100) / 100;
+                        e.target.value = roundedValue.toFixed(2);
                       }
                     }
                   })}

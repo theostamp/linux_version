@@ -1,93 +1,77 @@
 #!/usr/bin/env python3
 """
-Debug script για τα apartment balances
+Script για έλεγχο current_balance των διαμερισμάτων
 """
 
 import os
 import sys
 import django
 
-# Setup Django
+# Setup Django environment
+sys.path.append('/app')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
 django.setup()
 
-from django_tenants.utils import tenant_context
-from financial.models import Payment, Expense, Transaction, Apartment
-from tenants.models import Client
-from decimal import Decimal
-from django.db.models import Sum
+from django_tenants.utils import schema_context
+from apartments.models import Apartment
+from financial.models import Transaction
 from buildings.models import Building
 
 def debug_apartment_balances():
-    """Debug τα apartment balances"""
-    try:
-        # Βρες το demo tenant
-        tenant = Client.objects.get(schema_name='demo')
-        print(f"✅ Βρέθηκε tenant: {tenant.name} (schema: {tenant.schema_name})")
+    """Έλεγχος current_balance των διαμερισμάτων"""
+    
+    with schema_context('demo'):
+        print("🔍 ΕΛΕΓΧΟΣ CURRENT_BALANCE ΔΙΑΜΕΡΙΣΜΑΤΩΝ")
+        print("=" * 60)
         
-        # Ελέγχος στο tenant context
-        with tenant_context(tenant):
-            apartments = Apartment.objects.all()
-            print(f"\n🏢 Συνολικά διαμερίσματα: {apartments.count()}")
+        # Βρες το κτίριο Αλκμάνος 22
+        building = Building.objects.get(id=1)
+        print(f"🏢 Κτίριο: {building.name}")
+        print()
+        
+        # Έλεγχος διαμερισμάτων και συναλλαγών
+        apartments = Apartment.objects.filter(building=building).order_by('number')
+        
+        print("📊 ΔΙΑΜΕΡΙΣΜΑΤΑ ΚΑΙ ΥΠΟΛΟΙΠΑ:")
+        total_negative_balance = 0
+        
+        for apartment in apartments:
+            # Έλεγχος συναλλαγών από τον Ιούνιο
+            june_transactions = Transaction.objects.filter(
+                apartment=apartment,
+                date__year=2025,
+                date__month=6
+            )
             
-            for apartment in apartments:
-                print(f"\n📋 Διαμέρισμα {apartment.number}:")
-                print(f"  - Τρέχον Υπόλοιπο: {apartment.current_balance}€")
-                print(f"  - Χιλιοστά: {apartment.participation_mills}")
-                
-                # Ελέγχος πληρωμές
-                payments = Payment.objects.filter(apartment=apartment)
-                total_payments = payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-                print(f"  - Συνολικές Πληρωμές: {total_payments}€ ({payments.count()} πληρωμές)")
-                
-                # Ελέγχος transactions
-                transactions = Transaction.objects.filter(apartment=apartment)
-                print(f"  - Transactions: {transactions.count()}")
-                
-                # Υπολογισμός υπολοίπου
-                calculated_balance = total_payments
-                print(f"  - Υπολογισμένο Υπόλοιπο: {calculated_balance}€")
-                
-                if apartment.current_balance != calculated_balance:
-                    print(f"  ⚠️  ΔΙΑΦΟΡΑ: {apartment.current_balance}€ vs {calculated_balance}€")
-                    
-                    # Ενημέρωση του υπολοίπου
-                    apartment.current_balance = calculated_balance
-                    apartment.save()
-                    print(f"  ✅ Ενημερώθηκε το υπόλοιπο σε {calculated_balance}€")
+            june_debits = sum(t.amount for t in june_transactions if t.type in ['expense_created', 'expense_issued'])
+            june_credits = sum(t.amount for t in june_transactions if t.type in ['payment_received', 'common_expense_payment'])
             
-            # Ελέγχος building reserve
-            buildings = Building.objects.all()
-            for building in buildings:
-                print(f"\n🏢 Κτίριο {building.name}:")
-                print(f"  - Τρέχον Αποθεματικό: {building.current_reserve}€")
-                
-                # Υπολογισμός αποθεματικού από πληρωμές
-                building_payments = Payment.objects.filter(apartment__building=building)
-                total_building_payments = building_payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-                
-                building_expenses = Expense.objects.filter(building=building)
-                total_building_expenses = building_expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-                
-                calculated_reserve = total_building_payments - total_building_expenses
-                print(f"  - Συνολικές Πληρωμές: {total_building_payments}€")
-                print(f"  - Συνολικές Δαπάνες: {total_building_expenses}€")
-                print(f"  - Υπολογισμένο Αποθεματικό: {calculated_reserve}€")
-                
-                if building.current_reserve != calculated_reserve:
-                    print(f"  ⚠️  ΔΙΑΦΟΡΑ: {building.current_reserve}€ vs {calculated_reserve}€")
-                    
-                    # Ενημέρωση του αποθεματικού
-                    building.current_reserve = calculated_reserve
-                    building.save()
-                    print(f"  ✅ Ενημερώθηκε το αποθεματικό σε {calculated_reserve}€")
+            print(f"🏠 Διαμέρισμα {apartment.number}:")
+            print(f"   • Current Balance: {apartment.current_balance}€")
+            print(f"   • Ιουνίου συναλλαγές: {june_transactions.count()}")
+            print(f"   • Ιουνίου χρεώσεις: {june_debits}€")
+            print(f"   • Ιουνίου πληρωμές: {june_credits}€")
+            print(f"   • Υπόλοιπο Ιουνίου: {june_debits - june_credits}€")
             
-    except Client.DoesNotExist:
-        print("❌ Δεν βρέθηκε το demo tenant!")
-    except Exception as e:
-        print(f"❌ Σφάλμα: {e}")
-        import traceback
-        traceback.print_exc()
+            if apartment.current_balance and apartment.current_balance < 0:
+                total_negative_balance += abs(apartment.current_balance)
+                print(f"   ⚠️ ΑΡΝΗΤΙΚΟ ΥΠΟΛΟΙΠΟ: {apartment.current_balance}€")
+            else:
+                print(f"   ✅ ΘΕΤΙΚΟ ΥΠΟΛΟΙΠΟ: {apartment.current_balance}€")
+            print()
+        
+        print("=" * 60)
+        print(f"📊 ΣΥΝΟΛΙΚΕΣ ΑΡΝΗΤΙΚΕΣ ΟΦΕΙΛΕΣ: {total_negative_balance}€")
+        
+        # Έλεγχος γιατί τα current_balance δεν ενημερώθηκαν
+        print("\n🔍 ΕΛΕΓΧΟΣ ΓΙΑΤΙ ΔΕΝ ΕΝΗΜΕΡΩΘΗΚΑΝ ΤΑ CURRENT_BALANCE:")
+        
+        # Έλεγχος αν υπάρχει μέθοδος για ενημέρωση υπολοίπων
+        apartment_methods = [method for method in dir(apartments.first()) if 'balance' in method.lower() or 'update' in method.lower()]
+        print(f"   • Μέθοδοι διαμερίσματος: {apartment_methods}")
+        
+        print("\n" + "=" * 60)
+        print("✅ ΟΛΟΚΛΗΡΩΘΗΚΕ Ο ΕΛΕΓΧΟΣ")
 
 if __name__ == "__main__":
     debug_apartment_balances() 

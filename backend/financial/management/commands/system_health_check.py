@@ -206,7 +206,9 @@ class SystemHealthChecker:
                 'total_expenses': sum(exp.amount for exp in expenses),
                 'total_transactions': sum(txn.amount for txn in transactions),
                 'total_payments': sum(pay.amount for pay in payments),
-                'months_with_data': len(set(exp.date.month for exp in expenses)) if expenses.exists() else 0
+                'months_with_data': len(set(exp.date.month for exp in expenses)) if expenses.exists() else 0,
+                'expense_balance': 0,  # Θα ενημερωθεί παρακάτω
+                'payment_balance': 0   # Θα ενημερωθεί παρακάτω
             }
             
             # Εκτύπωση αποτελεσμάτων
@@ -218,15 +220,41 @@ class SystemHealthChecker:
             self.stdout.write(f"Συνολικές συναλλαγές: {result['total_transactions']:.2f}€")
             self.stdout.write(f"Συνολικές πληρωμές: {result['total_payments']:.2f}€")
             
-            # Έλεγχος ισορροπίας
-            balance = result['total_payments'] - result['total_expenses']
-            if abs(balance) < 0.01:  # Μικρή ανοχή για floating point
-                self.stdout.write(f"Ισορροπία: {balance:.2f}€ (σωστή)")
+            # Έλεγχος ισορροπίας - Διορθωμένη λογική
+            # Υπολογισμός των συναλλαγών που αφορούν δαπάνες
+            expense_related_transactions = sum(txn.amount for txn in transactions.filter(
+                type__in=['common_expense_charge', 'common_expense_payment']
+            ))
+            
+            # Υπολογισμός των συναλλαγών που αφορούν πληρωμές
+            payment_related_transactions = sum(txn.amount for txn in transactions.filter(
+                type='payment_received'
+            ))
+            
+            # Σωστός έλεγχος ισορροπίας
+            expense_balance = result['total_expenses'] + expense_related_transactions  # Θα πρέπει να είναι 0
+            payment_balance = result['total_payments'] - payment_related_transactions  # Πληρωμές χωρίς συναλλαγές
+            
+            if abs(expense_balance) < 0.01:  # Μικρή ανοχή για floating point
+                self.stdout.write(f"Ισορροπία δαπανών: {expense_balance:.2f}€ (σωστή)")
                 self.results['summary']['passed'] += 1
             else:
-                self.stdout.write(f"Ισορροπία: {balance:.2f}€ (λάθος)")
+                self.stdout.write(f"Ισορροπία δαπανών: {expense_balance:.2f}€ (λάθος)")
                 self.results['summary']['failed'] += 1
-                
+            
+            # Ενημέρωση του result με τις πραγματικές τιμές
+            result['expense_balance'] = expense_balance
+            result['payment_balance'] = payment_balance
+            
+            # Έλεγχος πληρωμών χωρίς συναλλαγές (φυσιολογικό)
+            if payment_balance > 0.01:
+                self.stdout.write(f"Πληρωμές χωρίς συναλλαγές: {payment_balance:.2f}€ (φυσιολογικό)")
+                self.results['summary']['warnings'] += 1
+            else:
+                self.stdout.write(f"Όλες οι πληρωμές έχουν συναλλαγές")
+                self.results['summary']['passed'] += 1
+            
+            # Επιπλέον έλεγχος για τις πληρωμές
             self.results['summary']['total_checks'] += 1
             self.results['checks']['financial_data'] = result
             self.stdout.write("")
@@ -446,7 +474,7 @@ class SystemHealthChecker:
 
 
 class Command(BaseCommand):
-            help = 'Έλεγχος υγείας του οικονομικού συστήματος'
+    help = 'Έλεγχος υγείας του οικονομικού συστήματος'
     
     def add_arguments(self, parser):
         parser.add_argument(

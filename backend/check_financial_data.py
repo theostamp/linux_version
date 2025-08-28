@@ -6,7 +6,7 @@ Script to check financial data for building ID 1 in February 2025
 import os
 import sys
 import django
-from datetime import date
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -14,68 +14,74 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Expense, Payment
-from apartments.models import Apartment
+from buildings.models import Building
+from financial.models import Payment, Expense
+from django.db import models
 
 def check_financial_data():
-    """Check financial data for building ID 1 in February 2025"""
-    
     with schema_context('demo'):
-        building_id = 1
-        year = 2025
-        month = 2
+        # Get current month and year
+        current_date = datetime.now()
+        year = current_date.year
+        month = current_date.month
         
-        # Create date range for February 2025
-        start_date = date(year, month, 1)
-        end_date = date(year, month + 1, 1)  # March 1, 2025
-        
-        print(f"🔍 Checking financial data for Building ID {building_id}")
-        print(f"📅 Period: {start_date} to {end_date}")
+        print(f"=== ΕΛΕΓΧΟΣ ΟΙΚΟΝΟΜΙΚΩΝ ΔΕΔΟΜΕΝΩΝ ===")
+        print(f"Περίοδος: {month}/{year}")
         print()
         
-        # Check expenses
-        expenses = Expense.objects.filter(
-            building_id=building_id,
-            date__gte=start_date,
-            date__lt=end_date
-        )
+        # Check buildings
+        buildings = Building.objects.all()
+        print(f"Πολυκατοικίες στη βάση: {buildings.count()}")
         
-        print(f"💰 Expenses found: {expenses.count()}")
-        total_expenses = 0
-        for expense in expenses:
-            print(f"  - ID: {expense.id}, Title: {expense.title}, Amount: {expense.amount}, Date: {expense.date}")
-            total_expenses += float(expense.amount)
-        print(f"  Total expenses amount: {total_expenses}")
-        print()
-        
-        # Check payments
-        payments = Payment.objects.filter(
-            apartment__building_id=building_id,
-            date__gte=start_date,
-            date__lt=end_date
-        )
-        
-        print(f"💳 Payments found: {payments.count()}")
-        total_payments = 0
-        for payment in payments:
-            print(f"  - ID: {payment.id}, Payer: {payment.payer_name}, Amount: {payment.amount}, Date: {payment.date}, Apartment: {payment.apartment.number if payment.apartment else 'N/A'}")
-            total_payments += float(payment.amount)
-        print(f"  Total payments amount: {total_payments}")
-        print()
-        
-        # Check apartments in building
-        apartments = Apartment.objects.filter(building_id=building_id)
-        print(f"🏢 Apartments in building {building_id}: {apartments.count()}")
-        for apt in apartments:
-            print(f"  - ID: {apt.id}, Number: {apt.number}, Owner: {apt.owner_name}, Tenant: {apt.tenant_name}")
-        print()
-        
-        # Summary
-        balance = total_payments - total_expenses
-        print(f"📊 Summary:")
-        print(f"  Total Expenses: {total_expenses}")
-        print(f"  Total Payments: {total_payments}")
-        print(f"  Balance: {balance}")
+        for building in buildings:
+            print(f"\n--- Πολυκατοικία ID: {building.id} ---")
+            print(f"Διεύθυνση: {building.address}")
+            print(f"Αριθμός διαμερισμάτων: {building.apartments_count}")
+            print(f"Στόχος αποθεματικού: €{building.reserve_fund_goal or 0}")
+            print(f"Διάρκεια αποθεματικού (μήνες): {building.reserve_fund_duration_months or 0}")
+            print(f"Τρέχον αποθεματικό: €{building.current_reserve or 0}")
+            print(f"Συνεισφορά ανά διαμέρισμα: €{building.reserve_contribution_per_apartment or 0}")
+            
+            # Check payments for this building
+            payments = Payment.objects.filter(
+                apartment__building=building,
+                date__year=year,
+                date__month=month
+            )
+            total_payments = payments.aggregate(total=models.Sum('amount'))['total'] or 0
+            print(f"Εισπράξεις {month}/{year}: €{total_payments}")
+            print(f"Αριθμός πληρωμών: {payments.count()}")
+            
+            # Check expenses for this building
+            expenses = Expense.objects.filter(
+                building=building,
+                date__year=year,
+                date__month=month
+            )
+            total_expenses = expenses.aggregate(total=models.Sum('amount'))['total'] or 0
+            print(f"Δαπάνες {month}/{year}: €{total_expenses}")
+            print(f"Αριθμός δαπανών: {expenses.count()}")
+            
+            # Check by category
+            management_expenses = expenses.filter(category='management_fees').aggregate(total=models.Sum('amount'))['total'] or 0
+            building_expenses = expenses.exclude(category='management_fees').aggregate(total=models.Sum('amount'))['total'] or 0
+            print(f"  - Δαπάνες διαχείρισης: €{management_expenses}")
+            print(f"  - Δαπάνες πολυκατοικίας: €{building_expenses}")
+            
+            # Calculate reserve fund target
+            if building.reserve_fund_goal and building.reserve_fund_duration_months:
+                reserve_target = float(building.reserve_fund_goal) / building.reserve_fund_duration_months
+            else:
+                reserve_target = float(building.reserve_contribution_per_apartment or 0) * building.apartments_count
+            
+            print(f"Στόχος αποθεματικού/μήνα: €{reserve_target}")
+            
+            # Calculate surplus
+            surplus = total_payments - total_expenses
+            surplus = max(0, surplus)
+            print(f"Πλεόνασμα: €{surplus}")
+            
+            print("-" * 50)
 
 if __name__ == "__main__":
     check_financial_data()

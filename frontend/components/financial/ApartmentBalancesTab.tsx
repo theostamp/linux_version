@@ -104,22 +104,22 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Ενεργό':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'Ενήμερο':
+        return <CheckCircle className="h-3 w-3 text-green-600" />;
       case 'Καθυστέρηση':
-        return <Clock className="h-4 w-4 text-yellow-600" />;
+        return <Clock className="h-3 w-3 text-yellow-600" />;
       case 'Κρίσιμο':
-        return <AlertTriangle className="h-4 w-4 text-red-600" />;
+        return <AlertTriangle className="h-3 w-3 text-red-600" />;
       case 'Πιστωτικό':
-        return <TrendingUp className="h-4 w-4 text-blue-600" />;
+        return <TrendingUp className="h-3 w-3 text-blue-600" />;
       default:
-        return <CheckCircle className="h-4 w-4 text-gray-600" />;
+        return <CheckCircle className="h-3 w-3 text-gray-600" />;
     }
   };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'Ενεργό':
+      case 'Ενήμερο':
         return 'default';
       case 'Καθυστέρηση':
         return 'secondary';
@@ -255,7 +255,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-600" />
-                <span className="text-sm font-medium text-green-700">Ενεργό</span>
+                <span className="text-sm font-medium text-green-700">Ενήμερο</span>
               </div>
             </div>
             <div className="text-2xl font-bold text-green-800 mt-2">
@@ -340,76 +340,77 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Διαμέρισμα</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Ένοικοι</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Χιλιοστά</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Προηγούμενο Υπόλοιπο</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Μερίδιο Δαπανών</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Συνολικό Οφειλόμενο</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Κατάσταση</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">Λεπτομέρειες</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-16">Διαμέρισμα</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-32">Ένοικοι</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-16">Χιλιοστά</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-24">Προηγούμενο Υπόλοιπο</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-24">Μερίδιο Δαπανών</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-24">Συνολικό Οφειλόμενο</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-20">Κατάσταση</th>
+                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-20">Λεπτομέρειες</th>
                 </tr>
               </thead>
               <tbody>
                 {apartmentBalances.map((apartment) => (
                   <tr key={apartment.apartment_id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4">
-                      <div className="font-medium text-gray-900">
+                    <td className="py-2 px-2">
+                      <div className="font-medium text-gray-900 text-xs">
                         {apartment.apartment_number}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="text-sm text-gray-600">
+                    <td className="py-2 px-2">
+                      <div className="text-xs text-gray-600">
                         Ιδιοκτήτης
                       </div>
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-xs font-medium text-gray-900 truncate" title={apartment.owner_name}>
                         {apartment.owner_name}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="text-sm font-medium text-gray-900">
+                    <td className="py-2 px-2">
+                      <div className="text-xs font-medium text-gray-900">
                         {apartment.participation_mills}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
-                      <div className={`text-sm font-medium ${
+                    <td className="py-2 px-2">
+                      <div className={`text-xs font-medium ${
                         apartment.previous_balance > 0 ? 'text-red-600' : 
                         apartment.previous_balance < 0 ? 'text-green-600' : 'text-gray-900'
                       }`}>
                         {formatCurrency(apartment.previous_balance)}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="text-sm font-medium text-gray-900">
+                    <td className="py-2 px-2">
+                      <div className="text-xs font-medium text-gray-900">
                         {formatCurrency(apartment.expense_share)}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
-                      <div className={`text-sm font-medium ${
+                    <td className="py-2 px-2">
+                      <div className={`text-xs font-medium ${
                         apartment.net_obligation > 0 ? 'text-red-600' : 
                         apartment.net_obligation < 0 ? 'text-green-600' : 'text-gray-900'
                       }`}>
                         {formatCurrency(apartment.net_obligation)}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
+                    <td className="py-2 px-2">
+                      <div className="flex items-center gap-1">
                         {getStatusIcon(apartment.status)}
-                        <Badge variant={getStatusBadgeVariant(apartment.status)}>
+                        <Badge variant={getStatusBadgeVariant(apartment.status)} className="text-xs px-1 py-0">
                           {apartment.status}
                         </Badge>
                       </div>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-2">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleShowDetails(apartment)}
+                        className="h-6 px-2 text-xs"
                       >
-                        <Eye className="h-4 w-4 mr-2" />
+                        <Eye className="h-3 w-3 mr-1" />
                         Λεπτομέρειες
                       </Button>
                     </td>
@@ -421,44 +422,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
         </CardContent>
       </Card>
 
-      {/* Summary Footer */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-2 border-purple-100 bg-gradient-to-r from-purple-50 to-indigo-50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Calculator className="h-5 w-5 text-purple-600" />
-              <span className="text-sm font-medium text-purple-700">Συνολικές Υποχρεώσεις</span>
-            </div>
-            <div className="text-xl font-bold text-purple-800">
-              {formatCurrency(summary?.total_obligations || 0)}
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card className="border-2 border-green-100 bg-gradient-to-r from-green-50 to-emerald-50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Euro className="h-5 w-5 text-green-600" />
-              <span className="text-sm font-medium text-green-700">Συνολικές Πληρωμές</span>
-            </div>
-            <div className="text-xl font-bold text-green-800">
-              {formatCurrency(summary?.total_payments || 0)}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-red-100 bg-gradient-to-r from-red-50 to-pink-50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingDown className="h-5 w-5 text-red-600" />
-              <span className="text-sm font-medium text-red-700">Συνολικές Οφειλές</span>
-            </div>
-            <div className="text-xl font-bold text-red-800">
-              {formatCurrency(summary?.total_net_obligations || 0)}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Details Modal */}
       {selectedApartment && (

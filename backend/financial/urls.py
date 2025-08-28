@@ -4,7 +4,7 @@ from .views import (
     ExpenseViewSet, TransactionViewSet, PaymentViewSet,
     FinancialDashboardViewSet, CommonExpenseViewSet, MeterReadingViewSet,
     ReportViewSet, SupplierViewSet, ApartmentTransactionViewSet,
-    SystemHealthCheckView, auto_fix_system_issues
+    SystemHealthCheckView, auto_fix_system_issues, financial_overview
 )
 
 router = DefaultRouter()
@@ -32,4 +32,6 @@ urlpatterns = [
     path('system-health/', SystemHealthCheckView.as_view(), name='system-health-check'),
     # Auto fix system issues endpoint
     path('auto-fix/', auto_fix_system_issues, name='auto-fix-system-issues'),
+    # Financial overview endpoint
+    path('overview/', financial_overview, name='financial-overview'),
 ] 

@@ -475,9 +475,18 @@ class PaymentViewSet(viewsets.ModelViewSet):
         if payment.reserve_fund_amount and float(payment.reserve_fund_amount) > 0:
             description += f" (Αποθεματικό: {payment.reserve_fund_amount}€)"
         
+        # Convert payment.date (DateField) to DateTimeField for Transaction
+        from datetime import datetime
+        from django.utils import timezone
+        
+        payment_datetime = datetime.combine(payment.date, datetime.min.time())
+        if timezone.is_naive(payment_datetime):
+            payment_datetime = timezone.make_aware(payment_datetime)
+        
         Transaction.objects.create(
             building=building,
             apartment=apartment,
+            date=payment_datetime,  # Use converted datetime
             apartment_number=apartment.number,
             type='common_expense_payment',
             description=description,
@@ -859,7 +868,9 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     calculator = CommonExpenseCalculator(building_id, month)
                     shares = calculator.calculate_shares()
                     apartment_share = shares.get(apartment.id, {})
-                    monthly_due = float(apartment_share.get('total_due', 0))
+                    # Monthly due = total_amount (δαπάνες) + reserve_fund_amount (αποθεματικό)
+                    # ΔΕΝ χρησιμοποιούμε total_due που είναι αρνητικό
+                    monthly_due = float(apartment_share.get('total_amount', 0)) + float(apartment_share.get('reserve_fund_amount', 0))
                 except Exception:
                     monthly_due = 0.0
                 
@@ -1188,18 +1199,42 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     apartment_data['previous_balance'] = apartment_data['net_obligation']
                     apartment_data['expense_share'] = 0.0
                 
-                # Determine status based on net obligation
-                if apartment_data['net_obligation'] > 0:
-                    if apartment_data['net_obligation'] > 100:  # More than 100€ debt
-                        apartment_data['status'] = 'Κρίσιμο'
-                    elif apartment_data['net_obligation'] > 50:  # More than 50€ debt
-                        apartment_data['status'] = 'Καθυστέρηση'
-                    else:
-                        apartment_data['status'] = 'Ενεργό'
-                elif apartment_data['net_obligation'] < 0:
-                    apartment_data['status'] = 'Πιστωτικό'
+                # Determine status based on new rules:
+                # 1. "Ενήμερο" (Ενεργό): net_obligation <= 0 OR current date < 20th of month
+                # 2. "Καθυστέρηση": net_obligation > 0 AND current date >= 20th of month
+                # 3. "Κρίσιμο": unpaid for >2 months
+                
+                from datetime import datetime, date
+                current_date = datetime.now().date()
+                current_day = current_date.day
+                
+                # Check if debt is older than 2 months
+                is_debt_older_than_2_months = False
+                if apartment_data['net_obligation'] > 0 and month:
+                    try:
+                        # Parse the month to get the debt date
+                        year, mon = map(int, month.split('-'))
+                        debt_date = date(year, mon, 1)
+                        
+                        # Calculate months difference
+                        months_diff = (current_date.year - debt_date.year) * 12 + (current_date.month - debt_date.month)
+                        is_debt_older_than_2_months = months_diff > 2
+                    except:
+                        # If month parsing fails, assume debt is not older than 2 months
+                        is_debt_older_than_2_months = False
+                
+                if apartment_data['net_obligation'] <= 0:
+                    # Fully paid or has credit
+                    apartment_data['status'] = 'Ενήμερο'
+                elif is_debt_older_than_2_months:
+                    # Debt older than 2 months
+                    apartment_data['status'] = 'Κρίσιμο'
+                elif current_day >= 20:
+                    # After 20th of month and has debt
+                    apartment_data['status'] = 'Καθυστέρηση'
                 else:
-                    apartment_data['status'] = 'Ενεργό'
+                    # Before 20th of month and has debt
+                    apartment_data['status'] = 'Ενήμερο'
                 
                 apartment_balances.append(apartment_data)
             
@@ -1209,7 +1244,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             total_net_obligations = sum(max(0, apt['net_obligation']) for apt in apartment_balances)
             
             # Count apartments by status
-            active_count = len([apt for apt in apartment_balances if apt['status'] == 'Ενεργό'])
+            active_count = len([apt for apt in apartment_balances if apt['status'] == 'Ενήμερο'])
             delay_count = len([apt for apt in apartment_balances if apt['status'] == 'Καθυστέρηση'])
             critical_count = len([apt for apt in apartment_balances if apt['status'] == 'Κρίσιμο'])
             credit_count = len([apt for apt in apartment_balances if apt['status'] == 'Πιστωτικό'])
@@ -2271,3 +2306,128 @@ class SystemHealthCheckView(APIView):
                 'status': 'error',
                 'message': f'Σφάλμα κατά τον έλεγχο: {str(e)}'
             }, status=500)
+
+@api_view(['GET'])
+@permission_classes([FinancialReadPermission])
+def financial_overview(request):
+    """
+    API endpoint για την συνοπτική εικόνα οικονομικής διαχείρισης
+    
+    Επιστρέφει δεδομένα για:
+    - Συνολικές εισπράξεις
+    - Δαπάνες διαχείρισης
+    - Δαπάνες πολυκατοικίας
+    - Καλυψη αποθεματικου
+    - Πλεόνασμα
+    """
+    try:
+        building_id = request.query_params.get('building_id')
+        selected_month = request.query_params.get('selected_month')
+        
+        if not building_id:
+            return Response(
+                {'error': 'Building ID is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Import necessary services
+        from .services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator
+        from django_tenants.utils import schema_context
+        
+        with schema_context('demo'):
+            # Get building
+            try:
+                building = Building.objects.get(id=building_id)
+            except Building.DoesNotExist:
+                return Response(
+                    {'error': 'Building not found'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Calculate total income (payments)
+            if selected_month:
+                # Filter by specific month
+                year, month = selected_month.split('-')
+                total_income = Payment.objects.filter(
+                    apartment__building=building,
+                    date__year=year,
+                    date__month=month
+                ).aggregate(total=models.Sum('amount'))['total'] or 0
+            else:
+                # Current month
+                now = datetime.now()
+                total_income = Payment.objects.filter(
+                    apartment__building=building,
+                    date__year=now.year,
+                    date__month=now.month
+                ).aggregate(total=models.Sum('amount'))['total'] or 0
+            
+            # Calculate management expenses
+            if selected_month:
+                year, month = selected_month.split('-')
+                management_expenses = Expense.objects.filter(
+                    building=building,
+                    date__year=year,
+                    date__month=month,
+                    category='management_fees'
+                ).aggregate(total=models.Sum('amount'))['total'] or 0
+            else:
+                now = datetime.now()
+                management_expenses = Expense.objects.filter(
+                    building=building,
+                    date__year=now.year,
+                    date__month=now.month,
+                    category='management_fees'
+                ).aggregate(total=models.Sum('amount'))['total'] or 0
+            
+            # Calculate building expenses (non-management)
+            if selected_month:
+                year, month = selected_month.split('-')
+                building_expenses = Expense.objects.filter(
+                    building=building,
+                    date__year=year,
+                    date__month=month
+                ).exclude(category='management_fees').aggregate(total=models.Sum('amount'))['total'] or 0
+            else:
+                now = datetime.now()
+                building_expenses = Expense.objects.filter(
+                    building=building,
+                    date__year=now.year,
+                    date__month=now.month
+                ).exclude(category='management_fees').aggregate(total=models.Sum('amount'))['total'] or 0
+            
+            # Calculate reserve fund target (monthly target)
+            # Calculate based on goal and duration
+            if building.reserve_fund_goal and building.reserve_fund_duration_months:
+                reserve_fund_target = float(building.reserve_fund_goal) / building.reserve_fund_duration_months
+            else:
+                reserve_fund_target = float(building.reserve_contribution_per_apartment or 0) * building.apartments_count
+            
+            # Calculate current reserve fund (accumulated)
+            reserve_fund_current = float(building.current_reserve or 0)
+            
+            # Calculate surplus
+            total_expenses = management_expenses + building_expenses
+            surplus = total_income - total_expenses
+            
+            # Ensure surplus is not negative for display purposes
+            surplus = max(0, surplus)
+            
+            return Response({
+                'status': 'success',
+                'data': {
+                    'total_income': float(total_income),
+                    'management_expenses': float(management_expenses),
+                    'building_expenses': float(building_expenses),
+                    'reserve_fund_target': float(reserve_fund_target),
+                    'reserve_fund_current': float(reserve_fund_current),
+                    'surplus': float(surplus),
+                    'period': selected_month or f"{datetime.now().year}-{datetime.now().month:02d}"
+                }
+            })
+            
+    except Exception as e:
+        return Response({
+            'status': 'error',
+            'message': f'Σφάλμα κατά την ανάκτηση δεδομένων: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
