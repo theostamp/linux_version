@@ -110,7 +110,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   React.useEffect(() => {
     const fetchBuildingData = async () => {
       try {
-        const response = await fetch(`/api/buildings/${buildingId}/`);
+        const response = await fetch(`/api/buildings/list/${buildingId}/`);
         if (response.ok) {
           const data = await response.json();
           setBuildingData(data);
@@ -795,7 +795,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 </p>
                 <p className="text-green-600 text-sm">
                   Συνολικό Ποσό: <strong>{formatCurrency((createdPayment || lastCreatedPayment)?.amount)}</strong>
-                  {(createdPayment || lastCreatedPayment)?.reserve_fund_amount && (createdPayment || lastCreatedPayment)?.reserve_fund_amount > 0 && (
+                  {((createdPayment || lastCreatedPayment)?.reserve_fund_amount ?? 0) > 0 && (
                     <span> (συμπεριλαμβανομένου αποθεματικού {formatCurrency((createdPayment || lastCreatedPayment)?.reserve_fund_amount)})</span>
                   )}
                 </p>

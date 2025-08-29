@@ -5,6 +5,7 @@ export type User = {
   username: string;
   first_name?: string;
   last_name?: string;
+  name?: string; // Add missing name property for chat functionality
   groups?: { id: number; name: string }[];
   is_staff?: boolean;
   is_superuser?: boolean;

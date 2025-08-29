@@ -10,6 +10,7 @@ export interface UserRequest {
   building_name?: string; // Building name for display
   created_by: number;
   created_by_username: string;
+  user_id?: number; // Add missing property for dashboard compatibility
   status: string;
   created_at: string;
   updated_at?: string;

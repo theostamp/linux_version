@@ -88,12 +88,12 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     previous_obligations_amount: number;
   } | null>(null);
   
-  // Ref for building overview section to refresh data
+  // Refs for refreshing components
+  const paymentListRef = useRef<{ refresh: () => void }>(null);
   const buildingOverviewRef = useRef<{ refresh: () => void }>(null);
+  const paymentProgressRef = useRef<{ refresh: () => void } | null>(null);
   // Ref for expense list to refresh data
   const expenseListRef = useRef<{ refresh: () => void }>(null);
-  // Ref for payment list to refresh data
-  const paymentListRef = useRef<{ refresh: () => void }>(null);
   
   // Auto-refresh financial data when expenses/payments change
   useFinancialAutoRefresh(
@@ -305,6 +305,11 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     if (buildingOverviewRef.current) {
       buildingOverviewRef.current.refresh();
     }
+    // Refresh payment progress visualization
+    if (paymentProgressRef.current) {
+      console.log('Refreshing payment progress visualization...');
+      paymentProgressRef.current.refresh();
+    }
   };
   
   const handleExpenseCancel = () => {
@@ -319,7 +324,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   const handleOpenPaymentModal = (apartment: any) => {
     setPaymentModalData({
       apartment_id: apartment.apartment_id,
-      common_expense_amount: Math.round((apartment.expense_share || 0) * 100) / 100,
+      common_expense_amount: Math.round(Math.max(0, apartment.expense_share || 0) * 100) / 100,
       previous_obligations_amount: apartment.previous_balance > 0 ? Math.round(apartment.previous_balance * 100) / 100 : 0,
     });
     paymentModal.openModal();
@@ -945,6 +950,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         <TabsContent value="payment-progress" className="space-y-4" data-tab="payment-progress">
           <ProtectedFinancialRoute requiredPermission="financial_read">
             <PaymentProgressVisualization 
+              ref={paymentProgressRef}
               buildingId={activeBuildingId} 
               selectedMonth={selectedMonth}
             />
@@ -1045,8 +1051,8 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 apartments={apartments}
                 initialData={paymentModalData || {
                   apartment_id: parseInt(new URLSearchParams(window.location.search).get('apartment') || '0'),
-                  common_expense_amount: Math.round(parseFloat(new URLSearchParams(window.location.search).get('amount') || '0') * 100) / 100,
-                  previous_obligations_amount: Math.round(parseFloat(new URLSearchParams(window.location.search).get('previous_obligations') || '0') * 100) / 100,
+                  common_expense_amount: Math.round(Math.max(0, parseFloat(new URLSearchParams(window.location.search).get('amount') || '0')) * 100) / 100,
+                  previous_obligations_amount: Math.round(Math.max(0, parseFloat(new URLSearchParams(window.location.search).get('previous_obligations') || '0')) * 100) / 100,
                 }}
               />
             </div>

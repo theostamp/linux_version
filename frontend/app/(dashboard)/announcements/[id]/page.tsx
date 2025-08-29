@@ -149,9 +149,9 @@ export default function AnnouncementDetailPage() {
         <h1 className="text-3xl font-bold mb-2">{announcement.title}</h1>
         
         <div className="flex items-center text-sm text-gray-500 mb-4">
-          <span>Ημ/νία έναρξης: {new Date(announcement.start_date).toLocaleDateString('el-GR')}</span>
+          <span>Ημ/νία έναρξης: {announcement.start_date ? new Date(announcement.start_date).toLocaleDateString('el-GR') : 'Μη καθορισμένη'}</span>
           <span className="mx-2">•</span>
-          <span>Ημ/νία λήξης: {new Date(announcement.end_date).toLocaleDateString('el-GR')}</span>
+          <span>Ημ/νία λήξης: {announcement.end_date ? new Date(announcement.end_date).toLocaleDateString('el-GR') : 'Μη καθορισμένη'}</span>
         </div>
         
         <div className="prose max-w-none">

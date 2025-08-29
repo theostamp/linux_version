@@ -283,8 +283,8 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
     const fallbackAmountRaw = selectedApartment.monthly_due ?? 0;
     const fallbackAmount = typeof fallbackAmountRaw === 'string' ? parseFloat(fallbackAmountRaw) : Number(fallbackAmountRaw || 0);
     const prefill = typeof monthAmount === 'number' ? monthAmount : fallbackAmount;
-    // Round to 2 decimal places to avoid excessive decimals
-    const roundedPrefill = Math.round((isNaN(prefill) ? 0 : prefill) * 100) / 100;
+    // Round to 2 decimal places to avoid excessive decimals and ensure positive amounts
+    const roundedPrefill = Math.round(Math.max(0, isNaN(prefill) ? 0 : prefill) * 100) / 100;
     setFormData(prev => ({ ...prev, amount: roundedPrefill }));
   }, [selectedApartment?.id, monthlyShares, amountTouched]);
 
@@ -325,9 +325,11 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
       participationMills,
       buildingId,
       buildingName: building?.name,
-      reserveFundGoal: building?.reserve_fund_goal,
-      reserveFundDuration: building?.reserve_fund_duration_months,
-      monthlyReserveTarget,
+      reserve_fund_goal: building?.reserve_fund_goal || 0,
+      reserve_fund_duration_months: building?.reserve_fund_duration_months || 12,
+      reserve_fund_monthly_target: (building?.reserve_fund_goal && building?.reserve_fund_duration_months)
+        ? (building.reserve_fund_goal / building.reserve_fund_duration_months).toFixed(2)
+        : 0,
       calculatedAmount: reserveFundAmount,
       finalAmount: Number(reserveFundAmount.toFixed(2))
     });
@@ -462,7 +464,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                         </p>
                       </div>
                     </div>
-                    {selectedApartment.latest_payment_date && (
+                    {selectedApartment.last_payment_date && (
                       <div className="mt-2 pt-2 border-t border-gray-200">
                         <span className="text-gray-600 text-xs">Τελευταία πληρωμή:</span>
                         <span className="ml-2 text-xs text-gray-700">
@@ -470,7 +472,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                             typeof selectedApartment.latest_payment_amount === 'string'
                               ? parseFloat(selectedApartment.latest_payment_amount)
                               : Number(selectedApartment.latest_payment_amount || 0)
-                          )} στις {new Date(selectedApartment.latest_payment_date).toLocaleDateString('el-GR')}
+                          )} στις {new Date(selectedApartment.last_payment_date).toLocaleDateString('el-GR')}
                         </span>
                       </div>
                     )}
@@ -519,7 +521,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                 )}
                 {!amountTouched && selectedApartment && (monthlyShares?.[selectedApartment.id] || selectedApartment.monthly_due) ? (
                   <p className="text-xs text-gray-500 mt-1">
-                    Προτεινόμενο ποσό: {formatCurrency((monthlyShares?.[selectedApartment.id] ?? selectedApartment.monthly_due) || 0)}
+                    Προτεινόμενο ποσό: {formatCurrency(Math.max(0, (monthlyShares?.[selectedApartment.id] ?? selectedApartment.monthly_due) || 0))}
                     <br />
                     <span className="text-xs text-blue-600">
                       (Μηνιαία οφειλή κοινοχρήστων με βάση χιλιοστά)
@@ -535,7 +537,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                   const currentAmount = formData.amount || 0;
                   
                   // Get the actual reserve fund contribution for this apartment from the calculation
-                  const apartmentShare = monthlySharesData?.shares?.[selectedApartment?.id];
+                  const apartmentShare = selectedApartment?.id ? monthlySharesData?.shares?.[selectedApartment.id] : null;
                   const actualReserveContribution = apartmentShare?.breakdown?.reserve_fund_contribution || 0;
                   const hasReserveFund = actualReserveContribution > 0;
                   
@@ -572,7 +574,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                     const currentAmount = formData.amount || 0;
                     
                     // Get the actual reserve fund contribution for this apartment from the calculation
-                    const apartmentShare = monthlySharesData?.shares?.[selectedApartment?.id];
+                    const apartmentShare = selectedApartment?.id ? monthlySharesData?.shares?.[selectedApartment.id] : null;
                     const actualReserveContribution = apartmentShare?.breakdown?.reserve_fund_contribution || 0;
                     const hasReserveFund = actualReserveContribution > 0;
                     

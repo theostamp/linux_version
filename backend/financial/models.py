@@ -372,9 +372,10 @@ class Transaction(models.Model):
         return f"{self.get_type_display()} - {self.amount}€ ({self.date.strftime('%d/%m/%Y')})"
     
     def save(self, *args, **kwargs):
-        # Ensure date is timezone-aware
+        # Ensure date is timezone-aware (only for datetime objects)
         from django.utils import timezone
-        if self.date and timezone.is_naive(self.date):
+        from datetime import datetime
+        if self.date and isinstance(self.date, datetime) and timezone.is_naive(self.date):
             self.date = timezone.make_aware(self.date)
         super().save(*args, **kwargs)
     

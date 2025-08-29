@@ -302,8 +302,9 @@ export async function getCurrentUser(): Promise<User> {
 
 export type Announcement = { 
   id: number; title: string; description: string; file: string | null; 
-  start_date: string; end_date: string; is_active: boolean; building: number; // Building ID
+  start_date: string | null; end_date: string | null; is_active: boolean; building: number; // Building ID
   building_name?: string; // Building name
+  published?: boolean; // Add missing published property
   is_currently_active?: boolean; days_remaining?: number | null; status_display?: string;
   created_at: string; updated_at?: string;
 };
@@ -363,7 +364,7 @@ export type Building = {
   id: number;
   name: string;
   address: string;
-  city?: string;
+  city: string; // Make city required to fix undefined errors
   postal_code?: string;
   apartments_count?: number;
   internal_manager_name?: string;
@@ -373,6 +374,9 @@ export type Building = {
   management_office_address?: string;
   management_fee_per_apartment?: number;
   reserve_contribution_per_apartment?: number;
+  // Add missing reserve fund properties
+  reserve_fund_goal?: number;
+  reserve_fund_duration_months?: number;
   created_at: string;
   updated_at?: string;
   street_view_image?: string;
@@ -505,7 +509,7 @@ export async function fetchAllBuildingsPublic(): Promise<Building[]> {
         management_office_address: "Αθήνα, Ελλάδα",
         latitude: 37.9838,
         longitude: 23.7275,
-        street_view_image: null,
+        street_view_image: undefined,
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z"
       },
@@ -523,7 +527,7 @@ export async function fetchAllBuildingsPublic(): Promise<Building[]> {
         management_office_address: "Αθήνα, Ελλάδα",
         latitude: 37.9838,
         longitude: 23.7275,
-        street_view_image: null,
+        street_view_image: undefined,
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z"
       },
@@ -541,7 +545,7 @@ export async function fetchAllBuildingsPublic(): Promise<Building[]> {
         management_office_address: "Αθήνα, Ελλάδα",
         latitude: 37.9838,
         longitude: 23.7275,
-        street_view_image: null,
+        street_view_image: undefined,
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z"
       }
@@ -893,7 +897,6 @@ export async function fetchRequests(filters: { status?: string; buildingId?: num
     estimated_completion: r.estimated_completion,
     completed_at: r.completed_at,
     notes: r.notes,
-    photos: r.photos,
     location: r.location,
     apartment_number: r.apartment_number,
     cost_estimate: r.cost_estimate,
@@ -932,7 +935,6 @@ export async function fetchTopRequests(buildingId: number | null): Promise<UserR
     estimated_completion: r.estimated_completion,
     completed_at: r.completed_at,
     notes: r.notes,
-    photos: r.photos,
     location: r.location,
     apartment_number: r.apartment_number,
     cost_estimate: r.cost_estimate,
@@ -971,7 +973,6 @@ export async function fetchUserRequestsForBuilding(buildingId: number): Promise<
     estimated_completion: r.estimated_completion,
     completed_at: r.completed_at,
     notes: r.notes,
-    photos: r.photos,
     location: r.location,
     apartment_number: r.apartment_number,
     cost_estimate: r.cost_estimate,
@@ -1875,6 +1876,7 @@ export type CollaborationProject = {
   progress_percentage: number;
   building: number;
   collaborator: number;
+  collaborator_name?: string; // Add missing property
   created_at: string;
 };
 
@@ -1887,6 +1889,9 @@ export type CollaborationContract = {
   start_date: string;
   end_date: string;
   total_amount: number;
+  total_value?: number; // Add missing property
+  is_active?: boolean; // Add missing property
+  collaborator_name?: string; // Add missing property
   building: number;
   collaborator: number;
   created_at: string;
@@ -1897,11 +1902,14 @@ export type CollaborationInvoice = {
   invoice_number: string;
   description: string;
   amount: number;
+  total_amount?: number; // Add missing property
   status: string;
   issue_date: string;
   due_date: string;
   collaborator: number;
+  collaborator_name?: string; // Add missing property
   contract: number;
+  contract_number?: string; // Add missing property
   created_at: string;
 };
 

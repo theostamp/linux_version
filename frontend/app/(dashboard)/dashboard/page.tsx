@@ -251,7 +251,7 @@ function DashboardContent() {
           return;
         }
         
-        const obligationsData = await fetchObligationsSummary(selectedBuilding.id);
+        const obligationsData = await fetchObligationsSummary();
         setObligations(obligationsData);
       } catch (err) {
         console.error('Failed to load obligations:', err);
@@ -483,8 +483,8 @@ function DashboardContent() {
           </div>
           <div className="space-y-3">
             {announcements.slice(0, 3).map((announcement) => {
-              const start = new Date(announcement.start_date);
-              const end = new Date(announcement.end_date);
+              const start = announcement.start_date ? new Date(announcement.start_date) : new Date();
+              const end = announcement.end_date ? new Date(announcement.end_date) : new Date();
               const now = new Date();
               let status = 'Ενεργή';
               if (now < start) status = 'Προσεχώς';

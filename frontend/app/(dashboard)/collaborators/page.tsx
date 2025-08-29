@@ -145,7 +145,7 @@ export default function CollaboratorsPage() {
 
   const filteredProjects = projects.filter(project =>
     project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.collaborator_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    project.collaborator_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     project.project_type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -241,7 +241,7 @@ export default function CollaboratorsPage() {
               <CardContent>
                 <div className="text-2xl font-bold">
                   €{invoices.filter(i => i.status === 'sent' || i.status === 'overdue')
-                    .reduce((acc, inv) => acc + inv.total_amount, 0).toLocaleString()}
+                    .reduce((acc, inv) => acc + (inv.total_amount || 0), 0).toLocaleString()}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {invoices.filter(i => i.status === 'sent' || i.status === 'overdue').length} τιμολόγια
@@ -444,7 +444,7 @@ export default function CollaboratorsPage() {
                       <TableCell>{contract.title}</TableCell>
                       <TableCell>{contract.collaborator_name}</TableCell>
                       <TableCell>{contract.contract_type}</TableCell>
-                      <TableCell>€{contract.total_value.toLocaleString()}</TableCell>
+                      <TableCell>€{contract.total_value?.toLocaleString() || '0'}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Badge className={getStatusColor(contract.status)}>
@@ -500,7 +500,7 @@ export default function CollaboratorsPage() {
                       <TableCell>{invoice.contract_number}</TableCell>
                       <TableCell>{new Date(invoice.issue_date).toLocaleDateString('el-GR')}</TableCell>
                       <TableCell>{new Date(invoice.due_date).toLocaleDateString('el-GR')}</TableCell>
-                      <TableCell>€{invoice.total_amount.toLocaleString()}</TableCell>
+                      <TableCell>€{invoice.total_amount?.toLocaleString() || '0'}</TableCell>
                       <TableCell>
                         <Badge className={getInvoiceStatusColor(invoice.status)}>
                           {invoice.status}

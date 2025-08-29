@@ -78,7 +78,7 @@ const BuildingsPage = () => {
         case 'name':
           return a.name.localeCompare(b.name);
         case 'city':
-          return a.city.localeCompare(b.city);
+          return (a.city || '').localeCompare(b.city || '');
         case 'apartments_count':
           return (b.apartments_count || 0) - (a.apartments_count || 0);
         default:

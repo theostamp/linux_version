@@ -20,6 +20,10 @@ interface PaymentProgressVisualizationProps {
   selectedMonth?: string;
 }
 
+interface PaymentProgressVisualizationRef {
+  refresh: () => void;
+}
+
 interface FinancialSummary {
   total_balance: number;
   current_obligations: number;
@@ -51,10 +55,13 @@ interface ProgressSegment {
   priority: number;
 }
 
-export const PaymentProgressVisualization: React.FC<PaymentProgressVisualizationProps> = ({
+export const PaymentProgressVisualization = React.forwardRef<
+  PaymentProgressVisualizationRef,
+  PaymentProgressVisualizationProps
+>(({
   buildingId,
   selectedMonth
-}) => {
+}, ref) => {
   const [financialSummary, setFinancialSummary] = useState<FinancialSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
@@ -110,6 +117,11 @@ export const PaymentProgressVisualization: React.FC<PaymentProgressVisualization
   useEffect(() => {
     fetchFinancialSummary();
   }, [fetchFinancialSummary]);
+
+  // Expose refresh function via ref
+  React.useImperativeHandle(ref, () => ({
+    refresh: fetchFinancialSummary
+  }));
 
   const formatCurrency = (amount: number | undefined | null) => {
     if (amount === undefined || amount === null || isNaN(amount)) {
@@ -514,4 +526,6 @@ export const PaymentProgressVisualization: React.FC<PaymentProgressVisualization
       </Card>
     </div>
   );
-};
+});
+
+PaymentProgressVisualization.displayName = 'PaymentProgressVisualization';

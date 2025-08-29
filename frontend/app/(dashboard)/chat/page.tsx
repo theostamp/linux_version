@@ -121,9 +121,9 @@ export default function ChatPage() {
         <ChatInterface 
           currentUser={{
             id: user.id,
-            name: user.name,
+            name: user.name || user.username || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
             email: user.email,
-            role: user.role,
+            role: user.role || 'resident',
           }} 
         />
       </div>
