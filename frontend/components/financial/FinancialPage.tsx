@@ -75,7 +75,15 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   });
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const result = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    console.log('🔍 FinancialPage selectedMonth initialization:', {
+      now: now.toISOString(),
+      getMonth: now.getMonth(),
+      monthPlusOne: now.getMonth() + 1,
+      result,
+      currentURL: window.location.href
+    });
+    return result;
   });
   const [apartments, setApartments] = useState<ApartmentList[]>([]);
   const [reserveFundMonthlyAmount, setReserveFundMonthlyAmount] = useState<number>(0); // No hardcoded default - will be set from building data
@@ -205,11 +213,19 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     const tabParam = searchParams.get('tab');
     const monthParam = searchParams.get('month');
     
+    console.log('🔍 FinancialPage URL params:', {
+      tabParam,
+      monthParam,
+      currentSelectedMonth: selectedMonth,
+      willOverride: !!monthParam
+    });
+    
     if (tabParam) {
       setActiveTab(tabParam);
     }
     
     if (monthParam) {
+      console.log('🔄 FinancialPage: URL overriding selectedMonth from', selectedMonth, 'to', monthParam);
       setSelectedMonth(monthParam);
     }
   }, [searchParams]);

@@ -8,6 +8,7 @@ import { apiPublic } from './apiPublic';
 // Βασικό URL του API. Χρησιμοποιούμε την ίδια λογική με το apiPublic για tenant-specific URLs
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
+    (window as any).debugApiCalls = true;
     const hostname = window.location.hostname;
     console.log(`[API] Current hostname: ${hostname}`);
     
@@ -28,7 +29,7 @@ export const API_BASE_URL = getApiBaseUrl();
 export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
-  timeout: 30000, // Increased timeout for batch operations
+  timeout: 60000, // Increased timeout for financial operations
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

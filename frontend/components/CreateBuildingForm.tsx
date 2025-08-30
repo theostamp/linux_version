@@ -7,12 +7,12 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Loader2, Camera, Building as BuildingIcon, Info, Users, ChevronDown } from 'lucide-react';
-import { createBuilding, updateBuilding, refreshBuildings, fetchBuildingResidents } from '@/lib/api';
+import { createBuilding, updateBuilding, fetchBuildingResidents } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 import StreetViewImage from '@/components/StreetViewImage';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { Building } from '@/types/building';
+import type { Building } from '@/lib/api';
 
 
 interface Props {
@@ -30,6 +30,8 @@ interface BuildingFormData {
   apartments_count?: number;
   internal_manager_name?: string;
   internal_manager_phone?: string;
+  internal_manager_apartment?: string;
+  internal_manager_collection_schedule?: string;
   management_office_name?: string;
   management_office_phone?: string;
   management_office_address?: string;
@@ -67,6 +69,8 @@ export default function CreateBuildingForm({
     apartments_count: undefined,
     internal_manager_name: '',
     internal_manager_phone: '',
+    internal_manager_apartment: '',
+    internal_manager_collection_schedule: 'Δευ-Παρ 9:00-17:00',
     management_office_name: user?.office_name || '',
     management_office_phone: user?.office_phone || '',
     management_office_address: user?.office_address || '',
@@ -127,6 +131,7 @@ export default function CreateBuildingForm({
       ...prev,
       internal_manager_name: resident.name,
       internal_manager_phone: resident.phone,
+      internal_manager_apartment: resident.apartment_number,
     }));
     setShowResidentsDropdown(false);
   };
@@ -688,9 +693,53 @@ export default function CreateBuildingForm({
           </div>
         </div>
         
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="internal_manager_apartment">
+              Διαμέρισμα Διαχειριστή
+            </label>
+            <input
+              id="internal_manager_apartment"
+              name="internal_manager_apartment"
+              value={form.internal_manager_apartment ?? ''}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="π.χ. Α1, Β2, 1ος όροφος"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="internal_manager_collection_schedule">
+              Ώρες και Ημέρες Είσπραξης Κοινοχρήστων
+            </label>
+            <select
+              id="internal_manager_collection_schedule"
+              name="internal_manager_collection_schedule"
+              value={form.internal_manager_collection_schedule ?? ''}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            >
+              <option value="">Επιλέξτε ώρες είσπραξης...</option>
+              <option value="Δευτέρα 17:00-19:00">Δευτέρα 17:00-19:00</option>
+              <option value="Τρίτη 17:00-19:00">Τρίτη 17:00-19:00</option>
+              <option value="Τετάρτη 17:00-19:00">Τετάρτη 17:00-19:00</option>
+              <option value="Πέμπτη 17:00-19:00">Πέμπτη 17:00-19:00</option>
+              <option value="Παρασκευή 17:00-19:00">Παρασκευή 17:00-19:00</option>
+              <option value="Σάββατο 10:00-12:00">Σάββατο 10:00-12:00</option>
+              <option value="Δευτέρα & Τετάρτη 17:00-19:00">Δευτέρα & Τετάρτη 17:00-19:00</option>
+              <option value="Τρίτη & Πέμπτη 17:00-19:00">Τρίτη & Πέμπτη 17:00-19:00</option>
+              <option value="Δευτέρα & Παρασκευή 17:00-19:00">Δευτέρα & Παρασκευή 17:00-19:00</option>
+              <option value="Δευ-Παρ 9:00-17:00">Δευ-Παρ 9:00-17:00</option>
+              <option value="Δευ-Παρ 17:00-19:00">Δευ-Παρ 17:00-19:00</option>
+              <option value="Σαβ-Κυρ 10:00-12:00">Σαβ-Κυρ 10:00-12:00</option>
+              <option value="Κατόπιν συνεννόησης">Κατόπιν συνεννόησης</option>
+            </select>
+          </div>
+        </div>
+        
         {buildingId && residents.length > 0 && (
           <div className="text-xs text-gray-600">
-            💡 <strong>Σημείωση:</strong> Η επιλογή διαχειριστή από τη λίστα θα συμπληρώσει αυτόματα το όνομα και το τηλέφωνο.
+            💡 <strong>Σημείωση:</strong> Η επιλογή διαχειριστή από τη λίστα θα συμπληρώσει αυτόματα το όνομα, τηλέφωνο και διαμέρισμα.
           </div>
         )}
       </div>

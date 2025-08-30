@@ -46,13 +46,23 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
   // Auto-calculate current month dates
   const getCurrentMonthDates = () => {
     const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1; // Convert to 1-based month
+    
+    const startDate = new Date(Date.UTC(year, month - 1, 1));
+    const endDate = new Date(Date.UTC(year, month, 0));
+    
+    const monthNames = [
+      'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
+      'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
+    ];
+    const periodName = `${monthNames[month - 1]} ${year}`;
+    
     
     return {
       startDate: startDate.toISOString().split('T')[0],
       endDate: endDate.toISOString().split('T')[0],
-      periodName: now.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })
+      periodName
     };
   };
 
@@ -86,15 +96,22 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
 
   // Update period when selectedMonth changes
   useEffect(() => {
-    console.log('🔄 CalculatorWizard: useEffect triggered with selectedMonth:', selectedMonth);
     
     if (selectedMonth) {
       // Parse selectedMonth (format: "2025-03") and create period dates
       const [year, month] = selectedMonth.split('-').map(Number);
-      const startDate = new Date(year, month - 1, 1); // month - 1 because Date months are 0-indexed
-      const endDate = new Date(year, month, 0); // Last day of the month
       
-      const periodName = startDate.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' });
+      // Create dates using UTC to avoid timezone issues
+      const startDate = new Date(Date.UTC(year, month - 1, 1)); // month - 1 because Date months are 0-indexed
+      const endDate = new Date(Date.UTC(year, month, 0)); // Last day of the month
+      
+      // Create period name directly from the parsed values to avoid timezone issues
+      const monthNames = [
+        'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
+        'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
+      ];
+      const periodName = `${monthNames[month - 1]} ${year}`;
+      
       
       const newPeriod = {
         startDate: startDate.toISOString().split('T')[0],
@@ -102,17 +119,13 @@ export const CalculatorWizard: React.FC<CalculatorWizardProps> = ({
         periodName
       };
       
-      console.log('🔄 CalculatorWizard: Setting new period:', newPeriod);
-      
       setState(prev => {
-        console.log('🔄 CalculatorWizard: Previous state customPeriod:', prev.customPeriod);
         return {
           ...prev,
           customPeriod: newPeriod
         };
       });
     } else {
-      console.log('🔄 CalculatorWizard: No selectedMonth, using current month');
       // When no selectedMonth, use current month as default
       const currentMonthDates = getCurrentMonthDates();
       setState(prev => ({

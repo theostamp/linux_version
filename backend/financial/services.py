@@ -22,23 +22,33 @@ class CommonExpenseCalculator:
         self.building_id = building_id
         self.building = Building.objects.get(id=building_id)
         self.apartments = Apartment.objects.filter(building_id=building_id)
-        self.expenses = Expense.objects.filter(
-            building_id=building_id
-        )
         self.month = month  # Format: YYYY-MM
         self.period_end_date = None
+        self.period_start_date = None
         
-        # Calculate period end date if month is provided
+        # Calculate period dates and filter expenses if month is provided
         if month:
             try:
                 from datetime import date
                 year, mon = map(int, month.split('-'))
+                self.period_start_date = date(year, mon, 1)
                 if mon == 12:
                     self.period_end_date = date(year + 1, 1, 1)
                 else:
                     self.period_end_date = date(year, mon + 1, 1)
+                
+                # Filter expenses for the specific month
+                self.expenses = Expense.objects.filter(
+                    building_id=building_id,
+                    date__gte=self.period_start_date,
+                    date__lt=self.period_end_date
+                )
             except Exception:
-                pass
+                # Fallback to all expenses if month parsing fails
+                self.expenses = Expense.objects.filter(building_id=building_id)
+        else:
+            # No month specified, use all expenses
+            self.expenses = Expense.objects.filter(building_id=building_id)
     
     def _get_historical_balance(self, apartment, end_date):
         """
@@ -564,10 +574,13 @@ class FinancialDashboardService:
                 year, mon = map(int, month.split('-'))
                 if mon == 1:
                     # January - previous month is December of previous year
+                    from calendar import monthrange
                     previous_month_end = date(year - 1, 12, 31)
                 else:
                     # Other months - previous month end
-                    previous_month_end = date(year, mon - 1, 31)
+                    from calendar import monthrange
+                    _, last_day = monthrange(year, mon - 1)
+                    previous_month_end = date(year, mon - 1, last_day)
                 
                 # Calculate total previous obligations across all apartments
                 previous_obligations = Decimal('0.00')
@@ -808,6 +821,9 @@ class FinancialDashboardService:
         """
         Υπολογισμός ιστορικού υπολοίπου διαμερίσματος μέχρι συγκεκριμένη ημερομηνία
         
+        ΣΗΜΑΝΤΙΚΟ: Για "Previous Months' Obligations", πρέπει να υπολογίζουμε μόνο
+        τις οφειλές από δαπάνες που δημιουργήθηκαν ΠΡΙΝ από τον επιλεγμένο μήνα.
+        
         Args:
             apartment: Το διαμέρισμα για το οποίο υπολογίζουμε το υπόλοιπο
             end_date: Η ημερομηνία μέχρι την οποία υπολογίζουμε
@@ -817,6 +833,8 @@ class FinancialDashboardService:
         """
         from decimal import Decimal
         from .models import Transaction, Payment
+        from datetime import datetime
+        from django.utils import timezone
         
         # Υπολογισμός πληρωμών μέχρι την ημερομηνία
         total_payments = Payment.objects.filter(
@@ -824,18 +842,44 @@ class FinancialDashboardService:
             date__lt=end_date
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
-        # Υπολογισμός χρεώσεων μέχρι την ημερομηνία από συναλλαγές
-        total_charges = Transaction.objects.filter(
-            apartment=apartment,
-            date__lt=end_date,
-            type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
-                     'interest_charge', 'penalty_charge']
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        # ΔΙΟΡΘΩΣΗ: Για τον υπολογισμό προηγούμενων οφειλών, πρέπει να συμπεριλάβουμε
+        # μόνο χρεώσεις από δαπάνες που δημιουργήθηκαν ΠΡΙΝ από τον επιλεγμένο μήνα
+        
+        # Βρίσκουμε την αρχή του μήνα για τον οποίο υπολογίζουμε
+        # Αν end_date είναι 2025-08-01, τότε θέλουμε δαπάνες πριν από 2025-07-01
+        if isinstance(end_date, datetime):
+            end_date = end_date.date()
+        
+        # Υπολογισμός αρχής του μήνα
+        month_start = end_date.replace(day=1)
+        
+        # Βρίσκουμε δαπάνες που δημιουργήθηκαν ΠΡΙΝ από την αρχή του μήνα
+        expenses_before_month = Expense.objects.filter(
+            building_id=apartment.building_id,
+            date__lt=month_start
+        )
+        
+        expense_ids_before_month = list(expenses_before_month.values_list('id', flat=True))
+        
+        # Υπολογισμός χρεώσεων μόνο από αυτές τις δαπάνες
+        if expense_ids_before_month:
+            total_charges = Transaction.objects.filter(
+                apartment=apartment,
+                reference_type='expense',
+                reference_id__in=[str(exp_id) for exp_id in expense_ids_before_month],
+                type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
+                         'interest_charge', 'penalty_charge']
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+        else:
+            total_charges = Decimal('0.00')
         
         # Υπολογισμός επιπλέον εισπράξεων από συναλλαγές (εκτός από τις κανονικές πληρωμές)
+        # Μετατροπή end_date σε timezone-aware datetime για σύγκριση
+        end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
+        
         additional_payments = Transaction.objects.filter(
             apartment=apartment,
-            date__lt=end_date,
+            date__lt=end_datetime,
             type__in=['common_expense_payment', 'payment_received', 'refund']
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
@@ -2198,17 +2242,31 @@ class DataIntegrityService:
     def cleanup_orphaned_transactions(self) -> dict:
         """Καθαρισμός orphaned transactions και επαναυπολογισμός υπολοίπων"""
         try:
-            # Find orphaned transactions
+            # Find orphaned transactions from both payments and expenses
             orphaned_transactions = []
-            transactions = Transaction.objects.filter(
+            
+            # Check orphaned payment transactions
+            payment_transactions = Transaction.objects.filter(
                 building_id=self.building_id, 
                 reference_type='payment'
             )
             
-            for transaction in transactions:
+            for transaction in payment_transactions:
                 try:
                     Payment.objects.get(id=transaction.reference_id)
                 except Payment.DoesNotExist:
+                    orphaned_transactions.append(transaction)
+            
+            # Check orphaned expense transactions
+            expense_transactions = Transaction.objects.filter(
+                building_id=self.building_id, 
+                reference_type='expense'
+            )
+            
+            for transaction in expense_transactions:
+                try:
+                    Expense.objects.get(id=int(transaction.reference_id))
+                except (Expense.DoesNotExist, ValueError, TypeError):
                     orphaned_transactions.append(transaction)
             
             # Delete orphaned transactions
@@ -2281,17 +2339,31 @@ class DataIntegrityService:
     def verify_data_integrity(self) -> dict:
         """Επιβεβαίωση ακεραιότητας δεδομένων"""
         try:
-            # Check for orphaned transactions
+            # Check for orphaned transactions (both payments and expenses)
             orphaned_count = 0
-            transactions = Transaction.objects.filter(
+            
+            # Check payment transactions
+            payment_transactions = Transaction.objects.filter(
                 building_id=self.building_id, 
                 reference_type='payment'
             )
             
-            for transaction in transactions:
+            for transaction in payment_transactions:
                 try:
                     Payment.objects.get(id=transaction.reference_id)
                 except Payment.DoesNotExist:
+                    orphaned_count += 1
+            
+            # Check expense transactions
+            expense_transactions = Transaction.objects.filter(
+                building_id=self.building_id, 
+                reference_type='expense'
+            )
+            
+            for transaction in expense_transactions:
+                try:
+                    Expense.objects.get(id=int(transaction.reference_id))
+                except (Expense.DoesNotExist, ValueError, TypeError):
                     orphaned_count += 1
             
             # Check apartment balance consistency

@@ -218,11 +218,11 @@ def create_configuration_file():
     config_content = '''# Configuration for hardcoded values
 # This file contains configuration values that were previously hardcoded
 
-# Default building settings
+# Default building settings - UPDATED: Removed hardcoded values to prevent mysterious amounts
 DEFAULT_BUILDING_SETTINGS = {
-    'reserve_fund_goal': 5000.00,
-    'reserve_fund_duration_months': 12,
-    'reserve_contribution_per_apartment': 5.00,
+    'reserve_fund_goal': 0.00,  # Changed from 5000.00 to prevent automatic goals
+    'reserve_fund_duration_months': 0,  # Changed from 12 to prevent automatic duration
+    'reserve_contribution_per_apartment': 0.00,  # Changed from 5.00 to prevent mysterious 50€ (5€×10 apartments)
 }
 
 # Default apartment settings

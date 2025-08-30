@@ -71,11 +71,26 @@ class Building(models.Model):
 
     internal_manager_name = models.CharField(
         max_length=255,
-        blank=True
+        blank=True,
+        verbose_name=_("Όνομα Εσωτερικού Διαχειριστή")
     )
     internal_manager_phone = models.CharField(
         max_length=20,
-        blank=True
+        blank=True,
+        verbose_name=_("Τηλέφωνο Εσωτερικού Διαχειριστή")
+    )
+    internal_manager_apartment = models.CharField(
+        max_length=10,
+        blank=True,
+        verbose_name=_("Διαμέρισμα Εσωτερικού Διαχειριστή"),
+        help_text=_("Αριθμός διαμερίσματος του εσωτερικού διαχειριστή")
+    )
+    internal_manager_collection_schedule = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name=_("Ωράριο Είσπραξης Κοινοχρήστων"),
+        help_text=_("Ημέρες και ώρες είσπραξης κοινοχρήστων από τον εσωτερικό διαχειριστή"),
+        default="Δευ-Παρ 9:00-17:00"
     )
 
     # Γραφείο Διαχείρισης

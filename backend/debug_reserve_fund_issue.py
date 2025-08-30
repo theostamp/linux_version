@@ -17,7 +17,7 @@ def debug_reserve_fund_issue():
     """Debug the reserve fund calculation issue"""
     
     with schema_context('demo'):
-        building_id = 4
+        building_id = 1  # Αλκμάνος 22
         building = Building.objects.get(id=building_id)
         apartments = Apartment.objects.filter(building_id=building_id)
         

@@ -20,7 +20,8 @@ import {
   AlertCircle,
   Calculator,
   PiggyBank,
-  Thermometer
+  Thermometer,
+  CreditCard
 } from 'lucide-react';
 import { CalculatorState } from './CalculatorWizard';
 import { ExpenseBreakdownSection } from './ExpenseBreakdownSection';
@@ -61,6 +62,13 @@ interface CommonExpenseModalProps {
   buildingName?: string;
   managementFeePerApartment?: number;
   reserveContributionPerApartment?: number;
+  managerName?: string;
+  managerPhone?: string;
+  managerApartment?: string;
+  managerCollectionSchedule?: string;
+  buildingAddress?: string;
+  buildingCity?: string;
+  buildingPostalCode?: string;
 }
 
 export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
@@ -70,7 +78,14 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   buildingId,
   buildingName = 'Άγνωστο Κτίριο',
   managementFeePerApartment = 0,
-  reserveContributionPerApartment = 0
+  reserveContributionPerApartment = 0,
+  managerName = 'Διαχειριστής Κτιρίου',
+  managerPhone = '210-1234567',
+  managerApartment = '',
+  managerCollectionSchedule = 'Δευ-Παρ 9:00-17:00',
+  buildingAddress = '',
+  buildingCity = '',
+  buildingPostalCode = ''
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [showHeatingModal, setShowHeatingModal] = useState(false);
@@ -90,6 +105,14 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   const { saveCommonExpenseSheet } = useCommonExpenses();
   // Extract month from state's customPeriod
   const selectedMonth = state.customPeriod?.startDate ? state.customPeriod.startDate.substring(0, 7) : undefined;
+  
+  // Debug the state to see what's happening
+  console.log('🔍 CommonExpenseModal state debug:', {
+    periodMode: state.periodMode,
+    customPeriod: state.customPeriod,
+    selectedMonth: selectedMonth,
+    startDate: state.customPeriod?.startDate
+  });
   const { apartments: aptWithFinancial, forceRefresh } = useApartmentsWithFinancialData(buildingId, selectedMonth);
 
   // Occupants map (owner & tenant) by apartment id
@@ -194,17 +217,49 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   };
 
   const getPeriodInfo = () => {
-    if (state.periodMode === 'quick') {
-      if (state.quickOptions.currentMonth) {
-        const now = new Date();
-        return now.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' });
-      } else if (state.quickOptions.previousMonth) {
-        const now = new Date();
-        const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        return prevMonth.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' });
-      }
+    console.log('🔍 CommonExpenseModal getPeriodInfo:', {
+      periodMode: state.periodMode,
+      quickOptions: state.quickOptions,
+      customPeriodName: state.customPeriod.periodName,
+      selectedMonth
+    });
+    
+    // FIXED: Always use the customPeriod.periodName which is set correctly based on selectedMonth
+    const result = state.customPeriod.periodName;
+    console.log('🔄 CommonExpenseModal: Using customPeriod.periodName (FIXED):', result);
+    return result;
+  };
+
+  const getPeriodInfoWithBillingCycle = () => {
+    const periodName = getPeriodInfo();
+    
+    // Extract month and year from period name (e.g., "Αύγουστος 2025")
+    const monthMatch = periodName.match(/(\w+)\s+(\d{4})/);
+    if (!monthMatch) return periodName;
+    
+    const [, monthName, year] = monthMatch;
+    
+    // Greek month names mapping for previous month calculation
+    const monthNames = [
+      'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
+      'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
+    ];
+    
+    const currentMonthIndex = monthNames.indexOf(monthName);
+    if (currentMonthIndex === -1) return periodName;
+    
+    // Calculate previous month (usage month)
+    let usageMonthIndex = currentMonthIndex - 1;
+    let usageYear = parseInt(year);
+    
+    if (usageMonthIndex < 0) {
+      usageMonthIndex = 11; // December
+      usageYear -= 1;
     }
-    return state.customPeriod.periodName;
+    
+    const usageMonthName = monthNames[usageMonthIndex];
+    
+    return `${periodName} (Χρήση: ${usageMonthName} ${usageYear} → Χρέωση: ${monthName} ${year})`;
   };
 
   const getCurrentDate = () => {
@@ -216,8 +271,52 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   };
 
   const getPaymentDueDate = () => {
-    const now = new Date();
-    const dueDate = new Date(now.getFullYear(), now.getMonth(), 15);
+    // Get the billing month from the selected period
+    const periodName = getPeriodInfo();
+    const monthMatch = periodName.match(/(\w+)\s+(\d{4})/);
+    
+    if (!monthMatch) {
+      // Fallback to current month + 1
+      const now = new Date();
+      const dueDate = new Date(now.getFullYear(), now.getMonth() + 1, 15);
+      return dueDate.toLocaleDateString('el-GR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+    
+    const [, monthName, year] = monthMatch;
+    
+    // Greek month names mapping
+    const monthNames = [
+      'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
+      'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
+    ];
+    
+    const currentMonthIndex = monthNames.indexOf(monthName);
+    if (currentMonthIndex === -1) {
+      // Fallback
+      const now = new Date();
+      const dueDate = new Date(now.getFullYear(), now.getMonth() + 1, 15);
+      return dueDate.toLocaleDateString('el-GR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+    
+    // Calculate next month after billing month (billing month + 1)
+    let dueDateMonthIndex = currentMonthIndex + 1;
+    let dueDateYear = parseInt(year);
+    
+    if (dueDateMonthIndex > 11) {
+      dueDateMonthIndex = 0; // January
+      dueDateYear += 1;
+    }
+    
+    // Create due date: 15th of the month after billing month
+    const dueDate = new Date(dueDateYear, dueDateMonthIndex, 15);
     return dueDate.toLocaleDateString('el-GR', {
       day: '2-digit',
       month: '2-digit',
@@ -514,29 +613,15 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   };
 
   const getReserveFundInfo = () => {
-    // Prefer backend-provided goal/duration; fallback to localStorage (from BuildingOverviewSection)
+    // ONLY use backend-provided goal/duration - ignore localStorage to prevent hardcoded values
     const goalFromState = Number(state.advancedShares?.reserve_fund_goal || 0);
     const durationFromState = Number(state.advancedShares?.reserve_fund_duration || 0);
     const perApartmentContribution = Number(state.advancedShares?.reserve_contribution || reserveContributionPerApartment || 0);
     const apartmentsCount = Object.keys(state.shares).length;
 
-    const getStorageKey = (key: string) => `reserve_fund_${buildingId}_${key}`;
-    const getFromStorage = (key: string, defaultValue: any = null) => {
-      try {
-        const raw = typeof window !== 'undefined' ? localStorage.getItem(getStorageKey(key)) : null;
-        return raw ? JSON.parse(raw) : defaultValue;
-      } catch {
-        return defaultValue;
-      }
-    };
-
-    const savedGoal = Number(getFromStorage('goal', 0));
-    const savedDuration = Number(getFromStorage('duration_months', 0));
-    const savedMonthlyTarget = Number(getFromStorage('monthly_target', 0));
-    const savedStartDate = getFromStorage('start_date', null);
-
-    const reserveFundGoal = goalFromState > 0 ? goalFromState : savedGoal;
-    const reserveFundDuration = durationFromState > 0 ? durationFromState : (savedDuration > 0 ? savedDuration : 0);
+    // Use only backend values, no localStorage fallback
+    const reserveFundGoal = goalFromState;
+    const reserveFundDuration = durationFromState;
 
     let monthlyAmount = 0;
     let totalContribution = 0;
@@ -546,11 +631,6 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       monthlyAmount = reserveFundGoal / reserveFundDuration;
       totalContribution = reserveFundGoal; // συνολικός στόχος κτιρίου
       displayText = `Στόχος ${formatAmount(reserveFundGoal)}€ σε ${reserveFundDuration} δόσεις = ${formatAmount(monthlyAmount)}€`;
-    } else if (savedMonthlyTarget > 0 && savedDuration > 0) {
-      // Χρήση αποθηκευμένου monthly target (goal/duration από Overview)
-      monthlyAmount = savedMonthlyTarget;
-      totalContribution = savedMonthlyTarget * savedDuration;
-      displayText = `Μηνιαία δόση ${formatAmount(monthlyAmount)}€ για ${savedDuration} μήνες`;
     } else if (perApartmentContribution > 0) {
       // Fallback: per-apartment contribution → συνολική μηνιαία δόση κτιρίου
       monthlyAmount = perApartmentContribution * apartmentsCount;
@@ -560,9 +640,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
 
     // Progress / months remaining based on timeline
     const now = new Date();
-    const startDate = savedStartDate ? new Date(savedStartDate) : now;
-    const monthsElapsed = Math.max(0, (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth()));
-    const monthsRemaining = Math.max(0, (reserveFundDuration > 0 ? reserveFundDuration : savedDuration) - monthsElapsed);
+    const startDate = now; // No localStorage fallback
+    const monthsElapsed = 0; // Reset to 0 since we're not using localStorage
+    const monthsRemaining = Math.max(0, reserveFundDuration - monthsElapsed);
 
     // Actual reserve collected (separate from current balance)
     const actualReserveCollected = Number(state.advancedShares?.actual_reserve_collected || 0);
@@ -573,7 +653,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       totalContribution,
       displayText,
       goal: reserveFundGoal,
-      duration: (reserveFundDuration > 0 ? reserveFundDuration : savedDuration),
+      duration: reserveFundDuration,
       monthsRemaining,
       actualReserveCollected,
       progressPercentage
@@ -644,7 +724,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       // Prepare data for rendering with fresh calculations
       const currentDate = getCurrentDate();
       const paymentDueDate = getPaymentDueDate();
-      const period = getPeriodInfo();
+      const period = getPeriodInfoWithBillingCycle();
       const groupedExpenses = getGroupedExpenses();
       const apartmentCount = Object.keys(currentState.shares).length;
       
@@ -670,7 +750,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Φύλλο Κοινοχρήστων - ${period}</title>
+          <title>Φύλλο Κοινοχρήστων - Περίοδος ${period}</title>
           <style>
             @page { 
               size: A4 landscape; 
@@ -973,10 +1053,15 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
             <div style="flex: 1;">
             <table class="info-table">
               <tr><th>🏢 ΠΟΛΥΚΑΤΟΙΚΙΑ</th><td>${buildingName}</td></tr>
+              <tr><th>📍 ΔΙΕΥΘΥΝΣΗ</th><td>${buildingAddress}${buildingCity ? ', ' + buildingCity : ''}${buildingPostalCode ? ' ' + buildingPostalCode : ''}</td></tr>
               <tr><th>📅 ΜΗΝΑΣ</th><td>${period}</td></tr>
-              <tr><th>👤 ΔΙΑΧΕΙΡΙΣΤΗΣ</th><td>Διαχειριστής Κτιρίου</td></tr>
+              <tr><th>👤 ΔΙΑΧΕΙΡΙΣΤΗΣ</th><td>${managerName}${managerApartment ? ' (Διαμ. ' + managerApartment + ')' : ''}</td></tr>
+              <tr><th>📞 ΤΗΛΕΦΩΝΟ</th><td>${managerPhone}</td></tr>
+              <tr><th>🕒 ΩΡΑΡΙΟ ΕΙΣΠΡΑΞΗΣ</th><td>${managerCollectionSchedule}</td></tr>
               <tr><th>⏰ ΛΗΞΗ ΠΛΗΡΩΜΗΣ</th><td>${paymentDueDate}</td></tr>
-              <tr><th>📝 ΠΑΡΑΤΗΡΗΣΕΙΣ</th><td>ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ: ΔΕΥΤΕΡΑ & ΤΕΤΑΡΤΗ ΑΠΟΓΕΥΜΑ</td></tr>
+              <tr><th>🏦 ΤΡΑΠΕΖΑ</th><td>Εθνική Τράπεζα</td></tr>
+              <tr><th>💳 IBAN</th><td>GR16 0110 1250 0000 1234 5678 901</td></tr>
+              <tr><th>📝 ΠΑΡΑΤΗΡΗΣΕΙΣ</th><td>ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ: ${managerCollectionSchedule}</td></tr>
             </table>
           </div>
           
@@ -1043,6 +1128,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
               <tr>
                 <th rowspan="2" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">Α/Δ</th>
                 <th rowspan="2" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</th>
+                <th rowspan="2" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">ΠΑΛΑΙΟΤΕΡΕΣ<br/>ΟΦΕΙΛΕΣ</th>
                 <th colspan="3" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ</th>
                 <th colspan="3" style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);">ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ</th>
                 <th colspan="3" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ</th>
@@ -1101,7 +1187,8 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 return `<tr>
                   <td class="font-bold text-primary">${share.identifier || share.apartment_number}</td>
                   <td class="name-cell">${share.owner_name || 'Μη καταχωρημένος'}</td>
-                                      <td>${toNumber(commonMills).toFixed(2)}</td>
+                  <td class="amount-cell" style="color: ${(apartmentData?.previous_balance ?? 0) > 0 ? '#dc2626' : '#059669'};">${formatAmount(apartmentData?.previous_balance ?? 0)}€</td>
+                  <td>${toNumber(commonMills).toFixed(2)}</td>
                     <td>${toNumber(elevatorMills).toFixed(2)}</td>
                     <td>${toNumber(heatingMills).toFixed(2)}</td>
                   <td class="amount-cell">${formatAmount(commonAmount)}</td>
@@ -1583,7 +1670,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
               </div>
               <div className="text-center">
                 <h1 className="text-2xl font-bold text-gray-800" style={{ fontSize: '18px' }}>Φύλλο Κοινοχρήστων</h1>
-                <p className="text-lg text-gray-600" style={{ fontSize: '18px' }}>{getPeriodInfo()}</p>
+                <p className="text-lg text-gray-600" style={{ fontSize: '18px' }}>Περίοδος {getPeriodInfo()}</p>
               </div>
             </div>
           </div>
@@ -1618,7 +1705,14 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                   <Building className="h-4 w-4 text-blue-600" />
                   <h3 className="font-semibold text-blue-800 text-sm">ΠΟΛΥΚΑΤΟΙΚΙΑ</h3>
                 </div>
-                <p className="text-sm font-medium text-blue-900 mt-1">{buildingName}</p>
+                <div className="space-y-1 mt-1">
+                  <p className="text-sm font-medium text-blue-900">{buildingName}</p>
+                  {(buildingAddress || buildingCity || buildingPostalCode) && (
+                    <p className="text-xs text-blue-700">
+                      📍 {buildingAddress}{buildingCity && `, ${buildingCity}`}{buildingPostalCode && ` ${buildingPostalCode}`}
+                    </p>
+                  )}
+                </div>
               </div>
               
               <div className="bg-purple-50 p-3 rounded border">
@@ -1626,7 +1720,11 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                   <User className="h-4 w-4 text-purple-600" />
                   <h3 className="font-semibold text-purple-800 text-sm">ΔΙΑΧΕΙΡΙΣΤΗΣ</h3>
                 </div>
-                <p className="text-sm font-medium text-purple-900 mt-1">Διαχειριστής Κτιρίου</p>
+                <div className="space-y-1 mt-1">
+                  <p className="text-sm font-medium text-purple-900">{managerName}{managerApartment && ` (Διαμ. ${managerApartment})`}</p>
+                  <p className="text-xs text-purple-700">📞 {managerPhone}</p>
+                  <p className="text-xs text-purple-700">🕒 {managerCollectionSchedule}</p>
+                </div>
               </div>
               
               <div className="bg-orange-50 p-3 rounded border">
@@ -1637,7 +1735,21 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 <p className="text-sm font-medium text-orange-900 mt-1">{getPaymentDueDate()}</p>
               </div>
               
-              {/* Ζ. ΑΠΟΘΕΜΑΤΙΚΟ Banner */}
+              {/* Banking Information */}
+              <div className="bg-green-50 p-3 rounded border">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-green-600" />
+                  <h3 className="font-semibold text-green-800 text-sm">ΤΡΑΠΕΖΙΚΑ ΣΤΟΙΧΕΙΑ</h3>
+                </div>
+                <div className="space-y-1 mt-1">
+                  <p className="text-xs text-green-700">🏦 Εθνική Τράπεζα</p>
+                  <p className="text-xs text-green-700 font-mono">IBAN: GR16 0110 1250 0000 1234 5678 901</p>
+                  <p className="text-xs text-green-700">Δικαιούχος: Πολυκατοικία {buildingName}</p>
+                </div>
+              </div>
+              
+              {/* Ζ. ΑΠΟΘΕΜΑΤΙΚΟ Banner - Only show if monthly amount > 0 */}
+              {reserveFundInfo.monthlyAmount > 0 && (
               <div className="bg-blue-50 p-3 rounded border">
                 <div className="flex items-center gap-2">
                   <PiggyBank className="h-4 w-4 text-blue-600" />
@@ -1697,6 +1809,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                   )}
                 </div>
               </div>
+              )}
             </div>
 
             {/* Middle Column - Building Expenses Analysis */}
@@ -1948,6 +2061,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                   <TableRow className="bg-gray-50">
                     <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>Α/Δ</TableHead>
                     <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΟΝΟΜΑΤΕΠΩΝΥΜΟ</TableHead>
+                    <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΠΑΛΑΙΟΤΕΡΕΣ ΟΦΕΙΛΕΣ</TableHead>
                     
                     {/* ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ Section - Κόκκινη κεφαλίδα */}
                     <TableHead className="text-center border font-bold text-xs text-white" colSpan={3} style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)"}}>
@@ -1966,13 +2080,16 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                       </TableHead>
                     )}
                     
-                    <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #7e22ce 0%, #6d28d9 100%)", color: "white"}}>ΑΠΟΘΕΜΑΤΙΚΟ</TableHead>
+                    {reserveFundInfo.monthlyAmount > 0 && (
+                      <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #7e22ce 0%, #6d28d9 100%)", color: "white"}}>ΑΠΟΘΕΜΑΤΙΚΟ</TableHead>
+                    )}
                     <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΠΛΗΡΩΤΕΟ ΠΟΣΟ</TableHead>
                     <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", color: "white"}}>A/A</TableHead>
                   </TableRow>
                   
                   {/* Sub-headers Row */}
                   <TableRow className="bg-gray-100">
+                    <TableHead className="text-center border"></TableHead>
                     <TableHead className="text-center border"></TableHead>
                     <TableHead className="text-center border"></TableHead>
                     
@@ -2110,6 +2227,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                       <TableRow key={share.apartment_id} className="hover:bg-gray-50">
                         <TableCell className="text-center border font-medium text-xs">{share.identifier || share.apartment_number}</TableCell>
                         <TableCell className="border font-medium text-xs">{share.owner_name || 'Μη καταχωρημένος'}</TableCell>
+                        <TableCell className="text-center border font-medium text-xs" style={{color: (apartmentData?.previous_balance ?? 0) > 0 ? '#dc2626' : '#059669'}}>
+                          {formatAmount(apartmentData?.previous_balance ?? 0)}€
+                        </TableCell>
                         
                         {/* ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ */}
                         <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{toNumber(commonMills).toFixed(2)}</TableCell>
@@ -2131,7 +2251,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                           </>
                         )}
                         {/* ΑΠΟΘΕΜΑΤΙΚΟ ανά διαμέρισμα */}
-                        <TableCell className="text-center border font-medium text-xs">{formatAmount(apartmentReserveFund)}</TableCell>
+                        {reserveFundInfo.monthlyAmount > 0 && (
+                          <TableCell className="text-center border font-medium text-xs">{formatAmount(apartmentReserveFund)}</TableCell>
+                        )}
                         <TableCell className="text-center border font-bold text-xs">{formatAmount(finalTotalWithFees)}</TableCell>
                         <TableCell className="text-center border text-xs">{index + 1}</TableCell>
                       </TableRow>
@@ -2181,7 +2303,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     )}
 
                     {/* ΑΠΟΘΕΜΑΤΙΚΟ Totals */}
-                    <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(hasOtherExpenses ? reserveFundDetails.monthlyAmount : 0)}</TableCell>
+                    {reserveFundInfo.monthlyAmount > 0 && (
+                      <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(hasOtherExpenses ? reserveFundDetails.monthlyAmount : 0)}</TableCell>
+                    )}
 
                     <TableCell className="text-center border">{formatAmount(totalExpenses)}</TableCell>
                     <TableCell className="text-center border"></TableCell>

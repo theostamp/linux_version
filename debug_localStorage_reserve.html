@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug localStorage Reserve Fund</title>
+</head>
+<body>
+    <h1>Debug localStorage Reserve Fund</h1>
+    <div id="output"></div>
+    
+    <script>
+        function debugLocalStorage() {
+            const output = document.getElementById('output');
+            let html = '<h2>localStorage Reserve Fund Keys:</h2>';
+            
+            // Check for building ID 1 (Alkmanos)
+            const buildingId = 1;
+            const keys = [
+                `reserve_fund_${buildingId}_goal`,
+                `reserve_fund_${buildingId}_duration_months`,
+                `reserve_fund_${buildingId}_monthly_target`,
+                `reserve_fund_${buildingId}_start_date`
+            ];
+            
+            html += '<ul>';
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                html += `<li><strong>${key}:</strong> ${value || 'null'}</li>`;
+            });
+            html += '</ul>';
+            
+            // Show all localStorage keys that contain 'reserve'
+            html += '<h2>All Reserve-related localStorage keys:</h2><ul>';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.includes('reserve')) {
+                    const value = localStorage.getItem(key);
+                    html += `<li><strong>${key}:</strong> ${value}</li>`;
+                }
+            }
+            html += '</ul>';
+            
+            // Clear reserve fund localStorage
+            html += '<h2>Actions:</h2>';
+            html += '<button onclick="clearReserveFund()">Clear Reserve Fund localStorage</button>';
+            html += '<button onclick="location.reload()">Refresh</button>';
+            
+            output.innerHTML = html;
+        }
+        
+        function clearReserveFund() {
+            const buildingId = 1;
+            const keys = [
+                `reserve_fund_${buildingId}_goal`,
+                `reserve_fund_${buildingId}_duration_months`,
+                `reserve_fund_${buildingId}_monthly_target`,
+                `reserve_fund_${buildingId}_start_date`
+            ];
+            
+            keys.forEach(key => {
+                localStorage.removeItem(key);
+            });
+            
+            // Also remove any other reserve-related keys
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && key.includes('reserve')) {
+                    localStorage.removeItem(key);
+                }
+            }
+            
+            alert('Reserve fund localStorage cleared!');
+            location.reload();
+        }
+        
+        // Run on page load
+        debugLocalStorage();
+    </script>
+</body>
+</html>

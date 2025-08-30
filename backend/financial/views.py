@@ -225,27 +225,61 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             print(f"⚠️ Auto cleanup failed after expense update: {str(e)}")
     
     def perform_destroy(self, instance):
-        """Καταγραφή διαγραφής δαπάνης"""
-        # Add back the expense amount to the building's current reserve
+        """Καταγραφή διαγραφής δαπάνης με καθαρισμό σχετικών συναλλαγών"""
         building = instance.building
+        expense_id = instance.id
+        
+        # ΠΡΩΤΑ: Καθαρισμός σχετικών συναλλαγών και ενημέρωση υπολοίπων
+        related_transactions = Transaction.objects.filter(
+            building_id=building.id,
+            reference_type='expense',
+            reference_id=str(expense_id)
+        )
+        
+        print(f"🗑️ Διαγραφή δαπάνης {expense_id}: Βρέθηκαν {related_transactions.count()} σχετικές συναλλαγές")
+        
+        # Ενημέρωση υπολοίπων διαμερισμάτων πριν τη διαγραφή των συναλλαγών
+        for transaction in related_transactions:
+            if transaction.apartment:
+                apartment = transaction.apartment
+                old_balance = apartment.current_balance or Decimal('0.00')
+                
+                # Αφαιρούμε την χρέωση (προσθέτουμε το ποσό γιατί οι χρεώσεις είναι αρνητικές)
+                new_balance = old_balance - transaction.amount
+                apartment.current_balance = new_balance
+                apartment.save()
+                
+                print(f"   🏠 Διαμέρισμα {apartment.number}: {old_balance}€ → {new_balance}€")
+        
+        # Διαγραφή των σχετικών συναλλαγών
+        deleted_count = related_transactions.count()
+        related_transactions.delete()
+        print(f"   ✅ Διαγράφηκαν {deleted_count} συναλλαγές")
+        
+        # ΔΕΥΤΕΡΑ: Επαναφορά του αποθεματικού του κτιρίου
         building.current_reserve += instance.amount
         building.save()
         
+        # ΤΡΙΤΑ: Audit log
         FinancialAuditLog.log_expense_action(
             user=self.request.user,
             action='DELETE',
             expense=instance,
             request=self.request
         )
+        
+        # ΤΕΤΑΡΤΑ: Διαγραφή της δαπάνης
         instance.delete()
+        
+        print(f"✅ Δαπάνη {expense_id} διαγράφηκε επιτυχώς με όλες τις σχετικές συναλλαγές")
         
         # Auto cleanup and refresh after expense deletion
         try:
             from .services import DataIntegrityService
-            integrity_service = DataIntegrityService(instance.building.id)
+            integrity_service = DataIntegrityService(building.id)
             cleanup_result = integrity_service.auto_cleanup_and_refresh()
             
-            if cleanup_result['cleanup_performed']:
+            if cleanup_result.get('cleanup_performed'):
                 print(f"🧹 Auto cleanup performed after expense deletion: {cleanup_result['message']}")
         except Exception as e:
             print(f"⚠️ Auto cleanup failed after expense deletion: {str(e)}")
@@ -829,6 +863,106 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
+    @action(detail=False, methods=['get'], url_path='improved-summary')
+    def improved_summary(self, request):
+        """Λήψη βελτιωμένου οικονομικού συνόψη με καλύτερη ορολογία"""
+        building_id = request.query_params.get('building_id')
+        month = request.query_params.get('month')
+        
+        if not building_id:
+            return Response(
+                {'error': 'Building ID is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from datetime import datetime
+            from dateutil.relativedelta import relativedelta
+            
+            service = FinancialDashboardService(int(building_id))
+            
+            # Get current month info
+            if month:
+                current_date = datetime.strptime(month + '-01', '%Y-%m-%d')
+            else:
+                current_date = datetime.now()
+            
+            # Get previous month info
+            previous_date = current_date - relativedelta(months=1)
+            previous_month_str = previous_date.strftime('%Y-%m')
+            
+            # Get basic summary
+            summary = service.get_summary(month)
+            
+            # Calculate improved structure
+            improved_data = {
+                # Previous month expenses (operational expenses from previous month)
+                'previous_month_expenses': summary.get('total_expenses_month', 0),
+                'previous_month_name': previous_date.strftime('%B %Y'),
+                
+                # Current month charges
+                'management_fees': summary.get('management_fees', 0),
+                'reserve_fund_contribution': summary.get('reserve_fund_contribution', 0),
+                'current_month_name': current_date.strftime('%B %Y'),
+                
+                # Invoice total (previous expenses + current charges)
+                'invoice_total': (
+                    summary.get('total_expenses_month', 0) + 
+                    summary.get('management_fees', 0) + 
+                    summary.get('reserve_fund_contribution', 0)
+                ),
+                
+                # Total obligations
+                'current_invoice': (
+                    summary.get('total_expenses_month', 0) + 
+                    summary.get('management_fees', 0) + 
+                    summary.get('reserve_fund_contribution', 0)
+                ),
+                'previous_balances': summary.get('previous_balance', 0),
+                'grand_total': summary.get('total_balance', 0),
+                
+                # Coverage calculations
+                'current_invoice_paid': summary.get('total_payments_month', 0),
+                'current_invoice_total': (
+                    summary.get('total_expenses_month', 0) + 
+                    summary.get('management_fees', 0) + 
+                    summary.get('reserve_fund_contribution', 0)
+                ),
+                'current_invoice_coverage_percentage': (
+                    (summary.get('total_payments_month', 0) / max(
+                        summary.get('total_expenses_month', 0) + 
+                        summary.get('management_fees', 0) + 
+                        summary.get('reserve_fund_contribution', 0), 1
+                    )) * 100
+                ),
+                
+                'total_paid': summary.get('total_payments', 0),
+                'total_obligations': abs(summary.get('total_balance', 0)),
+                'total_coverage_percentage': (
+                    (summary.get('total_payments', 0) / max(abs(summary.get('total_balance', 0)), 1)) * 100
+                ),
+                
+                # Reserve fund info
+                'current_reserve': summary.get('current_reserve', 0),
+                'reserve_target': summary.get('reserve_target', 1000),
+                'reserve_monthly_contribution': summary.get('reserve_fund_contribution', 0),
+                'reserve_progress_percentage': (
+                    (summary.get('current_reserve', 0) / max(summary.get('reserve_target', 1000), 1)) * 100
+                ),
+                
+                # Building info
+                'apartment_count': summary.get('apartment_count', 0),
+                'has_monthly_activity': summary.get('has_monthly_activity', False)
+            }
+            
+            return Response(improved_data)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
 
 
     @action(detail=True, methods=['get'])
@@ -1281,16 +1415,21 @@ class CommonExpenseViewSet(viewsets.ViewSet):
             data = request.data
             building_id = data.get('building_id') or data.get('building')
             include_reserve_fund = data.get('include_reserve_fund', True)  # Προεπιλογή True
+            month_filter = data.get('month_filter')  # "YYYY-MM" format
+            
+            print(f"🔍 calculate: building_id: {building_id}, month_filter: {month_filter}")
             
             if not building_id:
                 raise ValueError('building_id is required')
             
-            calculator = CommonExpenseCalculator(int(building_id))
+            # Pass month_filter to CommonExpenseCalculator for proper expense filtering
+            calculator = CommonExpenseCalculator(int(building_id), month_filter)
             result = {
                 'shares': calculator.calculate_shares(include_reserve_fund=include_reserve_fund),
                 'total_expenses': float(calculator.get_total_expenses()),
                 'apartments_count': calculator.get_apartments_count(),
                 'include_reserve_fund': include_reserve_fund,
+                'month_filter': month_filter,
             }
             
             return Response(result)
@@ -1314,16 +1453,20 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                 building_id = data.get('building_id') or data.get('building')
                 period_start_date = data.get('period_start_date')
                 period_end_date = data.get('period_end_date')
+                month_filter = data.get('month_filter')
+                reserve_fund_monthly_total = data.get('reserve_fund_monthly_total')
             else:
                 # JSON data
                 building_id = data.get('building_id') or data.get('building')
                 period_start_date = data.get('period_start_date')
                 period_end_date = data.get('period_end_date')
+                month_filter = data.get('month_filter')
                 reserve_fund_monthly_total = data.get('reserve_fund_monthly_total')
             
             print(f"🔍 calculate_advanced: building_id: {building_id}")
             print(f"🔍 calculate_advanced: period_start_date: {period_start_date}")
             print(f"🔍 calculate_advanced: period_end_date: {period_end_date}")
+            print(f"🔍 calculate_advanced: month_filter: {month_filter}")
             
             if not building_id:
                 raise ValueError('building_id is required')
@@ -1333,6 +1476,27 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                 building_id = int(building_id)
             except (ValueError, TypeError):
                 raise ValueError(f'Invalid building_id: {building_id}')
+            
+            # If month_filter is provided, use it to set period dates
+            if month_filter and not (period_start_date and period_end_date):
+                from datetime import datetime, date, timedelta
+                try:
+                    year, month = month_filter.split('-')
+                    year, month = int(year), int(month)
+                    
+                    # Create start and end dates for the month
+                    start_date = date(year, month, 1)
+                    if month == 12:
+                        end_date = date(year + 1, 1, 1) - timedelta(days=1)
+                    else:
+                        end_date = date(year, month + 1, 1) - timedelta(days=1)
+                    
+                    period_start_date = start_date.strftime('%Y-%m-%d')
+                    period_end_date = end_date.strftime('%Y-%m-%d')
+                    
+                    print(f"🔄 calculate_advanced: Using month_filter to set dates: {period_start_date} to {period_end_date}")
+                except (ValueError, IndexError) as e:
+                    print(f"⚠️ calculate_advanced: Invalid month_filter format: {month_filter}, error: {e}")
             
             calculator = AdvancedCommonExpenseCalculator(
                 building_id=building_id,

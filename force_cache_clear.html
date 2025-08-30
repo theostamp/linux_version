@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Force Cache Clear</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body>
+    <h1>Force Cache Clear for Digital Concierge</h1>
+    <div id="output"></div>
+    
+    <script>
+        function forceCacheClear() {
+            const output = document.getElementById('output');
+            let html = '<h2>Clearing All Caches...</h2>';
+            
+            // Clear localStorage
+            localStorage.clear();
+            html += '<p>✅ localStorage cleared</p>';
+            
+            // Clear sessionStorage
+            sessionStorage.clear();
+            html += '<p>✅ sessionStorage cleared</p>';
+            
+            // Clear IndexedDB (if any)
+            if ('indexedDB' in window) {
+                indexedDB.databases().then(databases => {
+                    databases.forEach(db => {
+                        indexedDB.deleteDatabase(db.name);
+                    });
+                });
+                html += '<p>✅ IndexedDB cleared</p>';
+            }
+            
+            // Clear service worker cache (if any)
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => {
+                        registration.unregister();
+                    });
+                });
+                html += '<p>✅ Service Worker cleared</p>';
+            }
+            
+            // Clear cache API (if any)
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        caches.delete(name);
+                    });
+                });
+                html += '<p>✅ Cache API cleared</p>';
+            }
+            
+            html += '<h3>Actions to take:</h3>';
+            html += '<ol>';
+            html += '<li>Close all browser tabs</li>';
+            html += '<li>Clear browser cache manually (Ctrl+Shift+Del)</li>';
+            html += '<li>Restart browser completely</li>';
+            html += '<li>Open application in incognito/private mode</li>';
+            html += '</ol>';
+            
+            html += '<button onclick="location.reload(true)">Force Reload</button>';
+            
+            output.innerHTML = html;
+        }
+        
+        // Run immediately
+        forceCacheClear();
+        
+        // Also clear on page load
+        window.addEventListener('load', forceCacheClear);
+    </script>
+</body>
+</html>

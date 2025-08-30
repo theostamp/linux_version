@@ -491,7 +491,7 @@ git push origin v2.1.0
 ### Βασικές Εντολές Git
 
 git add .
-git commit -m "διορθωση απλοποιηση dashboard πληρωμων 11 "
+git commit -m "διορθωση πινακα κοινοχρηστων - διορθωση φιλτρου μηνων για ολες τις δαπανες "
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

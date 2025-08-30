@@ -116,6 +116,7 @@ class BuildingSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'address', 'city', 'postal_code', 
             'apartments_count', 'internal_manager_name', 'internal_manager_phone',
+            'internal_manager_apartment', 'internal_manager_collection_schedule',
             'management_office_name', 'management_office_phone', 'management_office_address',
             'management_fee_per_apartment', 'service_package', 'service_package_id',
             'current_reserve', 'heating_fixed_percentage', 'reserve_contribution_per_apartment',

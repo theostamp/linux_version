@@ -10,6 +10,7 @@ export interface ApartmentWithFinancialData {
   heating_mills?: number;
   elevator_mills?: number;
   current_balance: number;
+  previous_balance?: number;
   monthly_due: number;
   last_payment_date?: string;
   latest_payment_amount?: number;

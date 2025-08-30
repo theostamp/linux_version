@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import * as XLSX from 'xlsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -843,41 +844,38 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   };
 
   const getPeriodInfo = () => {
-    console.log('🔄 ResultsStep: getPeriodInfo called with state:', {
+    console.log('🔍 ResultsStep getPeriodInfo:', {
       periodMode: state.periodMode,
-      customPeriod: state.customPeriod,
-      quickOptions: state.quickOptions
+      quickOptions: state.quickOptions,
+      customPeriodName: state.customPeriod.periodName
     });
     
-    // Always use customPeriod.periodName if it exists (this includes selectedMonth overrides)
-    if (state.customPeriod.periodName) {
-      console.log('🔄 ResultsStep: Using customPeriod.periodName:', state.customPeriod.periodName);
-      return state.customPeriod.periodName;
-    }
-    
-    // Fallback to quick mode calculations only if no custom period name
-    if (state.periodMode === 'quick') {
-      if (state.quickOptions.currentMonth) {
-        const now = new Date();
-        const result = now.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' });
-        console.log('🔄 ResultsStep: Using current month fallback:', result);
-        return result;
-      } else if (state.quickOptions.previousMonth) {
-        const now = new Date();
-        const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const result = prevMonth.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' });
-        console.log('🔄 ResultsStep: Using previous month fallback:', result);
-        return result;
-      }
-    }
-    
-    console.log('🔄 ResultsStep: Using default customPeriod.periodName:', state.customPeriod.periodName);
-    return state.customPeriod.periodName;
+    // FIXED: Always use the customPeriod.periodName which is set correctly based on selectedMonth
+    const result = state.customPeriod.periodName;
+    console.log('🔄 ResultsStep: Using customPeriod.periodName (FIXED):', result);
+    return result;
   };
 
   const getSummaryStats = () => {
     const shares = Object.values(state.shares);
     const totalApartments = shares.length;
+
+    // Calculate expense breakdown data for Excel export
+    const expenseBreakdownData = shares.map((share: any) => ({
+      apartment: share.identifier || share.apartment_number,
+      owner: share.owner_name || 'Μη καταχωρημένος',
+      participation_mills: share.participation_mills,
+      common_amount: share.breakdown?.common || 0,
+      heating_amount: share.breakdown?.heating || 0,
+      elevator_amount: share.breakdown?.elevator || 0,
+      equal_share_amount: share.breakdown?.equal_share || 0,
+      individual_amount: share.breakdown?.individual || 0,
+      reserve_fund_amount: share.breakdown?.reserve_fund_contribution || 0,
+      management_fee: 1.00,
+      total_amount: share.total_amount || 0
+    }));
+
+    const expenseBreakdownWorksheet = XLSX.utils.json_to_sheet(expenseBreakdownData);
 
     // Reserve handling: if reserve is already included in shares, don't add again.
     const reserveIncludedInShares = shares.some((s: any) => Number((s.breakdown || {}).reserve_fund_contribution || 0) > 0);
@@ -1386,6 +1384,13 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         buildingName={buildingData?.name || "Κτίριο Διαχείρισης"}
         managementFeePerApartment={buildingData?.management_fee_per_apartment || 0}
         reserveContributionPerApartment={buildingData?.reserve_contribution_per_apartment || 0}
+        managerName={buildingData?.internal_manager_name || "Διαχειριστής Κτιρίου"}
+        managerPhone={buildingData?.internal_manager_phone || "210-1234567"}
+        managerApartment={buildingData?.internal_manager_apartment || ""}
+        managerCollectionSchedule={buildingData?.internal_manager_collection_schedule || "Δευ-Παρ 9:00-17:00"}
+        buildingAddress={buildingData?.address || ""}
+        buildingCity={buildingData?.city || ""}
+        buildingPostalCode={buildingData?.postal_code || ""}
       />
     </div>
   );
