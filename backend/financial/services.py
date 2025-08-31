@@ -558,19 +558,33 @@ class FinancialDashboardService:
         # Check if there's any financial activity for this month (διακανονισμός)
         has_monthly_activity = self._has_monthly_activity(month) if month else True
         
+        # Apply timeline validation to reserve fund monthly target
+        # Only show reserve fund if the selected month is within the collection period
+        if month and self.building.reserve_fund_start_date:
+            try:
+                year, mon = map(int, month.split('-'))
+                selected_month_date = date(year, mon, 1)
+                
+                # Check if selected month is before start date
+                if selected_month_date < self.building.reserve_fund_start_date:
+                    reserve_fund_monthly_target = Decimal('0.00')
+                # Check if selected month is after target date
+                elif (self.building.reserve_fund_target_date and 
+                      selected_month_date > self.building.reserve_fund_target_date):
+                    reserve_fund_monthly_target = Decimal('0.00')
+            except Exception as e:
+                print(f"Error parsing month {month}: {e}")
+                reserve_fund_monthly_target = Decimal('0.00')
+        
         # Υπολογισμός εισφοράς αποθεματικού με προτεραιότητα
-        # Αν δεν υπάρχει δραστηριότητα για συγκεκριμένο μήνα, δεν υπολογίζουμε εισφορά
-        if month and not has_monthly_activity:
-            reserve_fund_contribution = Decimal('0.00')
+        # Για month-specific view, χρησιμοποιούμε το reserve_fund_monthly_target (έχει ήδη timeline validation)
+        if month:
+            reserve_fund_contribution = reserve_fund_monthly_target
         else:
-            # Για month-specific view, χρησιμοποιούμε το reserve_fund_monthly_target
-            if month:
-                reserve_fund_contribution = reserve_fund_monthly_target
-            else:
-                # Για current view, χρησιμοποιούμε την παλιά λογική
-                reserve_fund_contribution = self._calculate_reserve_fund_contribution(
-                    current_reserve, total_obligations
-                )
+            # Για current view, χρησιμοποιούμε την παλιά λογική
+            reserve_fund_contribution = self._calculate_reserve_fund_contribution(
+                current_reserve, total_obligations
+            )
         
         # Calculate total balance based on view type
         if month:

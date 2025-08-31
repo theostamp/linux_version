@@ -616,7 +616,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     // ONLY use backend-provided goal/duration - ignore localStorage to prevent hardcoded values
     const goalFromState = Number(state.advancedShares?.reserve_fund_goal || 0);
     const durationFromState = Number(state.advancedShares?.reserve_fund_duration || 0);
-    const perApartmentContribution = Number(state.advancedShares?.reserve_contribution || reserveContributionPerApartment || 0);
+    const perApartmentContribution = Number(state.advancedShares?.reserve_contribution || 0); // Remove fallback to prevent hardcoded values
     const apartmentsCount = Object.keys(state.shares).length;
 
     // Check if current selected month is within Reserve Fund collection period
@@ -647,14 +647,31 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       });
     }
     
-    // TEMPORARILY DISABLED: Timeline check for testing Reserve Fund display
-    // Force show Reserve Fund amounts regardless of timeline validation
-    console.log('🔍 Reserve Fund timeline check DISABLED - showing amounts for testing:', {
+    // ENABLE timeline validation - only show reserve fund when it should be collected
+    let showReserveFund = true;
+    let timelineReason = '';
+    
+    if (selectedMonth && reserveFundStartDate) {
+      const selectedDate = new Date(selectedMonth + '-01');
+      const startDate = new Date(reserveFundStartDate);
+      
+      if (selectedDate < startDate) {
+        showReserveFund = false;
+        timelineReason = `Selected month (${selectedMonth}) is before reserve fund start date (${reserveFundStartDate})`;
+      } else if (reserveFundTargetDate && selectedDate > new Date(reserveFundTargetDate)) {
+        showReserveFund = false;
+        timelineReason = `Selected month (${selectedMonth}) is after reserve fund target date (${reserveFundTargetDate})`;
+      } else {
+        timelineReason = `Selected month (${selectedMonth}) is within reserve fund collection period`;
+      }
+    }
+    
+    console.log('🔍 Reserve Fund timeline check:', {
       selectedMonth,
       reserveFundStartDate,
       reserveFundTargetDate,
-      showReserveFund: true,
-      reason: 'Timeline validation temporarily disabled for testing'
+      showReserveFund,
+      reason: timelineReason
     });
 
     // Use only backend values, no localStorage fallback
@@ -665,15 +682,20 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     let totalContribution = 0;
     let displayText = '';
 
-    if (reserveFundGoal > 0 && reserveFundDuration > 0) {
+    if (showReserveFund && reserveFundGoal > 0 && reserveFundDuration > 0) {
       monthlyAmount = reserveFundGoal / reserveFundDuration;
       totalContribution = reserveFundGoal; // συνολικός στόχος κτιρίου
       displayText = `Στόχος ${formatAmount(reserveFundGoal)}€ σε ${reserveFundDuration} δόσεις = ${formatAmount(monthlyAmount)}€`;
-    } else if (perApartmentContribution > 0) {
+    } else if (showReserveFund && perApartmentContribution > 0) {
       // Fallback: per-apartment contribution → συνολική μηνιαία δόση κτιρίου
       monthlyAmount = perApartmentContribution * apartmentsCount;
       totalContribution = monthlyAmount * (reserveFundDuration > 0 ? reserveFundDuration : 1);
       displayText = `Μηνιαία εισφορά αποθεματικού`;
+    } else {
+      // No reserve fund should be shown
+      monthlyAmount = 0;
+      totalContribution = 0;
+      displayText = 'Αποθεματικό δεν συλλέγεται αυτόν τον μήνα';
     }
 
     // Progress / months remaining based on timeline

@@ -1106,12 +1106,6 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   )}
                   
                   {/* Εισφορά αποθεματικού - εμφανίζεται αν είμαστε στην περίοδο συλλογής */}
-                  {console.log('🔍 Reserve Fund Display Check:', {
-                    reserve_fund_monthly_target: financialSummary?.reserve_fund_monthly_target,
-                    condition1: (financialSummary.reserve_fund_monthly_target || 0) > 0,
-                    condition2: isMonthWithinReserveFundPeriod(),
-                    finalCondition: (financialSummary.reserve_fund_monthly_target || 0) > 0 && isMonthWithinReserveFundPeriod()
-                  })}
                   {(financialSummary.reserve_fund_monthly_target || 0) > 0 && isMonthWithinReserveFundPeriod() && (
                     <div className="space-y-1">
                       <div className="text-xs text-green-600 font-medium">Εισφορά αποθεματικού:</div>

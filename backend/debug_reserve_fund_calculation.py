@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Debug Reserve Fund Calculation Logic
-Investigate why Reserve Fund contributions are 0 even during collection period.
+Debug script to test reserve fund calculation logic
 """
 
 import os
 import sys
 import django
+from decimal import Decimal
 from datetime import date
 
 # Setup Django environment
@@ -16,90 +16,86 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from buildings.models import Building
+from apartments.models import Apartment
 from financial.services import CommonExpenseCalculator
 
 def debug_reserve_fund_calculation():
-    """Debug Reserve Fund calculation for August 2025"""
+    """Debug the reserve fund calculation logic"""
     
     with schema_context('demo'):
-        try:
-            building = Building.objects.get(id=1)
-            month = '2025-08'  # Should be within collection period
-            
-            print(f"🏢 Building: {building.name}")
-            print(f"🗓️  Testing month: {month}")
-            print(f"📅 Reserve Fund Start Date: {building.reserve_fund_start_date}")
-            print(f"🎯 Reserve Fund Target Date: {building.reserve_fund_target_date}")
-            print(f"💰 Reserve Fund Goal: {building.reserve_fund_goal}")
-            print()
-            
-            # Create calculator
-            calculator = CommonExpenseCalculator(building.id, month=month)
-            
-            # Check timeline logic manually
-            year, mon = map(int, month.split('-'))
-            selected_month_date = date(year, mon, 1)
-            
-            print(f"📊 Timeline Check:")
-            print(f"   Selected month date: {selected_month_date}")
-            print(f"   Start date: {building.reserve_fund_start_date}")
-            print(f"   Target date: {building.reserve_fund_target_date}")
-            print(f"   Is after start: {selected_month_date >= building.reserve_fund_start_date}")
-            print(f"   Is before end: {selected_month_date <= building.reserve_fund_target_date}")
-            print()
-            
-            # Check if there are pending obligations
-            from apartments.models import Apartment
-            apartments = Apartment.objects.filter(building=building)
-            
-            print(f"🏠 Checking apartments for pending obligations:")
-            for apartment in apartments:
-                # Check if apartment has pending obligations
-                from financial.models import Transaction
+        building = Building.objects.get(id=1)  # Αλκμάνος 22
+        apartments = Apartment.objects.filter(building_id=building.id)
+        
+        print("🔍 RESERVE FUND CALCULATION DEBUG")
+        print("=" * 50)
+        print(f"🏢 Building: {building.name}")
+        print(f"📅 Reserve fund start date: {building.reserve_fund_start_date}")
+        print(f"📅 Reserve fund target date: {building.reserve_fund_target_date}")
+        print()
+        
+        # Test with April 2024
+        test_month = "2024-04"
+        print(f"🧪 Testing with month: {test_month}")
+        
+        # Create calculator instance
+        calculator = CommonExpenseCalculator(
+            building_id=building.id,
+            month=test_month
+        )
+        
+        print(f"📊 Calculator month: {calculator.month}")
+        print(f"📊 Calculator building reserve fund start date: {calculator.building.reserve_fund_start_date}")
+        print()
+        
+        # Test the date comparison logic
+        if calculator.month:
+            from datetime import date
+            try:
+                year, mon = map(int, calculator.month.split('-'))
+                selected_month_date = date(year, mon, 1)
                 
-                # Get all transactions for this apartment up to the selected month
-                transactions = Transaction.objects.filter(
-                    apartment=apartment,
-                    date__lt=selected_month_date
-                ).order_by('date')
+                print(f"📅 Parsed selected month date: {selected_month_date}")
+                print(f"📅 Building reserve fund start date: {calculator.building.reserve_fund_start_date}")
+                print(f"📅 Is selected month before start date? {selected_month_date < calculator.building.reserve_fund_start_date}")
                 
-                total_obligations = sum(t.amount for t in transactions if t.amount > 0)
-                total_payments = sum(abs(t.amount) for t in transactions if t.amount < 0)
-                balance = total_obligations - total_payments
-                
-                print(f"   {apartment.number}: Balance = €{balance}")
-                if balance > 0:
-                    print(f"      ⚠️  Has pending obligations: €{balance}")
-            
-            print()
-            
-            # Now run the actual calculation
-            print(f"🧮 Running Reserve Fund calculation:")
-            shares = calculator.calculate_shares()
-            
-            # Check Reserve Fund contributions
-            reserve_fund_total = 0
-            for apt_id, share_data in shares.items():
-                reserve_contribution = share_data.get('reserve_fund_contribution', 0)
-                reserve_fund_total += reserve_contribution
-                if reserve_contribution > 0:
-                    print(f"   Apartment {apt_id}: €{reserve_contribution}")
-            
-            print(f"   Total Reserve Fund Contribution: €{reserve_fund_total}")
-            
-            if reserve_fund_total == 0:
-                print(f"❌ No Reserve Fund contributions calculated")
-                print(f"   This might be due to:")
-                print(f"   1. Pending obligations blocking collection")
-                print(f"   2. Timeline check failing")
-                print(f"   3. Reserve Fund goal not set properly")
-            else:
-                print(f"✅ Reserve Fund contributions calculated successfully")
-                
-        except Exception as e:
-            print(f"❌ Error during debug: {e}")
-            import traceback
-            traceback.print_exc()
+                if selected_month_date < calculator.building.reserve_fund_start_date:
+                    print("✅ Should return early - reserve fund should NOT be calculated")
+                else:
+                    print("❌ Should continue - reserve fund should be calculated")
+                    
+            except Exception as e:
+                print(f"❌ Error parsing month: {e}")
+        
+        print()
+        print("=" * 50)
+        
+        # Test the actual calculation
+        print("🧮 Testing actual calculation...")
+        
+        # Initialize shares structure
+        shares = {}
+        for apartment in apartments:
+            shares[apartment.id] = {
+                'total_amount': Decimal('0.00'),
+                'breakdown': [],
+                'reserve_fund_amount': Decimal('0.00'),
+                'reserve_fund_contribution': Decimal('0.00')
+            }
+        
+        # Call the reserve fund calculation method
+        calculator._calculate_reserve_fund_contribution(shares)
+        
+        # Check results
+        total_reserve_fund = sum(share['reserve_fund_amount'] for share in shares.values())
+        print(f"💰 Total reserve fund calculated: {total_reserve_fund:,.2f}€")
+        
+        if total_reserve_fund > 0:
+            print("❌ ISSUE: Reserve fund was calculated when it shouldn't be!")
+        else:
+            print("✅ CORRECT: No reserve fund was calculated")
+        
+        print()
+        print("=" * 50)
 
 if __name__ == '__main__':
     debug_reserve_fund_calculation()

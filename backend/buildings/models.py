@@ -158,7 +158,7 @@ class Building(models.Model):
         _("Πάγια Εισφορά Αποθεματικού ανά Διαμέρισμα"),
         max_digits=6,
         decimal_places=2,
-        default=5.0,
+        default=0.0,
         help_text=_("Πάγια εισφορά αποθεματικού ανά διαμέρισμα σε ευρώ")
     )
 
