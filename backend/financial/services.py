@@ -1785,13 +1785,24 @@ class AdvancedCommonExpenseCalculator:
             except Exception:
                 self.reserve_fund_monthly_total = Decimal('0.00')
         else:
-            dashboard_service = FinancialDashboardService(self.building_id)
-            summary = dashboard_service.get_summary()
-            monthly_total = summary.get('reserve_fund_contribution', 0) or 0
-            try:
-                self.reserve_fund_monthly_total = Decimal(str(monthly_total))
-            except Exception:
-                self.reserve_fund_monthly_total = Decimal('0.00')
+            # Calculate from building settings directly if dashboard service doesn't provide it
+            if (self.building.reserve_fund_goal and 
+                self.building.reserve_fund_duration_months and 
+                self.building.reserve_fund_duration_months > 0):
+                monthly_total = float(self.building.reserve_fund_goal) / float(self.building.reserve_fund_duration_months)
+                try:
+                    self.reserve_fund_monthly_total = Decimal(str(monthly_total))
+                except Exception:
+                    self.reserve_fund_monthly_total = Decimal('0.00')
+            else:
+                # Fallback to dashboard service
+                dashboard_service = FinancialDashboardService(self.building_id)
+                summary = dashboard_service.get_summary()
+                monthly_total = summary.get('reserve_fund_contribution', 0) or 0
+                try:
+                    self.reserve_fund_monthly_total = Decimal(str(monthly_total))
+                except Exception:
+                    self.reserve_fund_monthly_total = Decimal('0.00')
     
     def _get_historical_balance(self, apartment, end_date):
         """
@@ -1883,7 +1894,10 @@ class AdvancedCommonExpenseCalculator:
             'actual_reserve_collected': actual_reserve_collected,  # Only reserve fund money collected
             'management_fee_per_apartment': float(self.building.management_fee_per_apartment or 0),
             'total_apartments': len(self.apartments),
-            'calculation_date': timezone.now().isoformat()
+            'calculation_date': timezone.now().isoformat(),
+            # Reserve fund timeline dates - CRITICAL for frontend timeline checks
+            'reserve_fund_start_date': self.building.reserve_fund_start_date.strftime('%Y-%m-%d') if self.building.reserve_fund_start_date else None,
+            'reserve_fund_target_date': self.building.reserve_fund_target_date.strftime('%Y-%m-%d') if self.building.reserve_fund_target_date else None,
         }
     
     def _calculate_actual_reserve_collected(self) -> float:

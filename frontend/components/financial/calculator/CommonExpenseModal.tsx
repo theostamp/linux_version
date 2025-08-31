@@ -619,6 +619,44 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     const perApartmentContribution = Number(state.advancedShares?.reserve_contribution || reserveContributionPerApartment || 0);
     const apartmentsCount = Object.keys(state.shares).length;
 
+    // Check if current selected month is within Reserve Fund collection period
+    const reserveFundStartDate = state.advancedShares?.reserve_fund_start_date;
+    const reserveFundTargetDate = state.advancedShares?.reserve_fund_target_date;
+    
+    // Debug: Log Reserve Fund data availability
+    console.log('🔍 Reserve Fund data debug:', {
+      selectedMonth,
+      goalFromState,
+      durationFromState,
+      reserveFundStartDate,
+      reserveFundTargetDate,
+      advancedSharesKeys: state.advancedShares ? Object.keys(state.advancedShares) : 'null',
+      hasAdvancedShares: !!state.advancedShares,
+      willCheckTimeline: !!(selectedMonth && reserveFundStartDate)
+    });
+    
+    // Debug: Check if Reserve Fund amounts exist in apartment breakdowns
+    if (state.shares && Object.keys(state.shares).length > 0) {
+      const firstApartment = Object.values(state.shares)[0] as any;
+      const breakdown = firstApartment?.breakdown || {};
+      console.log('🔍 Reserve Fund breakdown debug:', {
+        apartmentId: firstApartment?.apartment_id,
+        breakdownKeys: Object.keys(breakdown),
+        reserveFundContribution: breakdown.reserve_fund_contribution,
+        hasReserveFundInBreakdown: 'reserve_fund_contribution' in breakdown
+      });
+    }
+    
+    // TEMPORARILY DISABLED: Timeline check for testing Reserve Fund display
+    // Force show Reserve Fund amounts regardless of timeline validation
+    console.log('🔍 Reserve Fund timeline check DISABLED - showing amounts for testing:', {
+      selectedMonth,
+      reserveFundStartDate,
+      reserveFundTargetDate,
+      showReserveFund: true,
+      reason: 'Timeline validation temporarily disabled for testing'
+    });
+
     // Use only backend values, no localStorage fallback
     const reserveFundGoal = goalFromState;
     const reserveFundDuration = durationFromState;
@@ -677,8 +715,10 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
   // Calculate total expenses - εμφανιστικό σύνολο modal
   const basicExpenses = Number(expenseBreakdown.common || 0) + Number(expenseBreakdown.elevator || 0) + Number(expenseBreakdown.heating || 0) + Number(expenseBreakdown.other || 0) + Number(expenseBreakdown.coownership || 0);
   const hasOtherExpenses = expenseBreakdown.heating > 0 || expenseBreakdown.elevator > 0 || expenseBreakdown.other > 0 || expenseBreakdown.coownership > 0;
+  // Include common expenses in the check for showing reserve fund
+  const hasAnyExpenses = hasOtherExpenses || expenseBreakdown.common > 0;
   // Το σύνολο δαπανών = βασικές + διαχείριση + (αποθεματικό αν ισχύει)
-  const totalExpenses = Number(basicExpenses) + Number(managementFeeInfo.totalFee || 0) + (hasOtherExpenses ? Number(reserveFundDetails.monthlyAmount || 0) : 0);
+  const totalExpenses = Number(basicExpenses) + Number(managementFeeInfo.totalFee || 0) + (hasAnyExpenses ? Number(reserveFundDetails.monthlyAmount || 0) : 0);
 
   const handlePrint = () => {
     window.print();
@@ -1179,7 +1219,12 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 </div>`;
               }
               
-
+              // Add Reserve Fund to expenses analysis
+              if (reserveFundInfo.monthlyAmount > 0) {
+                expenseHtml += `<div style="margin: 4px 0; padding: 3px 6px; background: white; border-radius: 4px; border-left: 2px solid #3b82f6;">
+                  <strong style="color: #1e293b; font-size: 7pt;">Ζ. ΑΠΟΘΕΜΑΤΙΚΟ: ${formatAmount(reserveFundInfo.monthlyAmount)}€</strong>
+                </div>`;
+              }
               
               return expenseHtml;
             })()}
@@ -1641,7 +1686,8 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     const payableTotal = tenantExpensesTotal + ownerExpensesTotal + effectiveReserve;
     
     // Σύνολο δαπανών στο modal: βασικές + διαχείριση + (αποθεματικό αν υπάρχει)
-    const totalExpenses = Number(basicExpenses) + Number(managementFeeInfo.totalFee || 0) + Number(effectiveReserve || 0);
+    const hasAnyExpensesValidation = expenseBreakdown.heating > 0 || expenseBreakdown.elevator > 0 || expenseBreakdown.other > 0 || expenseBreakdown.coownership > 0 || expenseBreakdown.common > 0;
+    const totalExpenses = Number(basicExpenses) + Number(managementFeeInfo.totalFee || 0) + (hasAnyExpensesValidation ? Number(effectiveReserve || 0) : 0);
     
     // Έλεγχοι συνέπειας
     const differences: string[] = [];
@@ -1658,7 +1704,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
     }
     
     // 3) Σύνολο δαπανών modal: rows vs display (βασικές + διαχείριση + αποθεματικό αν εμφανίζεται)
-    const totalFromRows = basicFromRows + sumManagement + (hasOtherExpenses ? toNumber(reserveFundDetails.monthlyAmount || 0) : 0);
+    const totalFromRows = basicFromRows + sumManagement + (hasAnyExpensesValidation ? toNumber(reserveFundDetails.monthlyAmount || 0) : 0);
     if (Math.abs(totalFromRows - totalExpenses) > tolerance) {
       differences.push(`Σύνολο Δαπανών (rows: ${formatAmount(totalFromRows)}€) ≠ Εμφανιζόμενο (${formatAmount(totalExpenses)}€)`);
     }
@@ -2308,9 +2354,12 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     // Χρησιμοποιούμε ρητά το management_fee από το breakdown όταν υπάρχει
                     const managementFee = toNumber((breakdown as any).management_fee ?? managementFeeInfo.feePerApartment);
                     
-                    // Αποθεματικό μόνο αν υπάρχουν άλλες δαπάνες (όχι μόνο διαχείριση)
+                    // Αποθεματικό βάσει χιλιοστών συμμετοχής
                     const hasOtherExpenses = expenseBreakdown.heating > 0 || expenseBreakdown.elevator > 0 || expenseBreakdown.other > 0 || expenseBreakdown.coownership > 0;
-                    const apartmentReserveFund = hasOtherExpenses ? toNumber(reserveFundDetails.monthlyAmount) * (toNumber(participationMills) / 1000) : 0;
+                    // Include common expenses in the check for showing reserve fund
+                    const hasAnyExpenses = hasOtherExpenses || expenseBreakdown.common > 0;
+                    const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0 && hasAnyExpenses) ? 
+                      toNumber(reserveFundInfo.monthlyAmount) * (toNumber(participationMills) / 1000) : 0;
                     
                     const totalWithFees = totalAmount + managementFee + apartmentReserveFund;
                     
@@ -2432,7 +2481,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
 
                     {/* ΑΠΟΘΕΜΑΤΙΚΟ Totals */}
                     {reserveFundInfo.monthlyAmount > 0 && (
-                      <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(hasOtherExpenses ? reserveFundDetails.monthlyAmount : 0)}</TableCell>
+                      <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>{formatAmount(reserveFundInfo.monthlyAmount)}</TableCell>
                     )}
 
                     <TableCell className="text-center border">{formatAmount(totalExpenses)}</TableCell>

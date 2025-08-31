@@ -558,7 +558,8 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             <tbody>
               ${Object.values(currentState.shares).map((share: any, index: number) => {
                 const managementFee = 1.0; // Default management fee per apartment
-                const reserveFund = (share.participation_mills || 0) * 0.1; // Example reserve fund calculation
+                // Calculate reserve fund from breakdown data
+                const reserveFund = share.breakdown?.reserve_fund || 0;
                 const previousBalance = share.previous_balance || 0;
                 return `<tr>
                   <td class="font-bold text-primary">${share.identifier || share.apartment_number}</td>
@@ -576,7 +577,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 <td class="font-bold">-</td>
                 <td class="font-bold">${Object.values(currentState.shares).reduce((sum: number, s: any) => sum + (s.participation_mills || 0), 0)}</td>
                 <td class="font-bold">${formatAmount(Object.values(currentState.shares).length * 1.0)}€</td>
-                <td class="font-bold">${formatAmount(Object.values(currentState.shares).reduce((sum: number, s: any) => sum + ((s.participation_mills || 0) * 0.1), 0))}€</td>
+                <td class="font-bold">${formatAmount(Object.values(currentState.shares).reduce((sum: number, s: any) => sum + (s.breakdown?.reserve_fund || 0), 0))}€</td>
                 <td class="font-bold text-primary">${formatAmount(currentState.totalExpenses)}€</td>
                 <td class="font-bold">${formatAmount(Object.values(currentState.shares).reduce((sum: number, s: any) => sum + Math.abs(s.previous_balance || 0), 0))}€</td>
                 </tr>
@@ -816,26 +817,15 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   // Helper function to check if period is within reserve fund collection timeline
   const checkIfPeriodInReserveFundTimeline = (startDate: string, endDate: string) => {
     try {
-      // Get reserve fund timeline from localStorage (same as BuildingOverviewSection)
-      const getStorageKey = (key: string) => `reserve_fund_${buildingId}_${key}`;
-      const getFromStorage = (key: string, defaultValue: any = null) => {
-        try {
-          const stored = localStorage.getItem(getStorageKey(key));
-          return stored ? JSON.parse(stored) : defaultValue;
-        } catch {
-          return defaultValue;
-        }
-      };
-      
-      // Check if reserve fund goal is set and not zero
-      const reserveFundGoal = getFromStorage('goal', 0);
+      // Use buildingData instead of localStorage
+      const reserveFundGoal = buildingData?.reserve_fund_goal || 0;
       if (!reserveFundGoal || reserveFundGoal === 0) {
         console.log('🔄 Reserve fund goal is zero or not set, returning false');
         return false;
       }
       
-      const reserveFundStartDate = getFromStorage('start_date', null);
-      const reserveFundEndDate = getFromStorage('target_date', null);
+      const reserveFundStartDate = buildingData?.reserve_fund_start_date;
+      const reserveFundEndDate = buildingData?.reserve_fund_target_date;
       
       // If no dates are set, return false
       if (!reserveFundStartDate || !reserveFundEndDate) {
@@ -1047,9 +1037,9 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             period_start_date: startDate,
             period_end_date: endDate,
             month_filter: startDate ? startDate.substring(0, 7) : undefined, // "2025-05" format
-            reserve_fund_monthly_total: shouldIncludeReserveFund
+            reserve_fund_monthly_total: shouldIncludeReserveFund && state.advancedOptions.reserveFundMonthlyAmount > 0
               ? state.advancedOptions.reserveFundMonthlyAmount
-              : 0,
+              : undefined, // Let backend calculate from building settings
           });
           const shares = result?.shares || {};
           const totalExpenses = Object.values(shares).reduce((sum: number, share: any) => sum + (share.total_amount || 0), 0);
