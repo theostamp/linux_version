@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Expense, Transaction, Payment, ExpenseApartment, MeterReading, Supplier
+from .models import Expense, Transaction, Payment, ExpenseApartment, MeterReading, Supplier, FinancialReceipt
 from buildings.models import Building
 from apartments.models import Apartment
 from .services import FileUploadService
@@ -110,7 +110,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = [
-            'id', 'apartment', 'apartment_number', 'building_name', 'owner_name', 'tenant_name', 'current_balance', 'monthly_due', 'amount', 'reserve_fund_amount', 'date',
+            'id', 'apartment', 'apartment_number', 'building_name', 'owner_name', 'tenant_name', 'current_balance', 'monthly_due', 'amount', 'reserve_fund_amount', 'previous_obligations_amount', 'date',
             'method', 'method_display', 'payment_type', 'payment_type_display',
             'payer_type', 'payer_type_display', 'payer_name',
             'reference_number', 'notes', 'receipt', 'receipt_url', 'created_at'
@@ -374,4 +374,49 @@ class CommonExpenseCalculationSerializer(serializers.Serializer):
     building_id = serializers.IntegerField()
     period_id = serializers.IntegerField()
     expenses = serializers.ListField(child=serializers.IntegerField())
-    distribution_type = serializers.CharField() 
+    distribution_type = serializers.CharField()
+
+
+class FinancialReceiptSerializer(serializers.ModelSerializer):
+    """Serializer για τις αποδείξεις εισπράξεων"""
+    
+    receipt_type_display = serializers.CharField(source='get_receipt_type_display', read_only=True)
+    payer_type_display = serializers.CharField(source='get_payer_type_display', read_only=True)
+    payment_details = PaymentSerializer(source='payment', read_only=True)
+    apartment_number = serializers.CharField(source='payment.apartment.number', read_only=True)
+    building_name = serializers.CharField(source='payment.apartment.building.name', read_only=True)
+    receipt_file_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = FinancialReceipt
+        fields = [
+            'id', 'payment', 'payment_details', 'receipt_type', 'receipt_type_display',
+            'amount', 'receipt_date', 'receipt_number', 'reference_number',
+            'payer_name', 'payer_type', 'payer_type_display', 'notes',
+            'receipt_file', 'receipt_file_url', 'created_by', 'created_at', 'updated_at',
+            'apartment_number', 'building_name'
+        ]
+        read_only_fields = ['id', 'receipt_number', 'created_at', 'updated_at']
+    
+    def get_receipt_file_url(self, obj):
+        if obj.receipt_file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.receipt_file.url)
+            return obj.receipt_file.url
+        return None
+    
+    def validate_amount(self, value):
+        """Επιβεβαίωση ότι το ποσό είναι θετικό"""
+        if value <= 0:
+            raise serializers.ValidationError("Το ποσό πρέπει να είναι μεγαλύτερο του μηδενός.")
+        return value
+    
+    def validate_receipt_file(self, value):
+        """Επιβεβαίωση του αρχείου απόδειξης"""
+        if value:
+            try:
+                FileUploadService.validate_file(value)
+            except Exception as e:
+                raise serializers.ValidationError(f"Σφάλμα στο αρχείο: {str(e)}")
+        return value 

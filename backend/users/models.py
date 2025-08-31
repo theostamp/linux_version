@@ -67,6 +67,39 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         blank=True,
         help_text=_("Διεύθυνση του γραφείου διαχείρισης")
     )
+    office_logo = models.ImageField(
+        _("Logo Γραφείου Διαχείρισης"),
+        upload_to='office_logos/',
+        blank=True,
+        null=True,
+        help_text=_("Logo της εταιρείας διαχείρισης")
+    )
+    
+    # Τραπεζικά Στοιχεία
+    office_bank_name = models.CharField(
+        _("Όνομα Τράπεζας"),
+        max_length=100,
+        blank=True,
+        help_text=_("Όνομα της τράπεζας για πληρωμές")
+    )
+    office_bank_account = models.CharField(
+        _("Αριθμός Λογαριασμού"),
+        max_length=50,
+        blank=True,
+        help_text=_("Αριθμός τραπεζικού λογαριασμού")
+    )
+    office_bank_iban = models.CharField(
+        _("IBAN"),
+        max_length=34,
+        blank=True,
+        help_text=_("IBAN για πληρωμές")
+    )
+    office_bank_beneficiary = models.CharField(
+        _("Δικαιούχος"),
+        max_length=255,
+        blank=True,
+        help_text=_("Όνομα δικαιούχου του λογαριασμού")
+    )
 
     objects = CustomUserManager()
 

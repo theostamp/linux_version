@@ -601,5 +601,89 @@ class ApartmentShare(models.Model):
     def __str__(self):
         return f"Μερίδιο για {self.apartment.number} - Περίοδος: {self.period.period_name}"
 
+
+class FinancialReceipt(models.Model):
+    """Μοντέλο για αποδείξεις εισπράξεων"""
+    
+    RECEIPT_TYPES = [
+        ('cash', 'Μετρητά'),
+        ('bank_transfer', 'Τραπεζική Μεταφορά'),
+        ('check', 'Επιταγή'),
+        ('card', 'Κάρτα'),
+        ('online', 'Online Πληρωμή'),
+        ('other', 'Άλλο'),
+    ]
+    
+    payment = models.ForeignKey(
+        Payment,
+        on_delete=models.CASCADE,
+        related_name='receipts',
+        verbose_name="Πληρωμή"
+    )
+    receipt_type = models.CharField(
+        max_length=20,
+        choices=RECEIPT_TYPES,
+        verbose_name="Τύπος Απόδειξης"
+    )
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        verbose_name="Ποσό"
+    )
+    receipt_date = models.DateField(verbose_name="Ημερομηνία Απόδειξης")
+    receipt_number = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name="Αριθμός Απόδειξης"
+    )
+    reference_number = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Αριθμός Αναφοράς"
+    )
+    payer_name = models.CharField(
+        max_length=255,
+        verbose_name="Όνομα Πληρωμέα"
+    )
+    payer_type = models.CharField(
+        max_length=20,
+        choices=Payment.PAYER_TYPES,
+        verbose_name="Τύπος Πληρωμέα"
+    )
+    notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
+    receipt_file = models.FileField(
+        upload_to='financial_receipts/%Y/%m/',
+        blank=True,
+        null=True,
+        verbose_name="Αρχείο Απόδειξης"
+    )
+    created_by = models.ForeignKey(
+        'users.CustomUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_financial_receipts',
+        verbose_name="Δημιουργήθηκε από"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Απόδειξη Εισπράξεως"
+        verbose_name_plural = "Αποδείξεις Εισπράξεων"
+        ordering = ['-receipt_date', '-created_at']
+    
+    def __str__(self):
+        return f"{self.payment.apartment} - {self.receipt_date} - €{self.amount}"
+    
+    def save(self, *args, **kwargs):
+        # Auto-generate receipt number if not provided
+        if not self.receipt_number:
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            self.receipt_number = f"RCP-{timestamp}-{self.payment.id}"
+        super().save(*args, **kwargs)
+
+
 # Import του audit model στο τέλος για να αποφύγουμε circular imports
 from .audit import FinancialAuditLog

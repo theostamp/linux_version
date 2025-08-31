@@ -64,11 +64,16 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
       if (data.receipt) {
         const formData = new FormData();
         formData.append('apartment', data.apartment_id.toString());
-        formData.append('amount', data.amount.toString());
+        formData.append('amount', data.amount.toFixed(2));
         formData.append('reserve_fund_amount', (data.reserve_fund_amount || 0).toString());
+        formData.append('previous_obligations_amount', (data.previous_obligations_amount || 0).toString());
         formData.append('date', data.date);
         formData.append('method', data.method);
         formData.append('payment_type', data.payment_type);
+        formData.append('payer_type', data.payer_type);
+        if (data.payer_name) {
+          formData.append('payer_name', data.payer_name);
+        }
         
         if (data.reference_number) {
           formData.append('reference_number', data.reference_number);
@@ -85,11 +90,14 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
         // Use JSON for requests without file upload
         requestData = {
           apartment: data.apartment_id,
-          amount: data.amount,
-          reserve_fund_amount: data.reserve_fund_amount || 0,
+          amount: parseFloat(data.amount.toFixed(2)),
+          reserve_fund_amount: parseFloat((data.reserve_fund_amount || 0).toString()),
+          previous_obligations_amount: parseFloat((data.previous_obligations_amount || 0).toString()),
           date: data.date,
           method: data.method,
           payment_type: data.payment_type,
+          payer_type: data.payer_type,
+          payer_name: data.payer_name,
           reference_number: data.reference_number,
           notes: data.notes
         };
@@ -98,8 +106,9 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
 
       const response = await api.post('/financial/payments/', requestData, { headers });
 
-      // Refresh payments list after creating new payment
-      await loadPayments();
+      // Optimize: Don't refresh payments list immediately - let the parent component handle it
+      // This reduces the submit handler time and improves user experience
+      // The payments list will be refreshed when the modal closes or when needed
 
       return response.data;
     } catch (err: any) {
@@ -124,10 +133,16 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
       if (data.receipt) {
         const formData = new FormData();
         formData.append('apartment', data.apartment_id.toString());
-        formData.append('amount', data.amount.toString());
+        formData.append('amount', data.amount.toFixed(2));
+        formData.append('reserve_fund_amount', (data.reserve_fund_amount || 0).toString());
+        formData.append('previous_obligations_amount', (data.previous_obligations_amount || 0).toString());
         formData.append('date', data.date);
         formData.append('method', data.method);
         formData.append('payment_type', data.payment_type);
+        formData.append('payer_type', data.payer_type);
+        if (data.payer_name) {
+          formData.append('payer_name', data.payer_name);
+        }
         
         if (data.reference_number) {
           formData.append('reference_number', data.reference_number);
@@ -144,10 +159,14 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
         // Use JSON for requests without file upload
         requestData = {
           apartment: data.apartment_id,
-          amount: data.amount,
+          amount: parseFloat(data.amount.toFixed(2)),
+          reserve_fund_amount: parseFloat((data.reserve_fund_amount || 0).toString()),
+          previous_obligations_amount: parseFloat((data.previous_obligations_amount || 0).toString()),
           date: data.date,
           method: data.method,
           payment_type: data.payment_type,
+          payer_type: data.payer_type,
+          payer_name: data.payer_name,
           reference_number: data.reference_number,
           notes: data.notes
         };
@@ -256,7 +275,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
           formData.append('apartment', data.apartment_id.toString());
         }
         if (data.amount !== undefined) {
-          formData.append('amount', data.amount.toString());
+          formData.append('amount', data.amount.toFixed(2));
         }
         if (data.date) {
           formData.append('date', data.date);

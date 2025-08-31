@@ -15,6 +15,13 @@ export type User = {
   office_name?: string;
   office_phone?: string;
   office_address?: string;
+  office_logo?: string; // URL to the office logo image
+  
+  // Bank Account Details
+  office_bank_name?: string;
+  office_bank_account?: string;
+  office_bank_iban?: string;
+  office_bank_beneficiary?: string;
 
   // ✅ Προσθήκη profile αν το API το επιστρέφει
   profile?: {

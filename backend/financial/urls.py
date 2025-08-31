@@ -4,7 +4,8 @@ from .views import (
     ExpenseViewSet, TransactionViewSet, PaymentViewSet,
     FinancialDashboardViewSet, CommonExpenseViewSet, MeterReadingViewSet,
     ReportViewSet, SupplierViewSet, ApartmentTransactionViewSet,
-    SystemHealthCheckView, auto_fix_system_issues, financial_overview
+    SystemHealthCheckView, auto_fix_system_issues, financial_overview,
+    FinancialReceiptViewSet
 )
 
 router = DefaultRouter()
@@ -17,6 +18,7 @@ router.register(r'common-expenses', CommonExpenseViewSet, basename='common-expen
 router.register(r'meter-readings', MeterReadingViewSet)
 router.register(r'reports', ReportViewSet, basename='reports')
 router.register(r'apartments', ApartmentTransactionViewSet, basename='apartment-transactions')
+router.register(r'receipts', FinancialReceiptViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

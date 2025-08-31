@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Payment, PaymentMethod, PaymentType, PayerType } from '@/types/financial';
 import { useToast } from '@/hooks/use-toast';
+import { useReceipts, FinancialReceipt } from '@/hooks/useReceipts';
 
 interface ReceiptPrintModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface ReceiptPrintModalProps {
     payer_name: string;
     payer_type: PayerType;
   };
+  receiptData?: FinancialReceipt;
 }
 
 export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
@@ -28,11 +30,27 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
   payment,
   apartmentInfo,
   payerInfo,
+  receiptData,
 }) => {
   const { toast } = useToast();
+  const { loadReceipts } = useReceipts();
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const [storedReceipt, setStoredReceipt] = useState<FinancialReceipt | null>(receiptData || null);
   const printRef = useRef<HTMLDivElement>(null);
+
+  // Load receipt data from database if not provided
+  useEffect(() => {
+    if (isOpen && !storedReceipt && payment.id) {
+      loadReceipts(undefined, payment.id).then((receipts) => {
+        if (receipts && receipts.length > 0) {
+          setStoredReceipt(receipts[0]);
+        }
+      }).catch((error) => {
+        console.error('Failed to load receipt data:', error);
+      });
+    }
+  }, [isOpen, payment.id, storedReceipt, loadReceipts]);
 
   // Generate QR code for verification
   const generateQRCode = async (text: string): Promise<string> => {
@@ -65,13 +83,15 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
   React.useEffect(() => {
     if (isOpen && !qrCodeDataUrl) {
       setIsGeneratingQR(true);
-      const verificationUrl = `${window.location.origin}/verify-payment/${payment.id}`;
+      // Use receipt number if available, otherwise use payment ID
+      const verificationId = storedReceipt?.receipt_number || payment.id;
+      const verificationUrl = `${window.location.origin}/verify-payment/${verificationId}`;
       generateQRCode(verificationUrl).then((dataUrl) => {
         setQrCodeDataUrl(dataUrl);
         setIsGeneratingQR(false);
       });
     }
-  }, [isOpen, payment.id, qrCodeDataUrl]);
+  }, [isOpen, payment.id, storedReceipt?.receipt_number, qrCodeDataUrl]);
 
   const getPaymentMethodLabel = (method: PaymentMethod) => {
     const labels: Record<PaymentMethod, string> = {
@@ -212,8 +232,8 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
 
   const currentDate = new Date().toLocaleDateString('el-GR');
   const currentTime = new Date().toLocaleTimeString('el-GR');
-  const receiptNumber = `RCP-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}-${payment.id}`;
-  const verificationUrl = `${window.location.origin}/verify-payment/${payment.id}`;
+  const receiptNumber = storedReceipt?.receipt_number || `RCP-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}-${payment.id}`;
+  const verificationUrl = `${window.location.origin}/verify-payment/${storedReceipt?.receipt_number || payment.id}`;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -331,12 +351,18 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-600">Ένοικος:</span>
-                  <span className="text-gray-900">{payerInfo.payer_name || 'Μη καταχωρημένος'}</span>
+                  <span className="text-gray-900">{storedReceipt?.payer_name || payerInfo.payer_name || 'Μη καταχωρημένος'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-600">Ιδιότητα:</span>
-                  <span className="text-gray-900">{getPayerTypeLabel(payerInfo.payer_type)}</span>
+                  <span className="text-gray-900">{storedReceipt?.payer_type_display || getPayerTypeLabel(payerInfo.payer_type)}</span>
                 </div>
+                {storedReceipt?.reference_number && (
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">Αρ. Αναφοράς:</span>
+                    <span className="text-gray-900">{storedReceipt.reference_number}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -348,12 +374,12 @@ export const ReceiptPrintModal: React.FC<ReceiptPrintModalProps> = ({
             </div>
 
             {/* Notes */}
-            {payment.notes && (
+            {(storedReceipt?.notes || payment.notes) && (
               <div className="border border-gray-300 p-4 rounded-lg bg-gray-50 mb-8">
                 <h3 className="font-semibold text-gray-800 text-base border-b border-gray-300 pb-2 mb-3">
                   Σημειώσεις
                 </h3>
-                <p className="text-gray-900">{payment.notes}</p>
+                <p className="text-gray-900">{storedReceipt?.notes || payment.notes}</p>
               </div>
             )}
 

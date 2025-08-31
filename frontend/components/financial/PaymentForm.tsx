@@ -90,6 +90,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   
   const [createdPayment, setCreatedPayment] = useState<Payment | null>(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Store the last created payment for printing purposes
   const [lastCreatedPayment, setLastCreatedPayment] = useState<Payment | null>(null);
@@ -110,11 +111,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   React.useEffect(() => {
     const fetchBuildingData = async () => {
       try {
-        const response = await fetch(`/api/buildings/list/${buildingId}/`);
-        if (response.ok) {
-          const data = await response.json();
-          setBuildingData(data);
-        }
+        const { api } = await import('@/lib/api');
+        const response = await api.get(`/buildings/list/${buildingId}/`);
+        setBuildingData(response.data);
       } catch (error) {
         console.error('Error fetching building data:', error);
       }
@@ -154,12 +153,14 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   }, [initialData, setValue]);
 
   const onSubmit = async (data: LocalPaymentFormData) => {
+    // Prevent multiple submissions
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    
     try {
-      // Calculate total amount (common expenses + previous obligations)
-      // Reserve fund is now included in the common_expense_amount
+      // Optimize: Pre-calculate values to reduce computation in the async function
       const totalAmount = data.common_expense_amount + (data.previous_obligations_amount || 0);
-      
-      // Calculate reserve fund amount from building settings if available
       const reserveFundAmount = buildingData?.reserve_contribution_per_apartment || 0;
       
       const paymentData: PaymentFormData = {
@@ -177,41 +178,33 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         receipt: data.receipt,
       };
 
+      // Optimize: Store data before API call to avoid blocking
+      const currentSelectedApartment = selectedApartment;
+      const currentPayerInfo = {
+        payer_name: data.payer_name || '',
+        payer_type: data.payer_type as PayerType,
+      };
+
       const payment = await createPayment(paymentData);
 
       if (payment) {
-        // Payment created successfully
+        // Payment created successfully - update state efficiently
         setCreatedPayment(payment);
-        
-        // Store the payment data for future printing
         setLastCreatedPayment(payment);
-        setLastSelectedApartment(selectedApartment || null);
-        setLastPayerInfo({
-          payer_name: data.payer_name || '',
-          payer_type: data.payer_type as PayerType,
-        });
+        setLastSelectedApartment(currentSelectedApartment || null);
+        setLastPayerInfo(currentPayerInfo);
 
+        // Automatically show receipt modal after successful payment
+        setShowPrintModal(true);
+
+        // Show success toast without print button (since receipt modal will open automatically)
         toast({
           title: 'Επιτυχία!',
-          description: `Η είσπραξη καταχωρήθηκε επιτυχώς. Συνολικό ποσό: ${formatCurrency(totalAmount)}${reserveFundAmount > 0 ? ` (Αποθεματικό: ${formatCurrency(reserveFundAmount)})` : ''}${data.previous_obligations_amount && data.previous_obligations_amount > 0 ? ` (Παλαιότερες οφειλές: ${formatCurrency(data.previous_obligations_amount)})` : ''}. Θέλετε να εκτυπώσετε απόδειξη;`,
-          action: (
-            <Button 
-              size="sm" 
-              onClick={() => {
-                // Print from toast clicked
-                setShowPrintModal(true);
-              }}
-            >
-              🖨️ Εκτύπωση
-            </Button>
-          ),
+          description: `Η είσπραξη καταχωρήθηκε επιτυχώς. Συνολικό ποσό: ${formatCurrency(totalAmount)}${reserveFundAmount > 0 ? ` (Αποθεματικό: ${formatCurrency(reserveFundAmount)})` : ''}${data.previous_obligations_amount && data.previous_obligations_amount > 0 ? ` (Παλαιότερες οφειλές: ${formatCurrency(data.previous_obligations_amount)})` : ''}.`,
         });
 
         reset();
-        // Don't call onSuccess immediately - let user see the success message first
-        // onSuccess?.(payment);
       } else {
-        // Payment creation failed
         toast({
           title: 'Σφάλμα',
           description: 'Η καταχώρηση της εισπράξεως απέτυχε. Παρακαλώ δοκιμάστε ξανά.',
@@ -224,6 +217,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         description: error instanceof Error ? error.message : 'Προέκυψε σφάλμα κατά την καταχώρηση της εισπράξεως.',
         variant: 'destructive',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1178,8 +1173,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
           {/* Form Actions */}
           <div className="flex gap-4 pt-4">
-            <Button type="submit" disabled={isLoading || !!createdPayment} className="flex-1">
-              {isLoading ? 'Καταχώρηση...' : 'Καταχώρηση Εισπράξεως'}
+            <Button type="submit" disabled={isLoading || isSubmitting || !!createdPayment} className="flex-1">
+              {isLoading || isSubmitting ? 'Καταχώρηση...' : 'Καταχώρηση Εισπράξεως'}
             </Button>
             {onCancel && (
               <Button type="button" variant="outline" onClick={onCancel}>
@@ -1212,4 +1207,4 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
     </Card>
   );
-}; 
+};

@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { PaymentForm } from './PaymentForm';
+import PaymentNotificationModal from './PaymentNotificationModal';
 
 interface ApartmentBalance {
   apartment_id: number;
@@ -59,20 +61,24 @@ interface PaymentBreakdown {
 interface ApartmentBalancesTabProps {
   buildingId: number;
   selectedMonth?: string;
-  onOpenPaymentModal?: (apartment: ApartmentBalance) => void;
 }
 
 export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
   buildingId,
-  selectedMonth,
-  onOpenPaymentModal
+  selectedMonth
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [apartmentBalances, setApartmentBalances] = useState<ApartmentBalance[]>([]);
   const [summary, setSummary] = useState<any>(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showPaymentNotificationModal, setShowPaymentNotificationModal] = useState(false);
   const [selectedApartment, setSelectedApartment] = useState<ApartmentBalance | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentModalData, setPaymentModalData] = useState<{
+    apartment_id: number;
+    common_expense_amount: number;
+    previous_obligations_amount: number;
+  } | null>(null);
 
   useEffect(() => {
     loadApartmentBalances();
@@ -94,154 +100,102 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       setApartmentBalances(response.data.apartments || []);
       setSummary(response.data.summary || {});
       
-    } catch (err) {
+      console.log('✅ Apartment balances loaded:', response.data);
+    } catch (err: any) {
       console.error('❌ Error loading apartment balances:', err);
-      setError('Σφάλμα κατά τη φόρτωση των ισοζυγίων διαμερισμάτων');
+      setError(err.response?.data?.detail || err.message || 'Σφάλμα φόρτωσης δεδομένων');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleViewDetails = (apartment: ApartmentBalance) => {
+    setSelectedApartment(apartment);
+    setShowPaymentNotificationModal(true);
+  };
+
+  const handlePayment = (apartment: ApartmentBalance) => {
+    setPaymentModalData({
+      apartment_id: apartment.apartment_id,
+      common_expense_amount: apartment.expense_share,
+      previous_obligations_amount: apartment.previous_balance,
+    });
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setShowPaymentModal(false);
+    setPaymentModalData(null);
+    loadApartmentBalances(); // Reload data
+  };
+
+  const handlePaymentNotificationClose = () => {
+    setShowPaymentNotificationModal(false);
+    setSelectedApartment(null);
+    loadApartmentBalances(); // Reload data after any action
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentModal(false);
+    setPaymentModalData(null);
+  };
+
+  const handlePrintStatement = (apartment: ApartmentBalance) => {
+    // This will be handled by the PaymentNotificationModal
+    console.log('Print statement for apartment:', apartment.apartment_number);
+  };
+
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Ενήμερο':
-        return <CheckCircle className="h-3 w-3 text-green-600" />;
-      case 'Καθυστέρηση':
-        return <Clock className="h-3 w-3 text-yellow-600" />;
-      case 'Κρίσιμο':
-        return <AlertTriangle className="h-3 w-3 text-red-600" />;
-      case 'Πιστωτικό':
-        return <TrendingUp className="h-3 w-3 text-blue-600" />;
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'overdue':
+        return <AlertTriangle className="w-4 h-4 text-red-500" />;
+      case 'pending':
+        return <Clock className="w-4 h-4 text-yellow-500" />;
       default:
-        return <CheckCircle className="h-3 w-3 text-gray-600" />;
+        return <div className="w-2 h-2 bg-gray-500 rounded-full" />;
     }
   };
 
   const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'Ενήμερο':
-        return 'default';
-      case 'Καθυστέρηση':
-        return 'secondary';
-      case 'Κρίσιμο':
-        return 'destructive';
-      case 'Πιστωτικό':
-        return 'outline';
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return 'default' as const;
+      case 'overdue':
+        return 'destructive' as const;
+      case 'pending':
+        return 'secondary' as const;
       default:
-        return 'default';
-    }
-  };
-
-  const handleShowDetails = (apartment: ApartmentBalance) => {
-    setSelectedApartment(apartment);
-    setShowDetailsModal(true);
-  };
-
-  const handlePrintStatement = (apartment: ApartmentBalance) => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Καρτέλα Κινήσεων - Διαμέρισμα ${apartment.apartment_number}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-            .apartment-info { margin-bottom: 20px; }
-            .balance-summary { margin-bottom: 20px; }
-            .expenses-section { margin-bottom: 20px; }
-            .payments-section { margin-bottom: 20px; }
-            .expense-item { margin: 5px 0; padding: 5px; border-left: 3px solid #007bff; }
-            .payment-item { margin: 5px 0; padding: 5px; border-left: 3px solid #28a745; }
-            .total { font-weight: bold; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc; }
-            .negative { color: #dc3545; }
-            .positive { color: #28a745; }
-            @media print { body { margin: 0; } }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>Καρτέλα Κινήσεων</h1>
-            <h2>Διαμέρισμα ${apartment.apartment_number}</h2>
-            <p>Ημερομηνία εκτύπωσης: ${new Date().toLocaleDateString('el-GR')}</p>
-          </div>
-          
-          <div class="apartment-info">
-            <h3>Στοιχεία Διαμερίσματος</h3>
-            <p><strong>Ιδιοκτήτης:</strong> ${apartment.owner_name}</p>
-            <p><strong>Χιλιοστά:</strong> ${apartment.participation_mills}</p>
-            <p><strong>Κατάσταση:</strong> ${apartment.status}</p>
-          </div>
-          
-          <div class="balance-summary">
-            <h3>Οικονομική Σύνοψη</h3>
-            <p><strong>Προηγούμενο Υπόλοιπο:</strong> ${formatCurrency(apartment.previous_balance)}</p>
-            <p><strong>Μερίδιο Δαπανών:</strong> ${formatCurrency(apartment.expense_share)}</p>
-            <p><strong>Καθαρή Οφειλή:</strong> <span class="${apartment.net_obligation > 0 ? 'negative' : 'positive'}">${formatCurrency(apartment.net_obligation)}</span></p>
-          </div>
-          
-          <div class="expenses-section">
-            <h3>Breakdown Δαπανών</h3>
-            ${apartment.expense_breakdown.map(expense => `
-              <div class="expense-item">
-                <strong>${expense.expense_title}</strong> - ${expense.month_display}<br>
-                Ποσό: ${formatCurrency(expense.share_amount)}
-              </div>
-            `).join('')}
-          </div>
-          
-          <div class="payments-section">
-            <h3>Breakdown Πληρωμών</h3>
-            ${apartment.payment_breakdown.length > 0 ? 
-              apartment.payment_breakdown.map(payment => `
-                <div class="payment-item">
-                  <strong>${payment.payer_name}</strong> - ${new Date(payment.payment_date).toLocaleDateString('el-GR')}<br>
-                  Ποσό: ${formatCurrency(payment.payment_amount)}
-                </div>
-              `).join('') : 
-              '<p>Δεν υπάρχουν καταγεγραμμένες πληρωμές</p>'
-            }
-          </div>
-          
-          <div class="total">
-            <h3>Συνοπτικά</h3>
-            <p><strong>Συνολικές Υποχρεώσεις:</strong> ${formatCurrency(apartment.total_obligations)}</p>
-            <p><strong>Συνολικές Πληρωμές:</strong> ${formatCurrency(apartment.total_payments)}</p>
-            <p><strong>Τελική Καθαρή Οφειλή:</strong> <span class="${apartment.net_obligation > 0 ? 'negative' : 'positive'}">${formatCurrency(apartment.net_obligation)}</span></p>
-          </div>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    }
-  };
-
-  const handlePayment = (apartment: ApartmentBalance) => {
-    // Close the details modal first
-    setShowDetailsModal(false);
-    setSelectedApartment(null);
-    
-    // Open payment modal with pre-filled data
-    if (onOpenPaymentModal) {
-      onOpenPaymentModal(apartment);
+        return 'outline' as const;
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center p-8">
+        <div className="flex items-center space-x-2">
+          <RefreshCw className="w-5 h-5 animate-spin" />
+          <span>Φόρτωση δεδομένων...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-12 text-red-600">
-        <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
-        {error}
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+          <p className="text-red-600">{error}</p>
+          <Button 
+            onClick={loadApartmentBalances} 
+            className="mt-2"
+            variant="outline"
+          >
+            Δοκιμή ξανά
+          </Button>
+        </div>
       </div>
     );
   }
@@ -249,72 +203,51 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-2 border-green-100 bg-gradient-to-r from-green-50 to-emerald-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <span className="text-sm font-medium text-green-700">Ενήμερο</span>
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-green-800 mt-2">
-              {summary?.active_count || 0}
-            </div>
-            <div className="text-xs text-green-600 mt-1">
-              διαμερίσματα
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Σύνολο Διαμερισμάτων</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{apartmentBalances.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Συνολικές Οφειλές</CardTitle>
+            <TrendingDown className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {formatCurrency(apartmentBalances.reduce((sum, apt) => sum + Math.max(0, apt.net_obligation), 0))}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-yellow-100 bg-gradient-to-r from-yellow-50 to-amber-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-yellow-600" />
-                <span className="text-sm font-medium text-yellow-700">Καθυστέρηση</span>
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-yellow-800 mt-2">
-              {summary?.delay_count || 0}
-            </div>
-            <div className="text-xs text-yellow-600 mt-1">
-              διαμερίσματα
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Συνολικές Πληρωμές</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(apartmentBalances.reduce((sum, apt) => sum + apt.total_payments, 0))}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-red-100 bg-gradient-to-r from-red-50 to-pink-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-                <span className="text-sm font-medium text-red-700">Κρίσιμο</span>
-              </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Κατάσταση</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {apartmentBalances.filter(apt => apt.status === 'paid').length}/{apartmentBalances.length}
             </div>
-            <div className="text-2xl font-bold text-red-800 mt-2">
-              {summary?.critical_count || 0}
-            </div>
-            <div className="text-xs text-red-600 mt-1">
-              διαμερίσματα
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700">Πιστωτικό</span>
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-blue-800 mt-2">
-              {summary?.credit_count || 0}
-            </div>
-            <div className="text-xs text-blue-600 mt-1">
-              διαμερίσματα
-            </div>
+            <p className="text-xs text-muted-foreground">Εξοφλημένα</p>
           </CardContent>
         </Card>
       </div>
@@ -324,95 +257,79 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-blue-600" />
-              Λεπτομερή Αποτελέσματα
+              <Calculator className="w-5 h-5" />
+              Υπόλοιπα Διαμερισμάτων
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={loadApartmentBalances}
               disabled={isLoading}
+              className="flex items-center gap-2"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               Ενημέρωση
             </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-16">Διαμέρισμα</th>
-                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-32">Ένοικοι</th>
-                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-16">Χιλιοστά</th>
-                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-24">Προηγούμενο Υπόλοιπο</th>
-                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-24">Μερίδιο Δαπανών</th>
-                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-24">Συνολικό Οφειλόμενο</th>
-                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-20">Κατάσταση</th>
-                  <th className="text-left py-2 px-2 font-medium text-gray-700 w-20">Λεπτομέρειες</th>
+                <tr className="border-b">
+                  <th className="text-left py-3 px-2">Διαμέρισμα</th>
+                  <th className="text-left py-3 px-2">Ιδιοκτήτης</th>
+                  <th className="text-left py-3 px-2">Χιλιοστά</th>
+                  <th className="text-right py-3 px-2">Καθαρή Οφειλή</th>
+                  <th className="text-center py-3 px-2">Κατάσταση</th>
+                  <th className="text-center py-3 px-2">Ενέργειες</th>
                 </tr>
               </thead>
               <tbody>
                 {apartmentBalances.map((apartment) => (
-                  <tr key={apartment.apartment_id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-2 px-2">
-                      <div className="font-medium text-gray-900 text-xs">
-                        {apartment.apartment_number}
-                      </div>
-                    </td>
-                    <td className="py-2 px-2">
-                      <div className="text-xs text-gray-600">
-                        Ιδιοκτήτης
-                      </div>
-                      <div className="text-xs font-medium text-gray-900 truncate" title={apartment.owner_name}>
-                        {apartment.owner_name}
-                      </div>
-                    </td>
-                    <td className="py-2 px-2">
-                      <div className="text-xs font-medium text-gray-900">
-                        {apartment.participation_mills}
-                      </div>
-                    </td>
-                    <td className="py-2 px-2">
-                      <div className={`text-xs font-medium ${
-                        apartment.previous_balance > 0 ? 'text-red-600' : 
-                        apartment.previous_balance < 0 ? 'text-green-600' : 'text-gray-900'
-                      }`}>
-                        {formatCurrency(apartment.previous_balance)}
-                      </div>
-                    </td>
-                    <td className="py-2 px-2">
-                      <div className="text-xs font-medium text-gray-900">
-                        {formatCurrency(apartment.expense_share)}
-                      </div>
-                    </td>
-                    <td className="py-2 px-2">
-                      <div className={`text-xs font-medium ${
+                  <tr key={apartment.apartment_id} className="border-b hover:bg-gray-50">
+                    <td className="py-3 px-2 font-medium">{apartment.apartment_number}</td>
+                    <td className="py-3 px-2">{apartment.owner_name}</td>
+                    <td className="py-3 px-2">{apartment.participation_mills}</td>
+                    <td className="py-3 px-2 text-right">
+                      <span className={`font-medium ${
                         apartment.net_obligation > 0 ? 'text-red-600' : 
                         apartment.net_obligation < 0 ? 'text-green-600' : 'text-gray-900'
                       }`}>
                         {formatCurrency(apartment.net_obligation)}
-                      </div>
+                      </span>
                     </td>
-                    <td className="py-2 px-2">
-                      <div className="flex items-center gap-1">
+                    <td className="py-3 px-2 text-center">
+                      <div className="flex items-center justify-center gap-2">
                         {getStatusIcon(apartment.status)}
-                        <Badge variant={getStatusBadgeVariant(apartment.status)} className="text-xs px-1 py-0">
+                        <Badge variant={getStatusBadgeVariant(apartment.status)}>
                           {apartment.status}
                         </Badge>
                       </div>
                     </td>
-                    <td className="py-2 px-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleShowDetails(apartment)}
-                        className="h-6 px-2 text-xs"
-                      >
-                        <Eye className="h-3 w-3 mr-1" />
-                        Λεπτομέρειες
-                      </Button>
+                    <td className="py-3 px-2 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDetails(apartment)}
+                          className="flex items-center gap-1"
+                        >
+                          <Eye className="h-3 w-3" />
+                          Ειδοποιητήριο
+                        </Button>
+                        {apartment.net_obligation > 0 && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handlePayment(apartment)}
+                            className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700"
+                          >
+                            <CreditCard className="h-3 w-3" />
+                            Πληρωμή
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -422,166 +339,57 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
         </CardContent>
       </Card>
 
+      {/* Payment Notification Modal */}
+      <PaymentNotificationModal
+        isOpen={showPaymentNotificationModal}
+        onClose={handlePaymentNotificationClose}
+        apartment={selectedApartment}
+        onPaymentClick={() => {
+          if (selectedApartment) {
+            handlePayment(selectedApartment);
+          }
+        }}
+      />
 
-
-      {/* Details Modal */}
-      {selectedApartment && (
+      {/* Payment Form Modal */}
+      {showPaymentModal && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          onClick={() => {
-            setShowDetailsModal(false);
-            setSelectedApartment(null);
-          }}
+          onClick={handlePaymentCancel}
         >
           <div 
-            className="bg-white rounded-lg p-6 max-w-4xl max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">
-                Λεπτομέρειες: Διαμέρισμα {selectedApartment.apartment_number}
-              </h3>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePrintStatement(selectedApartment)}
-                  className="flex items-center gap-2"
-                >
-                  <Printer className="h-4 w-4" />
-                  Εκτύπωση
-                </Button>
-                {selectedApartment.net_obligation > 0 && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => handlePayment(selectedApartment)}
-                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    Πληρωμή
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setShowDetailsModal(false);
-                    setSelectedApartment(null);
-                  }}
-                >
-                  ✕
-                </Button>
-              </div>
+              <h2 className="text-xl font-semibold">Νέα Εισπράξη</h2>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handlePaymentCancel}
+              >
+                ✕
+              </Button>
             </div>
-            
-            <div className="space-y-4">
-              {/* Apartment Info */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div>
-                  <span className="text-sm text-gray-600">Ιδιοκτήτης:</span>
-                  <div className="font-medium">{selectedApartment.owner_name}</div>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-600">Χιλιοστά:</span>
-                  <div className="font-medium">{selectedApartment.participation_mills}</div>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-600">Κατάσταση:</span>
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(selectedApartment.status)}
-                    <Badge variant={getStatusBadgeVariant(selectedApartment.status)}>
-                      {selectedApartment.status}
-                    </Badge>
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Financial Summary */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div>
-                  <span className="text-sm text-gray-600">Προηγούμενο Υπόλοιπο:</span>
-                  <div className="font-medium">{formatCurrency(selectedApartment.previous_balance)}</div>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-600">Μερίδιο Δαπανών:</span>
-                  <div className="font-medium">{formatCurrency(selectedApartment.expense_share)}</div>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-600">Καθαρή Οφειλή:</span>
-                  <div className={`font-medium ${
-                    selectedApartment.net_obligation > 0 ? 'text-red-600' : 
-                    selectedApartment.net_obligation < 0 ? 'text-green-600' : 'text-gray-900'
-                  }`}>
-                    {formatCurrency(selectedApartment.net_obligation)}
-                  </div>
-                </div>
-              </div>
-
-                             {/* Expense Breakdown */}
-               {selectedApartment.expense_breakdown.length > 0 && (
-                 <div>
-                   <h4 className="font-medium text-gray-900 mb-2">Breakdown Δαπανών:</h4>
-                   <div className="space-y-3 max-h-40 overflow-y-auto">
-                     {(() => {
-                       // Group expenses by month
-                       const groupedExpenses = selectedApartment.expense_breakdown.reduce((groups, expense) => {
-                         const month = expense.month;
-                         if (!groups[month]) {
-                           groups[month] = {
-                             month: month,
-                             month_display: expense.month_display,
-                             expenses: []
-                           };
-                         }
-                         groups[month].expenses.push(expense);
-                         return groups;
-                       }, {} as { [key: string]: { month: string; month_display: string; expenses: any[] } });
-                       
-                       return Object.values(groupedExpenses).map((group, groupIndex) => (
-                         <div key={groupIndex} className="border border-gray-200 rounded-lg overflow-hidden">
-                           <div className="bg-gray-100 px-3 py-2 border-b border-gray-200">
-                             <h5 className="text-sm font-semibold text-gray-700">{group.month_display}</h5>
-                           </div>
-                           <div className="space-y-1 p-2">
-                             {group.expenses.map((expense, index) => (
-                               <div key={index} className="flex justify-between text-sm py-1">
-                                 <span className="text-gray-600">{expense.expense_title}</span>
-                                 <span className="font-medium">{formatCurrency(expense.share_amount)}</span>
-                               </div>
-                             ))}
-                             <div className="border-t border-gray-200 pt-1 mt-1">
-                               <div className="flex justify-between text-sm font-semibold">
-                                 <span className="text-gray-700">Σύνολο {group.month_display}:</span>
-                                 <span className="text-blue-600">
-                                   {formatCurrency(group.expenses.reduce((sum, exp) => sum + exp.share_amount, 0))}
-                                 </span>
-                               </div>
-                             </div>
-                           </div>
-                         </div>
-                       ));
-                     })()}
-                   </div>
-                 </div>
-               )}
-
-              {/* Payment Breakdown */}
-              {selectedApartment.payment_breakdown.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Breakdown Πληρωμών:</h4>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {selectedApartment.payment_breakdown.map((payment, index) => (
-                      <div key={index} className="flex justify-between text-sm p-2 bg-green-50 rounded">
-                        <span className="text-gray-600">{payment.payer_name} ({payment.payment_date})</span>
-                        <span className="font-medium text-green-600">{formatCurrency(payment.payment_amount)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <PaymentForm 
+              buildingId={buildingId}
+              onSuccess={handlePaymentSuccess}
+              onCancel={handlePaymentCancel}
+              apartments={apartmentBalances.map(apt => ({
+                id: apt.apartment_id,
+                number: apt.apartment_number,
+                owner_name: apt.owner_name,
+                tenant_name: '',
+                occupant_name: apt.owner_name,
+                is_rented: false,
+                participation_mills: apt.participation_mills
+              }))}
+              initialData={paymentModalData || {
+                apartment_id: 0,
+                common_expense_amount: 0,
+                previous_obligations_amount: 0,
+              }}
+            />
           </div>
         </div>
       )}

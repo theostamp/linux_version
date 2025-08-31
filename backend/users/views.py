@@ -78,6 +78,11 @@ def login_view(request):
         'office_name': user.office_name,
         'office_phone': user.office_phone,
         'office_address': user.office_address,
+        'office_logo': user.office_logo.url if user.office_logo else None,
+        'office_bank_name': user.office_bank_name,
+        'office_bank_account': user.office_bank_account,
+        'office_bank_iban': user.office_bank_iban,
+        'office_bank_beneficiary': user.office_bank_beneficiary,
     }
 
     return Response({
@@ -109,6 +114,11 @@ def me_view(request):
         'office_name': user.office_name,
         'office_phone': user.office_phone,
         'office_address': user.office_address,
+        'office_logo': user.office_logo.url if user.office_logo else None,
+        'office_bank_name': user.office_bank_name,
+        'office_bank_account': user.office_bank_account,
+        'office_bank_iban': user.office_bank_iban,
+        'office_bank_beneficiary': user.office_bank_beneficiary,
     }, status=status.HTTP_200_OK)
 
 @api_view(['POST'])

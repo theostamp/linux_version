@@ -10,9 +10,7 @@ import {
   TransactionHistory,
   ChartsContainer,
   BulkImportWizard,
-  PaymentForm,
   ExpenseList,
-  PaymentList,
   BuildingOverviewSection,
   PaymentProgressVisualization,
   FinancialOverviewTab
@@ -28,13 +26,13 @@ import {
   Calculator, 
   Plus, 
   History,
-  DollarSign,
   TrendingUp,
   PieChart,
   Calendar,
   Building2,
   RefreshCw,
-  BarChart3
+  BarChart3,
+  DollarSign
 } from 'lucide-react';
 import { useFinancialPermissions } from '@/hooks/useFinancialPermissions';
 import { ProtectedFinancialRoute, ConditionalRender, PermissionButton } from './ProtectedFinancialRoute';
@@ -67,12 +65,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     requiredTab: 'expenses',
     buildingId: activeBuildingId
   });
-  
-  const paymentModal = useModalState({
-    modalKey: 'payment-form',
-    requiredTab: 'payments',
-    buildingId: activeBuildingId
-  });
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     const result = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -89,26 +81,19 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   const [reserveFundMonthlyAmount, setReserveFundMonthlyAmount] = useState<number>(0); // No hardcoded default - will be set from building data
   const { canCreateExpense, canAccessReports, canCalculateCommonExpenses } = useFinancialPermissions();
   
-  // State for payment modal with pre-filled data
-  const [paymentModalData, setPaymentModalData] = useState<{
-    apartment_id: number;
-    common_expense_amount: number;
-    previous_obligations_amount: number;
-  } | null>(null);
+
   
   // Refs for refreshing components
-  const paymentListRef = useRef<{ refresh: () => void }>(null);
   const buildingOverviewRef = useRef<{ refresh: () => void }>(null);
   const paymentProgressRef = useRef<{ refresh: () => void } | null>(null);
   // Ref for expense list to refresh data
   const expenseListRef = useRef<{ refresh: () => void }>(null);
   
-  // Auto-refresh financial data when expenses/payments change
+  // Auto-refresh financial data when expenses change
   useFinancialAutoRefresh(
     {
       loadSummary: () => buildingOverviewRef.current?.refresh(),
       loadExpenses: () => expenseListRef.current?.refresh(),
-      loadPayments: () => paymentListRef.current?.refresh(),
     },
     {
       buildingId: activeBuildingId,
@@ -145,29 +130,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   // Simplified auto-refresh system - removed complex event handling
   // The selectedMonth useEffect below will handle all refreshes
 
-  // Handle URL parameters for payment form
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tab = params.get('tab');
-    const apartmentId = params.get('apartment');
-    const amount = params.get('amount');
-    const previousObligations = params.get('previous_obligations');
-    
-    if (tab === 'payments' && apartmentId && amount) {
-      // Open payment modal with pre-filled data
-      paymentModal.openModal();
-      
-      // Clear URL parameters after opening modal
-      const newParams = new URLSearchParams(window.location.search);
-      newParams.delete('tab');
-      newParams.delete('apartment');
-      newParams.delete('amount');
-      newParams.delete('previous_obligations');
-      
-      const newUrl = `${window.location.pathname}?${newParams.toString()}`;
-      window.history.replaceState({}, '', newUrl);
-    }
-  }, [paymentModal]);
+
 
   // Monitor selectedMonth changes and refresh components
   useEffect(() => {
@@ -308,42 +271,8 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     }
   };
   
-  const handlePaymentSuccess = () => {
-    console.log('Payment success handler called');
-    paymentModal.closeModal();
-    setPaymentModalData(null);
-    // Refresh payment list data
-    if (paymentListRef.current) {
-      console.log('Refreshing payment list...');
-      paymentListRef.current.refresh();
-    }
-    // Refresh building overview section data
-    if (buildingOverviewRef.current) {
-      buildingOverviewRef.current.refresh();
-    }
-    // Refresh payment progress visualization
-    if (paymentProgressRef.current) {
-      console.log('Refreshing payment progress visualization...');
-      paymentProgressRef.current.refresh();
-    }
-  };
-  
   const handleExpenseCancel = () => {
     expenseModal.closeModal();
-  };
-  
-  const handlePaymentCancel = () => {
-    paymentModal.closeModal();
-    setPaymentModalData(null);
-  };
-  
-  const handleOpenPaymentModal = (apartment: any) => {
-    setPaymentModalData({
-      apartment_id: apartment.apartment_id,
-      common_expense_amount: Math.round(Math.max(0, apartment.expense_share || 0) * 100) / 100,
-      previous_obligations_amount: apartment.previous_balance > 0 ? Math.round(apartment.previous_balance * 100) / 100 : 0,
-    });
-    paymentModal.openModal();
   };
 
 
@@ -370,7 +299,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             onClick={() => {
               if (buildingOverviewRef.current) buildingOverviewRef.current.refresh();
               if (expenseListRef.current) expenseListRef.current.refresh();
-              if (paymentListRef.current) paymentListRef.current.refresh();
             }}
             variant="outline"
             size="sm"
@@ -491,6 +419,19 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-2">
               <ConditionalRender permission="financial_read">
                 <button
+                  onClick={() => handleTabChange('balances')}
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
+                    activeTab === 'balances' 
+                      ? 'bg-emerald-100 border-emerald-300 text-emerald-700 shadow-sm' 
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                  }`}
+                >
+                  <DollarSign className="h-4 w-4" />
+                  <span className="text-sm font-medium whitespace-nowrap">Εισπράξεις</span>
+                </button>
+              </ConditionalRender>
+              <ConditionalRender permission="financial_read">
+                <button
                   onClick={() => handleTabChange('overview')}
                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
                     activeTab === 'overview' 
@@ -500,19 +441,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 >
                   <TrendingUp className="h-4 w-4" />
                   <span className="text-sm font-medium whitespace-nowrap">Συνοπτική Εικόνα</span>
-                </button>
-              </ConditionalRender>
-              <ConditionalRender permission="financial_write">
-                <button
-                  onClick={() => handleTabChange('calculator')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
-                    activeTab === 'calculator' 
-                      ? 'bg-blue-100 border-blue-300 text-blue-700 shadow-sm' 
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
-                  }`}
-                >
-                  <Calculator className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Κοινοχρήστων</span>
                 </button>
               </ConditionalRender>
               <ConditionalRender permission="expense_manage">
@@ -530,17 +458,18 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               </ConditionalRender>
               <ConditionalRender permission="financial_write">
                 <button
-                  onClick={() => handleTabChange('payments')}
+                  onClick={() => handleTabChange('calculator')}
                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
-                    activeTab === 'payments' 
-                      ? 'bg-emerald-100 border-emerald-300 text-emerald-700 shadow-sm' 
+                    activeTab === 'calculator' 
+                      ? 'bg-blue-100 border-blue-300 text-blue-700 shadow-sm' 
                       : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
                   }`}
                 >
-                  <DollarSign className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Εισπράξεις</span>
+                  <Calculator className="h-4 w-4" />
+                  <span className="text-sm font-medium whitespace-nowrap">Κοινοχρήστων</span>
                 </button>
               </ConditionalRender>
+
               <ConditionalRender permission="financial_write">
                 <button
                   onClick={() => handleTabChange('meters')}
@@ -595,19 +524,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               </ConditionalRender>
               <ConditionalRender permission="financial_read">
                 <button
-                  onClick={() => handleTabChange('balances')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
-                    activeTab === 'balances' 
-                      ? 'bg-teal-100 border-teal-300 text-teal-700 shadow-sm' 
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
-                  }`}
-                >
-                  <Building2 className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Ισοζύγια</span>
-                </button>
-              </ConditionalRender>
-              <ConditionalRender permission="financial_read">
-                <button
                   onClick={() => handleTabChange('debug')}
                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
                     activeTab === 'debug' 
@@ -624,6 +540,32 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 
           {/* Desktop: Card Grid Layout */}
           <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-8 gap-3">
+            <ConditionalRender permission="financial_read">
+              <button
+                onClick={() => handleTabChange('balances')}
+                className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
+                  activeTab === 'balances' 
+                    ? 'bg-emerald-50 border-emerald-200 shadow-sm' 
+                    : 'bg-white border-gray-200 hover:border-emerald-200 hover:bg-emerald-50/30'
+                }`}
+              >
+                <div className={`mb-3 p-3 rounded-full transition-colors ${
+                  activeTab === 'balances' 
+                    ? 'bg-emerald-100 text-emerald-600' 
+                    : 'bg-gray-100 text-gray-500 group-hover:bg-emerald-100 group-hover:text-emerald-600'
+                }`}>
+                  <DollarSign className="h-6 w-6" />
+                </div>
+                <h3 className={`font-semibold text-sm ${
+                  activeTab === 'balances' ? 'text-emerald-700' : 'text-gray-700'
+                }`}>
+                  Εισπράξεις
+                </h3>
+                <p className="text-xs text-gray-500 text-center mt-1">
+                  Κατάσταση Διαμερισμάτων
+                </p>
+              </button>
+            </ConditionalRender>
             <ConditionalRender permission="financial_read">
               <button
                 onClick={() => handleTabChange('overview')}
@@ -650,33 +592,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 </p>
               </button>
             </ConditionalRender>
-            <ConditionalRender permission="financial_write">
-              <button
-                onClick={() => handleTabChange('calculator')}
-                className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
-                  activeTab === 'calculator' 
-                    ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                    : 'bg-white border-gray-200 hover:border-blue-200 hover:bg-blue-50/30'
-                }`}
-              >
-                <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'calculator' 
-                    ? 'bg-blue-100 text-blue-600' 
-                    : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
-                }`}>
-                  <Calculator className="h-6 w-6" />
-                </div>
-                <h3 className={`font-semibold text-sm ${
-                  activeTab === 'calculator' ? 'text-blue-700' : 'text-gray-700'
-                }`}>
-                  Κοινόχρηστα
-                </h3>
-                <p className="text-xs text-gray-500 text-center mt-1">
-                  Υπολογισμός & Έκδοση
-                </p>
-              </button>
-            </ConditionalRender>
-
             <ConditionalRender permission="expense_manage">
               <button
                 onClick={() => handleTabChange('expenses')}
@@ -706,30 +621,32 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 
             <ConditionalRender permission="financial_write">
               <button
-                onClick={() => handleTabChange('payments')}
+                onClick={() => handleTabChange('calculator')}
                 className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
-                  activeTab === 'payments' 
-                    ? 'bg-emerald-50 border-emerald-200 shadow-sm' 
-                    : 'bg-white border-gray-200 hover:border-emerald-200 hover:bg-emerald-50/30'
+                  activeTab === 'calculator' 
+                    ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                    : 'bg-white border-gray-200 hover:border-blue-200 hover:bg-blue-50/30'
                 }`}
               >
                 <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'payments' 
-                    ? 'bg-emerald-100 text-emerald-600' 
-                    : 'bg-gray-100 text-gray-500 group-hover:bg-emerald-100 group-hover:text-emerald-600'
+                  activeTab === 'calculator' 
+                    ? 'bg-blue-100 text-blue-600' 
+                    : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
                 }`}>
-                  <DollarSign className="h-6 w-6" />
+                  <Calculator className="h-6 w-6" />
                 </div>
                 <h3 className={`font-semibold text-sm ${
-                  activeTab === 'payments' ? 'text-emerald-700' : 'text-gray-700'
+                  activeTab === 'calculator' ? 'text-blue-700' : 'text-gray-700'
                 }`}>
-                  Εισπράξεις
+                  Κοινόχρηστα
                 </h3>
                 <p className="text-xs text-gray-500 text-center mt-1">
-                  Καταγραφή Πληρωμών
+                  Υπολογισμός & Έκδοση
                 </p>
               </button>
             </ConditionalRender>
+
+
 
             <ConditionalRender permission="financial_write">
               <button
@@ -838,32 +755,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 </p>
               </button>
             </ConditionalRender>
-            <ConditionalRender permission="financial_read">
-              <button
-                onClick={() => handleTabChange('balances')}
-                className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
-                  activeTab === 'balances' 
-                    ? 'bg-teal-50 border-teal-200 shadow-sm' 
-                    : 'bg-white border-gray-200 hover:border-teal-200 hover:bg-teal-50/30'
-                }`}
-              >
-                <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'balances' 
-                    ? 'bg-teal-100 text-teal-600' 
-                    : 'bg-gray-100 text-gray-500 group-hover:bg-teal-100 group-hover:text-teal-600'
-                }`}>
-                  <Building2 className="h-6 w-6" />
-                </div>
-                <h3 className={`font-semibold text-sm ${
-                  activeTab === 'balances' ? 'text-teal-700' : 'text-gray-700'
-                }`}>
-                  Ισοζύγια
-                </h3>
-                <p className="text-xs text-gray-500 text-center mt-1">
-                  Κατάσταση Διαμερισμάτων
-                </p>
-              </button>
-            </ConditionalRender>
           </div>
         </div>
         
@@ -927,20 +818,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </ProtectedFinancialRoute>
         </TabsContent>
         
-        <TabsContent value="payments" className="space-y-4" data-tab="payments">
-          <ProtectedFinancialRoute requiredPermission="financial_write">
-            <PaymentList 
-              ref={paymentListRef}
-              buildingId={activeBuildingId}
-              selectedMonth={selectedMonth}
-              onPaymentSelect={(payment) => {
-                console.log('Selected payment:', payment);
-                // Here you could open a payment detail modal or navigate to payment details
-              }}
-              showActions={true}
-            />
-          </ProtectedFinancialRoute>
-        </TabsContent>
+
         
         <TabsContent value="meters" className="space-y-4" data-tab="meters">
           <ProtectedFinancialRoute requiredPermission="financial_write">
@@ -978,7 +856,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             <ApartmentBalancesTab 
               buildingId={activeBuildingId} 
               selectedMonth={selectedMonth}
-              onOpenPaymentModal={handleOpenPaymentModal}
             />
           </ProtectedFinancialRoute>
         </TabsContent>
@@ -990,9 +867,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                     buildingId={activeBuildingId} 
                     onCleanupComplete={() => {
                       // Refresh all data after cleanup
-                      if (paymentListRef.current) {
-                        paymentListRef.current.refresh();
-                      }
                       if (expenseListRef.current) {
                         expenseListRef.current.refresh();
                       }
@@ -1039,42 +913,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         )}
       </ConditionalRender>
       
-      {/* Payment Form Modal */}
-      <ConditionalRender permission="financial_write">
-        {paymentModal.isOpen && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={handlePaymentCancel}
-          >
-            <div 
-              className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Νέα Είσπραξη</h2>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={handlePaymentCancel}
-                >
-                  ✕
-                </Button>
-              </div>
-              <PaymentForm 
-                buildingId={activeBuildingId}
-                onSuccess={handlePaymentSuccess}
-                onCancel={handlePaymentCancel}
-                apartments={apartments}
-                initialData={paymentModalData || {
-                  apartment_id: parseInt(new URLSearchParams(window.location.search).get('apartment') || '0'),
-                  common_expense_amount: Math.round(Math.max(0, parseFloat(new URLSearchParams(window.location.search).get('amount') || '0')) * 100) / 100,
-                  previous_obligations_amount: Math.round(Math.max(0, parseFloat(new URLSearchParams(window.location.search).get('previous_obligations') || '0')) * 100) / 100,
-                }}
-              />
-            </div>
-          </div>
-        )}
-      </ConditionalRender>
+
     </div>
   );
 }; 

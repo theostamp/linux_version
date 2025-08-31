@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { X, Save, Building, Phone, MapPin, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Save, Building, Phone, MapPin, Loader2, Upload, Trash2, Image } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { api } from '@/lib/api';
@@ -15,6 +15,11 @@ interface OfficeFormData {
   office_name: string;
   office_phone: string;
   office_address: string;
+  office_logo?: File;
+  office_bank_name: string;
+  office_bank_account: string;
+  office_bank_iban: string;
+  office_bank_beneficiary: string;
 }
 
 export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsModalProps) {
@@ -23,9 +28,16 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
     office_name: '',
     office_phone: '',
     office_address: '',
+    office_bank_name: '',
+    office_bank_account: '',
+    office_bank_iban: '',
+    office_bank_beneficiary: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize form with user's current office details
   useEffect(() => {
@@ -34,7 +46,13 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
         office_name: user.office_name || '',
         office_phone: user.office_phone || '',
         office_address: user.office_address || '',
+        office_bank_name: user.office_bank_name || '',
+        office_bank_account: user.office_bank_account || '',
+        office_bank_iban: user.office_bank_iban || '',
+        office_bank_beneficiary: user.office_bank_beneficiary || '',
       });
+      setCurrentLogoUrl(user.office_logo || null);
+      setLogoPreview(null);
     }
   }, [user]);
 
@@ -46,18 +64,81 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
     }));
   };
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validation
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
+    const maxSize = 2 * 1024 * 1024; // 2MB
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Επιτρέπονται μόνο αρχεία τύπου JPEG, PNG ή SVG.');
+      return;
+    }
+
+    if (file.size > maxSize) {
+      toast.error('Το αρχείο πρέπει να είναι μικρότερο από 2MB.');
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setLogoPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    setForm(prev => ({
+      ...prev,
+      office_logo: file,
+    }));
+  };
+
+  const removeLogo = () => {
+    setForm(prev => ({
+      ...prev,
+      office_logo: undefined,
+    }));
+    setLogoPreview(null);
+    setCurrentLogoUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const response = await api.put('/users/office-details/', form);
+      const formData = new FormData();
+      formData.append('office_name', form.office_name);
+      formData.append('office_phone', form.office_phone);
+      formData.append('office_address', form.office_address);
+      formData.append('office_bank_name', form.office_bank_name);
+      formData.append('office_bank_account', form.office_bank_account);
+      formData.append('office_bank_iban', form.office_bank_iban);
+      formData.append('office_bank_beneficiary', form.office_bank_beneficiary);
+      
+      if (form.office_logo) {
+        formData.append('office_logo', form.office_logo);
+      }
+
+      const response = await api.put('/users/office-details/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       
       toast.success('Τα στοιχεία γραφείου διαχείρισης ενημερώθηκαν επιτυχώς');
       
       // Refresh user data to get updated office details
       await refreshUser();
+      
+      // Show success message
+      toast.success('Τα στοιχεία γραφείου διαχείρισης ενημερώθηκαν επιτυχώς');
       
       onClose();
     } catch (err: any) {
@@ -107,6 +188,59 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
           )}
 
           <div className="space-y-4">
+            {/* Logo Upload Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Logo Γραφείου Διαχείρισης
+              </label>
+              
+              {/* Current Logo or Preview */}
+              {(logoPreview || currentLogoUrl) && (
+                <div className="mb-3">
+                  <div className="relative inline-block">
+                    <img
+                      src={logoPreview || currentLogoUrl || ''}
+                      alt="Office Logo"
+                      className="w-20 h-20 object-contain border border-gray-300 rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeLogo}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* File Input */}
+              <div className="flex items-center space-x-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/svg+xml"
+                  onChange={handleLogoChange}
+                  className="hidden"
+                  id="office_logo"
+                />
+                <label
+                  htmlFor="office_logo"
+                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                >
+                  <Upload className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm text-gray-700">
+                    {logoPreview || currentLogoUrl ? 'Αλλαγή Logo' : 'Επιλογή Logo'}
+                  </span>
+                </label>
+                {!logoPreview && !currentLogoUrl && (
+                  <span className="text-xs text-gray-500">
+                    PNG, JPG, SVG (max 2MB)
+                  </span>
+                )}
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_name">
                 Όνομα Γραφείου Διαχείρισης
@@ -149,6 +283,69 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
                 placeholder="π.χ. Λεωφ. Συγγρού 123, Αθήνα"
               />
             </div>
+
+            {/* Bank Account Details Section */}
+            <div className="border-t border-gray-200 pt-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Τραπεζικά Στοιχεία</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_bank_name">
+                    Όνομα Τράπεζας
+                  </label>
+                  <input
+                    id="office_bank_name"
+                    name="office_bank_name"
+                    value={form.office_bank_name}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="π.χ. Εθνική Τράπεζα της Ελλάδος"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_bank_account">
+                    Αριθμός Λογαριασμού
+                  </label>
+                  <input
+                    id="office_bank_account"
+                    name="office_bank_account"
+                    value={form.office_bank_account}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="π.χ. 1234567890"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_bank_iban">
+                    IBAN
+                  </label>
+                  <input
+                    id="office_bank_iban"
+                    name="office_bank_iban"
+                    value={form.office_bank_iban}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="π.χ. GR16 0110 1250 0000 1234 5678 901"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_bank_beneficiary">
+                    Δικαιούχος
+                  </label>
+                  <input
+                    id="office_bank_beneficiary"
+                    name="office_bank_beneficiary"
+                    value={form.office_bank_beneficiary}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="π.χ. Γραφείο Διαχείρισης Παπαδόπουλου"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Info Box */}
@@ -159,7 +356,8 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
                 <p className="text-sm text-blue-800 font-medium">ℹ️ Πληροφορίες</p>
                 <p className="text-xs text-blue-700 mt-1">
                   Αυτά τα στοιχεία θα χρησιμοποιηθούν αυτόματα κατά τη δημιουργία νέων κτιρίων, 
-                  ώστε να μην χρειάζεται να τα εισάγετε κάθε φορά.
+                  ώστε να μην χρειάζεται να τα εισάγετε κάθε φορά. Το logo και τα τραπεζικά στοιχεία 
+                  θα εμφανίζονται στα ειδοποιητήρια πληρωμής.
                 </p>
               </div>
             </div>

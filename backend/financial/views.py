@@ -10,12 +10,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from .models import Expense, Transaction, Payment, ExpenseApartment, MeterReading, Supplier, CommonExpensePeriod, ApartmentShare
+from .models import Expense, Transaction, Payment, ExpenseApartment, MeterReading, Supplier, CommonExpensePeriod, ApartmentShare, FinancialReceipt
 from .serializers import (
     ExpenseSerializer, TransactionSerializer, PaymentSerializer,
     ExpenseApartmentSerializer, MeterReadingSerializer, SupplierSerializer,
     FinancialSummarySerializer, ApartmentBalanceSerializer,
-    CommonExpenseCalculationSerializer
+    CommonExpenseCalculationSerializer, FinancialReceiptSerializer
 )
 from .services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator, FinancialDashboardService, PaymentProcessor, FileUploadService
 from buildings.models import Building
@@ -480,14 +480,20 @@ class PaymentViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """Καταγραφή δημιουργίας εισπράξεως με file upload"""
-        # Get reserve_fund_amount from request data if provided
+        # Get reserve_fund_amount and previous_obligations_amount from request data if provided
         reserve_fund_amount = self.request.data.get('reserve_fund_amount', 0)
+        previous_obligations_amount = self.request.data.get('previous_obligations_amount', 0)
         
         payment = serializer.save()
         
         # Set reserve_fund_amount if provided
         if reserve_fund_amount:
             payment.reserve_fund_amount = reserve_fund_amount
+            payment.save()
+        
+        # Set previous_obligations_amount if provided
+        if previous_obligations_amount:
+            payment.previous_obligations_amount = previous_obligations_amount
             payment.save()
         
         # Ενημέρωση του τρέχοντος αποθεματικού του κτιρίου
@@ -565,6 +571,9 @@ class PaymentViewSet(viewsets.ModelViewSet):
             payment=payment,
             request=self.request
         )
+        
+        # Automatically create a receipt for the payment
+        self._create_payment_receipt(payment)
         
         # Auto cleanup and refresh after payment creation
         try:
@@ -692,6 +701,38 @@ class PaymentViewSet(viewsets.ModelViewSet):
         """Λήψη διαθέσιμων μεθόδων πληρωμής"""
         methods = [{'value': choice[0], 'label': choice[1]} for choice in Payment.PAYMENT_METHODS]
         return Response(methods)
+    
+    def _create_payment_receipt(self, payment):
+        """Αυτόματη δημιουργία απόδειξης για την πληρωμή"""
+        try:
+            # Map payment method to receipt type
+            method_to_receipt_type = {
+                'cash': 'cash',
+                'bank_transfer': 'bank_transfer',
+                'check': 'check',
+                'card': 'card',
+            }
+            
+            receipt_type = method_to_receipt_type.get(payment.method, 'other')
+            
+            # Create receipt
+            FinancialReceipt.objects.create(
+                payment=payment,
+                receipt_type=receipt_type,
+                amount=payment.amount,
+                receipt_date=payment.date,
+                payer_name=payment.payer_name or f"{payment.apartment.owner_name}",
+                payer_type=payment.payer_type,
+                reference_number=payment.reference_number or '',
+                notes=payment.notes or '',
+                created_by=self.request.user if self.request.user.is_authenticated else None
+            )
+            
+            print(f"✅ Receipt created automatically for payment {payment.id}")
+            
+        except Exception as e:
+            print(f"⚠️ Failed to create receipt for payment {payment.id}: {str(e)}")
+            # Don't fail the payment creation if receipt creation fails
     
     @action(detail=False, methods=['post'])
     def cleanup_data_integrity(self, request):
@@ -2595,3 +2636,70 @@ def financial_overview(request):
             'status': 'error',
             'message': f'Σφάλμα κατά την ανάκτηση δεδομένων: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class FinancialReceiptViewSet(viewsets.ModelViewSet):
+    """ViewSet για τη διαχείριση αποδείξεων εισπράξεων"""
+    
+    queryset = FinancialReceipt.objects.all()
+    serializer_class = FinancialReceiptSerializer
+    permission_classes = [PaymentPermission]
+    filter_backends = [filters.DjangoFilterBackend]
+    filterset_fields = ['payment', 'receipt_type', 'receipt_date', 'payer_type']
+    
+    def perform_create(self, serializer):
+        """Καταγραφή δημιουργίας απόδειξης"""
+        receipt = serializer.save(created_by=self.request.user)
+        FinancialAuditLog.log_receipt_action(
+            user=self.request.user,
+            action='CREATE',
+            receipt=receipt,
+            request=self.request
+        )
+    
+    def perform_update(self, serializer):
+        """Καταγραφή ενημέρωσης απόδειξης"""
+        receipt = serializer.save()
+        FinancialAuditLog.log_receipt_action(
+            user=self.request.user,
+            action='UPDATE',
+            receipt=receipt,
+            request=self.request
+        )
+    
+    def perform_destroy(self, instance):
+        """Καταγραφή διαγραφής απόδειξης"""
+        FinancialAuditLog.log_receipt_action(
+            user=self.request.user,
+            action='DELETE',
+            receipt=instance,
+            request=self.request
+        )
+        instance.delete()
+    
+    def get_queryset(self):
+        """Φιλτράρισμα ανά building"""
+        building_id = self.request.query_params.get('building_id')
+        if building_id:
+            return self.queryset.filter(payment__apartment__building_id=building_id)
+        return self.queryset
+    
+    @action(detail=False, methods=['get'])
+    def by_payment(self, request):
+        """Λήψη αποδείξεων για συγκεκριμένη πληρωμή"""
+        payment_id = request.query_params.get('payment_id')
+        if not payment_id:
+            return Response(
+                {'error': 'Payment ID is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        receipts = self.get_queryset().filter(payment_id=payment_id)
+        serializer = self.get_serializer(receipts, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def receipt_types(self, request):
+        """Λήψη διαθέσιμων τύπων αποδείξεων"""
+        receipt_types = [{'value': choice[0], 'label': choice[1]} for choice in FinancialReceipt.RECEIPT_TYPES]
+        return Response(receipt_types)

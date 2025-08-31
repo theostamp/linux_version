@@ -51,6 +51,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 'office_name': user.office_name,
                 'office_phone': user.office_phone,
                 'office_address': user.office_address,
+                'office_logo': user.office_logo.url if user.office_logo else None,
             }
             
             data = {
@@ -74,7 +75,12 @@ class UserSerializer(serializers.ModelSerializer):
             'is_staff',
             'office_name',
             'office_phone',
-            'office_address'
+            'office_address',
+            'office_logo',
+            'office_bank_name',
+            'office_bank_account',
+            'office_bank_iban',
+            'office_bank_beneficiary'
         ]
         read_only_fields = ['id', 'is_staff']
 
@@ -84,10 +90,33 @@ class OfficeDetailsSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = CustomUser
-        fields = ['office_name', 'office_phone', 'office_address']
+        fields = [
+            'office_name', 
+            'office_phone', 
+            'office_address', 
+            'office_logo',
+            'office_bank_name',
+            'office_bank_account',
+            'office_bank_iban',
+            'office_bank_beneficiary'
+        ]
         
     def validate_office_phone(self, value):
         """Validate phone number format"""
         if value and not value.replace('-', '').replace(' ', '').replace('+', '').isdigit():
             raise serializers.ValidationError("Το τηλέφωνο πρέπει να περιέχει μόνο αριθμούς, παύλες και κενά.")
+        return value
+    
+    def validate_office_logo(self, value):
+        """Validate logo file"""
+        if value:
+            # Check file size (2MB limit)
+            if value.size > 2 * 1024 * 1024:  # 2MB in bytes
+                raise serializers.ValidationError("Το αρχείο πρέπει να είναι μικρότερο από 2MB.")
+            
+            # Check file type
+            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml']
+            if value.content_type not in allowed_types:
+                raise serializers.ValidationError("Επιτρέπονται μόνο αρχεία τύπου JPEG, PNG ή SVG.")
+        
         return value
