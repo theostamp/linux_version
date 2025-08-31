@@ -1122,21 +1122,21 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         # Distribution by participation mills
                         mills = apartment.participation_mills or 0
                         if total_mills > 0:
-                            share_amount = float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills))))
+                            share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
                         else:
-                            share_amount = float(expense.amount / Decimal(str(apartments_count)))
+                            share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
                     
                     elif expense.distribution_type == 'equal_share':
                         # Equal distribution
-                        share_amount = float(expense.amount / Decimal(str(apartments_count)))
+                        share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
                     
                     elif expense.distribution_type in ['by_meters', 'specific_apartments']:
                         # Fallback to participation mills for now
                         mills = apartment.participation_mills or 0
                         if total_mills > 0:
-                            share_amount = float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills))))
+                            share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
                         else:
-                            share_amount = float(expense.amount / Decimal(str(apartments_count)))
+                            share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
                     
                     apartment_data['total_obligations'] += share_amount
                     apartment_data['expense_breakdown'].append({
@@ -1240,21 +1240,21 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         # Distribution by participation mills
                         mills = apartment.participation_mills or 0
                         if total_mills > 0:
-                            share_amount = float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills))))
+                            share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
                         else:
-                            share_amount = float(expense.amount / Decimal(str(apartments_count)))
+                            share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
                     
                     elif expense.distribution_type == 'equal_share':
                         # Equal distribution
-                        share_amount = float(expense.amount / Decimal(str(apartments_count)))
+                        share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
                     
                     elif expense.distribution_type in ['by_meters', 'specific_apartments']:
                         # Fallback to participation mills for now
                         mills = apartment.participation_mills or 0
                         if total_mills > 0:
-                            share_amount = float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills))))
+                            share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
                         else:
-                            share_amount = float(expense.amount / Decimal(str(apartments_count)))
+                            share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
                     
                     apartment_data['total_obligations'] += share_amount
                     apartment_data['expense_breakdown'].append({
@@ -1302,19 +1302,19 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                             if expense.distribution_type == 'by_participation_mills':
                                 mills = apartment.participation_mills or 0
                                 if total_mills > 0:
-                                    share_amount = float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills))))
+                                    share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
                                 else:
-                                    share_amount = float(expense.amount / Decimal(str(apartments_count)))
+                                    share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
                             
                             elif expense.distribution_type == 'equal_share':
-                                share_amount = float(expense.amount / Decimal(str(apartments_count)))
+                                share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
                             
                             elif expense.distribution_type in ['by_meters', 'specific_apartments']:
                                 mills = apartment.participation_mills or 0
                                 if total_mills > 0:
-                                    share_amount = float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills))))
+                                    share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
                                 else:
-                                    share_amount = float(expense.amount / Decimal(str(apartments_count)))
+                                    share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
                             
                             previous_obligations += share_amount
                         
@@ -1334,19 +1334,19 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                             if expense.distribution_type == 'by_participation_mills':
                                 mills = apartment.participation_mills or 0
                                 if total_mills > 0:
-                                    share_amount = float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills))))
+                                    share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
                                 else:
-                                    share_amount = float(expense.amount / Decimal(str(apartments_count)))
+                                    share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
                             
                             elif expense.distribution_type == 'equal_share':
-                                share_amount = float(expense.amount / Decimal(str(apartments_count)))
+                                share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
                             
                             elif expense.distribution_type in ['by_meters', 'specific_apartments']:
                                 mills = apartment.participation_mills or 0
                                 if total_mills > 0:
-                                    share_amount = float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills))))
+                                    share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
                                 else:
-                                    share_amount = float(expense.amount / Decimal(str(apartments_count)))
+                                    share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
                             
                             current_month_share += share_amount
                         
@@ -1356,13 +1356,13 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         # Calculate reserve fund contribution based on participation mills
                         reserve_contribution_share = 0.0
                         if building.reserve_fund_goal and building.reserve_fund_duration_months and total_mills > 0:
-                            monthly_reserve_total = float(building.reserve_fund_goal) / float(building.reserve_fund_duration_months)
-                            reserve_contribution_share = (monthly_reserve_total / total_mills) * (apartment.participation_mills or 0)
+                            monthly_reserve_total = round(float(building.reserve_fund_goal) / float(building.reserve_fund_duration_months), 2)
+                            reserve_contribution_share = round((monthly_reserve_total / total_mills) * (apartment.participation_mills or 0), 2)
                         
-                        apartment_data['expense_share'] = current_month_share + management_fee_share + reserve_contribution_share
+                        apartment_data['expense_share'] = round(current_month_share + management_fee_share + reserve_contribution_share, 2)
                         
                         # Add current month obligations to net_obligation
-                        current_month_obligations = current_month_share + management_fee_share + reserve_contribution_share
+                        current_month_obligations = round(current_month_share + management_fee_share + reserve_contribution_share, 2)
                         apartment_data['net_obligation'] += current_month_obligations
                         
                     except Exception as e:

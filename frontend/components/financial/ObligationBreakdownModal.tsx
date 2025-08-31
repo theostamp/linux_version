@@ -22,7 +22,8 @@ import {
   DollarSign,
   CreditCard,
   Plus,
-  ExternalLink
+  ExternalLink,
+  Trash2
 } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -77,6 +78,9 @@ export function ObligationBreakdownModal({
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<BreakdownData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [apartmentToDelete, setApartmentToDelete] = useState<ApartmentDebt | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchBreakdownData = async () => {
     setLoading(true);
@@ -156,6 +160,55 @@ export function ObligationBreakdownModal({
     } catch (error) {
       console.error('Error initiating quick payment:', error);
     }
+  };
+
+  const handleDeletePayments = (apartmentDebt: ApartmentDebt) => {
+    setApartmentToDelete(apartmentDebt);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDeletePayments = async () => {
+    if (!apartmentToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      // Find apartment ID from the apartment number
+      const apartmentResponse = await api.get(`/apartments/?building_id=${buildingId}&number=${apartmentToDelete.apartment_number}`);
+      const apartments = apartmentResponse.data.results || apartmentResponse.data;
+      const apartment = apartments.find((apt: any) => apt.number === apartmentToDelete.apartment_number);
+      
+      if (!apartment) {
+        throw new Error('Διαμέρισμα δεν βρέθηκε');
+      }
+
+      // Delete all payments for this apartment
+      const params = new URLSearchParams({ 
+        apartment_id: apartment.id.toString(),
+        building_id: buildingId.toString()
+      });
+      
+      const response = await api.delete(`/financial/payments/bulk_delete/?${params.toString()}`);
+      
+      if (response.data.success) {
+        // Refresh data
+        await fetchBreakdownData();
+        setShowDeleteConfirmation(false);
+        setApartmentToDelete(null);
+        console.log('Payments deleted successfully:', response.data);
+      } else {
+        throw new Error(response.data.message || 'Σφάλμα κατά τη διαγραφή');
+      }
+    } catch (error: any) {
+      console.error('Error deleting payments:', error);
+      setError(error.message || 'Σφάλμα κατά τη διαγραφή των πληρωμών');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const cancelDeletePayments = () => {
+    setShowDeleteConfirmation(false);
+    setApartmentToDelete(null);
   };
 
   const renderTrigger = () => {
@@ -358,6 +411,16 @@ export function ObligationBreakdownModal({
                                 <Plus className="h-3 w-3 mr-1" />
                                 Άμεσα
                               </Button>
+                              
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeletePayments(apt)}
+                                className="text-xs px-3 py-1 h-7 bg-white hover:bg-red-50 border-red-200 text-red-700 hover:text-red-800"
+                                title="Διαγραφή όλων των πληρωμών αυτού του διαμερίσματος"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -521,6 +584,114 @@ export function ObligationBreakdownModal({
           </div>
         )}
       </DialogContent>
+      
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirmation && apartmentToDelete && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={cancelDeletePayments}
+        >
+          <div 
+            className="bg-white rounded-lg max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Διαγραφή Πληρωμών
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Η ενέργεια αυτή δεν μπορεί να αναιρεθεί
+                </p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="mb-6">
+              <p className="text-gray-700 mb-4">
+                Είστε σίγουροι ότι θέλετε να διαγράψετε όλες τις πληρωμές για το διαμέρισμα <strong>{apartmentToDelete.apartment_number}</strong>;
+              </p>
+              
+              {/* Apartment Details */}
+              <div className="bg-gray-50 rounded-lg p-3 border">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-gray-600">Διαμέρισμα:</span>
+                    <p className="font-medium text-blue-600">
+                      {apartmentToDelete.apartment_number}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Ιδιοκτήτης:</span>
+                    <p className="font-medium">
+                      {apartmentToDelete.owner_name || 'Μη καταχωρημένος'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Οφειλή:</span>
+                    <p className="font-medium text-red-600">
+                      {new Intl.NumberFormat('el-GR', {
+                        style: 'currency',
+                        currency: 'EUR',
+                        minimumFractionDigits: 2,
+                      }).format(apartmentToDelete.debt_amount)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Υπόλοιπο:</span>
+                    <p className="font-medium text-red-600">
+                      {new Intl.NumberFormat('el-GR', {
+                        style: 'currency',
+                        currency: 'EUR',
+                        minimumFractionDigits: 2,
+                      }).format(apartmentToDelete.balance)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ <strong>Προσοχή:</strong> Θα διαγραφούν όλες οι πληρωμές που έχουν καταχωρηθεί για αυτό το διαμέρισμα.
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={cancelDeletePayments}
+                disabled={isDeleting}
+              >
+                Ακύρωση
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDeletePayments}
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Διαγραφή...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Διαγραφή Πληρωμών
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Dialog>
   );
 }

@@ -15,7 +15,8 @@ import {
   RefreshCw,
   Eye,
   Printer,
-  CreditCard
+  CreditCard,
+  Trash2
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
@@ -79,13 +80,29 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
     common_expense_amount: number;
     previous_obligations_amount: number;
   } | null>(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [apartmentToDelete, setApartmentToDelete] = useState<ApartmentBalance | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     loadApartmentBalances();
   }, [buildingId, selectedMonth]);
 
-  const loadApartmentBalances = async () => {
-    setIsLoading(true);
+  // Auto refresh when modals close
+  useEffect(() => {
+    if (!showPaymentNotificationModal && !showPaymentModal && !showDeleteConfirmation) {
+      // All modals are closed, ensure data is fresh
+      loadApartmentBalances(true);
+    }
+  }, [showPaymentNotificationModal, showPaymentModal, showDeleteConfirmation]);
+
+  const loadApartmentBalances = async (isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
     setError(null);
 
     try {
@@ -105,7 +122,11 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       console.error('❌ Error loading apartment balances:', err);
       setError(err.response?.data?.detail || err.message || 'Σφάλμα φόρτωσης δεδομένων');
     } finally {
-      setIsLoading(false);
+      if (isRefresh) {
+        setIsRefreshing(false);
+      } else {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -126,18 +147,62 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
   const handlePaymentSuccess = () => {
     setShowPaymentModal(false);
     setPaymentModalData(null);
-    loadApartmentBalances(); // Reload data
+    // Auto refresh data after successful payment
+    loadApartmentBalances(true);
   };
 
   const handlePaymentNotificationClose = () => {
     setShowPaymentNotificationModal(false);
     setSelectedApartment(null);
-    loadApartmentBalances(); // Reload data after any action
+    // Auto refresh data when notification modal closes
+    loadApartmentBalances(true);
   };
 
   const handlePaymentCancel = () => {
     setShowPaymentModal(false);
     setPaymentModalData(null);
+    // Auto refresh data when payment modal is cancelled
+    loadApartmentBalances(true);
+  };
+
+  const handleDeletePayments = (apartment: ApartmentBalance) => {
+    setApartmentToDelete(apartment);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDeletePayments = async () => {
+    if (!apartmentToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      // Delete all payments for this apartment
+      const params = new URLSearchParams({ 
+        apartment_id: apartmentToDelete.apartment_id.toString(),
+        building_id: buildingId.toString()
+      });
+      
+      const response = await api.delete(`/financial/payments/bulk_delete/?${params.toString()}`);
+      
+      if (response.data.success) {
+        // Auto refresh data after successful deletion
+        await loadApartmentBalances(true);
+        setShowDeleteConfirmation(false);
+        setApartmentToDelete(null);
+        console.log('Payments deleted successfully:', response.data);
+      } else {
+        throw new Error(response.data.message || 'Σφάλμα κατά τη διαγραφή');
+      }
+    } catch (error: any) {
+      console.error('Error deleting payments:', error);
+      setError(error.message || 'Σφάλμα κατά τη διαγραφή των πληρωμών');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const cancelDeletePayments = () => {
+    setShowDeleteConfirmation(false);
+    setApartmentToDelete(null);
   };
 
   const handlePrintStatement = (apartment: ApartmentBalance) => {
@@ -263,16 +328,22 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={loadApartmentBalances}
-              disabled={isLoading}
+              onClick={() => loadApartmentBalances(true)}
+              disabled={isLoading || isRefreshing}
               className="flex items-center gap-2"
             >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              Ενημέρωση
+              <RefreshCw className={`w-4 h-4 ${isLoading || isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Ενημέρωση...' : 'Ενημέρωση'}
             </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {isRefreshing && (
+            <div className="flex items-center justify-center py-2 mb-4 bg-blue-50 rounded-lg">
+              <RefreshCw className="w-4 h-4 animate-spin mr-2 text-blue-600" />
+              <span className="text-sm text-blue-600">Ενημέρωση δεδομένων...</span>
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -329,6 +400,15 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                             Πληρωμή
                           </Button>
                         )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeletePayments(apartment)}
+                          className="flex items-center gap-1 text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200"
+                          title="Διαγραφή όλων των πληρωμών αυτού του διαμερίσματος"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -390,6 +470,109 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                 previous_obligations_amount: 0,
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirmation && apartmentToDelete && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={cancelDeletePayments}
+        >
+          <div 
+            className="bg-white rounded-lg max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Διαγραφή Πληρωμών
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Η ενέργεια αυτή δεν μπορεί να αναιρεθεί
+                </p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="mb-6">
+              <p className="text-gray-700 mb-4">
+                Είστε σίγουροι ότι θέλετε να διαγράψετε όλες τις πληρωμές για το διαμέρισμα <strong>{apartmentToDelete.apartment_number}</strong>;
+              </p>
+              
+              {/* Apartment Details */}
+              <div className="bg-gray-50 rounded-lg p-3 border">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-gray-600">Διαμέρισμα:</span>
+                    <p className="font-medium text-blue-600">
+                      {apartmentToDelete.apartment_number}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Ιδιοκτήτης:</span>
+                    <p className="font-medium">
+                      {apartmentToDelete.owner_name || 'Μη καταχωρημένος'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Καθαρή Οφειλή:</span>
+                    <p className={`font-medium ${
+                      apartmentToDelete.net_obligation > 0 ? 'text-red-600' : 
+                      apartmentToDelete.net_obligation < 0 ? 'text-green-600' : 'text-gray-600'
+                    }`}>
+                      {formatCurrency(apartmentToDelete.net_obligation)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Συνολικές Πληρωμές:</span>
+                    <p className="font-medium text-green-600">
+                      {formatCurrency(apartmentToDelete.total_payments)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ <strong>Προσοχή:</strong> Θα διαγραφούν όλες οι πληρωμές που έχουν καταχωρηθεί για αυτό το διαμέρισμα.
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={cancelDeletePayments}
+                disabled={isDeleting}
+              >
+                Ακύρωση
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDeletePayments}
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Διαγραφή...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Διαγραφή Πληρωμών
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}
