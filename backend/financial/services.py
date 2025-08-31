@@ -262,11 +262,51 @@ class CommonExpenseCalculator:
         if not self.building.reserve_fund_start_date:
             return
         
-        # Έλεγχος αν υπάρχουν εκκρεμότητες (αν ναι, δεν συλλέγουμε αποθεματικό)
+        # ΚΡΙΣΙΜΟΣ ΕΛΕΓΧΟΣ: Έλεγχος αν ο επιλεγμένος μήνας είναι εντός της περιόδου συλλογής
+        if self.month:
+            from datetime import date
+            try:
+                year, mon = map(int, self.month.split('-'))
+                selected_month_date = date(year, mon, 1)
+                
+                # Έλεγχος αν ο επιλεγμένος μήνας είναι πριν την έναρξη συλλογής
+                if selected_month_date < self.building.reserve_fund_start_date:
+                    return  # Δεν συλλέγουμε αποθεματικό πριν την έναρξη
+                
+                # Έλεγχος αν ο επιλεγμένος μήνας είναι μετά την ολοκλήρωση
+                if (self.building.reserve_fund_target_date and 
+                    selected_month_date > self.building.reserve_fund_target_date):
+                    return  # Δεν συλλέγουμε αποθεματικό μετά την ολοκλήρωση
+                    
+            except Exception as e:
+                print(f"Error parsing month {self.month}: {e}")
+                return
+        
+        # Έλεγχος αν υπάρχουν εκκρεμότητες (εξαιρώντας το αποθεματικό για αποφυγή κυκλικής παγίδας)
         # Χρήση ιστορικών υπολοίπων για τον έλεγχο εκκρεμοτήτων
-        total_obligations = sum(abs(self._get_historical_balance(apt, self.period_end_date)) 
-                              for apt in self.apartments 
-                              if self._get_historical_balance(apt, self.period_end_date) < 0)
+        total_obligations = 0
+        for apt in self.apartments:
+            historical_balance = self._get_historical_balance(apt, self.period_end_date)
+            
+            if historical_balance < 0:
+                # Αφαίρεση τυχόν χρεώσεων αποθεματικού για αποφυγή κυκλικής παγίδας
+                from django.utils import timezone
+                from datetime import datetime
+                end_datetime = timezone.make_aware(datetime.combine(self.period_end_date, datetime.max.time()))
+                
+                from django.db.models import Sum
+                reserve_charges = Transaction.objects.filter(
+                    apartment=apt,
+                    date__lt=end_datetime,
+                    description__icontains='αποθεματικ'
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                
+                # Προσαρμογή υπολοίπου αφαιρώντας χρεώσεις αποθεματικού
+                adjusted_balance = historical_balance + reserve_charges
+                
+                if adjusted_balance < 0:
+                    total_obligations += abs(adjusted_balance)
+        
         if total_obligations > 0:
             return
         
@@ -289,6 +329,7 @@ class CommonExpenseCalculator:
             share_per_apartment = Decimal(str(monthly_target)) / len(self.apartments)
             for apartment in self.apartments:
                 shares[apartment.id]['reserve_fund_amount'] = share_per_apartment
+                shares[apartment.id]['reserve_fund_contribution'] = share_per_apartment
         else:
             # Κατανομή ανά χιλιοστά
             for apartment in self.apartments:
@@ -297,6 +338,7 @@ class CommonExpenseCalculator:
                     total_mills_decimal = Decimal(str(total_mills))
                     reserve_share = (Decimal(str(monthly_target)) * participation_mills_decimal) / total_mills_decimal
                     shares[apartment.id]['reserve_fund_amount'] = reserve_share
+                    shares[apartment.id]['reserve_fund_contribution'] = reserve_share
         
         # Προσθήκη στο breakdown μόνο αν δεν υπάρχουν εκκρεμότητες
         # ΣΗΜΕΙΩΣΗ: Το αποθεματικό ΔΕΝ προστίθεται στο total_amount
@@ -617,6 +659,9 @@ class FinancialDashboardService:
             'reserve_fund_goal': float(self.building.reserve_fund_goal or Decimal('0.0')),  # From building settings
             'reserve_fund_duration_months': int(self.building.reserve_fund_duration_months or 0),  # From building settings
             'reserve_fund_monthly_target': float(reserve_fund_monthly_target),  # Use calculated value based on period
+            # Reserve fund timeline dates - CRITICAL for frontend timeline checks
+            'reserve_fund_start_date': self.building.reserve_fund_start_date.strftime('%Y-%m-%d') if self.building.reserve_fund_start_date else None,
+            'reserve_fund_target_date': self.building.reserve_fund_target_date.strftime('%Y-%m-%d') if self.building.reserve_fund_target_date else None,
             # Management expenses
             'management_fee_per_apartment': float(management_fee_per_apartment),
             'total_management_cost': float(total_management_cost)
@@ -2119,14 +2164,34 @@ class AdvancedCommonExpenseCalculator:
             shares[apartment_id]['total_amount'] += equal_share_amount
             
             # ε. Υπολογισμός Εισφοράς Αποθεματικού (κατανομή ανά χιλιοστά)
-            # FIXED: Add obligations check like Basic Calculator
+            # FIXED: Add obligations check like Basic Calculator (excluding reserve fund to avoid circular dependency)
             # Χρήση ιστορικών υπολοίπων για τον έλεγχο εκκρεμοτήτων
-            total_obligations = sum(abs(self._get_historical_balance(apt, self.period_end_date)) 
-                                  for apt in self.apartments 
-                                  if self._get_historical_balance(apt, self.period_end_date) < 0)
+            total_obligations = 0
+            for apt in self.apartments:
+                historical_balance = self._get_historical_balance(apt, self.period_end_date)
+                
+                if historical_balance < 0:
+                    # Αφαίρεση τυχόν χρεώσεων αποθεματικού για αποφυγή κυκλικής παγίδας
+                    from django.utils import timezone
+                    from datetime import datetime
+                    from django.db.models import Sum
+                    end_datetime = timezone.make_aware(datetime.combine(self.period_end_date, datetime.max.time()))
+                    
+                    reserve_charges = Transaction.objects.filter(
+                        apartment=apt,
+                        date__lt=end_datetime,
+                        description__icontains='αποθεματικ'
+                    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                    
+                    # Προσαρμογή υπολοίπου αφαιρώντας χρεώσεις αποθεματικού
+                    adjusted_balance = historical_balance + reserve_charges
+                    
+                    if adjusted_balance < 0:
+                        total_obligations += abs(adjusted_balance)
+            
             if (self.reserve_fund_monthly_total > 0 and 
                 total_participation_mills > 0 and 
-                total_obligations == 0):  # Only collect reserve fund if no obligations
+                total_obligations == 0):  # Only collect reserve fund if no non-reserve obligations
                 total_participation_mills_decimal = Decimal(str(total_participation_mills))
                 participation_mills_decimal = Decimal(str(participation_mills))
                 reserve_share = self.reserve_fund_monthly_total * (participation_mills_decimal / total_participation_mills_decimal)

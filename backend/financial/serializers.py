@@ -345,6 +345,9 @@ class FinancialSummarySerializer(serializers.Serializer):
     reserve_fund_goal = serializers.FloatField()
     reserve_fund_duration_months = serializers.IntegerField()
     reserve_fund_monthly_target = serializers.FloatField()
+    # Reserve fund timeline dates - CRITICAL for frontend timeline checks
+    reserve_fund_start_date = serializers.CharField(allow_null=True)
+    reserve_fund_target_date = serializers.CharField(allow_null=True)
     # Management expenses
     management_fee_per_apartment = serializers.FloatField()
     total_management_cost = serializers.FloatField()

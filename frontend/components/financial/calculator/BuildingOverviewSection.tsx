@@ -91,6 +91,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const [newInstallments, setNewInstallments] = useState('12'); // Προεπιλογή 12 μήνες
   const [editingTimeline, setEditingTimeline] = useState(false);
   const [newStartMonth, setNewStartMonth] = useState('');
+  const [newStartYear, setNewStartYear] = useState('');
   const [newDurationMonths, setNewDurationMonths] = useState('');
   const [editingManagementFee, setEditingManagementFee] = useState(false);
   const [newManagementFee, setNewManagementFee] = useState('');
@@ -125,6 +126,15 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     return months;
   };
 
+  const getYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = currentYear - 1; i <= currentYear + 3; i++) {
+      years.push({ value: i.toString(), label: i.toString() });
+    }
+    return years;
+  };
+
   const getDurationOptions = () => {
     const durations = [];
     for (let i = 3; i <= 24; i++) {
@@ -133,10 +143,11 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     return durations;
   };
 
-  const calculateNewDates = (startMonth: string, durationMonths: number) => {
-    const currentYear = new Date().getFullYear();
-    const startDate = new Date(currentYear, parseInt(startMonth) - 1, 1);
-    const endDate = new Date(currentYear, parseInt(startMonth) - 1 + durationMonths, 0); // Last day of end month
+  const calculateNewDates = (startMonth: string, startYear: string, durationMonths: number) => {
+    const year = parseInt(startYear) || new Date().getFullYear();
+    const month = parseInt(startMonth) || 1;
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month - 1 + durationMonths, 0); // Last day of end month
     
     return {
       startDate: startDate.toISOString().split('T')[0],
@@ -194,12 +205,23 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       if (financialSummary.reserve_fund_start_date) {
         const startDate = new Date(financialSummary.reserve_fund_start_date);
         const month = (startDate.getMonth() + 1).toString().padStart(2, '0');
+        const year = startDate.getFullYear().toString();
         setNewStartMonth(month);
+        setNewStartYear(year);
+      } else {
+        // Default to current month/year if no start date is set
+        const now = new Date();
+        setNewStartMonth((now.getMonth() + 1).toString().padStart(2, '0'));
+        setNewStartYear(now.getFullYear().toString());
       }
       if (financialSummary.reserve_fund_duration_months) {
         setNewDurationMonths(financialSummary.reserve_fund_duration_months.toString());
         // Αρχικοποίηση δόσεων από τη διάρκεια σε μήνες
         setNewInstallments((financialSummary.reserve_fund_duration_months || 0).toString());
+      } else {
+        // Default to 12 months if no duration is set
+        setNewDurationMonths('12');
+        setNewInstallments('12');
       }
     }
     
@@ -579,20 +601,30 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const targetDateString = targetDate.toISOString().split('T')[0];
       saveToLocalStorage('target_date', targetDateString);
       
+      // Calculate start and end dates based on timeline configuration
+      const newStartDate = newStartMonth && newStartYear ? 
+        calculateNewDates(newStartMonth, newStartYear, installmentsValue).startDate :
+        new Date().toISOString().split('T')[0];
+      const newEndDate = newStartMonth && newStartYear ? 
+        calculateNewDates(newStartMonth, newStartYear, installmentsValue).endDate :
+        new Date(new Date().getFullYear(), new Date().getMonth() + installmentsValue, 0).toISOString().split('T')[0];
+      
       // Recalculate reserve fund debt with new goal and installments
-      const startDate = new Date(financialSummary?.reserve_fund_start_date || today.toISOString().split('T')[0]);
+      const existingStartDate = new Date(financialSummary?.reserve_fund_start_date || newStartDate);
       const monthsPassed = Math.max(0, 
-        (today.getFullYear() - startDate.getFullYear()) * 12 + 
-        (today.getMonth() - startDate.getMonth())
+        (today.getFullYear() - existingStartDate.getFullYear()) * 12 + 
+        (today.getMonth() - existingStartDate.getMonth())
       );
       const expectedSoFar = monthsPassed * newMonthlyTarget;
       const currentReserve = financialSummary?.current_reserve || 0;
       const newReserveFundDebt = Math.max(0, expectedSoFar - currentReserve);
-
-      // Save to API
+      
+      // Save to API with complete timeline data
       await api.patch(`/buildings/list/${buildingId}/`, { 
         reserve_fund_goal: goalValue,
-        reserve_fund_duration_months: installmentsValue
+        reserve_fund_duration_months: installmentsValue,
+        reserve_fund_start_date: newStartDate,
+        reserve_fund_target_date: newEndDate
       });
       
       setFinancialSummary(prev => prev ? { 
@@ -600,7 +632,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         reserve_fund_goal: goalValue,
         reserve_fund_duration_months: installmentsValue,
         reserve_fund_monthly_target: newMonthlyTarget,
-        reserve_fund_target_date: targetDateString,
+        reserve_fund_start_date: newStartDate,
+        reserve_fund_target_date: newEndDate,
         reserve_fund_debt: -newReserveFundDebt,
         total_balance: (prev.current_reserve || 0) // Current reserve already reflects the true balance
       } : null);
@@ -616,20 +649,18 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
   const handleSaveTimeline = async () => {
     try {
-      if (!newStartMonth || !newDurationMonths) {
-        // Αφαιρέθηκε το error notification
-        // toast.error('Παρακαλώ συμπληρώστε όλα τα πεδία');
+      if (!newStartMonth || !newStartYear || !newDurationMonths) {
+        console.error('Missing required fields for timeline update');
         return;
       }
 
       const durationValue = parseInt(newDurationMonths);
-      if (isNaN(durationValue) || durationValue < 3 || durationValue > 24) {
-        // Αφαιρέθηκε το error notification
-        // toast.error('Η διάρκεια πρέπει να είναι μεταξύ 3 και 24 μηνών');
+      if (isNaN(durationValue) || durationValue < 3 || durationValue > 60) {
+        console.error('Duration must be between 3 and 60 months');
         return;
       }
 
-      const { startDate, endDate } = calculateNewDates(newStartMonth, durationValue);
+      const { startDate, endDate } = calculateNewDates(newStartMonth, newStartYear, durationValue);
       
       // Calculate monthly target based on goal and duration
       const monthlyTarget = financialSummary?.reserve_fund_goal ? 
@@ -825,30 +856,38 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
   // Helper function to check if selectedMonth is within reserve fund collection period
   const isMonthWithinReserveFundPeriod = () => {
-    if (!selectedMonth || !financialSummary?.reserve_fund_start_date || !financialSummary?.reserve_fund_target_date) {
-      return true; // Show reserve fund by default when no month is selected
+    if (!selectedMonth || !financialSummary?.reserve_fund_start_date) {
+      return false; // Don't show reserve fund if no timeline is configured
     }
 
     try {
       const selectedDate = new Date(selectedMonth + '-01');
       const startDate = new Date(financialSummary.reserve_fund_start_date);
-      const targetDate = new Date(financialSummary.reserve_fund_target_date);
+      const targetDate = financialSummary.reserve_fund_target_date ? 
+        new Date(financialSummary.reserve_fund_target_date) : null;
       
       // Check if selected month is within the collection period
-      const isWithinPeriod = selectedDate >= startDate && selectedDate <= targetDate;
+      const isAfterStart = selectedDate >= startDate;
+      const isBeforeEnd = !targetDate || selectedDate <= targetDate;
+      const isWithinPeriod = isAfterStart && isBeforeEnd;
       
       console.log('🔄 Reserve Fund Period Check:', {
         selectedMonth,
         selectedDate: selectedDate.toLocaleDateString('el-GR'),
         startDate: startDate.toLocaleDateString('el-GR'),
-        targetDate: targetDate.toLocaleDateString('el-GR'),
-        isWithinPeriod
+        targetDate: targetDate?.toLocaleDateString('el-GR') || 'No end date',
+        isAfterStart,
+        isBeforeEnd,
+        isWithinPeriod,
+        reserve_fund_monthly_target: financialSummary?.reserve_fund_monthly_target,
+        condition1: (financialSummary.reserve_fund_monthly_target || 0) > 0,
+        condition2: isWithinPeriod
       });
       
       return isWithinPeriod;
     } catch (error) {
       console.error('Error checking reserve fund period:', error);
-      return true; // Safe fallback - show reserve fund
+      return false; // Safe fallback - don't show reserve fund if error
     }
   };
 
@@ -1066,16 +1105,25 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     </div>
                   )}
                   
-                  {/* Εισφορά αποθεματικού - εμφανίζεται αν υπάρχει στόχος και είμαστε στην περίοδο εφαρμογής */}
-                  {(financialSummary.reserve_fund_monthly_target || 0) > 0 && (
+                  {/* Εισφορά αποθεματικού - εμφανίζεται αν είμαστε στην περίοδο συλλογής */}
+                  {console.log('🔍 Reserve Fund Display Check:', {
+                    reserve_fund_monthly_target: financialSummary?.reserve_fund_monthly_target,
+                    condition1: (financialSummary.reserve_fund_monthly_target || 0) > 0,
+                    condition2: isMonthWithinReserveFundPeriod(),
+                    finalCondition: (financialSummary.reserve_fund_monthly_target || 0) > 0 && isMonthWithinReserveFundPeriod()
+                  })}
+                  {(financialSummary.reserve_fund_monthly_target || 0) > 0 && isMonthWithinReserveFundPeriod() && (
                     <div className="space-y-1">
                       <div className="text-xs text-green-600 font-medium">Εισφορά αποθεματικού:</div>
-                      <div className="text-lg font-bold text-green-700">
+                      <div className={`text-lg font-bold ${(financialSummary.reserve_fund_contribution || 0) === 0 ? 'text-gray-500' : 'text-green-700'}`}>
                         {formatCurrency(financialSummary.reserve_fund_monthly_target || 0)}
+                        {(financialSummary.reserve_fund_contribution || 0) === 0 && (
+                          <span className="text-xs text-red-600 ml-2">(Αναστολή)</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1">
-                        <div className="text-xs text-green-600 italic">
-                          {financialSummary.reserve_fund_contribution === 0 ? 'Δεν συλλέγεται (pending obligations)' : 'Συσσώρευση κεφαλαίων'}
+                        <div className={`text-xs italic ${(financialSummary.reserve_fund_contribution || 0) === 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {(financialSummary.reserve_fund_contribution || 0) === 0 ? 'Θα αρχίσει να συλλέγεται μόλις εκπληρωθούν οι λειτουργικές δαπάνες' : 'Συσσώρευση κεφαλαίων'}
                         </div>
                         <Button
                           variant="ghost"
@@ -1090,18 +1138,18 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     </div>
                   )}
                   
-                                      {/* Μηνιαίες Υποχρεώσεις (αν υπάρχουν πραγματικές δαπάνες, κόστος διαχείρισης ή αποθεματικό) */}
-                  {((financialSummary.average_monthly_expenses || 0) > 0 || (financialSummary.total_management_cost || 0) > 0 || (financialSummary.reserve_fund_monthly_target || 0) > 0) && (
+                                      {/* Μηνιαίες Υποχρεώσεις (αν υπάρχουν πραγματικές δαπάνες, κόστος διαχείρισης ή αποθεματικό στην περίοδο) */}
+                  {((financialSummary.average_monthly_expenses || 0) > 0 || (financialSummary.total_management_cost || 0) > 0 || ((financialSummary.reserve_fund_monthly_target || 0) > 0 && isMonthWithinReserveFundPeriod())) && (
                     <div className="space-y-1 pt-2 border-t border-gray-200">
                       <div className="text-xs text-gray-700 font-medium">Μηνιαίες υποχρεώσεις (τρέχοντος μήνα):</div>
                       <div className="text-xl font-bold text-gray-800">
-                        {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (financialSummary.reserve_fund_monthly_target || 0))}
+                        {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (isMonthWithinReserveFundPeriod() ? (financialSummary.reserve_fund_monthly_target || 0) : 0))}
                       </div>
                       <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">
                         {(() => {
                           const hasExpenses = (financialSummary.average_monthly_expenses || 0) > 0;
                           const hasManagement = (financialSummary.total_management_cost || 0) > 0;
-                          const hasReserve = (financialSummary.reserve_fund_monthly_target || 0) > 0;
+                          const hasReserve = (financialSummary.reserve_fund_monthly_target || 0) > 0 && isMonthWithinReserveFundPeriod();
                           
                           if (hasExpenses && hasManagement && hasReserve) return 'Έξοδα + Διαχείριση + Εισφορά';
                           if (hasExpenses && hasManagement) return 'Έξοδα + Διαχείριση';
@@ -1230,14 +1278,14 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-gray-800">Μηνιαίο σύνολο:</span>
                         <span className="text-lg font-bold text-gray-900">
-                          {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (financialSummary.reserve_fund_monthly_target || 0) + (financialSummary.previous_obligations || 0))}
+                          {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (isMonthWithinReserveFundPeriod() ? (financialSummary.reserve_fund_monthly_target || 0) : 0) + (financialSummary.previous_obligations || 0))}
                         </span>
                       </div>
                       <div className="text-xs text-gray-500 mt-1 text-[10px]">
                         {(() => {
                           const hasExpenses = (financialSummary.average_monthly_expenses || 0) > 0;
                           const hasManagement = (financialSummary.total_management_cost || 0) > 0;
-                          const hasReserve = (financialSummary.reserve_fund_monthly_target || 0) > 0;
+                          const hasReserve = (financialSummary.reserve_fund_monthly_target || 0) > 0 && isMonthWithinReserveFundPeriod();
                           const hasPreviousObligations = (financialSummary.previous_obligations || 0) > 0;
                           
                           let description = '';
@@ -1520,6 +1568,75 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         </div>
                       </div>
                     )}
+                    
+                    {/* Timeline Configuration */}
+                    <div className="mt-4 p-3 bg-gray-50 rounded border border-gray-200">
+                      <div className="text-sm font-medium text-gray-700 mb-3">Πρόγραμμα Συλλογής</div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <Label htmlFor="start-month" className="text-xs font-medium">Μήνας Έναρξης</Label>
+                          <Select value={newStartMonth} onValueChange={setNewStartMonth}>
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder="Επιλογή μήνα" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getMonthOptions().map((month) => (
+                                <SelectItem key={month.value} value={month.value}>
+                                  {month.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="start-year" className="text-xs font-medium">Έτος Έναρξης</Label>
+                          <Select value={newStartYear} onValueChange={setNewStartYear}>
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder="Επιλογή έτους" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getYearOptions().map((year) => (
+                                <SelectItem key={year.value} value={year.value}>
+                                  {year.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="duration" className="text-xs font-medium">Διάρκεια</Label>
+                          <Select value={newDurationMonths} onValueChange={setNewDurationMonths}>
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder="Επιλογή διάρκειας" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getDurationOptions().map((duration) => (
+                                <SelectItem key={duration.value} value={duration.value}>
+                                  {duration.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      
+                      {/* Timeline Preview */}
+                      {newStartMonth && newStartYear && newDurationMonths && (
+                        <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-200">
+                          <div className="text-xs text-blue-700 font-medium mb-1">Προεπισκόπηση Προγράμματος:</div>
+                          <div className="text-xs text-blue-600">
+                            • Έναρξη: {getMonthOptions().find(m => m.value === newStartMonth)?.label} {newStartYear}
+                            • Διάρκεια: {newDurationMonths} μήνες
+                            • Ολοκλήρωση: {(() => {
+                              const startDate = new Date(parseInt(newStartYear), parseInt(newStartMonth) - 1, 1);
+                              const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + parseInt(newDurationMonths), 0);
+                              return `${getMonthOptions().find(m => m.value === (endDate.getMonth() + 1).toString().padStart(2, '0'))?.label} ${endDate.getFullYear()}`;
+                            })()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
                     <div className="flex gap-2 pt-2">
                       <Button size="sm" onClick={handleSaveGoal} className="flex-1 bg-orange-600 hover:bg-orange-700">
                         <Check className="h-4 w-4 mr-1" />

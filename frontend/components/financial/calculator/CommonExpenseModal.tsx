@@ -1003,39 +1003,78 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
             .font-bold { font-weight: 700; }
             .text-primary { color: #2563eb; }
             
-            /* Print Optimizations */
-            @media print {
-              body { font-size: 10pt; }
-              .header { break-inside: avoid; }
-              .section-title { break-after: avoid; }
-              .analysis-table { font-size: 6pt; }
+            /* A4 Page Setup with Margins */
+            @page {
+              size: A4;
+              margin: 15mm 10mm 15mm 10mm; /* top right bottom left */
             }
             
-            /* Ensure single page layout */
+            /* Print Optimizations for A4 */
+            @media print {
+              body { 
+                font-size: 8pt; 
+                margin: 0;
+                padding: 0;
+                width: 190mm; /* A4 width minus margins */
+                max-height: 267mm; /* A4 height minus margins */
+                overflow: hidden;
+              }
+              .header { 
+                break-inside: avoid;
+                font-size: 9pt;
+                margin-bottom: 8px;
+              }
+              .section-title { 
+                break-after: avoid;
+                font-size: 9pt;
+                margin: 8px 0 4px 0;
+              }
+              .analysis-table { 
+                font-size: 5pt;
+                margin: 6px 0;
+              }
+              .analysis-table th {
+                font-size: 5.5pt;
+                padding: 3px 2px;
+                height: 18px;
+              }
+              .analysis-table td {
+                font-size: 5pt;
+                padding: 2px 1px;
+                height: 16px;
+              }
+            }
+            
+            /* Ensure content fits A4 */
             body {
-              max-height: 210mm; /* A4 landscape height */
+              max-width: 190mm;
+              max-height: 267mm;
               overflow: hidden;
+              font-family: Arial, sans-serif;
             }
             
             .analysis-table {
               page-break-inside: avoid;
+              width: 100%;
+              table-layout: fixed;
             }
             
             .info-section {
               page-break-inside: avoid;
+              margin: 6px 0;
             }
           </style>
         </head>
         <body>
-          <!-- Header Section - Single Line -->
-          <div class="header">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div style="display: flex; align-items: center; gap: 15px;">
-                <div class="brand">Digital Concierge App</div>
-            <div class="main-title">Φύλλο Κοινοχρήστων</div>
-            <div class="period">${period}</div>
+          <!-- Header Section - Compact for A4 -->
+          <div class="header" style="margin-bottom: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 8pt;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="brand" style="font-size: 8pt;">Digital Concierge App</div>
+                <div class="main-title" style="font-size: 10pt;">Φύλλο Κοινοχρήστων</div>
+                <div class="period" style="font-size: 9pt;">${period}</div>
               </div>
-              <div class="timestamp">
+              <div class="timestamp" style="font-size: 7pt;">
                 ⏰ ${new Date().toLocaleString('el-GR', { 
                   day: '2-digit', 
                   month: '2-digit', 
@@ -1047,28 +1086,52 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
             </div>
           </div>
           
-          <!-- Building Information and Expenses Side by Side -->
-          <div class="info-section" style="display: flex; gap: 15px; margin: 8px 0;">
+          <!-- Three Column Layout - Compact for A4 -->
+          <div class="info-section" style="display: flex; gap: 8px; margin: 4px 0;">
             <!-- Left Column - Building Info -->
             <div style="flex: 1;">
-            <table class="info-table">
-              <tr><th>🏢 ΠΟΛΥΚΑΤΟΙΚΙΑ</th><td>${buildingName}</td></tr>
-              <tr><th>📍 ΔΙΕΥΘΥΝΣΗ</th><td>${buildingAddress}${buildingCity ? ', ' + buildingCity : ''}${buildingPostalCode ? ' ' + buildingPostalCode : ''}</td></tr>
-              <tr><th>📅 ΜΗΝΑΣ</th><td>${period}</td></tr>
-              <tr><th>👤 ΔΙΑΧΕΙΡΙΣΤΗΣ</th><td>${managerName}${managerApartment ? ' (Διαμ. ' + managerApartment + ')' : ''}</td></tr>
-              <tr><th>📞 ΤΗΛΕΦΩΝΟ</th><td>${managerPhone}</td></tr>
-              <tr><th>🕒 ΩΡΑΡΙΟ ΕΙΣΠΡΑΞΗΣ</th><td>${managerCollectionSchedule}</td></tr>
-              <tr><th>⏰ ΛΗΞΗ ΠΛΗΡΩΜΗΣ</th><td>${paymentDueDate}</td></tr>
-              <tr><th>🏦 ΤΡΑΠΕΖΑ</th><td>Εθνική Τράπεζα</td></tr>
-              <tr><th>💳 IBAN</th><td>GR16 0110 1250 0000 1234 5678 901</td></tr>
-              <tr><th>📝 ΠΑΡΑΤΗΡΗΣΕΙΣ</th><td>ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ: ${managerCollectionSchedule}</td></tr>
-            </table>
-          </div>
-          
-            <!-- Right Column - Expenses Summary -->
+              <div style="background: #dbeafe; border-radius: 4px; padding: 5px; border: 1px solid #93c5fd;">
+                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+                  <span style="font-size: 6pt;">🏢</span>
+                  <h3 style="font-size: 6pt; font-weight: 700; color: #1e40af;">ΠΟΛΥΚΑΤΟΙΚΙΑ</h3>
+                </div>
+                <p style="font-size: 6pt; font-weight: 600; color: #1e3a8a; margin: 1px 0;">${buildingName}</p>
+                <p style="font-size: 5pt; color: #3730a3; margin: 1px 0;">${buildingAddress}${buildingCity ? ', ' + buildingCity : ''}${buildingPostalCode ? ' ' + buildingPostalCode : ''}</p>
+              </div>
+              
+              <div style="background: #f3e8ff; border-radius: 4px; padding: 5px; border: 1px solid #c4b5fd; margin-top: 4px;">
+                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+                  <span style="font-size: 6pt;">👤</span>
+                  <h3 style="font-size: 6pt; font-weight: 700; color: #7c2d12;">ΔΙΑΧΕΙΡΙΣΤΗΣ</h3>
+                </div>
+                <p style="font-size: 6pt; font-weight: 600; color: #7c2d12; margin: 1px 0;">${managerName}${managerApartment ? ' (Διαμ. ' + managerApartment + ')' : ''}</p>
+                <p style="font-size: 5pt; color: #7c2d12; margin: 1px 0;">📞 ${managerPhone}</p>
+                <p style="font-size: 5pt; color: #7c2d12; margin: 1px 0;">🕒 ${managerCollectionSchedule}</p>
+              </div>
+              
+              <div style="background: #f0fdf4; border-radius: 4px; padding: 5px; border: 1px solid #86efac; margin-top: 4px;">
+                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+                  <span style="font-size: 6pt;">💳</span>
+                  <h3 style="font-size: 6pt; font-weight: 700; color: #15803d;">ΤΡΑΠΕΖΙΚΑ ΣΤΟΙΧΕΙΑ</h3>
+                </div>
+                <p style="font-size: 5pt; color: #15803d; margin: 1px 0;">🏦 Εθνική Τράπεζα</p>
+                <p style="font-size: 5pt; color: #15803d; margin: 1px 0; font-family: monospace;">IBAN: GR16 0110 1250 0000 1234 5678 901</p>
+                <p style="font-size: 5pt; color: #15803d; margin: 1px 0;">Δικαιούχος: Πολυκατοικία ${buildingName}</p>
+              </div>
+              
+              <div style="background: #fef3c7; border-radius: 4px; padding: 5px; border: 1px solid #fcd34d; margin-top: 4px;">
+                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+                  <span style="font-size: 6pt;">📅</span>
+                  <h3 style="font-size: 6pt; font-weight: 700; color: #d97706;">ΛΗΞΗ ΠΛΗΡΩΜΗΣ</h3>
+                </div>
+                <p style="font-size: 6pt; font-weight: 600; color: #d97706; margin: 1px 0;">${paymentDueDate}</p>
+              </div>
+            </div>
+            
+            <!-- Middle Column - Expenses Analysis -->
             <div style="flex: 1;">
-              <div style="background: #f8fafc; border-radius: 6px; padding: 8px; border-left: 3px solid #f59e0b;">
-                <h3 style="font-size: 9pt; font-weight: 700; color: #1e293b; margin-bottom: 8px; text-align: center;">📊 ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ</h3>
+              <div style="background: #f8fafc; border-radius: 4px; padding: 5px; border: 1px solid #e2e8f0;">
+                <h3 style="font-size: 7pt; font-weight: 700; color: #1e293b; margin-bottom: 4px; text-align: center;">ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ</h3>
                 
             ${(() => {
               let expenseHtml = '';
@@ -1086,16 +1149,26 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     'individual': 'Ε. ΕΞΟΔΑ ΣΥΝΙΔΙΟΚΤΗΣΙΑΣ'
                   };
                   
-                  expenseHtml += `<div style="margin: 4px 0; padding: 3px 6px; background: white; border-radius: 4px; border-left: 2px solid #3b82f6;">
-                    <strong style="color: #1e293b; font-size: 7pt;">${groupLabels[groupKey]}: ${formatAmount(groupData.total)}€</strong>`;
-                  
-                  if (groupData.expenses && groupData.expenses.length > 0) {
-                    groupData.expenses.forEach((category: any, index: number) => {
-                      expenseHtml += `<div style="margin-left: 10px; font-size: 6pt; color: #475569; padding: 1px 0;">
-                        ${index + 1}. ${category.displayName}: ${formatAmount(category.total)}€</div>`;
-                    });
+                  // Add null check for groupData and items
+                  if (!groupData || !groupData.items || !Array.isArray(groupData.items)) {
+                    return;
                   }
-                  expenseHtml += `</div>`;
+                  
+                  expenseHtml += `
+                    <div style="margin: 4px 0; padding: 3px; background: white; border-radius: 3px; border-left: 2px solid #3b82f6;">
+                      <div style="font-weight: 600; color: #1e293b; font-size: 6pt; margin-bottom: 2px;">${groupLabels[groupKey] || groupKey}</div>
+                      <div style="font-size: 5pt; color: #64748b;">
+                        ${groupData.items.map((item: any) => `
+                          <div style="margin: 1px 0; padding-left: 8px;">
+                            • ${item.description}: ${item.amount.toFixed(2)}€
+                          </div>
+                        `).join('')}
+                      </div>
+                      <div style="font-weight: 600; color: #1e293b; font-size: 6pt; margin-top: 2px; padding-top: 2px; border-top: 1px solid #e2e8f0;">
+                        Σύνολο: ${(groupData.total || 0).toFixed(2)}€
+                      </div>
+                    </div>
+                  `;
                 });
               }
               
@@ -1117,34 +1190,80 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 </div>
               </div>
             </div>
+            
+            <!-- Right Column - Reserve Fund -->
+            <div style="flex: 1;">
+              ${reserveFundInfo.monthlyAmount > 0 ? `
+              <div style="background: #dbeafe; border-radius: 4px; padding: 5px; border: 1px solid #93c5fd;">
+                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+                  <span style="font-size: 6pt;">🐷</span>
+                  <h3 style="font-size: 6pt; font-weight: 700; color: #1e40af;">Ζ. ΑΠΟΘΕΜΑΤΙΚΟ</h3>
+                </div>
+                <div style="margin: 2px 0;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 1px 0;">
+                    <span style="font-size: 5pt; font-weight: 600; color: #1e3a8a;">Μηνιαία Εισφορά:</span>
+                    <span style="font-size: 6pt; font-weight: 700; color: #1e3a8a;">${formatAmount(reserveFundInfo.monthlyAmount)}€</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 1px 0;">
+                    <span style="font-size: 5pt; font-weight: 600; color: #1e3a8a;">Στόχος:</span>
+                    <span style="font-size: 5pt; font-weight: 600; color: #1e3a8a;">${formatAmount(reserveFundInfo.goal)}€</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 1px 0;">
+                    <span style="font-size: 5pt; font-weight: 600; color: #1e3a8a;">Διάρκεια:</span>
+                    <span style="font-size: 5pt; font-weight: 600; color: #1e3a8a;">${reserveFundInfo.duration} μήνες</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 1px 0;">
+                    <span style="font-size: 5pt; font-weight: 600; color: #1e3a8a;">Συνολική Εισφορά:</span>
+                    <span style="font-size: 5pt; font-weight: 600; color: #1e3a8a;">${formatAmount(reserveFundInfo.totalContribution)}€</span>
+                  </div>
+                  ${reserveFundInfo.goal > 0 ? `
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 1px 0;">
+                    <span style="font-size: 5pt; font-weight: 600; color: #1e3a8a;">Μήνες Απομένουν:</span>
+                    <span style="font-size: 5pt; font-weight: 600; color: #1e3a8a;">${reserveFundInfo.monthsRemaining}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 1px 0;">
+                    <span style="font-size: 5pt; font-weight: 600; color: #1e3a8a;">Μαζεμένα Χρήματα:</span>
+                    <span style="font-size: 5pt; font-weight: 600; color: #1e3a8a;">${formatAmount(reserveFundInfo.actualReserveCollected)}€</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 1px 0;">
+                    <span style="font-size: 5pt; font-weight: 600; color: #1e3a8a;">Πρόοδος:</span>
+                    <span style="font-size: 5pt; font-weight: 600; color: #1e3a8a;">${reserveFundInfo.progressPercentage.toFixed(1)}%</span>
+                  </div>
+                  <!-- Progress Bar -->
+                  <div style="width: 100%; background: #bfdbfe; border-radius: 6px; height: 3px; margin-top: 2px;">
+                    <div style="height: 3px; border-radius: 6px; background: ${reserveFundInfo.progressPercentage >= 0 ? '#2563eb' : '#dc2626'}; width: ${Math.min(Math.abs(reserveFundInfo.progressPercentage), 100)}%;"></div>
+                  </div>
+                  ` : ''}
+                </div>
+              </div>
+              ` : ''}
+            </div>
           </div>
 
           
           <!-- Apartments Analysis -->
-          <div class="section-title">🏠 ΑΝΑΛΥΣΗ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ <span style="font-size: 9pt; font-style: italic; color: #666;"> </span></div>
+          <div class="section-title" style="font-size: 7pt; margin: 6px 0 3px 0;">🏠 ΑΝΑΛΥΣΗ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ</div>
           
           <table class="analysis-table">
             <thead>
               <tr>
-                <th rowspan="2" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">Α/Δ</th>
-                <th rowspan="2" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</th>
-                <th rowspan="2" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">ΠΑΛΑΙΟΤΕΡΕΣ<br/>ΟΦΕΙΛΕΣ</th>
+                <th rowspan="2" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); width: 5%;">Α/Δ</th>
+                <th rowspan="2" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); width: 20%;">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</th>
+                <th rowspan="2" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); width: 10%;">ΠΑΛΑΙΟΤΕΡΕΣ<br/>ΟΦΕΙΛΕΣ</th>
                 <th colspan="3" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ</th>
                 <th colspan="3" style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);">ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ</th>
-                <th colspan="3" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ</th>
-                <th rowspan="2" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">ΠΛΗΡΩΤΕΟ<br/>ΠΟΣΟ</th>
-                <th rowspan="2" style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);">A/A</th>
+                <th colspan="2" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ</th>
+                <th rowspan="2" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); width: 12%;">ΠΛΗΡΩΤΕΟ<br/>ΠΟΣΟ</th>
               </tr>
               <tr>
-                <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); font-size: 10px; width: 80px;">ΚΟΙΝΟΧΡΗΣΤΑ</th>
-                <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); font-size: 10px; width: 80px;">ΑΝΕΛΚ/ΡΑΣ</th>
-                <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); font-size: 10px; width: 80px;">ΘΕΡΜΑΝΣΗ</th>
-                <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); font-size: 10px; width: 80px;">ΚΟΙΝΟΧΡΗΣΤΑ</th>
-                <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); font-size: 10px; width: 80px;">ΑΝΕΛΚ/ΡΑΣ</th>
-                <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); font-size: 10px; width: 80px;">ΘΕΡΜΑΝΣΗ</th>
-                <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%); font-size: 10px; width: 80px;">ΚΟΙΝΟΧΡΗΣΤΑ</th>
-                <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%); font-size: 10px; width: 80px;">ΑΝΕΛΚ/ΡΑΣ</th>
-                <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%); font-size: 10px; width: 80px;">ΘΕΡΜΑΝΣΗ</th>
+                <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); font-size: 10px; width: 8%;">ΚΟΙΝΟΧΡΗΣΤΑ</th>
+                <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); font-size: 10px; width: 8%;">ΑΝΕΛΚ/ΡΑΣ</th>
+                <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); font-size: 10px; width: 8%;">ΘΕΡΜΑΝΣΗ</th>
+                <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); font-size: 10px; width: 8%;">ΚΟΙΝΟΧΡΗΣΤΑ</th>
+                <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); font-size: 10px; width: 8%;">ΑΝΕΛΚ/ΡΑΣ</th>
+                <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); font-size: 10px; width: 8%;">ΘΕΡΜΑΝΣΗ</th>
+                <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%); font-size: 10px; width: 8%;">ΔΙΑΧΕΙΡΙΣΗ</th>
+                <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%); font-size: 10px; width: 12%;">ΑΠΟΘΕΜΑΤΙΚΟ</th>
               </tr>
             </thead>
             <tbody>
@@ -1189,45 +1308,45 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                   <td class="name-cell">${share.owner_name || 'Μη καταχωρημένος'}</td>
                   <td class="amount-cell" style="color: ${(apartmentData?.previous_balance ?? 0) > 0 ? '#dc2626' : '#059669'};">${formatAmount(apartmentData?.previous_balance ?? 0)}€</td>
                   <td>${toNumber(commonMills).toFixed(2)}</td>
-                    <td>${toNumber(elevatorMills).toFixed(2)}</td>
-                    <td>${toNumber(heatingMills).toFixed(2)}</td>
+                  <td>${toNumber(elevatorMills).toFixed(2)}</td>
+                  <td>${toNumber(heatingMills).toFixed(2)}</td>
                   <td class="amount-cell">${formatAmount(commonAmount)}</td>
                   <td class="amount-cell">${formatAmount(elevatorAmount)}</td>
                   <td class="amount-cell">${formatAmount(heatingAmount)}</td>
-                  <td class="amount-cell">${formatAmount(equalShareAmount)}</td>
-                  <td class="amount-cell">${formatAmount(0)}</td>
+                  <td class="amount-cell">${formatAmount(managementFee)}</td>
                   <td class="amount-cell">${formatAmount(reserveFundAmount)}</td>
                   <td class="total-amount-cell">${formatAmount(finalTotalWithFees)}</td>
-                  <td>${index + 1}</td>
                 </tr>`;
               }).join('')}
               
               <tr class="totals-row">
                 <td class="font-bold">ΣΥΝΟΛΑ</td>
-                <td class="name-cell" style="font-weight: 600;"></td>
-                <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => {
+                <td class="name-cell" style="font-weight: 600;">-</td>
+                <td class="font-bold">${formatAmount(Object.values(currentState.shares).reduce((sum: number, s: any) => {
+                  const apartmentData = aptWithFinancial.find(apt => apt.id === s.apartment_id);
+                  return sum + Math.abs(apartmentData?.previous_balance ?? 0);
+                }, 0))}€</td>
+                <td class="font-bold">${Object.values(currentState.shares).reduce((sum: number, s: any) => {
                   const apartmentData = aptWithFinancial.find(apt => apt.id === s.apartment_id);
                   const commonMills = apartmentData?.participation_mills ?? toNumber(s.participation_mills);
                   return sum + commonMills;
-                }, 0).toFixed(2)}</td>
-                <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => {
+                }, 0).toFixed(0)}</td>
+                <td class="font-bold">${Object.values(currentState.shares).reduce((sum: number, s: any) => {
                   const apartmentData = aptWithFinancial.find(apt => apt.id === s.apartment_id);
                   const elevatorMills = apartmentData?.participation_mills ?? toNumber(s.participation_mills);
                   return sum + elevatorMills;
-                }, 0).toFixed(2)}</td>
-                <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => {
+                }, 0).toFixed(0)}</td>
+                <td class="font-bold">${Object.values(currentState.shares).reduce((sum: number, s: any) => {
                   const apartmentData = aptWithFinancial.find(apt => apt.id === s.apartment_id);
                   const heatingMills = apartmentData?.heating_mills ?? toNumber(s.participation_mills);
                   return sum + heatingMills;
-                }, 0).toFixed(2)}</td>
-                <td class="amount-cell">${formatAmount(currentExpenseBreakdown.common)}</td>
-                <td class="amount-cell">${formatAmount(currentExpenseBreakdown.elevator)}</td>
-                <td class="amount-cell">${formatAmount(currentExpenseBreakdown.heating)}</td>
-                <td class="amount-cell">${formatAmount(currentExpenseBreakdown.other)}</td>
-                <td class="amount-cell">${formatAmount(currentExpenseBreakdown.coownership)}</td>
-                <td class="amount-cell">${formatAmount(currentReserveFundInfo.totalContribution)}</td>
-                <td class="total-amount-cell">${formatAmount(finalTotalExpenses)}</td>
-                <td></td>
+                }, 0).toFixed(0)}</td>
+                <td class="amount-cell font-bold">${formatAmount(currentExpenseBreakdown.common)}€</td>
+                <td class="amount-cell font-bold">${formatAmount(currentExpenseBreakdown.elevator)}€</td>
+                <td class="amount-cell font-bold">${formatAmount(currentExpenseBreakdown.heating)}€</td>
+                <td class="amount-cell font-bold">${formatAmount(currentManagementFeeInfo.totalFee)}€</td>
+                <td class="amount-cell font-bold">${formatAmount(currentReserveFundInfo.totalContribution)}€</td>
+                <td class="total-amount-cell font-bold">${formatAmount(finalTotalExpenses)}€</td>
               </tr>
             </tbody>
           </table>
@@ -1243,7 +1362,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       element.style.position = 'absolute';
       element.style.left = '-9999px';
       element.style.top = '0';
-      element.style.width = '350mm'; // A4 landscape width with extra space for new columns
+      element.style.width = '277mm'; // A4 landscape width minus margins
       element.style.backgroundColor = 'white';
       element.style.fontFamily = 'Arial, sans-serif';
       element.style.fontSize = '11pt';
@@ -1291,15 +1410,18 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
       console.log('PDF instance created');
       
       // Calculate dimensions for landscape A4
-      const imgWidth = 350; // A4 landscape width in mm with extra space for new columns
+      const imgWidth = 297; // A4 landscape width in mm
       const pageHeight = 210; // A4 landscape height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
       let position = 0;
       
-      // Add image to PDF (handle multiple pages if needed)
-      console.log('Adding image to PDF. Dimensions:', imgWidth, 'x', imgHeight, 'mm');
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      // Add image to PDF with proper margins (handle multiple pages if needed)
+      const leftMargin = 10; // 10mm left margin
+      const rightMargin = 10; // 10mm right margin
+      const contentWidth = imgWidth - leftMargin - rightMargin; // Adjust content width
+      console.log('Adding image to PDF. Dimensions:', contentWidth, 'x', imgHeight, 'mm with margins');
+      pdf.addImage(imgData, 'JPEG', leftMargin, position, contentWidth, imgHeight);
       heightLeft -= pageHeight;
       
       let pageCount = 1;
@@ -1307,7 +1429,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
         position = heightLeft - imgHeight;
         pdf.addPage();
         pageCount++;
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'JPEG', leftMargin, position, contentWidth, imgHeight);
         heightLeft -= pageHeight;
       }
       console.log('PDF created with', pageCount, 'pages');
@@ -1748,68 +1870,6 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 </div>
               </div>
               
-              {/* Ζ. ΑΠΟΘΕΜΑΤΙΚΟ Banner - Only show if monthly amount > 0 */}
-              {reserveFundInfo.monthlyAmount > 0 && (
-              <div className="bg-blue-50 p-3 rounded border">
-                <div className="flex items-center gap-2">
-                  <PiggyBank className="h-4 w-4 text-blue-600" />
-                  <h3 className="font-semibold text-blue-800 text-sm">Ζ. ΑΠΟΘΕΜΑΤΙΚΟ</h3>
-                </div>
-                <div className="space-y-1 mt-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-blue-900">Μηνιαία Εισφορά:</span>
-                    <span className="text-lg font-bold text-blue-900">{formatAmount(reserveFundInfo.monthlyAmount)}€</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-blue-900">Στόχος:</span>
-                    <span className="text-sm font-medium text-blue-900">{formatAmount(reserveFundInfo.goal)}€</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-blue-900">Διάρκεια:</span>
-                    <span className="text-sm font-medium text-blue-900">{reserveFundInfo.duration} μήνες</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-blue-900">Συνολική Εισφορά:</span>
-                    <span className="text-sm font-medium text-blue-900">{formatAmount(reserveFundInfo.totalContribution)}€</span>
-                  </div>
-                  
-                  {/* Progress Information */}
-                  {reserveFundInfo.goal > 0 && (
-                    <>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-blue-900">Μήνες Απομένουν:</span>
-                        <span className="text-sm font-medium text-blue-900">{reserveFundInfo.monthsRemaining}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-blue-900">Μαζεμένα Χρήματα:</span>
-                        <span className="text-sm font-medium text-blue-900">
-                          {formatAmount(reserveFundInfo.actualReserveCollected)}€
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-blue-900">Πρόοδος:</span>
-                        <span className="text-sm font-medium text-blue-900">
-                          {reserveFundInfo.progressPercentage.toFixed(1)}%
-                        </span>
-                      </div>
-                      
-                      {/* Progress Bar */}
-                      <div className="w-full bg-blue-200 rounded-full h-2 mt-2">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${
-                            reserveFundInfo.progressPercentage >= 0 ? 'bg-blue-600' : 'bg-red-500'
-                          }`}
-                          style={{ 
-                            width: `${Math.min(Math.abs(reserveFundInfo.progressPercentage), 100)}%`,
-                            marginLeft: reserveFundInfo.progressPercentage < 0 ? 'auto' : '0'
-                          }}
-                        ></div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-              )}
             </div>
 
             {/* Middle Column - Building Expenses Analysis */}
@@ -1984,8 +2044,8 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
               </div>
             </div>
 
-            {/* Right Column - Owner Expenses Analysis */}
-            {showOwnerExpenses && (
+            {/* Right Column - Reserve Fund or Owner Expenses */}
+            {showOwnerExpenses ? (
             <div className="bg-green-50 p-3 rounded border">
               <h3 className="font-bold text-gray-800 mb-3 text-center text-sm">ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΙΔΙΟΚΤΗΤΩΝ</h3>
               
@@ -2032,6 +2092,69 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                 </div>
               </div>
             </div>
+            ) : (
+            /* Right Column - Reserve Fund when no owner expenses */
+            reserveFundInfo.monthlyAmount > 0 && (
+            <div className="bg-blue-50 p-3 rounded border">
+              <div className="flex items-center gap-2 mb-3">
+                <PiggyBank className="h-4 w-4 text-blue-600" />
+                <h3 className="font-semibold text-blue-800 text-sm">Ζ. ΑΠΟΘΕΜΑΤΙΚΟ</h3>
+              </div>
+              <div className="space-y-1 mt-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-blue-900">Μηνιαία Εισφορά:</span>
+                  <span className="text-lg font-bold text-blue-900">{formatAmount(reserveFundInfo.monthlyAmount)}€</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-blue-900">Στόχος:</span>
+                  <span className="text-sm font-medium text-blue-900">{formatAmount(reserveFundInfo.goal)}€</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-blue-900">Διάρκεια:</span>
+                  <span className="text-sm font-medium text-blue-900">{reserveFundInfo.duration} μήνες</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-blue-900">Συνολική Εισφορά:</span>
+                  <span className="text-sm font-medium text-blue-900">{formatAmount(reserveFundInfo.totalContribution)}€</span>
+                </div>
+                
+                {/* Progress Information */}
+                {reserveFundInfo.goal > 0 && (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-blue-900">Μήνες Απομένουν:</span>
+                      <span className="text-sm font-medium text-blue-900">{reserveFundInfo.monthsRemaining}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-blue-900">Μαζεμένα Χρήματα:</span>
+                      <span className="text-sm font-medium text-blue-900">
+                        {formatAmount(reserveFundInfo.actualReserveCollected)}€
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-blue-900">Πρόοδος:</span>
+                      <span className="text-sm font-medium text-blue-900">
+                        {reserveFundInfo.progressPercentage.toFixed(1)}%
+                      </span>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-full bg-blue-200 rounded-full h-2 mt-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          reserveFundInfo.progressPercentage >= 0 ? 'bg-blue-600' : 'bg-red-500'
+                        }`}
+                        style={{ 
+                          width: `${Math.min(Math.abs(reserveFundInfo.progressPercentage), 100)}%`,
+                          marginLeft: reserveFundInfo.progressPercentage < 0 ? 'auto' : '0'
+                        }}
+                      ></div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+            )
             )}
           </div>
 
@@ -2084,7 +2207,6 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                       <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #7e22ce 0%, #6d28d9 100%)", color: "white"}}>ΑΠΟΘΕΜΑΤΙΚΟ</TableHead>
                     )}
                     <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΠΛΗΡΩΤΕΟ ΠΟΣΟ</TableHead>
-                    <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", color: "white"}}>A/A</TableHead>
                   </TableRow>
                   
                   {/* Sub-headers Row */}
@@ -2113,7 +2235,6 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                       </>
                     )}
                     
-                    <TableHead className="text-center border"></TableHead>
                     <TableHead className="text-center border"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -2255,7 +2376,6 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                           <TableCell className="text-center border font-medium text-xs">{formatAmount(apartmentReserveFund)}</TableCell>
                         )}
                         <TableCell className="text-center border font-bold text-xs">{formatAmount(finalTotalWithFees)}</TableCell>
-                        <TableCell className="text-center border text-xs">{index + 1}</TableCell>
                       </TableRow>
                     );
                   })}
@@ -2264,6 +2384,14 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                   <TableRow className="bg-gray-100 font-bold">
                     <TableCell className="text-center border">ΣΥΝΟΛΑ</TableCell>
                     <TableCell className="border"></TableCell>
+                    
+                    {/* ΠΑΛΑΙΟΤΕΡΕΣ ΟΦΕΙΛΕΣ Total */}
+                    <TableCell className="text-center border font-bold">
+                      {formatAmount(Object.values(state.shares).reduce((sum: number, s: any) => {
+                        const apartmentData = aptWithFinancial.find(apt => apt.id === s.apartment_id);
+                        return sum + Math.abs(apartmentData?.previous_balance ?? 0);
+                      }, 0))}€
+                    </TableCell>
                     
                     {/* ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ Totals */}
                     <TableCell className="text-center border" style={{fontSize: "10px", width: "80px"}}>
@@ -2308,7 +2436,6 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = ({
                     )}
 
                     <TableCell className="text-center border">{formatAmount(totalExpenses)}</TableCell>
-                    <TableCell className="text-center border"></TableCell>
                   </TableRow>
                 </TableBody>
               </Table>

@@ -432,17 +432,29 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
             .analysis-table { 
               width: 100%; 
               border-collapse: collapse; 
-              margin: 20px 0; 
+              margin: 20px auto; 
               font-size: 7pt;
               background: white;
               box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+              table-layout: fixed; /* Fixed layout for better column control */
             }
             
             .analysis-table th, .analysis-table td { 
               border: 1px solid #cbd5e1; 
               padding: 6px 4px; 
-              text-align: center; 
+              text-align: center;
+              vertical-align: middle;
+              word-wrap: break-word;
             }
+            
+            /* Column width specifications */
+            .analysis-table th:nth-child(1), .analysis-table td:nth-child(1) { width: 5%; } /* ΑΡΙΘΜΟΣ ΔΙΑΜΕΡΙΣΜΑΤΟΣ */
+            .analysis-table th:nth-child(2), .analysis-table td:nth-child(2) { width: 25%; text-align: left; } /* ΟΝΟΜΑΤΕΠΩΝΥΜΟ */
+            .analysis-table th:nth-child(3), .analysis-table td:nth-child(3) { width: 15%; } /* ΧΙΛΙΟΣΤΑ */
+            .analysis-table th:nth-child(4), .analysis-table td:nth-child(4) { width: 12%; } /* ΔΙΑΧΕΙΡΙΣΗ */
+            .analysis-table th:nth-child(5), .analysis-table td:nth-child(5) { width: 12%; } /* ΑΠΟΘΕΜΑΤΙΚΟ */
+            .analysis-table th:nth-child(6), .analysis-table td:nth-child(6) { width: 12%; } /* ΠΛΗΡΩΤΕΟ ΠΟΣΟ */
+            .analysis-table th:nth-child(7), .analysis-table td:nth-child(7) { width: 19%; } /* ΠΑΛΑΙΟΤΕΡΕΣ ΟΦΕΙΛΕΣ */
             
             .analysis-table th { 
               background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
@@ -534,30 +546,39 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
           <table class="analysis-table">
             <thead>
               <tr>
-                <th rowspan="2">ΑΡΙΘΜΟΣ<br/>ΔΙΑΜΕΡΙΣΜΑΤΟΣ</th>
-                <th rowspan="2">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</th>
-                <th rowspan="2">ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ</th>
-                <th rowspan="2">ΠΛΗΡΩΤΕΟ<br/>ΠΟΣΟ</th>
-                <th rowspan="2">A/A</th>
+                <th style="text-align: center; vertical-align: middle;">Α/Δ</th>
+                <th style="text-align: center; vertical-align: middle;">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</th>
+                <th style="text-align: center; vertical-align: middle;">ΧΙΛΙΟΣΤΑ<br/>ΣΥΜΜΕΤΟΧΗΣ</th>
+                <th style="text-align: center; vertical-align: middle;">ΔΙΑΧΕΙΡΙΣΗ<br/>(€)</th>
+                <th style="text-align: center; vertical-align: middle;">ΑΠΟΘΕΜΑΤΙΚΟ<br/>(€)</th>
+                <th style="text-align: center; vertical-align: middle;">ΠΛΗΡΩΤΕΟ<br/>ΠΟΣΟ (€)</th>
+                <th style="text-align: center; vertical-align: middle;">ΠΑΛΑΙΟΤΕΡΕΣ<br/>ΟΦΕΙΛΕΣ (€)</th>
               </tr>
             </thead>
             <tbody>
               ${Object.values(currentState.shares).map((share: any, index: number) => {
+                const managementFee = 1.0; // Default management fee per apartment
+                const reserveFund = (share.participation_mills || 0) * 0.1; // Example reserve fund calculation
+                const previousBalance = share.previous_balance || 0;
                 return `<tr>
                   <td class="font-bold text-primary">${share.identifier || share.apartment_number}</td>
                   <td class="text-left" style="padding-left: 8px;">${share.owner_name || 'Μη καταχωρημένος'}</td>
                   <td>${share.participation_mills || 0}</td>
-                  <td class="font-bold text-primary">${formatAmount(share.total_due || 0)}</td>
-                  <td>${index + 1}</td>
+                  <td class="font-bold">${formatAmount(managementFee)}€</td>
+                  <td class="font-bold">${formatAmount(reserveFund)}€</td>
+                  <td class="font-bold text-primary">${formatAmount(share.total_due || 0)}€</td>
+                  <td class="font-bold" style="color: ${previousBalance < 0 ? '#dc2626' : '#059669'};">${formatAmount(Math.abs(previousBalance))}€</td>
                 </tr>`;
               }).join('')}
               
               <tr class="totals-row">
                 <td class="font-bold">ΣΥΝΟΛΑ</td>
-                <td></td>
-                <td>${Object.values(currentState.shares).reduce((sum: number, s: any) => sum + (s.participation_mills || 0), 0)}</td>
-                <td class="font-bold text-primary">${formatAmount(currentState.totalExpenses)}</td>
-                <td></td>
+                <td class="font-bold">-</td>
+                <td class="font-bold">${Object.values(currentState.shares).reduce((sum: number, s: any) => sum + (s.participation_mills || 0), 0)}</td>
+                <td class="font-bold">${formatAmount(Object.values(currentState.shares).length * 1.0)}€</td>
+                <td class="font-bold">${formatAmount(Object.values(currentState.shares).reduce((sum: number, s: any) => sum + ((s.participation_mills || 0) * 0.1), 0))}€</td>
+                <td class="font-bold text-primary">${formatAmount(currentState.totalExpenses)}€</td>
+                <td class="font-bold">${formatAmount(Object.values(currentState.shares).reduce((sum: number, s: any) => sum + Math.abs(s.previous_balance || 0), 0))}€</td>
                 </tr>
             </tbody>
           </table>
@@ -586,7 +607,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       element.style.position = 'absolute';
       element.style.left = '-9999px';
       element.style.top = '0';
-      element.style.width = '297mm'; // A4 landscape width
+      element.style.width = '277mm'; // A4 landscape width minus margins (297-20)
       element.style.backgroundColor = 'white';
       document.body.appendChild(element);
       
@@ -621,14 +642,17 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       let heightLeft = imgHeight;
       let position = 0;
       
-      // Add image to PDF (handle multiple pages if needed)
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      // Add image to PDF with proper margins (handle multiple pages if needed)
+      const leftMargin = 10; // 10mm left margin
+      const rightMargin = 10; // 10mm right margin
+      const contentWidth = imgWidth - leftMargin - rightMargin; // Adjust content width
+      pdf.addImage(imgData, 'JPEG', leftMargin, position, contentWidth, imgHeight);
       heightLeft -= pageHeight;
       
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'JPEG', leftMargin, position, contentWidth, imgHeight);
         heightLeft -= pageHeight;
       }
       
