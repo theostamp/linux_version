@@ -38,6 +38,7 @@ import { ServicePackageModal } from '../ServicePackageModal';
 import { AmountDetailsModal } from '../AmountDetailsModal';
 import { PreviousObligationsModal } from '../PreviousObligationsModal';
 
+
 interface BuildingOverviewSectionProps {
   buildingId: number;
   selectedMonth?: string; // Add selectedMonth prop
@@ -419,7 +420,10 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         reserve_fund_contribution: apiData.reserve_fund_contribution || 0, // ← ΝΕΟ FIELD
         // Management Expenses
         management_fee_per_apartment: buildingData?.management_fee_per_apartment || 0,
-        total_management_cost: (buildingData?.management_fee_per_apartment || 0) * (buildingData?.apartments_count || 0)
+        total_management_cost: (buildingData?.management_fee_per_apartment || 0) * (buildingData?.apartments_count || 0),
+        // Monthly Payment and Expense Data
+        total_payments_month: apiData.total_payments_month || 0,
+        total_expenses_month: apiData.total_expenses_month || 0
       };
       
       console.log('🔄 BuildingOverviewSection: Transformed financial data:', financialData);
@@ -486,7 +490,10 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         reserve_fund_duration_months: 0, // No hardcoded value - will be set by user
         reserve_fund_contribution: 0, // No hardcoded value - from API
         management_fee_per_apartment: buildingData?.management_fee_per_apartment || 0,
-        total_management_cost: (buildingData?.management_fee_per_apartment || 0) * (buildingData?.apartments_count || 0)
+        total_management_cost: (buildingData?.management_fee_per_apartment || 0) * (buildingData?.apartments_count || 0),
+        // Monthly Payment and Expense Data
+        total_payments_month: 0,
+        total_expenses_month: 0
       };
       
       setFinancialSummary(emptyData);
@@ -517,6 +524,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   useImperativeHandle(ref, () => ({
     refresh: () => fetchFinancialSummary(true)
   }));
+
+  // Αφαιρέθηκε το auto-refresh hook - μόνο χειροκίνητο refresh
 
   // Handle refresh button click for all data
   const handleRefresh = () => {
@@ -1361,6 +1370,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                         Progress Bar
                       </Badge>
+
                       <ChevronDown className="h-4 w-4 text-green-600 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                     </div>
                   </CardTitle>
@@ -1370,11 +1380,10 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 <CardContent className="p-4">
               
               {(() => {
-                // Υπολογισμός συνολικού ποσού που οφείλεται (0-1100)
-                const totalObligations = (financialSummary.average_monthly_expenses || 0) + 
+                // Υπολογισμός συνολικού ποσού που οφείλεται για τον τρέχοντα μήνα
+                const totalObligations = (financialSummary.total_expenses_month || 0) + 
                                         (financialSummary.total_management_cost || 0) + 
-                                        (financialSummary.reserve_fund_monthly_target || 0) + 
-                                        (financialSummary.previous_obligations || 0);
+                                        (financialSummary.reserve_fund_monthly_target || 0);
                 
                 // Πληρωμές που έχουν γίνει για τον τρέχοντα μήνα
                 const actualPayments = financialSummary.total_payments_month || 0;
@@ -1390,7 +1399,19 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     {/* Progress Bar */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700">Κάλυψη Υποχρεώσεων</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-700">Κάλυψη Υποχρεώσεων</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRefresh}
+                            disabled={refreshing}
+                            className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700"
+                            title="Ανανέωση δεδομένων (χειροκίνητο)"
+                          >
+                            <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
+                          </Button>
+                        </div>
                         <span className="text-sm font-bold text-green-600">
                           {coveragePercentage.toFixed(1)}%
                         </span>

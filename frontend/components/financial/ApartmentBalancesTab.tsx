@@ -23,6 +23,7 @@ import { formatCurrency } from '@/lib/utils';
 import { PaymentForm } from './PaymentForm';
 import PaymentNotificationModal from './PaymentNotificationModal';
 
+
 interface ApartmentBalance {
   apartment_id: number;
   apartment_number: string;
@@ -89,13 +90,9 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
     loadApartmentBalances();
   }, [buildingId, selectedMonth]);
 
-  // Auto refresh when modals close
-  useEffect(() => {
-    if (!showPaymentNotificationModal && !showPaymentModal && !showDeleteConfirmation) {
-      // All modals are closed, ensure data is fresh
-      loadApartmentBalances(true);
-    }
-  }, [showPaymentNotificationModal, showPaymentModal, showDeleteConfirmation]);
+  // Αφαιρέθηκε το auto-refresh όταν κλείνουν τα modals - μόνο χειροκίνητο refresh
+
+  // Αφαιρέθηκε το auto-refresh hook - μόνο χειροκίνητο refresh
 
   const loadApartmentBalances = async (isRefresh = false) => {
     if (isRefresh) {
@@ -215,6 +212,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       case 'paid':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'overdue':
+      case 'καθυστέρηση':
         return <AlertTriangle className="w-4 h-4 text-red-500" />;
       case 'pending':
         return <Clock className="w-4 h-4 text-yellow-500" />;
@@ -228,12 +226,22 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       case 'paid':
         return 'default' as const;
       case 'overdue':
+      case 'καθυστέρηση':
         return 'destructive' as const;
       case 'pending':
         return 'secondary' as const;
       default:
         return 'outline' as const;
     }
+  };
+
+  // Δυναμική μέτρηση διαμερισμάτων με καθυστέρηση
+  const getOverdueApartmentsCount = () => {
+    return apartmentBalances.filter(apt => 
+      apt.status.toLowerCase() === 'καθυστέρηση' || 
+      apt.status.toLowerCase() === 'overdue' ||
+      apt.net_obligation > 0
+    ).length;
   };
 
   if (isLoading) {
@@ -306,13 +314,17 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Κατάσταση</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-1">
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {apartmentBalances.filter(apt => apt.status === 'paid').length}/{apartmentBalances.length}
+            <div className="text-2xl font-bold text-red-600">
+              {getOverdueApartmentsCount()}/{apartmentBalances.length}
             </div>
-            <p className="text-xs text-muted-foreground">Εξοφλημένα</p>
+            <p className="text-xs text-muted-foreground">
+              με οφειλή {getOverdueApartmentsCount() > 0 ? `(${getOverdueApartmentsCount()} καθυστέρηση)` : ''}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -324,13 +336,15 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
             <div className="flex items-center gap-2">
               <Calculator className="w-5 h-5" />
               Υπόλοιπα Διαμερισμάτων
+
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => loadApartmentBalances(true)}
               disabled={isLoading || isRefreshing}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+              title="Ανανέωση δεδομένων (χειροκίνητο)"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading || isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? 'Ενημέρωση...' : 'Ενημέρωση'}
