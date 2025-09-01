@@ -1497,16 +1497,27 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             start_date = today - timedelta(days=30 * months_back)
             
             # Get all transactions for this apartment in the date range
+            # Group by reference_id to avoid duplicates from different transaction types
             transactions = Transaction.objects.filter(
                 apartment=apartment,
                 date__date__gte=start_date,
                 date__date__lte=end_date
             ).order_by('-date')
             
+            # Remove duplicate transactions with same reference_id
+            seen_references = set()
+            unique_transactions = []
+            for transaction in transactions:
+                if transaction.reference_id:
+                    if transaction.reference_id in seen_references:
+                        continue
+                    seen_references.add(transaction.reference_id)
+                unique_transactions.append(transaction)
+            
             # Group transactions by month
             monthly_data = {}
             
-            for transaction in transactions:
+            for transaction in unique_transactions:
                 # Get month key (YYYY-MM format)
                 month_key = transaction.date.strftime('%Y-%m')
                 
