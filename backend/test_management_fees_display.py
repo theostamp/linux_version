@@ -45,7 +45,7 @@ def test_management_fees_display():
             current_obligations = summary_monthly.get('current_obligations', 0)
             total_balance = summary_monthly.get('total_balance', 0)
             
-            print(f"   • Πραγματικά έξοδα: {monthly_expenses:.2f}€")
+            print(f"   • Λειτουργικές Δαπάνες {monthly_expenses:.2f}€")
             print(f"   • Κόστος διαχείρισης: {management_cost:.2f}€")
             print(f"   • Αμοιβή ανά διαμέρισμα: {management_fee_per_apartment:.2f}€")
             print(f"   • Αριθμός διαμερισμάτων: {apartments_count}")
@@ -57,7 +57,7 @@ def test_management_fees_display():
             expected_total_balance = -expected_total_obligations
             
             print("📋 FRONTEND DISPLAY EXPECTATIONS:")
-            print(f"   • Πραγματικά έξοδα: {monthly_expenses:.2f}€")
+            print(f"   • Λειτουργικές Δαπάνες {monthly_expenses:.2f}€")
             if management_cost > 0:
                 print(f"   • Κόστος διαχείρισης: {management_cost:.2f}€ ({apartments_count} διαμερίσματα × {management_fee_per_apartment:.2f}€)")
             if reserve_fund_monthly_target > 0:

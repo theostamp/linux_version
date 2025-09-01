@@ -91,12 +91,12 @@ def investigate_amount_discrepancies():
         print("="*60)
         
         print(f"\n❌ ΑΝΑΦΕΡΟΜΕΝΑ ΠΟΣΑ:")
-        print(f"   • Πραγματικά έξοδα: 120,00€ (ΛΑΘΟΣ)")
+        print(f"   • Λειτουργικές Δαπάνες 120,00€ (ΛΑΘΟΣ)")
         print(f"   • Εισφορά αποθεματικού: 66,67€ (ΛΑΘΟΣ)")
         print(f"   • Συνολικές υποχρεώσεις: 186,67€ (ΛΑΘΟΣ)")
         
         print(f"\n✅ ΠΡΑΓΜΑΤΙΚΑ ΠΟΣΑ:")
-        print(f"   • Πραγματικά έξοδα: {total_august_expenses}€")
+        print(f"   • Λειτουργικές Δαπάνες {total_august_expenses}€")
         print(f"   • Εισφορά αποθεματικού: {total_reserve_contribution}€")
         print(f"   • Συνολικές υποχρεώσεις: {total_august_expenses + total_reserve_contribution}€")
         

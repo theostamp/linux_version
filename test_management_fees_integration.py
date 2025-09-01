@@ -75,7 +75,7 @@ def test_management_fees_integration():
                 print(f"✅ Current reserve equals total balance")
             
             print(f"\n🎯 EXPECTED FRONTEND DISPLAY:")
-            print(f"  Πραγματικά έξοδα: {summary['average_monthly_expenses']:.2f}€")
+            print(f"  Λειτουργικές Δαπάνες {summary['average_monthly_expenses']:.2f}€")
             print(f"  Τρέχουσες υποχρεώσεις: {abs(summary['current_obligations']):.2f}€")
             print(f"  Υπόλοιπο Περιόδου: {summary['total_balance']:.2f}€")
             

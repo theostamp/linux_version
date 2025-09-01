@@ -12,14 +12,11 @@ import {
   BulkImportWizard,
   ExpenseList,
   BuildingOverviewSection,
-  PaymentProgressVisualization,
+
   FinancialOverviewTab
 } from './index';
 import { ApartmentBalancesTab } from './ApartmentBalancesTab';
-import ReserveFundDebug from './test/ReserveFundDebug';
-import SimpleAPITest from './test/SimpleAPITest';
-import AutoRefreshTest from './test/AutoRefreshTest';
-import { DataIntegrityCleanup } from './DataIntegrityCleanup';
+
 import { MeterReadingList } from './MeterReadingList';
 import { MonthSelector } from './MonthSelector';
 import { 
@@ -31,7 +28,7 @@ import {
   Calendar,
   Building2,
   RefreshCw,
-  BarChart3,
+
   DollarSign
 } from 'lucide-react';
 import { useFinancialPermissions } from '@/hooks/useFinancialPermissions';
@@ -85,7 +82,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   
   // Refs for refreshing components
   const buildingOverviewRef = useRef<{ refresh: () => void }>(null);
-  const paymentProgressRef = useRef<{ refresh: () => void } | null>(null);
+
   // Ref for expense list to refresh data
   const expenseListRef = useRef<{ refresh: () => void }>(null);
   
@@ -509,37 +506,13 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   <span className="text-sm font-medium whitespace-nowrap">Ιστορικό</span>
                 </button>
               </ConditionalRender>
-              <ConditionalRender permission="financial_read">
-                <button
-                  onClick={() => handleTabChange('payment-progress')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
-                    activeTab === 'payment-progress' 
-                      ? 'bg-cyan-100 border-cyan-300 text-cyan-700 shadow-sm' 
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
-                  }`}
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Εικόνα Εισπράξεων</span>
-                </button>
-              </ConditionalRender>
-              <ConditionalRender permission="financial_read">
-                <button
-                  onClick={() => handleTabChange('debug')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
-                    activeTab === 'debug' 
-                      ? 'bg-red-100 border-red-300 text-red-700 shadow-sm' 
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
-                  }`}
-                >
-                  🔍
-                  <span className="text-sm font-medium whitespace-nowrap">Debug</span>
-                </button>
-              </ConditionalRender>
+
+
             </div>
           </div>
 
           {/* Desktop: Card Grid Layout */}
-          <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-8 gap-3">
+          <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-7 gap-3">
             <ConditionalRender permission="financial_read">
               <button
                 onClick={() => handleTabChange('balances')}
@@ -729,32 +702,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               </button>
             </ConditionalRender>
 
-            <ConditionalRender permission="financial_read">
-              <button
-                onClick={() => handleTabChange('payment-progress')}
-                className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
-                  activeTab === 'payment-progress' 
-                    ? 'bg-cyan-50 border-cyan-200 shadow-sm' 
-                    : 'bg-white border-gray-200 hover:border-cyan-200 hover:bg-cyan-50/30'
-                }`}
-              >
-                <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'payment-progress' 
-                    ? 'bg-cyan-100 text-cyan-600' 
-                    : 'bg-gray-100 text-gray-500 group-hover:bg-cyan-100 group-hover:text-cyan-600'
-                }`}>
-                  <BarChart3 className="h-6 w-6" />
-                </div>
-                <h3 className={`font-semibold text-sm ${
-                  activeTab === 'payment-progress' ? 'text-cyan-700' : 'text-gray-700'
-                }`}>
-                  Εικόνα Εισπράξεων
-                </h3>
-                <p className="text-xs text-gray-500 text-center mt-1">
-                  Προοδος & Κατανομή
-                </p>
-              </button>
-            </ConditionalRender>
+
           </div>
         </div>
         
@@ -841,15 +789,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </ProtectedFinancialRoute>
         </TabsContent>
         
-        <TabsContent value="payment-progress" className="space-y-4" data-tab="payment-progress">
-          <ProtectedFinancialRoute requiredPermission="financial_read">
-            <PaymentProgressVisualization 
-              ref={paymentProgressRef}
-              buildingId={activeBuildingId} 
-              selectedMonth={selectedMonth}
-            />
-          </ProtectedFinancialRoute>
-        </TabsContent>
+
         
         <TabsContent value="balances" className="space-y-4" data-tab="balances">
           <ProtectedFinancialRoute requiredPermission="financial_read">
@@ -860,26 +800,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </ProtectedFinancialRoute>
         </TabsContent>
         
-                    <TabsContent value="debug" className="space-y-4" data-tab="debug">
-              <ProtectedFinancialRoute requiredPermission="financial_read">
-                <div className="space-y-6">
-                  <DataIntegrityCleanup 
-                    buildingId={activeBuildingId} 
-                    onCleanupComplete={() => {
-                      // Refresh all data after cleanup
-                      if (expenseListRef.current) {
-                        expenseListRef.current.refresh();
-                      }
-                      // Force re-render of financial overview
-                      // setRefreshKey(prev => prev + 1); // This line was removed as per the new_code
-                    }}
-                  />
-                  <AutoRefreshTest buildingId={activeBuildingId} />
-                  <SimpleAPITest buildingId={activeBuildingId} />
-                  <ReserveFundDebug buildingId={activeBuildingId} />
-                </div>
-              </ProtectedFinancialRoute>
-            </TabsContent>
+
       </Tabs>
       
       {/* Expense Form Modal */}

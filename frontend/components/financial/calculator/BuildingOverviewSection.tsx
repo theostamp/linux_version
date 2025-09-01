@@ -1092,7 +1092,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 <div className="space-y-3">
                   {/* Πραγματικά έξοδα */}
                   <div className="space-y-1">
-                    <div className="text-xs text-red-600 font-medium">Πραγματικά έξοδα:</div>
+                    <div className="text-xs text-red-600 font-medium">Λειτουργικές Δαπάνες</div>
                     <div className="text-lg font-bold text-red-700">
                     {formatCurrency(financialSummary.average_monthly_expenses || 0)}
                     </div>
@@ -1380,10 +1380,16 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 <CardContent className="p-4">
               
               {(() => {
-                // Υπολογισμός συνολικού ποσού που οφείλεται για τον τρέχοντα μήνα
-                const totalObligations = (financialSummary.total_expenses_month || 0) + 
-                                        (financialSummary.total_management_cost || 0) + 
-                                        (financialSummary.reserve_fund_monthly_target || 0);
+                // Υπολογισμός συνολικού ποσού που οφείλεται (τρέχοντες + προηγούμενες οφειλές)
+                const currentMonthObligations = (financialSummary.total_expenses_month || 0) + 
+                                               (financialSummary.total_management_cost || 0) + 
+                                               (financialSummary.reserve_fund_monthly_target || 0);
+                
+                // Προηγούμενες οφειλές (συμπεριλαμβανομένων εκ των υστέρων δαπανών)
+                const previousObligations = financialSummary.previous_obligations || 0;
+                
+                // Συνολικές υποχρεώσεις = τρέχοντες + προηγούμενες
+                const totalObligations = currentMonthObligations + previousObligations;
                 
                 // Πληρωμές που έχουν γίνει για τον τρέχοντα μήνα
                 const actualPayments = financialSummary.total_payments_month || 0;
@@ -1400,7 +1406,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-700">Κάλυψη Υποχρεώσεων</span>
+                          <span className="text-sm font-medium text-gray-700">
+                            Κάλυψη Υποχρεώσεων
+                            {previousObligations > 0 && (
+                              <span className="text-xs text-gray-500 ml-1">(συμπεριλαμβανομένων προηγούμενων)</span>
+                            )}
+                          </span>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1491,7 +1502,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         </div>
                       )}
                       <div className="mt-2 text-xs opacity-75">
-                        Εισπράξεις: {formatCurrency(actualPayments)} | Υποχρεώσεις: {formatCurrency(totalObligations)}
+                        Εισπράξεις: {formatCurrency(actualPayments)} | Συνολικές Υποχρεώσεις: {formatCurrency(totalObligations)}
+                        {previousObligations > 0 && (
+                          <div className="mt-1 text-xs">
+                            (Τρέχοντες: {formatCurrency(currentMonthObligations)} + Προηγούμενες: {formatCurrency(previousObligations)})
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

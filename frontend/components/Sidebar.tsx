@@ -38,7 +38,7 @@ import {
 const navigationGroups = [
   {
     id: 'main',
-    title: 'Κύριες Λειτουργίες',
+    title: 'Kiosk',
     color: 'blue',
     bgColor: 'bg-blue-50 dark:bg-blue-900/20',
     borderColor: 'border-blue-200 dark:border-blue-800',
