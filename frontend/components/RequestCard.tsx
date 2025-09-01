@@ -174,7 +174,7 @@ export default function RequestCard({ request }: Readonly<Props>) {
             {isOverdue ? (
               <span className="flex items-center gap-1">
                 <AlertTriangle className="w-4 h-4" />
-                Καθυστέρηση
+                Οφειλή
               </span>
             ) : (
               `Εκτιμώμενη: ${safeFormatDate(estimated_completion, 'd MMM', { locale: el })}`

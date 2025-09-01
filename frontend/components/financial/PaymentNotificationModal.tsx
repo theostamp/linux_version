@@ -48,10 +48,16 @@ interface ExpenseBreakdown {
 }
 
 interface PaymentBreakdown {
-  payment_id: number;
-  payment_date: string;
-  payment_amount: number;
-  payer_name: string;
+  id: number;
+  amount: number;
+  date: string;
+  method: string;
+  method_display?: string;
+  payment_type: string;
+  payment_type_display?: string;
+  reference_number?: string;
+  notes?: string;
+  payer_name?: string;
 }
 
 interface PaymentNotificationModalProps {

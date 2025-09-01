@@ -113,7 +113,7 @@ def analyze_payment_discrepancy():
                     status = "Ενημερωμένο"
                     current_apartments += 1
                 elif abs(total_due) <= total_amount * 2:
-                    status = "Καθυστέρηση"
+                    status = "Οφειλή"
                     behind_apartments += 1
                 else:
                     status = "Κρίσιμο"
@@ -127,7 +127,7 @@ def analyze_payment_discrepancy():
             
             print("📈 ΣΥΝΟΠΤΙΚΑ ΣΤΑΤΙΣΤΙΚΑ:")
             print(f"   ✅ Ενημερωμένα: {current_apartments} διαμερίσματα")
-            print(f"   ⚠️  Καθυστέρηση: {behind_apartments} διαμερίσματα")
+            print(f"   ⚠️  Οφειλή: {behind_apartments} διαμερίσματα")
             print(f"   ❌ Κρίσιμα: {critical_apartments} διαμερίσματα")
             
         except Exception as e:

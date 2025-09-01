@@ -853,7 +853,7 @@ class FinancialDashboardService:
                 if calculated_balance > 100:  # More than 100€ debt
                     status = 'Κρίσιμο'
                 elif calculated_balance > 50:  # More than 50€ debt
-                    status = 'Καθυστέρηση'
+                    status = 'Οφειλή'
                 else:
                     status = 'Ενεργό'
             elif calculated_balance < 0:
@@ -1100,7 +1100,7 @@ class ReportService:
                 if current_balance > 100:  # More than 100€ debt
                     status = 'Κρίσιμο'
                 elif current_balance > 50:  # More than 50€ debt
-                    status = 'Καθυστέρηση'
+                    status = 'Οφειλή'
                 else:
                     status = 'Ενεργό'
             elif current_balance < 0:

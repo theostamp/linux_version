@@ -23,7 +23,7 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
 }) => {
   const { apartmentBalances, isLoading, error } = useFinancialDashboard(buildingId);
   const [searchTerm, setSearchTerm] = useState('');
-  const [balanceFilter, setBalanceFilter] = useState<string>('all');
+  const [balanceFilter, setBalanceFilter] = useState<string>('debt');
   const [sortBy, setSortBy] = useState<string>('balance');
 
   const filteredAndSortedBalances = useMemo(() => {
@@ -39,16 +39,13 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
       let matchesBalance = true;
       switch (balanceFilter) {
         case 'positive':
-          matchesBalance = balance.current_balance > 0;
-          break;
-        case 'negative':
-          matchesBalance = balance.current_balance < 0;
+          matchesBalance = balance.current_balance > 0; // Πιστωτικό
           break;
         case 'zero':
-          matchesBalance = balance.current_balance === 0;
+          matchesBalance = balance.current_balance === 0; // Εξοφλημένο
           break;
-        case 'overdue':
-          matchesBalance = balance.current_balance < -50; // Threshold for overdue
+        case 'debt':
+          matchesBalance = balance.current_balance < 0; // Οφειλή
           break;
       }
 
@@ -78,8 +75,7 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
 
   const getBalanceColor = (balance: number) => {
     if (balance > 0) return 'text-green-600';
-    if (balance < -50) return 'text-red-600';
-    if (balance < 0) return 'text-orange-600';
+    if (balance < 0) return 'text-red-600';
     return 'text-gray-600';
   };
 
@@ -87,11 +83,8 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
     if (balance > 0) {
       return <Badge className="bg-green-100 text-green-800">Πιστωτικό</Badge>;
     }
-    if (balance < -50) {
-      return <Badge className="bg-red-100 text-red-800">Καθυστέρηση</Badge>;
-    }
     if (balance < 0) {
-      return <Badge className="bg-orange-100 text-orange-800">Οφειλή</Badge>;
+      return <Badge className="bg-red-100 text-red-800">Οφειλή</Badge>;
     }
     return <Badge className="bg-gray-100 text-gray-800">Εξοφλημένο</Badge>;
   };
@@ -191,9 +184,8 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
             <SelectContent>
               <SelectItem value="all">Όλες οι καταστάσεις</SelectItem>
               <SelectItem value="positive">Πιστωτικό</SelectItem>
-              <SelectItem value="negative">Οφειλή</SelectItem>
+              <SelectItem value="debt">Οφειλή</SelectItem>
               <SelectItem value="zero">Εξοφλημένο</SelectItem>
-              <SelectItem value="overdue">Καθυστέρηση</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>

@@ -91,7 +91,7 @@ def test_api_status():
                 print()
                 print("📊 Summary από API:")
                 print(f"   Ενεργό: {summary.get('active_count', 0)}")
-                print(f"   Καθυστέρηση: {summary.get('delay_count', 0)}")
+                print(f"   Οφειλή: {summary.get('debt_count', 0)}")
                 print(f"   Κρίσιμο: {summary.get('critical_count', 0)}")
                 print(f"   Πιστωτικό: {summary.get('credit_count', 0)}")
                 

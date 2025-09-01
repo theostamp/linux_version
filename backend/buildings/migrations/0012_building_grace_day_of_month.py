@@ -16,9 +16,9 @@ class Migration(migrations.Migration):
             name='grace_day_of_month',
             field=models.PositiveSmallIntegerField(
                 default=15,
-                help_text='Ημέρα του μήνα μετά την οποία οι οφειλές θεωρούνται καθυστερημένες',
+                help_text='Ημέρα του μήνα μετά την οποία οι οφειλές θεωρούνται οφειλές',
                 validators=[django.core.validators.MinValueValidator(1)],
-                verbose_name='Ημέρα Έναρξης Καθυστέρησης'
+                verbose_name='Ημέρα Έναρξης Οφειλής'
             ),
         ),
     ]

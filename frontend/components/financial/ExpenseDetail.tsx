@@ -12,7 +12,6 @@ import { FilePreview } from '@/components/ui/FilePreview';
 interface ExpenseDetailProps {
   expense: Expense;
   onEdit?: () => void;
-  onDistribute?: () => void;
   onDelete?: () => void;
   showActions?: boolean;
 }
@@ -20,20 +19,20 @@ interface ExpenseDetailProps {
 export const ExpenseDetail: React.FC<ExpenseDetailProps> = ({
   expense,
   onEdit,
-  onDistribute,
   onDelete,
   showActions = true,
 }) => {
   const getCategoryColor = (category: ExpenseCategory) => {
-    const colors: Record<ExpenseCategory, string> = {
-      [ExpenseCategory.ELECTRICITY]: 'bg-blue-100 text-blue-800',
-      [ExpenseCategory.WATER]: 'bg-cyan-100 text-cyan-800',
-      [ExpenseCategory.HEATING]: 'bg-orange-100 text-orange-800',
+    const colors: Partial<Record<ExpenseCategory, string>> = {
+      [ExpenseCategory.ELECTRICITY_COMMON]: 'bg-blue-100 text-blue-800',
+      [ExpenseCategory.WATER_COMMON]: 'bg-cyan-100 text-cyan-800',
+      [ExpenseCategory.HEATING_FUEL]: 'bg-orange-100 text-orange-800',
+      [ExpenseCategory.HEATING_GAS]: 'bg-orange-100 text-orange-800',
       [ExpenseCategory.CLEANING]: 'bg-green-100 text-green-800',
-      [ExpenseCategory.MAINTENANCE]: 'bg-purple-100 text-purple-800',
-      [ExpenseCategory.INSURANCE]: 'bg-red-100 text-red-800',
-      [ExpenseCategory.ADMINISTRATION]: 'bg-gray-100 text-gray-800',
-      [ExpenseCategory.OTHER]: 'bg-yellow-100 text-yellow-800',
+      [ExpenseCategory.MAINTENANCE_GENERAL]: 'bg-purple-100 text-purple-800',
+      [ExpenseCategory.INSURANCE_BUILDING]: 'bg-red-100 text-red-800',
+      [ExpenseCategory.MANAGEMENT_FEES]: 'bg-gray-100 text-gray-800',
+      [ExpenseCategory.MISCELLANEOUS]: 'bg-yellow-100 text-yellow-800',
     };
     return colors[category] || 'bg-gray-100 text-gray-800';
   };
@@ -43,20 +42,22 @@ export const ExpenseDetail: React.FC<ExpenseDetailProps> = ({
       [DistributionType.EQUAL]: 'Ισόποσα κατανομή',
       [DistributionType.MILLS]: 'Κατανομή ανά χιλιοστά',
       [DistributionType.METERS]: 'Κατανομή ανά μετρητές',
+      [DistributionType.SPECIFIC]: 'Συγκεκριμένα διαμερίσματα',
     };
     return labels[distribution] || 'Άγνωστη κατανομή';
   };
 
   const getCategoryLabel = (category: ExpenseCategory) => {
-    const labels: Record<ExpenseCategory, string> = {
-      [ExpenseCategory.ELECTRICITY]: 'Ηλεκτρισμός',
-      [ExpenseCategory.WATER]: 'Νερό',
-      [ExpenseCategory.HEATING]: 'Θέρμανση',
+    const labels: Partial<Record<ExpenseCategory, string>> = {
+      [ExpenseCategory.ELECTRICITY_COMMON]: 'Ηλεκτρισμός',
+      [ExpenseCategory.WATER_COMMON]: 'Νερό',
+      [ExpenseCategory.HEATING_FUEL]: 'Θέρμανση',
+      [ExpenseCategory.HEATING_GAS]: 'Φυσικό Αέριο',
       [ExpenseCategory.CLEANING]: 'Καθαριότητα',
-      [ExpenseCategory.MAINTENANCE]: 'Συντήρηση',
-      [ExpenseCategory.INSURANCE]: 'Ασφάλεια',
-      [ExpenseCategory.ADMINISTRATION]: 'Διοίκηση',
-      [ExpenseCategory.OTHER]: 'Άλλο',
+      [ExpenseCategory.MAINTENANCE_GENERAL]: 'Συντήρηση',
+      [ExpenseCategory.INSURANCE_BUILDING]: 'Ασφάλεια',
+      [ExpenseCategory.MANAGEMENT_FEES]: 'Διοίκηση',
+      [ExpenseCategory.MISCELLANEOUS]: 'Άλλο',
     };
     return labels[category] || category;
   };
@@ -67,32 +68,19 @@ export const ExpenseDetail: React.FC<ExpenseDetailProps> = ({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-3">
             <span>Λεπτομέρειες Δαπάνης</span>
-            <Badge className={getCategoryColor(expense.category)}>
-              {getCategoryLabel(expense.category)}
+            <Badge className={getCategoryColor(expense.category as ExpenseCategory)}>
+              {getCategoryLabel(expense.category as ExpenseCategory)}
             </Badge>
-            {expense.is_distributed && (
-              <Badge variant="outline" className="text-green-600 border-green-600">
-                Κατανεμημένη
-              </Badge>
-            )}
           </CardTitle>
+
           {showActions && (
             <div className="flex gap-2">
-              {!expense.is_distributed && onDistribute && (
-                <Button onClick={onDistribute} variant="outline" size="sm">
-                  Κατανάλωση
-                </Button>
-              )}
-              {onEdit && (
-                <Button onClick={onEdit} variant="outline" size="sm">
-                  Επεξεργασία
-                </Button>
-              )}
-              {onDelete && (
-                <Button onClick={onDelete} variant="destructive" size="sm">
-                  Διαγραφή
-                </Button>
-              )}
+              <Button variant="outline" size="sm" onClick={onEdit}>
+                Επεξεργασία
+              </Button>
+              <Button variant="destructive" size="sm" onClick={onDelete}>
+                Διαγραφή
+              </Button>
             </div>
           )}
         </div>
@@ -104,7 +92,7 @@ export const ExpenseDetail: React.FC<ExpenseDetailProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-600">Περιγραφή</label>
-              <p className="text-lg">{expense.description}</p>
+              <p className="text-lg">{expense.title || 'Δεν υπάρχει περιγραφή'}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-600">Ποσό</label>
@@ -118,76 +106,54 @@ export const ExpenseDetail: React.FC<ExpenseDetailProps> = ({
             </div>
             <div>
               <label className="text-sm font-medium text-gray-600">Τύπος Κατανομής</label>
-              <p className="text-lg">{getDistributionLabel(expense.distribution_type)}</p>
+              <p className="text-lg">{getDistributionLabel(expense.distribution_type as DistributionType)}</p>
             </div>
           </div>
         </div>
 
         <Separator />
 
-        {/* Distribution Details */}
-        <div>
-          <h3 className="text-lg font-semibold mb-3">Λεπτομέρειες Κατανομής</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Distribution Status */}
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Κατάσταση Κατανομής</h3>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-blue-600 border-blue-600">
+              Έτοιμη για κατανομή
+            </Badge>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <label className="text-sm font-medium text-gray-600">Κατάσταση Κατανομής</label>
-              <p className="text-lg">
-                {expense.is_distributed ? 'Κατανεμημένη' : 'Μη κατανεμημένη'}
+              <span className="text-gray-600">Ημερομηνία κατανομής:</span>
+              <p className="font-medium">
+                {formatDate(expense.date)}
               </p>
             </div>
-            {expense.distribution_date && (
-              <div>
-                <label className="text-sm font-medium text-gray-600">Ημερομηνία Κατανομής</label>
-                <p className="text-lg">{formatDate(expense.distribution_date)}</p>
-              </div>
-            )}
-            {expense.distribution_notes && (
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium text-gray-600">Σημειώσεις Κατανομής</label>
-                <p className="text-lg">{expense.distribution_notes}</p>
-              </div>
-            )}
+            <div>
+              <span className="text-gray-600">Σημειώσεις:</span>
+              <p className="font-medium">
+                {expense.notes || 'Δεν υπάρχουν σημειώσεις'}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Notes */}
-        {expense.notes && (
-          <>
-            <Separator />
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Σημειώσεις</h3>
-              <p className="text-lg text-gray-700">{expense.notes}</p>
-            </div>
-          </>
-        )}
-
         {/* Metadata */}
-        <Separator />
-        <div>
-          <h3 className="text-lg font-semibold mb-3">Μεταδεδομένα</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+        <div className="space-y-2 pt-4 border-t">
+          <h3 className="text-lg font-semibold">Μεταδεδομένα</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <label className="font-medium">Δημιουργήθηκε</label>
-              <p>{formatDate(expense.created_at)}</p>
+              <span className="text-gray-600">Δημιουργήθηκε:</span>
+              <p className="font-medium">
+                {formatDate(expense.created_at)}
+              </p>
             </div>
-            {expense.updated_at && expense.updated_at !== expense.created_at && (
-              <div>
-                <label className="font-medium">Τελευταία Ενημέρωση</label>
-                <p>{formatDate(expense.updated_at)}</p>
-              </div>
-            )}
-            {expense.created_by && (
-              <div>
-                <label className="font-medium">Δημιουργήθηκε από</label>
-                <p>{expense.created_by}</p>
-              </div>
-            )}
-            {expense.updated_by && expense.updated_by !== expense.created_by && (
-              <div>
-                <label className="font-medium">Ενημερώθηκε από</label>
-                <p>{expense.updated_by}</p>
-              </div>
-            )}
+            <div>
+              <span className="text-gray-600">Τελευταία ενημέρωση:</span>
+              <p className="font-medium">
+                {expense.updated_at ? formatDate(expense.updated_at) : 'Δεν έχει ενημερωθεί'}
+              </p>
+            </div>
           </div>
         </div>
 

@@ -182,16 +182,16 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
   useEffect(() => {
     if (selectedCategory) {
       // Auto-set distribution type
-      const suggestedDistribution = getSuggestedDistribution(selectedCategory);
+      const suggestedDistribution = getSuggestedDistribution(selectedCategory as ExpenseCategory);
       setValue('distribution_type', suggestedDistribution);
 
       // Auto-set date
-      const suggestedDate = getSuggestedDate(selectedCategory);
+      const suggestedDate = getSuggestedDate(selectedCategory as ExpenseCategory);
       setValue('date', suggestedDate);
 
       // Auto-fill title if empty
       if (!selectedTitle) {
-        const suggestions = getTitleSuggestions(selectedCategory, selectedSupplierDetails);
+        const suggestions = getTitleSuggestions(selectedCategory as ExpenseCategory, selectedSupplierDetails);
         if (suggestions.length > 0) {
           setValue('title', suggestions[0]);
         }
@@ -340,7 +340,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
                 <ExpenseTitleDropdown
                   value={selectedTitle || ''}
                   onChange={(value) => setValue('title', value)}
-                  category={selectedCategory}
+                  category={selectedCategory as ExpenseCategory}
                   supplier={selectedSupplierDetails}
                   placeholder="Επιλέξτε τίτλο δαπάνης (προαιρετικό)"
                   error={errors.title?.message}
@@ -408,7 +408,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Ημερομηνία *
-                  {selectedCategory && isMonthlyExpense(selectedCategory) && (
+                  {selectedCategory && isMonthlyExpense(selectedCategory as ExpenseCategory) && (
                     <Badge variant="secondary" className="ml-2 text-xs">
                       Αυτόματη
                     </Badge>

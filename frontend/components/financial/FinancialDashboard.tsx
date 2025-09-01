@@ -31,6 +31,14 @@ interface FinancialDashboardProps {
   ref?: React.RefObject<{ loadSummary: () => void }>;
 }
 
+interface ApartmentBalance {
+  apartment_id: number;
+  apartment_number: string;
+  owner_name: string;
+  current_balance: number;
+  last_payment_date?: string;
+}
+
 const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, FinancialDashboardProps>(
   ({ buildingId, selectedMonth }, ref) => {
   const [summary, setSummary] = useState<any>(null);
@@ -265,10 +273,12 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
           <CardContent>
             <div className="space-y-4">
               {summary.apartment_balances
-                .filter(apt => apt.current_balance < 0)
-                .sort((a, b) => a.current_balance - b.current_balance)
+                .filter((apt: ApartmentBalance) => apt.current_balance < 0)
+                .sort((a: ApartmentBalance, b: ApartmentBalance) => {
+                  return Math.abs(a.current_balance) - Math.abs(b.current_balance);
+                })
                 .slice(0, 10)
-                .map((apartment) => (
+                .map((apartment: ApartmentBalance) => (
                   <div key={apartment.apartment_id} className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <Building className="h-4 w-4 text-muted-foreground" />

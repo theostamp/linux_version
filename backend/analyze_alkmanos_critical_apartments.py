@@ -79,7 +79,7 @@ def analyze_critical_apartments():
                 status = "Ενημερωμένο"
                 current_apartments += 1
             elif abs(balance) <= monthly_due * 2:
-                status = "Καθυστέρηση"
+                status = "Οφειλή"
                 behind_apartments += 1
             else:
                 status = "Κρίσιμο"
@@ -106,7 +106,7 @@ def analyze_critical_apartments():
         print("📊 3. ΣΤΑΤΙΣΤΙΚΑ")
         print("-" * 50)
         print(f"✅ Ενημερωμένα: {current_apartments} διαμερίσματα")
-        print(f"⚠️ Καθυστέρηση: {behind_apartments} διαμερίσματα")
+        print(f"⚠️ Οφειλή: {behind_apartments} διαμερίσματα")
         print(f"🚨 Κρίσιμα: {critical_apartments} διαμερίσματα")
         print()
         
@@ -122,7 +122,7 @@ def analyze_critical_apartments():
                 print(f"   Διαμέρισμα {apt['number']} ({apt['owner']}):")
                 print(f"     • Υπόλοιπο: {apt['balance']:,.2f}€")
                 print(f"     • Μηνιαία οφειλή: {apt['monthly_due']:,.2f}€")
-                print(f"     • Μήνες καθυστέρησης: {months_behind:.1f}")
+                print(f"     • Μήνες οφειλής: {months_behind:.1f}")
                 print(f"     • Χιλιοστά: {apt['mills']}")
                 print()
         

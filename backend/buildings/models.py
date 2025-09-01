@@ -204,9 +204,9 @@ class Building(models.Model):
         help_text=_("Αμοιβή διαχείρισης ανά διαμέρισμα σε ευρώ")
     )
 
-    # ⏳ Grace period για καθυστέρηση πληρωμών (ημέρα μήνα)
+            # ⏳ Grace period για οφειλές πληρωμών (ημέρα μήνα)
     grace_day_of_month = models.PositiveSmallIntegerField(
-        _("Ημέρα Έναρξης Καθυστέρησης"),
+        _("Ημέρα Έναρξης Οφειλής"),
         default=15,
         validators=[MinValueValidator(1)],
         help_text=_("Ημέρα του μήνα μετά την οποία οι οφειλές θεωρούνται καθυστερημένες")

@@ -162,6 +162,17 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         if (error?.response?.status === 401) {
           console.log('AuthContext: 401 error, clearing tokens');
           performClientLogout();
+          // Demo auto-login fallback αν τρέχουμε σε demo subdomain
+          if (typeof window !== 'undefined' && window.location.hostname.includes('demo.localhost')) {
+            console.log('AuthContext: Attempting demo auto-login fallback after 401');
+            try {
+              await login('admin@demo.localhost', 'admin123456');
+              console.log('AuthContext: Demo auto-login fallback succeeded');
+              return;
+            } catch (autoLoginError) {
+              console.error('AuthContext: Demo auto-login fallback failed', autoLoginError);
+            }
+          }
         }
       } finally {
         setIsLoading(false);

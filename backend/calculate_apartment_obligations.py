@@ -157,10 +157,16 @@ def calculate_apartment_obligations():
             
             apartment_obligations[apt_id]['total_payments'] += amount
             apartment_obligations[apt_id]['payment_breakdown'].append({
-                'payment_id': payment.id,
-                'payment_date': payment.date,
-                'payment_amount': amount,
-                'payer_name': payment.payer_name
+                'id': payment.id,
+                'amount': amount,
+                'date': payment.date.isoformat(),
+                'method': payment.method,
+                'method_display': payment.get_method_display(),
+                'payment_type': payment.payment_type,
+                'payment_type_display': payment.get_payment_type_display(),
+                'reference_number': payment.reference_number,
+                'notes': payment.notes,
+                'payer_name': payment.payer_name or 'Άγνωστος'
             })
             
             total_payments += amount

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Building2, 
   Users, 
@@ -16,29 +17,23 @@ import {
   Eye,
   Printer,
   CreditCard,
-  Trash2
+  Trash2,
+  Info,
+  History
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import { PaymentForm } from './PaymentForm';
 import PaymentNotificationModal from './PaymentNotificationModal';
-
-
-interface ApartmentBalance {
-  apartment_id: number;
-  apartment_number: string;
-  owner_name: string;
-  participation_mills: number;
-  current_balance: number;
-  previous_balance: number;
-  expense_share: number;
-  total_obligations: number;
-  total_payments: number;
-  net_obligation: number;
-  status: string;
-  expense_breakdown: ExpenseBreakdown[];
-  payment_breakdown: PaymentBreakdown[];
-}
+import { PaymentHistoryModal, PaymentHistoryItem } from './PaymentHistoryModal';
+import { TransactionHistoryModal } from './TransactionHistoryModal';
+import { 
+  validateFinancialDataMonth, 
+  getValidationMessage, 
+  formatMonthDisplay,
+  type DateValidationResult 
+} from '@/lib/dateValidation';
+import { ApartmentBalance } from '@/types/financial';
 
 interface ExpenseBreakdown {
   expense_id: number;
@@ -53,11 +48,20 @@ interface ExpenseBreakdown {
   total_mills?: number;
 }
 
-interface PaymentBreakdown {
-  payment_id: number;
-  payment_date: string;
-  payment_amount: number;
-  payer_name: string;
+interface ApartmentBalanceWithDetails {
+  apartment_id: number;
+  apartment_number: string;
+  owner_name: string;
+  participation_mills: number;
+  current_balance: number;
+  previous_balance: number;
+  expense_share: number;
+  total_obligations: number;
+  total_payments: number;
+  net_obligation: number;
+  status: string;
+  expense_breakdown: ExpenseBreakdown[];
+  payment_breakdown: PaymentHistoryItem[];
 }
 
 interface ApartmentBalancesTabProps {
@@ -71,10 +75,11 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [apartmentBalances, setApartmentBalances] = useState<ApartmentBalance[]>([]);
+  const [apartmentBalances, setApartmentBalances] = useState<ApartmentBalanceWithDetails[]>([]);
   const [summary, setSummary] = useState<any>(null);
+  const [dateValidation, setDateValidation] = useState<DateValidationResult | null>(null);
   const [showPaymentNotificationModal, setShowPaymentNotificationModal] = useState(false);
-  const [selectedApartment, setSelectedApartment] = useState<ApartmentBalance | null>(null);
+  const [selectedApartment, setSelectedApartment] = useState<ApartmentBalanceWithDetails | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentModalData, setPaymentModalData] = useState<{
     apartment_id: number;
@@ -82,17 +87,17 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
     previous_obligations_amount: number;
   } | null>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [apartmentToDelete, setApartmentToDelete] = useState<ApartmentBalance | null>(null);
+  const [apartmentToDelete, setApartmentToDelete] = useState<ApartmentBalanceWithDetails | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedApartmentForHistory, setSelectedApartmentForHistory] = useState<ApartmentBalanceWithDetails | null>(null);
+  const [showTransactionHistoryModal, setShowTransactionHistoryModal] = useState(false);
+  const [selectedApartmentForTransactionHistory, setSelectedApartmentForTransactionHistory] = useState<ApartmentBalanceWithDetails | null>(null);
 
   useEffect(() => {
     loadApartmentBalances();
   }, [buildingId, selectedMonth]);
-
-  // Αφαιρέθηκε το auto-refresh όταν κλείνουν τα modals - μόνο χειροκίνητο refresh
-
-  // Αφαιρέθηκε το auto-refresh hook - μόνο χειροκίνητο refresh
 
   const loadApartmentBalances = async (isRefresh = false) => {
     if (isRefresh) {
@@ -101,6 +106,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       setIsLoading(true);
     }
     setError(null);
+    setDateValidation(null);
 
     try {
       console.log('🔍 Loading apartment balances for building:', buildingId);
@@ -111,10 +117,24 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       });
       
       const response = await api.get(`/financial/dashboard/apartment_balances/?${params}`);
-      setApartmentBalances(response.data.apartments || []);
-      setSummary(response.data.summary || {});
+      const responseData = response.data;
       
-      console.log('✅ Apartment balances loaded:', response.data);
+      setApartmentBalances(responseData.apartments || []);
+      setSummary(responseData.summary || {});
+      
+      // Validate if the returned data matches the selected month
+      if (selectedMonth) {
+        const validation = validateFinancialDataMonth(responseData, selectedMonth);
+        setDateValidation(validation);
+        
+        console.log('🔍 Date validation result:', {
+          selectedMonth,
+          validation,
+          responseDataKeys: Object.keys(responseData)
+        });
+      }
+      
+      console.log('✅ Apartment balances loaded:', responseData);
     } catch (err: any) {
       console.error('❌ Error loading apartment balances:', err);
       setError(err.response?.data?.detail || err.message || 'Σφάλμα φόρτωσης δεδομένων');
@@ -127,12 +147,12 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
     }
   };
 
-  const handleViewDetails = (apartment: ApartmentBalance) => {
+  const handleViewDetails = (apartment: ApartmentBalanceWithDetails) => {
     setSelectedApartment(apartment);
     setShowPaymentNotificationModal(true);
   };
 
-  const handlePayment = (apartment: ApartmentBalance) => {
+  const handlePayment = (apartment: ApartmentBalanceWithDetails) => {
     setPaymentModalData({
       apartment_id: apartment.apartment_id,
       common_expense_amount: apartment.expense_share,
@@ -144,25 +164,42 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
   const handlePaymentSuccess = () => {
     setShowPaymentModal(false);
     setPaymentModalData(null);
-    // Auto refresh data after successful payment
     loadApartmentBalances(true);
   };
 
   const handlePaymentNotificationClose = () => {
     setShowPaymentNotificationModal(false);
     setSelectedApartment(null);
-    // Auto refresh data when notification modal closes
     loadApartmentBalances(true);
+  };
+
+  const handleViewHistory = (apartment: ApartmentBalanceWithDetails) => {
+    setSelectedApartmentForHistory(apartment);
+    setShowHistoryModal(true);
+  };
+
+  const handleHistoryModalClose = () => {
+    setShowHistoryModal(false);
+    setSelectedApartmentForHistory(null);
+  };
+
+  const handleViewTransactionHistory = (apartment: ApartmentBalanceWithDetails) => {
+    setSelectedApartmentForTransactionHistory(apartment);
+    setShowTransactionHistoryModal(true);
+  };
+
+  const handleTransactionHistoryModalClose = () => {
+    setShowTransactionHistoryModal(false);
+    setSelectedApartmentForTransactionHistory(null);
   };
 
   const handlePaymentCancel = () => {
     setShowPaymentModal(false);
     setPaymentModalData(null);
-    // Auto refresh data when payment modal is cancelled
     loadApartmentBalances(true);
   };
 
-  const handleDeletePayments = (apartment: ApartmentBalance) => {
+  const handleDeletePayments = (apartment: ApartmentBalanceWithDetails) => {
     setApartmentToDelete(apartment);
     setShowDeleteConfirmation(true);
   };
@@ -172,7 +209,6 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
     
     setIsDeleting(true);
     try {
-      // Delete all payments for this apartment
       const params = new URLSearchParams({ 
         apartment_id: apartmentToDelete.apartment_id.toString(),
         building_id: buildingId.toString()
@@ -181,7 +217,6 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       const response = await api.delete(`/financial/payments/bulk_delete/?${params.toString()}`);
       
       if (response.data.success) {
-        // Auto refresh data after successful deletion
         await loadApartmentBalances(true);
         setShowDeleteConfirmation(false);
         setApartmentToDelete(null);
@@ -202,20 +237,18 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
     setApartmentToDelete(null);
   };
 
-  const handlePrintStatement = (apartment: ApartmentBalance) => {
-    // This will be handled by the PaymentNotificationModal
-    console.log('Print statement for apartment:', apartment.apartment_number);
-  };
-
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'paid':
+      case 'ενήμερο':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'overdue':
-      case 'καθυστέρηση':
+      case 'οφειλή':
         return <AlertTriangle className="w-4 h-4 text-red-500" />;
       case 'pending':
         return <Clock className="w-4 h-4 text-yellow-500" />;
+      case 'κρίσιμο':
+        return <AlertTriangle className="w-4 h-4 text-red-600" />;
       default:
         return <div className="w-2 h-2 bg-gray-500 rounded-full" />;
     }
@@ -224,22 +257,25 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
   const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case 'paid':
+      case 'ενήμερο':
         return 'default' as const;
       case 'overdue':
-      case 'καθυστέρηση':
+      case 'οφειλή':
         return 'destructive' as const;
       case 'pending':
         return 'secondary' as const;
+      case 'κρίσιμο':
+        return 'destructive' as const;
       default:
         return 'outline' as const;
     }
   };
 
-  // Δυναμική μέτρηση διαμερισμάτων με καθυστέρηση
-  const getOverdueApartmentsCount = () => {
+  const getDebtApartmentsCount = () => {
     return apartmentBalances.filter(apt => 
-      apt.status.toLowerCase() === 'καθυστέρηση' || 
       apt.status.toLowerCase() === 'overdue' ||
+      apt.status.toLowerCase() === 'οφειλή' ||
+      apt.status.toLowerCase() === 'κρίσιμο' ||
       apt.net_obligation > 0
     ).length;
   };
@@ -262,7 +298,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
           <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
           <p className="text-red-600">{error}</p>
           <Button 
-            onClick={loadApartmentBalances} 
+            onClick={() => loadApartmentBalances()} 
             className="mt-2"
             variant="outline"
           >
@@ -275,6 +311,36 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Date Validation Warning */}
+      {dateValidation?.shouldShowWarning && (
+        <Alert className={`border-l-4 ${
+          dateValidation.severity === 'warning' 
+            ? 'border-l-yellow-500 bg-yellow-50' 
+            : 'border-l-blue-500 bg-blue-50'
+        }`}>
+          <Info className={`h-4 w-4 ${
+            dateValidation.severity === 'warning' ? 'text-yellow-600' : 'text-blue-600'
+          }`} />
+          <AlertDescription className="space-y-2">
+            <div>
+              <strong className={dateValidation.severity === 'warning' ? 'text-yellow-800' : 'text-blue-800'}>
+                {getValidationMessage(dateValidation).title}
+              </strong>
+            </div>
+            <div className={dateValidation.severity === 'warning' ? 'text-yellow-700' : 'text-blue-700'}>
+              {getValidationMessage(dateValidation).description}
+            </div>
+            {getValidationMessage(dateValidation).action && (
+              <div className={`text-sm font-medium ${
+                dateValidation.severity === 'warning' ? 'text-yellow-800' : 'text-blue-800'
+              }`}>
+                💡 {getValidationMessage(dateValidation).action}
+              </div>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -320,10 +386,10 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {getOverdueApartmentsCount()}/{apartmentBalances.length}
+              {getDebtApartmentsCount()}/{apartmentBalances.length}
             </div>
             <p className="text-xs text-muted-foreground">
-              με οφειλή {getOverdueApartmentsCount() > 0 ? `(${getOverdueApartmentsCount()} καθυστέρηση)` : ''}
+              με οφειλή {getDebtApartmentsCount() > 0 ? `(${getDebtApartmentsCount()} οφειλή)` : ''}
             </p>
           </CardContent>
         </Card>
@@ -336,7 +402,11 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
             <div className="flex items-center gap-2">
               <Calculator className="w-5 h-5" />
               Υπόλοιπα Διαμερισμάτων
-
+              {selectedMonth && (
+                <Badge variant="outline" className="ml-2">
+                  {formatMonthDisplay(selectedMonth)}
+                </Badge>
+              )}
             </div>
             <Button
               variant="outline"
@@ -402,6 +472,26 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                         >
                           <Eye className="h-3 w-3" />
                           Ειδοποιητήριο
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewHistory(apartment)}
+                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border-blue-200"
+                          title="Προβολή ιστορικού πληρωμών"
+                        >
+                          <History className="h-3 w-3" />
+                          Ιστορικό
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewTransactionHistory(apartment)}
+                          className="flex items-center gap-1 text-purple-600 hover:text-purple-800 hover:bg-purple-50 border-purple-200"
+                          title="Προβολή ιστορικού κινήσεων (χρεώσεις και πληρωμές)"
+                        >
+                          <TrendingUp className="h-3 w-3" />
+                          Κινήσεις
                         </Button>
                         {apartment.net_obligation > 0 && (
                           <Button
@@ -498,7 +588,6 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
             className="bg-white rounded-lg max-w-md w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                 <Trash2 className="w-5 h-5 text-red-600" />
@@ -513,13 +602,11 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
               </div>
             </div>
 
-            {/* Content */}
             <div className="mb-6">
               <p className="text-gray-700 mb-4">
                 Είστε σίγουροι ότι θέλετε να διαγράψετε όλες τις πληρωμές για το διαμέρισμα <strong>{apartmentToDelete.apartment_number}</strong>;
               </p>
               
-              {/* Apartment Details */}
               <div className="bg-gray-50 rounded-lg p-3 border">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
@@ -559,7 +646,6 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
               </div>
             </div>
 
-            {/* Actions */}
             <div className="flex items-center justify-end gap-3">
               <Button
                 variant="outline"
@@ -590,6 +676,23 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
           </div>
         </div>
       )}
+
+      {/* Payment History Modal */}
+      <PaymentHistoryModal
+        isOpen={showHistoryModal}
+        onClose={handleHistoryModalClose}
+        apartment={selectedApartmentForHistory}
+      />
+
+      {/* Transaction History Modal */}
+      <TransactionHistoryModal
+        isOpen={showTransactionHistoryModal}
+        onClose={handleTransactionHistoryModalClose}
+        apartmentId={selectedApartmentForTransactionHistory?.apartment_id || 0}
+        buildingId={buildingId}
+        apartmentNumber={selectedApartmentForTransactionHistory?.apartment_number || ''}
+        ownerName={selectedApartmentForTransactionHistory?.owner_name || ''}
+      />
     </div>
   );
 };

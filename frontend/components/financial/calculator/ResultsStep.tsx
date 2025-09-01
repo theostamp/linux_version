@@ -944,11 +944,11 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
     const currentApartments = shares.filter((share: any) => getEffectiveTotalDue(share) >= 0).length;
     const behindApartments = shares.filter((share: any) => {
       const effectiveDue = getEffectiveTotalDue(share);
-      return effectiveDue < 0 && Math.abs(effectiveDue) <= (share.total_amount || 0) * 2; // Έως 2 μήνες καθυστέρηση
+              return effectiveDue < 0 && Math.abs(effectiveDue) <= (share.total_amount || 0) * 2; // Έως 2 μήνες οφειλή
     }).length;
     const criticalApartments = shares.filter((share: any) => {
       const effectiveDue = getEffectiveTotalDue(share);
-      return effectiveDue < 0 && Math.abs(effectiveDue) > (share.total_amount || 0) * 2; // Πάνω από 2 μήνες καθυστέρηση
+              return effectiveDue < 0 && Math.abs(effectiveDue) > (share.total_amount || 0) * 2; // Πάνω από 2 μήνες οφειλή
     }).length;
     
     // Υπολογισμός συνολικής κάλυψης

@@ -45,19 +45,26 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
       }
     });
 
-    const categoryTotals: Record<ExpenseCategory, number> = {
-      [ExpenseCategory.ELECTRICITY]: 0,
-      [ExpenseCategory.WATER]: 0,
-      [ExpenseCategory.HEATING]: 0,
+    const categoryTotals: Record<string, number> = {
+      [ExpenseCategory.ELECTRICITY_COMMON]: 0,
+      [ExpenseCategory.WATER_COMMON]: 0,
+      [ExpenseCategory.HEATING_FUEL]: 0,
       [ExpenseCategory.CLEANING]: 0,
-      [ExpenseCategory.MAINTENANCE]: 0,
-      [ExpenseCategory.INSURANCE]: 0,
-      [ExpenseCategory.ADMINISTRATION]: 0,
-      [ExpenseCategory.OTHER]: 0,
+      [ExpenseCategory.MAINTENANCE_GENERAL]: 0,
+      [ExpenseCategory.BUILDING_INSURANCE]: 0,
+      [ExpenseCategory.MANAGEMENT_FEES]: 0,
+      [ExpenseCategory.MISCELLANEOUS]: 0,
     };
 
     filteredExpenses.forEach(expense => {
-      categoryTotals[expense.category] += expense.amount;
+      const category = expense.category as ExpenseCategory;
+      const title = expense.title || 'Χωρίς τίτλο';
+      
+      if (categoryTotals[category] !== undefined) {
+        categoryTotals[category]! += expense.amount;
+      } else {
+        categoryTotals[ExpenseCategory.MISCELLANEOUS] = (categoryTotals[ExpenseCategory.MISCELLANEOUS] || 0) + expense.amount;
+      }
     });
 
     const total = Object.values(categoryTotals).reduce((sum, amount) => sum + amount, 0);
@@ -71,43 +78,43 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
   }, [expenses, period]);
 
   const getCategoryLabel = (category: ExpenseCategory) => {
-    const labels: Record<ExpenseCategory, string> = {
-      [ExpenseCategory.ELECTRICITY]: 'Ηλεκτρισμός',
-      [ExpenseCategory.WATER]: 'Νερό',
-      [ExpenseCategory.HEATING]: 'Θέρμανση',
+    const labels: Partial<Record<ExpenseCategory, string>> = {
+      [ExpenseCategory.ELECTRICITY_COMMON]: 'Ηλεκτρισμός',
+      [ExpenseCategory.WATER_COMMON]: 'Νερό',
+      [ExpenseCategory.HEATING_FUEL]: 'Θέρμανση',
       [ExpenseCategory.CLEANING]: 'Καθαριότητα',
-      [ExpenseCategory.MAINTENANCE]: 'Συντήρηση',
-      [ExpenseCategory.INSURANCE]: 'Ασφάλεια',
-      [ExpenseCategory.ADMINISTRATION]: 'Διοίκηση',
-      [ExpenseCategory.OTHER]: 'Άλλο',
+      [ExpenseCategory.MAINTENANCE_GENERAL]: 'Συντήρηση',
+      [ExpenseCategory.BUILDING_INSURANCE]: 'Ασφάλεια',
+      [ExpenseCategory.MANAGEMENT_FEES]: 'Διοίκηση',
+      [ExpenseCategory.MISCELLANEOUS]: 'Άλλο',
     };
     return labels[category] || category;
   };
 
   const getCategoryColor = (category: ExpenseCategory) => {
-    const colors: Record<ExpenseCategory, string> = {
-      [ExpenseCategory.ELECTRICITY]: 'bg-blue-100 text-blue-800',
-      [ExpenseCategory.WATER]: 'bg-cyan-100 text-cyan-800',
-      [ExpenseCategory.HEATING]: 'bg-orange-100 text-orange-800',
+    const colors: Partial<Record<ExpenseCategory, string>> = {
+      [ExpenseCategory.ELECTRICITY_COMMON]: 'bg-blue-100 text-blue-800',
+      [ExpenseCategory.WATER_COMMON]: 'bg-cyan-100 text-cyan-800',
+      [ExpenseCategory.HEATING_FUEL]: 'bg-orange-100 text-orange-800',
       [ExpenseCategory.CLEANING]: 'bg-green-100 text-green-800',
-      [ExpenseCategory.MAINTENANCE]: 'bg-purple-100 text-purple-800',
-      [ExpenseCategory.INSURANCE]: 'bg-red-100 text-red-800',
-      [ExpenseCategory.ADMINISTRATION]: 'bg-gray-100 text-gray-800',
-      [ExpenseCategory.OTHER]: 'bg-yellow-100 text-yellow-800',
+      [ExpenseCategory.MAINTENANCE_GENERAL]: 'bg-purple-100 text-purple-800',
+      [ExpenseCategory.BUILDING_INSURANCE]: 'bg-red-100 text-red-800',
+      [ExpenseCategory.MANAGEMENT_FEES]: 'bg-gray-100 text-gray-800',
+      [ExpenseCategory.MISCELLANEOUS]: 'bg-yellow-100 text-yellow-800',
     };
     return colors[category] || 'bg-gray-100 text-gray-800';
   };
 
   const getCategoryIcon = (category: ExpenseCategory) => {
-    const icons: Record<ExpenseCategory, string> = {
-      [ExpenseCategory.ELECTRICITY]: '⚡',
-      [ExpenseCategory.WATER]: '💧',
-      [ExpenseCategory.HEATING]: '🔥',
+    const icons: Partial<Record<ExpenseCategory, string>> = {
+      [ExpenseCategory.ELECTRICITY_COMMON]: '⚡',
+      [ExpenseCategory.WATER_COMMON]: '💧',
+      [ExpenseCategory.HEATING_FUEL]: '🔥',
       [ExpenseCategory.CLEANING]: '🧹',
-      [ExpenseCategory.MAINTENANCE]: '🔧',
-      [ExpenseCategory.INSURANCE]: '🛡️',
-      [ExpenseCategory.ADMINISTRATION]: '📋',
-      [ExpenseCategory.OTHER]: '📦',
+      [ExpenseCategory.MAINTENANCE_GENERAL]: '🔧',
+      [ExpenseCategory.BUILDING_INSURANCE]: '🛡️',
+      [ExpenseCategory.MANAGEMENT_FEES]: '📋',
+      [ExpenseCategory.MISCELLANEOUS]: '📦',
     };
     return icons[category] || '📦';
   };
@@ -313,23 +320,21 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
                 .map((expense) => (
                   <div
                     key={expense.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
+                    className="flex justify-between items-center p-2 bg-gray-50 rounded"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">{getCategoryIcon(expense.category)}</span>
-                      <div>
-                        <p className="font-medium">{expense.description}</p>
-                        <p className="text-sm text-gray-500">
-                          {formatDate(expense.date)}
-                        </p>
-                      </div>
+                    <div>
+                      <span className="font-medium">{expense.title || 'Χωρίς τίτλο'}</span>
+                      <span className="text-sm text-gray-500 ml-2">
+                        {formatDate(expense.date)}
+                      </span>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-red-600">
-                        {formatCurrency(expense.amount)}
-                      </p>
-                      <Badge className={getCategoryColor(expense.category)}>
-                        {getCategoryLabel(expense.category)}
+                      <div className="font-semibold">{formatCurrency(expense.amount)}</div>
+                      <Badge 
+                        variant="outline" 
+                        className={getCategoryColor(expense.category as ExpenseCategory)}
+                      >
+                        {getCategoryLabel(expense.category as ExpenseCategory)}
                       </Badge>
                     </div>
                   </div>

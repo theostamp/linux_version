@@ -1158,9 +1158,15 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     payment_amount = float(payment.amount)
                     apartment_data['total_payments'] += payment_amount
                     apartment_data['payment_breakdown'].append({
-                        'payment_id': payment.id,
-                        'payment_date': payment.date.isoformat(),
-                        'payment_amount': payment_amount,
+                        'id': payment.id,
+                        'amount': payment_amount,
+                        'date': payment.date.isoformat(),
+                        'method': payment.method,
+                        'method_display': payment.get_method_display(),
+                        'payment_type': payment.payment_type,
+                        'payment_type_display': payment.get_payment_type_display(),
+                        'reference_number': payment.reference_number,
+                        'notes': payment.notes,
                         'payer_name': payment.payer_name or 'Άγνωστος'
                     })
                 
@@ -1276,9 +1282,15 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     payment_amount = float(payment.amount)
                     apartment_data['total_payments'] += payment_amount
                     apartment_data['payment_breakdown'].append({
-                        'payment_id': payment.id,
-                        'payment_date': payment.date.isoformat(),
-                        'payment_amount': payment_amount,
+                        'id': payment.id,
+                        'amount': payment_amount,
+                        'date': payment.date.isoformat(),
+                        'method': payment.method,
+                        'method_display': payment.get_method_display(),
+                        'payment_type': payment.payment_type,
+                        'payment_type_display': payment.get_payment_type_display(),
+                        'reference_number': payment.reference_number,
+                        'notes': payment.notes,
                         'payer_name': payment.payer_name or 'Άγνωστος'
                     })
                 
@@ -1375,13 +1387,12 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     apartment_data['expense_share'] = 0.0
                 
                 # Determine status based on new rules:
-                # 1. "Ενήμερο" (Ενεργό): net_obligation <= 0 OR current date < 20th of month
-                # 2. "Καθυστέρηση": net_obligation > 0 AND current date >= 20th of month
-                # 3. "Κρίσιμο": unpaid for >2 months
+                # 1. "Ενήμερο": net_obligation <= 0 (δεν υπάρχει οφειλή)
+                # 2. "Οφειλή": net_obligation > 0 (υπάρχει οφειλή)
+                # 3. "Κρίσιμο": οφειλή > 2 μήνες
                 
                 from datetime import datetime, date
                 current_date = datetime.now().date()
-                current_day = current_date.day
                 
                 # Check if debt is older than 2 months
                 is_debt_older_than_2_months = False
@@ -1404,12 +1415,9 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 elif is_debt_older_than_2_months:
                     # Debt older than 2 months
                     apartment_data['status'] = 'Κρίσιμο'
-                elif current_day >= 20:
-                    # After 20th of month and has debt
-                    apartment_data['status'] = 'Καθυστέρηση'
                 else:
-                    # Before 20th of month and has debt
-                    apartment_data['status'] = 'Ενήμερο'
+                    # Has debt (net_obligation > 0)
+                    apartment_data['status'] = 'Οφειλή'
                 
                 apartment_balances.append(apartment_data)
             
@@ -1420,9 +1428,24 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             
             # Count apartments by status
             active_count = len([apt for apt in apartment_balances if apt['status'] == 'Ενήμερο'])
-            delay_count = len([apt for apt in apartment_balances if apt['status'] == 'Καθυστέρηση'])
+            debt_count = len([apt for apt in apartment_balances if apt['status'] == 'Οφειλή'])
             critical_count = len([apt for apt in apartment_balances if apt['status'] == 'Κρίσιμο'])
             credit_count = len([apt for apt in apartment_balances if apt['status'] == 'Πιστωτικό'])
+            
+            # Determine the actual month of the data
+            actual_month = None
+            if apartment_balances and apartment_balances[0]['expense_breakdown']:
+                # Get the most recent expense month
+                all_months = []
+                for apt in apartment_balances:
+                    for expense in apt['expense_breakdown']:
+                        if 'month' in expense:
+                            all_months.append(expense['month'])
+                
+                if all_months:
+                    # Sort months and get the most recent
+                    all_months.sort()
+                    actual_month = all_months[-1]
             
             return Response({
                 'apartments': apartment_balances,
@@ -1431,16 +1454,155 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     'total_payments': total_payments,
                     'total_net_obligations': total_net_obligations,
                     'active_count': active_count,
-                    'delay_count': delay_count,
+                    'debt_count': debt_count,
                     'critical_count': critical_count,
                     'credit_count': credit_count,
-                    'total_apartments': len(apartment_balances)
+                    'total_apartments': len(apartment_balances),
+                    'data_month': actual_month,  # Add the actual month of the data
+                    'requested_month': month  # Add the requested month for comparison
                 }
             })
             
         except Exception as e:
             return Response(
                 {'error': f'Error calculating apartment balances: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['get'])
+    def apartment_transaction_history(self, request):
+        """Λήψη ιστορικού κινήσεων διαμερίσματος (χρεώσεις και πληρωμές) ανά μήνα"""
+        building_id = request.query_params.get('building_id')
+        apartment_id = request.query_params.get('apartment_id')
+        months_back = int(request.query_params.get('months_back', 6))
+        
+        if not building_id or not apartment_id:
+            return Response(
+                {'error': 'Building ID and Apartment ID are required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from apartments.models import Apartment
+            from decimal import Decimal
+            from datetime import datetime, date, timedelta
+            from calendar import monthrange
+            
+            # Get apartment
+            apartment = Apartment.objects.get(id=apartment_id, building_id=building_id)
+            
+            # Calculate date range (last N months)
+            today = date.today()
+            end_date = today
+            start_date = today - timedelta(days=30 * months_back)
+            
+            # Get all transactions for this apartment in the date range
+            transactions = Transaction.objects.filter(
+                apartment=apartment,
+                date__date__gte=start_date,
+                date__date__lte=end_date
+            ).order_by('-date')
+            
+            # Group transactions by month
+            monthly_data = {}
+            
+            for transaction in transactions:
+                # Get month key (YYYY-MM format)
+                month_key = transaction.date.strftime('%Y-%m')
+                
+                if month_key not in monthly_data:
+                    monthly_data[month_key] = {
+                        'month': month_key,
+                        'month_display': transaction.date.strftime('%B %Y'),
+                        'charges': [],
+                        'payments': [],
+                        'total_charges': 0.0,
+                        'total_payments': 0.0,
+                        'net_amount': 0.0
+                    }
+                
+                # Determine if it's a charge or payment
+                is_charge = transaction.type in [
+                    'expense_created', 
+                    'common_expense_charge', 
+                    'interest_charge', 
+                    'penalty_charge'
+                ]
+                
+                transaction_data = {
+                    'id': transaction.id,
+                    'date': transaction.date.isoformat(),
+                    'amount': float(transaction.amount),
+                    'type': transaction.type,
+                    'type_display': transaction.get_type_display(),
+                    'description': transaction.description,
+                    'balance_before': float(transaction.balance_before or 0),
+                    'balance_after': float(transaction.balance_after or 0),
+                    'reference_id': transaction.reference_id,
+                    'reference_type': transaction.reference_type,
+                    'notes': transaction.notes
+                }
+                
+                if is_charge:
+                    monthly_data[month_key]['charges'].append(transaction_data)
+                    monthly_data[month_key]['total_charges'] += float(transaction.amount)
+                    monthly_data[month_key]['net_amount'] -= float(transaction.amount)
+                else:
+                    monthly_data[month_key]['payments'].append(transaction_data)
+                    monthly_data[month_key]['total_payments'] += float(transaction.amount)
+                    monthly_data[month_key]['net_amount'] += float(transaction.amount)
+            
+            # Convert to list and sort by month (newest first)
+            monthly_list = list(monthly_data.values())
+            monthly_list.sort(key=lambda x: x['month'], reverse=True)
+            
+            # Add empty months for the last N months
+            complete_monthly_list = []
+            for i in range(months_back):
+                target_date = today - timedelta(days=30 * i)
+                month_key = target_date.strftime('%Y-%m')
+                
+                # Find if we have data for this month
+                month_data = next((m for m in monthly_list if m['month'] == month_key), None)
+                
+                if month_data:
+                    complete_monthly_list.append(month_data)
+                else:
+                    # Add empty month
+                    complete_monthly_list.append({
+                        'month': month_key,
+                        'month_display': target_date.strftime('%B %Y'),
+                        'charges': [],
+                        'payments': [],
+                        'total_charges': 0.0,
+                        'total_payments': 0.0,
+                        'net_amount': 0.0
+                    })
+            
+            return Response({
+                'apartment': {
+                    'id': apartment.id,
+                    'number': apartment.number,
+                    'owner_name': apartment.owner_name or 'Άγνωστος',
+                    'current_balance': float(apartment.current_balance or 0)
+                },
+                'months': complete_monthly_list,
+                'summary': {
+                    'total_charges': sum(m['total_charges'] for m in complete_monthly_list),
+                    'total_payments': sum(m['total_payments'] for m in complete_monthly_list),
+                    'net_amount': sum(m['net_amount'] for m in complete_monthly_list),
+                    'months_with_activity': len([m for m in complete_monthly_list if m['charges'] or m['payments']])
+                }
+            })
+            
+        except Apartment.DoesNotExist:
+            return Response(
+                {'error': 'Apartment not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error retrieving transaction history: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

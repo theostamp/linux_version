@@ -261,7 +261,81 @@ export const ExpenseCategory = {
   HEATING_INSPECTION: 'heating_inspection',
   HEATING_MODERNIZATION: 'heating_modernization',
   
-  // Δαπάνες Συντήρησης
+  // Δαπάνες Ηλεκτρικών
+  ELECTRICAL_MAINTENANCE: 'electrical_maintenance',
+  ELECTRICAL_REPAIR: 'electrical_repair',
+  ELECTRICAL_UPGRADE: 'electrical_upgrade',
+  LIGHTING_COMMON: 'lighting_common',
+  INTERCOM_SYSTEM: 'intercom_system',
+  
+  // Δαπάνες Υδραυλικών
+  PLUMBING_MAINTENANCE: 'plumbing_maintenance',
+  PLUMBING_REPAIR: 'plumbing_repair',
+  WATER_TANK_CLEANING: 'water_tank_cleaning',
+  WATER_TANK_MAINTENANCE: 'water_tank_maintenance',
+  SEWAGE_SYSTEM: 'sewage_system',
+  
+  // Δαπάνες Κτιρίου
+  BUILDING_INSURANCE: 'building_insurance',
+  BUILDING_MAINTENANCE: 'building_maintenance',
+  ROOF_MAINTENANCE: 'roof_maintenance',
+  ROOF_REPAIR: 'roof_repair',
+  FACADE_MAINTENANCE: 'facade_maintenance',
+  FACADE_REPAIR: 'facade_repair',
+  PAINTING_EXTERIOR: 'painting_exterior',
+  PAINTING_INTERIOR: 'painting_interior',
+  GARDEN_MAINTENANCE: 'garden_maintenance',
+  PARKING_MAINTENANCE: 'parking_maintenance',
+  ENTRANCE_MAINTENANCE: 'entrance_maintenance',
+  
+  // Έκτακτες Δαπάνες
+  EMERGENCY_REPAIR: 'emergency_repair',
+  STORM_DAMAGE: 'storm_damage',
+  FLOOD_DAMAGE: 'flood_damage',
+  FIRE_DAMAGE: 'fire_damage',
+  EARTHQUAKE_DAMAGE: 'earthquake_damage',
+  VANDALISM_REPAIR: 'vandalism_repair',
+  
+  // Ειδικές Επισκευές
+  LOCKSMITH: 'locksmith',
+  GLASS_REPAIR: 'glass_repair',
+  DOOR_REPAIR: 'door_repair',
+  WINDOW_REPAIR: 'window_repair',
+  BALCONY_REPAIR: 'balcony_repair',
+  STAIRCASE_REPAIR: 'staircase_repair',
+  
+  // Ασφάλεια & Πρόσβαση
+  SECURITY_SYSTEM: 'security_system',
+  CCTV_INSTALLATION: 'cctv_installation',
+  ACCESS_CONTROL: 'access_control',
+  FIRE_ALARM: 'fire_alarm',
+  FIRE_EXTINGUISHERS: 'fire_extinguishers',
+  
+  // Διοικητικές & Νομικές
+  LEGAL_FEES: 'legal_fees',
+  NOTARY_FEES: 'notary_fees',
+  SURVEYOR_FEES: 'surveyor_fees',
+  ARCHITECT_FEES: 'architect_fees',
+  ENGINEER_FEES: 'engineer_fees',
+  ACCOUNTING_FEES: 'accounting_fees',
+  MANAGEMENT_FEES: 'management_fees',
+  
+  // Ειδικές Εργασίες
+  ASBESTOS_REMOVAL: 'asbestos_removal',
+  LEAD_PAINT_REMOVAL: 'lead_paint_removal',
+  MOLD_REMOVAL: 'mold_removal',
+  PEST_CONTROL: 'pest_control',
+  TREE_TRIMMING: 'tree_trimming',
+  SNOW_REMOVAL: 'snow_removal',
+  
+  // Ενεργειακή Απόδοση
+  ENERGY_UPGRADE: 'energy_upgrade',
+  INSULATION_WORK: 'insulation_work',
+  SOLAR_PANEL_INSTALLATION: 'solar_panel_installation',
+  LED_LIGHTING: 'led_lighting',
+  SMART_SYSTEMS: 'smart_systems',
+  
+  // Δαπάνες Συντήρησης (Legacy)
   MAINTENANCE_GENERAL: 'maintenance_general',
   MAINTENANCE_PLUMBING: 'maintenance_plumbing',
   MAINTENANCE_ELECTRICAL: 'maintenance_electrical',
@@ -271,15 +345,12 @@ export const ExpenseCategory = {
   MAINTENANCE_GARDEN: 'maintenance_garden',
   MAINTENANCE_PARKING: 'maintenance_parking',
   
-  // Δαπάνες Ασφάλειας
+  // Δαπάνες Ασφάλειας (Legacy)
   INSURANCE_BUILDING: 'insurance_building',
   INSURANCE_LIABILITY: 'insurance_liability',
   INSURANCE_EQUIPMENT: 'insurance_equipment',
   
-  // Δαπάνες Διοίκησης
-  MANAGEMENT_FEES: 'management_fees',
-  ACCOUNTING_FEES: 'accounting_fees',
-  LEGAL_FEES: 'legal_fees',
+  // Δαπάνες Διοίκησης (Legacy)
   MEETING_EXPENSES: 'meeting_expenses',
   
   // Δαπάνες Τηλεπικοινωνιών
@@ -297,27 +368,24 @@ export const ExpenseCategory = {
   CLEANING_EQUIPMENT: 'cleaning_equipment',
   CLEANING_SERVICES: 'cleaning_services',
   
-  // Δαπάνες Ασφάλειας & Πυρασφάλειας
+  // Δαπάνες Ασφάλειας & Πυρασφάλειας (Legacy)
   FIRE_SAFETY: 'fire_safety',
   SECURITY_SYSTEMS: 'security_systems',
   CCTV: 'cctv',
-  ACCESS_CONTROL: 'access_control',
   
-  // Δαπάνες Ενέργειας
+  // Δαπάνες Ενέργειας (Legacy)
   ENERGY_AUDIT: 'energy_audit',
   ENERGY_UPGRADES: 'energy_upgrades',
   SOLAR_PANELS: 'solar_panels',
-  LED_LIGHTING: 'led_lighting',
   
   // Δαπάνες Περιβάλλοντος
   WASTE_MANAGEMENT: 'waste_management',
   RECYCLING: 'recycling',
   GREEN_SPACES: 'green_spaces',
   
-  // Δαπάνες Τεχνολογίας
+  // Δαπάνες Τεχνολογίας (Legacy)
   SMART_HOME: 'smart_home',
   AUTOMATION: 'automation',
-  SMART_SYSTEMS: 'smart_systems',
   
   // Δαπάνες Ιδιοκτητών
   SPECIAL_CONTRIBUTION: 'special_contribution',
