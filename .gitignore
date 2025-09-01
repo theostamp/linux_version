@@ -30,3 +30,8 @@ venv/
 
 # Node.js
 node_modules/
+
+# Shell Scripts Permissions
+# Τα .sh αρχεία είναι ήδη στο git με εκτελέσιμα permissions (100755)
+# Μετά από git clone σε νέο σύστημα, τρέξτε: ./fix_permissions.sh
+# για να διορθώσετε τα permissions αν χάνονται
