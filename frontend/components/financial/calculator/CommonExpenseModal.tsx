@@ -36,7 +36,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { X, Building, PieChart, Receipt, BarChart, FileText } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { X, Building, PieChart, Receipt, BarChart, FileText, Calendar } from 'lucide-react';
 import { CommonExpenseModalProps } from './types/financial';
 import { useCommonExpenseCalculator } from './hooks/useCommonExpenseCalculator';
 import { TraditionalViewTab } from './tabs/TraditionalViewTab';
@@ -64,6 +65,32 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     buildingName = 'Άγνωστο Κτίριο',
   } = props;
 
+  // State for expense sheet month selection
+  const [expenseSheetMonth, setExpenseSheetMonth] = React.useState(() => {
+    // Default to previous month if available, otherwise current month
+    const currentMonth = new Date();
+    const previousMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+    return `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`;
+  });
+
+  // Generate month options for the last 12 months
+  const generateMonthOptions = () => {
+    const options = [];
+    const currentDate = new Date();
+    
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const monthName = date.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' });
+      options.push({ value: `${year}-${month}`, label: monthName });
+    }
+    
+    return options;
+  };
+
+  const monthOptions = generateMonthOptions();
+
   const {
     isSaving,
     showHeatingModal,
@@ -84,14 +111,26 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     getGroupedExpenses,
     getTotalPreviousBalance,
     getFinalTotalExpenses
-  } = useCommonExpenseCalculator(props);
+  } = useCommonExpenseCalculator({ ...props, selectedMonth: expenseSheetMonth });
+
+  // Debug: Log when expenseSheetMonth changes
+  React.useEffect(() => {
+    console.log('🔄 CommonExpenseModal: expenseSheetMonth changed:', expenseSheetMonth);
+  }, [expenseSheetMonth]);
+
+  // Force refresh when month changes
+  React.useEffect(() => {
+    if (expenseSheetMonth) {
+      console.log('🔄 Month changed, forcing refresh:', expenseSheetMonth);
+    }
+  }, [expenseSheetMonth]);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <style dangerouslySetInnerHTML={{ __html: printStyles }} />
-      <div className="bg-white rounded-lg max-w-[95vw] w-full max-h-[85vh] overflow-y-auto print-content">
+      <div key={expenseSheetMonth} className="bg-white rounded-lg max-w-[95vw] w-full max-h-[85vh] overflow-y-auto print-content">
         <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between no-print">
             <div className="flex items-center gap-4">
                 <h2 className="text-lg font-bold text-blue-600">Digital Concierge App</h2>
@@ -99,10 +138,32 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                     <Building className="h-6 w-6 text-blue-600" />
                     <div>
                         <h2 className="text-xl font-bold text-gray-800">Φύλλο Κοινοχρήστων</h2>
-                        <p className="text-xs text-gray-600 font-medium">{getPreviousMonthName(state)}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Calendar className="h-3 w-3 text-gray-500" />
+                            <Select value={expenseSheetMonth} onValueChange={setExpenseSheetMonth}>
+                                <SelectTrigger className="w-32 h-6 text-xs">
+                                    <SelectValue placeholder="Επιλέξτε μήνα" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {monthOptions.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <div className="text-xs text-gray-500">
+                                Πληρωτέο μέχρι 10/{(() => {
+                                    const date = new Date(expenseSheetMonth + '-01');
+                                    return String(date.getMonth() + 2).padStart(2, '0');
+                                })()}/{new Date(expenseSheetMonth + '-01').getFullYear()}
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 text-lg">{getPeriodInfo(state)}</Badge>
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 text-lg">
+                  {expenseSheetMonth ? new Date(expenseSheetMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' }) : getPeriodInfo(state)}
+                </Badge>
             </div>
             <div className="flex items-center gap-2">
                 <Button onClick={onClose} variant="ghost" size="sm"><X className="h-4 w-4" /></Button>

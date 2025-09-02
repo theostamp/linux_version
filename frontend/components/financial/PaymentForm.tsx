@@ -18,7 +18,7 @@ import { formatCurrency } from '@/lib/utils';
 
 const paymentFormSchema = z.object({
   apartment_id: z.number().min(1, 'Παρακαλώ επιλέξτε διαμέρισμα'),
-  common_expense_amount: z.number().min(0.1, 'Το ποσό πρέπει να είναι μεγαλύτερο από 0'),
+  common_expense_amount: z.number().min(0, 'Το ποσό δεν μπορεί να είναι αρνητικό').optional(),
   previous_obligations_amount: z.number().min(0, 'Το ποσό παλαιότερων οφειλών δεν μπορεί να είναι αρνητικό').optional(),
   date: z.string().min(1, 'Παρακαλώ επιλέξτε ημερομηνία'),
   method: z.string().min(1, 'Παρακαλώ επιλέξτε μέθοδο εισπράξεως'),
@@ -28,7 +28,18 @@ const paymentFormSchema = z.object({
   reference_number: z.string().optional(),
   notes: z.string().optional(),
   receipt: z.any().optional(),
-});
+}).refine(
+  (data) => {
+    // Τουλάχιστον ένα από τα δύο πεδία πρέπει να έχει τιμή > 0
+    const hasCommonExpense = (data.common_expense_amount || 0) > 0;
+    const hasPreviousObligations = (data.previous_obligations_amount || 0) > 0;
+    return hasCommonExpense || hasPreviousObligations;
+  },
+  {
+    message: 'Πρέπει να συμπληρώσετε τουλάχιστον ένα από τα πεδία "Ποσό Κοινόχρηστων" ή "Παλαιότερες Οφειλές"',
+    path: ['common_expense_amount'], // Θα εμφανιστεί σαν error στο πρώτο πεδίο
+  }
+);
 
 type LocalPaymentFormData = z.infer<typeof paymentFormSchema>;
 
@@ -72,8 +83,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
       apartment_id: initialData?.apartment_id || 0,
-      common_expense_amount: initialData?.common_expense_amount || 0,
-      previous_obligations_amount: initialData?.previous_obligations_amount || 0,
+      common_expense_amount: initialData?.common_expense_amount || undefined,
+      previous_obligations_amount: initialData?.previous_obligations_amount || undefined,
       date: initialData?.date || new Date().toISOString().split('T')[0],
       method: initialData?.method || PaymentMethod.CASH,
       payment_type: initialData?.payment_type || PaymentType.COMMON_EXPENSE,
@@ -160,14 +171,16 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     
     try {
       // Optimize: Pre-calculate values to reduce computation in the async function
-      const totalAmount = data.common_expense_amount + (data.previous_obligations_amount || 0);
+      const commonExpenseAmount = data.common_expense_amount || 0;
+      const previousObligationsAmount = data.previous_obligations_amount || 0;
+      const totalAmount = commonExpenseAmount + previousObligationsAmount;
       const reserveFundAmount = buildingData?.reserve_contribution_per_apartment || 0;
       
       const paymentData: PaymentFormData = {
         apartment_id: data.apartment_id,
         amount: totalAmount,
         reserve_fund_amount: reserveFundAmount,
-        previous_obligations_amount: data.previous_obligations_amount || 0,
+        previous_obligations_amount: previousObligationsAmount,
         date: data.date,
         method: data.method,
         payment_type: data.payment_type,
@@ -200,7 +213,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         // Show success toast without print button (since receipt modal will open automatically)
         toast({
           title: 'Επιτυχία!',
-          description: `Η είσπραξη καταχωρήθηκε επιτυχώς. Συνολικό ποσό: ${formatCurrency(totalAmount)}${reserveFundAmount > 0 ? ` (Αποθεματικό: ${formatCurrency(reserveFundAmount)})` : ''}${data.previous_obligations_amount && data.previous_obligations_amount > 0 ? ` (Παλαιότερες οφειλές: ${formatCurrency(data.previous_obligations_amount)})` : ''}.`,
+          description: `Η είσπραξη καταχωρήθηκε επιτυχώς. Συνολικό ποσό: ${formatCurrency(totalAmount)}${reserveFundAmount > 0 ? ` (Αποθεματικό: ${formatCurrency(reserveFundAmount)})` : ''}${previousObligationsAmount > 0 ? ` (Παλαιότερες οφειλές: ${formatCurrency(previousObligationsAmount)})` : ''}.`,
         });
 
         reset();
@@ -962,7 +975,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 id="common_expense_amount"
                 type="number"
                 step="0.01"
-                min="0.01"
+                min="0"
                 max="999999.99"
                 {...register('common_expense_amount', { 
                   valueAsNumber: true,
@@ -987,6 +1000,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               />
               {errors.common_expense_amount && (
                 <p className="text-sm text-red-600">{errors.common_expense_amount.message}</p>
+              )}
+              {/* Custom validation error for the refine rule */}
+              {errors.root && (
+                <p className="text-sm text-red-600">{errors.root.message}</p>
               )}
               {buildingData?.reserve_contribution_per_apartment && buildingData.reserve_contribution_per_apartment > 0 && (
                 <p className="text-xs text-blue-600 mt-1">

@@ -87,8 +87,75 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
 
         {/* Middle Column */}
         <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200 shadow-sm">
-            <h3 className="font-bold text-gray-800 mb-2 text-center text-sm flex items-center justify-center gap-2"><Calculator className="h-4 w-4 text-blue-600" />ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ</h3>
-            {/* ... JSX for expense analysis summary ... */}
+            <h3 className="font-bold text-gray-800 mb-3 text-center text-sm flex items-center justify-center gap-2">
+                <Calculator className="h-4 w-4 text-blue-600" />
+                ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ
+            </h3>
+            
+            {/* Expense Breakdown Summary */}
+            <div className="space-y-3">
+                {/* 1. Λειτουργικές Δαπάνες */}
+                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700">1</span>
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800">Λειτουργικές Δαπάνες</p>
+                            <p className="text-xs text-gray-600">Ρεύμα, νερό, καθαρισμός, κλπ.</p>
+                        </div>
+                    </div>
+                    <span className="text-sm font-bold text-blue-600">{formatAmount(expenseBreakdown.common || 0)}€</span>
+                </div>
+
+                {/* 2. Κόστος διαχείρισης */}
+                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700">2</span>
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800">Κόστος διαχείρισης</p>
+                            <p className="text-xs text-gray-600">Αμοιβή διαχειριστή</p>
+                        </div>
+                    </div>
+                    <span className="text-sm font-bold text-blue-600">{formatAmount(managementFeeInfo.totalFee || 0)}€</span>
+                </div>
+
+                {/* 3. Αποθεματικό Ταμείο */}
+                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700">3</span>
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800">Αποθεματικό Ταμείο</p>
+                            <p className="text-xs text-gray-600">Μηνιαία εισφορά</p>
+                        </div>
+                    </div>
+                    <span className="text-sm font-bold text-blue-600">{formatAmount(reserveFundInfo.monthlyAmount || 0)}€</span>
+                </div>
+
+                {/* 4. Παλαιότερες οφειλές */}
+                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700">4</span>
+                        <div>
+                            <p className="text-sm font-semibold text-gray-800">Παλαιότερες οφειλές</p>
+                            <p className="text-xs text-gray-600">Οφειλές προηγούμενων μηνών</p>
+                        </div>
+                    </div>
+                    <span className="text-sm font-bold text-blue-600">{formatAmount(getTotalPreviousBalance() || 0)}€</span>
+                </div>
+
+                {/* ΣΥΝΟΛΟ */}
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded border border-blue-200">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-blue-700">Σ</span>
+                        <div>
+                            <p className="text-sm font-bold text-blue-800">ΣΥΝΟΛΟ</p>
+                            <p className="text-xs text-blue-600">Όλες οι δαπάνες + παλαιότερες οφειλές</p>
+                        </div>
+                    </div>
+                    <span className="text-lg font-bold text-blue-700">{formatAmount(getFinalTotalExpenses() || 0)}€</span>
+                </div>
+
+                {/* Removed redundant expense items as requested */}
+            </div>
         </div>
 
         {/* Right Column */}

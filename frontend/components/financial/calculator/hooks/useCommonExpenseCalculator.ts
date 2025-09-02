@@ -1,8 +1,9 @@
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useCommonExpenses } from '@/hooks/useCommonExpenses';
 import { useApartmentsWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
+import { useMonthlyExpenses } from '@/hooks/useMonthlyExpenses';
 import { useMonthRefresh } from '@/hooks/useMonthRefresh';
 import { 
   CommonExpenseModalProps, 
@@ -36,8 +37,69 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
 
   const { saveCommonExpenseSheet } = useCommonExpenses();
-  const selectedMonth = state.customPeriod?.startDate ? state.customPeriod.startDate.substring(0, 7) : undefined;
+  
+  // Use selectedMonth from props if provided, otherwise fallback to state.customPeriod
+  const selectedMonth = props.selectedMonth || (state.customPeriod?.startDate ? state.customPeriod.startDate.substring(0, 7) : undefined);
+  
+  // Use the selected month directly for the expense sheet
+  // User will choose which month's data they want to see
   const { apartments: aptWithFinancial, forceRefresh } = useApartmentsWithFinancialData(buildingId, selectedMonth);
+  
+  // Fetch monthly expenses for the selected month
+  const { expenses: monthlyExpenses, isLoading: monthlyExpensesLoading } = useMonthlyExpenses(buildingId, selectedMonth);
+
+  // Wait for both monthlyExpenses and aptWithFinancial to be loaded
+  const isDataReady = useMemo(() => {
+    const hasMonthlyExpenses = !!monthlyExpenses && !monthlyExpensesLoading;
+    const hasApartments = aptWithFinancial.length > 0;
+    
+    console.log('🔍 DEBUG useCommonExpenseCalculator: Data readiness check:', {
+      selectedMonth,
+      hasMonthlyExpenses,
+      hasApartments,
+      monthlyExpensesKeys: monthlyExpenses ? Object.keys(monthlyExpenses) : 'No data',
+      apartmentsCount: aptWithFinancial.length
+    });
+    
+    return hasMonthlyExpenses && hasApartments;
+  }, [monthlyExpenses, monthlyExpensesLoading, aptWithFinancial.length, selectedMonth]);
+
+  // Debug: Log monthly expenses data
+  useEffect(() => {
+    console.log('🔍 DEBUG useCommonExpenseCalculator: monthlyExpenses updated:', {
+      selectedMonth,
+      monthlyExpenses,
+      hasData: !!monthlyExpenses,
+      keys: monthlyExpenses ? Object.keys(monthlyExpenses) : 'No data',
+      managementFields: monthlyExpenses ? {
+        management_fee_per_apartment: monthlyExpenses.management_fee_per_apartment,
+        total_management_cost: monthlyExpenses.total_management_cost,
+        hasManagementData: !!(monthlyExpenses.management_fee_per_apartment || monthlyExpenses.total_management_cost)
+      } : 'No data'
+    });
+  }, [monthlyExpenses, selectedMonth]);
+
+  // Force refresh when selectedMonth changes
+  useEffect(() => {
+    console.log('🔄 useCommonExpenseCalculator: useEffect triggered with selectedMonth:', selectedMonth);
+    if (selectedMonth && forceRefresh) {
+      console.log('🔄 useCommonExpenseCalculator: Month changed, forcing refresh:', selectedMonth);
+      // Use setTimeout to ensure state is updated before refresh
+      setTimeout(() => {
+        console.log('🔄 useCommonExpenseCalculator: Executing forceRefresh...');
+        forceRefresh();
+      }, 0);
+    }
+  }, [selectedMonth, forceRefresh]);
+
+  // Debug: Log when aptWithFinancial changes
+  useEffect(() => {
+    console.log('🔍 useCommonExpenseCalculator: aptWithFinancial updated:', {
+      length: aptWithFinancial.length,
+      selectedMonth,
+      sampleData: aptWithFinancial.length > 0 ? aptWithFinancial[0] : 'No data'
+    });
+  }, [aptWithFinancial, selectedMonth]);
 
   useMonthRefresh(selectedMonth, forceRefresh, 'CommonExpenseModal');
 
@@ -68,28 +130,88 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
 
   const expenseBreakdown = useMemo<ExpenseBreakdown>(() => {
     const breakdown: ExpenseBreakdown = { common: 0, elevator: 0, heating: 0, other: 0, coownership: 0 };
-    if (state.advancedShares && state.advancedShares.expense_totals) {
+    
+    // Use month-specific data from API if available
+    if (monthlyExpenses) {
+      console.log('🔍 DEBUG expenseBreakdown: Using API data for month', selectedMonth, monthlyExpenses);
+      
+      // Map API data to breakdown structure
+      breakdown.common = monthlyExpenses.total_expenses_month || 0;
+      breakdown.elevator = 0; // Not available in API yet
+      breakdown.heating = 0; // Not available in API yet
+      breakdown.other = 0; // Not available in API yet
+      breakdown.coownership = 0; // Not available in API yet
+      
+      console.log('🔍 DEBUG expenseBreakdown: Mapped API data to breakdown:', breakdown);
+    } else if (state.advancedShares && state.advancedShares.expense_totals) {
+      // Fallback to state data if API data not available
       const { general, elevator, heating, equal_share, individual } = state.advancedShares.expense_totals;
       breakdown.common = parseFloat(general || 0);
       breakdown.elevator = parseFloat(elevator || 0);
       breakdown.heating = parseFloat(heating || 0);
       breakdown.other = parseFloat(equal_share || 0);
       breakdown.coownership = parseFloat(individual || 0);
+      
+      console.log('🔍 DEBUG expenseBreakdown: Using fallback state data for month', selectedMonth, {
+        breakdown,
+        note: 'API data not available, using static state data'
+      });
     }
+    
     return breakdown;
-  }, [state.advancedShares, state.totalExpenses]);
+  }, [monthlyExpenses, state.advancedShares, state.totalExpenses, selectedMonth]);
 
   const managementFeeInfo = useMemo<ManagementFeeInfo>(() => {
-    const feeFromState = state.advancedShares?.management_fee_per_apartment || 0;
-    const finalFee = feeFromState > 0 ? feeFromState : managementFeePerApartment;
-    const apartmentsCount = Object.keys(state.shares).length;
-    return {
+    let finalFee = 0;
+    let apartmentsCount = Object.keys(state.shares).length;
+    
+    console.log('🔍 DEBUG managementFeeInfo: Starting calculation with:', {
+      selectedMonth,
+      monthlyExpenses: !!monthlyExpenses,
+      monthlyExpensesKeys: monthlyExpenses ? Object.keys(monthlyExpenses) : 'No data',
+      totalManagementCost: monthlyExpenses?.total_management_cost,
+      managementFeePerApartment: monthlyExpenses?.management_fee_per_apartment,
+      apartmentsCount,
+      stateShares: Object.keys(state.shares),
+      stateAdvancedShares: !!state.advancedShares
+    });
+    
+    // Use month-specific data from API if available
+    if (monthlyExpenses && monthlyExpenses.total_management_cost > 0) {
+      finalFee = monthlyExpenses.management_fee_per_apartment || (monthlyExpenses.total_management_cost / apartmentsCount);
+      console.log('✅ DEBUG managementFeeInfo: Using API data', {
+        totalManagementCost: monthlyExpenses.total_management_cost,
+        feePerApartment: monthlyExpenses.management_fee_per_apartment,
+        apartmentsCount,
+        finalFee,
+        source: 'API'
+      });
+    } else {
+      // Fallback to state data
+      const feeFromState = state.advancedShares?.management_fee_per_apartment || 0;
+      finalFee = feeFromState > 0 ? feeFromState : managementFeePerApartment;
+      
+      console.log('⚠️ DEBUG managementFeeInfo: Using fallback state data', {
+        feeFromState,
+        managementFeePerApartment,
+        finalFee,
+        apartmentsCount,
+        source: 'State fallback',
+        reason: monthlyExpenses ? 'No total_management_cost in API' : 'No monthlyExpenses data'
+      });
+    }
+    
+    const result = {
       feePerApartment: finalFee,
       totalFee: finalFee * apartmentsCount,
       apartmentsCount,
       hasFee: finalFee > 0,
     };
-  }, [state.advancedShares, state.shares, managementFeePerApartment]);
+    
+    console.log('💰 DEBUG managementFeeInfo: Final result:', result);
+    
+    return result;
+  }, [monthlyExpenses, state.advancedShares, state.shares, managementFeePerApartment, selectedMonth]);
 
   const reserveFundInfo = useMemo<ReserveFundInfo>(() => {
     const goal = Number(state.advancedShares?.reserve_fund_goal || 0);
@@ -171,7 +293,50 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
   }, [state.advancedShares]);
 
   const getTotalPreviousBalance = useCallback(() => {
-    return aptWithFinancial.reduce((sum: number, apt: any) => sum + Math.abs(apt.previous_balance ?? 0), 0);
+    console.log('🔍 DEBUG getTotalPreviousBalance called with aptWithFinancial:', {
+      length: aptWithFinancial.length,
+      sampleData: aptWithFinancial.length > 0 ? aptWithFinancial[0] : 'No data',
+      allPreviousBalances: aptWithFinancial.map(apt => ({
+        id: apt.id,
+        previous_balance: apt.previous_balance,
+        abs_previous_balance: Math.abs(apt.previous_balance ?? 0),
+        aptData: apt
+      }))
+    });
+    
+    // Log the first 3 apartments in detail
+    if (aptWithFinancial.length > 0) {
+      console.log('🔍 DEBUG First 3 apartments detailed data:', aptWithFinancial.slice(0, 3).map(apt => ({
+        id: apt.id,
+        apartment_number: apt.apartment_number,
+        previous_balance: apt.previous_balance,
+        current_balance: apt.current_balance,
+        expense_share: apt.expense_share,
+        allFields: Object.keys(apt),
+        sampleValues: {
+          previous_balance: apt.previous_balance,
+          current_balance: apt.current_balance,
+          expense_share: apt.expense_share,
+          net_obligation: apt.net_obligation,
+          total_obligations: apt.total_obligations,
+          total_payments: apt.total_payments
+        }
+      })));
+    }
+    
+    const total = aptWithFinancial.reduce((sum: number, apt: any) => sum + Math.abs(apt.previous_balance ?? 0), 0);
+    
+    console.log('🔍 DEBUG getTotalPreviousBalance result:', total);
+    console.log('🔍 DEBUG getTotalPreviousBalance calculation details:', {
+      total,
+      apartmentsCount: aptWithFinancial.length,
+      individualBalances: aptWithFinancial.map(apt => ({
+        id: apt.id,
+        previous_balance: apt.previous_balance,
+        abs_previous_balance: Math.abs(apt.previous_balance ?? 0)
+      }))
+    });
+    return total;
   }, [aptWithFinancial]);
 
   const getFinalTotalExpenses = useCallback(() => {

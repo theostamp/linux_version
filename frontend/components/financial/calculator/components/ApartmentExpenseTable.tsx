@@ -68,13 +68,18 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             const heatingAmount = toNumber(breakdown.heating_expenses || 0);
             const managementFee = toNumber((breakdown as any).management_fee ?? managementFeeInfo.feePerApartment);
             const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0 && Object.values(expenseBreakdown).some(v => v > 0)) ? toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000) : 0;
-            const finalTotalWithFees = commonAmount + elevatorAmount + heatingAmount + managementFee + apartmentReserveFund;
+            
+            // Fix: Show positive previous balance amounts
+            const previousBalance = Math.abs(apartmentData?.previous_balance ?? 0);
+            
+            // Fix: Include previous balance in final total
+            const finalTotalWithFees = commonAmount + elevatorAmount + heatingAmount + managementFee + apartmentReserveFund + previousBalance;
 
             return (
               <TableRow key={share.apartment_id}>
                 <TableCell>{share.identifier || share.apartment_number}</TableCell>
                 <TableCell>{share.owner_name || 'Μη καταχωρημένος'}</TableCell>
-                <TableCell>{formatAmount(apartmentData?.previous_balance ?? 0)}€</TableCell>
+                <TableCell>{formatAmount(previousBalance)}€</TableCell>
                 <TableCell>{commonMills.toFixed(2)}</TableCell>
                 <TableCell>{elevatorMills.toFixed(2)}</TableCell>
                 <TableCell>{heatingMills.toFixed(2)}</TableCell>
@@ -89,7 +94,8 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             );
           })}
           <TableRow className="bg-gray-100 font-bold">
-            <TableCell colSpan={3}>ΣΥΝΟΛΑ</TableCell>
+            <TableCell colSpan={2}>ΣΥΝΟΛΑ</TableCell>
+            <TableCell>{formatAmount(sharesArray.reduce((s, a) => s + Math.abs(aptWithFinancial.find(apt => apt.id === a.apartment_id)?.previous_balance ?? 0), 0))}€</TableCell>
             <TableCell>{sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.participation_mills ?? 0), 0).toFixed(2)}</TableCell>
             <TableCell>{sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.participation_mills ?? 0), 0).toFixed(2)}</TableCell>
             <TableCell>{sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.heating_mills ?? 0), 0).toFixed(2)}</TableCell>
@@ -99,7 +105,7 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             <TableCell>{formatAmount(managementFeeInfo.totalFee)}</TableCell>
             {showOwnerExpenses && (<> <TableCell>-</TableCell> <TableCell>-</TableCell> <TableCell>-</TableCell> </>)}
             {reserveFundInfo.monthlyAmount > 0 && <TableCell>{formatAmount(reserveFundInfo.monthlyAmount)}</TableCell>}
-            <TableCell>{formatAmount(totalExpenses)}</TableCell>
+            <TableCell>{formatAmount(totalExpenses + sharesArray.reduce((s, a) => s + Math.abs(aptWithFinancial.find(apt => apt.id === a.apartment_id)?.previous_balance ?? 0), 0))}€</TableCell>
           </TableRow>
         </TableBody>
       </Table>

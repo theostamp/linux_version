@@ -1,7 +1,13 @@
+#!/usr/bin/env python3
+"""
+Test script to verify that apartment_balances API no longer double-counts expenses
+"""
+
 import os
 import sys
 import django
-from decimal import Decimal
+import json
+from datetime import datetime, date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -9,89 +15,89 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from apartments.models import Apartment
-from financial.models import Expense, Payment
-from buildings.models import Building
-from django.db.models import Sum, Q
-from datetime import datetime, date
 
 def test_apartment_balances_fix():
-    """Test if the apartment balances API now shows correct amounts"""
+    """Test that apartment_balances API no longer double-counts expenses"""
     
     with schema_context('demo'):
-        # Get building (Αραχώβης 12)
-        building = Building.objects.get(id=1)  # Αραχώβης 12
+        from financial.views import FinancialDashboardViewSet
+        from django.test import RequestFactory
+        from users.models import CustomUser as User
         
-        print(f"🏢 Κτίριο: {building.name}")
-        print(f"📍 Διεύθυνση: {building.address}")
-        print()
+        print("🔍 TEST APARTMENT_BALANCES FIX")
+        print("=" * 50)
         
-        # Get apartments
-        apartments = Apartment.objects.filter(building=building)
-        total_mills = sum(apt.participation_mills or 0 for apt in apartments)
-        apartments_count = apartments.count()
+        # Create a mock request for September 2025
+        factory = RequestFactory()
+        request = factory.get('/financial/dashboard/apartment_balances/?building_id=1&month=2025-09')
         
-        # Current month (August 2025)
-        current_month = "2025-08"
-        year, mon = map(int, current_month.split('-'))
-        month_start = date(year, mon, 1)
+        # Use existing user
+        user = User.objects.first()
+        if not user:
+            user = User.objects.create_user(email='test4@example.com', password='testpass')
+        request.user = user
         
-        # Check expenses for current month
-        current_month_expenses = Expense.objects.filter(
-            building=building,
-            date__gte=month_start
-        )
+        # Add query_params attribute
+        request.query_params = request.GET
         
-        print(f"📅 ΜΗΝΑΣ: {current_month}")
-        print(f"💸 Δαπάνες τρέχοντος μήνα: {current_month_expenses.count()}")
-        print()
+        # Create viewset instance
+        viewset = FinancialDashboardViewSet()
+        viewset.request = request
         
-        # Test calculation for each apartment
-        print(f"🏠 ΥΠΟΛΟΓΙΣΜΟΣ ΜΕΡΙΔΙΩΝ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ:")
-        print("-" * 80)
+        # Call the apartment_balances method
+        response = viewset.apartment_balances(request)
         
-        for apartment in apartments:
-            # Calculate current month obligations (API logic)
-            current_month_share = 0.0
+        print(f"Response status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.data
+            apartments = data.get('apartments', [])
+            summary = data.get('summary', {})
             
-            for expense in current_month_expenses:
-                share_amount = 0.0
-                
-                if expense.distribution_type == 'by_participation_mills':
-                    mills = apartment.participation_mills or 0
-                    if total_mills > 0:
-                        share_amount = float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills))))
-                    else:
-                        share_amount = float(expense.amount / Decimal(str(apartments_count)))
-                
-                elif expense.distribution_type == 'equal_share':
-                    share_amount = float(expense.amount / Decimal(str(apartments_count)))
-                
-                elif expense.distribution_type in ['by_meters', 'specific_apartments']:
-                    mills = apartment.participation_mills or 0
-                    if total_mills > 0:
-                        share_amount = float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills))))
-                    else:
-                        share_amount = float(expense.amount / Decimal(str(apartments_count)))
-                
-                current_month_share += share_amount
+            print(f"✅ API call successful")
+            print(f"📊 Apartments returned: {len(apartments)}")
+            print(f"📋 Summary: {summary}")
             
-            # Add management fees and reserve fund contributions
-            management_fee_share = float(building.management_fee_per_apartment or 0)
-            reserve_contribution_share = float(building.reserve_contribution_per_apartment or 0)
-            total_monthly_obligations = current_month_share + management_fee_share + reserve_contribution_share
-            
-            print(f"🏠 Διαμέρισμα {apartment.number} ({apartment.owner_name}):")
-            print(f"   • Χιλιοστά: {apartment.participation_mills}")
-            print(f"   • Μερίδιο δαπανών: {current_month_share:.2f}€")
-            print(f"   • Διαχειριστικά τέλη: {management_fee_share:.2f}€")
-            print(f"   • Εισφορά αποθεματικού: {reserve_contribution_share:.2f}€")
-            print(f"   • ΣΥΝΟΛΟ μηνιαίες υποχρεώσεις: {total_monthly_obligations:.2f}€")
-            print()
-        
-        print(f"✅ ΕΠΙΤΥΧΗΣ ΔΙΟΡΘΩΣΗ!")
-        print(f"   • Τώρα κάθε διαμέρισμα θα εμφανίζει {management_fee_share + reserve_contribution_share:.2f}€")
-        print(f"   • Αντί για 0,00€ που εμφανιζόταν πριν")
+            if apartments:
+                # Check first apartment for double-counting
+                first_apt = apartments[0]
+                print(f"\n🏠 First apartment: {first_apt['apartment_number']}")
+                print(f"   • Total obligations: {first_apt['total_obligations']}€")
+                print(f"   • Previous balance: {first_apt['previous_balance']}€")
+                print(f"   • Expense share (current month): {first_apt['expense_share']}€")
+                print(f"   • Net obligation: {first_apt['net_obligation']}€")
+                print(f"   • Total payments: {first_apt['total_payments']}€")
+                
+                # Verify the calculation
+                expected_net_obligation = first_apt['previous_balance'] + first_apt['expense_share'] - first_apt['total_payments']
+                print(f"   • Expected net obligation: {expected_net_obligation}€")
+                
+                if abs(first_apt['net_obligation'] - expected_net_obligation) < 0.01:
+                    print(f"   ✅ Calculation is correct - no double-counting!")
+                else:
+                    print(f"   ❌ Calculation is wrong - possible double-counting!")
+                    print(f"      Difference: {first_apt['net_obligation'] - expected_net_obligation}€")
+                
+                # Check expense breakdown
+                expense_breakdown = first_apt.get('expense_breakdown', [])
+                print(f"\n📋 Expense breakdown: {len(expense_breakdown)} expenses")
+                
+                # Group expenses by month
+                expenses_by_month = {}
+                for expense in expense_breakdown:
+                    month = expense.get('month', 'unknown')
+                    if month not in expenses_by_month:
+                        expenses_by_month[month] = []
+                    expenses_by_month[month].append(expense)
+                
+                for month, expenses in expenses_by_month.items():
+                    total_month = sum(e['share_amount'] for e in expenses)
+                    print(f"   • {month}: {total_month}€ ({len(expenses)} expenses)")
+                
+        else:
+            print(f"❌ API call failed: {response.status_code}")
+            if hasattr(response, 'data'):
+                print(f"Error: {response.data}")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     test_apartment_balances_fix()

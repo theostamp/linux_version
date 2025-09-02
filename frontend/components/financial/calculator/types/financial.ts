@@ -44,6 +44,7 @@ export interface CommonExpenseModalProps {
   state: CalculatorState;
   buildingId: number;
   buildingName?: string;
+  selectedMonth?: string; // Month for expense sheet (e.g., "2025-08" for August)
   managementFeePerApartment?: number;
   reserveContributionPerApartment?: number;
   managerName?: string;

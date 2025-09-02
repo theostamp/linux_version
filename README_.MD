@@ -440,6 +440,15 @@ docker compose up --build -d
 
 docker rmi $(docker images -q)
 
+
+## Εκτέλεση script για καθαρισμό δεδομένων
+# Αντιγραφή script στο container
+docker cp clear_financial_data_simple.py linux_version-backend-1:/app/
+
+# Εκτέλεση
+docker exec -it linux_version-backend-1 python /app/clear_financial_data_simple.py
+
+
 # Πλήρες reset και εκκίνηση
 ./reset_and_start.sh
 
@@ -514,10 +523,10 @@ git push origin v2.1.0
 
 ## 📤 Ενημέρωση GitHub Repository
 
-### Βασικές Εντολές Git
+## Βασικές Εντολές Git
 
 git add .
-git commit -m "ακριβως μετα το refactor - πρεπει να δοκιμαστει "
+git commit -m "οκ fixed balanceδιορθωκηε η δυνατοτητα εισαγωγης μηδενικου ποσου πληρωμης στην περιπτωση επιπλεον υπολοιπο των δαπανων "
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

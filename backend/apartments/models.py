@@ -99,6 +99,14 @@ class Apartment(models.Model):
         help_text='Τρέχον υπόλοιπο διαμερίσματος (+ = πιστωτικό, - = οφειλή)'
     )
     
+    previous_balance = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name='Προηγούμενο Υπόλοιπο',
+        help_text='Υπόλοιπο προηγούμενων μηνών (+ = πιστωτικό, - = οφειλή)'
+    )
+    
     # Στοιχεία ενοικίασης
     tenant_name = models.CharField(
         max_length=255,

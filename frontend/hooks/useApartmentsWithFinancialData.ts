@@ -4,6 +4,7 @@ import { api, fetchApartmentsWithFinancialData } from '@/lib/api';
 export interface ApartmentWithFinancialData {
   id: number;
   number: string;
+  apartment_number?: string;  // Alias for number field
   owner_name: string;
   tenant_name: string;
   participation_mills?: number;
@@ -14,6 +15,11 @@ export interface ApartmentWithFinancialData {
   monthly_due: number;
   last_payment_date?: string;
   latest_payment_amount?: number;
+  // Additional fields that might be returned by the API
+  expense_share?: number;
+  net_obligation?: number;
+  total_obligations?: number;
+  total_payments?: number;
 }
 
 export const useApartmentsWithFinancialData = (buildingId?: number, month?: string) => {
@@ -25,38 +31,32 @@ export const useApartmentsWithFinancialData = (buildingId?: number, month?: stri
   const lastRequestTimeRef = useRef<number>(0);
   const currentRequestRef = useRef<string>(''); // Track current request to prevent stale responses
 
-  // Load apartments with financial data (optimized for rate limiting with debouncing)
+  // Load apartments with financial data (optimized for rate limiting)
   const loadApartments = useCallback(async () => {
-    if (!buildingId) return;
+    if (!buildingId) {
+      console.log('⚠️ No buildingId provided, skipping loadApartments');
+      return;
+    }
     
     // Create request identifier to prevent stale responses
     const requestId = `${buildingId}-${month || 'current'}-${Date.now()}`;
     currentRequestRef.current = requestId;
-    
-    // Debouncing: prevent rapid successive calls
-    const now = Date.now();
-    const timeSinceLastRequest = now - lastRequestTimeRef.current;
-    const MIN_INTERVAL = 500; // Reduced to 500ms for better responsiveness
-    
-    if (timeSinceLastRequest < MIN_INTERVAL) {
-      console.log('Request debounced, too soon since last request');
-      return;
-    }
     
     // Clear any existing timeout
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current);
     }
     
-    lastRequestTimeRef.current = now;
     setIsLoading(true);
     setError(null);
     
-    console.log(`🔄 Loading apartments for building ${buildingId}, month: ${month || 'current'}`);
+    console.log(`🔄 Loading apartments for building ${buildingId}, month: ${month}`);
     
     try {
       // Get building data first
+      console.log('🔍 DEBUG calling building API...');
       const buildingResponse = await api.get(`/buildings/list/${buildingId}/`);
+      console.log('🔍 DEBUG building API response:', buildingResponse.data);
       
       // Check if this request is still the current one
       if (currentRequestRef.current !== requestId) {
@@ -67,7 +67,18 @@ export const useApartmentsWithFinancialData = (buildingId?: number, month?: stri
       setBuilding(buildingResponse.data);
       
       // Use the optimized batch API function
+      console.log('🔍 DEBUG calling fetchApartmentsWithFinancialData...');
       const apartmentsWithFinancialData = await fetchApartmentsWithFinancialData(buildingId, month);
+      
+      // DEBUG: Log what we got from fetchApartmentsWithFinancialData
+      console.log('🔍 DEBUG fetchApartmentsWithFinancialData result:', {
+        buildingId,
+        month,
+        resultType: typeof apartmentsWithFinancialData,
+        isArray: Array.isArray(apartmentsWithFinancialData),
+        length: Array.isArray(apartmentsWithFinancialData) ? apartmentsWithFinancialData.length : 'N/A',
+        sampleData: Array.isArray(apartmentsWithFinancialData) && apartmentsWithFinancialData.length > 0 ? apartmentsWithFinancialData[0] : 'No data'
+      });
       
       // Final check before updating state
       if (currentRequestRef.current === requestId) {
@@ -100,8 +111,12 @@ export const useApartmentsWithFinancialData = (buildingId?: number, month?: stri
 
   // Load apartments when buildingId changes
   useEffect(() => {
+    console.log('🔍 DEBUG useEffect triggered:', { buildingId, month, hasBuildingId: !!buildingId });
     if (buildingId) {
+      console.log('🔍 DEBUG calling loadApartments for buildingId:', buildingId, 'month:', month);
       loadApartments();
+    } else {
+      console.log('⚠️ No buildingId in useEffect, skipping loadApartments');
     }
   }, [buildingId, month, loadApartments]);
 

@@ -1038,6 +1038,28 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 # Use balance from service (which handles historical filtering)
                 current_balance = float(balance_dict.get(apartment.id, 0))
                 
+                # Calculate previous_balance (obligations from months before the selected month)
+                previous_balance = 0.0
+                if month:
+                    try:
+                        # Get the previous month's balance
+                        from datetime import date
+                        year, mon = map(int, month.split('-'))
+                        if mon == 1:
+                            prev_month = f"{year-1}-12"
+                        else:
+                            prev_month = f"{year}-{mon-1:02d}"
+                        
+                        # Get balance for the previous month
+                        prev_balances = service.get_apartment_balances(prev_month)
+                        prev_balance_dict = {b['id']: b['current_balance'] for b in prev_balances}
+                        previous_balance = float(prev_balance_dict.get(apartment.id, 0))
+                    except Exception:
+                        previous_balance = 0.0
+                else:
+                    # If no month specified, use the apartment's previous_balance field
+                    previous_balance = float(apartment.previous_balance or 0)
+                
                 # Calculate monthly due using the service
                 try:
                     calculator = CommonExpenseCalculator(building_id, month)
@@ -1052,9 +1074,11 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 apartment_data = {
                     'id': apartment.id,
                     'number': apartment.number,
+                    'apartment_number': apartment.number,  # Add alias for frontend compatibility
                     'owner_name': apartment.owner_name,
                     'tenant_name': apartment.tenant_name,
                     'current_balance': current_balance,
+                    'previous_balance': previous_balance,  # Add previous_balance field
                     'monthly_due': monthly_due,
                     'building_id': apartment.building.id,
                     'building_name': apartment.building.name,
@@ -1373,9 +1397,8 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         
                         apartment_data['expense_share'] = round(current_month_share + management_fee_share + reserve_contribution_share, 2)
                         
-                        # Add current month obligations to net_obligation
-                        current_month_obligations = round(current_month_share + management_fee_share + reserve_contribution_share, 2)
-                        apartment_data['net_obligation'] += current_month_obligations
+                        # Calculate net obligation: previous obligations + current month obligations - all payments
+                        apartment_data['net_obligation'] = apartment_data['previous_balance'] + apartment_data['expense_share'] - sum(float(p.amount) for p in payments)
                         
                     except Exception as e:
                         print(f"Error parsing month {month}: {e}")
@@ -1383,7 +1406,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         apartment_data['expense_share'] = 0.0
                 else:
                     # No month specified, use total obligations as previous balance
-                    apartment_data['previous_balance'] = apartment_data['net_obligation']
+                    apartment_data['previous_balance'] = apartment_data['total_obligations']
                     apartment_data['expense_share'] = 0.0
                 
                 # Determine status based on new rules:

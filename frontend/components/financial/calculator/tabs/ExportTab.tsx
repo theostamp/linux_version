@@ -136,31 +136,7 @@ export const ExportTab: React.FC<ExportTabProps> = ({
           </Card>
         </div>
 
-        <Card className="border-gray-200 bg-gray-50/30">
-          <CardHeader>
-            <CardTitle className="text-base">Περίληψη Εξαγωγής</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <p className="font-medium text-gray-600">Κτίριο</p>
-                <p className="font-bold">{buildingName}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-600">Περίοδος</p>
-                <p className="font-bold">{periodInfo}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-600">Διαμερίσματα</p>
-                <p className="font-bold">{apartmentsCount}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-600">Σύνολο Δαπανών</p>
-                <p className="font-bold text-blue-700">{formatAmount(totalExpenses)}€</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Removed the summary section with building info, period, apartments count, and total expenses */}
       </CardContent>
     </Card>
   );
