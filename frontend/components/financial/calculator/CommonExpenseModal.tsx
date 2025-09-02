@@ -552,19 +552,73 @@ const getPreviousMonthName = () => {
     };
   };
 
-  // Get reserve fund information
-  const getReserveFundDetails = () => {
-    const reserveFundInfo = getReserveFundInfo();
-    const apartmentsCount = Object.keys(state.shares).length;
+  // Get reserve fund information with real data priority
+  const getReserveFundInfo = () => {
+    // PRIORITY 1: Use real reserve fund data from building settings
+    if (aptWithFinancial && aptWithFinancial.length > 0) {
+      // Get building data from first apartment (they all belong to same building)
+      const firstApartment = aptWithFinancial[0];
+      if (firstApartment?.building) {
+        const building = firstApartment.building;
+        const reserveGoal = building.reserve_fund_goal || 0;
+        const reserveDuration = building.reserve_fund_duration_months || 0;
+        
+        if (reserveGoal > 0 && reserveDuration > 0) {
+          const monthlyAmount = reserveGoal / reserveDuration;
+          const totalContribution = monthlyAmount * reserveDuration;
+          
+          console.log('🔍 Using real reserve fund data from building:', {
+            goal: reserveGoal,
+            duration: reserveDuration,
+            monthlyAmount: monthlyAmount
+          });
+          
+          return {
+            goal: reserveGoal,
+            duration: reserveDuration,
+            monthlyAmount: monthlyAmount,
+            totalContribution: totalContribution,
+            monthsRemaining: reserveDuration,
+            actualReserveCollected: 0, // This would need additional API call
+            progressPercentage: 0 // This would need additional API call
+          };
+        }
+      }
+    }
     
+    // PRIORITY 2: Use data from state.advancedShares
+    if (state.advancedShares?.reserve_fund_goal && state.advancedShares?.reserve_fund_duration) {
+      const goal = state.advancedShares.reserve_fund_goal;
+      const duration = state.advancedShares.reserve_fund_duration;
+      const monthlyAmount = goal / duration;
+      
+      console.log('🔍 Using reserve fund data from advanced shares:', {
+        goal: goal,
+        duration: duration,
+        monthlyAmount: monthlyAmount
+      });
+      
+      return {
+        goal: goal,
+        duration: duration,
+        monthlyAmount: monthlyAmount,
+        totalContribution: goal,
+        monthsRemaining: duration,
+        actualReserveCollected: 0,
+        progressPercentage: 0
+      };
+    }
+    
+    // PRIORITY 3: Fallback to default values
+    console.log('🔍 Using default reserve fund values');
     return {
-      monthlyAmount: Number(reserveFundInfo.monthlyAmount || 0),
-      totalContribution: Number(reserveFundInfo.totalContribution || 0),
-      displayText: reserveFundInfo.displayText,
-      goal: Number(reserveFundInfo.goal || 0),
-      duration: Number(reserveFundInfo.duration || 0),
-      apartmentsCount: apartmentsCount,
-      hasReserve: reserveFundInfo.totalContribution > 0
+      goal: 0,
+      duration: 0,
+      monthlyAmount: 0,
+      totalContribution: 0,
+      monthsRemaining: 0,
+      actualReserveCollected: 0,
+      progressPercentage: 0
     };
   };
 

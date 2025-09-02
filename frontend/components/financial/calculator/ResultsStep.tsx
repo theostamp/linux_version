@@ -1395,7 +1395,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         onClose={() => setShowCommonExpenseModal(false)}
         state={state}
         buildingId={buildingId}
-        buildingName={buildingData?.name || "Κτίριο Διαχείρισης"}
+        buildingName={buildingData?.name || "Άγνωστο Κτίριο"}
         managementFeePerApartment={buildingData?.management_fee_per_apartment || 0}
         reserveContributionPerApartment={buildingData?.reserve_contribution_per_apartment || 0}
         managerName={buildingData?.internal_manager_name || "Διαχειριστής Κτιρίου"}
