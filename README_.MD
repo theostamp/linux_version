@@ -517,7 +517,7 @@ git push origin v2.1.0
 ### Βασικές Εντολές Git
 
 git add .
-git commit -m "σταρτ refactor φυλλο κοινοχρηστων "
+git commit -m "ακριβως μετα το refactor - πρεπει να δοκιμαστει "
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

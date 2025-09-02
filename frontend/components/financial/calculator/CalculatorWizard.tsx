@@ -1,32 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { ResultsStep } from './ResultsStep';
-
-export interface CalculatorState {
-  // Step 1: Period Selection
-  periodMode: 'quick' | 'custom' | 'advanced';
-  quickOptions: {
-    currentMonth: boolean;
-    previousMonth: boolean;
-    customRange: boolean;
-  };
-  customPeriod: {
-    startDate: string;
-    endDate: string;
-    periodName: string;
-  };
-  advancedOptions: {
-    includeReserveFund: boolean;
-    reserveFundMonthlyAmount: number;
-    heatingFixedPercentage: number;
-    elevatorMills: boolean;
-  };
-  
-  // Step 2: Results
-  shares: Record<string, any>;
-  totalExpenses: number;
-  advancedShares: any;
-  isIssuing: boolean;
-}
+import { CalculatorState } from './types/financial';
 
 interface CalculatorWizardProps {
   buildingId: number;
