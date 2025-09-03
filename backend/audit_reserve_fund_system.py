@@ -8,10 +8,9 @@
 """
 
 import os
-import sys
 import django
 from decimal import Decimal
-from django.db.models import Sum, Q
+from django.db.models import Sum
 from django.utils import timezone
 
 # Setup Django
@@ -45,7 +44,7 @@ def audit_reserve_fund_system():
                 print(f"   ID: {building.id}")
                 
                 # Check reserve fund settings
-                print(f"\n🎯 Ρυθμίσεις Αποθεματικού:")
+                print("\n🎯 Ρυθμίσεις Αποθεματικού:")
                 print(f"   - Στόχος: {building.reserve_fund_goal or 0}€")
                 print(f"   - Διάρκεια: {building.reserve_fund_duration_months or 0} μήνες")
                 print(f"   - Ημερομηνία έναρξης: {building.reserve_fund_start_date or 'Δεν έχει οριστεί'}")
@@ -58,7 +57,7 @@ def audit_reserve_fund_system():
                 print(f"   - Μηνιαίος στόχος: {monthly_target:.2f}€")
                 
                 # Check current reserve (this includes all transactions)
-                print(f"\n💰 Τρέχον Αποθεματικό (συνολικό):")
+                print("\n💰 Τρέχον Αποθεματικό (συνολικό):")
                 print(f"   - Στη βάση: {building.current_reserve or 0}€")
                 
                 # Calculate from transactions
@@ -88,7 +87,7 @@ def audit_reserve_fund_system():
                     
                     expected_reserve_contributions = months_passed * monthly_target
                     
-                    print(f"\n📅 Συλλογή Αποθεματικού:")
+                    print("\n📅 Συλλογή Αποθεματικού:")
                     print(f"   - Ημερομηνία έναρξης: {start_date}")
                     print(f"   - Μήνες που πέρασαν: {months_passed}")
                     print(f"   - Αναμενόμενες εισφορές: {expected_reserve_contributions:.2f}€")
@@ -102,13 +101,13 @@ def audit_reserve_fund_system():
                         apartments = Apartment.objects.filter(building_id=building.id)
                         total_obligations = sum(abs(apt.current_balance or 0) for apt in apartments)
                         
-                        print(f"\n⚠️  Εκκρεμότητες:")
+                        print("\n⚠️  Εκκρεμότητες:")
                         print(f"   - Συνολικές εκκρεμότητες διαμερισμάτων: {total_obligations}€")
                         
                         if total_obligations > 0:
-                            print(f"   - ⚠️  Η συλλογή αποθεματικού είναι σε παύση λόγω εκκρεμοτήτων")
+                            print("   - ⚠️  Η συλλογή αποθεματικού είναι σε παύση λόγω εκκρεμοτήτων")
                         else:
-                            print(f"   - ✅ Η συλλογή αποθεματικού είναι ενεργή")
+                            print("   - ✅ Η συλλογή αποθεματικού είναι ενεργή")
                 
                 # Check apartments
                 apartments = Apartment.objects.filter(building_id=building.id)
@@ -119,7 +118,7 @@ def audit_reserve_fund_system():
                 
                 print(f"\n{'='*50}")
         
-        print(f"\n🎉 Το audit ολοκληρώθηκε!")
+        print("\n🎉 Το audit ολοκληρώθηκε!")
         
     except Client.DoesNotExist:
         print("❌ Δεν βρέθηκε το demo tenant!")
@@ -160,14 +159,14 @@ def fix_reserve_fund_calculations():
                     building.current_reserve = correct_reserve
                     building.save()
                     
-                    print(f"   ✅ Ενημερώθηκε αποθεματικό:")
+                    print("   ✅ Ενημερώθηκε αποθεματικό:")
                     print(f"      Παλιό: {old_reserve}€")
                     print(f"      Νέο: {correct_reserve}€")
                     print(f"      Διαφορά: {correct_reserve - old_reserve}€")
                 else:
-                    print(f"   ✅ Το αποθεματικό είναι σωστό!")
+                    print("   ✅ Το αποθεματικό είναι σωστό!")
         
-        print(f"\n🎉 Η διόρθωση ολοκληρώθηκε!")
+        print("\n🎉 Η διόρθωση ολοκληρώθηκε!")
         
     except Client.DoesNotExist:
         print("❌ Δεν βρέθηκε το demo tenant!")

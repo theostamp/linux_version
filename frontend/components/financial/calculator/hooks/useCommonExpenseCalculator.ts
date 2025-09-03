@@ -163,7 +163,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
 
   const managementFeeInfo = useMemo<ManagementFeeInfo>(() => {
     let finalFee = 0;
-    let apartmentsCount = Object.keys(state.shares).length;
+    const apartmentsCount = Object.keys(state.shares).length;
     
     console.log('🔍 DEBUG managementFeeInfo: Starting calculation with:', {
       selectedMonth,

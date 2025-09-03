@@ -19,8 +19,7 @@ django.setup()
 from data_migration.ai_service import FormAnalyzer
 from data_migration.views import simulate_ai_analysis
 import tempfile
-from PIL import Image, ImageDraw, ImageFont
-import numpy as np
+from PIL import Image, ImageDraw
 
 def create_test_image():
     """Δημιουργεί μια test εικόνα φόρμας κοινοχρήστων"""

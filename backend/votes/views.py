@@ -1,14 +1,12 @@
-from rest_framework import viewsets, permissions, status, exceptions  
+from rest_framework import viewsets, permissions, status  
 from rest_framework.decorators import action  
 from rest_framework.response import Response  
 from django.utils import timezone
 from django.db.models import Q
-from django.core.cache import cache
 import logging
 
 from .models import Vote, VoteSubmission
 from .serializers import VoteSerializer, VoteSubmissionSerializer, VoteListSerializer
-from buildings.models import Building
 from core.permissions import IsManagerOrSuperuser, IsBuildingAdmin
 from core.utils import filter_queryset_by_user_and_building
 

@@ -11,8 +11,6 @@ from django_tenants.utils import schema_context
 from financial.services import CommonExpenseCalculator, FinancialDashboardService
 from buildings.models import Building
 from apartments.models import Apartment
-from datetime import datetime, date
-from decimal import Decimal
 
 # All database operations must be within schema_context
 with schema_context('demo'):
@@ -29,7 +27,7 @@ with schema_context('demo'):
         building = Building.objects.get(id=2)
         print(f"📍 Κτίριο ID 2: {building.name} - {building.address}")
     
-    print(f"📊 Στοιχεία κτιρίου:")
+    print("📊 Στοιχεία κτιρίου:")
     print(f"   Reserve Fund Goal: {building.reserve_fund_goal}€")
     print(f"   Reserve Fund Duration: {building.reserve_fund_duration_months} μήνες")
     print(f"   Current Reserve: {building.current_reserve}€")
@@ -54,7 +52,7 @@ with schema_context('demo'):
             calculator = CommonExpenseCalculator(building.id)
             shares = calculator.calculate_shares(include_reserve_fund=True)
             
-            print(f"   🧮 CommonExpenseCalculator:")
+            print("   🧮 CommonExpenseCalculator:")
             
             # Check total expenses calculated
             total_expenses = calculator.get_total_expenses()

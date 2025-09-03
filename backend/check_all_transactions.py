@@ -16,8 +16,6 @@ from django_tenants.utils import schema_context
 from financial.models import Apartment, Transaction, Payment, Expense
 from buildings.models import Building
 from decimal import Decimal
-from datetime import date, datetime
-from django.utils import timezone
 
 def check_all_transactions():
     """Έλεγχος όλων των συναλλαγών"""
@@ -62,7 +60,7 @@ def check_all_transactions():
                 elif transaction.type in ['common_expense_payment', 'payment_received', 'refund']:
                     total_payments += transaction.amount
             
-            print(f"\n📊 ΣΥΝΟΛΑ:")
+            print("\n📊 ΣΥΝΟΛΑ:")
             print(f"   • Συνολικές χρεώσεις: {total_charges}€")
             print(f"   • Συνολικές πληρωμές: {total_payments}€")
             print(f"   • Καθαρό υπόλοιπο: {total_payments - total_charges}€")

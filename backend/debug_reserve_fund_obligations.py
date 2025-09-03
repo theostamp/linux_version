@@ -6,7 +6,7 @@ Script για debugging του αποθεματικού στις οικονομ�
 import os
 import sys
 import django
-from datetime import datetime, date
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -35,7 +35,7 @@ def debug_reserve_fund_obligations():
         print(f"📍 Διεύθυνση: {building.address}")
         
         # Έλεγχος ρυθμίσεων αποθεματικού
-        print(f"\n📋 ΡΥΘΜΙΣΕΙΣ ΑΠΟΘΕΜΑΤΙΚΟΥ:")
+        print("\n📋 ΡΥΘΜΙΣΕΙΣ ΑΠΟΘΕΜΑΤΙΚΟΥ:")
         print(f"💰 Τρέχον αποθεματικό: {building.current_reserve:,.2f}€")
         print(f"🎯 Στόχος αποθεματικού: {building.reserve_fund_goal:,.2f}€")
         print(f"📅 Διάρκεια: {building.reserve_fund_duration_months} μήνες")
@@ -68,7 +68,7 @@ def debug_reserve_fund_obligations():
                 print("❌ ΔΕΝ ΕΙΜΑΣΤΕ ΣΤΗΝ ΠΕΡΙΟΔΟ ΕΦΑΡΜΟΓΗΣ")
         
         # Έλεγχος δαπανών τρέχοντος μήνα
-        print(f"\n💸 ΔΑΠΑΝΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
+        print("\n💸 ΔΑΠΑΝΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
         expenses = Expense.objects.filter(
             building=building,
             date__year=current_year,
@@ -80,7 +80,7 @@ def debug_reserve_fund_obligations():
         print(f"💰 Συνολικό ποσό: {total_expenses:,.2f}€")
         
         # Έλεγχος πληρωμών τρέχοντος μήνα
-        print(f"\n💳 ΠΛΗΡΩΜΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
+        print("\n💳 ΠΛΗΡΩΜΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
         payments = Payment.objects.filter(
             apartment__building=building,
             date__year=current_year,
@@ -93,7 +93,7 @@ def debug_reserve_fund_obligations():
         
         # Υπολογισμός συνολικών υποχρεώσεων
         total_obligations = total_expenses + monthly_target
-        print(f"\n💰 ΣΥΝΟΛΙΚΕΣ ΥΠΟΧΡΕΩΣΕΙΣ ΜΗΝΑ:")
+        print("\n💰 ΣΥΝΟΛΙΚΕΣ ΥΠΟΧΡΕΩΣΕΙΣ ΜΗΝΑ:")
         print(f"💸 Δαπάνες: {total_expenses:,.2f}€")
         print(f"🏦 Αποθεματικό: {monthly_target:,.2f}€")
         print(f"📊 ΣΥΝΟΛΟ: {total_obligations:,.2f}€")

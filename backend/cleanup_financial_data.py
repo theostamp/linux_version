@@ -14,7 +14,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from buildings.models import Building
 from financial.models import Expense, Payment
 from apartments.models import Apartment
 
@@ -26,7 +25,7 @@ with schema_context('demo'):
     initial_expenses = Expense.objects.count()
     initial_payments = Payment.objects.count()
     
-    print(f'📊 ΑΡΧΙΚΗ ΚΑΤΑΣΤΑΣΗ:')
+    print('📊 ΑΡΧΙΚΗ ΚΑΤΑΣΤΑΣΗ:')
     print(f'   Δαπάνες: {initial_expenses}')
     print(f'   Εισπράξεις: {initial_payments}')
     
@@ -61,10 +60,10 @@ with schema_context('demo'):
     final_payments = Payment.objects.count()
     total_balance = sum(apt.current_balance or 0 for apt in Apartment.objects.all())
     
-    print(f'\n📊 ΤΕΛΙΚΗ ΚΑΤΑΣΤΑΣΗ:')
+    print('\n📊 ΤΕΛΙΚΗ ΚΑΤΑΣΤΑΣΗ:')
     print(f'   Δαπάνες: {final_expenses}')
     print(f'   Εισπράξεις: {final_payments}')
     print(f'   Συνολικό υπόλοιπο διαμερισμάτων: {total_balance:.2f}€')
     
-    print(f'\n🎯 ΕΠΙΤΥΧΙΑ! Όλα τα οικονομικά δεδομένα καθαρίστηκαν.')
-    print(f'   Το σύστημα τώρα έχει μηδενικά demo ποσά.')
+    print('\n🎯 ΕΠΙΤΥΧΙΑ! Όλα τα οικονομικά δεδομένα καθαρίστηκαν.')
+    print('   Το σύστημα τώρα έχει μηδενικά demo ποσά.')

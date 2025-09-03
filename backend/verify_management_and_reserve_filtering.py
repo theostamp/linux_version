@@ -7,7 +7,6 @@ and properly stored in the database.
 import os
 import sys
 import django
-import json
 from decimal import Decimal
 
 # Setup Django environment
@@ -16,7 +15,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Building, Expense, CommonExpensePeriod, ApartmentShare
+from financial.models import Expense, CommonExpensePeriod, ApartmentShare
 from financial.services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator
 from buildings.models import Building as BuildingModel
 
@@ -51,7 +50,7 @@ def check_management_fees():
                 shares = calculator.calculate_shares(include_reserve_fund=True)
                 total_expenses = calculator.get_total_expenses()
                 
-                print(f"   Regular Calculator:")
+                print("   Regular Calculator:")
                 print(f"   - Total expenses: {total_expenses}€")
                 print(f"   - Number of apartments: {len(shares)}")
                 
@@ -66,7 +65,7 @@ def check_management_fees():
             
             # Test with AdvancedCommonExpenseCalculator
             try:
-                from datetime import datetime, date, timedelta
+                from datetime import date, timedelta
                 year, month_num = month.split('-')
                 year, month_num = int(year), int(month_num)
                 
@@ -88,7 +87,7 @@ def check_management_fees():
                 
                 result = adv_calculator.calculate_advanced_shares()
                 
-                print(f"   Advanced Calculator:")
+                print("   Advanced Calculator:")
                 print(f"   - Management fee per apartment: {result.get('management_fee_per_apartment', 0)}€")
                 print(f"   - Total apartments: {result.get('total_apartments', 0)}")
                 print(f"   - General expenses total: {result.get('expense_totals', {}).get('general', 0)}€")
@@ -133,7 +132,7 @@ def check_reserve_fund_settings():
                 print("-" * 25)
                 
                 try:
-                    from datetime import datetime, date, timedelta
+                    from datetime import date, timedelta
                     year, month_num = month.split('-')
                     year, month_num = int(year), int(month_num)
                     
@@ -198,7 +197,7 @@ def check_database_storage():
                 print(f"     - {exp.category}: {exp.amount}€")
         
         # Check common expense periods
-        print(f"\n📋 Common Expense Periods:")
+        print("\n📋 Common Expense Periods:")
         periods = CommonExpensePeriod.objects.filter(building_id=building_id).order_by('-start_date')
         
         for period in periods[:5]:  # Show last 5 periods
@@ -211,7 +210,7 @@ def check_database_storage():
                 print(f"     - {shares.count()} apartment shares, total: {total_shares}€")
         
         # Check if there are any management fee expenses
-        print(f"\n🏢 Management Fee Expenses:")
+        print("\n🏢 Management Fee Expenses:")
         mgmt_expenses = Expense.objects.filter(
             building_id=building_id,
             category='management_fees'

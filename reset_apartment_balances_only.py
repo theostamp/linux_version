@@ -66,7 +66,7 @@ def reset_apartment_balances():
                     return
                 
                 # Μηδενισμός υπόλοιπων
-                print(f"\n🔄 Ξεκινάει ο μηδενισμός...")
+                print("\n🔄 Ξεκινάει ο μηδενισμός...")
                 
                 reset_count = 0
                 for apartment in apartments:
@@ -84,7 +84,7 @@ def reset_apartment_balances():
                 print(f"\n✅ Μηδενίστηκαν τα υπόλοιπα για {reset_count} διαμερίσματα")
                 
                 # Επιβεβαίωση
-                print(f"\n🔍 Επιβεβαίωση αποτελεσμάτων...")
+                print("\n🔍 Επιβεβαίωση αποτελεσμάτων...")
                 
                 # Έλεγχος τελικών υπόλοιπων
                 total_balance_after = Decimal('0.00')
@@ -100,9 +100,9 @@ def reset_apartment_balances():
                 
                 if apartments_with_balance_after == 0:
                     print("\n🎉 ΕΠΙΤΥΧΗΣ ΜΗΔΕΝΙΣΜΟΣ!")
-                    print(f"📊 Σύνοψη:")
+                    print("📊 Σύνοψη:")
                     print(f"   • Αρχικό υπόλοιπο: {total_balance_before:,.2f}€")
-                    print(f"   • Τελικό υπόλοιπο: €0.00")
+                    print("   • Τελικό υπόλοιπο: €0.00")
                     print(f"   • Διαμερίσματα επηρεασμένα: {reset_count}")
                     print(f"   • Εξοικονόμηση: {total_balance_before:,.2f}€")
                 else:
@@ -142,7 +142,7 @@ def verify_balances():
                 print(f"💰 Συνολικό υπόλοιπο: {total_balance:,.2f}€")
                 
                 # Εμφάνιση λεπτομερειών
-                print(f"\n📋 Λεπτομέρειες:")
+                print("\n📋 Λεπτομέρειες:")
                 for apt in apartments:
                     if apt.current_balance and apt.current_balance != Decimal('0.00'):
                         print(f"   🏠 {apt.number}: {apt.current_balance:,.2f}€")

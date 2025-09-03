@@ -24,11 +24,10 @@ def test_enhanced_breakdown():
         
         try:
             # Import the breakdown logic directly
-            from financial.obligations_breakdown_view import analyze_debt_creation, get_greek_month_year
+            from financial.obligations_breakdown_view import analyze_debt_creation
             from apartments.models import Apartment
             from financial.models import Transaction
             from decimal import Decimal
-            from datetime import datetime
             
             building_id = 3  # Αραχώβης 12
             
@@ -53,7 +52,7 @@ def test_enhanced_breakdown():
                 # Analyze debt creation
                 debt_info = analyze_debt_creation(apt, transactions, debt_amount)
                 
-                print(f"   📅 Result:")
+                print("   📅 Result:")
                 print(f"      Start Date: {debt_info['debt_start_date']}")
                 print(f"      Start Month: {debt_info['debt_start_month']}")
                 print(f"      Creation Type: {debt_info['creation_type']}")
@@ -71,7 +70,7 @@ def test_enhanced_breakdown():
                 enhanced_debts.append(enhanced_debt)
             
             # Summary
-            print(f"\n" + "=" * 70)
+            print("\n" + "=" * 70)
             print(" 📋 ENHANCED BREAKDOWN SUMMARY ")
             print("=" * 70)
             
@@ -82,7 +81,7 @@ def test_enhanced_breakdown():
             print(f"🎯 Actual dates: {actual_count}")
             print(f"📅 Estimated dates: {estimated_count}")
             
-            print(f"\n📱 PREVIEW OF UI MESSAGES:")
+            print("\n📱 PREVIEW OF UI MESSAGES:")
             for debt in enhanced_debts:
                 urgency_indicator = debt['urgency_color']
                 creation_indicator = " (εκτίμηση)" if debt['creation_type'] == 'estimated' else ""
@@ -105,16 +104,16 @@ def test_enhanced_breakdown():
                 }
             }
             
-            print(f"\n💡 UI MESSAGE PREVIEW:")
+            print("\n💡 UI MESSAGE PREVIEW:")
             if enhanced_breakdown['debt_summary']['estimated_debts'] > 0:
                 print(f"🟠 Σημείωση: {enhanced_breakdown['debt_summary']['estimated_debts']} από τις {enhanced_breakdown['apartments_with_debt']} οφειλές δείχνουν εκτιμώμενες ημερομηνίες")
             
             if enhanced_breakdown['debt_summary']['has_transaction_history']:
-                print(f"✅ Ενημερωμένο κτίριο: Διαθέσιμο ιστορικό συναλλαγών")
+                print("✅ Ενημερωμένο κτίριο: Διαθέσιμο ιστορικό συναλλαγών")
             else:
-                print(f"📝 Κτίριο χωρίς ιστορικό: Χρήση εκτιμήσεων βάσει μεγέθους οφειλής")
+                print("📝 Κτίριο χωρίς ιστορικό: Χρήση εκτιμήσεων βάσει μεγέθους οφειλής")
             
-            print(f"\n🎉 SUCCESS! Enhanced breakdown with dates is working!")
+            print("\n🎉 SUCCESS! Enhanced breakdown with dates is working!")
             
         except Exception as e:
             print(f"❌ Error: {e}")

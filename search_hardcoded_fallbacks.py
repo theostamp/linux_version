@@ -16,7 +16,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.services import FinancialDashboardService, AdvancedCommonExpenseCalculator
 from buildings.models import Building
-from apartments.models import Apartment
 
 def check_hardcoded_values():
     """Check for hardcoded values in the system"""
@@ -35,7 +34,7 @@ def check_hardcoded_values():
         print(f"   Management fee per apartment: {building.management_fee_per_apartment}")
         
         # Test dashboard service with different scenarios
-        print(f"\n🧪 Testing Dashboard Service Fallbacks:")
+        print("\n🧪 Testing Dashboard Service Fallbacks:")
         
         # Scenario 1: Current building settings
         dashboard = FinancialDashboardService(building_id=1)
@@ -46,7 +45,7 @@ def check_hardcoded_values():
         print(f"   Current reserve fund monthly target: {summary.get('reserve_fund_monthly_target', 'NOT_FOUND')}")
         
         # Scenario 2: Clear reserve settings and test fallbacks
-        print(f"\n🧪 Testing with Cleared Reserve Settings:")
+        print("\n🧪 Testing with Cleared Reserve Settings:")
         
         original_goal = building.reserve_fund_goal
         original_duration = building.reserve_fund_duration_months
@@ -89,7 +88,7 @@ def check_hardcoded_values():
         building.save()
         
         # Scenario 3: Test with specific problematic values
-        print(f"\n🧪 Testing with Specific Values that might cause 50€:")
+        print("\n🧪 Testing with Specific Values that might cause 50€:")
         
         # Test with reserve_contribution_per_apartment = 5€ (5€ * 10 apartments = 50€)
         building.reserve_contribution_per_apartment = Decimal('5.00')
@@ -100,7 +99,7 @@ def check_hardcoded_values():
         dashboard_test = FinancialDashboardService(building_id=1)
         summary_test = dashboard_test.get_summary()
         
-        print(f"   With 5€ per apartment contribution:")
+        print("   With 5€ per apartment contribution:")
         print(f"     Reserve fund contribution: {summary_test.get('reserve_fund_contribution', 'NOT_FOUND')}")
         print(f"     Expected: {5.00 * 10} (5€ × 10 apartments)")
         
@@ -115,7 +114,7 @@ def check_hardcoded_values():
         result_test = calc_test.calculate_advanced_shares()
         
         if 'shares' in result_test and result_test['shares']:
-            print(f"     Advanced calculator shares with 5€ per apartment:")
+            print("     Advanced calculator shares with 5€ per apartment:")
             for apt_id, share in list(result_test['shares'].items())[:3]:  # Show first 3
                 breakdown = share.get('breakdown', {})
                 reserve_contrib = breakdown.get('reserve_fund_contribution', 0)
@@ -130,10 +129,10 @@ def check_hardcoded_values():
         building.reserve_contribution_per_apartment = original_contribution
         building.save()
         
-        print(f"\n🔍 CHECKING FOR HARDCODED VALUES IN CODE:")
+        print("\n🔍 CHECKING FOR HARDCODED VALUES IN CODE:")
         
         # Check if there are any hardcoded defaults in the services
-        print(f"   Looking for common hardcoded values...")
+        print("   Looking for common hardcoded values...")
         
         # Test edge cases that might trigger defaults
         test_cases = [
@@ -159,7 +158,7 @@ def check_hardcoded_values():
             print(f"     Result: contribution={reserve_contribution}, monthly_target={monthly_target}")
             
             if reserve_contribution == 50 or monthly_target == 50:
-                print(f"     ⚠️ FOUND 50€! This might be the source.")
+                print("     ⚠️ FOUND 50€! This might be the source.")
         
         # Restore original settings
         building.reserve_fund_goal = original_goal
@@ -167,9 +166,9 @@ def check_hardcoded_values():
         building.reserve_contribution_per_apartment = original_contribution
         building.save()
         
-        print(f"\n" + "=" * 60)
-        print(f"🎯 SUMMARY OF FINDINGS:")
-        print(f"   Original settings restored:")
+        print("\n" + "=" * 60)
+        print("🎯 SUMMARY OF FINDINGS:")
+        print("   Original settings restored:")
         print(f"     Reserve fund goal: {original_goal}")
         print(f"     Reserve fund duration: {original_duration}")
         print(f"     Reserve contribution per apartment: {original_contribution}")

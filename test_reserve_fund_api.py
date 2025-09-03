@@ -32,7 +32,7 @@ def test_reserve_fund_api():
         print(f"   - Current target date: {building.reserve_fund_target_date}")
         
         # Test updating the reserve fund goal
-        print(f"\n🔄 Testing reserve fund goal update...")
+        print("\n🔄 Testing reserve fund goal update...")
         
         # Save current values
         original_goal = building.reserve_fund_goal
@@ -56,14 +56,14 @@ def test_reserve_fund_api():
         building.reserve_fund_duration_months = original_duration
         building.save()
         
-        print(f"\n🔄 Restored original values...")
+        print("\n🔄 Restored original values...")
         print(f"   ✅ Restored goal: {building.reserve_fund_goal}€")
         print(f"   ✅ Restored duration: {building.reserve_fund_duration_months} months")
         
-        print(f"\n🎯 API Test Results:")
-        print(f"   ✅ Database updates work correctly")
-        print(f"   ✅ Reserve fund fields are properly configured")
-        print(f"   ✅ Building model supports all required fields")
+        print("\n🎯 API Test Results:")
+        print("   ✅ Database updates work correctly")
+        print("   ✅ Reserve fund fields are properly configured")
+        print("   ✅ Building model supports all required fields")
 
 if __name__ == "__main__":
     test_reserve_fund_api()

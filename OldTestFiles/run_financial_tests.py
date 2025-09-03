@@ -20,7 +20,6 @@ django.setup()
 
 from django.test.utils import get_runner
 from django.conf import settings
-from django.core.management import execute_from_command_line
 
 
 def run_backend_tests():
@@ -119,7 +118,6 @@ def run_performance_tests():
     
     try:
         # Create a simple performance test
-        from django.test import TestCase
         from django.contrib.auth import get_user_model
         from financial.models import Expense, ExpenseCategory, DistributionType
         from buildings.models import Building
@@ -195,15 +193,12 @@ def run_security_tests():
     print("=" * 50)
     
     try:
-        from django.test import TestCase
         from django.contrib.auth import get_user_model
         from rest_framework.test import APIClient
         from rest_framework import status
-        from financial.models import Expense, ExpenseCategory, DistributionType
         from buildings.models import Building
         from tenants.models import Tenant
         from decimal import Decimal
-        from datetime import date
         
         User = get_user_model()
         

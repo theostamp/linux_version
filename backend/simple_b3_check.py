@@ -10,7 +10,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from apartments.models import Apartment
 from financial.models import Transaction, Payment
-from decimal import Decimal
 
 def check_b3():
     with schema_context('demo'):

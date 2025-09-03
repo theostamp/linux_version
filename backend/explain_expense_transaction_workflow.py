@@ -6,8 +6,6 @@ Script to explain the current expense and transaction workflow and show how they
 import os
 import sys
 import django
-from datetime import datetime, date
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -15,9 +13,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Building, Apartment, Expense, Transaction, Payment
-from django.db.models import Sum, Q
-from django.utils import timezone
 
 def explain_expense_transaction_workflow():
     """Explain the current workflow and propose improvements"""

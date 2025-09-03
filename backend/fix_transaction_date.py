@@ -2,8 +2,7 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
-from django.db.models import Sum, Q
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -11,9 +10,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Payment, Expense, Transaction
-from apartments.models import Apartment
-from buildings.models import Building
+from financial.models import Payment, Transaction
 
 def fix_transaction_date():
     """Fix the transaction date discrepancy for apartment 3"""
@@ -38,7 +35,7 @@ def fix_transaction_date():
             print("❌ Δεν βρέθηκε η συναλλαγή για διόρθωση")
             return
         
-        print(f"📋 Βρέθηκε συναλλαγή:")
+        print("📋 Βρέθηκε συναλλαγή:")
         print(f"   - ID: {transaction_to_fix.id}")
         print(f"   - Τρέχουσα ημερομηνία: {transaction_to_fix.date}")
         print(f"   - Ποσό: {transaction_to_fix.amount}€")
@@ -50,7 +47,7 @@ def fix_transaction_date():
                 payment_id = int(transaction_to_fix.reference_id)
                 payment = Payment.objects.get(id=payment_id)
                 
-                print(f"\n💰 Αντίστοιχη πληρωμή:")
+                print("\n💰 Αντίστοιχη πληρωμή:")
                 print(f"   - ID: {payment.id}")
                 print(f"   - Ημερομηνία: {payment.date}")
                 print(f"   - Ποσό: {payment.amount}€")
@@ -59,7 +56,7 @@ def fix_transaction_date():
                 old_date = transaction_to_fix.date
                 new_date = datetime.combine(payment.date, datetime.min.time())
                 
-                print(f"\n🔧 Διόρθωση ημερομηνίας:")
+                print("\n🔧 Διόρθωση ημερομηνίας:")
                 print(f"   - Παλιά ημερομηνία: {old_date}")
                 print(f"   - Νέα ημερομηνία: {new_date}")
                 
@@ -67,7 +64,7 @@ def fix_transaction_date():
                 transaction_to_fix.date = new_date
                 transaction_to_fix.save()
                 
-                print(f"✅ Η ημερομηνία διορθώθηκε επιτυχώς!")
+                print("✅ Η ημερομηνία διορθώθηκε επιτυχώς!")
                 
                 # Επιβεβαίωση
                 transaction_to_fix.refresh_from_db()

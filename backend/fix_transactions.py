@@ -16,9 +16,6 @@ from django_tenants.utils import tenant_context
 from tenants.models import Client
 from financial.models import Payment, Expense, Transaction
 from buildings.models import Building
-from apartments.models import Apartment
-from decimal import Decimal
-from datetime import datetime
 
 def fix_transactions():
     """Δημιουργία Transaction records για εισπράξεις και δαπάνες"""
@@ -122,7 +119,7 @@ def fix_transactions():
         
         # Summary
         total_created = payment_transactions_created + expense_transactions_created
-        print(f"\n📊 ΣΥΝΟΠΤΙΚΗ:")
+        print("\n📊 ΣΥΝΟΠΤΙΚΗ:")
         print(f"  - Transactions για εισπράξεις: {payment_transactions_created}")
         print(f"  - Transactions για δαπάνες: {expense_transactions_created}")
         print(f"  - Συνολικά δημιουργημένα: {total_created}")

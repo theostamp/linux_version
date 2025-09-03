@@ -2,9 +2,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
     # t
 from django.http import JsonResponse
    # type: ignonor
-from django.utils.decorators import method_decorator
    
-from django.views import View
    
 
 @ensure_csrf_cookie

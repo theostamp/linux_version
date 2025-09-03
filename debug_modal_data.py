@@ -17,7 +17,7 @@ from django_tenants.utils import schema_context
 from financial.models import Payment, Expense, Transaction
 from buildings.models import Building
 from apartments.models import Apartment
-from django.db.models import Sum, Q
+from django.db.models import Sum
 
 def debug_modal_data():
     """Debug why modal is not showing transaction data"""

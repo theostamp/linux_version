@@ -67,7 +67,7 @@ def test_payment_progress_data():
         print(f"\n⚖️ Balance: {balance}€")
         
         # Check building financial settings
-        print(f"\n🏢 Building Financial Settings:")
+        print("\n🏢 Building Financial Settings:")
         print(f"  - Management fee per apartment: {building.management_fee_per_apartment}€")
         print(f"  - Reserve fund goal: {building.reserve_fund_goal}€")
         print(f"  - Reserve fund duration: {building.reserve_fund_duration_months} months")

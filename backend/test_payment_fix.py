@@ -15,7 +15,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from buildings.models import Building
 from financial.services import FinancialDashboardService
-from decimal import Decimal
 
 def test_payment_fix():
     """Test if the payment suggestions fix works correctly"""
@@ -59,7 +58,7 @@ def test_payment_fix():
                 print(f"   • Suggested Payment per Apartment: {obligations_per_apartment:.2f}€")
                 
                 # Show breakdown
-                print(f"   • Breakdown:")
+                print("   • Breakdown:")
                 print(f"     - Expenses per apartment: {total_expenses_month / apartments_count:.2f}€")
                 print(f"     - Management per apartment: {total_management_cost / apartments_count:.2f}€")
                 print(f"     - Reserve fund per apartment: {reserve_fund_monthly_target / apartments_count:.2f}€")

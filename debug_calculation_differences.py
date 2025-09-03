@@ -10,9 +10,7 @@ django.setup()
 from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
-from financial.models import Expense
 from financial.services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator
-from decimal import Decimal
 
 def debug_calculation_differences():
     """Debug what's causing the differences between calculators"""
@@ -72,7 +70,7 @@ def debug_calculation_differences():
         
         # Get expense totals from advanced calculator
         expense_totals = advanced_shares['expense_totals']
-        print(f"   Advanced Calculator Expense Totals:")
+        print("   Advanced Calculator Expense Totals:")
         for key, value in expense_totals.items():
             print(f"     - {key}: €{value:,.2f}")
         

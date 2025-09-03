@@ -16,7 +16,6 @@ from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
 from financial.services import FinancialDashboardService, AdvancedCommonExpenseCalculator
-from decimal import Decimal
 
 def test_correct_distribution():
     """Test correct distribution logic"""
@@ -41,7 +40,7 @@ def test_correct_distribution():
         apartments = Apartment.objects.filter(building_id=building.id)
         total_mills = sum(apt.participation_mills or 0 for apt in apartments)
         
-        print(f"📋 APARTMENTS INFO:")
+        print("📋 APARTMENTS INFO:")
         print(f"   • Total Apartments: {apartments.count()}")
         print(f"   • Total Participation Mills: {total_mills}")
         print()
@@ -76,7 +75,7 @@ def test_correct_distribution():
             advanced_result = advanced_calculator.calculate_advanced_shares()
             advanced_shares = advanced_result.get('shares', {})
             
-            print(f"   • Advanced Calculator Results:")
+            print("   • Advanced Calculator Results:")
             for apt_id, share_data in advanced_shares.items():
                 apartment = apartments.filter(id=apt_id).first()
                 if apartment:

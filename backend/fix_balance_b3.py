@@ -8,7 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Transaction, Payment, Apartment
+from financial.models import Transaction, Apartment
 from decimal import Decimal
 
 def fix_balance_b3():
@@ -50,10 +50,10 @@ def fix_balance_b3():
             print(f"   📊 Διαφορά: €{difference:,.2f}")
             
             if abs(difference) > Decimal('0.01'):
-                print(f"   ⚠️  Χρειάζεται διόρθωση!")
+                print("   ⚠️  Χρειάζεται διόρθωση!")
                 
                 # Ερώτηση για διόρθωση
-                print(f"\n🔧 Θέλετε να διορθώσω το υπόλοιπο; (y/n): ", end="")
+                print("\n🔧 Θέλετε να διορθώσω το υπόλοιπο; (y/n): ", end="")
                 response = input().strip().lower()
                 
                 if response == 'y':

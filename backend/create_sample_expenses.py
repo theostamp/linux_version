@@ -19,7 +19,7 @@ def create_sample_expenses():
         year = current_date.year
         month = current_date.month
         
-        print(f"=== ΔΗΜΙΟΥΡΓΙΑ ΔΕΙΓΜΑΤΩΝ ΔΑΠΑΝΩΝ ===")
+        print("=== ΔΗΜΙΟΥΡΓΙΑ ΔΕΙΓΜΑΤΩΝ ΔΑΠΑΝΩΝ ===")
         print(f"Περίοδος: {month}/{year}")
         print()
         
@@ -74,7 +74,7 @@ def create_sample_expenses():
         management_expenses = sum(exp.amount for exp in created_expenses if exp.category == 'management_fees')
         building_expenses = sum(exp.amount for exp in created_expenses if exp.category != 'management_fees')
         
-        print(f"\n📊 Σύνοψη:")
+        print("\n📊 Σύνοψη:")
         print(f"Συνολικές δαπάνες: €{total_expenses}")
         print(f"Δαπάνες διαχείρισης: €{management_expenses}")
         print(f"Δαπάνες πολυκατοικίας: €{building_expenses}")

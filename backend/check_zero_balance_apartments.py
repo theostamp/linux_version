@@ -6,7 +6,7 @@
 import os
 import sys
 import django
-from datetime import datetime, date
+from datetime import date
 from decimal import Decimal
 
 # Setup Django environment
@@ -21,7 +21,7 @@ def check_zero_balance_apartments():
     
     with schema_context('demo'):
         from apartments.models import Apartment
-        from financial.models import Payment, Transaction, Expense
+        from financial.models import Transaction
         from buildings.models import Building
         
         print("🔍 ΕΛΕΓΧΟΣ ΔΙΑΜΕΡΙΣΜΑΤΩΝ ΜΕ ΜΗΔΕΝΙΚΟ ΥΠΟΛΟΙΠΟ")

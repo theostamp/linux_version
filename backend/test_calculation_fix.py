@@ -8,7 +8,6 @@ import os
 import sys
 import django
 import requests
-import time
 
 # Setup Django environment
 sys.path.append('/app')

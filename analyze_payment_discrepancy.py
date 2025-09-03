@@ -2,7 +2,6 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
 from django.db.models import Sum, Count
 
 # Setup Django environment
@@ -11,9 +10,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Payment, Expense, Transaction
+from financial.models import Payment, Expense
 from apartments.models import Apartment
-from buildings.models import Building
 
 def analyze_payment_discrepancy():
     """Analyze the discrepancy between period balance and payment status analysis"""
@@ -205,7 +203,7 @@ def analyze_payment_discrepancy():
         else:
             print("✅ Δεν υπάρχει ασυμφωνία στα ποσά")
         
-        print(f"\n💡 ΠΡΟΤΑΣΕΙΣ:")
+        print("\n💡 ΠΡΟΤΑΣΕΙΣ:")
         print("   1. Επιβεβαίωση λογικής υπολογισμού payment status")
         print("   2. Έλεγχος φίλτρων ημερομηνίας")
         print("   3. Διαχωρισμός τύπων πληρωμών")

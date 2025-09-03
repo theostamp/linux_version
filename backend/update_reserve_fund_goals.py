@@ -63,16 +63,16 @@ def update_reserve_fund_goals():
                     # Calculate monthly target
                     monthly_target = goal / duration_months
                     
-                    print(f"      ✅ Ενημερώθηκε:")
+                    print("      ✅ Ενημερώθηκε:")
                     print(f"         • Στόχος: {goal}€")
                     print(f"         • Διάρκεια: {duration_months} μήνες")
                     print(f"         • Μηνιαία δόση: {monthly_target:.2f}€")
                     print(f"         • Έναρξη: {start_date}")
                     print(f"         • Λήξη: {target_date}")
                 else:
-                    print(f"      ⚠️  Δεν έχει διαμερίσματα - παραλείπεται")
+                    print("      ⚠️  Δεν έχει διαμερίσματα - παραλείπεται")
     
-    print(f"\n✅ ΕΝΗΜΕΡΩΣΗ ΟΛΟΚΛΗΡΩΘΗΚΕ")
+    print("\n✅ ΕΝΗΜΕΡΩΣΗ ΟΛΟΚΛΗΡΩΘΗΚΕ")
 
 if __name__ == "__main__":
     update_reserve_fund_goals()

@@ -7,4 +7,4 @@ class UsersConfig(AppConfig):
     name = 'users'
     
     def ready(self):
-        import users.signals  # Εγγραφή των signals
+        pass  # Εγγραφή των signals

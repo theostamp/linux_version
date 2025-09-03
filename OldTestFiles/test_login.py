@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import requests
-import json
 
 # Test login for demo tenant
 def test_login():
@@ -22,7 +21,7 @@ def test_login():
         
         if response.status_code == 200:
             result = response.json()
-            print(f"Login successful!")
+            print("Login successful!")
             print(f"Access token: {result.get('access', 'No access token')[:20]}...")
             print(f"Refresh token: {result.get('refresh', 'No refresh token')[:20]}...")
             print(f"User: {result.get('user', {}).get('email', 'No user data')}")
@@ -46,7 +45,7 @@ def test_me_endpoint(access_token):
     
     try:
         response = requests.get(url, headers=headers)
-        print(f"\n/me/ endpoint test:")
+        print("\n/me/ endpoint test:")
         print(f"Status Code: {response.status_code}")
         print(f"Response: {response.text}")
         

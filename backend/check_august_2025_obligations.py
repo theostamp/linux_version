@@ -7,8 +7,6 @@ Script to check if there are any previous obligations recorded for August 2025
 import os
 import sys
 import django
-from datetime import datetime
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -17,7 +15,7 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from financial.models import CommonExpensePeriod, ApartmentShare
-from django.db.models import Sum, Q
+from django.db.models import Q
 
 def check_august_2025_obligations():
     """Check for any previous obligations recorded for August 2025"""

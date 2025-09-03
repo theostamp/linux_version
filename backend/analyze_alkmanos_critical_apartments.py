@@ -7,8 +7,8 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
-from django.db.models import Sum, Q
+from datetime import datetime
+from django.db.models import Sum
 
 # Setup Django environment
 sys.path.append('/app')
@@ -16,10 +16,10 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Payment, Expense, Transaction
+from financial.models import Payment, Expense
 from apartments.models import Apartment
 from buildings.models import Building
-from financial.services import CommonExpenseCalculator, FinancialDashboardService
+from financial.services import CommonExpenseCalculator
 
 def analyze_critical_apartments():
     """Analyze why 9 apartments are showing as critical"""

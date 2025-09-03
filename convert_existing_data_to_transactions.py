@@ -10,7 +10,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.models import Transaction, Payment, Expense
 from apartments.models import Apartment
-from buildings.models import Building
 from decimal import Decimal
 from datetime import datetime
 from django.utils import timezone
@@ -172,7 +171,7 @@ def main():
         total_payments = Payment.objects.count()
         total_expenses = Expense.objects.count()
     
-    print(f"📊 ΤΕΛΙΚΗ ΑΝΑΦΟΡΑ:")
+    print("📊 ΤΕΛΙΚΗ ΑΝΑΦΟΡΑ:")
     print(f"   Συναλλαγές: {total_transactions}")
     print(f"   Πληρωμές: {total_payments}")
     print(f"   Εκδοθείσες δαπάνες: {total_expenses}")

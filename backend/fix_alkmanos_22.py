@@ -9,7 +9,7 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
+from datetime import date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -17,7 +17,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Transaction, Expense, Payment
+from financial.models import Expense, Payment
 from apartments.models import Apartment
 from buildings.models import Building
 
@@ -133,7 +133,7 @@ def fix_alkmanos_22():
             # Ενημέρωση αποθεματικού κτιρίου
             building.current_reserve = Decimal('0.00')
             building.save()
-            print(f"   ✅ Ενημερώθηκε αποθεματικό: 0.00€")
+            print("   ✅ Ενημερώθηκε αποθεματικό: 0.00€")
         else:
             print("✅ Το αποθεματικό είναι θετικό ή μηδέν")
         

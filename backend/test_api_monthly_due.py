@@ -6,7 +6,6 @@ Script για έλεγχο API endpoint monthly_due
 import os
 import sys
 import django
-import requests
 
 # Setup Django environment
 sys.path.append('/app')
@@ -37,7 +36,6 @@ def test_api_monthly_due():
         
         # Χρήση του Django test client με tenant context
         from django.test import Client
-        from django_tenants.test.cases import TenantTestCase
         
         client = Client()
         
@@ -57,7 +55,7 @@ def test_api_monthly_due():
                     break
             
             if apartment_data:
-                print(f"🏠 Διαμέρισμα 3:")
+                print("🏠 Διαμέρισμα 3:")
                 print(f"   📊 Monthly due: {apartment_data.get('monthly_due', 'N/A')}€")
                 print(f"   💳 Current balance: {apartment_data.get('current_balance', 'N/A')}€")
                 print(f"   👤 Owner: {apartment_data.get('owner_name', 'N/A')}")

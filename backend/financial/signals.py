@@ -7,11 +7,8 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.db import transaction
 from decimal import Decimal
-from django.utils import timezone
 
 from .models import Transaction, Payment, Expense
-from apartments.models import Apartment
-from buildings.models import Building
 
 
 @receiver(post_save, sender=Transaction)

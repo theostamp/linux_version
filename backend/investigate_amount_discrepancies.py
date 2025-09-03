@@ -7,7 +7,6 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -46,7 +45,7 @@ def investigate_amount_discrepancies():
             total=models.Sum('amount')
         )['total'] or Decimal('0.00')
         
-        print(f"\n💸 ΠΡΑΓΜΑΤΙΚΑ ΕΞΟΔΑ ΑΥΓΟΥΣΤΟΥ 2025:")
+        print("\n💸 ΠΡΑΓΜΑΤΙΚΑ ΕΞΟΔΑ ΑΥΓΟΥΣΤΟΥ 2025:")
         print(f"📊 Συνολικά έξοδα: {total_august_expenses}€")
         print(f"📝 Αριθμός δαπανών: {august_expenses.count()}")
         
@@ -64,7 +63,7 @@ def investigate_amount_discrepancies():
             total=models.Sum('amount')
         )['total'] or Decimal('0.00')
         
-        print(f"\n💰 ΠΡΑΓΜΑΤΙΚΕΣ ΠΛΗΡΩΜΕΣ ΑΥΓΟΥΣΤΟΥ 2025:")
+        print("\n💰 ΠΡΑΓΜΑΤΙΚΕΣ ΠΛΗΡΩΜΕΣ ΑΥΓΟΥΣΤΟΥ 2025:")
         print(f"📊 Συνολικές πληρωμές: {total_august_payments}€")
         print(f"📝 Αριθμός πληρωμών: {august_payments.count()}")
         
@@ -76,31 +75,31 @@ def investigate_amount_discrepancies():
         reserve_contribution_per_apartment = building.reserve_contribution_per_apartment or Decimal('0.00')
         total_reserve_contribution = reserve_contribution_per_apartment * apartments.count()
         
-        print(f"\n🏦 ΕΙΣΦΟΡΑ ΑΠΟΘΕΜΑΤΙΚΟΥ:")
+        print("\n🏦 ΕΙΣΦΟΡΑ ΑΠΟΘΕΜΑΤΙΚΟΥ:")
         print(f"💰 Εισφορά ανά διαμέρισμα: {reserve_contribution_per_apartment}€")
         print(f"🏠 Συνολικά διαμερίσματα: {apartments.count()}")
         print(f"📊 Συνολική εισφορά: {total_reserve_contribution}€")
         
         # 4. Τρέχον αποθεματικό
         current_reserve = building.current_reserve or Decimal('0.00')
-        print(f"\n🏦 ΤΡΕΧΟΝ ΑΠΟΘΕΜΑΤΙΚΟ:")
+        print("\n🏦 ΤΡΕΧΟΝ ΑΠΟΘΕΜΑΤΙΚΟ:")
         print(f"💰 Τρέχον αποθεματικό: {current_reserve}€")
         
         print("\n" + "="*60)
         print("🔍 ΑΝΑΦΕΡΟΜΕΝΑ ΠΟΣΑ (ΛΑΘΟΣ)")
         print("="*60)
         
-        print(f"\n❌ ΑΝΑΦΕΡΟΜΕΝΑ ΠΟΣΑ:")
-        print(f"   • Λειτουργικές Δαπάνες 120,00€ (ΛΑΘΟΣ)")
-        print(f"   • Εισφορά αποθεματικού: 66,67€ (ΛΑΘΟΣ)")
-        print(f"   • Συνολικές υποχρεώσεις: 186,67€ (ΛΑΘΟΣ)")
+        print("\n❌ ΑΝΑΦΕΡΟΜΕΝΑ ΠΟΣΑ:")
+        print("   • Λειτουργικές Δαπάνες 120,00€ (ΛΑΘΟΣ)")
+        print("   • Εισφορά αποθεματικού: 66,67€ (ΛΑΘΟΣ)")
+        print("   • Συνολικές υποχρεώσεις: 186,67€ (ΛΑΘΟΣ)")
         
-        print(f"\n✅ ΠΡΑΓΜΑΤΙΚΑ ΠΟΣΑ:")
+        print("\n✅ ΠΡΑΓΜΑΤΙΚΑ ΠΟΣΑ:")
         print(f"   • Λειτουργικές Δαπάνες {total_august_expenses}€")
         print(f"   • Εισφορά αποθεματικού: {total_reserve_contribution}€")
         print(f"   • Συνολικές υποχρεώσεις: {total_august_expenses + total_reserve_contribution}€")
         
-        print(f"\n📊 ΔΙΑΦΟΡΕΣ:")
+        print("\n📊 ΔΙΑΦΟΡΕΣ:")
         print(f"   • Διαφορά εξόδων: {total_august_expenses - Decimal('120.00')}€")
         print(f"   • Διαφορά αποθεματικού: {total_reserve_contribution - Decimal('66.67')}€")
         print(f"   • Διαφορά συνολικού: {(total_august_expenses + total_reserve_contribution) - Decimal('186.67')}€")
@@ -110,13 +109,13 @@ def investigate_amount_discrepancies():
         print("="*60)
         
         # Έλεγχος αν υπάρχουν hardcoded ποσά στον κώδικα
-        print(f"\n🔍 ΕΡΕΥΝΑ ΚΩΔΙΚΑ:")
-        print(f"   • Πιθανή πηγή: Frontend components")
-        print(f"   • Πιθανή πηγή: Backend calculations")
-        print(f"   • Πιθανή πηγή: Database views ή stored procedures")
+        print("\n🔍 ΕΡΕΥΝΑ ΚΩΔΙΚΑ:")
+        print("   • Πιθανή πηγή: Frontend components")
+        print("   • Πιθανή πηγή: Backend calculations")
+        print("   • Πιθανή πηγή: Database views ή stored procedures")
         
         # Έλεγχος αν υπάρχουν παλαιότερα δεδομένα
-        print(f"\n🔍 ΕΡΕΥΝΑ ΙΣΤΟΡΙΚΩΝ ΔΕΔΟΜΕΝΩΝ:")
+        print("\n🔍 ΕΡΕΥΝΑ ΙΣΤΟΡΙΚΩΝ ΔΕΔΟΜΕΝΩΝ:")
         
         # Έλεγχος δαπανών προηγούμενων μηνών
         previous_expenses = Expense.objects.filter(
@@ -130,7 +129,7 @@ def investigate_amount_discrepancies():
             for expense in previous_expenses[:5]:  # Πρώτες 5
                 print(f"     - {expense.title}: {expense.amount}€ ({expense.date})")
         else:
-            print(f"   • Δεν υπάρχουν δαπάνες προηγούμενων μηνών")
+            print("   • Δεν υπάρχουν δαπάνες προηγούμενων μηνών")
         
         # Έλεγχος πληρωμών προηγούμενων μηνών
         previous_payments = Payment.objects.filter(
@@ -144,18 +143,18 @@ def investigate_amount_discrepancies():
             for payment in previous_payments[:5]:  # Πρώτες 5
                 print(f"     - Διαμέρισμα {payment.apartment.number}: {payment.amount}€ ({payment.date})")
         else:
-            print(f"   • Δεν υπάρχουν πληρωμές προηγούμενων μηνών")
+            print("   • Δεν υπάρχουν πληρωμές προηγούμενων μηνών")
         
         print("\n" + "="*60)
         print("💡 ΠΡΟΤΑΣΕΙΣ ΔΙΟΡΘΩΣΗΣ")
         print("="*60)
         
-        print(f"\n🎯 ΠΡΟΤΕΙΝΟΜΕΝΕΣ ΕΝΕΡΓΕΙΕΣ:")
-        print(f"   1. 🔍 Εύρεση και διόρθωση hardcoded ποσών στο frontend")
-        print(f"   2. 🔍 Έλεγχος backend calculations")
-        print(f"   3. 🔍 Έλεγχος database views")
-        print(f"   4. 🔍 Έλεγχος API endpoints")
-        print(f"   5. 🔍 Έλεγχος financial calculators")
+        print("\n🎯 ΠΡΟΤΕΙΝΟΜΕΝΕΣ ΕΝΕΡΓΕΙΕΣ:")
+        print("   1. 🔍 Εύρεση και διόρθωση hardcoded ποσών στο frontend")
+        print("   2. 🔍 Έλεγχος backend calculations")
+        print("   3. 🔍 Έλεγχος database views")
+        print("   4. 🔍 Έλεγχος API endpoints")
+        print("   5. 🔍 Έλεγχος financial calculators")
 
 if __name__ == "__main__":
     try:

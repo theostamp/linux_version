@@ -120,11 +120,11 @@ def fix_payment_transactions():
             
             print(f"  💰 Τελικό υπόλοιπο: {running_balance}€")
         
-        print(f"\n✅ ΟΛΟΚΛΗΡΩΣΗ")
+        print("\n✅ ΟΛΟΚΛΗΡΩΣΗ")
         print(f"📊 Δημιουργήθηκαν {total_created} νέα Transaction records")
         
         # Έλεγχος αποτελεσμάτων
-        print(f"\n🔍 ΕΛΕΓΧΟΣ ΑΠΟΤΕΛΕΣΜΑΤΩΝ:")
+        print("\n🔍 ΕΛΕΓΧΟΣ ΑΠΟΤΕΛΕΣΜΑΤΩΝ:")
         total_transactions = Transaction.objects.count()
         total_payments = Payment.objects.count()
         print(f"📊 Σύνολο Transactions: {total_transactions}")

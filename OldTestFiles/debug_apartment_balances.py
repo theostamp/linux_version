@@ -4,7 +4,6 @@ Debug script για τα apartment balances
 """
 
 import os
-import sys
 import django
 
 # Setup Django

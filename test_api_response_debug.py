@@ -3,8 +3,6 @@
 import os
 import sys
 import django
-import json
-from datetime import datetime, date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -26,7 +24,7 @@ def test_api_response_debug():
         building_id = 1
         
         # Test 1: Direct FinancialDashboardService call
-        print(f"🔧 Test 1: Direct FinancialDashboardService call")
+        print("🔧 Test 1: Direct FinancialDashboardService call")
         service = FinancialDashboardService(building_id)
         summary = service.get_summary(month='2025-08')
         
@@ -36,7 +34,7 @@ def test_api_response_debug():
         print(f"   reserve_fund_monthly_target: {summary.get('reserve_fund_monthly_target')}")
         
         # Test 2: API endpoint call simulation
-        print(f"\n🌐 Test 2: API endpoint simulation")
+        print("\n🌐 Test 2: API endpoint simulation")
         
         # Create a mock request
         factory = RequestFactory()
@@ -58,7 +56,7 @@ def test_api_response_debug():
             print(f"   reserve_fund_monthly_target: {response_data.get('reserve_fund_monthly_target')}")
             
             # Check if the fields exist in response
-            print(f"\n🔍 Field existence check:")
+            print("\n🔍 Field existence check:")
             all_keys = list(response_data.keys())
             reserve_keys = [k for k in all_keys if 'reserve' in k.lower()]
             print(f"   All reserve-related keys: {reserve_keys}")
@@ -67,7 +65,7 @@ def test_api_response_debug():
             print(f"   API Error: {e}")
         
         # Test 3: Check what keys are in the summary
-        print(f"\n📋 Test 3: All keys in FinancialDashboardService summary:")
+        print("\n📋 Test 3: All keys in FinancialDashboardService summary:")
         all_summary_keys = list(summary.keys())
         reserve_summary_keys = [k for k in all_summary_keys if 'reserve' in k.lower()]
         print(f"   All reserve-related keys: {reserve_summary_keys}")

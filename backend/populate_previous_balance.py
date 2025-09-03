@@ -31,7 +31,6 @@ def populate_previous_balance():
         
         try:
             from apartments.models import Apartment
-            from financial.models import Expense, Payment
             
             # 1. Get all apartments
             apartments = Apartment.objects.filter(building_id=building_id)
@@ -62,18 +61,18 @@ def populate_previous_balance():
                         print(f"  💰 Previous balance: {apartment_share}€")
                     else:
                         apt.previous_balance = Decimal('0')
-                        print(f"  ⚠️  No participation mills, setting to 0€")
+                        print("  ⚠️  No participation mills, setting to 0€")
                 else:
                     apt.previous_balance = Decimal('0')
-                    print(f"  ⚠️  No participation mills, setting to 0€")
+                    print("  ⚠️  No participation mills, setting to 0€")
                 
                 # Save the apartment
                 apt.save()
             
-            print(f"\n📋 SUMMARY:")
+            print("\n📋 SUMMARY:")
             print(f"  ✅ Updated {apartments.count()} apartments")
             print(f"  💰 Total previous balance: {total_previous_balance}€")
-            print(f"  🎯 Target: 5000€ (DEH expense)")
+            print("  🎯 Target: 5000€ (DEH expense)")
             
             # 3. Verify the data
             print("\n🔍 VERIFYING DATA:")

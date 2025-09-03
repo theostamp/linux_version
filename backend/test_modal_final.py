@@ -6,7 +6,6 @@ Final test to verify the modal shows the correct data after the fix
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Add the backend directory to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
@@ -49,12 +48,12 @@ def test_modal_final():
         # This is how the modal now calculates totalContribution
         total_contribution = goal  # Συνολική εισφορά = ο στόχος
         
-        print(f"\n📊 Backend data:")
+        print("\n📊 Backend data:")
         print(f"   - reserve_fund_goal: {goal}€")
         print(f"   - reserve_fund_duration: {duration} μήνες")
         print(f"   - reserve_contribution: {monthly_amount}€")
         
-        print(f"\n📋 Modal display data (after fix):")
+        print("\n📋 Modal display data (after fix):")
         print(f"   - Μηνιαία Εισφορά: {monthly_amount:.2f}€")
         print(f"   - Στόχος: {goal:.2f}€")
         print(f"   - Διάρκεια: {duration} μήνες")
@@ -68,7 +67,7 @@ def test_modal_final():
             'total_contribution': 2000.00  # Now equals the goal
         }
         
-        print(f"\n🎯 Expected vs Actual (User-entered data):")
+        print("\n🎯 Expected vs Actual (User-entered data):")
         print(f"   - Μηνιαία Εισφορά: Expected {expected_values['monthly_amount']:.2f}€, Actual {monthly_amount:.2f}€")
         print(f"   - Στόχος: Expected {expected_values['goal']:.2f}€, Actual {goal:.2f}€")
         print(f"   - Διάρκεια: Expected {expected_values['duration']} μήνες, Actual {duration} μήνες")
@@ -80,22 +79,22 @@ def test_modal_final():
         duration_match = duration == expected_values['duration']
         total_match = abs(total_contribution - expected_values['total_contribution']) < 0.01
         
-        print(f"\n✅ All matches:")
+        print("\n✅ All matches:")
         print(f"   - Μηνιαία Εισφορά: {'✅' if monthly_match else '❌'}")
         print(f"   - Στόχος: {'✅' if goal_match else '❌'}")
         print(f"   - Διάρκεια: {'✅' if duration_match else '❌'}")
         print(f"   - Συνολική Εισφορά: {'✅' if total_match else '❌'}")
         
         if monthly_match and goal_match and duration_match and total_match:
-            print(f"\n🎉 SUCCESS: The modal will now display the correct user-entered data!")
-            print(f"   The reserve fund section will show:")
-            print(f"   - Μηνιαία Εισφορά: 333,33€")
-            print(f"   - Στόχος: 2.000,00€")
-            print(f"   - Διάρκεια: 6 μήνες")
-            print(f"   - Συνολική Εισφορά: 2.000,00€")
-            print(f"\n✅ This matches exactly what the users have entered!")
+            print("\n🎉 SUCCESS: The modal will now display the correct user-entered data!")
+            print("   The reserve fund section will show:")
+            print("   - Μηνιαία Εισφορά: 333,33€")
+            print("   - Στόχος: 2.000,00€")
+            print("   - Διάρκεια: 6 μήνες")
+            print("   - Συνολική Εισφορά: 2.000,00€")
+            print("\n✅ This matches exactly what the users have entered!")
         else:
-            print(f"\n⚠️  WARNING: Some reserve fund data does not match the user-entered values.")
+            print("\n⚠️  WARNING: Some reserve fund data does not match the user-entered values.")
 
 if __name__ == '__main__':
     test_modal_final()

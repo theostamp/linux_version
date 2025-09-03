@@ -8,8 +8,6 @@ sys.path.append('/app')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
 django.setup()
 
-from django_tenants.utils import schema_context
-from datetime import datetime
 
 def test_payment_due_date_logic():
     """Test the new payment due date calculation logic"""
@@ -33,16 +31,16 @@ def test_payment_due_date_logic():
     for usage_month, year, billing_month, expected_due in test_cases:
         print(f"   {usage_month} {year} → {billing_month} {year if billing_month != 'Ιανουάριος' or usage_month != 'Δεκέμβριος' else year+1} → {expected_due}")
     
-    print(f"\n✅ Current Implementation Logic:")
-    print(f"   1. Extract billing month from period name")
-    print(f"   2. Calculate next month after billing month")
-    print(f"   3. Set due date to 15th of that month")
-    print(f"   4. Handle year transitions (Dec → Jan)")
+    print("\n✅ Current Implementation Logic:")
+    print("   1. Extract billing month from period name")
+    print("   2. Calculate next month after billing month")
+    print("   3. Set due date to 15th of that month")
+    print("   4. Handle year transitions (Dec → Jan)")
     
-    print(f"\n📋 Example for August 2025 billing:")
-    print(f"   • Usage: Ιούλιος 2025")
-    print(f"   • Billing: Αύγουστος 2025") 
-    print(f"   • Due Date: 15/09/2025 (15th of September)")
+    print("\n📋 Example for August 2025 billing:")
+    print("   • Usage: Ιούλιος 2025")
+    print("   • Billing: Αύγουστος 2025") 
+    print("   • Due Date: 15/09/2025 (15th of September)")
 
 if __name__ == "__main__":
     test_payment_due_date_logic()

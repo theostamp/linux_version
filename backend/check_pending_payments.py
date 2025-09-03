@@ -2,8 +2,7 @@
 import os
 import sys
 import django
-from decimal import Decimal
-from datetime import datetime, date
+from datetime import date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -12,8 +11,6 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from financial.models import Payment, Transaction
-from buildings.models import Building
-from apartments.models import Apartment
 
 def check_pending_payments():
     """

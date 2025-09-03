@@ -4,9 +4,7 @@ Script για έλεγχο των εξόδων διαχείρισης μέσω A
 """
 
 import os
-import sys
 import django
-from decimal import Decimal
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
@@ -49,7 +47,7 @@ def test_management_fees_api():
         try:
             summary = service.get_summary('2025-08')
             
-            print(f"\n💰 Δεδομένα από API:")
+            print("\n💰 Δεδομένα από API:")
             print(f"   Management Fee per Apartment: {summary.get('management_fee_per_apartment', 'N/A')}€")
             print(f"   Total Management Cost: {summary.get('total_management_cost', 'N/A')}€")
             print(f"   Apartments Count: {summary.get('apartments_count', 'N/A')}")
@@ -58,17 +56,17 @@ def test_management_fees_api():
             expected_total = alkmanos.management_fee_per_apartment * alkmanos.apartments_count
             actual_total = summary.get('total_management_cost', 0)
             
-            print(f"\n🔍 Έλεγχος Υπολογισμών:")
+            print("\n🔍 Έλεγχος Υπολογισμών:")
             print(f"   Αναμενόμενο συνολικό κόστος: {expected_total}€")
             print(f"   Πραγματικό συνολικό κόστος: {actual_total}€")
             
             if abs(expected_total - actual_total) < 0.01:
-                print(f"   ✅ Οι υπολογισμοί είναι σωστοί!")
+                print("   ✅ Οι υπολογισμοί είναι σωστοί!")
             else:
                 print(f"   ❌ Διαφορά: {abs(expected_total - actual_total)}€")
                 
             # Πρόσθετα στοιχεία
-            print(f"\n📊 Επιπλέον Οικονομικά Δεδομένα:")
+            print("\n📊 Επιπλέον Οικονομικά Δεδομένα:")
             print(f"   Τρέχον Αποθεματικό: {summary.get('current_reserve', 'N/A')}€")
             print(f"   Στόχος Αποθεματικού: {summary.get('reserve_fund_goal', 'N/A')}€")
             print(f"   Συνολικό Υπόλοιπο: {summary.get('total_balance', 'N/A')}€")
@@ -78,7 +76,7 @@ def test_management_fees_api():
             import traceback
             traceback.print_exc()
     
-    print(f"\n🎉 Ο έλεγχος ολοκληρώθηκε!")
+    print("\n🎉 Ο έλεγχος ολοκληρώθηκε!")
 
 if __name__ == "__main__":
     test_management_fees_api()

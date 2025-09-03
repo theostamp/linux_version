@@ -6,8 +6,6 @@ Test script για να κατανοήσουμε πώς λειτουργούν �
 import os
 import sys
 import django
-import json
-from datetime import datetime, date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -58,7 +56,7 @@ def test_common_expenses():
         
         try:
             shares = calculator.calculate_shares(include_reserve_fund=True)
-            print(f"✅ Calculator works for September 2025")
+            print("✅ Calculator works for September 2025")
             print(f"Total shares calculated: {len(shares)}")
             
             # Show first apartment share

@@ -34,7 +34,7 @@ def fix_arachovis_reserve_fund():
         print(f"📍 Διεύθυνση: {building.address}")
         
         # Έλεγχος τρέχουσων ρυθμίσεων
-        print(f"\n📋 ΤΡΕΧΟΥΣΕΣ ΡΥΘΜΙΣΕΙΣ:")
+        print("\n📋 ΤΡΕΧΟΥΣΕΣ ΡΥΘΜΙΣΕΙΣ:")
         print(f"💰 Τρέχον αποθεματικό: {building.current_reserve:,.2f}€")
         print(f"🎯 Στόχος αποθεματικού: {building.reserve_fund_goal:,.2f}€")
         print(f"📅 Διάρκεια: {building.reserve_fund_duration_months} μήνες")
@@ -47,7 +47,7 @@ def fix_arachovis_reserve_fund():
             building.reserve_fund_start_date = start_date
             building.save()
             
-            print(f"\n✅ ΔΙΟΡΘΩΣΗ ΕΦΑΡΜΟΣΤΗΚΕ:")
+            print("\n✅ ΔΙΟΡΘΩΣΗ ΕΦΑΡΜΟΣΤΗΚΕ:")
             print(f"📅 Νέα ημερομηνία έναρξης: {start_date}")
             
             # Υπολογισμός μηνιαίου στόχου
@@ -68,7 +68,7 @@ def fix_arachovis_reserve_fund():
         
         # Έλεγχος τελικών ρυθμίσεων
         building.refresh_from_db()
-        print(f"\n📋 ΤΕΛΙΚΕΣ ΡΥΘΜΙΣΕΙΣ:")
+        print("\n📋 ΤΕΛΙΚΕΣ ΡΥΘΜΙΣΕΙΣ:")
         print(f"💰 Τρέχον αποθεματικό: {building.current_reserve:,.2f}€")
         print(f"🎯 Στόχος αποθεματικού: {building.reserve_fund_goal:,.2f}€")
         print(f"📅 Διάρκεια: {building.reserve_fund_duration_months} μήνες")

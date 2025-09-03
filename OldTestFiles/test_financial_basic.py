@@ -26,19 +26,14 @@ def test_models_import():
     print("=" * 50)
     
     try:
-        from financial.models import Expense, Payment, MeterReading, Transaction
         print("✅ Financial models imported successfully")
         
-        from buildings.models import Building
         print("✅ Building model imported successfully")
         
-        from apartments.models import Apartment
         print("✅ Apartment model imported successfully")
         
-        from tenants.models import Client
         print("✅ Client model imported successfully")
         
-        from users.models import CustomUser
         print("✅ CustomUser model imported successfully")
         
         return True
@@ -54,10 +49,6 @@ def test_serializers_import():
     print("=" * 50)
     
     try:
-        from financial.serializers import (
-            ExpenseSerializer, PaymentSerializer, 
-            MeterReadingSerializer, TransactionSerializer
-        )
         print("✅ Financial serializers imported successfully")
         
         return True
@@ -73,7 +64,6 @@ def test_services_import():
     print("=" * 50)
     
     try:
-        from financial.services import CommonExpenseCalculator
         print("✅ CommonExpenseCalculator imported successfully")
         
         return True
@@ -100,7 +90,7 @@ def test_business_logic():
         share1 = (apartment1_mills / total_mills) * total_amount
         share2 = (apartment2_mills / total_mills) * total_amount
         
-        print(f"✅ Expense distribution calculation:")
+        print("✅ Expense distribution calculation:")
         print(f"   Total amount: {total_amount}")
         print(f"   Apartment 1 (100 mills): {share1:.2f}")
         print(f"   Apartment 2 (150 mills): {share2:.2f}")

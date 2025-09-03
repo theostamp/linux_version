@@ -6,15 +6,12 @@ Test script για το API endpoint apartment_balances με τη νέα λογ�
 import os
 import sys
 import django
-import requests
-import json
 
 # Setup Django environment
 sys.path.append('/app')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
 django.setup()
 
-from django_tenants.utils import schema_context
 
 
 def test_api_status():

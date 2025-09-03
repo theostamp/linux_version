@@ -6,7 +6,7 @@ Script για debugging της συνολικής κάλυψης και των �
 import os
 import sys
 import django
-from datetime import datetime, date
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -35,7 +35,7 @@ def debug_total_coverage():
         print(f"📍 Διεύθυνση: {building.address}")
         
         # Έλεγχος ρυθμίσεων αποθεματικού
-        print(f"\n📋 ΡΥΘΜΙΣΕΙΣ ΑΠΟΘΕΜΑΤΙΚΟΥ:")
+        print("\n📋 ΡΥΘΜΙΣΕΙΣ ΑΠΟΘΕΜΑΤΙΚΟΥ:")
         print(f"💰 Τρέχον αποθεματικό: {building.current_reserve:,.2f}€")
         print(f"🎯 Στόχος αποθεματικού: {building.reserve_fund_goal:,.2f}€")
         print(f"📅 Διάρκεια: {building.reserve_fund_duration_months} μήνες")
@@ -52,7 +52,7 @@ def debug_total_coverage():
         print(f"\n📅 ΤΡΕΧΩΝ ΜΗΝΑΣ: {current_year}-{current_month:02d}")
         
         # Έλεγχος δαπανών διαχείρισης
-        print(f"\n💼 ΔΑΠΑΝΕΣ ΔΙΑΧΕΙΡΙΣΗΣ:")
+        print("\n💼 ΔΑΠΑΝΕΣ ΔΙΑΧΕΙΡΙΣΗΣ:")
         management_fee_per_apartment = building.management_fee_per_apartment or 0
         print(f"💰 Αμοιβή ανά διαμέρισμα: {management_fee_per_apartment:,.2f}€")
         
@@ -66,7 +66,7 @@ def debug_total_coverage():
         print(f"💰 Συνολικό κόστος διαχείρισης: {total_management_cost:,.2f}€")
         
         # Έλεγχος δαπανών τρέχοντος μήνα
-        print(f"\n💸 ΔΑΠΑΝΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
+        print("\n💸 ΔΑΠΑΝΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
         expenses = Expense.objects.filter(
             building=building,
             date__year=current_year,
@@ -78,7 +78,7 @@ def debug_total_coverage():
         print(f"💰 Συνολικό ποσό δαπανών: {total_expenses:,.2f}€")
         
         # Έλεγχος πληρωμών τρέχοντος μήνα
-        print(f"\n💳 ΠΛΗΡΩΜΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
+        print("\n💳 ΠΛΗΡΩΜΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
         payments = Payment.objects.filter(
             apartment__building=building,
             date__year=current_year,
@@ -90,7 +90,7 @@ def debug_total_coverage():
         print(f"💰 Συνολικό ποσό πληρωμών: {total_payments:,.2f}€")
         
         # Υπολογισμός συνολικής κάλυψης
-        print(f"\n💰 ΥΠΟΛΟΓΙΣΜΟΣ ΣΥΝΟΛΙΚΗΣ ΚΑΛΥΨΗΣ:")
+        print("\n💰 ΥΠΟΛΟΓΙΣΜΟΣ ΣΥΝΟΛΙΚΗΣ ΚΑΛΥΨΗΣ:")
         print(f"💸 Δαπάνες τρέχοντος μήνα: {total_expenses:,.2f}€")
         print(f"💼 Δαπάνες διαχείρισης: {total_management_cost:,.2f}€")
         print(f"🏦 Εισφορά αποθεματικού: {monthly_target:,.2f}€")
@@ -108,10 +108,10 @@ def debug_total_coverage():
         print(f"📊 ΔΙΑΦΟΡΑ: {difference:,.2f}€")
         
         if difference == 0:
-            print(f"\n✅ ΕΠΙΤΥΧΙΑ:")
+            print("\n✅ ΕΠΙΤΥΧΙΑ:")
             print(f"Η συνολική κάλυψη είναι σωστή! Τα {total_management_cost:,.2f}€ των δαπανών διαχείρισης περιλαμβάνονται.")
         else:
-            print(f"\n💡 ΠΡΟΒΛΗΜΑ:")
+            print("\n💡 ΠΡΟΒΛΗΜΑ:")
             print(f"Το frontend δεν προσθέτει τα {total_management_cost:,.2f}€ των δαπανών διαχείρισης στη συνολική κάλυψη!")
         
         print("\n" + "=" * 60)

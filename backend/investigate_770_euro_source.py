@@ -12,7 +12,6 @@ from financial.models import Expense, Transaction, Payment
 from apartments.models import Apartment
 from buildings.models import Building
 from decimal import Decimal
-from datetime import date
 from django.db.models import Sum
 
 def investigate_770_euro_source():
@@ -111,7 +110,6 @@ def investigate_770_euro_source():
         print("-" * 50)
         
         # Check for expenses in different months
-        from datetime import datetime
         from collections import defaultdict
         
         expenses_by_month = defaultdict(list)

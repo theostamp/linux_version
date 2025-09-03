@@ -12,7 +12,6 @@ from financial.models import Payment
 from apartments.models import Apartment
 from financial.serializers import PaymentSerializer
 from rest_framework.test import APIRequestFactory
-from django.contrib.auth import get_user_model
 
 def debug_payment_creation():
     """Debug payment creation to identify 400 Bad Request issue"""

@@ -9,10 +9,10 @@ django.setup()
 from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
-from financial.models import Payment, Expense, Transaction
+from financial.models import Payment, Expense
 from decimal import Decimal
-from django.db.models import Sum, Q
-from datetime import datetime, date
+from django.db.models import Sum
+from datetime import datetime
 import calendar
 
 def format_currency(amount):
@@ -93,9 +93,9 @@ def deep_analysis_arachovis():
         reserve_66_67 = Decimal('66.67')
         apartments_needed = reserve_66_67 / Decimal('5.00')
         
-        print(f"🎯 Για να πάρουμε 66,67 € αποθεματικό:")
+        print("🎯 Για να πάρουμε 66,67 € αποθεματικό:")
         print(f"   • Χρειάζονται: {apartments_needed} διαμερίσματα")
-        print(f"   • Με 5,00 € ανά διαμέρισμα")
+        print("   • Με 5,00 € ανά διαμέρισμα")
         
         # Check if it's related to a different calculation
         if apartments.count() > 0:
@@ -107,9 +107,9 @@ def deep_analysis_arachovis():
         print_section("5. ΕΛΕΓΧΟΣ ΓΙΑ ΤΟ ΠΟΣΟ 120,00 €")
         
         # Check if 120.00 is a typical monthly expense
-        print(f"🎯 Έλεγχος για το ποσό 120,00 €:")
-        print(f"   • Μπορεί να είναι τυπικό μηνιαίο κόστος")
-        print(f"   • Ή προηγούμενων μηνών δαπάνες")
+        print("🎯 Έλεγχος για το ποσό 120,00 €:")
+        print("   • Μπορεί να είναι τυπικό μηνιαίο κόστος")
+        print("   • Ή προηγούμενων μηνών δαπάνες")
         
         # Check if there are any expenses around 120.00
         expenses_around_120 = Expense.objects.filter(
@@ -118,7 +118,7 @@ def deep_analysis_arachovis():
         )
         
         if expenses_around_120.count() > 0:
-            print(f"   • Βρέθηκαν δαπάνες γύρω από 120,00 €:")
+            print("   • Βρέθηκαν δαπάνες γύρω από 120,00 €:")
             for exp in expenses_around_120:
                 print(f"     - {exp.title}: {format_currency(exp.amount)} ({exp.date})")
         
@@ -126,9 +126,9 @@ def deep_analysis_arachovis():
         print_section("6. ΕΛΕΓΧΟΣ ΓΙΑ ΤΟ ΠΟΣΟ 186,67 €")
         
         total_186_67 = Decimal('186.67')
-        print(f"🎯 Έλεγχος για το ποσό 186,67 €:")
-        print(f"   • 120,00 € + 66,67 € = 186,67 €")
-        print(f"   • Αυτό είναι το αναφερόμενο σύνολο")
+        print("🎯 Έλεγχος για το ποσό 186,67 €:")
+        print("   • 120,00 € + 66,67 € = 186,67 €")
+        print("   • Αυτό είναι το αναφερόμενο σύνολο")
         
         # 7. ΑΝΑΛΥΣΗ ΠΡΟΗΓΟΥΜΕΝΩΝ ΜΗΝΩΝ
         print_section("7. ΑΝΑΛΥΣΗ ΠΡΟΗΓΟΥΜΕΝΩΝ ΜΗΝΩΝ")
@@ -186,12 +186,12 @@ def deep_analysis_arachovis():
         print_section("10. ΣΥΝΟΨΗ ΚΑΙ ΠΡΟΤΑΣΕΙΣ")
         
         print("📊 ΣΥΝΟΨΗ ΕΥΡΗΜΑΤΩΝ:")
-        print(f"   • Πραγματικά έξοδα Αυγούστου: 0,00 €")
-        print(f"   • Αναφερόμενα έξοδα: 120,00 €")
-        print(f"   • Πραγματικό αποθεματικό: 50,00 €")
-        print(f"   • Αναφερόμενο αποθεματικό: 66,67 €")
-        print(f"   • Πραγματικό σύνολο: 50,00 €")
-        print(f"   • Αναφερόμενο σύνολο: 186,67 €")
+        print("   • Πραγματικά έξοδα Αυγούστου: 0,00 €")
+        print("   • Αναφερόμενα έξοδα: 120,00 €")
+        print("   • Πραγματικό αποθεματικό: 50,00 €")
+        print("   • Αναφερόμενο αποθεματικό: 66,67 €")
+        print("   • Πραγματικό σύνολο: 50,00 €")
+        print("   • Αναφερόμενο σύνολο: 186,67 €")
         
         print("\n💡 ΠΡΟΤΑΣΕΙΣ:")
         print("   1. Ελέγξτε αν τα ποσά είναι από προηγούμενους μήνες")

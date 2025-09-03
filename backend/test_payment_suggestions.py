@@ -15,7 +15,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from buildings.models import Building
 from financial.services import FinancialDashboardService, AdvancedCommonExpenseCalculator
-from decimal import Decimal
 
 def test_payment_suggestions():
     """Test payment suggestions calculation"""

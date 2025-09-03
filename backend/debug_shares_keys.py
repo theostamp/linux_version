@@ -36,18 +36,18 @@ def main():
         
         apartments = Apartment.objects.filter(building_id=building_id).order_by('number')
         
-        print(f"Apartment IDs from database:")
+        print("Apartment IDs from database:")
         apt_ids = []
         for apt in apartments:
             apt_ids.append(apt.id)
             print(f"  {apt.number}: ID = {apt.id}")
         
-        print(f"\nShares keys from calculator:")
+        print("\nShares keys from calculator:")
         share_keys = list(shares.keys())
         for key in share_keys:
             print(f"  Key: {key} (type: {type(key)})")
         
-        print(f"\nMatching shares to apartments:")
+        print("\nMatching shares to apartments:")
         management_fees = []
         reserve_contributions = []
         
@@ -73,7 +73,7 @@ def main():
                   f"(expected: {expected_reserve:.2f}€)")
         
         # Analyze management fees
-        print(f"\n🔍 Management Fees Analysis:")
+        print("\n🔍 Management Fees Analysis:")
         unique_mgmt_fees = set(management_fees)
         if len(unique_mgmt_fees) == 1:
             print(f"✅ Management fees are EQUAL (ισόποσα): {management_fees[0]:.2f}€")
@@ -81,7 +81,7 @@ def main():
             print(f"❌ Management fees vary: {unique_mgmt_fees}")
         
         # Analyze reserve fund distribution
-        print(f"\n🔍 Reserve Fund Distribution Analysis:")
+        print("\n🔍 Reserve Fund Distribution Analysis:")
         reserve_correct = True
         for i, key in enumerate(share_keys):
             share = shares[key]
@@ -97,7 +97,7 @@ def main():
                 print(f"  ❌ {apt_number}: Expected {expected:.2f}€, got {actual:.2f}€")
         
         if reserve_correct:
-            print(f"  ✅ Reserve fund distributed BY PARTICIPATION MILLS (χιλιοστά)")
+            print("  ✅ Reserve fund distributed BY PARTICIPATION MILLS (χιλιοστά)")
 
 if __name__ == "__main__":
     main()

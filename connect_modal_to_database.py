@@ -14,10 +14,10 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Expense, Payment, Apartment, Transaction
+from financial.models import Expense, Payment, Apartment
 from buildings.models import Building
-from django.db.models import Sum, Q
-from datetime import datetime, timedelta
+from django.db.models import Sum
+from datetime import datetime
 from decimal import Decimal
 
 def connect_modal_to_database():
@@ -121,7 +121,7 @@ def connect_modal_to_database():
         calculated_total = management_amount + reserve_amount + previous_balance
         common_expenses_needed = total_required - calculated_total
         
-        print(f"💰 ΥΠΟΛΟΓΙΣΜΟΣ:")
+        print("💰 ΥΠΟΛΟΓΙΣΜΟΣ:")
         print(f"  Διαχείριση: {management_amount}€")
         print(f"  Αποθεματικό: {reserve_amount:.2f}€")
         print(f"  Παλαιότερες οφειλές: {previous_balance}€")
@@ -160,7 +160,7 @@ def connect_modal_to_database():
         final_expenses = Expense.objects.filter(building=building)
         final_total = final_expenses.aggregate(total=Sum('amount'))['total'] or 0
         
-        print(f"💰 ΤΕΛΙΚΑ ΣΥΝΟΛΑ:")
+        print("💰 ΤΕΛΙΚΑ ΣΥΝΟΛΑ:")
         print(f"  Συνολικές δαπάνες: {final_total}€")
         print(f"  Διαχείριση: {management_amount}€")
         print(f"  Αποθεματικό: {reserve_amount:.2f}€")

@@ -6,8 +6,7 @@ Test script για να κατανοήσουμε το πρόβλημα με τη
 import os
 import sys
 import django
-import json
-from datetime import datetime, date
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')

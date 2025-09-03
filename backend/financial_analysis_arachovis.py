@@ -23,8 +23,7 @@ from financial.models import (
     Expense, Payment as Receipt, CommonExpensePeriod as CommonExpenseSheet, 
     Transaction
 )
-from django.db.models import Sum, Q, Count
-from django.utils import timezone
+from django.db.models import Sum
 
 def print_header(title, symbol="="):
     """Print formatted header"""
@@ -50,7 +49,7 @@ def analyze_arachovis_building():
     with schema_context('demo'):
         print_header("🏢 ΑΝΑΛΥΤΙΚΗ ΟΙΚΟΝΟΜΙΚΗ ΑΝΑΦΟΡΑ - ΑΡΑΧΩΒΗΣ 12", "=")
         print(f"📅 Ημερομηνία Ανάλυσης: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
-        print(f"🔍 Περίοδος Ανάλυσης: Φεβρουάριος 2025")
+        print("🔍 Περίοδος Ανάλυσης: Φεβρουάριος 2025")
         
         # Find Αραχώβης 12 building
         try:
@@ -85,7 +84,7 @@ def analyze_arachovis_building():
             if apt.surface_area:
                 total_surface_area += apt.surface_area
 
-        print(f"\n📊 ΣΥΝΟΛΙΚΑ ΣΤΟΙΧΕΙΑ:")
+        print("\n📊 ΣΥΝΟΛΙΚΑ ΣΤΟΙΧΕΙΑ:")
         print(f"   • Συνολικά Χιλιοστά: {total_participation_mills}")
         print(f"   • Συνολικά Τ.Μ.: {total_surface_area}")
         print(f"   • Μέσα Χιλιοστά/Διαμέρισμα: {total_participation_mills/apartments.count():.1f}")
@@ -177,7 +176,7 @@ def analyze_arachovis_building():
         
         latest_sheet = common_sheets.first() if common_sheets.exists() else None
         if latest_sheet:
-            print(f"\n📄 ΤΕΛΕΥΤΑΙΟ ΦΥΛΛΟ ΚΟΙΝΟΧΡΗΣΤΩΝ:")
+            print("\n📄 ΤΕΛΕΥΤΑΙΟ ΦΥΛΛΟ ΚΟΙΝΟΧΡΗΣΤΩΝ:")
             print(f"   📅 Ημερομηνία: {latest_sheet.created_at.strftime('%d/%m/%Y')}")
             print(f"   💰 Συνολικό Ποσό: {format_currency(latest_sheet.total_amount)}")
             print(f"   🏠 Διαμερίσματα: {latest_sheet.apartment_count}")
@@ -186,7 +185,7 @@ def analyze_arachovis_building():
             if latest_sheet.calculation_details:
                 try:
                     details = json.loads(latest_sheet.calculation_details)
-                    print(f"\n🔍 ΛΕΠΤΟΜΕΡΕΙΕΣ ΥΠΟΛΟΓΙΣΜΟΥ:")
+                    print("\n🔍 ΛΕΠΤΟΜΕΡΕΙΕΣ ΥΠΟΛΟΓΙΣΜΟΥ:")
                     for key, value in details.items():
                         if isinstance(value, dict):
                             print(f"   {key}:")
@@ -263,14 +262,14 @@ def analyze_arachovis_building():
         monthly_service_costs = total_service_cost
         monthly_reserve_contribution = total_reserve / 12 if total_reserve > 0 else Decimal('0')  # Estimated monthly
         
-        print(f"\n💸 ΑΝΑΛΥΣΗ ΣΥΣΤΑΤΙΚΩΝ:")
+        print("\n💸 ΑΝΑΛΥΣΗ ΣΥΣΤΑΤΙΚΩΝ:")
         print(f"   • Δαπάνες Μήνα: {format_currency(monthly_common_expenses)}")
         print(f"   • Κόστος Υπηρεσιών: {format_currency(monthly_service_costs)}")
         print(f"   • Αποθεματικό: {format_currency(monthly_reserve_contribution)}")
         
         calculated_total = monthly_common_expenses + monthly_service_costs + monthly_reserve_contribution
         print(f"\n🧮 ΥΠΟΛΟΓΙΣΜΕΝΟ ΣΥΝΟΛΟ: {format_currency(calculated_total)}")
-        print(f"🎯 ΣΤΟΧΟΣ (334,85 €): 334,85 €")
+        print("🎯 ΣΤΟΧΟΣ (334,85 €): 334,85 €")
         print(f"📊 ΔΙΑΦΟΡΑ: {format_currency(calculated_total - Decimal('334.85'))}")
 
         # 9. BALANCE ANALYSIS PER APARTMENT
@@ -286,36 +285,36 @@ def analyze_arachovis_building():
             print(f"   💰 Υπόλοιπο: {format_currency(balance)}")
             
             if balance > 0:
-                print(f"   ✅ Κατάσταση: Πιστωτικό υπόλοιπο")
+                print("   ✅ Κατάσταση: Πιστωτικό υπόλοιπο")
             elif balance < 0:
-                print(f"   ⚠️ Κατάσταση: Χρεωστικό υπόλοιπο")
+                print("   ⚠️ Κατάσταση: Χρεωστικό υπόλοιπο")
             else:
-                print(f"   ⚖️ Κατάσταση: Εξισορροπημένο")
+                print("   ⚖️ Κατάσταση: Εξισορροπημένο")
 
         # 10. SUMMARY
         print_header("📋 ΣΥΝΟΨΗ ΑΝΑΛΥΣΗΣ", "=")
         
-        print(f"🏢 Κτίριο: Αραχώβης 12")
-        print(f"📅 Περίοδος: Φεβρουάριος 2025")
+        print("🏢 Κτίριο: Αραχώβης 12")
+        print("📅 Περίοδος: Φεβρουάριος 2025")
         print(f"🏠 Διαμερίσματα: {apartments.count()}")
         print(f"💸 Συνολικές Δαπάνες: {format_currency(total_expenses)}")
         print(f"💰 Συνολικές Εισπράξεις: {format_currency(total_receipts)}")
         print(f"⏳ Εκκρεμείς Εισπράξεις: {pending_receipts.count()} ({format_currency(pending_amount)})")
-        print(f"🎯 Υποχρεώσεις Περιόδου: 334,85 €")
+        print("🎯 Υποχρεώσεις Περιόδου: 334,85 €")
         print(f"📊 Κάλυψη: {'✅ Επαρκής' if total_receipts >= Decimal('334.85') else '⚠️ Ανεπαρκής'}")
 
-        print(f"\n🔍 ΠΙΘΑΝΕΣ ΑΙΤΙΕΣ ΓΙΑ ΤΟ ΠΟΣΟ 334,85 €:")
-        print(f"   1. Υπολογισμός κοινοχρήστων βάσει τελευταίου φύλλου")
-        print(f"   2. Μηνιαίες δόσεις αποθεματικού")
-        print(f"   3. Κόστος πακέτων υπηρεσιών")
-        print(f"   4. Τρέχουσες ανεκδοτές δαπάνες")
-        print(f"   5. Combination των παραπάνω")
+        print("\n🔍 ΠΙΘΑΝΕΣ ΑΙΤΙΕΣ ΓΙΑ ΤΟ ΠΟΣΟ 334,85 €:")
+        print("   1. Υπολογισμός κοινοχρήστων βάσει τελευταίου φύλλου")
+        print("   2. Μηνιαίες δόσεις αποθεματικού")
+        print("   3. Κόστος πακέτων υπηρεσιών")
+        print("   4. Τρέχουσες ανεκδοτές δαπάνες")
+        print("   5. Combination των παραπάνω")
 
-        print(f"\n🎯 ΠΡΟΤΑΣΕΙΣ ΕΝΕΡΓΕΙΩΝ:")
+        print("\n🎯 ΠΡΟΤΑΣΕΙΣ ΕΝΕΡΓΕΙΩΝ:")
         print(f"   • Επιβεβαίωση των {pending_receipts.count()} εκκρεμών πληρωμών")
-        print(f"   • Έλεγχος υπολογισμού κοινοχρήστων")
-        print(f"   • Επαλήθευση δόσεων αποθεματικού")
-        print(f"   • Ενημέρωση φύλλου κοινοχρήστων")
+        print("   • Έλεγχος υπολογισμού κοινοχρήστων")
+        print("   • Επαλήθευση δόσεων αποθεματικού")
+        print("   • Ενημέρωση φύλλου κοινοχρήστων")
 
 if __name__ == "__main__":
     analyze_arachovis_building()

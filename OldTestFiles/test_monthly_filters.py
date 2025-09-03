@@ -4,7 +4,6 @@ Test script για την επαλήθευση των μηνιαίων φίλτ�
 """
 
 import requests
-import json
 from datetime import datetime, timedelta
 
 # Configuration

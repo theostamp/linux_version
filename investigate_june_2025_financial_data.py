@@ -8,12 +8,12 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from datetime import datetime, date
+from datetime import datetime
 from decimal import Decimal
 
 with schema_context('demo'):
     from apartments.models import Apartment
-    from financial.models import Expense, Payment, Transaction, CommonExpensePeriod, ApartmentShare
+    from financial.models import Expense, Transaction, CommonExpensePeriod, ApartmentShare
     from buildings.models import Building
     
     print("=== JUNE 2025 FINANCIAL DATA INVESTIGATION ===")

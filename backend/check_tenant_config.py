@@ -3,7 +3,6 @@
 Check tenant configuration and domains
 """
 import os
-import sys
 import django
 
 # Setup Django environment

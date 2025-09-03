@@ -57,7 +57,7 @@ def check_form_html():
             # Save HTML to file for inspection
             with open('building_form.html', 'w', encoding='utf-8') as f:
                 f.write(html_content)
-            print(f"\n💾 HTML saved to building_form.html for inspection")
+            print("\n💾 HTML saved to building_form.html for inspection")
             
         else:
             print(f"❌ Failed to access form: {response.status_code}")

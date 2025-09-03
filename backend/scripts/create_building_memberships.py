@@ -90,12 +90,12 @@ def create_building_memberships():
             else:
                 print(f"ℹ️ Υπάρχει ήδη membership: {user.email} -> {building.name} ({role})")
         
-        print(f"\n📊 ΣΥΝΟΨΗ:")
+        print("\n📊 ΣΥΝΟΨΗ:")
         print(f"   Δημιουργήθηκαν: {created_count} νέα memberships")
         print(f"   Συνολικά memberships: {BuildingMembership.objects.count()}")
         
         # Show all memberships
-        print(f"\n📋 ΟΛΑ ΤΑ BUILDING MEMBERSHIPS:")
+        print("\n📋 ΟΛΑ ΤΑ BUILDING MEMBERSHIPS:")
         for membership in BuildingMembership.objects.all():
             print(f"   {membership.resident.email} -> {membership.building.name} ({membership.role})")
 

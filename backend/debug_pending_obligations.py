@@ -7,7 +7,6 @@ Investigate why Reserve Fund is blocked by pending obligations check.
 import os
 import sys
 import django
-from datetime import date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -37,7 +36,7 @@ def debug_pending_obligations():
             # Get apartments
             apartments = Apartment.objects.filter(building=building)
             
-            print(f"🏠 Checking pending obligations logic:")
+            print("🏠 Checking pending obligations logic:")
             print(f"   Period end date: {calculator.period_end_date}")
             print()
             
@@ -52,20 +51,20 @@ def debug_pending_obligations():
                     total_obligations += obligation
                     print(f"      ⚠️  Has pending obligation: €{obligation}")
                 else:
-                    print(f"      ✅ No pending obligations")
+                    print("      ✅ No pending obligations")
             
             print()
             print(f"📊 Total pending obligations: €{total_obligations}")
             
             if total_obligations > 0:
-                print(f"❌ Reserve Fund collection BLOCKED due to pending obligations")
-                print(f"   This might be the reason why Reserve Fund contributions are 0")
+                print("❌ Reserve Fund collection BLOCKED due to pending obligations")
+                print("   This might be the reason why Reserve Fund contributions are 0")
             else:
-                print(f"✅ No pending obligations - Reserve Fund should be collected")
+                print("✅ No pending obligations - Reserve Fund should be collected")
                 
                 # Let's check why it's still not working
                 print()
-                print(f"🔍 Checking other potential issues:")
+                print("🔍 Checking other potential issues:")
                 
                 # Check monthly target calculation
                 monthly_target = 0
@@ -73,7 +72,7 @@ def debug_pending_obligations():
                     monthly_target = float(building.reserve_fund_goal) / float(building.reserve_fund_duration_months)
                     print(f"   Monthly target: €{monthly_target}")
                 else:
-                    print(f"   ❌ Cannot calculate monthly target")
+                    print("   ❌ Cannot calculate monthly target")
                     print(f"      Goal: {building.reserve_fund_goal}")
                     print(f"      Duration: {building.reserve_fund_duration_months}")
                 
@@ -82,7 +81,7 @@ def debug_pending_obligations():
                 print(f"   Total participation mills: {total_mills}")
                 
                 if total_mills == 0:
-                    print(f"   ⚠️  No participation mills - will use equal distribution")
+                    print("   ⚠️  No participation mills - will use equal distribution")
                 
         except Exception as e:
             print(f"❌ Error during debug: {e}")

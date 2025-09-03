@@ -6,7 +6,6 @@ Final test to verify the modal shows the correct user-entered data for Alkmanos 
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Add the backend directory to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
@@ -43,7 +42,7 @@ def test_alkmanos_final():
         
         result = calculator.calculate_advanced_shares()
         
-        print(f"\n📊 Advanced calculation result:")
+        print("\n📊 Advanced calculation result:")
         print(f"   - reserve_fund_goal: {result.get('reserve_fund_goal', 'N/A')}€")
         print(f"   - reserve_fund_duration: {result.get('reserve_fund_duration', 'N/A')} μήνες")
         print(f"   - reserve_contribution: {result.get('reserve_contribution', 'N/A')}€")
@@ -54,7 +53,7 @@ def test_alkmanos_final():
         monthly_amount = result.get('reserve_contribution', 0)
         total_contribution = monthly_amount * len(calculator.apartments)
         
-        print(f"\n📋 Modal display data:")
+        print("\n📋 Modal display data:")
         print(f"   - Μηνιαία Εισφορά: {monthly_amount:.2f}€")
         print(f"   - Στόχος: {goal:.2f}€")
         print(f"   - Διάρκεια: {duration} μήνες")
@@ -68,7 +67,7 @@ def test_alkmanos_final():
             'total_contribution': 2000.00  # 333.33 * 6 months
         }
         
-        print(f"\n🎯 Expected vs Actual (User-entered data):")
+        print("\n🎯 Expected vs Actual (User-entered data):")
         print(f"   - Μηνιαία Εισφορά: Expected {expected_values['monthly_amount']:.2f}€, Actual {monthly_amount:.2f}€")
         print(f"   - Στόχος: Expected {expected_values['goal']:.2f}€, Actual {goal:.2f}€")
         print(f"   - Διάρκεια: Expected {expected_values['duration']} μήνες, Actual {duration} μήνες")
@@ -80,22 +79,22 @@ def test_alkmanos_final():
         duration_match = duration == expected_values['duration']
         total_match = abs(total_contribution - expected_values['total_contribution']) < 0.01
         
-        print(f"\n✅ All matches:")
+        print("\n✅ All matches:")
         print(f"   - Μηνιαία Εισφορά: {'✅' if monthly_match else '❌'}")
         print(f"   - Στόχος: {'✅' if goal_match else '❌'}")
         print(f"   - Διάρκεια: {'✅' if duration_match else '❌'}")
         print(f"   - Συνολική Εισφορά: {'✅' if total_match else '❌'}")
         
         if monthly_match and goal_match and duration_match and total_match:
-            print(f"\n🎉 SUCCESS: The modal will display the correct user-entered data!")
-            print(f"   The reserve fund section should show:")
-            print(f"   - Μηνιαία Εισφορά: 333,33€")
-            print(f"   - Στόχος: 2.000,00€")
-            print(f"   - Διάρκεια: 6 μήνες")
-            print(f"   - Συνολική Εισφορά: 2.000,00€")
-            print(f"\n✅ This matches exactly what the users have entered!")
+            print("\n🎉 SUCCESS: The modal will display the correct user-entered data!")
+            print("   The reserve fund section should show:")
+            print("   - Μηνιαία Εισφορά: 333,33€")
+            print("   - Στόχος: 2.000,00€")
+            print("   - Διάρκεια: 6 μήνες")
+            print("   - Συνολική Εισφορά: 2.000,00€")
+            print("\n✅ This matches exactly what the users have entered!")
         else:
-            print(f"\n⚠️  WARNING: Some reserve fund data does not match the user-entered values.")
+            print("\n⚠️  WARNING: Some reserve fund data does not match the user-entered values.")
 
 if __name__ == '__main__':
     test_alkmanos_final()

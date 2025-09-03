@@ -16,8 +16,7 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.models import Expense, Payment, Apartment, Transaction
 from buildings.models import Building
-from django.db.models import Sum, Q, Count
-from datetime import datetime, timedelta
+from django.db.models import Sum
 from decimal import Decimal
 
 def comprehensive_financial_analysis():
@@ -88,10 +87,10 @@ def comprehensive_financial_analysis():
             print(f"  🏠 Διαμ. {apt.number}: {mills} χιλιοστά")
         
         print(f"\n💰 ΣΥΝΟΛΟ ΧΙΛΙΟΣΤΩΝ: {total_mills}")
-        print(f"🎯 ΣΤΟΧΟΣ: 1000 χιλιοστά")
+        print("🎯 ΣΤΟΧΟΣ: 1000 χιλιοστά")
         
         if total_mills != 1000:
-            print(f"⚠️  ΠΡΟΣΟΧΗ: Τα χιλιοστά δεν αθροίζουν σε 1000!")
+            print("⚠️  ΠΡΟΣΟΧΗ: Τα χιλιοστά δεν αθροίζουν σε 1000!")
         
         # 4. BUILDING SETTINGS
         print("\n🔍 4. ΡΥΘΜΙΣΕΙΣ ΚΤΙΡΙΟΥ:")

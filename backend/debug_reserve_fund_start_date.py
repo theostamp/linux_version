@@ -3,8 +3,6 @@
 import os
 import sys
 import django
-import json
-from datetime import datetime, date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -29,7 +27,7 @@ def debug_reserve_fund_start_date():
             print(f"   Address: {building.address}")
             
             # Check raw database values
-            print(f"\n📊 Raw Database Values:")
+            print("\n📊 Raw Database Values:")
             print(f"   reserve_fund_goal: {building.reserve_fund_goal}")
             print(f"   reserve_fund_duration_months: {building.reserve_fund_duration_months}")
             print(f"   reserve_fund_start_date: {building.reserve_fund_start_date}")
@@ -39,7 +37,7 @@ def debug_reserve_fund_start_date():
             start_date = building.reserve_fund_start_date
             target_date = building.reserve_fund_target_date
             
-            print(f"\n🔍 Date Analysis:")
+            print("\n🔍 Date Analysis:")
             print(f"   start_date type: {type(start_date)}")
             print(f"   start_date value: {start_date}")
             print(f"   start_date is None: {start_date is None}")
@@ -59,7 +57,7 @@ def debug_reserve_fund_start_date():
                 monthly_target = building.reserve_fund_goal / building.reserve_fund_duration_months
                 print(f"\n💰 Calculated Monthly Target: €{monthly_target:.2f}")
             else:
-                print(f"\n💰 Cannot calculate monthly target - missing goal or duration")
+                print("\n💰 Cannot calculate monthly target - missing goal or duration")
             
             print("-" * 40)
 

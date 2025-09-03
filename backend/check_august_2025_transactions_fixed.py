@@ -7,8 +7,6 @@ Script to check all transactions for August 2025 to see if there are previous ob
 import os
 import sys
 import django
-from datetime import datetime
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -16,8 +14,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Transaction, Expense, Payment
-from django.db.models import Sum, Q, Count
+from financial.models import Transaction, Expense
+from django.db.models import Q
 
 def check_august_2025_transactions():
     """Check all transactions for August 2025 to see if there are previous obligations"""
@@ -101,12 +99,12 @@ def check_august_2025_transactions():
                 elif initial_balance < 0:
                     print(f"  ✅ Πιστωτικό υπόλοιπο: {abs(initial_balance)}€")
                 
-                print(f"  Συναλλαγές:")
+                print("  Συναλλαγές:")
                 for tx in data['transactions']:
                     print(f"    • {tx['date'].strftime('%Y-%m-%d %H:%M')}: {tx['type']} - {tx['description']} ({tx['amount']}€)")
                     print(f"      Υπόλοιπο πριν: {tx['balance_before']}€ → Υπόλοιπο μετά: {tx['balance_after']}€")
             
-            print(f"\n📊 ΣΥΝΟΛΑ:")
+            print("\n📊 ΣΥΝΟΛΑ:")
             print(f"  • Συνολικές παλιές οφειλές: {total_previous_balance}€")
             print(f"  • Συνολικές δαπάνες Αυγούστου: {sum(data['total_expenses'] for data in apartments_data.values())}€")
             print(f"  • Συνολικές πληρωμές Αυγούστου: {sum(data['total_payments'] for data in apartments_data.values())}€")
@@ -120,7 +118,7 @@ def check_august_2025_transactions():
             if apartments_with_previous_obligations:
                 print(f"\n⚠️  Διαμερίσματα με παλιές οφειλές: {', '.join(map(str, apartments_with_previous_obligations))}")
             else:
-                print(f"\n✅ Δεν βρέθηκαν διαμερίσματα με παλιές οφειλές")
+                print("\n✅ Δεν βρέθηκαν διαμερίσματα με παλιές οφειλές")
                 
         else:
             print("❌ Δεν βρέθηκαν συναλλαγές τον Αύγουστο 2025")

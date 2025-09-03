@@ -15,15 +15,12 @@
 import os
 import sys
 import django
-from decimal import Decimal
-from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
 django.setup()
 
-from django_tenants.utils import schema_context
 
 def print_header(title):
     """Εκτυπώνει επικεφαλίδα με διαχωριστικά"""
@@ -317,11 +314,11 @@ const BuildingOverviewSection = ({ buildingId, selectedMonth }) => {
 };
 '''
         
-        print(f"  ✅ Βελτιωμένο BuildingOverviewSection δημιουργήθηκε")
-        print(f"     📝 Αλλαγές:")
-        print(f"        • 'Πραγματικά έξοδα' → 'Δαπάνες του μήνα'")
-        print(f"        • Προσθήκη επεξηγηματικών σημειώσεων")
-        print(f"        • Βελτίωση κατανοητότητας")
+        print("  ✅ Βελτιωμένο BuildingOverviewSection δημιουργήθηκε")
+        print("     📝 Αλλαγές:")
+        print("        • 'Πραγματικά έξοδα' → 'Δαπάνες του μήνα'")
+        print("        • Προσθήκη επεξηγηματικών σημειώσεων")
+        print("        • Βελτίωση κατανοητότητας")
         
         print_subsection("2. PAYMENT LIST")
         
@@ -389,11 +386,11 @@ const PaymentList = ({ buildingId, selectedMonth }) => {
 };
 '''
         
-        print(f"  ✅ Βελτιωμένο PaymentList δημιουργήθηκε")
-        print(f"     📝 Αλλαγές:")
-        print(f"        • 'Πραγματικές πληρωμές' → 'Εισπράξεις'")
-        print(f"        • Προσθήκη επεξηγηματικών σημειώσεων")
-        print(f"        • Βελτίωση κατανοητότητας")
+        print("  ✅ Βελτιωμένο PaymentList δημιουργήθηκε")
+        print("     📝 Αλλαγές:")
+        print("        • 'Πραγματικές πληρωμές' → 'Εισπράξεις'")
+        print("        • Προσθήκη επεξηγηματικών σημειώσεων")
+        print("        • Βελτίωση κατανοητότητας")
         
         print_subsection("3. EXPENSE LIST")
         
@@ -461,11 +458,11 @@ const ExpenseList = ({ buildingId, selectedMonth }) => {
 };
 '''
         
-        print(f"  ✅ Βελτιωμένο ExpenseList δημιουργήθηκε")
-        print(f"     📝 Αλλαγές:")
-        print(f"        • 'Πραγματικές δαπάνες' → 'Δαπάνες'")
-        print(f"        • Προσθήκη επεξηγηματικών σημειώσεων")
-        print(f"        • Βελτίωση κατανοητότητας")
+        print("  ✅ Βελτιωμένο ExpenseList δημιουργήθηκε")
+        print("     📝 Αλλαγές:")
+        print("        • 'Πραγματικές δαπάνες' → 'Δαπάνες'")
+        print("        • Προσθήκη επεξηγηματικών σημειώσεων")
+        print("        • Βελτίωση κατανοητότητας")
     
     def create_terminology_guide(self):
         """Δημιουργία οδηγού ορολογίας"""
@@ -545,12 +542,12 @@ const ExpenseList = ({ buildingId, selectedMonth }) => {
 4. Επαλήθευση κατανοητότητας
 '''
         
-        print(f"  ✅ Οδηγός ορολογίας δημιουργήθηκε")
-        print(f"     📝 Περιεχόμενα:")
-        print(f"        • Προτεινόμενη ορολογία")
-        print(f"        • Αλλαγές ορολογίας")
-        print(f"        • Επεξηγηματικές σημειώσεις")
-        print(f"        • Αρχές και εκτέλεση")
+        print("  ✅ Οδηγός ορολογίας δημιουργήθηκε")
+        print("     📝 Περιεχόμενα:")
+        print("        • Προτεινόμενη ορολογία")
+        print("        • Αλλαγές ορολογίας")
+        print("        • Επεξηγηματικές σημειώσεις")
+        print("        • Αρχές και εκτέλεση")
     
     def generate_implementation_plan(self):
         """Δημιουργία σχεδίου εφαρμογής"""
@@ -632,12 +629,12 @@ const ExpenseList = ({ buildingId, selectedMonth }) => {
 4. User feedback scores
 '''
         
-        print(f"  ✅ Σχέδιο εφαρμογής δημιουργήθηκε")
-        print(f"     📝 Περιεχόμενα:")
-        print(f"        • Βήματα εφαρμογής")
-        print(f"        • Χρονοδιάγραμμα")
-        print(f"        • Αποτελέσματα")
-        print(f"        • Μετρήσεις επιτυχίας")
+        print("  ✅ Σχέδιο εφαρμογής δημιουργήθηκε")
+        print("     📝 Περιεχόμενα:")
+        print("        • Βήματα εφαρμογής")
+        print("        • Χρονοδιάγραμμα")
+        print("        • Αποτελέσματα")
+        print("        • Μετρήσεις επιτυχίας")
     
     def run_complete_improvement(self):
         """Εκτέλεση πλήρους βελτίωσης"""

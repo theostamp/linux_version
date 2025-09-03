@@ -57,7 +57,7 @@ def check_june_transactions():
             print(f"   • Ιουνίου συναλλαγές: {len(transactions)}")
             
             if len(transactions) == 0:
-                print(f"   ⚠️ ΔΕΝ ΥΠΑΡΧΟΥΝ ΣΥΝΑΛΛΑΓΕΣ!")
+                print("   ⚠️ ΔΕΝ ΥΠΑΡΧΟΥΝ ΣΥΝΑΛΛΑΓΕΣ!")
             else:
                 for transaction in transactions:
                     print(f"   • {transaction.type}: {transaction.amount}€ - {transaction.description}")

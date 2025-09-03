@@ -64,7 +64,7 @@ def main():
             else:
                 print(f"  ❌ No share data found for apartment ID {apt.id}")
         
-        print(f"\n📊 SUMMARY:")
+        print("\n📊 SUMMARY:")
         print(f"Management fees collected: {management_fees}")
         print(f"Reserve contributions collected: {reserve_contributions}")
         
@@ -76,11 +76,11 @@ def main():
             else:
                 print(f"❌ Management fees vary: {unique_fees}")
         else:
-            print(f"⚠️ No management fees found")
+            print("⚠️ No management fees found")
         
         # Check reserve fund distribution
         if reserve_contributions and len(reserve_contributions) == apartments.count():
-            print(f"\n🔍 Reserve Fund Check:")
+            print("\n🔍 Reserve Fund Check:")
             all_correct = True
             for i, apt in enumerate(apartments):
                 actual = reserve_contributions[i]
@@ -94,7 +94,7 @@ def main():
                     all_correct = False
             
             if all_correct:
-                print(f"✅ Reserve fund correctly distributed by participation mills")
+                print("✅ Reserve fund correctly distributed by participation mills")
 
 if __name__ == "__main__":
     main()

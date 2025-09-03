@@ -7,9 +7,7 @@
 """
 
 import os
-import sys
 import django
-from decimal import Decimal
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
@@ -42,7 +40,7 @@ def test_reserve_fund_in_shares():
                 print(f"   ID: {building.id}")
                 
                 # Check reserve fund settings
-                print(f"\n🎯 Ρυθμίσεις Αποθεματικού:")
+                print("\n🎯 Ρυθμίσεις Αποθεματικού:")
                 print(f"   - Στόχος: {building.reserve_fund_goal or 0}€")
                 print(f"   - Διάρκεια: {building.reserve_fund_duration_months or 0} μήνες")
                 print(f"   - Ημερομηνία έναρξης: {building.reserve_fund_start_date or 'Δεν έχει οριστεί'}")
@@ -55,7 +53,7 @@ def test_reserve_fund_in_shares():
                 print(f"   - Μηνιαίος στόχος: {monthly_target:.2f}€")
                 
                 # Test calculator with reserve fund
-                print(f"\n🧮 Υπολογισμός με Αποθεματικό:")
+                print("\n🧮 Υπολογισμός με Αποθεματικό:")
                 calculator = CommonExpenseCalculator(building.id)
                 shares_with_reserve = calculator.calculate_shares(include_reserve_fund=True)
                 
@@ -66,7 +64,7 @@ def test_reserve_fund_in_shares():
                 print(f"   - Συνολικό αποθεματικό στο φύλλο: {total_reserve_fund:.2f}€")
                 
                 # Show breakdown for each apartment
-                print(f"\n📋 Ανάλυση ανά Διαμέρισμα:")
+                print("\n📋 Ανάλυση ανά Διαμέρισμα:")
                 for apartment_id, share in shares_with_reserve.items():
                     apartment = Apartment.objects.get(id=apartment_id)
                     reserve_amount = share.get('reserve_fund_amount', 0)
@@ -81,7 +79,7 @@ def test_reserve_fund_in_shares():
                     
                     # Show breakdown
                     if share.get('breakdown'):
-                        print(f"     * Ανάλυση:")
+                        print("     * Ανάλυση:")
                         for item in share['breakdown']:
                             if item.get('distribution_type') == 'reserve_fund':
                                 print(f"       - {item['expense_title']}: {item['apartment_share']:.2f}€")
@@ -89,7 +87,7 @@ def test_reserve_fund_in_shares():
                                 print(f"       - {item['expense_title']}: {item['apartment_share']:.2f}€")
                 
                 # Test calculator without reserve fund
-                print(f"\n🧮 Υπολογισμός ΧΩΡΙΣ Αποθεματικό:")
+                print("\n🧮 Υπολογισμός ΧΩΡΙΣ Αποθεματικό:")
                 shares_without_reserve = calculator.calculate_shares(include_reserve_fund=False)
                 
                 total_without_reserve = sum(
@@ -99,14 +97,14 @@ def test_reserve_fund_in_shares():
                 print(f"   - Συνολικό αποθεματικό στο φύλλο: {total_without_reserve:.2f}€")
                 
                 # Compare results
-                print(f"\n📊 Σύγκριση Αποτελεσμάτων:")
+                print("\n📊 Σύγκριση Αποτελεσμάτων:")
                 print(f"   - Με αποθεματικό: {total_reserve_fund:.2f}€")
                 print(f"   - Χωρίς αποθεματικό: {total_without_reserve:.2f}€")
                 print(f"   - Διαφορά: {total_reserve_fund - total_without_reserve:.2f}€")
                 
                 print(f"\n{'='*50}")
         
-        print(f"\n🎉 Το test ολοκληρώθηκε!")
+        print("\n🎉 Το test ολοκληρώθηκε!")
         
     except Client.DoesNotExist:
         print("❌ Δεν βρέθηκε το demo tenant!")

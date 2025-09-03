@@ -4,8 +4,6 @@ Script για έλεγχο δεδομένων μέσω API
 """
 
 import requests
-import json
-from datetime import datetime
 
 def test_api_data():
     """Ελέγχος δεδομένων μέσω API"""
@@ -45,7 +43,7 @@ def test_api_data():
                 apartments[apartment_id]['payments'].append(payment)
                 apartments[apartment_id]['total'] += float(payment['amount'])
             
-            print(f"\n📊 ΕΙΣΠΡΑΞΕΙΣ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ:")
+            print("\n📊 ΕΙΣΠΡΑΞΕΙΣ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ:")
             for apartment_id, apartment_data in apartments.items():
                 print(f"  - {apartment_data['apartment_number']}: {apartment_data['total']:.2f}€ ({len(apartment_data['payments'])} πληρωμές)")
                 print(f"    Ιδιοκτήτης: {apartment_data['owner_name']}")
@@ -88,7 +86,7 @@ def test_api_data():
         except Exception as e:
             print(f"❌ Exception: {e}")
     
-    print(f"\n✅ Έλεγχος ολοκληρώθηκε")
+    print("\n✅ Έλεγχος ολοκληρώθηκε")
 
 if __name__ == "__main__":
     test_api_data()

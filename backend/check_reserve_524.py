@@ -4,7 +4,6 @@ Script για έλεγχο της προέλευσης του ποσού 524,00�
 """
 
 import os
-import sys
 import django
 
 # Setup Django
@@ -52,22 +51,22 @@ def check_reserve_524():
             
             calculated_reserve = total_payments - total_expenses
             
-            print(f"\n📊 Υπολογισμός από συναλλαγές:")
+            print("\n📊 Υπολογισμός από συναλλαγές:")
             print(f"  - Συνολικές εισπράξεις: {total_payments}€")
             print(f"  - Συνολικές δαπάνες: {total_expenses}€")
             print(f"  - Υπολογισμένο αποθεματικό: {calculated_reserve}€")
             
             # Check if this matches 524.00€
             if abs(calculated_reserve - Decimal('524.00')) < Decimal('0.01'):
-                print(f"🎯 ΒΡΕΘΗΚΕ! Το ποσό 524,00€ προέρχεται από αυτό το κτίριο!")
+                print("🎯 ΒΡΕΘΗΚΕ! Το ποσό 524,00€ προέρχεται από αυτό το κτίριο!")
                 
                 # Show detailed transactions
-                print(f"\n💳 ΛΕΠΤΟΜΕΡΕΙΕΣ ΕΙΣΠΡΑΞΕΩΝ:")
+                print("\n💳 ΛΕΠΤΟΜΕΡΕΙΕΣ ΕΙΣΠΡΑΞΕΩΝ:")
                 payments = Payment.objects.filter(apartment__building_id=building.id).order_by('date')
                 for payment in payments:
                     print(f"  - {payment.date}: {payment.amount}€ (Διαμέρισμα {payment.apartment.number})")
                 
-                print(f"\n💸 ΛΕΠΤΟΜΕΡΕΙΕΣ ΔΑΠΑΝΩΝ:")
+                print("\n💸 ΛΕΠΤΟΜΕΡΕΙΕΣ ΔΑΠΑΝΩΝ:")
                 expenses = Expense.objects.filter(building_id=building.id).order_by('date')
                 for expense in expenses:
                     # Check what fields are available on the Expense model
@@ -81,7 +80,7 @@ def check_reserve_524():
                     print(f"  - {expense.date}: {expense_info}")
                 
                 # Calculate running balance
-                print(f"\n📈 ΥΠΟΛΟΓΙΣΜΟΣ ΚΑΤΑΣΤΑΣΗΣ:")
+                print("\n📈 ΥΠΟΛΟΓΙΣΜΟΣ ΚΑΤΑΣΤΑΣΗΣ:")
                 all_transactions = []
                 
                 # Add payments as positive
@@ -122,7 +121,7 @@ def check_reserve_524():
             else:
                 print(f"❌ Δεν είναι αυτό το κτίριο (αναμενόμενο: 524,00€, πραγματικό: {calculated_reserve}€)")
     
-    print(f"\n❌ Δεν βρέθηκε κτίριο με αποθεματικό 524,00€")
+    print("\n❌ Δεν βρέθηκε κτίριο με αποθεματικό 524,00€")
     return False
 
 if __name__ == "__main__":

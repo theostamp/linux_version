@@ -39,11 +39,11 @@ def debug_apartment_encoding():
             
             # Check if it starts with Greek or Latin A
             if apt.number.startswith('Α'):  # Greek A
-                print(f"  - Starts with Greek Α")
+                print("  - Starts with Greek Α")
             elif apt.number.startswith('A'):  # Latin A
-                print(f"  - Starts with Latin A")
+                print("  - Starts with Latin A")
             else:
-                print(f"  - Starts with something else")
+                print("  - Starts with something else")
             print()
 
 if __name__ == "__main__":

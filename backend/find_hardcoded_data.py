@@ -17,7 +17,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 import django
 django.setup()
 
-from django_tenants.utils import schema_context
 
 def find_hardcoded_data():
     """Εύρεση hardcoded δεδομένων στο backend"""

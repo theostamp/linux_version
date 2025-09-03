@@ -49,7 +49,7 @@ def check_demo_building():
                 print(f"   ID: {building.id}")
                 
                 # Λεπτομερής έλεγχος διαμερισμάτων
-                print(f"\n📊 ΛΕΠΤΟΜΕΡΕΙΕΣ ΔΙΑΜΕΡΙΣΜΑΤΩΝ:")
+                print("\n📊 ΛΕΠΤΟΜΕΡΕΙΕΣ ΔΙΑΜΕΡΙΣΜΑΤΩΝ:")
                 print("-" * 50)
                 
                 total_mills = 0
@@ -104,7 +104,7 @@ def check_demo_building():
                 print(f"   Ανελκύστρα: {total_electricity:.2f}")
                 
                 # Σύγκριση με τα δεδομένα που παρείχες
-                print(f"\n🔍 ΣΥΓΚΡΙΣΗ ΜΕ ΤΑ ΠΑΡΕΙΧΘΕΝΤΑ ΔΕΔΟΜΕΝΑ:")
+                print("\n🔍 ΣΥΓΚΡΙΣΗ ΜΕ ΤΑ ΠΑΡΕΙΧΘΕΝΤΑ ΔΕΔΟΜΕΝΑ:")
                 print("=" * 50)
                 
                 expected_mills = 1000.00

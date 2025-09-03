@@ -3,7 +3,6 @@
 Test tenant API call with detailed error reporting
 """
 import os
-import sys
 import django
 
 # Setup Django environment
@@ -11,12 +10,10 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django.test import RequestFactory
-from django.http import HttpRequest
 from financial.views import ApartmentTransactionViewSet
 from apartments.models import Apartment
 from django_tenants.utils import schema_context
 from tenants.models import Client
-from rest_framework.response import Response
 
 def test_apartment_api_detailed():
     """Test apartment transaction API with detailed error reporting"""

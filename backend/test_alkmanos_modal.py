@@ -6,7 +6,6 @@ Test script to verify that the modal shows the correct data for the Alkmanos bui
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Add the backend directory to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
@@ -43,7 +42,7 @@ def test_alkmanos_modal():
         
         result = calculator.calculate_advanced_shares()
         
-        print(f"\n📊 Advanced calculation result:")
+        print("\n📊 Advanced calculation result:")
         print(f"   - reserve_fund_goal: {result.get('reserve_fund_goal', 'N/A')}€")
         print(f"   - reserve_fund_duration: {result.get('reserve_fund_duration', 'N/A')} μήνες")
         print(f"   - reserve_contribution: {result.get('reserve_contribution', 'N/A')}€")
@@ -53,13 +52,13 @@ def test_alkmanos_modal():
             expected_monthly = float(building.reserve_fund_goal) / float(building.reserve_fund_duration_months)
             actual_monthly = result.get('reserve_contribution', 0)
             
-            print(f"\n✅ Verification:")
+            print("\n✅ Verification:")
             print(f"   - Expected monthly: {expected_monthly:.2f}€")
             print(f"   - Actual monthly: {actual_monthly:.2f}€")
             print(f"   - Match: {'✅' if abs(expected_monthly - actual_monthly) < 0.01 else '❌'}")
         
         # Test the modal data structure
-        print(f"\n🎯 Modal data structure:")
+        print("\n🎯 Modal data structure:")
         print(f"   - state.advancedShares.reserve_fund_goal: {result.get('reserve_fund_goal', 0)}€")
         print(f"   - state.advancedShares.reserve_fund_duration: {result.get('reserve_fund_duration', 0)} μήνες")
         print(f"   - state.advancedShares.reserve_contribution: {result.get('reserve_contribution', 0)}€")
@@ -70,7 +69,7 @@ def test_alkmanos_modal():
         monthly_amount = result.get('reserve_contribution', 0)
         total_contribution = monthly_amount * len(calculator.apartments)
         
-        print(f"\n📋 Modal display data:")
+        print("\n📋 Modal display data:")
         print(f"   - Μηνιαία Εισφορά: {monthly_amount:.2f}€")
         print(f"   - Στόχος: {goal:.2f}€")
         print(f"   - Διάρκεια: {duration} μήνες")
@@ -84,7 +83,7 @@ def test_alkmanos_modal():
             'total_contribution': 8333.33
         }
         
-        print(f"\n🎯 Expected vs Actual:")
+        print("\n🎯 Expected vs Actual:")
         print(f"   - Μηνιαία Εισφορά: Expected {expected_values['monthly_amount']:.2f}€, Actual {monthly_amount:.2f}€")
         print(f"   - Στόχος: Expected {expected_values['goal']:.2f}€, Actual {goal:.2f}€")
         print(f"   - Διάρκεια: Expected {expected_values['duration']} μήνες, Actual {duration} μήνες")
@@ -96,22 +95,22 @@ def test_alkmanos_modal():
         duration_match = duration == expected_values['duration']
         total_match = abs(total_contribution - expected_values['total_contribution']) < 0.01
         
-        print(f"\n✅ All matches:")
+        print("\n✅ All matches:")
         print(f"   - Μηνιαία Εισφορά: {'✅' if monthly_match else '❌'}")
         print(f"   - Στόχος: {'✅' if goal_match else '❌'}")
         print(f"   - Διάρκεια: {'✅' if duration_match else '❌'}")
         print(f"   - Συνολική Εισφορά: {'✅' if total_match else '❌'}")
         
         if monthly_match and goal_match and duration_match and total_match:
-            print(f"\n🎉 SUCCESS: The modal will display the correct data for the Alkmanos building!")
-            print(f"   The reserve fund section should show:")
-            print(f"   - Μηνιαία Εισφορά: 833,33€")
-            print(f"   - Στόχος: 10.000,00€")
-            print(f"   - Διάρκεια: 12 μήνες")
-            print(f"   - Συνολική Εισφορά: 8.333,33€")
+            print("\n🎉 SUCCESS: The modal will display the correct data for the Alkmanos building!")
+            print("   The reserve fund section should show:")
+            print("   - Μηνιαία Εισφορά: 833,33€")
+            print("   - Στόχος: 10.000,00€")
+            print("   - Διάρκεια: 12 μήνες")
+            print("   - Συνολική Εισφορά: 8.333,33€")
         else:
-            print(f"\n⚠️  WARNING: Some reserve fund data does not match the expected values.")
-            print(f"   The modal may not display the correct data.")
+            print("\n⚠️  WARNING: Some reserve fund data does not match the expected values.")
+            print("   The modal may not display the correct data.")
 
 if __name__ == '__main__':
     test_alkmanos_modal()

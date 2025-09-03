@@ -2,8 +2,6 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
-from django.db.models import Sum, Q
 
 # Setup Django environment
 sys.path.append('/app')
@@ -47,14 +45,14 @@ def clean_test_data():
             
             # Λεπτομέρειες συναλλαγών
             if transactions_count > 0:
-                print(f"   📋 Λεπτομέρειες συναλλαγών:")
+                print("   📋 Λεπτομέρειες συναλλαγών:")
                 for transaction in Transaction.objects.filter(building=building).order_by('date'):
                     apartment_num = transaction.apartment_number or 'N/A'
                     print(f"      - {transaction.date.strftime('%Y-%m-%d %H:%M')}: {transaction.amount}€ ({transaction.type}) - Διαμέρισμα {apartment_num}")
             
             # Λεπτομέρειες πληρωμών
             if payments_count > 0:
-                print(f"   💰 Λεπτομέρειες πληρωμών:")
+                print("   💰 Λεπτομέρειες πληρωμών:")
                 for payment in Payment.objects.filter(apartment__building=building).order_by('date'):
                     print(f"      - {payment.date}: {payment.amount}€ ({payment.get_method_display()}) - Διαμέρισμα {payment.apartment.number}")
         

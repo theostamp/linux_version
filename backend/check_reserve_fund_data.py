@@ -7,7 +7,6 @@
 """
 
 import os
-import sys
 import django
 from decimal import Decimal
 from datetime import datetime
@@ -42,7 +41,7 @@ def check_reserve_fund_data():
                 print(f"   ID: {building.id}")
                 
                 # Check reserve fund settings
-                print(f"\n🎯 Ρυθμίσεις Αποθεματικού στη Βάση:")
+                print("\n🎯 Ρυθμίσεις Αποθεματικού στη Βάση:")
                 print(f"   - Στόχος: {building.reserve_fund_goal or 0}€")
                 print(f"   - Διάρκεια: {building.reserve_fund_duration_months or 0} μήνες")
                 print(f"   - Ημερομηνία έναρξης: {building.reserve_fund_start_date or 'Δεν έχει οριστεί'}")
@@ -59,7 +58,7 @@ def check_reserve_fund_data():
                 expected_duration = 6   # 6 δόσεις
                 expected_monthly = 333.33  # 333,33€
                 
-                print(f"\n✅ Έλεγχος Αναμενόμενων Τιμών:")
+                print("\n✅ Έλεγχος Αναμενόμενων Τιμών:")
                 print(f"   - Αναμενόμενος στόχος: {expected_goal}€")
                 print(f"   - Αναμενόμενη διάρκεια: {expected_duration} μήνες")
                 print(f"   - Αναμενόμενη μηνιαία δόση: {expected_monthly}€")
@@ -69,14 +68,14 @@ def check_reserve_fund_data():
                 duration_matches = (building.reserve_fund_duration_months or 0) == expected_duration
                 monthly_matches = abs(monthly_target - expected_monthly) < 0.01
                 
-                print(f"\n📊 Αποτελέσματα Ελέγχου:")
+                print("\n📊 Αποτελέσματα Ελέγχου:")
                 print(f"   - Στόχος ταιριάζει: {'✅' if goal_matches else '❌'}")
                 print(f"   - Διάρκεια ταιριάζει: {'✅' if duration_matches else '❌'}")
                 print(f"   - Μηνιαία δόση ταιριάζει: {'✅' if monthly_matches else '❌'}")
                 
                 if not (goal_matches and duration_matches and monthly_matches):
-                    print(f"\n⚠️  ΧΡΕΙΑΖΕΤΑΙ ΕΝΗΜΕΡΩΣΗ!")
-                    print(f"   Θέλετε να ενημερώσετε τα δεδομένα; (y/n): ", end="")
+                    print("\n⚠️  ΧΡΕΙΑΖΕΤΑΙ ΕΝΗΜΕΡΩΣΗ!")
+                    print("   Θέλετε να ενημερώσετε τα δεδομένα; (y/n): ", end="")
                     
                     # For automation, we'll update automatically
                     print("y (αυτόματη ενημέρωση)")
@@ -87,12 +86,12 @@ def check_reserve_fund_data():
                     building.reserve_fund_start_date = datetime(2025, 8, 1).date()  # Αυγ 2025
                     building.save()
                     
-                    print(f"   ✅ Ενημερώθηκαν τα δεδομένα!")
+                    print("   ✅ Ενημερώθηκαν τα δεδομένα!")
                     print(f"   - Νέος στόχος: {building.reserve_fund_goal}€")
                     print(f"   - Νέα διάρκεια: {building.reserve_fund_duration_months} μήνες")
                     print(f"   - Νέα ημερομηνία έναρξης: {building.reserve_fund_start_date}")
                 else:
-                    print(f"   ✅ Όλα τα δεδομένα είναι σωστά!")
+                    print("   ✅ Όλα τα δεδομένα είναι σωστά!")
                 
                 # Check apartments and their participation mills
                 apartments = Apartment.objects.filter(building_id=building.id)
@@ -108,7 +107,7 @@ def check_reserve_fund_data():
                 
                 # Calculate expected reserve fund amounts
                 if total_mills > 0:
-                    print(f"\n🧮 Υπολογισμός Αναμενόμενων Εισφορών:")
+                    print("\n🧮 Υπολογισμός Αναμενόμενων Εισφορών:")
                     for apt in apartments:
                         mills = apt.participation_mills or 0
                         if mills > 0:
@@ -117,7 +116,7 @@ def check_reserve_fund_data():
                 
                 print(f"\n{'='*50}")
         
-        print(f"\n🎉 Ο έλεγχος ολοκληρώθηκε!")
+        print("\n🎉 Ο έλεγχος ολοκληρώθηκε!")
         
     except Client.DoesNotExist:
         print("❌ Δεν βρέθηκε το demo tenant!")

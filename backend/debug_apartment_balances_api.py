@@ -10,10 +10,9 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from apartments.models import Apartment
-from financial.models import Expense, Payment
+from financial.models import Expense
 from buildings.models import Building
-from django.db.models import Sum, Q
-from datetime import datetime, date
+from datetime import date
 
 def debug_apartment_balances_api():
     """Debug why apartment balances API shows 0€ for all apartments"""
@@ -21,7 +20,7 @@ def debug_apartment_balances_api():
     with schema_context('demo'):
         # Find the correct building for Αραχώβης 12
         buildings = Building.objects.all()
-        print(f"🏢 ΔΙΑΘΕΣΙΜΑ ΚΤΙΡΙΑ:")
+        print("🏢 ΔΙΑΘΕΣΙΜΑ ΚΤΙΡΙΑ:")
         for b in buildings:
             print(f"   • ID {b.id}: {b.name} - {b.address}")
         
@@ -46,7 +45,7 @@ def debug_apartment_balances_api():
         total_mills = sum(apt.participation_mills or 0 for apt in apartments)
         apartments_count = apartments.count()
         
-        print(f"📊 ΣΤΑΤΙΣΤΙΚΑ ΚΤΙΡΙΟΥ:")
+        print("📊 ΣΤΑΤΙΣΤΙΚΑ ΚΤΙΡΙΟΥ:")
         print(f"   • Συνολικά χιλιοστά: {total_mills}")
         print(f"   • Αριθμός διαμερισμάτων: {apartments_count}")
         print(f"   • Διαχειριστικά ανά διαμέρισμα: {building.management_fee_per_apartment or 0}€")
@@ -70,7 +69,7 @@ def debug_apartment_balances_api():
             date__gte=month_start
         )
         
-        print(f"💸 ΔΑΠΑΝΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
+        print("💸 ΔΑΠΑΝΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
         if current_month_expenses.exists():
             for expense in current_month_expenses:
                 print(f"   • {expense.title}: {expense.amount}€ ({expense.distribution_type})")
@@ -119,24 +118,24 @@ def debug_apartment_balances_api():
         reserve_contribution_share = float(building.reserve_contribution_per_apartment or 0)
         total_monthly_obligations = current_month_share + management_fee_share + reserve_contribution_share
         
-        print(f"💰 ΤΙ ΘΑ ΠΡΕΠΕΙ ΝΑ ΕΜΦΑΝΙΖΕΤΑΙ:")
+        print("💰 ΤΙ ΘΑ ΠΡΕΠΕΙ ΝΑ ΕΜΦΑΝΙΖΕΤΑΙ:")
         print(f"   • Μερίδιο δαπανών: {current_month_share:.2f}€")
         print(f"   • Διαχειριστικά τέλη: {management_fee_share:.2f}€")
         print(f"   • Εισφορά αποθεματικού: {reserve_contribution_share:.2f}€")
         print(f"   • ΣΥΝΟΛΟ μηνιαίες υποχρεώσεις: {total_monthly_obligations:.2f}€")
         print()
         
-        print(f"🔍 ΠΡΟΒΛΗΜΑ:")
-        print(f"   • Το API υπολογίζει μόνο τις πραγματικές δαπάνες")
-        print(f"   • ΔΕΝ περιλαμβάνει τα διαχειριστικά τέλη")
-        print(f"   • ΔΕΝ περιλαμβάνει την εισφορά αποθεματικού")
-        print(f"   • Αυτό εξηγεί γιατί όλα τα διαμερίσματα δείχνουν 0,00€")
+        print("🔍 ΠΡΟΒΛΗΜΑ:")
+        print("   • Το API υπολογίζει μόνο τις πραγματικές δαπάνες")
+        print("   • ΔΕΝ περιλαμβάνει τα διαχειριστικά τέλη")
+        print("   • ΔΕΝ περιλαμβάνει την εισφορά αποθεματικού")
+        print("   • Αυτό εξηγεί γιατί όλα τα διαμερίσματα δείχνουν 0,00€")
         print()
         
-        print(f"💡 ΛΥΣΗ:")
-        print(f"   • Πρέπει να προστεθούν τα διαχειριστικά τέλη στο 'expense_share'")
-        print(f"   • Πρέπει να προστεθεί η εισφορά αποθεματικού στο 'expense_share'")
-        print(f"   • Ή να δημιουργηθεί ξεχωριστό πεδίο για αυτές τις υποχρεώσεις")
+        print("💡 ΛΥΣΗ:")
+        print("   • Πρέπει να προστεθούν τα διαχειριστικά τέλη στο 'expense_share'")
+        print("   • Πρέπει να προστεθεί η εισφορά αποθεματικού στο 'expense_share'")
+        print("   • Ή να δημιουργηθεί ξεχωριστό πεδίο για αυτές τις υποχρεώσεις")
 
 if __name__ == "__main__":
     debug_apartment_balances_api()

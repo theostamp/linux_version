@@ -13,22 +13,18 @@
 """
 
 import os
-import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
 
 # Django setup
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
 django.setup()
 
-from django.db import transaction
 from django.contrib.auth import get_user_model
 from django_tenants.utils import tenant_context
 from tenants.models import Client
 from financial.models import Building, Apartment, Payment, Transaction
 from financial.serializers import PaymentSerializer
-from financial.views import PaymentViewSet
 
 User = get_user_model()
 

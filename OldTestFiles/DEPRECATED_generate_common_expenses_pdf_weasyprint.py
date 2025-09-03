@@ -7,7 +7,6 @@ using WeasyPrint for proper Greek text support.
 
 from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
-import os
 
 def create_common_expenses_pdf():
     """Create a PDF with the exact elements from the Common Expenses Sheet."""

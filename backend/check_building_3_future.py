@@ -1,9 +1,7 @@
 import os
 import sys
 import django
-from decimal import Decimal
-from datetime import datetime, date
-from django.db.models import Sum, Q
+from datetime import date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -11,9 +9,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Payment, Expense, Transaction
-from apartments.models import Apartment
-from buildings.models import Building
+from financial.models import Payment, Transaction
 
 def check_building_3_future():
     """Check building 3 for future transactions and date discrepancies"""

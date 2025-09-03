@@ -7,7 +7,6 @@ Script για έλεγχο ακεραιότητας δεδομένων
 import os
 import django
 from django_tenants.utils import schema_context
-from django.db import connection
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
@@ -43,14 +42,14 @@ def check_id_gaps(model_class, model_name):
         if missing_ids:
             print(f"   ⚠️  Λείπουντα IDs: {sorted(missing_ids)}")
         else:
-            print(f"   ✅ Δεν υπάρχουν gaps στα IDs")
+            print("   ✅ Δεν υπάρχουν gaps στα IDs")
             
     except Exception as e:
         print(f"   ❌ Σφάλμα κατά τον έλεγχο: {e}")
 
 def check_orphaned_records():
     """Ελέγχει για orphaned records"""
-    print(f"\n🔍 Ελέγχος orphaned records...")
+    print("\n🔍 Ελέγχος orphaned records...")
     
     try:
         # Ελέγχος ανακοινώσεις χωρίς κτίριο
@@ -60,28 +59,28 @@ def check_orphaned_records():
             for ann in orphaned_announcements[:5]:
                 print(f"      - ID: {ann.id}, Title: {ann.title}")
         else:
-            print(f"   ✅ Όλες οι ανακοινώσεις έχουν κτίριο")
+            print("   ✅ Όλες οι ανακοινώσεις έχουν κτίριο")
             
         # Ελέγχος αιτήματα χωρίς κτίριο
         orphaned_requests = UserRequest.objects.filter(building__isnull=True)
         if orphaned_requests.exists():
             print(f"   ⚠️  {orphaned_requests.count()} αιτήματα χωρίς κτίριο")
         else:
-            print(f"   ✅ Όλα τα αιτήματα έχουν κτίριο")
+            print("   ✅ Όλα τα αιτήματα έχουν κτίριο")
             
         # Ελέγχος ψηφοφορίες χωρίς κτίριο
         orphaned_votes = Vote.objects.filter(building__isnull=True)
         if orphaned_votes.exists():
             print(f"   ⚠️  {orphaned_votes.count()} ψηφοφορίες χωρίς κτίριο")
         else:
-            print(f"   ✅ Όλες οι ψηφοφορίες έχουν κτίριο")
+            print("   ✅ Όλες οι ψηφοφορίες έχουν κτίριο")
             
     except Exception as e:
         print(f"   ❌ Σφάλμα κατά τον έλεγχο: {e}")
 
 def check_data_consistency():
     """Ελέγχει για consistency στα δεδομένα"""
-    print(f"\n🔍 Ελέγχος consistency δεδομένων...")
+    print("\n🔍 Ελέγχος consistency δεδομένων...")
     
     try:
         # Ελέγχος ανακοινώσεις με λάθος ημερομηνίες
@@ -91,14 +90,14 @@ def check_data_consistency():
         if invalid_dates.exists():
             print(f"   ⚠️  {invalid_dates.count()} ανακοινώσεις με λάθος ημερομηνίες")
         else:
-            print(f"   ✅ Όλες οι ανακοινώσεις έχουν σωστές ημερομηνίες")
+            print("   ✅ Όλες οι ανακοινώσεις έχουν σωστές ημερομηνίες")
             
         # Ελέγχος κτίρια χωρίς διαμερίσματα
         buildings_no_apartments = Building.objects.filter(apartments_count=0)
         if buildings_no_apartments.exists():
             print(f"   ⚠️  {buildings_no_apartments.count()} κτίρια χωρίς διαμερίσματα")
         else:
-            print(f"   ✅ Όλα τα κτίρια έχουν διαμερίσματα")
+            print("   ✅ Όλα τα κτίρια έχουν διαμερίσματα")
             
     except Exception as e:
         print(f"   ❌ Σφάλμα κατά τον έλεγχο: {e}")

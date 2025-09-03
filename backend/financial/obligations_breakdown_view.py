@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Sum, Q
+from django.db.models import Sum
 from decimal import Decimal
 from datetime import datetime, timedelta
 from apartments.models import Apartment

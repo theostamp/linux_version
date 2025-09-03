@@ -6,7 +6,6 @@ of the New Concierge application using fpdf2 for better Greek support.
 """
 
 from fpdf import FPDF
-import os
 
 class CommonExpensesPDF(FPDF):
     def __init__(self):

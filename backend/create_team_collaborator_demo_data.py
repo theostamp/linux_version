@@ -17,12 +17,11 @@ django.setup()
 
 from django.contrib.auth import get_user_model
 from buildings.models import Building
-from teams.models import Team, TeamRole, TeamMember, TeamTask, TeamMeeting, TeamPerformance
+from teams.models import Team, TeamRole, TeamMember, TeamTask
 from collaborators.models import (
-    Collaborator, CollaborationProject, CollaborationContract, 
-    CollaborationInvoice, CollaborationMeeting, CollaboratorPerformance
+    Collaborator, CollaborationProject, CollaborationContract
 )
-from maintenance.models import Contractor, ServiceReceipt, ScheduledMaintenance
+from maintenance.models import Contractor
 
 User = get_user_model()
 
@@ -335,7 +334,7 @@ def main():
         create_collaboration_contracts(building, collaborators)
         
         print("\n✅ Η δημιουργία demo data ολοκληρώθηκε επιτυχώς!")
-        print(f"📊 Στατιστικά:")
+        print("📊 Στατιστικά:")
         print(f"   - Ομάδες: {Team.objects.count()}")
         print(f"   - Μέλη ομάδων: {TeamMember.objects.count()}")
         print(f"   - Εργασίες: {TeamTask.objects.count()}")

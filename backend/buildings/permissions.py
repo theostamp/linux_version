@@ -1,7 +1,6 @@
 # backend/buildings/permissions.py
 
 from rest_framework import permissions
-from buildings.models import BuildingMembership
 
 
 class IsOfficeManager(permissions.BasePermission):

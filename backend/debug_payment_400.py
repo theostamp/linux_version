@@ -3,7 +3,6 @@
 Debug script to test payment API and identify 400 error cause
 """
 import os
-import sys
 import django
 
 # Setup Django environment

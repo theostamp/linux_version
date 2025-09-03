@@ -47,7 +47,7 @@ def test_api_response():
             reserve_fund_goal = data.get('reserve_fund_goal', 0)
             reserve_fund_monthly_target = data.get('reserve_fund_monthly_target', 0)
             
-            print(f"\n🔍 Key Values:")
+            print("\n🔍 Key Values:")
             print(f"   current_obligations: {current_obligations}")
             print(f"   current_reserve: {current_reserve}")
             print(f"   reserve_fund_goal: {reserve_fund_goal}")

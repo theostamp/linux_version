@@ -46,14 +46,14 @@ def detailed_a1_audit():
         
         # Get all payments for apartment A1
         payments = Payment.objects.filter(apartment=apartment_a1).order_by('date')
-        print(f"\n💰 ΠΛΗΡΩΜΕΣ ΔΙΑΜΕΡΙΣΜΑΤΟΣ Α1")
+        print("\n💰 ΠΛΗΡΩΜΕΣ ΔΙΑΜΕΡΙΣΜΑΤΟΣ Α1")
         print(f"📊 Συνολικές πληρωμές: {payments.count()}")
         
         if payments.exists():
             total_payments = sum(payment.amount for payment in payments)
             print(f"💵 Συνολικό ποσό πληρωμών: {total_payments:.2f}€")
             
-            print(f"\n📋 Λεπτομερής λίστα πληρωμών:")
+            print("\n📋 Λεπτομερής λίστα πληρωμών:")
             print("-" * 70)
             print(f"{'Ημερομηνία':<12} {'Ποσό':<10} {'Τρόπος':<18} {'Τύπος':<15} {'ID'}")
             print("-" * 70)
@@ -66,7 +66,7 @@ def detailed_a1_audit():
                       f"{payment.id}")
             
             # Group payments by month
-            print(f"\n📅 ΟΜΑΔΟΠΟΙΗΣΗ ΑΝΑ ΜΗΝΑ:")
+            print("\n📅 ΟΜΑΔΟΠΟΙΗΣΗ ΑΝΑ ΜΗΝΑ:")
             print("-" * 50)
             monthly_totals = {}
             for payment in payments:
@@ -81,11 +81,11 @@ def detailed_a1_audit():
                 
         # Get all transactions for apartment A1
         transactions = Transaction.objects.filter(apartment=apartment_a1).order_by('created_at')
-        print(f"\n💸 ΣΥΝΑΛΛΑΓΕΣ ΔΙΑΜΕΡΙΣΜΑΤΟΣ Α1")
+        print("\n💸 ΣΥΝΑΛΛΑΓΕΣ ΔΙΑΜΕΡΙΣΜΑΤΟΣ Α1")
         print(f"📊 Συνολικές συναλλαγές: {transactions.count()}")
         
         if transactions.exists():
-            print(f"\n📋 Λεπτομερής λίστα συναλλαγών:")
+            print("\n📋 Λεπτομερής λίστα συναλλαγών:")
             print("-" * 80)
             print(f"{'Ημερομηνία':<20} {'Τύπος':<10} {'Ποσό':<12} {'Περιγραφή':<25} {'ID'}")
             print("-" * 80)
@@ -112,7 +112,7 @@ def detailed_a1_audit():
                 print("❌ ΠΡΟΣΟΧΗ: Ασυμφωνία στα υπόλοιπα!")
                 
         # Check payment-transaction consistency
-        print(f"\n🔍 ΕΛΕΓΧΟΣ ΣΥΝΕΠΕΙΑΣ ΠΛΗΡΩΜΩΝ-ΣΥΝΑΛΛΑΓΩΝ:")
+        print("\n🔍 ΕΛΕΓΧΟΣ ΣΥΝΕΠΕΙΑΣ ΠΛΗΡΩΜΩΝ-ΣΥΝΑΛΛΑΓΩΝ:")
         payment_transactions = transactions.filter(type='payment')
         print(f"📊 Πληρωμές: {payments.count()}")
         print(f"📊 Payment συναλλαγές: {payment_transactions.count()}")
@@ -123,7 +123,7 @@ def detailed_a1_audit():
             print("❌ ΠΡΟΣΟΧΗ: Ασυνέπεια μεταξύ πληρωμών και συναλλαγών!")
             
         # Check for recent large payments
-        print(f"\n🔍 ΕΛΕΓΧΟΣ ΜΕΓΑΛΩΝ ΠΛΗΡΩΜΩΝ (>1000€):")
+        print("\n🔍 ΕΛΕΓΧΟΣ ΜΕΓΑΛΩΝ ΠΛΗΡΩΜΩΝ (>1000€):")
         large_payments = payments.filter(amount__gt=1000)
         if large_payments.exists():
             for payment in large_payments:
@@ -133,7 +133,7 @@ def detailed_a1_audit():
             
         # Monthly due calculation (if available)
         if hasattr(apartment_a1, 'monthly_due') and apartment_a1.monthly_due:
-            print(f"\n📅 ΑΝΑΛΥΣΗ ΜΗΝΙΑΙΩΝ ΟΦΕΙΛΩΝ:")
+            print("\n📅 ΑΝΑΛΥΣΗ ΜΗΝΙΑΙΩΝ ΟΦΕΙΛΩΝ:")
             print(f"💰 Μηνιαία οφειλή: {apartment_a1.monthly_due:.2f}€")
             
             # Calculate how many months the current balance covers

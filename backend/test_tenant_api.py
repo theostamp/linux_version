@@ -3,7 +3,6 @@
 Test tenant API call directly to apartment transactions
 """
 import os
-import sys
 import django
 
 # Setup Django environment
@@ -11,7 +10,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django.test import RequestFactory
-from django.http import HttpRequest
 from financial.views import ApartmentTransactionViewSet
 from apartments.models import Apartment
 from django_tenants.utils import schema_context

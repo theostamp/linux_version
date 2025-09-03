@@ -33,7 +33,7 @@ def test_calculation_apis():
             "building_id": 1,
             "month_filter": "2025-06"
         }
-        print(f"📤 Sending request to /financial/common-expenses/calculate/")
+        print("📤 Sending request to /financial/common-expenses/calculate/")
         print(f"📤 Payload: {json.dumps(payload, indent=2)}")
         
         response = requests.post(f"{base_url}/financial/common-expenses/calculate/", json=payload, timeout=30)
@@ -62,7 +62,7 @@ def test_calculation_apis():
             "period_end_date": "2025-06-30",
             "month_filter": "2025-06"
         }
-        print(f"📤 Sending request to /financial/common-expenses/calculate_advanced/")
+        print("📤 Sending request to /financial/common-expenses/calculate_advanced/")
         print(f"📤 Payload: {json.dumps(payload, indent=2)}")
         
         response = requests.post(f"{base_url}/financial/common-expenses/calculate_advanced/", json=payload, timeout=30)

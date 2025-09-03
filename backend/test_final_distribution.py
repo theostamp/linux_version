@@ -16,7 +16,6 @@ from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
 from financial.services import FinancialDashboardService
-from decimal import Decimal
 
 def test_final_distribution():
     """Test final correct distribution logic"""
@@ -41,7 +40,7 @@ def test_final_distribution():
         apartments = Apartment.objects.filter(building_id=building.id)
         total_mills = sum(apt.participation_mills or 0 for apt in apartments)
         
-        print(f"📋 APARTMENTS INFO:")
+        print("📋 APARTMENTS INFO:")
         print(f"   • Total Apartments: {apartments.count()}")
         print(f"   • Total Participation Mills: {total_mills}")
         print()
@@ -54,7 +53,7 @@ def test_final_distribution():
         total_management_cost = dashboard_summary.get('total_management_cost', 0)
         reserve_fund_monthly_target = dashboard_summary.get('reserve_fund_monthly_target', 0)
         
-        print(f"📊 DASHBOARD DATA:")
+        print("📊 DASHBOARD DATA:")
         print(f"   • Total Expenses: {total_expenses_month:.2f}€")
         print(f"   • Total Management Cost: {total_management_cost:.2f}€")
         print(f"   • Reserve Fund Target: {reserve_fund_monthly_target:.2f}€")

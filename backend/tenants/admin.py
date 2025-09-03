@@ -1,7 +1,7 @@
 # backend/tenants/admin.py
 
 from django.contrib import admin
-from .models import Client, Domain
+from .models import Client
 from .admin_views import TenantCreatorAdminView  # ✅ αυτό είναι το custom
 from django.contrib import messages
 from django.utils.safestring import mark_safe

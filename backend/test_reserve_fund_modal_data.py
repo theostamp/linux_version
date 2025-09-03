@@ -6,7 +6,6 @@ Test script to verify that reserve fund data is correctly passed to the CommonEx
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Add the backend directory to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
@@ -43,7 +42,7 @@ def test_reserve_fund_modal_data():
         
         result = calculator.calculate_advanced_shares()
         
-        print(f"\n📊 Advanced calculation result:")
+        print("\n📊 Advanced calculation result:")
         print(f"   - reserve_fund_goal: {result.get('reserve_fund_goal', 'N/A')}€")
         print(f"   - reserve_fund_duration: {result.get('reserve_fund_duration', 'N/A')} μήνες")
         print(f"   - reserve_contribution: {result.get('reserve_contribution', 'N/A')}€")
@@ -53,13 +52,13 @@ def test_reserve_fund_modal_data():
             expected_monthly = float(building.reserve_fund_goal) / float(building.reserve_fund_duration_months)
             actual_monthly = result.get('reserve_contribution', 0)
             
-            print(f"\n✅ Verification:")
+            print("\n✅ Verification:")
             print(f"   - Expected monthly: {expected_monthly:.2f}€")
             print(f"   - Actual monthly: {actual_monthly:.2f}€")
             print(f"   - Match: {'✅' if abs(expected_monthly - actual_monthly) < 0.01 else '❌'}")
         
         # Test the modal data structure
-        print(f"\n🎯 Modal data structure:")
+        print("\n🎯 Modal data structure:")
         print(f"   - state.advancedShares.reserve_fund_goal: {result.get('reserve_fund_goal', 0)}€")
         print(f"   - state.advancedShares.reserve_fund_duration: {result.get('reserve_fund_duration', 0)} μήνες")
         print(f"   - state.advancedShares.reserve_contribution: {result.get('reserve_contribution', 0)}€")
@@ -70,7 +69,7 @@ def test_reserve_fund_modal_data():
         monthly_amount = result.get('reserve_contribution', 0)
         total_contribution = monthly_amount * len(calculator.apartments)
         
-        print(f"\n📋 Modal display data:")
+        print("\n📋 Modal display data:")
         print(f"   - Μηνιαία Εισφορά: {monthly_amount:.2f}€")
         print(f"   - Στόχος: {goal:.2f}€")
         print(f"   - Διάρκεια: {duration} μήνες")
@@ -84,7 +83,7 @@ def test_reserve_fund_modal_data():
             'total_contribution': 8333.33
         }
         
-        print(f"\n🎯 Expected vs Actual:")
+        print("\n🎯 Expected vs Actual:")
         print(f"   - Μηνιαία Εισφορά: Expected {expected_values['monthly_amount']:.2f}€, Actual {monthly_amount:.2f}€")
         print(f"   - Στόχος: Expected {expected_values['goal']:.2f}€, Actual {goal:.2f}€")
         print(f"   - Διάρκεια: Expected {expected_values['duration']} μήνες, Actual {duration} μήνες")
@@ -96,17 +95,17 @@ def test_reserve_fund_modal_data():
         duration_match = duration == expected_values['duration']
         total_match = abs(total_contribution - expected_values['total_contribution']) < 0.01
         
-        print(f"\n✅ All matches:")
+        print("\n✅ All matches:")
         print(f"   - Μηνιαία Εισφορά: {'✅' if monthly_match else '❌'}")
         print(f"   - Στόχος: {'✅' if goal_match else '❌'}")
         print(f"   - Διάρκεια: {'✅' if duration_match else '❌'}")
         print(f"   - Συνολική Εισφορά: {'✅' if total_match else '❌'}")
         
         if monthly_match and goal_match and duration_match and total_match:
-            print(f"\n🎉 SUCCESS: All reserve fund data matches the expected values!")
+            print("\n🎉 SUCCESS: All reserve fund data matches the expected values!")
         else:
-            print(f"\n⚠️  WARNING: Some reserve fund data does not match the expected values.")
-            print(f"   This means the modal may not display the correct data for the right building.")
+            print("\n⚠️  WARNING: Some reserve fund data does not match the expected values.")
+            print("   This means the modal may not display the correct data for the right building.")
 
 if __name__ == '__main__':
     test_reserve_fund_modal_data()

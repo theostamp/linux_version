@@ -1,12 +1,9 @@
 # backend/financial/audit.py
 
-import json
 from django.db import models
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
-from django.utils import timezone
-from django.core.serializers.json import DjangoJSONEncoder
 
 
 class FinancialAuditLog(models.Model):

@@ -6,7 +6,6 @@ Script to check current reserve fund settings for Αλκμάνος 22 building
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')

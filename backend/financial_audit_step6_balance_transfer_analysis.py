@@ -15,7 +15,7 @@ import django
 from decimal import Decimal
 from datetime import datetime, date
 from django.utils import timezone
-from django.db.models import Sum, Q
+from django.db.models import Sum
 
 # Setup Django environment
 sys.path.append('/app')
@@ -23,8 +23,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Apartment, Payment, Transaction, Expense, CommonExpensePeriod, ApartmentShare
-from financial.services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator
+from financial.models import Apartment, Payment, Transaction
+from financial.services import CommonExpenseCalculator
 from buildings.models import Building
 
 def analyze_balance_transfer_issue():

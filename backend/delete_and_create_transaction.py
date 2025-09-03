@@ -1,7 +1,7 @@
 import os
 import sys
 import django
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -73,7 +73,7 @@ def delete_and_create_transaction():
             )
             transaction.save()
             
-            print(f"✅ Δημιουργήθηκε νέα κίνηση:")
+            print("✅ Δημιουργήθηκε νέα κίνηση:")
             print(f"   ID: {transaction.id}")
             print(f"   Ημερομηνία: {transaction.date}")
             print(f"   Περιγραφή: {transaction.description}")

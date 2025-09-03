@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
 from django_tenants.utils import schema_context
-from decimal import Decimal
 from financial.models import Expense
 from buildings.models import Building
 from datetime import datetime
@@ -21,13 +20,13 @@ class Command(BaseCommand):
             self.stdout.write(f"💵 Συνολική αμοιβή: {building.management_fee_per_apartment * building.apartments_count}€")
             
             # Έλεγχος αποθεματικού
-            self.stdout.write(f"\n📊 ΑΠΟΘΕΜΑΤΙΚΟ:")
+            self.stdout.write("\n📊 ΑΠΟΘΕΜΑΤΙΚΟ:")
             self.stdout.write(f"   Στόχος: {building.reserve_fund_goal}€")
             self.stdout.write(f"   Διάρκεια: {building.reserve_fund_duration_months} μήνες")
             self.stdout.write(f"   Μηνιαία εισφορά: {building.reserve_fund_goal / building.reserve_fund_duration_months if building.reserve_fund_duration_months else 0}€")
             
             # Έλεγχος δαπανών
-            self.stdout.write(f"\n💸 ΔΑΠΑΝΕΣ:")
+            self.stdout.write("\n💸 ΔΑΠΑΝΕΣ:")
             
             # Όλες οι δαπάνες
             all_expenses = Expense.objects.filter(building=building)
@@ -38,7 +37,7 @@ class Command(BaseCommand):
             
             if len(all_expenses) == 0:
                 self.stdout.write(self.style.WARNING("   ⚠️  ΔΕΝ ΥΠΑΡΧΟΥΝ ΔΑΠΑΝΕΣ ΣΤΟ ΣΥΣΤΗΜΑ!"))
-                self.stdout.write(f"   ❓ Αυτό εξηγεί γιατί τα 'Τρέχοντα έξοδα' είναι 0,00€")
+                self.stdout.write("   ❓ Αυτό εξηγεί γιατί τα 'Τρέχοντα έξοδα' είναι 0,00€")
             else:
                 for expense in all_expenses:
                     self.stdout.write(f"   - {expense.title}: {expense.amount}€ ({expense.date})")
@@ -59,9 +58,9 @@ class Command(BaseCommand):
             self.stdout.write(f"   Ποσό τρέχοντος μήνα: {monthly_total}€")
             
             # Σύνοψη
-            self.stdout.write(f"\n📋 ΣΥΝΟΨΗ:")
-            self.stdout.write(f"   🔍 Πρόβλημα: Τα 'Συνολικά έξοδα' περιλαμβάνουν το αποθεματικό")
-            self.stdout.write(f"   💡 Λύση: Το αποθεματικό δεν είναι έξοδο, είναι εισφορά")
+            self.stdout.write("\n📋 ΣΥΝΟΨΗ:")
+            self.stdout.write("   🔍 Πρόβλημα: Τα 'Συνολικά έξοδα' περιλαμβάνουν το αποθεματικό")
+            self.stdout.write("   💡 Λύση: Το αποθεματικό δεν είναι έξοδο, είναι εισφορά")
             self.stdout.write(f"   ✅ Σωστή λογική: Έξοδα = {monthly_total}€, Εισφορά = {building.reserve_fund_goal / building.reserve_fund_duration_months if building.reserve_fund_duration_months else 0}€")
             
             if len(all_expenses) == 0 and building.reserve_fund_goal > 0:

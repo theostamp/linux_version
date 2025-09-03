@@ -105,8 +105,8 @@ def create_basic_data():
             print(f"✅ Δημιουργήθηκε χρήστης: {user.get_full_name()} ({user.email})")
         users.append(user)
     
-    print(f"\n✅ Η δημιουργία βασικών δεδομένων ολοκληρώθηκε!")
-    print(f"📊 Στατιστικά:")
+    print("\n✅ Η δημιουργία βασικών δεδομένων ολοκληρώθηκε!")
+    print("📊 Στατιστικά:")
     print(f"   - Tenant: {Client.objects.count()}")
     print(f"   - Buildings: {Building.objects.count()}")
     print(f"   - Users: {User.objects.count()}")

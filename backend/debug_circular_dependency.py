@@ -7,7 +7,6 @@ Investigate if Reserve Fund charges are included in pending obligations calculat
 import os
 import sys
 import django
-from datetime import date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -73,11 +72,11 @@ def debug_circular_dependency():
                              'interest_charge', 'penalty_charge']
                 )
                 
-                print(f"   📈 Charges:")
+                print("   📈 Charges:")
                 for charge in charges:
                     print(f"      {charge.type}: €{charge.amount} ({charge.date})")
                     if 'reserve' in charge.description.lower():
-                        print(f"         ⚠️  RESERVE FUND CHARGE DETECTED!")
+                        print("         ⚠️  RESERVE FUND CHARGE DETECTED!")
                 
                 # Payments (negative amounts that reduce debt)
                 payments = Transaction.objects.filter(
@@ -86,7 +85,7 @@ def debug_circular_dependency():
                     type__in=['common_expense_payment', 'payment_received', 'refund']
                 )
                 
-                print(f"   📉 Payments:")
+                print("   📉 Payments:")
                 for payment in payments:
                     print(f"      {payment.type}: €{payment.amount} ({payment.date})")
                 

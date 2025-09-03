@@ -40,7 +40,7 @@ def test_arachovis_obligations():
             print(f"🏠 Διαμερίσματα: {apartments.count()}")
             
             # 1. APARTMENT OBLIGATIONS (current_balance < 0)
-            print(f"\n1️⃣ ΟΦΕΙΛΕΣ ΔΙΑΜΕΡΙΣΜΑΤΩΝ:")
+            print("\n1️⃣ ΟΦΕΙΛΕΣ ΔΙΑΜΕΡΙΣΜΑΤΩΝ:")
             print("-" * 40)
             
             apartment_obligations = Decimal('0.00')
@@ -55,7 +55,7 @@ def test_arachovis_obligations():
             print(f"💰 Συνολικές οφειλές διαμερισμάτων: {apartment_obligations} €")
             
             # 2. ALL EXPENSES
-            print(f"\n2️⃣ ΣΥΝΟΛΙΚΕΣ ΔΑΠΑΝΕΣ:")
+            print("\n2️⃣ ΣΥΝΟΛΙΚΕΣ ΔΑΠΑΝΕΣ:")
             print("-" * 40)
             
             all_expenses = Expense.objects.filter(building=building)
@@ -65,7 +65,7 @@ def test_arachovis_obligations():
             print(f"💰 Συνολικό ποσό δαπανών: {expenses_total} €")
             
             # 3. MANAGEMENT FEES
-            print(f"\n3️⃣ ΔΙΑΧΕΙΡΙΣΤΙΚΑ ΤΕΛΗ:")
+            print("\n3️⃣ ΔΙΑΧΕΙΡΙΣΤΙΚΑ ΤΕΛΗ:")
             print("-" * 40)
             
             management_fee_per_apartment = getattr(building, 'management_fee_per_apartment', Decimal('0.00')) or Decimal('0.00')
@@ -76,7 +76,7 @@ def test_arachovis_obligations():
             print(f"💰 Συνολικό κόστος διαχείρισης: {total_management_cost} €")
             
             # 4. TOTAL CALCULATION
-            print(f"\n4️⃣ ΣΥΝΟΛΙΚΟΣ ΥΠΟΛΟΓΙΣΜΟΣ:")
+            print("\n4️⃣ ΣΥΝΟΛΙΚΟΣ ΥΠΟΛΟΓΙΣΜΟΣ:")
             print("-" * 40)
             
             total_obligations = apartment_obligations + expenses_total + total_management_cost
@@ -84,11 +84,11 @@ def test_arachovis_obligations():
             print(f"🔸 Οφειλές διαμερισμάτων: {apartment_obligations} €")
             print(f"🔸 Συνολικές δαπάνες: {expenses_total} €")
             print(f"🔸 Διαχειριστικά τέλη: {total_management_cost} €")
-            print(f"=" * 40)
+            print("=" * 40)
             print(f"💰 ΣΥΝΟΛΟ (current_obligations): {total_obligations} €")
             
             # 5. COMPARISON WITH TARGET
-            print(f"\n5️⃣ ΣΥΓΚΡΙΣΗ ΜΕ ΣΤΟΧΟ:")
+            print("\n5️⃣ ΣΥΓΚΡΙΣΗ ΜΕ ΣΤΟΧΟ:")
             print("-" * 40)
             
             target = Decimal('334.85')
@@ -106,7 +106,7 @@ def test_arachovis_obligations():
                 print("❌ ΔΕΝ ΤΑΙΡΙΑΖΕΙ")
             
             # 6. ANALYSIS
-            print(f"\n6️⃣ ΑΝΑΛΥΣΗ:")
+            print("\n6️⃣ ΑΝΑΛΥΣΗ:")
             print("-" * 40)
             
             if total_obligations == 0:
@@ -114,7 +114,7 @@ def test_arachovis_obligations():
                 print("   • Δεν υπάρχουν οφειλές διαμερισμάτων")
                 print("   • Δεν υπάρχουν δαπάνες")
                 print("   • Δεν υπάρχουν διαχειριστικά τέλη")
-                print(f"\n💡 ΤΟ ΠΟΣΟ 334,85 € ΠΡΟΕΡΧΕΤΑΙ ΑΠΟ:")
+                print("\n💡 ΤΟ ΠΟΣΟ 334,85 € ΠΡΟΕΡΧΕΤΑΙ ΑΠΟ:")
                 print("   1. Frontend calculation logic")
                 print("   2. Template/default values")
                 print("   3. Service package estimates")
@@ -125,7 +125,7 @@ def test_arachovis_obligations():
                     from buildings.models import ServicePackage
                     service_packages = ServicePackage.objects.filter(building=building)
                     if service_packages.exists():
-                        print(f"\n📦 SERVICE PACKAGES:")
+                        print("\n📦 SERVICE PACKAGES:")
                         for pkg in service_packages:
                             monthly_cost = getattr(pkg, 'monthly_cost', 0) or 0
                             print(f"   • {pkg.name}: {monthly_cost} €/μήνα")

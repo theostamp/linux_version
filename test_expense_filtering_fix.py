@@ -10,7 +10,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.services import CommonExpenseCalculator
 from buildings.models import Building
-from datetime import datetime, date
 
 # All database operations must be within schema_context
 with schema_context('demo'):
@@ -51,7 +50,7 @@ with schema_context('demo'):
             print(f"   ✅ Αναμενόμενο: {expected}€ (καμία δαπάνη)")
         
         if abs(float(total_expenses) - expected) < 0.01:
-            print(f"   ✅ ΣΩΣΤΟ!")
+            print("   ✅ ΣΩΣΤΟ!")
         else:
             print(f"   ❌ ΛΑΘΟΣ! Αναμενόταν {expected}€, βρέθηκαν {total_expenses}€")
         
@@ -63,10 +62,10 @@ with schema_context('demo'):
     print(f"   📋 Calculator expenses: {calculator_all.expenses.count()}")
     total_all = calculator_all.get_total_expenses()
     print(f"   💰 Συνολικές δαπάνες: {total_all}€")
-    print(f"   ✅ Αναμενόμενο: 300€ (όλες οι δαπάνες)")
+    print("   ✅ Αναμενόμενο: 300€ (όλες οι δαπάνες)")
     
     if abs(float(total_all) - 300.00) < 0.01:
-        print(f"   ✅ ΣΩΣΤΟ!")
+        print("   ✅ ΣΩΣΤΟ!")
     else:
         print(f"   ❌ ΛΑΘΟΣ! Αναμενόταν 300€, βρέθηκαν {total_all}€")
     

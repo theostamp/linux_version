@@ -8,7 +8,6 @@ Checks building settings, financial calculations, and data consistency
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Setup Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
@@ -51,7 +50,7 @@ def test_reserve_fund_database():
                 print("   " + "-" * 40)
                 
                 # Check building reserve fund settings
-                print(f"      📋 Ρυθμίσεις Κτιρίου:")
+                print("      📋 Ρυθμίσεις Κτιρίου:")
                 print(f"         • name: {building.name}")
                 print(f"         • apartments_count: {building.apartments_count}")
                 print(f"         • current_reserve: {building.current_reserve or 'Not set'}")
@@ -60,17 +59,17 @@ def test_reserve_fund_database():
                 if hasattr(building, 'reserve_fund_goal'):
                     print(f"         • reserve_fund_goal: {building.reserve_fund_goal or 'Not set'}")
                 else:
-                    print(f"         • reserve_fund_goal: Field does not exist")
+                    print("         • reserve_fund_goal: Field does not exist")
                     
                 if hasattr(building, 'reserve_fund_duration_months'):
                     print(f"         • reserve_fund_duration_months: {building.reserve_fund_duration_months or 'Not set'}")
                 else:
-                    print(f"         • reserve_fund_duration_months: Field does not exist")
+                    print("         • reserve_fund_duration_months: Field does not exist")
                     
                 if hasattr(building, 'reserve_contribution_per_apartment'):
                     print(f"         • reserve_contribution_per_apartment: {building.reserve_contribution_per_apartment or 'Not set'}")
                 else:
-                    print(f"         • reserve_contribution_per_apartment: Field does not exist")
+                    print("         • reserve_contribution_per_apartment: Field does not exist")
                 
                 # Calculate expected monthly target if fields exist
                 if hasattr(building, 'reserve_fund_goal') and hasattr(building, 'reserve_fund_duration_months'):
@@ -78,9 +77,9 @@ def test_reserve_fund_database():
                         expected_monthly = building.reserve_fund_goal / building.reserve_fund_duration_months
                         print(f"         • Expected monthly target: {expected_monthly:.2f}€")
                     else:
-                        print(f"         • Expected monthly target: Cannot calculate (missing goal or duration)")
+                        print("         • Expected monthly target: Cannot calculate (missing goal or duration)")
                 else:
-                    print(f"         • Expected monthly target: Cannot calculate (fields do not exist)")
+                    print("         • Expected monthly target: Cannot calculate (fields do not exist)")
                 
                 # Check apartments count
                 apartments_count = building.apartments.count()
@@ -91,7 +90,7 @@ def test_reserve_fund_database():
                     service = FinancialDashboardService(building.id)
                     summary = service.get_summary()
                     
-                    print(f"      💰 Financial Dashboard Summary:")
+                    print("      💰 Financial Dashboard Summary:")
                     print(f"         • current_reserve: {summary.get('current_reserve', 'N/A')}€")
                     print(f"         • reserve_fund_goal: {summary.get('reserve_fund_goal', 'N/A')}€")
                     print(f"         • reserve_fund_contribution: {summary.get('reserve_fund_contribution', 'N/A')}€")
@@ -104,18 +103,18 @@ def test_reserve_fund_database():
                         if building.reserve_fund_goal and building.reserve_fund_duration_months:
                             expected_monthly = float(building.reserve_fund_goal) / float(building.reserve_fund_duration_months)
                             if abs(api_monthly - expected_monthly) < 0.01:
-                                print(f"         ✅ Monthly target calculation: CORRECT")
+                                print("         ✅ Monthly target calculation: CORRECT")
                             else:
-                                print(f"         ❌ Monthly target calculation: WRONG")
+                                print("         ❌ Monthly target calculation: WRONG")
                                 print(f"            Expected: {expected_monthly:.2f}€, Got: {api_monthly:.2f}€")
                         else:
-                            print(f"         ⚠️  Monthly target calculation: Cannot verify (missing data)")
+                            print("         ⚠️  Monthly target calculation: Cannot verify (missing data)")
                     else:
-                        print(f"         ⚠️  Monthly target calculation: Cannot verify (fields do not exist)")
+                        print("         ⚠️  Monthly target calculation: Cannot verify (fields do not exist)")
                         
                 except Exception as e:
                     print(f"      ❌ Error getting financial summary: {e}")
-                    print(f"         This might be due to missing reserve fund fields in the Building model")
+                    print("         This might be due to missing reserve fund fields in the Building model")
                 
                 # Check transactions related to reserve fund
                 reserve_transactions = Transaction.objects.filter(
@@ -137,7 +136,7 @@ def test_reserve_fund_database():
                 for exp in reserve_expenses:
                     print(f"         • {exp.created_at.strftime('%Y-%m-%d')}: {exp.amount}€ - {exp.description}")
     
-    print(f"\n✅ ΕΛΕΓΧΟΣ ΟΛΟΚΛΗΡΩΘΗΚΕ")
+    print("\n✅ ΕΛΕΓΧΟΣ ΟΛΟΚΛΗΡΩΘΗΚΕ")
     print("=" * 60)
 
 def check_specific_building(tenant_schema, building_id):
@@ -168,7 +167,7 @@ def check_specific_building(tenant_schema, building_id):
             service = FinancialDashboardService(building.id)
             summary = service.get_summary()
             
-            print(f"\n💰 Financial Dashboard Summary:")
+            print("\n💰 Financial Dashboard Summary:")
             for key, value in summary.items():
                 print(f"   • {key}: {value}")
                 

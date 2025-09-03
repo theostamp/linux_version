@@ -6,8 +6,6 @@ Test script to verify that apartment_balances API no longer double-counts expens
 import os
 import sys
 import django
-import json
-from datetime import datetime, date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -54,7 +52,7 @@ def test_apartment_balances_fix():
             apartments = data.get('apartments', [])
             summary = data.get('summary', {})
             
-            print(f"✅ API call successful")
+            print("✅ API call successful")
             print(f"📊 Apartments returned: {len(apartments)}")
             print(f"📋 Summary: {summary}")
             
@@ -73,9 +71,9 @@ def test_apartment_balances_fix():
                 print(f"   • Expected net obligation: {expected_net_obligation}€")
                 
                 if abs(first_apt['net_obligation'] - expected_net_obligation) < 0.01:
-                    print(f"   ✅ Calculation is correct - no double-counting!")
+                    print("   ✅ Calculation is correct - no double-counting!")
                 else:
-                    print(f"   ❌ Calculation is wrong - possible double-counting!")
+                    print("   ❌ Calculation is wrong - possible double-counting!")
                     print(f"      Difference: {first_apt['net_obligation'] - expected_net_obligation}€")
                 
                 # Check expense breakdown

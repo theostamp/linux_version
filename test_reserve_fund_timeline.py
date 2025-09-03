@@ -71,15 +71,15 @@ def test_reserve_fund_timeline():
                     )
                     
                     if should_have_contribution and reserve_fund_total > 0:
-                        print(f"   ✅ CORRECT: Month is within timeline and has contributions")
+                        print("   ✅ CORRECT: Month is within timeline and has contributions")
                     elif not should_have_contribution and reserve_fund_total == 0:
-                        print(f"   ✅ CORRECT: Month is outside timeline and has no contributions")
+                        print("   ✅ CORRECT: Month is outside timeline and has no contributions")
                     elif should_have_contribution and reserve_fund_total == 0:
-                        print(f"   ❌ ERROR: Month should have contributions but doesn't")
+                        print("   ❌ ERROR: Month should have contributions but doesn't")
                     else:
-                        print(f"   ❌ ERROR: Month shouldn't have contributions but does")
+                        print("   ❌ ERROR: Month shouldn't have contributions but does")
                 else:
-                    print(f"   ⚠️  WARNING: No timeline configured")
+                    print("   ⚠️  WARNING: No timeline configured")
                 
                 print()
                 

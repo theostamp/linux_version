@@ -19,12 +19,10 @@ from django_tenants.utils import tenant_context
 from tenants.models import Client
 from django.contrib.auth import get_user_model
 from buildings.models import Building
-from teams.models import Team, TeamRole, TeamMember, TeamTask, TeamMeeting, TeamPerformance
+from teams.models import Team, TeamRole, TeamMember, TeamTask
 from collaborators.models import (
-    Collaborator, CollaborationProject, CollaborationContract, 
-    CollaborationInvoice, CollaborationMeeting, CollaboratorPerformance
+    Collaborator, CollaborationProject
 )
-from maintenance.models import Contractor, ServiceReceipt, ScheduledMaintenance
 
 User = get_user_model()
 

@@ -4,7 +4,6 @@ Script για έλεγχο των API endpoints
 """
 
 import os
-import sys
 import django
 import requests
 
@@ -12,7 +11,6 @@ import requests
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
 django.setup()
 
-from django_tenants.utils import tenant_context
 from tenants.models import Client
 
 def test_api_endpoints():

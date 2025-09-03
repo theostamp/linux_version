@@ -39,7 +39,7 @@ def update_alkmanos_reserve():
         
         building.save()
         
-        print(f"\n✅ Updated successfully!")
+        print("\n✅ Updated successfully!")
         print(f"   - New goal: {building.reserve_fund_goal}€")
         print(f"   - New duration: {building.reserve_fund_duration_months} months")
         print(f"   - Start date: {building.reserve_fund_start_date}")
@@ -50,10 +50,10 @@ def update_alkmanos_reserve():
         print(f"   - Monthly amount: {monthly_amount:.2f}€")
         
         # Verify the update
-        print(f"\n🎯 Verification:")
-        print(f"   - Expected goal: 10,000.00€")
-        print(f"   - Expected duration: 12 months")
-        print(f"   - Expected monthly: 833.33€")
+        print("\n🎯 Verification:")
+        print("   - Expected goal: 10,000.00€")
+        print("   - Expected duration: 12 months")
+        print("   - Expected monthly: 833.33€")
         print(f"   - Actual goal: {building.reserve_fund_goal}€")
         print(f"   - Actual duration: {building.reserve_fund_duration_months} months")
         print(f"   - Actual monthly: {monthly_amount:.2f}€")
@@ -62,15 +62,15 @@ def update_alkmanos_reserve():
         duration_match = building.reserve_fund_duration_months == 12
         monthly_match = abs(monthly_amount - 833.33) < 0.01
         
-        print(f"\n✅ All matches:")
+        print("\n✅ All matches:")
         print(f"   - Goal: {'✅' if goal_match else '❌'}")
         print(f"   - Duration: {'✅' if duration_match else '❌'}")
         print(f"   - Monthly: {'✅' if monthly_match else '❌'}")
         
         if goal_match and duration_match and monthly_match:
-            print(f"\n🎉 SUCCESS: Alkmanos building now has the correct reserve fund data!")
+            print("\n🎉 SUCCESS: Alkmanos building now has the correct reserve fund data!")
         else:
-            print(f"\n⚠️  WARNING: Some values still don't match.")
+            print("\n⚠️  WARNING: Some values still don't match.")
 
 if __name__ == '__main__':
     update_alkmanos_reserve()

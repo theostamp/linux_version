@@ -64,7 +64,7 @@ def detailed_a1_audit_with_tenant():
                 # Find apartment A1
                 try:
                     apartment_a1 = Apartment.objects.get(building=building, number='Α1')
-                    print(f"\n🎯 ΕΣΤΙΑΣΗ ΣΤΟ ΔΙΑΜΕΡΙΣΜΑ Α1")
+                    print("\n🎯 ΕΣΤΙΑΣΗ ΣΤΟ ΔΙΑΜΕΡΙΣΜΑ Α1")
                     print("-" * 50)
                     print(f"🏠 Διαμέρισμα: {apartment_a1.number}")
                     print(f"🆔 ID: {apartment_a1.id}")
@@ -76,14 +76,14 @@ def detailed_a1_audit_with_tenant():
                     
                     # Get all payments for apartment A1
                     payments = Payment.objects.filter(apartment=apartment_a1).order_by('date')
-                    print(f"\n💰 ΠΛΗΡΩΜΕΣ ΔΙΑΜΕΡΙΣΜΑΤΟΣ Α1")
+                    print("\n💰 ΠΛΗΡΩΜΕΣ ΔΙΑΜΕΡΙΣΜΑΤΟΣ Α1")
                     print(f"📊 Συνολικές πληρωμές: {payments.count()}")
                     
                     if payments.exists():
                         total_payments = sum(payment.amount for payment in payments)
                         print(f"💵 Συνολικό ποσό πληρωμών: {total_payments:.2f}€")
                         
-                        print(f"\n📋 Λεπτομερής λίστα πληρωμών:")
+                        print("\n📋 Λεπτομερής λίστα πληρωμών:")
                         print("-" * 80)
                         print(f"{'ID':<5} {'Ημερομηνία':<12} {'Ποσό':<12} {'Τρόπος':<18} {'Περιγραφή':<20}")
                         print("-" * 80)
@@ -97,7 +97,7 @@ def detailed_a1_audit_with_tenant():
                                   f"{description:<20}")
                         
                         # Group payments by month
-                        print(f"\n📅 ΟΜΑΔΟΠΟΙΗΣΗ ΑΝΑ ΜΗΝΑ:")
+                        print("\n📅 ΟΜΑΔΟΠΟΙΗΣΗ ΑΝΑ ΜΗΝΑ:")
                         print("-" * 60)
                         monthly_totals = {}
                         for payment in payments:
@@ -111,7 +111,7 @@ def detailed_a1_audit_with_tenant():
                             print(f"{month}: {data['count']} πληρωμές - {data['total']:.2f}€")
                         
                         # Check for recent large payments
-                        print(f"\n🔍 ΜΕΓΑΛΕΣ ΠΛΗΡΩΜΕΣ (>1000€):")
+                        print("\n🔍 ΜΕΓΑΛΕΣ ΠΛΗΡΩΜΕΣ (>1000€):")
                         large_payments = payments.filter(amount__gt=1000)
                         if large_payments.exists():
                             for payment in large_payments:
@@ -122,11 +122,11 @@ def detailed_a1_audit_with_tenant():
                             
                     # Get all transactions for apartment A1
                     transactions = Transaction.objects.filter(apartment=apartment_a1).order_by('created_at')
-                    print(f"\n💸 ΣΥΝΑΛΛΑΓΕΣ ΔΙΑΜΕΡΙΣΜΑΤΟΣ Α1")
+                    print("\n💸 ΣΥΝΑΛΛΑΓΕΣ ΔΙΑΜΕΡΙΣΜΑΤΟΣ Α1")
                     print(f"📊 Συνολικές συναλλαγές: {transactions.count()}")
                     
                     if transactions.exists():
-                        print(f"\n📋 Τελευταίες 10 συναλλαγές:")
+                        print("\n📋 Τελευταίες 10 συναλλαγές:")
                         print("-" * 90)
                         print(f"{'ID':<5} {'Ημερομηνία':<20} {'Τύπος':<10} {'Ποσό':<12} {'Περιγραφή':<30}")
                         print("-" * 90)
@@ -140,7 +140,7 @@ def detailed_a1_audit_with_tenant():
                                   f"{transaction.description[:30]:<30}")
                         
                         # Calculate balance verification
-                        print(f"\n💰 ΕΛΕΓΧΟΣ ΥΠΟΛΟΙΠΟΥ:")
+                        print("\n💰 ΕΛΕΓΧΟΣ ΥΠΟΛΟΙΠΟΥ:")
                         running_balance = Decimal('0')
                         for transaction in transactions.order_by('created_at'):
                             if transaction.type == 'charge':
@@ -157,7 +157,7 @@ def detailed_a1_audit_with_tenant():
                             print("❌ ΠΡΟΣΟΧΗ: Ασυμφωνία στα υπόλοιπα!")
                             
                         # Check payment-transaction consistency
-                        print(f"\n🔍 ΕΛΕΓΧΟΣ ΣΥΝΕΠΕΙΑΣ:")
+                        print("\n🔍 ΕΛΕΓΧΟΣ ΣΥΝΕΠΕΙΑΣ:")
                         payment_transactions = transactions.filter(type='payment')
                         print(f"📊 Πληρωμές: {payments.count()}")
                         print(f"📊 Payment συναλλαγές: {payment_transactions.count()}")

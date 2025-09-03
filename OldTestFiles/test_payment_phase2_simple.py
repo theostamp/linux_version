@@ -110,7 +110,7 @@ def test_payment_model():
         payments = Payment.objects.all()[:5]
         print("✅ Payment list retrieved successfully!")
         print(f"   Total payments in database: {Payment.objects.count()}")
-        print(f"   Showing first 5 payments:")
+        print("   Showing first 5 payments:")
         
         for i, payment in enumerate(payments, 1):
             print(f"   {i}. {payment.apartment.number} - {payment.amount}€ - {payment.get_payment_type_display()}")

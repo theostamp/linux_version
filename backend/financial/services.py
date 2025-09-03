@@ -54,7 +54,6 @@ class CommonExpenseCalculator:
         """
         Υπολογίζει το ιστορικό υπόλοιπο διαμερίσματος μέχρι την δοθείσα ημερομηνία
         """
-        from datetime import datetime
         
         if not end_date:
             return apartment.current_balance or Decimal('0.00')
@@ -190,7 +189,7 @@ class CommonExpenseCalculator:
     def _calculate_by_meters(self, expense: Expense, shares: Dict):
         """Υπολογισμός με βάση μετρητές (για θέρμανση)"""
         from .models import MeterReading
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         
         # Προσδιορισμός περιόδου μετρήσεων
         # Αν η δαπάνη είναι για θέρμανση, χρησιμοποιούμε μετρήσεις θέρμανσης
@@ -413,7 +412,7 @@ class FinancialDashboardService:
         total_obligations = apartment_obligations + pending_expenses_all + total_management_cost
         
         # Δαπάνες αυτού του μήνα
-        from datetime import datetime, date
+        from datetime import date
         
         if month:
             # Parse YYYY-MM
@@ -892,7 +891,6 @@ class FinancialDashboardService:
         """
         from decimal import Decimal
         from .models import Transaction, Payment
-        from datetime import datetime
         from django.utils import timezone
         
         # Υπολογισμός πληρωμών μέχρι την ημερομηνία
@@ -950,7 +948,7 @@ class FinancialDashboardService:
     def get_payment_statistics(self, month: str | None = None) -> Dict[str, Any]:
         """Υπολογισμός στατιστικών πληρωμών"""
         from django.db.models import Count, Avg
-        from datetime import datetime, date
+        from datetime import date
         
         # Όλες οι πληρωμές
         payments = Payment.objects.filter(apartment__building_id=self.building_id)
@@ -1007,7 +1005,6 @@ class PaymentProcessor:
         """
         Επεξεργασία εισπράξεως και ενημέρωση συστήματος
         """
-        from datetime import datetime
         
         # 1. Ενημέρωση υπόλοιπου διαμερίσματος
         apartment = Apartment.objects.get(id=payment_data['apartment_id'])
@@ -1072,8 +1069,6 @@ class ReportService:
     
     def generate_apartment_balance_report(self, apartment_id=None):
         """Δημιουργία αναφοράς κατάστασης οφειλών"""
-        from datetime import date
-        from decimal import Decimal
         
         apartments = Apartment.objects.filter(building_id=self.building_id)
         
@@ -1126,7 +1121,7 @@ class ReportService:
     
     def generate_financial_summary_report(self, period='month'):
         """Δημιουργία οικονομικής σύνοψης"""
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         
         if period == 'month':
             start_date = timezone.now().replace(day=1)
@@ -1193,7 +1188,7 @@ class ReportService:
     
     def generate_cash_flow_data(self, days=30):
         """Δημιουργία δεδομένων ταμειακής ροής για γραφήματα"""
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         
         end_date = timezone.now()
         start_date = end_date - timedelta(days=days)
@@ -1264,10 +1259,9 @@ class ReportService:
     
     def generate_pdf_report(self, report_type, **kwargs):
         """Δημιουργία PDF αναφοράς"""
-        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.lib.pagesizes import A4
         from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.units import inch
         from reportlab.lib import colors
         from io import BytesIO
         
@@ -1474,7 +1468,7 @@ class CommonExpenseAutomationService:
         Returns:
             CommonExpensePeriod: Η δημιουργηθείσα περίοδος
         """
-        from datetime import datetime, date, timedelta
+        from datetime import date, timedelta
         
         if start_date:
             start = datetime.strptime(start_date, '%Y-%m-%d').date()
@@ -1607,7 +1601,6 @@ class CommonExpenseAutomationService:
         Returns:
             Dict με τα αποτελέσματα της έκδοσης
         """
-        from datetime import datetime
         
         if expenses is None:
             expenses = self.collect_expenses_for_period(period)
@@ -1822,7 +1815,6 @@ class AdvancedCommonExpenseCalculator:
         """
         Υπολογίζει το ιστορικό υπόλοιπο διαμερίσματος μέχρι την δοθείσα ημερομηνία
         """
-        from datetime import datetime
         
         if not end_date:
             return apartment.current_balance or Decimal('0.00')
@@ -2042,7 +2034,7 @@ class AdvancedCommonExpenseCalculator:
     def _calculate_heating_costs(self, total_heating_cost: Decimal) -> Dict[str, Any]:
         """Υπολογισμός δαπανών θέρμανσης (πάγιο + μεταβλητό)"""
         from .models import MeterReading
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         
         # Υπολογισμός πάγιου και μεταβλητού κόστους
         if self.heating_type == 'autonomous':

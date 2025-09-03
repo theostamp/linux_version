@@ -4,7 +4,6 @@ Script για την προσθήκη demo δεδομένων χιλιοστών
 """
 
 import os
-import sys
 import django
 
 # Setup Django

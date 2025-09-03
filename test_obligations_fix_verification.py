@@ -10,7 +10,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.services import FinancialDashboardService
 from buildings.models import Building
-from apartments.models import Apartment
 
 def test_obligations_fix():
     """Test the fix for previous obligations calculation"""
@@ -27,7 +26,7 @@ def test_obligations_fix():
         service = FinancialDashboardService(building.id)
         
         # Test July 2025 view
-        print(f"\n📅 Testing July 2025 view:")
+        print("\n📅 Testing July 2025 view:")
         july_data = service.get_summary('2025-07')
         
         print(f"   Previous obligations: {july_data['previous_obligations']:.2f}€")
@@ -35,14 +34,14 @@ def test_obligations_fix():
         print(f"   Total balance: {july_data['total_balance']:.2f}€")
         
         # Test apartment balances for July 2025
-        print(f"\n🏠 Testing apartment balances for July 2025:")
+        print("\n🏠 Testing apartment balances for July 2025:")
         apartment_balances = service.get_apartment_balances('2025-07')
         
         for balance in apartment_balances[:3]:  # Show first 3 apartments
             print(f"   Apartment {balance['number']}: {balance['current_balance']:.2f}€")
         
         # Test August 2025 view for comparison
-        print(f"\n📅 Testing August 2025 view:")
+        print("\n📅 Testing August 2025 view:")
         august_data = service.get_summary('2025-08')
         
         print(f"   Previous obligations: {august_data['previous_obligations']:.2f}€")
@@ -50,9 +49,9 @@ def test_obligations_fix():
         print(f"   Total balance: {august_data['total_balance']:.2f}€")
         
         # Verify the fix
-        print(f"\n✅ VERIFICATION:")
+        print("\n✅ VERIFICATION:")
         if july_data['previous_obligations'] == 0.0:
-            print(f"   ✅ SUCCESS: July 2025 previous obligations are now 0.00€ (correct)")
+            print("   ✅ SUCCESS: July 2025 previous obligations are now 0.00€ (correct)")
         else:
             print(f"   ❌ ISSUE: July 2025 previous obligations are {july_data['previous_obligations']:.2f}€")
         

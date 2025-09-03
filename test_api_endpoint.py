@@ -1,7 +1,6 @@
 import os
 import sys
 import django
-from datetime import datetime, timedelta
 
 # Setup Django environment
 sys.path.append('/app')
@@ -9,9 +8,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Transaction, Building
+from financial.models import Building
 from financial.services import ReportService
-from financial.serializers import TransactionSerializer
 
 def test_api_endpoint():
     print("🧪 Ελέγχουμε το API endpoint για ιστορικό κινήσεων...")

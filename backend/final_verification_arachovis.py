@@ -7,7 +7,6 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -37,7 +36,7 @@ def final_verification_arachovis():
         print("="*60)
         
         # 1. Έλεγχος κρίσιμων προβλημάτων
-        print(f"\n🔍 1. ΕΛΕΓΧΟΣ ΚΡΙΣΙΜΩΝ ΠΡΟΒΛΗΜΑΤΩΝ:")
+        print("\n🔍 1. ΕΛΕΓΧΟΣ ΚΡΙΣΙΜΩΝ ΠΡΟΒΛΗΜΑΤΩΝ:")
         
         critical_issues = 0
         
@@ -81,7 +80,7 @@ def final_verification_arachovis():
             critical_issues += 1
         
         # 2. Έλεγχος ανακρίβειες
-        print(f"\n🔍 2. ΕΛΕΓΧΟΣ ΑΝΑΚΡΙΒΕΙΩΝ:")
+        print("\n🔍 2. ΕΛΕΓΧΟΣ ΑΝΑΚΡΙΒΕΙΩΝ:")
         
         accuracy_issues = 0
         
@@ -105,7 +104,7 @@ def final_verification_arachovis():
             accuracy_issues += 1
         
         # 3. Έλεγχος FinancialDashboardService
-        print(f"\n🔍 3. ΕΛΕΓΧΟΣ DASHBOARD SERVICE:")
+        print("\n🔍 3. ΕΛΕΓΧΟΣ DASHBOARD SERVICE:")
         
         dashboard_service = FinancialDashboardService(building.id)
         summary = dashboard_service.get_summary()
@@ -115,65 +114,65 @@ def final_verification_arachovis():
         print(f"   📈 Current obligations: {summary.get('current_obligations', 0)}€")
         
         # 4. Έλεγχος συνολικής κατάστασης
-        print(f"\n🔍 4. ΕΛΕΓΧΟΣ ΣΥΝΟΛΙΚΗΣ ΚΑΤΑΣΤΑΣΗΣ:")
+        print("\n🔍 4. ΕΛΕΓΧΟΣ ΣΥΝΟΛΙΚΗΣ ΚΑΤΑΣΤΑΣΗΣ:")
         
         # Έλεγχος αν υπάρχουν εκκρεμείς πληρωμές
         apartments_with_negative_balance = apartments.filter(current_balance__lt=0)
         if apartments_with_negative_balance.count() == 0:
-            print(f"   ✅ Δεν υπάρχουν εκκρεμείς πληρωμές")
+            print("   ✅ Δεν υπάρχουν εκκρεμείς πληρωμές")
         else:
             print(f"   ⚠️  Υπάρχουν {apartments_with_negative_balance.count()} διαμερίσματα με αρνητικό υπόλοιπο")
             accuracy_issues += 1
         
         # Έλεγχος αν υπάρχουν δεδομένα για τον Αύγουστο 2025
         if august_expenses.count() > 0 and august_payments.count() > 0:
-            print(f"   ✅ Υπάρχουν πλήρη δεδομένα για τον Αύγουστο 2025")
+            print("   ✅ Υπάρχουν πλήρη δεδομένα για τον Αύγουστο 2025")
         else:
-            print(f"   ❌ Λείπουν δεδομένα για τον Αύγουστο 2025")
+            print("   ❌ Λείπουν δεδομένα για τον Αύγουστο 2025")
             critical_issues += 1
         
         # 5. Τελικό συμπέρασμα
-        print(f"\n" + "="*60)
+        print("\n" + "="*60)
         print("📊 ΤΕΛΙΚΟ ΣΥΜΠΕΡΑΣΜΑ")
         print("="*60)
         
-        print(f"\n📊 ΣΤΑΤΙΣΤΙΚΑ:")
+        print("\n📊 ΣΤΑΤΙΣΤΙΚΑ:")
         print(f"   🔴 Κρίσιμα προβλήματα: {critical_issues}")
         print(f"   🟡 Προβλήματα ακρίβειας: {accuracy_issues}")
         print(f"   📊 Συνολικά προβλήματα: {critical_issues + accuracy_issues}")
         
         if critical_issues == 0:
-            print(f"\n✅ ΚΡΙΣΙΜΑ ΠΡΟΒΛΗΜΑΤΑ:")
-            print(f"   ✅ Όλα τα κρίσιμα προβλήματα έχουν διορθωθεί!")
+            print("\n✅ ΚΡΙΣΙΜΑ ΠΡΟΒΛΗΜΑΤΑ:")
+            print("   ✅ Όλα τα κρίσιμα προβλήματα έχουν διορθωθεί!")
         else:
-            print(f"\n❌ ΚΡΙΣΙΜΑ ΠΡΟΒΛΗΜΑΤΑ:")
+            print("\n❌ ΚΡΙΣΙΜΑ ΠΡΟΒΛΗΜΑΤΑ:")
             print(f"   ❌ Υπάρχουν ακόμα {critical_issues} κρίσιμα προβλήματα")
         
         if accuracy_issues == 0:
-            print(f"\n✅ ΠΡΟΒΛΗΜΑΤΑ ΑΚΡΙΒΕΙΑΣ:")
-            print(f"   ✅ Όλα τα δεδομένα είναι ακριβή!")
+            print("\n✅ ΠΡΟΒΛΗΜΑΤΑ ΑΚΡΙΒΕΙΑΣ:")
+            print("   ✅ Όλα τα δεδομένα είναι ακριβή!")
         else:
-            print(f"\n⚠️  ΠΡΟΒΛΗΜΑΤΑ ΑΚΡΙΒΕΙΑΣ:")
+            print("\n⚠️  ΠΡΟΒΛΗΜΑΤΑ ΑΚΡΙΒΕΙΑΣ:")
             print(f"   ⚠️  Υπάρχουν ακόμα {accuracy_issues} προβλήματα ακρίβειας")
         
         # 6. Προτάσεις για επόμενα βήματα
-        print(f"\n💡 ΠΡΟΤΑΣΕΙΣ ΓΙΑ ΕΠΟΜΕΝΑ ΒΗΜΑΤΑ:")
+        print("\n💡 ΠΡΟΤΑΣΕΙΣ ΓΙΑ ΕΠΟΜΕΝΑ ΒΗΜΑΤΑ:")
         
         if critical_issues == 0 and accuracy_issues == 0:
-            print(f"   1. ✅ Το σύστημα είναι έτοιμο για παραγωγή")
-            print(f"   2. ✅ Όλα τα δεδομένα είναι αξιόπιστα")
-            print(f"   3. ✅ Δεν χρειάζονται επιπλέον διορθώσεις")
+            print("   1. ✅ Το σύστημα είναι έτοιμο για παραγωγή")
+            print("   2. ✅ Όλα τα δεδομένα είναι αξιόπιστα")
+            print("   3. ✅ Δεν χρειάζονται επιπλέον διορθώσεις")
         elif critical_issues == 0:
-            print(f"   1. ✅ Τα κρίσιμα προβλήματα έχουν διορθωθεί")
-            print(f"   2. 🔧 Χρειάζεται διόρθωση των προβλημάτων ακρίβειας")
-            print(f"   3. 🔧 Έλεγχος participation mills")
+            print("   1. ✅ Τα κρίσιμα προβλήματα έχουν διορθωθεί")
+            print("   2. 🔧 Χρειάζεται διόρθωση των προβλημάτων ακρίβειας")
+            print("   3. 🔧 Έλεγχος participation mills")
         else:
-            print(f"   1. 🔴 Χρειάζεται διόρθωση των κρίσιμων προβλημάτων")
-            print(f"   2. 🔧 Χρειάζεται διόρθωση των προβλημάτων ακρίβειας")
-            print(f"   3. 🔧 Επαναληπτικός έλεγχος μετά τις διορθώσεις")
+            print("   1. 🔴 Χρειάζεται διόρθωση των κρίσιμων προβλημάτων")
+            print("   2. 🔧 Χρειάζεται διόρθωση των προβλημάτων ακρίβειας")
+            print("   3. 🔧 Επαναληπτικός έλεγχος μετά τις διορθώσεις")
         
         # 7. Αξιοπιστία συστήματος
-        print(f"\n📊 ΑΞΙΟΠΙΣΤΙΑ ΣΥΣΤΗΜΑΤΟΣ:")
+        print("\n📊 ΑΞΙΟΠΙΣΤΙΑ ΣΥΣΤΗΜΑΤΟΣ:")
         
         if critical_issues == 0:
             reliability = 100
@@ -187,13 +186,13 @@ def final_verification_arachovis():
         print(f"   📈 Αξιοπιστία: {reliability}%")
         
         if reliability >= 90:
-            print(f"   ✅ Το σύστημα είναι πολύ αξιόπιστο")
+            print("   ✅ Το σύστημα είναι πολύ αξιόπιστο")
         elif reliability >= 75:
-            print(f"   ✅ Το σύστημα είναι αξιόπιστο")
+            print("   ✅ Το σύστημα είναι αξιόπιστο")
         elif reliability >= 50:
-            print(f"   ⚠️  Το σύστημα χρειάζεται βελτίωση")
+            print("   ⚠️  Το σύστημα χρειάζεται βελτίωση")
         else:
-            print(f"   ❌ Το σύστημα χρειάζεται σημαντική βελτίωση")
+            print("   ❌ Το σύστημα χρειάζεται σημαντική βελτίωση")
 
 if __name__ == "__main__":
     try:

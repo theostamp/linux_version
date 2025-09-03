@@ -4,7 +4,6 @@ Script to update existing buildings with coordinates from Google Maps Geocoding 
 """
 
 import os
-import sys
 import django
 import requests
 from decimal import Decimal
@@ -95,7 +94,7 @@ def update_buildings_with_coordinates():
             print(f"❌ Failed to get coordinates for {building.name}")
             failed_count += 1
     
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"✅ Successfully updated: {updated_count} buildings")
     print(f"❌ Failed to update: {failed_count} buildings")
     print(f"📈 Total processed: {updated_count + failed_count} buildings")

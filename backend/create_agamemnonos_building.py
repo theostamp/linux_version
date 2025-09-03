@@ -7,7 +7,6 @@ Script για τη δημιουργία νέου κτιρίου στην Αγα�
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Προσθήκη του backend directory στο path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
@@ -18,7 +17,6 @@ django.setup()
 
 from buildings.models import Building
 from apartments.models import Apartment
-from users.models import CustomUser
 from django_tenants.utils import schema_context
 
 def create_agamemnonos_building():
@@ -203,7 +201,7 @@ def create_agamemnonos_building():
         total_heating_mills = sum(apt.heating_mills for apt in created_apartments)
         total_elevator_mills = sum(apt.elevator_mills for apt in created_apartments)
         
-        print(f"\n📊 Σύνοψη δημιουργίας:")
+        print("\n📊 Σύνοψη δημιουργίας:")
         print(f"🏢 Κτίριο: {building.name}")
         print(f"📍 Διεύθυνση: {building.address}, {building.city} {building.postal_code}")
         print(f"🏠 Συνολικά διαμερίσματα: {len(created_apartments)}")
@@ -211,7 +209,7 @@ def create_agamemnonos_building():
         print(f"🔥 Συνολικά χιλιοστά θέρμανσης: {total_heating_mills}")
         print(f"🛗 Συνολικά χιλιοστά ανελκυστήρα: {total_elevator_mills}")
         
-        print(f"\n📋 Κατανομή διαμερισμάτων:")
+        print("\n📋 Κατανομή διαμερισμάτων:")
         rented_count = sum(1 for apt in created_apartments if apt.is_rented)
         owner_occupied_count = sum(1 for apt in created_apartments if not apt.is_rented and not apt.is_closed)
         empty_count = sum(1 for apt in created_apartments if apt.is_closed)
@@ -220,12 +218,12 @@ def create_agamemnonos_building():
         print(f"👤 Ιδιοκατοίκηση: {owner_occupied_count}")
         print(f"🚪 Κενά: {empty_count}")
         
-        print(f"\n💰 Οικονομική κατάσταση:")
+        print("\n💰 Οικονομική κατάσταση:")
         total_balance = sum(apt.current_balance for apt in created_apartments)
         print(f"💳 Συνολικό υπόλοιπο διαμερισμάτων: {total_balance}€")
         print(f"🏦 Τρέχον αποθεματικό: {building.current_reserve}€")
         
-        print(f"\n✅ Η δημιουργία του κτιρίου ολοκληρώθηκε επιτυχώς!")
+        print("\n✅ Η δημιουργία του κτιρίου ολοκληρώθηκε επιτυχώς!")
         
         return building, created_apartments
 

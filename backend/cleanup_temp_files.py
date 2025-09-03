@@ -6,8 +6,6 @@
 """
 
 import os
-import sys
-from pathlib import Path
 
 def cleanup_temp_files():
     """Καθαρισμός προσωρινών αρχείων"""
@@ -108,8 +106,8 @@ def cleanup_old_scripts():
     for script_path in old_scripts:
         if os.path.exists(script_path):
             print(f"📄 Εύρεση: {script_path}")
-            print(f"   Αυτό το script έχει ολοκληρωθεί επιτυχώς.")
-            print(f"   Θέλετε να διαγραφεί; (y/N): ", end="")
+            print("   Αυτό το script έχει ολοκληρωθεί επιτυχώς.")
+            print("   Θέλετε να διαγραφεί; (y/N): ", end="")
             
             # Για αυτόματη εκτέλεση, θα διαγράψουμε μόνο τα scripts που είναι ασφαλή
             safe_to_delete = [
@@ -122,12 +120,12 @@ def cleanup_old_scripts():
             if script_path in safe_to_delete:
                 try:
                     os.remove(script_path)
-                    print(f"   ✅ Διαγράφηκε")
+                    print("   ✅ Διαγράφηκε")
                     deleted_count += 1
                 except Exception as e:
                     print(f"   ❌ Σφάλμα: {e}")
             else:
-                print(f"   ⚠️ Διατηρήθηκε (χρειάζεται χειροκίνητη επιβεβαίωση)")
+                print("   ⚠️ Διατηρήθηκε (χρειάζεται χειροκίνητη επιβεβαίωση)")
     
     print(f"\n📊 Συνολικά διαγράφηκαν: {deleted_count} scripts")
     return deleted_count
@@ -277,7 +275,7 @@ if __name__ == "__main__":
     
     total_deleted = temp_deleted + scripts_deleted + migrations_deleted + logs_deleted
     
-    print(f"\n🎉 Ο καθαρισμός ολοκληρώθηκε!")
+    print("\n🎉 Ο καθαρισμός ολοκληρώθηκε!")
     print(f"📊 Συνολικά διαγράφηκαν: {total_deleted} αρχεία")
     print("📋 Ελέγξτε την σύνοψη για λεπτομέρειες.")
 

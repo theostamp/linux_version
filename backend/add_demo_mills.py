@@ -4,7 +4,6 @@ Simple script για την προσθήκη demo δεδομένων χιλιο�
 """
 
 import psycopg2
-import os
 
 def add_demo_mills():
     """Προσθήκη demo δεδομένων χιλιοστών"""

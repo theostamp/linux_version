@@ -16,7 +16,6 @@ from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
 from financial.services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator
-from decimal import Decimal
 
 def test_calculations_debug():
     """Έλεγχος υπολογισμών και debugging"""

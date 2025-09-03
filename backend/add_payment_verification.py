@@ -2,8 +2,6 @@
 import os
 import sys
 import django
-from decimal import Decimal
-from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -11,8 +9,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from django.db import connection, models
-from django.db import migrations
 from financial.models import Payment
 
 def add_payment_verification():

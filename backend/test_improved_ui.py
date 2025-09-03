@@ -15,7 +15,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from buildings.models import Building
 from financial.services import FinancialDashboardService
-from decimal import Decimal
 
 def test_improved_ui():
     """Test the improved UI for better user understanding"""
@@ -59,13 +58,13 @@ def test_improved_ui():
         print(f"{balance_icon} Οικονομική Κατάσταση Μήνα")
         print(f"   Ποσό: {abs(total_balance):.2f}€")
         print(f"   Τύπος: {balance_text}")
-        print(f"   Προβολή: Προβολή για τον επιλεγμένο μήνα")
+        print("   Προβολή: Προβολή για τον επιλεγμένο μήνα")
         print()
         
         # Monthly obligations
         print("💰 Τι πρέπει να πληρωθεί αυτόν τον μήνα:")
         print(f"   Μηνιαίες υποχρεώσεις: {current_obligations:.2f}€")
-        print(f"   Περιλαμβάνει: Έξοδα + Διαχείριση + Αποθεματικό")
+        print("   Περιλαμβάνει: Έξοδα + Διαχείριση + Αποθεματικό")
         print()
         
         # Additional information
@@ -94,7 +93,7 @@ def test_improved_ui():
             breakdown_text = " + ".join(breakdown)
             print(f"   Περιλαμβάνει: {breakdown_text}")
         else:
-            print(f"   Περιλαμβάνει: Δεν υπάρχουν υποχρεώσεις")
+            print("   Περιλαμβάνει: Δεν υπάρχουν υποχρεώσεις")
         print()
         
         # Status message

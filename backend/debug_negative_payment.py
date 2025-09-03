@@ -37,7 +37,7 @@ def debug_negative_payment():
         print(f"   Χιλιοστά συμμετοχής: {apartment.participation_mills}")
         
         # 3. Έλεγχος τρέχοντος υπολοίπου
-        print(f"\n💰 ΤΡΕΧΟΝ ΥΠΟΛΟΙΠΟ:")
+        print("\n💰 ΤΡΕΧΟΝ ΥΠΟΛΟΙΠΟ:")
         print(f"   current_balance: {apartment.current_balance}")
         
         # 4. Έλεγχος εσόδων και εξόδων
@@ -45,18 +45,18 @@ def debug_negative_payment():
         payments = Payment.objects.filter(apartment=apartment)
         transactions = Transaction.objects.filter(apartment=apartment)
         
-        print(f"\n📊 ΟΙΚΟΝΟΜΙΚΑ ΣΤΟΙΧΕΙΑ:")
+        print("\n📊 ΟΙΚΟΝΟΜΙΚΑ ΣΤΟΙΧΕΙΑ:")
         print(f"   Εξόδοι (Expenses): {expenses.count()}")
         print(f"   Πληρωμές (Payments): {payments.count()}")
         print(f"   Συναλλαγές (Transactions): {transactions.count()}")
         
         # 5. Έλεγχος αποθεματικού
-        print(f"\n🏦 ΑΠΟΘΕΜΑΤΙΚΟ:")
+        print("\n🏦 ΑΠΟΘΕΜΑΤΙΚΟ:")
         print(f"   Τρέχον αποθεματικό: {building.current_reserve}")
         print(f"   Διάρκεια μήνες: {building.reserve_fund_duration_months}")
         
         # 6. Έλεγχος βασικών attributes του building
-        print(f"\n🔍 BUILDING BASIC ATTRIBUTES:")
+        print("\n🔍 BUILDING BASIC ATTRIBUTES:")
         print(f"   name: {building.name}")
         print(f"   address: {building.address}")
         print(f"   current_reserve: {building.current_reserve}")
@@ -64,7 +64,7 @@ def debug_negative_payment():
         print(f"   heating_fixed_percentage: {building.heating_fixed_percentage}")
         
         # 7. Έλεγχος βασικών attributes του apartment
-        print(f"\n🔍 APARTMENT BASIC ATTRIBUTES:")
+        print("\n🔍 APARTMENT BASIC ATTRIBUTES:")
         print(f"   number: {apartment.number}")
         print(f"   owner_name: {apartment.owner_name}")
         print(f"   tenant_name: {apartment.tenant_name}")
@@ -75,14 +75,14 @@ def debug_negative_payment():
         
         # 8. Λεπτομερής έλεγχος transactions
         if transactions.exists():
-            print(f"\n📋 ΛΕΠΤΟΜΕΡΕΙΣ ΣΥΝΑΛΛΑΓΕΣ:")
+            print("\n📋 ΛΕΠΤΟΜΕΡΕΙΣ ΣΥΝΑΛΛΑΓΕΣ:")
             for tx in transactions.order_by('-created_at')[:5]:
                 print(f"   {tx.created_at}: {tx.amount}€ - {tx.transaction_type} - {tx.description}")
         
         # 9. Έλεγχος τρέχοντος μήνα
         current_month = datetime.now().month
         current_year = datetime.now().year
-        print(f"\n📅 ΤΡΕΧΟΝ ΜΗΝΑΣ:")
+        print("\n📅 ΤΡΕΧΟΝ ΜΗΝΑΣ:")
         print(f"   Μήνας: {current_month}")
         print(f"   Έτος: {current_year}")
         
@@ -91,7 +91,7 @@ def debug_negative_payment():
         apartment_mills = apartment.participation_mills
         apartment_percentage = (apartment_mills / total_mills) * 100
         
-        print(f"\n🧮 ΘΕΩΡΗΤΙΚΟ ΜΕΡΙΔΙΟ:")
+        print("\n🧮 ΘΕΩΡΗΤΙΚΟ ΜΕΡΙΔΙΟ:")
         print(f"   Χιλιοστά διαμερίσματος: {apartment_mills}")
         print(f"   Συνολικά χιλιοστά: {total_mills}")
         print(f"   Ποσοστό: {apartment_percentage:.2f}%")

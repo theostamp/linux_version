@@ -2,7 +2,6 @@ from rest_framework import serializers
 from django.utils import timezone
 from .models import UserRequest
 from buildings.models import Building
-from django.utils import timezone
 
 class UserRequestSerializer(serializers.ModelSerializer):
     # Expose building as a writable PK for creating/updating UserRequests

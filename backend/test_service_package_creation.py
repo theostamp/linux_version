@@ -6,7 +6,6 @@ import os
 import sys
 import django
 import requests
-import json
 
 # Setup Django environment
 sys.path.append('/app')

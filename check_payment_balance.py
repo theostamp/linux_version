@@ -37,7 +37,7 @@ def check_payment_balance():
         ).order_by('-date').first()
         
         if latest_payment:
-            print(f"\n📊 Τελευταία Πληρωμή:")
+            print("\n📊 Τελευταία Πληρωμή:")
             print(f"   Ημερομηνία: {latest_payment.date}")
             print(f"   Ποσό: {latest_payment.amount}€")
             print(f"   Αποθεματικό: {latest_payment.reserve_fund_amount}€")
@@ -48,7 +48,7 @@ def check_payment_balance():
             apartment=apartment
         ).order_by('date')
         
-        print(f"\n📜 Ιστορικό Συναλλαγών:")
+        print("\n📜 Ιστορικό Συναλλαγών:")
         running_balance = Decimal('0.00')
         
         for i, transaction in enumerate(transactions):
@@ -77,7 +77,7 @@ def check_payment_balance():
             payment_type='reserve_fund'
         ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
         
-        print(f"\n💰 Συνολικές Εισπράξεις:")
+        print("\n💰 Συνολικές Εισπράξεις:")
         print(f"   Κοινόχρηστα: {total_payments}€")
         print(f"   Αποθεματικό: {total_reserve_payments}€")
         print(f"   Σύνολο: {total_payments + total_reserve_payments}€")
@@ -90,12 +90,12 @@ def check_payment_balance():
         apartment_share = shares.get(apartment.id, {})
         total_charges = apartment_share.get('total_amount', Decimal('0.00'))
         
-        print(f"\n💳 Συνολικές Χρεώσεις:")
+        print("\n💳 Συνολικές Χρεώσεις:")
         print(f"   Κοινόχρηστα: {total_charges}€")
         
         # Υπολογισμός τελικού υπολοίπου
         final_balance = (total_payments + total_reserve_payments) - total_charges
-        print(f"\n🎯 Τελικός Υπολογισμός:")
+        print("\n🎯 Τελικός Υπολογισμός:")
         print(f"   Εισπράξεις - Χρεώσεις = {final_balance}€")
         print(f"   Διαφορά από DB: {final_balance - apartment.current_balance}€")
 

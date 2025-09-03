@@ -10,7 +10,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
-from financial.models import Expense
 from financial.services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator
 
 def test_fix_verification():

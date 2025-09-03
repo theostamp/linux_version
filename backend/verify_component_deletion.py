@@ -6,7 +6,6 @@
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')

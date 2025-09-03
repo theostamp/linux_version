@@ -11,8 +11,7 @@ from django_tenants.utils import schema_context
 from financial.models import Expense
 from financial.services import CommonExpenseCalculator
 from buildings.models import Building
-from datetime import datetime, date
-from decimal import Decimal
+from datetime import date
 
 # All database operations must be within schema_context
 with schema_context('demo'):
@@ -30,7 +29,7 @@ with schema_context('demo'):
     ).first()
     
     if deh_expense:
-        print(f"⚡ Δαπάνη ΔΕΗ:")
+        print("⚡ Δαπάνη ΔΕΗ:")
         print(f"   ID: {deh_expense.id}")
         print(f"   Τίτλος: {deh_expense.title}")
         print(f"   Ποσό: {deh_expense.amount}€")
@@ -82,7 +81,7 @@ with schema_context('demo'):
                 
                 # This shows the problem - calculator is not filtering by month!
                 if calculator_expenses.count() > expenses_manual.count():
-                    print(f"   ⚠️  ΠΡΟΒΛΗΜΑ: Calculator χρησιμοποιεί όλες τις δαπάνες αντί για μόνο του μήνα!")
+                    print("   ⚠️  ΠΡΟΒΛΗΜΑ: Calculator χρησιμοποιεί όλες τις δαπάνες αντί για μόνο του μήνα!")
                     print(f"       Calculator: {calculator_expenses.count()} vs Σωστό: {expenses_manual.count()}")
                 
                 total_calc = calculator.get_total_expenses()
@@ -94,7 +93,7 @@ with schema_context('demo'):
                 if total_calc != total_manual:
                     print(f"   ❌ ΔΙΑΦΟΡΑ: {total_calc - total_manual}€")
                 else:
-                    print(f"   ✅ Σωστό ποσό")
+                    print("   ✅ Σωστό ποσό")
                 
             except Exception as e:
                 print(f"   ❌ Σφάλμα calculator: {str(e)}")

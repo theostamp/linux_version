@@ -56,7 +56,7 @@ def debug_user_view():
         total_monthly_payments = monthly_payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         total_monthly_expenses = monthly_expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
-        print(f"\n📊 ΜΗΝΙΑΙΑ ΔΕΔΟΜΕΝΑ (Αύγουστος 2025):")
+        print("\n📊 ΜΗΝΙΑΙΑ ΔΕΔΟΜΕΝΑ (Αύγουστος 2025):")
         print(f"  - Εισπράξεις μήνα: {total_monthly_payments:10.2f}€ ({monthly_payments.count()} πληρωμές)")
         print(f"  - Δαπάνες μήνα: {total_monthly_expenses:10.2f}€ ({monthly_expenses.count()} δαπάνες)")
         
@@ -68,7 +68,7 @@ def debug_user_view():
         total_all_expenses = all_expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         current_reserve = total_all_payments - total_all_expenses
         
-        print(f"\n📊 ΣΥΝΟΛΙΚΑ ΔΕΔΟΜΕΝΑ (για αποθεματικό):")
+        print("\n📊 ΣΥΝΟΛΙΚΑ ΔΕΔΟΜΕΝΑ (για αποθεματικό):")
         print(f"  - Συνολικές εισπράξεις: {total_all_payments:10.2f}€ ({all_payments.count()} πληρωμές)")
         print(f"  - Συνολικές δαπάνες: {total_all_expenses:10.2f}€ ({all_expenses.count()} δαπάνες)")
         print(f"  - Τρέχον αποθεματικό: {current_reserve:10.2f}€")
@@ -77,7 +77,7 @@ def debug_user_view():
         service = FinancialDashboardService(building.id)
         summary = service.get_summary()
         
-        print(f"\n🧪 API ΑΠΟΤΕΛΕΣΜΑΤΑ:")
+        print("\n🧪 API ΑΠΟΤΕΛΕΣΜΑΤΑ:")
         print(f"  - Τρέχον Αποθεματικό: {summary['current_reserve']:10.2f}€")
         print(f"  - Εισπράξεις Μήνα: {summary['total_payments_month']:10.2f}€")
         print(f"  - Δαπάνες Μήνα: {summary['total_expenses_month']:10.2f}€")
@@ -91,26 +91,26 @@ def debug_user_view():
             'total_payments_month': 25000.00
         }
         
-        print(f"\n🎯 ΣΥΓΚΡΙΣΗ ΜΕ ΤΑ ΔΕΔΟΜΕΝΑ ΤΟΥ ΧΡΗΣΤΗ:")
-        print(f"  - Τρέχον Αποθεματικό:")
+        print("\n🎯 ΣΥΓΚΡΙΣΗ ΜΕ ΤΑ ΔΕΔΟΜΕΝΑ ΤΟΥ ΧΡΗΣΤΗ:")
+        print("  - Τρέχον Αποθεματικό:")
         print(f"    Χρήστης βλέπει: {user_claims['current_reserve']:10.2f}€")
         print(f"    Πραγματικό:     {summary['current_reserve']:10.2f}€")
         print(f"    Διαφορά:        {abs(summary['current_reserve'] - Decimal(str(user_claims['current_reserve']))):10.2f}€")
         
-        print(f"  - Εισπράξεις Μήνα:")
+        print("  - Εισπράξεις Μήνα:")
         print(f"    Χρήστης βλέπει: {user_claims['total_payments_month']:10.2f}€")
         print(f"    Πραγματικό:     {summary['total_payments_month']:10.2f}€")
         
-        print(f"  - Δαπάνες Μήνα:")
+        print("  - Δαπάνες Μήνα:")
         print(f"    Χρήστης βλέπει: {user_claims['total_expenses_month']:10.2f}€")
         print(f"    Πραγματικό:     {summary['total_expenses_month']:10.2f}€")
         
-        print(f"  - Ανέκδοτες Δαπάνες:")
+        print("  - Ανέκδοτες Δαπάνες:")
         print(f"    Χρήστης βλέπει: {user_claims['pending_expenses']:10.2f}€")
         print(f"    Πραγματικό:     {summary['pending_expenses']:10.2f}€")
         
         # Check if there are any other buildings or data sources
-        print(f"\n🔍 ΕΛΕΓΧΟΣ ΓΙΑ ΆΛΛΕΣ ΠΗΓΕΣ ΔΕΔΟΜΕΝΩΝ:")
+        print("\n🔍 ΕΛΕΓΧΟΣ ΓΙΑ ΆΛΛΕΣ ΠΗΓΕΣ ΔΕΔΟΜΕΝΩΝ:")
         
         # Check all buildings
         all_buildings = Building.objects.all()
@@ -125,7 +125,7 @@ def debug_user_view():
             
             # Check if this building has the numbers the user sees
             if b_total_payments >= 25000 or b_total_expenses >= 5988 or b_reserve >= 20000:
-                print(f"    🎯 ΒΡΕΘΗΚΑΝ ΜΕΓΑΛΑ ΠΟΣΑ!")
+                print("    🎯 ΒΡΕΘΗΚΑΝ ΜΕΓΑΛΑ ΠΟΣΑ!")
                 print(f"      Εισπράξεις: {b_total_payments:10.2f}€")
                 print(f"      Δαπάνες: {b_total_expenses:10.2f}€")
                 print(f"      Αποθεματικό: {b_reserve:10.2f}€")
@@ -135,11 +135,11 @@ def debug_user_view():
         total_pending = pending_expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
         if total_pending > 0:
-            print(f"\n📝 ΒΡΕΘΗΚΑΝ ΑΝΕΚΔΟΤΕΣ ΔΑΠΑΝΕΣ:")
+            print("\n📝 ΒΡΕΘΗΚΑΝ ΑΝΕΚΔΟΤΕΣ ΔΑΠΑΝΕΣ:")
             for expense in pending_expenses:
                 print(f"  - {expense.title}: {expense.amount:8.2f}€ ({expense.date})")
         
-        print(f"\n✅ Έλεγχος ολοκληρώθηκε")
+        print("\n✅ Έλεγχος ολοκληρώθηκε")
 
 if __name__ == "__main__":
     debug_user_view()

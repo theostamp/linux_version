@@ -6,7 +6,6 @@ import os
 import sys
 import django
 import json
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -84,7 +83,7 @@ def test_fixed_api():
             
             # Check expense totals
             expense_totals = result.get('expense_totals', {})
-            print(f"📊 August Expense totals:")
+            print("📊 August Expense totals:")
             print(f"   General: {expense_totals.get('general', 0)}€")
             print(f"   Elevator: {expense_totals.get('elevator', 0)}€")
             print(f"   Heating: {expense_totals.get('heating', 0)}€")
@@ -98,7 +97,7 @@ def test_fixed_api():
             breakdown = result.get('breakdown', {})
             if breakdown:
                 first_apt = list(breakdown.values())[0]
-                print(f"📋 First apartment breakdown:")
+                print("📋 First apartment breakdown:")
                 print(f"   Total share: {first_apt.get('total_share', 0)}€")
                 print(f"   General expenses: {first_apt.get('general_expenses', 0)}€")
                 print(f"   Management fees: {first_apt.get('management_fees', 0)}€")

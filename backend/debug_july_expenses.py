@@ -11,7 +11,6 @@ from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
 from financial.models import Expense
-from datetime import datetime
 
 def debug_july_expenses():
     """Debug July 2025 expenses for Alkmanos building"""
@@ -38,7 +37,7 @@ def debug_july_expenses():
             date__month=7
         )
         
-        print(f"\n📋 JULY 2025 EXPENSES:")
+        print("\n📋 JULY 2025 EXPENSES:")
         total_july = 0
         for expense in july_expenses:
             print(f"   ID: {expense.id} | Date: {expense.date} | Amount: €{expense.amount:,.2f} | Category: {expense.category}")
@@ -53,7 +52,7 @@ def debug_july_expenses():
             date__month=6
         )
         
-        print(f"\n📋 JUNE 2025 EXPENSES:")
+        print("\n📋 JUNE 2025 EXPENSES:")
         total_june = 0
         for expense in june_expenses:
             print(f"   ID: {expense.id} | Date: {expense.date} | Amount: €{expense.amount:,.2f} | Category: {expense.category}")
@@ -66,22 +65,22 @@ def debug_july_expenses():
         apartments_count = Apartment.objects.filter(building_id=building_id).count()
         total_management_fees = management_fee_per_apartment * apartments_count
         
-        print(f"\n💼 MANAGEMENT FEES:")
+        print("\n💼 MANAGEMENT FEES:")
         print(f"   Fee per apartment: €{management_fee_per_apartment:,.2f}")
         print(f"   Number of apartments: {apartments_count}")
         print(f"   Total management fees: €{total_management_fees:,.2f}")
         
         # Expected July total
         expected_july_total = total_july + total_management_fees
-        print(f"\n🎯 EXPECTED JULY TOTAL:")
+        print("\n🎯 EXPECTED JULY TOTAL:")
         print(f"   July expenses: €{total_july:,.2f}")
         print(f"   Management fees: €{total_management_fees:,.2f}")
         print(f"   EXPECTED TOTAL: €{expected_july_total:,.2f}")
         
         # Analysis
-        print(f"\n🔍 ANALYSIS:")
+        print("\n🔍 ANALYSIS:")
         if total_july == 0:
-            print(f"   ✅ July has no expenses (correct)")
+            print("   ✅ July has no expenses (correct)")
             print(f"   ✅ Expected total should be €{total_management_fees:,.2f} (management only)")
         else:
             print(f"   ❌ July has €{total_july:,.2f} in expenses")
@@ -89,7 +88,7 @@ def debug_july_expenses():
         if total_june > 0:
             print(f"   📝 June has €{total_june:,.2f} in expenses")
             if total_june == 300:
-                print(f"   ⚠️  June ΔΕΗ expense might be incorrectly showing in July sheet")
+                print("   ⚠️  June ΔΕΗ expense might be incorrectly showing in July sheet")
 
 if __name__ == "__main__":
     debug_july_expenses()

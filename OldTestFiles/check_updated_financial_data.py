@@ -74,21 +74,21 @@ def check_updated_financial_data():
             # Current reserve calculation
             current_reserve = total_all_payments - total_all_expenses
             
-            print(f"\n📊 ΜΗΝΙΑΙΑ ΣΤΟΙΧΕΙΑ (Αύγουστος 2025):")
+            print("\n📊 ΜΗΝΙΑΙΑ ΣΤΟΙΧΕΙΑ (Αύγουστος 2025):")
             print(f"  - Εισπράξεις μήνα: {total_monthly_payments:10.2f}€ ({monthly_payments.count()} πληρωμές)")
             print(f"  - Δαπάνες μήνα: {total_monthly_expenses:10.2f}€ ({monthly_expenses.count()} δαπάνες)")
             print(f"  - Διαφορά μήνα: {total_monthly_payments - total_monthly_expenses:10.2f}€")
             
-            print(f"\n📊 ΣΥΝΟΛΙΚΑ ΣΤΟΙΧΕΙΑ:")
+            print("\n📊 ΣΥΝΟΛΙΚΑ ΣΤΟΙΧΕΙΑ:")
             print(f"  - Συνολικές εισπράξεις: {total_all_payments:10.2f}€ ({all_payments.count()} πληρωμές)")
             print(f"  - Συνολικές δαπάνες: {total_all_expenses:10.2f}€ ({all_expenses.count()} δαπάνες)")
             print(f"  - Τρέχον αποθεματικό: {current_reserve:10.2f}€")
             
-            print(f"\n📝 ΑΝΕΚΔΟΤΕΣ ΔΑΠΑΝΕΣ:")
+            print("\n📝 ΑΝΕΚΔΟΤΕΣ ΔΑΠΑΝΕΣ:")
             print(f"  - Ανέκδοτες δαπάνες: {total_pending_expenses:10.2f}€ ({pending_expenses.count()} δαπάνες)")
             
             # Show recent payments
-            print(f"\n💳 ΠΡΟΣΦΑΤΕΣ ΠΛΗΡΩΜΕΣ:")
+            print("\n💳 ΠΡΟΣΦΑΤΕΣ ΠΛΗΡΩΜΕΣ:")
             recent_payments = all_payments.order_by('-date')[:5]
             for payment in recent_payments:
                 print(f"  - {payment.apartment.number}: {payment.amount:8.2f}€ ({payment.date}) - {payment.method}")
@@ -97,7 +97,7 @@ def check_updated_financial_data():
             service = FinancialDashboardService(building.id)
             summary = service.get_summary()
             
-            print(f"\n🧪 API ΑΠΟΤΕΛΕΣΜΑΤΑ:")
+            print("\n🧪 API ΑΠΟΤΕΛΕΣΜΑΤΑ:")
             print(f"  - Τρέχον Αποθεματικό: {summary['current_reserve']:10.2f}€")
             print(f"  - Εισπράξεις Μήνα: {summary['total_payments_month']:10.2f}€")
             print(f"  - Δαπάνες Μήνα: {summary['total_expenses_month']:10.2f}€")
@@ -111,24 +111,24 @@ def check_updated_financial_data():
                 'total_payments_month': 25000.00
             }
             
-            print(f"\n🎯 ΣΥΓΚΡΙΣΗ ΜΕ ΤΑ ΔΕΔΟΜΕΝΑ ΣΟΥ:")
-            print(f"  - Τρέχον Αποθεματικό:")
+            print("\n🎯 ΣΥΓΚΡΙΣΗ ΜΕ ΤΑ ΔΕΔΟΜΕΝΑ ΣΟΥ:")
+            print("  - Τρέχον Αποθεματικό:")
             print(f"    Αναμενόμενο: {expected_data['current_reserve']:10.2f}€")
             print(f"    Πραγματικό:  {summary['current_reserve']:10.2f}€")
             if abs(summary['current_reserve'] - Decimal(str(expected_data['current_reserve']))) < Decimal('0.01'):
-                print(f"    ✅ ΤΑΙΡΙΑΖΕΙ!")
+                print("    ✅ ΤΑΙΡΙΑΖΕΙ!")
             else:
-                print(f"    ❌ ΔΙΑΦΟΡΕΤΙΚΟ!")
+                print("    ❌ ΔΙΑΦΟΡΕΤΙΚΟ!")
             
-            print(f"  - Εισπράξεις Μήνα:")
+            print("  - Εισπράξεις Μήνα:")
             print(f"    Αναμενόμενο: {expected_data['total_payments_month']:10.2f}€")
             print(f"    Πραγματικό:  {summary['total_payments_month']:10.2f}€")
             if abs(summary['total_payments_month'] - Decimal(str(expected_data['total_payments_month']))) < Decimal('0.01'):
-                print(f"    ✅ ΤΑΙΡΙΑΖΕΙ!")
+                print("    ✅ ΤΑΙΡΙΑΖΕΙ!")
             else:
-                print(f"    ❌ ΔΙΑΦΟΡΕΤΙΚΟ!")
+                print("    ❌ ΔΙΑΦΟΡΕΤΙΚΟ!")
         
-        print(f"\n✅ Έλεγχος ολοκληρώθηκε")
+        print("\n✅ Έλεγχος ολοκληρώθηκε")
 
 if __name__ == "__main__":
     check_updated_financial_data()

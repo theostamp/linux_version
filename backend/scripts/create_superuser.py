@@ -143,14 +143,14 @@ def main():
             args.last_name
         )
     
-    print(f"\n✅ Superuser δημιουργήθηκε επιτυχώς!")
+    print("\n✅ Superuser δημιουργήθηκε επιτυχώς!")
     print(f"👤 Email: {args.email}")
     print(f"🔑 Password: {args.password}")
     if args.tenant:
         print(f"🏢 Tenant: {args.tenant}")
         print(f"🌐 Admin URL: http://{args.tenant}.localhost:8000/admin/")
     else:
-        print(f"🌐 Admin URL: http://localhost:8000/admin/")
+        print("🌐 Admin URL: http://localhost:8000/admin/")
 
 if __name__ == "__main__":
     main()

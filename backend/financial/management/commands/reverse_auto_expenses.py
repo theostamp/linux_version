@@ -5,7 +5,7 @@ Django management command για ανάκληση αυτόματα δημιου�
 
 from django.core.management.base import BaseCommand
 from django_tenants.utils import schema_context, get_tenant_model
-from datetime import datetime, date
+from datetime import date
 from financial.models import Expense
 from buildings.models import Building
 

@@ -3,7 +3,6 @@
 Debug script for apartment 14 transaction API issues
 """
 import os
-import sys
 import django
 
 # Setup Django environment

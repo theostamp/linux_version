@@ -7,7 +7,7 @@ are not being transferred as debt to subsequent months.
 import os
 import sys
 import django
-from datetime import datetime, date
+from datetime import date
 from decimal import Decimal
 
 # Setup Django environment
@@ -18,8 +18,7 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.models import Building, Apartment, Expense, Transaction, Payment
 from obligations.models import Obligation
-from django.db.models import Sum, Q
-from django.utils import timezone
+from django.db.models import Sum
 
 def check_alkmanos_expense_issue():
     """Check the expense issue in Alkmanos 22 building"""
@@ -44,7 +43,7 @@ def check_alkmanos_expense_issue():
             date=target_date
         ).select_related('building', 'supplier')
         
-        print(f"\n📅 ΔΑΠΑΝΕΣ ΣΤΙΣ 18/5/2025:")
+        print("\n📅 ΔΑΠΑΝΕΣ ΣΤΙΣ 18/5/2025:")
         print("-" * 40)
         
         if not expenses.exists():

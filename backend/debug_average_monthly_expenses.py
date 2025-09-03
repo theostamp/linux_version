@@ -6,7 +6,7 @@ Script για debugging του average_monthly_expenses
 import os
 import sys
 import django
-from datetime import datetime, date
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -15,7 +15,7 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from buildings.models import Building
-from financial.models import Expense, Payment
+from financial.models import Expense
 from financial.services import FinancialDashboardService
 
 def debug_average_monthly_expenses():
@@ -46,7 +46,7 @@ def debug_average_monthly_expenses():
         apartment_count = apartments.count()
         total_management_cost = management_fee_per_apartment * apartment_count
         
-        print(f"\n💼 ΔΑΠΑΝΕΣ ΔΙΑΧΕΙΡΙΣΗΣ:")
+        print("\n💼 ΔΑΠΑΝΕΣ ΔΙΑΧΕΙΡΙΣΗΣ:")
         print(f"💰 Αμοιβή ανά διαμέρισμα: {management_fee_per_apartment:,.2f}€")
         print(f"🏠 Αριθμός διαμερισμάτων: {apartment_count}")
         print(f"💰 Συνολικό κόστος διαχείρισης: {total_management_cost:,.2f}€")
@@ -59,19 +59,19 @@ def debug_average_monthly_expenses():
         )
         
         total_expenses_this_month = sum(expense.amount for expense in expenses)
-        print(f"\n💸 ΔΑΠΑΝΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
+        print("\n💸 ΔΑΠΑΝΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
         print(f"📊 Αριθμός δαπανών: {expenses.count()}")
         print(f"💰 Συνολικό ποσό δαπανών: {total_expenses_this_month:,.2f}€")
         
         # Υπολογισμός average_monthly_expenses όπως στο backend
         average_monthly_expenses = total_expenses_this_month + total_management_cost
-        print(f"\n📊 ΥΠΟΛΟΓΙΣΜΟΣ AVERAGE_MONTHLY_EXPENSES:")
+        print("\n📊 ΥΠΟΛΟΓΙΣΜΟΣ AVERAGE_MONTHLY_EXPENSES:")
         print(f"💸 Δαπάνες τρέχοντος μήνα: {total_expenses_this_month:,.2f}€")
         print(f"💼 Δαπάνες διαχείρισης: {total_management_cost:,.2f}€")
         print(f"📊 AVERAGE_MONTHLY_EXPENSES: {average_monthly_expenses:,.2f}€")
         
         # Έλεγχος με το FinancialDashboardService
-        print(f"\n🔍 ΕΛΕΓΧΟΣ ΜΕ FINANCIALDASHBOARDSERVICE:")
+        print("\n🔍 ΕΛΕΓΧΟΣ ΜΕ FINANCIALDASHBOARDSERVICE:")
         dashboard = FinancialDashboardService(building.id)
         summary = dashboard.get_summary()
         

@@ -7,7 +7,6 @@
 """
 
 import requests
-import json
 
 # Configuration
 BASE_URL = "http://demo.localhost:8080"
@@ -61,14 +60,14 @@ def test_payment_creation():
         
         if payment_response.status_code == 201:
             payment = payment_response.json()
-            print(f"✅ Payment created successfully!")
+            print("✅ Payment created successfully!")
             print(f"   Payment ID: {payment.get('id')}")
             print(f"   Amount: {payment.get('amount')}€")
             print(f"   Apartment: {payment.get('apartment')}")
             print(f"   Method: {payment.get('method')}")
             return True
         else:
-            print(f"❌ Payment creation failed")
+            print("❌ Payment creation failed")
             print(f"   Response: {payment_response.text}")
             return False
             

@@ -29,7 +29,7 @@ def test_reserve_fund_breakdown():
             return
         
         # Check building's Reserve Fund settings
-        print(f"\n🔍 Building Reserve Fund Settings:")
+        print("\n🔍 Building Reserve Fund Settings:")
         print(f"   reserve_fund_start_date: {building.reserve_fund_start_date}")
         print(f"   reserve_fund_target_date: {building.reserve_fund_target_date}")
         print(f"   reserve_fund_goal: {building.reserve_fund_goal}")
@@ -43,7 +43,7 @@ def test_reserve_fund_breakdown():
         )
         
         # Debug: Check reserve fund monthly total calculation
-        print(f"\n🔍 Reserve Fund Calculation Debug:")
+        print("\n🔍 Reserve Fund Calculation Debug:")
         print(f"   reserve_fund_monthly_total: {calculator.reserve_fund_monthly_total}")
         print(f"   building.reserve_fund_goal: {building.reserve_fund_goal}")
         print(f"   building.reserve_fund_duration_months: {building.reserve_fund_duration_months}")
@@ -56,7 +56,7 @@ def test_reserve_fund_breakdown():
         from financial.services import FinancialDashboardService
         dashboard_service = FinancialDashboardService(building_id)
         summary = dashboard_service.get_summary()
-        print(f"\n🔍 FinancialDashboardService Debug:")
+        print("\n🔍 FinancialDashboardService Debug:")
         print(f"   summary.reserve_fund_contribution: {summary.get('reserve_fund_contribution', 'NOT_FOUND')}")
         print(f"   summary keys: {list(summary.keys())}")
         
@@ -67,13 +67,13 @@ def test_reserve_fund_breakdown():
         
         result = calculator.calculate_advanced_shares()
         
-        print(f"\n📊 API Response Analysis for August 2025:")
+        print("\n📊 API Response Analysis for August 2025:")
         print(f"   Building ID: {building_id}")
-        print(f"   Selected Month: 2025-08")
+        print("   Selected Month: 2025-08")
         print(f"   Response Keys: {list(result.keys())}")
         
         # Check Reserve Fund timeline data
-        print(f"\n🔍 Reserve Fund Timeline Data:")
+        print("\n🔍 Reserve Fund Timeline Data:")
         print(f"   reserve_fund_start_date: {result.get('reserve_fund_start_date')}")
         print(f"   reserve_fund_target_date: {result.get('reserve_fund_target_date')}")
         print(f"   reserve_contribution: {result.get('reserve_contribution', 0)}€")
@@ -93,7 +93,7 @@ def test_reserve_fund_breakdown():
             is_before_end = selected_date <= target_date
             should_show = is_after_start and is_before_end
             
-            print(f"\n📅 Timeline Check for August 2025:")
+            print("\n📅 Timeline Check for August 2025:")
             print(f"   Selected Date: {selected_date}")
             print(f"   Start Date: {start_date}")
             print(f"   Target Date: {target_date}")
@@ -103,11 +103,11 @@ def test_reserve_fund_breakdown():
         
         # Check apartment shares breakdown
         shares = result.get('shares', {})
-        print(f"\n🏠 Apartment Breakdown Analysis:")
+        print("\n🏠 Apartment Breakdown Analysis:")
         print(f"   Total apartments: {len(shares)}")
         
         # Check if apartments have obligations that prevent reserve fund collection
-        print(f"\n🔍 Apartment Obligations Check:")
+        print("\n🔍 Apartment Obligations Check:")
         for apt_id, share_data in list(shares.items())[:3]:  # Show first 3 apartments
             breakdown = share_data.get('breakdown', {})
             current_balance = share_data.get('current_balance', 0)
@@ -138,7 +138,7 @@ def test_reserve_fund_breakdown():
         total_reserve = sum(float(contrib) for contrib in reserve_contributions)
         max_reserve = max(float(contrib) for contrib in reserve_contributions) if reserve_contributions else 0
         
-        print(f"\n🔍 Reserve Fund Summary:")
+        print("\n🔍 Reserve Fund Summary:")
         print(f"   Total Reserve Contributions: {total_reserve}€")
         print(f"   Max Individual Contribution: {max_reserve}€")
         

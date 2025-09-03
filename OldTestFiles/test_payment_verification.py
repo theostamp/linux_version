@@ -12,8 +12,6 @@
 """
 
 import requests
-import json
-from datetime import datetime
 
 # Configuration
 BASE_URL = "http://demo.localhost:8080"

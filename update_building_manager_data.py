@@ -27,13 +27,13 @@ def update_building_manager_data():
         building.internal_manager_collection_schedule = "Δευτέρα & Τετάρτη 17:00-19:00"
         building.save()
         
-        print(f"\n✅ Updated Manager Data:")
+        print("\n✅ Updated Manager Data:")
         print(f"   • Name: {building.internal_manager_name}")
         print(f"   • Phone: {building.internal_manager_phone}")
         print(f"   • Apartment: {building.internal_manager_apartment}")
         print(f"   • Collection Schedule: {building.internal_manager_collection_schedule}")
         
-        print(f"\n📋 Full Building Address:")
+        print("\n📋 Full Building Address:")
         print(f"   • {building.address}")
         print(f"   • {building.city} {building.postal_code}")
 

@@ -8,12 +8,12 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from datetime import datetime, date
+from datetime import datetime
 from decimal import Decimal
 
 with schema_context('demo'):
     from apartments.models import Apartment
-    from financial.models import Expense, Payment, Transaction, CommonExpensePeriod, ApartmentShare
+    from financial.models import Expense, Transaction, CommonExpensePeriod, ApartmentShare
     from buildings.models import Building
     
     print("=== INVESTIGATION: SOURCE OF 343.33€ AMOUNT ===")
@@ -102,7 +102,7 @@ with schema_context('demo'):
             total_period_amount = sum(share.total_amount for share in shares)
             
             if abs(total_period_amount - target_amount) <= tolerance:
-                print(f"   ✅ FOUND: Period total matches")
+                print("   ✅ FOUND: Period total matches")
                 print(f"      Period: {period.period_name}")
                 print(f"      Total Amount: {total_period_amount}€")
                 print(f"      Number of apartments: {shares.count()}")

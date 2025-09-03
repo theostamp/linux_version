@@ -20,7 +20,7 @@ import sys
 import django
 import argparse
 from datetime import datetime
-from typing import Dict, List, Tuple, Any
+from typing import Dict, Any
 
 # Setup Django environment
 sys.path.append('/app')
@@ -31,7 +31,6 @@ from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
 from financial.models import Expense, Transaction, Payment
-from users.models import CustomUser
 
 class SystemHealthChecker:
     """🔍 Main class για έλεγχο υγείας του συστήματος"""
@@ -56,7 +55,7 @@ class SystemHealthChecker:
         print("🔍 SYSTEM HEALTH CHECK - New Concierge")
         print("=" * 60)
         print(f"📅 Ημερομηνία: {self.results['timestamp'].strftime('%d/%m/%Y %H:%M:%S')}")
-        print(f"🏢 Κτίριο: Αραχώβης 12, Αθήνα 106 80, Ελλάδα")
+        print("🏢 Κτίριο: Αραχώβης 12, Αθήνα 106 80, Ελλάδα")
         print(f"🔧 Λεπτομερής έξοδος: {'✅' if self.detailed else '❌'}")
         print(f"🔧 Αυτόματη διόρθωση: {'✅' if self.auto_fix else '❌'}")
         print("=" * 60)

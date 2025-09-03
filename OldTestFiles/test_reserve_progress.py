@@ -6,7 +6,6 @@ Test script to verify the reserve fund progress calculation
 import os
 import sys
 import django
-from decimal import Decimal
 from datetime import datetime, date
 
 # Add the backend directory to the Python path
@@ -48,7 +47,7 @@ def test_reserve_progress():
         duration = result.get('reserve_fund_duration', 1)
         current_reserve = result.get('current_reserve', 0)
         
-        print(f"\n📊 Progress data:")
+        print("\n📊 Progress data:")
         print(f"   - Στόχος: {goal}€")
         print(f"   - Διάρκεια: {duration} μήνες")
         print(f"   - Τρέχον αποθεματικό: {current_reserve}€")
@@ -64,13 +63,13 @@ def test_reserve_progress():
                            (current_date.month - start_date.month))
         months_remaining = max(0, duration - months_elapsed)
         
-        print(f"\n📅 Timeline:")
+        print("\n📅 Timeline:")
         print(f"   - Ημερομηνία έναρξης: {start_date}")
         print(f"   - Τρέχουσα ημερομηνία: {current_date.strftime('%Y-%m-%d')}")
         print(f"   - Μήνες που έχουν περάσει: {months_elapsed}")
         print(f"   - Μήνες που απομένουν: {months_remaining}")
         
-        print(f"\n📈 Progress:")
+        print("\n📈 Progress:")
         print(f"   - Πρόοδος: {progress_percentage:.1f}%")
         print(f"   - Μαζεμένα χρήματα: {current_reserve:.2f}€")
         print(f"   - Απομένουν: {goal - current_reserve:.2f}€")
@@ -83,7 +82,7 @@ def test_reserve_progress():
             'progress_percentage': 0.0  # No money collected yet
         }
         
-        print(f"\n🎯 Expected vs Actual:")
+        print("\n🎯 Expected vs Actual:")
         print(f"   - Στόχος: Expected {expected_values['goal']:.2f}€, Actual {goal:.2f}€")
         print(f"   - Διάρκεια: Expected {expected_values['duration']} μήνες, Actual {duration} μήνες")
         print(f"   - Μήνες απομένουν: Expected {expected_values['months_remaining']}, Actual {months_remaining}")
@@ -95,20 +94,20 @@ def test_reserve_progress():
         months_remaining_match = months_remaining == expected_values['months_remaining']
         progress_match = abs(progress_percentage - expected_values['progress_percentage']) < 0.1
         
-        print(f"\n✅ All matches:")
+        print("\n✅ All matches:")
         print(f"   - Στόχος: {'✅' if goal_match else '❌'}")
         print(f"   - Διάρκεια: {'✅' if duration_match else '❌'}")
         print(f"   - Μήνες απομένουν: {'✅' if months_remaining_match else '❌'}")
         print(f"   - Πρόοδος: {'✅' if progress_match else '❌'}")
         
         if goal_match and duration_match and months_remaining_match and progress_match:
-            print(f"\n🎉 SUCCESS: Reserve fund progress calculation is working correctly!")
-            print(f"   The modal will show:")
+            print("\n🎉 SUCCESS: Reserve fund progress calculation is working correctly!")
+            print("   The modal will show:")
             print(f"   - Μήνες Απομένουν: {months_remaining}")
             print(f"   - Μαζεμένα Χρήματα: {current_reserve:.2f}€")
             print(f"   - Πρόοδος: {progress_percentage:.1f}%")
         else:
-            print(f"\n⚠️  WARNING: Some progress data does not match expected values.")
+            print("\n⚠️  WARNING: Some progress data does not match expected values.")
 
 if __name__ == '__main__':
     test_reserve_progress()

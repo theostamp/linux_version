@@ -25,7 +25,7 @@ def check_financial_data():
         year = current_date.year
         month = current_date.month
         
-        print(f"=== ΕΛΕΓΧΟΣ ΟΙΚΟΝΟΜΙΚΩΝ ΔΕΔΟΜΕΝΩΝ ===")
+        print("=== ΕΛΕΓΧΟΣ ΟΙΚΟΝΟΜΙΚΩΝ ΔΕΔΟΜΕΝΩΝ ===")
         print(f"Περίοδος: {month}/{year}")
         print()
         

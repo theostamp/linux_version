@@ -135,7 +135,6 @@ class ChatRoomJoinSerializer(serializers.Serializer):
     def validate_chat_room_id(self, value):
         """Επιβεβαίωση ότι ο χρήστης έχει πρόσβαση στο chat room"""
         from .models import ChatRoom
-        from buildings.models import Building
         
         try:
             chat_room = ChatRoom.objects.get(id=value)

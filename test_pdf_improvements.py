@@ -23,7 +23,7 @@ def test_pdf_improvements():
         print(f"🏠 Building: {building.name}")
         
         # Test data that will appear in PDF
-        print(f"\n📋 PDF Data Preview:")
+        print("\n📋 PDF Data Preview:")
         print(f"   • Building Name: {building.name}")
         print(f"   • Manager Name: {building.internal_manager_name}")
         print(f"   • Manager Phone: {building.internal_manager_phone}")
@@ -34,16 +34,16 @@ def test_pdf_improvements():
         print(f"   • Payment Due Date: {due_date.strftime('%d/%m/%Y')} (15th of month)")
         
         # Test billing cycle for August 2025
-        print(f"\n🔄 Billing Cycle Example (August 2025):")
-        print(f"   • Usage Month: Ιούλιος 2025")
-        print(f"   • Billing Month: Αύγουστος 2025")
-        print(f"   • Header: 'Αύγουστος 2025 (Χρήση: Ιούλιος 2025 → Χρέωση: Αύγουστος 2025)'")
+        print("\n🔄 Billing Cycle Example (August 2025):")
+        print("   • Usage Month: Ιούλιος 2025")
+        print("   • Billing Month: Αύγουστος 2025")
+        print("   • Header: 'Αύγουστος 2025 (Χρήση: Ιούλιος 2025 → Χρέωση: Αύγουστος 2025)'")
         
-        print(f"\n✅ All improvements ready for testing!")
-        print(f"   1. Dynamic manager data from database")
-        print(f"   2. Payment due date always 15th of month")
-        print(f"   3. Clear billing cycle explanation")
-        print(f"   4. Removed hardcoded values")
+        print("\n✅ All improvements ready for testing!")
+        print("   1. Dynamic manager data from database")
+        print("   2. Payment due date always 15th of month")
+        print("   3. Clear billing cycle explanation")
+        print("   4. Removed hardcoded values")
 
 if __name__ == "__main__":
     test_pdf_improvements()

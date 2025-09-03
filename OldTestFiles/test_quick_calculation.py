@@ -5,7 +5,6 @@ Test script για την Quick Calculation Feature
 """
 
 import requests
-import json
 from datetime import datetime, date
 import calendar
 
@@ -57,14 +56,14 @@ def test_date_calculations():
     
     # Test current month
     current_dates = get_current_month_dates()
-    print(f"📅 Τρέχοντας μήνας:")
+    print("📅 Τρέχοντας μήνας:")
     print(f"   Start: {current_dates['start_date']}")
     print(f"   End: {current_dates['end_date']}")
     print(f"   Period: {current_dates['period_name']}")
     
     # Test previous month
     previous_dates = get_previous_month_dates()
-    print(f"📅 Προηγούμενος μήνας:")
+    print("📅 Προηγούμενος μήνας:")
     print(f"   Start: {previous_dates['start_date']}")
     print(f"   End: {previous_dates['end_date']}")
     print(f"   Period: {previous_dates['period_name']}")

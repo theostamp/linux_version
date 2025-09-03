@@ -3,8 +3,6 @@
 import os
 import sys
 import django
-from datetime import datetime, date
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -70,7 +68,7 @@ def fix_july_2025_distribution():
                 updated_count += 1
                 print(f"   ✅ Ενημερώθηκε σε: {expense.get_distribution_type_display()}")
             else:
-                print(f"   ✓ Σωστή κατανομή")
+                print("   ✓ Σωστή κατανομή")
             print()
         
         print("📊 ΣΥΓΚΕΝΤΡΩΤΙΚΑ:")

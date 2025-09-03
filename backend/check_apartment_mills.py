@@ -24,7 +24,7 @@ def check_apartment_mills():
     with schema_context('demo'):
         # Get apartment 5
         apartment = Apartment.objects.get(id=5)
-        print(f"🔍 Looking for apartment ID: 5")
+        print("🔍 Looking for apartment ID: 5")
         print(f"🔍 Found apartment: {apartment.number} in building: {apartment.building.name}")
         
         # Let's also check the Alkmanos building
@@ -63,7 +63,7 @@ def check_apartment_mills():
             print("⚠️ Missing participation_mills or reserve_contribution_per_apartment")
         
         # Check all apartments for comparison
-        print(f"\n📋 All Apartments in Building:")
+        print("\n📋 All Apartments in Building:")
         all_apartments = Apartment.objects.filter(building=building).order_by('number')
         total_mills = 0
         

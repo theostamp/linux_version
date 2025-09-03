@@ -6,8 +6,6 @@ Test script to verify that payment creation now properly creates transaction rec
 import os
 import sys
 import django
-import requests
-import json
 from datetime import datetime
 
 # Add the backend directory to the Python path
@@ -17,7 +15,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
 django.setup()
 
-from django.contrib.auth.models import User
 from buildings.models import Building
 from apartments.models import Apartment
 from financial.models import Payment, Transaction
@@ -68,7 +65,7 @@ def test_payment_transaction_creation():
         initial_payments = Payment.objects.count()
         initial_transactions = Transaction.objects.count()
         
-        print(f"📊 Initial state:")
+        print("📊 Initial state:")
         print(f"   - Payments: {initial_payments}")
         print(f"   - Transactions: {initial_transactions}")
         
@@ -97,7 +94,7 @@ def test_payment_transaction_creation():
             ).first()
             
             if transaction:
-                print(f"✅ Transaction created successfully!")
+                print("✅ Transaction created successfully!")
                 print(f"   - Transaction ID: {transaction.id}")
                 print(f"   - Type: {transaction.type}")
                 print(f"   - Amount: {transaction.amount}")
@@ -114,7 +111,7 @@ def test_payment_transaction_creation():
         final_payments = Payment.objects.count()
         final_transactions = Transaction.objects.count()
         
-        print(f"📊 Final state:")
+        print("📊 Final state:")
         print(f"   - Payments: {final_payments} (+{final_payments - initial_payments})")
         print(f"   - Transactions: {final_transactions} (+{final_transactions - initial_transactions})")
         
@@ -132,7 +129,7 @@ def test_payment_transaction_creation():
             service = FinancialDashboardService(building.id)
             summary = service.get_summary()
             
-            print(f"📊 Dashboard Summary:")
+            print("📊 Dashboard Summary:")
             print(f"   - Total payments this month: {summary['total_payments_this_month']}")
             print(f"   - Recent transactions count: {len(summary['recent_transactions'])}")
             

@@ -3,7 +3,6 @@
 import os
 import sys
 import django
-from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -17,8 +16,7 @@ def check_monthly_obligations():
     
     with schema_context('demo'):
         from apartments.models import Apartment, Building
-        from financial.models import Payment, Expense
-        from financial.services import CommonExpenseCalculator
+        from financial.models import Payment
         
         print("🔍 Έλεγχος Μηνιαίων Υποχρεώσεων Αυγούστου 2025")
         print("=" * 60)
@@ -38,14 +36,14 @@ def check_monthly_obligations():
         # Management fees calculation
         management_fee_per_apartment = 12.00
         total_management_fees = apartments.count() * management_fee_per_apartment
-        print(f"📋 Κόστος διαχείρισης:")
+        print("📋 Κόστος διαχείρισης:")
         print(f"   - Ανά διαμέρισμα: {management_fee_per_apartment}€")
         print(f"   - Σύνολο: {total_management_fees}€ ({apartments.count()} × {management_fee_per_apartment}€)")
         
         # Reserve fund calculation
         reserve_fund_per_apartment = 10.00
         total_reserve_fund = apartments.count() * reserve_fund_per_apartment
-        print(f"🏦 Εισφορά αποθεματικού:")
+        print("🏦 Εισφορά αποθεματικού:")
         print(f"   - Ανά διαμέρισμα: {reserve_fund_per_apartment}€")
         print(f"   - Σύνολο: {total_reserve_fund}€ ({apartments.count()} × {reserve_fund_per_apartment}€)")
         
@@ -53,7 +51,7 @@ def check_monthly_obligations():
         total_monthly_obligations = total_management_fees + total_reserve_fund
         obligation_per_apartment = total_monthly_obligations / apartments.count()
         
-        print(f"💸 Συνολικές μηνιαίες υποχρεώσεις:")
+        print("💸 Συνολικές μηνιαίες υποχρεώσεις:")
         print(f"   - Σύνολο: {total_monthly_obligations}€")
         print(f"   - Ανά διαμέρισμα: {obligation_per_apartment}€")
         

@@ -5,7 +5,6 @@ Test script για επιβεβαίωση αυτόματης ενημέρωση�
 """
 
 import requests
-import json
 import time
 
 # Configuration
@@ -81,7 +80,7 @@ def test_service_package_auto_update():
         return False
     
     # Step 4: Apply the service package
-    print(f"\n🎯 Step 4: Applying service package...")
+    print("\n🎯 Step 4: Applying service package...")
     try:
         apply_data = {
             "package_id": test_package['id'],
@@ -92,7 +91,7 @@ def test_service_package_auto_update():
         
         if apply_response.status_code == 200:
             result = apply_response.json()
-            print(f"✅ Package applied successfully!")
+            print("✅ Package applied successfully!")
             print(f"📝 Response: {result.get('message', 'Success')}")
             print(f"💰 New fee: {result.get('new_fee', test_package['fee_per_apartment'])}€")
         else:
@@ -104,7 +103,7 @@ def test_service_package_auto_update():
         return False
     
     # Step 5: Wait and verify dashboard update
-    print(f"\n⏳ Step 5: Waiting 2 seconds for dashboard update...")
+    print("\n⏳ Step 5: Waiting 2 seconds for dashboard update...")
     time.sleep(2)
     
     try:

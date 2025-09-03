@@ -5,8 +5,6 @@ Test script to verify that month filtering works correctly in the calculate_adva
 import os
 import sys
 import django
-import json
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -40,9 +38,9 @@ def test_month_filtering():
             print(f"🏢 June 2025 Management fees: {management_fees_june}€")
             
             if float(total_june) <= 15:  # Allow small margin
-                print(f"✅ SUCCESS: June filtering working! Only management fees included.")
+                print("✅ SUCCESS: June filtering working! Only management fees included.")
             else:
-                print(f"❌ FAILURE: June filtering broken! Includes future expenses.")
+                print("❌ FAILURE: June filtering broken! Includes future expenses.")
                 
         except Exception as e:
             print(f"❌ June test failed: {e}")
@@ -64,9 +62,9 @@ def test_month_filtering():
             print(f"🏢 All expenses Management fees: {management_fees_all}€")
             
             if float(total_all) > 300:  # Should include August 300€ ΔΕΗ + management fees
-                print(f"✅ SUCCESS: No filtering includes all expenses as expected.")
+                print("✅ SUCCESS: No filtering includes all expenses as expected.")
             else:
-                print(f"❌ UNEXPECTED: All expenses total seems low.")
+                print("❌ UNEXPECTED: All expenses total seems low.")
                 
         except Exception as e:
             print(f"❌ All expenses test failed: {e}")
@@ -89,9 +87,9 @@ def test_month_filtering():
             print(f"🏢 August 2025 Management fees: {management_fees_august}€")
             
             if float(total_august) > 300:  # Should include 300€ ΔΕΗ + management fees + reserve
-                print(f"✅ SUCCESS: August filtering includes ΔΕΗ expense.")
+                print("✅ SUCCESS: August filtering includes ΔΕΗ expense.")
             else:
-                print(f"❌ FAILURE: August filtering missing ΔΕΗ expense.")
+                print("❌ FAILURE: August filtering missing ΔΕΗ expense.")
                 
         except Exception as e:
             print(f"❌ August test failed: {e}")

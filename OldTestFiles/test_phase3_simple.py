@@ -5,7 +5,6 @@ Simple Test Script για Phase 3 - Αυτοματισμοί Κοινοχρήσ�
 """
 
 import os
-import sys
 
 def test_backend_implementation():
     """Test για την υλοποίηση του backend"""

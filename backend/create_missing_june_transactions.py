@@ -55,7 +55,7 @@ def create_missing_june_transactions():
             total_mills = sum(apt.participation_mills or 0 for apt in apartments)
             
             if total_mills == 0:
-                print(f"   ⚠️ Δεν υπάρχουν χιλιοστά για το κτίριο!")
+                print("   ⚠️ Δεν υπάρχουν χιλιοστά για το κτίριο!")
                 continue
             
             transactions_created = 0
@@ -106,7 +106,7 @@ def create_missing_june_transactions():
             print()
         
         print("=" * 60)
-        print(f"✅ ΟΛΟΚΛΗΡΩΘΗΚΕ Η ΔΗΜΙΟΥΡΓΙΑ")
+        print("✅ ΟΛΟΚΛΗΡΩΘΗΚΕ Η ΔΗΜΙΟΥΡΓΙΑ")
         
         # Επιβεβαίωση
         total_transactions = Transaction.objects.filter(

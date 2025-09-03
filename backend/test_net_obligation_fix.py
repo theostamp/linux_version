@@ -12,8 +12,7 @@ from django_tenants.utils import schema_context
 from apartments.models import Apartment
 from financial.models import Expense, Payment
 from buildings.models import Building
-from django.db.models import Sum, Q
-from datetime import datetime, date
+from datetime import date
 
 def test_net_obligation_fix():
     """Test if the net_obligation fix works correctly"""
@@ -41,7 +40,7 @@ def test_net_obligation_fix():
         print()
         
         # Test calculation for each apartment
-        print(f"🏠 ΥΠΟΛΟΓΙΣΜΟΣ ΣΥΝΟΛΙΚΟΥ ΟΦΕΙΛΟΜΕΝΟΥ:")
+        print("🏠 ΥΠΟΛΟΓΙΣΜΟΣ ΣΥΝΟΛΙΚΟΥ ΟΦΕΙΛΟΜΕΝΟΥ:")
         print("-" * 80)
         
         for apartment in apartments:
@@ -121,8 +120,8 @@ def test_net_obligation_fix():
             print(f"   • ΣΥΝΟΛΙΚΟ ΟΦΕΙΛΟΜΕΝΟ: {total_net_obligation:.2f}€")
             print()
         
-        print(f"✅ ΕΠΙΤΥΧΗΣ ΔΙΟΡΘΩΣΗ!")
-        print(f"   • Τώρα το 'Συνολικό Οφειλόμενο' περιλαμβάνει τις τρέχουσες μηνιαίες υποχρεώσεις")
+        print("✅ ΕΠΙΤΥΧΗΣ ΔΙΟΡΘΩΣΗ!")
+        print("   • Τώρα το 'Συνολικό Οφειλόμενο' περιλαμβάνει τις τρέχουσες μηνιαίες υποχρεώσεις")
         print(f"   • Κάθε διαμέρισμα θα εμφανίζει {management_fee_share + reserve_contribution_share:.2f}€ αντί για 0€")
 
 if __name__ == "__main__":

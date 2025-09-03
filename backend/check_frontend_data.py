@@ -34,20 +34,20 @@ def check_frontend_data():
         # Calculate reserve fund amount
         if apartment_5.participation_mills and building.reserve_contribution_per_apartment:
             reserve_amount = float(apartment_5.participation_mills / 1000) * float(building.reserve_contribution_per_apartment)
-            print(f"🧮 Reserve Fund Calculation:")
+            print("🧮 Reserve Fund Calculation:")
             print(f"   ({apartment_5.participation_mills} / 1000) × {building.reserve_contribution_per_apartment}€ = {reserve_amount:.2f}€")
             print(f"   {apartment_5.participation_mills / 1000} × {building.reserve_contribution_per_apartment}€ = {reserve_amount:.2f}€")
         
         # Check if there's a different reserve contribution value
-        print(f"\n🔍 Checking for different reserve contribution values:")
+        print("\n🔍 Checking for different reserve contribution values:")
         print(f"   Building.reserve_contribution_per_apartment: {building.reserve_contribution_per_apartment}€")
         
         # Check if there's a hardcoded value in the frontend
-        print(f"\n💡 Frontend might be using hardcoded value instead of building data")
+        print("\n💡 Frontend might be using hardcoded value instead of building data")
         print(f"   Expected: {building.reserve_contribution_per_apartment}€")
-        print(f"   If frontend uses 5€: (105 / 1000) × 5€ = 0.53€ ✅")
-        print(f"   If frontend uses 6€: (105 / 1000) × 6€ = 0.63€")
-        print(f"   If frontend uses 4€: (105 / 1000) × 4€ = 0.42€")
+        print("   If frontend uses 5€: (105 / 1000) × 5€ = 0.53€ ✅")
+        print("   If frontend uses 6€: (105 / 1000) × 6€ = 0.63€")
+        print("   If frontend uses 4€: (105 / 1000) × 4€ = 0.42€")
 
 if __name__ == "__main__":
     check_frontend_data()

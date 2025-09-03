@@ -1,13 +1,11 @@
 # backend/buildings/views.py
 
-from rest_framework import viewsets, permissions, status  
+from rest_framework import viewsets, status  
 from rest_framework.response import Response  
-from rest_framework.decorators import action, api_view, permission_classes, authentication_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import JSONParser
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt  
-from django.views.decorators.http import require_GET
 from django.http import JsonResponse  
 from django.utils import timezone  
 from django_filters.rest_framework import DjangoFilterBackend
@@ -174,7 +172,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
 
     def list(self, request, *args, **kwargs):
         """Override list method to add debugging"""
-        print(f"🔍 BuildingViewSet.list() called")
+        print("🔍 BuildingViewSet.list() called")
         response = super().list(request, *args, **kwargs)
         print(f"🔍 BuildingViewSet.list() response count: {len(response.data.get('results', []))}")
         if response.data.get('results'):
@@ -195,7 +193,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
 
     def create(self, request, *args, **kwargs):
         """Override create method to add debugging"""
-        print(f"🔍 BuildingViewSet.create() called")
+        print("🔍 BuildingViewSet.create() called")
         print(f"🔍 Request data: {request.data}")
         print(f"🔍 Request data type: {type(request.data)}")
         print(f"🔍 Request content type: {request.content_type}")
@@ -206,7 +204,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         
         # Check if data is a QueryDict (which might cause the array issue)
         if hasattr(request.data, 'getlist'):
-            print(f"⚠️  Request.data is a QueryDict-like object")
+            print("⚠️  Request.data is a QueryDict-like object")
             print(f"🔍 Latitude getlist: {request.data.getlist('latitude')}")
             print(f"🔍 Longitude getlist: {request.data.getlist('longitude')}")
             print(f"🔍 Street view image getlist: {request.data.getlist('street_view_image')}")
@@ -218,7 +216,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
 
     def update(self, request, *args, **kwargs):
         """Override update method to add debugging"""
-        print(f"🔍 BuildingViewSet.update() called")
+        print("🔍 BuildingViewSet.update() called")
         print(f"🔍 Request data: {request.data}")
         print(f"🔍 Request data type: {type(request.data)}")
         print(f"🔍 Request content type: {request.content_type}")
@@ -229,7 +227,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         
         # Check if data is a QueryDict (which might cause the array issue)
         if hasattr(request.data, 'getlist'):
-            print(f"⚠️  Request.data is a QueryDict-like object")
+            print("⚠️  Request.data is a QueryDict-like object")
             print(f"🔍 Latitude getlist: {request.data.getlist('latitude')}")
             print(f"🔍 Longitude getlist: {request.data.getlist('longitude')}")
             print(f"🔍 Street view image getlist: {request.data.getlist('street_view_image')}")
@@ -318,7 +316,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
     @action(detail=False, methods=["post"], url_path="test-coordinates")
     def test_coordinates(self, request):
         """Test endpoint to debug coordinate data format"""
-        print(f"🔍 Test coordinates endpoint called")
+        print("🔍 Test coordinates endpoint called")
         print(f"🔍 Request data: {request.data}")
         print(f"🔍 Request data type: {type(request.data)}")
         print(f"🔍 Latitude: {request.data.get('latitude')} (type: {type(request.data.get('latitude'))})")

@@ -4,7 +4,9 @@
 # permission groups.  It also runs `migrate_schemas --shared` automatically so
 # the required tables (e.g. `auth_group`) exist.
 
-import os, sys, django
+import os
+import sys
+import django
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings")
 django.setup()
@@ -12,8 +14,7 @@ from django.core.management import call_command
 
 from tenants.models import Client, Domain
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Group
 
 User = get_user_model()
 

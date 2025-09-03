@@ -686,4 +686,3 @@ class FinancialReceipt(models.Model):
 
 
 # Import του audit model στο τέλος για να αποφύγουμε circular imports
-from .audit import FinancialAuditLog

@@ -15,8 +15,6 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
-from collections import defaultdict
 
 # Setup Django environment
 sys.path.append('/app')
@@ -24,8 +22,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from django.db.models import Sum, Count, Q
-from django.utils import timezone
+from django.db.models import Sum, Count
 from financial.models import Expense, Payment, Transaction
 from buildings.models import Building
 from apartments.models import Apartment
@@ -62,7 +59,7 @@ def analyze_financial_structure():
                 print(f"   📊 Συνολικά χιλιοστά: {total_mills}")
                 
                 if total_mills != 1000:
-                    print(f"   ⚠️  ΠΡΟΣΟΧΗ: Τα χιλιοστά δεν ισούνται με 1000!")
+                    print("   ⚠️  ΠΡΟΣΟΧΗ: Τα χιλιοστά δεν ισούνται με 1000!")
             
             # 2. Εξέταση δαπανών
             print("\n💸 2. ΕΞΕΤΑΣΗ ΔΑΠΑΝΩΝ")
@@ -228,9 +225,9 @@ def analyze_financial_structure():
                 print(f"   Διαφορά: {difference}€")
                 
                 if difference > Decimal('0.01'):
-                    print(f"   ⚠️  ΠΡΟΣΟΧΗ: Υπάρχει διαφορά στο αποθεματικό!")
+                    print("   ⚠️  ΠΡΟΣΟΧΗ: Υπάρχει διαφορά στο αποθεματικό!")
                 else:
-                    print(f"   ✅ Το αποθεματικό είναι σωστό")
+                    print("   ✅ Το αποθεματικό είναι σωστό")
             
             print("\n✅ Η ανάλυση ολοκληρώθηκε επιτυχώς!")
             

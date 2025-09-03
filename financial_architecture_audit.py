@@ -16,8 +16,8 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
-from django.db.models import Sum, Q
+from datetime import datetime
+from django.db.models import Sum
 
 # Setup Django environment
 sys.path.append('/app')
@@ -27,7 +27,7 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.models import Expense, Transaction, Payment, Apartment
 from buildings.models import Building
-from financial.services import FinancialDashboardService, CommonExpenseCalculator
+from financial.services import FinancialDashboardService
 
 def print_header(title):
     """Εκτυπώνει επικεφαλίδα με διαχωριστικά"""
@@ -80,11 +80,11 @@ class FinancialArchitectureAudit:
             total=Sum('amount'), count=Sum(1)
         ).order_by('-total')
         
-        print(f"  📋 Ανάλυση ανά κατηγορία:")
+        print("  📋 Ανάλυση ανά κατηγορία:")
         for cat in expense_categories[:5]:  # Top 5 categories
             print(f"    • {cat['category']}: {format_currency(cat['total'])} ({cat['count']} δαπάνες)")
         
-        print(f"  ✅ Επιβεβαίωση: Πραγματικές δαπάνες από λογαριασμούς - ΑΠΟΛΥΤΗ ΑΛΗΘΕΙΑ")
+        print("  ✅ Επιβεβαίωση: Πραγματικές δαπάνες από λογαριασμούς - ΑΠΟΛΥΤΗ ΑΛΗΘΕΙΑ")
         
         # 2. Payments (Πληρωμές) - ΠΥΛΩΝΑΣ
         print_subsection("2. ΠΛΗΡΩΜΕΣ (Payments) - ΠΥΛΩΝΑΣ")
@@ -99,11 +99,11 @@ class FinancialArchitectureAudit:
             total=Sum('amount'), count=Sum(1)
         ).order_by('-total')
         
-        print(f"  📋 Ανάλυση ανά τρόπο πληρωμής:")
+        print("  📋 Ανάλυση ανά τρόπο πληρωμής:")
         for method in payment_methods:
             print(f"    • {method['method']}: {format_currency(method['total'])} ({method['count']} πληρωμές)")
         
-        print(f"  ✅ Επιβεβαίωση: Πραγματικές πληρωμές από κατοίκους - ΑΠΟΛΥΤΗ ΑΛΗΘΕΙΑ")
+        print("  ✅ Επιβεβαίωση: Πραγματικές πληρωμές από κατοίκους - ΑΠΟΛΥΤΗ ΑΛΗΘΕΙΑ")
         
         # 3. Participation Mills (Χιλιοστά) - ΠΥΛΩΝΑΣ
         print_subsection("3. ΧΙΛΙΟΣΤΑ (Participation Mills) - ΠΥΛΩΝΑΣ")
@@ -119,9 +119,9 @@ class FinancialArchitectureAudit:
         if total_mills != 1000:
             print(f"  ⚠️  ΠΡΟΣΟΧΗ: Συνολικά χιλιοστά ({total_mills}) ≠ 1000")
         else:
-            print(f"  ✅ Συνολικά χιλιοστά = 1000 (σωστά)")
+            print("  ✅ Συνολικά χιλιοστά = 1000 (σωστά)")
         
-        print(f"  ✅ Επιβεβαίωση: Νομικά καθορισμένα χιλιοστά - ΑΠΟΛΥΤΗ ΑΛΗΘΕΙΑ")
+        print("  ✅ Επιβεβαίωση: Νομικά καθορισμένα χιλιοστά - ΑΠΟΛΥΤΗ ΑΛΗΘΕΙΑ")
     
     def audit_derived_data(self):
         """Audit των παραγώγων δεδομένων (calculated)"""
@@ -138,12 +138,12 @@ class FinancialArchitectureAudit:
             total=Sum('amount'), count=Sum(1)
         ).order_by('-count')
         
-        print(f"  📋 Ανάλυση ανά τύπο:")
+        print("  📋 Ανάλυση ανά τύπο:")
         for t_type in transaction_types:
             print(f"    • {t_type['type']}: {format_currency(t_type['total'])} ({t_type['count']} συναλλαγές)")
         
-        print(f"  🔄 Υπολογίζονται από: Δαπάνες + Χιλιοστά + Πληρωμές")
-        print(f"  ✅ ΕΠΑΛΗΘΕΥΣΙΜΑ από πυλώνες")
+        print("  🔄 Υπολογίζονται από: Δαπάνες + Χιλιοστά + Πληρωμές")
+        print("  ✅ ΕΠΑΛΗΘΕΥΣΙΜΑ από πυλώνες")
         
         # 2. Balances (Υπόλοιπα) - ΠΑΡΑΓΩΓΟ
         print_subsection("2. ΥΠΟΛΟΙΠΑ (Balances) - ΠΑΡΑΓΩΓΟ")
@@ -166,10 +166,10 @@ class FinancialArchitectureAudit:
         if balance_difference > Decimal('0.01'):
             print(f"  ⚠️  ΠΡΟΣΟΧΗ: Διαφορά υπολοίπων: {format_currency(balance_difference)}")
         else:
-            print(f"  ✅ Υπόλοιπα συνεπή")
+            print("  ✅ Υπόλοιπα συνεπή")
         
-        print(f"  🔄 Υπολογίζονται από: Συναλλαγές")
-        print(f"  ✅ ΕΠΑΛΗΘΕΥΣΙΜΑ από πυλώνες")
+        print("  🔄 Υπολογίζονται από: Συναλλαγές")
+        print("  ✅ ΕΠΑΛΗΘΕΥΣΙΜΑ από πυλώνες")
     
     def audit_financial_page_data(self):
         """Audit των δεδομένων που εμφανίζονται στη σελίδα /financial"""
@@ -183,43 +183,43 @@ class FinancialArchitectureAudit:
         
         # 1. Total Balance
         print(f"  💰 Total Balance: {format_currency(summary['total_balance'])}")
-        print(f"     📍 Πηγή: Υπολογίζεται από current_reserve")
-        print(f"     🔄 Υπολογισμός: total_payments - total_expenses - management_cost")
+        print("     📍 Πηγή: Υπολογίζεται από current_reserve")
+        print("     🔄 Υπολογισμός: total_payments - total_expenses - management_cost")
         
         # 2. Current Obligations
         print(f"  📋 Current Obligations: {format_currency(summary['current_obligations'])}")
-        print(f"     📍 Πηγή: Υπολογίζεται από expenses + management_cost + reserve_fund")
-        print(f"     🔄 Υπολογισμός: total_expenses_month + total_management_cost + reserve_fund_monthly_target")
+        print("     📍 Πηγή: Υπολογίζεται από expenses + management_cost + reserve_fund")
+        print("     🔄 Υπολογισμός: total_expenses_month + total_management_cost + reserve_fund_monthly_target")
         
         # 3. Previous Obligations
         print(f"  📋 Previous Obligations: {format_currency(summary['previous_obligations'])}")
-        print(f"     📍 Πηγή: Υπολογίζεται από apartment_obligations")
-        print(f"     🔄 Υπολογισμός: sum(abs(apt.current_balance) for apt in apartments if apt.current_balance < 0)")
+        print("     📍 Πηγή: Υπολογίζεται από apartment_obligations")
+        print("     🔄 Υπολογισμός: sum(abs(apt.current_balance) for apt in apartments if apt.current_balance < 0)")
         
         # 4. Current Reserve
         print(f"  💰 Current Reserve: {format_currency(summary['current_reserve'])}")
-        print(f"     📍 Πηγή: Υπολογίζεται από payments - expenses - management_cost")
-        print(f"     🔄 Υπολογισμός: total_payments_all_time - total_expenses_all_time - total_management_cost")
+        print("     📍 Πηγή: Υπολογίζεται από payments - expenses - management_cost")
+        print("     🔄 Υπολογισμός: total_payments_all_time - total_expenses_all_time - total_management_cost")
         
         # 5. Reserve Fund Contribution
         print(f"  💰 Reserve Fund Contribution: {format_currency(summary['reserve_fund_contribution'])}")
-        print(f"     📍 Πηγή: Υπολογίζεται από building settings")
-        print(f"     🔄 Υπολογισμός: reserve_contribution_per_apartment * apartments_count")
+        print("     📍 Πηγή: Υπολογίζεται από building settings")
+        print("     🔄 Υπολογισμός: reserve_contribution_per_apartment * apartments_count")
         
         # 6. Management Cost
         print(f"  💰 Total Management Cost: {format_currency(summary['total_management_cost'])}")
-        print(f"     📍 Πηγή: Υπολογίζεται από building settings")
-        print(f"     🔄 Υπολογισμός: management_fee_per_apartment * apartments_count")
+        print("     📍 Πηγή: Υπολογίζεται από building settings")
+        print("     🔄 Υπολογισμός: management_fee_per_apartment * apartments_count")
         
         # 7. Monthly Expenses
         print(f"  💰 Total Expenses Month: {format_currency(summary['total_expenses_month'])}")
-        print(f"     📍 Πηγή: ΠΥΛΩΝΑΣ - Expenses για τον τρέχοντα μήνα")
-        print(f"     🔄 Υπολογισμός: Sum(expenses.amount) where date >= start_of_month and date < end_of_month")
+        print("     📍 Πηγή: ΠΥΛΩΝΑΣ - Expenses για τον τρέχοντα μήνα")
+        print("     🔄 Υπολογισμός: Sum(expenses.amount) where date >= start_of_month and date < end_of_month")
         
         # 8. Monthly Payments
         print(f"  💰 Total Payments Month: {format_currency(summary['total_payments_month'])}")
-        print(f"     📍 Πηγή: ΠΥΛΩΝΑΣ - Payments για τον τρέχοντα μήνα")
-        print(f"     🔄 Υπολογισμός: Sum(payments.amount) where date >= start_of_month and date < end_of_month")
+        print("     📍 Πηγή: ΠΥΛΩΝΑΣ - Payments για τον τρέχοντα μήνα")
+        print("     🔄 Υπολογισμός: Sum(payments.amount) where date >= start_of_month and date < end_of_month")
     
     def audit_data_flow(self):
         """Audit της ροής δεδομένων"""
@@ -257,9 +257,9 @@ class FinancialArchitectureAudit:
         total_mills = sum(apt.participation_mills or 0 for apt in self.apartments)
         print(f"  📊 Συνολικά χιλιοστά: {total_mills}")
         if total_mills == 1000:
-            print(f"  ✅ Χιλιοστά σωστά (1000)")
+            print("  ✅ Χιλιοστά σωστά (1000)")
         else:
-            print(f"  ❌ Χιλιοστά λάθος (πρέπει να είναι 1000)")
+            print("  ❌ Χιλιοστά λάθος (πρέπει να είναι 1000)")
         
         # 2. Έλεγχος κατανομής δαπανών
         print_subsection("2. Έλεγχος Κατανομής Δαπανών")
@@ -284,7 +284,7 @@ class FinancialArchitectureAudit:
                     
                     print(f"     🔄 Υπολογισμένη κατανομή: {format_currency(total_calculated)}")
                     if difference < Decimal('0.01'):
-                        print(f"     ✅ Κατανομή σωστή")
+                        print("     ✅ Κατανομή σωστή")
                     else:
                         print(f"     ❌ Κατανομή λάθος (διαφορά: {format_currency(difference)})")
         
@@ -303,7 +303,7 @@ class FinancialArchitectureAudit:
             
             difference = abs((apt.current_balance or 0) - calculated_balance)
             if difference < Decimal('0.01'):
-                print(f"     ✅ Υπόλοιπο σωστό")
+                print("     ✅ Υπόλοιπο σωστό")
             else:
                 print(f"     ❌ Υπόλοιπο λάθος (διαφορά: {format_currency(difference)})")
     

@@ -21,7 +21,6 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from financial.models import Apartment, Expense, Payment, Building
-from financial.services import CommonExpenseCalculator
 
 def format_currency(amount):
     """Μορφοποίηση ποσού σε ευρώ"""
@@ -47,10 +46,10 @@ def check_mills_distribution():
         print("📊 ΕΛΕΓΧΟΣ ΣΥΝΟΛΙΚΩΝ ΧΙΛΙΟΣΤΩΝ")
         print("-" * 50)
         print(f"💰 Συνολικά χιλιοστά: {total_mills}")
-        print(f"🎯 Αναμενόμενα: 1000")
+        print("🎯 Αναμενόμενα: 1000")
         
         if total_mills != 1000:
-            print(f"❌ ΠΡΟΒΛΗΜΑ: Τα συνολικά χιλιοστά δεν ισούνται με 1000!")
+            print("❌ ΠΡΟΒΛΗΜΑ: Τα συνολικά χιλιοστά δεν ισούνται με 1000!")
             print(f"   Διαφορά: {1000 - total_mills}")
         else:
             print("✅ Τα συνολικά χιλιοστά είναι σωστά")
@@ -121,7 +120,7 @@ def check_mills_distribution():
                     if difference > Decimal('0.01'):  # Ανοχή 1 λεπτού
                         print(f"         ⚠️  ΔΙΑΦΟΡΑ: {format_currency(difference)}")
                     else:
-                        print(f"         ✅ Σωστή κατανομή")
+                        print("         ✅ Σωστή κατανομή")
             else:
                 print("   ℹ️  Δεν υπάρχουν δαπάνες αυτού του μήνα")
         
@@ -167,7 +166,7 @@ def check_mills_distribution():
                     if all_equal:
                         print(f"      ✅ Ισόποση κατανομή: {format_currency(first_amount)}")
                     else:
-                        print(f"      ❌ ΑΝΙΣΟΠΟΣΗ ΚΑΤΑΝΟΜΗ:")
+                        print("      ❌ ΑΝΙΣΟΠΟΣΗ ΚΑΤΑΝΟΜΗ:")
                         for i, apt in enumerate(apartments):
                             print(f"         🏠 {apt.number}: {format_currency(reserve_amounts[i])}")
         
@@ -199,7 +198,7 @@ def check_mills_distribution():
                     if all_equal:
                         print(f"      ✅ Ισόποση κατανομή: {format_currency(first_amount)}")
                     else:
-                        print(f"      ❌ ΑΝΙΣΟΠΟΣΗ ΚΑΤΑΝΟΜΗ:")
+                        print("      ❌ ΑΝΙΣΟΠΟΣΗ ΚΑΤΑΝΟΜΗ:")
                         for i, apt in enumerate(apartments):
                             print(f"         🏠 {apt.number}: {format_currency(management_amounts[i])}")
         

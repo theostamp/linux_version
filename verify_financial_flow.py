@@ -12,7 +12,6 @@ from buildings.models import Building
 from apartments.models import Apartment
 from financial.models import Expense, Transaction
 from financial.services import AdvancedCommonExpenseCalculator
-from datetime import datetime, date
 from decimal import Decimal
 
 def verify_financial_flow():
@@ -34,7 +33,7 @@ def verify_financial_flow():
         print("Rule 2: Progressive balance transfers Month 1 → Month 2 → Month 3")
         
         # 1. Check current state
-        print(f"\n🏢 CURRENT APARTMENT BALANCES:")
+        print("\n🏢 CURRENT APARTMENT BALANCES:")
         total_current_balance = Decimal('0.00')
         for apt in apartments:
             balance = apt.current_balance or Decimal('0.00')
@@ -43,7 +42,7 @@ def verify_financial_flow():
         print(f"   TOTAL BUILDING BALANCE: €{total_current_balance:,.2f}")
         
         # 2. Check all expenses by month
-        print(f"\n📊 EXPENSES BY MONTH:")
+        print("\n📊 EXPENSES BY MONTH:")
         months_to_check = [
             ('2025-06', 'June 2025'),
             ('2025-07', 'July 2025'), 
@@ -68,10 +67,10 @@ def verify_financial_flow():
                     print(f"       - {exp.date}: €{exp.amount:,.2f} ({exp.category})")
         
         # 3. Test expense flow logic
-        print(f"\n🔄 TESTING EXPENSE FLOW:")
+        print("\n🔄 TESTING EXPENSE FLOW:")
         
         # Test June expenses → July payable
-        print(f"\n   June 2025 expenses should create July 2025 payable sheet:")
+        print("\n   June 2025 expenses should create July 2025 payable sheet:")
         try:
             june_calculator = AdvancedCommonExpenseCalculator(
                 building_id=building_id,
@@ -81,12 +80,12 @@ def verify_financial_flow():
             june_result = june_calculator.calculate_advanced_shares()
             june_total = sum(june_result['expense_totals'].values()) if june_result.get('expense_totals') else 0
             print(f"     June expenses total: €{june_total:,.2f}")
-            print(f"     → This should be payable in July 2025")
+            print("     → This should be payable in July 2025")
         except Exception as e:
             print(f"     ❌ Error calculating June: {e}")
         
         # Test July expenses → August payable
-        print(f"\n   July 2025 expenses should create August 2025 payable sheet:")
+        print("\n   July 2025 expenses should create August 2025 payable sheet:")
         try:
             july_calculator = AdvancedCommonExpenseCalculator(
                 building_id=building_id,
@@ -96,12 +95,12 @@ def verify_financial_flow():
             july_result = july_calculator.calculate_advanced_shares()
             july_total = sum(july_result['expense_totals'].values()) if july_result.get('expense_totals') else 0
             print(f"     July expenses total: €{july_total:,.2f}")
-            print(f"     → This should be payable in August 2025")
+            print("     → This should be payable in August 2025")
         except Exception as e:
             print(f"     ❌ Error calculating July: {e}")
         
         # 4. Test balance progression
-        print(f"\n💰 TESTING BALANCE PROGRESSION:")
+        print("\n💰 TESTING BALANCE PROGRESSION:")
         
         # Check transactions to understand balance flow
         all_transactions = Transaction.objects.filter(
@@ -111,37 +110,37 @@ def verify_financial_flow():
         print(f"\n   Total transactions: {all_transactions.count()}")
         
         if all_transactions.exists():
-            print(f"   Recent transactions:")
+            print("   Recent transactions:")
             for txn in all_transactions[:10]:  # Show first 10
                 print(f"     {txn.created_at.date()}: {txn.apartment.identifier} → €{txn.amount:,.2f} ({txn.reference_type})")
         
         # 5. Verify the logic is working correctly
-        print(f"\n✅ VERIFICATION RESULTS:")
+        print("\n✅ VERIFICATION RESULTS:")
         
         # Rule 1 verification
-        print(f"\n   Rule 1: Month N expenses → Month N+1 payable")
+        print("\n   Rule 1: Month N expenses → Month N+1 payable")
         if june_total == 0 and july_total == 10:  # Only management fees in July
-            print(f"     ✅ CORRECT: June (€0) → July payable, July (€10) → August payable")
+            print("     ✅ CORRECT: June (€0) → July payable, July (€10) → August payable")
         else:
             print(f"     ⚠️  CHECK: June (€{june_total:,.2f}), July (€{july_total:,.2f})")
         
         # Rule 2 verification  
-        print(f"\n   Rule 2: Progressive balance transfer")
+        print("\n   Rule 2: Progressive balance transfer")
         if total_current_balance != 0:
             print(f"     📊 Current building balance: €{total_current_balance:,.2f}")
-            print(f"     💡 This balance carries forward to next month calculations")
+            print("     💡 This balance carries forward to next month calculations")
         else:
-            print(f"     ✅ Building is balanced (€0 total)")
+            print("     ✅ Building is balanced (€0 total)")
         
         # 6. Practical example
-        print(f"\n📝 PRACTICAL EXAMPLE:")
-        print(f"   Scenario: Record €300 ΔΕΗ expense in June 2025")
-        print(f"   Expected result:")
-        print(f"     - June 2025: €300 expense recorded")
-        print(f"     - July 2025: Common expense sheet shows €300 + €10 management = €310 payable")
-        print(f"     - August 2025: Previous balances from July carry forward")
+        print("\n📝 PRACTICAL EXAMPLE:")
+        print("   Scenario: Record €300 ΔΕΗ expense in June 2025")
+        print("   Expected result:")
+        print("     - June 2025: €300 expense recorded")
+        print("     - July 2025: Common expense sheet shows €300 + €10 management = €310 payable")
+        print("     - August 2025: Previous balances from July carry forward")
         
-        print(f"\n" + "=" * 60)
+        print("\n" + "=" * 60)
 
 if __name__ == "__main__":
     verify_financial_flow()

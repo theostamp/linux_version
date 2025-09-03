@@ -1,7 +1,6 @@
 import os
 import sys
 import django
-from datetime import datetime
 from decimal import Decimal
 
 # Setup Django environment
@@ -10,10 +9,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from django.utils import timezone
 from financial.models import Transaction
 from apartments.models import Apartment
-from buildings.models import Building
 
 def recalculate_balances():
     """Επαναυπολογισμός υπολοίπων από συναλλαγές"""
@@ -126,7 +123,7 @@ def verify_balance_calculation():
             print(f"  - Τρέχον: {current_balance:.2f}€")
             
             if abs(calculated_balance - current_balance) <= Decimal('0.01'):
-                print(f"  ✅ Σωστό")
+                print("  ✅ Σωστό")
             else:
                 print(f"  ❌ Διαφορά: {calculated_balance - current_balance:.2f}€")
             print()

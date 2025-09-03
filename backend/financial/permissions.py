@@ -1,9 +1,6 @@
 # backend/financial/permissions.py
 
 from rest_framework import permissions
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
-from .models import Expense, Transaction, Payment, ExpenseApartment, MeterReading
 
 
 class FinancialPermissionMixin:

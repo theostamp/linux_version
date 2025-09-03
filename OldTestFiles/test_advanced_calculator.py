@@ -4,7 +4,6 @@ Test script για τον προηγμένο υπολογιστή κοινοχρ
 """
 
 import os
-import sys
 import django
 
 # Setup Django
@@ -17,7 +16,6 @@ from buildings.models import Building
 from apartments.models import Apartment
 from financial.models import Expense, MeterReading
 from financial.services import AdvancedCommonExpenseCalculator
-from decimal import Decimal
 from datetime import date, timedelta
 
 def test_advanced_calculator():
@@ -118,7 +116,7 @@ def test_advanced_calculator():
                       f"{'N/A':<15}")
         
         # Test του προηγμένου υπολογιστή
-        print(f"\n🧮 Test Προηγμένου Υπολογιστή:")
+        print("\n🧮 Test Προηγμένου Υπολογιστή:")
         print("-" * 60)
         
         try:
@@ -136,13 +134,13 @@ def test_advanced_calculator():
             result = calculator.calculate_advanced_shares()
             
             print("✅ Υπολογισμός ολοκληρώθηκε επιτυχώς!")
-            print(f"📊 Αποτελέσματα:")
+            print("📊 Αποτελέσματα:")
             print(f"   - Συνολικά διαμερίσματα: {result['total_apartments']}")
             print(f"   - Ημερομηνία υπολογισμού: {result['calculation_date']}")
             
             # Εμφάνιση συνολικών δαπανών ανά κατηγορία
             expense_totals = result['expense_totals']
-            print(f"\n💰 Συνολικά Ποσά ανά Κατηγορία:")
+            print("\n💰 Συνολικά Ποσά ανά Κατηγορία:")
             print("-" * 40)
             print(f"Γενικές Δαπάνες: {expense_totals['general']:.2f}€")
             print(f"Δαπάνες Ανελκυστήρα: {expense_totals['elevator']:.2f}€")
@@ -152,7 +150,7 @@ def test_advanced_calculator():
             
             # Εμφάνιση μεριδίων για τα πρώτα 5 διαμερίσματα
             shares = result['shares']
-            print(f"\n🏠 Μερίδια Διαμερισμάτων (πρώτα 5):")
+            print("\n🏠 Μερίδια Διαμερισμάτων (πρώτα 5):")
             print("-" * 100)
             print(f"{'Διαμέρισμα':<12} {'Ιδιοκτήτης':<20} {'Συνολικό':<10} {'Γενικές':<10} {'Ανελκυστήρα':<12} {'Θέρμανσης':<12} {'Ισόποσες':<12}")
             print("-" * 100)
@@ -174,7 +172,7 @@ def test_advanced_calculator():
             
             # Εμφάνιση λεπτομερειών θέρμανσης
             heating_costs = result['heating_costs']
-            print(f"\n🌡️ Λεπτομέρειες Θέρμανσης:")
+            print("\n🌡️ Λεπτομέρειες Θέρμανσης:")
             print("-" * 50)
             print(f"Συνολικό κόστος: {heating_costs['total_cost']:.2f}€")
             print(f"Πάγιο κόστος (30%): {heating_costs['fixed_cost']:.2f}€")
@@ -187,7 +185,7 @@ def test_advanced_calculator():
             import traceback
             traceback.print_exc()
         
-        print(f"\n🎉 Ολοκληρώθηκε το test του προηγμένου υπολογιστή!")
+        print("\n🎉 Ολοκληρώθηκε το test του προηγμένου υπολογιστή!")
 
 if __name__ == "__main__":
     test_advanced_calculator()

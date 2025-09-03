@@ -7,7 +7,6 @@ import os
 import sys
 import django
 import requests
-import json
 
 # Setup Django environment
 sys.path.append('/app')
@@ -64,7 +63,7 @@ def test_current_token():
             
             if calc_response.status_code == 200:
                 calc_data = calc_response.json()
-                print(f"✅ Calculation successful!")
+                print("✅ Calculation successful!")
                 print(f"   - Shares count: {len(calc_data.get('shares', {}))}")
                 print(f"   - Total expenses: {calc_data.get('total_expenses', 0)}")
                 
@@ -87,7 +86,7 @@ def test_current_token():
                 
                 if adv_calc_response.status_code == 200:
                     adv_calc_data = adv_calc_response.json()
-                    print(f"✅ Advanced calculation successful!")
+                    print("✅ Advanced calculation successful!")
                     print(f"   - Shares count: {len(adv_calc_data.get('shares', {}))}")
                     print(f"   - Total expenses: {adv_calc_data.get('total_expenses', 0)}")
                 else:

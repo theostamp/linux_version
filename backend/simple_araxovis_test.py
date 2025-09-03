@@ -8,7 +8,6 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from buildings.models import Building
-from apartments.models import Apartment
 from financial.models import Payment, Expense
 from decimal import Decimal
 from django.db.models import Sum

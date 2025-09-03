@@ -6,7 +6,6 @@ Script to check all buildings and find which one has the expected reserve fund d
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Add the backend directory to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
@@ -25,7 +24,7 @@ def check_all_buildings():
         buildings = Building.objects.all()
         
         print(f"🔍 Checking {buildings.count()} buildings for expected reserve fund data...")
-        print(f"Expected values: Goal=10,000€, Duration=12 months, Monthly=833.33€")
+        print("Expected values: Goal=10,000€, Duration=12 months, Monthly=833.33€")
         print("-" * 80)
         
         expected_values = {
@@ -49,7 +48,7 @@ def check_all_buildings():
             print(f"   - Μηνιαία: {monthly:.2f}€ {'✅' if monthly_match else '❌'}")
             
             if goal_match and duration_match and monthly_match:
-                print(f"   🎉 MATCH FOUND! This building has the expected data!")
+                print("   🎉 MATCH FOUND! This building has the expected data!")
                 print(f"   📍 Address: {building.address}")
                 print(f"   🏠 Apartments: {building.apartments_count}")
                 return building.id

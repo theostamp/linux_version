@@ -4,9 +4,7 @@ Test script to verify monthly filtering fix for financial dashboard
 """
 
 import requests
-import json
-from datetime import datetime, timedelta
-import time
+from datetime import datetime
 
 # Configuration
 BASE_URL = "http://localhost:8000"
@@ -101,7 +99,7 @@ def test_current_month_button():
             response.raise_for_status()
             data = response.json()
             
-            print(f"✅ API επιστρέφει δεδομένα για τρέχον μήνα")
+            print("✅ API επιστρέφει δεδομένα για τρέχον μήνα")
             print(f"   Αποθεματικό: {float(data.get('current_reserve', 0)):.2f}€")
             
         except Exception as e:

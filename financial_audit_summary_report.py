@@ -10,7 +10,6 @@ Financial Audit - Συνοπτική Αναφορά Ευρημάτων
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -19,7 +18,6 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from financial.models import Apartment, Expense, Payment, Transaction, Building
-from financial.services import CommonExpenseCalculator
 
 def format_currency(amount):
     """Μορφοποίηση ποσού σε ευρώ"""

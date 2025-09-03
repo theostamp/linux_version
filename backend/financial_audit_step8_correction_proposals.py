@@ -12,10 +12,6 @@ New Concierge - Building Management System
 import os
 import sys
 import django
-from decimal import Decimal
-from datetime import datetime, date, timedelta
-from django.utils import timezone
-from django.db.models import Sum, Q
 
 # Setup Django environment
 sys.path.append('/app')
@@ -23,9 +19,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Apartment, Payment, Transaction, Expense, CommonExpensePeriod, ApartmentShare
-from financial.services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator
-from buildings.models import Building
 
 def generate_correction_proposals():
     """Δημιουργία προτάσεων διόρθωσης"""

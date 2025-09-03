@@ -57,7 +57,7 @@ def test_alkmanous_clean_initialization():
             if alkmanous_building.current_reserve != 0:
                 alkmanous_building.current_reserve = Decimal('0.00')
                 alkmanous_building.save()
-                print(f"🔄 Μηδενίστηκε αποθεματικό κτιρίου")
+                print("🔄 Μηδενίστηκε αποθεματικό κτιρίου")
             
             print("\n✅ Καθαρισμός ολοκληρώθηκε!")
             

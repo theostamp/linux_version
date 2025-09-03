@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 import os
-import sys
 import django
 import requests
-import json
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
@@ -53,7 +51,7 @@ def test_auth():
                 access_token = data.get('access')
                 user_data = data.get('user')
                 
-                print(f"✅ Login επιτυχής!")
+                print("✅ Login επιτυχής!")
                 print(f"Access token: {access_token[:20]}...")
                 print(f"User data: {user_data}")
                 

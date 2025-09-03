@@ -8,12 +8,12 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from datetime import datetime, date
+from datetime import datetime
 from decimal import Decimal
 
 with schema_context('demo'):
     from apartments.models import Apartment
-    from financial.models import Expense, Payment, Transaction, CommonExpensePeriod, ApartmentShare
+    from financial.models import Expense, CommonExpensePeriod, ApartmentShare
     from buildings.models import Building
     
     print("=== INVESTIGATION: SOURCE OF 1030€ (343.33€ × 3) ===")
@@ -25,7 +25,7 @@ with schema_context('demo'):
     target_343_33 = Decimal('343.33')
     tolerance = Decimal('0.01')
     
-    print(f"🔍 Searching for 1030€ (which ÷ 3 = 343.33€)")
+    print("🔍 Searching for 1030€ (which ÷ 3 = 343.33€)")
     print()
     
     # Check both buildings
@@ -123,7 +123,7 @@ with schema_context('demo'):
             # Check individual apartment shares for 343.33
             for share in shares:
                 if abs(share.total_amount - target_343_33) <= tolerance:
-                    print(f"   ✅ APARTMENT SHARE = 343.33€:")
+                    print("   ✅ APARTMENT SHARE = 343.33€:")
                     print(f"      Apartment: {share.apartment.number}")
                     print(f"      Period: {period.period_name}")
                     print(f"      Amount: {share.total_amount}€")

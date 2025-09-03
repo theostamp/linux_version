@@ -7,7 +7,7 @@ Create a scenario with real obligations to test the fix.
 import os
 import sys
 import django
-from datetime import date, datetime
+from datetime import datetime
 from decimal import Decimal
 
 # Setup Django environment

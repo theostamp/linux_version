@@ -1,10 +1,8 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db import transaction
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.db.models import Q, Count
+from django.db.models import Count
 
 from .models import ChatRoom, ChatMessage, ChatParticipant, ChatNotification
 from .serializers import (
@@ -15,11 +13,9 @@ from .serializers import (
     ChatNotificationSerializer,
     ChatRoomCreateSerializer,
     ChatMessageUpdateSerializer,
-    ChatRoomJoinSerializer,
     ChatMessageReadSerializer
 )
 from core.permissions import IsManagerOrSuperuser
-from core.utils import filter_queryset_by_user_and_building
 
 
 class ChatRoomViewSet(viewsets.ModelViewSet):

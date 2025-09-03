@@ -667,28 +667,29 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
               </div>
             </div>
 
-            {/* Reference Number */}
-            <div>
-              <Label htmlFor="reference_number">Αριθμός Αναφοράς</Label>
-              <Input
-                id="reference_number"
-                type="text"
-                value={formData.reference_number || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, reference_number: e.target.value }))}
-                placeholder="π.χ. αριθμός επιταγής, transaction ID"
-              />
-            </div>
+            {/* Reference Number and Notes on same row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="reference_number">Αριθμός Αναφοράς</Label>
+                <Input
+                  id="reference_number"
+                  type="text"
+                  value={formData.reference_number || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, reference_number: e.target.value }))}
+                  placeholder="π.χ. αριθμός επιταγής, transaction ID"
+                />
+              </div>
 
-            {/* Notes */}
-            <div>
-              <Label htmlFor="notes">Σημειώσεις</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                placeholder="Προαιρετικές σημειώσεις για την πληρωμή"
-                rows={3}
-              />
+              <div>
+                <Label htmlFor="notes">Σημειώσεις</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Προαιρετικές σημειώσεις για την πληρωμή"
+                  rows={2}
+                />
+              </div>
             </div>
 
             {/* Receipt Upload */}

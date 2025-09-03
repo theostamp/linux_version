@@ -8,7 +8,6 @@ import os
 import sys
 import django
 import requests
-from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -28,7 +27,7 @@ def test_improved_financial_api():
     month = "2025-08"  # Αύγουστος 2025
     
     # API endpoint
-    url = f"http://localhost:8000/api/financial/dashboard/improved-summary/"
+    url = "http://localhost:8000/api/financial/dashboard/improved-summary/"
     params = {
         'building_id': building_id,
         'month': month
@@ -120,7 +119,6 @@ def test_data_flow():
     
     with schema_context('demo'):
         from financial.models import Expense, Payment
-        from apartments.models import Apartment
         from buildings.models import Building
         
         building = Building.objects.get(id=2)  # Αλκμάνος 22
@@ -135,7 +133,7 @@ def test_data_flow():
             date__month=7
         )
         
-        print(f"\n📊 Ιούλιος 2025 - Έξοδα που θα τιμολογηθούν Αύγουστο:")
+        print("\n📊 Ιούλιος 2025 - Έξοδα που θα τιμολογηθούν Αύγουστο:")
         total_july = 0
         for expense in july_expenses:
             print(f"  • {expense.description}: €{expense.amount:,.2f}")
@@ -150,7 +148,7 @@ def test_data_flow():
             date__month=8
         )
         
-        print(f"\n💰 Αύγουστος 2025 - Πληρωμές:")
+        print("\n💰 Αύγουστος 2025 - Πληρωμές:")
         total_august_payments = 0
         for payment in august_payments:
             print(f"  • Διαμ. {payment.apartment.number}: €{payment.amount:,.2f}")

@@ -13,10 +13,10 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Expense, Payment, Apartment, Transaction
+from financial.models import Expense, Payment, Apartment
 from buildings.models import Building
-from django.db.models import Sum, Q
-from datetime import datetime, timedelta
+from django.db.models import Sum
+from datetime import datetime
 
 def investigate_missing_data():
     """Investigate why we don't have the missing numbers in the database"""
@@ -57,7 +57,7 @@ def investigate_missing_data():
             print("❌ ΔΕΝ ΒΡΕΘΗΚΑΝ παλαιότερες πληρωμές!")
         
         # Check previous_obligations_amount field
-        print(f"\n🔍 Έλεγχος πεδίου 'previous_obligations_amount':")
+        print("\n🔍 Έλεγχος πεδίου 'previous_obligations_amount':")
         payments_with_prev_obligations = Payment.objects.filter(
             apartment__building=building,
             previous_obligations_amount__gt=0
@@ -108,7 +108,7 @@ def investigate_missing_data():
         print("-" * 50)
         
         # Check building management fee settings
-        print(f"Διαθέσιμα πεδία στο Building model:")
+        print("Διαθέσιμα πεδία στο Building model:")
         building_fields = [field.name for field in building._meta.fields]
         print(f"Πεδία: {building_fields}")
         
@@ -121,7 +121,7 @@ def investigate_missing_data():
             print(f"  {field_name}: {value}")
         
         # Check if management fees are included in payments
-        print(f"\n🔍 Έλεγχος αν το κόστος διαχείρισης περιλαμβάνεται στις πληρωμές:")
+        print("\n🔍 Έλεγχος αν το κόστος διαχείρισης περιλαμβάνεται στις πληρωμές:")
         
         # Calculate total payments for September
         september_payments = Payment.objects.filter(
@@ -171,10 +171,10 @@ def investigate_missing_data():
         
         print("🔍 ΤΙ ΒΡΗΚΑΜΕ:")
         print(f"  ✅ Πληρωμές Σεπτεμβρίου: {total_september}€")
-        print(f"  ❌ Παλαιότερες οφειλές: Δεν βρέθηκαν")
-        print(f"  ❌ Αποθεματικό ταμείο: Δεν βρέθηκε")
-        print(f"  ❌ Κόστος διαχείρισης: Δεν βρέθηκε")
-        print(f"  ❌ Δαπάνες Σεπτεμβρίου: Δεν βρέθηκαν")
+        print("  ❌ Παλαιότερες οφειλές: Δεν βρέθηκαν")
+        print("  ❌ Αποθεματικό ταμείο: Δεν βρέθηκε")
+        print("  ❌ Κόστος διαχείρισης: Δεν βρέθηκε")
+        print("  ❌ Δαπάνες Σεπτεμβρίου: Δεν βρέθηκαν")
         
         print("\n💡 ΓΙΑΤΙ ΔΕΝ ΤΑ ΕΧΟΥΜΕ:")
         print("  1. Παλαιότερες οφειλές: Μπορεί να μην έχουν καταγραφεί ή να είναι σε άλλο μοντέλο")

@@ -6,7 +6,6 @@ Script to demonstrate improved expense and transaction integration with better v
 import os
 import sys
 import django
-from datetime import datetime, date
 from decimal import Decimal
 
 # Setup Django environment
@@ -15,9 +14,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Building, Apartment, Expense, Transaction, Payment
-from django.db.models import Sum, Q
-from django.utils import timezone
+from financial.models import Building, Expense, Transaction
+from django.db.models import Sum
 
 def improve_expense_transaction_integration():
     """Demonstrate improved expense and transaction integration"""
@@ -59,11 +57,11 @@ def improve_expense_transaction_integration():
             
             # Έλεγχος για ασυμφωνίες
             if total_expenses > 0 and total_expense_transactions == 0:
-                print(f"   ⚠️  ΠΡΟΒΛΗΜΑ: Δαπάνες χωρίς συναλλαγές!")
+                print("   ⚠️  ΠΡΟΒΛΗΜΑ: Δαπάνες χωρίς συναλλαγές!")
             elif total_expenses != total_expense_transactions:
-                print(f"   ⚠️  ΠΡΟΒΛΗΜΑ: Ασυμφωνία δαπανών-συναλλαγών!")
+                print("   ⚠️  ΠΡΟΒΛΗΜΑ: Ασυμφωνία δαπανών-συναλλαγών!")
             else:
-                print(f"   ✅ ΣΩΣΤΗ ΕΝΤΕΓΡΑΣΗ")
+                print("   ✅ ΣΩΣΤΗ ΕΝΤΕΓΡΑΣΗ")
         
         # 2. Προτεινόμενες βελτιώσεις
         print("\n🔧 ΠΡΟΤΕΙΝΟΜΕΝΕΣ ΒΕΛΤΙΩΣΕΙΣ:")

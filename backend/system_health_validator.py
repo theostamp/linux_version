@@ -8,9 +8,8 @@
 import os
 import sys
 import django
-from decimal import Decimal
-from datetime import datetime, date
-from typing import Dict, List, Any
+from datetime import datetime
+from typing import Dict, Any
 
 # Setup Django environment
 sys.path.append('/app')
@@ -18,7 +17,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from django.db import models
 from financial.models import Transaction, Expense, Payment
 from apartments.models import Apartment
 from buildings.models import Building
@@ -477,7 +475,7 @@ class SystemHealthValidator:
             'poor': '🔴'
         }
         
-        print(f"\n🏥 ΣΥΝΟΛΙΚΗ ΚΑΤΑΣΤΑΣΗ ΥΓΕΙΑΣ")
+        print("\n🏥 ΣΥΝΟΛΙΚΗ ΚΑΤΑΣΤΑΣΗ ΥΓΕΙΑΣ")
         print("=" * 60)
         print(f"{health_emoji[self.results['overall_health']]} Κατάσταση: {self.results['overall_health'].upper()}")
         print(f"📊 Ελέγχοι: {total_checks}")
@@ -486,7 +484,7 @@ class SystemHealthValidator:
         print(f"✅ Επιτυχίες: {self.results['successes']}")
         
         if self.results['recommendations']:
-            print(f"\n💡 ΣΥΣΤΑΣΕΙΣ:")
+            print("\n💡 ΣΥΣΤΑΣΕΙΣ:")
             for rec in self.results['recommendations']:
                 print(f"   • {rec}")
 
@@ -500,6 +498,6 @@ def run_system_health_check():
 
 if __name__ == "__main__":
     results = run_system_health_check()
-    print(f"\n✅ Ο έλεγχος υγείας ολοκληρώθηκε!")
+    print("\n✅ Ο έλεγχος υγείας ολοκληρώθηκε!")
     print(f"📋 Αποτελέσματα: {results['overall_health']}")
 

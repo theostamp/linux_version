@@ -17,7 +17,7 @@ import sys
 import django
 from decimal import Decimal
 from datetime import datetime
-from django.db.models import Sum, Q
+from django.db.models import Sum
 
 # Setup Django environment
 sys.path.append('/app')
@@ -76,49 +76,49 @@ class FinancialPageAnalyzer:
         # Πραγματικά έξοδα
         real_expenses = summary.get('total_expenses_month', 0)
         print(f"  📊 Λειτουργικές Δαπάνες {format_currency(real_expenses)}")
-        print(f"     🔍 ΠΡΟΒΛΗΜΑ: Ο όρος 'Πραγματικά έξοδα' μπορεί να προκαλέσει σύγχυση")
-        print(f"     💡 ΠΡΟΤΑΣΗ: 'Δαπάνες του μήνα' ή 'Μηνιαίες δαπάνες'")
-        print(f"     📍 Πηγή: Expenses για τον τρέχοντα μήνα")
+        print("     🔍 ΠΡΟΒΛΗΜΑ: Ο όρος 'Πραγματικά έξοδα' μπορεί να προκαλέσει σύγχυση")
+        print("     💡 ΠΡΟΤΑΣΗ: 'Δαπάνες του μήνα' ή 'Μηνιαίες δαπάνες'")
+        print("     📍 Πηγή: Expenses για τον τρέχοντα μήνα")
         
         # Κόστος διαχείρισης
         management_cost = summary.get('total_management_cost', 0)
         print(f"  📊 Κόστος διαχείρισης: {format_currency(management_cost)}")
-        print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατανοητός και σωστός")
-        print(f"     📍 Πηγή: Building settings (management_fee_per_apartment)")
+        print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατανοητός και σωστός")
+        print("     📍 Πηγή: Building settings (management_fee_per_apartment)")
         
         # Εισφορά αποθεματικού
         reserve_fund = summary.get('reserve_fund_monthly_target', 0)
         print(f"  📊 Εισφορά αποθεματικού: {format_currency(reserve_fund)}")
-        print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατανοητός και σωστός")
-        print(f"     📍 Πηγή: Building settings (reserve_fund_goal / duration)")
+        print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατανοητός και σωστός")
+        print("     📍 Πηγή: Building settings (reserve_fund_goal / duration)")
         
         # Μηνιαίες υποχρεώσεις
         total_monthly_obligations = real_expenses + management_cost + reserve_fund
         print(f"  📊 Μηνιαίες υποχρεώσεις: {format_currency(total_monthly_obligations)}")
-        print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατανοητός και σωστός")
-        print(f"     📍 Πηγή: Υπολογισμός (Δαπάνες + Διαχείριση + Αποθεματικό)")
+        print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατανοητός και σωστός")
+        print("     📍 Πηγή: Υπολογισμός (Δαπάνες + Διαχείριση + Αποθεματικό)")
         
         print_subsection("2. ΤΡΕΧΟΝ ΥΠΟΛΟΙΠΟ")
         
         # Total Balance
         total_balance = summary.get('total_balance', 0)
         print(f"  📊 Τρέχον υπόλοιπο: {format_currency(total_balance)}")
-        print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατανοητός και σωστός")
-        print(f"     📍 Πηγή: Υπολογισμός (Πληρωμές - Δαπάνες - Διαχείριση)")
+        print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατανοητός και σωστός")
+        print("     📍 Πηγή: Υπολογισμός (Πληρωμές - Δαπάνες - Διαχείριση)")
         
         # Current Reserve
         current_reserve = summary.get('current_reserve', 0)
         print(f"  📊 Τρέχον ταμείο: {format_currency(current_reserve)}")
-        print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατανοητός και σωστός")
-        print(f"     📍 Πηγή: Υπολογισμός (Πληρωμές - Δαπάνες - Διαχείριση)")
+        print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατανοητός και σωστός")
+        print("     📍 Πηγή: Υπολογισμός (Πληρωμές - Δαπάνες - Διαχείριση)")
         
         print_subsection("3. ΠΑΛΑΙΟΤΕΡΕΣ ΟΦΕΙΛΕΣ")
         
         # Previous Obligations
         previous_obligations = summary.get('previous_obligations', 0)
         print(f"  📊 Παλαιότερες οφειλές: {format_currency(previous_obligations)}")
-        print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατανοητός και σωστός")
-        print(f"     📍 Πηγή: Αρνητικά apartment balances")
+        print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατανοητός και σωστός")
+        print("     📍 Πηγή: Αρνητικά apartment balances")
     
     def analyze_calculator_tab(self):
         """Ανάλυση του Calculator Tab (Κοινοχρήστων)"""
@@ -131,8 +131,8 @@ class FinancialPageAnalyzer:
         shares = calculator.calculate_shares()
         
         print(f"  📊 Συνολικό ποσό κοινοχρήστων: {format_currency(sum(share.get('total_amount', 0) for share in shares.values()))}")
-        print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Κοινοχρήστων' είναι κατανοητός")
-        print(f"     📍 Πηγή: Υπολογισμός από δαπάνες και χιλιοστά")
+        print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Κοινοχρήστων' είναι κατανοητός")
+        print("     📍 Πηγή: Υπολογισμός από δαπάνες και χιλιοστά")
         
         print_subsection("2. ΚΑΤΑΝΟΜΗ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ")
         
@@ -141,7 +141,7 @@ class FinancialPageAnalyzer:
             total_amount = share_data.get('total_amount', 0)
             print(f"  🏠 {apartment.number}: {format_currency(total_amount)}")
             print(f"     📍 Χιλιοστά: {apartment.participation_mills}")
-            print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Κατανομή' είναι κατανοητός")
+            print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Κατανομή' είναι κατανοητός")
     
     def analyze_expenses_tab(self):
         """Ανάλυση του Expenses Tab"""
@@ -152,8 +152,8 @@ class FinancialPageAnalyzer:
         print_subsection("1. ΛΙΣΤΑ ΔΑΠΑΝΩΝ")
         
         print(f"  📊 Συνολικές δαπάνες: {format_currency(expenses.aggregate(total=Sum('amount'))['total'] or 0)}")
-        print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Δαπάνες' είναι κατανοητός")
-        print(f"     📍 Πηγή: ΠΥΛΩΝΑΣ - Πραγματικές δαπάνες από λογαριασμούς")
+        print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Δαπάνες' είναι κατανοητός")
+        print("     📍 Πηγή: ΠΥΛΩΝΑΣ - Πραγματικές δαπάνες από λογαριασμούς")
         
         print_subsection("2. ΚΑΤΗΓΟΡΙΕΣ ΔΑΠΑΝΩΝ")
         
@@ -163,7 +163,7 @@ class FinancialPageAnalyzer:
         
         for cat in expense_categories[:3]:
             print(f"  📋 {cat['category']}: {format_currency(cat['total'])} ({cat['count']} δαπάνες)")
-            print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατηγορίες είναι κατανοητές")
+            print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: Κατηγορίες είναι κατανοητές")
     
     def analyze_payments_tab(self):
         """Ανάλυση του Payments Tab"""
@@ -174,8 +174,8 @@ class FinancialPageAnalyzer:
         print_subsection("1. ΛΙΣΤΑ ΕΙΣΠΡΑΞΕΩΝ")
         
         print(f"  📊 Συνολικές εισπράξεις: {format_currency(payments.aggregate(total=Sum('amount'))['total'] or 0)}")
-        print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Εισπράξεις' είναι κατανοητός")
-        print(f"     📍 Πηγή: ΠΥΛΩΝΑΣ - Πραγματικές πληρωμές από κατοίκους")
+        print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Εισπράξεις' είναι κατανοητός")
+        print("     📍 Πηγή: ΠΥΛΩΝΑΣ - Πραγματικές πληρωμές από κατοίκους")
         
         print_subsection("2. ΤΡΟΠΟΙ ΠΛΗΡΩΜΗΣ")
         
@@ -185,7 +185,7 @@ class FinancialPageAnalyzer:
         
         for method in payment_methods:
             print(f"  💳 {method['method']}: {format_currency(method['total'])} ({method['count']} πληρωμές)")
-            print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: Τρόποι πληρωμής είναι κατανοητοί")
+            print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: Τρόποι πληρωμής είναι κατανοητοί")
     
     def analyze_meters_tab(self):
         """Ανάλυση του Meters Tab"""
@@ -198,8 +198,8 @@ class FinancialPageAnalyzer:
         print_subsection("1. ΜΕΤΡΗΣΕΙΣ")
         
         print(f"  📊 Συνολικές μετρήσεις: {meter_readings.count()}")
-        print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Μετρητές' είναι κατανοητός")
-        print(f"     📍 Πηγή: Πραγματικές μετρήσεις από διαμερίσματα")
+        print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Μετρητές' είναι κατανοητός")
+        print("     📍 Πηγή: Πραγματικές μετρήσεις από διαμερίσματα")
         
         print_subsection("2. ΤΥΠΟΙ ΜΕΤΡΗΤΩΝ")
         
@@ -207,7 +207,7 @@ class FinancialPageAnalyzer:
         
         for m_type in meter_types:
             print(f"  📊 {m_type['meter_type']}: {m_type['count']} μετρήσεις")
-            print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: Τύποι μετρητών είναι κατανοητοί")
+            print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: Τύποι μετρητών είναι κατανοητοί")
     
     def analyze_charts_tab(self):
         """Ανάλυση του Charts Tab"""
@@ -215,12 +215,12 @@ class FinancialPageAnalyzer:
         
         print_subsection("1. ΟΠΤΙΚΟΠΟΙΗΣΗ ΔΕΔΟΜΕΝΩΝ")
         
-        print(f"  📊 Γραφήματα διαθέσιμα:")
-        print(f"     📈 Γράφημα κατανομής δαπανών")
-        print(f"     📊 Γράφημα εισπράξεων ανά μήνα")
-        print(f"     🏠 Γράφημα υπολοίπων διαμερισμάτων")
-        print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Γραφήματα' είναι κατανοητός")
-        print(f"     📍 Πηγή: Υπολογισμένα από πυλώνες δεδομένων")
+        print("  📊 Γραφήματα διαθέσιμα:")
+        print("     📈 Γράφημα κατανομής δαπανών")
+        print("     📊 Γράφημα εισπράξεων ανά μήνα")
+        print("     🏠 Γράφημα υπολοίπων διαμερισμάτων")
+        print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Γραφήματα' είναι κατανοητός")
+        print("     📍 Πηγή: Υπολογισμένα από πυλώνες δεδομένων")
     
     def analyze_history_tab(self):
         """Ανάλυση του History Tab"""
@@ -231,8 +231,8 @@ class FinancialPageAnalyzer:
         print_subsection("1. ΙΣΤΟΡΙΚΟ ΣΥΝΑΛΛΑΓΩΝ")
         
         print(f"  📊 Συνολικές συναλλαγές: {transactions.count()}")
-        print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Ιστορικό' είναι κατανοητός")
-        print(f"     📍 Πηγή: ΠΑΡΑΓΩΓΟ - Υπολογίζονται από πυλώνες")
+        print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Ιστορικό' είναι κατανοητός")
+        print("     📍 Πηγή: ΠΑΡΑΓΩΓΟ - Υπολογίζονται από πυλώνες")
         
         print_subsection("2. ΤΥΠΟΙ ΣΥΝΑΛΛΑΓΩΝ")
         
@@ -240,7 +240,7 @@ class FinancialPageAnalyzer:
         
         for t_type in transaction_types:
             print(f"  📋 {t_type['type']}: {t_type['count']} συναλλαγές")
-            print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: Τύποι συναλλαγών είναι κατανοητοί")
+            print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: Τύποι συναλλαγών είναι κατανοητοί")
     
     def analyze_balances_tab(self):
         """Ανάλυση του Balances Tab"""
@@ -251,14 +251,14 @@ class FinancialPageAnalyzer:
         for apt in self.apartments[:3]:  # Πρώτα 3 διαμερίσματα
             balance = apt.current_balance or Decimal('0.00')
             print(f"  🏠 {apt.number}: {format_currency(balance)}")
-            print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Ισοζύγια' είναι κατανοητός")
-            print(f"     📍 Πηγή: ΠΑΡΑΓΩΓΟ - Υπολογίζεται από συναλλαγές")
+            print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Ισοζύγια' είναι κατανοητός")
+            print("     📍 Πηγή: ΠΑΡΑΓΩΓΟ - Υπολογίζεται από συναλλαγές")
         
         print_subsection("2. ΣΥΝΟΛΙΚΟ ΙΣΟΖΥΓΙΟ")
         
         total_balance = sum(apt.current_balance or Decimal('0.00') for apt in self.apartments)
         print(f"  📊 Συνολικό ισοζύγιο: {format_currency(total_balance)}")
-        print(f"     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Συνολικό ισοζύγιο' είναι κατανοητός")
+        print("     ✅ ΚΑΛΟΣ ΟΡΟΣ: 'Συνολικό ισοζύγιο' είναι κατανοητός")
     
     def identify_terminology_issues(self):
         """Εντοπισμός προβλημάτων με την ορολογία"""
@@ -338,10 +338,10 @@ class FinancialPageAnalyzer:
         
         print_subsection("2. ΒΕΛΤΙΩΣΗ ΕΠΙΣΗΜΑΝΣΕΩΝ")
         
-        print(f"  📋 Προσθήκη επεξηγηματικών σημειώσεων:")
-        print(f"     • 'Δαπάνες του μήνα: Πραγματικές δαπάνες που καταγράφηκαν αυτόν τον μήνα'")
-        print(f"     • 'Εισπράξεις: Πληρωμές που εισπράχθηκαν από τους κατοίκους'")
-        print(f"     • 'Μηνιαίες υποχρεώσεις: Σύνολο δαπανών, διαχείρισης και αποθεματικού'")
+        print("  📋 Προσθήκη επεξηγηματικών σημειώσεων:")
+        print("     • 'Δαπάνες του μήνα: Πραγματικές δαπάνες που καταγράφηκαν αυτόν τον μήνα'")
+        print("     • 'Εισπράξεις: Πληρωμές που εισπράχθηκαν από τους κατοίκους'")
+        print("     • 'Μηνιαίες υποχρεώσεις: Σύνολο δαπανών, διαχείρισης και αποθεματικού'")
     
     def trace_money_flow(self):
         """Ακολούθηση της ροής του χρήματος"""
@@ -355,8 +355,8 @@ class FinancialPageAnalyzer:
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
         print(f"  💰 Εισροές: {format_currency(total_payments)}")
-        print(f"     📍 Πηγή: Πληρωμές από κατοίκους")
-        print(f"     ✅ ΠΥΛΩΝΑΣ: Πραγματικές πληρωμές")
+        print("     📍 Πηγή: Πληρωμές από κατοίκους")
+        print("     ✅ ΠΥΛΩΝΑΣ: Πραγματικές πληρωμές")
         
         print_subsection("2. ΕΚΡΟΕΣ")
         
@@ -366,16 +366,16 @@ class FinancialPageAnalyzer:
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
         print(f"  💸 Εκροές: {format_currency(total_expenses)}")
-        print(f"     📍 Προορισμός: Δαπάνες κτιρίου")
-        print(f"     ✅ ΠΥΛΩΝΑΣ: Πραγματικές δαπάνες")
+        print("     📍 Προορισμός: Δαπάνες κτιρίου")
+        print("     ✅ ΠΥΛΩΝΑΣ: Πραγματικές δαπάνες")
         
         print_subsection("3. ΥΠΟΛΟΙΠΟ")
         
         # Υπολογισμός υπολοίπου
         balance = total_payments - total_expenses
         print(f"  📊 Υπόλοιπο: {format_currency(balance)}")
-        print(f"     📍 Υπολογισμός: Εισροές - Εκροές")
-        print(f"     ✅ ΕΠΑΛΗΘΕΥΣΙΜΟ: Από πυλώνες")
+        print("     📍 Υπολογισμός: Εισροές - Εκροές")
+        print("     ✅ ΕΠΑΛΗΘΕΥΣΙΜΟ: Από πυλώνες")
         
         print_subsection("4. ΚΑΤΑΝΟΜΗ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ")
         

@@ -35,7 +35,7 @@ try:
         # Specific check for apartment 3
         try:
             apt3 = Apartment.objects.get(number='3', building_id=4)
-            print(f"\n🎯 Apartment 3 found:")
+            print("\n🎯 Apartment 3 found:")
             print(f"   Owner: {apt3.owner_name}")
             print(f"   Tenant: {apt3.tenant_name}")
             print(f"   Current balance: {apt3.current_balance}")

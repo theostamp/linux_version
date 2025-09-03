@@ -6,8 +6,6 @@ Test apartment_balances API for apartment A1
 import os
 import sys
 import django
-import json
-from datetime import datetime, date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -61,7 +59,7 @@ def test_api_apartment_balances():
                     break
             
             if a1_data:
-                print(f"\n🏠 ΔΙΑΜΕΡΙΣΜΑ Α1:")
+                print("\n🏠 ΔΙΑΜΕΡΙΣΜΑ Α1:")
                 print(f"   • ID: {a1_data.get('apartment_id')}")
                 print(f"   • Number: {a1_data.get('apartment_number')}")
                 print(f"   • Owner: {a1_data.get('owner_name')}")

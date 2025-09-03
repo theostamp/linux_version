@@ -6,7 +6,7 @@
 import os
 import sys
 import django
-from datetime import datetime, date
+from datetime import date
 from decimal import Decimal
 
 # Setup Django environment
@@ -22,7 +22,6 @@ def test_apartment_a1_balance():
     with schema_context('demo'):
         from apartments.models import Apartment
         from financial.models import Payment, Transaction, Expense
-        from buildings.models import Building
         
         print("🔍 ΕΛΕΓΧΟΣ ΥΠΟΛΟΓΙΣΜΟΥ ΥΠΟΛΟΙΠΟΥ - ΔΙΑΜΕΡΙΣΜΑ Α1")
         print("=" * 60)
@@ -60,7 +59,7 @@ def test_apartment_a1_balance():
         ).order_by('date', 'id')
         
         running_balance = Decimal("0.00")
-        print(f"\n📜 Συναλλαγές μέχρι 31/07/2025:")
+        print("\n📜 Συναλλαγές μέχρι 31/07/2025:")
         
         for i, transaction in enumerate(transactions, 1):
             old_balance = running_balance
@@ -92,7 +91,7 @@ def test_apartment_a1_balance():
         )
         
         total_august_expenses = Decimal("0.00")
-        print(f"\n📋 Δαπάνες Αυγούστου 2025:")
+        print("\n📋 Δαπάνες Αυγούστου 2025:")
         
         for expense in august_expenses:
             # Υπολογισμός μεριδίου βάσει χιλιοστών
@@ -114,7 +113,7 @@ def test_apartment_a1_balance():
         ).order_by('date', 'id')
         
         total_august_payments = Decimal("0.00")
-        print(f"\n💵 Πληρωμές Αυγούστου 2025:")
+        print("\n💵 Πληρωμές Αυγούστου 2025:")
         
         for payment in august_payments:
             total_august_payments += payment.amount
@@ -156,7 +155,7 @@ def test_apartment_a1_balance():
         
         # Ελέγχει αν το προηγούμενο υπόλοιπο είναι 0,00€ όπως αναμένεται
         if abs(previous_balance) < Decimal("0.01"):
-            print(f"✅ Το προηγούμενο υπόλοιπο είναι όντως 0,00€")
+            print("✅ Το προηγούμενο υπόλοιπο είναι όντως 0,00€")
         else:
             print(f"❌ Το προηγούμενο υπόλοιπο ΔΕΝ είναι 0,00€, είναι {previous_balance:,.2f}€")
         

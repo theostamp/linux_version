@@ -13,8 +13,6 @@ from buildings.models import Building
 from apartments.models import Apartment
 from financial.models import Expense, CommonExpensePeriod
 from financial.services import AdvancedCommonExpenseCalculator
-from decimal import Decimal
-from datetime import datetime, date
 
 def test_pdf_header_data():
     """Test that we have data for PDF generation with the new header format"""
@@ -52,7 +50,7 @@ def test_pdf_header_data():
             print(f"   • {expense.title}: {expense.amount}€ ({expense.date})")
         
         # Test the calculator for August 2025
-        print(f"\n🧮 Testing Calculator for August 2025")
+        print("\n🧮 Testing Calculator for August 2025")
         try:
             calculator = AdvancedCommonExpenseCalculator(
                 building_id=building.id,
@@ -65,7 +63,7 @@ def test_pdf_header_data():
             
             # Test expense breakdown
             breakdown = calculator.calculate_expense_breakdown()
-            print(f"📊 Expense Breakdown:")
+            print("📊 Expense Breakdown:")
             for category, amount in breakdown.items():
                 if amount > 0:
                     print(f"   • {category}: {amount}€")

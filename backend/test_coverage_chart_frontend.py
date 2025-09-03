@@ -7,8 +7,7 @@ Test script για το γράφημα "Κάλυψη Υποχρεώσεων με
 import os
 import sys
 import django
-from decimal import Decimal
-from datetime import datetime, date
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -16,7 +15,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Payment, Expense, Apartment
 from buildings.models import Building
 from financial.services import FinancialDashboardService
 
@@ -63,13 +61,13 @@ def test_coverage_chart_frontend():
         
         coveragePercentage = min(100, (totalPayments / totalObligations * 100)) if totalObligations > 0 else 0
         
-        print(f"\n📊 ΑΝΑΛΥΣΗ ΚΑΛΥΨΗΣ (Frontend Logic):")
+        print("\n📊 ΑΝΑΛΥΣΗ ΚΑΛΥΨΗΣ (Frontend Logic):")
         print(f"   • Εισπράξεις (για γράφημα): {format_currency(totalPayments)}")
         print(f"   • Εκκρεμείς: {format_currency(pendingPayments)}")
         print(f"   • Ποσοστό Κάλυψης: {coveragePercentage:.1f}%")
         
         # Test για συγκεκριμένο μήνα (Αύγουστος 2025)
-        print(f"\n📅 ΣΥΓΚΕΚΡΙΜΕΝΟΣ ΜΗΝΑΣ (2025-08)")
+        print("\n📅 ΣΥΓΚΕΚΡΙΜΕΝΟΣ ΜΗΝΑΣ (2025-08)")
         print("-" * 50)
         
         summary_august = dashboard_service.get_summary('2025-08')
@@ -93,13 +91,13 @@ def test_coverage_chart_frontend():
         
         coveragePercentage_aug = min(100, (totalPayments_aug / totalObligations_aug * 100)) if totalObligations_aug > 0 else 0
         
-        print(f"\n📊 ΑΝΑΛΥΣΗ ΚΑΛΥΨΗΣ (Αύγουστος - Frontend Logic):")
+        print("\n📊 ΑΝΑΛΥΣΗ ΚΑΛΥΨΗΣ (Αύγουστος - Frontend Logic):")
         print(f"   • Εισπράξεις (για γράφημα): {format_currency(totalPayments_aug)}")
         print(f"   • Εκκρεμείς: {format_currency(pendingPayments_aug)}")
         print(f"   • Ποσοστό Κάλυψης: {coveragePercentage_aug:.1f}%")
         
         # Έλεγχος αν τα δεδομένα είναι συνεπή
-        print(f"\n✅ ΕΛΕΓΧΟΣ ΣΥΝΕΠΕΙΑΣ (Frontend):")
+        print("\n✅ ΕΛΕΓΧΟΣ ΣΥΝΕΠΕΙΑΣ (Frontend):")
         
         # Έλεγχος αν το ποσοστό κάλυψης είναι λογικό
         if 0 <= coveragePercentage <= 100:
@@ -120,21 +118,21 @@ def test_coverage_chart_frontend():
         else:
             print(f"   ❌ Άθροισμα εισπράξεων + εκκρεμών = {format_currency(total_calculated)} ≠ Υποχρεώσεις {format_currency(totalObligations)}")
         
-        print(f"\n🎯 ΣΥΜΠΕΡΑΣΜΑ (Frontend):")
+        print("\n🎯 ΣΥΜΠΕΡΑΣΜΑ (Frontend):")
         if coveragePercentage >= 100:
-            print(f"   🟢 Όλες οι μηνιαίες υποχρεώσεις έχουν καλυφθεί!")
+            print("   🟢 Όλες οι μηνιαίες υποχρεώσεις έχουν καλυφθεί!")
         elif coveragePercentage >= 80:
-            print(f"   🟡 Καλή κάλυψη - χρειάζεται επιπλέον εισπράξεις")
+            print("   🟡 Καλή κάλυψη - χρειάζεται επιπλέον εισπράξεις")
         else:
-            print(f"   🔴 Χαμηλή κάλυψη - απαιτούνται άμεσες εισπράξεις")
+            print("   🔴 Χαμηλή κάλυψη - απαιτούνται άμεσες εισπράξεις")
         
-        print(f"\n📋 ΣΤΑΤΙΣΤΙΚΑ ΓΡΑΦΗΜΑΤΟΣ:")
+        print("\n📋 ΣΤΑΤΙΣΤΙΚΑ ΓΡΑΦΗΜΑΤΟΣ:")
         print(f"   • Μηνιαίες Υποχρεώσεις: {format_currency(totalObligations)}")
         print(f"   • Πραγματικές Εισπράξεις: {format_currency(actualPayments)}")
         print(f"   • Πραγματικές Δαπάνες: {format_currency(actualExpenses)}")
         print(f"   • Εκκρεμείς Πληρωμές: {format_currency(pendingPayments)}")
         
-        print(f"\n" + "=" * 70)
+        print("\n" + "=" * 70)
 
 if __name__ == "__main__":
     test_coverage_chart_frontend()

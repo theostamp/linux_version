@@ -13,7 +13,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Expense, Payment, Apartment
+from financial.models import Payment, Apartment
 from buildings.models import Building
 
 def check_dashboard_data():

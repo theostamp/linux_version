@@ -1,7 +1,6 @@
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -34,7 +33,7 @@ def debug_reserve_fund_distribution():
         reserve_fund_goal = float(building.reserve_fund_goal or 0)
         reserve_fund_duration = int(building.reserve_fund_duration_months or 0)
         
-        print(f"📊 ΤΡΕΧΟΥΣΕΣ ΡΥΘΜΙΣΕΙΣ:")
+        print("📊 ΤΡΕΧΟΥΣΕΣ ΡΥΘΜΙΣΕΙΣ:")
         print(f"   • Διαχειριστικά ανά διαμέρισμα: {management_fee_per_apartment}€")
         print(f"   • Εισφορά αποθεματικού ανά διαμέρισμα: {reserve_contribution_per_apartment}€")
         print(f"   • Στόχος αποθεματικού: {reserve_fund_goal}€")
@@ -46,12 +45,12 @@ def debug_reserve_fund_distribution():
         # Calculate correct distribution
         if reserve_fund_goal > 0 and reserve_fund_duration > 0 and total_mills > 0:
             monthly_reserve_total = reserve_fund_goal / reserve_fund_duration
-            print(f"📊 ΣΩΣΤΟΣ ΥΠΟΛΟΓΙΣΜΟΣ:")
+            print("📊 ΣΩΣΤΟΣ ΥΠΟΛΟΓΙΣΜΟΣ:")
             print(f"   • Μηνιαία συνολική εισφορά: {monthly_reserve_total:.2f}€")
             print(f"   • Εισφορά ανά χιλιοστό: {monthly_reserve_total / total_mills:.4f}€")
             print()
         
-        print(f"🏠 ΤΡΕΧΟΥΣΗ vs ΣΩΣΤΗ ΚΑΤΑΝΟΜΗ:")
+        print("🏠 ΤΡΕΧΟΥΣΗ vs ΣΩΣΤΗ ΚΑΤΑΝΟΜΗ:")
         print("-" * 80)
         
         for apartment in apartments:
@@ -85,14 +84,14 @@ def debug_reserve_fund_distribution():
                 print(f"   ⚠️  ΔΙΑΦΟΡΑ: {abs(current_reserve_contribution - correct_reserve_contribution):.2f}€")
             print()
         
-        print(f"🔍 ΠΡΟΒΛΗΜΑ:")
-        print(f"   • Η εισφορά αποθεματικού είναι ίδια για όλα τα διαμερίσματα")
-        print(f"   • Θα πρέπει να είναι ανάλογη με τα χιλιοστά συμμετοχής")
+        print("🔍 ΠΡΟΒΛΗΜΑ:")
+        print("   • Η εισφορά αποθεματικού είναι ίδια για όλα τα διαμερίσματα")
+        print("   • Θα πρέπει να είναι ανάλογη με τα χιλιοστά συμμετοχής")
         print()
         
-        print(f"💡 ΛΥΣΗ:")
-        print(f"   • Πρέπει να αλλάξουμε τη λογική στο API endpoint")
-        print(f"   • Η εισφορά αποθεματικού θα υπολογίζεται: (συνολική μηνιαία / συνολικά χιλιοστά) × χιλιοστά διαμερίσματος")
+        print("💡 ΛΥΣΗ:")
+        print("   • Πρέπει να αλλάξουμε τη λογική στο API endpoint")
+        print("   • Η εισφορά αποθεματικού θα υπολογίζεται: (συνολική μηνιαία / συνολικά χιλιοστά) × χιλιοστά διαμερίσματος")
 
 if __name__ == "__main__":
     debug_reserve_fund_distribution()

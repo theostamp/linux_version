@@ -66,7 +66,7 @@ def test_api_endpoint_direct():
                 if data:
                     # Show first apartment data
                     first_apt = data[0]
-                    print(f"\n📋 Πρώτο διαμέρισμα:")
+                    print("\n📋 Πρώτο διαμέρισμα:")
                     print(f"   ID: {first_apt.get('id')}")
                     print(f"   Number: {first_apt.get('number')}")
                     print(f"   Owner: {first_apt.get('owner_name')}")
@@ -78,7 +78,7 @@ def test_api_endpoint_direct():
                     heating_mills_present = any(apt.get('heating_mills') is not None for apt in data)
                     elevator_mills_present = any(apt.get('elevator_mills') is not None for apt in data)
                     
-                    print(f"\n🔍 Έλεγχος πεδίων:")
+                    print("\n🔍 Έλεγχος πεδίων:")
                     print(f"   Heating Mills: {'✅' if heating_mills_present else '❌'}")
                     print(f"   Elevator Mills: {'✅' if elevator_mills_present else '❌'}")
                     
@@ -87,7 +87,7 @@ def test_api_endpoint_direct():
                         print(f"   Συνολικά Heating Mills: {total_heating}")
                     
                     # Show sample JSON response
-                    print(f"\n📄 SAMPLE JSON RESPONSE:")
+                    print("\n📄 SAMPLE JSON RESPONSE:")
                     print(json.dumps(first_apt, indent=2, ensure_ascii=False))
                     
                 else:

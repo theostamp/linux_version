@@ -13,7 +13,6 @@ Financial Audit - Step 5: Έλεγχος Διπλών Χρεώσεων
 import os
 import sys
 import django
-from decimal import Decimal
 from collections import defaultdict
 
 # Setup Django environment
@@ -22,8 +21,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Apartment, Expense, Payment, Transaction, Building
-from financial.services import CommonExpenseCalculator
+from financial.models import Apartment, Expense, Payment, Building
 
 def format_currency(amount):
     """Μορφοποίηση ποσού σε ευρώ"""

@@ -4,7 +4,6 @@ Script για δημιουργία προκαθορισμένων πακέτων
 """
 
 import os
-import sys
 import django
 
 # Setup Django
@@ -114,7 +113,7 @@ def create_service_packages():
         print(f"\n🎉 Δημιουργήθηκαν {len(created_packages)} πακέτα υπηρεσιών!")
         
         # Show summary
-        print(f"\n📊 ΣΥΝΟΨΗ ΠΑΚΕΤΩΝ:")
+        print("\n📊 ΣΥΝΟΨΗ ΠΑΚΕΤΩΝ:")
         for package in created_packages:
             print(f"   - {package.name}: {package.fee_per_apartment}€/διαμέρισμα")
             print(f"     Υπηρεσίες: {package.get_services_list()}")

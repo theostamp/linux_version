@@ -12,8 +12,7 @@ from django_tenants.utils import schema_context
 from apartments.models import Apartment
 from financial.models import Expense, Payment
 from buildings.models import Building
-from django.db.models import Sum, Q
-from datetime import datetime, date
+from datetime import date
 
 def debug_net_obligation_calculation():
     """Debug how net_obligation is calculated"""
@@ -111,29 +110,29 @@ def debug_net_obligation_calculation():
         reserve_contribution_share = float(building.reserve_contribution_per_apartment or 0)
         current_month_obligations = current_month_share + management_fee_share + reserve_contribution_share
         
-        print(f"📊 ΥΠΟΛΟΓΙΣΜΟΣ API:")
+        print("📊 ΥΠΟΛΟΓΙΣΜΟΣ API:")
         print(f"   • Ιστορικές δαπάνες: {total_obligations:.2f}€")
         print(f"   • Ιστορικές πληρωμές: {total_payments:.2f}€")
         print(f"   • Net obligation (API): {net_obligation:.2f}€")
         print()
         
-        print(f"📊 ΤΡΕΧΟΥΣΕΣ ΥΠΟΧΡΕΩΣΕΙΣ:")
+        print("📊 ΤΡΕΧΟΥΣΕΣ ΥΠΟΧΡΕΩΣΕΙΣ:")
         print(f"   • Μερίδιο δαπανών τρέχοντος μήνα: {current_month_share:.2f}€")
         print(f"   • Διαχειριστικά τέλη: {management_fee_share:.2f}€")
         print(f"   • Εισφορά αποθεματικού: {reserve_contribution_share:.2f}€")
         print(f"   • ΣΥΝΟΛΟ τρέχοντος μήνα: {current_month_obligations:.2f}€")
         print()
         
-        print(f"🔍 ΠΡΟΒΛΗΜΑ:")
-        print(f"   • Το API υπολογίζει μόνο ιστορικές δαπάνες - πληρωμές")
-        print(f"   • ΔΕΝ περιλαμβάνει τις τρέχουσες μηνιαίες υποχρεώσεις")
-        print(f"   • Το 'Συνολικό Οφειλόμενο' θα πρέπει να είναι:")
+        print("🔍 ΠΡΟΒΛΗΜΑ:")
+        print("   • Το API υπολογίζει μόνο ιστορικές δαπάνες - πληρωμές")
+        print("   • ΔΕΝ περιλαμβάνει τις τρέχουσες μηνιαίες υποχρεώσεις")
+        print("   • Το 'Συνολικό Οφειλόμενο' θα πρέπει να είναι:")
         print(f"     {net_obligation:.2f}€ + {current_month_obligations:.2f}€ = {net_obligation + current_month_obligations:.2f}€")
         print()
         
-        print(f"💡 ΛΥΣΗ:")
-        print(f"   • Πρέπει να προστεθούν οι τρέχουσες μηνιαίες υποχρεώσεις στο net_obligation")
-        print(f"   • Ή να δημιουργηθεί ξεχωριστό πεδίο για τρέχουσες υποχρεώσεις")
+        print("💡 ΛΥΣΗ:")
+        print("   • Πρέπει να προστεθούν οι τρέχουσες μηνιαίες υποχρεώσεις στο net_obligation")
+        print("   • Ή να δημιουργηθεί ξεχωριστό πεδίο για τρέχουσες υποχρεώσεις")
 
 if __name__ == "__main__":
     debug_net_obligation_calculation()

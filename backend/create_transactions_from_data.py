@@ -6,7 +6,6 @@ Script to create transactions from existing payments and expenses
 import os
 import sys
 import django
-from decimal import Decimal
 from datetime import datetime, timezone
 
 # Setup Django environment
@@ -18,7 +17,6 @@ from django_tenants.utils import schema_context
 from financial.models import Payment, Expense, Transaction
 from buildings.models import Building
 from apartments.models import Apartment
-from django.db.models import Sum, Q
 
 def create_transactions_from_data():
     """Create transactions from existing payments and expenses"""

@@ -49,7 +49,7 @@ def fix_current_reserve():
         
         correct_reserve = total_payments - total_expenses
         
-        print(f"\n📊 Υπολογισμός σωστού αποθεματικού:")
+        print("\n📊 Υπολογισμός σωστού αποθεματικού:")
         print(f"  - Συνολικές εισπράξεις: {total_payments:10.2f}€")
         print(f"  - Συνολικές δαπάνες: {total_expenses:10.2f}€")
         print(f"  - Σωστό αποθεματικό: {correct_reserve:10.2f}€")
@@ -60,16 +60,16 @@ def fix_current_reserve():
             building.current_reserve = correct_reserve
             building.save()
             
-            print(f"\n✅ Ενημέρωση αποθεματικού:")
+            print("\n✅ Ενημέρωση αποθεματικού:")
             print(f"  - Παλιό: {old_reserve:10.2f}€")
             print(f"  - Νέο: {correct_reserve:10.2f}€")
             print(f"  - Διαφορά: {correct_reserve - old_reserve:10.2f}€")
         else:
-            print(f"\n✅ Το αποθεματικό είναι ήδη σωστό!")
+            print("\n✅ Το αποθεματικό είναι ήδη σωστό!")
         
         # Verify the fix
         building.refresh_from_db()
-        print(f"\n🔍 Επιβεβαίωση:")
+        print("\n🔍 Επιβεβαίωση:")
         print(f"  - Τρέχον αποθεματικό στη βάση: {building.current_reserve:10.2f}€")
         
         if building.current_reserve == correct_reserve:

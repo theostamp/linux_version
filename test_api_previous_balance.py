@@ -44,7 +44,7 @@ with schema_context('demo'):
         
         if response.data and len(response.data) > 0:
             first_apartment = response.data[0]
-            print(f"\n🏠 First Apartment Data:")
+            print("\n🏠 First Apartment Data:")
             print(f"  ID: {first_apartment.get('id')}")
             print(f"  Number: {first_apartment.get('number')}")
             print(f"  Apartment Number: {first_apartment.get('apartment_number')}")
@@ -53,16 +53,16 @@ with schema_context('demo'):
             print(f"  Previous Balance: {first_apartment.get('previous_balance')}€")
             print(f"  Monthly Due: {first_apartment.get('monthly_due')}€")
             
-            print(f"\n🔍 All Available Fields:")
+            print("\n🔍 All Available Fields:")
             for field, value in first_apartment.items():
                 print(f"  {field}: {value}")
             
             # Check if previous_balance is present
             if 'previous_balance' in first_apartment:
-                print(f"\n✅ SUCCESS: previous_balance field is present!")
+                print("\n✅ SUCCESS: previous_balance field is present!")
                 print(f"   Value: {first_apartment['previous_balance']}€")
             else:
-                print(f"\n❌ ERROR: previous_balance field is missing!")
+                print("\n❌ ERROR: previous_balance field is missing!")
                 
         else:
             print("❌ No data returned from API")

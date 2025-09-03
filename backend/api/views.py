@@ -7,8 +7,6 @@ from announcements.models import Announcement
 from votes.models import Vote
 from buildings.models import Building
 from django.utils import timezone
-from datetime import datetime, timedelta
-import json
 
 @ensure_csrf_cookie
 def csrf(request):
@@ -79,10 +77,8 @@ def public_info(request, building_id=None):
             # Get financial information for the building
             try:
                 print(f"[DEBUG] Loading financial data for building {building_id}")
-                from financial.services import FinancialDashboardService
                 from financial.models import Apartment, Payment
-                from django.db.models import Sum, Q
-                from datetime import datetime, timedelta
+                from django.db.models import Sum
                 
                 # Get apartments for this building
                 apartments = Apartment.objects.filter(building_id=building_id)

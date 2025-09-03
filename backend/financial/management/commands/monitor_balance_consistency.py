@@ -72,7 +72,7 @@ class Command(BaseCommand):
             
             # Συνοπτικά αποτελέσματα
             self.stdout.write("\n" + "="*50)
-            self.stdout.write(f"📊 ΣΥΝΟΠΤΙΚΑ ΑΠΟΤΕΛΕΣΜΑΤΑ:")
+            self.stdout.write("📊 ΣΥΝΟΠΤΙΚΑ ΑΠΟΤΕΛΕΣΜΑΤΑ:")
             self.stdout.write(f"   Συνολικά ελεγχθέντα: {total_checked}")
             self.stdout.write(f"   Ασυνέπειες βρέθηκαν: {total_discrepancies}")
             

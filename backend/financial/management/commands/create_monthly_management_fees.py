@@ -4,10 +4,8 @@ Django management command για αυτόματη καταχώρηση μηνι�
 """
 
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 from django_tenants.utils import schema_context, get_tenant_model
 from datetime import datetime, date
-from decimal import Decimal
 from buildings.models import Building
 from financial.models import Expense
 from apartments.models import Apartment
@@ -81,7 +79,7 @@ class Command(BaseCommand):
                     
                     # Έλεγχος αν έχει οριστεί management fee
                     if not building.management_fee_per_apartment or building.management_fee_per_apartment == 0:
-                        self.stdout.write(self.style.WARNING(f'    ⚠️  Δεν έχει οριστεί αμοιβή διαχείρισης'))
+                        self.stdout.write(self.style.WARNING('    ⚠️  Δεν έχει οριστεί αμοιβή διαχείρισης'))
                         total_skipped += 1
                         continue
                     
@@ -101,7 +99,7 @@ class Command(BaseCommand):
                     # Υπολογισμός συνολικού ποσού
                     apartments_count = Apartment.objects.filter(building=building).count()
                     if apartments_count == 0:
-                        self.stdout.write(self.style.WARNING(f'    ⚠️  Δεν βρέθηκαν διαμερίσματα'))
+                        self.stdout.write(self.style.WARNING('    ⚠️  Δεν βρέθηκαν διαμερίσματα'))
                         total_skipped += 1
                         continue
                     

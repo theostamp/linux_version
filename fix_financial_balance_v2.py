@@ -17,7 +17,7 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from financial.models import Expense, Transaction, Payment
-from django.db.models import Sum, Q, Count
+from django.db.models import Sum, Count
 from decimal import Decimal
 
 def fix_financial_balance_v2():
@@ -94,7 +94,7 @@ def fix_financial_balance_v2():
             # Επαναυπολογισμός
             new_total_transactions = Transaction.objects.aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
-            print(f"\nΜετά τη διόρθωση:")
+            print("\nΜετά τη διόρθωση:")
             print(f"💰 Συνολικές δαπάνες: {total_expenses}€")
             print(f"💳 Συνολικές συναλλαγές: {new_total_transactions}€")
             print(f"💵 Συνολικές πληρωμές: {total_payments}€")

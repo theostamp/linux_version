@@ -1,7 +1,6 @@
 import os
 import sys
 import django
-from datetime import datetime, date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -61,7 +60,7 @@ def debug_transaction_issue():
                 
                 # Ειδική ένδειξη για συναλλαγές 150€
                 if tx.amount == Decimal('150.00'):
-                    print(f"    ⚠️  ΑΥΤΗ ΕΙΝΑΙ Η ΣΥΝΑΛΛΑΓΗ 150€!")
+                    print("    ⚠️  ΑΥΤΗ ΕΙΝΑΙ Η ΣΥΝΑΛΛΑΓΗ 150€!")
         
         # Έλεγχος διαμερισμάτων
         print("\n🏠 ΕΛΕΓΧΟΣ ΔΙΑΜΕΡΙΣΜΑΤΩΝ:")

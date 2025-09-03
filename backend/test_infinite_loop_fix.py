@@ -7,7 +7,6 @@ import os
 import sys
 import django
 import requests
-import json
 import time
 
 # Setup Django environment
@@ -39,7 +38,7 @@ def test_infinite_loop_fix():
         if response.status_code == 200:
             data = response.json()
             access_token = data.get('access')
-            print(f"✅ Login successful, token obtained")
+            print("✅ Login successful, token obtained")
         else:
             print(f"❌ Login failed: {response.status_code}")
             return False
@@ -146,8 +145,8 @@ def test_infinite_loop_fix():
     print("\n" + "=" * 50)
     print("📋 SUMMARY:")
     print(f"   - API calls: {success_count}/5 successful")
-    print(f"   - Calculation endpoints: Working")
-    print(f"   - Database: Accessible")
+    print("   - Calculation endpoints: Working")
+    print("   - Database: Accessible")
     
     if success_count >= 4:
         print("✅ INFINITE LOOP ISSUE APPEARS TO BE RESOLVED!")

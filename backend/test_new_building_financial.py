@@ -18,9 +18,7 @@ from django_tenants.utils import tenant_context
 from tenants.models import Client
 from financial.services import FinancialDashboardService
 from buildings.models import Building
-from apartments.models import Apartment
 from financial.models import Payment, Expense
-from decimal import Decimal
 
 def test_new_building_financial():
     """Test financial data for a new building"""
@@ -51,7 +49,7 @@ def test_new_building_financial():
             building_id=building.id
         ).count()
         
-        print(f"\n📊 Υπάρχοντα οικονομικά δεδομένα:")
+        print("\n📊 Υπάρχοντα οικονομικά δεδομένα:")
         print(f"  - Πληρωμές: {total_payments}")
         print(f"  - Δαπάνες: {total_expenses}")
         
@@ -61,7 +59,7 @@ def test_new_building_financial():
             print("⚠️  Το κτίριο έχει οικονομικά δεδομένα")
         
         # Test the financial dashboard service
-        print(f"\n🧮 Δοκιμή FinancialDashboardService:")
+        print("\n🧮 Δοκιμή FinancialDashboardService:")
         try:
             service = FinancialDashboardService(building.id)
             summary = service.get_summary()
@@ -103,7 +101,7 @@ def test_new_building_financial():
             print(f"❌ Σφάλμα κατά τη δοκιμή: {e}")
         
         # Test API endpoint
-        print(f"\n🌐 Δοκιμή API Endpoint:")
+        print("\n🌐 Δοκιμή API Endpoint:")
         try:
             from django.test import RequestFactory
             from financial.views import FinancialDashboardViewSet

@@ -7,8 +7,7 @@ Test script για το γράφημα "Κάλυψη Υποχρεώσεων με
 import os
 import sys
 import django
-from decimal import Decimal
-from datetime import datetime, date
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -16,7 +15,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Payment, Expense, Apartment
 from buildings.models import Building
 from financial.services import FinancialDashboardService
 
@@ -52,13 +50,13 @@ def test_coverage_chart_data():
         coverage = (payments / obligations * 100) if obligations > 0 else 0
         pending = max(0, obligations - payments)
         
-        print(f"\n📊 ΑΝΑΛΥΣΗ ΚΑΛΥΨΗΣ:")
+        print("\n📊 ΑΝΑΛΥΣΗ ΚΑΛΥΨΗΣ:")
         print(f"   • Εισπράξεις: {payments:,.2f}€")
         print(f"   • Εκκρεμείς: {pending:,.2f}€")
         print(f"   • Ποσοστό Κάλυψης: {coverage:.1f}%")
         
         # Test για συγκεκριμένο μήνα (Αύγουστος 2025)
-        print(f"\n📅 ΣΥΓΚΕΚΡΙΜΕΝΟΣ ΜΗΝΑΣ (2025-08)")
+        print("\n📅 ΣΥΓΚΕΚΡΙΜΕΝΟΣ ΜΗΝΑΣ (2025-08)")
         print("-" * 40)
         
         summary_august = dashboard_service.get_summary('2025-08')
@@ -75,13 +73,13 @@ def test_coverage_chart_data():
         coverage_aug = (payments_aug / obligations_aug * 100) if obligations_aug > 0 else 0
         pending_aug = max(0, obligations_aug - payments_aug)
         
-        print(f"\n📊 ΑΝΑΛΥΣΗ ΚΑΛΥΨΗΣ (Αύγουστος):")
+        print("\n📊 ΑΝΑΛΥΣΗ ΚΑΛΥΨΗΣ (Αύγουστος):")
         print(f"   • Εισπράξεις: {payments_aug:,.2f}€")
         print(f"   • Εκκρεμείς: {pending_aug:,.2f}€")
         print(f"   • Ποσοστό Κάλυψης: {coverage_aug:.1f}%")
         
         # Έλεγχος αν τα δεδομένα είναι συνεπή
-        print(f"\n✅ ΕΛΕΓΧΟΣ ΣΥΝΕΠΕΙΑΣ:")
+        print("\n✅ ΕΛΕΓΧΟΣ ΣΥΝΕΠΕΙΑΣ:")
         
         # Έλεγχος αν οι εισπράξεις είναι μικρότερες ή ίσες με τις υποχρεώσεις
         if payments <= obligations:
@@ -101,15 +99,15 @@ def test_coverage_chart_data():
         else:
             print(f"   ❌ Εκκρεμείς πληρωμές ({pending:,.2f}€) είναι αρνητικές")
         
-        print(f"\n🎯 ΣΥΜΠΕΡΑΣΜΑ:")
+        print("\n🎯 ΣΥΜΠΕΡΑΣΜΑ:")
         if coverage >= 100:
-            print(f"   🟢 Όλες οι μηνιαίες υποχρεώσεις έχουν καλυφθεί!")
+            print("   🟢 Όλες οι μηνιαίες υποχρεώσεις έχουν καλυφθεί!")
         elif coverage >= 80:
-            print(f"   🟡 Καλή κάλυψη - χρειάζεται επιπλέον εισπράξεις")
+            print("   🟡 Καλή κάλυψη - χρειάζεται επιπλέον εισπράξεις")
         else:
-            print(f"   🔴 Χαμηλή κάλυψη - απαιτούνται άμεσες εισπράξεις")
+            print("   🔴 Χαμηλή κάλυψη - απαιτούνται άμεσες εισπράξεις")
         
-        print(f"\n" + "=" * 60)
+        print("\n" + "=" * 60)
 
 if __name__ == "__main__":
     test_coverage_chart_data()

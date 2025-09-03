@@ -4,7 +4,6 @@ Script to create a request with photos
 """
 
 import requests
-import json
 import os
 
 def create_request_with_photos():
@@ -86,7 +85,7 @@ def create_request_with_photos():
         if response.status_code == 201:
             request_data = response.json()
             request_id = request_data['id']
-            print(f"✅ Request created successfully!")
+            print("✅ Request created successfully!")
             print(f"   Request ID: {request_id}")
             print(f"   Title: {request_data['title']}")
             print(f"   Photos: {len(request_data.get('photos', []))} uploaded")
@@ -97,14 +96,14 @@ def create_request_with_photos():
             if response.status_code == 200:
                 request_detail = response.json()
                 photos = request_detail.get('photos', [])
-                print(f"✅ Request retrieved successfully")
+                print("✅ Request retrieved successfully")
                 print(f"   Photos found: {len(photos)}")
                 for i, photo in enumerate(photos):
                     print(f"   Photo {i+1}: {photo}")
                 
-                print(f"\n🎉 Test completed successfully!")
+                print("\n🎉 Test completed successfully!")
                 print(f"   View the request at: http://demo.localhost:8080/requests/{request_id}")
-                print(f"   Photos should be visible in the detail page")
+                print("   Photos should be visible in the detail page")
             else:
                 print(f"❌ Failed to retrieve request: {response.status_code}")
         else:

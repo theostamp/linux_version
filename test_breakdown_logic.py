@@ -43,7 +43,7 @@ def test_breakdown_logic():
             apartment_debts = []
             total_apartment_debts = Decimal('0.00')
             
-            print(f"\n📊 APARTMENTS WITH DEBTS:")
+            print("\n📊 APARTMENTS WITH DEBTS:")
             for apt in apartments_with_debts:
                 debt_amount = abs(apt.current_balance or Decimal('0.00'))
                 total_apartment_debts += debt_amount
@@ -82,7 +82,7 @@ def test_breakdown_logic():
                 'apartments_count': apartments_count
             }
             
-            print(f"\n📋 BREAKDOWN SUMMARY:")
+            print("\n📋 BREAKDOWN SUMMARY:")
             print(f"   Building: {breakdown_data['building_name']}")
             print(f"   Apartments with debt: {breakdown_data['apartments_with_debt']}")
             print(f"   Total apartment debts: {breakdown_data['total_apartment_debts']}€")
@@ -93,7 +93,7 @@ def test_breakdown_logic():
             # Compare with expected
             expected = 334.85
             actual = breakdown_data['total_obligations']
-            print(f"\n🎯 COMPARISON:")
+            print("\n🎯 COMPARISON:")
             print(f"   Expected: {expected}€")
             print(f"   Actual: {actual}€")
             print(f"   Match: {'✅' if abs(actual - expected) < 0.01 else '❌'}")
@@ -106,7 +106,7 @@ def test_breakdown_logic():
                 
             # Show JSON format
             import json
-            print(f"\n📄 JSON RESPONSE FORMAT:")
+            print("\n📄 JSON RESPONSE FORMAT:")
             print(json.dumps(breakdown_data, indent=2, ensure_ascii=False))
             
         except Exception as e:

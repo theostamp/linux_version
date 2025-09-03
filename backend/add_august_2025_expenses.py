@@ -8,7 +8,7 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
+from datetime import date
 from django.db.models import Sum
 
 # Setup Django environment
@@ -118,11 +118,11 @@ def add_august_2025_expenses():
             total=Sum('amount')
         )['total'] or Decimal('0.00')
         
-        print(f"\n📊 ΕΠΙΒΕΒΑΙΩΣΗ:")
+        print("\n📊 ΕΠΙΒΕΒΑΙΩΣΗ:")
         print(f"📋 Συνολικές δαπάνες Αυγούστου 2025: {total_august}€")
         print(f"📝 Αριθμός δαπανών: {final_august_expenses.count()}")
         
-        print(f"\n📋 Λίστα όλων των δαπανών Αυγούστου:")
+        print("\n📋 Λίστα όλων των δαπανών Αυγούστου:")
         for expense in final_august_expenses.order_by('date'):
             print(f"   - {expense.date.strftime('%d/%m/%Y')}: {expense.title} - {expense.amount}€")
 

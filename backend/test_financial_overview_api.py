@@ -17,7 +17,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from buildings.models import Building
 from financial.models import Expense, Payment
-from apartments.models import Apartment
 
 def test_financial_overview_api():
     """Test the financial overview API endpoint"""
@@ -93,7 +92,7 @@ def test_financial_overview_api():
             reserve_fund_percentage = float((reserve_fund_current / reserve_fund_target) * 100) if reserve_fund_target > 0 else 0.0
             surplus_percentage = float((surplus / total_income) * 100)
             
-            print(f"\n📊 Percentages:")
+            print("\n📊 Percentages:")
             print(f"   Management expenses: {management_expenses_percentage:.1f}%")
             print(f"   Building expenses: {building_expenses_percentage:.1f}%")
             print(f"   Reserve fund coverage: {reserve_fund_percentage:.1f}%")

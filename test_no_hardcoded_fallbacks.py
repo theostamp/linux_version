@@ -36,7 +36,7 @@ def test_clean_system():
         original_duration = building.reserve_fund_duration_months
         original_contribution = building.reserve_contribution_per_apartment
         
-        print(f"\n📊 Original Settings:")
+        print("\n📊 Original Settings:")
         print(f"   Reserve fund goal: {original_goal}")
         print(f"   Reserve fund duration: {original_duration}")
         print(f"   Reserve contribution per apartment: {original_contribution}")
@@ -89,14 +89,14 @@ def test_clean_system():
             reserve_contribution = summary.get('reserve_fund_contribution', 0)
             monthly_target = summary.get('reserve_fund_monthly_target', 0)
             
-            print(f"   Dashboard Results:")
+            print("   Dashboard Results:")
             print(f"     Reserve contribution: {reserve_contribution}€")
             print(f"     Monthly target: {monthly_target}€")
             print(f"     Expected: {scenario['expected_result']}€")
             
             # Check if results match expectations
             if abs(reserve_contribution - scenario['expected_result']) < 0.01:
-                print(f"     ✅ Reserve contribution matches expected value")
+                print("     ✅ Reserve contribution matches expected value")
             else:
                 print(f"     ❌ Reserve contribution mismatch: got {reserve_contribution}, expected {scenario['expected_result']}")
             
@@ -115,7 +115,7 @@ def test_clean_system():
             
             # Check for any mysterious 50€ amounts
             if reserve_contribution == 50 or monthly_target == 50 or calc_reserve == 50:
-                print(f"     ⚠️ WARNING: Found mysterious 50€!")
+                print("     ⚠️ WARNING: Found mysterious 50€!")
             
             # Test individual apartment calculations
             if 'shares' in result and result['shares']:
@@ -128,9 +128,9 @@ def test_clean_system():
                 print(f"     Total individual reserves: {total_individual_reserves:.2f}€")
                 
                 if abs(total_individual_reserves - scenario['expected_result']) < 0.01:
-                    print(f"     ✅ Individual reserves sum matches expected")
+                    print("     ✅ Individual reserves sum matches expected")
                 else:
-                    print(f"     ❌ Individual reserves sum mismatch")
+                    print("     ❌ Individual reserves sum mismatch")
         
         # Restore original settings
         building.reserve_fund_goal = original_goal
@@ -138,13 +138,13 @@ def test_clean_system():
         building.reserve_contribution_per_apartment = original_contribution
         building.save()
         
-        print(f"\n✅ Original settings restored")
+        print("\n✅ Original settings restored")
 
 def test_edge_cases():
     """Test edge cases that might trigger hardcoded values"""
     
     with schema_context('demo'):
-        print(f"\n🔍 TESTING EDGE CASES")
+        print("\n🔍 TESTING EDGE CASES")
         print("=" * 40)
         
         building = Building.objects.get(id=1)
@@ -196,11 +196,11 @@ def test_edge_cases():
                 
                 # Check for hardcoded fallbacks
                 if reserve_contribution == 50 or monthly_target == 50:
-                    print(f"   ⚠️ HARDCODED FALLBACK DETECTED: 50€ found!")
+                    print("   ⚠️ HARDCODED FALLBACK DETECTED: 50€ found!")
                 elif reserve_contribution == 5 or monthly_target == 5:
-                    print(f"   ⚠️ HARDCODED FALLBACK DETECTED: 5€ found!")
+                    print("   ⚠️ HARDCODED FALLBACK DETECTED: 5€ found!")
                 else:
-                    print(f"   ✅ No hardcoded fallbacks detected")
+                    print("   ✅ No hardcoded fallbacks detected")
                 
             except Exception as e:
                 print(f"   ❌ Error in edge case: {e}")
@@ -215,11 +215,11 @@ def main():
     test_clean_system()
     test_edge_cases()
     
-    print(f"\n" + "=" * 60)
-    print(f"🎯 HARDCODED FALLBACKS TEST COMPLETED")
-    print(f"✅ Config files updated to use 0€ defaults")
-    print(f"✅ System tested without mysterious amounts")
-    print(f"✅ All calculations now use database values only")
+    print("\n" + "=" * 60)
+    print("🎯 HARDCODED FALLBACKS TEST COMPLETED")
+    print("✅ Config files updated to use 0€ defaults")
+    print("✅ System tested without mysterious amounts")
+    print("✅ All calculations now use database values only")
 
 if __name__ == "__main__":
     main()

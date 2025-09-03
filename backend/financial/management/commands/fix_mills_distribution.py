@@ -14,8 +14,6 @@ Script για έξυπνη και ισορροπημένη διόρθωση τω
 import os
 import sys
 import django
-from decimal import Decimal
-from typing import List, Tuple
 
 # Setup Django environment
 sys.path.append('/app')
@@ -76,7 +74,7 @@ def fix_mills_distribution(building_id: int = None) -> bool:
             return True
         
         # Έξυπνη διόρθωση
-        print(f"\n🔧 Εφαρμογή έξυπνης διόρθωσης...")
+        print("\n🔧 Εφαρμογή έξυπνης διόρθωσης...")
         
         if abs(difference) <= apartments.count():
             # Μικρή διαφορά - κατανέμουμε ισόποσα
@@ -123,7 +121,7 @@ def fix_mills_distribution(building_id: int = None) -> bool:
         
         # Επιβεβαίωση
         updated_total = sum(apt.participation_mills or 0 for apt in apartments)
-        print(f"\n📊 Επιβεβαίωση:")
+        print("\n📊 Επιβεβαίωση:")
         print(f"   Νέο σύνολο: {updated_total}")
         print(f"   Διαφορά από στόχο: {updated_total - expected_total}")
         
@@ -131,7 +129,7 @@ def fix_mills_distribution(building_id: int = None) -> bool:
             print("✅ Η διόρθωση ήταν επιτυχής!")
             
             # Εμφάνιση τελικής κατανομής
-            print(f"\n📋 Τελική Κατανομή:")
+            print("\n📋 Τελική Κατανομή:")
             for apartment in apartments:
                 mills = apartment.participation_mills or 0
                 percentage = (mills / expected_total) * 100

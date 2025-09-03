@@ -1,7 +1,5 @@
 from rest_framework import serializers
 from .models import Expense, Transaction, Payment, ExpenseApartment, MeterReading, Supplier, FinancialReceipt
-from buildings.models import Building
-from apartments.models import Apartment
 from .services import FileUploadService
 
 
@@ -145,7 +143,7 @@ class PaymentSerializer(serializers.ModelSerializer):
                         running_balance = transaction.balance_after
             
             return float(running_balance)
-        except Exception as e:
+        except Exception:
             # Fallback στο στατικό current_balance αν κάτι πάει στραβά
             try:
                 balance = obj.apartment.current_balance
@@ -159,7 +157,6 @@ class PaymentSerializer(serializers.ModelSerializer):
         """Υπολογισμός μηνιαίας οφειλής (κοινόχρηστα + αποθεματικό)"""
         try:
             from decimal import Decimal
-            from .services import CommonExpenseCalculator
             from buildings.models import Building
             from .models import Expense
             from datetime import datetime
@@ -199,7 +196,7 @@ class PaymentSerializer(serializers.ModelSerializer):
             monthly_due = apartment_share + reserve_fund_amount
             return float(monthly_due)
             
-        except Exception as e:
+        except Exception:
             # Αν υπάρχει σφάλμα, επιστρέφουμε 0
             return 0.0
     

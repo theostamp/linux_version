@@ -33,7 +33,7 @@ def test_arachovis_12_mills():
     for apt in apartments_data:
         print(f"   {apt['number']}: Συμμετοχή={apt['participation_mills']}, Θέρμανση={apt['heating_mills']}, Ανελκυστήρας={apt['elevator_mills']}")
     
-    print(f"\nΣυνολικά χιλιοστά:")
+    print("\nΣυνολικά χιλιοστά:")
     print(f"   Συμμετοχή: {total_participation}")
     print(f"   Θέρμανση: {total_heating}")
     print(f"   Ανελκυστήρας: {total_elevator}")
@@ -81,7 +81,7 @@ def test_alkmanos_22_mills():
     for apt in apartments_data:
         print(f"   {apt['number']}: Συμμετοχή={apt['participation_mills']}, Θέρμανση={apt['heating_mills']}, Ανελκυστήρας={apt['elevator_mills']}")
     
-    print(f"\nΣυνολικά χιλιοστά:")
+    print("\nΣυνολικά χιλιοστά:")
     print(f"   Συμμετοχή: {total_participation}")
     print(f"   Θέρμανση: {total_heating}")
     print(f"   Ανελκυστήρας: {total_elevator}")

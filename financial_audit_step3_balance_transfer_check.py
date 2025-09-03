@@ -15,8 +15,7 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
-from collections import defaultdict
+from datetime import date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -24,9 +23,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from django.db.models import Sum, Count, Q
-from django.utils import timezone
-from financial.models import Expense, Payment, Transaction
+from django.db.models import Sum
+from financial.models import Expense, Payment
 from buildings.models import Building
 from apartments.models import Apartment
 
@@ -173,12 +171,12 @@ def check_balance_transfer():
                             'difference': expected_next_balance - actual_next_balance
                         }
                         issues_found.append(issue)
-                        print(f"      ⚠️  ΠΡΟΒΛΗΜΑ: Η μεταφορά υπολοίπου δεν είναι σωστή!")
+                        print("      ⚠️  ΠΡΟΒΛΗΜΑ: Η μεταφορά υπολοίπου δεν είναι σωστή!")
                         print(f"         Αναμενόμενο: {expected_next_balance}€")
                         print(f"         Πραγματικό: {actual_next_balance}€")
                         print(f"         Διαφορά: {expected_next_balance - actual_next_balance}€")
                     else:
-                        print(f"      ✅ Η μεταφορά υπολοίπου είναι σωστή")
+                        print("      ✅ Η μεταφορά υπολοίπου είναι σωστή")
             
             # Συνοπτική αναφορά
             print("\n📋 ΣΥΝΟΠΤΙΚΗ ΑΝΑΦΟΡΑ")
@@ -192,7 +190,7 @@ def check_balance_transfer():
                 print("✅ Δεν βρέθηκαν προβλήματα με τη μεταφορά υπολοίπων")
             
             # Έλεγχος συνολικού υπολοίπου
-            print(f"\n🏦 ΕΛΕΓΧΟΣ ΣΥΝΟΛΙΚΟΥ ΥΠΟΛΟΙΠΟΥ")
+            print("\n🏦 ΕΛΕΓΧΟΣ ΣΥΝΟΛΙΚΟΥ ΥΠΟΛΟΙΠΟΥ")
             print("-" * 40)
             
             total_expenses = Expense.objects.filter(building=building).aggregate(
@@ -212,10 +210,10 @@ def check_balance_transfer():
             print(f"🏦 Αποθηκευμένο συνολικό υπόλοιπο: {stored_total_balance}€")
             
             if abs(calculated_total_balance - stored_total_balance) > Decimal('0.01'):
-                print(f"⚠️  ΠΡΟΒΛΗΜΑ: Το συνολικό υπόλοιπο δεν είναι σωστό!")
+                print("⚠️  ΠΡΟΒΛΗΜΑ: Το συνολικό υπόλοιπο δεν είναι σωστό!")
                 print(f"   Διαφορά: {calculated_total_balance - stored_total_balance}€")
             else:
-                print(f"✅ Το συνολικό υπόλοιπο είναι σωστό")
+                print("✅ Το συνολικό υπόλοιπο είναι σωστό")
             
             print("\n✅ Ο έλεγχος μεταφοράς υπολοίπων ολοκληρώθηκε!")
             

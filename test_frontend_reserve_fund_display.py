@@ -3,8 +3,7 @@
 import os
 import sys
 import django
-import json
-from datetime import datetime, date
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -77,10 +76,10 @@ def test_frontend_reserve_fund_display():
             if should_display:
                 print(f"   💰 Monthly Target: €{monthly_target:.2f}")
         
-        print(f"\n🔍 Summary:")
-        print(f"   Reserve Fund should display for August 2025: ✅")
-        print(f"   Reserve Fund should hide before July 2025: ❌") 
-        print(f"   Reserve Fund should hide after January 2026: ❌")
+        print("\n🔍 Summary:")
+        print("   Reserve Fund should display for August 2025: ✅")
+        print("   Reserve Fund should hide before July 2025: ❌") 
+        print("   Reserve Fund should hide after January 2026: ❌")
 
 if __name__ == "__main__":
     test_frontend_reserve_fund_display()

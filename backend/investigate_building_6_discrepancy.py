@@ -2,8 +2,6 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
-from django.db.models import Sum, Q
 
 # Setup Django environment
 sys.path.append('/app')
@@ -11,9 +9,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Payment, Expense, Transaction
+from financial.models import Payment, Transaction
 from apartments.models import Apartment
-from buildings.models import Building
 
 def investigate_building_6_discrepancy():
     """Investigate the specific discrepancy in building 6 for apartment 3"""
@@ -133,7 +130,7 @@ def investigate_building_6_discrepancy():
         # Βρες την πληρωμή 65.35€
         payment_65_35 = all_payments.filter(amount=Decimal('65.35')).first()
         if payment_65_35:
-            print(f"💰 Πληρωμή 65.35€:")
+            print("💰 Πληρωμή 65.35€:")
             print(f"   - ID: {payment_65_35.id}")
             print(f"   - Ημερομηνία: {payment_65_35.date}")
             print(f"   - Μέθοδος: {payment_65_35.get_method_display()}")
@@ -142,7 +139,7 @@ def investigate_building_6_discrepancy():
         # Βρες τη συναλλαγή 65.35€
         transaction_65_35 = all_transactions.filter(amount=Decimal('65.35')).first()
         if transaction_65_35:
-            print(f"\n📋 Συναλλαγή 65.35€:")
+            print("\n📋 Συναλλαγή 65.35€:")
             print(f"   - ID: {transaction_65_35.id}")
             print(f"   - Ημερομηνία: {transaction_65_35.date}")
             print(f"   - Τύπος: {transaction_65_35.type}")

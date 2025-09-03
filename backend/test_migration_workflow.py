@@ -8,7 +8,6 @@ import sys
 import django
 from pathlib import Path
 import requests
-import json
 import tempfile
 from PIL import Image, ImageDraw
 

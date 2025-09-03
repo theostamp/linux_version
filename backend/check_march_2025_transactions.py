@@ -16,7 +16,7 @@ from django_tenants.utils import schema_context
 from financial.models import Apartment, Transaction, Payment, Expense
 from buildings.models import Building
 from decimal import Decimal
-from datetime import date, datetime
+from datetime import datetime
 from django.utils import timezone
 from django.db.models import Sum
 
@@ -71,7 +71,7 @@ def check_march_2025_transactions():
                 elif transaction.type in ['common_expense_payment', 'payment_received', 'refund']:
                     total_payments += transaction.amount
             
-            print(f"\n📊 ΣΥΝΟΛΑ ΜΑΡΤΙΟΥ 2025:")
+            print("\n📊 ΣΥΝΟΛΑ ΜΑΡΤΙΟΥ 2025:")
             print(f"   • Συνολικές χρεώσεις: {total_charges}€")
             print(f"   • Συνολικές πληρωμές: {total_payments}€")
             print(f"   • Καθαρό υπόλοιπο: {total_payments - total_charges}€")

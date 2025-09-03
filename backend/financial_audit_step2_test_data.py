@@ -23,8 +23,7 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date, timedelta
-from collections import defaultdict
+from datetime import date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -32,8 +31,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from django.db.models import Sum, Count, Q
-from django.utils import timezone
+from django.db.models import Sum
 from financial.models import Expense, Payment, Transaction, Supplier
 from buildings.models import Building
 from apartments.models import Apartment

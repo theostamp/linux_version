@@ -1,7 +1,7 @@
 import os
 import sys
 import django
-from datetime import datetime, date
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -9,7 +9,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Transaction, Building, Apartment
+from financial.models import Transaction, Building
 from decimal import Decimal
 
 def check_full_transaction_history():
@@ -115,9 +115,9 @@ def check_full_transaction_history():
                 
                 # Ειδική ένδειξη για συναλλαγές 150€
                 if transaction.amount == Decimal('150.00'):
-                    print(f"     ⚠️  ΑΥΤΗ ΕΙΝΑΙ Η ΣΥΝΑΛΛΑΓΗ 150€!")
+                    print("     ⚠️  ΑΥΤΗ ΕΙΝΑΙ Η ΣΥΝΑΛΛΑΓΗ 150€!")
                 elif transaction.amount == Decimal('-150.00'):
-                    print(f"     ⚠️  ΑΥΤΗ ΕΙΝΑΙ Η ΧΡΕΩΣΗ -150€!")
+                    print("     ⚠️  ΑΥΤΗ ΕΙΝΑΙ Η ΧΡΕΩΣΗ -150€!")
         
         # Ανάλυση ανά τύπο συναλλαγής
         print("\n📊 ΑΝΑΛΥΣΗ ΑΝΑ ΤΥΠΟ ΣΥΝΑΛΛΑΓΗΣ:")

@@ -10,7 +10,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.models import Transaction, Payment, Expense
 from apartments.models import Apartment
-from buildings.models import Building
 
 def check_database_data():
     """Ελέγχει τα δεδομένα στη βάση"""

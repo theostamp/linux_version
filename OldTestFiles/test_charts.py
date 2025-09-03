@@ -7,18 +7,13 @@ Test Script για Charts & Visualization System
 import os
 import sys
 import django
-from datetime import datetime, timedelta
-import random
 
 # Setup Django
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
 django.setup()
 
-from django_tenants.utils import tenant_context
 from financial.models import MeterReading
-from buildings.models import Building
-from apartments.models import Apartment
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -96,7 +91,7 @@ def test_consumption_calculations(readings):
             apartment_consumption[apartment_name] = 0
         apartment_consumption[apartment_name] += reading.consumption or 0
     
-    print(f"    📊 Consumption by apartment:")
+    print("    📊 Consumption by apartment:")
     for apartment, consumption in sorted(apartment_consumption.items(), key=lambda x: x[1], reverse=True):
         print(f"       {apartment}: {consumption:.2f}")
 
@@ -121,7 +116,7 @@ def test_trend_analysis(readings):
     for month, consumptions in monthly_data.items():
         monthly_totals[month] = sum(consumptions)
     
-    print(f"    ✅ Monthly consumption data:")
+    print("    ✅ Monthly consumption data:")
     for month in sorted(monthly_totals.keys()):
         print(f"       {month}: {monthly_totals[month]:.2f}")
     

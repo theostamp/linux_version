@@ -7,4 +7,3 @@ class FinancialConfig(AppConfig):
     
     def ready(self):
         """Εγγραφή signals όταν φορτώνει το app"""
-        import financial.signals

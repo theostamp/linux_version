@@ -16,7 +16,6 @@ from django_tenants.utils import schema_context
 from financial.models import Transaction
 from apartments.models import Apartment
 from buildings.models import Building
-from decimal import Decimal
 
 def fix_apartment_balances():
     """Διορθώνει τα current_balance των διαμερισμάτων"""
@@ -55,14 +54,14 @@ def fix_apartment_balances():
                 apartment.current_balance = new_balance
                 apartment.save()
                 total_updated += 1
-                print(f"   ✅ ΕΝΗΜΕΡΩΘΗΚΕ")
+                print("   ✅ ΕΝΗΜΕΡΩΘΗΚΕ")
             else:
-                print(f"   ✅ ΗΔΗ ΣΩΣΤΟ")
+                print("   ✅ ΗΔΗ ΣΩΣΤΟ")
             
             print()
         
         print("=" * 60)
-        print(f"✅ ΟΛΟΚΛΗΡΩΘΗΚΕ Η ΔΙΟΡΘΩΣΗ")
+        print("✅ ΟΛΟΚΛΗΡΩΘΗΚΕ Η ΔΙΟΡΘΩΣΗ")
         print(f"📊 ΕΝΗΜΕΡΩΘΗΚΑΝ: {total_updated} διαμερίσματα")
         
         # Επιβεβαίωση

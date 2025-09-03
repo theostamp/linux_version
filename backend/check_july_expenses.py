@@ -1,7 +1,6 @@
 import os
 import sys
 import django
-from datetime import datetime, date
 
 # Setup Django environment
 sys.path.append('/app')

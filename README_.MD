@@ -526,7 +526,7 @@ git push origin v2.1.0
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "οκ fixed balanceδιορθωκηε η δυνατοτητα εισαγωγης μηδενικου ποσου πληρωμης στην περιπτωση επιπλεον υπολοιπο των δαπανων "
+git commit -m "sidebar δεξια ημερολογιο"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

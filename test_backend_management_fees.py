@@ -33,7 +33,7 @@ def test_management_fees_api():
             # Get summary
             summary = service.get_summary(august_month)
             
-            print(f"\n📊 API Response Summary:")
+            print("\n📊 API Response Summary:")
             print(f"  - total_expenses_month: {summary.get('total_expenses_month', 'NOT FOUND')}€")
             print(f"  - management_fees: {summary.get('management_fees', 'NOT FOUND')}€")
             print(f"  - reserve_fund_contribution: {summary.get('reserve_fund_contribution', 'NOT FOUND')}€")
@@ -51,7 +51,7 @@ def test_management_fees_api():
                 print(f"  - Total management fees: {summary['management_fees']}€")
                 
             else:
-                print(f"\n❌ management_fees field NOT FOUND in API response")
+                print("\n❌ management_fees field NOT FOUND in API response")
                 print(f"Available fields: {list(summary.keys())}")
             
             # Test και για Σεπτέμβριο
@@ -60,7 +60,7 @@ def test_management_fees_api():
             
             september_summary = service.get_summary(september_month)
             
-            print(f"\n📊 September API Response:")
+            print("\n📊 September API Response:")
             print(f"  - total_expenses_month: {september_summary.get('total_expenses_month', 'NOT FOUND')}€")
             print(f"  - management_fees: {september_summary.get('management_fees', 'NOT FOUND')}€")
             
@@ -68,7 +68,7 @@ def test_management_fees_api():
             august_expenses = summary.get('total_expenses_month', 0)
             september_expenses = september_summary.get('total_expenses_month', 0)
             
-            print(f"\n🔄 Month Comparison:")
+            print("\n🔄 Month Comparison:")
             print(f"  - August expenses: {august_expenses}€")
             print(f"  - September expenses: {september_expenses}€")
             print(f"  - Different: {'✅ YES' if august_expenses != september_expenses else '❌ NO'}")

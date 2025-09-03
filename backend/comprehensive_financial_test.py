@@ -19,7 +19,7 @@ from django_tenants.utils import schema_context
 from financial.views import CommonExpenseViewSet
 from django.test import RequestFactory
 from buildings.models import Building
-from financial.models import Expense, CommonExpensePeriod, ApartmentShare
+from financial.models import Expense
 
 def test_complete_financial_flow():
     """Test complete financial flow with all parameters and month filtering"""
@@ -82,7 +82,7 @@ def test_complete_financial_flow():
                 print(f"   ✅ Expected: {scenario['expected_expenses']}€")
                 
                 if abs(total_expenses - scenario['expected_expenses']) < 1:
-                    print(f"   ✅ PASS: Expense filtering correct")
+                    print("   ✅ PASS: Expense filtering correct")
                 else:
                     print(f"   ❌ FAIL: Expected {scenario['expected_expenses']}€, got {total_expenses}€")
                 
@@ -127,13 +127,13 @@ def test_complete_financial_flow():
                 # Verify calculations
                 expected_total = scenario['expected_expenses'] + scenario['expected_management']
                 if abs(general_expenses - expected_total) < 1:
-                    print(f"   ✅ PASS: Advanced calculation correct")
+                    print("   ✅ PASS: Advanced calculation correct")
                 else:
                     print(f"   ❌ FAIL: Expected {expected_total}€, got {general_expenses}€")
                 
                 # Check reserve fund
                 if abs(reserve_goal - scenario['expected_reserve_goal']) < 1:
-                    print(f"   ✅ PASS: Reserve fund goal correct")
+                    print("   ✅ PASS: Reserve fund goal correct")
                 else:
                     print(f"   ❌ FAIL: Expected goal {scenario['expected_reserve_goal']}€, got {reserve_goal}€")
                 
@@ -148,7 +148,7 @@ def test_complete_financial_flow():
                     reserve_contrib = breakdown.get('reserve_fund_contribution', 0)
                     general_exp = breakdown.get('general_expenses', 0)
                     
-                    print(f"   📊 Sample apartment breakdown:")
+                    print("   📊 Sample apartment breakdown:")
                     print(f"      - Management fee: {mgmt_fee}€")
                     print(f"      - Reserve contribution: {reserve_contrib}€")
                     print(f"      - General expenses: {general_exp}€")
@@ -162,14 +162,14 @@ def test_data_persistence():
     with schema_context('demo'):
         building_id = 1
         
-        print(f"\n💾 Testing Data Persistence")
+        print("\n💾 Testing Data Persistence")
         print("=" * 60)
         
         # Check building settings persistence
         try:
             building = Building.objects.get(id=building_id)
             
-            print(f"🏢 Building Settings:")
+            print("🏢 Building Settings:")
             print(f"   - Name: {building.name}")
             print(f"   - Management fee per apartment: {building.management_fee_per_apartment}€")
             print(f"   - Reserve fund goal: {building.reserve_fund_goal}€")
@@ -178,20 +178,20 @@ def test_data_persistence():
             
             # Verify settings are correct
             if building.management_fee_per_apartment == Decimal('1.00'):
-                print(f"   ✅ Management fee correctly stored")
+                print("   ✅ Management fee correctly stored")
             else:
-                print(f"   ❌ Management fee incorrect")
+                print("   ❌ Management fee incorrect")
             
             if building.reserve_fund_goal == Decimal('1000.00'):
-                print(f"   ✅ Reserve fund goal correctly stored")
+                print("   ✅ Reserve fund goal correctly stored")
             else:
-                print(f"   ❌ Reserve fund goal incorrect")
+                print("   ❌ Reserve fund goal incorrect")
                 
         except Exception as e:
             print(f"   ❌ Error getting building: {e}")
         
         # Check expenses by month
-        print(f"\n📊 Stored Expenses by Month:")
+        print("\n📊 Stored Expenses by Month:")
         expenses = Expense.objects.filter(building_id=building_id).order_by('date')
         
         expenses_by_month = {}
@@ -208,7 +208,7 @@ def test_data_persistence():
                 print(f"      - {exp.category}: {exp.amount}€")
         
         # Verify month filtering works with stored data
-        print(f"\n🔍 Verifying Month Filtering with Stored Data:")
+        print("\n🔍 Verifying Month Filtering with Stored Data:")
         
         february_expenses = Expense.objects.filter(
             building_id=building_id,
@@ -228,12 +228,12 @@ def test_data_persistence():
         print(f"   August 2025 expenses: {aug_total}€")
         
         if feb_total == 0:
-            print(f"   ✅ February correctly has no expenses")
+            print("   ✅ February correctly has no expenses")
         else:
             print(f"   ⚠️ February has {feb_total}€ expenses")
         
         if aug_total == 300:
-            print(f"   ✅ August correctly has ΔΕΗ expense")
+            print("   ✅ August correctly has ΔΕΗ expense")
         else:
             print(f"   ⚠️ August has {aug_total}€ expenses (expected 300€)")
 
@@ -251,7 +251,7 @@ def main():
     test_complete_financial_flow()
     test_data_persistence()
     
-    print(f"\n" + "=" * 70)
+    print("\n" + "=" * 70)
     print("🏁 COMPREHENSIVE TEST COMPLETED!")
     print("\n📋 Summary:")
     print("✅ Month filtering works correctly")

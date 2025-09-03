@@ -11,7 +11,7 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from django.utils import timezone
-from financial.models import Expense, Transaction, ExpenseApartment
+from financial.models import Expense, Transaction
 from apartments.models import Apartment
 from buildings.models import Building
 
@@ -160,7 +160,7 @@ def verify_expenses_and_charges():
             print(f"   - Συνολικό ποσό: {tx_type['total_amount']:.2f}€")
         
         # Έλεγχος υπολοίπων διαμερισμάτων
-        print(f"\n🏢 ΥΠΟΛΟΙΠΑ ΔΙΑΜΕΡΙΣΜΑΤΩΝ:")
+        print("\n🏢 ΥΠΟΛΟΙΠΑ ΔΙΑΜΕΡΙΣΜΑΤΩΝ:")
         print("-" * 30)
         
         apartments = Apartment.objects.filter(

@@ -50,7 +50,7 @@ def check_and_fix_financial_balances():
         
         correct_reserve = total_payments - total_expenses
         
-        print(f"\n📊 Υπολογισμός σωστού αποθεματικού:")
+        print("\n📊 Υπολογισμός σωστού αποθεματικού:")
         print(f"  - Συνολικές εισπράξεις: {total_payments:10.2f}€")
         print(f"  - Συνολικές δαπάνες: {total_expenses:10.2f}€")
         print(f"  - Σωστό αποθεματικό: {correct_reserve:10.2f}€")
@@ -58,7 +58,7 @@ def check_and_fix_financial_balances():
         # Check if there's a discrepancy
         current_reserve = building.current_reserve or Decimal('0.00')
         if abs(current_reserve - correct_reserve) > Decimal('0.01'):
-            print(f"\n⚠️  ΒΡΕΘΗΚΕ ΔΙΑΦΟΡΑ:")
+            print("\n⚠️  ΒΡΕΘΗΚΕ ΔΙΑΦΟΡΑ:")
             print(f"  - Τρέχον στη βάση: {current_reserve:10.2f}€")
             print(f"  - Σωστό υπολογισμένο: {correct_reserve:10.2f}€")
             print(f"  - Διαφορά: {abs(correct_reserve - current_reserve):10.2f}€")
@@ -67,18 +67,18 @@ def check_and_fix_financial_balances():
             building.current_reserve = correct_reserve
             building.save()
             
-            print(f"\n✅ ΔΙΟΡΘΩΘΗΚΕ ΤΟ ΑΠΟΘΕΜΑΤΙΚΟ:")
+            print("\n✅ ΔΙΟΡΘΩΘΗΚΕ ΤΟ ΑΠΟΘΕΜΑΤΙΚΟ:")
             print(f"  - Ενημερώθηκε σε: {correct_reserve:10.2f}€")
         else:
-            print(f"\n✅ Το αποθεματικό είναι σωστό!")
+            print("\n✅ Το αποθεματικό είναι σωστό!")
         
         # Verify the fix
         building.refresh_from_db()
-        print(f"\n🔍 Επιβεβαίωση:")
+        print("\n🔍 Επιβεβαίωση:")
         print(f"  - Τρέχον αποθεματικό στη βάση: {building.current_reserve:10.2f}€")
         
         # Additional checks
-        print(f"\n📋 Επιπλέον στοιχεία:")
+        print("\n📋 Επιπλέον στοιχεία:")
         print(f"  - Αριθμός εισπράξεων: {Payment.objects.count()}")
         print(f"  - Αριθμός δαπανών: {Expense.objects.count()}")
         print(f"  - Αριθμός transactions: {Transaction.objects.count()}")
@@ -100,13 +100,13 @@ def check_and_fix_financial_balances():
         if abs(expected_zero_balance) > Decimal('0.01'):
             print(f"  ⚠️  ΔΙΑΦΟΡΑ ΣΤΟ ΙΣΟΖΥΓΙΟ: {expected_zero_balance:10.2f}€")
         else:
-            print(f"  ✅ Το ισοζύγιο είναι σωστό!")
+            print("  ✅ Το ισοζύγιο είναι σωστό!")
         
-        print(f"\n✅ Έλεγχος ολοκληρώθηκε")
+        print("\n✅ Έλεγχος ολοκληρώθηκε")
 
 def check_monthly_figures():
     """Έλεγχος των μηνιαίων στοιχείων"""
-    print(f"\n📅 ΕΛΕΓΧΟΣ ΜΗΝΙΑΙΩΝ ΣΤΟΙΧΕΙΩΝ")
+    print("\n📅 ΕΛΕΓΧΟΣ ΜΗΝΙΑΙΩΝ ΣΤΟΙΧΕΙΩΝ")
     print("=" * 60)
     
     try:
@@ -116,7 +116,7 @@ def check_monthly_figures():
         return
     
     with tenant_context(client):
-        from datetime import datetime, timedelta
+        from datetime import datetime
         
         # Get current month
         now = datetime.now()

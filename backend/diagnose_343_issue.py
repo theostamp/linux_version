@@ -6,8 +6,7 @@ Diagnostic script to investigate why 343.33€ still appears after the fix
 import os
 import sys
 import django
-from datetime import date, datetime
-from decimal import Decimal
+from datetime import date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -31,7 +30,7 @@ def diagnose_343_issue():
         print(f"🏠 Apartments: {building.apartments.count()}")
         
         # Check reserve fund settings
-        print(f"\n💰 RESERVE FUND SETTINGS:")
+        print("\n💰 RESERVE FUND SETTINGS:")
         print(f"   Goal: {building.reserve_fund_goal}€")
         print(f"   Duration: {building.reserve_fund_duration_months} months")
         print(f"   Start Date: {building.reserve_fund_start_date}")
@@ -50,7 +49,7 @@ def diagnose_343_issue():
         if building.reserve_fund_goal and building.reserve_fund_duration_months:
             reserve_monthly = building.reserve_fund_goal / building.reserve_fund_duration_months
             total_343 = reserve_monthly + total_management
-            print(f"\n🧮 343.33€ BREAKDOWN:")
+            print("\n🧮 343.33€ BREAKDOWN:")
             print(f"   Reserve Fund Monthly: {reserve_monthly:.2f}€")
             print(f"   Management Fees: {total_management:.2f}€")
             print(f"   Total: {total_343:.2f}€")
@@ -65,7 +64,7 @@ def diagnose_343_issue():
             '2026-01',  # After collection (should be 10€)
         ]
         
-        print(f"\n📅 TESTING DIFFERENT MONTHS:")
+        print("\n📅 TESTING DIFFERENT MONTHS:")
         print("-" * 60)
         
         for month in test_months:
@@ -93,13 +92,13 @@ def diagnose_343_issue():
             
             # Check if this matches the problematic 343.33€
             if abs(current_obligations - 343.33) < 0.01:
-                print(f"   🚨 FOUND 343.33€ MATCH!")
+                print("   🚨 FOUND 343.33€ MATCH!")
                 print(f"   Expected for {month}: {'343.33€' if within_period else '10.00€'}")
                 if not within_period:
-                    print(f"   ❌ ERROR: Reserve fund should be 0 for this month!")
+                    print("   ❌ ERROR: Reserve fund should be 0 for this month!")
         
         # Test current obligations (no month specified)
-        print(f"\n🕐 CURRENT OBLIGATIONS (NO MONTH):")
+        print("\n🕐 CURRENT OBLIGATIONS (NO MONTH):")
         service_current = FinancialDashboardService(building.id)
         current_summary = service_current.get_summary()
         print(f"Current obligations: {current_summary['current_obligations']:.2f}€")
@@ -116,7 +115,7 @@ def diagnose_343_issue():
         
         print(f"Today within reserve fund period: {current_within_period}")
         
-        print(f"\n✅ DIAGNOSIS COMPLETE")
+        print("\n✅ DIAGNOSIS COMPLETE")
 
 if __name__ == '__main__':
     diagnose_343_issue()

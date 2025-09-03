@@ -65,7 +65,7 @@ def test_reserve_fund_data():
             if building.reserve_fund_goal and building.reserve_fund_duration_months:
                 expected_monthly = building.reserve_fund_goal / building.reserve_fund_duration_months
                 actual_monthly = summary.get('reserve_fund_monthly_target', 0)
-                print(f"📊 Υπολογισμός μηνιαίας εισφοράς:")
+                print("📊 Υπολογισμός μηνιαίας εισφοράς:")
                 print(f"   Αναμενόμενη: {expected_monthly}€")
                 print(f"   Πραγματική: {actual_monthly}€")
                 print(f"   Σωστή: {'✅' if abs(expected_monthly - actual_monthly) < 0.01 else '❌'}")

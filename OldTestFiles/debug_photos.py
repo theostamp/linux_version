@@ -4,8 +4,6 @@ Debug script to check photo upload functionality
 """
 
 import requests
-import json
-import os
 
 def debug_photos():
     print("🔍 Debugging Photo Upload")
@@ -62,7 +60,7 @@ def debug_photos():
         response = session.get("http://demo.localhost:8000/api/user-requests/10/")
         if response.status_code == 200:
             request_data = response.json()
-            print(f"✅ Request 10 details:")
+            print("✅ Request 10 details:")
             print(f"   Title: {request_data.get('title', 'No title')}")
             print(f"   Description: {request_data.get('description', 'No description')}")
             photos = request_data.get('photos', [])

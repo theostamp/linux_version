@@ -6,7 +6,6 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings"
 django.setup()
 
 from django.contrib.auth import get_user_model, authenticate
-from django.contrib.auth.hashers import make_password, check_password
 
 User = get_user_model()
 

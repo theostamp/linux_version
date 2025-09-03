@@ -6,7 +6,6 @@ Script to check the current reserve fund settings for the building
 import os
 import sys
 import django
-from decimal import Decimal
 from datetime import date
 
 # Setup Django environment

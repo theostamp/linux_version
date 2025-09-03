@@ -26,7 +26,6 @@ from buildings.models import Building, BuildingMembership
 from announcements.models import Announcement
 from user_requests.models import UserRequest
 from votes.models import Vote
-from obligations.models import Obligation
 from apartments.models import Apartment
 
 def wait_for_database():
@@ -40,7 +39,7 @@ def wait_for_database():
                 cursor.execute("SELECT 1")
             print("✅ Σύνδεση βάσης δεδομένων: OK")
             return True
-        except Exception as e:
+        except Exception:
             attempt += 1
             print(f"⏳ Αναμονή για βάση δεδομένων... (προσπάθεια {attempt}/{max_attempts})")
             time.sleep(2)
@@ -473,7 +472,7 @@ def save_credentials():
     os.makedirs(log_dir, exist_ok=True)
     log_path = os.path.join(log_dir, "demo_credentials.log")
     
-    credentials = f"""
+    credentials = """
 🎯 DIGITAL CONCIERGE - AUTO INITIALIZATION
 =========================================
 

@@ -2,7 +2,6 @@
 from django.db import models
 from django_tenants.models import TenantMixin, DomainMixin
 # ➊ αφαίρεσε  from buildings.models import Building
-from django.utils.translation import gettext_lazy as _
 
 
 class Client(TenantMixin):

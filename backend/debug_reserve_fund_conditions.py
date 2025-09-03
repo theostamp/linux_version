@@ -18,7 +18,6 @@ from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
 from financial.models import Transaction
-from datetime import datetime
 
 def debug_reserve_fund_conditions():
     """Έλεγχος συνθηκών αποθεματικού"""

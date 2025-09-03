@@ -7,8 +7,6 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
-from django.db.models import Sum, Q
 
 # Setup Django environment
 sys.path.append('/app')
@@ -18,7 +16,7 @@ django.setup()
 from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
-from financial.models import Payment, Expense, Transaction, Supplier
+from financial.models import Payment, Expense, Transaction
 
 def trace_araxovis_balance():
     """Trace the source of 7,712.68€ balance for Αραχώβης 12"""
@@ -106,7 +104,7 @@ def trace_araxovis_balance():
         if building.current_reserve != calculated_reserve:
             print(f"⚠️  ΔΙΑΦΟΡΑ: {building.current_reserve}€ vs {calculated_reserve}€")
         else:
-            print(f"✅ Τα αποθεματικά ταιριάζουν!")
+            print("✅ Τα αποθεματικά ταιριάζουν!")
         
         print()
         
@@ -179,13 +177,13 @@ def trace_araxovis_balance():
         print("=" * 80)
         
         if abs(building.current_reserve - target_amount) < Decimal('0.01'):
-            print(f"✅ Το ποσό 7.712,68€ είναι το τρέχον αποθεματικό του κτιρίου Αραχώβης 12.")
+            print("✅ Το ποσό 7.712,68€ είναι το τρέχον αποθεματικό του κτιρίου Αραχώβης 12.")
             print(f"   Υπολογίζεται ως: Εισπράξεις ({total_payments}€) - Δαπάνες ({total_expenses}€)")
             print(f"   Αυτό σημαίνει ότι το κτίριο έχει συνολικά εισπράξει {total_payments}€ και έχει δαπανήσει {total_expenses}€.")
-            print(f"   Η διαφορά αποτελεί το διαθέσιμο αποθεματικό για μελλοντικές δαπάνες.")
+            print("   Η διαφορά αποτελεί το διαθέσιμο αποθεματικό για μελλοντικές δαπάνες.")
         else:
-            print(f"❓ Το ποσό 7.712,68€ δεν ταιριάζει ακριβώς με κανέναν υπολογισμό.")
-            print(f"   Πιθανές πηγές:")
+            print("❓ Το ποσό 7.712,68€ δεν ταιριάζει ακριβώς με κανέναν υπολογισμό.")
+            print("   Πιθανές πηγές:")
             print(f"   - Τρέχον αποθεματικό: {building.current_reserve}€")
             print(f"   - Συνολικές εισπράξεις: {total_payments}€")
             print(f"   - Συνολικές δαπάνες: {total_expenses}€")

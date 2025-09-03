@@ -17,7 +17,6 @@ from users.models import CustomUser
 from django.test import RequestFactory
 from users.views import update_office_details
 from rest_framework.test import force_authenticate
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 def test_bank_account_integration():
     """Test the integration of bank account details"""

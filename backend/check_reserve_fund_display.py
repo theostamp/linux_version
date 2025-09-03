@@ -7,7 +7,7 @@
 
 import os
 import sys
-from datetime import datetime, date
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -17,7 +17,7 @@ import django
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Building, Apartment, Expense, Payment, Transaction
+from financial.models import Building, Expense, Payment
 from financial.services import FinancialDashboardService
 
 def check_arachovis_reserve_fund():

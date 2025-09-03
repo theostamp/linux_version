@@ -4,7 +4,6 @@ Script για διόρθωση του αποθεματικού της πολυκ
 """
 
 import os
-import sys
 import django
 
 # Setup Django
@@ -50,7 +49,7 @@ def fix_alkmanos_reserve():
                 
                 # Έλεγχος αν χρειάζεται διόρθωση
                 if building.current_reserve != actual_reserve:
-                    print(f"⚠️ ΧΡΕΙΑΖΕΤΑΙ ΔΙΟΡΘΩΣΗ!")
+                    print("⚠️ ΧΡΕΙΑΖΕΤΑΙ ΔΙΟΡΘΩΣΗ!")
                     print(f"   Τρέχον: {building.current_reserve}€")
                     print(f"   Σωστό: {actual_reserve}€")
                     
@@ -59,10 +58,10 @@ def fix_alkmanos_reserve():
                     building.save()
                     print(f"✅ ΔΙΟΡΘΩΘΗΚΕ σε {actual_reserve}€")
                 else:
-                    print(f"✅ Το αποθεματικό είναι σωστό!")
+                    print("✅ Το αποθεματικό είναι σωστό!")
                 
                 # Έλεγχος ρυθμίσεων αποθεματικού
-                print(f"\n📊 Ρυθμίσεις αποθεματικού:")
+                print("\n📊 Ρυθμίσεις αποθεματικού:")
                 print(f"   Εισφορά ανά διαμέρισμα: {building.reserve_contribution_per_apartment or 0}€")
                 print(f"   Αμοιβή διαχείρισης ανά διαμέρισμα: {building.management_fee_per_apartment or 0}€")
                 
@@ -70,7 +69,7 @@ def fix_alkmanos_reserve():
                 if building.reserve_contribution_per_apartment and building.reserve_contribution_per_apartment > 0:
                     print(f"✅ Η εισφορά αποθεματικού είναι {building.reserve_contribution_per_apartment}€ ανά διαμέρισμα")
                 else:
-                    print(f"✅ Η εισφορά αποθεματικού είναι μηδενική (νέο κτίριο)")
+                    print("✅ Η εισφορά αποθεματικού είναι μηδενική (νέο κτίριο)")
                 
             except Building.DoesNotExist:
                 print("❌ Δεν βρέθηκε κτίριο 'Πολυκατοικία Αλκμάνος 22'")

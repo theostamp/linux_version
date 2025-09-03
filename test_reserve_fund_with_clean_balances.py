@@ -8,7 +8,6 @@ import os
 import sys
 import django
 from datetime import date
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -64,15 +63,15 @@ def test_reserve_fund_with_clean_balances():
             print(f"   Expected monthly target: €{expected_monthly_target}")
             
             if reserve_fund_total > 0:
-                print(f"✅ SUCCESS: Reserve Fund collection working correctly!")
-                print(f"   Timeline logic: ✅ Working")
-                print(f"   Pending obligations check: ✅ Working")
-                print(f"   Calculation logic: ✅ Working")
+                print("✅ SUCCESS: Reserve Fund collection working correctly!")
+                print("   Timeline logic: ✅ Working")
+                print("   Pending obligations check: ✅ Working")
+                print("   Calculation logic: ✅ Working")
             else:
-                print(f"❌ FAILED: Reserve Fund still not collecting")
+                print("❌ FAILED: Reserve Fund still not collecting")
                 
                 # Debug why it's still failing
-                print(f"\n🔍 Additional debugging:")
+                print("\n🔍 Additional debugging:")
                 
                 # Check pending obligations again
                 total_obligations = 0
@@ -88,7 +87,7 @@ def test_reserve_fund_with_clean_balances():
                     monthly_target = float(building.reserve_fund_goal) / float(building.reserve_fund_duration_months)
                     print(f"   Monthly target calculation: €{monthly_target}")
                 else:
-                    print(f"   ❌ Monthly target calculation failed")
+                    print("   ❌ Monthly target calculation failed")
                     print(f"      Goal: {building.reserve_fund_goal}")
                     print(f"      Duration: {building.reserve_fund_duration_months}")
             

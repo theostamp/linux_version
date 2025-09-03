@@ -15,9 +15,8 @@ from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
 from financial.models import Expense, Transaction, Payment
-from users.models import CustomUser
 from datetime import datetime
-from typing import Dict, List, Tuple, Any
+from typing import Dict, Any
 import json
 
 
@@ -45,7 +44,7 @@ class SystemHealthChecker:
         self.stdout.write("SYSTEM HEALTH CHECK - New Concierge")
         self.stdout.write("=" * 60)
         self.stdout.write(f"Ημερομηνία: {self.results['timestamp'].strftime('%d/%m/%Y %H:%M:%S')}")
-        self.stdout.write(f"Κτίριο: Αραχώβης 12, Αθήνα 106 80, Ελλάδα")
+        self.stdout.write("Κτίριο: Αραχώβης 12, Αθήνα 106 80, Ελλάδα")
         self.stdout.write(f"Λεπτομερής έξοδος: {'Ενεργή' if self.detailed else 'Απενεργή'}")
         self.stdout.write(f"Αυτόματη διόρθωση: {'Ενεργή' if self.auto_fix else 'Απενεργή'}")
         self.stdout.write("=" * 60)
@@ -89,7 +88,7 @@ class SystemHealthChecker:
                 
                 self.stdout.write(f"Τα χιλιοστά είναι {result['total_mills']} (αναμενόμενα {result['expected_mills']})")
                 self.stdout.write(f"   Scaling factor: {scaling_factor:.2f}x")
-                self.stdout.write(f"   Το σύστημα λειτουργεί κανονικά με οποιοδήποτε σύνολο χιλιοστών")
+                self.stdout.write("   Το σύστημα λειτουργεί κανονικά με οποιοδήποτε σύνολο χιλιοστών")
                 
                 # Αυτόματη διόρθωση αν είναι ενεργοποιημένη
                 if self.auto_fix and result['apartments_count'] > 0:
@@ -251,7 +250,7 @@ class SystemHealthChecker:
                 self.stdout.write(f"Πληρωμές χωρίς συναλλαγές: {payment_balance:.2f}€ (φυσιολογικό)")
                 self.results['summary']['warnings'] += 1
             else:
-                self.stdout.write(f"Όλες οι πληρωμές έχουν συναλλαγές")
+                self.stdout.write("Όλες οι πληρωμές έχουν συναλλαγές")
                 self.results['summary']['passed'] += 1
             
             # Επιπλέον έλεγχος για τις πληρωμές

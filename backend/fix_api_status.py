@@ -61,7 +61,7 @@ def fix_api_status():
             print(f'  Διαφορά: {net_obligation - apt.current_balance:.2f}')
             
             # Προτάσεις για το API
-            print(f'  💡 Το API πρέπει να επιστρέφει:')
+            print('  💡 Το API πρέπει να επιστρέφει:')
             print(f'     - net_obligation: {apt.current_balance:.2f} (από το model)')
             print(f'     - status: {status} (βασισμένο στο current_balance)')
 

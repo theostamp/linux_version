@@ -36,7 +36,7 @@ def debug_calculator():
         
         try:
             # Test regular calculator first
-            print(f"\n📊 Testing CommonExpenseCalculator:")
+            print("\n📊 Testing CommonExpenseCalculator:")
             regular_calc = CommonExpenseCalculator(building_id=building_id, month='2025-02')
             regular_result = regular_calc.calculate_shares()
             
@@ -53,7 +53,7 @@ def debug_calculator():
                     print(f"First apartment data: {json.dumps(first_share, indent=2, default=str)}")
             
             # Test advanced calculator
-            print(f"\n📊 Testing AdvancedCommonExpenseCalculator:")
+            print("\n📊 Testing AdvancedCommonExpenseCalculator:")
             advanced_calc = AdvancedCommonExpenseCalculator(
                 building_id=building_id,
                 period_start_date=period_start,
@@ -82,7 +82,7 @@ def debug_calculator():
                     print(f"Management fee: {mgmt_fee}")
             
             # Test with reserve fund
-            print(f"\n📊 Testing with Reserve Fund:")
+            print("\n📊 Testing with Reserve Fund:")
             advanced_calc_reserve = AdvancedCommonExpenseCalculator(
                 building_id=building_id,
                 period_start_date=period_start,
@@ -115,7 +115,7 @@ def check_building_settings():
     with schema_context('demo'):
         try:
             building = Building.objects.get(id=1)
-            print(f"\n🏢 Building Settings:")
+            print("\n🏢 Building Settings:")
             print(f"Name: {building.name}")
             print(f"Management fee per apartment: {building.management_fee_per_apartment}")
             

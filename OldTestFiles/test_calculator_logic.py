@@ -161,7 +161,7 @@ def test_calculator_logic():
     for cat in equal_share_categories:
         print(f"  - {cat}")
     
-    print(f"\n🎉 Ολοκληρώθηκε το test της λογικής του υπολογιστή!")
+    print("\n🎉 Ολοκληρώθηκε το test της λογικής του υπολογιστή!")
 
 if __name__ == "__main__":
     test_calculator_logic()

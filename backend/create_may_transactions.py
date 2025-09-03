@@ -16,7 +16,6 @@ from django_tenants.utils import schema_context
 from financial.models import Expense, Transaction
 from apartments.models import Apartment
 from buildings.models import Building
-from decimal import Decimal
 
 def create_may_transactions():
     """Δημιουργεί συναλλαγές για τις δαπάνες του Μάιου"""
@@ -68,7 +67,7 @@ def create_may_transactions():
             total_mills = sum(apt.participation_mills or 0 for apt in apartments)
             
             if total_mills == 0:
-                print(f"   ⚠️ Δεν υπάρχουν χιλιοστά για το κτίριο!")
+                print("   ⚠️ Δεν υπάρχουν χιλιοστά για το κτίριο!")
                 continue
             
             transactions_created = 0
@@ -98,7 +97,7 @@ def create_may_transactions():
             print()
         
         print("=" * 60)
-        print(f"✅ ΟΛΟΚΛΗΡΩΘΗΚΕ Η ΔΗΜΙΟΥΡΓΙΑ")
+        print("✅ ΟΛΟΚΛΗΡΩΘΗΚΕ Η ΔΗΜΙΟΥΡΓΙΑ")
         print(f"📊 ΣΥΝΟΛΙΚΕΣ ΣΥΝΑΛΛΑΓΕΣ: {total_transactions_created}")
         
         # Επιβεβαίωση

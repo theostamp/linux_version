@@ -17,7 +17,6 @@
 import os
 import sys
 import django
-from decimal import Decimal
 from datetime import datetime
 
 # Setup Django environment
@@ -26,9 +25,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Expense, Transaction, Payment, Apartment
+from financial.models import Apartment
 from buildings.models import Building
-from financial.services import FinancialDashboardService, CommonExpenseCalculator
+from financial.services import FinancialDashboardService
 
 def print_header(title):
     """Εκτυπώνει επικεφαλίδα με διαχωριστικά"""
@@ -105,19 +104,19 @@ class TerminologyFixer:
         
         print_subsection("2. ΑΠΟΤΕΛΕΣΜΑΤΑ ΛΑΘΟΥΣ ΟΡΟΛΟΓΙΑΣ")
         
-        print(f"  ❌ ΠΡΟΒΛΗΜΑΤΑ:")
-        print(f"     • Σύγχυση για τους χρήστες")
-        print(f"     • Λάθος ερμηνεία της οικονομικής κατάστασης")
-        print(f"     • Αμφιβολία για την ακρίβεια του συστήματος")
-        print(f"     • Δυσκολία στη λήψη αποφάσεων")
+        print("  ❌ ΠΡΟΒΛΗΜΑΤΑ:")
+        print("     • Σύγχυση για τους χρήστες")
+        print("     • Λάθος ερμηνεία της οικονομικής κατάστασης")
+        print("     • Αμφιβολία για την ακρίβεια του συστήματος")
+        print("     • Δυσκολία στη λήψη αποφάσεων")
         
         print_subsection("3. ΕΠΙΠΤΩΣΕΙΣ")
         
-        print(f"  🔍 ΕΠΙΠΤΩΣΕΙΣ:")
-        print(f"     • Οι χρήστες νομίζουν ότι το κτίριο έχει πρόβλημα")
-        print(f"     • Δυσκολία στην κατανόηση της πραγματικής κατάστασης")
-        print(f"     • Μειωμένη εμπιστοσύνη στο σύστημα")
-        print(f"     • Λάθος business decisions")
+        print("  🔍 ΕΠΙΠΤΩΣΕΙΣ:")
+        print("     • Οι χρήστες νομίζουν ότι το κτίριο έχει πρόβλημα")
+        print("     • Δυσκολία στην κατανόηση της πραγματικής κατάστασης")
+        print("     • Μειωμένη εμπιστοσύνη στο σύστημα")
+        print("     • Λάθος business decisions")
     
     def propose_correct_terminology(self):
         """Προτάσεις σωστής ορολογίας"""
@@ -235,7 +234,7 @@ class TerminologyFixer:
             print(f"  {group['group']}")
             print(f"     📝 {group['description']}")
             print(f"     🎨 Χρώμα: {group['color']}")
-            print(f"     📋 Στοιχεία:")
+            print("     📋 Στοιχεία:")
             for item in group['items']:
                 print(f"        • {item}")
             print()
@@ -265,7 +264,7 @@ class TerminologyFixer:
 └── Τάσεις εισπράξεων
 '''
         
-        print(f"  📋 ΠΡΟΤΑΣΗ ΟΡΓΑΝΩΣΗΣ:")
+        print("  📋 ΠΡΟΤΑΣΗ ΟΡΓΑΝΩΣΗΣ:")
         print(layout)
     
     def create_improved_component(self):
@@ -485,13 +484,13 @@ const BuildingOverviewSection = ({ buildingId, selectedMonth }) => {
 };
 '''
         
-        print(f"  ✅ Βελτιωμένο component δημιουργήθηκε")
-        print(f"     📝 Χαρακτηριστικά:")
-        print(f"        • Διόρθωση ορολογίας")
-        print(f"        • Οργάνωση με βάση τη συναφειά")
-        print(f"        • Χρωματική διαφοροποίηση")
-        print(f"        • Επεξηγηματικές σημειώσεις")
-        print(f"        • Καλύτερη κατανοητότητα")
+        print("  ✅ Βελτιωμένο component δημιουργήθηκε")
+        print("     📝 Χαρακτηριστικά:")
+        print("        • Διόρθωση ορολογίας")
+        print("        • Οργάνωση με βάση τη συναφειά")
+        print("        • Χρωματική διαφοροποίηση")
+        print("        • Επεξηγηματικές σημειώσεις")
+        print("        • Καλύτερη κατανοητότητα")
     
     def generate_implementation_plan(self):
         """Δημιουργία σχεδίου εφαρμογής"""

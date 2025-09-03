@@ -10,8 +10,7 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.models import Expense
 from buildings.models import Building
-from datetime import datetime, date
-from decimal import Decimal
+from datetime import date
 
 # All database operations must be within schema_context
 with schema_context('demo'):

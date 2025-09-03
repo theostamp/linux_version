@@ -13,7 +13,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Apartment, Expense, Payment, Transaction
+from financial.models import Apartment, Expense, Payment
 from buildings.models import Building
 from decimal import Decimal
 from django.db.models import Sum

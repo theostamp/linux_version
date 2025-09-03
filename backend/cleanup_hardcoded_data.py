@@ -8,7 +8,6 @@
 import os
 import re
 import sys
-from pathlib import Path
 
 # Setup Django environment
 sys.path.append('/app')
@@ -17,7 +16,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 import django
 django.setup()
 
-from django_tenants.utils import schema_context
 
 def cleanup_management_commands():
     """Καθαρισμός hardcoded building IDs σε management commands"""
@@ -70,9 +68,9 @@ def cleanup_management_commands():
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
-                print(f"   ✅ Καθαρίστηκε")
+                print("   ✅ Καθαρίστηκε")
             else:
-                print(f"   ℹ️ Χωρίς αλλαγές")
+                print("   ℹ️ Χωρίς αλλαγές")
                 
         except Exception as e:
             print(f"   ❌ Σφάλμα: {e}")
@@ -125,9 +123,9 @@ def cleanup_test_files():
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
-                print(f"   ✅ Καθαρίστηκε")
+                print("   ✅ Καθαρίστηκε")
             else:
-                print(f"   ℹ️ Χωρίς αλλαγές")
+                print("   ℹ️ Χωρίς αλλαγές")
                 
         except Exception as e:
             print(f"   ❌ Σφάλμα: {e}")
@@ -162,9 +160,9 @@ def cleanup_buildings_views():
         if content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"   ✅ Καθαρίστηκε")
+            print("   ✅ Καθαρίστηκε")
         else:
-            print(f"   ℹ️ Χωρίς αλλαγές")
+            print("   ℹ️ Χωρίς αλλαγές")
             
     except Exception as e:
         print(f"   ❌ Σφάλμα: {e}")
@@ -202,9 +200,9 @@ def cleanup_verification_scripts():
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
-                print(f"   ✅ Καθαρίστηκε")
+                print("   ✅ Καθαρίστηκε")
             else:
-                print(f"   ℹ️ Χωρίς αλλαγές")
+                print("   ℹ️ Χωρίς αλλαγές")
                 
         except Exception as e:
             print(f"   ❌ Σφάλμα: {e}")

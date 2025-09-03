@@ -35,7 +35,7 @@ def analyze_current_settings():
         print(f"   Reserve contribution per apartment: {building.reserve_contribution_per_apartment}")
         
         # Calculate potential 50€ scenarios
-        print(f"\n🧮 Potential 50€ Calculations:")
+        print("\n🧮 Potential 50€ Calculations:")
         
         # Scenario 1: Goal/Duration = 50
         if building.reserve_fund_goal and building.reserve_fund_duration_months:
@@ -43,7 +43,7 @@ def analyze_current_settings():
             print(f"   Goal ÷ Duration: {building.reserve_fund_goal} ÷ {building.reserve_fund_duration_months} = {monthly_from_goal}€")
             
             if monthly_from_goal == 50:
-                print(f"   ⚠️ FOUND 50€ SOURCE: Goal/Duration calculation!")
+                print("   ⚠️ FOUND 50€ SOURCE: Goal/Duration calculation!")
         
         # Scenario 2: Contribution per apartment × total apartments = 50
         if building.reserve_contribution_per_apartment:
@@ -51,10 +51,10 @@ def analyze_current_settings():
             print(f"   Contribution × Apartments: {building.reserve_contribution_per_apartment} × {apartments.count()} = {total_from_contribution}€")
             
             if total_from_contribution == 50:
-                print(f"   ⚠️ FOUND 50€ SOURCE: Per-apartment contribution calculation!")
+                print("   ⚠️ FOUND 50€ SOURCE: Per-apartment contribution calculation!")
         
         # Test dashboard service
-        print(f"\n📊 Dashboard Service Results:")
+        print("\n📊 Dashboard Service Results:")
         dashboard = FinancialDashboardService(building_id=1)
         summary = dashboard.get_summary()
         
@@ -65,12 +65,12 @@ def analyze_current_settings():
         print(f"   Reserve fund monthly target: {monthly_target}€")
         
         if reserve_contribution == 50:
-            print(f"   ⚠️ FOUND 50€ in reserve_fund_contribution!")
+            print("   ⚠️ FOUND 50€ in reserve_fund_contribution!")
         if monthly_target == 50:
-            print(f"   ⚠️ FOUND 50€ in reserve_fund_monthly_target!")
+            print("   ⚠️ FOUND 50€ in reserve_fund_monthly_target!")
         
         # Test advanced calculator
-        print(f"\n🧪 Advanced Calculator Results:")
+        print("\n🧪 Advanced Calculator Results:")
         calc = AdvancedCommonExpenseCalculator(
             building_id=1,
             period_start_date='2025-02-01',
@@ -90,20 +90,20 @@ def analyze_current_settings():
             print(f"   Total reserve contributions from all apartments: {total_reserve_contributions:.2f}€")
             
             if abs(total_reserve_contributions - 50) < 0.01:
-                print(f"   ⚠️ FOUND 50€ in advanced calculator total!")
+                print("   ⚠️ FOUND 50€ in advanced calculator total!")
         
         # Check result metadata
         reserve_contribution_meta = result.get('reserve_contribution', 0)
         print(f"   Reserve contribution (metadata): {reserve_contribution_meta}€")
         
         if reserve_contribution_meta == 50:
-            print(f"   ⚠️ FOUND 50€ in calculator metadata!")
+            print("   ⚠️ FOUND 50€ in calculator metadata!")
 
 def test_different_scenarios():
     """Test different scenarios that might produce 50€"""
     
     with schema_context('demo'):
-        print(f"\n🧪 TESTING DIFFERENT SCENARIOS")
+        print("\n🧪 TESTING DIFFERENT SCENARIOS")
         print("=" * 50)
         
         building = Building.objects.get(id=1)
@@ -175,7 +175,7 @@ def test_different_scenarios():
             
             # Check if any value equals 50
             if any(abs(val - 50) < 0.01 for val in [reserve_contribution, monthly_target, calc_reserve]):
-                print(f"   🎯 THIS SCENARIO PRODUCES 50€!")
+                print("   🎯 THIS SCENARIO PRODUCES 50€!")
                 
                 # Show calculation details
                 if scenario['goal'] and scenario['duration']:
@@ -192,30 +192,30 @@ def test_different_scenarios():
         building.reserve_contribution_per_apartment = original_contribution
         building.save()
         
-        print(f"\n✅ Original settings restored")
+        print("\n✅ Original settings restored")
 
 def check_hardcoded_defaults():
     """Check for hardcoded default values in the code"""
     
-    print(f"\n🔍 CHECKING FOR HARDCODED DEFAULTS")
+    print("\n🔍 CHECKING FOR HARDCODED DEFAULTS")
     print("=" * 50)
     
     # Check common hardcoded config
     try:
         from common.hardcoded_config import DEFAULT_BUILDING_SETTINGS
-        print(f"📄 Found hardcoded config:")
+        print("📄 Found hardcoded config:")
         for key, value in DEFAULT_BUILDING_SETTINGS.items():
             print(f"   {key}: {value}")
             if value == 50 or value == 5.0:
                 print(f"   ⚠️ Potential 50€ source: {key} = {value}")
     except ImportError:
-        print(f"   No hardcoded config found")
+        print("   No hardcoded config found")
     
     # Check if any building has these default values
     with schema_context('demo'):
         buildings = Building.objects.all()
         
-        print(f"\n🏢 Checking all buildings for 50€-related values:")
+        print("\n🏢 Checking all buildings for 50€-related values:")
         for building in buildings:
             print(f"   Building {building.id} ({building.name}):")
             
@@ -236,10 +236,10 @@ def main():
     test_different_scenarios()
     check_hardcoded_defaults()
     
-    print(f"\n" + "=" * 60)
-    print(f"🎯 SUMMARY:")
-    print(f"   Search completed for 50€ sources in reserve fund calculations")
-    print(f"   Check the scenarios above that produced exactly 50€")
+    print("\n" + "=" * 60)
+    print("🎯 SUMMARY:")
+    print("   Search completed for 50€ sources in reserve fund calculations")
+    print("   Check the scenarios above that produced exactly 50€")
 
 if __name__ == "__main__":
     main()

@@ -7,8 +7,6 @@ Test Script για Phase 3 - Αυτοματισμοί Κοινοχρήστων
 import os
 import sys
 import django
-from datetime import datetime, date
-from decimal import Decimal
 
 # Add backend directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
@@ -18,8 +16,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from buildings.models import Building
-from apartments.models import Apartment
-from financial.models import Expense, Supplier, CommonExpensePeriod, ApartmentShare, Transaction
 from financial.services import CommonExpenseAutomationService
 
 def test_phase3_automation():

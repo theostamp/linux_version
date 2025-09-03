@@ -15,7 +15,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from django.db.models import Sum, Q
 
 def analyze_debt_creation_dates():
     """Αναλύει πότε δημιουργήθηκαν οι οφειλές"""
@@ -27,7 +26,7 @@ def analyze_debt_creation_dates():
         
         try:
             from apartments.models import Apartment
-            from financial.models import Expense, Transaction
+            from financial.models import Transaction
             from buildings.models import Building
             
             building_id = 3  # Αραχώβης 12
@@ -41,7 +40,7 @@ def analyze_debt_creation_dates():
                 current_balance__lt=0
             ).order_by('number')
             
-            print(f"\n📊 DETAILED DEBT ANALYSIS:")
+            print("\n📊 DETAILED DEBT ANALYSIS:")
             print("-" * 70)
             
             apartment_debts_enhanced = []
@@ -60,7 +59,7 @@ def analyze_debt_creation_dates():
                 ).order_by('date')
                 
                 if transactions.exists():
-                    print(f"   📅 TRANSACTION HISTORY:")
+                    print("   📅 TRANSACTION HISTORY:")
                     running_balance = Decimal('0.00')
                     debt_start_date = None
                     debt_start_month = None
@@ -105,7 +104,7 @@ def analyze_debt_creation_dates():
                             urgency = "🔴 Κρίσιμη"
                         print(f"   📊 Κατηγορία: {urgency}")
                 else:
-                    print(f"   ⚠️ Δεν βρέθηκαν transactions")
+                    print("   ⚠️ Δεν βρέθηκαν transactions")
                     debt_start_date = None
                     debt_start_month = "Άγνωστος"
                     days_in_debt = 0
@@ -147,7 +146,7 @@ def analyze_debt_creation_dates():
                 }
             }
             
-            print(f"\n" + "=" * 70)
+            print("\n" + "=" * 70)
             print(" 📋 ENHANCED BREAKDOWN SUMMARY ")
             print("=" * 70)
             
@@ -156,7 +155,7 @@ def analyze_debt_creation_dates():
             print(f"🏠 Apartments with debt: {enhanced_breakdown['apartments_with_debt']}")
             
             summary = enhanced_breakdown['debt_summary']
-            print(f"\n📊 DEBT URGENCY BREAKDOWN:")
+            print("\n📊 DEBT URGENCY BREAKDOWN:")
             print(f"   🟢 Πρόσφατες (≤30 ημέρες): {summary['recent_debts']}")
             print(f"   🟡 Μέτριες (31-60 ημέρες): {summary['moderate_debts']}")
             print(f"   🟠 Σοβαρές (61-90 ημέρες): {summary['serious_debts']}")
@@ -165,7 +164,7 @@ def analyze_debt_creation_dates():
             
             # JSON για frontend
             import json
-            print(f"\n📄 ENHANCED JSON FOR FRONTEND:")
+            print("\n📄 ENHANCED JSON FOR FRONTEND:")
             print(json.dumps(enhanced_breakdown, indent=2, ensure_ascii=False, default=str))
             
         except Exception as e:

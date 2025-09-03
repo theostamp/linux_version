@@ -32,7 +32,7 @@ def find_alkmanos_building():
         # Ας δοκιμάσουμε να βρούμε κτίρια με 'Αλκμάνος'
         buildings = Building.objects.filter(address__icontains='Αλκμάνος')
         if buildings.exists():
-            print(f"📋 Βρέθηκαν κτίρια με 'Αλκμάνος':")
+            print("📋 Βρέθηκαν κτίρια με 'Αλκμάνος':")
             for b in buildings:
                 print(f"   - {b.name}: {b.address}")
             return buildings.first()
@@ -88,7 +88,7 @@ def check_expenses(building_id):
 
 def check_calculator_results(building_id):
     """Ελέγχει τα αποτελέσματα του calculator"""
-    print(f"\n🧮 ΕΛΕΓΧΟΣ ΑΠΟΤΕΛΕΣΜΑΤΩΝ CALCULATOR")
+    print("\n🧮 ΕΛΕΓΧΟΣ ΑΠΟΤΕΛΕΣΜΑΤΩΝ CALCULATOR")
     print("=" * 60)
     
     try:
@@ -103,14 +103,14 @@ def check_calculator_results(building_id):
         for category, amount in expense_totals.items():
             print(f"   {category}: {amount}€")
         
-        print(f"\n📋 ΛΕΠΤΟΜΕΡΕΙΕΣ ΔΑΠΑΝΩΝ:")
+        print("\n📋 ΛΕΠΤΟΜΕΡΕΙΕΣ ΔΑΠΑΝΩΝ:")
         for category, expenses in expense_details.items():
             if expenses:
                 print(f"\n   {category.upper()}:")
                 for expense in expenses:
                     print(f"     - {expense['title']}: {expense['amount']}€")
         
-        print(f"\n🏠 ΑΝΑΛΥΣΗ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ:")
+        print("\n🏠 ΑΝΑΛΥΣΗ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ:")
         print("-" * 60)
         
         total_tenant_expenses = Decimal('0.00')
@@ -151,7 +151,7 @@ def check_calculator_results(building_id):
             print(f"       - Αποθεματικό: {breakdown['reserve_fund_contribution']}€")
             print(f"     Πληρωτέο: {payable}€")
         
-        print(f"\n💰 ΣΥΝΟΛΙΚΑ ΑΘΡΟΙΣΜΑΤΑ:")
+        print("\n💰 ΣΥΝΟΛΙΚΑ ΑΘΡΟΙΣΜΑΤΑ:")
         print(f"   Συνολικές δαπάνες ενοικιαστών: {total_tenant_expenses}€")
         print(f"   Συνολικές δαπάνες ιδιοκτητών: {total_owner_expenses}€")
         print(f"   Συνολικό πληρωτέο: {total_payable}€")
@@ -160,7 +160,7 @@ def check_calculator_results(building_id):
         expected_payable = total_tenant_expenses + total_owner_expenses
         difference = total_payable - expected_payable
         
-        print(f"\n🔍 ΕΛΕΓΧΟΣ ΑΘΡΟΙΣΜΑΤΩΝ:")
+        print("\n🔍 ΕΛΕΓΧΟΣ ΑΘΡΟΙΣΜΑΤΩΝ:")
         print(f"   Αναμενόμενο πληρωτέο: {expected_payable}€")
         print(f"   Πραγματικό πληρωτέο: {total_payable}€")
         print(f"   Διαφορά: {difference}€")
@@ -194,7 +194,7 @@ def check_calculator_results(building_id):
 
 def check_apartments_data(building_id):
     """Ελέγχει τα δεδομένα των διαμερισμάτων"""
-    print(f"\n🏠 ΕΛΕΓΧΟΣ ΔΕΔΟΜΕΝΩΝ ΔΙΑΜΕΡΙΣΜΑΤΩΝ")
+    print("\n🏠 ΕΛΕΓΧΟΣ ΔΕΔΟΜΕΝΩΝ ΔΙΑΜΕΡΙΣΜΑΤΩΝ")
     print("=" * 60)
     
     apartments = Apartment.objects.filter(building_id=building_id).order_by('number')
@@ -225,7 +225,7 @@ def check_apartments_data(building_id):
         print(f"     Τρέχον υπόλοιπο: {balance}€")
         print()
     
-    print(f"💰 ΣΥΝΟΛΙΚΑ:")
+    print("💰 ΣΥΝΟΛΙΚΑ:")
     print(f"   Συνολικά χιλιοστά συμμετοχής: {total_mills}")
     print(f"   Συνολικά χιλιοστά θέρμανσης: {total_heating_mills}")
     print(f"   Συνολικά χιλιοστά ανελκυστήρα: {total_elevator_mills}")
@@ -258,7 +258,7 @@ def main():
     # Ελέγχουμε τα αποτελέσματα του calculator
     check_calculator_results(building_id)
     
-    print(f"\n✅ Ο έλεγχος ολοκληρώθηκε!")
+    print("\n✅ Ο έλεγχος ολοκληρώθηκε!")
 
 if __name__ == "__main__":
     main()

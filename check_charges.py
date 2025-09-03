@@ -1,8 +1,6 @@
 import os
 import sys
 import django
-from datetime import datetime
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -43,7 +41,7 @@ def check_charges():
                        'interest_charge', 'penalty_charge']
         
         charges = transactions.filter(type__in=charge_types)
-        print(f"\n💸 ΧΡΕΩΣΕΙΣ:")
+        print("\n💸 ΧΡΕΩΣΕΙΣ:")
         print("-" * 20)
         print(f"📊 Συνολικές χρεώσεις: {charges.count()}")
         
@@ -58,7 +56,7 @@ def check_charges():
         
         # Έλεγχος δαπανών
         expenses = Expense.objects.all()
-        print(f"\n📉 ΔΑΠΑΝΕΣ:")
+        print("\n📉 ΔΑΠΑΝΕΣ:")
         print("-" * 15)
         print(f"📊 Συνολικές δαπάνες: {expenses.count()}")
         
@@ -72,7 +70,7 @@ def check_charges():
             print("💡 Χρειάζεται δημιουργία δαπανών για να υπάρχουν χρεώσεις.")
         
         # Έλεγχος υπολοίπων διαμερισμάτων
-        print(f"\n🏢 ΥΠΟΛΟΙΠΑ ΔΙΑΜΕΡΙΣΜΑΤΩΝ:")
+        print("\n🏢 ΥΠΟΛΟΙΠΑ ΔΙΑΜΕΡΙΣΜΑΤΩΝ:")
         print("-" * 30)
         
         apartments = Apartment.objects.all()
@@ -91,7 +89,7 @@ def check_charges():
             
             print(f"  - {apartment.number}: {balance:.2f}€")
         
-        print(f"\n📊 ΣΥΝΟΨΗ ΥΠΟΛΟΙΠΩΝ:")
+        print("\n📊 ΣΥΝΟΨΗ ΥΠΟΛΟΙΠΩΝ:")
         print("-" * 25)
         print(f"✅ Θετικά υπόλοιπα: {positive_balances}")
         print(f"❌ Αρνητικά υπόλοιπα: {negative_balances}")

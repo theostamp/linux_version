@@ -4,7 +4,6 @@ Test script για το dashboard API
 """
 
 import os
-import sys
 import django
 
 # Setup Django

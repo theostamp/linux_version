@@ -9,7 +9,7 @@ django.setup()
 from buildings.models import Building
 from apartments.models import Apartment
 from residents.models import Resident
-from financial.models import Expense, ApartmentShare
+from financial.models import Expense
 
 def check_building():
     print("🔍 Ελέγχος Δεδομένων Κτιρίου 'Αλκμάνος 22'")

@@ -8,8 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from datetime import datetime, date
-from decimal import Decimal
+from datetime import datetime
 
 with schema_context('demo'):
     from financial.services import AdvancedCommonExpenseCalculator
@@ -47,7 +46,7 @@ with schema_context('demo'):
         # Calculate shares
         result = calculator.calculate_advanced_shares()
         
-        print(f"\nCalculation results:")
+        print("\nCalculation results:")
         print(f"Total expenses: {result.get('total_expenses', 0)}€")
         print(f"Reserve fund monthly total: {result.get('reserve_fund_monthly_total', 0)}€")
         
@@ -86,7 +85,7 @@ with schema_context('demo'):
         
         result_all = calculator_all.calculate_advanced_shares()
         
-        print(f"\nCalculation results (all expenses):")
+        print("\nCalculation results (all expenses):")
         print(f"Total expenses: {result_all.get('total_expenses', 0)}€")
         
         # Check first apartment's calculation

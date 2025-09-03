@@ -3,7 +3,6 @@
 Check database tables and tenants
 """
 import os
-import sys
 import django
 
 # Setup Django environment

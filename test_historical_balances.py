@@ -7,8 +7,7 @@ Test script για έλεγχο ιστορικών υπολοίπων διαμε
 import os
 import sys
 import django
-from datetime import datetime, date
-from decimal import Decimal
+from datetime import date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -172,7 +171,7 @@ def test_api_endpoints():
                 # Show sample apartment data
                 if apartment_balances:
                     sample = apartment_balances[0]
-                    print(f"📋 Sample apartment data:")
+                    print("📋 Sample apartment data:")
                     print(f"  ID: {sample['id']}")
                     print(f"  Number: {sample['apartment_number']}")
                     print(f"  Balance: {sample['current_balance']}€")

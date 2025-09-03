@@ -11,7 +11,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.models import Payment
 from django.db.models import Sum
-from datetime import datetime
 from django.db.models import Count
 
 def check_august_payments():

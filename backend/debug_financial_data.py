@@ -8,7 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Apartment, Expense, Payment, Transaction
+from financial.models import Apartment, Expense, Payment
 from buildings.models import Building
 from financial.services import FinancialDashboardService
 from decimal import Decimal
@@ -54,7 +54,7 @@ def debug_financial_data():
             management_fee_per_apartment = building.management_fee_per_apartment or Decimal('0.00')
             apartments_count = apartments.count()
             total_management_cost = management_fee_per_apartment * apartments_count
-            print(f"\n4. MANAGEMENT FEES:")
+            print("\n4. MANAGEMENT FEES:")
             print(f"   Per apartment: {management_fee_per_apartment:,.2f}€")
             print(f"   Total: {total_management_cost:,.2f}€")
             
@@ -67,7 +67,7 @@ def debug_financial_data():
             print(f"\n6. TOTAL OBLIGATIONS: {total_obligations:,.2f}€")
             
             # 7. Check the API response
-            print(f"\n7. API RESPONSE:")
+            print("\n7. API RESPONSE:")
             try:
                 service = FinancialDashboardService(building.id)
                 api_response = service.get_summary()
@@ -79,14 +79,14 @@ def debug_financial_data():
                 # Check if the API values match our calculations
                 api_previous = api_response.get('previous_obligations', 0)
                 if abs(api_previous - float(total_apartment_debts)) < 0.01:
-                    print(f"   ✅ API previous_obligations matches our calculation!")
+                    print("   ✅ API previous_obligations matches our calculation!")
                 else:
                     print(f"   ❌ API previous_obligations ({api_previous:,.2f}€) doesn't match our calculation ({total_apartment_debts:,.2f}€)")
                     
             except Exception as e:
                 print(f"   ❌ Error getting API response: {e}")
             
-            print(f"\n" + "=" * 60)
+            print("\n" + "=" * 60)
 
 if __name__ == "__main__":
     debug_financial_data()

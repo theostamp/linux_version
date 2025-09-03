@@ -21,7 +21,7 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from financial.models import Expense, Transaction, Payment
-from django.db.models import Sum, Q, Count
+from django.db.models import Sum
 from decimal import Decimal
 
 def analyze_and_fix_financial_balance():
@@ -112,7 +112,7 @@ def analyze_and_fix_financial_balance():
             new_expense_transaction_diff = new_total_transactions - total_expenses
             new_payment_transaction_diff = total_payments - new_total_transactions
             
-            print(f"\nΜετά τη διόρθωση:")
+            print("\nΜετά τη διόρθωση:")
             print(f"💰 Συνολικές δαπάνες: {total_expenses}€")
             print(f"💳 Συνολικές συναλλαγές: {new_total_transactions}€")
             print(f"💵 Συνολικές πληρωμές: {total_payments}€")
@@ -169,7 +169,7 @@ def analyze_and_fix_financial_balance():
                 final_expense_transaction_diff = final_total_transactions - total_expenses
                 final_payment_transaction_diff = total_payments - final_total_transactions
                 
-                print(f"\nΜετά τη διόρθωση:")
+                print("\nΜετά τη διόρθωση:")
                 print(f"💰 Συνολικές δαπάνες: {total_expenses}€")
                 print(f"💳 Συνολικές συναλλαγές: {final_total_transactions}€")
                 print(f"💵 Συνολικές πληρωμές: {total_payments}€")

@@ -82,7 +82,7 @@ def debug_previous_obligations_issue():
             date__lt=july_start_date
         )
         
-        print(f"   📊 Expenses created before July 1st:")
+        print("   📊 Expenses created before July 1st:")
         for expense in expenses_before_july:
             print(f"      💰 {expense.date}: {expense.title} - {expense.amount}€")
         

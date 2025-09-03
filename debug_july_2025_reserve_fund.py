@@ -6,7 +6,6 @@ Script to debug why July 2025 is not showing the reserve fund correctly
 import os
 import sys
 import django
-from decimal import Decimal
 from datetime import date
 
 # Setup Django environment
@@ -53,16 +52,16 @@ def debug_july_2025_reserve_fund():
         # So the reserve fund should NOT be collected in July 2025
         # The start date is July 31, 2025, which means collection starts from August 2025
         
-        print(f"\n💡 ANALYSIS:")
-        print(f"   • Reserve fund start date: July 31, 2025")
-        print(f"   • July 2025 (July 1, 2025) is BEFORE the start date")
-        print(f"   • Reserve fund should NOT be collected in July 2025")
-        print(f"   • Reserve fund should start from August 2025")
+        print("\n💡 ANALYSIS:")
+        print("   • Reserve fund start date: July 31, 2025")
+        print("   • July 2025 (July 1, 2025) is BEFORE the start date")
+        print("   • Reserve fund should NOT be collected in July 2025")
+        print("   • Reserve fund should start from August 2025")
         
-        print(f"\n✅ CONCLUSION:")
-        print(f"   The current behavior is CORRECT!")
-        print(f"   July 2025 should show 0.00€ reserve fund")
-        print(f"   August 2025 should show 333.33€ reserve fund")
+        print("\n✅ CONCLUSION:")
+        print("   The current behavior is CORRECT!")
+        print("   July 2025 should show 0.00€ reserve fund")
+        print("   August 2025 should show 333.33€ reserve fund")
         
         print()
         print("=" * 50)

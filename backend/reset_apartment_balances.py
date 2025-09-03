@@ -7,7 +7,7 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
+from datetime import datetime
 from django.db.models import Sum
 
 # Setup Django environment
@@ -16,7 +16,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Payment, Expense, Transaction
+from financial.models import Transaction
 from apartments.models import Apartment
 from buildings.models import Building
 

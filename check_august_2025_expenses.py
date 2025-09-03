@@ -3,7 +3,6 @@
 import os
 import sys
 import django
-from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -16,7 +15,6 @@ def check_august_2025_expenses():
     """Check if common expenses are issued for August 2025"""
     
     with schema_context('demo'):
-        from apartments.models import Apartment
         from financial.models import Expense
         
         print("🔍 Έλεγχος Κοινόχρηστων Αυγούστου 2025")

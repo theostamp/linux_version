@@ -32,7 +32,7 @@ def test_user_authentication():
             "email": "admin@demo.localhost",
             "password": "admin123456"
         }
-        print(f"📤 Sending login request...")
+        print("📤 Sending login request...")
         print(f"📤 Payload: {json.dumps(login_payload, indent=2)}")
         
         response = requests.post(f"{base_url}/users/login/", json=login_payload, timeout=30)
@@ -43,7 +43,7 @@ def test_user_authentication():
             access_token = data.get('access')
             refresh_token = data.get('refresh')
             
-            print(f"✅ Login successful!")
+            print("✅ Login successful!")
             print(f"   - Access token: {access_token[:20]}...{access_token[-10:] if access_token else 'None'}")
             print(f"   - Refresh token: {refresh_token[:20]}...{refresh_token[-10:] if refresh_token else 'None'}")
             
@@ -61,7 +61,7 @@ def test_user_authentication():
                 "month_filter": "2025-06"
             }
             
-            print(f"📤 Sending authenticated calculation request...")
+            print("📤 Sending authenticated calculation request...")
             print(f"📤 Headers: {json.dumps({k: v[:50] + '...' if len(str(v)) > 50 else v for k, v in headers.items()}, indent=2)}")
             print(f"📤 Payload: {json.dumps(calc_payload, indent=2)}")
             
@@ -74,7 +74,7 @@ def test_user_authentication():
             
             if calc_response.status_code == 200:
                 calc_data = calc_response.json()
-                print(f"✅ Authenticated calculation successful!")
+                print("✅ Authenticated calculation successful!")
                 print(f"   - Shares count: {len(calc_data.get('shares', {}))}")
                 print(f"   - Total expenses: {calc_data.get('total_expenses', 0)}")
             else:

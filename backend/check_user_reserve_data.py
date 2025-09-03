@@ -6,7 +6,6 @@ Script to check what reserve fund data the users have actually entered
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Add the backend directory to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
@@ -24,7 +23,7 @@ def check_user_reserve_data():
     with schema_context('demo'):
         buildings = Building.objects.all()
         
-        print(f"🔍 Checking reserve fund data for all buildings...")
+        print("🔍 Checking reserve fund data for all buildings...")
         print("-" * 80)
         
         for building in buildings:

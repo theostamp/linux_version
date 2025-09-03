@@ -29,7 +29,7 @@ def quick_financial_check():
     
     try:
         client = Client.objects.get(schema_name='demo')
-        print(f"✅ Demo tenant βρέθηκε")
+        print("✅ Demo tenant βρέθηκε")
     except Client.DoesNotExist:
         print("❌ Demo tenant δεν βρέθηκε")
         return
@@ -62,12 +62,12 @@ def quick_financial_check():
         print(f"📅 Εισπράξεις Αύγουστου: {august_total:10.2f}€ ({august_payments.count()} πληρωμές)")
         
         # Show recent payments
-        print(f"\n💳 ΠΡΟΣΦΑΤΕΣ ΠΛΗΡΩΜΕΣ:")
+        print("\n💳 ΠΡΟΣΦΑΤΕΣ ΠΛΗΡΩΜΕΣ:")
         recent = all_payments.order_by('-date')[:3]
         for payment in recent:
             print(f"  - {payment.apartment.number}: {payment.amount:8.2f}€ ({payment.date})")
         
-        print(f"\n✅ Έλεγχος ολοκληρώθηκε")
+        print("\n✅ Έλεγχος ολοκληρώθηκε")
 
 if __name__ == "__main__":
     quick_financial_check()

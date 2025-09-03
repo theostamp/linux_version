@@ -8,7 +8,7 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -16,10 +16,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Expense, Transaction, Payment, CommonExpensePeriod, ApartmentShare
 from apartments.models import Apartment
 from buildings.models import Building
-from financial.services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator
+from financial.services import CommonExpenseCalculator
 
 def create_improved_common_expenses_sheet():
     """Δημιουργία βελτιωμένου φύλλου κοινοχρήστων"""

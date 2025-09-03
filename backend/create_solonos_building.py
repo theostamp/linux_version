@@ -8,7 +8,6 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import date
 
 # Προσθήκη του backend directory στο path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
@@ -19,7 +18,6 @@ django.setup()
 
 from buildings.models import Building
 from apartments.models import Apartment
-from users.models import CustomUser
 from django_tenants.utils import schema_context
 
 def create_solonos_building():
@@ -267,7 +265,7 @@ def create_solonos_building():
         total_heating_mills = sum(apt.heating_mills for apt in created_apartments)
         total_elevator_mills = sum(apt.elevator_mills for apt in created_apartments)
         
-        print(f"\n📊 Σύνοψη δημιουργίας:")
+        print("\n📊 Σύνοψη δημιουργίας:")
         print(f"🏢 Κτίριο: {building.name}")
         print(f"📍 Διεύθυνση: {building.address}, {building.city} {building.postal_code}")
         print(f"🏠 Συνολικά διαμερίσματα: {len(created_apartments)}")
@@ -275,7 +273,7 @@ def create_solonos_building():
         print(f"🔥 Συνολικά χιλιοστά θέρμανσης: {total_heating_mills}")
         print(f"🛗 Συνολικά χιλιοστά ανελκυστήρα: {total_elevator_mills}")
         
-        print(f"\n📋 Κατανομή διαμερισμάτων:")
+        print("\n📋 Κατανομή διαμερισμάτων:")
         rented_count = sum(1 for apt in created_apartments if apt.is_rented)
         owner_occupied_count = sum(1 for apt in created_apartments if not apt.is_rented and not apt.is_closed)
         empty_count = sum(1 for apt in created_apartments if apt.is_closed)
@@ -289,7 +287,7 @@ def create_solonos_building():
 if __name__ == "__main__":
     try:
         building, apartments = create_solonos_building()
-        print(f"\n🎉 Η δημιουργία ολοκληρώθηκε επιτυχώς!")
+        print("\n🎉 Η δημιουργία ολοκληρώθηκε επιτυχώς!")
         print(f"🆔 ID Κτιρίου: {building.id}")
     except Exception as e:
         print(f"❌ Σφάλμα κατά τη δημιουργία: {e}")

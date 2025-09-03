@@ -6,7 +6,6 @@ Script για τη δημιουργία απλών demo data για teams και
 import os
 import sys
 import django
-from datetime import datetime, timedelta
 from decimal import Decimal
 import random
 
@@ -17,8 +16,8 @@ django.setup()
 
 from django.contrib.auth import get_user_model
 from buildings.models import Building
-from teams.models import Team, TeamRole, TeamMember, TeamTask
-from collaborators.models import Collaborator, CollaborationProject, CollaborationContract
+from teams.models import Team, TeamRole
+from collaborators.models import Collaborator
 from maintenance.models import Contractor
 
 User = get_user_model()
@@ -219,8 +218,8 @@ def create_simple_demo_data():
         if created:
             print(f"✅ Δημιουργήθηκε συνεργείο: {contractor.name}")
     
-    print(f"\n✅ Η δημιουργία demo data ολοκληρώθηκε!")
-    print(f"📊 Στατιστικά:")
+    print("\n✅ Η δημιουργία demo data ολοκληρώθηκε!")
+    print("📊 Στατιστικά:")
     print(f"   - Buildings: {Building.objects.count()}")
     print(f"   - Users: {User.objects.count()}")
     print(f"   - Teams: {Team.objects.count()}")

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import requests
-import json
 
 def add_mills_to_athens_building():
     base_url = "http://localhost:8000"

@@ -15,10 +15,10 @@ django.setup()
 
 from django_tenants.utils import tenant_context
 from tenants.models import Client
-from financial.models import Payment, Transaction, Expense
+from financial.models import Payment, Transaction
 from apartments.models import Apartment
 from buildings.models import Building
-from django.db.models import Sum, Q
+from django.db.models import Sum
 
 def debug_building_3():
     """Ελέγχος δεδομένων κτιρίου 3"""
@@ -52,7 +52,7 @@ def debug_building_3():
         print(f"💰 Συνολικό ποσό εισπράξεων: {total_payments:10.2f}€")
         
         # Show payments by apartment
-        print(f"\n📊 ΕΙΣΠΡΑΞΕΙΣ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ:")
+        print("\n📊 ΕΙΣΠΡΑΞΕΙΣ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ:")
         for payment in payments.order_by('apartment__number', 'date'):
             print(f"  - {payment.apartment.number}: {payment.amount:8.2f}€ ({payment.date}) - {payment.get_method_display()}")
         
@@ -61,13 +61,13 @@ def debug_building_3():
         print(f"\n💸 Συνολικές συναλλαγές: {transactions.count()} συναλλαγές")
         
         # Show transactions by apartment
-        print(f"\n📊 ΣΥΝΑΛΛΑΓΕΣ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ:")
+        print("\n📊 ΣΥΝΑΛΛΑΓΕΣ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ:")
         for transaction in transactions.order_by('apartment__number', 'date'):
             apartment_num = transaction.apartment.number if transaction.apartment else transaction.apartment_number
             print(f"  - {apartment_num}: {transaction.amount:8.2f}€ ({transaction.date}) - {transaction.get_type_display()}")
         
         # Check for missing transactions
-        print(f"\n🔍 ΕΛΕΓΧΟΣ ΑΝΑΝΤΙΣΤΟΙΧΙΩΝ:")
+        print("\n🔍 ΕΛΕΓΧΟΣ ΑΝΑΝΤΙΣΤΟΙΧΙΩΝ:")
         
         # Check if payments have corresponding transactions
         payments_without_transactions = []
@@ -92,7 +92,7 @@ def debug_building_3():
             print("  ✅ Όλες οι πληρωμές έχουν αντίστοιχες συναλλαγές")
         
         # Check apartment balances calculation
-        print(f"\n🧮 ΕΛΕΓΧΟΣ ΥΠΟΛΟΓΙΣΜΟΥ ΥΠΟΛΟΙΠΩΝ:")
+        print("\n🧮 ΕΛΕΓΧΟΣ ΥΠΟΛΟΓΙΣΜΟΥ ΥΠΟΛΟΙΠΩΝ:")
         for apartment in apartments:
             # Calculate balance from transactions
             apartment_transactions = Transaction.objects.filter(apartment=apartment)
@@ -113,7 +113,7 @@ def debug_building_3():
             else:
                 print(f"  ✅ {apartment.number}: Υπολογισμένο: {calculated_balance:8.2f}€, Αποθηκευμένο: {stored_balance:8.2f}€")
         
-        print(f"\n✅ Έλεγχος ολοκληρώθηκε")
+        print("\n✅ Έλεγχος ολοκληρώθηκε")
 
 if __name__ == "__main__":
     debug_building_3()

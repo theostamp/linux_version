@@ -6,8 +6,6 @@ Script to test the financial dashboard API endpoint and trace the 187.00 € amo
 import os
 import sys
 import django
-import requests
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -15,10 +13,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Payment, Expense, Transaction
 from buildings.models import Building
-from apartments.models import Apartment
-from django.db.models import Sum, Q
 from financial.services import FinancialDashboardService
 
 def test_api_187():
@@ -118,11 +113,11 @@ def test_api_187():
                 b_summary = b_service.get_summary()
                 
                 if abs(b_summary.get('total_balance', 0) - target_amount) < 0.01:
-                    print(f"      ✅ Βρέθηκε 187.00€ στο total_balance!")
+                    print("      ✅ Βρέθηκε 187.00€ στο total_balance!")
                 if abs(b_summary.get('current_reserve', 0) - target_amount) < 0.01:
-                    print(f"      ✅ Βρέθηκε 187.00€ στο current_reserve!")
+                    print("      ✅ Βρέθηκε 187.00€ στο current_reserve!")
                 if abs(b_summary.get('current_obligations', 0) - target_amount) < 0.01:
-                    print(f"      ✅ Βρέθηκε 187.00€ στο current_obligations!")
+                    print("      ✅ Βρέθηκε 187.00€ στο current_obligations!")
                     
             except Exception as e:
                 print(f"      ❌ Σφάλμα: {e}")

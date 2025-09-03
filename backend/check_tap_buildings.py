@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os
 import django
-import sys
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings")
 django.setup()

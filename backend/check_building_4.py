@@ -4,7 +4,6 @@ Script to check and update building 4's street view image
 """
 
 import os
-import sys
 import django
 
 # Setup Django
@@ -25,7 +24,7 @@ def main():
             # Check building 4
             try:
                 building = Building.objects.get(id=4)
-                print(f"\nBuilding 4 details:")
+                print("\nBuilding 4 details:")
                 print(f"  - ID: {building.id}")
                 print(f"  - Name: {building.name}")
                 print(f"  - Address: {building.address}")
@@ -47,7 +46,7 @@ def main():
                     print("✅ Street view image already exists")
                     
             except Building.DoesNotExist:
-                print(f"❌ Building with ID 4 does not exist")
+                print("❌ Building with ID 4 does not exist")
                 
                 # List all available buildings
                 buildings = Building.objects.all()

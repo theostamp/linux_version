@@ -7,7 +7,6 @@ Script για διόρθωση χιλιοστών συμμετοχής στο κ
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Προσθήκη του backend directory στο path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
@@ -16,7 +15,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
-from django_tenants.utils import tenant_context
 from apartments.models import Apartment
 from buildings.models import Building
 

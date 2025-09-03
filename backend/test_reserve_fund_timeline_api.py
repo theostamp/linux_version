@@ -33,7 +33,7 @@ def test_reserve_fund_timeline_data():
             print(f"   Building found: {building.name}")
         
         # Check building's Reserve Fund settings
-        print(f"\n🔍 Building Reserve Fund Settings:")
+        print("\n🔍 Building Reserve Fund Settings:")
         print(f"   reserve_fund_start_date: {building.reserve_fund_start_date}")
         print(f"   reserve_fund_target_date: {building.reserve_fund_target_date}")
         print(f"   reserve_fund_goal: {building.reserve_fund_goal}")
@@ -48,9 +48,9 @@ def test_reserve_fund_timeline_data():
         
         result = calculator.calculate_advanced_shares()
         
-        print(f"\n📊 API Response Analysis:")
+        print("\n📊 API Response Analysis:")
         print(f"   Building ID: {building_id}")
-        print(f"   Selected Month: 2025-04")
+        print("   Selected Month: 2025-04")
         print(f"   Response Keys: {list(result.keys())}")
         
         # Check Reserve Fund timeline fields
@@ -59,7 +59,7 @@ def test_reserve_fund_timeline_data():
         reserve_goal = result.get('reserve_fund_goal')
         reserve_duration = result.get('reserve_fund_duration_months')
         
-        print(f"\n🔍 Reserve Fund Timeline Data:")
+        print("\n🔍 Reserve Fund Timeline Data:")
         print(f"   reserve_fund_start_date: {reserve_start}")
         print(f"   reserve_fund_target_date: {reserve_target}")
         print(f"   reserve_fund_goal: {reserve_goal}")
@@ -67,7 +67,7 @@ def test_reserve_fund_timeline_data():
         
         # Check if timeline data exists
         if reserve_start and reserve_target:
-            print(f"\n✅ Timeline data is present in API response")
+            print("\n✅ Timeline data is present in API response")
             
             # Check timeline logic for April 2025
             from datetime import date
@@ -78,7 +78,7 @@ def test_reserve_fund_timeline_data():
             is_after_start = selected_date >= start_date
             is_before_end = selected_date <= target_date
             
-            print(f"\n📅 Timeline Check for April 2025:")
+            print("\n📅 Timeline Check for April 2025:")
             print(f"   Selected Date: {selected_date}")
             print(f"   Start Date: {start_date}")
             print(f"   Target Date: {target_date}")
@@ -87,16 +87,16 @@ def test_reserve_fund_timeline_data():
             print(f"   Should Show Reserve Fund: {is_after_start and is_before_end}")
             
         else:
-            print(f"\n❌ Timeline data is missing from API response")
-            print(f"   This explains why frontend shows Reserve Fund in April 2025")
+            print("\n❌ Timeline data is missing from API response")
+            print("   This explains why frontend shows Reserve Fund in April 2025")
         
         # Check Reserve Fund calculation for April vs July
-        print(f"\n🔍 Reserve Fund Calculation Check:")
+        print("\n🔍 Reserve Fund Calculation Check:")
         reserve_monthly = result.get('reserve_fund_monthly_target', 0)
         print(f"   Monthly Target: {reserve_monthly}€")
         
         if reserve_monthly > 0 and not (reserve_start and reserve_target):
-            print(f"   ⚠️  Reserve Fund shows amount but no timeline validation!")
+            print("   ⚠️  Reserve Fund shows amount but no timeline validation!")
 
 if __name__ == '__main__':
     test_reserve_fund_timeline_data()

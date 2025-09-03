@@ -10,7 +10,6 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from buildings.models import Building
-from apartments.models import Apartment
 
 def remove_hardcoded_reserve_fund():
     """Remove all hardcoded 5€ reserve fund contributions and set them to 0€"""
@@ -31,14 +30,14 @@ def remove_hardcoded_reserve_fund():
             current_reserve_goal = building.reserve_fund_goal or 0
             current_duration = building.reserve_fund_duration_months or 0
             
-            print(f"📊 ΤΡΕΧΟΥΣΕΣ ΡΥΘΜΙΣΕΙΣ:")
+            print("📊 ΤΡΕΧΟΥΣΕΣ ΡΥΘΜΙΣΕΙΣ:")
             print(f"   • Εισφορά ανά διαμέρισμα: {current_reserve_contribution}€")
             print(f"   • Στόχος αποθεματικού: {current_reserve_goal}€")
             print(f"   • Διάρκεια σε μήνες: {current_duration}μήνες")
             
             # Check if it's hardcoded 5€
             if current_reserve_contribution == 5.0 or current_reserve_contribution == Decimal('5.00'):
-                print(f"   ⚠️  ΒΡΕΘΗΚΕ HARCODED 5€ - ΘΑ ΔΙΟΡΘΩΘΕΙ")
+                print("   ⚠️  ΒΡΕΘΗΚΕ HARCODED 5€ - ΘΑ ΔΙΟΡΘΩΘΕΙ")
                 
                 # Calculate correct amount based on goal and duration
                 if current_reserve_goal > 0 and current_duration > 0:
@@ -53,24 +52,24 @@ def remove_hardcoded_reserve_fund():
                         
                         print(f"   ✅ ΕΝΗΜΕΡΩΘΗΚΕ: {correct_contribution:.2f}€")
                     else:
-                        print(f"   ❌ Δεν υπάρχουν διαμερίσματα - δεν μπορεί να υπολογιστεί")
+                        print("   ❌ Δεν υπάρχουν διαμερίσματα - δεν μπορεί να υπολογιστεί")
                         building.reserve_contribution_per_apartment = 0
                         building.save()
-                        print(f"   ✅ ΕΝΗΜΕΡΩΘΗΚΕ: 0€")
+                        print("   ✅ ΕΝΗΜΕΡΩΘΗΚΕ: 0€")
                 else:
-                    print(f"   ❌ Δεν υπάρχει στόχος ή διάρκεια - θα μηδενιστεί")
+                    print("   ❌ Δεν υπάρχει στόχος ή διάρκεια - θα μηδενιστεί")
                     building.reserve_contribution_per_apartment = 0
                     building.save()
-                    print(f"   ✅ ΕΝΗΜΕΡΩΘΗΚΕ: 0€")
+                    print("   ✅ ΕΝΗΜΕΡΩΘΗΚΕ: 0€")
             else:
-                print(f"   ✅ ΔΕΝ ΕΙΝΑΙ HARCODED 5€ - ΔΕΝ ΑΛΛΑΖΕΙ")
+                print("   ✅ ΔΕΝ ΕΙΝΑΙ HARCODED 5€ - ΔΕΝ ΑΛΛΑΖΕΙ")
         
-        print(f"\n" + "=" * 60)
+        print("\n" + "=" * 60)
         print("✅ ΟΛΟΚΛΗΡΩΣΗ ΑΠΑΛΛΑΓΗΣ HARCODED 5€")
         print("=" * 60)
         
         # Show final results
-        print(f"\n📊 ΤΕΛΙΚΑ ΑΠΟΤΕΛΕΣΜΑΤΑ:")
+        print("\n📊 ΤΕΛΙΚΑ ΑΠΟΤΕΛΕΣΜΑΤΑ:")
         for building in buildings:
             print(f"🏢 {building.name}: {building.reserve_contribution_per_apartment:.2f}€ ανά διαμέρισμα")
 

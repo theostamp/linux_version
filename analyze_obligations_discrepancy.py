@@ -6,7 +6,6 @@
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -16,7 +15,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.services import FinancialDashboardService
 from buildings.models import Building
-from apartments.models import Apartment
 
 def analyze_obligations_discrepancy():
     """Ανάλυση της ασυμφωνίας στα οικονομικά υπολογισμούς"""

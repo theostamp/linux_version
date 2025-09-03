@@ -42,7 +42,7 @@ def check_solonos_building():
             total_heating_mills = sum(apt.heating_mills for apt in apartments)
             total_elevator_mills = sum(apt.elevator_mills for apt in apartments)
             
-            print(f"\n📊 Σύνοψη χιλιοστών:")
+            print("\n📊 Σύνοψη χιλιοστών:")
             print(f"💰 Συνολικά χιλιοστά συμμετοχής: {total_mills}")
             print(f"🔥 Συνολικά χιλιοστά θέρμανσης: {total_heating_mills}")
             print(f"🛗 Συνολικά χιλιοστά ανελκυστήρα: {total_elevator_mills}")

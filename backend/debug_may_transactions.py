@@ -14,7 +14,6 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from financial.models import Transaction, Expense
-from apartments.models import Apartment
 from buildings.models import Building
 from datetime import datetime
 from django.utils import timezone

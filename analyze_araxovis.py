@@ -8,7 +8,6 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from buildings.models import Building
-from apartments.models import Apartment
 from financial.models import Payment, Expense
 from decimal import Decimal
 from django.db.models import Sum
@@ -37,7 +36,7 @@ with schema_context('demo'):
     # Calculate reserve
     calculated_reserve = total_payments - total_expenses
     
-    print(f"📊 ΥΠΟΛΟΓΙΣΜΟΣ:")
+    print("📊 ΥΠΟΛΟΓΙΣΜΟΣ:")
     print(f"   Συνολικές εισπράξεις: {total_payments}€")
     print(f"   Συνολικές δαπάνες: {total_expenses}€")
     print(f"   Υπολογισμένο αποθεματικό: {calculated_reserve}€")
@@ -46,7 +45,7 @@ with schema_context('demo'):
     
     # Check if they match
     if abs(calculated_reserve - building.current_reserve) < Decimal('0.01'):
-        print(f"✅ Τα ποσά ταιριάζουν! Το 7.712,68€ είναι το αποθεματικό.")
+        print("✅ Τα ποσά ταιριάζουν! Το 7.712,68€ είναι το αποθεματικό.")
         print(f"   Πηγή: Εισπράξεις ({total_payments}€) - Δαπάνες ({total_expenses}€)")
     else:
         print(f"❌ Διαφορά: {calculated_reserve}€ vs {building.current_reserve}€")

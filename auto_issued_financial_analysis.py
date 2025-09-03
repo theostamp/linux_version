@@ -16,7 +16,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from django.db.models import Sum, Q, Avg
+from django.db.models import Sum
 
 def print_header(title, symbol="="):
     """Print formatted header"""
@@ -42,7 +42,7 @@ def analyze_auto_issued_logic():
     with schema_context('demo'):
         print_header("🏢 ΟΙΚΟΝΟΜΙΚΗ ΑΝΑΛΥΣΗ ΑΡΑΧΩΒΗΣ 12 - AUTO ISSUED LOGIC")
         print(f"📅 Ημερομηνία: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
-        print(f"🔄 Λογική: Όλες οι δαπάνες auto-issued, άμεση ενημέρωση υπολοίπων")
+        print("🔄 Λογική: Όλες οι δαπάνες auto-issued, άμεση ενημέρωση υπολοίπων")
         
         try:
             # Import models
@@ -68,18 +68,18 @@ def analyze_auto_issued_logic():
             total_payments_building = Payment.objects.filter(apartment__building=building).count()
             total_transactions_building = Transaction.objects.filter(apartment__building=building).count()
             
-            print(f"\n📊 ΔΙΑΘΕΣΙΜΑ ΔΕΔΟΜΕΝΑ:")
+            print("\n📊 ΔΙΑΘΕΣΙΜΑ ΔΕΔΟΜΕΝΑ:")
             print(f"   💸 Συνολικές δαπάνες: {total_expenses_building}")
             print(f"   💰 Συνολικές πληρωμές: {total_payments_building}")
             print(f"   💳 Συνολικές συναλλαγές: {total_transactions_building}")
             
             if total_expenses_building == 0 and total_payments_building == 0 and total_transactions_building == 0:
-                print(f"\n⚠️ ΣΗΜΑΝΤΙΚΟ: Δεν υπάρχουν οικονομικά δεδομένα για το κτίριο!")
-                print(f"   Το ποσό 334,85 € πιθανότατα προέρχεται από:")
-                print(f"   1. Υπολογισμό στο frontend")
-                print(f"   2. Προκαθορισμένα ποσά κοινοχρήστων") 
-                print(f"   3. Εκτίμηση βάσει άλλων κτιρίων")
-                print(f"   4. Template ή default τιμές")
+                print("\n⚠️ ΣΗΜΑΝΤΙΚΟ: Δεν υπάρχουν οικονομικά δεδομένα για το κτίριο!")
+                print("   Το ποσό 334,85 € πιθανότατα προέρχεται από:")
+                print("   1. Υπολογισμό στο frontend")
+                print("   2. Προκαθορισμένα ποσά κοινοχρήστων") 
+                print("   3. Εκτίμηση βάσει άλλων κτιρίων")
+                print("   4. Template ή default τιμές")
                 return
             
             # 1. EXPENSE ANALYSIS - όλες θεωρούνται issued
@@ -141,7 +141,7 @@ def analyze_auto_issued_logic():
                 else:
                     debits_total += abs(trans.amount)
             
-            print(f"\n💰 ΣΥΝΟΛΑ ΣΥΝΑΛΛΑΓΩΝ:")
+            print("\n💰 ΣΥΝΟΛΑ ΣΥΝΑΛΛΑΓΩΝ:")
             print(f"   🟢 Πιστώσεις: {format_currency(credits_total)}")
             print(f"   🔴 Χρεώσεις: {format_currency(debits_total)}")
             print(f"   ⚖️ Καθαρό: {format_currency(credits_total - debits_total)}")
@@ -164,13 +164,13 @@ def analyze_auto_issued_logic():
                 print(f"   💰 Υπόλοιπο: {format_currency(balance)}")
                 
                 if balance > Decimal('0.01'):
-                    print(f"   ✅ Πιστωτικό υπόλοιπο")
+                    print("   ✅ Πιστωτικό υπόλοιπο")
                     positive_balances.append(balance)
                 elif balance < Decimal('-0.01'):
-                    print(f"   ⚠️ Χρεωστικό υπόλοιπο")
+                    print("   ⚠️ Χρεωστικό υπόλοιπο")
                     negative_balances.append(abs(balance))
                 else:
-                    print(f"   ⚖️ Μηδενικό υπόλοιπο")
+                    print("   ⚖️ Μηδενικό υπόλοιπο")
                     zero_balances.append(balance)
                 
                 total_building_balance += balance
@@ -188,23 +188,23 @@ def analyze_auto_issued_logic():
                 per_apartment = target_amount / apartments.count()
                 print(f"💡 Ανά διαμέρισμα: {format_currency(per_apartment)}")
             
-            print(f"\n🔍 ΠΙΘΑΝΕΣ ΠΗΓΕΣ:")
+            print("\n🔍 ΠΙΘΑΝΕΣ ΠΗΓΕΣ:")
             
             # Check if it matches February expenses
             if abs(feb_total - target_amount) < Decimal('5'):
-                print(f"✅ ΤΑΙΡΙΑΖΕΙ με δαπάνες Φεβρουαρίου!")
+                print("✅ ΤΑΙΡΙΑΖΕΙ με δαπάνες Φεβρουαρίου!")
                 print(f"   Διαφορά: {format_currency(abs(feb_total - target_amount))}")
             
             # Check if it's related to total negative balances
             total_negative = sum(negative_balances) if negative_balances else Decimal('0')
             if abs(total_negative - target_amount) < Decimal('5'):
-                print(f"✅ ΤΑΙΡΙΑΖΕΙ με συνολικά χρεωστικά υπόλοιπα!")
+                print("✅ ΤΑΙΡΙΑΖΕΙ με συνολικά χρεωστικά υπόλοιπα!")
                 print(f"   Διαφορά: {format_currency(abs(total_negative - target_amount))}")
             
             # Check if it's a monthly obligation calculation
             monthly_obligation = feb_total / apartments.count() * apartments.count()
             if abs(monthly_obligation - target_amount) < Decimal('5'):
-                print(f"✅ ΤΑΙΡΙΑΖΕΙ με μηνιαία υποχρέωση!")
+                print("✅ ΤΑΙΡΙΑΖΕΙ με μηνιαία υποχρέωση!")
                 print(f"   Διαφορά: {format_currency(abs(monthly_obligation - target_amount))}")
             
             # 5. DETAILED BREAKDOWN
@@ -218,7 +218,7 @@ def analyze_auto_issued_logic():
             
             # Calculate monthly common expenses per apartment based on participation
             total_mills = sum(apt.participation_mills for apt in apartments if apt.participation_mills) or 1000
-            print(f"\n📊 ΚΑΤΑΝΟΜΗ ΒΑΣΕΙ ΧΙΛΙΟΣΤΩΝ:")
+            print("\n📊 ΚΑΤΑΝΟΜΗ ΒΑΣΕΙ ΧΙΛΙΟΣΤΩΝ:")
             print(f"   Συνολικά χιλιοστά: {total_mills}")
             
             if feb_total > 0:
@@ -230,26 +230,26 @@ def analyze_auto_issued_logic():
             # 6. CONCLUSION
             print_header("📋 ΣΥΜΠΕΡΑΣΜΑΤΑ")
             
-            print(f"🏢 Κτίριο: Αραχώβης 12")
+            print("🏢 Κτίριο: Αραχώβης 12")
             print(f"🏠 Διαμερίσματα: {apartments.count()}")
             print(f"🎯 Υποχρεώσεις περιόδου: {format_currency(target_amount)}")
             
             if abs(feb_total - target_amount) < Decimal('10'):
-                print(f"\n✅ ΤΟ ΠΟΣΟ 334,85 € ΠΡΟΕΡΧΕΤΑΙ ΑΠΟ:")
-                print(f"   📸 Δαπάνες Φεβρουαρίου 2025")
-                print(f"   🔄 Auto-issued logic: Άμεση εφαρμογή στα υπόλοιπα")
-                print(f"   📊 Κατανομή βάσει χιλιοστών συμμετοχής")
+                print("\n✅ ΤΟ ΠΟΣΟ 334,85 € ΠΡΟΕΡΧΕΤΑΙ ΑΠΟ:")
+                print("   📸 Δαπάνες Φεβρουαρίου 2025")
+                print("   🔄 Auto-issued logic: Άμεση εφαρμογή στα υπόλοιπα")
+                print("   📊 Κατανομή βάσει χιλιοστών συμμετοχής")
             else:
-                print(f"\n🔍 ΤΟ ΠΟΣΟ 334,85 € ΠΙΘΑΝΟΤΑΤΑ ΠΡΟΕΡΧΕΤΑΙ ΑΠΟ:")
-                print(f"   📸 Συνδυασμό δαπανών και εκκρεμοτήτων")
-                print(f"   🔄 Υπολογισμό κοινοχρήστων προηγούμενων περιόδων")
-                print(f"   📊 Αυτόματη ενημέρωση λόγω auto-issued logic")
+                print("\n🔍 ΤΟ ΠΟΣΟ 334,85 € ΠΙΘΑΝΟΤΑΤΑ ΠΡΟΕΡΧΕΤΑΙ ΑΠΟ:")
+                print("   📸 Συνδυασμό δαπανών και εκκρεμοτήτων")
+                print("   🔄 Υπολογισμό κοινοχρήστων προηγούμενων περιόδων")
+                print("   📊 Αυτόματη ενημέρωση λόγω auto-issued logic")
             
-            print(f"\n🚀 ΠΡΟΤΕΙΝΟΜΕΝΕΣ ΕΝΕΡΓΕΙΕΣ:")
-            print(f"   1. Έλεγχος υπολογισμού κοινοχρήστων τρέχουσας περιόδου")
-            print(f"   2. Επιβεβαίωση εκκρεμών πληρωμών")
-            print(f"   3. Επαλήθευση auto-issued logic στο frontend")
-            print(f"   4. Έλεγχος χιλιοστών συμμετοχής")
+            print("\n🚀 ΠΡΟΤΕΙΝΟΜΕΝΕΣ ΕΝΕΡΓΕΙΕΣ:")
+            print("   1. Έλεγχος υπολογισμού κοινοχρήστων τρέχουσας περιόδου")
+            print("   2. Επιβεβαίωση εκκρεμών πληρωμών")
+            print("   3. Επαλήθευση auto-issued logic στο frontend")
+            print("   4. Έλεγχος χιλιοστών συμμετοχής")
             
         except Exception as e:
             print(f"❌ Σφάλμα: {e}")

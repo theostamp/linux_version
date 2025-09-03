@@ -58,7 +58,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
     
     try {
       let requestData: any;
-      let headers: any = {};
+      const headers: any = {};
       
       // If there's a file upload, use FormData
       if (data.receipt) {
@@ -127,7 +127,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
     
     try {
       let requestData: any;
-      let headers: any = {};
+      const headers: any = {};
       
       // If there's a file upload, use FormData
       if (data.receipt) {
@@ -264,7 +264,7 @@ export const usePayments = (buildingId?: number, selectedMonth?: string) => {
     
     try {
       let requestData: any;
-      let headers: any = {};
+      const headers: any = {};
       
       // If there's a file upload, use FormData
       if (data.receipt) {

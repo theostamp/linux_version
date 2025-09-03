@@ -22,7 +22,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from buildings.models import Building
 from apartments.models import Apartment
-from financial.models import Expense, CommonExpensePeriod, ApartmentShare
+from financial.models import Expense, ApartmentShare
 from financial.services import CommonExpenseCalculator, FinancialReportGenerator
 from decimal import Decimal
 

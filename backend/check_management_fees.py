@@ -44,10 +44,10 @@ def check_management_fees():
             # Check if this explains the 50€ difference
             print("🔍 ΕΛΕΓΧΟΣ ΔΙΑΦΟΡΑΣ:")
             print("-" * 20)
-            print(f"   Συνολικές δαπάνες: 1780€")
+            print("   Συνολικές δαπάνες: 1780€")
             print(f"   Διαχειριστικές δαπάνες: {total_management}€")
             print(f"   Σύνολο με διαχείριση: {1780 + total_management}€")
-            print(f"   Αναμενόμενο σύνολο: 1830€")
+            print("   Αναμενόμενο σύνολο: 1830€")
             
             difference = abs((1780 + total_management) - 1830)
             print(f"   Διαφορά: {difference}€")

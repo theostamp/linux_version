@@ -2,8 +2,7 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
-from django.db.models import Sum, Q
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -11,9 +10,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Payment, Expense, Transaction
-from apartments.models import Apartment
-from buildings.models import Building
+from financial.models import Payment, Transaction
 
 def fix_remaining_discrepancy():
     """Fix the remaining 1-day discrepancy"""
@@ -41,20 +38,20 @@ def fix_remaining_discrepancy():
         # Βρες την πληρωμή
         payment = Payment.objects.get(id=88)
         
-        print(f"📋 Τρέχουσα κατάσταση:")
+        print("📋 Τρέχουσα κατάσταση:")
         print(f"   - Πληρωμή ημερομηνία: {payment.date}")
         print(f"   - Συναλλαγή ημερομηνία: {transaction.date}")
         
         # Διόρθωση - χρησιμοποιούμε την ίδια ημερομηνία με την πληρωμή
         new_date = datetime.combine(payment.date, datetime.min.time())
         
-        print(f"\n🔧 Διόρθωση:")
+        print("\n🔧 Διόρθωση:")
         print(f"   - Νέα ημερομηνία συναλλαγής: {new_date}")
         
         transaction.date = new_date
         transaction.save()
         
-        print(f"✅ Η διόρθωση ολοκληρώθηκε!")
+        print("✅ Η διόρθωση ολοκληρώθηκε!")
         
         # Επιβεβαίωση
         transaction.refresh_from_db()

@@ -15,7 +15,7 @@ from buildings.models import Building
 def check_building_9():
     try:
         building = Building.objects.get(id=9)
-        print(f"🔍 Building ID 9 found:")
+        print("🔍 Building ID 9 found:")
         print(f"   Name: {building.name}")
         print(f"   Address: {building.address}")
         print(f"   Street View Image: {building.street_view_image}")
@@ -24,7 +24,7 @@ def check_building_9():
         print(f"   Street View Image is empty: {building.street_view_image == ''}")
         
         # Check all fields
-        print(f"\n🔍 All fields:")
+        print("\n🔍 All fields:")
         for field in building._meta.fields:
             value = getattr(building, field.name)
             print(f"   {field.name}: {value} (type: {type(value)})")

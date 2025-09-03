@@ -8,11 +8,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Apartment, Expense, Payment, Transaction
+from financial.models import Apartment, Expense, Payment
 from buildings.models import Building
 from decimal import Decimal
-from django.db.models import Sum
-from datetime import date
 
 def calculate_apartment_obligations():
     """Υπολογίζει τις συσσωρευμένες οφειλές ανά διαμέρισμα"""
@@ -45,13 +43,13 @@ def calculate_apartment_obligations():
         total_mills = sum(apt.participation_mills or 0 for apt in apartments)
         apartments_count = apartments.count()
         
-        print(f"📊 ΣΤΑΤΙΣΤΙΚΑ ΚΤΙΡΙΟΥ:")
+        print("📊 ΣΤΑΤΙΣΤΙΚΑ ΚΤΙΡΙΟΥ:")
         print(f"   • Συνολικά διαμερίσματα: {apartments_count}")
         print(f"   • Συνολικά χιλιοστά: {total_mills}")
         print(f"   • Μέσος όρος χιλιοστών ανά διαμέρισμα: {total_mills/apartments_count:.0f}")
         
         # Επεξεργασία δαπανών
-        print(f"\n💰 ΕΠΕΞΕΡΓΑΣΙΑ ΔΑΠΑΝΩΝ:")
+        print("\n💰 ΕΠΕΞΕΡΓΑΣΙΑ ΔΑΠΑΝΩΝ:")
         total_expenses = Decimal('0.00')
         
         for expense in expenses:
@@ -102,7 +100,7 @@ def calculate_apartment_obligations():
             
             elif expense.distribution_type == 'by_meters':
                 # Κατανομή ανά μετρητές (απλοποιημένη - χρησιμοποιούμε χιλιοστά)
-                print(f"      ⚠️  Μετρητές - χρησιμοποιούμε χιλιοστά ως fallback")
+                print("      ⚠️  Μετρητές - χρησιμοποιούμε χιλιοστά ως fallback")
                 for apt in apartments:
                     mills = apt.participation_mills or 0
                     if total_mills > 0:
@@ -125,7 +123,7 @@ def calculate_apartment_obligations():
             
             elif expense.distribution_type == 'specific_apartments':
                 # Συγκεκριμένα διαμερίσματα (απλοποιημένη - χρησιμοποιούμε χιλιοστά)
-                print(f"      ⚠️  Συγκεκριμένα διαμερίσματα - χρησιμοποιούμε χιλιοστά ως fallback")
+                print("      ⚠️  Συγκεκριμένα διαμερίσματα - χρησιμοποιούμε χιλιοστά ως fallback")
                 for apt in apartments:
                     mills = apt.participation_mills or 0
                     if total_mills > 0:
@@ -147,7 +145,7 @@ def calculate_apartment_obligations():
                     print(f"      → Apartment {apt.number}: {share:,.2f}€ ({mills}χλ.)")
         
         # Επεξεργασία πληρωμών
-        print(f"\n💳 ΕΠΕΞΕΡΓΑΣΙΑ ΠΛΗΡΩΜΩΝ:")
+        print("\n💳 ΕΠΕΞΕΡΓΑΣΙΑ ΠΛΗΡΩΜΩΝ:")
         total_payments = Decimal('0.00')
         
         payments = Payment.objects.filter(apartment__building_id=building.id)
@@ -173,7 +171,7 @@ def calculate_apartment_obligations():
             print(f"   💰 Apartment {payment.apartment.number}: {amount:,.2f}€ ({payment.payer_name})")
         
         # Υπολογισμός καθαρών οφειλών
-        print(f"\n📊 ΥΠΟΛΟΓΙΣΜΟΣ ΚΑΘΑΡΩΝ ΟΦΕΙΛΩΝ:")
+        print("\n📊 ΥΠΟΛΟΓΙΣΜΟΣ ΚΑΘΑΡΩΝ ΟΦΕΙΛΩΝ:")
         total_net_obligations = Decimal('0.00')
         
         for apt_id, data in apartment_obligations.items():
@@ -193,11 +191,11 @@ def calculate_apartment_obligations():
             
             # Εμφάνιση breakdown
             if data['expense_breakdown']:
-                print(f"      📋 Breakdown δαπανών:")
+                print("      📋 Breakdown δαπανών:")
                 for expense in data['expense_breakdown']:
                     print(f"         • {expense['expense_title']}: {expense['share_amount']:,.2f}€")
         
-        print(f"\n" + "=" * 60)
+        print("\n" + "=" * 60)
         print("📈 ΣΥΝΟΨΗ:")
         print(f"   • Συνολικές δαπάνες: {total_expenses:,.2f}€")
         print(f"   • Συνολικές πληρωμές: {total_payments:,.2f}€")
@@ -205,7 +203,7 @@ def calculate_apartment_obligations():
         print(f"   • Συνολικές καθαρές οφειλές: {total_net_obligations:,.2f}€")
         
         # Ελέγχος συνέπειας
-        print(f"\n🔍 ΕΛΕΓΧΟΣ ΣΥΝΕΠΕΙΑΣ:")
+        print("\n🔍 ΕΛΕΓΧΟΣ ΣΥΝΕΠΕΙΑΣ:")
         calculated_deficit = total_expenses - total_payments
         actual_deficit = abs(building.current_reserve) if building.current_reserve < 0 else Decimal('0.00')
         
@@ -213,10 +211,10 @@ def calculate_apartment_obligations():
         print(f"   • Πραγματικό έλλειμα: {actual_deficit:,.2f}€")
         
         if abs(calculated_deficit - actual_deficit) < Decimal('0.01'):
-            print(f"   ✅ Τα νούμερα είναι συνεπή!")
+            print("   ✅ Τα νούμερα είναι συνεπή!")
         else:
             print(f"   ❌ Διαφορά: {abs(calculated_deficit - actual_deficit):,.2f}€")
-            print(f"   🔍 Πιθανή αιτία: Διαχειριστικά τέλη ή άλλες χρεώσεις")
+            print("   🔍 Πιθανή αιτία: Διαχειριστικά τέλη ή άλλες χρεώσεις")
         
         return apartment_obligations
 

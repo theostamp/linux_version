@@ -14,7 +14,6 @@ sys.path.append('/app')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
 django.setup()
 
-from django_tenants.utils import schema_context
 
 def test_obligations_breakdown_api():
     """Test το νέο API endpoint"""
@@ -46,7 +45,7 @@ def test_obligations_breakdown_api():
                 'apartments_with_debt', 'apartments_count'
             ]
             
-            print(f"\n🔍 VALIDATION:")
+            print("\n🔍 VALIDATION:")
             for field in required_fields:
                 if field in data:
                     print(f"✅ {field}: {data[field]}")
@@ -57,7 +56,7 @@ def test_obligations_breakdown_api():
             expected_total = 334.85
             actual_total = data.get('total_obligations', 0)
             
-            print(f"\n🎯 TOTAL COMPARISON:")
+            print("\n🎯 TOTAL COMPARISON:")
             print(f"   Expected: {expected_total} €")
             print(f"   Actual: {actual_total} €")
             print(f"   Match: {'✅' if abs(actual_total - expected_total) < 0.01 else '❌'}")

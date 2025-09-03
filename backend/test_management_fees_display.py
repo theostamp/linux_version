@@ -15,7 +15,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from buildings.models import Building
 from financial.services import FinancialDashboardService
-from decimal import Decimal
 
 def test_management_fees_display():
     """Test if management fees are displayed correctly"""

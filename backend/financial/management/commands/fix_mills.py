@@ -13,7 +13,6 @@ from django.core.management.base import BaseCommand, CommandError
 from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
-from decimal import Decimal
 
 
 class Command(BaseCommand):
@@ -74,7 +73,7 @@ class Command(BaseCommand):
                 return
             
             # Έξυπνη διόρθωση
-            self.stdout.write(f"\n🔧 Εφαρμογή έξυπνης διόρθωσης...")
+            self.stdout.write("\n🔧 Εφαρμογή έξυπνης διόρθωσης...")
             
             changes = []
             
@@ -173,14 +172,14 @@ class Command(BaseCommand):
             
             # Εφαρμογή αλλαγών (αν δεν είναι dry-run)
             if not dry_run:
-                self.stdout.write(f"\n💾 Εφαρμογή αλλαγών...")
+                self.stdout.write("\n💾 Εφαρμογή αλλαγών...")
                 for change in changes:
                     change['apartment'].participation_mills = change['new']
                     change['apartment'].save()
                 
                 # Επιβεβαίωση
                 updated_total = sum(apt.participation_mills or 0 for apt in apartments)
-                self.stdout.write(f"\n📊 Επιβεβαίωση:")
+                self.stdout.write("\n📊 Επιβεβαίωση:")
                 self.stdout.write(f"   Νέο σύνολο: {updated_total}")
                 self.stdout.write(f"   Διαφορά από στόχο: {updated_total - expected_total}")
                 
@@ -188,7 +187,7 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.SUCCESS("✅ Η διόρθωση ήταν επιτυχής!"))
                     
                     # Εμφάνιση τελικής κατανομής
-                    self.stdout.write(f"\n📋 Τελική Κατανομή:")
+                    self.stdout.write("\n📋 Τελική Κατανομή:")
                     for apartment in apartments:
                         mills = apartment.participation_mills or 0
                         percentage = (mills / expected_total) * 100
@@ -196,7 +195,7 @@ class Command(BaseCommand):
                 else:
                     self.stdout.write(self.style.WARNING("⚠️ Η διόρθωση δεν ήταν πλήρης"))
             else:
-                self.stdout.write(f"\n🔍 DRY RUN - Δεν εφαρμόστηκαν αλλαγές")
+                self.stdout.write("\n🔍 DRY RUN - Δεν εφαρμόστηκαν αλλαγές")
                 
                 # Προσομοίωση αποτελέσματος
                 simulated_total = sum(change['new'] for change in changes)

@@ -16,7 +16,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from django.db.models import Sum, Q
+from django.db.models import Sum
 
 def print_header(title, symbol="="):
     """Print formatted header"""
@@ -123,7 +123,7 @@ def simple_analysis():
             print(f"✅ Επιβεβαιωμένες πληρωμές: {confirmed_payments.count()} ({format_currency(confirmed_total)})")
             print(f"⏳ Εκκρεμείς πληρωμές: {pending_payments.count()} ({format_currency(pending_total)})")
             
-            print(f"\n🔍 ΛΕΠΤΟΜΕΡΕΙΕΣ ΕΚΚΡΕΜΩΝ ΠΛΗΡΩΜΩΝ:")
+            print("\n🔍 ΛΕΠΤΟΜΕΡΕΙΕΣ ΕΚΚΡΕΜΩΝ ΠΛΗΡΩΜΩΝ:")
             for payment in pending_payments:
                 print(f"   • Διαμ. {payment.apartment.apartment_number}: {format_currency(payment.amount)}")
                 print(f"     📅 {payment.date} | {payment.description}")
@@ -141,11 +141,11 @@ def simple_analysis():
                 print(f"   💰 Υπόλοιπο: {format_currency(balance)}")
                 
                 if balance > Decimal('0.01'):
-                    print(f"   ✅ Πιστωτικό υπόλοιπο")
+                    print("   ✅ Πιστωτικό υπόλοιπο")
                 elif balance < Decimal('-0.01'):
-                    print(f"   ⚠️ Χρεωστικό υπόλοιπο")
+                    print("   ⚠️ Χρεωστικό υπόλοιπο")
                 else:
-                    print(f"   ⚖️ Μηδενικό υπόλοιπο")
+                    print("   ⚖️ Μηδενικό υπόλοιπο")
             
             # 4. ANALYSIS OF 334,85 €
             print_header("🔍 ΑΝΑΛΥΣΗ 334,85 €")
@@ -162,17 +162,17 @@ def simple_analysis():
             
             # Check if it matches any combination
             target = Decimal('334.85')
-            print(f"\n🧮 ΣΥΓΚΡΙΣΗ ΜΕ ΣΤΟΧΟ (334,85 €):")
+            print("\n🧮 ΣΥΓΚΡΙΣΗ ΜΕ ΣΤΟΧΟ (334,85 €):")
             
             if abs(total_expenses - target) < Decimal('1'):
-                print(f"✅ Ταιριάζει με δαπάνες μήνα!")
+                print("✅ Ταιριάζει με δαπάνες μήνα!")
             elif abs(all_expenses_total - target) < Decimal('1'):
-                print(f"✅ Ταιριάζει με συνολικές δαπάνες!")
+                print("✅ Ταιριάζει με συνολικές δαπάνες!")
             elif abs(pending_total - target) < Decimal('1'):
-                print(f"✅ Ταιριάζει με εκκρεμείς πληρωμές!")
+                print("✅ Ταιριάζει με εκκρεμείς πληρωμές!")
             else:
-                print(f"🔍 Δεν ταιριάζει ακριβώς με κανένα από τα παραπάνω")
-                print(f"   Πιθανότατα συνδυασμός ή άλλος υπολογισμός")
+                print("🔍 Δεν ταιριάζει ακριβώς με κανένα από τα παραπάνω")
+                print("   Πιθανότατα συνδυασμός ή άλλος υπολογισμός")
             
             # 5. SUMMARY
             print_header("📋 ΣΥΝΟΨΗ")
@@ -181,7 +181,7 @@ def simple_analysis():
             print(f"💸 Δαπάνες Φεβρουαρίου: {format_currency(total_expenses)}")
             print(f"💰 Επιβεβαιωμένες πληρωμές: {format_currency(confirmed_total)}")
             print(f"⏳ Εκκρεμείς πληρωμές: {pending_payments.count()} ({format_currency(pending_total)})")
-            print(f"🎯 Στόχος ανάλυσης: 334,85 €")
+            print("🎯 Στόχος ανάλυσης: 334,85 €")
             
         except Exception as e:
             print(f"❌ Σφάλμα: {e}")

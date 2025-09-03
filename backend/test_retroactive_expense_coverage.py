@@ -61,7 +61,7 @@ def test_retroactive_expense_coverage():
             date__month=3
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
-        print(f"\n📅 ΔΑΠΑΝΕΣ ΕΚ ΤΩΝ ΥΣΤΕΡΩΝ (Μάρτιος 2025):")
+        print("\n📅 ΔΑΠΑΝΕΣ ΕΚ ΤΩΝ ΥΣΤΕΡΩΝ (Μάρτιος 2025):")
         print(f"   Συνολικές δαπάνες: {march_expenses}€")
         
         # 3. Προηγούμενες οφειλές (υπολογισμός όπως στο backend)
@@ -115,7 +115,7 @@ def test_retroactive_expense_coverage():
             if historical_balance < 0:
                 previous_obligations += abs(historical_balance)
         
-        print(f"\n📊 ΠΡΟΗΓΟΥΜΕΝΕΣ ΟΦΕΙΛΕΣ:")
+        print("\n📊 ΠΡΟΗΓΟΥΜΕΝΕΣ ΟΦΕΙΛΕΣ:")
         print(f"   Συνολικές προηγούμενες οφειλές: {previous_obligations}€")
         
         # 4. Διαχειριστικά τέλη
@@ -123,14 +123,14 @@ def test_retroactive_expense_coverage():
         apartments_count = apartments.count()
         total_management_cost = management_fee_per_apartment * apartments_count
         
-        print(f"\n🏢 ΔΙΑΧΕΙΡΙΣΤΙΚΑ ΤΕΛΗ:")
+        print("\n🏢 ΔΙΑΧΕΙΡΙΣΤΙΚΑ ΤΕΛΗ:")
         print(f"   Ανά διαμέρισμα: {management_fee_per_apartment}€")
         print(f"   Συνολικό κόστος: {total_management_cost}€")
         
         # 5. Εισφορά αποθεματικού
         reserve_fund_monthly_target = (building.reserve_fund_goal or Decimal('0.0')) / (building.reserve_fund_duration_months or 1)
         
-        print(f"\n💰 ΕΙΣΦΟΡΑ ΑΠΟΘΕΜΑΤΙΚΟΥ:")
+        print("\n💰 ΕΙΣΦΟΡΑ ΑΠΟΘΕΜΑΤΙΚΟΥ:")
         print(f"   Μηνιαίος στόχος: {reserve_fund_monthly_target}€")
         
         # 6. Πληρωμές τρέχοντος μήνα
@@ -140,14 +140,14 @@ def test_retroactive_expense_coverage():
             date__lt=end_date
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         
-        print(f"\n💳 ΠΛΗΡΩΜΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
+        print("\n💳 ΠΛΗΡΩΜΕΣ ΤΡΕΧΟΝΤΟΣ ΜΗΝΑ:")
         print(f"   Συνολικές πληρωμές: {current_month_payments}€")
         
         # 7. Υπολογισμός όπως στο "Με μια ματιά" (ΠΡΙΝ τη διόρθωση)
         old_current_month_obligations = current_month_expenses + total_management_cost + reserve_fund_monthly_target
         old_coverage_percentage = (current_month_payments / old_current_month_obligations * 100) if old_current_month_obligations > 0 else 0
         
-        print(f"\n❌ ΠΑΛΑΙΟΣ ΥΠΟΛΟΓΙΣΜΟΣ (ΧΩΡΙΣ ΕΚ ΤΩΝ ΥΣΤΕΡΩΝ):")
+        print("\n❌ ΠΑΛΑΙΟΣ ΥΠΟΛΟΓΙΣΜΟΣ (ΧΩΡΙΣ ΕΚ ΤΩΝ ΥΣΤΕΡΩΝ):")
         print(f"   Τρέχουσες υποχρεώσεις: {old_current_month_obligations}€")
         print(f"   Πληρωμές: {current_month_payments}€")
         print(f"   Κάλυψη: {old_coverage_percentage:.1f}%")
@@ -157,7 +157,7 @@ def test_retroactive_expense_coverage():
         new_total_obligations = new_current_month_obligations + previous_obligations
         new_coverage_percentage = (current_month_payments / new_total_obligations * 100) if new_total_obligations > 0 else 0
         
-        print(f"\n✅ ΝΕΟΣ ΥΠΟΛΟΓΙΣΜΟΣ (ΜΕ ΕΚ ΤΩΝ ΥΣΤΕΡΩΝ):")
+        print("\n✅ ΝΕΟΣ ΥΠΟΛΟΓΙΣΜΟΣ (ΜΕ ΕΚ ΤΩΝ ΥΣΤΕΡΩΝ):")
         print(f"   Τρέχουσες υποχρεώσεις: {new_current_month_obligations}€")
         print(f"   Προηγούμενες οφειλές: {previous_obligations}€")
         print(f"   Συνολικές υποχρεώσεις: {new_total_obligations}€")
@@ -165,17 +165,17 @@ def test_retroactive_expense_coverage():
         print(f"   Κάλυψη: {new_coverage_percentage:.1f}%")
         
         # 9. Σύγκριση
-        print(f"\n📈 ΣΥΓΚΡΙΣΗ:")
+        print("\n📈 ΣΥΓΚΡΙΣΗ:")
         print(f"   Διαφορά κάλυψης: {new_coverage_percentage - old_coverage_percentage:.1f}%")
         print(f"   Διαφορά υποχρεώσεων: {new_total_obligations - old_current_month_obligations}€")
         
         if previous_obligations > 0:
-            print(f"\n🎯 ΑΠΟΤΕΛΕΣΜΑ:")
-            print(f"   ✅ Το 'Με μια ματιά' ΤΩΡΑ λαμβάνει υπόψη τις εκ των υστέρων δαπάνες!")
+            print("\n🎯 ΑΠΟΤΕΛΕΣΜΑ:")
+            print("   ✅ Το 'Με μια ματιά' ΤΩΡΑ λαμβάνει υπόψη τις εκ των υστέρων δαπάνες!")
             print(f"   ✅ Η κάλυψη είναι πιο ρεαλιστική: {new_coverage_percentage:.1f}% αντί για {old_coverage_percentage:.1f}%")
         else:
-            print(f"\n🎯 ΑΠΟΤΕΛΕΣΜΑ:")
-            print(f"   ℹ️  Δεν υπάρχουν προηγούμενες οφειλές για να εμφανιστούν")
+            print("\n🎯 ΑΠΟΤΕΛΕΣΜΑ:")
+            print("   ℹ️  Δεν υπάρχουν προηγούμενες οφειλές για να εμφανιστούν")
             print(f"   ℹ️  Η κάλυψη παραμένει ίδια: {new_coverage_percentage:.1f}%")
         
         return {
@@ -188,7 +188,7 @@ def test_retroactive_expense_coverage():
 if __name__ == "__main__":
     try:
         result = test_retroactive_expense_coverage()
-        print(f"\n🎉 Το test ολοκληρώθηκε επιτυχώς!")
+        print("\n🎉 Το test ολοκληρώθηκε επιτυχώς!")
         print(f"📊 Αποτελέσματα: {result}")
     except Exception as e:
         print(f"❌ Σφάλμα: {e}")

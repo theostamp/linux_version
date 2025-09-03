@@ -25,7 +25,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Expense, Transaction, Payment, Apartment
+from financial.models import Transaction, Apartment
 from buildings.models import Building
 
 def print_header(title):
@@ -80,10 +80,10 @@ class BalanceDiscrepancyFixer:
         print(f"⚠️  Διαφορά: {format_currency(discrepancy)}")
         
         if abs(discrepancy) > Decimal('0.01'):
-            print(f"❌ ΠΡΟΒΛΗΜΑ: Υπάρχει διαφορά υπολοίπων!")
+            print("❌ ΠΡΟΒΛΗΜΑ: Υπάρχει διαφορά υπολοίπων!")
             return True, discrepancy
         else:
-            print(f"✅ Δεν υπάρχει διαφορά υπολοίπων")
+            print("✅ Δεν υπάρχει διαφορά υπολοίπων")
             return False, Decimal('0.00')
     
     def analyze_apartment_balances(self):
@@ -117,9 +117,9 @@ class BalanceDiscrepancyFixer:
                     'calculated_balance': calculated_balance,
                     'difference': difference
                 })
-                print(f"   ❌ ΧΡΕΙΑΖΕΤΑΙ ΔΙΟΡΘΩΣΗ")
+                print("   ❌ ΧΡΕΙΑΖΕΤΑΙ ΔΙΟΡΘΩΣΗ")
             else:
-                print(f"   ✅ ΣΩΣΤΟ")
+                print("   ✅ ΣΩΣΤΟ")
         
         return apartment_issues
     
@@ -147,7 +147,7 @@ class BalanceDiscrepancyFixer:
             apt.current_balance = new_balance
             apt.save()
             
-            print(f"   ✅ ΔΙΟΡΘΩΘΗΚΕ")
+            print("   ✅ ΔΙΟΡΘΩΘΗΚΕ")
     
     def verify_fix(self):
         """Επιβεβαίωση της διόρθωσης"""
@@ -161,7 +161,7 @@ class BalanceDiscrepancyFixer:
             print("✅ Όλα τα υπολοίπα είναι συνεπή")
             return True
         else:
-            print(f"❌ Η διόρθωση απέτυχε!")
+            print("❌ Η διόρθωση απέτυχε!")
             print(f"❌ Παραμένει διαφορά: {format_currency(discrepancy)}")
             return False
     
@@ -193,7 +193,7 @@ class BalanceDiscrepancyFixer:
         # Έλεγχος συνέπειας
         balance_difference = abs(total_transaction_amount - total_apartment_balance)
         if balance_difference < Decimal('0.01'):
-            print(f"   ✅ Υπολοίπα συνεπή (διαφορά < 0.01€)")
+            print("   ✅ Υπολοίπα συνεπή (διαφορά < 0.01€)")
         else:
             print(f"   ❌ Υπολοίπα μη συνεπή (διαφορά: {format_currency(balance_difference)})")
     

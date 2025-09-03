@@ -4,7 +4,6 @@ Debug script για το πρόβλημα με τις πληρωμές
 """
 
 import os
-import sys
 import django
 
 # Setup Django

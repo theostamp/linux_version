@@ -4,7 +4,6 @@ Test payment creation and dashboard refresh
 """
 
 import requests
-import json
 
 def test_payment_creation_and_refresh():
     """Test payment creation and verify it appears in dashboard"""
@@ -53,7 +52,7 @@ def test_payment_creation_and_refresh():
         
         if response.status_code == 200:
             dashboard_data = response.json()
-            print(f"✅ Dashboard loaded successfully")
+            print("✅ Dashboard loaded successfully")
             print(f"   Current reserve: {dashboard_data.get('current_reserve', 'N/A')}")
             print(f"   Total payments this month: {dashboard_data.get('total_payments_this_month', 'N/A')}")
             print(f"   Recent transactions: {len(dashboard_data.get('recent_transactions', []))}")
@@ -113,7 +112,7 @@ def test_payment_creation_and_refresh():
         
         if response.status_code == 200:
             dashboard_data = response.json()
-            print(f"✅ Dashboard refreshed successfully")
+            print("✅ Dashboard refreshed successfully")
             print(f"   Current reserve: {dashboard_data.get('current_reserve', 'N/A')}")
             print(f"   Total payments this month: {dashboard_data.get('total_payments_this_month', 'N/A')}")
             print(f"   Recent transactions: {len(dashboard_data.get('recent_transactions', []))}")

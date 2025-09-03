@@ -13,10 +13,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Expense, Payment, Apartment, Transaction
+from financial.models import Expense
 from buildings.models import Building
-from django.db.models import Sum, Q
-from datetime import datetime, timedelta
 
 def investigate_dee_expense():
     """Investigate the DEH expense of 5,000€ recorded on 14/03/2025"""
@@ -104,7 +102,7 @@ def investigate_dee_expense():
             print(f"Διαθέσιμα πεδία: {[field.name for field in sample_expense._meta.fields]}")
             
             # Check specific fields
-            print(f"\n🔍 Έλεγχος συγκεκριμένων πεδίων:")
+            print("\n🔍 Έλεγχος συγκεκριμένων πεδίων:")
             for field_name in ['title', 'amount', 'date', 'category', 'distribution_type', 'building']:
                 if hasattr(sample_expense, field_name):
                     value = getattr(sample_expense, field_name)

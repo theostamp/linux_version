@@ -4,7 +4,6 @@ Script για έλεγχο της λογικής του frontend PaymentList com
 """
 
 import requests
-import json
 from collections import defaultdict
 
 def test_frontend_logic():
@@ -32,7 +31,7 @@ def test_frontend_logic():
             apartment_key = payment['apartment']
             payments_by_apartment[apartment_key].append(payment)
         
-        print(f"\n📊 FRONTEND APARTMENT SUMMARIES LOGIC:")
+        print("\n📊 FRONTEND APARTMENT SUMMARIES LOGIC:")
         print(f"Βρέθηκαν {len(payments_by_apartment)} διαμερίσματα με πληρωμές")
         
         summaries = []
@@ -88,12 +87,12 @@ def test_frontend_logic():
             for s in sorted_summaries
         )
         
-        print(f"\n💰 ΣΥΓΚΕΝΤΡΩΤΙΚΑ ΣΤΟΙΧΕΙΑ:")
+        print("\n💰 ΣΥΓΚΕΝΤΡΩΤΙΚΑ ΣΤΟΙΧΕΙΑ:")
         print(f"  • Σύνολο διαμερισμάτων: {len(sorted_summaries)}")
         print(f"  • Συνολικό ποσό όλων των πληρωμών: {total_amount:.2f}€")
         
         # Test specific apartments mentioned in TODO (C2 and C3)
-        print(f"\n🎯 ΕΛΕΓΧΟΣ ΣΥΓΚΕΚΡΙΜΕΝΩΝ ΔΙΑΜΕΡΙΣΜΑΤΩΝ:")
+        print("\n🎯 ΕΛΕΓΧΟΣ ΣΥΓΚΕΚΡΙΜΕΝΩΝ ΔΙΑΜΕΡΙΣΜΑΤΩΝ:")
         target_apartments = [10, 11]  # C2 and C3 based on the API script
         
         for apt_id in target_apartments:
@@ -104,7 +103,7 @@ def test_frontend_logic():
                     print(f"\n🏠 Διαμέρισμα {apt_summary['apartment_number']} (ID: {apt_id}):")
                     print(f"  • Frontend summary amount: {apt_summary['amount']:.2f}€")
                     print(f"  • Frontend current_balance: {apt_summary['current_balance']:.2f}€")
-                    print(f"  • Individual payments:")
+                    print("  • Individual payments:")
                     for payment in apt_payments:
                         print(f"    - {payment['amount']}€ ({payment['date']}) - {payment.get('method_display', payment.get('method', 'N/A'))}")
                     
@@ -113,7 +112,7 @@ def test_frontend_logic():
                     if abs(manual_total - apt_summary['amount']) > 0.01:
                         print(f"  ⚠️  ΑΝΑΝΤΙΣΤΟΙΧΙΑ: Manual sum: {manual_total:.2f}€, Summary: {apt_summary['amount']:.2f}€")
                     else:
-                        print(f"  ✅ Ο υπολογισμός του συνόλου είναι σωστός")
+                        print("  ✅ Ο υπολογισμός του συνόλου είναι σωστός")
             else:
                 print(f"\n❌ Δεν βρέθηκαν πληρωμές για διαμέρισμα ID {apt_id}")
         
@@ -128,7 +127,7 @@ def compare_with_modal_logic(summaries):
     if not summaries:
         return
         
-    print(f"\n🔍 ΕΛΕΓΧΟΣ ΔΕΔΟΜΕΝΩΝ ΠΟΥ ΠΕΡΝΑΝΕ ΣΤΟ MODAL:")
+    print("\n🔍 ΕΛΕΓΧΟΣ ΔΕΔΟΜΕΝΩΝ ΠΟΥ ΠΕΡΝΑΝΕ ΣΤΟ MODAL:")
     
     for summary in summaries:
         apartment_id = summary['apartment']
@@ -147,9 +146,9 @@ def compare_with_modal_logic(summaries):
                 print(f"  • Modal calculated balance: {last_balance:.2f}€")
                 
                 if abs(summary['current_balance'] - last_balance) > 0.01:
-                    print(f"  ⚠️  ΑΝΑΝΤΙΣΤΟΙΧΙΑ μεταξύ PaymentList και Modal!")
+                    print("  ⚠️  ΑΝΑΝΤΙΣΤΟΙΧΙΑ μεταξύ PaymentList και Modal!")
                 else:
-                    print(f"  ✅ Τα δεδομένα συμφωνούν")
+                    print("  ✅ Τα δεδομένα συμφωνούν")
                     
             else:
                 print(f"  ❌ Σφάλμα στο transaction endpoint: {response.status_code}")
@@ -166,7 +165,7 @@ def main():
     if summaries:
         compare_with_modal_logic(summaries)
     
-    print(f"\n✅ ΕΛΕΓΧΟΣ ΟΛΟΚΛΗΡΩΘΗΚΕ")
+    print("\n✅ ΕΛΕΓΧΟΣ ΟΛΟΚΛΗΡΩΘΗΚΕ")
     print("Αν υπάρχουν αναντιστοιχίες, το πρόβλημα μπορεί να είναι:")
     print("1. Στον PaymentSerializer.get_current_balance() υπολογισμό")
     print("2. Στον ApartmentTransactionViewSet._get_apartment_transactions()")

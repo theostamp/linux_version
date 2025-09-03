@@ -40,30 +40,30 @@ def setup_reserve_fund():
             
             if hasattr(building, 'reserve_fund_goal'):
                 building.reserve_fund_goal = Decimal('1000.00')
-                print(f"\n✅ Set reserve_fund_goal to: 1000€")
+                print("\n✅ Set reserve_fund_goal to: 1000€")
             else:
-                print(f"\n⚠️ Building model doesn't have reserve_fund_goal field")
+                print("\n⚠️ Building model doesn't have reserve_fund_goal field")
             
             if hasattr(building, 'reserve_fund_duration'):
                 building.reserve_fund_duration = 12
-                print(f"✅ Set reserve_fund_duration to: 12 months")
+                print("✅ Set reserve_fund_duration to: 12 months")
             else:
-                print(f"⚠️ Building model doesn't have reserve_fund_duration field")
+                print("⚠️ Building model doesn't have reserve_fund_duration field")
             
             if hasattr(building, 'reserve_fund_start_date'):
                 from datetime import date
                 building.reserve_fund_start_date = date(2025, 1, 1)
-                print(f"✅ Set reserve_fund_start_date to: 2025-01-01")
+                print("✅ Set reserve_fund_start_date to: 2025-01-01")
             else:
-                print(f"⚠️ Building model doesn't have reserve_fund_start_date field")
+                print("⚠️ Building model doesn't have reserve_fund_start_date field")
             
             # Save changes
             building.save()
-            print(f"\n💾 Building settings saved!")
+            print("\n💾 Building settings saved!")
             
             # Verify the changes
             building.refresh_from_db()
-            print(f"\nVerification:")
+            print("\nVerification:")
             print(f"- Reserve fund goal: {getattr(building, 'reserve_fund_goal', 'Not found')}")
             print(f"- Reserve fund duration: {getattr(building, 'reserve_fund_duration', 'Not found')}")
             print(f"- Reserve fund start date: {getattr(building, 'reserve_fund_start_date', 'Not found')}")
@@ -75,7 +75,7 @@ def setup_reserve_fund():
                 monthly_building_total = goal / duration
                 monthly_per_apartment = monthly_building_total / building.apartments.count()
                 
-                print(f"\nExpected calculations:")
+                print("\nExpected calculations:")
                 print(f"- Monthly total for building: {monthly_building_total:.2f}€")
                 print(f"- Monthly per apartment: {monthly_per_apartment:.2f}€")
             
@@ -90,7 +90,7 @@ def test_reserve_fund_after_setup():
     with schema_context('demo'):
         building_id = 1
         
-        print(f"\n🧪 Testing Reserve Fund After Setup")
+        print("\n🧪 Testing Reserve Fund After Setup")
         print("=" * 50)
         
         from financial.services import AdvancedCommonExpenseCalculator
@@ -148,7 +148,7 @@ def main():
     setup_reserve_fund()
     test_reserve_fund_after_setup()
     
-    print(f"\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("🏁 Reserve Fund Setup Complete!")
     print("\nNext steps:")
     print("- Test frontend to see if reserve fund appears correctly")

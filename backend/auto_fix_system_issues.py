@@ -10,7 +10,7 @@ import sys
 import django
 from decimal import Decimal
 from datetime import datetime, date
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 # Setup Django environment
 sys.path.append('/app')
@@ -18,8 +18,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from django.db import models
-from financial.models import Transaction, Expense, Payment
+from financial.models import Transaction, Payment
 from apartments.models import Apartment
 from buildings.models import Building
 from system_health_validator import SystemHealthValidator
@@ -72,7 +71,7 @@ class AutoFixSystemIssues:
             self.fix_participation_mills_issues(health_results)
             
             # 3. Εκτέλεση νέου health check για επιβεβαίωση
-            print(f"\n🔍 ΕΠΙΒΕΒΑΙΩΣΗ ΔΙΟΡΘΩΣΕΩΝ")
+            print("\n🔍 ΕΠΙΒΕΒΑΙΩΣΗ ΔΙΟΡΘΩΣΕΩΝ")
             print("-" * 40)
             
             validator_after = SystemHealthValidator()
@@ -310,7 +309,7 @@ class AutoFixSystemIssues:
     def print_summary(self):
         """Εκτύπωση σύνοψης διορθώσεων"""
         
-        print(f"\n📊 ΣΥΝΟΨΗ ΑΥΤΟΜΑΤΩΝ ΔΙΟΡΘΩΣΕΩΝ")
+        print("\n📊 ΣΥΝΟΨΗ ΑΥΤΟΜΑΤΩΝ ΔΙΟΡΘΩΣΕΩΝ")
         print("=" * 60)
         
         print(f"🔍 Προβλήματα που βρέθηκαν: {self.summary['total_issues_found']}")
@@ -319,19 +318,19 @@ class AutoFixSystemIssues:
         print(f"📈 Βελτίωση: {self.summary['improvement']} προβλήματα")
         
         if self.fixes_applied:
-            print(f"\n✅ ΔΙΟΡΘΩΣΕΙΣ ΠΟΥ ΕΦΑΡΜΟΣΤΗΚΑΝ:")
+            print("\n✅ ΔΙΟΡΘΩΣΕΙΣ ΠΟΥ ΕΦΑΡΜΟΣΤΗΚΑΝ:")
             for fix in self.fixes_applied:
                 print(f"   • {fix}")
         
         if self.errors_encountered:
-            print(f"\n❌ ΣΦΑΛΜΑΤΑ ΠΟΥ ΣΥΝΑΝΤΗΘΗΚΑΝ:")
+            print("\n❌ ΣΦΑΛΜΑΤΑ ΠΟΥ ΣΥΝΑΝΤΗΘΗΚΑΝ:")
             for error in self.errors_encountered:
                 print(f"   • {error}")
         
         if self.summary['improvement'] > 0:
             print(f"\n🎉 Επιτυχία! Διορθώθηκαν {self.summary['improvement']} προβλήματα!")
         else:
-            print(f"\n⚠️ Δεν έγιναν βελτιώσεις ή υπήρξαν σφάλματα.")
+            print("\n⚠️ Δεν έγιναν βελτιώσεις ή υπήρξαν σφάλματα.")
 
 def run_auto_fix():
     """Εκτέλεση αυτόματης διόρθωσης"""
@@ -343,5 +342,5 @@ def run_auto_fix():
 
 if __name__ == "__main__":
     results = run_auto_fix()
-    print(f"\n✅ Η αυτόματη διόρθωση ολοκληρώθηκε!")
+    print("\n✅ Η αυτόματη διόρθωση ολοκληρώθηκε!")
     print(f"📋 Βελτίωση: {results['summary']['improvement']} προβλήματα")

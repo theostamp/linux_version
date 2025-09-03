@@ -19,7 +19,7 @@ def check_alkmanos_building():
         
         # List all buildings
         buildings = Building.objects.all()
-        print(f"\nAll buildings in database:")
+        print("\nAll buildings in database:")
         for building in buildings:
             print(f"   ID: {building.id} - {building.name} - {building.address}")
             if 'Αλκμάνος' in building.name or 'Αλκμάνος' in building.address:

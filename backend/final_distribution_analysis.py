@@ -16,7 +16,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.services import AdvancedCommonExpenseCalculator
 from apartments.models import Apartment
-from buildings.models import Building
 
 def main():
     with schema_context('demo'):
@@ -28,12 +27,12 @@ def main():
         # Get apartments
         apartments = Apartment.objects.filter(building_id=building_id).order_by('number')
         
-        print(f"📊 Participation Mills:")
+        print("📊 Participation Mills:")
         for apt in apartments:
             print(f"   Διαμέρισμα {apt.number}: {apt.participation_mills}‰")
         
         # Test with reserve fund to see both management fees and reserve distribution
-        print(f"\n🧪 Testing Management Fees + Reserve Fund Distribution")
+        print("\n🧪 Testing Management Fees + Reserve Fund Distribution")
         print("-" * 50)
         
         calc = AdvancedCommonExpenseCalculator(
@@ -53,7 +52,7 @@ def main():
         management_fees = []
         reserve_contributions = []
         
-        print(f"   Distribution per apartment:")
+        print("   Distribution per apartment:")
         for apt in apartments:
             apt_id = str(apt.id)
             if apt_id in shares:
@@ -74,7 +73,7 @@ def main():
                       f"(expected: {expected_reserve:.2f}€)")
         
         # Analyze management fees
-        print(f"\n   🔍 Management Fees Analysis:")
+        print("\n   🔍 Management Fees Analysis:")
         unique_mgmt_fees = set(management_fees)
         if len(unique_mgmt_fees) <= 1 and management_fees:
             print(f"      ✅ Management fees are EQUAL (ισόποσα): {management_fees[0]:.2f}€")
@@ -82,7 +81,7 @@ def main():
             print(f"      ❌ Management fees vary: {unique_mgmt_fees}")
         
         # Analyze reserve fund distribution
-        print(f"\n   🔍 Reserve Fund Distribution Analysis:")
+        print("\n   🔍 Reserve Fund Distribution Analysis:")
         reserve_correct = True
         for i, apt in enumerate(apartments):
             if i < len(reserve_contributions):
@@ -95,10 +94,10 @@ def main():
                     print(f"      ❌ {apt.number}: Expected {expected:.2f}€, got {actual:.2f}€")
         
         if reserve_correct:
-            print(f"      ✅ Reserve fund distributed BY PARTICIPATION MILLS (χιλιοστά)")
+            print("      ✅ Reserve fund distributed BY PARTICIPATION MILLS (χιλιοστά)")
         
         # Test August with ΔΕΗ
-        print(f"\n🧪 Testing August with ΔΕΗ Expense")
+        print("\n🧪 Testing August with ΔΕΗ Expense")
         print("-" * 50)
         
         calc_aug = AdvancedCommonExpenseCalculator(
@@ -112,7 +111,7 @@ def main():
         shares_aug = result_aug.get('shares', {})
         
         if shares_aug:
-            print(f"   ΔΕΗ Distribution (300€ total):")
+            print("   ΔΕΗ Distribution (300€ total):")
             
             deh_correct = True
             for apt in apartments:
@@ -138,14 +137,14 @@ def main():
                           f"ΔΕΗ={deh_portion:.2f}€ (expected: {expected_deh:.2f}€)")
             
             if deh_correct:
-                print(f"      ✅ ΔΕΗ distributed BY PARTICIPATION MILLS (χιλιοστά)")
+                print("      ✅ ΔΕΗ distributed BY PARTICIPATION MILLS (χιλιοστά)")
         
-        print(f"\n" + "=" * 60)
-        print(f"📋 VERIFICATION SUMMARY:")
-        print(f"✅ Management Fees: EQUAL distribution (ισόποσα)")
-        print(f"✅ Reserve Fund: BY PARTICIPATION MILLS (χιλιοστά)")  
-        print(f"✅ ΔΕΗ & Other Expenses: BY PARTICIPATION MILLS (χιλιοστά)")
-        print(f"\n✅ CONFIRMED: System correctly implements both distribution methods!")
+        print("\n" + "=" * 60)
+        print("📋 VERIFICATION SUMMARY:")
+        print("✅ Management Fees: EQUAL distribution (ισόποσα)")
+        print("✅ Reserve Fund: BY PARTICIPATION MILLS (χιλιοστά)")  
+        print("✅ ΔΕΗ & Other Expenses: BY PARTICIPATION MILLS (χιλιοστά)")
+        print("\n✅ CONFIRMED: System correctly implements both distribution methods!")
 
 if __name__ == "__main__":
     main()

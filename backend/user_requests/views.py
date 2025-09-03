@@ -1,13 +1,12 @@
 
 # backend/user_requests/views.py
-from rest_framework import viewsets, permissions, exceptions 
+from rest_framework import viewsets, permissions 
 from rest_framework.response import Response 
 from core.permissions import IsManagerOrSuperuser
 from .models import UserRequest
 from .serializers import UserRequestSerializer, UserRequestListSerializer
 from buildings.models import Building
 from rest_framework.decorators import action 
-from rest_framework.response import Response 
 from rest_framework import status 
 from django.db.models import Count 
 from core.utils import filter_queryset_by_user_and_building
@@ -75,7 +74,7 @@ class UserRequestViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Handle file uploads
         photos = []
-        print(f"[DEBUG] perform_create called")
+        print("[DEBUG] perform_create called")
         print(f"[DEBUG] request.FILES: {self.request.FILES}")
         print(f"[DEBUG] request.FILES.getlist('photos'): {self.request.FILES.getlist('photos') if hasattr(self.request, 'FILES') else 'No FILES'}")
         print(f"[DEBUG] request.content_type: {self.request.content_type}")
@@ -88,8 +87,6 @@ class UserRequestViewSet(viewsets.ModelViewSet):
                 print(f"[DEBUG] Processing file: {file.name}, size: {file.size}, type: {file.content_type}")
                 
                 # Save file to media directory
-                import os
-                from django.conf import settings
                 from django.core.files.storage import default_storage
                 
                 # Create a unique filename
@@ -120,7 +117,7 @@ class UserRequestViewSet(viewsets.ModelViewSet):
             user_request.save()
             print(f"[DEBUG] Photos saved to user_request: {user_request.photos}")
         else:
-            print(f"[DEBUG] No photos to save")
+            print("[DEBUG] No photos to save")
         
     @action(detail=False, methods=["get"], url_path="top")
     def top_requests(self, request):

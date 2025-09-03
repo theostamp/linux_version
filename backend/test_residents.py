@@ -3,7 +3,6 @@
 Test script για το residents API
 """
 import os
-import sys
 import django
 
 # Setup Django

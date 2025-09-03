@@ -17,7 +17,7 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from financial.models import Expense, Transaction, Payment
-from django.db.models import Sum, Q, Count
+from django.db.models import Sum, Count
 from decimal import Decimal
 
 def simple_financial_fix():

@@ -4,9 +4,7 @@ Script για έλεγχο του financial API απευθείας μέσω Djan
 """
 
 import os
-import sys
 import django
-from decimal import Decimal
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
@@ -51,12 +49,12 @@ def test_financial_direct():
         try:
             summary = service.get_summary(month)
             
-            print(f"\n💰 Δεδομένα Αποθεματικού:")
+            print("\n💰 Δεδομένα Αποθεματικού:")
             print(f"   Τρέχον Αποθεματικό: {summary.get('current_reserve', 'N/A')}€")
             print(f"   Εισφορά Αποθεματικού: {summary.get('reserve_fund_contribution', 'N/A')}€")
             print(f"   Στόχος Αποθεματικού: {summary.get('reserve_fund_goal', 'N/A')}€")
             
-            print(f"\n📈 Γενικά Οικονομικά:")
+            print("\n📈 Γενικά Οικονομικά:")
             print(f"   Συνολικό Υπόλοιπο: {summary.get('total_balance', 'N/A')}€")
             print(f"   Τρέχουσες Υποχρεώσεις: {summary.get('current_obligations', 'N/A')}€")
             print(f"   Δαπάνες Μήνα: {summary.get('total_expenses_month', 'N/A')}€")
@@ -65,12 +63,12 @@ def test_financial_direct():
             # Έλεγχος αν το αποθεματικό είναι σωστό
             current_reserve = summary.get('current_reserve', 0)
             if current_reserve == 0:
-                print(f"\n✅ ΣΩΣΤΟ! Το αποθεματικό είναι 0€ όπως πρέπει για νέο κτίριο χωρίς συναλλαγές.")
+                print("\n✅ ΣΩΣΤΟ! Το αποθεματικό είναι 0€ όπως πρέπει για νέο κτίριο χωρίς συναλλαγές.")
             else:
                 print(f"\n❌ ΛΑΘΟΣ! Το αποθεματικό είναι {current_reserve}€ αντί για 0€.")
             
             # Εμφάνιση πλήρων δεδομένων για debugging
-            print(f"\n📋 Πλήρη Απόκριση:")
+            print("\n📋 Πλήρη Απόκριση:")
             for key, value in summary.items():
                 print(f"   {key}: {value}")
             

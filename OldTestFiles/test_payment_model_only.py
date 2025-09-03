@@ -7,7 +7,6 @@ Simple test για το Payment model - Phase 2
 import os
 import sys
 import django
-from datetime import date
 
 # Add the backend directory to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
@@ -53,7 +52,7 @@ def test_payment_fields():
     # Έλεγχος για τα νέα πεδία
     required_fields = ['payment_type', 'reference_number']
     
-    print(f"\n🔍 Checking for new Phase 2 fields:")
+    print("\n🔍 Checking for new Phase 2 fields:")
     for field in required_fields:
         if field in field_names:
             print(f"   ✅ {field}: Found")
@@ -77,7 +76,7 @@ def test_payment_meta():
     if hasattr(Payment._meta, 'ordering'):
         print(f"📋 Ordering: {Payment._meta.ordering}")
     else:
-        print(f"📋 Ordering: Not defined")
+        print("📋 Ordering: Not defined")
 
 def test_payment_methods():
     """Test για τις μεθόδους του Payment model"""

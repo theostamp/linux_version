@@ -96,7 +96,7 @@ def debug_monthly_due_calculation():
             share_data = shares[apartment.id]
             print(f"📊 Total amount: {share_data['total_amount']}€")
             print(f"🏦 Reserve fund amount: {share_data['reserve_fund_amount']}€")
-            print(f"💰 Management fee (από breakdown): ", end="")
+            print("💰 Management fee (από breakdown): ", end="")
             
             management_from_breakdown = Decimal('0.00')
             for item in share_data['breakdown']:

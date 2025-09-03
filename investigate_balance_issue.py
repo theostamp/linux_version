@@ -7,8 +7,8 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
-from django.db.models import Sum, Q
+from datetime import datetime
+from django.db.models import Sum
 
 # Setup Django environment
 sys.path.append('/app')
@@ -18,7 +18,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.models import Payment, Expense, Transaction
 from apartments.models import Apartment
-from buildings.models import Building
 
 def investigate_balance_issue():
     """Investigate why apartment balances are not being updated correctly"""
@@ -111,7 +110,7 @@ def investigate_balance_issue():
             if abs(apartment.current_balance - calculated_balance) > Decimal('0.01'):
                 print(f"   ⚠️ ΔΙΑΦΟΡΑ: {apartment.current_balance - calculated_balance:,.2f}€")
             else:
-                print(f"   ✅ ΣΥΝΕΠΕΣ")
+                print("   ✅ ΣΥΝΕΠΕΣ")
             
             print()
         

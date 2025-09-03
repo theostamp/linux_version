@@ -1,7 +1,6 @@
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -33,7 +32,7 @@ def test_reserve_fund_distribution_fix():
         reserve_fund_goal = float(building.reserve_fund_goal or 0)
         reserve_fund_duration = int(building.reserve_fund_duration_months or 0)
         
-        print(f"📊 ΡΥΘΜΙΣΕΙΣ:")
+        print("📊 ΡΥΘΜΙΣΕΙΣ:")
         print(f"   • Διαχειριστικά ανά διαμέρισμα: {management_fee_per_apartment}€")
         print(f"   • Στόχος αποθεματικού: {reserve_fund_goal}€")
         print(f"   • Διάρκεια σε μήνες: {reserve_fund_duration}")
@@ -45,12 +44,12 @@ def test_reserve_fund_distribution_fix():
         if reserve_fund_goal > 0 and reserve_fund_duration > 0 and total_mills > 0:
             monthly_reserve_total = reserve_fund_goal / reserve_fund_duration
             reserve_per_mill = monthly_reserve_total / total_mills
-            print(f"📊 ΥΠΟΛΟΓΙΣΜΟΣ:")
+            print("📊 ΥΠΟΛΟΓΙΣΜΟΣ:")
             print(f"   • Μηνιαία συνολική εισφορά: {monthly_reserve_total:.2f}€")
             print(f"   • Εισφορά ανά χιλιοστό: {reserve_per_mill:.4f}€")
             print()
         
-        print(f"🏠 ΣΩΣΤΗ ΚΑΤΑΝΟΜΗ ΑΠΟΘΕΜΑΤΙΚΟΥ:")
+        print("🏠 ΣΩΣΤΗ ΚΑΤΑΝΟΜΗ ΑΠΟΘΕΜΑΤΙΚΟΥ:")
         print("-" * 80)
         
         total_reserve_contributions = 0.0
@@ -78,20 +77,20 @@ def test_reserve_fund_distribution_fix():
             print(f"   • ΣΥΝΟΛΟ: {total_obligations:.2f}€")
             print()
         
-        print(f"📊 ΕΠΙΒΕΒΑΙΩΣΗ:")
+        print("📊 ΕΠΙΒΕΒΑΙΩΣΗ:")
         print(f"   • Συνολική εισφορά αποθεματικού: {total_reserve_contributions:.2f}€")
         print(f"   • Αναμενόμενη συνολική: {monthly_reserve_total:.2f}€")
         print(f"   • Διαφορά: {abs(total_reserve_contributions - monthly_reserve_total):.2f}€")
         
         if abs(total_reserve_contributions - monthly_reserve_total) < 0.01:
-            print(f"   ✅ Τα νούμερα είναι σωστά!")
+            print("   ✅ Τα νούμερα είναι σωστά!")
         else:
-            print(f"   ⚠️  Υπάρχει μικρή διαφορά λόγω στρογγυλοποίησης")
+            print("   ⚠️  Υπάρχει μικρή διαφορά λόγω στρογγυλοποίησης")
         
         print()
-        print(f"✅ ΕΠΙΤΥΧΗΣ ΔΙΟΡΘΩΣΗ!")
-        print(f"   • Η εισφορά αποθεματικού τώρα είναι ανάλογη με τα χιλιοστά")
-        print(f"   • Τα διαχειριστικά τέλη παραμένουν ίσα για όλα τα διαμερίσματα")
+        print("✅ ΕΠΙΤΥΧΗΣ ΔΙΟΡΘΩΣΗ!")
+        print("   • Η εισφορά αποθεματικού τώρα είναι ανάλογη με τα χιλιοστά")
+        print("   • Τα διαχειριστικά τέλη παραμένουν ίσα για όλα τα διαμερίσματα")
 
 if __name__ == "__main__":
     test_reserve_fund_distribution_fix()

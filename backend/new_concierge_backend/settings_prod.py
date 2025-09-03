@@ -5,7 +5,6 @@ Optimized for security, performance, and monitoring
 """
 
 import os
-from pathlib import Path
 from .settings import *  # Import base settings
 from datetime import timedelta
 

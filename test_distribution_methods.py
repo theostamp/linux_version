@@ -8,7 +8,6 @@ Test script to verify distribution methods:
 import os
 import sys
 import django
-import json
 from decimal import Decimal
 
 # Setup Django environment
@@ -38,7 +37,7 @@ def analyze_participation_mills():
             print(f"Total apartments: {apartments.count()}")
             
             total_mills = 0
-            print(f"\n📊 Apartment Participation Mills:")
+            print("\n📊 Apartment Participation Mills:")
             
             for apt in apartments:
                 mills = apt.participation_mills or 0
@@ -48,7 +47,7 @@ def analyze_participation_mills():
             print(f"\n✅ Total participation mills: {total_mills}")
             
             if total_mills == 1000:
-                print(f"✅ CORRECT: Total mills = 1000 (100%)")
+                print("✅ CORRECT: Total mills = 1000 (100%)")
             else:
                 print(f"⚠️ WARNING: Total mills = {total_mills} (should be 1000)")
             
@@ -117,7 +116,7 @@ def test_distribution_methods():
                     print("   ❌ No shares calculated")
                     continue
                 
-                print(f"   📋 Distribution Analysis:")
+                print("   📋 Distribution Analysis:")
                 
                 # Analyze management fee distribution
                 management_fees = []
@@ -157,19 +156,19 @@ def test_distribution_methods():
                 total_amounts = [data['total_amt'] for data in apt_data]
                 
                 # Check if management fees are equal (ισόποσα)
-                print(f"\n   🔍 Management Fees Distribution Check:")
+                print("\n   🔍 Management Fees Distribution Check:")
                 if management_fees and len(set(management_fees)) <= 1:  # All values are the same
-                    print(f"      ✅ CORRECT: Management fees are equal (ισόποσα)")
+                    print("      ✅ CORRECT: Management fees are equal (ισόποσα)")
                     print(f"      ✅ Each apartment pays: {management_fees[0]:.2f}€")
                 elif management_fees:
-                    print(f"      ❌ ERROR: Management fees are not equal!")
+                    print("      ❌ ERROR: Management fees are not equal!")
                     print(f"      ❌ Values: {management_fees}")
                 else:
-                    print(f"      ⚠️ No management fees data found")
+                    print("      ⚠️ No management fees data found")
                 
                 # Check if reserve fund follows participation mills
                 if scenario['reserve_amount'] > 0:
-                    print(f"\n   🔍 Reserve Fund Distribution Check:")
+                    print("\n   🔍 Reserve Fund Distribution Check:")
                     
                     # Calculate expected reserve contributions based on mills
                     total_reserve = sum(reserve_contributions)
@@ -192,10 +191,10 @@ def test_distribution_methods():
                             print(f"      ❌ {apt.number}: Expected {expected:.2f}€, got {actual:.2f}€")
                     
                     if all_correct:
-                        print(f"      ✅ CORRECT: Reserve fund distributed by participation mills")
+                        print("      ✅ CORRECT: Reserve fund distributed by participation mills")
                         print(f"      ✅ Total reserve fund: {total_reserve:.2f}€")
                     else:
-                        print(f"      ❌ ERROR: Reserve fund distribution incorrect!")
+                        print("      ❌ ERROR: Reserve fund distribution incorrect!")
                 
             except Exception as e:
                 print(f"   ❌ Error in scenario: {e}")
@@ -207,7 +206,7 @@ def test_august_with_deh():
         building_id = 1
         month = "2025-08"  # August with ΔΕΗ expense
         
-        print(f"\n🔥 Testing August with ΔΕΗ Expense")
+        print("\n🔥 Testing August with ΔΕΗ Expense")
         print("=" * 50)
         
         from datetime import date, timedelta
@@ -232,7 +231,7 @@ def test_august_with_deh():
             shares = result.get('shares', {})
             apartments = Apartment.objects.filter(building_id=building_id).order_by('number')
             
-            print(f"📊 August Distribution Analysis (ΔΕΗ + Management + Reserve):")
+            print("📊 August Distribution Analysis (ΔΕΗ + Management + Reserve):")
             
             for apt in apartments:
                 apt_id = str(apt.id)
@@ -253,7 +252,7 @@ def test_august_with_deh():
                           f"Reserve={reserve_contrib:.2f}€, Total={total_amt:.2f}€")
             
             # Verify ΔΕΗ is distributed by mills
-            print(f"\n🔍 ΔΕΗ Distribution Verification:")
+            print("\n🔍 ΔΕΗ Distribution Verification:")
             deh_total = 300  # Known ΔΕΗ amount
             
             for apt in apartments:
@@ -292,7 +291,7 @@ def main():
     test_distribution_methods()
     test_august_with_deh()
     
-    print(f"\n" + "=" * 70)
+    print("\n" + "=" * 70)
     print("🏁 DISTRIBUTION VERIFICATION COMPLETED!")
     print("\n📋 Expected Behavior:")
     print("✅ Management fees: Same amount for all apartments (ισόποσα)")

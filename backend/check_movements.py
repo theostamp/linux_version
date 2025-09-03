@@ -1,7 +1,7 @@
 import os
 import sys
 import django
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -9,8 +9,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Transaction, Building, Apartment
-from django.db.models import Q
+from financial.models import Transaction, Building
 
 def check_movements():
     print("🔍 Ελέγχουμε κινήσεις για το κτίριο Αλκμάνος 22...")

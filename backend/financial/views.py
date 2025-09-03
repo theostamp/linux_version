@@ -2,20 +2,18 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters import rest_framework as filters
-from django.db.models import Q
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
 from django.core.exceptions import ValidationError
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from .models import Expense, Transaction, Payment, ExpenseApartment, MeterReading, Supplier, CommonExpensePeriod, ApartmentShare, FinancialReceipt
+from .models import Expense, Transaction, Payment, MeterReading, Supplier, CommonExpensePeriod, ApartmentShare, FinancialReceipt
 from .serializers import (
     ExpenseSerializer, TransactionSerializer, PaymentSerializer,
-    ExpenseApartmentSerializer, MeterReadingSerializer, SupplierSerializer,
-    FinancialSummarySerializer, ApartmentBalanceSerializer,
-    CommonExpenseCalculationSerializer, FinancialReceiptSerializer
+    MeterReadingSerializer, SupplierSerializer,
+    FinancialSummarySerializer, FinancialReceiptSerializer
 )
 from .services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator, FinancialDashboardService, PaymentProcessor, FileUploadService
 from buildings.models import Building
@@ -1043,7 +1041,6 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 if month:
                     try:
                         # Get the previous month's balance
-                        from datetime import date
                         year, mon = map(int, month.split('-'))
                         if mon == 1:
                             prev_month = f"{year-1}-12"
@@ -1110,7 +1107,6 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             )
         
         try:
-            from .services import FinancialDashboardService
             from apartments.models import Apartment
             from decimal import Decimal
             
@@ -1230,7 +1226,6 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
         try:
             from apartments.models import Apartment
             from decimal import Decimal
-            from django.db.models import Sum, Q
             from datetime import datetime, date
             
             # Get building and apartments
@@ -1414,7 +1409,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 # 2. "Οφειλή": net_obligation > 0 (υπάρχει οφειλή)
                 # 3. "Κρίσιμο": οφειλή > 2 μήνες
                 
-                from datetime import datetime, date
+                from datetime import date
                 current_date = datetime.now().date()
                 
                 # Check if debt is older than 2 months
@@ -1507,9 +1502,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
         
         try:
             from apartments.models import Apartment
-            from decimal import Decimal
-            from datetime import datetime, date, timedelta
-            from calendar import monthrange
+            from datetime import date, timedelta
             
             # Get apartment
             apartment = Apartment.objects.get(id=apartment_id, building_id=building_id)
@@ -1716,7 +1709,7 @@ class CommonExpenseViewSet(viewsets.ViewSet):
             
             # If month_filter is provided, use it to set period dates
             if month_filter and not (period_start_date and period_end_date):
-                from datetime import datetime, date, timedelta
+                from datetime import date, timedelta
                 try:
                     year, month = month_filter.split('-')
                     year, month = int(year), int(month)
@@ -2620,7 +2613,6 @@ class SystemHealthCheckView(APIView):
             
             # Δημιουργία custom stdout για capture του output
             import io
-            import sys
             
             class StringIO:
                 def __init__(self):
@@ -2732,7 +2724,6 @@ def financial_overview(request):
             )
         
         # Import necessary services
-        from .services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator
         from django_tenants.utils import schema_context
         
         with schema_context('demo'):

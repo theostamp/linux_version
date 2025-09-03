@@ -1,9 +1,6 @@
 import os
 import sys
 import django
-from decimal import Decimal
-from datetime import datetime, date
-from django.db.models import Sum, Q
 
 # Setup Django environment
 sys.path.append('/app')
@@ -11,7 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Payment, Expense, Transaction
+from financial.models import Payment, Transaction
 from apartments.models import Apartment
 from buildings.models import Building
 
@@ -72,7 +69,7 @@ def check_all_tenants():
                         building_id=4
                     ).order_by('-date', '-id')[:3]
                     
-                    print(f"   📋 Τελευταίες 3 συναλλαγές:")
+                    print("   📋 Τελευταίες 3 συναλλαγές:")
                     for trans in recent_transactions:
                         print(f"      - {trans.date}: {trans.amount}€ ({trans.type}) - {trans.description[:30]}")
                 
@@ -82,7 +79,7 @@ def check_all_tenants():
                         apartment__building_id=4
                     ).order_by('-date', '-id')[:3]
                     
-                    print(f"   💰 Τελευταίες 3 πληρωμές:")
+                    print("   💰 Τελευταίες 3 πληρωμές:")
                     for payment in recent_payments:
                         print(f"      - {payment.date}: {payment.amount}€ ({payment.get_method_display()}) - Διαμέρισμα {payment.apartment.number}")
                 

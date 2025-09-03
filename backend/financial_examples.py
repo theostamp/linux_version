@@ -8,12 +8,10 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Apartment, Expense, Payment, Transaction
+from financial.models import Apartment, Expense, Payment
 from buildings.models import Building
-from financial.services import FinancialDashboardService
 from decimal import Decimal
 from django.db.models import Sum
-from datetime import date
 
 def create_financial_examples():
     """Δημιουργεί παραδείγματα για να εξηγήσει τη διαφορά μεταξύ έλλειμα και οφειλές"""
@@ -53,10 +51,10 @@ def create_financial_examples():
                 total_apartment_debts += abs(balance)
             print(f"   Apartment {apt.number}: {balance:,.2f}€")
         
-        print(f"\n📋 Σύνοψη:")
+        print("\n📋 Σύνοψη:")
         print(f"   • Έλλειμα: {abs(current_reserve):,.2f}€")
         print(f"   • Οφειλές προηγούμενων μηνών: {total_apartment_debts:,.2f}€")
-        print(f"   • Συμπέρασμα: Έλλειμα χωρίς οφειλές!")
+        print("   • Συμπέρασμα: Έλλειμα χωρίς οφειλές!")
         
         # Παράδειγμα 2: Υποθετικό σενάριο με οφειλές
         print("\n\n🔍 ΠΑΡΑΔΕΙΓΜΑ 2: Υποθετικό σενάριο με οφειλές")
@@ -71,10 +69,10 @@ def create_financial_examples():
         hypothetical_apartment_debts = Decimal('50.00')
         hypothetical_total_obligations = hypothetical_apartment_debts
         
-        print(f"\n📋 Υποθετική σύνοψη:")
+        print("\n📋 Υποθετική σύνοψη:")
         print(f"   • Έλλειμα: {abs(current_reserve):,.2f}€")
         print(f"   • Οφειλές προηγούμενων μηνών: {hypothetical_apartment_debts:,.2f}€")
-        print(f"   • Συμπέρασμα: Έλλειμα ΚΑΙ οφειλές!")
+        print("   • Συμπέρασμα: Έλλειμα ΚΑΙ οφειλές!")
         
         # Παράδειγμα 3: Εξήγηση της διαφοράς
         print("\n\n🔍 ΠΑΡΑΔΕΙΓΜΑ 3: Εξήγηση της διαφοράς")

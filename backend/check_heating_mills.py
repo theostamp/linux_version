@@ -6,7 +6,6 @@ Script για έλεγχο χιλιοστών θέρμανσης στο κτίρ
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Setup Django
 sys.path.append('/app')
@@ -48,7 +47,7 @@ def check_heating_mills():
                     apartments_with_heating += 1
             
             print("-" * 50)
-            print(f"ΣΥΝΟΛΑ:")
+            print("ΣΥΝΟΛΑ:")
             print(f"  • Συνολικά χιλιοστά θέρμανσης: {total_heating_mills}")
             print(f"  • Διαμερίσματα με θέρμανση: {apartments_with_heating}/{apartments.count()}")
             print(f"  • Συνολικά χιλιοστά συμμετοχής: {sum(apt.participation_mills or 0 for apt in apartments)}")

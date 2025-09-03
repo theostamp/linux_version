@@ -46,7 +46,7 @@ def test_historical_reserve_fund():
         
         service = FinancialDashboardService(building_id)
         
-        print(f"\n📊 Reserve Fund Analysis:")
+        print("\n📊 Reserve Fund Analysis:")
         print("-" * 50)
         
         for month in test_months:
@@ -86,7 +86,7 @@ def test_historical_reserve_fund():
                     # Calculate expected reserve
                     expected_reserve = total_payments - total_expenses
                     
-                    print(f"🔢 Calculation breakdown:")
+                    print("🔢 Calculation breakdown:")
                     print(f"   📥 Total Payments (up to {end_date}): {total_payments}€")
                     print(f"   📤 Total Expenses (up to {end_date}): {total_expenses}€")
                     print(f"   🧮 Expected Reserve: {expected_reserve}€")
@@ -94,7 +94,7 @@ def test_historical_reserve_fund():
                     if abs(float(expected_reserve) - current_reserve) > 0.01:
                         print(f"   ⚠️  DIFFERENCE: {abs(float(expected_reserve) - current_reserve)}€")
                     else:
-                        print(f"   ✅ CALCULATION MATCHES!")
+                        print("   ✅ CALCULATION MATCHES!")
                         
             except Exception as e:
                 print(f"❌ Error testing month {month}: {e}")
@@ -105,7 +105,7 @@ def test_month_comparison():
     """Compare reserve fund across months"""
     
     building_id = 4
-    print(f"\n🔍 Month-to-Month Reserve Fund Comparison")
+    print("\n🔍 Month-to-Month Reserve Fund Comparison")
     print("=" * 50)
     
     with schema_context('demo'):
@@ -136,19 +136,18 @@ def test_month_comparison():
         valid_reserves = [v for v in reserves.values() if v != 'ERROR']
         if len(set(valid_reserves)) == 1:
             print(f"\n⚠️  WARNING: All reserves are the same ({valid_reserves[0]}€)")
-            print(f"   This indicates the month filtering might not be working correctly!")
+            print("   This indicates the month filtering might not be working correctly!")
         else:
-            print(f"\n✅ Reserve fund values differ across months (this is expected)")
+            print("\n✅ Reserve fund values differ across months (this is expected)")
 
 def analyze_transactions_by_month():
     """Analyze actual transactions by month to understand the data"""
     
     building_id = 4
-    print(f"\n📋 Transaction Analysis by Month")
+    print("\n📋 Transaction Analysis by Month")
     print("=" * 40)
     
     with schema_context('demo'):
-        from django.db.models import Sum
         
         # Get all payments
         payments = Payment.objects.filter(
@@ -173,7 +172,7 @@ def analyze_transactions_by_month():
             print(f"   ... and {expenses.count() - 10} more")
             
         # Calculate running total by month
-        print(f"\n📊 Running Reserve by Month:")
+        print("\n📊 Running Reserve by Month:")
         
         months_data = {}
         running_total = Decimal('0.00')

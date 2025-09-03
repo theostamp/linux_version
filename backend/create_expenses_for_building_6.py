@@ -10,7 +10,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Expense, Transaction, Payment, Apartment, Building, Supplier
+from financial.models import Expense, Building, Supplier
 from django.db.models import Sum
 
 def create_expenses_for_building_6():

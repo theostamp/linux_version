@@ -35,14 +35,14 @@ def fix_reserve_fund_default():
             
             # If it's the hardcoded 5.00€ value, set it to 0
             if current_contribution == Decimal('5.00'):
-                print(f"⚠️  Found hardcoded 5.00€ value - fixing...")
+                print("⚠️  Found hardcoded 5.00€ value - fixing...")
                 building.reserve_contribution_per_apartment = Decimal('0.00')
                 building.save()
-                print(f"✅ Fixed: Set to 0.00€")
+                print("✅ Fixed: Set to 0.00€")
             else:
                 print(f"✅ Already correct: {current_contribution}€")
         
-        print(f"\n" + "=" * 50)
+        print("\n" + "=" * 50)
         print("✅ RESERVE FUND DEFAULT VALUES FIXED")
         print("=" * 50)
 

@@ -4,7 +4,6 @@ Script για έλεγχο του building API endpoint
 """
 
 import os
-import sys
 import django
 
 # Setup Django
@@ -15,7 +14,6 @@ from django_tenants.utils import tenant_context
 from tenants.models import Client
 from buildings.models import Building
 from apartments.models import Apartment
-from decimal import Decimal
 
 def test_building_api():
     """Ελέγχει το building API endpoint"""
@@ -41,7 +39,7 @@ def test_building_api():
             print(f"   ID: {building.id}")
             
             # Check all fields
-            print(f"   📋 Όλα τα πεδία:")
+            print("   📋 Όλα τα πεδία:")
             print(f"      - name: {building.name}")
             print(f"      - address: {building.address}")
             print(f"      - apartments_count: {building.apartments_count}")
@@ -52,7 +50,7 @@ def test_building_api():
             
             # Check if management_fee_per_apartment is None
             if building.management_fee_per_apartment is None:
-                print(f"   ⚠️  management_fee_per_apartment είναι None!")
+                print("   ⚠️  management_fee_per_apartment είναι None!")
             else:
                 print(f"   ✅ management_fee_per_apartment είναι {building.management_fee_per_apartment}")
             
@@ -65,7 +63,7 @@ def test_building_api():
                 total_cost = building.management_fee_per_apartment * apartments_count
                 print(f"   💰 Συνολικό κόστος διαχείρισης: {total_cost}€")
             else:
-                print(f"   💰 Συνολικό κόστος διαχείρισης: 0€ (δεν έχει οριστεί αμοιβή)")
+                print("   💰 Συνολικό κόστος διαχείρισης: 0€ (δεν έχει οριστεί αμοιβή)")
 
 if __name__ == "__main__":
     test_building_api()

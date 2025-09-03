@@ -6,8 +6,6 @@ Script to test the API response for common expenses calculation
 import os
 import sys
 import django
-from decimal import Decimal
-from datetime import date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -45,7 +43,7 @@ def test_api_reserve_fund():
         # Calculate shares
         shares = calculator.calculate_shares()
         
-        print(f"\n📊 SHARES CALCULATION RESULTS:")
+        print("\n📊 SHARES CALCULATION RESULTS:")
         print(f"   Total apartments: {len(shares)}")
         
         # Check reserve fund in shares
@@ -60,7 +58,7 @@ def test_api_reserve_fund():
                 apartments_with_reserve += 1
                 print(f"   Apartment {apartment_id}: {reserve_amount:,.2f}€")
         
-        print(f"\n💰 RESERVE FUND SUMMARY:")
+        print("\n💰 RESERVE FUND SUMMARY:")
         print(f"   Total reserve fund: {total_reserve_fund:,.2f}€")
         print(f"   Apartments with reserve fund: {apartments_with_reserve}")
         
@@ -70,7 +68,7 @@ def test_api_reserve_fund():
             print("✅ CORRECT: No reserve fund is being calculated")
         
         # Check breakdown data
-        print(f"\n📋 BREAKDOWN DATA SAMPLE:")
+        print("\n📋 BREAKDOWN DATA SAMPLE:")
         if shares:
             first_apartment_id = list(shares.keys())[0]
             first_share = shares[first_apartment_id]

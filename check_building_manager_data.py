@@ -25,25 +25,25 @@ def check_manager_data():
             print(f"📍 Address: {building.address}, {building.city} {building.postal_code}")
             
             # Internal Manager
-            print(f"\n👤 Internal Manager:")
+            print("\n👤 Internal Manager:")
             print(f"   • Name: {building.internal_manager_name or 'Not set'}")
             print(f"   • Phone: {building.internal_manager_phone or 'Not set'}")
             
             # Management Office
-            print(f"\n🏢 Management Office:")
+            print("\n🏢 Management Office:")
             print(f"   • Name: {building.management_office_name or 'Not set'}")
             print(f"   • Phone: {building.management_office_phone or 'Not set'}")
             print(f"   • Address: {building.management_office_address or 'Not set'}")
             
             # External Manager (CustomUser)
             if building.manager:
-                print(f"\n👨‍💼 External Manager (User):")
+                print("\n👨‍💼 External Manager (User):")
                 print(f"   • Name: {building.manager.get_full_name() or building.manager.email}")
                 print(f"   • Email: {building.manager.email}")
                 if hasattr(building.manager, 'phone'):
                     print(f"   • Phone: {building.manager.phone or 'Not set'}")
             else:
-                print(f"\n👨‍💼 External Manager: Not assigned")
+                print("\n👨‍💼 External Manager: Not assigned")
 
 if __name__ == "__main__":
     check_manager_data()

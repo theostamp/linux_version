@@ -3,8 +3,7 @@
 import os
 import sys
 import django
-import json
-from datetime import datetime, date
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -25,7 +24,7 @@ def test_complete_api_fix():
         building_id = 1
         
         # Test 1: FinancialDashboardService
-        print(f"🔧 Test 1: FinancialDashboardService.get_summary()")
+        print("🔧 Test 1: FinancialDashboardService.get_summary()")
         service = FinancialDashboardService(building_id)
         summary = service.get_summary(month='2025-08')
         
@@ -35,7 +34,7 @@ def test_complete_api_fix():
         print(f"   reserve_fund_monthly_target: {summary.get('reserve_fund_monthly_target')}")
         
         # Test 2: FinancialSummarySerializer
-        print(f"\n📋 Test 2: FinancialSummarySerializer")
+        print("\n📋 Test 2: FinancialSummarySerializer")
         serializer = FinancialSummarySerializer(summary)
         serialized_data = serializer.data
         
@@ -45,7 +44,7 @@ def test_complete_api_fix():
         print(f"   reserve_fund_monthly_target: {serialized_data.get('reserve_fund_monthly_target')}")
         
         # Test 3: Frontend timeline logic simulation
-        print(f"\n🎯 Test 3: Frontend Timeline Logic Simulation")
+        print("\n🎯 Test 3: Frontend Timeline Logic Simulation")
         
         start_date = serialized_data.get('reserve_fund_start_date')
         target_date = serialized_data.get('reserve_fund_target_date')
@@ -75,17 +74,17 @@ def test_complete_api_fix():
             print(f"   Should display Reserve Fund: {should_display}")
             
             if should_display:
-                print(f"   ✅ SUCCESS: Reserve Fund should be displayed in frontend")
+                print("   ✅ SUCCESS: Reserve Fund should be displayed in frontend")
                 print(f"   💰 Monthly Target: €{monthly_target:.2f}")
             else:
-                print(f"   ❌ FAILED: Reserve Fund should NOT be displayed")
+                print("   ❌ FAILED: Reserve Fund should NOT be displayed")
         else:
-            print(f"   ❌ FAILED: Missing start date or monthly target")
+            print("   ❌ FAILED: Missing start date or monthly target")
             print(f"   start_date: {start_date}")
             print(f"   monthly_target: {monthly_target}")
         
         # Test 4: Check all reserve fund keys in serialized data
-        print(f"\n📊 Test 4: All Reserve Fund Keys in Serialized Data")
+        print("\n📊 Test 4: All Reserve Fund Keys in Serialized Data")
         all_keys = list(serialized_data.keys())
         reserve_keys = [k for k in all_keys if 'reserve' in k.lower()]
         print(f"   Reserve fund keys: {reserve_keys}")

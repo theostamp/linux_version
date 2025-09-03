@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import requests
-import json
 
 def add_expenses_via_api():
     base_url = "http://localhost:8000"

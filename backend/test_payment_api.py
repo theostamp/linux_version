@@ -3,7 +3,6 @@
 Test the new payment API with payer fields
 """
 import os
-import sys
 import django
 
 # Setup Django environment

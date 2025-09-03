@@ -16,10 +16,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Expense, Transaction, Payment
-from django.db.models import Sum, Q, Count
-from decimal import Decimal
-from datetime import datetime, timedelta
+from financial.models import Transaction, Payment
+from django.db.models import Count
 
 def check_timing_difference():
     """Έλεγχος χρονικής διαφοράς μεταξύ πληρωμών και συναλλαγών"""
@@ -73,7 +71,7 @@ def check_timing_difference():
                     print(f"      Δημιουργήθηκε: {txn.created_at}")
                     print(f"      Χρονική διαφορά: {time_diff:.0f} δευτερόλεπτα")
             else:
-                print(f"   ❌ Δεν βρέθηκαν παρόμοιες συναλλαγές")
+                print("   ❌ Δεν βρέθηκαν παρόμοιες συναλλαγές")
         
         # 3. Ανάλυση όλων των πληρωμών και συναλλαγών
         print("\n📈 ΣΥΝΟΛΙΚΗ ΑΝΑΛΥΣΗ:")

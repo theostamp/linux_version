@@ -6,7 +6,6 @@ Analyze distribution methods correctly based on actual data
 import os
 import sys
 import django
-import json
 from decimal import Decimal
 
 # Setup Django environment
@@ -17,7 +16,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.services import AdvancedCommonExpenseCalculator
 from apartments.models import Apartment
-from buildings.models import Building
 
 def analyze_distribution_methods():
     """Analyze actual distribution methods"""
@@ -31,11 +29,11 @@ def analyze_distribution_methods():
         # Get apartments with participation mills
         apartments = Apartment.objects.filter(building_id=building_id).order_by('number')
         
-        print(f"📊 Participation Mills:")
+        print("📊 Participation Mills:")
         for apt in apartments:
             print(f"   Διαμέρισμα {apt.number}: {apt.participation_mills}‰")
         
-        print(f"\n🧪 Test 1: Only Management Fees (February 2025)")
+        print("\n🧪 Test 1: Only Management Fees (February 2025)")
         print("-" * 50)
         
         # Test February - only management fees
@@ -67,7 +65,7 @@ def analyze_distribution_methods():
         else:
             print(f"   ❌ Management fees are NOT equal: {unique_mgmt_fees}")
         
-        print(f"\n🧪 Test 2: Management Fees + Reserve Fund")
+        print("\n🧪 Test 2: Management Fees + Reserve Fund")
         print("-" * 50)
         
         # Test with reserve fund
@@ -100,7 +98,7 @@ def analyze_distribution_methods():
                       f"(expected: {expected_reserve:.2f}€)")
         
         # Verify reserve fund distribution by mills
-        print(f"\n   🔍 Reserve Fund Distribution Check:")
+        print("\n   🔍 Reserve Fund Distribution Check:")
         all_correct = True
         for i, apt in enumerate(apartments):
             actual = reserve_contributions[i]
@@ -112,11 +110,11 @@ def analyze_distribution_methods():
                 print(f"      ❌ {apt.number}: Expected {expected:.2f}€, got {actual:.2f}€")
         
         if all_correct:
-            print(f"      ✅ Reserve fund distributed BY PARTICIPATION MILLS (χιλιοστά)")
+            print("      ✅ Reserve fund distributed BY PARTICIPATION MILLS (χιλιοστά)")
         else:
-            print(f"      ❌ Reserve fund distribution incorrect")
+            print("      ❌ Reserve fund distribution incorrect")
         
-        print(f"\n🧪 Test 3: August with ΔΕΗ Expense")
+        print("\n🧪 Test 3: August with ΔΕΗ Expense")
         print("-" * 50)
         
         # Test August with ΔΕΗ expense
@@ -130,7 +128,7 @@ def analyze_distribution_methods():
         result_aug = calc_aug.calculate_advanced_shares()
         shares_aug = result_aug.get('shares', {})
         
-        print(f"   August Distribution (ΔΕΗ + Management + Reserve):")
+        print("   August Distribution (ΔΕΗ + Management + Reserve):")
         
         deh_portions = []
         for apt in apartments:
@@ -155,7 +153,7 @@ def analyze_distribution_methods():
                       f"Mgmt={mgmt_fee:.2f}€, Reserve={reserve_contrib:.2f}€")
         
         # Verify ΔΕΗ distribution by mills
-        print(f"\n   🔍 ΔΕΗ Distribution Check:")
+        print("\n   🔍 ΔΕΗ Distribution Check:")
         all_deh_correct = True
         for i, apt in enumerate(apartments):
             actual = deh_portions[i]
@@ -167,16 +165,16 @@ def analyze_distribution_methods():
                 print(f"      ❌ {apt.number}: Expected {expected:.2f}€, got {actual:.2f}€")
         
         if all_deh_correct:
-            print(f"      ✅ ΔΕΗ distributed BY PARTICIPATION MILLS (χιλιοστά)")
+            print("      ✅ ΔΕΗ distributed BY PARTICIPATION MILLS (χιλιοστά)")
         else:
-            print(f"      ❌ ΔΕΗ distribution incorrect")
+            print("      ❌ ΔΕΗ distribution incorrect")
         
-        print(f"\n" + "=" * 60)
-        print(f"📋 FINAL VERIFICATION RESULTS:")
-        print(f"✅ Management Fees: EQUAL distribution (ισόποσα) - 1€ per apartment")
-        print(f"✅ Reserve Fund: BY PARTICIPATION MILLS (χιλιοστά)")
-        print(f"✅ ΔΕΗ Expenses: BY PARTICIPATION MILLS (χιλιοστά)")
-        print(f"✅ All other expenses: BY PARTICIPATION MILLS (χιλιοστά)")
+        print("\n" + "=" * 60)
+        print("📋 FINAL VERIFICATION RESULTS:")
+        print("✅ Management Fees: EQUAL distribution (ισόποσα) - 1€ per apartment")
+        print("✅ Reserve Fund: BY PARTICIPATION MILLS (χιλιοστά)")
+        print("✅ ΔΕΗ Expenses: BY PARTICIPATION MILLS (χιλιοστά)")
+        print("✅ All other expenses: BY PARTICIPATION MILLS (χιλιοστά)")
 
 def main():
     analyze_distribution_methods()

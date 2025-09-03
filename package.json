@@ -8,6 +8,11 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@types/file-saver": "^2.0.7"
+    "@types/file-saver": "^2.0.7",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
+    "eslint": "^9.34.0",
+    "globals": "^16.3.0",
+    "typescript-eslint": "^8.42.0"
   }
 }

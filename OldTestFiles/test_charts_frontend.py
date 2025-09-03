@@ -32,7 +32,7 @@ def test_chart_components():
             missing_files.append(file_path)
             print(f"❌ {file_path}")
     
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"✅ Existing files: {len(existing_files)}")
     print(f"❌ Missing files: {len(missing_files)}")
     
@@ -67,7 +67,7 @@ def test_package_dependencies():
                 missing_deps.append(dep)
                 print(f"❌ {dep}: Not found")
         
-        print(f"\n📊 Dependencies Summary:")
+        print("\n📊 Dependencies Summary:")
         print(f"✅ Existing: {len(existing_deps)}")
         print(f"❌ Missing: {len(missing_deps)}")
         
@@ -109,7 +109,7 @@ def test_index_exports():
                 missing_exports.append(export_name)
                 print(f"❌ {export_name}")
         
-        print(f"\n📊 Exports Summary:")
+        print("\n📊 Exports Summary:")
         print(f"✅ Existing: {len(existing_exports)}")
         print(f"❌ Missing: {len(missing_exports)}")
         
@@ -150,7 +150,7 @@ def test_financial_page_integration():
                 missing_integrations.append(integration)
                 print(f"❌ {integration}")
         
-        print(f"\n📊 Integration Summary:")
+        print("\n📊 Integration Summary:")
         print(f"✅ Existing: {len(existing_integrations)}")
         print(f"❌ Missing: {len(missing_integrations)}")
         

@@ -5,9 +5,7 @@ from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
     # type:
 from .models import UserRequest
-from django.core.mail import send_mail
    
-from django.conf import settings  # Import settings to access EMAIL_HOST_USER
    
 
 # backend/user_requests/signals.py

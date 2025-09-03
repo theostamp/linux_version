@@ -15,8 +15,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
-from financial.models import Expense, Payment, Transaction
-from datetime import datetime
 
 def debug_monthly_due():
     """Ερευνά το monthly_due field"""
@@ -36,21 +34,21 @@ def debug_monthly_due():
         print(f"   Ενοικιαστής: {apartment.tenant_name}")
         
         # 3. Έλεγχος όλων των πεδίων του apartment
-        print(f"\n🔍 APARTMENT FIELDS:")
+        print("\n🔍 APARTMENT FIELDS:")
         print(f"   current_balance: {apartment.current_balance}")
         print(f"   participation_mills: {apartment.participation_mills}")
         print(f"   heating_mills: {apartment.heating_mills}")
         print(f"   elevator_mills: {apartment.elevator_mills}")
         
         # 4. Έλεγχος αν υπάρχει monthly_due field
-        print(f"\n🔍 MONTHLY_DUE FIELD:")
+        print("\n🔍 MONTHLY_DUE FIELD:")
         if hasattr(apartment, 'monthly_due'):
             print(f"   monthly_due: {apartment.monthly_due}")
         else:
             print("   ❌ Το apartment δεν έχει monthly_due field")
         
         # 5. Έλεγχος όλων των attributes
-        print(f"\n🔍 ALL APARTMENT ATTRIBUTES:")
+        print("\n🔍 ALL APARTMENT ATTRIBUTES:")
         for attr in dir(apartment):
             if not attr.startswith('_') and not callable(getattr(apartment, attr)):
                 try:
@@ -61,14 +59,14 @@ def debug_monthly_due():
                     pass
         
         # 6. Έλεγχος API response
-        print(f"\n🔍 API RESPONSE SIMULATION:")
+        print("\n🔍 API RESPONSE SIMULATION:")
         print("   Το monthly_due πιθανότατα υπολογίζεται στο frontend")
         print("   ή επιστρέφεται από το API endpoint")
         
         # 7. Έλεγχος αν υπάρχουν υποχρεώσεις
         from obligations.models import Obligation
         obligations = Obligation.objects.filter(apartment=apartment)
-        print(f"\n📋 ΥΠΟΧΡΕΩΣΕΙΣ:")
+        print("\n📋 ΥΠΟΧΡΕΩΣΕΙΣ:")
         print(f"   Αριθμός υποχρεώσεων: {obligations.count()}")
         
         if obligations.exists():

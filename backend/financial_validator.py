@@ -2,9 +2,9 @@ import os
 import sys
 import django
 from decimal import Decimal
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any
 from datetime import datetime, date
-from django.db.models import Sum, Q
+from django.db.models import Sum
 from django.utils import timezone
 
 # Setup Django environment
@@ -15,8 +15,8 @@ django.setup()
 from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
-from financial.models import Expense, Transaction, Payment, CommonExpensePeriod, ApartmentShare
-from financial.services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator, FinancialDashboardService
+from financial.models import Expense, Transaction, Payment
+from financial.services import CommonExpenseCalculator, FinancialDashboardService
 
 
 class FinancialDataValidator:
@@ -156,7 +156,7 @@ class FinancialDataValidator:
             else:
                 print(f"   ✅ Δεν συλλέγεται αποθεματικό (εκκρεμότητες: {total_obligations:,.2f}€)")
         else:
-            print(f"   ✅ Δεν υπάρχουν εκκρεμότητες - Αποθεματικό μπορεί να συλλέγεται")
+            print("   ✅ Δεν υπάρχουν εκκρεμότητες - Αποθεματικό μπορεί να συλλέγεται")
     
     def _validate_future_expenses(self):
         """Έλεγχος δαπανών μελλοντικών ημερομηνιών"""
@@ -188,7 +188,7 @@ class FinancialDataValidator:
             })
             print(f"   ⚠️  ΠΡΟΕΙΔΟΠΟΙΗΣΗ: {future_expenses.count()} δαπάνες με μελλοντική ημερομηνία")
         else:
-            print(f"   ✅ Όλες οι δαπάνες έχουν παρελθοντική ημερομηνία")
+            print("   ✅ Όλες οι δαπάνες έχουν παρελθοντική ημερομηνία")
     
     def _validate_pending_transactions(self):
         """Έλεγχος εκκρεμών συναλλαγών"""
@@ -211,7 +211,7 @@ class FinancialDataValidator:
             })
             print(f"   ⚠️  ΠΡΟΕΙΔΟΠΟΙΗΣΗ: {pending_transactions.count()} εκκρεμείς συναλλαγές")
         else:
-            print(f"   ✅ Δεν υπάρχουν εκκρεμείς συναλλαγές")
+            print("   ✅ Δεν υπάρχουν εκκρεμείς συναλλαγές")
     
     def _validate_expense_distribution(self):
         """Έλεγχος κατανομής δαπανών"""
@@ -234,7 +234,7 @@ class FinancialDataValidator:
             })
             print(f"   ❌ Κρίσιμο!: {invalid_distribution_expenses.count()} δαπάνες χωρίς τρόπο κατανομής")
         else:
-            print(f"   ✅ Όλες οι δαπάνες έχουν έγκυρο τρόπο κατανομής")
+            print("   ✅ Όλες οι δαπάνες έχουν έγκυρο τρόπο κατανομής")
     
     def _validate_payment_breakdown(self):
         """Έλεγχος ανάλυσης πληρωμών"""
@@ -303,7 +303,7 @@ class FinancialDataValidator:
                     'reserve_fund_goal': float(self.building.reserve_fund_goal)
                 }
             })
-            print(f"   ⚠️  ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Στόχος αποθεματικού χωρίς διάρκεια")
+            print("   ⚠️  ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Στόχος αποθεματικού χωρίς διάρκεια")
         
         # Έλεγχος αν υπάρχει διάρκεια αλλά όχι στόχος
         if self.building.reserve_fund_duration_months and not self.building.reserve_fund_goal:
@@ -315,7 +315,7 @@ class FinancialDataValidator:
                     'reserve_fund_duration_months': self.building.reserve_fund_duration_months
                 }
             })
-            print(f"   ⚠️  ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Διάρκεια αποθεματικού χωρίς στόχο")
+            print("   ⚠️  ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Διάρκεια αποθεματικού χωρίς στόχο")
     
     def _calculate_historical_balance(self, apartment: Apartment, end_date: date = None) -> Decimal:
         """
@@ -363,7 +363,7 @@ class FinancialDataValidator:
         
         # Σύνοψη
         critical_issues = len([i for i in self.issues if i['severity'] == 'critical'])
-        report.append(f"## ΣΥΝΟΨΗ")
+        report.append("## ΣΥΝΟΨΗ")
         report.append(f"- **Κρίσιμα προβλήματα:** {critical_issues}")
         report.append(f"- **Συνολικά προβλήματα:** {len(self.issues)}")
         report.append(f"- **Προειδοποιήσεις:** {len(self.warnings)}")
@@ -403,7 +403,7 @@ def validate_building_financial_data(building_id: int) -> Dict[str, Any]:
         result = validator.run_full_validation()
         
         # Εμφάνιση αποτελεσμάτων
-        print(f"\n" + "=" * 80)
+        print("\n" + "=" * 80)
         print("📊 ΑΠΟΤΕΛΕΣΜΑΤΑ ΕΠΙΚΥΡΩΣΗΣ")
         print(f"   Κτίριο: {result['building_name']}")
         print(f"   Κρίσιμα προβλήματα: {result['critical_issues']}")
@@ -411,11 +411,11 @@ def validate_building_financial_data(building_id: int) -> Dict[str, Any]:
         print(f"   Προειδοποιήσεις: {result['total_warnings']}")
         
         if result['critical_issues'] > 0:
-            print(f"\n❌ ΒΡΕΘΗΚΑΝ ΚΡΙΣΙΜΑ ΠΡΟΒΛΗΜΑΤΑ!")
+            print("\n❌ ΒΡΕΘΗΚΑΝ ΚΡΙΣΙΜΑ ΠΡΟΒΛΗΜΑΤΑ!")
         elif result['total_issues'] > 0:
-            print(f"\n⚠️  ΒΡΕΘΗΚΑΝ ΠΡΟΒΛΗΜΑΤΑ")
+            print("\n⚠️  ΒΡΕΘΗΚΑΝ ΠΡΟΒΛΗΜΑΤΑ")
         else:
-            print(f"\n✅ ΔΕΝ ΒΡΕΘΗΚΑΝ ΚΡΙΣΙΜΑ ΠΡΟΒΛΗΜΑΤΑ")
+            print("\n✅ ΔΕΝ ΒΡΕΘΗΚΑΝ ΚΡΙΣΙΜΑ ΠΡΟΒΛΗΜΑΤΑ")
         
         return result
 

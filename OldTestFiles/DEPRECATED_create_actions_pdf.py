@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from weasyprint import HTML
-import os
 
 def create_actions_pdf():
     html_content = """

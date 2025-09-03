@@ -4,7 +4,6 @@ Simple Check για το πρόβλημα με τις πληρωμές
 """
 
 import requests
-import json
 
 def check_payment_api():
     """Έλεγχος του API για πληρωμές"""

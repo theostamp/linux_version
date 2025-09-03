@@ -5,7 +5,6 @@ Debug script to check what expenses exist in the database and why they're not be
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -40,7 +39,7 @@ def debug_expense_data():
             return
         
         # Check all expenses
-        print(f"\n📊 All expenses in database:")
+        print("\n📊 All expenses in database:")
         expenses = Expense.objects.filter(building_id=1).order_by('date')
         
         if not expenses.exists():
@@ -51,7 +50,7 @@ def debug_expense_data():
             print(f"   📅 {expense.date} | {expense.category} | {expense.amount}€ | {expense.title}")
         
         # Check expenses by month
-        print(f"\n📅 Expenses by month:")
+        print("\n📅 Expenses by month:")
         
         # June 2025
         june_expenses = expenses.filter(date__year=2025, date__month=6)
@@ -66,12 +65,12 @@ def debug_expense_data():
             print(f"      - {exp.date}: {exp.amount}€ ({exp.title})")
         
         # Test AdvancedCommonExpenseCalculator directly
-        print(f"\n🧮 Testing AdvancedCommonExpenseCalculator directly...")
+        print("\n🧮 Testing AdvancedCommonExpenseCalculator directly...")
         
         from financial.services import AdvancedCommonExpenseCalculator
         
         # Test with August 2025 (should include the 300€ ΔΕΗ)
-        print(f"\n📅 Testing August 2025 calculation:")
+        print("\n📅 Testing August 2025 calculation:")
         calculator = AdvancedCommonExpenseCalculator(
             building_id=1,
             period_start_date='2025-08-01',
@@ -91,7 +90,7 @@ def debug_expense_data():
         # Run the calculation
         try:
             result = calculator.calculate_advanced_shares()
-            print(f"✅ Calculation result:")
+            print("✅ Calculation result:")
             print(f"   Total amount: {result.get('total_amount', 0)}€")
             print(f"   Management fees: {result.get('management_fees', 0)}€")
             print(f"   Reserve fund: {result.get('reserve_fund_contribution', 0)}€")

@@ -10,7 +10,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from buildings.models import Building
 from apartments.models import Apartment
-from decimal import Decimal
 
 def fix_participation_mills():
     """
@@ -39,7 +38,7 @@ def fix_participation_mills():
             return
         
         # Υπολογισμός διορθώσεων
-        print(f"\n🔧 ΥΠΟΛΟΓΙΣΜΟΣ ΔΙΟΡΘΩΣΕΩΝ:")
+        print("\n🔧 ΥΠΟΛΟΓΙΣΜΟΣ ΔΙΟΡΘΩΣΕΩΝ:")
         difference = 1000 - total_mills
         print(f"   Διαφορά: {difference} χιλιοστά")
         
@@ -88,7 +87,7 @@ def fix_participation_mills():
                 print(f"   {apt.number}: {current_mills} → {new_mills} (-{reduction_mills})")
         
         # Επιβεβαίωση
-        print(f"\n✅ ΕΠΙΒΕΒΑΙΩΣΗ:")
+        print("\n✅ ΕΠΙΒΕΒΑΙΩΣΗ:")
         total_mills_after = 0
         for apt in apartments:
             mills = apt.participation_mills or 0

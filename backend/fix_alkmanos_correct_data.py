@@ -39,7 +39,7 @@ def fix_alkmanos_correct_data():
         
         building.save()
         
-        print(f"\n✅ Fixed successfully!")
+        print("\n✅ Fixed successfully!")
         print(f"   - New goal: {building.reserve_fund_goal}€")
         print(f"   - New duration: {building.reserve_fund_duration_months} months")
         print(f"   - Start date: {building.reserve_fund_start_date}")
@@ -50,10 +50,10 @@ def fix_alkmanos_correct_data():
         print(f"   - Monthly amount: {monthly_amount:.2f}€")
         
         # Verify the fix
-        print(f"\n🎯 Verification:")
-        print(f"   - Expected goal: 2,000.00€")
-        print(f"   - Expected duration: 6 months")
-        print(f"   - Expected monthly: 333.33€")
+        print("\n🎯 Verification:")
+        print("   - Expected goal: 2,000.00€")
+        print("   - Expected duration: 6 months")
+        print("   - Expected monthly: 333.33€")
         print(f"   - Actual goal: {building.reserve_fund_goal}€")
         print(f"   - Actual duration: {building.reserve_fund_duration_months} months")
         print(f"   - Actual monthly: {monthly_amount:.2f}€")
@@ -62,20 +62,20 @@ def fix_alkmanos_correct_data():
         duration_match = building.reserve_fund_duration_months == 6
         monthly_match = abs(monthly_amount - 333.33) < 0.01
         
-        print(f"\n✅ All matches:")
+        print("\n✅ All matches:")
         print(f"   - Goal: {'✅' if goal_match else '❌'}")
         print(f"   - Duration: {'✅' if duration_match else '❌'}")
         print(f"   - Monthly: {'✅' if monthly_match else '❌'}")
         
         if goal_match and duration_match and monthly_match:
-            print(f"\n🎉 SUCCESS: Alkmanos building now has the correct user-entered data!")
-            print(f"   The modal should now show:")
-            print(f"   - Μηνιαία Εισφορά: 333,33€")
-            print(f"   - Στόχος: 2.000,00€")
-            print(f"   - Διάρκεια: 6 μήνες")
-            print(f"   - Συνολική Εισφορά: 2.000,00€")
+            print("\n🎉 SUCCESS: Alkmanos building now has the correct user-entered data!")
+            print("   The modal should now show:")
+            print("   - Μηνιαία Εισφορά: 333,33€")
+            print("   - Στόχος: 2.000,00€")
+            print("   - Διάρκεια: 6 μήνες")
+            print("   - Συνολική Εισφορά: 2.000,00€")
         else:
-            print(f"\n⚠️  WARNING: Some values still don't match.")
+            print("\n⚠️  WARNING: Some values still don't match.")
 
 if __name__ == '__main__':
     fix_alkmanos_correct_data()

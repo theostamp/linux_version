@@ -8,7 +8,7 @@ import os
 import sys
 import django
 from decimal import Decimal
-from datetime import datetime, date
+from datetime import datetime
 from collections import defaultdict
 
 # Setup Django environment
@@ -23,8 +23,7 @@ from financial.models import (
     Expense, Payment, CommonExpensePeriod, 
     ApartmentShare, Transaction
 )
-from django.db.models import Sum, Q, F
-from django.utils import timezone
+from django.db.models import Sum
 
 def print_header(title):
     """Print formatted header"""
@@ -234,21 +233,21 @@ def trace_334_85_amount(building):
     # Check expenses
     expenses = Expense.objects.filter(building=building, amount=target_amount)
     if expenses.exists():
-        print(f"💰 Βρέθηκε στις δαπάνες:")
+        print("💰 Βρέθηκε στις δαπάνες:")
         for expense in expenses:
             print(f"   - {expense.category}: {expense.description}")
     
     # Check payments
     payments = Payment.objects.filter(apartment__building=building, amount=target_amount)
     if payments.exists():
-        print(f"💳 Βρέθηκε στις πληρωμές:")
+        print("💳 Βρέθηκε στις πληρωμές:")
         for payment in payments:
             print(f"   - Διαμέρισμα {payment.apartment.number}: {payment.description}")
     
     # Check common expense periods
     common_expense_periods = CommonExpensePeriod.objects.filter(building=building, total_amount=target_amount)
     if common_expense_periods.exists():
-        print(f"🏢 Βρέθηκε στα κοινοχρήστων:")
+        print("🏢 Βρέθηκε στα κοινοχρήστων:")
         for cep in common_expense_periods:
             print(f"   - Περίοδος {cep.period.strftime('%m/%Y')}: {cep.allocation_type}")
     

@@ -1,10 +1,8 @@
 # backend/users/views.py
 
 from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
-from django.views.decorators.http import require_http_methods
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated

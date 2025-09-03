@@ -4,10 +4,8 @@ Script για έλεγχο του service packages API με authentication
 """
 
 import os
-import sys
 import django
 import requests
-import json
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')

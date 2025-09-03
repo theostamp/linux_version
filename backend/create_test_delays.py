@@ -6,7 +6,7 @@ Script για δημιουργία test data με καθυστερήσεις π�
 import os
 import sys
 import django
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from decimal import Decimal
 
 # Setup Django environment
@@ -93,7 +93,7 @@ def create_test_delays():
             else:  # Τελευταία 2 διαμερίσματα - δεν έχουν πληρώσει ακόμα
                 payment_date = None
                 payment_amount = Decimal('0.00')
-                print(f"   ❌ Δεν έχει πληρώσει ακόμα")
+                print("   ❌ Δεν έχει πληρώσει ακόμα")
             
             # Δημιουργία πληρωμής αν υπάρχει
             if payment_date:

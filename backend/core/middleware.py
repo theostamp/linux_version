@@ -1,6 +1,5 @@
 from django_tenants.middleware.main import TenantMainMiddleware
-from django_tenants.utils import get_tenant_model, get_public_schema_name
-from django.http import Http404
+from django_tenants.utils import get_tenant_model
 
 
 class CustomTenantMiddleware(TenantMainMiddleware):

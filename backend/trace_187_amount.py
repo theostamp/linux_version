@@ -17,7 +17,7 @@ from django_tenants.utils import schema_context
 from financial.models import Payment, Expense, Transaction
 from buildings.models import Building
 from apartments.models import Apartment
-from django.db.models import Sum, Q
+from django.db.models import Sum
 
 def trace_187_amount():
     """Trace the source of 187.00 € amount"""
@@ -73,14 +73,14 @@ def trace_187_amount():
         print("-" * 40)
         
         if abs(calculated_reserve - target_amount) < Decimal('0.01'):
-            print(f"✅ Το 187.00€ είναι το υπολογισμένο αποθεματικό!")
+            print("✅ Το 187.00€ είναι το υπολογισμένο αποθεματικό!")
             print(f"   Πηγή: Εισπράξεις ({total_payments}€) - Δαπάνες ({total_expenses}€)")
         elif abs(total_payments - target_amount) < Decimal('0.01'):
-            print(f"✅ Το 187.00€ είναι το σύνολο εισπράξεων!")
+            print("✅ Το 187.00€ είναι το σύνολο εισπράξεων!")
         elif abs(total_expenses - target_amount) < Decimal('0.01'):
-            print(f"✅ Το 187.00€ είναι το σύνολο δαπανών!")
+            print("✅ Το 187.00€ είναι το σύνολο δαπανών!")
         else:
-            print(f"❓ Το 187.00€ δεν ταιριάζει με κανέναν υπολογισμό:")
+            print("❓ Το 187.00€ δεν ταιριάζει με κανέναν υπολογισμό:")
             print(f"   - Υπολογισμένο αποθεματικό: {calculated_reserve}€")
             print(f"   - Συνολικές εισπράξεις: {total_payments}€")
             print(f"   - Συνολικές δαπάνες: {total_expenses}€")
@@ -99,7 +99,7 @@ def trace_187_amount():
         print(f"   Σύνολο υπολοίπων διαμερισμάτων: {total_apartment_balance}€")
         
         if abs(total_apartment_balance - target_amount) < Decimal('0.01'):
-            print(f"✅ Το 187.00€ είναι το σύνολο υπολοίπων διαμερισμάτων!")
+            print("✅ Το 187.00€ είναι το σύνολο υπολοίπων διαμερισμάτων!")
         print()
         
         # 7. Check transactions
@@ -110,7 +110,7 @@ def trace_187_amount():
         # Check if any transaction is exactly 187.00
         for transaction in transactions:
             if abs(transaction.amount - target_amount) < Decimal('0.01'):
-                print(f"✅ Βρέθηκε συναλλαγή 187.00€:")
+                print("✅ Βρέθηκε συναλλαγή 187.00€:")
                 print(f"     Ημερομηνία: {transaction.date.strftime('%d/%m/%Y')}")
                 print(f"     Διαμέρισμα: {transaction.apartment.number}")
                 print(f"     Τύπος: {transaction.type}")
@@ -128,7 +128,7 @@ def trace_187_amount():
         print(f"   Συνολικό διαχειριστικό κόστος: {total_management_cost}€")
         
         if abs(total_management_cost - target_amount) < Decimal('0.01'):
-            print(f"✅ Το 187.00€ είναι το συνολικό διαχειριστικό κόστος!")
+            print("✅ Το 187.00€ είναι το συνολικό διαχειριστικό κόστος!")
         print()
         
         # 9. Check reserve fund contributions
@@ -140,7 +140,7 @@ def trace_187_amount():
         print(f"   Συνολικές εισφοράς αποθεματικού: {total_reserve_contributions}€")
         
         if abs(total_reserve_contributions - target_amount) < Decimal('0.01'):
-            print(f"✅ Το 187.00€ είναι το σύνολο εισφορών αποθεματικού!")
+            print("✅ Το 187.00€ είναι το σύνολο εισφορών αποθεματικού!")
         print()
         
         # 10. Summary

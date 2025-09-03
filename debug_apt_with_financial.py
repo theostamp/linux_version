@@ -75,7 +75,7 @@ def debug_apt_with_financial():
             with connection.cursor() as cursor:
                 cursor.execute("SELECT COUNT(*) FROM financial_apartment")
                 count = cursor.fetchone()[0]
-                print(f"  ✅ Database connection successful")
+                print("  ✅ Database connection successful")
                 print(f"  📊 Total apartments in database: {count}")
         except Exception as e:
             print(f"  ❌ Database error: {e}")

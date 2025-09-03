@@ -6,7 +6,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings"
 django.setup()
 
 from django.contrib.auth import get_user_model, authenticate
-from django_tenants.utils import schema_context, get_public_schema_name
+from django_tenants.utils import schema_context
 from tenants.models import Client, Domain
 
 User = get_user_model()

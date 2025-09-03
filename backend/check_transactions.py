@@ -9,14 +9,13 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from financial.models import Transaction, Payment, Building
-from apartments.models import Apartment
 
 # Check transaction history in demo schema
 with schema_context('demo'):
     try:
         # First check what buildings exist
         buildings = Building.objects.all()
-        print(f"🏢 AVAILABLE BUILDINGS:")
+        print("🏢 AVAILABLE BUILDINGS:")
         for building in buildings:
             print(f"  - ID: {building.id}, Name: {building.name}, Address: {building.address}")
         print()
@@ -35,7 +34,7 @@ with schema_context('demo'):
             total_transactions = Transaction.objects.filter(building=building).count()
             total_payments = Payment.objects.filter(apartment__building=building).count()
             
-            print(f"📊 STATISTICS:")
+            print("📊 STATISTICS:")
             print(f"  - Total transactions: {total_transactions}")
             print(f"  - Total payments: {total_payments}")
             print()
@@ -43,7 +42,7 @@ with schema_context('demo'):
             if total_transactions > 0:
                 # Show recent transactions
                 recent_transactions = Transaction.objects.filter(building=building).order_by('-date')[:5]
-                print(f"📋 RECENT TRANSACTIONS (last 5):")
+                print("📋 RECENT TRANSACTIONS (last 5):")
                 for i, transaction in enumerate(recent_transactions, 1):
                     print(f"  {i}. {transaction.date.strftime('%d/%m/%Y %H:%M')} - {transaction.type} - {transaction.amount}€")
                     print(f"     Description: {transaction.description}")
@@ -52,7 +51,7 @@ with schema_context('demo'):
                     print()
                 
                 # Show transaction types breakdown
-                print(f"📈 TRANSACTION TYPES BREAKDOWN:")
+                print("📈 TRANSACTION TYPES BREAKDOWN:")
                 type_counts = {}
                 for transaction in Transaction.objects.filter(building=building):
                     type_name = transaction.get_type_display()
@@ -63,7 +62,7 @@ with schema_context('demo'):
                 print()
             
             # Check if there are any issues with transaction creation
-            print(f"🔍 TRANSACTION CREATION ANALYSIS:")
+            print("🔍 TRANSACTION CREATION ANALYSIS:")
             
             # Check for payments without corresponding transactions
             payments_without_transactions = []

@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand
 from django_tenants.utils import schema_context
 from decimal import Decimal
 from financial.models import Payment
-from apartments.models import Apartment
 
 class Command(BaseCommand):
     help = 'Add missing signal to update apartment balance when payments are created'

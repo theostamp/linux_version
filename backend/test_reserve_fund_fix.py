@@ -9,7 +9,6 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from datetime import datetime, date
-from decimal import Decimal
 
 with schema_context('demo'):
     from financial.services import FinancialDashboardService

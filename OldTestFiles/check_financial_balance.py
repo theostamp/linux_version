@@ -49,7 +49,7 @@ def check_financial_balance():
         
         correct_reserve = total_payments - total_expenses
         
-        print(f"\n📊 Υπολογισμός σωστού αποθεματικού:")
+        print("\n📊 Υπολογισμός σωστού αποθεματικού:")
         print(f"  - Συνολικές εισπράξεις: {total_payments:10.2f}€")
         print(f"  - Συνολικές δαπάνες: {total_expenses:10.2f}€")
         print(f"  - Σωστό αποθεματικό: {correct_reserve:10.2f}€")
@@ -57,7 +57,7 @@ def check_financial_balance():
         # Check if there's a discrepancy
         current_reserve = building.current_reserve or Decimal('0.00')
         if abs(current_reserve - correct_reserve) > Decimal('0.01'):
-            print(f"\n⚠️  ΒΡΕΘΗΚΕ ΔΙΑΦΟΡΑ:")
+            print("\n⚠️  ΒΡΕΘΗΚΕ ΔΙΑΦΟΡΑ:")
             print(f"  - Τρέχον στη βάση: {current_reserve:10.2f}€")
             print(f"  - Σωστό υπολογισμένο: {correct_reserve:10.2f}€")
             print(f"  - Διαφορά: {abs(correct_reserve - current_reserve):10.2f}€")
@@ -66,18 +66,18 @@ def check_financial_balance():
             building.current_reserve = correct_reserve
             building.save()
             
-            print(f"\n✅ ΔΙΟΡΘΩΘΗΚΕ ΤΟ ΑΠΟΘΕΜΑΤΙΚΟ:")
+            print("\n✅ ΔΙΟΡΘΩΘΗΚΕ ΤΟ ΑΠΟΘΕΜΑΤΙΚΟ:")
             print(f"  - Ενημερώθηκε σε: {correct_reserve:10.2f}€")
         else:
-            print(f"\n✅ Το αποθεματικό είναι σωστό!")
+            print("\n✅ Το αποθεματικό είναι σωστό!")
         
         # Verify the fix
         building.refresh_from_db()
-        print(f"\n🔍 Επιβεβαίωση:")
+        print("\n🔍 Επιβεβαίωση:")
         print(f"  - Τρέχον αποθεματικό στη βάση: {building.current_reserve:10.2f}€")
         
         # Additional checks
-        print(f"\n📋 Επιπλέον στοιχεία:")
+        print("\n📋 Επιπλέον στοιχεία:")
         print(f"  - Αριθμός εισπράξεων: {Payment.objects.count()}")
         print(f"  - Αριθμός δαπανών: {Expense.objects.count()}")
         
@@ -86,7 +86,7 @@ def check_financial_balance():
         total_pending = pending_expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         print(f"  - Ανέκδοτες δαπάνες: {total_pending:10.2f}€ ({pending_expenses.count()} δαπάνες)")
         
-        print(f"\n✅ Έλεγχος ολοκληρώθηκε")
+        print("\n✅ Έλεγχος ολοκληρώθηκε")
 
 if __name__ == "__main__":
     check_financial_balance()

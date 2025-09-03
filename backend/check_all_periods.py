@@ -7,8 +7,6 @@ Script to check all existing common expense periods
 import os
 import sys
 import django
-from datetime import datetime
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -17,7 +15,7 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from financial.models import CommonExpensePeriod, ApartmentShare
-from django.db.models import Sum, Q, Count
+from django.db.models import Q
 
 def check_all_periods():
     """Check all existing common expense periods"""

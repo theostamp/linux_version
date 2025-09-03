@@ -1,8 +1,7 @@
 import os
 import sys
 import django
-from decimal import Decimal
-from datetime import datetime, date, timedelta
+from datetime import date
 
 # Setup Django environment
 sys.path.append('/app')
@@ -11,7 +10,7 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from apartments.models import Apartment
-from financial.models import Expense, Payment
+from financial.models import Payment
 from buildings.models import Building
 
 def debug_payment_delay_logic():
@@ -39,7 +38,7 @@ def debug_payment_delay_logic():
         # Get apartments
         apartments = Apartment.objects.filter(building=building)
         
-        print(f"🏠 ΑΝΑΛΥΣΗ ΚΑΘΥΣΤΕΡΗΣΗΣ ΠΛΗΡΩΜΩΝ:")
+        print("🏠 ΑΝΑΛΥΣΗ ΚΑΘΥΣΤΕΡΗΣΗΣ ΠΛΗΡΩΜΩΝ:")
         print("-" * 80)
         
         for apartment in apartments:
@@ -97,10 +96,10 @@ def debug_payment_delay_logic():
             print(f"   • Λόγος: {status_reason}")
             print()
         
-        print(f"📊 ΝΕΑ ΚΡΙΤΗΡΙΑ ΚΑΤΑΣΤΑΣΗΣ:")
-        print(f"   • Ενεργό: Δεν υπάρχει οφειλή ή καθυστέρηση ≤15 ημερών")
-        print(f"   • Οφειλή: Οφειλή 16-40 ημερών")
-        print(f"   • Κρίσιμο: Οφειλή >40 ημερών")
+        print("📊 ΝΕΑ ΚΡΙΤΗΡΙΑ ΚΑΤΑΣΤΑΣΗΣ:")
+        print("   • Ενεργό: Δεν υπάρχει οφειλή ή καθυστέρηση ≤15 ημερών")
+        print("   • Οφειλή: Οφειλή 16-40 ημερών")
+        print("   • Κρίσιμο: Οφειλή >40 ημερών")
 
 if __name__ == "__main__":
     debug_payment_delay_logic()

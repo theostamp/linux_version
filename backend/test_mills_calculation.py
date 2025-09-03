@@ -7,7 +7,6 @@ import os
 import sys
 import django
 import requests
-from decimal import Decimal
 
 # Προσθήκη του backend directory στο path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))

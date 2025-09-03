@@ -7,9 +7,7 @@ Tests both calculate and calculate_advanced endpoints with month_filter paramete
 import os
 import sys
 import django
-import requests
 import json
-from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
@@ -35,7 +33,6 @@ def test_month_filtering():
         
         from financial.views import CommonExpenseViewSet
         from django.test import RequestFactory
-        from django.http import QueryDict
         
         factory = RequestFactory()
         
@@ -57,9 +54,9 @@ def test_month_filtering():
         if response.status_code == 200:
             total_expenses = response.data.get('total_expenses', 0)
             print(f"   ✅ February total expenses: {total_expenses}€")
-            print(f"   Expected: ~10€ (management fees only)")
+            print("   Expected: ~10€ (management fees only)")
             if total_expenses <= 15:  # Allow small variance
-                print(f"   ✅ PASS: Correctly filtered expenses for February")
+                print("   ✅ PASS: Correctly filtered expenses for February")
             else:
                 print(f"   ❌ FAIL: Expected ~10€, got {total_expenses}€")
         else:
@@ -79,9 +76,9 @@ def test_month_filtering():
         if response.status_code == 200:
             total_expenses = response.data.get('total_expenses', 0)
             print(f"   ✅ August total expenses: {total_expenses}€")
-            print(f"   Expected: ~310€ (300€ ΔΕΗ + 10€ management)")
+            print("   Expected: ~310€ (300€ ΔΕΗ + 10€ management)")
             if total_expenses >= 300:  # Should include ΔΕΗ
-                print(f"   ✅ PASS: Correctly included August expenses")
+                print("   ✅ PASS: Correctly included August expenses")
             else:
                 print(f"   ❌ FAIL: Expected ~310€, got {total_expenses}€")
         else:
@@ -107,9 +104,9 @@ def test_month_filtering():
             expense_totals = response.data.get('expense_totals', {})
             total_general = float(expense_totals.get('general', 0))
             print(f"   ✅ February advanced general expenses: {total_general}€")
-            print(f"   Expected: ~10€ (management fees only)")
+            print("   Expected: ~10€ (management fees only)")
             if total_general <= 15:  # Allow small variance
-                print(f"   ✅ PASS: Advanced calculator correctly filtered February")
+                print("   ✅ PASS: Advanced calculator correctly filtered February")
             else:
                 print(f"   ❌ FAIL: Expected ~10€, got {total_general}€")
         else:
@@ -130,9 +127,9 @@ def test_month_filtering():
             expense_totals = response.data.get('expense_totals', {})
             total_general = float(expense_totals.get('general', 0))
             print(f"   ✅ August advanced general expenses: {total_general}€")
-            print(f"   Expected: ~310€ (300€ ΔΕΗ + 10€ management)")
+            print("   Expected: ~310€ (300€ ΔΕΗ + 10€ management)")
             if total_general >= 300:  # Should include ΔΕΗ
-                print(f"   ✅ PASS: Advanced calculator correctly included August expenses")
+                print("   ✅ PASS: Advanced calculator correctly included August expenses")
             else:
                 print(f"   ❌ FAIL: Expected ~310€, got {total_general}€")
         else:

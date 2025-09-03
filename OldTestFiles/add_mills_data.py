@@ -6,7 +6,6 @@ Script για προσθήκη sample δεδομένων χιλιοστών θέ
 import os
 import sys
 import django
-from decimal import Decimal
 
 # Προσθήκη του backend directory στο path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
@@ -107,7 +106,7 @@ def add_mills_data():
         print("-" * 60)
         print(f"{'ΣΥΝΟΛΟ':<12} {sum(apt.participation_mills or 0 for apt in apartments):<12} {total_heating:<12} {total_elevator:<12}")
         
-        print(f"\n🎉 Ολοκληρώθηκε η προσθήκη δεδομένων χιλιοστών!")
+        print("\n🎉 Ολοκληρώθηκε η προσθήκη δεδομένων χιλιοστών!")
 
 if __name__ == "__main__":
     add_mills_data()

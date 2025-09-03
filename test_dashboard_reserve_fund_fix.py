@@ -6,7 +6,6 @@ Script to test the dashboard API fix for reserve fund timeline validation
 import os
 import sys
 import django
-from decimal import Decimal
 from datetime import date
 
 # Setup Django environment
@@ -89,7 +88,7 @@ def test_dashboard_reserve_fund_fix():
                 except Exception as e:
                     print(f"   ❌ Error parsing month: {e}")
             else:
-                print(f"   ⚠️ No reserve fund start date set")
+                print("   ⚠️ No reserve fund start date set")
             
             print()
         

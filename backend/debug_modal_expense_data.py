@@ -9,7 +9,6 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from financial.services import AdvancedCommonExpenseCalculator
-from datetime import datetime
 
 def debug_modal_expense_data():
     """Debug the expense data that goes to CommonExpenseModal"""
@@ -61,7 +60,7 @@ def debug_modal_expense_data():
             total_apartments = result.get('total_apartments', 0)
             total_management = management_fee * total_apartments
             
-            print(f"\nManagement fees:")
+            print("\nManagement fees:")
             print(f"   Per apartment: €{management_fee:,.2f}")
             print(f"   Total apartments: {total_apartments}")
             print(f"   Total management: €{total_management:,.2f}")

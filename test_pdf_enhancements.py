@@ -20,19 +20,19 @@ def test_pdf_enhancements():
         
         building = Building.objects.get(id=1)
         
-        print(f"🏠 Building Information:")
+        print("🏠 Building Information:")
         print(f"   • Name: {building.name}")
         print(f"   • Address: {building.address}")
         print(f"   • City: {building.city}")
         print(f"   • Postal Code: {building.postal_code}")
         
-        print(f"\n👤 Internal Manager Details:")
+        print("\n👤 Internal Manager Details:")
         print(f"   • Name: {building.internal_manager_name}")
         print(f"   • Phone: {building.internal_manager_phone}")
         print(f"   • Apartment: {building.internal_manager_apartment}")
         print(f"   • Collection Schedule: {building.internal_manager_collection_schedule}")
         
-        print(f"\n📋 PDF Preview Data:")
+        print("\n📋 PDF Preview Data:")
         full_address = f"{building.address}, {building.city} {building.postal_code}"
         manager_with_apt = f"{building.internal_manager_name} (Διαμ. {building.internal_manager_apartment})"
         
@@ -42,12 +42,12 @@ def test_pdf_enhancements():
         print(f"   📞 ΤΗΛΕΦΩΝΟ: {building.internal_manager_phone}")
         print(f"   🕒 ΩΡΑΡΙΟ ΕΙΣΠΡΑΞΗΣ: {building.internal_manager_collection_schedule}")
         
-        print(f"\n✅ All enhancements ready:")
-        print(f"   1. ✅ Building address added to PDF")
-        print(f"   2. ✅ Manager apartment number included")
-        print(f"   3. ✅ Custom collection schedule from database")
-        print(f"   4. ✅ Dynamic data instead of hardcoded fallbacks")
-        print(f"   5. ✅ Payment due date logic updated")
+        print("\n✅ All enhancements ready:")
+        print("   1. ✅ Building address added to PDF")
+        print("   2. ✅ Manager apartment number included")
+        print("   3. ✅ Custom collection schedule from database")
+        print("   4. ✅ Dynamic data instead of hardcoded fallbacks")
+        print("   5. ✅ Payment due date logic updated")
 
 if __name__ == "__main__":
     test_pdf_enhancements()

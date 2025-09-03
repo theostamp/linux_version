@@ -16,8 +16,7 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from financial.models import Building, Apartment, Expense, Transaction, Payment
-from obligations.models import Obligation
-from django.db.models import Sum, Q
+from django.db.models import Sum
 from django.utils import timezone
 
 def fix_alkmanos_expense_transactions():

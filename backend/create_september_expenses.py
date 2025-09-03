@@ -6,7 +6,7 @@ Script για τη δημιουργία κοινόχρηστων για Σεπτ
 import os
 import sys
 import django
-from datetime import datetime, date
+from datetime import date
 from decimal import Decimal
 
 # Setup Django environment

@@ -6,9 +6,7 @@ Test script για το file upload functionality του οικονομικού 
 import os
 import sys
 import django
-from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
 from django.contrib.auth import get_user_model
 
 # Add the backend directory to the Python path

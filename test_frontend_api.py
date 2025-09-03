@@ -9,7 +9,6 @@ django.setup()
 
 from django_tenants.utils import schema_context
 from financial.services import FinancialDashboardService
-from decimal import Decimal
 
 def test_frontend_api():
     """Ελέγχει το API endpoint που χρησιμοποιεί το frontend"""
@@ -23,7 +22,7 @@ def test_frontend_api():
         # API call όπως το frontend
         api_response = service.get_summary(month='2025-08')
         
-        print(f"📊 API Response για Αύγουστο 2025:")
+        print("📊 API Response για Αύγουστο 2025:")
         print(f"   previous_obligations: {api_response.get('previous_obligations', 'NOT FOUND'):,.2f}€")
         print(f"   total_balance: {api_response.get('total_balance', 'NOT FOUND'):,.2f}€")
         print(f"   current_obligations: {api_response.get('current_obligations', 'NOT FOUND'):,.2f}€")
@@ -34,10 +33,10 @@ def test_frontend_api():
         
         # Έλεγχος αν το previous_obligations είναι διαθέσιμο
         if 'previous_obligations' in api_response:
-            print(f"\n✅ ΕΠΙΤΥΧΙΑ! Το previous_obligations είναι διαθέσιμο στο API!")
+            print("\n✅ ΕΠΙΤΥΧΙΑ! Το previous_obligations είναι διαθέσιμο στο API!")
             print(f"   Τιμή: {api_response['previous_obligations']:,.2f}€")
         else:
-            print(f"\n❌ ΠΡΟΒΛΗΜΑ! Το previous_obligations δεν είναι διαθέσιμο στο API!")
+            print("\n❌ ΠΡΟΒΛΗΜΑ! Το previous_obligations δεν είναι διαθέσιμο στο API!")
         
         print("=" * 50)
 

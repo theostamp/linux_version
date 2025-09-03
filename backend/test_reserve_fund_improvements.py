@@ -4,7 +4,6 @@ Script για έλεγχο των βελτιώσεων στο reserve fund
 """
 
 import os
-import sys
 import django
 from decimal import Decimal
 
@@ -63,7 +62,7 @@ def test_reserve_fund_improvements():
                 reserve_goal = summary.get('reserve_fund_goal', 0)
                 
                 if current_reserve == 0 and reserve_goal == 0:
-                    print(f"   ✅ ΣΩΣΤΟ! Το αποθεματικό είναι 0€ και δεν έχει οριστεί στόχος.")
+                    print("   ✅ ΣΩΣΤΟ! Το αποθεματικό είναι 0€ και δεν έχει οριστεί στόχος.")
                 elif current_reserve == 0 and reserve_goal > 0:
                     print(f"   ✅ ΣΩΣΤΟ! Το αποθεματικό είναι 0€ αλλά έχει οριστεί στόχος {reserve_goal}€.")
                 else:
@@ -73,7 +72,7 @@ def test_reserve_fund_improvements():
                 print(f"   ❌ Σφάλμα κατά τον υπολογισμό: {e}")
         
         # Έλεγχος και άλλων κτιρίων
-        print(f"\n🏢 Έλεγχος άλλων κτιρίων:")
+        print("\n🏢 Έλεγχος άλλων κτιρίων:")
         buildings = Building.objects.all()
         
         for building in buildings:
@@ -97,11 +96,11 @@ def test_reserve_fund_improvements():
                 print(f"      Σωστό αποθεματικό: {correct_reserve}€")
                 
                 if building.current_reserve == correct_reserve:
-                    print(f"      ✅ ΣΩΣΤΟ!")
+                    print("      ✅ ΣΩΣΤΟ!")
                 else:
                     print(f"      ❌ ΛΑΘΟΣ! Διαφορά: {abs(building.current_reserve - correct_reserve)}€")
     
-    print(f"\n🎉 Ο έλεγχος ολοκληρώθηκε!")
+    print("\n🎉 Ο έλεγχος ολοκληρώθηκε!")
 
 if __name__ == "__main__":
     test_reserve_fund_improvements()

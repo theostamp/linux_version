@@ -2,9 +2,6 @@
 import os
 import django
 import sys
-from datetime import date, timedelta
-from decimal import Decimal
-import random
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings")
 django.setup()
@@ -162,13 +159,13 @@ def create_sample_suppliers(tenant_schema):
                 else:
                     print(f"ℹ️ Υπάρχει ήδη προμηθευτής: {supplier.name}")
         
-        print(f"\n📊 Σύνοψη:")
+        print("\n📊 Σύνοψη:")
         print(f"   🏢 Κτίρια: {buildings.count()}")
         print(f"   👥 Προμηθευτές ανά κτίριο: {len(sample_suppliers)}")
         print(f"   📋 Συνολικοί προμηθευτές: {len(created_suppliers)}")
         
         # Εμφάνιση στατιστικών ανά κατηγορία
-        print(f"\n📈 Προμηθευτές ανά κατηγορία:")
+        print("\n📈 Προμηθευτές ανά κατηγορία:")
         for category_choice in Supplier.SUPPLIER_CATEGORIES:
             count = Supplier.objects.filter(category=category_choice[0]).count()
             print(f"   {category_choice[1]}: {count}")

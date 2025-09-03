@@ -15,7 +15,6 @@ django.setup()
 from django_tenants.utils import schema_context
 from financial.services import FinancialDashboardService
 from buildings.models import Building
-import json
 
 def debug_previous_obligations():
     """Έλεγχος προηγούμενων οφειλών"""
@@ -57,7 +56,6 @@ def debug_previous_obligations():
         print(f"   • Συνολικές αρνητικές οφειλές διαμερισμάτων: {total_apartment_obligations}€")
         
         # Έλεγχος συναλλαγών από τον Μάιο
-        from datetime import date
         may_transactions = Transaction.objects.filter(
             apartment__building=building,
             date__year=2025,

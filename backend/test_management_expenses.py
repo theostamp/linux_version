@@ -4,9 +4,7 @@ Script για έλεγχο των εξόδων διαχείρισης
 """
 
 import os
-import sys
 import django
-from decimal import Decimal
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
@@ -58,9 +56,9 @@ def test_management_expenses():
                     print(f"   Διάρκεια συλλογής: {building.reserve_fund_duration_months} μήνες")
                     print(f"   Μηνιαία δόση αποθεματικού: {reserve_fund_monthly:.2f}€")
                 else:
-                    print(f"   Δεν έχει οριστεί στόχος αποθεματικού")
+                    print("   Δεν έχει οριστεί στόχος αποθεματικού")
             else:
-                print(f"   Τα πεδία αποθεματικού δεν υπάρχουν στο μοντέλο")
+                print("   Τα πεδία αποθεματικού δεν υπάρχουν στο μοντέλο")
             
             # Υπολογισμός συνολικών μηνιαίων εξόδων (διαχείριση + αποθεματικό)
             total_monthly_expenses = total_management_cost + reserve_fund_monthly
@@ -69,7 +67,7 @@ def test_management_expenses():
             print(f"     - Διαχείριση: {total_management_cost}€")
             print(f"     - Αποθεματικό: {reserve_fund_monthly}€")
     
-    print(f"\n🎉 Ο έλεγχος ολοκληρώθηκε!")
+    print("\n🎉 Ο έλεγχος ολοκληρώθηκε!")
 
 if __name__ == "__main__":
     test_management_expenses()

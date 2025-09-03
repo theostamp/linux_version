@@ -46,7 +46,7 @@ with schema_context('demo'):
             total_previous_balance = 0
             total_current_balance = 0
             
-            print(f"\n🏠 All Apartments Data:")
+            print("\n🏠 All Apartments Data:")
             for i, apt in enumerate(response.data, 1):
                 previous_balance = apt.get('previous_balance', 0)
                 current_balance = apt.get('current_balance', 0)
@@ -59,7 +59,7 @@ with schema_context('demo'):
                 print(f"     Current Balance: {current_balance}€")
                 print(f"     Owner: {apt.get('owner_name')}")
             
-            print(f"\n💰 SUMMARY:")
+            print("\n💰 SUMMARY:")
             print(f"  Total Previous Balance: {total_previous_balance}€")
             print(f"  Total Current Balance: {total_current_balance}€")
             
@@ -68,9 +68,9 @@ with schema_context('demo'):
             print(f"  Apartments with previous_balance field: {apartments_with_previous_balance}/{len(response.data)}")
             
             if apartments_with_previous_balance == len(response.data):
-                print(f"\n✅ SUCCESS: All apartments have previous_balance field!")
+                print("\n✅ SUCCESS: All apartments have previous_balance field!")
             else:
-                print(f"\n❌ ERROR: Some apartments missing previous_balance field!")
+                print("\n❌ ERROR: Some apartments missing previous_balance field!")
                 
         else:
             print("❌ No data returned from API")

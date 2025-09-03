@@ -6,7 +6,6 @@
 import os
 import sys
 import django
-from datetime import datetime, date, timedelta
 from decimal import Decimal
 
 # Setup Django environment

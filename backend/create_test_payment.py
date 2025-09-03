@@ -6,7 +6,6 @@ Create a test payment to verify progress bar updates
 import os
 import sys
 import django
-from datetime import date
 from django.utils import timezone
 
 # Setup Django environment
@@ -74,7 +73,7 @@ def create_test_payment():
             notes='Test payment for progress bar verification'
         )
         
-        print(f"✅ Created test payment:")
+        print("✅ Created test payment:")
         print(f"  - ID: {payment.id}")
         print(f"  - Apartment: {payment.apartment.number}")
         print(f"  - Amount: {payment.amount}€")
@@ -86,15 +85,15 @@ def create_test_payment():
         total_payments = Payment.objects.filter(apartment__building=building).count()
         total_amount = sum(p.amount for p in Payment.objects.filter(apartment__building=building))
         
-        print(f"\n📈 Building totals after payment:")
+        print("\n📈 Building totals after payment:")
         print(f"  - Total payments: {total_payments}")
         print(f"  - Total amount: {total_amount}€")
         
-        print(f"\n🎯 Now test the frontend:")
+        print("\n🎯 Now test the frontend:")
         print(f"  1. Open the financial page for building {building.id}")
-        print(f"  2. Go to 'Προοδος Εισπράξεων' tab")
+        print("  2. Go to 'Προοδος Εισπράξεων' tab")
         print(f"  3. The progress bar should show {test_amount}€ in payments")
-        print(f"  4. Coverage should be > 0%")
+        print("  4. Coverage should be > 0%")
 
 if __name__ == "__main__":
     create_test_payment()

@@ -2,7 +2,6 @@
 from rest_framework import viewsets, permissions, status  
 from rest_framework.response import Response  
 from rest_framework.decorators import action
-from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.db.models import Q
 from django.core.cache import cache
@@ -11,7 +10,6 @@ import logging
 from .models import Announcement
 from .serializers import AnnouncementSerializer, AnnouncementListSerializer
 from core.permissions import IsManagerOrSuperuser
-from buildings.models import Building
 from core.utils import filter_queryset_by_user_and_building
 from users.permissions import IsBuildingAdmin
 

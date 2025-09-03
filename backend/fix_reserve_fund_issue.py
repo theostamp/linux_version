@@ -5,7 +5,6 @@ Script για διορθώση του προβλήματος με το αποθ�
 """
 
 import os
-import sys
 import django
 from decimal import Decimal
 
@@ -59,7 +58,7 @@ def fix_reserve_fund_issue():
             
             # Έλεγχος αν χρειάζεται διόρθωση
             if building.current_reserve != correct_reserve:
-                print(f"   ⚠️  ΧΡΕΙΑΖΕΤΑΙ ΔΙΟΡΘΩΣΗ!")
+                print("   ⚠️  ΧΡΕΙΑΖΕΤΑΙ ΔΙΟΡΘΩΣΗ!")
                 print(f"      Τρέχον: {building.current_reserve}€")
                 print(f"      Σωστό: {correct_reserve}€")
                 
@@ -68,9 +67,9 @@ def fix_reserve_fund_issue():
                 building.save()
                 print(f"   ✅ ΔΙΟΡΘΩΘΗΚΕ σε {correct_reserve}€")
             else:
-                print(f"   ✅ Το αποθεματικό είναι σωστό!")
+                print("   ✅ Το αποθεματικό είναι σωστό!")
     
-    print(f"\n🎉 Η διόρθωση ολοκληρώθηκε!")
+    print("\n🎉 Η διόρθωση ολοκληρώθηκε!")
 
 if __name__ == "__main__":
     fix_reserve_fund_issue()

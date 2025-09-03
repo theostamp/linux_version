@@ -3,8 +3,6 @@
 import os
 import sys
 import django
-from datetime import datetime, date
-from decimal import Decimal
 
 # Setup Django environment
 sys.path.append('/app')
@@ -68,7 +66,7 @@ def recreate_july_transactions():
             # Trigger transaction recreation by calling the method
             try:
                 expense._create_apartment_transactions()
-                print(f"   ✅ Συναλλαγές επαναδημιουργήθηκαν")
+                print("   ✅ Συναλλαγές επαναδημιουργήθηκαν")
                 total_recreated += 1
             except Exception as e:
                 print(f"   ❌ Σφάλμα: {e}")

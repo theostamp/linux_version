@@ -8,7 +8,7 @@ import sys
 import django
 from decimal import Decimal
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Προσθήκη backend στον PYTHONPATH
 sys.path.append('/app')
@@ -135,9 +135,9 @@ def test_financial_data_creation():
             
             if building.name == 'Πολυκατοικία Αλκμάνος 22':
                 if payments_count == 0 and expenses_count == 0:
-                    print(f"   🎉 ΤΕΛΕΙΑ! Κανένα οικονομικό δεδομένο!")
+                    print("   🎉 ΤΕΛΕΙΑ! Κανένα οικονομικό δεδομένο!")
                 else:
-                    print(f"   ⚠️ ΠΡΟΒΛΗΜΑ! Βρέθηκαν οικονομικά δεδομένα!")
+                    print("   ⚠️ ΠΡΟΒΛΗΜΑ! Βρέθηκαν οικονομικά δεδομένα!")
 
 if __name__ == "__main__":
     test_financial_data_creation()
