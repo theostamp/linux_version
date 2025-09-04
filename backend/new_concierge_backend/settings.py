@@ -68,6 +68,7 @@ TENANT_APPS = [
     # 🔧 Νέα apps για επέκταση λειτουργιών
     'maintenance',
     'projects',
+    'todo_management',
     
     # 💰 Οικονομικό σύστημα
     'financial',

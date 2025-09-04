@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from buildings.models import Building
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -76,6 +77,7 @@ class Project(models.Model):
     specifications = models.TextField(blank=True, verbose_name="Προδιαγραφές")
     requirements = models.TextField(blank=True, verbose_name="Απαιτήσεις")
     notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
+    attachment = models.FileField(upload_to='projects/%Y/%m/', blank=True, null=True, verbose_name="Συνημμένο")
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -165,11 +167,7 @@ class Offer(models.Model):
         validators=[MinValueValidator(0), MaxValueValidator(10)],
         verbose_name="Βαθμολογία Αξιολόγησης"
     )
-    offer_file = models.FileField(
-        upload_to='offers/%Y/%m/',
-        blank=True,
-        verbose_name="Αρχείο Προσφοράς"
-    )
+    offer_file = models.FileField(upload_to='offers/%Y/%m/', blank=True, null=True, verbose_name="Αρχείο Προσφοράς")
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -294,3 +292,47 @@ class Contract(models.Model):
         if self.end_date > today:
             return (self.end_date - today).days
         return 0
+
+
+class Milestone(models.Model):
+    """Ορόσημα έργου"""
+
+    STATUS_CHOICES = [
+        ('pending', 'Σε εκκρεμότητα'),
+        ('in_progress', 'Σε εξέλιξη'),
+        ('awaiting_approval', 'Προς έγκριση'),
+        ('approved', 'Εγκρίθηκε'),
+        ('overdue', 'Ληξιπρόθεσμο'),
+    ]
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='milestones',
+        verbose_name="Έργο",
+    )
+    title = models.CharField(max_length=255, verbose_name="Τίτλος")
+    description = models.TextField(blank=True, verbose_name="Περιγραφή")
+    due_at = models.DateTimeField(null=True, blank=True, verbose_name="Προθεσμία")
+    amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name="Ποσό")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Κατάσταση")
+    approved_at = models.DateTimeField(null=True, blank=True, verbose_name="Ημερομηνία Έγκρισης")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_milestones', verbose_name="Δημιουργήθηκε από")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Ορόσημο"
+        verbose_name_plural = "Ορόσημα"
+        ordering = ['due_at']
+        indexes = [
+            models.Index(fields=['project', 'status']),
+            models.Index(fields=['project', 'due_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.project.title}"
+
+    @property
+    def is_overdue(self):
+        return self.due_at and self.status not in ['approved'] and self.due_at < timezone.now()

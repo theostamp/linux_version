@@ -1,108 +1,134 @@
 'use client';
-
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { useBuilding } from '@/components/contexts/BuildingContext';
+import { apiPost, getActiveBuildingId } from '@/lib/api';
+import { useRole } from '@/lib/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { api } from '@/lib/api';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const schema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(3, 'Ο τίτλος πρέπει να έχει τουλάχιστον 3 χαρακτήρες')
+    .max(100, 'Ο τίτλος δεν μπορεί να ξεπερνά τους 100 χαρακτήρες'),
+  description: z
+    .string()
+    .trim()
+    .max(1000, 'Η περιγραφή δεν μπορεί να ξεπερνά τους 1000 χαρακτήρες')
+    .optional(),
+  project_type: z.enum(
+    ['maintenance','renovation','construction','installation','repair','upgrade','other'] as const
+  ),
+  status: z.enum(
+    ['planning','bidding','awarded','in_progress','completed','cancelled'] as const
+  ),
+});
+
+ 
+
+type FormValues = z.infer<typeof schema>;
+
+const PROJECT_TYPE_OPTIONS: ReadonlyArray<{ value: FormValues['project_type']; label: string }> = [
+  { value: 'maintenance', label: 'Συντήρηση' },
+  { value: 'renovation', label: 'Ανακαίνιση' },
+  { value: 'construction', label: 'Κατασκευή' },
+  { value: 'installation', label: 'Εγκατάσταση' },
+  { value: 'repair', label: 'Επισκευή' },
+  { value: 'upgrade', label: 'Αναβάθμιση' },
+  { value: 'other', label: 'Άλλο' },
+] as const;
+
+const STATUS_OPTIONS: ReadonlyArray<{ value: FormValues['status']; label: string }> = [
+  { value: 'planning', label: 'Σχεδιασμός' },
+  { value: 'bidding', label: 'Διαγωνισμός/Προσφορές' },
+  { value: 'awarded', label: 'Ανάθεση' },
+  { value: 'in_progress', label: 'Σε εξέλιξη' },
+  { value: 'completed', label: 'Ολοκληρωμένο' },
+  { value: 'cancelled', label: 'Ακυρωμένο' },
+] as const;
 
 export default function NewProjectPage() {
-  const { selectedBuilding } = useBuilding();
+  const { isAdmin, isManager, isLoading } = useRole();
   const router = useRouter();
+  const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      project_type: 'maintenance',
+      status: 'planning',
+    },
+  });
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [projectType, setProjectType] = useState('maintenance');
-  const [status, setStatus] = useState('planning');
-  const [budget, setBudget] = useState<string>('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedBuilding) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const payload: any = {
-        title,
-        description,
-        building: selectedBuilding.id,
-        project_type: projectType,
-        status,
-      };
-      if (budget) payload.budget = parseFloat(budget);
-
-      const { data } = await api.post('/projects/projects/', payload);
-      router.push('/projects');
-    } catch (err: any) {
-      setError(err?.message ?? 'Αποτυχία δημιουργίας έργου');
-    } finally {
-      setLoading(false);
+  if (isLoading) return null;
+  if (!(isAdmin || isManager)) {
+    if (typeof window !== 'undefined') {
+      window.location.replace('/projects');
     }
+    return null;
+  }
+
+  const onSubmit = async (values: FormValues) => {
+    const payload = {
+      ...values,
+      building: getActiveBuildingId(),
+    };
+    await apiPost('/api/projects/projects/', payload);
+    router.push('/projects');
   };
 
   return (
-    <div className="max-w-2xl">
-      <Card>
-        <CardHeader>
-          <CardTitle>Νέο Έργο</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!selectedBuilding && (
-            <div className="text-sm text-red-600 mb-4">Επιλέξτε κτίριο πρώτα.</div>
-          )}
-          {error && <div className="text-sm text-red-600 mb-4">{error}</div>}
-          <form onSubmit={handleSubmit} className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Νέο Έργο</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Τίτλος <span className="text-red-600">*</span></label>
+            <Input {...register('title')} placeholder="Π.χ. Αναβάθμιση ανελκυστήρα" />
+            {errors.title && <p className="text-sm text-red-600">{errors.title.message}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Περιγραφή</label>
+            <Textarea {...register('description')} rows={4} placeholder="Περιγραφή έργου (προαιρετικό)" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Τίτλος</label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Περιγραφή</label>
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Τύπος Έργου</label>
-                <select value={projectType} onChange={(e) => setProjectType(e.target.value)} className="border rounded px-3 py-2 text-sm w-full">
-                  <option value="maintenance">Συντήρηση</option>
-                  <option value="renovation">Ανακαίνιση</option>
-                  <option value="construction">Κατασκευή</option>
-                  <option value="installation">Εγκατάσταση</option>
-                  <option value="repair">Επισκευή</option>
-                  <option value="upgrade">Αναβάθμιση</option>
-                  <option value="other">Άλλο</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Κατάσταση</label>
-                <select value={status} onChange={(e) => setStatus(e.target.value)} className="border rounded px-3 py-2 text-sm w-full">
-                  <option value="planning">Σχεδιασμός</option>
-                  <option value="bidding">Διαγωνισμός</option>
-                  <option value="awarded">Ανατεθειμένο</option>
-                  <option value="in_progress">Σε Εξέλιξη</option>
-                  <option value="completed">Ολοκληρωμένο</option>
-                  <option value="cancelled">Ακυρώθηκε</option>
-                </select>
-              </div>
+              <label className="block text-sm font-medium mb-1">Τύπος Έργου <span className="text-red-600">*</span></label>
+              <Select onValueChange={(v) => setValue('project_type', v as FormValues['project_type'], { shouldValidate: true, shouldTouch: true })} value={watch('project_type')}>
+                <SelectTrigger><SelectValue placeholder="Επιλέξτε" /></SelectTrigger>
+                <SelectContent>
+                  {PROJECT_TYPE_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.project_type && <p className="text-sm text-red-600">{errors.project_type.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Προϋπολογισμός (€)</label>
-              <Input type="number" step="0.01" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="π.χ. 10000" />
+              <label className="block text-sm font-medium mb-1">Κατάσταση <span className="text-red-600">*</span></label>
+              <Select onValueChange={(v) => setValue('status', v as FormValues['status'], { shouldValidate: true, shouldTouch: true })} value={watch('status')}>
+                <SelectTrigger><SelectValue placeholder="Επιλέξτε" /></SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.status && <p className="text-sm text-red-600">{errors.status.message}</p>}
             </div>
-            <div className="pt-2">
-              <Button type="submit" disabled={!selectedBuilding || loading}>
-                {loading ? 'Δημιουργία...' : 'Δημιουργία'}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+          </div>
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Αποθήκευση…' : 'Αποθήκευση'}</Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 

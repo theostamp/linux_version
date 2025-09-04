@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { format } from 'date-fns'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -33,7 +34,6 @@ export function safeFormatDate(
   }
   
   try {
-    const { format } = require('date-fns');
     return format(new Date(dateString!), formatString, options);
   } catch (error) {
     console.warn('Error formatting date:', error);

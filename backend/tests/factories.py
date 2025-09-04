@@ -36,11 +36,13 @@ class UserRequestFactory(factory.django.DjangoModelFactory):
     building = factory.SubFactory(BuildingFactory)
     type = "technical"  # ή type = ""   
     status = "pending"  # ή status = ""
-    supporters = factory.RelatedFactoryList(
-        UserFactory,
-        factory_related_name="supported_requests",
-        size=3
-    )   
+    @factory.post_generation
+    def supporters(self, create, extracted, **kwargs):
+        if not create:
+            return
+        users = extracted if extracted is not None else [UserFactory() for _ in range(3)]
+        for u in users:
+            self.supporters.add(u)
 
 
 

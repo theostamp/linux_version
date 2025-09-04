@@ -1,6 +1,7 @@
 import './globals.css';
 import React from 'react';
 import AppProviders from '@/components/AppProviders';
+import DevCompileIndicator from '@/components/DevCompileIndicator';
 import { Roboto, Roboto_Condensed } from 'next/font/google';
 
 const roboto = Roboto({
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { readonly children: React.Reac
   return (
     <html lang="el">
       <body className={`${roboto.variable} ${robotoCondensed.variable}`}>
+        <DevCompileIndicator />
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

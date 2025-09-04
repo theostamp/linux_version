@@ -359,4 +359,6 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
   );
 });
 
+FinancialOverview.displayName = 'FinancialOverview';
+
 export default FinancialOverview; 

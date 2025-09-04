@@ -4,6 +4,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import exceptions
 from buildings.models import Building
 from django.db.models import Q
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 def _validate_building_param(building_param):
     try:
@@ -111,3 +113,26 @@ def filter_queryset_by_user_and_building(request, base_queryset, building_field=
         return _filter_for_manager(base_queryset, user, building_param, building_field)
 
     return _filter_for_resident(base_queryset, user, building_param, building_field)
+
+
+def publish_building_event(*, building_id: int, event_type: str, payload: dict):
+    """Publish a realtime event to the building channel group.
+
+    Reuses the chat group pattern `chat_{building_id}` and a generic handler `broadcast_event`.
+    """
+    try:
+        channel_layer = get_channel_layer()
+        if channel_layer is None:
+            return
+        group_name = f"chat_{building_id}"
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            {
+                "type": "broadcast_event",
+                "event": event_type,
+                "payload": payload,
+            },
+        )
+    except Exception:
+        # In tests or when redis is not available, ignore realtime errors
+        return

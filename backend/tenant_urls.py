@@ -53,6 +53,9 @@ urlpatterns = [
     # Maintenance management
     path('api/maintenance/', include('maintenance.urls')),
 
+    # Todo management
+    path('api/todos/', include('todo_management.urls')),
+
     # Data migration
     path('api/data-migration/', include('data_migration.urls')),
 

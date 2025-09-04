@@ -5,6 +5,10 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const buildingId = searchParams.get('buildingId');
+    const status = searchParams.get('status');
+    const dateFrom = searchParams.get('from');
+    const dateTo = searchParams.get('to');
+    const aggregate = searchParams.get('aggregate');
 
     if (!buildingId) {
       return NextResponse.json(
@@ -16,7 +20,14 @@ export async function GET(request: NextRequest) {
     const response = await makeRequestWithRetry({
       method: 'get',
       url: '/projects/dashboard/summary/',
-      params: { building_id: buildingId },
+      params: {
+        building_id: buildingId,
+        // Pass-through optional filters if provided
+        ...(status ? { status } : {}),
+        ...(dateFrom ? { from: dateFrom, start_date: dateFrom, date_from: dateFrom } : {}),
+        ...(dateTo ? { to: dateTo, end_date: dateTo, date_to: dateTo } : {}),
+        ...(aggregate ? { aggregate } : {}),
+      },
     });
 
     return NextResponse.json({ success: true, data: response.data });

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiGet, extractCount, getActiveBuildingId } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +20,8 @@ import {
   FileCheck
 } from 'lucide-react';
 import Link from 'next/link';
+import { useBuildingEvents } from '@/lib/useBuildingEvents';
+import { useRole } from '@/lib/auth';
 
 interface ProjectStats {
   total_projects: number;
@@ -31,33 +35,26 @@ interface ProjectStats {
 }
 
 export default function ProjectsDashboard() {
-  const [stats, setStats] = useState<ProjectStats>({
-    total_projects: 0,
-    active_projects: 0,
-    completed_projects: 0,
-    pending_offers: 0,
-    active_contracts: 0,
+  useBuildingEvents();
+  const { isAdmin, isManager } = useRole();
+  const buildingId = getActiveBuildingId();
+  const projectsQ = useQuery({ queryKey: ['projects', { building: buildingId }], queryFn: () => apiGet(`/api/projects/projects/`, { building: buildingId }) });
+  const activeProjectsQ = useQuery({ queryKey: ['projects', { building: buildingId, status: 'in_progress' }], queryFn: () => apiGet(`/api/projects/projects/`, { building: buildingId, status: 'in_progress' }) });
+  const completedProjectsQ = useQuery({ queryKey: ['projects', { building: buildingId, status: 'completed' }], queryFn: () => apiGet(`/api/projects/projects/`, { building: buildingId, status: 'completed' }) });
+  const pendingOffersQ = useQuery({ queryKey: ['offers', { status: 'pending' }], queryFn: () => apiGet(`/api/projects/offers/`, { status: 'pending' }) });
+  const activeContractsQ = useQuery({ queryKey: ['contracts', { status: 'active' }], queryFn: () => apiGet(`/api/projects/contracts/`, { status: 'active' }) });
+
+  const loading = projectsQ.isLoading || activeProjectsQ.isLoading || completedProjectsQ.isLoading || pendingOffersQ.isLoading || activeContractsQ.isLoading;
+  const stats: ProjectStats = {
+    total_projects: extractCount(projectsQ.data ?? []),
+    active_projects: extractCount(activeProjectsQ.data ?? []),
+    completed_projects: extractCount(completedProjectsQ.data ?? []),
+    pending_offers: extractCount(pendingOffersQ.data ?? []),
+    active_contracts: extractCount(activeContractsQ.data ?? []),
     total_budget: 0,
     total_spent: 0,
     average_completion_rate: 0,
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // TODO: Fetch actual data from API
-    // For now, using mock data
-    setStats({
-      total_projects: 8,
-      active_projects: 3,
-      completed_projects: 4,
-      pending_offers: 5,
-      active_contracts: 6,
-      total_budget: 125000.00,
-      total_spent: 89000.50,
-      average_completion_rate: 78.5,
-    });
-    setLoading(false);
-  }, []);
+  };
 
   const StatCard = ({ 
     title, 
@@ -122,20 +119,22 @@ export default function ProjectsDashboard() {
             Διαχείριση έργων, προσφορών και συμβολαίων
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button asChild>
-            <Link href="/projects/new">
-              <FileText className="w-4 h-4 mr-2" />
-              Νέο Έργο
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/projects/offers/new">
-              <Award className="w-4 h-4 mr-2" />
-              Νέα Προσφορά
-            </Link>
-          </Button>
-        </div>
+        {(isAdmin || isManager) && (
+          <div className="flex gap-2">
+            <Button asChild>
+              <Link href="/projects/new">
+                <FileText className="w-4 h-4 mr-2" />
+                Νέο Έργο
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/projects/offers/new">
+                <Award className="w-4 h-4 mr-2" />
+                Νέα Προσφορά
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Main Stats Grid */}

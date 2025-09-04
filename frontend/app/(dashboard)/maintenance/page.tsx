@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiGet, extractCount, getActiveBuildingId } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +18,8 @@ import {
   TrendingUp
 } from 'lucide-react';
 import Link from 'next/link';
+import { useBuildingEvents } from '@/lib/useBuildingEvents';
+import { useRole } from '@/lib/auth';
 
 interface MaintenanceStats {
   total_contractors: number;
@@ -28,31 +32,37 @@ interface MaintenanceStats {
 }
 
 export default function MaintenanceDashboard() {
-  const [stats, setStats] = useState<MaintenanceStats>({
-    total_contractors: 0,
-    active_contractors: 0,
-    pending_receipts: 0,
-    scheduled_maintenance: 0,
-    urgent_maintenance: 0,
+  useBuildingEvents();
+  const { isAdmin, isManager } = useRole();
+  const buildingId = getActiveBuildingId();
+
+  const contractorsQ = useQuery({
+    queryKey: ['contractors', { building: buildingId }],
+    queryFn: () => apiGet(`/api/maintenance/contractors/`),
+  });
+  const receiptsQ = useQuery({
+    queryKey: ['receipts', { building: buildingId, payment_status: 'pending' }],
+    queryFn: () => apiGet(`/api/maintenance/receipts/`, { building: buildingId, payment_status: 'pending' }),
+  });
+  const scheduledQ = useQuery({
+    queryKey: ['scheduled-maintenance', { building: buildingId }],
+    queryFn: () => apiGet(`/api/maintenance/scheduled-maintenance/`, { building: buildingId }),
+  });
+  const urgentScheduledQ = useQuery({
+    queryKey: ['scheduled-maintenance', { building: buildingId, priority: 'urgent' }],
+    queryFn: () => apiGet(`/api/maintenance/scheduled-maintenance/`, { building: buildingId, priority: 'urgent' }),
+  });
+
+  const loading = contractorsQ.isLoading || receiptsQ.isLoading || scheduledQ.isLoading || urgentScheduledQ.isLoading;
+  const stats: MaintenanceStats = {
+    total_contractors: extractCount(contractorsQ.data ?? []),
+    active_contractors: extractCount(contractorsQ.data ?? []),
+    pending_receipts: extractCount(receiptsQ.data ?? []),
+    scheduled_maintenance: extractCount(scheduledQ.data ?? []),
+    urgent_maintenance: extractCount(urgentScheduledQ.data ?? []),
     completed_maintenance: 0,
     total_spent: 0,
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // TODO: Fetch actual data from API
-    // For now, using mock data
-    setStats({
-      total_contractors: 12,
-      active_contractors: 8,
-      pending_receipts: 5,
-      scheduled_maintenance: 3,
-      urgent_maintenance: 1,
-      completed_maintenance: 15,
-      total_spent: 12500.50,
-    });
-    setLoading(false);
-  }, []);
+  };
 
   const StatCard = ({ 
     title, 
@@ -117,20 +127,22 @@ export default function MaintenanceDashboard() {
             Διαχείριση συνεργείων, αποδείξεων και προγραμματισμένων έργων
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button asChild>
-            <Link href="/maintenance/contractors/new">
-              <Users className="w-4 h-4 mr-2" />
-              Νέο Συνεργείο
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/maintenance/scheduled/new">
-              <Calendar className="w-4 h-4 mr-2" />
-              Προγραμματισμένο Έργο
-            </Link>
-          </Button>
-        </div>
+        {(isAdmin || isManager) && (
+          <div className="flex gap-2">
+            <Button asChild>
+              <Link href="/maintenance/contractors/new">
+                <Users className="w-4 h-4 mr-2" />
+                Νέο Συνεργείο
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/maintenance/scheduled/new">
+                <Calendar className="w-4 h-4 mr-2" />
+                Προγραμματισμένο Έργο
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Stats Grid */}

@@ -359,4 +359,6 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
   );
 });
 
+FinancialDashboard.displayName = 'FinancialDashboard';
+
 export default FinancialDashboard; 

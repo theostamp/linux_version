@@ -228,6 +228,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'timestamp': event['timestamp']
         }))
 
+    async def broadcast_event(self, event):
+        """Generic event broadcaster for non-chat updates (tickets, workorders, projects)."""
+        await self.send(text_data=json.dumps({
+            'type': 'event',
+            'event': event.get('event'),
+            'payload': event.get('payload', {}),
+        }))
+
     @database_sync_to_async
     def can_access_room(self):
         """

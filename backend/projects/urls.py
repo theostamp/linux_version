@@ -4,20 +4,14 @@ from .views import (
     ProjectViewSet,
     OfferViewSet,
     ContractViewSet,
-    ProjectsDashboardViewSet,
-    ProcurementEventViewSet,
-    DecisionViewSet,
-    ProjectTaskViewSet,
+    MilestoneViewSet,
 )
 
 router = DefaultRouter()
 router.register(r'projects', ProjectViewSet)
 router.register(r'offers', OfferViewSet)
 router.register(r'contracts', ContractViewSet)
-router.register(r'procurement', ProcurementEventViewSet)
-router.register(r'decisions', DecisionViewSet)
-router.register(r'tasks', ProjectTaskViewSet)
-router.register(r'dashboard', ProjectsDashboardViewSet, basename='projects-dashboard')
+router.register(r'milestones', MilestoneViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

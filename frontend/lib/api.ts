@@ -1,3 +1,69 @@
+'use client';
+
+export function getApiBase(): string {
+  if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL as string;
+  }
+  return 'http://localhost:8000';
+}
+
+export async function apiGet<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
+  const url = new URL(path, getApiBase());
+  if (params) {
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
+    });
+  }
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('accessToken');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
+  const res = await fetch(url.toString(), { headers, credentials: 'include' });
+  if (!res.ok) {
+    throw new Error(`GET ${url} failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export type Paginated<T> = { count?: number; next?: string|null; previous?: string|null; results?: T[] } | T[];
+
+export function extractResults<T>(data: Paginated<T>): T[] {
+  if (Array.isArray(data)) return data;
+  return data.results ?? [];
+}
+
+export function extractCount<T>(data: Paginated<T>): number {
+  if (Array.isArray(data)) return data.length;
+  return typeof data.count === 'number' ? data.count : (data.results?.length ?? 0);
+}
+
+export function getActiveBuildingId(): number {
+  if (typeof window === 'undefined') return 1;
+  const fromStorage = window.localStorage.getItem('activeBuildingId');
+  const parsed = fromStorage ? parseInt(fromStorage, 10) : NaN;
+  return Number.isFinite(parsed) ? parsed : 1;
+}
+
+export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const url = new URL(path, getApiBase());
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('accessToken');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
+  const res = await fetch(url.toString(), {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`POST ${url} failed: ${res.status} ${text}`);
+  }
+  return res.json();
+}
 // Helper για όλα τα calls στο backend
 import axios, { AxiosResponse, AxiosRequestHeaders, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import type { UserRequest } from '@/types/userRequests';
@@ -664,9 +730,9 @@ export async function fetchAnnouncements(buildingId?: number | null): Promise<An
   } catch (error) {
     console.error(`[DEBUG fetchAnnouncements] Error during api.get("${relativeUrl}"):`, error);
     // Για να δεις το config του request που απέτυχε:
-    // @ts-ignore
+    // @ts-expect-error - AxiosError type is not guaranteed; narrowing via runtime checks
     if (error?.isAxiosError && error?.config) {
-        // @ts-ignore
+        // @ts-expect-error - Accessing axios-specific error.config fields for debug logging
         console.error('[DEBUG fetchAnnouncements] Failed Request Config:', JSON.stringify({url: error.config.url, baseURL: error.config.baseURL, method: error.config.method, params: error.config.params }, null, 2));
     }
     throw error;
@@ -1992,4 +2058,163 @@ export async function fetchSuppliers(buildingId?: number): Promise<Supplier[]> {
 export async function fetchContractors(): Promise<Contractor[]> {
   const response = await api.get('/maintenance/contractors/');
   return response.data.results || response.data;
+}
+
+// ============================================================================
+// 🛠️ MAINTENANCE: TICKETS & WORK ORDERS API FUNCTIONS
+// ============================================================================
+
+export type MaintenanceTicket = {
+  id: number;
+  building: number;
+  apartment?: number | null;
+  title: string;
+  description: string;
+  category: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: string;
+  reporter?: number | null;
+  assignee?: number | null;
+  contractor?: number | null;
+  sla_due_at?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WorkOrder = {
+  id: number;
+  ticket: number;
+  contractor?: number | null;
+  assigned_to?: number | null;
+  status: string;
+  scheduled_at?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
+  created_by?: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function fetchMaintenanceTickets(filters: { building?: number; search?: string; status?: string; ordering?: string } = {}): Promise<MaintenanceTicket[]> {
+  const params = new URLSearchParams();
+  if (filters.building) params.append('building', String(filters.building));
+  if (filters.search) params.append('search', filters.search);
+  if (filters.status) params.append('status', filters.status);
+  if (filters.ordering) params.append('ordering', filters.ordering);
+  const url = `/maintenance/tickets/${params.toString() ? `?${params.toString()}` : ''}`;
+  const resp = await api.get(url);
+  const data = resp.data;
+  return Array.isArray(data) ? data : data.results ?? [];
+}
+
+export async function fetchMaintenanceTicket(id: number): Promise<MaintenanceTicket> {
+  const { data } = await api.get(`/maintenance/tickets/${id}/`);
+  return data;
+}
+
+export async function fetchWorkOrders(filters: { ticket?: number; building?: number; status?: string; ordering?: string } = {}): Promise<WorkOrder[]> {
+  const params = new URLSearchParams();
+  if (filters.ticket) params.append('ticket', String(filters.ticket));
+  if (filters.building) params.append('building', String(filters.building));
+  if (filters.status) params.append('status', filters.status);
+  if (filters.ordering) params.append('ordering', filters.ordering);
+  const url = `/maintenance/work-orders/${params.toString() ? `?${params.toString()}` : ''}`;
+  const resp = await api.get(url);
+  const data = resp.data;
+  return Array.isArray(data) ? data : data.results ?? [];
+}
+
+export async function fetchWorkOrder(id: number): Promise<WorkOrder> {
+  const { data } = await api.get(`/maintenance/work-orders/${id}/`);
+  return data;
+}
+
+// ============================================================================
+// 🧾 MAINTENANCE: SERVICE RECEIPTS API FUNCTIONS
+// ============================================================================
+
+export type ServiceReceipt = {
+  id: number;
+  contractor: number;
+  building: number;
+  service_date: string;
+  amount: number | string;
+  receipt_file?: string | null;
+  description: string;
+  invoice_number?: string | null;
+  payment_status: 'pending' | 'paid' | 'overdue';
+  payment_date?: string | null;
+  created_at: string;
+};
+
+export async function fetchServiceReceipts(params: { buildingId?: number } = {}): Promise<ServiceReceipt[]> {
+  const search = new URLSearchParams();
+  if (params.buildingId) search.append('building', String(params.buildingId));
+  const url = `/maintenance/receipts/${search.toString() ? `?${search.toString()}` : ''}`;
+  const resp = await api.get(url);
+  const data = resp.data;
+  return Array.isArray(data) ? data : data.results ?? [];
+}
+
+export async function createServiceReceipt(payload: {
+  contractor: number;
+  building: number;
+  service_date: string;
+  amount: string | number;
+  description: string;
+  invoice_number?: string;
+  payment_status?: 'pending' | 'paid' | 'overdue';
+  receipt_file?: File;
+}): Promise<ServiceReceipt> {
+  const form = new FormData();
+  form.append('contractor', String(payload.contractor));
+  form.append('building', String(payload.building));
+  form.append('service_date', payload.service_date);
+  form.append('amount', String(payload.amount));
+  form.append('description', payload.description);
+  if (payload.invoice_number) form.append('invoice_number', payload.invoice_number);
+  form.append('payment_status', payload.payment_status ?? 'pending');
+  if (payload.receipt_file) form.append('receipt_file', payload.receipt_file);
+  const { data } = await api.post<ServiceReceipt>('/maintenance/receipts/', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+}
+
+// ============================================================================
+// 📅 MAINTENANCE: SCHEDULED MAINTENANCE API FUNCTIONS
+// ============================================================================
+
+export type ScheduledMaintenance = {
+  id: number;
+  title: string;
+  description: string;
+  building: number;
+  contractor?: number | null;
+  contractor_name?: string;
+  scheduled_date?: string | null;
+  estimated_duration?: number | null;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+};
+
+export async function fetchScheduledMaintenances(params: { buildingId?: number; priority?: string; ordering?: string } = {}): Promise<ScheduledMaintenance[]> {
+  const search = new URLSearchParams();
+  if (params.buildingId) search.append('building', String(params.buildingId));
+  if (params.priority) search.append('priority', params.priority);
+  if (params.ordering) search.append('ordering', params.ordering);
+  const url = `/maintenance/scheduled/${search.toString() ? `?${search.toString()}` : ''}`;
+  const resp = await api.get(url);
+  const data = resp.data;
+  return Array.isArray(data) ? data : data.results ?? [];
+}
+
+export async function fetchScheduledMaintenance(id: number): Promise<ScheduledMaintenance> {
+  const { data } = await api.get(`/maintenance/scheduled/${id}/`);
+  return data;
+}
+
+export async function createScheduledMaintenance(payload: Omit<ScheduledMaintenance, 'id'>): Promise<ScheduledMaintenance> {
+  const { data } = await api.post<ScheduledMaintenance>('/maintenance/scheduled/', payload);
+  return data;
 }

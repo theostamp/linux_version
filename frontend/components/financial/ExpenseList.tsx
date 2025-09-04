@@ -23,7 +23,7 @@ interface ExpenseListProps {
   ref?: React.Ref<{ refresh: () => void }>;
 }
 
-export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseListProps>(({
+export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseListProps>(({ 
   buildingId,
   buildingName,
   onExpenseSelect,
@@ -476,4 +476,6 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
     />
   </>
   );
-}); 
+});
+
+ExpenseList.displayName = 'ExpenseList';

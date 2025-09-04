@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Project, Offer, Contract, ProcurementEvent, Decision, ProjectTask
+from .models import Project, Offer, Contract, Milestone
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -8,8 +8,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'description', 'building', 'project_type', 'status',
             'budget', 'actual_cost', 'start_date', 'end_date', 'estimated_duration',
-            'location', 'specifications', 'requirements', 'notes',
-            'decision_mode', 'direct_assignment_reason', 'policy_threshold_exceeded', 'visibility',
+            'location', 'specifications', 'requirements', 'notes', 'attachment',
             'created_by', 'created_at', 'updated_at', 'progress_percentage'
         ]
         read_only_fields = ['created_at', 'updated_at', 'progress_percentage']
@@ -42,31 +41,13 @@ class ContractSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at', 'is_active', 'days_remaining']
 
 
-class ProcurementEventSerializer(serializers.ModelSerializer):
+class MilestoneSerializer(serializers.ModelSerializer):
+    project_title = serializers.CharField(source='project.title', read_only=True)
+
     class Meta:
-        model = ProcurementEvent
+        model = Milestone
         fields = [
-            'id', 'project', 'strategy', 'invited_vendors', 'start_date', 'end_date',
-            'documents', 'criteria', 'created_at', 'updated_at'
+            'id', 'project', 'project_title', 'title', 'description', 'due_at', 'amount',
+            'status', 'approved_at', 'created_by', 'created_at', 'updated_at', 'is_overdue'
         ]
-        read_only_fields = ['created_at', 'updated_at']
-
-
-class DecisionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Decision
-        fields = [
-            'id', 'project', 'mode', 'result', 'quorum', 'threshold',
-            'minutes_text', 'minutes_file', 'occurred_at', 'created_by', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['created_at', 'updated_at']
-
-
-class ProjectTaskSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProjectTask
-        fields = [
-            'id', 'project', 'title', 'description', 'due_date', 'status', 'progress',
-            'assignee_user', 'assignee_contractor', 'evidence_files', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'is_overdue']

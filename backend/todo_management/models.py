@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from datetime import timedelta
 
 User = get_user_model()
@@ -292,3 +294,27 @@ class TodoNotification(models.Model):
             notification_type=notification_type,
             message=message
         )
+
+
+class TodoLink(models.Model):
+    """Σύνδεση domain αντικειμένων (Ticket/WorkOrder/Project/Milestone) με TodoItem"""
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    todo = models.ForeignKey(TodoItem, on_delete=models.CASCADE, related_name='links')
+    primary_due_at = models.DateTimeField(null=True, blank=True)
+    recurrence_rule = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('Σύνδεση TODO')
+        verbose_name_plural = _('Συνδέσεις TODO')
+        indexes = [
+            models.Index(fields=['content_type', 'object_id']),
+        ]
+
+    def __str__(self):
+        return f"TodoLink -> {self.todo_id}"

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useRole } from '@/lib/auth';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ interface ProjectOption { id: number; title: string; }
 interface ContractorOption { id: number; name: string; }
 
 export default function NewContractPage() {
+  const { isAdmin, isManager, isLoading } = useRole();
   const { selectedBuilding } = useBuilding();
   const router = useRouter();
 
@@ -100,6 +102,9 @@ export default function NewContractPage() {
 
   return (
     <div className="max-w-2xl">
+      {isLoading ? null : !(isAdmin || isManager) ? (
+        <div className="text-sm text-red-600 mb-4">Δεν έχετε δικαίωμα δημιουργίας συμβολαίου.</div>
+      ) : null}
       <Card>
         <CardHeader>
           <CardTitle>Νέο Συμβόλαιο</CardTitle>

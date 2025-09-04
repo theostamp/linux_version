@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useMemo } from 'react';
+ 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,10 +12,8 @@ import { fetchScheduledMaintenance, type ScheduledMaintenance } from '@/lib/api'
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type Status = 'planned' | 'in_progress' | 'completed' | 'on_hold';
 
-export default function ScheduledMaintenanceDetailPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
-  // Next.js 15: params may be a Promise; unwrap safely with React.use
-  // @ts-expect-error next 15 params can be promise-like
-  const { id } = (typeof (params as any)?.then === 'function' ? React.use(params as Promise<{ id: string }>) : (params as { id: string }));
+export default function ScheduledMaintenanceDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const numericId = Number(id);
   const { data: item, isLoading } = useQuery<ScheduledMaintenance>({
     queryKey: ['maintenance', 'scheduled', numericId],
