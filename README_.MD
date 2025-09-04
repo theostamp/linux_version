@@ -526,12 +526,13 @@ git push origin v2.1.0
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "sidebar δεξια ημερολογιο"
+git commit -m "συνδεση προσφορων εργασιων κτλ"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
 ---
 
+git reset --hard 6d237a5
 ### Πλήρης Καθαρισμός Docker
 ```bash
 
