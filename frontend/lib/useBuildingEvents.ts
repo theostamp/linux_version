@@ -16,42 +16,56 @@ export function useBuildingEvents(buildingIdParam?: number) {
 
   useEffect(() => {
     const buildingId = buildingIdParam ?? getActiveBuildingId();
-    const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss' : 'ws';
-    // Always target backend websocket port on same tenant (demo.localhost:8000)
-    const host = typeof window !== 'undefined'
-      ? `${window.location.hostname}:8000`
-      : 'localhost:8000';
-    // Connect with room_name = numeric building id to match server group "chat_{id}"
+    // Avoid connecting in development if backend WS isn’t available
+    if (typeof window === 'undefined') return;
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const host = `${window.location.hostname}:8000`;
     const wsUrl = `${protocol}://${host}/ws/chat/${buildingId}/`;
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
 
-    ws.onmessage = (event) => {
-      try {
-        const data: EventPayload = JSON.parse(event.data);
-        const eventType = data.event || data.type;
-        if (!eventType) return;
+    // Guard: try a quick HEAD to backend HTTP root to infer availability
+    // If it fails quickly, skip opening WS to prevent console spam
+    let aborted = false;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1500);
 
-        if (eventType === 'event') {
-          // Generic wrapper { type: 'event', event: '...', payload: {...} }
-          const inner = data as unknown as { event: string; payload?: Record<string, unknown> };
-          handleEvent(inner.event, inner.payload);
-          return;
-        }
+    fetch(`http://${host}/health/`, { method: 'GET', signal: controller.signal })
+      .catch(() => null)
+      .finally(() => {
+        if (aborted) return;
+        clearTimeout(timer);
+        try {
+          const ws = new WebSocket(wsUrl);
+          wsRef.current = ws;
 
-        // Fallback: direct event names
-        handleEvent(eventType, (data as any).payload);
-      } catch (_e) {
-        // ignore malformed
-      }
-    };
+          ws.onopen = () => {
+            // connected
+          };
+          ws.onmessage = (event) => {
+            try {
+              const data: EventPayload = JSON.parse(event.data);
+              const eventType = data.event || data.type;
+              if (!eventType) return;
 
-    ws.onerror = () => {
-      // best-effort; no-op
-    };
+              if (eventType === 'event') {
+                const inner = data as unknown as { event: string; payload?: Record<string, unknown> };
+                handleEvent(inner.event, inner.payload);
+                return;
+              }
+              handleEvent(eventType, (data as any).payload);
+            } catch {}
+          };
+          ws.onerror = () => {
+            // silence errors in dev
+          };
+          ws.onclose = () => {
+            // no retry to avoid noise
+          };
+        } catch {}
+      });
 
     return () => {
-      try { ws.close(); } catch {}
+      aborted = true;
+      try { wsRef.current?.close(); } catch {}
       wsRef.current = null;
     };
 

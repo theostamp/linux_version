@@ -30,7 +30,7 @@ const pathToBreadcrumb: Record<string, BreadcrumbItem[]> = {
   ],
   '/maintenance': [
     { label: 'Πίνακας Ελέγχου', href: '/dashboard', icon: <Home className="w-4 h-4" /> },
-    { label: 'Τεχνικά & Συντήρηση', href: '/maintenance' }
+    { label: 'Περιοδικές Υπηρεσίες', href: '/maintenance' }
   ],
   '/financial': [
     { label: 'Πίνακας Ελέγχου', href: '/dashboard', icon: <Home className="w-4 h-4" /> },

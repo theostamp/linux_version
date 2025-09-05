@@ -138,11 +138,9 @@ export default function ProjectDetailsPage() {
 
         <TabsContent value="offers">
           <ProjectOffersTab projectId={project.id} onApproved={async () => {
-            // Reload project after approval to reflect status
             try {
-              const res = await fetch(`/api/projects/${project.id}`);
-              const json = await res.json();
-              if (res.ok && json?.success) setProject(json.data);
+              const { data } = await api.get(`/projects/projects/${project.id}/`);
+              setProject(data);
             } catch {}
           }} />
         </TabsContent>

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { apiPost, getActiveBuildingId } from '@/lib/api';
+import { api, getActiveBuildingId } from '@/lib/api';
 import { useRole } from '@/lib/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,7 @@ export default function NewTicketPage() {
       ...values,
       building: getActiveBuildingId(),
     };
-    await apiPost('/api/maintenance/tickets/', payload);
+    await api.post('/maintenance/tickets/', payload);
     router.push('/maintenance');
   };
 

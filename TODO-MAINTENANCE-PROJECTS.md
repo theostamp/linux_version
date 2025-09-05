@@ -1,6 +1,6 @@
-## TODO: Τεχνικά & Συντήρηση • Προσφορές & Έργα
+## TODO: Περιοδικές Υπηρεσίες • Προσφορές & Έργα
 
-Σκοπός: Ενοποίηση domains «Τεχνικά & Συντήρηση» και «Προσφορές & Έργα», χωρίς mocks/hardcoded δεδομένα, με πλήρη multi-tenancy, σύνδεση με την εφαρμογή TODOS (υπενθυμίσεις/ημερολόγιο), και realtime ενημερώσεις.
+Σκοπός: Ενοποίηση domains «Περιοδικές Υπηρεσίες» και «Προσφορές & Έργα», χωρίς mocks/hardcoded δεδομένα, με πλήρη multi-tenancy, σύνδεση με την εφαρμογή TODOS (υπενθυμίσεις/ημερολόγιο), και realtime ενημερώσεις.
 
 ---
 
@@ -274,7 +274,7 @@
 
 ### Στόχος
 - Συστηματική διαχείριση έργων με πλήρη κύκλο: RFQ → Προσφορές → Επιλογή/Έγκριση → Έναρξη Έργου → Milestones → Ολοκλήρωση.
-- Δέσιμο με «Τεχνικά & Συντήρηση» (Tickets/Work Orders) και προβολές στο Kiosk όπου χρειάζεται.
+- Δέσιμο με «Περιοδικές Υπηρεσίες» (Tickets/Work Orders) και προβολές στο Kiosk όπου χρειάζεται.
 - Ενιαία UX με BackButton, Edit/Delete, ConfirmDialog/toasts, role guards.
 
 ### Αρχιτεκτονική & Συνδέσεις
@@ -283,7 +283,7 @@
   - RFQ: οδηγεί σε Offers (1→Ν), συνδέεται με Project (π.χ. ένα RFQ ανά Project ή πολλαπλά RFQs ανά Project — να οριστεί).
   - Offer: ανήκει σε RFQ/Project, έχει status (received/accepted/rejected/expired), cost breakdown.
   - Milestone: ανήκει σε Project, με due/status/amount.
-- Συνδέσεις με «Τεχνικά & Συντήρηση»:
+- Συνδέσεις με «Περιοδικές Υπηρεσίες»:
   - Project ↔ MaintenanceTicket/WorkOrder: προαιρετική σύνδεση για τεχνικά έργα.
   - Όταν εγκρίνεται Offer ⇒ δημιουργία ScheduledMaintenance ή WorkOrder (configurable flow).
 - Kiosk:

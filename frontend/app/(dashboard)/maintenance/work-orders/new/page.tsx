@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { apiPost } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useRole } from '@/lib/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,7 @@ export default function NewWorkOrderPage() {
       // datetime-local -> ISO
       payload.scheduled_at = new Date(values.scheduled_at).toISOString();
     }
-    await apiPost('/api/maintenance/work-orders/', payload);
+    await api.post('/maintenance/work-orders/', payload);
     router.push('/maintenance');
   };
 

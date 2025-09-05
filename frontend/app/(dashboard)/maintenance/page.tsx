@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiGet, extractCount, extractResults, getActiveBuildingId } from '@/lib/api';
+import { api, extractCount, extractResults, getActiveBuildingId } from '@/lib/api';
 import { fetchPublicMaintenanceCounters } from '@/lib/apiPublic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,19 +40,19 @@ export default function MaintenanceDashboard() {
 
   const contractorsQ = useQuery({
     queryKey: ['contractors', { building: buildingId }],
-    queryFn: () => apiGet(`/api/maintenance/contractors/`),
+    queryFn: async () => (await api.get(`/maintenance/contractors/`)).data,
   });
   const receiptsQ = useQuery({
     queryKey: ['receipts', { building: buildingId, payment_status: 'pending' }],
-    queryFn: () => apiGet(`/api/maintenance/receipts/`, { building: buildingId, payment_status: 'pending' }),
+    queryFn: async () => (await api.get(`/maintenance/receipts/`, { params: { building: buildingId, payment_status: 'pending' } })).data,
   });
   const scheduledQ = useQuery({
     queryKey: ['scheduled-maintenance', { building: buildingId }],
-    queryFn: () => apiGet(`/api/maintenance/scheduled-maintenance/`, { building: buildingId }),
+    queryFn: async () => (await api.get(`/maintenance/scheduled/`, { params: { building: buildingId } })).data,
   });
   const urgentScheduledQ = useQuery({
     queryKey: ['scheduled-maintenance', { building: buildingId, priority: 'urgent' }],
-    queryFn: () => apiGet(`/api/maintenance/scheduled-maintenance/`, { building: buildingId, priority: 'urgent' }),
+    queryFn: async () => (await api.get(`/maintenance/scheduled/`, { params: { building: buildingId, priority: 'urgent' } })).data,
   });
 
   // Public counters fallback when private endpoints return 401/are unavailable
@@ -143,7 +143,7 @@ export default function MaintenanceDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Τεχνικά & Συντήρηση</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Περιοδικές Υπηρεσίες</h1>
           <p className="text-muted-foreground">
             Διαχείριση συνεργείων, αποδείξεων και προγραμματισμένων έργων
           </p>

@@ -117,7 +117,7 @@ const navigationGroups = [
     links: [
       {
         href: '/maintenance',
-        label: 'Τεχνικά & Συντήρηση',
+        label: 'Περιοδικές Υπηρεσίες',
         icon: <Wrench className="w-4 h-4" />,
         roles: ['manager', 'staff', 'superuser'],
       },

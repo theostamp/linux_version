@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { api, getActiveBuildingId } from '@/lib/api';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ export default function EditOfferPage() {
   const [deliveryTime, setDeliveryTime] = useState<string>('');
   const [warrantyPeriod, setWarrantyPeriod] = useState<string>('');
   const [status, setStatus] = useState<string>('pending');
+  const [startAt, setStartAt] = useState<string>('');
 
   useEffect(() => {
     const run = async () => {
@@ -66,6 +67,32 @@ export default function EditOfferPage() {
         status,
       };
       await api.patch(`/projects/offers/${id}/`, payload);
+
+      if (startAt) {
+        try {
+          const buildingId = getActiveBuildingId();
+          const { data: categories } = await api.get('/todos/categories/', { params: { building: buildingId } });
+          const cats = Array.isArray(categories) ? categories : categories?.results ?? [];
+          const preferred = cats.find((c: any) => String(c.name).toLowerCase().includes('project')) || cats[0];
+          if (preferred) {
+            await api.post('/todos/items/', {
+              title: `Έναρξη προσφοράς #${id}`,
+              description: description || `Προγραμματισμένη έναρξη για προσφορά #${id}`,
+              category: preferred.id,
+              building: buildingId,
+              apartment: null,
+              priority: 'medium',
+              status: 'pending',
+              due_date: new Date(startAt).toISOString(),
+            });
+          } else {
+            toast({ title: 'Προειδοποίηση', description: 'Δεν βρέθηκε κατηγορία To-Do για το ημερολόγιο.' });
+          }
+        } catch (e: any) {
+          toast({ title: 'Σφάλμα', description: e?.message ?? 'Αποτυχία δημιουργίας To-Do για το ημερολόγιο' });
+        }
+      }
+
       toast({ title: 'Επιτυχία', description: 'Η προσφορά ενημερώθηκε.' });
       router.push('/projects/offers');
     } catch (e: any) {
@@ -116,6 +143,10 @@ export default function EditOfferPage() {
                   <option value="rejected">Απορριφθείσα</option>
                   <option value="withdrawn">Αποσυρθείσα</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Χρόνος Έναρξης (Calendar)</label>
+                <Input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} />
               </div>
               <div className="flex justify-end gap-2">
                 <Button asChild variant="outline"><Link href="/projects/offers">Άκυρο</Link></Button>

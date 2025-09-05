@@ -1,4 +1,14 @@
 'use client';
+import { useParams } from 'next/navigation';
+import ScheduledProjectForm from '@/components/projects/ScheduledProjectForm';
+
+export default function EditScheduledProjectPage() {
+  const params = useParams<{ id: string }>();
+  const projectId = Number(params?.id);
+  return <ScheduledProjectForm title="Επεξεργασία Προγραμματισμένου Έργου" projectId={projectId} />;
+}
+
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
