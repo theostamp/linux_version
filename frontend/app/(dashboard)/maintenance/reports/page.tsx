@@ -6,9 +6,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Calendar, FileText, TrendingUp, AlertTriangle, CheckCircle, Wrench } from 'lucide-react';
+import { Calendar, FileText, TrendingUp, AlertTriangle, CheckCircle, Wrench } from 'lucide-react';
 import { fetchServiceReceipts, fetchScheduledMaintenances, type ServiceReceipt, type ScheduledMaintenance } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import { BackButton } from '@/components/ui/BackButton';
 
 export default function MaintenanceReportsPage() {
   const { selectedBuilding, currentBuilding } = useBuilding();
@@ -49,11 +50,7 @@ export default function MaintenanceReportsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Συντηρήσεις • Reports</h1>
           <p className="text-muted-foreground">Σύνοψη δαπανών και προγραμματισμένων εργασιών</p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/maintenance">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Πίσω
-          </Link>
-        </Button>
+        <BackButton href="/maintenance" />
       </div>
 
       {loading ? (

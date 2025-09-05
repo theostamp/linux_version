@@ -111,6 +111,45 @@ class Project(models.Model):
             return 75
         return 0
 
+
+class RFQ(models.Model):
+    """Αίτημα Προσφοράς (RFQ) για έργα"""
+
+    STATUS_CHOICES = [
+        ('draft', 'Πρόχειρο'),
+        ('sent', 'Στάλθηκε'),
+        ('received', 'Ελήφθησαν'),
+        ('closed', 'Κλειστό'),
+    ]
+
+    project = models.ForeignKey(
+        'Project',
+        on_delete=models.CASCADE,
+        related_name='rfqs',
+        verbose_name="Έργο",
+    )
+    title = models.CharField(max_length=255, verbose_name="Τίτλος RFQ")
+    description = models.TextField(blank=True, verbose_name="Περιγραφή")
+    due_date = models.DateField(null=True, blank=True, verbose_name="Προθεσμία Υποβολής")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name="Κατάσταση")
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_rfqs',
+        verbose_name="Δημιουργήθηκε από",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "RFQ"
+        verbose_name_plural = "RFQs"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"RFQ: {self.title} ({self.get_status_display()})"
+
 class Offer(models.Model):
     """Μοντέλο για προσφορές σε έργα"""
     
@@ -127,6 +166,14 @@ class Offer(models.Model):
         on_delete=models.CASCADE,
         related_name='offers',
         verbose_name="Έργο"
+    )
+    rfq = models.ForeignKey(
+        'RFQ',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='offers',
+        verbose_name="RFQ",
     )
     contractor = models.ForeignKey(
         'maintenance.Contractor',

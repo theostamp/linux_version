@@ -526,7 +526,7 @@ git push origin v2.1.0
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "feat(maintenance,financial): auto-link receipts→monthly expenses (CRUD+signals), add backfill cmd, enable AUTO_MAKEMIGRATIONS"
+git commit -m "various fixes"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

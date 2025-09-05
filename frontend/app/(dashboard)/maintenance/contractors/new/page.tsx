@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createContractor, type Contractor } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { BackButton } from '@/components/ui/BackButton';
 
 type NewContractor = Partial<Omit<Contractor, 'id' | 'created_at'>>;
 
@@ -94,9 +95,7 @@ export default function NewContractorPage() {
     <div className="space-y-6 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Νέο Συνεργείο</h1>
-        <Button asChild variant="outline">
-          <Link href="/maintenance/contractors">Πίσω</Link>
-        </Button>
+        <BackButton href="/maintenance/contractors" />
       </div>
 
       <Card>

@@ -16,6 +16,7 @@ import { useTodoCategories } from '@/hooks/useTodos';
 import { createTodoCategory } from '@/lib/todos';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { createScheduledMaintenance } from '@/lib/api';
+import { BackButton } from '@/components/ui/BackButton';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
@@ -216,12 +217,7 @@ export default function NewScheduledMaintenancePage() {
           <h1 className="text-3xl font-bold tracking-tight">Νέο Προγραμματισμένο Έργο</h1>
           <p className="text-muted-foreground">Καταχώριση νέας εργασίας συντήρησης</p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/maintenance/scheduled">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Πίσω στη λίστα
-          </Link>
-        </Button>
+        <BackButton href="/maintenance/scheduled" />
       </div>
 
       <Card>

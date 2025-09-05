@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Project, Offer, Contract, Milestone
+from .models import Project, Offer, Contract, Milestone, RFQ
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -18,13 +18,22 @@ class OfferSerializer(serializers.ModelSerializer):
     class Meta:
         model = Offer
         fields = [
-            'id', 'project', 'contractor', 'amount', 'description',
+            'id', 'project', 'rfq', 'contractor', 'amount', 'description',
             'technical_specifications', 'delivery_time', 'warranty_period',
             'status', 'submitted_date', 'evaluation_date', 'evaluation_notes',
-            'evaluation_score', 'currency', 'tax_included', 'valid_until', 'scoring_breakdown', 'is_awarded',
-            'offer_file', 'created_by'
+            'evaluation_score', 'offer_file', 'created_by'
         ]
         read_only_fields = ['submitted_date']
+
+
+class RFQSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RFQ
+        fields = [
+            'id', 'project', 'title', 'description', 'due_date', 'status',
+            'created_by', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
 
 
 class ContractSerializer(serializers.ModelSerializer):
@@ -34,8 +43,7 @@ class ContractSerializer(serializers.ModelSerializer):
             'id', 'project', 'contractor', 'offer', 'contract_type',
             'contract_number', 'title', 'description', 'amount',
             'start_date', 'end_date', 'status', 'payment_terms',
-            'warranty_terms', 'contract_file', 'notes', 'advance_amount', 'retention_percent',
-            'guarantee_terms', 'deliverables', 'po_number',
+            'warranty_terms', 'contract_file', 'notes',
             'created_by', 'created_at', 'updated_at', 'is_active', 'days_remaining'
         ]
         read_only_fields = ['created_at', 'updated_at', 'is_active', 'days_remaining']

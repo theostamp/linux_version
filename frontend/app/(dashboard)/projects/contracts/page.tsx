@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FileCheck, Filter } from 'lucide-react';
+import { BackButton } from '@/components/ui/BackButton';
 
 interface Contract {
   id: number;
@@ -31,13 +33,10 @@ export default function ContractsListPage() {
       setLoading(true);
       setError(null);
       try {
-        const qs = new URLSearchParams();
-        qs.set('buildingId', String(selectedBuilding.id));
-        if (status) qs.set('status', status);
-        const res = await fetch(`/api/projects/contracts?${qs.toString()}`, { cache: 'no-store' });
-        const json = await res.json();
-        if (!res.ok || !json?.success) throw new Error(json?.error || 'Failed to load contracts');
-        setContracts(json.data);
+        const params: Record<string, string> = { project__building: String(selectedBuilding.id) } as any;
+        if (status) params.status = status;
+        const { data } = await api.get('/projects/contracts/', { params });
+        setContracts(data?.results ?? data ?? []);
       } catch (err: any) {
         setError(err?.message ?? 'Αποτυχία φόρτωσης συμβολαίων');
       } finally {
@@ -54,11 +53,14 @@ export default function ContractsListPage() {
           <h1 className="text-2xl font-bold">Συμβόλαια</h1>
           <p className="text-muted-foreground">Λίστα συμβολαίων ανά κτίριο</p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/projects/contracts/new">
-            <FileCheck className="w-4 h-4 mr-2" /> Νέο Συμβόλαιο
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <BackButton href="/projects" />
+          <Button asChild variant="outline">
+            <Link href="/projects/contracts/new">
+              <FileCheck className="w-4 h-4 mr-2" /> Νέο Συμβόλαιο
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">

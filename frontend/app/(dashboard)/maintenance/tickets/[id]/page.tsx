@@ -7,6 +7,7 @@ import { fetchMaintenanceTicket, fetchWorkOrders, WorkOrder } from '@/lib/api';
 import { withAuth } from '@/lib/auth';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
 import { getActiveBuildingId } from '@/lib/api';
+import { BackButton } from '@/components/ui/BackButton';
 
 function TicketDetailInner() {
   const params = useParams();
@@ -34,7 +35,10 @@ function TicketDetailInner() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">{t.title}</h1>
+        <div className="flex items-center gap-2">
+          <BackButton href="/maintenance/tickets" size="sm" />
+          <h1 className="text-xl font-semibold">{t.title}</h1>
+        </div>
         <Link className="text-blue-600" href={`/(dashboard)/maintenance/work-orders/new?ticket=${t.id}`}>Νέα Εντολή Εργασίας</Link>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -6,6 +6,7 @@ import { fetchMaintenanceTickets, MaintenanceTicket } from '@/lib/api';
 import { getActiveBuildingId } from '@/lib/api';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
 import { withAuth } from '@/lib/auth';
+import { BackButton } from '@/components/ui/BackButton';
 
 function TicketsListInner() {
   const buildingId = getActiveBuildingId();
@@ -29,7 +30,10 @@ function TicketsListInner() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Αιτήματα Συντήρησης</h1>
+        <div className="flex items-center gap-2">
+          <BackButton href="/maintenance" size="sm" />
+          <h1 className="text-xl font-semibold">Αιτήματα Συντήρησης</h1>
+        </div>
         <Link className="text-blue-600" href="/(dashboard)/maintenance/tickets/new">Νέο Αίτημα</Link>
       </div>
       <div className="rounded border">

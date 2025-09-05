@@ -11,8 +11,8 @@ class CustomTenantMiddleware(TenantMainMiddleware):
         """
         Override to handle frontend proxy requests
         """
-        # If the hostname is localhost or demo.localhost (from frontend proxy), use demo tenant
-        if hostname in ['localhost', '127.0.0.1', 'demo.localhost']:
+        # If the hostname is localhost, testserver or demo.localhost (from frontend/tests), use demo tenant
+        if hostname in ['localhost', '127.0.0.1', 'demo.localhost', 'testserver']:
             try:
                 tenant_model = get_tenant_model()
                 demo_tenant = tenant_model.objects.get(schema_name='demo')

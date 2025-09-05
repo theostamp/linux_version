@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { fetchServiceReceipt, updateServiceReceipt, deleteServiceReceipt, type ServiceReceipt } from '@/lib/api';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { BackButton } from '@/components/ui/BackButton';
 
 export default function EditReceiptPage() {
   const params = useParams();
@@ -67,9 +68,7 @@ export default function EditReceiptPage() {
     <div className="space-y-6 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Επεξεργασία Απόδειξης</h1>
-        <Button asChild variant="outline">
-          <Link href={`/maintenance/receipts`}>Πίσω</Link>
-        </Button>
+        <BackButton href="/maintenance/receipts" />
       </div>
 
       <Card>

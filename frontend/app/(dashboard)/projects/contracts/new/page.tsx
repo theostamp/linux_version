@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { makeRequestWithRetry } from '@/lib/api';
+import { BackButton } from '@/components/ui/BackButton';
 
 interface ProjectOption { id: number; title: string; }
 interface ContractorOption { id: number; name: string; }
@@ -33,6 +35,7 @@ export default function NewContractPage() {
   const [status, setStatus] = useState('draft');
   const [paymentTerms, setPaymentTerms] = useState('');
   const [warrantyTerms, setWarrantyTerms] = useState('');
+  const [contractFile, setContractFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,22 +43,12 @@ export default function NewContractPage() {
     const loadData = async () => {
       if (!selectedBuilding) return;
       try {
-        const qs = new URLSearchParams();
-        qs.set('buildingId', String(selectedBuilding.id));
-        const [projectsRes, contractorsRes] = await Promise.all([
-          fetch(`/api/projects?${qs.toString()}`),
-          fetch(`/api/maintenance/contractors`),
+        const [projectsResp, contractorsResp] = await Promise.all([
+          makeRequestWithRetry({ method: 'get', url: '/projects/projects/', params: { building: selectedBuilding.id } }),
+          makeRequestWithRetry({ method: 'get', url: '/maintenance/contractors/' }),
         ]);
-        const [projectsJson, contractorsJson] = await Promise.all([
-          projectsRes.json(),
-          contractorsRes.json(),
-        ]);
-        if (projectsRes.ok && projectsJson?.success) {
-          setProjects((projectsJson.data || []).map((p: any) => ({ id: p.id, title: p.title })));
-        }
-        if (contractorsRes.ok && contractorsJson?.success) {
-          setContractors((contractorsJson.data || []).map((c: any) => ({ id: c.id, name: c.name })));
-        }
+        setProjects(((projectsResp.data?.results ?? projectsResp.data) || []).map((p: any) => ({ id: p.id, title: p.title })));
+        setContractors(((contractorsResp.data?.results ?? contractorsResp.data) || []).map((c: any) => ({ id: c.id, name: c.name })));
       } catch (e) {
         console.error('Failed to load select data', e);
       }
@@ -69,29 +62,26 @@ export default function NewContractPage() {
     setLoading(true);
     setError(null);
     try {
-      const payload: any = {
-        project: parseInt(projectId),
-        contractor: parseInt(contractorId),
-        offer: offerId ? parseInt(offerId) : null,
-        contract_type: contractType,
-        contract_number: contractNumber,
-        title,
-        description,
-        amount: parseFloat(amount),
-        start_date: startDate,
-        end_date: endDate,
-        status,
-        payment_terms: paymentTerms,
-        warranty_terms: warrantyTerms,
-      };
+      const form = new FormData();
+      form.append('project', String(parseInt(projectId)));
+      form.append('contractor', String(parseInt(contractorId)));
+      if (offerId) form.append('offer', String(parseInt(offerId)));
+      form.append('contract_type', contractType);
+      form.append('contract_number', contractNumber);
+      form.append('title', title);
+      form.append('description', description);
+      form.append('amount', String(parseFloat(amount)));
+      form.append('start_date', startDate);
+      form.append('end_date', endDate);
+      form.append('status', status);
+      if (paymentTerms) form.append('payment_terms', paymentTerms);
+      if (warrantyTerms) form.append('warranty_terms', warrantyTerms);
+      if (contractFile) form.append('contract_file', contractFile);
 
-      const res = await fetch('/api/projects/contracts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const json = await res.json();
-      if (!res.ok || !json?.success) throw new Error(json?.error || 'Failed to create contract');
+      const resp = await makeRequestWithRetry({ method: 'post', url: '/projects/contracts/', data: form, headers: { 'Content-Type': 'multipart/form-data' } });
+      if (!(resp?.status && resp.status >= 200 && resp.status < 300)) {
+        throw new Error('Failed to create contract');
+      }
       router.push('/projects/contracts');
     } catch (err: any) {
       setError(err?.message ?? 'Αποτυχία δημιουργίας συμβολαίου');
@@ -107,7 +97,10 @@ export default function NewContractPage() {
       ) : null}
       <Card>
         <CardHeader>
-          <CardTitle>Νέο Συμβόλαιο</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Νέο Συμβόλαιο</CardTitle>
+            <BackButton />
+          </div>
         </CardHeader>
         <CardContent>
           {!selectedBuilding && (
@@ -179,6 +172,10 @@ export default function NewContractPage() {
                   <option value="terminated">Λυμένο</option>
                   <option value="expired">Ληγμένο</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Αρχείο Συμβολαίου</label>
+                <Input type="file" accept="application/pdf,image/*" onChange={(e) => setContractFile(e.target.files?.[0] ?? null)} />
               </div>
             </div>
             <div>

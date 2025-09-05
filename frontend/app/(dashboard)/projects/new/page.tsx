@@ -3,10 +3,11 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { apiPost, getActiveBuildingId } from '@/lib/api';
+import { api, getActiveBuildingId } from '@/lib/api';
 import { useRole } from '@/lib/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/BackButton';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,8 +21,8 @@ const schema = z.object({
   description: z
     .string()
     .trim()
-    .max(1000, 'Η περιγραφή δεν μπορεί να ξεπερνά τους 1000 χαρακτήρες')
-    .optional(),
+    .min(1, 'Η περιγραφή είναι υποχρεωτική')
+    .max(1000, 'Η περιγραφή δεν μπορεί να ξεπερνά τους 1000 χαρακτήρες'),
   project_type: z.enum(
     ['maintenance','renovation','construction','installation','repair','upgrade','other'] as const
   ),
@@ -34,14 +35,14 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-const PROJECT_TYPE_OPTIONS: ReadonlyArray<{ value: FormValues['project_type']; label: string }> = [
-  { value: 'maintenance', label: 'Συντήρηση' },
-  { value: 'renovation', label: 'Ανακαίνιση' },
-  { value: 'construction', label: 'Κατασκευή' },
-  { value: 'installation', label: 'Εγκατάσταση' },
-  { value: 'repair', label: 'Επισκευή' },
-  { value: 'upgrade', label: 'Αναβάθμιση' },
-  { value: 'other', label: 'Άλλο' },
+const PROJECT_TYPE_OPTIONS: ReadonlyArray<{ value: FormValues['project_type']; label: string; category?: string }> = [
+  { value: 'maintenance', label: 'Συντήρηση', category: 'Γενικά' },
+  { value: 'renovation', label: 'Ανακαίνιση', category: 'Γενικά' },
+  { value: 'construction', label: 'Κατασκευή', category: 'Γενικά' },
+  { value: 'installation', label: 'Εγκατάσταση', category: 'Γενικά' },
+  { value: 'repair', label: 'Επισκευή', category: 'Γενικά' },
+  { value: 'upgrade', label: 'Αναβάθμιση', category: 'Γενικά' },
+  { value: 'other', label: 'Άλλο', category: 'Γενικά' },
 ] as const;
 
 const STATUS_OPTIONS: ReadonlyArray<{ value: FormValues['status']; label: string }> = [
@@ -77,14 +78,17 @@ export default function NewProjectPage() {
       ...values,
       building: getActiveBuildingId(),
     };
-    await apiPost('/api/projects/projects/', payload);
+    await api.post('/projects/projects/', payload);
     router.push('/projects');
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Νέο Έργο</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Νέο Έργο</CardTitle>
+          <BackButton />
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -101,10 +105,27 @@ export default function NewProjectPage() {
             <div>
               <label className="block text-sm font-medium mb-1">Τύπος Έργου <span className="text-red-600">*</span></label>
               <Select onValueChange={(v) => setValue('project_type', v as FormValues['project_type'], { shouldValidate: true, shouldTouch: true })} value={watch('project_type')}>
-                <SelectTrigger><SelectValue placeholder="Επιλέξτε" /></SelectTrigger>
-                <SelectContent>
-                  {PROJECT_TYPE_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                <SelectTrigger><SelectValue placeholder="Επιλέξτε τύπο έργου" /></SelectTrigger>
+                <SelectContent className="max-h-80">
+                  {/* Group options by category */}
+                  {Object.entries(
+                    PROJECT_TYPE_OPTIONS.reduce((acc, option) => {
+                      const category = option.category || 'Γενικά';
+                      if (!acc[category]) acc[category] = [];
+                      acc[category].push(option);
+                      return acc;
+                    }, {} as Record<string, typeof PROJECT_TYPE_OPTIONS[number][]>)
+                  ).map(([category, options]) => (
+                    <div key={category}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50 border-b">
+                        {category}
+                      </div>
+                      {options.map((option) => (
+                        <SelectItem key={`${option.value}-${option.label}`} value={option.value} className="pl-4">
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </div>
                   ))}
                 </SelectContent>
               </Select>
@@ -131,4 +152,3 @@ export default function NewProjectPage() {
     </Card>
   );
 }
-

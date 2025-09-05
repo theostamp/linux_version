@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BackButton } from '@/components/ui/BackButton';
 
 const schema = z.object({
   title: z.string().min(3),
@@ -52,7 +53,10 @@ export default function NewTicketPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Νέο Αίτημα Συντήρησης</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Νέο Αίτημα Συντήρησης</CardTitle>
+          <BackButton href="/maintenance/tickets" />
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

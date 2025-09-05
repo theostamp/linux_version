@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiGet, extractCount, getActiveBuildingId } from '@/lib/api';
+import { api, extractCount, getActiveBuildingId } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,11 +38,11 @@ export default function ProjectsDashboard() {
   useBuildingEvents();
   const { isAdmin, isManager } = useRole();
   const buildingId = getActiveBuildingId();
-  const projectsQ = useQuery({ queryKey: ['projects', { building: buildingId }], queryFn: () => apiGet(`/api/projects/projects/`, { building: buildingId }) });
-  const activeProjectsQ = useQuery({ queryKey: ['projects', { building: buildingId, status: 'in_progress' }], queryFn: () => apiGet(`/api/projects/projects/`, { building: buildingId, status: 'in_progress' }) });
-  const completedProjectsQ = useQuery({ queryKey: ['projects', { building: buildingId, status: 'completed' }], queryFn: () => apiGet(`/api/projects/projects/`, { building: buildingId, status: 'completed' }) });
-  const pendingOffersQ = useQuery({ queryKey: ['offers', { status: 'pending' }], queryFn: () => apiGet(`/api/projects/offers/`, { status: 'pending' }) });
-  const activeContractsQ = useQuery({ queryKey: ['contracts', { status: 'active' }], queryFn: () => apiGet(`/api/projects/contracts/`, { status: 'active' }) });
+  const projectsQ = useQuery({ queryKey: ['projects', { building: buildingId }], queryFn: async () => (await api.get('/projects/projects/', { params: { building: buildingId, page_size: 1_000 } })).data });
+  const activeProjectsQ = useQuery({ queryKey: ['projects', { building: buildingId, status: 'in_progress' }], queryFn: async () => (await api.get('/projects/projects/', { params: { building: buildingId, status: 'in_progress', page_size: 1_000 } })).data });
+  const completedProjectsQ = useQuery({ queryKey: ['projects', { building: buildingId, status: 'completed' }], queryFn: async () => (await api.get('/projects/projects/', { params: { building: buildingId, status: 'completed', page_size: 1_000 } })).data });
+  const pendingOffersQ = useQuery({ queryKey: ['offers', { status: 'pending' }], queryFn: async () => (await api.get('/projects/offers/', { params: { status: 'pending', page_size: 1_000 } })).data });
+  const activeContractsQ = useQuery({ queryKey: ['contracts', { status: 'active' }], queryFn: async () => (await api.get('/projects/contracts/', { params: { status: 'active', page_size: 1_000 } })).data });
 
   const loading = projectsQ.isLoading || activeProjectsQ.isLoading || completedProjectsQ.isLoading || pendingOffersQ.isLoading || activeContractsQ.isLoading;
   const stats: ProjectStats = {

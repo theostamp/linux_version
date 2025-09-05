@@ -21,6 +21,7 @@ import {
 import Link from 'next/link';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
 import { useRole } from '@/lib/auth';
+import { BackButton } from '@/components/ui/BackButton';
 
 interface MaintenanceStats {
   total_contractors: number;
@@ -149,6 +150,7 @@ export default function MaintenanceDashboard() {
         </div>
         {(isAdmin || isManager) && (
           <div className="flex gap-2">
+            <BackButton href="/" />
             <Button asChild>
               <Link href="/maintenance/contractors/new">
                 <Users className="w-4 h-4 mr-2" />

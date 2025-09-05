@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { makeRequestWithRetry } from '@/lib/api';
 import { useRole } from '@/lib/auth';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { BackButton } from '@/components/ui/BackButton';
 
 interface ProjectOption { id: number; title: string; }
 interface ContractorOption { id: number; name: string; }
@@ -34,22 +36,12 @@ export default function NewOfferPage() {
     const loadData = async () => {
       if (!selectedBuilding) return;
       try {
-        const qs = new URLSearchParams();
-        qs.set('buildingId', String(selectedBuilding.id));
-        const [projectsRes, contractorsRes] = await Promise.all([
-          fetch(`/api/projects?${qs.toString()}`),
-          fetch(`/api/maintenance/contractors`),
+        const [projectsResp, contractorsResp] = await Promise.all([
+          makeRequestWithRetry({ method: 'get', url: '/projects/projects/', params: { building: selectedBuilding.id } }),
+          makeRequestWithRetry({ method: 'get', url: '/maintenance/contractors/' }),
         ]);
-        const [projectsJson, contractorsJson] = await Promise.all([
-          projectsRes.json(),
-          contractorsRes.json(),
-        ]);
-        if (projectsRes.ok && projectsJson?.success) {
-          setProjects((projectsJson.data || []).map((p: any) => ({ id: p.id, title: p.title })));
-        }
-        if (contractorsRes.ok && contractorsJson?.success) {
-          setContractors((contractorsJson.data || []).map((c: any) => ({ id: c.id, name: c.name })));
-        }
+        setProjects(((projectsResp.data?.results ?? projectsResp.data) || []).map((p: any) => ({ id: p.id, title: p.title })));
+        setContractors(((contractorsResp.data?.results ?? contractorsResp.data) || []).map((c: any) => ({ id: c.id, name: c.name })));
       } catch (e) {
         console.error('Failed to load select data', e);
       }
@@ -73,13 +65,10 @@ export default function NewOfferPage() {
         status,
       };
 
-      const res = await fetch('/api/projects/offers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const json = await res.json();
-      if (!res.ok || !json?.success) throw new Error(json?.error || 'Failed to create offer');
+      const resp = await makeRequestWithRetry({ method: 'post', url: '/projects/offers/', data: payload });
+      if (!(resp?.status && resp.status >= 200 && resp.status < 300)) {
+        throw new Error('Failed to create offer');
+      }
       router.push('/projects/offers');
     } catch (err: any) {
       setError(err?.message ?? 'Αποτυχία δημιουργίας προσφοράς');
@@ -95,7 +84,10 @@ export default function NewOfferPage() {
       ) : null}
       <Card>
         <CardHeader>
-          <CardTitle>Νέα Προσφορά</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Νέα Προσφορά</CardTitle>
+            <BackButton />
+          </div>
         </CardHeader>
         <CardContent>
           {!selectedBuilding && (

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BackButton } from '@/components/ui/BackButton';
 
 const schema = z.object({
   ticket: z.preprocess((v) => Number(v), z.number().int().positive()),
@@ -52,7 +53,10 @@ export default function NewWorkOrderPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Νέα Εντολή Εργασίας</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Νέα Εντολή Εργασίας</CardTitle>
+          <BackButton href="/maintenance/work-orders" />
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

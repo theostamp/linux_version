@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, ArrowLeft, Plus } from 'lucide-react';
+import { Users, Plus } from 'lucide-react';
+import { BackButton } from '@/components/ui/BackButton';
 import { fetchContractors, type Contractor, deleteContractor } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { useRole } from '@/lib/auth';
@@ -42,11 +43,7 @@ export default function ContractorsPage() {
               </Link>
             </Button>
           )}
-          <Button asChild variant="outline">
-            <Link href="/maintenance">
-              <ArrowLeft className="w-4 h-4 mr-2" /> Πίσω
-            </Link>
-          </Button>
+          <BackButton href="/maintenance" />
         </div>
       </div>
 

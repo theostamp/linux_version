@@ -15,7 +15,10 @@ export function getApiBase(): string {
 }
 
 export async function apiGet<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
-  const url = new URL(path, getApiBase());
+  const base = (typeof window !== 'undefined' && path.startsWith('/api/'))
+    ? window.location.origin
+    : getApiBase();
+  const url = new URL(path, base);
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
@@ -53,7 +56,10 @@ export function getActiveBuildingId(): number {
 }
 
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
-  const url = new URL(path, getApiBase());
+  const base = (typeof window !== 'undefined' && path.startsWith('/api/'))
+    ? window.location.origin
+    : getApiBase();
+  const url = new URL(path, base);
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('access') || localStorage.getItem('accessToken');
@@ -92,9 +98,13 @@ const getApiBaseUrl = () => {
       return apiUrl;
     }
   }
-  const defaultUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? 'http://localhost:8000/api';
-  console.log(`[API] Using default API URL: ${defaultUrl}`);
-  return defaultUrl;
+  let base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api';
+  base = base.replace(/\/$/, '');
+  if (!/\/api$/.test(base)) {
+    base = `${base}/api`;
+  }
+  console.log(`[API] Using default API URL: ${base}`);
+  return base;
 };
 
 export const API_BASE_URL = getApiBaseUrl();

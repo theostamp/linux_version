@@ -7,6 +7,7 @@ import { fetchWorkOrder } from '@/lib/api';
 import { withAuth } from '@/lib/auth';
 import { getActiveBuildingId } from '@/lib/api';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
+import { BackButton } from '@/components/ui/BackButton';
 
 function WorkOrderDetailInner() {
   const params = useParams();
@@ -28,33 +29,8 @@ function WorkOrderDetailInner() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">WO#{w.id}</h1>
-        <Link className="text-blue-600" href={`/(dashboard)/maintenance/tickets/${w.ticket}`}>Προς Ticket</Link>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="col-span-2 space-y-2">
-          <div className="rounded border p-4">
-            <div className="text-sm text-gray-500">Κατάσταση</div>
-            <div className="font-medium">{w.status}</div>
-          </div>
-          <div className="rounded border p-4">
-            <div className="text-sm text-gray-500">Προγραμματισμένη</div>
-            <div className="font-medium">{w.scheduled_at ? new Date(w.scheduled_at).toLocaleString() : '-'}</div>
-          </div>
+        <div className="flex items-center gap-2">
+          <BackButton href="/maintenance/work-orders" size="sm" />
+          <h1 className="text-xl font-semibold">WO#{w.id}</h1>
         </div>
-        <div className="space-y-2">
-          <div className="rounded border p-4">
-            <div className="text-sm text-gray-500">Ticket</div>
-            <div className="font-medium">
-              <Link href={`/(dashboard)/maintenance/tickets/${w.ticket}`}>#{w.ticket}</Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default withAuth(WorkOrderDetailInner, ['admin', 'manager']);
-
-
+        <Link className="text-blue-600" href={`/(dashboard)/maintenance/tickets/${w.ticket}`

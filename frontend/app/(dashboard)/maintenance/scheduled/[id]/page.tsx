@@ -7,13 +7,14 @@ import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Calendar, Wrench } from 'lucide-react';
+import { Calendar, Wrench } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchScheduledMaintenance, deleteScheduledMaintenance, type ScheduledMaintenance } from '@/lib/api';
 import { useRole } from '@/lib/auth';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { BackButton } from '@/components/ui/BackButton';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type Status = 'planned' | 'in_progress' | 'completed' | 'on_hold';
@@ -49,11 +50,7 @@ export default function ScheduledMaintenanceDetailPage() {
           <h1 className="text-3xl font-bold tracking-tight">Λεπτομέρειες Έργου</h1>
           <p className="text-muted-foreground">Πληροφορίες για το προγραμματισμένο έργο συντήρησης</p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/maintenance/scheduled">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Πίσω στη λίστα
-          </Link>
-        </Button>
+        <BackButton href="/maintenance/scheduled" />
       </div>
 
       <Card>

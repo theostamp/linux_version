@@ -39,6 +39,13 @@ class Announcement(models.Model):
         building_name = self.building.name if self.building else "Όλα τα κτίρια"
         return f"{self.title} ({building_name})"
 
+    def __init__(self, *args, **kwargs):
+        # Allow factories/tests to pass created_by, map to author
+        created_by = kwargs.pop('created_by', None)
+        super().__init__(*args, **kwargs)
+        if created_by is not None:
+            self.author_id = getattr(created_by, 'id', created_by)
+
     def clean(self):
         """Validation για τις ημερομηνίες"""
         if self.start_date and self.end_date and self.start_date > self.end_date:

@@ -53,6 +53,9 @@ urlpatterns = [
     # Maintenance management
     path('api/maintenance/', include('maintenance.urls')),
 
+    # Projects & Offers
+    path('api/projects/', include('projects.urls')),
+
     # Todo management
     path('api/todos/', include('todo_management.urls')),
 

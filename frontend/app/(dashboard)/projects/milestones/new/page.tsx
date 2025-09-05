@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { apiPost } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useRole } from '@/lib/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,7 +42,7 @@ export default function NewMilestonePage() {
   const onSubmit = async (values: FormValues) => {
     const payload: any = { ...values };
     if (values.due_at) payload.due_at = new Date(values.due_at).toISOString();
-    await apiPost('/api/projects/milestones/', payload);
+    await api.post('/projects/milestones/', payload);
     router.push('/projects');
   };
 

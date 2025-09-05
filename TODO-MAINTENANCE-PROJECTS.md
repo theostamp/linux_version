@@ -270,6 +270,62 @@
 **Timeline**: 16-week roadmap με 4 sub-phases
 **Success Metrics**: Performance, UX, και technical targets
 
+## Προσφορές & Έργα — Enhancement Plan (New)
+
+### Στόχος
+- Συστηματική διαχείριση έργων με πλήρη κύκλο: RFQ → Προσφορές → Επιλογή/Έγκριση → Έναρξη Έργου → Milestones → Ολοκλήρωση.
+- Δέσιμο με «Τεχνικά & Συντήρηση» (Tickets/Work Orders) και προβολές στο Kiosk όπου χρειάζεται.
+- Ενιαία UX με BackButton, Edit/Delete, ConfirmDialog/toasts, role guards.
+
+### Αρχιτεκτονική & Συνδέσεις
+- Οντότητες (υπάρχουσες/ενισχυμένες):
+  - Project: έχει πολλά Offers, έχει Milestones, συνδέσεις με MaintenanceTickets/WorkOrders (προαιρετικά).
+  - RFQ: οδηγεί σε Offers (1→Ν), συνδέεται με Project (π.χ. ένα RFQ ανά Project ή πολλαπλά RFQs ανά Project — να οριστεί).
+  - Offer: ανήκει σε RFQ/Project, έχει status (received/accepted/rejected/expired), cost breakdown.
+  - Milestone: ανήκει σε Project, με due/status/amount.
+- Συνδέσεις με «Τεχνικά & Συντήρηση»:
+  - Project ↔ MaintenanceTicket/WorkOrder: προαιρετική σύνδεση για τεχνικά έργα.
+  - Όταν εγκρίνεται Offer ⇒ δημιουργία ScheduledMaintenance ή WorkOrder (configurable flow).
+- Kiosk:
+  - Public endpoints για “εγκεκριμένα/σε εξέλιξη” έργα (μόνο τίτλος/ημερομηνίες/κατάσταση, χωρίς ευαίσθητα ποσά).
+
+### Backend Εργασίες
+- [ ] [be-proj-01] Επιβεβαίωση/επέκταση μοντέλων (Project/RFQ/Offer/Milestone) με type hints, constraints, indexes.
+- [ ] [be-proj-02] Endpoints: Projects, RFQs, Offers, Milestones (CRUD, filters, ordering, search).
+- [ ] [be-proj-03] ViewSet actions: approve_offer (κλειδώνει offers, στήνει project flow), start_project, complete_project.
+- [ ] [be-proj-04] Signals/Events: publish events για changes (project.updated, offer.approved).
+- [ ] [be-proj-05] Permissions: IsAuthenticated (read), Admin/Manager (write), vendor-limited actions όπου χρειάζεται.
+- [ ] [be-proj-06] Public (Kiosk) endpoints: λίστα εγκεκριμένων/σε εξέλιξη έργων (safe fields, throttling, cache TTL).
+
+### Frontend Εργασίες
+- [ ] [fe-proj-01] Λίστα Έργων: στήλες (τίτλος, κατάσταση, προϋπολογισμός, vendor/offer επιλεγμένη), BackButton, New Project (guarded).
+- [ ] [fe-proj-02] Project Detail: tabs (Overview, Offers, Milestones, Activity), Edit/Delete με ConfirmDialog, toasts.
+- [ ] [fe-proj-03] RFQ/Offers UI: δημιουργία RFQ, προσθήκη/επεξεργασία προσφορών, επιλογή/έγκριση.
+- [ ] [fe-proj-04] Milestones UI: CRUD milestones, progress, due alerts.
+- [ ] [fe-proj-05] Reuse BackButton + role guards σε όλες τις σελίδες.
+- [ ] [fe-proj-06] Kiosk: προβολή approved/in-progress έργων (κατάλογος/slider), χωρίς ποσά.
+
+### Αποδοτικά Flows
+- Approve Offer ⇒ (option) δημιουργία ScheduledMaintenance/WorkOrder και σύνδεση με Project.
+- Completion Milestone ⇒ (option) ενημέρωση Project status και δημιουργία ειδοποίησης.
+
+### Acceptance Criteria
+- Projects list/detail με πλήρη CRUD και inline feedback (loading/toasts/errors).
+- Offers list ανά Project με approve action που κλειδώνει άλλες προσφορές.
+- Milestones με due/status και εμφανές progress.
+- Role guards: μόνο Admin/Manager τροποποιούν∙ vendors βλέπουν/υποβάλλουν Offers όπου επιτρέπεται.
+- Public kiosk endpoints/σελίδα εμφανίζει μόνο ασφαλή πεδία εγκεκριμένων/σε εξέλιξη έργων.
+
+### Testing
+- Unit/integration tests για Projects/RFQs/Offers/Milestones (CRUD, permissions, approve flow).
+- Tenant context tests (`schema_context('demo')`).
+- Public endpoints parity tests (μόνο safe fields).
+
+### Παρατηρήσεις Υλοποίησης
+- Χρήση React Query keys ανά οντότητα: ['projects'], ['projects', id], ['projects', id, 'offers']...
+- ConfirmDialog/toasts σε destructive/approve actions.
+- BackButton παντού για συνέπεια UX.
+
 ### Glossary
 - RFQ: Αίτημα Προσφοράς
 - Offer: Προσφορά προμηθευτή

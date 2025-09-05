@@ -8,6 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Award, Filter } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useToast } from '@/hooks/use-toast';
+import { BackButton } from '@/components/ui/BackButton';
 
 interface Offer {
   id: number;
@@ -25,6 +28,10 @@ export default function OffersListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string>('');
+  const { toast } = useToast();
+  const [confirm, setConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null });
+  const [isApproving, setIsApproving] = useState(false);
+  const [refreshNonce, setRefreshNonce] = useState(0);
 
   useEffect(() => {
     const fetchOffers = async () => {
@@ -45,7 +52,7 @@ export default function OffersListPage() {
       }
     };
     fetchOffers();
-  }, [selectedBuilding, status]);
+  }, [selectedBuilding, status, refreshNonce]);
 
   return (
     <div className="space-y-6">
@@ -54,11 +61,14 @@ export default function OffersListPage() {
           <h1 className="text-2xl font-bold">Προσφορές</h1>
           <p className="text-muted-foreground">Λίστα προσφορών ανά κτίριο</p>
         </div>
-        <Button asChild>
-          <Link href="/projects/offers/new">
-            <Award className="w-4 h-4 mr-2" /> Νέα Προσφορά
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <BackButton href="/projects" />
+          <Button asChild>
+            <Link href="/projects/offers/new">
+              <Award className="w-4 h-4 mr-2" /> Νέα Προσφορά
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -95,10 +105,46 @@ export default function OffersListPage() {
                 <div>Υποβλήθηκε: {new Date(offer.submitted_date).toLocaleDateString()}</div>
                 <div className="line-clamp-2 text-muted-foreground">{offer.description}</div>
               </div>
+              <div className="pt-3 flex items-center gap-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/projects/offers/${offer.id}/edit`}>
+                    Επεξεργασία
+                  </Link>
+                </Button>
+                {offer.status !== 'accepted' && (
+                  <Button size="sm" variant="secondary" onClick={() => setConfirm({ open: true, id: offer.id })}>
+                    Έγκριση
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <ConfirmDialog
+        open={confirm.open}
+        onOpenChange={(open) => setConfirm((s) => ({ ...s, open }))}
+        title="Έγκριση Προσφοράς"
+        description="Θέλετε να εγκρίνετε αυτή την προσφορά; Οι υπόλοιπες θα απορριφθούν."
+        confirmText="Έγκριση"
+        confirmVariant="secondary"
+        isConfirmLoading={isApproving}
+        onConfirm={async () => {
+          if (!confirm.id) return;
+          try {
+            setIsApproving(true);
+            await makeRequestWithRetry({ method: 'post', url: `/projects/offers/${confirm.id}/approve/` });
+            toast({ title: 'Επιτυχία', description: 'Η προσφορά εγκρίθηκε.' });
+            setRefreshNonce((n) => n + 1);
+          } catch (e: any) {
+            toast({ title: 'Σφάλμα', description: e?.message ?? 'Αποτυχία έγκρισης' });
+          } finally {
+            setIsApproving(false);
+            setConfirm({ open: false, id: null });
+          }
+        }}
+      />
     </div>
   );
 }

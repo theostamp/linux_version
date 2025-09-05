@@ -106,8 +106,8 @@ if DEBUG:
     INSTALLED_APPS += debug_apps
     
     MIDDLEWARE = [
-        'core.middleware.CustomTenantMiddleware',
         'corsheaders.middleware.CorsMiddleware',
+        'core.middleware.CustomTenantMiddleware',
         'django.middleware.security.SecurityMiddleware',
         'django.contrib.sessions.middleware.SessionMiddleware',
         'django.middleware.common.CommonMiddleware',
@@ -123,8 +123,8 @@ if DEBUG:
     
 else:
     MIDDLEWARE = [
-        'core.middleware.CustomTenantMiddleware',
         'corsheaders.middleware.CorsMiddleware',
+        'core.middleware.CustomTenantMiddleware',
         'django.middleware.security.SecurityMiddleware',
         'django.contrib.sessions.middleware.SessionMiddleware',
         'django.middleware.common.CommonMiddleware',
@@ -291,11 +291,13 @@ CORS_ALLOW_CREDENTIALS = True     # για cookies / JWT
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://127.0.0.1:8080",
+    "http://demo.localhost:8080",
     "http://top.localhost:8080",  # Προσθήκη του συγκεκριμένου subdomain
     "http://tap.localhost:8080",  # Προσθήκη του tap subdomain
     # ✅ Next.js default dev port
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://demo.localhost:3000",
     "http://top.localhost:3000",
     "http://tap.localhost:3000",
 ]  # τα «σκέτα» origins
@@ -328,7 +330,9 @@ CORS_ALLOW_METHODS   = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
 _raw_csrf = get_list_env(
     "CSRF_ORIGINS",
     # ✅ Cover common dev hosts and ports by default
-    "localhost:8080,localhost:3000,127.0.0.1:8080,127.0.0.1:3000,top.localhost:8080,tap.localhost:8080,top.localhost:3000,tap.localhost:3000"
+    "localhost:8080,localhost:3000,127.0.0.1:8080,127.0.0.1:3000,"
+    "demo.localhost:8080,demo.localhost:3000,"
+    "top.localhost:8080,tap.localhost:8080,top.localhost:3000,tap.localhost:3000"
 )
 CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in _raw_csrf] + [f"https://{h}" for h in _raw_csrf]
 

@@ -17,7 +17,10 @@ export function useBuildingEvents(buildingIdParam?: number) {
   useEffect(() => {
     const buildingId = buildingIdParam ?? getActiveBuildingId();
     const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const host = typeof window !== 'undefined' ? window.location.host : 'localhost:8000';
+    // Always target backend websocket port on same tenant (demo.localhost:8000)
+    const host = typeof window !== 'undefined'
+      ? `${window.location.hostname}:8000`
+      : 'localhost:8000';
     // Connect with room_name = numeric building id to match server group "chat_{id}"
     const wsUrl = `${protocol}://${host}/ws/chat/${buildingId}/`;
     const ws = new WebSocket(wsUrl);

@@ -178,4 +178,59 @@ export default function KioskPage() {
       </div>
     </div>
   );
-} 
+}
+
+'use client';
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { fetchPublicProjects, type PublicProject } from '@/lib/apiPublic';
+
+export function PublicProjectsCard({ buildingId = 1 }: { buildingId?: number }) {
+  const [projects, setProjects] = useState<PublicProject[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const run = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchPublicProjects(buildingId);
+        setProjects(data);
+      } catch (e: any) {
+        setError(e?.message ?? 'Αποτυχία φόρτωσης έργων');
+      } finally {
+        setLoading(false);
+      }
+    };
+    run();
+  }, [buildingId]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Έργα (Δημόσια)</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading && <div className="text-sm">Φόρτωση...</div>}
+        {error && <div className="text-sm text-red-600">{error}</div>}
+        {!loading && projects.length === 0 && (
+          <div className="text-sm text-muted-foreground">Δεν υπάρχουν έργα προς εμφάνιση.</div>
+        )}
+        <div className="grid gap-3">
+          {projects.map((p) => (
+            <div key={p.id} className="flex items-center justify-between border rounded p-3">
+              <div className="text-sm">
+                <div className="font-medium">{p.title}</div>
+                <div className="text-muted-foreground">{p.status}</div>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {p.start_date ? new Date(p.start_date).toLocaleDateString() : ''}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

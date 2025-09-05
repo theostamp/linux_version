@@ -71,3 +71,21 @@ export async function fetchPublicMaintenanceCounters(building: number): Promise<
   const resp = await apiPublic.get(url);
   return resp.data;
 }
+
+// ---------------------
+// Public Projects API
+// ---------------------
+export type PublicProject = {
+  id: number;
+  title: string;
+  status: 'awarded' | 'in_progress';
+  start_date?: string | null;
+  end_date?: string | null;
+};
+
+export async function fetchPublicProjects(building: number): Promise<PublicProject[]> {
+  const search = new URLSearchParams({ building: String(building) });
+  const url = `/projects/public/approved-in-progress/?${search.toString()}`;
+  const resp = await apiPublic.get(url);
+  return Array.isArray(resp.data) ? resp.data : resp.data?.results ?? [];
+}

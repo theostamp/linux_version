@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, ArrowLeft } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { fetchServiceReceipts, type ServiceReceipt, deleteServiceReceipt } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useRouter } from 'next/navigation';
@@ -14,6 +14,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRole } from '@/lib/auth';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
+import { BackButton } from '@/components/ui/BackButton';
 
 export default function ReceiptsPage() {
   const { selectedBuilding, currentBuilding } = useBuilding();
@@ -37,11 +38,7 @@ export default function ReceiptsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Αποδείξεις Υπηρεσιών</h1>
           <p className="text-muted-foreground">Τιμολόγια/αποδείξεις συνεργείων</p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/maintenance">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Πίσω
-          </Link>
-        </Button>
+        <BackButton href="/maintenance" />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

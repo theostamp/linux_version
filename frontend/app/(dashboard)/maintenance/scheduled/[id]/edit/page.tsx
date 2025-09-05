@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/select';
 import { fetchScheduledMaintenance, updateScheduledMaintenance, deleteScheduledMaintenance, type ScheduledMaintenance } from '@/lib/api';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { BackButton } from '@/components/ui/BackButton';
 
 export default function EditScheduledMaintenancePage() {
   const params = useParams();
@@ -73,9 +74,7 @@ export default function EditScheduledMaintenancePage() {
     <div className="space-y-6 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Επεξεργασία Προγραμματισμένου Έργου</h1>
-        <Button asChild variant="outline">
-          <Link href={`/maintenance/scheduled/${id}`}>Πίσω</Link>
-        </Button>
+        <BackButton href={`/maintenance/scheduled/${id}`} />
       </div>
 
       <Card>

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft } from 'lucide-react';
+import { BackButton } from '@/components/ui/BackButton';
 import { createServiceReceipt, fetchContractors, type Contractor } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -71,11 +71,7 @@ export default function NewReceiptPage() {
           <h1 className="text-3xl font-bold tracking-tight">Νέα Απόδειξη Υπηρεσίας</h1>
           <p className="text-muted-foreground">Καταχώριση απόδειξης/τιμολογίου συνεργείου</p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/maintenance/receipts">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Πίσω στη λίστα
-          </Link>
-        </Button>
+        <BackButton href="/maintenance/receipts" />
       </div>
 
       <Card>
