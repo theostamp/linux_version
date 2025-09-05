@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { BackButton } from '@/components/ui/BackButton';
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchScheduledMaintenances, type ScheduledMaintenance, deleteScheduledMaintenance } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -52,11 +52,13 @@ function StatusBadge({ status }: { status: Status }) {
   );
 }
 
-export default function ScheduledMaintenancePage({ searchParams }: { searchParams?: Promise<{ priority?: string }> | { priority?: string } }) {
+export default function ScheduledMaintenancePage({ searchParams }: { searchParams?: Promise<{ priority?: string; highlight?: string }> | { priority?: string; highlight?: string } }) {
   // Next.js 15: searchParams may be a Promise; unwrap with React.use when needed
   // @ts-expect-error next 15 searchParams can be promise-like
-  const sp = (typeof (searchParams as any)?.then === 'function' ? React.use(searchParams as Promise<{ priority?: string }>) : (searchParams as { priority?: string } | undefined));
+  const sp = (typeof (searchParams as any)?.then === 'function' ? React.use(searchParams as Promise<{ priority?: string; highlight?: string }>) : (searchParams as { priority?: string; highlight?: string } | undefined));
   const priorityFilter = (sp?.priority || '').toLowerCase() as Priority | '';
+  const highlightParam = sp?.highlight ? parseInt(String(sp.highlight), 10) : NaN;
+  const [highlightId, setHighlightId] = useState<number | null>(Number.isFinite(highlightParam) ? highlightParam : null);
   const { selectedBuilding, currentBuilding } = useBuilding();
   const buildingId = selectedBuilding?.id || currentBuilding?.id;
 
@@ -76,6 +78,16 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
     if (!priorityFilter) return items;
     return items.filter((i) => i.priority === priorityFilter);
   }, [items, priorityFilter]);
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const el = document.getElementById(`scheduled-item-${highlightId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const timeout = setTimeout(() => setHighlightId(null), 4000);
+      return () => clearTimeout(timeout);
+    }
+  }, [highlightId, filtered]);
 
   return (
     <div className="space-y-6">
@@ -101,7 +113,11 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
           <div className="col-span-full text-sm text-muted-foreground">Δεν βρέθηκαν έργα.</div>
         )}
         {!isLoading && filtered.map((item) => (
-          <Card key={item.id}>
+          <Card
+            key={item.id}
+            id={`scheduled-item-${item.id}`}
+            className={item.id && highlightId === item.id ? 'ring-2 ring-amber-400 bg-amber-50/40 transition-colors' : ''}
+          >
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
               <div>
                 <CardTitle className="text-base">{item.title}</CardTitle>

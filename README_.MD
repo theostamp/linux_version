@@ -526,7 +526,7 @@ git push origin v2.1.0
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "various fixes 2"
+git commit -m "various fixes 3"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
