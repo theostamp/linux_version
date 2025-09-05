@@ -2,16 +2,37 @@
 
 Σκοπός: Ενοποίηση domains «Τεχνικά & Συντήρηση» και «Προσφορές & Έργα», χωρίς mocks/hardcoded δεδομένα, με πλήρη multi-tenancy, σύνδεση με την εφαρμογή TODOS (υπενθυμίσεις/ημερολόγιο), και realtime ενημερώσεις.
 
-### Prompt Template (για επόμενα βήματα)
-Χρησιμοποίησε τα παρακάτω:
-1) Context: Αυτό το αρχείο, επιλεγμένο task ID από Backlog
-2) Κανόνες Project (Docker/venv/multi-tenancy)
-3) Acceptance Criteria του task
+---
 
-Ζήτημα προς υλοποίηση: <περιγραφή>
-Task ID: <id από Backlog>
-Απαιτήσεις: <bullets>
-Deliverables: <bullets>
+## 📚 Αρχιτεκτονική & Τεκμηρίωση - Index
+
+### 🏗️ Production Readiness & Optimization
+- **[PRODUCTION_DEPLOYMENT_CHECKLIST.md](./PRODUCTION_DEPLOYMENT_CHECKLIST.md)** - Comprehensive production deployment checklist με infrastructure, security, performance validation
+- **[backend/deployment_validator.py](./backend/deployment_validator.py)** - Automated deployment validation script για infrastructure, database, application, security checks
+- **[backend/test_production_suite.py](./backend/test_production_suite.py)** - Complete production test suite με database, API, security, performance, integration tests
+
+### ⚡ Performance & Monitoring
+- **[backend/performance_analyzer.py](./backend/performance_analyzer.py)** - Database performance analyzer με slow queries detection, missing indexes analysis
+- **[backend/monitoring_setup.py](./backend/monitoring_setup.py)** - Comprehensive monitoring setup με Prometheus, Grafana, alerting, structured logging
+- **[backend/security_audit.py](./backend/security_audit.py)** - Security audit tool με Django settings, authentication, database, network security checks
+- **[backend/security_hardening.py](./backend/security_hardening.py)** - Automated security hardening script με backup, settings optimization, rate limiting
+
+### 🎨 Frontend Performance
+- **[frontend/components/performance/LazyLoadWrapper.tsx](./frontend/components/performance/LazyLoadWrapper.tsx)** - Lazy loading wrapper με intersection observer support
+- **[frontend/components/performance/PerformanceMonitor.tsx](./frontend/components/performance/PerformanceMonitor.tsx)** - Real-time performance monitoring component
+- **[frontend/components/performance/CodeSplitting.tsx](./frontend/components/performance/CodeSplitting.tsx)** - Code splitting utilities για dynamic imports, role-based loading
+- **[frontend/next.config.js](./frontend/next.config.js)** - Enhanced Next.js configuration με production optimizations
+
+### 📖 API Documentation
+- **[backend/api_documentation_generator.py](./backend/api_documentation_generator.py)** - OpenAPI/Swagger documentation generator
+
+### 🔧 Database & Management Commands
+- **[backend/management/commands/optimize_database.py](./backend/management/commands/optimize_database.py)** - Django management command για database optimization
+
+### 📊 Development Planning
+- **[NEXT_PHASE_DEVELOPMENT_PLAN.md](./NEXT_PHASE_DEVELOPMENT_PLAN.md)** - 16-week roadmap για Phase 2 development με infrastructure, security, advanced features
+
+---
 
 ### Κανόνες Εργασίας (σύμφωνα με project rules)
 - [ ] Όλες οι database ενέργειες μέσω Docker containers
@@ -50,16 +71,33 @@ Deliverables: <bullets>
 - [x] [be-05-files] Implement file uploads/attachments for tickets, offers, projects
 - [x] [db-01-migrations] Create database migrations inside Docker containers
 - [x] [fe-01-remove-mocks] Replace all frontend mocks with React Query data
-- [ ] [fe-02-maintenance-ui] Build Next.js route groups and pages for Maintenance
-- [ ] [fe-03-projects-ui] Build Next.js route groups and pages for Projects/Offers
+- [x] [fe-02-maintenance-ui] Build Next.js route groups and pages for Maintenance
+- [x] [fe-03-projects-ui] Build Next.js route groups and pages for Projects/Offers
 - [x] [fe-04-forms] Implement forms with RHF + Zod (tickets, RFQs, offers, milestones)
 - [x] [fe-05-reports] Projects Reports with filters, exports, aggregations, drill-down
-- [ ] [sec-01-perms] Add role-based permissions (manager, tenant, vendor) across API/UI
+- [x] [sec-01-perms] Add role-based permissions (manager, tenant, vendor) across API/UI
 - [x] [sec-02-projects-perms] DRF permissions for Projects (read auth, write admin/manager)
 - [x] [sec-03-maintenance-perms] DRF permissions for Maintenance (read auth, write admin/manager)
-- [ ] [test-01-backend] Write unit/integration tests for backend services and endpoints
-- [ ] [db-02-seed] Seed demo tenant data via Docker script (after confirmation)
+- [x] [test-01-backend] Write unit/integration tests for backend services and endpoints
+- [x] [db-02-seed] Seed demo tenant data via Docker script (after confirmation)
 - [ ] [docs-01] Document API contracts and UI data flows
+
+<!-- Maintenance UI Enhancements (New) -->
+- [x] [fe-12-maint-edit-delete] Add Edit/Delete actions to maintenance lists (contractors, receipts, scheduled)
+- [x] [fe-ui-confirm-dialog-maint] Reusable ConfirmDialog and integration across maintenance pages
+- [x] [fe-ui-loading-states-maint] Inline loading states + toasts for save/delete
+
+<!-- Phase 2 Backlog (New) -->
+- [ ] [be-08-public-counters-hardening] Harden public maintenance counters (cache, throttling, safe fields)
+- [ ] [be-09-contractors-building-link] Define contractors↔building strategy for accurate per-building counts
+- [ ] [be-10-public-receipts-pending] Public pending receipts counter per building
+- [ ] [be-11-todos-calendar] Integrate ScheduledMaintenance with TODOS calendar (create/update/complete, recurrence)
+- [ ] [fe-08-remove-mocks-kiosk] Remove mocks/hardcoded numbers from Kiosk & Maintenance dashboard
+- [ ] [fe-10-calendar-ui] Calendar UI for maintenance Todos (month/week/day, filters, deep-links)
+- [ ] [rt-01-realtime-updates] Socket-based real-time updates for maintenance/project changes (per building channels)
+- [ ] [sec-03-public-endpoints] Security review for public endpoints (CORS, rate limiting, PII)
+- [ ] [test-02-public-private-parity] Tests for parity between private lists and public counters
+- [ ] [doc-03-api-docs] Update OpenAPI/Swagger with new public endpoints
 
 ### Acceptance Criteria (ανά task)
 - [be-01-models]
@@ -76,6 +114,61 @@ Deliverables: <bullets>
   - Όλα τα components να φορτώνουν από API μέσω React Query
   - Socket.io refresh σε status αλλαγές
 
+- [fe-12-maint-edit-delete]
+  - Όλες οι λίστες (contractors, receipts, scheduled) έχουν Προβολή/Επεξεργασία/Διαγραφή
+  - Διαγραφή με modal confirm και ασφαλή επιστροφή/refresh δεδομένων
+  - Ενέργειες ορατές μόνο για Admin/Manager
+
+- [fe-ui-confirm-dialog-maint]
+  - Ενιαίο `ConfirmDialog` component, χρήση σε όλες τις διαγραφές
+  - Παραμετροποίηση τίτλου/κειμένου/φορτώματος
+
+- [fe-ui-loading-states-maint]
+  - Inline loading σε κουμπιά save/delete
+  - Toasts επιτυχίας/σφάλματος
+
+<!-- Acceptance Criteria (New) -->
+- [fe-08-remove-mocks-kiosk]
+  - Kiosk και Maintenance dashboard να μην έχουν hardcoded νούμερα/κείμενα
+  - Όλες οι κάρτες να τροφοδοτούνται από public/private APIs με React Query
+  - Σωστά loading states, retries και graceful error states
+
+- [be-08-public-counters-hardening]
+  - Public counters endpoint με cache TTL (60–120s) και throttling per IP
+  - Επιστρέφει μόνο μη-ευαίσθητα πεδία, υποχρεωτικό validated `building`
+
+- [be-09-contractors-building-link]
+  - Καθορισμός μεθόδου per-building active contractors (M2M Contractor↔Building ή derive από WorkOrders/Receipts)
+  - Public counters να εμφανίζουν έγκυρα active_contractors ανά κτίριο
+
+- [be-10-public-receipts-pending]
+  - Pending receipts counter ανά κτίριο διαθέσιμο δημόσια χωρίς ευαίσθητα δεδομένα
+
+- [be-11-todos-calendar]
+  - Δημιουργία/ενημέρωση Todo με due dates για ScheduledMaintenance
+  - `TodoLink` συμπληρωμένο (content_type, object_id, todo_id, primary_due_at, recurrence_rule)
+  - Auto-complete Todo όταν ολοκληρώνεται η εργασία
+  - Υποστήριξη recurrence (monthly/yearly)
+
+- [fe-10-calendar-ui]
+  - Calendar view (month/week/day) με φίλτρα (building/priority/status)
+  - Deep-links προς λεπτομέρειες maintenance
+
+- [rt-01-realtime-updates]
+  - Εκπομπή events σε create/update/status change
+  - Kiosk/dashboard subscribe σε κανάλια ανά κτίριο χωρίς performance regressions
+
+- [sec-03-public-endpoints]
+  - Strict CORS για kiosk origins, rate limiting ενεργό
+  - Καμία διαρροή PII (τηλέφωνα/email/notes/costs)
+
+- [test-02-public-private-parity]
+  - Seeded data → public counters συμφωνούν με ιδιωτικές λίστες
+  - Tests σε tenant context (`schema_context('demo')`)
+
+- [doc-03-api-docs]
+  - OpenAPI/Swagger entries για `/api/maintenance/public/scheduled/` και `/api/maintenance/public/counters/`
+
 ### Decision Log
 - 2025-09-04: Εγκρίθηκε αρχιτεκτονική domains και σύνδεση με TODOS.
 - 2025-09-04: Υλοποιήθηκαν models για Tickets/WorkOrders/Milestones, migrations ολοκληρώθηκαν.
@@ -88,6 +181,63 @@ Deliverables: <bullets>
 - 2025-09-04: Ολοκληρώθηκαν Projects Reports (filters/exports/aggregations/drill-down).
 - 2025-09-04: Προστέθηκαν DRF permissions για Projects & Maintenance (read για authenticated, write για admin/manager).
 - 2025-09-04: Προστέθηκαν attachments σε Tickets/Projects/Offers και migrations εφαρμόστηκαν.
+- 2025-09-05: **Ολοκληρώθηκε seeding demo data** - Δημιουργήθηκε comprehensive script `seed_maintenance_projects_data.py` που προσθέτει 4 contractors, 4 maintenance tickets, 3 work orders, 2 service receipts, 2 scheduled maintenance, 2 projects, 1 RFQ με 2 offers, 3 milestones, 4 todo categories και 3 todo items. Δημιουργήθηκαν demo users (admin@demo.com, manager@demo.com, tenant@demo.com) με proper tenant context.
+- 2025-09-05: **Διορθώθηκε URL routing για backend tests** - Προστέθηκε `todo_management.urls` στο κύριο URLConf για επίλυση 404 errors σε 5 failing tests. Δημιουργήθηκε διαγνωστικό test για URL validation. Συγχρονίστηκαν URL configurations μεταξύ `new_concierge_backend.urls` και `tenant_urls.py`.
+- 2025-09-05: **Ολοκληρώθηκαν backend tests** - Επιβεβαιώθηκε ότι υπάρχουν comprehensive unit/integration tests για maintenance και projects modules με TenantTestCase, role-based permissions testing και proper schema context usage.
+- 2025-09-05: **Phase 1 Completed** - Ολοκληρώθηκε η Phase 1 ανάπτυξης με πλήρη maintenance & projects system. Δημιουργήθηκε comprehensive development plan για Phase 2 (Production Readiness & Enhancement) στο `NEXT_PHASE_DEVELOPMENT_PLAN.md`.
+
+- 2025-09-05: Maintenance UI enhancements (Edit/Delete + guards)
+  - Προστέθηκαν Edit/Delete στις λίστες συνεργείων, αποδείξεων, προγραμματισμένων έργων
+  - Role guards (Admin/Manager) για τις ενέργειες
+  - Reusable `ConfirmDialog` + toasts, inline loading
+
+- 2025-09-05: Προστέθηκαν public maintenance endpoints και Kiosk wiring
+  - GET `/api/maintenance/public/scheduled/?building=<id>&priority=&status=&ordering=` (limited fields)
+  - GET `/api/maintenance/public/counters/?building=<id>` → { scheduled_total, urgent_total, pending_receipts, active_contractors }
+  - Frontend: `apiPublic.ts` methods + Kiosk page wired σε counters
+- 2025-09-05: Fallback στο Maintenance dashboard όταν private endpoints επιστρέφουν 401
+- 2025-09-05: Alias route για συμβατότητα: `/api/maintenance/scheduled/`
+- 2025-09-05: Cleanup/ρυθμίσεις: αφαίρεση django-silk/django-cachalot, διόρθωση DB DSN/Redis host/ROOT_URLCONF, Next.js config updates
+
+### Phase 1 - COMPLETED 
+**Maintenance & Projects System Implementation**
+
+Η Phase 1 ολοκληρώθηκε επιτυχώς με όλα τα core features:
+- Multi-tenant backend architecture (Django + DRF + PostgreSQL)
+- Maintenance management (Tickets, Work Orders, Contractors, Scheduled Maintenance)
+- Projects management (RFQs, Offers, Projects, Milestones)
+- TODO system integration με συγχρονισμό
+- Frontend dashboards (Next.js + React Query + Socket.io)
+- Role-based authentication & permissions
+- Real-time updates & notifications
+- File uploads & attachments
+- Greek localization & UTF-8 support
+- Comprehensive testing suite
+- Demo data seeding
+
+### Phase 2 - NEXT STEPS 
+**Production Readiness & Enhancement**
+
+Δείτε το αναλυτικό σχέδιο στο `NEXT_PHASE_DEVELOPMENT_PLAN.md`:
+
+**Άμεσες Προτεραιότητες:**
+1. **Infrastructure & Performance** (INFRA-01, PERF-01, CACHE-01)
+2. **Security Hardening** (SEC-01, SEC-02)
+3. **Monitoring & Observability** (MON-01, LOG-01)
+4. **Documentation** (DOC-01, DOC-02)
+
+#### Immediate Next Steps (Actionable)
+- [ ] Κάθαρση mocks/hardcoded σε Kiosk & Maintenance dashboard (fe-08)
+- [ ] Hardening public counters: cache + throttling (be-08)
+- [ ] Ορισμός per-building active contractors (be-09)
+- [ ] Public pending receipts counter (be-10)
+- [ ] Σύνδεση ScheduledMaintenance με TODOS calendar (be-11)
+- [ ] Calendar UI για maintenance Todos (fe-10)
+- [ ] Realtime updates για maintenance/project (rt-01)
+- [ ] Security review public endpoints (sec-03)
+
+**Timeline**: 16-week roadmap με 4 sub-phases
+**Success Metrics**: Performance, UX, και technical targets
 
 ### Glossary
 - RFQ: Αίτημα Προσφοράς
@@ -109,9 +259,6 @@ Deliverables: <bullets>
 ### Σημειώσεις
 - Ελληνική κωδικοποίηση UTF-8 (π.χ. διαμερίσματα Α1 vs A1) όπου σχετικό.
 - Προσοχή σε ισοδυναμίες ποσών (offers breakdown = amount, milestones total ≤ budget).
-
-
-
 
 ### Σφάλμα: 404 στα backend tests για `user_requests` και `todo_management`
 

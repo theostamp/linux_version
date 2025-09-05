@@ -1,4 +1,3 @@
-
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
@@ -10,7 +9,7 @@ from .serializers import ProjectSerializer, OfferSerializer, ContractSerializer,
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
-    queryset = Project.objects.all()
+    queryset = Project.objects.select_related('building', 'created_by').prefetch_related('milestones', 'offers').all()
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated, ProjectPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -24,7 +23,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
 
 class OfferViewSet(viewsets.ModelViewSet):
-    queryset = Offer.objects.select_related('project').all()
+    queryset = Offer.objects.select_related('project', 'project__building', 'contractor').all()
     serializer_class = OfferSerializer
     permission_classes = [IsAuthenticated, ProjectPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -35,7 +34,7 @@ class OfferViewSet(viewsets.ModelViewSet):
 
 
 class ContractViewSet(viewsets.ModelViewSet):
-    queryset = Contract.objects.select_related('project', 'contractor').all()
+    queryset = Contract.objects.select_related('project', 'project__building', 'contractor').all()
     serializer_class = ContractSerializer
     permission_classes = [IsAuthenticated, ProjectPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -46,7 +45,7 @@ class ContractViewSet(viewsets.ModelViewSet):
 
 
 class MilestoneViewSet(viewsets.ModelViewSet):
-    queryset = Milestone.objects.select_related('project').all()
+    queryset = Milestone.objects.select_related('project', 'project__building').all()
     serializer_class = MilestoneSerializer
     permission_classes = [IsAuthenticated, ProjectPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]

@@ -7,6 +7,7 @@ import KioskMode from '@/components/KioskMode';
 import KioskSidebar from '@/components/KioskSidebar';
 import FullPageSpinner from '@/components/FullPageSpinner';
 import { fetchAllBuildingsPublic } from '@/lib/api';
+import { fetchPublicMaintenanceCounters, fetchPublicScheduledMaintenance } from '@/lib/apiPublic';
 import { useSearchParams } from 'next/navigation';
 
 export default function KioskPage() {
@@ -148,12 +149,20 @@ export default function KioskPage() {
           advertisingBanners={data?.advertising_banners}
           generalInfo={data?.general_info}
           financialInfo={data?.financial_info}
-          maintenanceInfo={{
-            active_contractors: 8,
-            pending_receipts: 5,
-            scheduled_maintenance: 3,
-            urgent_maintenance: 1,
-          }}
+          maintenanceInfo={await (async () => {
+            try {
+              const b = data?.building_info?.id ?? selectedBuildingId ?? 1;
+              const counters = await fetchPublicMaintenanceCounters(b);
+              return {
+                active_contractors: counters.active_contractors,
+                pending_receipts: counters.pending_receipts,
+                scheduled_maintenance: counters.scheduled_total,
+                urgent_maintenance: counters.urgent_total,
+              };
+            } catch {
+              return { active_contractors: 0, pending_receipts: 0, scheduled_maintenance: 0, urgent_maintenance: 0 };
+            }
+          })()}
           projectsInfo={{
             active_projects: 3,
             pending_offers: 5,

@@ -33,3 +33,41 @@ export const fetchPublicInfo = async (buildingId: number) => {
     throw error;
   }
 };
+
+// ---------------------
+// Public Maintenance API
+// ---------------------
+export type PublicScheduledMaintenance = {
+  id: number;
+  title: string;
+  scheduled_date?: string | null;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  building_name?: string;
+  contractor_name?: string | null;
+};
+
+export async function fetchPublicScheduledMaintenance(params: { building: number; priority?: string; status?: string; ordering?: string } ): Promise<PublicScheduledMaintenance[]> {
+  const search = new URLSearchParams();
+  search.append('building', String(params.building));
+  if (params.priority) search.append('priority', params.priority);
+  if (params.status) search.append('status', params.status);
+  if (params.ordering) search.append('ordering', params.ordering);
+
+  const url = `/maintenance/public/scheduled/${search.toString() ? `?${search.toString()}` : ''}`;
+  const resp = await apiPublic.get(url);
+  const data = resp.data;
+  return Array.isArray(data) ? data : data.results ?? [];
+}
+
+export async function fetchPublicMaintenanceCounters(building: number): Promise<{
+  scheduled_total: number;
+  urgent_total: number;
+  pending_receipts: number;
+  active_contractors: number;
+}> {
+  const search = new URLSearchParams({ building: String(building) });
+  const url = `/maintenance/public/counters/?${search.toString()}`;
+  const resp = await apiPublic.get(url);
+  return resp.data;
+}

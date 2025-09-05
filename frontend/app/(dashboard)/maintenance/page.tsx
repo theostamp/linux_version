@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiGet, extractCount, getActiveBuildingId } from '@/lib/api';
+import { apiGet, extractCount, extractResults, getActiveBuildingId } from '@/lib/api';
+import { fetchPublicMaintenanceCounters } from '@/lib/apiPublic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -53,16 +54,35 @@ export default function MaintenanceDashboard() {
     queryFn: () => apiGet(`/api/maintenance/scheduled-maintenance/`, { building: buildingId, priority: 'urgent' }),
   });
 
+  // Public counters fallback when private endpoints return 401/are unavailable
+  const publicCountersQ = useQuery({
+    queryKey: ['maintenance-public-counters', { building: buildingId }],
+    queryFn: () => fetchPublicMaintenanceCounters(buildingId ?? 1),
+    enabled: Boolean(contractorsQ.isError || receiptsQ.isError || scheduledQ.isError || urgentScheduledQ.isError),
+    staleTime: 30_000,
+  });
+
   const loading = contractorsQ.isLoading || receiptsQ.isLoading || scheduledQ.isLoading || urgentScheduledQ.isLoading;
-  const stats: MaintenanceStats = {
-    total_contractors: extractCount(contractorsQ.data ?? []),
-    active_contractors: extractCount(contractorsQ.data ?? []),
+  const contractorRows = extractResults<any>(contractorsQ.data ?? []);
+  const baseStats: MaintenanceStats = {
+    total_contractors: contractorRows.length,
+    active_contractors: contractorRows.filter((c: any) => c.status === 'active' || c.is_active === true).length,
     pending_receipts: extractCount(receiptsQ.data ?? []),
     scheduled_maintenance: extractCount(scheduledQ.data ?? []),
     urgent_maintenance: extractCount(urgentScheduledQ.data ?? []),
     completed_maintenance: 0,
     total_spent: 0,
   };
+
+  const stats: MaintenanceStats = publicCountersQ.data ? {
+    total_contractors: publicCountersQ.data.active_contractors, // public API doesn't expose total; mirror active
+    active_contractors: publicCountersQ.data.active_contractors,
+    pending_receipts: publicCountersQ.data.pending_receipts,
+    scheduled_maintenance: publicCountersQ.data.scheduled_total,
+    urgent_maintenance: publicCountersQ.data.urgent_total,
+    completed_maintenance: 0,
+    total_spent: 0,
+  } : baseStats;
 
   const StatCard = ({ 
     title, 

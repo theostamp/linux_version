@@ -84,40 +84,91 @@ TENANT_APPS = [
 
 INSTALLED_APPS = SHARED_APPS + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
+# Performance & Monitoring
+if DEBUG:
+    # Only add debug tools if they're available
+    debug_apps = []
+    
+    try:
+        import debug_toolbar
+        debug_apps.append('debug_toolbar')
+    except ImportError:
+        pass
+    
+    try:
+        import django_extensions
+        debug_apps.append('django_extensions')
+    except ImportError:
+        pass
+    
+    
+    
+    INSTALLED_APPS += debug_apps
+    
+    MIDDLEWARE = [
+        'core.middleware.CustomTenantMiddleware',
+        'corsheaders.middleware.CorsMiddleware',
+        'django.middleware.security.SecurityMiddleware',
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'financial.audit.AuditMiddleware',  # Audit logging για οικονομικές κινήσεις
+    ]
+    
+    if 'debug_toolbar' in INSTALLED_APPS:
+        MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+    
+else:
+    MIDDLEWARE = [
+        'core.middleware.CustomTenantMiddleware',
+        'corsheaders.middleware.CorsMiddleware',
+        'django.middleware.security.SecurityMiddleware',
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'financial.audit.AuditMiddleware',  # Audit logging για οικονομικές κινήσεις
+    ]
 
-
-
-
-# ----------------------------------------
-# 🧩 Middleware
-# ----------------------------------------
-MIDDLEWARE = [
-    'core.middleware.CustomTenantMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'financial.audit.AuditMiddleware',  # Audit logging για οικονομικές κινήσεις
+# Debug Toolbar Configuration
+INTERNAL_IPS = [
+    '127.0.0.1',
+    'localhost',
 ]
 
-# ----------------------------------------
-# 🌐 URL / WSGI / ASGI
-# ----------------------------------------
-ROOT_URLCONF = 'new_concierge_backend.urls'
-WSGI_APPLICATION = 'new_concierge_backend.wsgi.application'
-ASGI_APPLICATION = 'new_concierge_backend.asgi.application'
+ 
 
-# Django Tenants URL configuration
-PUBLIC_SCHEMA_URLCONF = 'new_concierge_backend.public_urls'
-TENANT_APPS_URLS = 'tenant_urls'
+ 
 
-# ----------------------------------------
-# 🗄️ Database
-# ----------------------------------------
+# Cache Configuration
+TENANT_SCHEMA_NAME = os.getenv('TENANT_SCHEMA_NAME', 'demo')
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f"redis://{os.getenv('REDIS_HOST', 'redis')}:{os.getenv('REDIS_PORT', '6379')}/1",
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+                'retry_on_timeout': True,
+            },
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+        },
+        'KEY_PREFIX': f"{TENANT_SCHEMA_NAME}_cache",
+        'TIMEOUT': 300,  # 5 minutes default
+    }
+}
+
+ 
+
+# Database Connection Pooling
 DATABASES = {
     'default': {
         'ENGINE': 'django_tenants.postgresql_backend',
@@ -126,6 +177,7 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD', os.getenv('POSTGRES_PASSWORD', 'postgres')),
         'HOST': os.getenv('DB_HOST', os.getenv('POSTGRES_HOST', 'localhost')),
         'PORT': os.getenv('DB_PORT', os.getenv('POSTGRES_PORT', '5432')),
+        'CONN_MAX_AGE': 600,  # 10 minutes
     }
 }
 
@@ -170,6 +222,13 @@ MEDIA_ROOT = Path(os.getenv('MEDIA_ROOT', BASE_DIR / 'media'))
 MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ----------------------------------------
+# 🌐 URL Configuration
+# ----------------------------------------
+# Tenant URLs and Public schema URLs
+ROOT_URLCONF = 'new_concierge_backend.urls'
+PUBLIC_SCHEMA_URLCONF = 'new_concierge_backend.public_urls'
 
 # ----------------------------------------
 # ⚙️ Templates
@@ -335,7 +394,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [(os.getenv('REDIS_HOST', 'redis'), int(os.getenv('REDIS_PORT', '6379')))],
         },
     },
 }
@@ -354,3 +413,8 @@ LOGGING = {
     },
 }
 
+# Prometheus Metrics (Production)
+if not DEBUG:
+    INSTALLED_APPS += ['django_prometheus']
+    MIDDLEWARE = ['django_prometheus.middleware.PrometheusBeforeMiddleware'] + MIDDLEWARE
+    MIDDLEWARE += ['django_prometheus.middleware.PrometheusAfterMiddleware']

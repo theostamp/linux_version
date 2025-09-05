@@ -33,7 +33,7 @@ from auto_fix_system_issues import run_auto_fix
 class SupplierViewSet(viewsets.ModelViewSet):
     """ViewSet για τη διαχείριση προμηθευτών"""
     
-    queryset = Supplier.objects.all()
+    queryset = Supplier.objects.select_related('building').all()
     serializer_class = SupplierSerializer
     permission_classes = [FinancialWritePermission]
     filter_backends = [filters.DjangoFilterBackend]
@@ -105,7 +105,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
 class ExpenseViewSet(viewsets.ModelViewSet):
     """ViewSet για τη διαχείριση δαπανών"""
     
-    queryset = Expense.objects.all()
+    queryset = Expense.objects.select_related('building', 'supplier').all()
     serializer_class = ExpenseSerializer
     permission_classes = [ExpensePermission]
     filter_backends = [filters.DjangoFilterBackend]
@@ -135,7 +135,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                 raise ValidationError(f"Σφάλμα στο upload αρχείου: {str(e)}")
         
         # Αυτόματη χρέωση διαμερισμάτων αν η δαπάνη είναι εκδοθείσα
-        # Σημείωση: Όλες οι δαπάνες θεωρούνται πλέον εκδομένες
+        # Σημείωση: Όλες οι δαπάνες θεωρούνται πλέον εκδοθείσες
         if True:  # expense.is_issued removed
             try:
                 from financial.services import CommonExpenseCalculator
@@ -316,7 +316,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def pending(self, request):
-        """Λήψη ανέκδοτων δαπανών - DEPRECATED: Όλες οι δαπάνες θεωρούνται εκδομένες"""
+        """Λήψη ανέκδοτων δαπανών - DEPRECATED: Όλες οι δαπάνες θεωρούνται εκδοθείσες"""
         # Για backwards compatibility, επιστρέφουμε άδεια λίστα
         return Response([])
     
@@ -330,7 +330,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Όλες οι δαπάνες θεωρούνται πλέον εκδομένες
+        # Όλες οι δαπάνες θεωρούνται πλέον εκδοθείσες
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
@@ -388,7 +388,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
 class TransactionViewSet(viewsets.ModelViewSet):
     """ViewSet για τη διαχείριση κινήσεων ταμείου"""
     
-    queryset = Transaction.objects.all()
+    queryset = Transaction.objects.select_related('building', 'apartment').all()
     serializer_class = TransactionSerializer
     permission_classes = [TransactionPermission]
     filter_backends = [filters.DjangoFilterBackend]
@@ -470,7 +470,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
 class PaymentViewSet(viewsets.ModelViewSet):
     """ViewSet για τη διαχείριση εισπράξεων"""
     
-    queryset = Payment.objects.all()
+    queryset = Payment.objects.select_related('apartment', 'apartment__building').all()
     serializer_class = PaymentSerializer
     permission_classes = [PaymentPermission]
     filter_backends = [filters.DjangoFilterBackend]
@@ -1850,7 +1850,7 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                 apartment.current_balance = total_due
                 apartment.save()
             
-            # Σημείωση: Οι δαπάνες θεωρούνται αυτόματα εκδομένες
+            # Σημείωση: Οι δαπάνες θεωρούνται αυτόματα εκδοθείσες
             # Δεν χρειάζεται πλέον μαρκάρισμα ως εκδοθείσες
             
             return Response({
@@ -2080,7 +2080,7 @@ class CommonExpenseViewSet(viewsets.ViewSet):
 class MeterReadingViewSet(viewsets.ModelViewSet):
     """ViewSet για τη διαχείριση μετρήσεων"""
     
-    queryset = MeterReading.objects.all()
+    queryset = MeterReading.objects.select_related('apartment', 'apartment__building').all()
     serializer_class = MeterReadingSerializer
     permission_classes = [FinancialWritePermission]
     filter_backends = [filters.DjangoFilterBackend]
@@ -2828,7 +2828,7 @@ def financial_overview(request):
 class FinancialReceiptViewSet(viewsets.ModelViewSet):
     """ViewSet για τη διαχείριση αποδείξεων εισπράξεων"""
     
-    queryset = FinancialReceipt.objects.all()
+    queryset = FinancialReceipt.objects.select_related('payment', 'payment__apartment', 'payment__apartment__building').all()
     serializer_class = FinancialReceiptSerializer
     permission_classes = [PaymentPermission]
     filter_backends = [filters.DjangoFilterBackend]

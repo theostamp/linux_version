@@ -2,13 +2,16 @@
 
 import Link from 'next/link';
 import React, { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchScheduledMaintenances, type ScheduledMaintenance } from '@/lib/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchScheduledMaintenances, type ScheduledMaintenance, deleteScheduledMaintenance } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, AlertTriangle, CheckCircle, Clock, Plus } from 'lucide-react';
+import { Calendar, AlertTriangle, CheckCircle, Clock, Plus, Trash2, Pencil } from 'lucide-react';
+import { useRole } from '@/lib/auth';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useToast } from '@/hooks/use-toast';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type Status = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
@@ -33,12 +36,13 @@ function PriorityBadge({ priority }: { priority: Priority }) {
 
 function StatusBadge({ status }: { status: Status }) {
   const map: Record<Status, { label: string; icon: React.ReactNode; classes: string }> = {
-    planned: { label: 'Προγραμματισμένο', icon: <Calendar className="w-3 h-3" />, classes: 'bg-blue-50 text-blue-700' },
+    scheduled: { label: 'Προγραμματισμένο', icon: <Calendar className="w-3 h-3" />, classes: 'bg-blue-50 text-blue-700' },
     in_progress: { label: 'Σε εξέλιξη', icon: <Clock className="w-3 h-3" />, classes: 'bg-yellow-50 text-yellow-700' },
     completed: { label: 'Ολοκληρώθηκε', icon: <CheckCircle className="w-3 h-3" />, classes: 'bg-green-50 text-green-700' },
-    on_hold: { label: 'Σε αναμονή', icon: <AlertTriangle className="w-3 h-3" />, classes: 'bg-orange-50 text-orange-700' },
+    cancelled: { label: 'Ακυρώθηκε', icon: <AlertTriangle className="w-3 h-3" />, classes: 'bg-gray-50 text-gray-700' },
   };
-  const { label, icon, classes } = map[status];
+  const fallback = { label: String(status), icon: null as React.ReactNode, classes: 'bg-neutral-50 text-neutral-700' };
+  const { label, icon, classes } = map[status] ?? fallback;
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded ${classes}`}>
       {icon}
@@ -61,6 +65,11 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
     enabled: true,
     staleTime: 30_000,
   });
+  const qc = useQueryClient();
+  const { isAdmin, isManager } = useRole();
+  const { toast } = useToast();
+  const [toDeleteId, setToDeleteId] = React.useState<number | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
 
   const filtered = useMemo(() => {
     if (!priorityFilter) return items;
@@ -109,15 +118,55 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
               <div>
                 <StatusBadge status={item.status as Status} />
               </div>
-              <div className="pt-2">
+              <div className="pt-2 flex gap-2">
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/maintenance/scheduled/${item.id}`}>Προβολή</Link>
                 </Button>
+                {(isAdmin || isManager) && (
+                  <>
+                    <Button asChild variant="secondary" size="sm">
+                      <Link href={`/maintenance/scheduled/${item.id}/edit`}>
+                        <Pencil className="w-3 h-3 mr-1" /> Επεξεργασία
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setToDeleteId(item.id)}
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" /> Διαγραφή
+                    </Button>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <ConfirmDialog
+        open={toDeleteId !== null}
+        onOpenChange={(open) => !open && setToDeleteId(null)}
+        title="Επιβεβαίωση Διαγραφής"
+        description="Θέλετε σίγουρα να διαγράψετε το έργο;"
+        confirmText="Διαγραφή"
+        confirmVariant="destructive"
+        isConfirmLoading={deleting}
+        onConfirm={async () => {
+          if (toDeleteId === null) return;
+          try {
+            setDeleting(true);
+            await deleteScheduledMaintenance(toDeleteId);
+            qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled'] });
+            toast({ title: 'Διαγράφηκε', description: 'Το έργο διαγράφηκε επιτυχώς.' });
+          } catch (e) {
+            toast({ title: 'Σφάλμα', description: 'Αποτυχία διαγραφής.', variant: 'destructive' as any });
+          } finally {
+            setDeleting(false);
+            setToDeleteId(null);
+          }
+        }}
+      />
     </div>
   );
 }

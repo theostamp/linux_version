@@ -6,11 +6,17 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.contrib import admin
+from health_check import HealthCheckView, ReadinessCheckView, LivenessCheckView
 
 # Tenant-specific URL configuration (automatically routed by django-tenants middleware)
 urlpatterns = [
     # Django Admin
     path('admin/', admin.site.urls),
+    
+    # Health checks (production monitoring)
+    path('health/', HealthCheckView.as_view(), name='health-check'),
+    path('ready/', ReadinessCheckView.as_view(), name='readiness-check'),
+    path('live/', LivenessCheckView.as_view(), name='liveness-check'),
     
     # Authentication & User endpoints
     path('api/users/', include('users.urls')),
@@ -59,6 +65,9 @@ urlpatterns = [
 
     # Projects & Offers
     path('api/projects/', include('projects.urls')),
+
+    # Todo management
+    path('api/todos/', include('todo_management.urls')),
 
     # Data migration
     path('api/data-migration/', include('data_migration.urls')),

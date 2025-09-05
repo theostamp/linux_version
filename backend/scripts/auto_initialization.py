@@ -18,8 +18,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings")
 django.setup()
 
-from django.db import connection
-from django.core.management import call_command
+from django.db import connection, connections
+from django.core.management import call_command, execute_from_command_line
 from django_tenants.utils import get_tenant_model, get_tenant_domain_model, schema_context, schema_exists
 from users.models import CustomUser
 from buildings.models import Building, BuildingMembership
@@ -35,13 +35,21 @@ def wait_for_database():
     
     while attempt < max_attempts:
         try:
-            with connection.cursor() as cursor:
+            # Use Django's database connection properly
+            db_conn = connections['default']
+            with db_conn.cursor() as cursor:
                 cursor.execute("SELECT 1")
-            print("✅ Σύνδεση βάσης δεδομένων: OK")
-            return True
-        except Exception:
+                result = cursor.fetchone()
+                
+            if result and result[0] == 1:
+                print("✅ Σύνδεση βάσης δεδομένων: OK")
+                return True
+            else:
+                raise Exception("Database query returned unexpected result")
+                
+        except Exception as e:
             attempt += 1
-            print(f"⏳ Αναμονή για βάση δεδομένων... (προσπάθεια {attempt}/{max_attempts})")
+            print(f"⏳ Αναμονή για βάση δεδομένων... (προσπάθεια {attempt}/{max_attempts}) - {e}")
             time.sleep(2)
     
     print("❌ Δεν μπόρεσε να συνδεθεί στη βάση δεδομένων")

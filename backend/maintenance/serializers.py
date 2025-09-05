@@ -25,7 +25,24 @@ class ScheduledMaintenanceSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ScheduledMaintenance
-        fields = '__all__' 
+        fields = '__all__'
+
+
+class PublicScheduledMaintenanceSerializer(serializers.ModelSerializer):
+    building_name = serializers.CharField(source='building.name', read_only=True)
+    contractor_name = serializers.CharField(source='contractor.name', read_only=True)
+
+    class Meta:
+        model = ScheduledMaintenance
+        fields = (
+            'id',
+            'title',
+            'scheduled_date',
+            'priority',
+            'status',
+            'building_name',
+            'contractor_name',
+        )
 
 
 class MaintenanceTicketSerializer(serializers.ModelSerializer):

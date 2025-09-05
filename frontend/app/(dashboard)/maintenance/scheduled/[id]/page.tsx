@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
  
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,8 +13,9 @@ import { fetchScheduledMaintenance, type ScheduledMaintenance } from '@/lib/api'
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type Status = 'planned' | 'in_progress' | 'completed' | 'on_hold';
 
-export default function ScheduledMaintenanceDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function ScheduledMaintenanceDetailPage() {
+  const params = useParams();
+  const id = params?.id as string;
   const numericId = Number(id);
   const { data: item, isLoading } = useQuery<ScheduledMaintenance>({
     queryKey: ['maintenance', 'scheduled', numericId],

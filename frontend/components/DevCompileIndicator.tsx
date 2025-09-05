@@ -22,59 +22,15 @@ export default function DevCompileIndicator(): JSX.Element | null {
       (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") &&
       window.location.port === "3000";
 
-    // Vite detection: if running under Vite, import.meta.hot will exist at runtime
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const viteHot: any | undefined = (import.meta as any)?.hot;
-    const isLocalViteDev =
-      typeof window !== "undefined" &&
-      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") &&
-      (window.location.port === "5173" || window.location.port === "5174");
-
     const envFlag = process.env.NEXT_PUBLIC_DEV_COMPILE_INDICATOR;
-    const shouldEnable = envFlag === "true" || (envFlag !== "false" && (isLocalNextDev || isLocalViteDev || Boolean(viteHot)));
+    const shouldEnable = envFlag === "true" || (envFlag !== "false" && isLocalNextDev);
 
     if (!shouldEnable) {
       setInitialized(true);
       return;
     }
 
-    // If Vite HMR is available, listen to its lifecycle events; no network probes needed
-    if (viteHot) {
-      const onBeforeUpdate = () => {
-        setState("building");
-        setVisible(true);
-      };
-      const onAfterUpdate = () => {
-        setState("built");
-        setTimeout(() => setVisible(false), 600);
-      };
-      const onError = () => {
-        setState("building");
-        setVisible(true);
-      };
-
-      try {
-        viteHot.on?.("vite:beforeUpdate", onBeforeUpdate);
-        viteHot.on?.("vite:afterUpdate", onAfterUpdate);
-        viteHot.on?.("vite:error", onError);
-        viteHot.on?.("full-reload", onBeforeUpdate);
-      } catch {
-        // ignore
-      }
-
-      setInitialized(true);
-
-      return () => {
-        try {
-          viteHot.off?.("vite:beforeUpdate", onBeforeUpdate);
-          viteHot.off?.("vite:afterUpdate", onAfterUpdate);
-          viteHot.off?.("vite:error", onError);
-          viteHot.off?.("full-reload", onBeforeUpdate);
-        } catch {
-          // ignore
-        }
-      };
-    }
+    // If not Next dev or explicitly disabled, we won't connect to HMR endpoints
 
     const probe = async (url: string): Promise<boolean> => {
       try {

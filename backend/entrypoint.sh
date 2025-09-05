@@ -12,10 +12,10 @@ until pg_isready -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" >/dev/null 2>&1; do
 done
 echo "✅ Postgres is up!"
 
-# 2. Run automatic initialization
+# 2. Run migrations directly (skip auto_initialization for now)
 echo ""
-echo "🎯 Running automatic initialization..."
-python scripts/auto_initialization.py
+echo "🔄 Running migrations..."
+python manage.py migrate --run-syncdb
 
 # 3. Collect static files
 echo ""

@@ -2060,6 +2060,23 @@ export async function fetchContractors(): Promise<Contractor[]> {
   return response.data.results || response.data;
 }
 
+export async function updateContractor(
+  id: number,
+  payload: Partial<Omit<Contractor, 'id' | 'created_at'>>
+): Promise<Contractor> {
+  const { data } = await api.patch<Contractor>(`/maintenance/contractors/${id}/`, payload);
+  return data;
+}
+
+export async function deleteContractor(id: number): Promise<void> {
+  await api.delete(`/maintenance/contractors/${id}/`);
+}
+
+export async function fetchContractor(id: number): Promise<Contractor> {
+  const { data } = await api.get<Contractor>(`/maintenance/contractors/${id}/`);
+  return data;
+}
+
 // ============================================================================
 // 🛠️ MAINTENANCE: TICKETS & WORK ORDERS API FUNCTIONS
 // ============================================================================
@@ -2156,6 +2173,23 @@ export async function fetchServiceReceipts(params: { buildingId?: number } = {})
   return Array.isArray(data) ? data : data.results ?? [];
 }
 
+export async function updateServiceReceipt(
+  id: number,
+  payload: Partial<Omit<ServiceReceipt, 'id' | 'created_at'>>
+): Promise<ServiceReceipt> {
+  const { data } = await api.patch<ServiceReceipt>(`/maintenance/receipts/${id}/`, payload);
+  return data;
+}
+
+export async function deleteServiceReceipt(id: number): Promise<void> {
+  await api.delete(`/maintenance/receipts/${id}/`);
+}
+
+export async function fetchServiceReceipt(id: number): Promise<ServiceReceipt> {
+  const { data } = await api.get<ServiceReceipt>(`/maintenance/receipts/${id}/`);
+  return data;
+}
+
 export async function createServiceReceipt(payload: {
   contractor: number;
   building: number;
@@ -2217,4 +2251,16 @@ export async function fetchScheduledMaintenance(id: number): Promise<ScheduledMa
 export async function createScheduledMaintenance(payload: Omit<ScheduledMaintenance, 'id'>): Promise<ScheduledMaintenance> {
   const { data } = await api.post<ScheduledMaintenance>('/maintenance/scheduled/', payload);
   return data;
+}
+
+export async function updateScheduledMaintenance(
+  id: number,
+  payload: Partial<Omit<ScheduledMaintenance, 'id'>>
+): Promise<ScheduledMaintenance> {
+  const { data } = await api.patch<ScheduledMaintenance>(`/maintenance/scheduled/${id}/`, payload);
+  return data;
+}
+
+export async function deleteScheduledMaintenance(id: number): Promise<void> {
+  await api.delete(`/maintenance/scheduled/${id}/`);
 }
