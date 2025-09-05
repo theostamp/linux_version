@@ -1,6 +1,13 @@
 'use client';
 
 export function getApiBase(): string {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    // Use tenant-specific host if available (e.g., demo.localhost)
+    if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
+      return `http://${hostname}:8000`;
+    }
+  }
   if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_BASE_URL) {
     return process.env.NEXT_PUBLIC_API_BASE_URL as string;
   }
@@ -16,7 +23,7 @@ export async function apiGet<T>(path: string, params?: Record<string, string | n
   }
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('access') || localStorage.getItem('accessToken');
     if (token) headers['Authorization'] = `Bearer ${token}`;
   }
   const res = await fetch(url.toString(), { headers, credentials: 'include' });
@@ -49,7 +56,7 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   const url = new URL(path, getApiBase());
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('access') || localStorage.getItem('accessToken');
     if (token) headers['Authorization'] = `Bearer ${token}`;
   }
   const res = await fetch(url.toString(), {
@@ -2058,6 +2065,13 @@ export async function fetchSuppliers(buildingId?: number): Promise<Supplier[]> {
 export async function fetchContractors(): Promise<Contractor[]> {
   const response = await api.get('/maintenance/contractors/');
   return response.data.results || response.data;
+}
+
+export async function createContractor(
+  payload: Partial<Omit<Contractor, 'id' | 'created_at'>>
+): Promise<Contractor> {
+  const { data } = await api.post<Contractor>('/maintenance/contractors/', payload);
+  return data;
 }
 
 export async function updateContractor(

@@ -23,6 +23,8 @@ services:
       - static_dev:/vol/static
       - media_dev:/vol/media
     env_file: .env
+    environment:
+      - AUTO_MAKEMIGRATIONS=true
     depends_on: [db]
     ports: ["8000:8000"]
 

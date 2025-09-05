@@ -54,8 +54,11 @@ export default function NewReceiptPage() {
         receipt_file: file || undefined,
       });
       window.location.href = '/maintenance/receipts';
-    } catch (err) {
-      setError('Αποτυχία αποθήκευσης. Δοκιμάστε ξανά.');
+    } catch (err: any) {
+      const msg = err?.response?.data ?
+        (typeof err.response.data === 'string' ? err.response.data : JSON.stringify(err.response.data)) :
+        err?.message || 'Αποτυχία αποθήκευσης. Δοκιμάστε ξανά.';
+      setError(msg);
     } finally {
       setSubmitting(false);
     }

@@ -135,7 +135,9 @@ class ServiceReceipt(models.Model):
     )
     receipt_file = models.FileField(
         upload_to='receipts/%Y/%m/',
-        verbose_name="Απόδειξη"
+        verbose_name="Απόδειξη",
+        blank=True,
+        null=True,
     )
     description = models.TextField(verbose_name="Περιγραφή Υπηρεσίας")
     invoice_number = models.CharField(
@@ -157,6 +159,14 @@ class ServiceReceipt(models.Model):
         null=True, 
         blank=True,
         verbose_name="Ημερομηνία Εισπράξεως"
+    )
+    linked_expense = models.ForeignKey(
+        'financial.Expense',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='linked_service_receipts',
+        verbose_name="Συνδεδεμένη Δαπάνη"
     )
     created_by = models.ForeignKey(
         User,

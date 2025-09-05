@@ -1,7 +1,9 @@
-from django.db.models.signals import post_save
+from django.db import models
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-from .models import MaintenanceTicket, WorkOrder
+from .models import MaintenanceTicket, WorkOrder, ServiceReceipt
+from financial.models import Expense
 from todo_management.services import ensure_linked_todo, complete_linked_todo
 from core.utils import publish_building_event
 
@@ -56,4 +58,87 @@ def sync_workorder_todo(sender, instance: WorkOrder, created, **kwargs):
         },
     )
 
+
+# -----------------------
+# ServiceReceipt -> Expense auto-link & sync (safety net beyond API)
+# -----------------------
+
+def _category_for_receipt(receipt: ServiceReceipt) -> str:
+    category_map = {
+        'cleaning': 'cleaning',
+        'elevator': 'elevator_maintenance',
+        'heating': 'heating_maintenance',
+        'electrical': 'electrical_maintenance',
+        'plumbing': 'plumbing_maintenance',
+        'security': 'security',
+        'landscaping': 'garden_maintenance',
+        'maintenance': 'building_maintenance',
+        'repair': 'emergency_repair',
+        'technical': 'building_maintenance',
+    }
+    contractor_type = receipt.contractor.service_type if receipt.contractor else 'maintenance'
+    return category_map.get(contractor_type, 'building_maintenance')
+
+
+def _get_or_create_monthly_expense(receipt: ServiceReceipt) -> Expense:
+    category = _category_for_receipt(receipt)
+    expense_date = receipt.service_date.replace(day=1)
+    exp = Expense.objects.filter(
+        building=receipt.building,
+        category=category,
+        date__year=expense_date.year,
+        date__month=expense_date.month,
+        expense_type='regular',
+    ).first()
+    if exp:
+        return exp
+    title = f"Δαπάνη: {(receipt.contractor.name if receipt.contractor else 'Συνεργείο')} - {str(receipt.description)[:40]}"
+    return Expense.objects.create(
+        building=receipt.building,
+        title=title,
+        amount=receipt.amount,
+        date=expense_date,
+        category=category,
+        distribution_type='by_participation_mills',
+        notes=f"Συνδεδεμένη με απόδειξη ID {receipt.id}",
+    )
+
+
+def _refresh_expense_amount(expense: Expense):
+    total = ServiceReceipt.objects.filter(linked_expense=expense).aggregate(models.Sum('amount'))['amount__sum'] or 0
+    if total and total > 0:
+        if expense.amount != total:
+            expense.amount = total
+            expense.save(update_fields=['amount'])
+    else:
+        try:
+            expense.delete()
+        except Exception:
+            pass
+
+
+@receiver(post_save, sender=ServiceReceipt)
+def receipt_autolink_on_save(sender, instance: ServiceReceipt, created, **kwargs):
+    try:
+        # Ensure linked_expense exists and is correct month/category
+        if not instance.service_date or not instance.building_id:
+            return
+        target = _get_or_create_monthly_expense(instance)
+        if instance.linked_expense_id != target.id:
+            ServiceReceipt.objects.filter(pk=instance.pk).update(linked_expense=target)
+        _refresh_expense_amount(target)
+    except Exception:
+        # Safety: never break save path via signal
+        pass
+
+
+@receiver(post_delete, sender=ServiceReceipt)
+def receipt_cleanup_on_delete(sender, instance: ServiceReceipt, **kwargs):
+    try:
+        if instance.linked_expense_id:
+            exp = Expense.objects.filter(id=instance.linked_expense_id).first()
+            if exp:
+                _refresh_expense_amount(exp)
+    except Exception:
+        pass
 

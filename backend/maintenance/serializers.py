@@ -12,10 +12,15 @@ class ServiceReceiptSerializer(serializers.ModelSerializer):
     contractor_name = serializers.CharField(source='contractor.name', read_only=True)
     building_name = serializers.CharField(source='building.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    linked_expense_title = serializers.CharField(source='linked_expense.title', read_only=True)
     
     class Meta:
         model = ServiceReceipt
         fields = '__all__'
+        extra_kwargs = {
+            'receipt_file': {'required': False, 'allow_null': True},
+            'created_by': {'read_only': True},
+        }
 
 
 class ScheduledMaintenanceSerializer(serializers.ModelSerializer):

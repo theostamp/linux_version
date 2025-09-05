@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { BackButton } from '@/components/ui/BackButton';
 import React, { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchScheduledMaintenances, type ScheduledMaintenance, deleteScheduledMaintenance } from '@/lib/api';
@@ -79,7 +80,8 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-2">
+          <BackButton size="sm" />
           <h1 className="text-3xl font-bold tracking-tight">Προγραμματισμένα Έργα</h1>
           <p className="text-muted-foreground">Λίστα εργασιών συντήρησης ανά προτεραιότητα</p>
         </div>

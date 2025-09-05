@@ -7,6 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.utils import timezone
 from .models import Contractor, ServiceReceipt, ScheduledMaintenance, MaintenanceTicket, WorkOrder
+from financial.models import Expense
 from .permissions import MaintenancePermission
 from .serializers import (
     ContractorSerializer, ServiceReceiptSerializer, ScheduledMaintenanceSerializer,
@@ -50,6 +51,161 @@ class ServiceReceiptViewSet(viewsets.ModelViewSet):
     search_fields = ['description', 'invoice_number', 'contractor__name']
     ordering_fields = ['service_date', 'amount', 'created_at']
     ordering = ['-service_date']
+
+    def perform_create(self, serializer):
+        receipt = serializer.save(created_by=self.request.user)
+        # Auto-link to a monthly expense
+        try:
+            # Determine category from contractor service_type
+            category_map = {
+                'cleaning': 'cleaning',
+                'elevator': 'elevator_maintenance',
+                'heating': 'heating_maintenance',
+                'electrical': 'electrical_maintenance',
+                'plumbing': 'plumbing_maintenance',
+                'security': 'security',
+                'landscaping': 'garden_maintenance',
+                'maintenance': 'building_maintenance',
+                'repair': 'emergency_repair',
+                'technical': 'building_maintenance',
+            }
+            contractor_type = receipt.contractor.service_type if receipt.contractor else 'maintenance'
+            category = category_map.get(contractor_type, 'building_maintenance')
+
+            # Use first day of month as expense date
+            expense_date = receipt.service_date.replace(day=1)
+            amount = receipt.amount
+
+            # Find existing monthly expense for same building, category and month
+            existing = Expense.objects.filter(
+                building=receipt.building,
+                category=category,
+                date__year=expense_date.year,
+                date__month=expense_date.month,
+                expense_type='regular',
+            ).first()
+
+            if existing:
+                # Aggregate: increase amount and save
+                existing.amount = (existing.amount or 0) + amount
+                existing.save()
+                receipt.linked_expense = existing
+                receipt.save(update_fields=['linked_expense'])
+            else:
+                # Create new expense and link
+                new_expense = Expense.objects.create(
+                    building=receipt.building,
+                    title=f"Δαπάνη: {receipt.contractor.name if receipt.contractor else 'Συνεργείο'} - {receipt.description[:40]}",
+                    amount=amount,
+                    date=expense_date,
+                    category=category,
+                    distribution_type='by_participation_mills',
+                    notes=f"Συνδεδεμένη με απόδειξη ID {receipt.id}",
+                )
+                receipt.linked_expense = new_expense
+                receipt.save(update_fields=['linked_expense'])
+        except Exception as e:
+            # Fail silently for linking, do not block receipt creation
+            print(f"[ServiceReceiptViewSet] Auto-link expense failed: {e}")
+
+    def _category_for_receipt(self, receipt: ServiceReceipt) -> str:
+        category_map = {
+            'cleaning': 'cleaning',
+            'elevator': 'elevator_maintenance',
+            'heating': 'heating_maintenance',
+            'electrical': 'electrical_maintenance',
+            'plumbing': 'plumbing_maintenance',
+            'security': 'security',
+            'landscaping': 'garden_maintenance',
+            'maintenance': 'building_maintenance',
+            'repair': 'emergency_repair',
+            'technical': 'building_maintenance',
+        }
+        contractor_type = receipt.contractor.service_type if receipt.contractor else 'maintenance'
+        return category_map.get(contractor_type, 'building_maintenance')
+
+    def _get_or_create_monthly_expense(self, receipt: ServiceReceipt) -> Expense:
+        category = self._category_for_receipt(receipt)
+        expense_date = receipt.service_date.replace(day=1)
+        exp = Expense.objects.filter(
+            building=receipt.building,
+            category=category,
+            date__year=expense_date.year,
+            date__month=expense_date.month,
+            expense_type='regular',
+        ).first()
+        if exp:
+            return exp
+        title = f"Δαπάνη: {(receipt.contractor.name if receipt.contractor else 'Συνεργείο')} - {str(receipt.description)[:40]}"
+        return Expense.objects.create(
+            building=receipt.building,
+            title=title,
+            amount=receipt.amount,
+            date=expense_date,
+            category=category,
+            distribution_type='by_participation_mills',
+            notes=f"Συνδεδεμένη με απόδειξη ID {receipt.id}",
+        )
+
+    def _refresh_expense_amount(self, expense: Expense):
+        # Sum amounts of all receipts linked to this expense
+        total = ServiceReceipt.objects.filter(linked_expense=expense).aggregate(models.Sum('amount'))['amount__sum'] or 0
+        if total and total > 0:
+            if expense.amount != total:
+                expense.amount = total
+                expense.save(update_fields=['amount'])
+        else:
+            # No receipts reference this expense anymore; safe to delete
+            try:
+                expense.delete()
+            except Exception as e:
+                print(f"[ServiceReceiptViewSet] Failed to delete empty expense {expense.id}: {e}")
+
+    def perform_update(self, serializer):
+        # Capture old mapping before save
+        old_instance: ServiceReceipt = serializer.instance
+        old_expense = old_instance.linked_expense
+        old_building = old_instance.building
+        old_date = old_instance.service_date
+        old_contractor = old_instance.contractor
+        old_amount = old_instance.amount
+
+        receipt = serializer.save()
+
+        try:
+            # Determine target expense based on new receipt data
+            target_expense = self._get_or_create_monthly_expense(receipt)
+            if receipt.linked_expense_id != target_expense.id:
+                receipt.linked_expense = target_expense
+                receipt.save(update_fields=['linked_expense'])
+
+            # Refresh amounts for affected expenses
+            # If mapping changed (building/month/category) or amount changed, refresh both old and new
+            mapping_changed = (
+                old_building_id := getattr(old_building, 'id', None)
+            ) != getattr(receipt.building, 'id', None) or (
+                (old_date or None) != (receipt.service_date or None)
+            ) or (
+                (old_contractor.service_type if old_contractor else None) != (receipt.contractor.service_type if receipt.contractor else None)
+            )
+            amount_changed = (old_amount != receipt.amount)
+
+            if mapping_changed and old_expense:
+                self._refresh_expense_amount(old_expense)
+
+            # Always refresh current target to reflect any amount changes
+            self._refresh_expense_amount(target_expense)
+        except Exception as e:
+            print(f"[ServiceReceiptViewSet] perform_update linking failed: {e}")
+
+    def perform_destroy(self, instance):
+        try:
+            old_expense = instance.linked_expense
+            instance.delete()
+            if old_expense:
+                self._refresh_expense_amount(old_expense)
+        except Exception as e:
+            print(f"[ServiceReceiptViewSet] perform_destroy failed: {e}")
 
 
 class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):

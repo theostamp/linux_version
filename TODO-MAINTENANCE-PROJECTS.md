@@ -87,6 +87,11 @@
 - [x] [fe-ui-confirm-dialog-maint] Reusable ConfirmDialog and integration across maintenance pages
 - [x] [fe-ui-loading-states-maint] Inline loading states + toasts for save/delete
 
+<!-- Receipts ⇄ Expenses Auto-link (New) -->
+- [x] [be-12-receipts-expenses-autolink] Auto-link ServiceReceipt → monthly Expense (create/update/delete) με ViewSet hooks + signals
+- [x] [be-13-management-command-backfill] Management command: `backfill_service_receipts_to_expenses` (tenant-aware)
+- [x] [devops-01-auto-makemigrations] AUTO_MAKEMIGRATIONS στο `entrypoint.sh` + `docker-compose.yml`
+
 <!-- Phase 2 Backlog (New) -->
 - [ ] [be-08-public-counters-hardening] Harden public maintenance counters (cache, throttling, safe fields)
 - [ ] [be-09-contractors-building-link] Define contractors↔building strategy for accurate per-building counts
@@ -126,6 +131,21 @@
 - [fe-ui-loading-states-maint]
   - Inline loading σε κουμπιά save/delete
   - Toasts επιτυχίας/σφάλματος
+
+- [be-12-receipts-expenses-autolink]
+  - Δημιουργία απόδειξης: σύνδεση/συσσώρευση σε μηνιαία Δαπάνη ανά κτίριο/μήνα/κατηγορία
+  - Επεξεργασία απόδειξης: re-link όταν αλλάζει κατηγορία/μήνας/κτίριο, ανανέωση ποσού δαπάνης
+  - Διαγραφή απόδειξης: ενημέρωση ποσού δαπάνης ή διαγραφή αν δεν υπάρχουν συνδέσεις
+  - Υλοποίηση τόσο σε ViewSet (perform_create/update/destroy) όσο και σε signals (post_save/post_delete)
+
+- [be-13-management-command-backfill]
+  - Εντολή: `python manage.py backfill_service_receipts_to_expenses --schema demo`
+  - Δημιουργεί/ενημερώνει μηνιαίες δαπάνες και συμπληρώνει `linked_expense` για υπάρχουσες αποδείξεις
+  - Idempotent λειτουργία, ασφαλής για επανάληψη
+
+- [devops-01-auto-makemigrations]
+  - `entrypoint.sh`: conditional `makemigrations` πριν το `migrate` όταν `AUTO_MAKEMIGRATIONS=true`
+  - `docker-compose.yml`: περιβάλλον `AUTO_MAKEMIGRATIONS=true` στο service `backend`
 
 <!-- Acceptance Criteria (New) -->
 - [fe-08-remove-mocks-kiosk]
@@ -198,6 +218,17 @@
 - 2025-09-05: Fallback στο Maintenance dashboard όταν private endpoints επιστρέφουν 401
 - 2025-09-05: Alias route για συμβατότητα: `/api/maintenance/scheduled/`
 - 2025-09-05: Cleanup/ρυθμίσεις: αφαίρεση django-silk/django-cachalot, διόρθωση DB DSN/Redis host/ROOT_URLCONF, Next.js config updates
+
+- 2025-09-05: Αυτόματη σύνδεση Αποδείξεων → Δαπάνες
+  - Προστέθηκαν ViewSet hooks και signals για auto-link, aggregation, και cleanup
+  - Νέα σχέση `ServiceReceipt.linked_expense` και προαιρετικό `receipt_file`
+
+- 2025-09-05: Backfill management command
+  - `backfill_service_receipts_to_expenses` για linking υπαρχουσών αποδείξεων
+  - Εκτέλεση σε tenant schema (`--schema demo`)
+
+- 2025-09-05: AUTO_MAKEMIGRATIONS στο startup
+  - Ενεργοποίηση `makemigrations` στο container startup όταν έχει οριστεί η env var
 
 ### Phase 1 - COMPLETED 
 **Maintenance & Projects System Implementation**

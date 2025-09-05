@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
  
@@ -7,8 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Calendar, Wrench } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchScheduledMaintenance, type ScheduledMaintenance } from '@/lib/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchScheduledMaintenance, deleteScheduledMaintenance, type ScheduledMaintenance } from '@/lib/api';
+import { useRole } from '@/lib/auth';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type Status = 'planned' | 'in_progress' | 'completed' | 'on_hold';
@@ -17,6 +22,12 @@ export default function ScheduledMaintenanceDetailPage() {
   const params = useParams();
   const id = params?.id as string;
   const numericId = Number(id);
+  const { isAdmin, isManager } = useRole();
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const router = useRouter();
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
   const { data: item, isLoading } = useQuery<ScheduledMaintenance>({
     queryKey: ['maintenance', 'scheduled', numericId],
     queryFn: () => fetchScheduledMaintenance(numericId),
@@ -77,12 +88,50 @@ export default function ScheduledMaintenanceDetailPage() {
           </div>
 
           <div className="pt-2">
-            <Button asChild size="sm" variant="outline">
-              <Link href="/maintenance/scheduled">Επιστροφή</Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="sm" variant="outline">
+                <Link href="/maintenance/scheduled">Επιστροφή</Link>
+              </Button>
+              {(isAdmin || isManager) && Number.isFinite(numericId) && (
+                <>
+                  <Button asChild size="sm" variant="secondary">
+                    <Link href={`/maintenance/scheduled/${numericId}/edit`}>Επεξεργασία</Link>
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => setConfirmOpen(true)}>
+                    Διαγραφή
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Επιβεβαίωση Διαγραφής"
+        description="Θέλετε σίγουρα να διαγράψετε το προγραμματισμένο έργο;"
+        confirmText="Διαγραφή"
+        confirmVariant="destructive"
+        isConfirmLoading={deleting}
+        onConfirm={async () => {
+          if (!Number.isFinite(numericId)) return;
+          try {
+            setDeleting(true);
+            await deleteScheduledMaintenance(numericId);
+            qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled'] });
+            qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled', numericId] });
+            toast({ title: 'Διαγράφηκε', description: 'Το έργο διαγράφηκε.' });
+            router.push('/maintenance/scheduled');
+          } catch (e) {
+            toast({ title: 'Σφάλμα', description: 'Αποτυχία διαγραφής.', variant: 'destructive' as any });
+          } finally {
+            setDeleting(false);
+            setConfirmOpen(false);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -1,11 +1,12 @@
 'use client';
 
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, ArrowLeft } from 'lucide-react';
+import { Users, ArrowLeft, Plus } from 'lucide-react';
 import { fetchContractors, type Contractor, deleteContractor } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { useRole } from '@/lib/auth';
@@ -33,11 +34,20 @@ export default function ContractorsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Συνεργεία</h1>
           <p className="text-muted-foreground">Λίστα συνεργείων συντήρησης</p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/maintenance">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Πίσω
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          {(isAdmin || isManager) && (
+            <Button asChild>
+              <Link href="/maintenance/contractors/new">
+                <Plus className="w-4 h-4 mr-2" /> Νέο Συνεργείο
+              </Link>
+            </Button>
+          )}
+          <Button asChild variant="outline">
+            <Link href="/maintenance">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Πίσω
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

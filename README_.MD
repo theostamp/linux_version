@@ -526,13 +526,13 @@ git push origin v2.1.0
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "βελτιωση παροχων και εργασιων"
+git commit -m "feat(maintenance,financial): auto-link receipts→monthly expenses (CRUD+signals), add backfill cmd, enable AUTO_MAKEMIGRATIONS"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
 ---
 
-git reset --hard 6d237a5
+git reset --hard 9906d237a5
 ### Πλήρης Καθαρισμός Docker
 ```bash
 

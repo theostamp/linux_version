@@ -15,6 +15,11 @@ echo "✅ Postgres is up!"
 # 2. Run migrations directly (skip auto_initialization for now)
 echo ""
 echo "🔄 Running migrations..."
+echo "   AUTO_MAKEMIGRATIONS=${AUTO_MAKEMIGRATIONS:-unset}"
+if [ "${AUTO_MAKEMIGRATIONS:-false}" = "true" ]; then
+  echo "   AUTO_MAKEMIGRATIONS is enabled. Checking for model changes..."
+  python manage.py makemigrations --noinput || true
+fi
 python manage.py migrate --run-syncdb
 
 # 3. Collect static files
