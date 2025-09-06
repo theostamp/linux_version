@@ -29,10 +29,17 @@ export function useBuildingEvents(buildingIdParam?: number) {
     const timer = setTimeout(() => controller.abort(), 1500);
 
     fetch(`http://${host}/health/`, { method: 'GET', signal: controller.signal })
-      .catch(() => null)
-      .finally(() => {
+      .then((res) => {
+        return res && res.ok;
+      })
+      .catch(() => false)
+      .finally((ok?: boolean) => {
         if (aborted) return;
         clearTimeout(timer);
+        if (!ok) {
+          // Skip opening WS when backend health is not OK to avoid console noise in dev
+          return;
+        }
         try {
           const ws = new WebSocket(wsUrl);
           wsRef.current = ws;

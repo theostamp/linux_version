@@ -57,7 +57,7 @@ export type ScheduledProject = {
 };
 
 export default function ScheduledProjectForm({
-  title = 'Προγραμματισμένο Έργο',
+  title = 'Προγραμματισμός Έργου',
   projectId,
   initialProject,
 }: {

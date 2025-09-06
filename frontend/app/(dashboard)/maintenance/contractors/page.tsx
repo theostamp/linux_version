@@ -62,13 +62,30 @@ export default function ContractorsPage() {
                   <Users className="w-4 h-4" />
                   {c.name}
                 </CardTitle>
-                <div className="text-xs text-muted-foreground">{c.contact_person} • {c.phone}</div>
+                <div className="text-xs text-muted-foreground">
+                  {c.contact_person}
+                  {c.phone && (
+                    <>
+                      {' '}•{' '}
+                      <a
+                        href={`tel:${String(c.phone).replace(/\s+/g, '')}`}
+                        className="text-blue-600 font-medium hover:underline"
+                      >
+                        {c.phone}
+                      </a>
+                    </>
+                  )}
+                </div>
               </div>
               <Badge variant={c.is_active ? 'secondary' : 'outline'}>{c.status || (c.is_active ? 'active' : 'inactive')}</Badge>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
               <div>Τύπος: {c.service_type}</div>
-              {c.email && <div>Email: {c.email}</div>}
+              {c.email && (
+                <div>
+                  Email: <a href={`mailto:${c.email}`} className="text-blue-600 font-medium hover:underline">{c.email}</a>
+                </div>
+              )}
               {(c as any).hourly_rate && <div>Ωριαία χρέωση: €{Number((c as any).hourly_rate).toLocaleString('el-GR')}</div>}
               <div className="pt-2 flex gap-2">
                 <Button variant="outline" size="sm" asChild>

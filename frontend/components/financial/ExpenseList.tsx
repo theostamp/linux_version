@@ -11,6 +11,7 @@ import { Expense, ExpenseCategory, DistributionType } from '@/types/financial';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { FilePreview } from '@/components/ui/FilePreview';
 import { toast } from 'sonner';
+import { api, fetchScheduledMaintenances, updateScheduledMaintenance, deleteServiceReceipt } from '@/lib/api';
 import { ExpenseViewModal } from './ExpenseViewModal';
 
 interface ExpenseListProps {
@@ -77,6 +78,62 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
       const success = await deleteExpense(expense.id);
       if (success) {
         toast.success(`Η δαπάνη "${expense.title}" διαγράφηκε επιτυχώς!`);
+
+        // Optional follow-ups: check for linked service receipts and scheduled works
+        try {
+          const building = expense.building;
+          const res = await api.get(`/maintenance/receipts/`, { params: { building, limit: 1000 } });
+          const receipts = Array.isArray(res.data) ? res.data : res.data?.results ?? [];
+          // Prefer explicit linkage if backend supports it
+          const explicit = receipts.filter((r: any) => r?.expense === expense.id);
+          if (explicit.length > 0) {
+            const alsoDelete = window.confirm(`Βρέθηκαν ${explicit.length} αποδείξεις συνδεδεμένες με τη δαπάνη. Θέλετε να διαγραφούν;`);
+            if (alsoDelete) {
+              for (const r of explicit) { try { await deleteServiceReceipt(r.id); } catch {} }
+              toast.success('Οι συνδεδεμένες αποδείξεις υπηρεσιών διαγράφηκαν.');
+            }
+          }
+          const normalize = (s: string) => (s || '').trim().toLowerCase();
+          const approxAmountEqual = (a: number, b: number) => Math.abs(Number(a || 0) - Number(b || 0)) < 0.005;
+          const sameDate = (d1?: string, d2?: string) => !!d1 && !!d2 && (d1.slice(0,10) === d2.slice(0,10));
+
+          const likelyReceipts = receipts.filter((r: any) => (
+            sameDate(r?.service_date, expense.date) && approxAmountEqual(r?.amount, expense.amount) && normalize(r?.description || r?.title) === normalize(expense.title)
+          ));
+
+          if (likelyReceipts.length > 0) {
+            const alsoDelete = window.confirm(`Βρέθηκαν ${likelyReceipts.length} συνδεδεμένες αποδείξεις υπηρεσιών για την ίδια ημερομηνία/ποσό/τίτλο.\nΘέλετε να διαγραφούν κι αυτές; (Ίσως είναι λογιστικά παρατυπία)`);
+            if (alsoDelete) {
+              for (const r of likelyReceipts) {
+                try { await deleteServiceReceipt(r.id); } catch {}
+              }
+              toast.success('Οι σχετικές αποδείξεις υπηρεσιών διαγράφηκαν.');
+            }
+          }
+
+          // Optionally revert related scheduled maintenance items from completed -> scheduled
+          try {
+            const scheduled = await fetchScheduledMaintenances({ buildingId: building, ordering: 'scheduled_date' });
+            const closeDate = (d1?: string, d2?: string) => {
+              if (!d1 || !d2) return false;
+              const t1 = new Date(d1.length > 10 ? d1 : `${d1}T00:00:00`).getTime();
+              const t2 = new Date(d2.length > 10 ? d2 : `${d2}T00:00:00`).getTime();
+              return Number.isFinite(t1) && Number.isFinite(t2) && Math.abs(t1 - t2) <= 3 * 24 * 60 * 60 * 1000; // ±3 ημέρες
+            };
+            const related = (scheduled as any[]).filter((s) => (
+              (s?.status === 'completed') && closeDate(s?.scheduled_date, expense.date) && normalize(s?.title) === normalize(expense.title)
+            ));
+            if (related.length > 0) {
+              const revert = window.confirm(`Βρέθηκαν ${related.length} ολοκληρωμένα προγραμματισμένα έργα που ταιριάζουν (τίτλος/ημερομηνία). Θέλετε να επανέλθουν σε κατάσταση "scheduled";`);
+              if (revert) {
+                for (const s of related) {
+                  try { await updateScheduledMaintenance(s.id, { status: 'scheduled' as any }); } catch {}
+                }
+                toast.success('Ενημερώθηκαν τα σχετικά έργα (σε scheduled).');
+              }
+            }
+          } catch {}
+        } catch {}
       } else {
         toast.error('Σφάλμα κατά τη διαγραφή της δαπάνης');
       }

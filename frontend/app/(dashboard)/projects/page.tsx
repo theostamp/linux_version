@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api, extractCount, getActiveBuildingId } from '@/lib/api';
+import { api, extractCount, extractResults, getActiveBuildingId } from '@/lib/api';
+import { getRelativeTimeEl } from '@/lib/date';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +56,95 @@ export default function ProjectsDashboard() {
     total_spent: 0,
     average_completion_rate: 0,
   };
+
+  // using shared helper getRelativeTimeEl
+
+  type ActivityItem = {
+    key: string;
+    icon: React.ReactNode;
+    bgClass: string;
+    text: string;
+    date: Date;
+    badge: { label: string; variant: 'secondary' | 'outline' };
+  };
+
+  const toDate = (value: unknown): Date | null => {
+    if (!value || typeof value !== 'string') return null;
+    const s = value.length === 10 ? `${value}T00:00:00` : value;
+    const t = new Date(s);
+    return isNaN(t.getTime()) ? null : t;
+  };
+
+  const projectsRows = extractResults<any>(projectsQ.data ?? []);
+  const completedRows = extractResults<any>(completedProjectsQ.data ?? []);
+  const pendingOffersRows = extractResults<any>(pendingOffersQ.data ?? []);
+  const activeContractsRows = extractResults<any>(activeContractsQ.data ?? []);
+
+  const getProjectRelevantDate = (r: any): Date | null => {
+    return (
+      toDate(r?.completed_at) ||
+      toDate(r?.updated_at) ||
+      toDate(r?.created_at) ||
+      null
+    );
+  };
+  const byLatest = (getDate: (r: any) => Date | null) => (a: any, b: any) => {
+    const da = getDate(a)?.getTime() ?? -Infinity;
+    const db = getDate(b)?.getTime() ?? -Infinity;
+    return db - da;
+  };
+
+  const latestCompletedProject = [...completedRows].sort(byLatest(getProjectRelevantDate))[0];
+  const latestPendingOffer = [...pendingOffersRows].sort(byLatest((r: any) => toDate(r?.updated_at) || toDate(r?.created_at)))[0];
+  const latestActiveContract = [...activeContractsRows].sort(byLatest((r: any) => toDate(r?.updated_at) || toDate(r?.start_date) || toDate(r?.created_at)))[0];
+
+  const activityItems: ActivityItem[] = [];
+
+  if (latestCompletedProject) {
+    const d = getProjectRelevantDate(latestCompletedProject) || new Date();
+    activityItems.push({
+      key: `project-${latestCompletedProject.id}`,
+      icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+      bgClass: 'bg-green-50',
+      text: latestCompletedProject?.title
+        ? `Ολοκληρώθηκε έργο: ${latestCompletedProject.title}`
+        : 'Ολοκληρώθηκε έργο',
+      date: d,
+      badge: { label: 'Ολοκληρώθηκε', variant: 'secondary' },
+    });
+  }
+
+  if (latestPendingOffer) {
+    const d = toDate(latestPendingOffer?.updated_at) || toDate(latestPendingOffer?.created_at) || new Date();
+    const amount = latestPendingOffer?.amount || latestPendingOffer?.total_amount;
+    const amountStr = typeof amount === 'number' ? ` — €${amount.toLocaleString()}` : '';
+    activityItems.push({
+      key: `offer-${latestPendingOffer.id}`,
+      icon: <Award className="w-4 h-4 text-yellow-600" />,
+      bgClass: 'bg-yellow-50',
+      text: latestPendingOffer?.title
+        ? `Νέα προσφορά: ${latestPendingOffer.title}${amountStr}`
+        : `Προστέθηκε νέα προσφορά${amountStr}`,
+      date: d,
+      badge: { label: 'Εκκρεμεί', variant: 'outline' },
+    });
+  }
+
+  if (latestActiveContract) {
+    const d = toDate(latestActiveContract?.updated_at) || toDate(latestActiveContract?.start_date) || toDate(latestActiveContract?.created_at) || new Date();
+    const price = latestActiveContract?.monthly_price || latestActiveContract?.price;
+    const priceStr = typeof price === 'number' ? ` — €${price.toLocaleString()}/μήνα` : '';
+    activityItems.push({
+      key: `contract-${latestActiveContract.id}`,
+      icon: <FileCheck className="w-4 h-4 text-blue-600" />,
+      bgClass: 'bg-blue-50',
+      text: latestActiveContract?.title
+        ? `Ενεργό συμβόλαιο: ${latestActiveContract.title}${priceStr}`
+        : `Υπογράφηκε νέο συμβόλαιο${priceStr}`,
+      date: d,
+      badge: { label: 'Ενεργό', variant: 'secondary' },
+    });
+  }
 
   const StatCard = ({ 
     title, 
@@ -301,38 +391,24 @@ export default function ProjectsDashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-green-50 rounded-lg">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">Ολοκληρώθηκε έργο ανακαίνισης κοινοχρήστων χώρων</p>
-                <p className="text-xs text-muted-foreground">Πριν 1 ημέρα</p>
-              </div>
-              <Badge variant="secondary">Ολοκληρώθηκε</Badge>
+          {activityItems.length === 0 ? (
+            <div className="text-sm text-muted-foreground">Δεν υπάρχουν πρόσφατες ενέργειες.</div>
+          ) : (
+            <div className="space-y-4">
+              {activityItems.slice(0, 3).map((item) => (
+                <div key={item.key} className="flex items-center space-x-4">
+                  <div className={`p-2 rounded-lg ${item.bgClass}`}>
+                    {item.icon}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{item.text}</p>
+                    <p className="text-xs text-muted-foreground">{getRelativeTimeEl(item.date)}</p>
+                  </div>
+                  <Badge variant={item.badge.variant}>{item.badge.label}</Badge>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-yellow-50 rounded-lg">
-                <Award className="w-4 h-4 text-yellow-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">Προστέθηκε νέα προσφορά για έργο ηλεκτρολογικών</p>
-                <p className="text-xs text-muted-foreground">€12,500 - Πριν 2 ημέρες</p>
-              </div>
-              <Badge variant="outline">Εκκρεμεί</Badge>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <FileCheck className="w-4 h-4 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">Υπογράφηκε νέο συμβόλαιο για συντήρηση ανελκυστήρων</p>
-                <p className="text-xs text-muted-foreground">€8,000/μήνα - Πριν 3 ημέρες</p>
-              </div>
-              <Badge variant="secondary">Ενεργό</Badge>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

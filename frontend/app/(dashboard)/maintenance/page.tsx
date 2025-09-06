@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, extractCount, extractResults, getActiveBuildingId } from '@/lib/api';
 import { fetchPublicMaintenanceCounters } from '@/lib/apiPublic';
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
+import { getRelativeTimeEl } from '@/lib/date';
 import { useRole } from '@/lib/auth';
 import { BackButton } from '@/components/ui/BackButton';
 
@@ -46,6 +47,33 @@ export default function MaintenanceDashboard() {
     queryKey: ['receipts', { building: buildingId, payment_status: 'pending' }],
     queryFn: async () => (await api.get(`/maintenance/receipts/`, { params: { building: buildingId, payment_status: 'pending' } })).data,
   });
+  const receiptsCompletedQ = useQuery({
+    queryKey: ['receipts', { building: buildingId, payment_status: 'paid' }],
+    queryFn: async () => (await api.get(`/maintenance/receipts/`, { params: { building: buildingId, payment_status: 'paid' } })).data,
+  });
+  // Year boundaries
+  const year = new Date().getFullYear();
+  const yearStart = `${year}-01-01`;
+  const yearEnd = `${year}-12-31`;
+
+  // Total expenses for the year from Financial Expenses API
+  const expensesYearQ = useQuery({
+    queryKey: ['expenses-year', { building: buildingId, year }],
+    queryFn: async () => (await api.get(`/financial/expenses/`, { params: { building_id: buildingId, date__gte: yearStart, date__lte: yearEnd, limit: 1000 } })).data,
+    staleTime: 30_000,
+  });
+  // Completed scheduled works for the year (filter by scheduled_date range)
+  const completedYearQ = useQuery({
+    queryKey: ['scheduled-completed-year', { building: buildingId, year }],
+    queryFn: async () => (await api.get(`/maintenance/scheduled/`, { params: { building: buildingId, status: 'completed', scheduled_date__gte: yearStart, scheduled_date__lte: yearEnd, limit: 1 } })).data,
+    staleTime: 30_000,
+  });
+  // Service receipts for the year (proxy for completed works when no scheduled items marked completed)
+  const receiptsYearQ = useQuery({
+    queryKey: ['maintenance-receipts-year', { building: buildingId, year }],
+    queryFn: async () => (await api.get(`/maintenance/receipts/`, { params: { building: buildingId, service_date__gte: yearStart, service_date__lte: yearEnd, limit: 1000 } })).data,
+    staleTime: 30_000,
+  });
   const scheduledQ = useQuery({
     queryKey: ['scheduled-maintenance', { building: buildingId }],
     queryFn: async () => (await api.get(`/maintenance/scheduled/`, { params: { building: buildingId } })).data,
@@ -63,16 +91,142 @@ export default function MaintenanceDashboard() {
     staleTime: 30_000,
   });
 
-  const loading = contractorsQ.isLoading || receiptsQ.isLoading || scheduledQ.isLoading || urgentScheduledQ.isLoading;
+  const loading = contractorsQ.isLoading || receiptsQ.isLoading || receiptsCompletedQ.isLoading || scheduledQ.isLoading || urgentScheduledQ.isLoading || expensesYearQ.isLoading || completedYearQ.isLoading || receiptsYearQ.isLoading;
   const contractorRows = extractResults<any>(contractorsQ.data ?? []);
+  const scheduledRows = extractResults<any>(scheduledQ.data ?? []);
+  const totalSpentThisYear = useMemo(() => {
+    const rows = extractResults<any>(expensesYearQ.data ?? []);
+    return rows.reduce((sum: number, r: any) => sum + (Number(r?.amount) || 0), 0);
+  }, [expensesYearQ.data]);
+  const completedThisYear = useMemo(() => {
+    // Prefer server-side count if provided
+    const data = completedYearQ.data;
+    const count = (data && typeof data === 'object' && typeof (data as any).count === 'number') ? (data as any).count : extractResults<any>(data ?? []).length;
+    if (count > 0) return count;
+    // Fallback 1: maintenance service receipts count in the year
+    const receiptsRows = extractResults<any>(receiptsYearQ.data ?? []);
+    if (Array.isArray(receiptsRows) && receiptsRows.length > 0) {
+      return receiptsRows.length;
+    }
+    // Fallback: local filtering (if server didn't return count)
+    const startMs = new Date(`${year}-01-01T00:00:00`).getTime();
+    const endMs = new Date(`${year}-12-31T23:59:59.999`).getTime();
+    const toMs = (v: any): number | null => {
+      if (!v || typeof v !== 'string') return null;
+      const s = v.length === 10 ? `${v}T00:00:00` : v;
+      const t = new Date(s).getTime();
+      return Number.isFinite(t) ? t : null;
+    };
+    const getCompletionDateMs = (r: any): number | null => (
+      toMs(r?.finished_at) ?? toMs(r?.completed_at) ?? toMs(r?.updated_at) ?? toMs(r?.scheduled_date) ?? toMs(r?.created_at) ?? null
+    );
+    return scheduledRows.filter((r: any) => r?.status === 'completed' && (() => {
+      const ms = getCompletionDateMs(r);
+      return ms !== null && ms >= startMs && ms <= endMs;
+    })()).length;
+  }, [completedYearQ.data, receiptsYearQ.data, scheduledRows, year]);
+
+  // using shared helper getRelativeTimeEl
+
+  // Build activity items from real data
+  type ActivityItem = {
+    key: string;
+    icon: React.ReactNode;
+    bgClass: string;
+    text: string;
+    date: Date;
+    badge: { label: string; variant: 'secondary' | 'outline' };
+  };
+
+  const toDate = (value: unknown): Date | null => {
+    if (!value || typeof value !== 'string') return null;
+    const s = value.length === 10 ? `${value}T00:00:00` : value;
+    const t = new Date(s);
+    return isNaN(t.getTime()) ? null : t;
+  };
+
+  const receiptsPendingRows = extractResults<any>(receiptsQ.data ?? []);
+  const receiptsPaidRows = extractResults<any>(receiptsCompletedQ.data ?? []);
+
+  const getCompletionDate = (r: any): Date | null => {
+    return (
+      toDate(r?.finished_at) ||
+      toDate(r?.completed_at) ||
+      toDate(r?.updated_at) ||
+      toDate(r?.scheduled_date) ||
+      toDate(r?.created_at) ||
+      null
+    );
+  };
+
+  const byLatest = (getDate: (r: any) => Date | null) => (a: any, b: any) => {
+    const da = getDate(a)?.getTime() ?? -Infinity;
+    const db = getDate(b)?.getTime() ?? -Infinity;
+    return db - da;
+  };
+
+  const latestCompletedScheduled = [...scheduledRows]
+    .filter((r: any) => r?.status === 'completed')
+    .sort(byLatest(getCompletionDate))[0];
+
+  const latestPendingReceipt = [...receiptsPendingRows]
+    .sort(byLatest((r: any) => toDate(r?.updated_at) || toDate(r?.service_date) || toDate(r?.created_at)))[0];
+
+  const latestContractor = [...contractorRows]
+    .sort(byLatest((r: any) => toDate(r?.created_at) || toDate(r?.updated_at)))[0];
+
+  const activityItems: ActivityItem[] = [];
+
+  if (latestCompletedScheduled) {
+    const d = getCompletionDate(latestCompletedScheduled) ?? new Date();
+    activityItems.push({
+      key: `scheduled-${latestCompletedScheduled.id}`,
+      icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+      bgClass: 'bg-green-50',
+      text: latestCompletedScheduled?.title
+        ? `Ολοκληρώθηκε έργο: ${latestCompletedScheduled.title}`
+        : 'Ολοκληρώθηκε Προγραμματισμός Έργου',
+      date: d,
+      badge: { label: 'Ολοκληρώθηκε', variant: 'secondary' },
+    });
+  }
+
+  if (latestPendingReceipt) {
+    const d = toDate(latestPendingReceipt?.updated_at) || toDate(latestPendingReceipt?.service_date) || toDate(latestPendingReceipt?.created_at) || new Date();
+    const contractorName: string | undefined = latestPendingReceipt?.contractor_name || latestPendingReceipt?.contractor?.name;
+    activityItems.push({
+      key: `receipt-${latestPendingReceipt.id}`,
+      icon: <Clock className="w-4 h-4 text-yellow-600" />,
+      bgClass: 'bg-yellow-50',
+      text: contractorName
+        ? `Προστέθηκε νέα απόδειξη από ${contractorName}`
+        : 'Προστέθηκε νέα απόδειξη συντήρησης',
+      date: d,
+      badge: { label: 'Εκκρεμεί', variant: 'outline' },
+    });
+  }
+
+  if (latestContractor) {
+    const d = toDate(latestContractor?.created_at) || toDate(latestContractor?.updated_at) || new Date();
+    activityItems.push({
+      key: `contractor-${latestContractor.id}`,
+      icon: <Users className="w-4 h-4 text-blue-600" />,
+      bgClass: 'bg-blue-50',
+      text: latestContractor?.name
+        ? `Προστέθηκε νέο συνεργείο: ${latestContractor.name}`
+        : 'Προστέθηκε νέο συνεργείο',
+      date: d,
+      badge: { label: 'Νέο', variant: 'secondary' },
+    });
+  }
   const baseStats: MaintenanceStats = {
     total_contractors: contractorRows.length,
     active_contractors: contractorRows.filter((c: any) => c.status === 'active' || c.is_active === true).length,
     pending_receipts: extractCount(receiptsQ.data ?? []),
     scheduled_maintenance: extractCount(scheduledQ.data ?? []),
     urgent_maintenance: extractCount(urgentScheduledQ.data ?? []),
-    completed_maintenance: 0,
-    total_spent: 0,
+    completed_maintenance: completedThisYear,
+    total_spent: totalSpentThisYear,
   };
 
   const stats: MaintenanceStats = publicCountersQ.data ? {
@@ -81,8 +235,8 @@ export default function MaintenanceDashboard() {
     pending_receipts: publicCountersQ.data.pending_receipts,
     scheduled_maintenance: publicCountersQ.data.scheduled_total,
     urgent_maintenance: publicCountersQ.data.urgent_total,
-    completed_maintenance: 0,
-    total_spent: 0,
+    completed_maintenance: completedThisYear,
+    total_spent: totalSpentThisYear,
   } : baseStats;
 
   const StatCard = ({ 
@@ -143,7 +297,7 @@ export default function MaintenanceDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Περιοδικές Υπηρεσίες</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Υπηρεσίες</h1>
           <p className="text-muted-foreground">
             Διαχείριση συνεργείων, αποδείξεων και προγραμματισμένων έργων
           </p>
@@ -160,7 +314,7 @@ export default function MaintenanceDashboard() {
             <Button asChild variant="outline">
               <Link href="/maintenance/scheduled/new">
                 <Calendar className="w-4 h-4 mr-2" />
-                Προγραμματισμένο Έργο
+                Προγραμματισμός Έργου
               </Link>
             </Button>
           </div>
@@ -180,7 +334,7 @@ export default function MaintenanceDashboard() {
         <StatCard
           title="Εκκρεμείς Αποδείξεις"
           value={stats.pending_receipts}
-          description="Αποδείξεις για επεξεργασία"
+          description={`Αποδείξεις για επεξεργασία — Ολοκληρωμένες: ${extractCount(receiptsCompletedQ.data ?? [])}`}
           icon={<FileText className="w-4 h-4" />}
           color="warning"
           href="/maintenance/receipts"
@@ -268,38 +422,24 @@ export default function MaintenanceDashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-green-50 rounded-lg">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">Ολοκληρώθηκε έργο συντήρησης ανελκυστήρα</p>
-                <p className="text-xs text-muted-foreground">Πριν 2 ώρες</p>
-              </div>
-              <Badge variant="secondary">Ολοκληρώθηκε</Badge>
+          {activityItems.length === 0 ? (
+            <div className="text-sm text-muted-foreground">Δεν υπάρχουν πρόσφατες ενέργειες.</div>
+          ) : (
+            <div className="space-y-4">
+              {activityItems.slice(0, 3).map((item) => (
+                <div key={item.key} className="flex items-center space-x-4">
+                  <div className={`p-2 rounded-lg ${item.bgClass}`}>
+                    {item.icon}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{item.text}</p>
+                    <p className="text-xs text-muted-foreground">{getRelativeTimeEl(item.date)}</p>
+                  </div>
+                  <Badge variant={item.badge.variant}>{item.badge.label}</Badge>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-yellow-50 rounded-lg">
-                <Clock className="w-4 h-4 text-yellow-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">Προστέθηκε νέα απόδειξη από συνεργείο καθαρισμού</p>
-                <p className="text-xs text-muted-foreground">Πριν 1 ημέρα</p>
-              </div>
-              <Badge variant="outline">Εκκρεμεί</Badge>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <Users className="w-4 h-4 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">Προστέθηκε νέο συνεργείο ηλεκτρολογικών</p>
-                <p className="text-xs text-muted-foreground">Πριν 2 ημέρες</p>
-              </div>
-              <Badge variant="secondary">Νέο</Badge>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

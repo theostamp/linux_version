@@ -2186,6 +2186,9 @@ export type ServiceReceipt = {
   payment_status: 'pending' | 'paid' | 'overdue';
   payment_date?: string | null;
   created_at: string;
+  // Explicit links (optional; require backend support)
+  expense?: number | null;
+  scheduled_maintenance?: number | null;
 };
 
 export async function fetchServiceReceipts(params: { buildingId?: number } = {}): Promise<ServiceReceipt[]> {
@@ -2223,6 +2226,9 @@ export async function createServiceReceipt(payload: {
   invoice_number?: string;
   payment_status?: 'pending' | 'paid' | 'overdue';
   receipt_file?: File;
+  // Explicit links (optional)
+  expense?: number;
+  scheduled_maintenance?: number;
 }): Promise<ServiceReceipt> {
   const form = new FormData();
   form.append('contractor', String(payload.contractor));
@@ -2233,6 +2239,8 @@ export async function createServiceReceipt(payload: {
   if (payload.invoice_number) form.append('invoice_number', payload.invoice_number);
   form.append('payment_status', payload.payment_status ?? 'pending');
   if (payload.receipt_file) form.append('receipt_file', payload.receipt_file);
+  if (typeof payload.expense === 'number') form.append('expense', String(payload.expense));
+  if (typeof payload.scheduled_maintenance === 'number') form.append('scheduled_maintenance', String(payload.scheduled_maintenance));
   const { data } = await api.post<ServiceReceipt>('/maintenance/receipts/', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });

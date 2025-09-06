@@ -30,10 +30,10 @@ _Exported on 8/3/2025 at 00:01:04 GMT+3 from Cursor (1.3.8)_
 const mainLinks = [
   // ... υπάρχοντα links ...
   
-  // 🔧 Περιοδικές Υπηρεσίες
+  // 🔧 Υπηρεσίες
   {
     href: '/maintenance',
-    label: 'Περιοδικές Υπηρεσίες',
+    label: 'Υπηρεσίες',
     icon: <Wrench className="w-5 h-5" />,
     roles: ['manager', 'staff', 'superuser'],
   },
@@ -58,7 +58,7 @@ const mainLinks = [
 
 ### 2. **Δομή των Νέων Modules**
 
-#### **🔧 Περιοδικές Υπηρεσίες** (`/maintenance`)
+#### **🔧 Υπηρεσίες** (`/maintenance`)
 - **Συνεργεία**: Διαχείριση συνεργείων επισκευών, καθαρισμού, ασφαλείας
 - **Αποδείξεις Παροχής**: Upload και διαχείριση αποδείξεων από συνεργεία
 - **Προγραμματισμένα Έργα**: Προγραμματισμός συντηρήσεων
@@ -186,10 +186,10 @@ frontend/app/(dashboard)/
 const mainLinks = [
   // ... υπάρχοντα links ...
   
-  // 🔧 Περιοδικές Υπηρεσίες
+  // 🔧 Υπηρεσίες
   {
     href: '/maintenance',
-    label: 'Περιοδικές Υπηρεσίες',
+    label: 'Υπηρεσίες',
     icon: <Wrench className="w-5 h-5" />,
     roles: ['manager', 'staff', 'superuser'],
   },

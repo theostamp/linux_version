@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { api, getActiveBuildingId, fetchScheduledMaintenances, type ScheduledMaintenance as ApiScheduledMaintenance } from '@/lib/api';
+import { api, getActiveBuildingId, fetchScheduledMaintenances, type ScheduledMaintenance as ApiScheduledMaintenance, createServiceReceipt } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useRole } from '@/lib/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,7 +49,7 @@ export type ScheduledMaintenance = {
 };
 
 export default function ScheduledMaintenanceForm({
-  heading = 'Προγραμματισμένο Έργο',
+  heading = 'Προγραμματισμός Έργου',
   maintenanceId,
 }: {
   readonly heading?: string;
@@ -213,7 +213,7 @@ export default function ScheduledMaintenanceForm({
         router.push(`/maintenance/scheduled?highlight=${savedId}`);
       } else {
         toast({ title: 'Επιτυχία', description: 'Το έργο καταχωρήθηκε επιτυχώς.' });
-        router.push('/maintenance/scheduled');
+      router.push('/maintenance/scheduled');
       }
     } catch (e: any) {
       toast({ title: 'Σφάλμα', description: e?.message ?? 'Αποτυχία αποθήκευσης' });
@@ -577,6 +577,24 @@ export default function ScheduledMaintenanceForm({
                   distribution_type: receiptDistribution,
                   attachment: receiptFile || undefined,
                 } as any);
+                // Link a service receipt explicitly to the expense and maintenance if possible
+                try {
+                  const expenseId = created?.id ?? created?.data?.id;
+                  const contractorId = currentValues.contractor ?? initialData?.contractor;
+                  if (contractorId && expenseId) {
+                    await createServiceReceipt({
+                      contractor: Number(contractorId),
+                      building: buildingId,
+                      service_date: receiptDate,
+                      amount: Math.round(amountNum * 100) / 100,
+                      description: receiptTitle.trim(),
+                      payment_status: 'pending',
+                      receipt_file: receiptFile || undefined,
+                      expense: expenseId,
+                      scheduled_maintenance: initialData?.id,
+                    });
+                  }
+                } catch {}
                 setShowReceiptModal(false);
                 const createdId = created?.id ?? created?.data?.id;
                 toast({ title: 'Επιτυχία', description: createdId ? `Η απόδειξη καταχωρήθηκε (ID: ${createdId}).` : 'Η απόδειξη καταχωρήθηκε στις δαπάνες.' });
@@ -617,6 +635,23 @@ export default function ScheduledMaintenanceForm({
             distribution_type: receiptDistribution,
             attachment: receiptFile || undefined,
           } as any);
+          try {
+            const expenseId = created?.id ?? created?.data?.id;
+            const contractorId = currentValues.contractor ?? initialData?.contractor;
+            if (contractorId && expenseId) {
+              await createServiceReceipt({
+                contractor: Number(contractorId),
+                building: pendingCreateAfterConfirm.buildingId,
+                service_date: receiptDate,
+                amount: Math.round(pendingCreateAfterConfirm.amountNum * 100) / 100,
+                description: receiptTitle.trim(),
+                payment_status: 'pending',
+                receipt_file: receiptFile || undefined,
+                expense: expenseId,
+                scheduled_maintenance: initialData?.id,
+              });
+            }
+          } catch {}
           setShowDuplicateConfirm(false);
           setShowReceiptModal(false);
           const createdId = created?.id ?? created?.data?.id;

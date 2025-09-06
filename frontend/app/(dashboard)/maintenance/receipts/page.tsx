@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileText } from 'lucide-react';
-import { fetchServiceReceipts, type ServiceReceipt, deleteServiceReceipt } from '@/lib/api';
+import { fetchServiceReceipts, type ServiceReceipt, deleteServiceReceipt, api, fetchScheduledMaintenances, updateScheduledMaintenance } from '@/lib/api';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -98,6 +98,69 @@ export default function ReceiptsPage() {
             await deleteServiceReceipt(toDeleteId);
             qc.invalidateQueries({ queryKey: ['maintenance', 'receipts'] });
             toast({ title: 'Διαγράφηκε', description: 'Η απόδειξη διαγράφηκε.' });
+
+            // Optional follow-ups: offer to delete related financial expenses and revert related scheduled works
+            try {
+              const building = buildingId;
+              // Find the deleted receipt details locally to derive date/amount/description
+              const deleted = receipts.find(r => r.id === toDeleteId);
+              const receiptDate = deleted?.service_date;
+              const receiptAmount = typeof deleted?.amount === 'string' ? parseFloat(deleted?.amount as any) : (deleted?.amount ?? 0);
+              const receiptTitle = (deleted?.description || '').trim().toLowerCase();
+
+              if (building && receiptDate && receiptTitle) {
+                // Fetch expenses in same day for the building
+                const params = { building_id: building, date__gte: receiptDate.slice(0,10), date__lte: receiptDate.slice(0,10) } as any;
+                const resp = await api.get(`/financial/expenses/`, { params });
+                const rows = Array.isArray(resp.data) ? resp.data : resp.data?.results ?? [];
+                // Prefer explicit linkage if backend supports it
+                const explicit = rows.filter((e: any) => e?.linked_service_receipt === toDeleteId);
+                if (explicit.length > 0) {
+                  const alsoDelete = window.confirm(`Βρέθηκαν ${explicit.length} δαπάνες συνδεδεμένες με την απόδειξη. Θέλετε να διαγραφούν;`);
+                  if (alsoDelete) {
+                    for (const m of explicit) { try { await api.delete(`/financial/expenses/${m.id}/`); } catch {} }
+                    toast({ title: 'Ολοκληρώθηκε', description: 'Οι συνδεδεμένες δαπάνες διαγράφηκαν.' });
+                  }
+                }
+                const approxAmountEqual = (a: number, b: number) => Math.abs(Number(a || 0) - Number(b || 0)) < 0.005;
+                const normalize = (s: string) => (s || '').trim().toLowerCase();
+                const matches = rows.filter((e: any) => (
+                  approxAmountEqual(Number(e?.amount), Number(receiptAmount)) && normalize(e?.title) === receiptTitle
+                ));
+                if (matches.length > 0) {
+                  const alsoDelete = window.confirm(`Βρέθηκαν ${matches.length} σχετικές δαπάνες για ίδια ημερομηνία/ποσό/τίτλο. Θέλετε να διαγραφούν κι αυτές; (Ίσως είναι λογιστικά παρατυπία)`);
+                  if (alsoDelete) {
+                    for (const m of matches) {
+                      try { await api.delete(`/financial/expenses/${m.id}/`); } catch {}
+                    }
+                    toast({ title: 'Ολοκληρώθηκε', description: 'Οι σχετικές δαπάνες διαγράφηκαν.' });
+                  }
+                }
+
+                // Offer reverting related scheduled items from completed -> scheduled
+                try {
+                  const scheduled = await fetchScheduledMaintenances({ buildingId: building, ordering: 'scheduled_date' });
+                  const closeDate = (d1?: string, d2?: string) => {
+                    if (!d1 || !d2) return false;
+                    const t1 = new Date(d1.length > 10 ? d1 : `${d1}T00:00:00`).getTime();
+                    const t2 = new Date(d2.length > 10 ? d2 : `${d2}T00:00:00`).getTime();
+                    return Number.isFinite(t1) && Number.isFinite(t2) && Math.abs(t1 - t2) <= 3 * 24 * 60 * 60 * 1000;
+                  };
+                  const related = (scheduled as any[]).filter((s) => (
+                    (s?.status === 'completed') && closeDate(s?.scheduled_date, receiptDate) && normalize(s?.title) === receiptTitle
+                  ));
+                  if (related.length > 0) {
+                    const revert = window.confirm(`Βρέθηκαν ${related.length} ολοκληρωμένα προγραμματισμένα έργα που ταιριάζουν (τίτλος/ημερομηνία). Θέλετε να επανέλθουν σε "scheduled";`);
+                    if (revert) {
+                      for (const s of related) {
+                        try { await updateScheduledMaintenance(s.id, { status: 'scheduled' as any }); } catch {}
+                      }
+                      toast({ title: 'Ενημερώθηκαν', description: 'Τα σχετικά έργα επανήλθαν σε scheduled.' });
+                    }
+                  }
+                } catch {}
+              }
+            } catch {}
           } catch (e) {
             toast({ title: 'Σφάλμα', description: 'Αποτυχία διαγραφής.', variant: 'destructive' as any });
           } finally {

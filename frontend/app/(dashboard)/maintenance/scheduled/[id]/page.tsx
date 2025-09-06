@@ -48,7 +48,7 @@ export default function ScheduledMaintenanceDetailPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Λεπτομέρειες Έργου</h1>
-          <p className="text-muted-foreground">Πληροφορίες για το προγραμματισμένο έργο συντήρησης</p>
+          <p className="text-muted-foreground">Πληροφορίες για το Προγραμματισμός Έργου συντήρησης</p>
         </div>
         <BackButton href="/maintenance/scheduled" />
       </div>
@@ -108,7 +108,7 @@ export default function ScheduledMaintenanceDetailPage() {
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Επιβεβαίωση Διαγραφής"
-        description="Θέλετε σίγουρα να διαγράψετε το προγραμματισμένο έργο;"
+        description="Θέλετε σίγουρα να διαγράψετε το Προγραμματισμός Έργου;"
         confirmText="Διαγραφή"
         confirmVariant="destructive"
         isConfirmLoading={deleting}

@@ -39,6 +39,9 @@ export interface Expense {
   notes?: string;
   created_at: string;
   updated_at: string;
+  // Explicit links (optional; require backend support)
+  linked_service_receipt?: number | null;
+  linked_scheduled_maintenance?: number | null;
 }
 
 export interface Transaction {

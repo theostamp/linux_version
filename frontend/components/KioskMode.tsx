@@ -445,7 +445,7 @@ export default function KioskMode({
 
     return [{
       id: 'maintenance-overview',
-      title: 'Περιοδικές Υπηρεσίες',
+      title: 'Υπηρεσίες',
       icon: Wrench,
       content: (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">

@@ -29,13 +29,18 @@ class ExpenseSerializer(serializers.ModelSerializer):
     supplier_details = SupplierSerializer(source='supplier', read_only=True)
     attachment_url = serializers.SerializerMethodField()
     
+    # Linked maintenance/receipt (read-only)
+    linked_service_receipt = serializers.SerializerMethodField()
+    linked_scheduled_maintenance = serializers.SerializerMethodField()
+
     class Meta:
         model = Expense
         fields = [
             'id', 'building', 'building_name', 'title', 'amount', 'date', 
             'category', 'category_display', 'distribution_type', 'distribution_type_display',
             'supplier', 'supplier_name', 'supplier_details', 'attachment', 'attachment_url',
-            'notes', 'created_at', 'updated_at'
+            'notes', 'created_at', 'updated_at',
+            'linked_service_receipt', 'linked_scheduled_maintenance'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
     
@@ -61,6 +66,20 @@ class ExpenseSerializer(serializers.ModelSerializer):
             except Exception as e:
                 raise serializers.ValidationError(f"Σφάλμα στο αρχείο: {str(e)}")
         return value
+
+    def get_linked_service_receipt(self, obj):
+        try:
+            receipt = obj.linked_service_receipts.first()
+            return receipt.id if receipt else None
+        except Exception:
+            return None
+
+    def get_linked_scheduled_maintenance(self, obj):
+        try:
+            receipt = obj.linked_service_receipts.first()
+            return receipt.scheduled_maintenance_id if receipt else None
+        except Exception:
+            return None
 
 
 class TransactionSerializer(serializers.ModelSerializer):

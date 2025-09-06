@@ -160,6 +160,14 @@ class ServiceReceipt(models.Model):
         blank=True,
         verbose_name="Ημερομηνία Εισπράξεως"
     )
+    scheduled_maintenance = models.ForeignKey(
+        'maintenance.ScheduledMaintenance',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='service_receipts',
+        verbose_name="Σχετικό Έργο"
+    )
     linked_expense = models.ForeignKey(
         'financial.Expense',
         on_delete=models.SET_NULL,
