@@ -83,6 +83,7 @@ import type { UserRequest } from '@/types/userRequests';
 export type { UserRequest };
 import type { User } from '@/types/user';
 import { apiPublic } from './apiPublic';
+import { toast } from '@/hooks/use-toast';
 
 // Βασικό URL του API. Χρησιμοποιούμε την ίδια λογική με το apiPublic για tenant-specific URLs
 const getApiBaseUrl = () => {
@@ -264,6 +265,24 @@ function isTokenExpiredError(errorData: any): boolean {
 
 api.interceptors.response.use(
   (response) => {
+    try {
+      const method = (response.config?.method || '').toUpperCase();
+      const cfg: any = response.config || {};
+      const successHeader = (cfg.xToastSuccess as string | undefined) ?? (response.config?.headers?.['X-Toast-Success'] as string | undefined);
+      const suppressToastValue = (cfg.xToastSuppress as boolean | undefined);
+      const suppressToastHeader = response.config?.headers?.['X-Toast-Suppress'] as string | undefined;
+      const suppressToast = typeof suppressToastValue === 'boolean' ? suppressToastValue : (suppressToastHeader === 'true');
+      const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+      if (isMutation && suppressToast !== 'true') {
+        const defaultMsg =
+          method === 'POST' ? 'Αποθηκεύτηκε επιτυχώς'
+          : method === 'PUT' || method === 'PATCH' ? 'Ενημερώθηκε επιτυχώς'
+          : method === 'DELETE' ? 'Διαγράφηκε επιτυχώς'
+          : 'Επιτυχής ενέργεια';
+        const title = successHeader && successHeader.length > 0 ? successHeader : defaultMsg;
+        toast({ title });
+      }
+    } catch {}
     return response;
   },
   async (error: AxiosError) => {
@@ -308,6 +327,23 @@ api.interceptors.response.use(
       return await handleTokenRefresh(originalRequest, error);
     }
 
+    try {
+      const method = (originalRequest?.method || '').toUpperCase();
+      const cfg: any = originalRequest || {};
+      const suppressToastValue = cfg.xToastSuppress as boolean | undefined;
+      const suppressToastHeader = originalRequest?.headers?.['X-Toast-Suppress'] as string | undefined;
+      const suppressToast = typeof suppressToastValue === 'boolean' ? suppressToastValue : (suppressToastHeader === 'true');
+      const errorHeader = (cfg.xToastError as string | undefined) ?? (originalRequest?.headers?.['X-Toast-Error'] as string | undefined);
+      const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+      if (isMutation && suppressToast !== true) {
+        const status = error.response?.status;
+        const detail = (error.response?.data as any)?.detail || (error.response?.data as any)?.message;
+        const defaultMsg = status ? `Σφάλμα (${status})` : 'Σφάλμα ενέργειας';
+        const title = errorHeader && errorHeader.length > 0 ? errorHeader : defaultMsg;
+        const description = typeof detail === 'string' ? detail : undefined;
+        toast({ title, description, variant: 'destructive' as any });
+      }
+    } catch {}
     console.warn('[INTERCEPTOR] Δεν πληρούνται προϋποθέσεις για token refresh ή άλλο σφάλμα. Απόρριψη...');
     return Promise.reject(error);
   }
@@ -2209,7 +2245,7 @@ export async function updateServiceReceipt(
 }
 
 export async function deleteServiceReceipt(id: number): Promise<void> {
-  await api.delete(`/maintenance/receipts/${id}/`);
+  await api.delete(`/maintenance/receipts/${id}/`, { xToastSuppress: true } as any);
 }
 
 export async function fetchServiceReceipt(id: number): Promise<ServiceReceipt> {
@@ -2289,10 +2325,10 @@ export async function updateScheduledMaintenance(
   id: number,
   payload: Partial<Omit<ScheduledMaintenance, 'id'>>
 ): Promise<ScheduledMaintenance> {
-  const { data } = await api.patch<ScheduledMaintenance>(`/maintenance/scheduled/${id}/`, payload);
+  const { data } = await api.patch<ScheduledMaintenance>(`/maintenance/scheduled/${id}/`, payload, { xToastSuppress: true } as any);
   return data;
 }
 
 export async function deleteScheduledMaintenance(id: number): Promise<void> {
-  await api.delete(`/maintenance/scheduled/${id}/`);
+  await api.delete(`/maintenance/scheduled/${id}/`, { xToastSuppress: true } as any);
 }

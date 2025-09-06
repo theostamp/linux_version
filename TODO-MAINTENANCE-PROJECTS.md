@@ -86,6 +86,8 @@
 - [x] [fe-12-maint-edit-delete] Add Edit/Delete actions to maintenance lists (contractors, receipts, scheduled)
 - [x] [fe-ui-confirm-dialog-maint] Reusable ConfirmDialog and integration across maintenance pages
 - [x] [fe-ui-loading-states-maint] Inline loading states + toasts for save/delete
+ - [x] [fe-14-global-toasts] Global success/error toasts via API interceptor with per-request suppress/override headers
+ - [x] [fe-15-recent-activity-real-data] Real data for "Πρόσφατη Δραστηριότητα" (Maintenance & Projects)
 
 <!-- Receipts ⇄ Expenses Auto-link (New) -->
 - [x] [be-12-receipts-expenses-autolink] Auto-link ServiceReceipt → monthly Expense (create/update/delete) με ViewSet hooks + signals
@@ -229,6 +231,24 @@
 
 - 2025-09-05: AUTO_MAKEMIGRATIONS στο startup
   - Ενεργοποίηση `makemigrations` στο container startup όταν έχει οριστεί η env var
+
+ - 2025-09-06: Frontend UX — Real-data Recent Activity + Global Toasts
+  - Maintenance Dashboard: Αντικαταστάθηκαν τα hardcoded activity με πραγματικά δεδομένα από API
+    - Χρησιμοποιούνται: `/maintenance/scheduled/` (τελευταίο completed), `/maintenance/receipts/?payment_status=pending` (τελευταία εκκρεμής), `/maintenance/contractors/` (τελευταίο νέο)
+    - Αρχείο: `frontend/app/(dashboard)/maintenance/page.tsx`
+  - Projects Dashboard: Αντικαταστάθηκαν τα hardcoded activity με πραγματικά δεδομένα
+    - Χρησιμοποιούνται: `/projects/projects/` (τελευταίο completed), `/projects/offers/?status=pending`, `/projects/contracts/?status=active`
+    - Αρχείο: `frontend/app/(dashboard)/projects/page.tsx`
+  - Κοινός helper relative time στα Ελληνικά
+    - Νέο: `frontend/lib/date.ts` → `getRelativeTimeEl(date)` και import όπου χρειάζεται
+  - Global success/error toasts για mutations μέσω Axios interceptor
+    - Υλοποίηση: `frontend/lib/api.ts` (response interceptor)
+    - Defaults (GR): POST «Αποθηκεύτηκε επιτυχώς», PATCH/PUT «Ενημερώθηκε επιτυχώς», DELETE «Διαγράφηκε επιτυχώς»
+    - Headers override/suppress: `X-Toast-Suppress`, `X-Toast-Success`, `X-Toast-Error`
+    - Suppress σε κλήσεις με χειροκίνητα toasts για αποφυγή διπλών ειδοποιήσεων:
+      - API: `deleteServiceReceipt`, `updateScheduledMaintenance`, `deleteScheduledMaintenance`
+      - Projects detail actions (start/complete, approve offer, milestones CRUD, RFQ create) μέσω `makeRequestWithRetry(..., headers: { 'X-Toast-Suppress': 'true' })`
+    - Lint: κανένα σφάλμα στα ενημερωμένα αρχεία
 
 ### Phase 1 - COMPLETED 
 **Maintenance & Projects System Implementation**

@@ -34,6 +34,11 @@ const schema = z.object({
     const n = Number(v);
     return isNaN(n) ? undefined : n;
   }, z.number().positive().optional()),
+  estimated_duration: z.preprocess((v) => {
+    if (v === undefined || v === null || v === '') return undefined;
+    const n = Number(v);
+    return isNaN(n) ? undefined : n;
+  }, z.number().positive().int().optional()),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -46,6 +51,7 @@ export type ScheduledMaintenance = {
   scheduled_date?: string | null;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   status?: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  estimated_duration?: number | null;
 };
 
 export default function ScheduledMaintenanceForm({
@@ -83,7 +89,7 @@ export default function ScheduledMaintenanceForm({
   const [receiptTitle, setReceiptTitle] = useState('');
   const [receiptAmount, setReceiptAmount] = useState('');
   const [receiptDate, setReceiptDate] = useState(() => new Date().toISOString().slice(0,10));
-  const [receiptCategory, setReceiptCategory] = useState<string>('cleaning_services');
+  const [receiptCategory, setReceiptCategory] = useState<string>('cleaning');
   const [receiptDistribution, setReceiptDistribution] = useState<'by_participation_mills' | 'equal_share' | 'by_meters' | 'specific_apartments'>('by_participation_mills');
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [isCreatingExpense, setIsCreatingExpense] = useState(false);
@@ -138,6 +144,7 @@ export default function ScheduledMaintenanceForm({
     scheduled_date: initialData?.scheduled_date ? formatForDateInput(initialData.scheduled_date) : undefined,
     priority: initialData?.priority ?? 'medium',
     status_ui: initialData?.status === 'completed' ? 'executed' : 'pending',
+    estimated_duration: (initialData?.estimated_duration as any) ?? 1,
   }), [initialData]);
 
   const { control, register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch, getValues } = useForm<FormValues>({
@@ -160,10 +167,14 @@ export default function ScheduledMaintenanceForm({
     const buildingId = getActiveBuildingId();
     const payload: any = {
       title: values.title,
-      description: values.description ?? '',
       building: buildingId,
       priority: values.priority,
     };
+    if (values.description && values.description.trim().length > 0) {
+      payload.description = values.description.trim();
+    }
+    // Backend requires estimated_duration
+    payload.estimated_duration = Number(values.estimated_duration ?? 1);
     if (values.contractor) payload.contractor = values.contractor;
     if (values.scheduled_date) {
       const dateOnly = values.scheduled_date.length > 10 ? values.scheduled_date.slice(0,10) : values.scheduled_date;
@@ -202,10 +213,10 @@ export default function ScheduledMaintenanceForm({
     try {
       let savedId: number | undefined = initialData?.id ?? undefined;
       if (initialData?.id) {
-        await api.patch(`/maintenance/scheduled/${initialData.id}/`, payload);
+        await api.patch(`/maintenance/scheduled/${initialData.id}/`, payload, { xToastSuppress: true } as any);
         savedId = initialData.id;
       } else {
-        const resp = await api.post('/maintenance/scheduled/', payload);
+        const resp = await api.post('/maintenance/scheduled/', payload, { xToastSuppress: true } as any);
         savedId = resp?.data?.id ?? undefined;
       }
       if (savedId) {
@@ -216,9 +227,35 @@ export default function ScheduledMaintenanceForm({
       router.push('/maintenance/scheduled');
       }
     } catch (e: any) {
-      toast({ title: 'Σφάλμα', description: e?.message ?? 'Αποτυχία αποθήκευσης' });
+      const msg = extractApiErrorMessage(e) ?? 'Αποτυχία αποθήκευσης';
+      toast({ title: 'Σφάλμα', description: msg, variant: 'destructive' as any });
     }
   };
+
+  function extractApiErrorMessage(error: unknown): string | null {
+    try {
+      const err = error as any;
+      const data = err?.response?.data;
+      if (!data) return err?.message ?? null;
+      if (typeof data === 'string') return data;
+      if (typeof data?.detail === 'string') return data.detail;
+      if (Array.isArray(data?.non_field_errors) && data.non_field_errors.length > 0) {
+        return String(data.non_field_errors[0]);
+      }
+      // DRF field errors: { field: [".."], ... }
+      const parts: string[] = [];
+      Object.entries(data).forEach(([field, val]) => {
+        if (Array.isArray(val) && val.length > 0) {
+          parts.push(`${field}: ${String(val[0])}`);
+        } else if (typeof val === 'string') {
+          parts.push(`${field}: ${val}`);
+        }
+      });
+      return parts.length > 0 ? parts.join(' — ') : (err?.message ?? null);
+    } catch {
+      return null;
+    }
+  }
 
   async function hasExecutedInDefinedPeriod(args: {
     buildingId: number;
@@ -330,7 +367,7 @@ export default function ScheduledMaintenanceForm({
                   }
                 }}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Επιλέξτε περιοδική υπηρεσία" />
+                    <SelectValue placeholder="Επιλέξτε υπηρεσία" />
                   </SelectTrigger>
                   <SelectContent>
                     {templates.map(t => (
@@ -358,12 +395,12 @@ export default function ScheduledMaintenanceForm({
                   <Button type="button" onClick={() => {
                     if (!newTemplateTitle.trim()) return;
                     const key = newTemplateTitle.trim().toLowerCase().replace(/\s+/g, '_').slice(0, 50);
-                    const item = { key, title: newTemplateTitle.trim(), description: newTemplateDescription.trim(), suggestedCategory: 'cleaning_services' };
+                    const item = { key, title: newTemplateTitle.trim(), description: newTemplateDescription.trim(), suggestedCategory: 'cleaning' };
                     setTemplates(prev => [{...item}, ...prev]);
                     setValue('template', item.key);
                     setValue('title', item.title as any);
                     setValue('description', item.description as any);
-                    setReceiptCategory('cleaning_services');
+                    setReceiptCategory('cleaning');
                     setShowAddTemplate(false);
                   }}>Αποθήκευση ως πρότυπο</Button>
                 </div>
@@ -383,7 +420,7 @@ export default function ScheduledMaintenanceForm({
                   control={control}
                   name="contractor"
                   render={({ field }) => (
-                    <Select value={field.value ? String(field.value) : undefined} onValueChange={(v) => field.onChange(Number(v))}>
+                    <Select value={field.value !== undefined && field.value !== null ? String(field.value) : ''} onValueChange={(v) => field.onChange(Number(v))}>
                       <SelectTrigger>
                         <SelectValue placeholder={loadingContractors ? 'Φόρτωση…' : 'Επιλέξτε συνεργείο'} />
                       </SelectTrigger>
@@ -420,7 +457,7 @@ export default function ScheduledMaintenanceForm({
                     control={control}
                     name="recurrence_frequency"
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={(v) => field.onChange(v)}>
+                      <Select value={field.value ?? ''} onValueChange={(v) => field.onChange(v)}>
                         <SelectTrigger><SelectValue placeholder="Επιλέξτε συχνότητα" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="weekly">Εβδομαδιαία</SelectItem>
@@ -442,7 +479,7 @@ export default function ScheduledMaintenanceForm({
                 control={control}
                 name="priority"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={(v) => field.onChange(v)}>
+                  <Select value={field.value ?? ''} onValueChange={(v) => field.onChange(v)}>
                     <SelectTrigger><SelectValue placeholder="Επιλέξτε" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="low">Χαμηλή</SelectItem>
@@ -453,6 +490,11 @@ export default function ScheduledMaintenanceForm({
                   </Select>
                 )}
               />
+              <div className="mt-4">
+                <label className="block text-sm font-medium mb-1">Εκτιμώμενη Διάρκεια (ώρες)</label>
+                <Input type="number" step="1" min="1" placeholder="1" {...register('estimated_duration')} />
+                {errors.estimated_duration && <p className="text-sm text-red-600">{String(errors.estimated_duration.message || 'Μη έγκυρη διάρκεια')}</p>}
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -462,7 +504,7 @@ export default function ScheduledMaintenanceForm({
                 control={control}
                 name="status_ui"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={(v) => field.onChange(v)}>
+                  <Select value={field.value ?? ''} onValueChange={(v) => field.onChange(v)}>
                     <SelectTrigger><SelectValue placeholder="Επιλέξτε" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pending">Εκκρεμεί</SelectItem>
@@ -516,7 +558,7 @@ export default function ScheduledMaintenanceForm({
               <Select value={receiptCategory} onValueChange={(v) => setReceiptCategory(v)}>
                 <SelectTrigger><SelectValue placeholder="Επιλέξτε" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cleaning_services">Υπηρεσίες Καθαρισμού</SelectItem>
+                  <SelectItem value="cleaning">Καθαρισμός Κοινοχρήστων Χώρων</SelectItem>
                   <SelectItem value="elevator_maintenance">Συντήρηση Ανελκυστήρα</SelectItem>
                   <SelectItem value="heating_maintenance">Συντήρηση Θέρμανσης</SelectItem>
                   <SelectItem value="plumbing_maintenance">Συντήρηση Υδραυλικών</SelectItem>

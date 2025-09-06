@@ -200,7 +200,7 @@ export default function ProjectDetailsPage() {
           try {
             setIsActing(true);
             const action = confirm.action === 'start' ? 'start' : 'complete';
-            await makeRequestWithRetry({ method: 'post', url: `/projects/projects/${project.id}/${action}/` });
+            await makeRequestWithRetry({ method: 'post', url: `/projects/projects/${project.id}/${action}/`, xToastSuppress: true } as any);
             toast({ title: 'Επιτυχία', description: 'Η ενέργεια ολοκληρώθηκε.' });
             // refresh project
             const { data } = await api.get(`/projects/projects/${project.id}/`);
@@ -283,7 +283,7 @@ function ProjectOffersTab({ projectId, onApproved }: { projectId: number; onAppr
           if (!confirm.id) return;
           try {
             setIsApproving(true);
-            await makeRequestWithRetry({ method: 'post', url: `/projects/offers/${confirm.id}/approve/` });
+            await makeRequestWithRetry({ method: 'post', url: `/projects/offers/${confirm.id}/approve/`, xToastSuppress: true } as any);
             toast({ title: 'Επιτυχία', description: 'Η προσφορά εγκρίθηκε.' });
             setRefresh((n) => n + 1);
             onApproved && onApproved();
@@ -357,7 +357,7 @@ function ProjectMilestonesTab({ projectId }: { projectId: number }) {
       const payload: any = { project: projectId, title };
       if (dueAt) payload.due_at = new Date(dueAt).toISOString();
       if (amount) payload.amount = parseFloat(amount);
-      await makeRequestWithRetry({ method: 'post', url: '/projects/milestones/', data: payload });
+      await makeRequestWithRetry({ method: 'post', url: '/projects/milestones/', data: payload, xToastSuppress: true } as any);
       toast({ title: 'Επιτυχία', description: 'Το ορόσημο δημιουργήθηκε.' });
       setTitle('');
       setDueAt('');
@@ -372,7 +372,7 @@ function ProjectMilestonesTab({ projectId }: { projectId: number }) {
 
   const updateStatus = async (id: number, status: string) => {
     try {
-      await makeRequestWithRetry({ method: 'patch', url: `/projects/milestones/${id}/`, data: { status } });
+      await makeRequestWithRetry({ method: 'patch', url: `/projects/milestones/${id}/`, data: { status }, xToastSuppress: true } as any);
       toast({ title: 'Ενημερώθηκε', description: 'Η κατάσταση ενημερώθηκε.' });
       setRefresh((n) => n + 1);
     } catch (e: any) {
@@ -383,7 +383,7 @@ function ProjectMilestonesTab({ projectId }: { projectId: number }) {
   const deleteMilestone = async (id: number) => {
     try {
       setDeleting(true);
-      await makeRequestWithRetry({ method: 'delete', url: `/projects/milestones/${id}/` });
+      await makeRequestWithRetry({ method: 'delete', url: `/projects/milestones/${id}/`, xToastSuppress: true } as any);
       toast({ title: 'Διαγράφηκε', description: 'Το ορόσημο διαγράφηκε.' });
       setRefresh((n) => n + 1);
     } catch (e: any) {
@@ -510,7 +510,7 @@ function ProjectRFQsTab({ projectId }: { projectId: number }) {
       setSaving(true);
       const payload: any = { project: projectId, title };
       if (due) payload.due_date = new Date(due).toISOString().slice(0, 10);
-      const resp = await makeRequestWithRetry({ method: 'post', url: '/projects/rfqs/', data: payload });
+      const resp = await makeRequestWithRetry({ method: 'post', url: '/projects/rfqs/', data: payload, xToastSuppress: true } as any);
       if (resp?.data?.id) {
         toast({ title: 'Επιτυχία', description: 'Το RFQ δημιουργήθηκε.' });
       }

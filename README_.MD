@@ -40,6 +40,29 @@ find . -name "*.sh" -type f | grep -v ".venv" | grep -v "node_modules" | xargs c
 
 ## 🚀 Τελευταίες Ενημερώσεις (January 2025)
 
+### 📝 Changelog (September 2025)
+
+- Maintenance & Projects Dashboards: Real-data "Πρόσφατη Δραστηριότητα"
+  - Maintenance: αντλεί τελευταία completed εργασία, τελευταία εκκρεμή απόδειξη, τελευταίο νέο συνεργείο
+    - Αρχείο: `frontend/app/(dashboard)/maintenance/page.tsx`
+  - Projects: αντλεί τελευταίο completed project, τελευταία pending offer, τελευταίο active contract
+    - Αρχείο: `frontend/app/(dashboard)/projects/page.tsx`
+  - Κοινός helper για ελληνικό relative time: `frontend/lib/date.ts` (`getRelativeTimeEl`)
+
+- Global Mutation Toasts (API interceptor)
+  - Αυτόματες ειδοποιήσεις επιτυχίας/σφάλματος για POST/PUT/PATCH/DELETE
+  - Παραμετροποίηση headers ανά αίτημα:
+    - `X-Toast-Suppress: 'true'` για σίγαση auto-toast (όταν υπάρχουν manual toasts)
+    - `X-Toast-Success: '...'` και `X-Toast-Error: '...'` για custom τίτλους
+  - Αρχείο: `frontend/lib/api.ts`
+
+- Αποφυγή διπλών ειδοποιήσεων σε pages με χειροκίνητα toasts
+  - Suppress headers προστέθηκαν σε:
+    - API wrappers: `deleteServiceReceipt`, `updateScheduledMaintenance`, `deleteScheduledMaintenance`
+    - Project detail actions: start/complete, approve offer, milestones CRUD, RFQ create
+      - Αρχείο: `frontend/app/(dashboard)/projects/[id]/page.tsx`
+
+
 ### 🎯 **Service Package Management System** - NEW MAJOR FEATURE
 
 #### 📦 **Smart Service Package Creation** - NEW COMPONENT
@@ -526,7 +549,7 @@ git push origin v2.1.0
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "υπηρεσιες και ανέκδοτες δαπανες"
+git commit -m "περνανε οι αποδειξεις εργων στις δπανες κοινοχρηστων οκ , δεν εμφανιζονται οι αποδειξεις στο εργα dashboard"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
@@ -620,8 +643,8 @@ docker compose up --build -d
 
 ---
 
-**Last Updated**: January 15, 2025  
-**Version**: 2.2.0  
+**Last Updated**: September 6, 2025  
+**Version**: 2.3.0  
 **Status**: Production Ready with Service Packages ✅
 
 

@@ -5,7 +5,7 @@ export const useEnsureCsrf = () => {
   useEffect(() => {
     const fetchToken = async () => {
       try {
-        await api.get('/api/csrf/');
+        await api.get('/csrf/');
       } catch (error) {
         console.error('CSRF token error:', error);
       }

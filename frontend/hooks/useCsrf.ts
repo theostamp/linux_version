@@ -1,6 +1,6 @@
 // frontend/hooks/useCsrf.ts
 import { useEffect, useState, useRef } from 'react';
-import { getBaseUrl } from '@/lib/config';
+import { api } from '@/lib/api';
 
 export default function useEnsureCsrf(): boolean {
   const [ready, setReady] = useState(false);
@@ -12,13 +12,10 @@ export default function useEnsureCsrf(): boolean {
     
     async function fetchToken() {
       hasTriedRef.current = true;
-      const base = getBaseUrl();
       try {
-        const res = await fetch(`${base}/csrf/`, {
-          credentials: 'include',
-        });
-        if (!res.ok) {
-          console.error('CSRF fetch failed:', res.status);
+        const res = await api.get('/csrf/');
+        if (!res || (res as any).status !== 200) {
+          console.error('CSRF fetch failed:', (res as any)?.status);
           return;
         }
         setReady(true);
