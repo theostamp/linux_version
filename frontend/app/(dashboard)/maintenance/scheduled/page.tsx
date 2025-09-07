@@ -5,6 +5,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import React, { useMemo, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchScheduledMaintenances, type ScheduledMaintenance, deleteScheduledMaintenance } from '@/lib/api';
+import { useExpenses } from '@/hooks/useExpenses';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -72,6 +73,7 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
   const qc = useQueryClient();
   const { isAdmin, isManager } = useRole();
   const { toast } = useToast();
+  const { getExpenses, deleteExpense } = useExpenses(buildingId || 0);
   const [toDeleteId, setToDeleteId] = React.useState<number | null>(null);
   const [deleting, setDeleting] = React.useState(false);
   const [overviewOpen, setOverviewOpen] = React.useState(false);
@@ -181,12 +183,53 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
         confirmVariant="destructive"
         isConfirmLoading={deleting}
         onConfirm={async () => {
-          if (toDeleteId === null) return;
+          if (toDeleteId === null || !buildingId) return;
           try {
             setDeleting(true);
+            
+            // Find the maintenance item to get its title
+            const itemToDelete = items.find(item => item.id === toDeleteId);
+            const maintenanceTitle = itemToDelete?.title || '';
+            
+            // First, find and delete related expenses
+            try {
+              const allExpenses = await getExpenses({ building_id: buildingId });
+              const relatedExpenses = allExpenses.filter(expense => {
+                const expenseTitle = (expense.title || '').toLowerCase();
+                const normalizedMaintenanceTitle = maintenanceTitle.toLowerCase();
+                // Match expenses that contain the maintenance title
+                return expenseTitle.includes(normalizedMaintenanceTitle) || 
+                       (expenseTitle.includes('προκαταβολή') && expenseTitle.includes(normalizedMaintenanceTitle)) ||
+                       (expenseTitle.includes('δόση') && expenseTitle.includes(normalizedMaintenanceTitle));
+              });
+              
+              if (relatedExpenses.length > 0) {
+                const confirmDeleteExpenses = window.confirm(
+                  `Βρέθηκαν ${relatedExpenses.length} σχετικές δαπάνες που θα διαγραφούν μαζί με το έργο:\n\n${relatedExpenses.map(e => `• ${e.title} (${e.amount}€)`).join('\n')}\n\nΘέλετε να συνεχίσετε;`
+                );
+                
+                if (confirmDeleteExpenses) {
+                  for (const expense of relatedExpenses) {
+                    try {
+                      await deleteExpense(expense.id);
+                    } catch (expenseError) {
+                      console.error('Error deleting related expense:', expenseError);
+                    }
+                  }
+                  toast({ title: 'Διαγράφηκαν', description: `Διαγράφηκαν ${relatedExpenses.length} σχετικές δαπάνες.` });
+                } else {
+                  return; // Cancel the entire deletion
+                }
+              }
+            } catch (expenseError) {
+              console.error('Error checking related expenses:', expenseError);
+              // Continue with maintenance deletion even if expense check fails
+            }
+            
+            // Delete the scheduled maintenance
             await deleteScheduledMaintenance(toDeleteId);
             qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled'] });
-            toast({ title: 'Διαγράφηκε', description: 'Το έργο διαγράφηκε επιτυχώς.' });
+            toast({ title: 'Διαγράφηκε', description: 'Το έργο και οι σχετικές δαπάνες διαγράφηκαν επιτυχώς.' });
           } catch (e) {
             toast({ title: 'Σφάλμα', description: 'Αποτυχία διαγραφής.', variant: 'destructive' as any });
           } finally {

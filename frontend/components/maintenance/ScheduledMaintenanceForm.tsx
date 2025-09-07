@@ -40,6 +40,21 @@ const schema = z.object({
     const n = Number(v);
     return isNaN(n) ? undefined : n;
   }, z.number().positive().int().optional()),
+  payment_config: z.object({
+    enabled: z.boolean().optional(),
+    payment_type: z.enum(['lump_sum', 'advance_installments', 'periodic', 'milestone_based']).optional(),
+    total_amount: z.number().optional(),
+    advance_percentage: z.number().optional(),
+    installment_count: z.number().optional(),
+    installment_frequency: z.enum(['weekly', 'biweekly', 'monthly']).optional(),
+    periodic_frequency: z.enum(['weekly', 'biweekly', 'monthly']).optional(),
+    periodic_amount: z.number().optional(),
+    start_date: z.string().optional(),
+    notes: z.string().optional(),
+    advance_amount: z.number().optional(),
+    remaining_amount: z.number().optional(),
+    installment_amount: z.number().optional(),
+  }).optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -229,17 +244,69 @@ export default function ScheduledMaintenanceForm({
     }
   }, [initialData, reset]);
 
-  const statusUi = watch('status_ui');
   const watchedPrice = watch('price');
-  const paymentConfigEnabled = watch('payment_config?.enabled');
+  const paymentConfigEnabled = watch('payment_config.enabled');
   const paymentConfig = watch('payment_config');
-  const watchedTitle = watch('title');
 
   if (isLoading) return null;
   if (!(isAdmin || isManager)) {
     if (typeof window !== 'undefined') router.push('/maintenance/scheduled');
     return null;
   }
+
+  const createInstallmentExpenses = async ({
+    buildingId,
+    title,
+    totalAmount,
+    advancePercentage,
+    installmentCount,
+    startDate,
+    category,
+    scheduledMaintenanceId,
+  }: {
+    buildingId: number;
+    title: string;
+    totalAmount: number;
+    advancePercentage: number;
+    installmentCount: number;
+    startDate: string;
+    category: string;
+    scheduledMaintenanceId: number;
+  }) => {
+    const advanceAmount = (totalAmount * advancePercentage) / 100;
+    const remainingAmount = totalAmount - advanceAmount;
+    const installmentAmount = remainingAmount / installmentCount;
+    
+    // Create advance payment expense (current month)
+    const currentDate = new Date().toISOString().slice(0, 10);
+    await createExpense({
+      building: buildingId,
+      title: `${title} - Προκαταβολή (${advancePercentage}%)`,
+      amount: Math.round(advanceAmount * 100) / 100,
+      date: currentDate,
+      category: category,
+      distribution_type: 'by_participation_mills',
+      notes: `Προκαταβολή ${advancePercentage}% για συντήρηση. Συνολικό κόστος: ${totalAmount}€`,
+    } as any);
+    
+    // Create installment expenses for future months
+    const baseDate = new Date(startDate);
+    for (let i = 1; i <= installmentCount; i++) {
+      const installmentDate = new Date(baseDate);
+      installmentDate.setMonth(baseDate.getMonth() + i);
+      const installmentDateStr = installmentDate.toISOString().slice(0, 10);
+      
+      await createExpense({
+        building: buildingId,
+        title: `${title} - Δόση ${i}/${installmentCount}`,
+        amount: Math.round(installmentAmount * 100) / 100,
+        date: installmentDateStr,
+        category: category,
+        distribution_type: 'by_participation_mills',
+        notes: `Δόση ${i} από ${installmentCount} για συντήρηση. Ποσό δόσης: ${installmentAmount.toFixed(2)}€`,
+      } as any);
+    }
+  };
 
   const onSubmit = async (values: FormValues, options?: { skipReceipt?: boolean }) => {
     const buildingId = getActiveBuildingId();
@@ -317,10 +384,32 @@ export default function ScheduledMaintenanceForm({
         const resp = await api.post('/maintenance/scheduled/', payload, { xToastSuppress: true } as any);
         savedId = resp?.data?.id ?? undefined;
       }
-      // If payment configuration is enabled, create or update payment schedule
+      // If payment configuration is enabled, create installment expenses first, then try payment schedule
       if (savedId && paymentConfigEnabled) {
+        const pc = paymentConfig || {};
+        
+        // Create installment expenses if payment type is advance_installments
+        if (pc.payment_type === 'advance_installments' && pc.total_amount && pc.installment_count) {
+          try {
+            await createInstallmentExpenses({
+              buildingId: getActiveBuildingId(),
+              title: values.title,
+              totalAmount: pc.total_amount,
+              advancePercentage: pc.advance_percentage || 30,
+              installmentCount: pc.installment_count,
+              startDate: pc.start_date || new Date().toISOString().slice(0, 10),
+              category: 'building_maintenance',
+              scheduledMaintenanceId: savedId,
+            });
+            toast({ title: 'Επιτυχία', description: `Δημιουργήθηκαν ${pc.installment_count + 1} τμηματικές δαπάνες για το έργο.` });
+          } catch (expenseError: any) {
+            console.error('Error creating installment expenses:', expenseError);
+            toast({ title: 'Σφάλμα', description: 'Υπήρξε πρόβλημα με τη δημιουργία των τμηματικών δαπανών.', variant: 'destructive' as any });
+          }
+        }
+
+        // Then try to create payment schedule (optional, won't block the flow)
         try {
-          const pc = paymentConfig || {};
           const schedulePayload: any = {
             payment_type: pc.payment_type || 'lump_sum',
             total_amount: pc.total_amount ?? watchedPrice ?? 0,
@@ -329,18 +418,19 @@ export default function ScheduledMaintenanceForm({
             installment_frequency: pc.installment_frequency,
             periodic_frequency: pc.periodic_frequency,
             periodic_amount: pc.periodic_amount,
-            start_date: pc.start_date,
+            start_date: pc.start_date || new Date().toISOString().slice(0, 10),
             notes: pc.notes,
           };
+          let scheduleResponse;
           if (existingScheduleId) {
-            await api.patch(`/maintenance/payment-schedules/${existingScheduleId}/`, schedulePayload);
+            scheduleResponse = await api.patch(`/maintenance/payment-schedules/${existingScheduleId}/`, schedulePayload);
           } else {
-            await api.post(`/maintenance/scheduled/${savedId}/create_payment_schedule/`, schedulePayload);
+            scheduleResponse = await api.post(`/maintenance/scheduled/${savedId}/create_payment_schedule/`, schedulePayload);
           }
         } catch (e: any) {
           // Don't block main flow; show warning with reason
           const msg = (e?.response?.data && JSON.stringify(e.response.data)) || e?.message || 'Αποτυχία ενημέρωσης/δημιουργίας χρονοδιαγράμματος πληρωμών';
-          toast({ title: 'Προειδοποίηση', description: msg, variant: 'default' as any });
+          // Don't show toast for this, as installment expenses were created successfully
         }
       }
 
@@ -475,7 +565,7 @@ export default function ScheduledMaintenanceForm({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-4">
           <div className="text-sm text-muted-foreground">Στοιχεία Έργου — Συμπληρώστε τα βασικά στοιχεία</div>
           <div>
             <label className="block text-sm font-medium mb-1">Τύπος έργου</label>
@@ -749,6 +839,7 @@ export default function ScheduledMaintenanceForm({
                 // Link a service receipt explicitly to the expense and maintenance if possible
                 try {
                   const expenseId = created?.id ?? created?.data?.id;
+                  const currentValues = getValues();
                   const contractorId = currentValues.contractor ?? initialData?.contractor;
                   if (contractorId && expenseId) {
                     await createServiceReceipt({
@@ -806,6 +897,7 @@ export default function ScheduledMaintenanceForm({
           } as any);
           try {
             const expenseId = created?.id ?? created?.data?.id;
+            const currentValues = getValues();
             const contractorId = currentValues.contractor ?? initialData?.contractor;
             if (contractorId && expenseId) {
               await createServiceReceipt({

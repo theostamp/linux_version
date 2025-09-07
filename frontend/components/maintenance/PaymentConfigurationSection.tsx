@@ -57,9 +57,10 @@ export function PaymentConfigurationSection({
       totalAmount,
       advancePercentage,
       installmentCount,
-      fullConfig: paymentConfig
+      fullConfig: paymentConfig,
+      projectPrice
     });
-  }, [paymentEnabled, paymentType, totalAmount, advancePercentage, installmentCount, watch]);
+  }, [paymentEnabled, paymentType, totalAmount, advancePercentage, installmentCount, watch, projectPrice]);
 
   // Auto-calculate amounts based on configuration
   useEffect(() => {
@@ -172,6 +173,7 @@ export function PaymentConfigurationSection({
           <Controller
             name="payment_config.payment_type"
             control={control}
+            defaultValue="lump_sum"
             render={({ field }) => (
               <Select value={field.value ?? ''} onValueChange={field.onChange}>
                 <SelectTrigger>

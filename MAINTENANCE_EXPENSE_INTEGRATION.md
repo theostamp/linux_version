@@ -10,6 +10,8 @@
 - **Συγχρονισμός ποσών** μεταξύ συντήρησης και δαπανών
 - **Ενοποιημένη διαχείριση διαγραφών**
 - **Έξυπνη κατηγοριοποίηση** βάσει τύπου έργου
+- **🆕 Τμηματικές Καταβολές**: Προκαταβολές + δόσεις ανά μήνα
+- **🆕 Αμφίδρομη Διαγραφή**: Διαγραφή από οποιαδήποτε πλευρά
 
 ---
 
@@ -169,6 +171,103 @@ def _determine_expense_category(self):
 
 ---
 
+## 🆕 Installment Payment System
+
+### Τμηματικές Καταβολές (Προκαταβολή + Δόσεις)
+
+Το σύστημα υποστηρίζει αυτόματη δημιουργία τμηματικών δαπανών:
+
+#### Payment Configuration
+```typescript
+interface PaymentConfiguration {
+  enabled: boolean;
+  payment_type: 'lump_sum' | 'advance_installments' | 'periodic';
+  total_amount: number;
+  advance_percentage: number;  // π.χ. 30%
+  installment_count: number;   // π.χ. 3 δόσεις
+  start_date: string;
+}
+```
+
+#### Example: Έργο 600€ με 30% προκαταβολή + 3 δόσεις
+
+**Δημιουργούμενες Δαπάνες:**
+1. **Σεπτέμβριος 2025**: `"Έλεγχος Ηλεκτρικών - Προκαταβολή (30%)"` - **180,00€**
+2. **Οκτώβριος 2025**: `"Έλεγχος Ηλεκτρικών - Δόση 1/3"` - **140,00€**
+3. **Νοέμβριος 2025**: `"Έλεγχος Ηλεκτρικών - Δόση 2/3"` - **140,00€**
+4. **Δεκέμβριος 2025**: `"Έλεγχος Ηλεκτρικών - Δόση 3/3"` - **140,00€**
+
+#### Monthly View Logic
+Στις δαπάνες εμφανίζεται **μόνο το ποσό του τρέχοντα μήνα**:
+- Σεπτέμβριος: 180€ (προκαταβολή) ✅ Εμφανίζεται
+- Οκτώβριος: 140€ (δόση 1) ⏰ Θα εμφανιστεί τον Οκτώβριο
+
+---
+
+## 🔄 Bidirectional Deletion System
+
+### Αμφίδρομη Διαγραφή
+
+#### From Financial → Maintenance
+```typescript
+// ExpenseList.tsx:83-135
+const handleDeleteExpense = async (expense: Expense) => {
+  // 1. Διαγραφή expense
+  await deleteExpense(expense.id);
+  
+  // 2. Διαγραφή συνδεδεμένων service receipts
+  const receipts = await getRelatedServiceReceipts(expense);
+  for (const receipt of receipts) {
+    await deleteServiceReceipt(receipt.id);
+  }
+  
+  // 3. Επαναφορά scheduled maintenance: completed → scheduled
+  const relatedMaintenance = await getRelatedScheduledMaintenance(expense);
+  for (const maintenance of relatedMaintenance) {
+    await updateScheduledMaintenance(maintenance.id, { status: 'scheduled' });
+  }
+};
+```
+
+#### From Maintenance → Financial  
+```typescript
+// page.tsx:185-239
+const handleDeleteScheduledMaintenance = async (maintenanceId: number) => {
+  // 1. Εύρεση σχετικών δαπανών (προκαταβολή + δόσεις)
+  const relatedExpenses = await getRelatedExpenses(maintenanceTitle);
+  
+  // 2. Επιβεβαίωση από χρήστη
+  const confirmDelete = window.confirm(
+    `Βρέθηκαν ${relatedExpenses.length} σχετικές δαπάνες:\n` +
+    relatedExpenses.map(e => `• ${e.title} (${e.amount}€)`).join('\n')
+  );
+  
+  // 3. Διαγραφή όλων των σχετικών δαπανών
+  if (confirmDelete) {
+    for (const expense of relatedExpenses) {
+      await deleteExpense(expense.id);
+    }
+  }
+  
+  // 4. Διαγραφή scheduled maintenance
+  await deleteScheduledMaintenance(maintenanceId);
+};
+```
+
+#### Matching Logic για Installments
+```typescript
+const relatedExpenses = allExpenses.filter(expense => {
+  const expenseTitle = expense.title.toLowerCase();
+  const maintenanceTitle = maintenance.title.toLowerCase();
+  
+  return expenseTitle.includes(maintenanceTitle) || 
+         (expenseTitle.includes('προκαταβολή') && expenseTitle.includes(maintenanceTitle)) ||
+         (expenseTitle.includes('δόση') && expenseTitle.includes(maintenanceTitle));
+});
+```
+
+---
+
 ## 🛡️ Error Handling & Data Integrity
 
 ### Database Schema Issues
@@ -323,6 +422,46 @@ const maintenanceData = {
 const response = await api.post('/maintenance/scheduled/', maintenanceData);
 // 🎯 Automatic expense creation happens in backend
 ```
+
+---
+
+## ✅ Implementation Status
+
+### 🆕 Completed Features (September 2025)
+
+#### Installment Payment System
+- ✅ **Payment Configuration UI**: Ενεργοποίηση/απενεργοποίηση διαχείρισης πληρωμών
+- ✅ **Payment Types**: Εφάπαξ, Προκαταβολή+Δόσεις, Περιοδικές καταβολές  
+- ✅ **Auto Expense Creation**: Αυτόματη δημιουργία τμηματικών δαπανών
+- ✅ **Monthly View**: Εμφάνιση μόνο του ποσού τρέχοντα μήνα στις δαπάνες
+- ✅ **Calculation Display**: Real-time υπολογισμός προκαταβολής και δόσεων
+
+#### Bidirectional Deletion System  
+- ✅ **Financial → Maintenance**: Διαγραφή expense διαγράφει service receipts & επαναφέρει maintenance status
+- ✅ **Maintenance → Financial**: Διαγραφή maintenance διαγράφει όλες τις σχετικές δαπάνες (προκαταβολή + δόσεις)
+- ✅ **User Confirmation**: Επιβεβαίωση με λίστα των δαπανών που θα διαγραφούν
+- ✅ **Smart Matching**: Έξυπνο matching για προκαταβολές και δόσεις
+
+#### Form Validation & Error Handling
+- ✅ **Zod Schema**: Πλήρης validation για payment configuration
+- ✅ **TypeScript Types**: Πλήρη type safety για payment config
+- ✅ **Error Recovery**: Fallback αν payment schedule αποτύχει (δε σταματά τη δημιουργία expenses)
+- ✅ **User Feedback**: Toast notifications για επιτυχία/αποτυχία
+
+### 🎯 Tested Scenarios
+
+#### Test Case 1: Νέο Έργο με Τμηματικές Καταβολές
+- **Έργο**: "Έλεγχος Ηλεκτρικών Κοινοχρήστων" - 600€
+- **Payment Config**: Προκαταβολή 30% + 3 δόσεις
+- **Result**: ✅ Δημιουργήθηκε προκαταβολή 180€ για Σεπτέμβριο
+
+#### Test Case 2: Αμφίδρομη Διαγραφή
+- **From Maintenance**: ✅ Διαγραφή maintenance διέγραψε όλες τις σχετικές δαπάνες
+- **From Financial**: ✅ Διαγραφή expense επανέφερε maintenance status
+
+#### Test Case 3: Form Persistence  
+- **Edit Mode**: ✅ Payment configuration αποθηκεύεται και ανακαλείται σωστά
+- **Validation**: ✅ Όλα τα fields validάρονται σωστά
 
 ---
 
