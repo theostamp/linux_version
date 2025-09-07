@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { DistributionSelector } from '@/components/ui/DistributionSelector';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useExpenses } from '@/hooks/useExpenses';
+import { PaymentConfigurationSection } from '@/components/maintenance/PaymentConfigurationSection';
 
 const schema = z.object({
   title: z.string().trim().min(3, 'Ο τίτλος πρέπει να έχει τουλάχιστον 3 χαρακτήρες').max(100, 'Ο τίτλος δεν μπορεί να ξεπερνά τους 100 χαρακτήρες'),
@@ -68,6 +69,7 @@ export default function ScheduledMaintenanceForm({
   const [contractors, setContractors] = useState<Array<{ id: number; name: string }>>([]);
   const [loadingContractors, setLoadingContractors] = useState(false);
   const [initialData, setInitialData] = useState<ScheduledMaintenance | null>(null);
+  const [existingScheduleId, setExistingScheduleId] = useState<number | null>(null);
 
   // Templates for common scheduled tasks
   const [templates, setTemplates] = useState<Array<{ key: string; title: string; description: string; suggestedCategory: string }>>([
@@ -129,7 +131,63 @@ export default function ScheduledMaintenanceForm({
           scheduled_date: data.scheduled_date ?? undefined,
           priority: data.priority ?? 'medium',
           status: data.status ?? 'scheduled',
+          estimated_duration: data.estimated_duration ?? 1,
         });
+        // Prefill price from estimated_cost (fallback to actual_cost)
+        try {
+          setValue('price', (data.estimated_cost ?? data.actual_cost) as any);
+        } catch {}
+
+        // Try to load existing payment schedule and prefill payment_config
+        try {
+          const resp = await api.get('/maintenance/payment-schedules/', { params: { scheduled_maintenance: data.id } });
+          const schedule = Array.isArray(resp.data) ? (resp.data[0] || null) : (resp.data?.results?.[0] || null);
+          if (schedule) {
+            console.log('Found existing payment schedule:', schedule);
+            setExistingScheduleId(schedule.id);
+            
+            // Update the initialData to include payment config
+            setInitialData(prev => ({
+              ...prev,
+              id: data.id,
+              title: data.title,
+              description: data.description ?? '',
+              contractor: data.contractor ?? undefined,
+              scheduled_date: data.scheduled_date ?? undefined,
+              priority: data.priority ?? 'medium',
+              status: data.status ?? 'scheduled',
+              estimated_duration: data.estimated_duration ?? 1,
+              payment_config: {
+                enabled: true,
+                payment_type: schedule.payment_type || 'lump_sum',
+                total_amount: Number(schedule.total_amount) || 0,
+                advance_percentage: schedule.advance_percentage || 30,
+                installment_count: schedule.installment_count || 3,
+                installment_frequency: schedule.installment_frequency || 'monthly',
+                periodic_frequency: schedule.periodic_frequency || 'monthly',
+                periodic_amount: schedule.periodic_amount || 0,
+                start_date: schedule.start_date || '',
+                notes: schedule.notes || '',
+              }
+            } as any));
+            
+            // Also set the values immediately for immediate render
+            setValue('payment_config.enabled', true as any);
+            setValue('payment_config.payment_type', (schedule.payment_type || 'lump_sum') as any);
+            setValue('payment_config.total_amount', Number(schedule.total_amount) as any);
+            setValue('payment_config.advance_percentage', schedule.advance_percentage as any);
+            setValue('payment_config.installment_count', schedule.installment_count as any);
+            setValue('payment_config.installment_frequency', (schedule.installment_frequency || 'monthly') as any);
+            setValue('payment_config.periodic_frequency', (schedule.periodic_frequency || 'monthly') as any);
+            setValue('payment_config.periodic_amount', schedule.periodic_amount as any);
+            setValue('payment_config.start_date', schedule.start_date as any);
+            setValue('payment_config.notes', schedule.notes as any);
+          } else {
+            console.log('No payment schedule found for maintenance ID:', data.id);
+          }
+        } catch (error) {
+          console.error('Error loading payment schedule:', error);
+        }
       } catch (e: any) {
         toast({ title: 'Σφάλμα', description: e?.message ?? 'Αποτυχία φόρτωσης εργασίας' });
       }
@@ -147,14 +205,34 @@ export default function ScheduledMaintenanceForm({
     estimated_duration: (initialData?.estimated_duration as any) ?? 1,
   }), [initialData]);
 
-  const { control, register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch, getValues } = useForm<FormValues>({
+  const { control, register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch, getValues, reset } = useForm<FormValues>({
     resolver: zodResolver(schema) as any,
     defaultValues,
-    values: defaultValues,
   });
+
+  useEffect(() => {
+    // When initial data is loaded/changes, reset form once to those values
+    if (initialData) {
+      const resetData = {
+        title: initialData.title ?? '',
+        description: initialData.description ?? '',
+        contractor: initialData.contractor ?? undefined,
+        scheduled_date: initialData.scheduled_date ? formatForDateInput(initialData.scheduled_date) : undefined,
+        priority: initialData.priority ?? 'medium',
+        status_ui: initialData.status === 'completed' ? 'executed' : 'pending',
+        estimated_duration: (initialData.estimated_duration as any) ?? 1,
+        // Include payment config if it exists
+        payment_config: (initialData as any)?.payment_config || undefined,
+      };
+      console.log('Resetting form with data:', resetData);
+      reset(resetData);
+    }
+  }, [initialData, reset]);
 
   const statusUi = watch('status_ui');
   const watchedPrice = watch('price');
+  const paymentConfigEnabled = watch('payment_config?.enabled');
+  const paymentConfig = watch('payment_config');
   const watchedTitle = watch('title');
 
   if (isLoading) return null;
@@ -165,23 +243,43 @@ export default function ScheduledMaintenanceForm({
 
   const onSubmit = async (values: FormValues, options?: { skipReceipt?: boolean }) => {
     const buildingId = getActiveBuildingId();
+    const isEditing = Boolean(initialData?.id);
     const payload: any = {
       title: values.title,
-      building: buildingId,
       priority: values.priority,
     };
-    if (values.description && values.description.trim().length > 0) {
-      payload.description = values.description.trim();
+    // Only set building on create; do not change building when editing
+    if (!isEditing) {
+      payload.building = buildingId;
     }
+    // Always include description (allow clearing)
+    payload.description = (values.description ?? '').trim();
     // Backend requires estimated_duration
     payload.estimated_duration = Number(values.estimated_duration ?? 1);
-    if (values.contractor) payload.contractor = values.contractor;
+    // Always include contractor; allow clearing to null
+    payload.contractor = (values.contractor !== undefined ? values.contractor : (initialData?.contractor ?? null));
+    if (payload.contractor === undefined) payload.contractor = null;
     if (values.scheduled_date) {
       const dateOnly = values.scheduled_date.length > 10 ? values.scheduled_date.slice(0,10) : values.scheduled_date;
       payload.scheduled_date = dateOnly;
     }
-    // Map UI status to backend status
-    payload.status = values.status_ui === 'executed' ? 'completed' : 'scheduled';
+    // Map UI status to backend status; only include if changed vs current
+    const desiredStatus = values.status_ui === 'executed' ? 'completed' : 'scheduled';
+    const currentStatusUi = initialData?.status === 'completed' ? 'executed' : 'pending';
+    if (!isEditing || desiredStatus !== (initialData?.status ?? 'scheduled')) {
+      payload.status = desiredStatus;
+    }
+
+    // Map price → estimated_cost (and actual_cost when executed)
+    if (values.price !== undefined && values.price !== null && values.price !== ('' as any)) {
+      const priceNum = Number(values.price);
+      if (!Number.isNaN(priceNum)) {
+        payload.estimated_cost = priceNum;
+        if (payload.status === 'completed') {
+          payload.actual_cost = priceNum;
+        }
+      }
+    }
 
     // If executed and no receipt created yet, check recurrence and then open receipt modal
     if (values.status_ui === 'executed' && !isCreatingExpense && !options?.skipReceipt) {
@@ -219,6 +317,33 @@ export default function ScheduledMaintenanceForm({
         const resp = await api.post('/maintenance/scheduled/', payload, { xToastSuppress: true } as any);
         savedId = resp?.data?.id ?? undefined;
       }
+      // If payment configuration is enabled, create or update payment schedule
+      if (savedId && paymentConfigEnabled) {
+        try {
+          const pc = paymentConfig || {};
+          const schedulePayload: any = {
+            payment_type: pc.payment_type || 'lump_sum',
+            total_amount: pc.total_amount ?? watchedPrice ?? 0,
+            advance_percentage: pc.advance_percentage,
+            installment_count: pc.installment_count,
+            installment_frequency: pc.installment_frequency,
+            periodic_frequency: pc.periodic_frequency,
+            periodic_amount: pc.periodic_amount,
+            start_date: pc.start_date,
+            notes: pc.notes,
+          };
+          if (existingScheduleId) {
+            await api.patch(`/maintenance/payment-schedules/${existingScheduleId}/`, schedulePayload);
+          } else {
+            await api.post(`/maintenance/scheduled/${savedId}/create_payment_schedule/`, schedulePayload);
+          }
+        } catch (e: any) {
+          // Don't block main flow; show warning with reason
+          const msg = (e?.response?.data && JSON.stringify(e.response.data)) || e?.message || 'Αποτυχία ενημέρωσης/δημιουργίας χρονοδιαγράμματος πληρωμών';
+          toast({ title: 'Προειδοποίηση', description: msg, variant: 'default' as any });
+        }
+      }
+
       if (savedId) {
         toast({ title: 'Επιτυχία', description: `Το έργο καταχωρήθηκε επιτυχώς (ID: ${savedId}).` });
         router.push(`/maintenance/scheduled?highlight=${savedId}`);
@@ -519,6 +644,8 @@ export default function ScheduledMaintenanceForm({
               <Input type="number" step="0.01" min="0" placeholder="0.00" {...register('price')} />
             </div>
           </div>
+          {/* Payment Configuration */}
+          <PaymentConfigurationSection control={control} watch={watch as any} setValue={setValue as any} projectPrice={watchedPrice as any} />
           <div>
             <label className="block text-sm font-medium mb-1">Περιγραφή</label>
             <Textarea rows={4} placeholder="Σύντομη περιγραφή εργασιών, πρόσβαση, υλικά, κλπ." {...register('description')} />

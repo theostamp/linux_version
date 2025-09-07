@@ -269,11 +269,12 @@ api.interceptors.response.use(
       const method = (response.config?.method || '').toUpperCase();
       const cfg: any = response.config || {};
       const successHeader = (cfg.xToastSuccess as string | undefined) ?? (response.config?.headers?.['X-Toast-Success'] as string | undefined);
-      const suppressToastValue = (cfg.xToastSuppress as boolean | undefined);
+      const suppressToastValue = cfg.xToastSuppress as boolean | undefined;
       const suppressToastHeader = response.config?.headers?.['X-Toast-Suppress'] as string | undefined;
       const suppressToast = typeof suppressToastValue === 'boolean' ? suppressToastValue : (suppressToastHeader === 'true');
+      const errorHeader = (cfg.xToastError as string | undefined) ?? (response.config?.headers?.['X-Toast-Error'] as string | undefined);
       const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
-      if (isMutation && suppressToast !== 'true') {
+      if (isMutation && !suppressToast) {
         const defaultMsg =
           method === 'POST' ? 'Αποθηκεύτηκε επιτυχώς'
           : method === 'PUT' || method === 'PATCH' ? 'Ενημερώθηκε επιτυχώς'
@@ -335,7 +336,7 @@ api.interceptors.response.use(
       const suppressToast = typeof suppressToastValue === 'boolean' ? suppressToastValue : (suppressToastHeader === 'true');
       const errorHeader = (cfg.xToastError as string | undefined) ?? (originalRequest?.headers?.['X-Toast-Error'] as string | undefined);
       const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
-      if (isMutation && suppressToast !== true) {
+      if (isMutation && !suppressToast) {
         const status = error.response?.status;
         const detail = (error.response?.data as any)?.detail || (error.response?.data as any)?.message;
         const defaultMsg = status ? `Σφάλμα (${status})` : 'Σφάλμα ενέργειας';
@@ -1228,161 +1229,6 @@ export async function updateObligation(id: number, payload: Partial<Omit<Obligat
 export async function deleteObligation(id: number): Promise<void> {
   console.log(`[API CALL] Attempting to delete obligation ${id}`);
   await api.delete(`/obligations/${id}/`);
-}
-
-// Handles refreshing the access token and retrying the original request.
-async function handleTokenRefresh(originalRequest: InternalAxiosRequestConfig & { _retry?: boolean }, error: AxiosError) {
-  originalRequest._retry = true;
-  isRefreshing = true;
-  const refresh = typeof window !== 'undefined' ? localStorage.getItem('refresh') : null;
-
-  if (!refresh) {
-    handleLogout('[handleTokenRefresh] No refresh token found. Logging out.');
-    isRefreshing = false;
-    processQueue(error, null);
-    return Promise.reject(error);
-  }
-
-  try {
-    console.log('[handleTokenRefresh] Attempting to refresh token with:', API_BASE_URL);
-    
-    // Χρησιμοποιούμε απευθείας axios αντί για το api instance για να αποφύγουμε κυκλικές κλήσεις
-    const response = await axios.post(`${API_BASE_URL}/users/token/refresh/`, { refresh }, {
-      baseURL: API_BASE_URL,
-      headers: { 'Content-Type': 'application/json' },
-      withCredentials: true,
-    });
-    
-    console.log('[handleTokenRefresh] Token refresh response:', response.data);
-    
-    const { data } = response;
-
-    if (!data.access) {
-      console.error('[handleTokenRefresh] Token refresh response did not include access token!', data);
-      throw new Error('Token refresh failed: No access token in response');
-    }
-
-    console.log('[handleTokenRefresh] Token refresh successful, new token received');
-    console.log('[handleTokenRefresh] New token (first 20 chars):', data.access.substring(0, 20) + '...');
-    console.log('[handleTokenRefresh] New token length:', data.access.length);
-    console.log('[handleTokenRefresh] New token type:', typeof data.access);
-    
-    // Check if token is a valid JWT format
-    const tokenParts = data.access.split('.');
-    console.log('[handleTokenRefresh] Token parts count:', tokenParts.length);
-    if (tokenParts.length !== 3) {
-      console.error('[handleTokenRefresh] Invalid JWT token format - should have 3 parts');
-    }
-    
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('access', data.access);
-      console.log('[handleTokenRefresh] New access token saved to localStorage');
-      
-      // Verify the token was saved correctly
-      const savedToken = localStorage.getItem('access');
-      console.log('[handleTokenRefresh] Verified saved token (first 20 chars):', savedToken?.substring(0, 20) + '...');
-      
-      // Verify token integrity
-      if (savedToken !== data.access) {
-        console.error('[handleTokenRefresh] Token corruption detected! Original and saved tokens do not match');
-        console.error('[handleTokenRefresh] Original token length:', data.access.length);
-        console.error('[handleTokenRefresh] Saved token length:', savedToken?.length);
-      } else {
-        console.log('[handleTokenRefresh] Token integrity verified - saved token matches original');
-      }
-    }
-
-    // Αποθηκεύουμε το νέο token στο axios instance
-    api.defaults.headers.common['Authorization'] = `Bearer ${data.access}`;
-    console.log('[handleTokenRefresh] Set Authorization header in api defaults');
-    processQueue(null, data.access);
-
-    // Ορίζουμε Authorization για το αρχικό αίτημα
-    originalRequest.headers = originalRequest.headers || {};
-    originalRequest.headers['Authorization'] = `Bearer ${data.access}`;
-    
-    // Επιπλέον έλεγχος: βεβαιωθείτε ότι το token είναι σωστά αποθηκευμένο
-    console.log('[handleTokenRefresh] Final check - Token in localStorage:', localStorage.getItem('access')?.substring(0, 20) + '...');
-    console.log('[handleTokenRefresh] Final check - Token in api defaults:', api.defaults.headers.common['Authorization']?.substring(0, 20) + '...');
-
-    // 🔍 DEBUG LOG ΠΡΙΝ το retry
-    console.log('%c[INTERCEPTOR] Replaying original request with new token:', 'color: green; font-weight: bold;');
-    console.log({
-      url: originalRequest.url,
-      method: originalRequest.method,
-      headers: {
-        ...(originalRequest.headers || {}),
-        Authorization: originalRequest.headers['Authorization']?.slice(0, 10) + '...' // Μόνο τα πρώτα 10 chars
-      }
-    });
-    
-    // Additional debugging for the Authorization header
-    const authHeader = originalRequest.headers['Authorization'];
-    console.log('[handleTokenRefresh] Authorization header being sent:', authHeader?.substring(0, 30) + '...');
-    console.log('[handleTokenRefresh] Authorization header starts with "Bearer":', authHeader?.startsWith('Bearer '));
-
-    // Επαναποστολή του αρχικού αιτήματος με το νέο token
-    // Χρησιμοποιούμε το api instance που τώρα έχει το νέο token
-    console.log('[handleTokenRefresh] About to retry original request with new token');
-    
-    // Small delay to ensure token is properly saved and applied
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    return api(originalRequest);
-
-  } catch (refreshError: any) {
-    console.error('[handleTokenRefresh] Token refresh failed:', refreshError);
-    console.error('[handleTokenRefresh] Error response:', refreshError.response?.data);
-    console.error('[handleTokenRefresh] Error status:', refreshError.response?.status);
-    
-    // Αν το refresh απέτυχε, πιθανότατα το refresh token είναι άκυρο ή έχει λήξει
-    handleLogout('[handleTokenRefresh] Token refresh failed. Logging out.');
-    processQueue(refreshError, null);
-    
-    // Ανακατεύθυνση στη σελίδα login
-    if (typeof window !== 'undefined') {
-      console.log('[handleTokenRefresh] Redirecting to login page...');
-      window.location.href = '/login';
-    }
-    
-    return Promise.reject(refreshError instanceof Error ? refreshError : new Error(String(refreshError)));
-  } finally {
-    isRefreshing = false;
-  }
-}
-
-// Queues requests while token is being refreshed
-function queueRequestWhileRefreshing(originalRequest: InternalAxiosRequestConfig & { _retry?: boolean }) {
-  return new Promise((resolve, reject) => {
-    failedQueue.push({
-      resolve: (token: string) => {
-        if (token) {
-          originalRequest.headers = originalRequest.headers || {};
-          originalRequest.headers['Authorization'] = `Bearer ${token}`;
-        }
-        resolve(api(originalRequest));
-      },
-      reject: (err: any) => {
-        reject(err instanceof Error ? err : new Error(String(err)));
-      },
-    });
-  });
-}
-
-// Logs out the user by clearing tokens and user data from localStorage.
-function handleLogout(logMessage: string) {
-  console.warn(logMessage);
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('access');
-    localStorage.removeItem('refresh');
-    localStorage.removeItem('user');
-    
-    // Ανακατεύθυνση στη σελίδα login αν δεν είμαστε ήδη εκεί
-    if (!window.location.pathname.includes('/login')) {
-      console.log('[handleLogout] Redirecting to login page...');
-      window.location.href = '/login';
-    }
-  }
 }
 
 // Νέα συνάρτηση για την ανάκτηση των κατοίκων ενός κτιρίου
@@ -2331,4 +2177,159 @@ export async function updateScheduledMaintenance(
 
 export async function deleteScheduledMaintenance(id: number): Promise<void> {
   await api.delete(`/maintenance/scheduled/${id}/`, { xToastSuppress: true } as any);
+}
+
+// Handles refreshing the access token and retrying the original request.
+async function handleTokenRefresh(originalRequest: InternalAxiosRequestConfig & { _retry?: boolean }, error: AxiosError) {
+  originalRequest._retry = true;
+  isRefreshing = true;
+  const refresh = typeof window !== 'undefined' ? localStorage.getItem('refresh') : null;
+
+  if (!refresh) {
+    handleLogout('[handleTokenRefresh] No refresh token found. Logging out.');
+    isRefreshing = false;
+    processQueue(error, null);
+    return Promise.reject(error);
+  }
+
+  try {
+    console.log('[handleTokenRefresh] Attempting to refresh token with:', API_BASE_URL);
+    
+    // Χρησιμοποιούμε απευθείας axios αντί για το api instance για να αποφύγουμε κυκλικές κλήσεις
+    const response = await axios.post(`${API_BASE_URL}/users/token/refresh/`, { refresh }, {
+      baseURL: API_BASE_URL,
+      headers: { 'Content-Type': 'application/json' },
+      withCredentials: true,
+    });
+    
+    console.log('[handleTokenRefresh] Token refresh response:', response.data);
+    
+    const { data } = response;
+
+    if (!data.access) {
+      console.error('[handleTokenRefresh] Token refresh response did not include access token!', data);
+      throw new Error('Token refresh failed: No access token in response');
+    }
+
+    console.log('[handleTokenRefresh] Token refresh successful, new token received');
+    console.log('[handleTokenRefresh] New token (first 20 chars):', data.access.substring(0, 20) + '...');
+    console.log('[handleTokenRefresh] New token length:', data.access.length);
+    console.log('[handleTokenRefresh] New token type:', typeof data.access);
+    
+    // Check if token is a valid JWT format
+    const tokenParts = data.access.split('.');
+    console.log('[handleTokenRefresh] Token parts count:', tokenParts.length);
+    if (tokenParts.length !== 3) {
+      console.error('[handleTokenRefresh] Invalid JWT token format - should have 3 parts');
+    }
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('access', data.access);
+      console.log('[handleTokenRefresh] New access token saved to localStorage');
+      
+      // Verify the token was saved correctly
+      const savedToken = localStorage.getItem('access');
+      console.log('[handleTokenRefresh] Verified saved token (first 20 chars):', savedToken?.substring(0, 20) + '...');
+      
+      // Verify token integrity
+      if (savedToken !== data.access) {
+        console.error('[handleTokenRefresh] Token corruption detected! Original and saved tokens do not match');
+        console.error('[handleTokenRefresh] Original token length:', data.access.length);
+        console.error('[handleTokenRefresh] Saved token length:', savedToken?.length);
+      } else {
+        console.log('[handleTokenRefresh] Token integrity verified - saved token matches original');
+      }
+    }
+
+    // Αποθηκεύουμε το νέο token στο axios instance
+    api.defaults.headers.common['Authorization'] = `Bearer ${data.access}`;
+    console.log('[handleTokenRefresh] Set Authorization header in api defaults');
+    processQueue(null, data.access);
+
+    // Ορίζουμε Authorization για το αρχικό αίτημα
+    originalRequest.headers = originalRequest.headers || {};
+    originalRequest.headers['Authorization'] = `Bearer ${data.access}`;
+    
+    // Επιπλέον έλεγχος: βεβαιωθείτε ότι το token είναι σωστά αποθηκευμένο
+    console.log('[handleTokenRefresh] Final check - Token in localStorage:', localStorage.getItem('access')?.substring(0, 20) + '...');
+    console.log('[handleTokenRefresh] Final check - Token in api defaults:', api.defaults.headers.common['Authorization']?.substring(0, 20) + '...');
+
+    // 🔍 DEBUG LOG ΠΡΙΝ το retry
+    console.log('%c[INTERCEPTOR] Replaying original request with new token:', 'color: green; font-weight: bold;');
+    console.log({
+      url: originalRequest.url,
+      method: originalRequest.method,
+      headers: {
+        ...(originalRequest.headers || {}),
+        Authorization: originalRequest.headers['Authorization']?.slice(0, 10) + '...' // Μόνο τα πρώτα 10 chars
+      }
+    });
+    
+    // Additional debugging for the Authorization header
+    const authHeader = originalRequest.headers['Authorization'];
+    console.log('[handleTokenRefresh] Authorization header being sent:', authHeader?.substring(0, 30) + '...');
+    console.log('[handleTokenRefresh] Authorization header starts with "Bearer":', authHeader?.startsWith('Bearer '));
+
+    // Επαναποστολή του αρχικού αιτήματος με το νέο token
+    // Χρησιμοποιούμε το api instance που τώρα έχει το νέο token
+    console.log('[handleTokenRefresh] About to retry original request with new token');
+    
+    // Small delay to ensure token is properly saved and applied
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    return api(originalRequest);
+
+  } catch (refreshError: any) {
+    console.error('[handleTokenRefresh] Token refresh failed:', refreshError);
+    console.error('[handleTokenRefresh] Error response:', refreshError.response?.data);
+    console.error('[handleTokenRefresh] Error status:', refreshError.response?.status);
+    
+    // Αν το refresh απέτυχε, πιθανότατα το refresh token είναι άκυρο ή έχει λήξει
+    handleLogout('[handleTokenRefresh] Token refresh failed. Logging out.');
+    processQueue(refreshError, null);
+    
+    // Ανακατεύθυνση στη σελίδα login
+    if (typeof window !== 'undefined') {
+      console.log('[handleTokenRefresh] Redirecting to login page...');
+      window.location.href = '/login';
+    }
+    
+    return Promise.reject(refreshError instanceof Error ? refreshError : new Error(String(refreshError)));
+  } finally {
+    isRefreshing = false;
+  }
+}
+
+// Queues requests while token is being refreshed
+function queueRequestWhileRefreshing(originalRequest: InternalAxiosRequestConfig & { _retry?: boolean }) {
+  return new Promise((resolve, reject) => {
+    failedQueue.push({
+      resolve: (token: string) => {
+        if (token) {
+          originalRequest.headers = originalRequest.headers || {};
+          originalRequest.headers['Authorization'] = `Bearer ${token}`;
+        }
+        resolve(api(originalRequest));
+      },
+      reject: (err: any) => {
+        reject(err instanceof Error ? err : new Error(String(err)));
+      },
+    });
+  });
+}
+
+// Logs out the user by clearing tokens and user data from localStorage.
+function handleLogout(logMessage: string) {
+  console.warn(logMessage);
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('access');
+    localStorage.removeItem('refresh');
+    localStorage.removeItem('user');
+    
+    // Ανακατεύθυνση στη σελίδα login αν δεν είμαστε ήδη εκεί
+    if (!window.location.pathname.includes('/login')) {
+      console.log('[handleLogout] Redirecting to login page...');
+      window.location.href = '/login';
+    }
+  }
 }

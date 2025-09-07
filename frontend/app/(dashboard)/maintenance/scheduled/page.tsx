@@ -13,6 +13,7 @@ import { Calendar, AlertTriangle, CheckCircle, Clock, Plus, Trash2, Pencil } fro
 import { useRole } from '@/lib/auth';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
+import ScheduledMaintenanceOverviewModal from '@/components/maintenance/ScheduledMaintenanceOverviewModal';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type Status = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
@@ -73,6 +74,8 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
   const { toast } = useToast();
   const [toDeleteId, setToDeleteId] = React.useState<number | null>(null);
   const [deleting, setDeleting] = React.useState(false);
+  const [overviewOpen, setOverviewOpen] = React.useState(false);
+  const [overviewId, setOverviewId] = React.useState<number | null>(null);
 
   const filtered = useMemo(() => {
     if (!priorityFilter) return items;
@@ -137,8 +140,15 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
                 <StatusBadge status={item.status as Status} />
               </div>
               <div className="pt-2 flex gap-2">
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`/maintenance/scheduled/${item.id}`}>Προβολή</Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setOverviewId(item.id);
+                    setOverviewOpen(true);
+                  }}
+                >
+                  Προβολή
                 </Button>
                 {(isAdmin || isManager) && (
                   <>
@@ -184,6 +194,15 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
             setToDeleteId(null);
           }
         }}
+      />
+
+      <ScheduledMaintenanceOverviewModal
+        open={overviewOpen}
+        onOpenChange={(o) => {
+          setOverviewOpen(o);
+          if (!o) setOverviewId(null);
+        }}
+        maintenanceId={overviewId}
       />
     </div>
   );

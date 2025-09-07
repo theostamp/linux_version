@@ -9,6 +9,8 @@ from django.db import transaction
 from decimal import Decimal
 
 from .models import Transaction, Payment, Expense
+from core.utils import publish_building_event
+from django.db.models import Sum
 
 
 @receiver(post_save, sender=Transaction)
@@ -305,8 +307,40 @@ def recalculate_building_reserve_on_expense_delete(sender, instance, **kwargs):
         print(f"❌ Σφάλμα στον επαναυπολογισμό αποθεματικού κτιρίου: {e}")
 
 
-# Import που λείπει
-from django.db.models import Sum
+# --- Maintenance integration: Unlink maintenance payment receipts on expense delete ---
+@receiver(post_delete, sender=Expense)
+def unlink_maintenance_receipts_on_expense_delete(sender, instance, **kwargs):
+    """
+    Όταν διαγραφεί μια δαπάνη, αποσυνδέουμε τυχόν αποδείξεις πληρωμών συντήρησης που την αναφέρονται.
+    """
+    try:
+        from maintenance.models import PaymentReceipt
+        # Collect affected receipts for notification payloads
+        affected = list(PaymentReceipt.objects.filter(linked_expense_id=instance.id))
+        # Unlink in bulk
+        PaymentReceipt.objects.filter(id__in=[r.id for r in affected]).update(linked_expense=None)
+        # Broadcast event per affected maintenance
+        for r in affected:
+            try:
+                maint = r.scheduled_maintenance
+                if not maint:
+                    continue
+                publish_building_event(
+                    building_id=instance.building_id,
+                    event_type="maintenance.expense_deleted",
+                    payload={
+                        "message": f"Δαπάνη διαγράφηκε. Επιστροφή στο έργο: {maint.title}",
+                        "link": f"/maintenance/scheduled/{maint.id}",
+                        "receipt_id": r.id,
+                        "maintenance_id": maint.id,
+                    },
+                )
+            except Exception:
+                # Do not block signal on notification errors
+                pass
+    except Exception as e:
+        print(f"⚠️ Αποτυχία αποσύνδεσης αποδείξεων συντήρησης από δαπάνη {instance.id}: {e}")
+
 
 @receiver(post_save, sender='buildings.Building')
 def update_financial_data_on_building_change(sender, instance, created, **kwargs):

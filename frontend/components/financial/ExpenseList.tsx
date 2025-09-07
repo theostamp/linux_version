@@ -492,6 +492,28 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                         )}
                       </div>
                     )}
+
+                    {/* Maintenance Payment Info */}
+                    {expense.maintenance_payment_receipts && expense.maintenance_payment_receipts.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-blue-100 bg-blue-50/30 rounded p-2">
+                        <div className="text-xs font-medium text-blue-700 mb-1 flex items-center gap-1">
+                          <span>🔧</span>
+                          <span>Συνδεδεμένο με Συντήρηση:</span>
+                        </div>
+                        {expense.maintenance_payment_receipts.map((receipt) => (
+                          <div key={receipt.id} className="text-xs text-blue-600 ml-1">
+                            <span className="font-medium">{receipt.scheduled_maintenance.title}</span>
+                            {receipt.installment && (
+                              <span className="text-blue-500 ml-2">
+                                ({receipt.installment.installment_type === 'advance' ? 'Προκαταβολή' : 
+                                  receipt.installment.installment_type === 'installment' ? `Δόση ${receipt.installment.installment_number}` :
+                                  receipt.installment.installment_type})
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Actions */}

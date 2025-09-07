@@ -32,6 +32,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
     # Linked maintenance/receipt (read-only)
     linked_service_receipt = serializers.SerializerMethodField()
     linked_scheduled_maintenance = serializers.SerializerMethodField()
+    maintenance_payment_receipts = serializers.SerializerMethodField()
 
     class Meta:
         model = Expense
@@ -40,7 +41,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
             'category', 'category_display', 'distribution_type', 'distribution_type_display',
             'supplier', 'supplier_name', 'supplier_details', 'attachment', 'attachment_url',
             'notes', 'created_at', 'updated_at',
-            'linked_service_receipt', 'linked_scheduled_maintenance'
+            'linked_service_receipt', 'linked_scheduled_maintenance', 'maintenance_payment_receipts'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
     
@@ -80,6 +81,43 @@ class ExpenseSerializer(serializers.ModelSerializer):
             return receipt.scheduled_maintenance_id if receipt else None
         except Exception:
             return None
+
+    def get_maintenance_payment_receipts(self, obj):
+        """Return linked maintenance payment receipts"""
+        try:
+            from maintenance.models import PaymentReceipt
+            receipts = PaymentReceipt.objects.filter(
+                linked_expense=obj
+            ).select_related(
+                'scheduled_maintenance', 'installment'
+            )
+            
+            result = []
+            for receipt in receipts:
+                receipt_data = {
+                    'id': receipt.id,
+                    'receipt_type': receipt.receipt_type,
+                    'amount': float(receipt.amount),
+                    'scheduled_maintenance': {
+                        'id': receipt.scheduled_maintenance.id,
+                        'title': receipt.scheduled_maintenance.title,
+                    }
+                }
+                
+                # Include installment info if available
+                if receipt.installment:
+                    receipt_data['installment'] = {
+                        'id': receipt.installment.id,
+                        'installment_type': receipt.installment.installment_type,
+                        'installment_number': receipt.installment.installment_number,
+                    }
+                
+                result.append(receipt_data)
+            
+            return result
+        except Exception as e:
+            # In case of import error or other issues, return empty list
+            return []
 
 
 class TransactionSerializer(serializers.ModelSerializer):

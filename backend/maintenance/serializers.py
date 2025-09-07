@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Contractor, ServiceReceipt, ScheduledMaintenance, MaintenanceTicket, WorkOrder
+from .models import Contractor, ServiceReceipt, ScheduledMaintenance, MaintenanceTicket, WorkOrder, PaymentSchedule, PaymentInstallment, PaymentReceipt
 from financial.models import Expense
 
 
@@ -89,3 +89,180 @@ class WorkOrderSerializer(serializers.ModelSerializer):
         model = WorkOrder
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
+
+
+class PaymentScheduleSerializer(serializers.ModelSerializer):
+    scheduled_maintenance_title = serializers.CharField(source='scheduled_maintenance.title', read_only=True)
+    building_name = serializers.CharField(source='scheduled_maintenance.building.name', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    
+    # Calculated fields
+    advance_amount = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    remaining_amount = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    installment_amount = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    
+    # Installments count
+    installments_count = serializers.SerializerMethodField()
+    paid_installments_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PaymentSchedule
+        fields = '__all__'
+        extra_kwargs = {
+            'created_by': {'read_only': True},
+        }
+    
+    def get_installments_count(self, obj):
+        return obj.installments.count()
+    
+    def get_paid_installments_count(self, obj):
+        return obj.installments.filter(status='paid').count()
+    
+    def validate(self, attrs):
+        payment_type = attrs.get('payment_type')
+        
+        if payment_type == 'advance_installments':
+            if not attrs.get('advance_percentage'):
+                raise serializers.ValidationError({'advance_percentage': 'Απαιτείται ποσοστό προκαταβολής για προκαταβολή + δόσεις'})
+            if not attrs.get('installment_count'):
+                raise serializers.ValidationError({'installment_count': 'Απαιτείται αριθμός δόσεων για προκαταβολή + δόσεις'})
+        
+        elif payment_type == 'periodic':
+            if not attrs.get('periodic_frequency'):
+                raise serializers.ValidationError({'periodic_frequency': 'Απαιτείται συχνότητα για περιοδικές καταβολές'})
+        
+        return attrs
+
+
+class PaymentInstallmentSerializer(serializers.ModelSerializer):
+    payment_schedule_title = serializers.CharField(source='payment_schedule.scheduled_maintenance.title', read_only=True)
+    building_name = serializers.CharField(source='payment_schedule.scheduled_maintenance.building.name', read_only=True)
+    contractor_name = serializers.CharField(source='payment_schedule.scheduled_maintenance.contractor.name', read_only=True)
+    
+    # Status indicators
+    is_overdue = serializers.BooleanField(read_only=True)
+    days_until_due = serializers.SerializerMethodField()
+    
+    # Receipt information
+    receipt_number = serializers.CharField(source='receipt.receipt_number', read_only=True)
+    receipt_status = serializers.CharField(source='receipt.status', read_only=True)
+    
+    class Meta:
+        model = PaymentInstallment
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
+    
+    def get_days_until_due(self, obj):
+        if obj.due_date:
+            from django.utils import timezone
+            delta = obj.due_date - timezone.now().date()
+            return delta.days
+        return None
+    
+    def validate(self, attrs):
+        due_date = attrs.get('due_date')
+        payment_date = attrs.get('payment_date')
+        
+        if payment_date and due_date and payment_date < due_date:
+            # Allow early payments but warn
+            pass
+        
+        return attrs
+
+
+class PaymentReceiptSerializer(serializers.ModelSerializer):
+    scheduled_maintenance_title = serializers.CharField(source='scheduled_maintenance.title', read_only=True)
+    building_name = serializers.CharField(source='scheduled_maintenance.building.name', read_only=True)
+    contractor_name = serializers.CharField(source='contractor.name', read_only=True)
+    contractor_phone = serializers.CharField(source='contractor.phone', read_only=True)
+    contractor_tax_number = serializers.CharField(source='contractor.tax_number', read_only=True)
+    
+    # Installment information
+    installment_number = serializers.IntegerField(source='installment.installment_number', read_only=True)
+    installment_type = serializers.CharField(source='installment.installment_type', read_only=True)
+    
+    # Financial integration
+    linked_expense_title = serializers.CharField(source='linked_expense.title', read_only=True)
+    
+    # Audit trail
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    approved_by_name = serializers.CharField(source='approved_by.get_full_name', read_only=True)
+    
+    # Status indicators
+    is_signed = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = PaymentReceipt
+        fields = '__all__'
+        extra_kwargs = {
+            'receipt_number': {'read_only': True},
+            'created_by': {'read_only': True},
+            'contractor_signature': {'write_only': True},
+            'contractor_signature_ip': {'read_only': True},
+        }
+    
+    def validate(self, attrs):
+        scheduled_maintenance = attrs.get('scheduled_maintenance')
+        contractor = attrs.get('contractor')
+        
+        # Validate contractor matches scheduled maintenance
+        if scheduled_maintenance and contractor:
+            if scheduled_maintenance.contractor and scheduled_maintenance.contractor != contractor:
+                raise serializers.ValidationError({
+                    'contractor': 'Το συνεργείο δεν ταιριάζει με το προγραμματισμένο έργο'
+                })
+        
+        # Validate amount is positive
+        amount = attrs.get('amount')
+        if amount and amount <= 0:
+            raise serializers.ValidationError({'amount': 'Το ποσό πρέπει να είναι θετικό'})
+        
+        return attrs
+
+
+class PaymentReceiptCreateSerializer(PaymentReceiptSerializer):
+    """Simplified serializer for creating payment receipts"""
+    
+    class Meta(PaymentReceiptSerializer.Meta):
+        fields = [
+            'scheduled_maintenance', 'installment', 'contractor', 'receipt_type',
+            'amount', 'payment_date', 'description', 'receipt_file', 
+            'contractor_invoice', 'status'
+        ]
+
+
+class PaymentReceiptDetailSerializer(PaymentReceiptSerializer):
+    """Detailed serializer with all related information"""
+    
+    # Building information
+    building_address = serializers.CharField(source='scheduled_maintenance.building.address', read_only=True)
+    building_postal_code = serializers.CharField(source='scheduled_maintenance.building.postal_code', read_only=True)
+    building_city = serializers.CharField(source='scheduled_maintenance.building.city', read_only=True)
+    
+    # Full contractor information
+    contractor_address = serializers.CharField(source='contractor.address', read_only=True)
+    contractor_email = serializers.CharField(source='contractor.email', read_only=True)
+    
+    class Meta(PaymentReceiptSerializer.Meta):
+        pass
+
+
+# Enhanced ScheduledMaintenance serializer with payment information
+class ScheduledMaintenanceWithPaymentsSerializer(ScheduledMaintenanceSerializer):
+    # Payment schedule information
+    payment_schedule = PaymentScheduleSerializer(read_only=True)
+    payment_receipts_count = serializers.SerializerMethodField()
+    total_paid_amount = serializers.SerializerMethodField()
+    
+    class Meta(ScheduledMaintenanceSerializer.Meta):
+        pass
+    
+    def get_payment_receipts_count(self, obj):
+        return obj.payment_receipts.count()
+    
+    def get_total_paid_amount(self, obj):
+        from django.db.models import Sum
+        total = obj.payment_receipts.filter(status__in=['issued', 'signed', 'archived']).aggregate(
+            total=Sum('amount')
+        )['total']
+        return total or 0

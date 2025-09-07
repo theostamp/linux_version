@@ -449,3 +449,280 @@ class WorkOrder(models.Model):
 
     def __str__(self):
         return f"WO#{self.id} - {self.ticket.title} ({self.get_status_display()})"
+
+
+class PaymentSchedule(models.Model):
+    """Πρόγραμμα πληρωμών για έργα συντήρησης"""
+    
+    PAYMENT_TYPE_CHOICES = [
+        ('lump_sum', 'Εφάπαξ'),
+        ('advance_installments', 'Προκαταβολή + Δόσεις'),
+        ('periodic', 'Περιοδικές Καταβολές'),
+        ('milestone_based', 'Βάσει Ορόσημων'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('active', 'Ενεργό'),
+        ('completed', 'Ολοκληρωμένο'),
+        ('cancelled', 'Ακυρώθηκε'),
+        ('suspended', 'Αναστολή'),
+    ]
+    
+    scheduled_maintenance = models.OneToOneField(
+        ScheduledMaintenance,
+        on_delete=models.CASCADE,
+        related_name='payment_schedule',
+        verbose_name="Προγραμματισμένη Συντήρηση"
+    )
+    payment_type = models.CharField(
+        max_length=20,
+        choices=PAYMENT_TYPE_CHOICES,
+        default='lump_sum',
+        verbose_name="Τύπος Πληρωμής"
+    )
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Συνολικό Ποσό")
+    # Advance + installments configuration
+    advance_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Ποσοστό Προκαταβολής (%)")
+    installment_count = models.PositiveIntegerField(null=True, blank=True, verbose_name="Αριθμός Δόσεων")
+    installment_frequency = models.CharField(max_length=20, null=True, blank=True, verbose_name="Συχνότητα Δόσεων (weekly/monthly/biweekly)")
+    # Periodic configuration
+    periodic_frequency = models.CharField(max_length=20, null=True, blank=True, verbose_name="Συχνότητα Περιοδικών (weekly/monthly/quarterly/annual)")
+    periodic_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Ποσό Περιοδικής Καταβολής")
+    # Legacy/compat fields (kept for compatibility)
+    number_of_installments = models.PositiveIntegerField(default=1, verbose_name="Αριθμός Δόσεων (legacy)")
+    installment_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Ποσό Δόσης (legacy)")
+    start_date = models.DateField(verbose_name="Ημερομηνία Έναρξης")
+    end_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Ημερομηνία Λήξης"
+    )
+    payment_frequency_days = models.PositiveIntegerField(default=30, verbose_name="Συχνότητα Πληρωμής (ημέρες)")
+    is_active = models.BooleanField(default=True, verbose_name="Ενεργό")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='active',
+        verbose_name="Κατάσταση"
+    )
+    notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_payment_schedules',
+        verbose_name="Δημιουργήθηκε από"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Πρόγραμμα Πληρωμών"
+        verbose_name_plural = "Προγράμματα Πληρωμών"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Πληρωμές για {self.scheduled_maintenance.title}"
+    
+    def save(self, *args, **kwargs):
+        # Auto-calc legacy installment_amount for compatibility
+        if self.payment_type in ['advance_installments'] and (self.installment_count or 0) > 0:
+            try:
+                from decimal import Decimal
+                adv = (self.total_amount * (self.advance_percentage or 0)) / Decimal('100') if self.advance_percentage is not None else None
+                remaining = (self.total_amount - (adv or 0)) if adv is not None else self.total_amount
+                count = self.installment_count or 1
+                self.installment_amount = remaining / count
+            except Exception:
+                pass
+        super().save(*args, **kwargs)
+
+    @property
+    def advance_amount(self):
+        """Υπολογισμός ποσού προκαταβολής από ποσοστό."""
+        try:
+            from decimal import Decimal
+            if self.payment_type == 'advance_installments' and self.advance_percentage is not None:
+                return (self.total_amount * Decimal(self.advance_percentage)) / Decimal('100')
+        except Exception:
+            pass
+        return None
+
+    @property
+    def remaining_amount(self):
+        """Υπολογισμός υπολοίπου μετά την προκαταβολή."""
+        adv = self.advance_amount or 0
+        try:
+            return self.total_amount - adv
+        except Exception:
+            return None
+
+
+class PaymentInstallment(models.Model):
+    """Μεμονωμένες δόσεις πληρωμής"""
+    
+    STATUS_CHOICES = [
+        ('pending', 'Εκκρεμεί'),
+        ('paid', 'Εξοφλήθηκε'),
+        ('overdue', 'Ληξιπρόθεσμη'),
+        ('cancelled', 'Ακυρώθηκε'),
+    ]
+    
+    payment_schedule = models.ForeignKey(
+        PaymentSchedule,
+        on_delete=models.CASCADE,
+        related_name='installments',
+        verbose_name="Πρόγραμμα Πληρωμών"
+    )
+    installment_type = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+        verbose_name="Τύπος Δόσης (full/advance/installment/periodic/milestone)"
+    )
+    installment_number = models.PositiveIntegerField(verbose_name="Αριθμός Δόσης")
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="Ποσό"
+    )
+    due_date = models.DateField(verbose_name="Ημερομηνία Λήξης")
+    payment_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Ημερομηνία Πληρωμής"
+    )
+    # Legacy field kept for compatibility
+    paid_date = models.DateField(null=True, blank=True, verbose_name="Ημερομηνία Πληρωμής (legacy)")
+    paid_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Πληρωθέν Ποσό"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        verbose_name="Κατάσταση"
+    )
+    payment_method = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name="Τρόπος Πληρωμής"
+    )
+    transaction_reference = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Αναφορά Συναλλαγής"
+    )
+    description = models.TextField(blank=True, verbose_name="Περιγραφή")
+    notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Δόση Πληρωμής"
+        verbose_name_plural = "Δόσεις Πληρωμών"
+        ordering = ['due_date', 'installment_number']
+        unique_together = ['payment_schedule', 'installment_number']
+    
+    def __str__(self):
+        return f"Δόση {self.installment_number} - €{self.amount} - {self.due_date}"
+    
+    @property
+    def is_overdue(self):
+        return self.status == 'pending' and self.due_date < timezone.now().date()
+
+
+class PaymentReceipt(models.Model):
+    """Αποδείξεις πληρωμών με ψηφιακή υπογραφή"""
+    
+    RECEIPT_TYPES = [
+        ('advance', 'Προκαταβολή'),
+        ('installment', 'Δόση'),
+        ('final', 'Εξόφληση'),
+        ('periodic', 'Περιοδική Καταβολή'),
+        ('payment', 'Πληρωμή'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('draft', 'Πρόχειρο'),
+        ('issued', 'Εκδόθηκε'),
+        ('signed', 'Υπογεγραμμένη'),
+        ('approved', 'Εγκεκριμένη'),
+        ('archived', 'Αρχειοθετημένη'),
+        ('disputed', 'Αμφισβητείται'),
+    ]
+    
+    scheduled_maintenance = models.ForeignKey(
+        ScheduledMaintenance,
+        on_delete=models.CASCADE,
+        related_name='payment_receipts',
+        null=True,
+        blank=True,
+        verbose_name="Προγραμματισμένη Συντήρηση"
+    )
+    contractor = models.ForeignKey(
+        Contractor,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='payment_receipts',
+        verbose_name="Συνεργείο"
+    )
+    installment = models.OneToOneField(
+        PaymentInstallment,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='receipt',
+        verbose_name="Δόση"
+    )
+    receipt_type = models.CharField(max_length=20, choices=RECEIPT_TYPES, default='payment', verbose_name="Τύπος Απόδειξης")
+    receipt_number = models.CharField(max_length=50, unique=True, verbose_name="Αριθμός Απόδειξης")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Ποσό")
+    payment_date = models.DateField(verbose_name="Ημερομηνία Πληρωμής")
+    description = models.TextField(blank=True, verbose_name="Περιγραφή")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name="Κατάσταση")
+    # Contractor signature fields
+    contractor_signature = models.TextField(blank=True, verbose_name="Ψηφιακή Υπογραφή Συνεργείου")
+    contractor_signature_date = models.DateTimeField(null=True, blank=True, verbose_name="Ημερομηνία Υπογραφής")
+    contractor_signature_ip = models.CharField(max_length=64, blank=True, verbose_name="IP Υπογραφής")
+    # Files
+    receipt_file = models.FileField(upload_to='payment_receipts/%Y/%m/', null=True, blank=True, verbose_name="Αρχείο Απόδειξης")
+    contractor_invoice = models.FileField(upload_to='contractor_invoices/%Y/%m/', null=True, blank=True, verbose_name="Τιμολόγιο Συνεργείου")
+    pdf_file = models.FileField(upload_to='payment_receipts/%Y/%m/', null=True, blank=True, verbose_name="Αρχείο PDF")
+    # Financial integration
+    linked_expense = models.ForeignKey('financial.Expense', on_delete=models.SET_NULL, null=True, blank=True, related_name='maintenance_payment_receipts', verbose_name="Συνδεδεμένη Δαπάνη")
+    # Audit
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_payment_receipts', verbose_name="Δημιουργήθηκε από")
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_payment_receipts', verbose_name="Εγκρίθηκε από")
+    approved_at = models.DateTimeField(null=True, blank=True, verbose_name="Ημερομηνία Έγκρισης")
+    issue_date = models.DateField(auto_now_add=True, verbose_name="Ημερομηνία Έκδοσης")
+    notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
+    archived_at = models.DateTimeField(null=True, blank=True, verbose_name="Ημερομηνία Αρχειοθέτησης")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Απόδειξη Πληρωμής"
+        verbose_name_plural = "Αποδείξεις Πληρωμών"
+        ordering = ['-issue_date']
+    
+    def __str__(self):
+        return f"Απόδειξη {self.receipt_number} - €{self.amount}"
+    
+    def save(self, *args, **kwargs):
+        if not self.receipt_number:
+            # Generate unique receipt number
+            from django.utils import timezone
+            base_id = self.installment.id if self.installment_id else (self.scheduled_maintenance_id or 'X')
+            timestamp = timezone.now().strftime('%Y%m%d%H%M%S')
+            self.receipt_number = f"REC-{timestamp}-{base_id}"
+        super().save(*args, **kwargs)
+
+    @property
+    def is_signed(self):
+        return bool(self.contractor_signature)

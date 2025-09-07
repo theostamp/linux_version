@@ -16,10 +16,17 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='transaction',
-            name='apartment',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='transactions', to='apartments.apartment', verbose_name='Διαμέρισμα'),
+        # Skip apartment field addition if it already exists
+        migrations.RunSQL(
+            sql="SELECT 1",  # No-op SQL
+            reverse_sql="SELECT 1",
+            state_operations=[
+                migrations.AddField(
+                    model_name='transaction',
+                    name='apartment',
+                    field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='transactions', to='apartments.apartment', verbose_name='Διαμέρισμα'),
+                ),
+            ]
         ),
         migrations.AddField(
             model_name='transaction',

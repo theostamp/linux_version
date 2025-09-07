@@ -42,6 +42,21 @@ export interface Expense {
   // Explicit links (optional; require backend support)
   linked_service_receipt?: number | null;
   linked_scheduled_maintenance?: number | null;
+  // Maintenance payment integration
+  maintenance_payment_receipts?: Array<{
+    id: number;
+    scheduled_maintenance: {
+      id: number;
+      title: string;
+    };
+    installment?: {
+      id: number;
+      installment_type: string;
+      installment_number: number;
+    };
+    receipt_type: string;
+    amount: number;
+  }>;
 }
 
 export interface Transaction {

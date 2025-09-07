@@ -95,6 +95,18 @@ export function useBuildingEvents(buildingIdParam?: number) {
       case 'milestone.updated':
         queryClient.invalidateQueries({ queryKey: ['milestones'] });
         break;
+      case 'maintenance.expense_deleted': {
+        // Invalidate maintenance related lists
+        queryClient.invalidateQueries({ queryKey: ['scheduled-maintenance'] });
+        queryClient.invalidateQueries({ queryKey: ['maintenance-payment-history'] });
+        // Try to show a toast if hook exists in window (light coupling)
+        try {
+          const payload = _payload || {};
+          const msg = (payload as any).message || 'Διαγράφηκε σχετική δαπάνη συντήρησης';
+          (window as any).__app_toast?.({ title: 'Ειδοποίηση', description: msg });
+        } catch {}
+        break;
+      }
       default:
         // Generic invalidate for safety
         queryClient.invalidateQueries({ queryKey: ['tickets'] });

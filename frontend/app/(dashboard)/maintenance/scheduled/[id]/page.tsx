@@ -1,136 +1,67 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
- 
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, Wrench } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchScheduledMaintenance, deleteScheduledMaintenance, type ScheduledMaintenance } from '@/lib/api';
-import { useRole } from '@/lib/auth';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { BackButton } from '@/components/ui/BackButton';
-
-type Priority = 'low' | 'medium' | 'high' | 'urgent';
-type Status = 'planned' | 'in_progress' | 'completed' | 'on_hold';
+import PaymentHistoryTab from '@/components/maintenance/PaymentHistoryTab';
+import PaymentScheduleTab from '@/components/maintenance/PaymentScheduleTab';
 
 export default function ScheduledMaintenanceDetailPage() {
   const params = useParams();
-  const id = params?.id as string;
-  const numericId = Number(id);
-  const { isAdmin, isManager } = useRole();
-  const qc = useQueryClient();
-  const { toast } = useToast();
   const router = useRouter();
-  const [confirmOpen, setConfirmOpen] = React.useState(false);
-  const [deleting, setDeleting] = React.useState(false);
-  const { data: item, isLoading } = useQuery<ScheduledMaintenance>({
-    queryKey: ['maintenance', 'scheduled', numericId],
-    queryFn: () => fetchScheduledMaintenance(numericId),
-    enabled: Number.isFinite(numericId),
-    staleTime: 30_000,
-  });
+  const id = useMemo(() => Number(params?.id), [params]);
+  const [item, setItem] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const priorityColor: Record<Priority, string> = {
-    low: 'bg-green-50 text-green-700',
-    medium: 'bg-yellow-50 text-yellow-700',
-    high: 'bg-orange-50 text-orange-700',
-    urgent: 'bg-red-50 text-red-700',
-  };
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      try {
+        const { data } = await api.get(`/maintenance/scheduled/${id}/`);
+        setItem(data);
+      } catch {
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
+  if (!id || loading) return null;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Λεπτομέρειες Έργου</h1>
-          <p className="text-muted-foreground">Πληροφορίες για το Προγραμματισμός Έργου συντήρησης</p>
+        <div className="flex items-center gap-2">
+          <BackButton size="sm" />
+          <h1 className="text-3xl font-bold tracking-tight">{item?.title ?? 'Προγραμματισμένο Έργο'}</h1>
         </div>
-        <BackButton href="/maintenance/scheduled" />
+        <Button variant="outline" onClick={() => router.push(`/maintenance/scheduled/${id}/edit`)}>Επεξεργασία</Button>
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-xl">{item?.title || `Προγραμματισμένη εργασία #${id}`}</CardTitle>
-              <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                <Wrench className="w-4 h-4" />
-                <span>Συνεργείο:</span>
-                <span className="font-medium">{item?.contractor_name || '—'}</span>
-              </div>
-            </div>
-            <span className={`px-2 py-1 rounded text-xs ${item ? priorityColor[item.priority as Priority] : ''}`}>Προτεραιότητα: {item?.priority || '—'}</span>
-          </div>
+          <CardTitle>Πληρωμές</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="w-4 h-4" />
-            <span>Ημ/νία έναρξης:</span>
-            <span className="font-medium">{item?.scheduled_date ? new Date(item.scheduled_date).toLocaleDateString('el-GR') : '—'}</span>
-          </div>
-
-          <div>
-            <h2 className="text-sm font-semibold mb-1">Κατάσταση</h2>
-            <Badge variant="secondary">{item?.status || '—'}</Badge>
-          </div>
-
-          <div>
-            <h2 className="text-sm font-semibold mb-1">Περιγραφή</h2>
-            <p className="text-sm text-muted-foreground">{item?.description || '—'}</p>
-          </div>
-
-          <div className="pt-2">
-            <div className="flex flex-wrap gap-2">
-              <Button asChild size="sm" variant="outline">
-                <Link href="/maintenance/scheduled">Επιστροφή</Link>
-              </Button>
-              {(isAdmin || isManager) && Number.isFinite(numericId) && (
-                <>
-                  <Button asChild size="sm" variant="secondary">
-                    <Link href={`/maintenance/scheduled/${numericId}/edit`}>Επεξεργασία</Link>
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => setConfirmOpen(true)}>
-                    Διαγραφή
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
+        <CardContent>
+          <Tabs defaultValue="history">
+            <TabsList>
+              <TabsTrigger value="history">Ιστορικό</TabsTrigger>
+              <TabsTrigger value="schedule">Χρονοδιάγραμμα</TabsTrigger>
+            </TabsList>
+            <TabsContent value="history">
+              <PaymentHistoryTab maintenanceId={id} />
+            </TabsContent>
+            <TabsContent value="schedule">
+              <PaymentScheduleTab maintenanceId={id} />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
-
-      <ConfirmDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title="Επιβεβαίωση Διαγραφής"
-        description="Θέλετε σίγουρα να διαγράψετε το Προγραμματισμός Έργου;"
-        confirmText="Διαγραφή"
-        confirmVariant="destructive"
-        isConfirmLoading={deleting}
-        onConfirm={async () => {
-          if (!Number.isFinite(numericId)) return;
-          try {
-            setDeleting(true);
-            await deleteScheduledMaintenance(numericId);
-            qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled'] });
-            qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled', numericId] });
-            toast({ title: 'Διαγράφηκε', description: 'Το έργο διαγράφηκε.' });
-            router.push('/maintenance/scheduled');
-          } catch (e) {
-            toast({ title: 'Σφάλμα', description: 'Αποτυχία διαγραφής.', variant: 'destructive' as any });
-          } finally {
-            setDeleting(false);
-            setConfirmOpen(false);
-          }
-        }}
-      />
     </div>
   );
 }
-
 
