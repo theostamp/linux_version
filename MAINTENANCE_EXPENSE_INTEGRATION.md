@@ -268,6 +268,68 @@ const relatedExpenses = allExpenses.filter(expense => {
 
 ---
 
+## 🛡️ Duplicate Prevention & Data Integrity
+
+### Προστασία από Διπλή Καταχώρηση
+
+#### Pre-Creation Check
+```typescript
+// Check existing expenses before creating installments
+const existingExpenses = await getExpenses({ building_id: buildingId });
+const hasExistingInstallments = existingExpenses.some(expense => {
+  const expenseTitle = expense.title.toLowerCase();
+  const maintenanceTitle = values.title.toLowerCase();
+  return (
+    expenseTitle.includes(maintenanceTitle) && 
+    (expenseTitle.includes('προκαταβολή') || expenseTitle.includes('δόση'))
+  );
+});
+
+if (hasExistingInstallments) {
+  toast({ 
+    title: 'Προειδοποίηση', 
+    description: `Βρέθηκαν ήδη τμηματικές δαπάνες για το έργο "${values.title}". Δεν θα δημιουργηθούν νέες.` 
+  });
+  return; // Skip expense creation
+}
+```
+
+#### Transactional Safety
+```typescript
+const createInstallmentExpenses = async (params) => {
+  const createdExpenses = [];
+  
+  try {
+    // Create advance payment
+    const advanceExpense = await createExpense(advanceData);
+    createdExpenses.push(advanceExpense);
+    
+    // Create installments
+    for (let i = 1; i <= installmentCount; i++) {
+      const installmentExpense = await createExpense(installmentData);
+      createdExpenses.push(installmentExpense);
+    }
+  } catch (error) {
+    // Cleanup partially created expenses on failure
+    for (const expense of createdExpenses) {
+      try {
+        await deleteExpense(expense.id);
+      } catch (cleanupError) {
+        console.error('Cleanup failed:', cleanupError);
+      }
+    }
+    throw error; // Re-throw original error
+  }
+};
+```
+
+#### User Feedback
+- ✅ **Success**: "Δημιουργήθηκαν X τμηματικές δαπάνες για το έργο"
+- ⚠️ **Duplicate Warning**: "Βρέθηκαν ήδη τμηματικές δαπάνες - δεν θα δημιουργηθούν νέες"
+- ❌ **Error**: "Υπήρξε πρόβλημα με τη δημιουργία των τμηματικών δαπανών"
+
+---
+
 ## 🛡️ Error Handling & Data Integrity
 
 ### Database Schema Issues
@@ -447,6 +509,8 @@ const response = await api.post('/maintenance/scheduled/', maintenanceData);
 - ✅ **TypeScript Types**: Πλήρη type safety για payment config
 - ✅ **Error Recovery**: Fallback αν payment schedule αποτύχει (δε σταματά τη δημιουργία expenses)
 - ✅ **User Feedback**: Toast notifications για επιτυχία/αποτυχία
+- ✅ **Duplicate Prevention**: Έλεγχος για αποφυγή διπλής καταχώρησης δαπανών
+- ✅ **Transactional Safety**: Cleanup partially created expenses on failure
 
 ### 🎯 Tested Scenarios
 

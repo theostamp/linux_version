@@ -277,34 +277,57 @@ export default function ScheduledMaintenanceForm({
     const remainingAmount = totalAmount - advanceAmount;
     const installmentAmount = remainingAmount / installmentCount;
     
-    // Create advance payment expense (current month)
-    const currentDate = new Date().toISOString().slice(0, 10);
-    await createExpense({
-      building: buildingId,
-      title: `${title} - Προκαταβολή (${advancePercentage}%)`,
-      amount: Math.round(advanceAmount * 100) / 100,
-      date: currentDate,
-      category: category,
-      distribution_type: 'by_participation_mills',
-      notes: `Προκαταβολή ${advancePercentage}% για συντήρηση. Συνολικό κόστος: ${totalAmount}€`,
-    } as any);
+    const createdExpenses = [];
     
-    // Create installment expenses for future months
-    const baseDate = new Date(startDate);
-    for (let i = 1; i <= installmentCount; i++) {
-      const installmentDate = new Date(baseDate);
-      installmentDate.setMonth(baseDate.getMonth() + i);
-      const installmentDateStr = installmentDate.toISOString().slice(0, 10);
-      
-      await createExpense({
+    try {
+      // Create advance payment expense (current month)
+      const currentDate = new Date().toISOString().slice(0, 10);
+      const advanceExpense = await createExpense({
         building: buildingId,
-        title: `${title} - Δόση ${i}/${installmentCount}`,
-        amount: Math.round(installmentAmount * 100) / 100,
-        date: installmentDateStr,
+        title: `${title} - Προκαταβολή (${advancePercentage}%)`,
+        amount: Math.round(advanceAmount * 100) / 100,
+        date: currentDate,
         category: category,
         distribution_type: 'by_participation_mills',
-        notes: `Δόση ${i} από ${installmentCount} για συντήρηση. Ποσό δόσης: ${installmentAmount.toFixed(2)}€`,
+        notes: `Προκαταβολή ${advancePercentage}% για συντήρηση. Συνολικό κόστος: ${totalAmount}€`,
       } as any);
+      createdExpenses.push(advanceExpense);
+      
+      // Create installment expenses for future months
+      const baseDate = new Date(startDate);
+      for (let i = 1; i <= installmentCount; i++) {
+        const installmentDate = new Date(baseDate);
+        installmentDate.setMonth(baseDate.getMonth() + i);
+        const installmentDateStr = installmentDate.toISOString().slice(0, 10);
+        
+        const installmentExpense = await createExpense({
+          building: buildingId,
+          title: `${title} - Δόση ${i}/${installmentCount}`,
+          amount: Math.round(installmentAmount * 100) / 100,
+          date: installmentDateStr,
+          category: category,
+          distribution_type: 'by_participation_mills',
+          notes: `Δόση ${i} από ${installmentCount} για συντήρηση. Ποσό δόσης: ${installmentAmount.toFixed(2)}€`,
+        } as any);
+        createdExpenses.push(installmentExpense);
+      }
+    } catch (error: any) {
+      // If any expense creation fails, try to clean up the already created ones
+      console.error('Error during installment expense creation:', error);
+      
+      // Attempt cleanup of partially created expenses
+      for (const createdExpense of createdExpenses) {
+        try {
+          const expenseId = createdExpense?.id || createdExpense?.data?.id;
+          if (expenseId) {
+            await deleteExpense(expenseId);
+          }
+        } catch (cleanupError) {
+          console.error('Error during cleanup:', cleanupError);
+        }
+      }
+      
+      throw error; // Re-throw the original error
     }
   };
 
@@ -388,20 +411,39 @@ export default function ScheduledMaintenanceForm({
       if (savedId && paymentConfigEnabled) {
         const pc = paymentConfig || {};
         
-        // Create installment expenses if payment type is advance_installments
+        // Create installment expenses if payment type is advance_installments (only for new projects or when changing payment type)
         if (pc.payment_type === 'advance_installments' && pc.total_amount && pc.installment_count) {
           try {
-            await createInstallmentExpenses({
-              buildingId: getActiveBuildingId(),
-              title: values.title,
-              totalAmount: pc.total_amount,
-              advancePercentage: pc.advance_percentage || 30,
-              installmentCount: pc.installment_count,
-              startDate: pc.start_date || new Date().toISOString().slice(0, 10),
-              category: 'building_maintenance',
-              scheduledMaintenanceId: savedId,
+            // Check for existing installment expenses to prevent duplicates
+            const existingExpenses = await getExpenses({ building_id: buildingId });
+            const hasExistingInstallments = existingExpenses.some(expense => {
+              const expenseTitle = (expense.title || '').toLowerCase();
+              const maintenanceTitle = values.title.toLowerCase();
+              return (
+                expenseTitle.includes(maintenanceTitle) && 
+                (expenseTitle.includes('προκαταβολή') || expenseTitle.includes('δόση'))
+              );
             });
-            toast({ title: 'Επιτυχία', description: `Δημιουργήθηκαν ${pc.installment_count + 1} τμηματικές δαπάνες για το έργο.` });
+
+            if (hasExistingInstallments) {
+              toast({ 
+                title: 'Προειδοποίηση', 
+                description: `Βρέθηκαν ήδη τμηματικές δαπάνες για το έργο "${values.title}". Δεν θα δημιουργηθούν νέες.`,
+                variant: 'default' as any 
+              });
+            } else {
+              await createInstallmentExpenses({
+                buildingId: getActiveBuildingId(),
+                title: values.title,
+                totalAmount: pc.total_amount,
+                advancePercentage: pc.advance_percentage || 30,
+                installmentCount: pc.installment_count,
+                startDate: pc.start_date || new Date().toISOString().slice(0, 10),
+                category: 'building_maintenance',
+                scheduledMaintenanceId: savedId,
+              });
+              toast({ title: 'Επιτυχία', description: `Δημιουργήθηκαν ${pc.installment_count + 1} τμηματικές δαπάνες για το έργο.` });
+            }
           } catch (expenseError: any) {
             console.error('Error creating installment expenses:', expenseError);
             toast({ title: 'Σφάλμα', description: 'Υπήρξε πρόβλημα με τη δημιουργία των τμηματικών δαπανών.', variant: 'destructive' as any });
