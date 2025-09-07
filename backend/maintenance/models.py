@@ -271,6 +271,15 @@ class ScheduledMaintenance(models.Model):
         related_name='created_maintenance',
         verbose_name="Δημιουργήθηκε από"
     )
+    # Financial integration
+    linked_expense = models.ForeignKey(
+        'financial.Expense',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='scheduled_maintenance_tasks',
+        verbose_name="Συνδεδεμένη Δαπάνη"
+    )
     completed_at = models.DateTimeField(null=True, blank=True, verbose_name="Ημερομηνία Ολοκλήρωσης")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -282,6 +291,96 @@ class ScheduledMaintenance(models.Model):
     
     def __str__(self):
         return f"{self.title} - {self.building.name} - {self.scheduled_date}"
+    
+    def create_or_update_expense(self):
+        """Create or update linked expense based on maintenance data"""
+        from financial.models import Expense
+        from django.utils import timezone
+        
+        # Calculate total amount from payment schedule or estimated cost
+        total_amount = self.estimated_cost or 0
+        
+        # Try to get payment schedule total if available
+        try:
+            if hasattr(self, 'payment_schedule') and self.payment_schedule:
+                total_amount = self.payment_schedule.total_amount
+        except:
+            pass
+        
+        # Don't create expense if amount is 0
+        if total_amount <= 0:
+            return None
+        
+        # Determine expense category based on maintenance title/description
+        category = self._determine_expense_category()
+        
+        if self.linked_expense:
+            # Update existing expense
+            expense = self.linked_expense
+            expense.title = f"Συντήρηση: {self.title}"
+            expense.amount = total_amount
+            expense.date = self.scheduled_date or timezone.now().date()
+            expense.category = category
+            expense.notes = f"Αυτόματα συνδεδεμένο με προγραμματισμένο έργο #{self.id}"
+            expense.save()
+            return expense
+        else:
+            # Create new expense
+            expense = Expense.objects.create(
+                building=self.building,
+                title=f"Συντήρηση: {self.title}",
+                amount=total_amount,
+                date=self.scheduled_date or timezone.now().date(),
+                category=category,
+                expense_type='regular',
+                distribution_type='by_participation_mills',
+                notes=f"Αυτόματα συνδεδεμένο με προγραμματισμένο έργο #{self.id}"
+            )
+            # Link back to this maintenance
+            self.linked_expense = expense
+            self.save(update_fields=['linked_expense'])
+            return expense
+    
+    def _determine_expense_category(self):
+        """Determine expense category based on maintenance type"""
+        title_lower = self.title.lower()
+        
+        # Map maintenance types to expense categories
+        category_mapping = {
+            'ανελκυστήρα': 'elevator_maintenance',
+            'elevator': 'elevator_maintenance',
+            'θέρμανση': 'heating_maintenance',
+            'καυστήρα': 'heating_maintenance',
+            'heating': 'heating_maintenance',
+            'ηλεκτρικ': 'electrical_maintenance',
+            'electrical': 'electrical_maintenance',
+            'υδραυλικ': 'plumbing_repair',
+            'plumbing': 'plumbing_repair',
+            'καθαρισμ': 'cleaning',
+            'cleaning': 'cleaning',
+            'ασφάλει': 'security',
+            'security': 'security',
+            'κήπ': 'landscaping',
+            'garden': 'landscaping',
+            'ενδοεπικοινων': 'electrical_maintenance',
+            'intercom': 'electrical_maintenance',
+            'θυροτηλ': 'electrical_maintenance',
+        }
+        
+        for keyword, category in category_mapping.items():
+            if keyword in title_lower:
+                return category
+        
+        # Default category
+        return 'maintenance'
+    
+    def delete_linked_expense(self):
+        """Delete linked expense when maintenance is deleted"""
+        if self.linked_expense:
+            expense = self.linked_expense
+            self.linked_expense = None
+            self.save(update_fields=['linked_expense'])
+            expense.delete()
 
 
 class MaintenanceTicket(models.Model):

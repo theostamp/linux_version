@@ -2144,6 +2144,20 @@ export type ScheduledMaintenance = {
   estimated_duration?: number | null;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  estimated_cost?: number | null;
+  payment_config?: {
+    enabled: boolean;
+    payment_type?: 'lump_sum' | 'advance_installments' | 'periodic' | 'milestone_based';
+    total_amount?: number;
+    advance_percentage?: number;
+    installment_count?: number;
+    installment_frequency?: 'weekly' | 'biweekly' | 'monthly';
+    periodic_amount?: number;
+    periodic_frequency?: 'weekly' | 'biweekly' | 'monthly';
+    start_date?: string;
+    notes?: string;
+  };
+  payment_schedule?: any; // Full payment schedule data from backend
 };
 
 export async function fetchScheduledMaintenances(params: { buildingId?: number; priority?: string; ordering?: string } = {}): Promise<ScheduledMaintenance[]> {

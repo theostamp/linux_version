@@ -225,9 +225,113 @@ class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         # Include payment schedule and aggregates on retrieve to power UI tabs
-        if self.action == 'retrieve':
+        if self.action in ['retrieve', 'list']:
             return ScheduledMaintenanceWithPaymentsSerializer
         return super().get_serializer_class()
+    
+    def perform_create(self, serializer):
+        """Handle creation with payment configuration"""
+        from maintenance.models import PaymentSchedule
+        from django.utils import timezone
+        
+        # Set created_by from request user
+        serializer.save(created_by=self.request.user)
+        maintenance = serializer.instance
+        
+        # Handle payment configuration
+        payment_config = self.request.data.get('payment_config')
+        if payment_config and payment_config.get('enabled'):
+            PaymentSchedule.objects.create(
+                scheduled_maintenance=maintenance,
+                payment_type=payment_config.get('payment_type', 'lump_sum'),
+                total_amount=payment_config.get('total_amount', maintenance.estimated_cost or 0),
+                advance_percentage=payment_config.get('advance_percentage', 0),
+                installment_count=payment_config.get('installment_count', 1),
+                installment_frequency=payment_config.get('installment_frequency', 'monthly'),
+                periodic_amount=payment_config.get('periodic_amount', 0),
+                periodic_frequency=payment_config.get('periodic_frequency', 'monthly'),
+                start_date=payment_config.get('start_date') or timezone.now().date(),
+                notes=payment_config.get('notes', ''),
+                created_by=self.request.user,
+            )
+        
+        # Auto-create linked expense
+        try:
+            maintenance.create_or_update_expense()
+        except Exception as e:
+            # Log error but don't fail the creation
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to create expense for maintenance {maintenance.id}: {e}")
+    
+    def perform_update(self, serializer):
+        """Handle update with payment configuration"""
+        from maintenance.models import PaymentSchedule
+        from django.utils import timezone
+        
+        serializer.save()
+        maintenance = serializer.instance
+        
+        # Handle payment configuration
+        payment_config = self.request.data.get('payment_config')
+        if payment_config:
+            if payment_config.get('enabled'):
+                # Create or update payment schedule
+                schedule, created = PaymentSchedule.objects.get_or_create(
+                    scheduled_maintenance=maintenance,
+                    defaults={
+                        'payment_type': payment_config.get('payment_type', 'lump_sum'),
+                        'total_amount': payment_config.get('total_amount', maintenance.estimated_cost or 0),
+                        'advance_percentage': payment_config.get('advance_percentage', 0),
+                        'installment_count': payment_config.get('installment_count', 1),
+                        'installment_frequency': payment_config.get('installment_frequency', 'monthly'),
+                        'periodic_amount': payment_config.get('periodic_amount', 0),
+                        'periodic_frequency': payment_config.get('periodic_frequency', 'monthly'),
+                        'start_date': payment_config.get('start_date') or timezone.now().date(),
+                        'notes': payment_config.get('notes', ''),
+                        'created_by': self.request.user,
+                    }
+                )
+                
+                if not created:
+                    # Update existing schedule
+                    schedule.payment_type = payment_config.get('payment_type', schedule.payment_type)
+                    schedule.total_amount = payment_config.get('total_amount', schedule.total_amount)
+                    schedule.advance_percentage = payment_config.get('advance_percentage', schedule.advance_percentage)
+                    schedule.installment_count = payment_config.get('installment_count', schedule.installment_count)
+                    schedule.installment_frequency = payment_config.get('installment_frequency', schedule.installment_frequency)
+                    schedule.periodic_amount = payment_config.get('periodic_amount', schedule.periodic_amount)
+                    schedule.periodic_frequency = payment_config.get('periodic_frequency', schedule.periodic_frequency)
+                    if payment_config.get('start_date'):
+                        schedule.start_date = payment_config.get('start_date')
+                    schedule.notes = payment_config.get('notes', schedule.notes)
+                    schedule.save()
+            else:
+                # Delete payment schedule if disabled
+                PaymentSchedule.objects.filter(scheduled_maintenance=maintenance).delete()
+        
+        # Update linked expense
+        try:
+            maintenance.create_or_update_expense()
+        except Exception as e:
+            # Log error but don't fail the update
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to update expense for maintenance {maintenance.id}: {e}")
+    
+    def perform_destroy(self, instance):
+        """Handle deletion with linked expense cleanup"""
+        try:
+            # Delete linked expense before deleting maintenance
+            instance.delete_linked_expense()
+        except Exception as e:
+            # Log error but don't fail the deletion
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to delete linked expense for maintenance {instance.id}: {e}")
+        
+        # Proceed with normal deletion
+        super().perform_destroy(instance)
 
     @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):

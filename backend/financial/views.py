@@ -217,6 +217,38 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             expense=expense,
             request=self.request
         )
+    
+    def perform_destroy(self, instance):
+        """Handle expense deletion with maintenance synchronization"""
+        # Check if this expense is linked to scheduled maintenance
+        try:
+            linked_maintenances = instance.scheduled_maintenance_tasks.all()
+            for maintenance in linked_maintenances:
+                # Clear the link but don't delete the maintenance
+                maintenance.linked_expense = None
+                maintenance.save(update_fields=['linked_expense'])
+        except Exception as e:
+            # Log error but don't fail the deletion
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to update linked maintenance for expense {instance.id}: {e}")
+        
+        # Log the deletion
+        try:
+            FinancialAuditLog.log_expense_action(
+                user=self.request.user,
+                action='DELETE',
+                expense=instance,
+                request=self.request
+            )
+        except Exception as e:
+            # Log error but don't fail the deletion if audit logging fails
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to log expense deletion for expense {instance.id}: {e}")
+        
+        # Proceed with normal deletion
+        super().perform_destroy(instance)
         
         # Auto cleanup and refresh after expense update
         try:
@@ -235,30 +267,44 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         expense_id = instance.id
         
         # ΠΡΩΤΑ: Καθαρισμός σχετικών συναλλαγών και ενημέρωση υπολοίπων
-        related_transactions = Transaction.objects.filter(
+        # Use values() to avoid apartment_id foreign key issues
+        related_transactions_data = Transaction.objects.filter(
             building_id=building.id,
             reference_type='expense',
             reference_id=str(expense_id)
-        )
+        ).values('id', 'apartment_number', 'amount')
         
-        print(f"🗑️ Διαγραφή δαπάνης {expense_id}: Βρέθηκαν {related_transactions.count()} σχετικές συναλλαγές")
+        print(f"🗑️ Διαγραφή δαπάνης {expense_id}: Βρέθηκαν {len(related_transactions_data)} σχετικές συναλλαγές")
         
         # Ενημέρωση υπολοίπων διαμερισμάτων πριν τη διαγραφή των συναλλαγών
-        for transaction in related_transactions:
-            if transaction.apartment:
-                apartment = transaction.apartment
-                old_balance = apartment.current_balance or Decimal('0.00')
-                
-                # Αφαιρούμε την χρέωση (προσθέτουμε το ποσό γιατί οι χρεώσεις είναι αρνητικές)
-                new_balance = old_balance - transaction.amount
-                apartment.current_balance = new_balance
-                apartment.save()
-                
-                print(f"   🏠 Διαμέρισμα {apartment.number}: {old_balance}€ → {new_balance}€")
+        for transaction_data in related_transactions_data:
+            # Use apartment_number instead of apartment foreign key to avoid schema issues
+            if transaction_data['apartment_number']:
+                from apartments.models import Apartment
+                try:
+                    apartment = Apartment.objects.get(
+                        building=building, 
+                        number=transaction_data['apartment_number']
+                    )
+                    old_balance = apartment.current_balance or Decimal('0.00')
+                    
+                    # Αφαιρούμε την χρέωση (προσθέτουμε το ποσό γιατί οι χρεώσεις είναι αρνητικές)
+                    new_balance = old_balance - transaction_data['amount']
+                    apartment.current_balance = new_balance
+                    apartment.save()
+                    
+                    print(f"   🏠 Διαμέρισμα {apartment.number}: {old_balance}€ → {new_balance}€")
+                except Apartment.DoesNotExist:
+                    print(f"   ⚠️ Διαμέρισμα {transaction_data['apartment_number']} δεν βρέθηκε")
         
         # Διαγραφή των σχετικών συναλλαγών
-        deleted_count = related_transactions.count()
-        related_transactions.delete()
+        deleted_count = len(related_transactions_data)
+        if deleted_count > 0:
+            Transaction.objects.filter(
+                building_id=building.id,
+                reference_type='expense',
+                reference_id=str(expense_id)
+            ).delete()
         print(f"   ✅ Διαγράφηκαν {deleted_count} συναλλαγές")
         
         # ΔΕΥΤΕΡΑ: Επαναφορά του αποθεματικού του κτιρίου

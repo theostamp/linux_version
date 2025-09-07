@@ -37,14 +37,47 @@ class ServiceReceiptSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class PaymentScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentSchedule
+        fields = '__all__'
+        extra_kwargs = {
+            'created_by': {'read_only': True},
+            'created_at': {'read_only': True},
+            'updated_at': {'read_only': True},
+        }
+
+
 class ScheduledMaintenanceSerializer(serializers.ModelSerializer):
     contractor_name = serializers.CharField(source='contractor.name', read_only=True)
     building_name = serializers.CharField(source='building.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    payment_config = serializers.SerializerMethodField()
     
     class Meta:
         model = ScheduledMaintenance
         fields = '__all__'
+    
+    def get_payment_config(self, obj):
+        """Get payment configuration from related PaymentSchedule"""
+        try:
+            if hasattr(obj, 'payment_schedule') and obj.payment_schedule:
+                schedule = obj.payment_schedule
+                return {
+                    'enabled': True,
+                    'payment_type': schedule.payment_type,
+                    'total_amount': float(schedule.total_amount),
+                    'advance_percentage': float(schedule.advance_percentage) if schedule.advance_percentage else None,
+                    'installment_count': schedule.installment_count,
+                    'installment_frequency': schedule.installment_frequency,
+                    'periodic_amount': float(schedule.periodic_amount) if schedule.periodic_amount else None,
+                    'periodic_frequency': schedule.periodic_frequency,
+                    'start_date': schedule.start_date.isoformat() if schedule.start_date else None,
+                    'notes': schedule.notes,
+                }
+            return {'enabled': False}
+        except:
+            return {'enabled': False}
 
 
 class PublicScheduledMaintenanceSerializer(serializers.ModelSerializer):
