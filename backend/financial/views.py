@@ -9,6 +9,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
+
+def get_query_params(request):
+    """
+    Helper function to get query parameters from both DRF and Django requests
+    """
+    return getattr(request, 'query_params', request.GET)
+
 from .models import Expense, Transaction, Payment, MeterReading, Supplier, CommonExpensePeriod, ApartmentShare, FinancialReceipt
 from .serializers import (
     ExpenseSerializer, TransactionSerializer, PaymentSerializer,
@@ -882,8 +889,10 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def summary(self, request):
         """Λήψη οικονομικού συνόψη"""
-        building_id = request.query_params.get('building_id')
-        month = request.query_params.get('month')
+        # Handle both DRF (query_params) and regular Django (GET) requests
+        query_params = get_query_params(request)
+        building_id = query_params.get('building_id')
+        month = query_params.get('month')
         
         if not building_id:
             return Response(
@@ -905,8 +914,10 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='improved-summary')
     def improved_summary(self, request):
         """Λήψη βελτιωμένου οικονομικού συνόψη με καλύτερη ορολογία"""
-        building_id = request.query_params.get('building_id')
-        month = request.query_params.get('month')
+        # Handle both DRF (query_params) and regular Django (GET) requests
+        query_params = get_query_params(request)
+        building_id = query_params.get('building_id')
+        month = query_params.get('month')
         
         if not building_id:
             return Response(
@@ -917,90 +928,82 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
         try:
             from datetime import datetime
             from dateutil.relativedelta import relativedelta
-            
+
             service = FinancialDashboardService(int(building_id))
-            
-            # Get current month info
+
+            # Current month reference date
             if month:
                 current_date = datetime.strptime(month + '-01', '%Y-%m-%d')
             else:
                 current_date = datetime.now()
-            
-            # Get previous month info
+
+            # Previous month helpers
             previous_date = current_date - relativedelta(months=1)
             previous_month_str = previous_date.strftime('%Y-%m')
-            
-            # Get basic summary
+
+            # Summaries
             summary = service.get_summary(month)
-            
-            # Calculate improved structure
+            previous_summary = service.get_summary(previous_month_str)
+
+            # Compute values expected by frontend
+            total_expenses_this_month = float(summary.get('total_expenses_month', 0) or 0)
+            total_payments_this_month = float(summary.get('total_payments_month', 0) or 0)
+            total_management_cost = float(summary.get('total_management_cost', 0) or 0)
+            reserve_fund_contribution = float(summary.get('reserve_fund_contribution', 0) or 0)
+
+            current_invoice_total = total_expenses_this_month + total_management_cost + reserve_fund_contribution
+            previous_month_expenses = float(previous_summary.get('total_expenses_month', 0) or 0)
+
+            previous_balances = float(summary.get('previous_obligations', 0) or 0)
+            grand_total = current_invoice_total + previous_balances
+
+            total_paid_all = float(summary.get('total_payments', 0) or 0)  # may be 0 if not provided
+            total_obligations_for_coverage = grand_total if grand_total else abs(float(summary.get('total_balance', 0) or 0))
+
             improved_data = {
-                # Previous month expenses (operational expenses from previous month)
-                'previous_month_expenses': summary.get('total_expenses_month', 0),
+                # Previous month expenses (operational) and names
+                'previous_month_expenses': previous_month_expenses,
                 'previous_month_name': previous_date.strftime('%B %Y'),
-                
+
                 # Current month charges
-                'management_fees': summary.get('management_fees', 0),
-                'reserve_fund_contribution': summary.get('reserve_fund_contribution', 0),
+                'management_fees': total_management_cost,
+                'reserve_fund_contribution': reserve_fund_contribution,
                 'current_month_name': current_date.strftime('%B %Y'),
-                
-                # Invoice total (previous expenses + current charges)
-                'invoice_total': (
-                    summary.get('total_expenses_month', 0) + 
-                    summary.get('management_fees', 0) + 
-                    summary.get('reserve_fund_contribution', 0)
-                ),
-                
-                # Total obligations
-                'current_invoice': (
-                    summary.get('total_expenses_month', 0) + 
-                    summary.get('management_fees', 0) + 
-                    summary.get('reserve_fund_contribution', 0)
-                ),
-                'previous_balances': summary.get('previous_balance', 0),
-                'grand_total': summary.get('total_balance', 0),
-                
+
+                # Invoice totals
+                'invoice_total': current_invoice_total,
+
+                # Total obligations section
+                'current_invoice': current_invoice_total,
+                'previous_balances': previous_balances,
+                'grand_total': grand_total,
+
                 # Coverage calculations
-                'current_invoice_paid': summary.get('total_payments_month', 0),
-                'current_invoice_total': (
-                    summary.get('total_expenses_month', 0) + 
-                    summary.get('management_fees', 0) + 
-                    summary.get('reserve_fund_contribution', 0)
-                ),
-                'current_invoice_coverage_percentage': (
-                    (summary.get('total_payments_month', 0) / max(
-                        summary.get('total_expenses_month', 0) + 
-                        summary.get('management_fees', 0) + 
-                        summary.get('reserve_fund_contribution', 0), 1
-                    )) * 100
-                ),
-                
-                'total_paid': summary.get('total_payments', 0),
-                'total_obligations': abs(summary.get('total_balance', 0)),
-                'total_coverage_percentage': (
-                    (summary.get('total_payments', 0) / max(abs(summary.get('total_balance', 0)), 1)) * 100
-                ),
-                
+                'current_invoice_paid': total_payments_this_month,
+                'current_invoice_total': current_invoice_total,
+                'current_invoice_coverage_percentage': (total_payments_this_month / max(current_invoice_total, 1)) * 100,
+
+                'total_paid': total_paid_all,
+                'total_obligations': total_obligations_for_coverage,
+                'total_coverage_percentage': (total_paid_all / max(total_obligations_for_coverage, 1)) * 100,
+
                 # Reserve fund info
-                'current_reserve': summary.get('current_reserve', 0),
-                'reserve_target': summary.get('reserve_target', 1000),
-                'reserve_monthly_contribution': summary.get('reserve_fund_contribution', 0),
+                'current_reserve': float(summary.get('current_reserve', 0) or 0),
+                'reserve_target': float(summary.get('reserve_fund_goal', 0) or 0),
+                'reserve_monthly_contribution': float(summary.get('reserve_fund_monthly_target', 0) or 0),
                 'reserve_progress_percentage': (
-                    (summary.get('current_reserve', 0) / max(summary.get('reserve_target', 1000), 1)) * 100
+                    (float(summary.get('current_reserve', 0) or 0) / max(float(summary.get('reserve_fund_goal', 0) or 0), 1)) * 100
                 ),
-                
+
                 # Building info
-                'apartment_count': summary.get('apartment_count', 0),
-                'has_monthly_activity': summary.get('has_monthly_activity', False)
+                'apartment_count': int(summary.get('apartments_count', 0) or 0),
+                'has_monthly_activity': bool(summary.get('has_monthly_activity', False)),
             }
-            
+
             return Response(improved_data)
-            
+
         except Exception as e:
-            return Response(
-                {'error': str(e)}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
 

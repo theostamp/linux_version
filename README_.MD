@@ -549,7 +549,7 @@ git push origin v2.1.0
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "ολοκληρωση συνδεσης εργων δαπανων με claude code"
+git commit -m "φιχ ολοκληρωση συνδεσης εργων δαπανων με claude code"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

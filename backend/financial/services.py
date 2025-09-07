@@ -69,7 +69,7 @@ class CommonExpenseCalculator:
         
         # Υπολογισμός χρεώσεων μέχρι την ημερομηνία από συναλλαγές
         total_charges = Transaction.objects.filter(
-            apartment=apartment,
+            apartment_number=apartment.number,
             date__lt=end_datetime,
             type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
                      'interest_charge', 'penalty_charge']
@@ -77,7 +77,7 @@ class CommonExpenseCalculator:
         
         # Υπολογισμός επιπλέον εισπράξεων από συναλλαγές
         additional_payments = Transaction.objects.filter(
-            apartment=apartment,
+            apartment_number=apartment.number,
             date__lt=end_datetime,
             type__in=['common_expense_payment', 'payment_received', 'refund']
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
@@ -480,7 +480,10 @@ class FinancialDashboardService:
                 # Fallback to all transactions if month parsing fails
                 pass
         
-        recent_transactions = recent_transactions_query.order_by('-date')[:10]
+        recent_transactions = recent_transactions_query.order_by('-date')[:10].values(
+            'id', 'date', 'type', 'description', 'apartment_number', 'amount', 
+            'balance_before', 'balance_after', 'reference_id', 'reference_type', 'notes'
+        )
         
         # Σημείωση: Όλες οι δαπάνες θεωρούνται εκδομένες
         # Επιστρέφουμε άδειο queryset για backwards compatibility
@@ -921,7 +924,7 @@ class FinancialDashboardService:
         # Υπολογισμός χρεώσεων μόνο από αυτές τις δαπάνες
         if expense_ids_before_month:
             total_charges = Transaction.objects.filter(
-                apartment=apartment,
+                apartment_number=apartment.number,
                 reference_type='expense',
                 reference_id__in=[str(exp_id) for exp_id in expense_ids_before_month],
                 type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
@@ -935,7 +938,7 @@ class FinancialDashboardService:
         end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
         
         additional_payments = Transaction.objects.filter(
-            apartment=apartment,
+            apartment_number=apartment.number,
             date__lt=end_datetime,
             type__in=['common_expense_payment', 'payment_received', 'refund']
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
@@ -1083,7 +1086,7 @@ class ReportService:
             
             # Υπολογισμός συνολικών χρεώσεων από κοινοχρήστους
             transactions = Transaction.objects.filter(
-                apartment=apartment,
+                apartment_number=apartment.number,
                 type__in=['common_expense_charge', 'expense_payment']
             )
             total_charges = transactions.aggregate(total=Sum('amount'))['total'] or 0
@@ -1651,7 +1654,6 @@ class CommonExpenseAutomationService:
                 date=timezone.now(),
                 type='common_expense_charge',
                 description=f'Χρέωση κοινοχρήστων - {period.period_name}',
-                apartment=apartment,
                 apartment_number=apartment.number,
                 amount=-share_amount,  # αρνητική κίνηση για χρέωση
                 balance_before=previous_balance,
@@ -1830,7 +1832,7 @@ class AdvancedCommonExpenseCalculator:
         
         # Υπολογισμός χρεώσεων μέχρι την ημερομηνία από συναλλαγές
         total_charges = Transaction.objects.filter(
-            apartment=apartment,
+            apartment_number=apartment.number,
             date__lt=end_datetime,
             type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
                      'interest_charge', 'penalty_charge']
@@ -1838,7 +1840,7 @@ class AdvancedCommonExpenseCalculator:
         
         # Υπολογισμός επιπλέον εισπράξεων από συναλλαγές
         additional_payments = Transaction.objects.filter(
-            apartment=apartment,
+            apartment_number=apartment.number,
             date__lt=end_datetime,
             type__in=['common_expense_payment', 'payment_received', 'refund']
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
@@ -2407,7 +2409,7 @@ class DataIntegrityService:
     
     def _calculate_apartment_balance(self, apartment: Apartment) -> Decimal:
         """Υπολογισμός υπολοίπου διαμερίσματος από transactions"""
-        transactions = Transaction.objects.filter(apartment=apartment).order_by('date', 'id')
+        transactions = Transaction.objects.filter(apartment_number=apartment.number).order_by('date', 'id')
         running_balance = Decimal('0.00')
         
         for transaction in transactions:
