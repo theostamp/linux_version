@@ -293,26 +293,45 @@ class ScheduledMaintenance(models.Model):
         return f"{self.title} - {self.building.name} - {self.scheduled_date}"
     
     def create_or_update_expense(self):
-        """Create or update linked expense based on maintenance data"""
+        """Create or update linked expenses based on maintenance data and payment schedule"""
         from financial.models import Expense
         from django.utils import timezone
+        from dateutil.relativedelta import relativedelta
         
-        # Calculate total amount from payment schedule or estimated cost
-        total_amount = self.estimated_cost or 0
+        # Don't create expenses if no cost is specified
+        if not self.estimated_cost and not (hasattr(self, 'payment_schedule') and self.payment_schedule):
+            return None
         
-        # Try to get payment schedule total if available
+        # Get payment schedule if available
+        payment_schedule = None
         try:
             if hasattr(self, 'payment_schedule') and self.payment_schedule:
-                total_amount = self.payment_schedule.total_amount
+                payment_schedule = self.payment_schedule
         except:
             pass
         
-        # Don't create expense if amount is 0
+        # Determine expense category
+        category = self._determine_expense_category()
+        
+        # Handle different payment types
+        if payment_schedule and payment_schedule.payment_type in ['advance_installments', 'periodic']:
+            return self._create_installment_expenses(payment_schedule, category)
+        else:
+            # Handle lump sum or no payment schedule
+            return self._create_single_expense(payment_schedule, category)
+    
+    def _create_single_expense(self, payment_schedule, category):
+        """Create or update a single expense for lump sum payments"""
+        from financial.models import Expense
+        from django.utils import timezone
+        
+        # Calculate amount
+        total_amount = self.estimated_cost or 0
+        if payment_schedule:
+            total_amount = payment_schedule.total_amount
+        
         if total_amount <= 0:
             return None
-        
-        # Determine expense category based on maintenance title/description
-        category = self._determine_expense_category()
         
         if self.linked_expense:
             # Update existing expense
@@ -340,6 +359,119 @@ class ScheduledMaintenance(models.Model):
             self.linked_expense = expense
             self.save(update_fields=['linked_expense'])
             return expense
+    
+    def _create_installment_expenses(self, payment_schedule, category):
+        """Create separate expenses for each installment based on payment schedule"""
+        from financial.models import Expense
+        from django.utils import timezone
+        from dateutil.relativedelta import relativedelta
+        from decimal import Decimal
+        import calendar
+        
+        # Clear existing single expense if it exists
+        if self.linked_expense:
+            old_expense = self.linked_expense
+            self.linked_expense = None
+            self.save(update_fields=['linked_expense'])
+            # Delete old single expense
+            old_expense.delete()
+        
+        created_expenses = []
+        
+        if payment_schedule.payment_type == 'advance_installments':
+            # Handle advance + installments
+            advance_amount = payment_schedule.advance_amount or Decimal('0')
+            remaining_amount = payment_schedule.remaining_amount or payment_schedule.total_amount
+            installment_count = payment_schedule.installment_count or 1
+            
+            current_date = payment_schedule.start_date
+            
+            # Create advance payment expense if there's an advance
+            if advance_amount > 0:
+                advance_expense = Expense.objects.create(
+                    building=self.building,
+                    title=f"Συντήρηση: {self.title} (Προκαταβολή)",
+                    amount=advance_amount,
+                    date=current_date,
+                    category=category,
+                    expense_type='regular',
+                    distribution_type='by_participation_mills',
+                    notes=f"Προκαταβολή για προγραμματισμένο έργο #{self.id}"
+                )
+                created_expenses.append(advance_expense)
+                
+                # Move to next month for first installment
+                current_date = current_date + relativedelta(months=1)
+            
+            # Create installment expenses
+            if installment_count > 0 and remaining_amount > 0:
+                installment_amount = remaining_amount / installment_count
+                
+                for i in range(installment_count):
+                    # Ensure we don't go beyond the last day of the month
+                    try:
+                        # Get the last day of the target month
+                        last_day = calendar.monthrange(current_date.year, current_date.month)[1]
+                        # If the original day is beyond the last day of this month, use the last day
+                        expense_date = current_date.replace(day=min(current_date.day, last_day))
+                    except:
+                        expense_date = current_date
+                    
+                    installment_expense = Expense.objects.create(
+                        building=self.building,
+                        title=f"Συντήρηση: {self.title} (Δόση {i+1}/{installment_count})",
+                        amount=installment_amount,
+                        date=expense_date,
+                        category=category,
+                        expense_type='regular',
+                        distribution_type='by_participation_mills',
+                        notes=f"Δόση {i+1} από {installment_count} για προγραμματισμένο έργο #{self.id}"
+                    )
+                    created_expenses.append(installment_expense)
+                    
+                    # Move to next month
+                    current_date = current_date + relativedelta(months=1)
+        
+        elif payment_schedule.payment_type == 'periodic':
+            # Handle periodic payments
+            periodic_amount = payment_schedule.periodic_amount or Decimal('0')
+            if periodic_amount <= 0:
+                return None
+            
+            # Calculate number of periods based on total amount and periodic amount
+            total_periods = int(payment_schedule.total_amount / periodic_amount)
+            current_date = payment_schedule.start_date
+            
+            for i in range(total_periods):
+                # Handle month boundaries properly
+                try:
+                    last_day = calendar.monthrange(current_date.year, current_date.month)[1]
+                    expense_date = current_date.replace(day=min(current_date.day, last_day))
+                except:
+                    expense_date = current_date
+                
+                periodic_expense = Expense.objects.create(
+                    building=self.building,
+                    title=f"Συντήρηση: {self.title} (Περίοδος {i+1}/{total_periods})",
+                    amount=periodic_amount,
+                    date=expense_date,
+                    category=category,
+                    expense_type='regular',
+                    distribution_type='by_participation_mills',
+                    notes=f"Περιοδική πληρωμή {i+1} από {total_periods} για προγραμματισμένο έργο #{self.id}"
+                )
+                created_expenses.append(periodic_expense)
+                
+                # Move to next period (assuming monthly for now)
+                current_date = current_date + relativedelta(months=1)
+        
+        # Link the first expense as the primary linked expense for backward compatibility
+        if created_expenses:
+            self.linked_expense = created_expenses[0]
+            self.save(update_fields=['linked_expense'])
+            return created_expenses[0]
+        
+        return None
     
     def _determine_expense_category(self):
         """Determine expense category based on maintenance type"""
@@ -375,11 +507,24 @@ class ScheduledMaintenance(models.Model):
         return 'maintenance'
     
     def delete_linked_expense(self):
-        """Delete linked expense when maintenance is deleted"""
+        """Delete linked expenses when maintenance is deleted"""
+        from financial.models import Expense
+        
+        # Delete the primary linked expense
         if self.linked_expense:
             expense = self.linked_expense
             self.linked_expense = None
             self.save(update_fields=['linked_expense'])
+            expense.delete()
+        
+        # Delete any additional expenses created for this maintenance (installments)
+        # Find expenses that reference this maintenance in their notes
+        related_expenses = Expense.objects.filter(
+            building=self.building,
+            notes__icontains=f"προγραμματισμένο έργο #{self.id}"
+        )
+        
+        for expense in related_expenses:
             expense.delete()
 
 
