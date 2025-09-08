@@ -2,17 +2,17 @@ import './globals.css';
 import React from 'react';
 import AppProviders from '@/components/AppProviders';
 import DevCompileIndicator from '@/components/DevCompileIndicator';
-import { Roboto, Roboto_Condensed } from 'next/font/google';
+import { Open_Sans, Roboto_Condensed } from 'next/font/google';
 
-const roboto = Roboto({
-  subsets: ['latin'],
+const openSans = Open_Sans({
+  subsets: ['latin', 'greek'],
   weight: ['300', '400', '500', '700'],
-  variable: '--font-roboto',
+  variable: '--font-open-sans',
 });
 
 const robotoCondensed = Roboto_Condensed({
-  subsets: ['latin'],
-  weight: ['700'],
+  subsets: ['latin', 'greek'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-roboto-condensed',
 });
 
@@ -24,7 +24,7 @@ export const metadata = {
 export default function RootLayout({ children }: { readonly children: React.ReactNode }) {
   return (
     <html lang="el">
-      <body className={`${roboto.variable} ${robotoCondensed.variable}`}>
+      <body className={`${openSans.variable} ${robotoCondensed.variable}`}>
         <DevCompileIndicator />
         <AppProviders>{children}</AppProviders>
       </body>

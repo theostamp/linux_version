@@ -3,8 +3,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { AppCard, CardContent, CardHeader, CardTitle } from '@/components/ui/AppCard';
+import { AppButton } from '@/components/ui/AppButton';
 import { Badge } from '@/components/ui/badge';
 import { Users, Plus } from 'lucide-react';
 import { BackButton } from '@/components/ui/BackButton';
@@ -32,16 +32,16 @@ export default function ContractorsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Συνεργεία</h1>
+          <h1>Συνεργεία</h1>
           <p className="text-muted-foreground">Λίστα συνεργείων συντήρησης</p>
         </div>
         <div className="flex gap-2">
           {(isAdmin || isManager) && (
-            <Button asChild>
+            <AppButton variant="modern" asChild>
               <Link href="/maintenance/contractors/new">
                 <Plus className="w-4 h-4 mr-2" /> Νέο Συνεργείο
               </Link>
-            </Button>
+            </AppButton>
           )}
           <BackButton href="/maintenance" />
         </div>
@@ -55,10 +55,10 @@ export default function ContractorsPage() {
           <div className="col-span-full text-sm text-muted-foreground">Δεν βρέθηκαν συνεργεία.</div>
         )}
         {!isLoading && contractors.map((c) => (
-          <Card key={c.id}>
+          <AppCard key={c.id}>
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
               <div>
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2">
                   <Users className="w-4 h-4" />
                   {c.name}
                 </CardTitle>
@@ -69,7 +69,7 @@ export default function ContractorsPage() {
                       {' '}•{' '}
                       <a
                         href={`tel:${String(c.phone).replace(/\s+/g, '')}`}
-                        className="text-blue-600 font-medium hover:underline"
+                        className="text-brand font-medium hover:underline"
                       >
                         {c.phone}
                       </a>
@@ -83,25 +83,25 @@ export default function ContractorsPage() {
               <div>Τύπος: {c.service_type}</div>
               {c.email && (
                 <div>
-                  Email: <a href={`mailto:${c.email}`} className="text-blue-600 font-medium hover:underline">{c.email}</a>
+                  Email: <a href={`mailto:${c.email}`} className="text-brand font-medium hover:underline">{c.email}</a>
                 </div>
               )}
               {(c as any).hourly_rate && <div>Ωριαία χρέωση: €{Number((c as any).hourly_rate).toLocaleString('el-GR')}</div>}
               <div className="pt-2 flex gap-2">
-                <Button variant="outline" size="sm" asChild>
+                <AppButton variant="outline" size="sm" asChild>
                   <Link href={`/maintenance/contractors/${c.id}`}>Προβολή</Link>
-                </Button>
+                </AppButton>
                 {(isAdmin || isManager) && (
                   <>
-                    <Button variant="secondary" size="sm" asChild>
+                    <AppButton variant="secondary" size="sm" asChild>
                       <Link href={`/maintenance/contractors/${c.id}/edit`}>Επεξεργασία</Link>
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => setToDeleteId(c.id)}>Διαγραφή</Button>
+                    </AppButton>
+                    <AppButton variant="destructive" size="sm" onClick={() => setToDeleteId(c.id)}>Διαγραφή</AppButton>
                   </>
                 )}
               </div>
             </CardContent>
-          </Card>
+          </AppCard>
         ))}
       </div>
       <ConfirmDialog
@@ -130,5 +130,3 @@ export default function ContractorsPage() {
     </div>
   );
 }
-
-

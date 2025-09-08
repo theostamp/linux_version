@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-roboto)', 'sans-serif'],
+        sans: ['var(--font-roboto-condensed)', 'sans-serif'],
         heading: ['var(--font-roboto-condensed)', 'sans-serif'],
       },
       animation: {
@@ -60,6 +60,29 @@ module.exports = {
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))'
+        },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--success-foreground))',
+          hover: 'hsl(var(--success-hover))'
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))',
+          hover: 'hsl(var(--warning-hover))'
+        },
+        brand: {
+          DEFAULT: 'hsl(var(--brand))',
+          hover: 'hsl(var(--brand-hover))',
+          darker: 'hsl(var(--brand-darker))',
+          foreground: 'hsl(var(--brand-foreground))',
+          subtle: 'hsl(var(--brand-subtle))'
+        },
+        'neutral-btn': {
+          DEFAULT: 'hsl(var(--neutral-btn))',
+          hover: 'hsl(var(--neutral-btn-hover))',
+          darker: 'hsl(var(--neutral-btn-darker))',
+          foreground: 'hsl(var(--neutral-btn-foreground))'
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

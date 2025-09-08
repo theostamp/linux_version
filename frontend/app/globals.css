@@ -23,9 +23,27 @@
     --accent-foreground: 24 9.8% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 60 9.1% 97.8%;
+    --destructive-hover: 0 72% 51%;
+    --success: 142 71% 45%; /* green-500 */
+    --success-foreground: 60 9.1% 97.8%;
+    --success-hover: 142 76% 39%; /* green-600 */
+    --warning: 48 96% 53%; /* yellow-500 */
+    --warning-foreground: 24 9.8% 10%;
+    --warning-hover: 43 96% 50%; /* yellow-600 */
     --border: 20 5.9% 90%;
     --input: 20 5.9% 90%;
     --ring: 20 14.3% 4.1%;
+    /* Brand Colors */
+    --brand: 217 91% 60%; /* blue-500 */
+    --brand-hover: 221 83% 53%; /* blue-600 */
+    --brand-darker: 224 76% 48%; /* blue-700 */
+    --brand-foreground: 210 40% 98%;
+    --brand-subtle: 216 91% 93%; /* blue-100 */
+    /* Neutral Colors for buttons etc. */
+    --neutral-btn: 215 9% 47%; /* gray-500 */
+    --neutral-btn-hover: 216 15% 35%; /* gray-600 */
+    --neutral-btn-darker: 215 25% 27%; /* gray-700 */
+    --neutral-btn-foreground: 210 40% 98%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -51,9 +69,27 @@
     --accent-foreground: 60 9.1% 97.8%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 60 9.1% 97.8%;
+    --destructive-hover: 0 72% 51%;
+    --success: 142 71% 45%;
+    --success-foreground: 60 9.1% 97.8%;
+    --success-hover: 142 76% 39%;
+    --warning: 48 96% 53%;
+    --warning-foreground: 24 9.8% 10%;
+    --warning-hover: 43 96% 50%;
     --border: 12 6.5% 15.1%;
     --input: 12 6.5% 15.1%;
     --ring: 24 5.7% 82.9%;
+    /* Brand Colors */
+    --brand: 217 91% 60%;
+    --brand-hover: 221 83% 53%;
+    --brand-darker: 224 76% 48%;
+    --brand-foreground: 210 40% 98%;
+    --brand-subtle: 222 47% 11%; /* slate-900 */
+    /* Neutral Colors for buttons etc. */
+    --neutral-btn: 215 9% 47%;
+    --neutral-btn-hover: 216 15% 35%;
+    --neutral-btn-darker: 215 25% 27%;
+    --neutral-btn-foreground: 210 40% 98%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -69,8 +105,33 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-heading font-bold text-lg;
+
+  /* New Typographic Scale */
+  h1 {
+    @apply font-heading font-bold text-4xl tracking-tight lg:text-5xl;
+  }
+  h2 {
+    @apply font-heading font-bold text-3xl tracking-tight;
+  }
+  h3 {
+    @apply font-heading font-semibold text-2xl tracking-tight;
+  }
+  h4 {
+    @apply font-heading font-semibold text-xl tracking-tight;
+  }
+  h5 {
+    @apply font-heading font-medium text-lg tracking-tight;
+  }
+  h6 {
+    @apply font-heading font-medium text-base tracking-tight;
+  }
+  
+  p {
+    @apply leading-7 [&:not(:first-child)]:mt-6;
+  }
+
+  .muted {
+    @apply text-sm text-muted-foreground;
   }
 }
 
@@ -81,6 +142,7 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 1;
+    line-clamp: 1;
   }
   
   .line-clamp-2 {
@@ -88,6 +150,7 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
   
   .line-clamp-3 {
@@ -95,6 +158,7 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
   }
   
   /* Smooth transitions */
@@ -116,29 +180,23 @@
   
   /* Gradient backgrounds */
   .bg-gradient-primary {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    @apply bg-gradient-to-br from-brand to-brand-darker;
   }
   
   .bg-gradient-secondary {
-    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    @apply bg-gradient-to-br from-neutral-btn to-neutral-btn-hover;
   }
   
   .bg-gradient-success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    @apply bg-gradient-to-br from-success to-success-hover;
   }
   
   .bg-gradient-warning {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    @apply bg-gradient-to-br from-warning to-warning-hover;
   }
   
   .bg-gradient-danger {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  }
-  
-  /* Marquee animation */
-  @keyframes marquee {
-    0% { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
+    @apply bg-gradient-to-br from-destructive to-destructive-hover;
   }
   
   .animate-marquee {
@@ -146,64 +204,19 @@
   }
   
   /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
+  body::-webkit-scrollbar {
+    @apply w-2;
   }
-  
-  ::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 3px;
+  body::-webkit-scrollbar-track {
+    @apply bg-muted;
   }
-  
-  ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+  body::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-secondary hover:bg-secondary/80;
   }
   
   /* Focus ring */
   .focus-ring:focus {
-    outline: 2px solid #3b82f6;
-    outline-offset: 2px;
-  }
-  
-  /* Card hover effects */
-  .card-hover {
-    transition: all 0.3s ease;
-  }
-  
-  .card-hover:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  }
-  
-  /* Modern button styles */
-  .btn-modern {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
-  }
-  
-  .btn-primary-modern {
-    @apply bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 focus:ring-blue-500 shadow-md hover:shadow-lg transform hover:-translate-y-0.5;
-  }
-  
-  .btn-secondary-modern {
-    @apply bg-gradient-to-r from-gray-500 to-gray-600 text-white hover:from-gray-600 hover:to-gray-700 focus:ring-gray-500 shadow-md hover:shadow-lg transform hover:-translate-y-0.5;
-  }
-  
-  /* Sidebar specific styles */
-  .sidebar-nav-item {
-    @apply flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ease-in-out group;
-  }
-  
-  .sidebar-nav-item:hover {
-    @apply bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/50 dark:to-blue-800/50 shadow-md transform -translate-y-0.5;
-  }
-  
-  .sidebar-nav-item.active {
-    @apply bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform -translate-y-0.5;
+    @apply ring-2 ring-offset-2 ring-brand;
   }
   
   /* Glass morphism effect */
@@ -292,10 +305,8 @@
   
   /* Gradient text */
   .text-gradient {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    -webkit-background-clip: text;
+    @apply bg-gradient-primary bg-clip-text;
     -webkit-text-fill-color: transparent;
-    background-clip: text;
   }
   
   /* Shimmer effect */
@@ -347,13 +358,11 @@
   
   /* Table header gradient styles */
   .table-header-gradient {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
-    border-bottom: 2px solid #94a3b8;
+    @apply bg-gradient-to-br from-slate-50 via-slate-200 to-slate-300 border-b-2 border-slate-400;
   }
   
   .table-header-gradient-blue {
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #bfdbfe 100%);
-    border-bottom: 2px solid #3b82f6;
+    @apply bg-gradient-to-br from-blue-50 via-blue-200 to-blue-300 border-b-2 border-brand;
   }
   
   /* Vertical text for table headers */
@@ -391,8 +400,8 @@
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
-    color: #374151;
+    letter-spacing: 0.3px;    
+    @apply text-gray-700;
   }
   
   /* Common expense table specific styles */
@@ -403,25 +412,24 @@
   
   .common-expense-table th,
   .common-expense-table td {
-    border: 1px solid #d1d5db;
+    @apply border border-gray-300;
     padding: 4px 6px;
     text-align: center;
     vertical-align: middle;
   }
   
   .common-expense-table th {
-    background-color: #f9fafb;
+    @apply bg-gray-50;
     font-weight: 600;
   }
   
   .common-expense-table .vertical-header {
-    background-color: #f3f4f6;
-    border-bottom: 2px solid #d1d5db;
+    @apply bg-gray-100 border-b-2 border-gray-300;
     transition: background-color 0.2s ease;
   }
   
   .common-expense-table .vertical-header:hover {
-    background-color: #e5e7eb;
+    @apply bg-gray-200;
   }
   
   /* Special handling for longer header texts */

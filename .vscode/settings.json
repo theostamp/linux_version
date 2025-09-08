@@ -1,4 +1,8 @@
 {
+  "css.lint.unknownAtRules": "ignore"
+}
+
+{
     "git.ignoreLimitWarning": true,
     "sonarlint.connectedMode.project": {
         "connectionId": "theostamp",

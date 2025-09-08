@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -501,10 +502,19 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                           <span>Συνδεδεμένο με Συντήρηση:</span>
                         </div>
                         {expense.maintenance_payment_receipts.map((receipt) => (
-                          <div key={receipt.id} className="text-xs text-blue-600 ml-1">
-                            <span className="font-medium">{receipt.scheduled_maintenance.title}</span>
+                          <div key={receipt.id} className="text-xs text-blue-600 ml-1 flex items-center gap-2">
+                            {receipt?.scheduled_maintenance?.id ? (
+                              <Link
+                                href={`/maintenance/scheduled/${receipt.scheduled_maintenance.id}/edit`}
+                                className="font-medium text-blue-700 hover:underline"
+                              >
+                                {receipt.scheduled_maintenance.title}
+                              </Link>
+                            ) : (
+                              <span className="font-medium">{receipt.scheduled_maintenance.title}</span>
+                            )}
                             {receipt.installment && (
-                              <span className="text-blue-500 ml-2">
+                              <span className="text-blue-500">
                                 ({receipt.installment.installment_type === 'advance' ? 'Προκαταβολή' : 
                                   receipt.installment.installment_type === 'installment' ? `Δόση ${receipt.installment.installment_number}` :
                                   receipt.installment.installment_type})
