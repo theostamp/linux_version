@@ -549,10 +549,37 @@ git push origin v2.1.0
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m " Η εφαρμογή calendar είναι έτοιμη για χρήση! ."
+git commit -m " ανακαμψη μετα απο reset --hard ."
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
+ 
+### 🔁 Διπλό push: GitHub + τοπικός δίσκος E: (WSL)
+
+- Χρησιμοποίησε το WSL path για τον δίσκο E: (`/mnt/e/`).
+
+```bash
+# 1) Δημιούργησε bare repo στον E:
+mkdir -p /mnt/e/git-repos
+git init --bare /mnt/e/git-repos/linux_version.git
+
+# 2) Πρόσθεσε διπλό push στο ίδιο remote (origin)
+git remote set-url --push origin --add git@github-ssh443:theostamp/linux_version.git
+git remote set-url --push origin --add /mnt/e/git-repos/linux_version.git
+
+# 3) Έλεγχος
+git remote -v
+
+# 4) Push και στα δύο με μία εντολή
+git push origin main
+```
+
+Εναλλακτικά, με δεύτερο remote:
+```bash
+git remote add local /mnt/e/git-repos/linux_version.git
+git push --all origin && git push --all local
+```
+
 ---
 
 git reset --hard 9906d237a5
