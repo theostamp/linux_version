@@ -6,13 +6,15 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import BuildingSelectorButton from './BuildingSelectorButton';
 import LogoutButton from './LogoutButton';
 import OfficeSettingsModal from './OfficeSettingsModal';
-import { User, Building as BuildingIcon, Bell, Settings, Menu } from 'lucide-react';
+import { EventNotificationBell, EventSidebar } from '@/components/events';
+import { User, Building as BuildingIcon, Settings, Menu } from 'lucide-react';
 
 export default function GlobalHeader() {
   const { user } = useAuth();
   const { selectedBuilding, setSelectedBuilding } = useBuilding();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isEventSidebarOpen, setIsEventSidebarOpen] = useState(false);
 
   return (
     <>
@@ -52,10 +54,10 @@ export default function GlobalHeader() {
 
             {/* Right side - User info and actions */}
             <div className="flex items-center gap-2 sm:gap-4">
-              {/* Notifications - Hidden on small mobile */}
-              <button className="hidden sm:block p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200">
-                <Bell className="w-5 h-5" />
-              </button>
+              {/* Event Notifications - Hidden on small mobile */}
+              <div className="hidden sm:block">
+                <EventNotificationBell onClick={() => setIsEventSidebarOpen(true)} />
+              </div>
               
               {/* Settings - Desktop */}
               <button 
@@ -112,6 +114,12 @@ export default function GlobalHeader() {
       <OfficeSettingsModal 
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
+      />
+
+      {/* Event Sidebar */}
+      <EventSidebar
+        isOpen={isEventSidebarOpen}
+        onClose={() => setIsEventSidebarOpen(false)}
       />
     </>
   );

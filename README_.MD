@@ -549,7 +549,9 @@ git push origin v2.1.0
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "βελτιωση css me roboto font"
+git commit -m " Η εφαρμογή calendar είναι έτοιμη για χρήση! Το μόνο που απομένει
+  είναι η επίλυση του frontend permission issue για να
+  τεσταριστεί πλήρως η ολοκληρωμένη λειτουργικότητα."
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

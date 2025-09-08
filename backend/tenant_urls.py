@@ -58,6 +58,9 @@ urlpatterns = [
 
     # Todo management
     path('api/todos/', include('todo_management.urls')),
+    
+    # Events management
+    path('api/events/', include('events.urls')),
 
     # Data migration
     path('api/data-migration/', include('data_migration.urls')),

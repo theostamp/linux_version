@@ -69,6 +69,7 @@ TENANT_APPS = [
     'maintenance',
     'projects',
     'todo_management',
+    'events',
     
     # 💰 Οικονομικό σύστημα
     'financial',
