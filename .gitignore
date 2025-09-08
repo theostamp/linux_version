@@ -35,3 +35,15 @@ node_modules/
 # Τα .sh αρχεία είναι ήδη στο git με εκτελέσιμα permissions (100755)
 # Μετά από git clone σε νέο σύστημα, τρέξτε: ./fix_permissions.sh
 # για να διορθώσετε τα permissions αν χάνονται
+# Node/Next.js
+node_modules/
+.next/
+
+# Frontend caches
+frontend/node_modules/
+frontend/.next/
+frontend/.next-old/
+
+# OS/Editor
+.DS_Store
+*.log
