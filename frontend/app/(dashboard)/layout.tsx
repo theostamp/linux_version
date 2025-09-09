@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import GlobalHeader from '@/components/GlobalHeader';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from 'react-hot-toast';
+import { Toaster as SonnerToaster } from 'sonner';
 import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
 
 interface DashboardLayoutProps {
@@ -56,6 +57,7 @@ export default function DashboardLayout({ children, fullWidth = false }: Dashboa
       <GlobalLoadingOverlay />
       
       <Toaster position="top-right" />
+      <SonnerToaster position="top-right" richColors />
     </div>
   );
 }

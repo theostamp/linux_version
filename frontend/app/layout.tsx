@@ -3,6 +3,7 @@ import React from 'react';
 import AppProviders from '@/components/AppProviders';
 import DevCompileIndicator from '@/components/DevCompileIndicator';
 import { Open_Sans, Roboto_Condensed } from 'next/font/google';
+import { Toaster } from '@/components/ui/toaster';
 
 const openSans = Open_Sans({
   subsets: ['latin', 'greek'],
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { readonly children: React.Reac
       <body className={`${openSans.variable} ${robotoCondensed.variable}`}>
         <DevCompileIndicator />
         <AppProviders>{children}</AppProviders>
+        <Toaster />
       </body>
     </html>
   );

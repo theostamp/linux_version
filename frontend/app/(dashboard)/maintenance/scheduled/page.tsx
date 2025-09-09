@@ -98,7 +98,7 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BackButton size="sm" />
+          <BackButton size="sm" href="/maintenance" />
           <h1 className="text-3xl font-bold tracking-tight">Προγραμματισμένα Έργα</h1>
           <p className="text-muted-foreground">Λίστα εργασιών συντήρησης ανά προτεραιότητα</p>
         </div>
@@ -194,31 +194,29 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
             // First, find and delete related expenses
             try {
               const allExpenses = await getExpenses({ building_id: buildingId });
+              const normalizedMaintenanceTitle = maintenanceTitle.toLowerCase();
               const relatedExpenses = allExpenses.filter(expense => {
                 const expenseTitle = (expense.title || '').toLowerCase();
-                const normalizedMaintenanceTitle = maintenanceTitle.toLowerCase();
-                // Match expenses that contain the maintenance title
-                return expenseTitle.includes(normalizedMaintenanceTitle) || 
-                       (expenseTitle.includes('προκαταβολή') && expenseTitle.includes(normalizedMaintenanceTitle)) ||
-                       (expenseTitle.includes('δόση') && expenseTitle.includes(normalizedMaintenanceTitle));
+                // Match expenses that contain the maintenance title or explicit labels
+                return (
+                  expenseTitle.includes(normalizedMaintenanceTitle) ||
+                  (expenseTitle.includes('προκαταβολή') && expenseTitle.includes(normalizedMaintenanceTitle)) ||
+                  (expenseTitle.includes('δόση') && expenseTitle.includes(normalizedMaintenanceTitle))
+                );
               });
               
               if (relatedExpenses.length > 0) {
-                const confirmDeleteExpenses = window.confirm(
-                  `Βρέθηκαν ${relatedExpenses.length} σχετικές δαπάνες που θα διαγραφούν μαζί με το έργο:\n\n${relatedExpenses.map(e => `• ${e.title} (${e.amount}€)`).join('\n')}\n\nΘέλετε να συνεχίσετε;`
-                );
-                
-                if (confirmDeleteExpenses) {
-                  for (const expense of relatedExpenses) {
-                    try {
-                      await deleteExpense(expense.id);
-                    } catch (expenseError) {
-                      console.error('Error deleting related expense:', expenseError);
-                    }
+                let deletedCount = 0;
+                for (const expense of relatedExpenses) {
+                  try {
+                    await deleteExpense(expense.id);
+                    deletedCount += 1;
+                  } catch (expenseError) {
+                    console.error('Error deleting related expense:', expenseError);
                   }
-                  toast({ title: 'Διαγράφηκαν', description: `Διαγράφηκαν ${relatedExpenses.length} σχετικές δαπάνες.` });
-                } else {
-                  return; // Cancel the entire deletion
+                }
+                if (deletedCount > 0) {
+                  toast({ title: 'Καθαρισμός Δαπανών', description: `Διαγράφηκαν ${deletedCount} σχετικές δαπάνες.` });
                 }
               }
             } catch (expenseError) {

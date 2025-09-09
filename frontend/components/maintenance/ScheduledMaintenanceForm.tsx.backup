@@ -146,7 +146,7 @@ export default function ScheduledMaintenanceForm({
           scheduled_date: data.scheduled_date ?? undefined,
           priority: data.priority ?? 'medium',
           status: data.status ?? 'scheduled',
-          estimated_duration: 1,
+          estimated_duration: data.estimated_duration ?? 1,
         });
         // Prefill price from estimated_cost (fallback to actual_cost)
         try {
@@ -171,7 +171,7 @@ export default function ScheduledMaintenanceForm({
               scheduled_date: data.scheduled_date ?? undefined,
               priority: data.priority ?? 'medium',
               status: data.status ?? 'scheduled',
-              estimated_duration: 1,
+              estimated_duration: data.estimated_duration ?? 1,
               payment_config: {
                 enabled: true,
                 payment_type: schedule.payment_type || 'lump_sum',
@@ -217,7 +217,7 @@ export default function ScheduledMaintenanceForm({
     scheduled_date: initialData?.scheduled_date ? formatForDateInput(initialData.scheduled_date) : undefined,
     priority: initialData?.priority ?? 'medium',
     status_ui: initialData?.status === 'completed' ? 'executed' : 'pending',
-    estimated_duration: 1,
+    estimated_duration: (initialData?.estimated_duration as any) ?? 1,
   }), [initialData]);
 
   const { control, register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch, getValues, reset } = useForm<FormValues>({
@@ -234,8 +234,8 @@ export default function ScheduledMaintenanceForm({
         contractor: initialData.contractor ?? undefined,
         scheduled_date: initialData.scheduled_date ? formatForDateInput(initialData.scheduled_date) : undefined,
         priority: initialData.priority ?? 'medium',
-        status_ui: (initialData.status === 'completed' ? 'executed' : 'pending') as 'pending' | 'executed',
-        estimated_duration: 1,
+        status_ui: initialData.status === 'completed' ? 'executed' : 'pending',
+        estimated_duration: (initialData.estimated_duration as any) ?? 1,
         // Include payment config if it exists
         payment_config: (initialData as any)?.payment_config || undefined,
       };
@@ -318,7 +318,7 @@ export default function ScheduledMaintenanceForm({
       // Attempt cleanup of partially created expenses
       for (const createdExpense of createdExpenses) {
         try {
-          const expenseId = createdExpense?.id;
+          const expenseId = createdExpense?.id || createdExpense?.data?.id;
           if (expenseId) {
             await deleteExpense(expenseId);
           }
@@ -431,7 +431,7 @@ export default function ScheduledMaintenanceForm({
       }
       
       let scheduleResponse;
-      if (existingScheduleId && foundExistingSchedules.find((s: any) => s.id === existingScheduleId)) {
+      if (existingScheduleId && foundExistingSchedules.find(s => s.id === existingScheduleId)) {
         // Update the known existing payment schedule
         scheduleResponse = await api.patch(`/maintenance/payment-schedules/${existingScheduleId}/`, schedulePayload);
       } else {
@@ -550,6 +550,7 @@ export default function ScheduledMaintenanceForm({
       return;
     }
 
+    try {
       console.time('Main save operation');
       let savedId: number | undefined = initialData?.id ?? undefined;
       
@@ -575,15 +576,16 @@ export default function ScheduledMaintenanceForm({
         router.push('/maintenance/scheduled');
       }
       
-      console.log('💾 Save completed, processing payment configuration...');
+      // Temporarily disable background processing for debugging
+      console.log('💾 Save completed, payment config processing disabled for debugging');
       
       // Process payment configuration in background (non-blocking)
-      if (savedId && paymentConfig?.payment_type === 'advance_installments') {
-        // Use setTimeout to move this to next tick, making UI response immediate
-        setTimeout(() => {
-          processPaymentConfigurationBackground(savedId, paymentConfig, values, buildingId, watchedPrice);
-        }, 0);
-      }
+      // if (savedId && paymentConfigEnabled) {
+      //   // Use setTimeout to move this to next tick, making UI response immediate
+      //   setTimeout(() => {
+      //     processPaymentConfigurationBackground(savedId, paymentConfig, values, buildingId, watchedPrice);
+      //   }, 0);
+      // }
     } catch (e: any) {
       const msg = extractApiErrorMessage(e) ?? 'Αποτυχία αποθήκευσης';
       toast({ title: 'Σφάλμα', description: msg, variant: 'destructive' as any });
@@ -740,6 +742,11 @@ export default function ScheduledMaintenanceForm({
                   </Select>
                 )}
               />
+              <div className="mt-4">
+                <label className="block text-sm font-medium mb-1">Εκτιμώμενη Διάρκεια (ώρες)</label>
+                <Input type="number" step="1" min="1" placeholder="1" {...register('estimated_duration')} />
+                {errors.estimated_duration && <p className="text-sm text-red-600">{String(errors.estimated_duration.message || 'Μη έγκυρη διάρκεια')}</p>}
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -974,6 +981,7 @@ export default function ScheduledMaintenanceForm({
     />
     </>
   );
+}
 }
 
 function extractApiErrorMessage(error: unknown): string | null {

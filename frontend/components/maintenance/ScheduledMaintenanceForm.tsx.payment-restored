@@ -578,7 +578,7 @@ export default function ScheduledMaintenanceForm({
       console.log('💾 Save completed, processing payment configuration...');
       
       // Process payment configuration in background (non-blocking)
-      if (savedId && paymentConfig?.payment_type === 'advance_installments') {
+      if (savedId && paymentConfigEnabled) {
         // Use setTimeout to move this to next tick, making UI response immediate
         setTimeout(() => {
           processPaymentConfigurationBackground(savedId, paymentConfig, values, buildingId, watchedPrice);

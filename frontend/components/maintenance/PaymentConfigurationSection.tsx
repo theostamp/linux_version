@@ -23,7 +23,6 @@ export interface PaymentConfiguration {
   installment_frequency?: 'weekly' | 'biweekly' | 'monthly';
   periodic_amount?: number;
   periodic_frequency?: 'weekly' | 'biweekly' | 'monthly';
-  start_date?: string;
   notes?: string;
 }
 
@@ -62,6 +61,13 @@ export function PaymentConfigurationSection({
     });
   }, [paymentEnabled, paymentType, totalAmount, advancePercentage, installmentCount, watch, projectPrice]);
 
+  // Sync total_amount with projectPrice when projectPrice changes
+  useEffect(() => {
+    if (projectPrice > 0 && (!totalAmount || totalAmount === 0)) {
+      setValue('payment_config.total_amount', projectPrice, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+    }
+  }, [projectPrice, totalAmount, setValue]);
+
   // Auto-calculate amounts based on configuration
   useEffect(() => {
     if (paymentEnabled && paymentType === 'advance_installments' && totalAmount > 0) {
@@ -69,18 +75,13 @@ export function PaymentConfigurationSection({
       const remainingAmount = totalAmount - advanceAmount;
       const installmentAmount = remainingAmount / installmentCount;
       
-      setValue('payment_config.advance_amount', advanceAmount);
-      setValue('payment_config.remaining_amount', remainingAmount);
-      setValue('payment_config.installment_amount', installmentAmount);
+      setValue('payment_config.advance_amount', advanceAmount, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+      setValue('payment_config.remaining_amount', remainingAmount, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+      setValue('payment_config.installment_amount', installmentAmount, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
     }
   }, [paymentEnabled, paymentType, totalAmount, advancePercentage, installmentCount, setValue]);
 
-  // Set default start date to today
-  useEffect(() => {
-    if (paymentEnabled && !watch('payment_config.start_date')) {
-      setValue('payment_config.start_date', new Date().toISOString().slice(0, 10));
-    }
-  }, [paymentEnabled, setValue, watch]);
+  // Payment config no longer needs separate start_date - uses scheduled_date from main form
 
   const calculateAdvanceAmount = () => {
     return totalAmount > 0 ? (totalAmount * advancePercentage) / 100 : 0;
@@ -101,70 +102,24 @@ export function PaymentConfigurationSection({
     }).format(amount);
   };
 
-  if (!paymentEnabled) {
-    return (
-      <Card className="border-dashed">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Διαχείριση Πληρωμών
-            </CardTitle>
-            <Controller
-              name="payment_config.enabled"
-              control={control}
-              defaultValue={false}
-              render={({ field }) => (
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="payment-enabled"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                  <Label htmlFor="payment-enabled" className="text-sm font-medium">
-                    Ενεργοποίηση
-                  </Label>
-                </div>
-              )}
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Ενεργοποιήστε τη διαχείριση πληρωμών για να ρυθμίσετε σταδιακές καταβολές, 
-            προκαταβολές και αποδείξεις πληρωμής για αυτό το έργο.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Always enabled - no need for toggle
+  // Set enabled to true by default
+  useEffect(() => {
+    if (!paymentEnabled) {
+      setValue('payment_config.enabled', true, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+    }
+  }, [paymentEnabled, setValue]);
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Διαχείριση Πληρωμών
-          </CardTitle>
-          <Controller
-            name="payment_config.enabled"
-            control={control}
-            defaultValue={false}
-            render={({ field }) => (
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="payment-enabled"
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-                <Label htmlFor="payment-enabled" className="text-sm font-medium">
-                  Ενεργοποιημένο
-                </Label>
-              </div>
-            )}
-          />
-        </div>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <CreditCard className="h-5 w-5" />
+          Διαχείριση Πληρωμών
+        </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Ρυθμίστε το χρονοδιάγραμμα πληρωμών για το έργο
+        </p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Payment Type Selection */}
@@ -198,59 +153,36 @@ export function PaymentConfigurationSection({
                       Περιοδικές Καταβολές
                     </div>
                   </SelectItem>
-                  <SelectItem value="milestone_based">
-                    <div className="flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4" />
-                      Βάσει Ορόσημων
-                    </div>
-                  </SelectItem>
                 </SelectContent>
               </Select>
             )}
           />
         </div>
 
-        {/* Total Amount */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="total-amount" className="text-sm font-medium">
-              Συνολικό Ποσό (€)
-            </Label>
-            <Controller
-              name="payment_config.total_amount"
-              control={control}
-              defaultValue={projectPrice}
-              render={({ field }) => (
-                <Input
-                  id="total-amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  {...field}
-                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                />
-              )}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="start-date" className="text-sm font-medium">
-              Ημερομηνία Έναρξης
-            </Label>
-            <Controller
-              name="payment_config.start_date"
-              control={control}
-              defaultValue=""
-              render={({ field }) => (
-                <Input
-                  id="start-date"
-                  type="date"
-                  value={field.value ?? ''}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-          </div>
+        {/* Total Amount - Single field */}
+        <div className="space-y-2">
+          <Label htmlFor="total-amount" className="text-sm font-medium">
+            Συνολικό Ποσό (€)
+          </Label>
+          <Controller
+            name="payment_config.total_amount"
+            control={control}
+            defaultValue={projectPrice}
+            render={({ field }) => (
+              <Input
+                id="total-amount"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                {...field}
+                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+              />
+            )}
+          />
+          <p className="text-xs text-muted-foreground">
+            Χρησιμοποιείται η ημερομηνία έναρξης του έργου για τον υπολογισμό των δόσεων
+          </p>
         </div>
 
         {/* Payment Type Specific Configuration */}
@@ -465,23 +397,6 @@ export function PaymentConfigurationSection({
                 />
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Controller
-                  name="payment_config.auto_create_expense"
-                  control={control}
-                  defaultValue={true}
-                  render={({ field }) => (
-                    <Switch
-                      id="auto-expense"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  )}
-                />
-                <Label htmlFor="auto-expense" className="text-sm">
-                  Αυτόματη δημιουργία δαπάνης κατά την πληρωμή
-                </Label>
-              </div>
 
               <div className="flex items-center space-x-2">
                 <Controller
