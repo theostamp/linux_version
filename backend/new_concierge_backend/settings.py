@@ -301,11 +301,18 @@ CORS_ALLOWED_ORIGINS = [
     "http://demo.localhost:3000",
     "http://top.localhost:3000",
     "http://tap.localhost:3000",
+    # ✅ Port 3001 για το frontend
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "http://demo.localhost:3001",
+    "http://top.localhost:3001",
+    "http://tap.localhost:3001",
 ]  # τα «σκέτα» origins
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://[\w\-]+\.localhost:8080$",
     r"^http://[\w\-]+\.localhost:3000$",
+    r"^http://[\w\-]+\.localhost:3001$",
 ]  # ✅ Ο *οποιοσδήποτε* sub-domain *.localhost:8080
 
 CSRF_TRUSTED_ORIGINS = [

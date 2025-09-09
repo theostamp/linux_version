@@ -348,13 +348,6 @@ class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):
         maintenance = self.get_object()
         data = request.data or {}
         try:
-            # Helper function to parse date strings
-            def parse_date(date_input):
-                from datetime import datetime
-                if isinstance(date_input, str):
-                    return datetime.strptime(date_input, '%Y-%m-%d').date()
-                return date_input
-            
             payment_schedule = PaymentSchedule.objects.create(
                 scheduled_maintenance=maintenance,
                 payment_type=data.get('payment_type', 'lump_sum'),
@@ -377,7 +370,7 @@ class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):
                     installment_type='full',
                     installment_number=1,
                     amount=payment_schedule.total_amount,
-                    due_date=parse_date(payment_schedule.start_date),
+                    due_date=payment_schedule.start_date,
                     description=f"Εφάπαξ πληρωμή - {maintenance.title}"
                 ))
             elif payment_schedule.payment_type == 'advance_installments':
@@ -392,7 +385,7 @@ class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):
                     installment_type='advance',
                     installment_number=0,
                     amount=advance_amount,
-                    due_date=parse_date(payment_schedule.start_date),
+                    due_date=payment_schedule.start_date,
                     description=f"Προκαταβολή - {maintenance.title}"
                 ))
                 # Installments
@@ -402,12 +395,8 @@ class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):
                     amount = remaining_amount / count
                 else:
                     amount = Decimal('0')
-                from datetime import timedelta, datetime
-                # Ensure start_date is a date object, not string
-                if isinstance(payment_schedule.start_date, str):
-                    current_due = datetime.strptime(payment_schedule.start_date, '%Y-%m-%d').date()
-                else:
-                    current_due = payment_schedule.start_date
+                from datetime import timedelta
+                current_due = payment_schedule.start_date
                 for i in range(1, count + 1):
                     # naive monthly/weekly frequency handling
                     freq = (payment_schedule.installment_frequency or 'monthly')
@@ -432,12 +421,8 @@ class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):
                         description=f"Δόση {i}/{count} - {maintenance.title}"
                     ))
             elif payment_schedule.payment_type == 'periodic':
-                from datetime import timedelta, datetime
-                # Ensure start_date is a date object, not string  
-                if isinstance(payment_schedule.start_date, str):
-                    current_date = datetime.strptime(payment_schedule.start_date, '%Y-%m-%d').date()
-                else:
-                    current_date = payment_schedule.start_date
+                from datetime import timedelta
+                current_date = payment_schedule.start_date
                 periodic_amount = payment_schedule.periodic_amount or 0
                 for i in range(1, 13):
                     installments_created.append(PaymentInstallment.objects.create(

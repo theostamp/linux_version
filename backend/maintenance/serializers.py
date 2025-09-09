@@ -75,6 +75,16 @@ class ScheduledMaintenanceSerializer(serializers.ModelSerializer):
                     'start_date': schedule.start_date.isoformat() if schedule.start_date else None,
                     'notes': schedule.notes,
                 }
+            # If no payment schedule exists but there's a total_cost, enable with defaults
+            elif obj.total_cost:
+                return {
+                    'enabled': True,
+                    'payment_type': 'lump_sum',
+                    'total_amount': float(obj.total_cost),
+                    'advance_percentage': 30,
+                    'installment_count': 3,
+                    'start_date': obj.scheduled_date.isoformat() if obj.scheduled_date else None,
+                }
             return {'enabled': False}
         except:
             return {'enabled': False}

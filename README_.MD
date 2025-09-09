@@ -42,6 +42,16 @@ find . -name "*.sh" -type f | grep -v ".venv" | grep -v "node_modules" | xargs c
 
 ### 📝 Changelog (September 2025)
 
+#### 🔧 **Maintenance Application Improvements** - LATEST
+- **Enhanced Error Messages**: Detailed field-specific validation με Greek field names
+  - Αντικατάσταση generic "Το πεδίο αυτό είναι απαραίτητο" με συγκεκριμένα field names
+  - Visual indicators (red borders) στα problematic fields 
+  - Bullet point format για καλύτερη οργάνωση errors
+- **Price Field Consolidation**: Ενοποίηση "Τιμή Υπηρεσίας" → "Συνολικό Κόστος"
+- **Validation Schema Fixes**: Support για 0 values, string-to-number preprocessing
+- **Form UX Improvements**: Καλύτερη change detection και user feedback
+  - Αρχείο: `frontend/components/maintenance/ScheduledMaintenanceForm.tsx`
+
 - Maintenance & Projects Dashboards: Real-data "Πρόσφατη Δραστηριότητα"
   - Maintenance: αντλεί τελευταία completed εργασία, τελευταία εκκρεμή απόδειξη, τελευταίο νέο συνεργείο
     - Αρχείο: `frontend/app/(dashboard)/maintenance/page.tsx`
@@ -549,7 +559,7 @@ git push origin v2.1.0
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m " ανακαμψη μετα απο reset --hard ."
+git commit -m "Ολοκληρωση επεξεργασίας προβληματων υπηρεσιών και συνδεσης με δαπανες ."
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

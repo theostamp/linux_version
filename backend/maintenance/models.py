@@ -258,6 +258,15 @@ class ScheduledMaintenance(models.Model):
         blank=True,
         verbose_name="Πραγματικό Κόστος"
     )
+    # Unified cost field for simplified UI
+    total_cost = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Συνολικό Κόστος",
+        help_text="Ενοποιημένο πεδίο κόστους για απλοποιημένη διεπαφή"
+    )
     location = models.CharField(
         max_length=255,
         blank=True,
@@ -298,8 +307,9 @@ class ScheduledMaintenance(models.Model):
         from django.utils import timezone
         from dateutil.relativedelta import relativedelta
         
-        # Don't create expenses if no cost is specified
-        if not self.estimated_cost and not (hasattr(self, 'payment_schedule') and self.payment_schedule):
+        # Don't create expenses if no cost is specified - check total_cost first, then fallback
+        cost = self.total_cost or self.estimated_cost
+        if not cost and not (hasattr(self, 'payment_schedule') and self.payment_schedule):
             return None
         
         # Get payment schedule if available
@@ -310,23 +320,28 @@ class ScheduledMaintenance(models.Model):
         except:
             pass
         
-        # Determine expense category
-        category = self._determine_expense_category()
-        
-        # Handle different payment types
+        # IMPORTANT: If payment schedule has installments, let sync_payment_expenses handle it
+        # This prevents duplicate expense creation
         if payment_schedule and payment_schedule.payment_type in ['advance_installments', 'periodic']:
-            return self._create_installment_expenses(payment_schedule, category)
+            # Check if installments exist - if yes, defer to sync_payment_expenses command
+            if payment_schedule.installments.exists():
+                print(f"⚠️ Payment schedule has installments - skipping expense creation to avoid duplicates")
+                print(f"   Use 'python manage.py sync_payment_expenses' to create expenses from installments")
+                return None
+            else:
+                # No installments yet, create them via the old system
+                return self._create_installment_expenses(payment_schedule, self._determine_expense_category())
         else:
             # Handle lump sum or no payment schedule
-            return self._create_single_expense(payment_schedule, category)
+            return self._create_single_expense(payment_schedule, self._determine_expense_category())
     
     def _create_single_expense(self, payment_schedule, category):
         """Create or update a single expense for lump sum payments"""
         from financial.models import Expense
         from django.utils import timezone
         
-        # Calculate amount
-        total_amount = self.estimated_cost or 0
+        # Calculate amount - prefer total_cost, fallback to estimated_cost
+        total_amount = self.total_cost or self.estimated_cost or 0
         if payment_schedule:
             total_amount = payment_schedule.total_amount
         

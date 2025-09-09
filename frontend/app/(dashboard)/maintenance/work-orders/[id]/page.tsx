@@ -33,4 +33,26 @@ function WorkOrderDetailInner() {
           <BackButton href="/maintenance/work-orders" size="sm" />
           <h1 className="text-xl font-semibold">WO#{w.id}</h1>
         </div>
-        <Link className="text-blue-600" href={`/(dashboard)/maintenance/tickets/${w.ticket}`
+        <Link className="text-blue-600" href={`/(dashboard)/maintenance/tickets/${w.ticket}`}>
+          View Ticket #{w.ticket}
+        </Link>
+      </div>
+      
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-lg font-medium mb-4">Work Order Details</h2>
+        <div className="space-y-2">
+          <p><strong>Status:</strong> {w.status}</p>
+          <p><strong>Priority:</strong> {w.priority}</p>
+          <p><strong>Description:</strong> {w.description}</p>
+          <p><strong>Assigned To:</strong> {w.assigned_to || 'Unassigned'}</p>
+          <p><strong>Created:</strong> {new Date(w.created_at).toLocaleDateString()}</p>
+          {w.completed_at && (
+            <p><strong>Completed:</strong> {new Date(w.completed_at).toLocaleDateString()}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default withAuth(WorkOrderDetailInner);

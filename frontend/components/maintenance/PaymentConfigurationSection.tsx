@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Control, Controller, UseFormWatch, UseFormSetValue } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -159,29 +159,27 @@ export function PaymentConfigurationSection({
           />
         </div>
 
-        {/* Total Amount - Single field */}
+        {/* Total Amount - Display only (uses projectPrice) */}
         <div className="space-y-2">
-          <Label htmlFor="total-amount" className="text-sm font-medium">
-            Συνολικό Ποσό (€)
+          <Label className="text-sm font-medium">
+            Συνολικό Ποσό: {projectPrice ? `${Number(projectPrice).toFixed(2)}€` : '0.00€'}
           </Label>
           <Controller
             name="payment_config.total_amount"
             control={control}
-            defaultValue={projectPrice}
-            render={({ field }) => (
-              <Input
-                id="total-amount"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                {...field}
-                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-              />
-            )}
+            render={({ field }) => {
+              // Auto-sync with projectPrice
+              React.useEffect(() => {
+                if (projectPrice && field.value !== projectPrice) {
+                  field.onChange(Number(projectPrice));
+                }
+              }, [projectPrice, field]);
+              
+              return <input type="hidden" value={projectPrice || 0} />;
+            }}
           />
           <p className="text-xs text-muted-foreground">
-            Χρησιμοποιείται η ημερομηνία έναρξης του έργου για τον υπολογισμό των δόσεων
+            Το ποσό λαμβάνεται από το πεδίο "Συνολικό Κόστος" παραπάνω
           </p>
         </div>
 

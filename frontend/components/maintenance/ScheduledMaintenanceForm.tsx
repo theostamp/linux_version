@@ -34,7 +34,7 @@ const schema = z.object({
     if (v === undefined || v === null || v === '') return undefined;
     const n = Number(v);
     return isNaN(n) ? undefined : n;
-  }, z.number().positive().optional()),
+  }, z.number().min(0).optional()),
   estimated_duration: z.preprocess((v) => {
     if (v === undefined || v === null || v === '') return undefined;
     const n = Number(v);
@@ -44,7 +44,11 @@ const schema = z.object({
     enabled: z.boolean().optional(),
     payment_type: z.enum(['lump_sum', 'advance_installments', 'periodic', 'milestone_based']).optional(),
     total_amount: z.number().optional(),
-    advance_percentage: z.number().optional(),
+    advance_percentage: z.preprocess((v) => {
+      if (v === undefined || v === null || v === '') return undefined;
+      const n = Number(v);
+      return isNaN(n) ? undefined : n;
+    }, z.number().optional()),
     installment_count: z.number().optional(),
     installment_frequency: z.enum(['weekly', 'biweekly', 'monthly']).optional(),
     periodic_frequency: z.enum(['weekly', 'biweekly', 'monthly']).optional(),
@@ -245,7 +249,6 @@ export default function ScheduledMaintenanceForm({
   }, [initialData, reset]);
 
   const watchedPrice = watch('price');
-  const paymentConfigEnabled = watch('payment_config.enabled');
   const paymentConfig = watch('payment_config');
 
   if (isLoading) return null;
@@ -430,10 +433,9 @@ export default function ScheduledMaintenanceForm({
         console.warn('Failed to fetch existing payment schedules:', fetchError);
       }
       
-      let scheduleResponse;
       if (existingScheduleId && foundExistingSchedules.find((s: any) => s.id === existingScheduleId)) {
         // Update the known existing payment schedule
-        scheduleResponse = await api.patch(`/maintenance/payment-schedules/${existingScheduleId}/`, schedulePayload);
+        await api.patch(`/maintenance/payment-schedules/${existingScheduleId}/`, schedulePayload);
       } else {
         // Clean up any existing schedules to prevent duplicates
         for (const schedule of foundExistingSchedules) {
@@ -446,7 +448,7 @@ export default function ScheduledMaintenanceForm({
         }
         
         // Create new payment schedule
-        scheduleResponse = await api.post(`/maintenance/scheduled/${savedId}/create_payment_schedule/`, schedulePayload);
+        await api.post(`/maintenance/scheduled/${savedId}/create_payment_schedule/`, schedulePayload);
       }
       
       console.timeEnd('Background payment configuration processing');
@@ -507,7 +509,6 @@ export default function ScheduledMaintenanceForm({
     }
     // Map UI status to backend status; only include if changed vs current
     const desiredStatus = values.status_ui === 'executed' ? 'completed' : 'scheduled';
-    const currentStatusUi = initialData?.status === 'completed' ? 'executed' : 'pending';
     if (!isEditing || desiredStatus !== (initialData?.status ?? 'scheduled')) {
       payload.status = desiredStatus;
     }
@@ -600,7 +601,38 @@ export default function ScheduledMaintenanceForm({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-4">
+        <form onSubmit={handleSubmit(
+          (values) => onSubmit(values),
+          (errors) => {
+            console.error('❌ Form validation failed:', errors);
+            
+            // Create user-friendly error messages with Greek field names
+            const fieldNameMap: Record<string, string> = {
+              'title': 'Τίτλος',
+              'description': 'Περιγραφή', 
+              'price': 'Συνολικό Κόστος',
+              'scheduled_date': 'Ημερομηνία Προγραμματισμού',
+              'category': 'Κατηγορία',
+              'priority': 'Προτεραιότητα',
+              'contractor': 'Συνεργείο',
+              'payment_config.advance_percentage': 'Ποσοστό Προκαταβολής',
+              'payment_config.installment_count': 'Αριθμός Δόσεων',
+              'payment_config.total_amount': 'Συνολικό Ποσό Πληρωμής'
+            };
+            
+            const errorMessages = Object.entries(errors).map(([field, error]) => {
+              const greekFieldName = fieldNameMap[field] || field;
+              const errorMessage = (error as any)?.message || 'Το πεδίο αυτό είναι απαραίτητο';
+              return `• ${greekFieldName}: ${errorMessage}`;
+            }).join('\n');
+            
+            toast({
+              title: 'Σφάλμα Φόρμας',
+              description: errorMessages,
+              variant: 'destructive'
+            });
+          }
+        )} className="space-y-4">
           <div className="text-sm text-muted-foreground">Στοιχεία Έργου — Συμπληρώστε τα βασικά στοιχεία</div>
           <div>
             <label className="block text-sm font-medium mb-1">Τύπος έργου</label>
@@ -760,15 +792,29 @@ export default function ScheduledMaintenanceForm({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Τιμή Υπηρεσίας (€)</label>
-              <Input type="number" step="0.01" min="0" placeholder="0.00" {...register('price')} />
+              <label className="block text-sm font-medium mb-1">Συνολικό Κόστος (€)</label>
+              <Input 
+                type="number" 
+                step="0.01" 
+                min="0" 
+                placeholder="0.00" 
+                className={errors.price ? 'border-red-500' : ''}
+                {...register('price')} 
+              />
+              {errors.price && <p className="text-sm text-red-600 mt-1">{errors.price.message}</p>}
             </div>
           </div>
           {/* Payment Configuration */}
           <PaymentConfigurationSection control={control} watch={watch as any} setValue={setValue as any} projectPrice={watchedPrice as any} />
           <div>
             <label className="block text-sm font-medium mb-1">Περιγραφή</label>
-            <Textarea rows={4} placeholder="Σύντομη περιγραφή εργασιών, πρόσβαση, υλικά, κλπ." {...register('description')} />
+            <Textarea 
+              rows={4} 
+              placeholder="Σύντομη περιγραφή εργασιών, πρόσβαση, υλικά, κλπ." 
+              className={errors.description ? 'border-red-500' : ''}
+              {...register('description')} 
+            />
+            {errors.description && <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>}
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => router.push('/maintenance/scheduled')}>Άκυρο</Button>

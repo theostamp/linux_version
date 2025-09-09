@@ -348,13 +348,6 @@ class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):
         maintenance = self.get_object()
         data = request.data or {}
         try:
-            # Helper function to parse date strings
-            def parse_date(date_input):
-                from datetime import datetime
-                if isinstance(date_input, str):
-                    return datetime.strptime(date_input, '%Y-%m-%d').date()
-                return date_input
-            
             payment_schedule = PaymentSchedule.objects.create(
                 scheduled_maintenance=maintenance,
                 payment_type=data.get('payment_type', 'lump_sum'),
@@ -377,7 +370,7 @@ class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):
                     installment_type='full',
                     installment_number=1,
                     amount=payment_schedule.total_amount,
-                    due_date=parse_date(payment_schedule.start_date),
+                    due_date=payment_schedule.start_date,
                     description=f"Εφάπαξ πληρωμή - {maintenance.title}"
                 ))
             elif payment_schedule.payment_type == 'advance_installments':
@@ -392,7 +385,7 @@ class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):
                     installment_type='advance',
                     installment_number=0,
                     amount=advance_amount,
-                    due_date=parse_date(payment_schedule.start_date),
+                    due_date=payment_schedule.start_date,
                     description=f"Προκαταβολή - {maintenance.title}"
                 ))
                 # Installments

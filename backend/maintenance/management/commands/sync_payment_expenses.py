@@ -8,6 +8,7 @@ from django.db import transaction
 from django.utils import timezone
 from decimal import Decimal
 from datetime import date, timedelta
+from django_tenants.utils import schema_context
 
 from maintenance.models import PaymentInstallment, PaymentReceipt
 from financial.models import Expense
@@ -41,51 +42,53 @@ class Command(BaseCommand):
         if dry_run:
             self.stdout.write(self.style.WARNING('DRY RUN MODE - No changes will be made'))
 
-        # Get active payment installments that are due or overdue
-        installments = PaymentInstallment.objects.select_related(
-            'payment_schedule__scheduled_maintenance__building',
-            'payment_schedule__scheduled_maintenance__contractor'
-        ).filter(
-            status='pending',
-            due_date__lte=timezone.now().date() + timedelta(days=30)  # Due within 30 days
-        )
-
-        if building_id:
-            installments = installments.filter(
-                payment_schedule__scheduled_maintenance__building_id=building_id
+        # Run within tenant context
+        with schema_context('demo'):
+            # Get active payment installments that are due or overdue
+            installments = PaymentInstallment.objects.select_related(
+                'payment_schedule__scheduled_maintenance__building',
+                'payment_schedule__scheduled_maintenance__contractor'
+            ).filter(
+                status='pending',
+                due_date__lte=timezone.now().date() + timedelta(days=120)  # Due within 120 days
             )
 
-        self.stdout.write(f'Found {installments.count()} active payment installments')
-
-        created_count = 0
-        updated_count = 0
-        error_count = 0
-
-        for installment in installments:
-            try:
-                with transaction.atomic():
-                    result = self._process_installment(installment, dry_run, create_only)
-                    if result == 'created':
-                        created_count += 1
-                    elif result == 'updated':
-                        updated_count += 1
-            except Exception as e:
-                error_count += 1
-                self.stdout.write(
-                    self.style.ERROR(f'Error processing installment {installment.id}: {e}')
+            if building_id:
+                installments = installments.filter(
+                    payment_schedule__scheduled_maintenance__building_id=building_id
                 )
 
-        # Summary
-        self.stdout.write('')
-        if dry_run:
-            self.stdout.write(self.style.SUCCESS(f'DRY RUN COMPLETED:'))
-        else:
-            self.stdout.write(self.style.SUCCESS(f'SYNC COMPLETED:'))
-        
-        self.stdout.write(f'  Created: {created_count} expenses')
-        self.stdout.write(f'  Updated: {updated_count} expenses') 
-        if error_count > 0:
-            self.stdout.write(self.style.ERROR(f'  Errors: {error_count}'))
+            self.stdout.write(f'Found {installments.count()} active payment installments')
+
+            created_count = 0
+            updated_count = 0
+            error_count = 0
+
+            for installment in installments:
+                try:
+                    with transaction.atomic():
+                        result = self._process_installment(installment, dry_run, create_only)
+                        if result == 'created':
+                            created_count += 1
+                        elif result == 'updated':
+                            updated_count += 1
+                except Exception as e:
+                    error_count += 1
+                    self.stdout.write(
+                        self.style.ERROR(f'Error processing installment {installment.id}: {e}')
+                    )
+
+            # Summary
+            self.stdout.write('')
+            if dry_run:
+                self.stdout.write(self.style.SUCCESS(f'DRY RUN COMPLETED:'))
+            else:
+                self.stdout.write(self.style.SUCCESS(f'SYNC COMPLETED:'))
+            
+            self.stdout.write(f'  Created: {created_count} expenses')
+            self.stdout.write(f'  Updated: {updated_count} expenses') 
+            if error_count > 0:
+                self.stdout.write(self.style.ERROR(f'  Errors: {error_count}'))
 
     def _process_installment(self, installment, dry_run=False, create_only=False):
         """Process a single payment installment"""
