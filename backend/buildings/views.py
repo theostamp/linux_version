@@ -106,7 +106,17 @@ class ServicePackageViewSet(viewsets.ModelViewSet):
         """Εφαρμογή πακέτου σε κτίριο"""
         try:
             service_package = self.get_object()
-            building_id = request.data.get('building_id')
+            
+            # Handle both DRF request and Django request
+            if hasattr(request, 'data'):
+                building_id = request.data.get('building_id')
+            else:
+                import json
+                try:
+                    data = json.loads(request.body.decode('utf-8'))
+                    building_id = data.get('building_id')
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    building_id = request.POST.get('building_id')
             
             if not building_id:
                 return Response(
