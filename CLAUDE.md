@@ -32,7 +32,20 @@ docker exec -it linux_version-backend-1 python manage.py <command>
 ./run_backend.sh                     # Backend only
 ./run_frontend.sh                    # Frontend only
 ./rebuild_and_test.sh                # Rebuild and test
+./optimize_startup.sh                # Pre-optimize Next.js for faster startup
 ```
+
+### Startup Performance Optimization
+
+**Frontend Startup Animation**: Το σύστημα διαθέτει startup loading animation που εμφανίζεται κατά την πρώτη εκκίνηση στο development environment. Το animation:
+- Εμφανίζεται μόνο στο development mode
+- Εμφανίζεται μόνο την πρώτη φορά σε κάθε browser session
+- Παρακολουθεί την πρόοδο της μεταγλώττισης
+- Προσφέρει visual feedback κατά τη διάρκεια του SWC package download
+
+**SWC Package Caching**: Το Docker container προ-κάνει cache τα SWC packages για γρηγορότερη εκκίνηση:
+- Τα packages κατεβαίνουν κατά το Docker build
+- Μειώνεται σημαντικά ο χρόνος εκκίνησης από ~105s σε ~10-15s
 
 ### Development Commands
 ```bash
