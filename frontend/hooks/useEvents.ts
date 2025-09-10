@@ -31,7 +31,7 @@ export interface Event {
 
 interface EventsFilters {
   building?: number;
-  filter?: 'all' | 'pending' | 'overdue' | 'today';
+  filter?: 'all' | 'today' | 'week' | 'overdue';
   event_type?: string;
   priority?: string;
   status?: string;
@@ -68,19 +68,28 @@ const eventsApi = {
     
     // Handle special filters
     if (filters.filter) {
+      const now = new Date();
+      
       switch (filters.filter) {
-        case 'pending':
-          params.append('status', 'pending');
-          break;
-        case 'overdue':
-          // This will be handled by a separate endpoint
-          break;
         case 'today':
-          const today = new Date();
-          const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-          const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
+          // Events scheduled for today
+          const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+          const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
           params.append('scheduled_date__gte', todayStart);
           params.append('scheduled_date__lt', todayEnd);
+          break;
+          
+        case 'week':
+          // Events for the next 7 days
+          const weekEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+          params.append('scheduled_date__gte', now.toISOString());
+          params.append('scheduled_date__lt', weekEnd);
+          break;
+          
+        case 'overdue':
+          // Events that are past due date (εκπρόθεσμα)
+          params.append('due_date__lt', now.toISOString());
+          params.append('status', 'pending');  // Only pending events can be overdue
           break;
       }
     }
@@ -134,15 +143,24 @@ export const useEvents = (filters: EventsFilters = {}) => {
   return useQuery({
     queryKey: ['events', filters],
     queryFn: () => eventsApi.getEvents(filters),
-    staleTime: 30000 // 30 seconds
+    staleTime: 10 * 60 * 1000, // 10 minutes 
+    refetchInterval: false, // Disable automatic refetching
+    refetchIntervalInBackground: false, // Don't refetch when tab is not visible
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: false // Don't refetch on reconnect
   });
 };
 
-export const useCalendarEvents = (filters: CalendarEventsFilters = {}) => {
+export const useCalendarEvents = (filters: CalendarEventsFilters = {}, options: any = {}) => {
   return useQuery({
     queryKey: ['events', 'calendar', filters],
     queryFn: () => eventsApi.getCalendarEvents(filters),
-    staleTime: 30000
+    staleTime: 10 * 60 * 1000, // 10 minutes 
+    refetchInterval: false, // Disable automatic refetching
+    refetchIntervalInBackground: false, // Don't refetch when tab is not visible
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: false, // Don't refetch on reconnect
+    ...options // Spread additional options like 'enabled'
   });
 };
 
@@ -150,7 +168,11 @@ export const useEventsPendingCount = (buildingId?: number) => {
   return useQuery({
     queryKey: ['events', 'pending-count', buildingId],
     queryFn: () => eventsApi.getPendingCount(buildingId),
-    refetchInterval: 60000, // Refetch every minute
+    refetchInterval: false, // Disable automatic refetching
+    refetchIntervalInBackground: false, // Don't refetch when tab is not visible
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: false, // Don't refetch on reconnect
+    staleTime: 10 * 60 * 1000, // 10 minutes
     select: (data) => data.pending_count
   });
 };

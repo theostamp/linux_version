@@ -1,8 +1,10 @@
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from django.utils import timezone
+from datetime import datetime
 
-from .models import MaintenanceTicket, WorkOrder, ServiceReceipt
+from .models import MaintenanceTicket, WorkOrder, ServiceReceipt, ScheduledMaintenance
 from financial.models import Expense
 from todo_management.services import ensure_linked_todo, complete_linked_todo
 from core.utils import publish_building_event
@@ -141,4 +143,121 @@ def receipt_cleanup_on_delete(sender, instance: ServiceReceipt, **kwargs):
                 _refresh_expense_amount(exp)
     except Exception:
         pass
+
+
+# -----------------------
+# ScheduledMaintenance -> Event sync for calendar integration
+# -----------------------
+
+@receiver(post_save, sender=ScheduledMaintenance)
+def create_or_update_maintenance_event(sender, instance, created, **kwargs):
+    """
+    Δημιουργεί ή ενημερώνει αυτόματα event όταν δημιουργείται/ενημερώνεται scheduled maintenance
+    """
+    from events.models import Event
+    from django.contrib.auth import get_user_model
+    
+    User = get_user_model()
+    
+    # Get admin user for event creation
+    admin_user = User.objects.filter(is_staff=True).first()
+    if not admin_user:
+        return
+    
+    # Map maintenance priority to event priority
+    priority_map = {
+        'low': 'low',
+        'medium': 'medium',
+        'high': 'high',
+        'urgent': 'urgent'
+    }
+    
+    # Map maintenance status to event status
+    status_map = {
+        'pending': 'pending',
+        'in_progress': 'in_progress',
+        'completed': 'completed',
+        'cancelled': 'cancelled'
+    }
+    
+    # Create description with details
+    description = f"""Προγραμματισμένη συντήρηση: {instance.title}
+
+📋 **Λεπτομέρειες:**
+- Προτεραιότητα: {instance.get_priority_display() if hasattr(instance, 'get_priority_display') else instance.priority}
+- Κατάσταση: {instance.get_status_display() if hasattr(instance, 'get_status_display') else instance.status}
+- Εργολάβος: {instance.contractor.name if instance.contractor else 'Δεν έχει οριστεί'}
+- Κόστος: €{instance.total_cost or instance.estimated_cost or 0:.2f}
+- Τοποθεσία: {instance.location or 'Όλο το κτίριο'}
+
+{instance.description or 'Χωρίς περιγραφή'}
+
+📊 **Ενέργειες:**
+🔗 [Προβολή Maintenance](http://demo.localhost:3001/maintenance)
+🔗 [Λεπτομέρειες Έργου](http://demo.localhost:3001/maintenance/scheduled/{instance.id})
+🔗 [Επεξεργασία](http://demo.localhost:3001/maintenance/scheduled/{instance.id}/edit)"""
+    
+    # Convert scheduled_date to datetime if it's a date
+    if instance.scheduled_date:
+        if isinstance(instance.scheduled_date, datetime):
+            scheduled_datetime = instance.scheduled_date
+        else:
+            # Convert date to datetime at start of day
+            scheduled_datetime = datetime.combine(instance.scheduled_date, datetime.min.time())
+            if timezone.is_naive(scheduled_datetime):
+                scheduled_datetime = timezone.make_aware(scheduled_datetime)
+    else:
+        scheduled_datetime = timezone.now()
+    
+    # Try to find existing event for this maintenance
+    try:
+        existing_event = Event.objects.filter(
+            notes__contains=f'maintenance_id:{instance.id}'
+        ).first()
+        
+        if existing_event:
+            # Update existing event
+            existing_event.title = f'🔧 {instance.title}'
+            existing_event.description = description
+            existing_event.priority = priority_map.get(instance.priority, 'medium')
+            existing_event.status = status_map.get(instance.status, 'pending')
+            existing_event.scheduled_date = scheduled_datetime
+            if instance.contractor:
+                existing_event.contact_phone = instance.contractor.phone or ''
+                existing_event.contact_email = instance.contractor.email or ''
+            existing_event.save()
+        else:
+            # Create new event
+            Event.objects.create(
+                title=f'🔧 {instance.title}',
+                description=description,
+                event_type='maintenance',
+                priority=priority_map.get(instance.priority, 'medium'),
+                status=status_map.get(instance.status, 'pending'),
+                building=instance.building,
+                scheduled_date=scheduled_datetime,
+                created_by=admin_user,
+                notes=f'maintenance_id:{instance.id}',  # Store reference in notes
+                contact_phone=instance.contractor.phone if instance.contractor else '',
+                contact_email=instance.contractor.email if instance.contractor else ''
+            )
+    except Exception as e:
+        # Log error but don't break the save
+        print(f"Error creating/updating event for maintenance {instance.id}: {e}")
+
+
+@receiver(post_delete, sender=ScheduledMaintenance)
+def delete_maintenance_event(sender, instance, **kwargs):
+    """
+    Διαγράφει το αντίστοιχο event όταν διαγράφεται scheduled maintenance
+    """
+    from events.models import Event
+    
+    try:
+        Event.objects.filter(
+            notes__contains=f'maintenance_id:{instance.id}'
+        ).delete()
+    except Exception as e:
+        # Log error but don't break the delete
+        print(f"Error deleting event for maintenance {instance.id}: {e}")
 

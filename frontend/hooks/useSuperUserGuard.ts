@@ -10,7 +10,16 @@ export function useSuperUserGuard() {
 
   useEffect(() => {
     if (!isAuthReady) return;
+    
+    console.log('useSuperUserGuard: Checking permissions', {
+      user: user?.email,
+      is_superuser: user?.is_superuser,
+      is_staff: user?.is_staff,
+      hasAccess: user?.is_superuser || user?.is_staff
+    });
+    
     if (!user?.is_superuser && !user?.is_staff) {
+      console.log('useSuperUserGuard: Access denied, redirecting to unauthorized');
       router.push('/unauthorized');
     }
   }, [user, isAuthReady, router]);

@@ -17,7 +17,7 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children, fullWidth = false }: DashboardLayoutProps) {
-  const { isAuthReady, isLoading: authLoading } = useAuth();
+  const { user, isAuthReady, isLoading: authLoading } = useAuth();
   const { isLoading: buildingLoading } = useBuilding();
 
   const isLoading = authLoading || buildingLoading || !isAuthReady;
@@ -28,6 +28,25 @@ export default function DashboardLayout({ children, fullWidth = false }: Dashboa
         <div className="flex justify-center items-center h-full p-10">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
           <span className="ml-3 text-gray-600">Φόρτωση...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to login if not authenticated
+  if (!user && isAuthReady) {
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname + window.location.search;
+      // Don't redirect back to unauthorized page
+      const safeRedirect = currentPath.includes('/unauthorized') ? '/dashboard' : currentPath;
+      const redirectUrl = `/login?redirectTo=${encodeURIComponent(safeRedirect)}`;
+      window.location.href = redirectUrl;
+    }
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Μετάβαση στη σελίδα σύνδεσης...</p>
         </div>
       </div>
     );

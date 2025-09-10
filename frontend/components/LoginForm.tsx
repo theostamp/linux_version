@@ -26,17 +26,27 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
     e.preventDefault();
     setLoading(true);
     setStatus('Παρακαλώ περιμένετε...');
+    
     try {
-      await login(email, password);
+      const loggedInUser = await login(email, password);
+      console.log('LoginForm: Login successful, user:', loggedInUser.email);
+      
       toast.success('Επιτυχής σύνδεση!');
       setStatus('Επιτυχής σύνδεση! Μεταφέρεστε...');
+      
+      // Clear queries and wait a bit for state to settle
       queryClient.clear();
-      router.push(finalRedirect);
+      
+      // Small delay to ensure state has updated
+      setTimeout(() => {
+        console.log('LoginForm: Navigating to:', finalRedirect);
+        router.push(finalRedirect);
+      }, 100);
+      
     } catch (err: any) {
-      console.error('Login error:', err);
+      console.error('LoginForm: Login error:', err);
       toast.error(err.message ?? 'Κάτι πήγε στραβά!');
       setStatus(err.message ?? 'Σφάλμα σύνδεσης');
-    } finally {
       setLoading(false);
     }
   };

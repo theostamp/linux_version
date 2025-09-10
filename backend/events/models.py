@@ -130,6 +130,26 @@ class Event(models.Model):
         help_text="π.χ. 'weekly', 'monthly', 'yearly'"
     )
     
+    # 📅 Google Calendar Integration
+    google_event_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Google Event ID",
+        help_text="ID του αντίστοιχου event στο Google Calendar"
+    )
+    google_sync_enabled = models.BooleanField(
+        default=True,
+        verbose_name="Συγχρονισμός με Google",
+        help_text="Συγχρονισμός αυτού του event με Google Calendar"
+    )
+    last_google_sync = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Τελευταίος συγχρονισμός",
+        help_text="Τελευταία φορά που συγχρονίστηκε με Google Calendar"
+    )
+    
     class Meta:
         ordering = ['-priority', 'scheduled_date', '-created_at']
         verbose_name = "Συμβάν"

@@ -54,8 +54,9 @@ export function useAnnouncements(buildingId?: number | null) {
       if (error?.response?.status === 401) return false;
       return failureCount < 2; // Μειώνουμε τις προσπάθειες από 3 σε 2
     },
-    staleTime: 30000, // 30 seconds
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false, // Disable refetch on window focus
+    refetchOnReconnect: false, // Disable refetch on reconnect
+    refetchInterval: false, // Disable automatic refetching
   });
 }

@@ -55,4 +55,4 @@ function WorkOrderDetailInner() {
   );
 }
 
-export default withAuth(WorkOrderDetailInner);
+export default withAuth(WorkOrderDetailInner, ['admin', 'manager']);

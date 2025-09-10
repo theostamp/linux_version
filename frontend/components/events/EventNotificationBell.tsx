@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useEventsPendingCount } from '@/hooks/useEvents';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface EventNotificationBellProps {
   className?: string;
@@ -12,9 +13,25 @@ interface EventNotificationBellProps {
 
 export default function EventNotificationBell({ className, onClick }: EventNotificationBellProps) {
   const { selectedBuilding } = useBuilding();
-  const { data: pendingCount = 0 } = useEventsPendingCount(selectedBuilding?.id);
+  const queryClient = useQueryClient();
+  const { data: pendingCount = 0, refetch } = useEventsPendingCount(selectedBuilding?.id);
 
   const hasUnread = pendingCount > 0;
+
+  // Only refresh when page becomes visible (the hook already handles auto-refresh)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refetch();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refetch]);
 
   return (
     <button

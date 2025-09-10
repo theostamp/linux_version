@@ -1,5 +1,53 @@
 'use client';
 
+// Global API call throttling
+const API_CALL_CACHE = new Map<string, { data: any, timestamp: number, promise?: Promise<any> }>();
+const MIN_REQUEST_INTERVAL = 1000; // 1 second minimum between identical requests
+
+// 429 error handling with exponential backoff
+const RETRY_DELAYS = new Map<string, number>(); // Track retry delays per endpoint
+const MAX_RETRY_DELAY = 60000; // Maximum 1 minute delay
+
+function getRetryDelay(endpoint: string): number {
+  const currentDelay = RETRY_DELAYS.get(endpoint) || 1000;
+  const nextDelay = Math.min(currentDelay * 2, MAX_RETRY_DELAY);
+  RETRY_DELAYS.set(endpoint, nextDelay);
+  return currentDelay;
+}
+
+function resetRetryDelay(endpoint: string): void {
+  RETRY_DELAYS.delete(endpoint);
+}
+
+function getCacheKey(url: string, options: any = {}): string {
+  return `${url}_${JSON.stringify(options)}`;
+}
+
+function shouldThrottleRequest(cacheKey: string): boolean {
+  const cached = API_CALL_CACHE.get(cacheKey);
+  if (!cached) return false;
+  
+  const timeSinceLastCall = Date.now() - cached.timestamp;
+  return timeSinceLastCall < MIN_REQUEST_INTERVAL;
+}
+
+function getCachedOrInFlight(cacheKey: string): any {
+  const cached = API_CALL_CACHE.get(cacheKey);
+  if (!cached) return null;
+  
+  // If there's an in-flight request, return that promise
+  if (cached.promise) return cached.promise;
+  
+  // If data is less than 5 minutes old, return cached data
+  const age = Date.now() - cached.timestamp;
+  if (age < 5 * 60 * 1000) { // 5 minutes cache
+    console.log(`[API THROTTLE] Returning cached data for ${cacheKey}`);
+    return Promise.resolve(cached.data);
+  }
+  
+  return null;
+}
+
 export function getApiBase(): string {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
@@ -139,7 +187,10 @@ export const makeRequestWithRetry = async (requestConfig: any, maxAttempts: numb
   
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      return await api(requestConfig);
+      const result = await api(requestConfig);
+      // Reset retry delay on successful request
+      resetRetryDelay(requestConfig.url || 'unknown');
+      return result;
     } catch (error: any) {
       lastError = error;
       
@@ -152,7 +203,15 @@ export const makeRequestWithRetry = async (requestConfig: any, maxAttempts: numb
           url: requestConfig.url,
         });
         
-        const delayMs = await exponentialBackoff(attempt, maxAttempts);
+        let delayMs;
+        if (error.response?.status === 429) {
+          // Use exponential backoff for 429 errors per endpoint
+          delayMs = getRetryDelay(requestConfig.url || 'unknown');
+          console.log(`[429 BACKOFF] Waiting ${delayMs}ms for ${requestConfig.url}`);
+        } else {
+          delayMs = await exponentialBackoff(attempt, maxAttempts);
+        }
+        
         await delay(delayMs);
         continue;
       }
@@ -541,9 +600,37 @@ export async function fetchBuildings(page: number = 1, pageSize: number = 50): P
 }
 
 // Backward compatibility function with retry logic
+// In-memory cache for buildings
+let buildingsCache: { data: Building[], timestamp: number } | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export async function fetchAllBuildings(): Promise<Building[]> {
+  const cacheKey = getCacheKey('/buildings/list/', { page_size: 1000, page: 1 });
+  
+  // Check global throttling cache first
+  const cached = getCachedOrInFlight(cacheKey);
+  if (cached) {
+    return await cached;
+  }
+
+  // Check if we should throttle this request
+  if (shouldThrottleRequest(cacheKey)) {
+    console.log('[API THROTTLE] Request throttled, returning cached data');
+    const cachedData = API_CALL_CACHE.get(cacheKey);
+    if (cachedData) return cachedData.data;
+  }
+
+  // Check local cache first (backward compatibility)
+  if (buildingsCache && (Date.now() - buildingsCache.timestamp) < CACHE_DURATION) {
+    console.log('[API CALL] Returning cached buildings');
+    return buildingsCache.data;
+  }
+
   console.log('[API CALL] Fetching all buildings (no pagination)');
-  try {
+  
+  // Create promise and store in cache to prevent duplicate calls
+  const fetchPromise = (async () => {
+    try {
     // Try to disable pagination by requesting a very large page size
     const resp = await makeRequestWithRetry({
       method: 'get',
@@ -589,14 +676,30 @@ export async function fetchAllBuildings(): Promise<Building[]> {
       }
       
       console.log('[API CALL] Final total buildings:', allBuildings.length);
+      // Cache the result
+      buildingsCache = { data: allBuildings, timestamp: Date.now() };
+      // Also cache in global throttling cache
+      API_CALL_CACHE.set(cacheKey, { data: allBuildings, timestamp: Date.now() });
       return allBuildings;
     }
     
+    // Cache the result
+    buildingsCache = { data: buildings, timestamp: Date.now() };
+    // Also cache in global throttling cache
+    API_CALL_CACHE.set(cacheKey, { data: buildings, timestamp: Date.now() });
     return buildings;
-  } catch (error) {
-    console.error('[API CALL] Error fetching all buildings:', error);
-    throw error;
-  }
+    } catch (error) {
+      // Remove the promise from cache on error
+      API_CALL_CACHE.delete(cacheKey);
+      console.error('[API CALL] Error fetching all buildings:', error);
+      throw error;
+    }
+  })();
+
+  // Store the promise in cache to prevent duplicate calls
+  API_CALL_CACHE.set(cacheKey, { data: null, timestamp: Date.now(), promise: fetchPromise });
+  
+  return await fetchPromise;
 }
 
 // Public version for kiosk mode (no authentication required)

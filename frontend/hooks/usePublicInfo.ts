@@ -15,10 +15,10 @@ export function usePublicInfo(buildingId?: number | null) {
       return fetchPublicInfo(buildingId);
     },
     enabled: buildingId !== undefined, // Don't run query when buildingId is undefined
-    staleTime: 30000, // 30 seconds - data is considered fresh for 30 seconds
-    refetchOnWindowFocus: true, // Refetch when window regains focus
-    refetchOnReconnect: true, // Refetch when internet connection is restored
-    refetchInterval: 60000, // Refetch every minute for real-time updates
+    staleTime: 10 * 60 * 1000, // 10 minutes - data is considered fresh for 10 minutes
+    refetchOnWindowFocus: false, // Disable refetch on window focus
+    refetchOnReconnect: false, // Disable refetch on reconnect
+    refetchInterval: false, // Disable automatic refetching
     retry: (failureCount, error: any) => {
       // Don't retry on 404 errors (building not found)
       if (error?.response?.status === 404) return false;

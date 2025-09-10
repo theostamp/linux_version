@@ -61,13 +61,14 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingBuildings, setIsLoadingBuildings] = useState<boolean>(false);
+  const [hasInitialized, setHasInitialized] = useState<boolean>(false);
 
   const { isLoading: authLoading, user } = useAuth();
   const router = useRouter();
 
   // Load buildings function - wrapped with useCallback to prevent unnecessary re-renders
   const loadBuildings = useCallback(async () => {
-    if (authLoading || !user || isLoadingBuildings) return;
+    if (authLoading || !user || isLoadingBuildings || buildings.length > 0 || hasInitialized) return;
 
     try {
       setIsLoading(true);
@@ -101,6 +102,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       }
       
       setError(null);
+      setHasInitialized(true);
     } catch (err: any) {
       console.error('[BuildingContext] Failed to load buildings:', err);
 
@@ -121,7 +123,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
       setIsLoadingBuildings(false);
     }
-  }, [authLoading, user]);
+  }, [authLoading, user, isLoadingBuildings, buildings.length, hasInitialized]);
 
   // Refresh buildings function
   const refreshBuildings = async () => {

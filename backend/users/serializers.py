@@ -52,6 +52,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 'office_phone': user.office_phone,
                 'office_address': user.office_address,
                 'office_logo': user.office_logo.url if user.office_logo else None,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser,
+                'is_active': user.is_active,
             }
             
             data = {
@@ -73,6 +76,7 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name', 
             'is_active', 
             'is_staff',
+            'is_superuser',
             'office_name',
             'office_phone',
             'office_address',
@@ -82,7 +86,7 @@ class UserSerializer(serializers.ModelSerializer):
             'office_bank_iban',
             'office_bank_beneficiary'
         ]
-        read_only_fields = ['id', 'is_staff']
+        read_only_fields = ['id', 'is_staff', 'is_superuser']
 
 class OfficeDetailsSerializer(serializers.ModelSerializer):
     """

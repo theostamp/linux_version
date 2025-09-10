@@ -7,12 +7,11 @@ import BuildingSelectorButton from './BuildingSelectorButton';
 import LogoutButton from './LogoutButton';
 import OfficeSettingsModal from './OfficeSettingsModal';
 import { EventNotificationBell, EventSidebar } from '@/components/events';
-import { User, Building as BuildingIcon, Settings, Menu } from 'lucide-react';
+import { User, Building as BuildingIcon, Settings, Menu, Calendar } from 'lucide-react';
 
 export default function GlobalHeader() {
   const { user } = useAuth();
   const { selectedBuilding, setSelectedBuilding } = useBuilding();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isEventSidebarOpen, setIsEventSidebarOpen] = useState(false);
 
@@ -54,6 +53,18 @@ export default function GlobalHeader() {
 
             {/* Right side - User info and actions */}
             <div className="flex items-center gap-2 sm:gap-4">
+              {/* Calendar - Hidden on small mobile */}
+              <button 
+                onClick={() => {
+                  const calendarUrl = `${window.location.protocol}//${window.location.host}/calendar`;
+                  window.open(calendarUrl, 'calendar', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+                }}
+                className="hidden sm:block p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
+                title="Άνοιγμα Ημερολογίου σε νέο παράθυρο"
+              >
+                <Calendar className="w-5 h-5" />
+              </button>
+
               {/* Event Notifications - Hidden on small mobile */}
               <div className="hidden sm:block">
                 <EventNotificationBell onClick={() => setIsEventSidebarOpen(true)} />

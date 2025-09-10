@@ -42,14 +42,14 @@ export function useRole() {
   return { role, isAdmin, isManager, isLoading };
 }
 
-export function withAuth<TProps = any>(Component: (props: TProps) => any, allowedRoles: Array<'admin' | 'manager' | 'tenant'>) {
+export function withAuth<TProps = any>(Component: (props: TProps) => any, allowedRoles: Array<'admin' | 'manager' | 'tenant'> = ['admin', 'manager', 'tenant']) {
   return function Protected(props: TProps) {
     const { role, isAdmin, isManager, isLoading } = useRole();
     if (isLoading) return null;
     const ok = (
-      (allowedRoles.includes('admin') && isAdmin) ||
-      (allowedRoles.includes('manager') && isManager) ||
-      (allowedRoles.includes('tenant') && role === 'tenant')
+      (allowedRoles && allowedRoles.includes('admin') && isAdmin) ||
+      (allowedRoles && allowedRoles.includes('manager') && isManager) ||
+      (allowedRoles && allowedRoles.includes('tenant') && role === 'tenant')
     );
     if (!ok) {
       if (typeof window !== 'undefined') window.location.replace('/');

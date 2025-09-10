@@ -80,6 +80,9 @@ TENANT_APPS = [
     
     # 🔄 AI Data Migration
     'data_migration',
+    
+    # 🔗 Integrations
+    'integrations',
 ]
 
 
@@ -431,3 +434,32 @@ if not DEBUG:
     INSTALLED_APPS += ['django_prometheus']
     MIDDLEWARE = ['django_prometheus.middleware.PrometheusBeforeMiddleware'] + MIDDLEWARE
     MIDDLEWARE += ['django_prometheus.middleware.PrometheusAfterMiddleware']
+
+# ----------------------------------------
+# 📅 Google Calendar Integration Settings
+# ----------------------------------------
+GOOGLE_CALENDAR_ENABLED = os.getenv('GOOGLE_CALENDAR_ENABLED', 'False') == 'True'
+
+# OAuth 2.0 credentials (για admin authentication)
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
+GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://demo.localhost:8000/auth/google/callback')
+
+# Service Account για server-to-server API calls
+GOOGLE_SERVICE_ACCOUNT_FILE = os.getenv('GOOGLE_SERVICE_ACCOUNT_FILE', BASE_DIR / 'credentials' / 'google-service-account.json')
+
+# Admin account που θα χρησιμοποιηθεί για calendar management
+GOOGLE_ADMIN_EMAIL = os.getenv('GOOGLE_ADMIN_EMAIL', '')
+
+# Google Calendar API settings
+GOOGLE_CALENDAR_SCOPES = [
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/calendar.events'
+]
+
+# Frontend URL για links στα Google Calendar events
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://demo.localhost:3001')
+
+# Calendar sync settings
+GOOGLE_CALENDAR_SYNC_ENABLED = os.getenv('GOOGLE_CALENDAR_SYNC_ENABLED', 'True') == 'True'
+GOOGLE_CALENDAR_AUTO_SHARE = os.getenv('GOOGLE_CALENDAR_AUTO_SHARE', 'True') == 'True'

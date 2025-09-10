@@ -127,6 +127,7 @@ export default function DevCompileIndicator(): JSX.Element | null {
   }
 
   const label = state === "building" ? "Γίνεται μεταγλώττιση…" : "Ολοκληρώθηκε";
+  const isBuilding = state === "building";
 
   return (
     <div
@@ -135,33 +136,109 @@ export default function DevCompileIndicator(): JSX.Element | null {
         top: 12,
         right: 12,
         zIndex: 9999,
-        background: "rgba(17,17,17,0.9)",
+        background: isBuilding 
+          ? "linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(147, 51, 234, 0.95))"
+          : "linear-gradient(135deg, rgba(34, 197, 94, 0.95), rgba(59, 130, 246, 0.95))",
         color: "#fff",
-        borderRadius: 12,
-        padding: "10px 14px",
+        borderRadius: 16,
+        padding: "12px 16px",
         display: "flex",
-        gap: 10,
+        gap: 12,
         alignItems: "center",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
-        border: "1px solid rgba(255,255,255,0.1)",
-        backdropFilter: "blur(6px)",
+        boxShadow: isBuilding 
+          ? "0 10px 30px rgba(59, 130, 246, 0.4), 0 4px 15px rgba(0,0,0,0.2)"
+          : "0 10px 30px rgba(34, 197, 94, 0.4), 0 4px 15px rgba(0,0,0,0.2)",
+        border: "1px solid rgba(255,255,255,0.2)",
+        backdropFilter: "blur(10px)",
+        transform: visible ? "scale(1) translateY(0)" : "scale(0.9) translateY(-10px)",
+        opacity: visible ? 1 : 0,
+        transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        animation: visible ? "slideInFromTop 0.3s ease-out" : undefined,
       }}
       aria-live="polite"
       aria-label={label}
     >
-      <span
-        style={{
-          width: 14,
-          height: 14,
-          borderRadius: "50%",
-          border: "2px solid rgba(255,255,255,0.5)",
-          borderTopColor: "#fff",
-          animation: "spin 0.8s linear infinite",
-          display: "inline-block",
-        }}
-      />
-      <span style={{ fontSize: 13, fontWeight: 500 }}>{label}</span>
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      {isBuilding ? (
+        <div
+          style={{
+            width: 16,
+            height: 16,
+            borderRadius: "50%",
+            border: "2px solid rgba(255,255,255,0.3)",
+            borderTop: "2px solid #fff",
+            borderRight: "2px solid #fff",
+            animation: "spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite",
+            display: "inline-block",
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: 16,
+            height: 16,
+            borderRadius: "50%",
+            backgroundColor: "#22c55e",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            animation: "checkmarkBounce 0.6s ease-out",
+          }}
+        >
+          <svg 
+            width="10" 
+            height="8" 
+            viewBox="0 0 10 8" 
+            fill="none"
+            style={{ animation: "drawCheckmark 0.3s ease-out 0.2s both" }}
+          >
+            <path 
+              d="M1 4L3.5 6.5L9 1" 
+              stroke="white" 
+              strokeWidth="1.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+      )}
+      
+      <span style={{ 
+        fontSize: 14, 
+        fontWeight: 600,
+        textShadow: "0 1px 2px rgba(0,0,0,0.3)"
+      }}>
+        {label}
+      </span>
+      
+      <style>{`
+        @keyframes spin { 
+          from { transform: rotate(0deg); } 
+          to { transform: rotate(360deg); } 
+        }
+        @keyframes slideInFromTop {
+          from { 
+            transform: translateY(-20px) scale(0.95); 
+            opacity: 0; 
+          }
+          to { 
+            transform: translateY(0) scale(1); 
+            opacity: 1; 
+          }
+        }
+        @keyframes checkmarkBounce {
+          0% { transform: scale(0); }
+          50% { transform: scale(1.2); }
+          100% { transform: scale(1); }
+        }
+        @keyframes drawCheckmark {
+          from { 
+            stroke-dasharray: 0 12; 
+          }
+          to { 
+            stroke-dasharray: 12 0; 
+          }
+        }
+      `}</style>
     </div>
   );
 }

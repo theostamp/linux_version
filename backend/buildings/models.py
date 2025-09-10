@@ -221,8 +221,41 @@ class Building(models.Model):
         help_text=_("Επιλεγμένο πακέτο υπηρεσιών διαχείρισης")
     )
 
+    # 📅 Google Calendar Integration
+    google_calendar_id = models.CharField(
+        _("Google Calendar ID"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("ID του Google Calendar για αυτό το κτίριο")
+    )
+    
+    google_calendar_enabled = models.BooleanField(
+        _("Google Calendar Ενεργό"),
+        default=False,
+        help_text=_("Ενεργοποίηση του Google Calendar για αυτό το κτίριο")
+    )
+    
+    google_calendar_sync_enabled = models.BooleanField(
+        _("Αυτόματος Συγχρονισμός"),
+        default=True,
+        help_text=_("Αυτόματος συγχρονισμός events με Google Calendar")
+    )
+
     def __str__(self):
         return self.name
+    
+    def get_google_calendar_url(self):
+        """Επιστρέφει το Google Calendar URL αν υπάρχει"""
+        if self.google_calendar_id:
+            return f"https://calendar.google.com/calendar/embed?src={self.google_calendar_id}&ctz=Europe/Athens"
+        return None
+        
+    def get_google_calendar_public_url(self):
+        """Επιστρέφει το δημόσιο Google Calendar URL"""
+        if self.google_calendar_id:
+            return f"https://calendar.google.com/calendar/u/0?cid={self.google_calendar_id}"
+        return None
 
     def get_street_view_image_url(self):
         """Returns the street view image URL or a placeholder"""

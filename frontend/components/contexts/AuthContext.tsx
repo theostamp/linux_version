@@ -18,7 +18,7 @@ import FullPageSpinner from '@/components/FullPageSpinner';
 
 interface AuthCtx {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   isLoading: boolean;
   isAuthReady: boolean;
@@ -52,23 +52,24 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     console.log('AuthContext: Client-side logout performed.');
   }, [setUser]);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string): Promise<User> => {
     try {
+      setIsLoading(true);
       const { user: loggedInUser } = await loginUser(email, password);
       setUser(loggedInUser);
       console.log('AuthContext: Login successful for user:', loggedInUser?.email);
-      // Μετά από επιτυχημένο login, δεν είμαστε πλέον σε loading state
-      if (isLoading) {
-        setIsLoading(false);
-      }
-      if (!isAuthReady) {
-        setIsAuthReady(true);
-      }
+      
+      // Ensure states are properly set after successful login
+      setIsLoading(false);
+      setIsAuthReady(true);
+      
+      return loggedInUser;
     } catch (error) {
+      setIsLoading(false);
       console.error('AuthContext: Login failed:', error);
       throw error;
     }
-  }, [setUser, isLoading, isAuthReady]);
+  }, [setUser]);
 
   const logout = useCallback(async () => {
     try {
@@ -115,20 +116,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       const token = localStorage.getItem('access');
       const cachedUser = localStorage.getItem('user');
 
-      // Demo auto-login for demo environment
-      if (!token && typeof window !== 'undefined' && window.location.hostname.includes('demo.localhost')) {
-        console.log('AuthContext: Demo environment detected, attempting auto-login');
-        try {
-          await login('admin@demo.localhost', 'admin123456');
-          console.log('AuthContext: Demo auto-login successful');
-          setIsLoading(false);
-          setIsAuthReady(true);
-          return;
-        } catch (error) {
-          console.error('AuthContext: Demo auto-login failed:', error);
-          // Continue with normal flow
-        }
-      }
+      // Skip auto-login to simplify the flow - users can manually login
 
       if (!token) {
         console.log('AuthContext: No token found on mount');
@@ -141,8 +129,22 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       if (cachedUser) {
         try {
           const parsedUser = JSON.parse(cachedUser) as User;
-          setUser(parsedUser);
-          console.log('AuthContext: Loaded cached user:', parsedUser?.email);
+          
+          // Always verify user data with API to ensure permissions are up to date
+          console.log('AuthContext: Found cached user:', parsedUser?.email, 'but will verify with API');
+          
+          try {
+            const freshUser = await getCurrentUser();
+            setUser(freshUser);
+            console.log('AuthContext: Refreshed user data:', freshUser?.email);
+          } catch (apiError) {
+            console.error('AuthContext: Failed to refresh user, using cached:', apiError);
+            setUser(parsedUser);
+          }
+          
+          setIsLoading(false);
+          setIsAuthReady(true);
+          return;
         } catch (e) {
           console.error('AuthContext: Failed to parse cached user', e);
           localStorage.removeItem('user');
@@ -162,17 +164,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         if (error?.response?.status === 401) {
           console.log('AuthContext: 401 error, clearing tokens');
           performClientLogout();
-          // Demo auto-login fallback αν τρέχουμε σε demo subdomain
-          if (typeof window !== 'undefined' && window.location.hostname.includes('demo.localhost')) {
-            console.log('AuthContext: Attempting demo auto-login fallback after 401');
-            try {
-              await login('admin@demo.localhost', 'admin123456');
-              console.log('AuthContext: Demo auto-login fallback succeeded');
-              return;
-            } catch (autoLoginError) {
-              console.error('AuthContext: Demo auto-login fallback failed', autoLoginError);
-            }
-          }
+          // Skip auto-login fallback - keep it simple
         }
       } finally {
         setIsLoading(false);
