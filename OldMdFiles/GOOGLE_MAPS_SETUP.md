@@ -58,7 +58,7 @@
 Create/edit `frontend/.env.local`:
 
 ```env
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=YOUR_ACTUAL_API_KEY_HERE
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyAAhw--f6ejdNH-0vfTkY9t6sO7nD2fxSk
 ```
 
 **Important Notes:**
