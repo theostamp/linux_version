@@ -6,6 +6,46 @@
 /* εδώ μπορείς να προσθέσεις δικά σου global styles */
 
 @layer base {
+  /* Typography fixes for better line height */
+  body {
+    font-family: var(--font-open-sans), system-ui, -apple-system, sans-serif;
+    line-height: 1.4; /* Reduced from default 1.5 */
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    line-height: 1.2; /* Tighter line height for headings */
+  }
+  
+  p {
+    line-height: 1.4; /* Consistent with body */
+  }
+  
+  .text-xs {
+    line-height: 1.3; /* Tighter for small text */
+  }
+  
+  .text-sm {
+    line-height: 1.35; /* Slightly tighter */
+  }
+  
+  /* Custom utility classes for better spacing */
+  .leading-tight {
+    line-height: 1.25 !important;
+  }
+  
+  .leading-snug {
+    line-height: 1.375 !important;
+  }
+  
+  /* Header and sidebar specific improvements */
+  .header-text {
+    line-height: 1.2;
+  }
+  
+  .sidebar-text {
+    line-height: 1.3;
+  }
+
   :root {
     --background: 0 0% 100%;
     --foreground: 20 14.3% 4.1%;

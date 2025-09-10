@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,8 +18,16 @@ import { formatCurrency } from '@/lib/utils';
 
 const paymentFormSchema = z.object({
   apartment_id: z.number().min(1, 'Παρακαλώ επιλέξτε διαμέρισμα'),
-  common_expense_amount: z.number().min(0, 'Το ποσό δεν μπορεί να είναι αρνητικό').optional(),
-  previous_obligations_amount: z.number().min(0, 'Το ποσό παλαιότερων οφειλών δεν μπορεί να είναι αρνητικό').optional(),
+  common_expense_amount: z.union([
+    z.number().min(0, 'Το ποσό δεν μπορεί να είναι αρνητικό'),
+    z.string().regex(/^\d*\.?\d*$/, 'Παρακαλώ εισάγετε έγκυρο ποσό').transform((val) => val === '' ? 0 : parseFloat(val)),
+    z.literal('')
+  ]).optional(),
+  previous_obligations_amount: z.union([
+    z.number().min(0, 'Το ποσό παλαιότερων οφειλών δεν μπορεί να είναι αρνητικό'),
+    z.string().regex(/^\d*\.?\d*$/, 'Παρακαλώ εισάγετε έγκυρο ποσό').transform((val) => val === '' ? 0 : parseFloat(val)),
+    z.literal('')
+  ]).optional(),
   date: z.string().min(1, 'Παρακαλώ επιλέξτε ημερομηνία'),
   method: z.string().min(1, 'Παρακαλώ επιλέξτε μέθοδο εισπράξεως'),
   payment_type: z.string().min(1, 'Παρακαλώ επιλέξτε τύπο εισπράξεως'),
@@ -30,14 +38,20 @@ const paymentFormSchema = z.object({
   receipt: z.any().optional(),
 }).refine(
   (data) => {
-    // Τουλάχιστον ένα από τα δύο πεδία πρέπει να έχει τιμή > 0
-    const hasCommonExpense = (data.common_expense_amount || 0) > 0;
-    const hasPreviousObligations = (data.previous_obligations_amount || 0) > 0;
-    return hasCommonExpense || hasPreviousObligations;
+    // Convert values to numbers, treating empty strings and undefined as 0
+    const commonAmount = typeof data.common_expense_amount === 'string' && data.common_expense_amount === '' 
+      ? 0 
+      : Number(data.common_expense_amount) || 0;
+    const previousAmount = typeof data.previous_obligations_amount === 'string' && data.previous_obligations_amount === '' 
+      ? 0 
+      : Number(data.previous_obligations_amount) || 0;
+    
+    // At least one field must have a value > 0
+    return commonAmount > 0 || previousAmount > 0;
   },
   {
     message: 'Πρέπει να συμπληρώσετε τουλάχιστον ένα από τα πεδία "Ποσό Κοινόχρηστων" ή "Παλαιότερες Οφειλές"',
-    path: ['common_expense_amount'], // Θα εμφανιστεί σαν error στο πρώτο πεδίο
+    path: ['common_expense_amount'],
   }
 );
 
@@ -102,6 +116,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const [createdPayment, setCreatedPayment] = useState<Payment | null>(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const lastSubmitTimeRef = useRef<number>(0);
   
   // Store the last created payment for printing purposes
   const [lastCreatedPayment, setLastCreatedPayment] = useState<Payment | null>(null);
@@ -163,10 +178,17 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
   }, [initialData, setValue]);
 
-  const onSubmit = async (data: LocalPaymentFormData) => {
-    // Prevent multiple submissions
-    if (isSubmitting) return;
+  const onSubmit = useCallback(async (data: LocalPaymentFormData) => {
+    const now = Date.now();
     
+    // Prevent multiple submissions with debouncing (2 seconds)
+    if (isSubmitting || (now - lastSubmitTimeRef.current < 2000)) {
+      console.warn('Payment submission too frequent or already in progress, ignoring duplicate request');
+      return;
+    }
+    
+    lastSubmitTimeRef.current = now;
+    console.log('Starting payment submission...');
     setIsSubmitting(true);
     
     try {
@@ -233,7 +255,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [createPayment, buildingData, selectedApartment, toast, onSuccess, reset]);
 
   const getPaymentMethodLabel = (method: PaymentMethod) => {
     const labels: Record<PaymentMethod, string> = {

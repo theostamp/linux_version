@@ -480,10 +480,7 @@ class FinancialDashboardService:
                 # Fallback to all transactions if month parsing fails
                 pass
         
-        recent_transactions = recent_transactions_query.order_by('-date')[:10].values(
-            'id', 'date', 'type', 'description', 'apartment_number', 'amount', 
-            'balance_before', 'balance_after', 'reference_id', 'reference_type', 'notes'
-        )
+        recent_transactions = recent_transactions_query.select_related('building', 'apartment').order_by('-date')[:10]
         
         # Σημείωση: Όλες οι δαπάνες θεωρούνται εκδομένες
         # Επιστρέφουμε άδειο queryset για backwards compatibility

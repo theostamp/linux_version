@@ -1305,149 +1305,111 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     'payment_breakdown': []
                 }
                 
-                # Calculate historical obligations from all expenses
-                expenses = Expense.objects.filter(building_id=building_id)
-                for expense in expenses:
-                    share_amount = 0.0
-                    
-                    if expense.distribution_type == 'by_participation_mills':
-                        # Distribution by participation mills
-                        mills = apartment.participation_mills or 0
-                        if total_mills > 0:
-                            share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
+                # Get expense transactions (charges) - filter by month if specified
+                transaction_filter = {'apartment': apartment, 'type': 'expense_created'}
+                if month:
+                    try:
+                        # Parse month to get start and end of month
+                        year, mon = map(int, month.split('-'))
+                        month_start = date(year, mon, 1)
+                        if mon == 12:
+                            month_end = date(year + 1, 1, 1)
                         else:
-                            share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
-                    
-                    elif expense.distribution_type == 'equal_share':
-                        # Equal distribution
-                        share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
-                    
-                    elif expense.distribution_type in ['by_meters', 'specific_apartments']:
-                        # Fallback to participation mills for now
-                        mills = apartment.participation_mills or 0
-                        if total_mills > 0:
-                            share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
-                        else:
-                            share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
-                    
+                            month_end = date(year, mon + 1, 1)
+                        
+                        # Filter transactions by date
+                        transaction_filter['date__gte'] = month_start
+                        transaction_filter['date__lt'] = month_end
+                    except ValueError:
+                        pass  # If month parsing fails, don't add date filter
+                
+                # Get expense transactions for this apartment
+                expense_transactions = Transaction.objects.filter(**transaction_filter)
+                
+                for trans in expense_transactions:
+                    # Use the exact transaction amount (already properly calculated)
+                    share_amount = float(trans.amount)
                     apartment_data['total_obligations'] += share_amount
+                    
+                    # Get expense details if available
+                    expense = None
+                    if trans.reference_type == 'expense' and trans.reference_id:
+                        try:
+                            expense = Expense.objects.get(id=trans.reference_id)
+                        except Expense.DoesNotExist:
+                            pass
+                    
                     apartment_data['expense_breakdown'].append({
-                        'expense_id': expense.id,
-                        'expense_title': expense.title,
-                        'expense_amount': float(expense.amount),
+                        'expense_id': int(trans.reference_id) if trans.reference_id else 0,
+                        'expense_title': expense.title if expense else trans.description,
+                        'expense_amount': float(expense.amount) if expense else share_amount,
                         'share_amount': share_amount,
-                        'distribution_type': expense.distribution_type,
-                        'date': expense.date.isoformat(),
-                        'month': expense.date.strftime('%Y-%m'),
-                        'month_display': expense.date.strftime('%B %Y'),
+                        'distribution_type': expense.distribution_type if expense else 'unknown',
+                        'date': trans.date.date().isoformat(),
+                        'month': trans.date.strftime('%Y-%m'),
+                        'month_display': trans.date.strftime('%B %Y'),
                         'mills': apartment.participation_mills or 0,
                         'total_mills': total_mills
                     })
                 
-                # Calculate historical payments
-                payments = Payment.objects.filter(apartment=apartment)
-                for payment in payments:
-                    payment_amount = float(payment.amount)
+                # Get payment transactions - filter by month if specified
+                payment_filter = {'apartment': apartment, 'type': 'payment_received'}
+                if month:
+                    try:
+                        # Parse month to get start and end of month
+                        year, mon = map(int, month.split('-'))
+                        month_start = date(year, mon, 1)
+                        if mon == 12:
+                            month_end = date(year + 1, 1, 1)
+                        else:
+                            month_end = date(year, mon + 1, 1)
+                        
+                        # Filter transactions by date
+                        payment_filter['date__gte'] = month_start
+                        payment_filter['date__lt'] = month_end
+                    except ValueError:
+                        pass  # If month parsing fails, don't add date filter
+                
+                # Get payment transactions for this apartment
+                payment_transactions = Transaction.objects.filter(**payment_filter)
+                
+                for trans in payment_transactions:
+                    # Use the exact transaction amount (already properly calculated)
+                    payment_amount = float(trans.amount)
                     apartment_data['total_payments'] += payment_amount
+                    
+                    # Get payment details if available
+                    payment = None
+                    if trans.reference_type == 'payment' and trans.reference_id:
+                        try:
+                            payment = Payment.objects.get(id=trans.reference_id)
+                        except Payment.DoesNotExist:
+                            pass
+                    
                     apartment_data['payment_breakdown'].append({
-                        'id': payment.id,
+                        'id': int(trans.reference_id) if trans.reference_id else trans.id,
                         'amount': payment_amount,
-                        'date': payment.date.isoformat(),
-                        'method': payment.method,
-                        'method_display': payment.get_method_display(),
-                        'payment_type': payment.payment_type,
-                        'payment_type_display': payment.get_payment_type_display(),
-                        'reference_number': payment.reference_number,
-                        'notes': payment.notes,
-                        'payer_name': payment.payer_name or 'Άγνωστος'
+                        'date': trans.date.date().isoformat(),
+                        'method': payment.method if payment else 'unknown',
+                        'method_display': payment.get_method_display() if payment else 'Άγνωστος',
+                        'payment_type': payment.payment_type if payment else 'unknown',
+                        'payment_type_display': payment.get_payment_type_display() if payment else 'Άγνωστο',
+                        'reference_number': payment.reference_number if payment else '',
+                        'notes': payment.notes if payment else trans.description,
+                        'payer_name': payment.payer_name if payment else 'Άγνωστος'
                     })
                 
                 # Calculate net obligation
                 apartment_data['net_obligation'] = apartment_data['total_obligations'] - apartment_data['total_payments']
                 
-                # Calculate previous balance (before current month)
+                # Simplified calculation for monthly view
                 if month:
-                    try:
-                        # Parse month to get start of month
-                        year, mon = map(int, month.split('-'))
-                        month_start = date(year, mon, 1)
-                        
-                        # Calculate obligations before this month
-                        previous_expenses = expenses.filter(date__lt=month_start)
-                        previous_obligations = 0.0
-                        
-                        for expense in previous_expenses:
-                            share_amount = 0.0
-                            
-                            if expense.distribution_type == 'by_participation_mills':
-                                mills = apartment.participation_mills or 0
-                                if total_mills > 0:
-                                    share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
-                                else:
-                                    share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
-                            
-                            elif expense.distribution_type == 'equal_share':
-                                share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
-                            
-                            elif expense.distribution_type in ['by_meters', 'specific_apartments']:
-                                mills = apartment.participation_mills or 0
-                                if total_mills > 0:
-                                    share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
-                                else:
-                                    share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
-                            
-                            previous_obligations += share_amount
-                        
-                        # Calculate payments before this month
-                        previous_payments = payments.filter(date__lt=month_start)
-                        previous_payments_total = sum(float(p.amount) for p in previous_payments)
-                        
-                        apartment_data['previous_balance'] = previous_obligations - previous_payments_total
-                        
-                        # Current month expense share
-                        current_month_expenses = expenses.filter(date__gte=month_start)
-                        current_month_share = 0.0
-                        
-                        for expense in current_month_expenses:
-                            share_amount = 0.0
-                            
-                            if expense.distribution_type == 'by_participation_mills':
-                                mills = apartment.participation_mills or 0
-                                if total_mills > 0:
-                                    share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
-                                else:
-                                    share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
-                            
-                            elif expense.distribution_type == 'equal_share':
-                                share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
-                            
-                            elif expense.distribution_type in ['by_meters', 'specific_apartments']:
-                                mills = apartment.participation_mills or 0
-                                if total_mills > 0:
-                                    share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
-                                else:
-                                    share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
-                            
-                            current_month_share += share_amount
-                        
-                        # Add management fees and reserve fund contributions to current month obligations
-                        management_fee_share = float(building.management_fee_per_apartment or 0)
-                        
-                        # Calculate reserve fund contribution based on participation mills
-                        reserve_contribution_share = 0.0
-                        if building.reserve_fund_goal and building.reserve_fund_duration_months and total_mills > 0:
-                            monthly_reserve_total = round(float(building.reserve_fund_goal) / float(building.reserve_fund_duration_months), 2)
-                            reserve_contribution_share = round((monthly_reserve_total / total_mills) * (apartment.participation_mills or 0), 2)
-                        
-                        apartment_data['expense_share'] = round(current_month_share + management_fee_share + reserve_contribution_share, 2)
-                        
-                        # Calculate net obligation: previous obligations + current month obligations - all payments
-                        apartment_data['net_obligation'] = apartment_data['previous_balance'] + apartment_data['expense_share'] - sum(float(p.amount) for p in payments)
-                        
-                    except Exception as e:
-                        print(f"Error parsing month {month}: {e}")
-                        apartment_data['previous_balance'] = apartment_data['net_obligation']
-                        apartment_data['expense_share'] = 0.0
+                    # For monthly view, previous_balance = 0 (we only show current month)
+                    apartment_data['previous_balance'] = 0.0
+                    # Current month expense share is already calculated in total_obligations
+                    apartment_data['expense_share'] = apartment_data['total_obligations']
+                    # Net obligation is just the monthly obligations minus monthly payments
+                    apartment_data['net_obligation'] = apartment_data['total_obligations'] - apartment_data['total_payments']
                 else:
                     # No month specified, use total obligations as previous balance
                     apartment_data['previous_balance'] = apartment_data['total_obligations']
@@ -1558,26 +1520,18 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             
             # Calculate date range (last N months)
             today = date.today()
-            end_date = today
+            end_date = today + timedelta(days=30)  # Include future transactions
             start_date = today - timedelta(days=30 * months_back)
             
             # Get all transactions for this apartment in the date range
-            # Group by reference_id to avoid duplicates from different transaction types
             transactions = Transaction.objects.filter(
                 apartment=apartment,
                 date__date__gte=start_date,
                 date__date__lte=end_date
             ).order_by('-date')
             
-            # Remove duplicate transactions with same reference_id
-            seen_references = set()
-            unique_transactions = []
-            for transaction in transactions:
-                if transaction.reference_id:
-                    if transaction.reference_id in seen_references:
-                        continue
-                    seen_references.add(transaction.reference_id)
-                unique_transactions.append(transaction)
+            # Use all transactions (no deduplication needed)
+            unique_transactions = list(transactions)
             
             # Group transactions by month
             monthly_data = {}

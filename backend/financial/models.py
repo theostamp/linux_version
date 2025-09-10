@@ -504,13 +504,14 @@ class Payment(models.Model):
         
         # Calculate balances
         current_balance = self.apartment.current_balance or Decimal('0.00')
-        new_balance = current_balance + self.amount
+        amount_decimal = Decimal(str(self.amount))
+        new_balance = current_balance + amount_decimal
         
         # Create transaction for this payment
         Transaction.objects.create(
             apartment=self.apartment,
             building=self.apartment.building,
-            amount=self.amount,
+            amount=amount_decimal,
             type='payment_received',
             description=f"Είσπραξη: {self.get_payment_type_display()}",
             date=self.date,

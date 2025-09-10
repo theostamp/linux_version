@@ -1104,12 +1104,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   {/* Κόστος διαχείρισης */}
                   {(financialSummary.total_management_cost || 0) > 0 && (
                     <div className="space-y-1">
-                      <div className="text-xs text-blue-600 font-medium">Κόστος διαχείρισης:</div>
+                      <div className="text-xs text-blue-600 font-medium">Κόστος διαχείρισης/μήνα:</div>
                       <div className="text-lg font-bold text-blue-700">
-                        {formatCurrency(financialSummary.total_management_cost || 0)}
+                        {formatCurrency(financialSummary.total_management_cost || 0)}/μήνα
                       </div>
                       <div className="text-xs text-blue-600 italic">
-                        {financialSummary.apartments_count || 0} διαμερίσματα × {formatCurrency(financialSummary.management_fee_per_apartment || 0)}
+                        {financialSummary.apartments_count || 0} διαμερίσματα × {formatCurrency(financialSummary.management_fee_per_apartment || 0)}/μήνα
                       </div>
                     </div>
                   )}
@@ -1863,9 +1863,9 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     {/* Column 1: Management Fee per Apartment */}
                     <div className="space-y-3">
                       <div className="space-y-1">
-                        <div className="text-xs text-purple-700 font-medium">Αμοιβή ανά διαμέρισμα:</div>
+                        <div className="text-xs text-purple-700 font-medium">Αμοιβή ανά διαμέρισμα/μήνα:</div>
                         <div className="text-sm font-bold text-purple-700">
-                          {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}
+                          {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}/μήνα
                         </div>
                       </div>
                     </div>
@@ -1873,12 +1873,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     {/* Column 2: Total Management Cost */}
                     <div className="space-y-3">
                       <div className="space-y-1">
-                        <div className="text-xs text-purple-700 font-medium">Συνολικό κόστος διαχείρισης:</div>
+                        <div className="text-xs text-purple-700 font-medium">Συνολικό κόστος διαχείρισης/μήνα:</div>
                         <div className="text-sm font-bold text-purple-700">
-                          {formatCurrency((financialSummary?.management_fee_per_apartment || 0) * (financialSummary?.apartments_count || 0))}
+                          {formatCurrency((financialSummary?.management_fee_per_apartment || 0) * (financialSummary?.apartments_count || 0))}/μήνα
                         </div>
                         <div className="text-xs text-purple-600">
-                          {financialSummary?.apartments_count || 0} διαμερίσματα × {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}
+                          {financialSummary?.apartments_count || 0} διαμερίσματα × {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}/μήνα
                         </div>
                       </div>
                     </div>

@@ -173,7 +173,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
       const totalCost = newFee * apartmentsCount;
       
       toast.success(
-        `🎉 Πακέτο εφαρμόστηκε επιτυχώς!\n💰 Αμοιβή: ${newFee}€/διαμέρισμα\n🏢 Συνολικό: ${totalCost.toFixed(2)}€`,
+        `🎉 Πακέτο εφαρμόστηκε επιτυχώς!\n💰 Αμοιβή: ${newFee}€/διαμέρισμα/μήνα\n🏢 Συνολικό μηνιαίο: ${totalCost.toFixed(2)}€/μήνα`,
         { duration: 3000 }
       );
       
@@ -409,11 +409,11 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Τρέχουσα αμοιβή διαχείρισης:</p>
-                  <p className="text-lg font-bold">{formatCurrency(currentFee)}/διαμέρισμα</p>
+                  <p className="text-lg font-bold">{formatCurrency(currentFee)}/διαμέρισμα/μήνα</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-600">Συνολικό κόστος:</p>
-                  <p className="text-lg font-bold">{formatCurrency(currentFee * apartmentsCount)}</p>
+                  <p className="text-sm text-gray-600">Συνολικό μηνιαίο κόστος:</p>
+                  <p className="text-lg font-bold">{formatCurrency(currentFee * apartmentsCount)}/μήνα</p>
                   <p className="text-xs text-gray-500">{apartmentsCount} διαμερίσματα</p>
                 </div>
               </div>
@@ -451,7 +451,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                               {pkg.name}
                             </CardTitle>
                             <Badge className={getPackageColor(pkg.fee_per_apartment)}>
-                              {formatCurrency(pkg.fee_per_apartment)}/διαμέρισμα
+                              {formatCurrency(pkg.fee_per_apartment)}/διαμέρισμα/μήνα
                             </Badge>
                           </div>
                         </CardHeader>
@@ -476,13 +476,13 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                           {/* Cost Calculation */}
                           <div className="pt-3 border-t border-gray-200">
                             <div className="flex items-center justify-between text-sm">
-                              <span>Συνολικό κόστος για το κτίριο:</span>
+                              <span>Συνολικό μηνιαίο κόστος:</span>
                               <span className="font-bold text-lg">
-                                {formatCurrency(pkg.total_cost_for_building)}
+                                {formatCurrency(pkg.total_cost_for_building)}/μήνα
                               </span>
                             </div>
                             <p className="text-xs text-gray-500 text-right">
-                              {apartmentsCount} διαμερίσματα × {formatCurrency(pkg.fee_per_apartment)}
+                              {apartmentsCount} διαμερίσματα × {formatCurrency(pkg.fee_per_apartment)}/μήνα
                             </p>
                           </div>
                           
@@ -549,7 +549,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                           {template.name}
                         </CardTitle>
                         <Badge className={getPackageColor(template.fee_per_apartment)}>
-                          {formatCurrency(template.fee_per_apartment)}/διαμέρισμα
+                          {formatCurrency(template.fee_per_apartment)}/διαμέρισμα/μήνα
                         </Badge>
                       </div>
                     </CardHeader>
@@ -578,13 +578,13 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                       {/* Cost */}
                       <div className="pt-3 border-t border-gray-200">
                         <div className="flex items-center justify-between text-sm">
-                          <span>Συνολικό κόστος:</span>
+                          <span>Συνολικό μηνιαίο κόστος:</span>
                           <span className="font-bold">
-                            {formatCurrency(template.fee_per_apartment * apartmentsCount)}
+                            {formatCurrency(template.fee_per_apartment * apartmentsCount)}/μήνα
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 text-right">
-                          {apartmentsCount} διαμερίσματα
+                          {apartmentsCount} διαμερίσματα × {formatCurrency(template.fee_per_apartment)}/μήνα
                         </p>
                       </div>
                       
@@ -675,7 +675,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
               </div>
               
               <div>
-                <Label htmlFor="package-fee">Αμοιβή ανά Διαμέρισμα (€) *</Label>
+                <Label htmlFor="package-fee">Αμοιβή ανά Διαμέρισμα (€/μήνα) *</Label>
                 <Input
                   id="package-fee"
                   type="number"
@@ -705,7 +705,7 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                 )}
                 {customPackageForm.fee_per_apartment && (
                   <p className="text-sm text-gray-600 mt-1">
-                    Συνολικό κόστος: {formatCurrency(parseFloat(customPackageForm.fee_per_apartment || '0') * apartmentsCount)}
+                    Συνολικό μηνιαίο κόστος: {formatCurrency(parseFloat(customPackageForm.fee_per_apartment || '0') * apartmentsCount)}/μήνα
                   </p>
                 )}
               </div>

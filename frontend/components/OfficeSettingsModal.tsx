@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, Building, Phone, MapPin, Loader2, Upload, Trash2, Image } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { api } from '@/lib/api';
+import { api, API_BASE_URL } from '@/lib/api';
 
 interface OfficeSettingsModalProps {
   isOpen: boolean;
@@ -51,10 +51,14 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
         office_bank_iban: user.office_bank_iban || '',
         office_bank_beneficiary: user.office_bank_beneficiary || '',
       });
-      setCurrentLogoUrl(user.office_logo || null);
+      const logoUrl = user.office_logo 
+        ? (user.office_logo.startsWith('http') ? user.office_logo : `${API_BASE_URL}${user.office_logo.startsWith('/') ? user.office_logo : `/${user.office_logo}`}`)
+        : null;
+      setCurrentLogoUrl(logoUrl);
       setLogoPreview(null);
+      console.log('OfficeSettingsModal: Updated logo URL:', logoUrl);
     }
-  }, [user]);
+  }, [user, isOpen]); // Added isOpen as dependency to refresh when modal opens
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
