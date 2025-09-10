@@ -1330,6 +1330,31 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                     # Use the exact transaction amount (already properly calculated)
                     share_amount = float(trans.amount)
                     apartment_data['total_obligations'] += share_amount
+                
+                # Add management fee if building has a service package
+                building = apartment.building
+                if building.service_package and building.management_fee_per_apartment:
+                    # Add management fee to total obligations 
+                    management_fee = float(building.management_fee_per_apartment)
+                    apartment_data['total_obligations'] += management_fee
+                    
+                    # Add management fee to breakdown
+                    apartment_data['expense_breakdown'].append({
+                        'expense_id': 0,  # No specific expense ID for management fee
+                        'expense_title': f'Διαχείριση - {building.service_package.name}',
+                        'expense_amount': management_fee,
+                        'share_amount': management_fee,
+                        'distribution_type': 'management_fee',
+                        'date': datetime.now().date().isoformat(),
+                        'month': datetime.now().strftime('%Y-%m'),
+                        'month_display': datetime.now().strftime('%B %Y'),
+                        'mills': apartment.participation_mills or 0,
+                        'total_mills': total_mills
+                    })
+                
+                for trans in expense_transactions:
+                    # Use the exact transaction amount (already properly calculated)
+                    share_amount = float(trans.amount)
                     
                     # Get expense details if available
                     expense = None
