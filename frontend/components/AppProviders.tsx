@@ -15,7 +15,8 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   const isDashboard = pathname?.startsWith('/dashboard') || pathname?.startsWith('/announcements') || 
                      pathname?.startsWith('/votes') || pathname?.startsWith('/requests') || 
                      pathname?.startsWith('/buildings') || pathname?.startsWith('/apartments') ||
-                     pathname?.startsWith('/map-visualization') || pathname?.startsWith('/residents');
+                     pathname?.startsWith('/map-visualization') || pathname?.startsWith('/residents') ||
+                     pathname?.startsWith('/documents');
 
   // Kiosk mode routes - no auth needed, no LayoutWrapper (they have their own layout)
   if (isKioskMode) {

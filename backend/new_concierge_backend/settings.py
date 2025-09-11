@@ -48,6 +48,10 @@ SHARED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Celery apps - must be in SHARED_APPS for public schema
+    'django_celery_beat',
+    'django_celery_results',
 ]
 
 TENANT_APPS = [
@@ -83,6 +87,9 @@ TENANT_APPS = [
     
     # 🔗 Integrations
     'integrations',
+
+    # 🤖 AI Document Parser
+    'document_parser',
 ]
 
 
@@ -463,3 +470,33 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://demo.localhost:3001')
 # Calendar sync settings
 GOOGLE_CALENDAR_SYNC_ENABLED = os.getenv('GOOGLE_CALENDAR_SYNC_ENABLED', 'True') == 'True'
 GOOGLE_CALENDAR_AUTO_SHARE = os.getenv('GOOGLE_CALENDAR_AUTO_SHARE', 'True') == 'True'
+
+# Celery Configuration
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://redis:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Europe/Athens'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # 25 minutes
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_RESULT_BACKEND = 'django-db'
+
+# Celery Beat Schedule for periodic tasks
+CELERY_BEAT_SCHEDULE = {
+    # Απενεργοποίηση για development - ενεργοποίηση μόνο για production
+    # 'cleanup-old-documents': {
+    #     'task': 'document_parser.tasks.cleanup_old_documents',
+    #     'schedule': 60 * 60 * 24,  # Daily
+    # },
+}
+
+# Google Document AI Settings
+GOOGLE_CLOUD_PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT_ID', '')
+GOOGLE_CLOUD_LOCATION = os.getenv('GOOGLE_CLOUD_LOCATION', 'us')
+GOOGLE_DOCUMENT_AI_PROCESSOR_ID = os.getenv('GOOGLE_DOCUMENT_AI_PROCESSOR_ID', '')
+GOOGLE_APPLICATION_CREDENTIALS = os.getenv('GOOGLE_APPLICATION_CREDENTIALS', BASE_DIR / 'credentials' / 'google-document-ai-credentials.json')

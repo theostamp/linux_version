@@ -133,6 +133,12 @@ const navigationGroups = [
         icon: <FileText className="w-4 h-4" />,
         roles: ['manager', 'staff', 'superuser'],
       },
+      {
+        href: '/documents',
+        label: 'Εισαγωγή Παραστατικών',
+        icon: <FileText className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
     ]
   },
   {

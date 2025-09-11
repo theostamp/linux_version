@@ -1,0 +1,79 @@
+import { apiClient } from '../apiClient';
+
+export interface DocumentUpload {
+    id: number;
+    building: {
+        id: number;
+        name: string;
+    };
+    uploaded_by: {
+        id: number;
+        email: string;
+        first_name: string;
+        last_name: string;
+    };
+    original_file_url: string;
+    status: 'pending' | 'processing' | 'awaiting_confirmation' | 'completed' | 'failed';
+    extracted_data: Record<string, any> | null;
+    created_at: string;
+    updated_at: string;
+    error_message: string | null;
+    original_filename: string;
+    file_size: number;
+    mime_type: string;
+    confidence_score: number | null;
+}
+
+export interface DocumentUploadResponse {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: DocumentUpload[];
+}
+
+export interface UploadDocumentRequest {
+    file: File;
+    building: number;
+}
+
+export interface ConfirmDocumentRequest {
+    [key: string]: any;
+}
+
+// API Functions
+export const getDocumentUploads = async (page: number = 1): Promise<DocumentUploadResponse> => {
+    const response = await apiClient.get(`/parser/uploads/?page=${page}`);
+    return response.data;
+};
+
+export const getDocumentUpload = async (id: string | number): Promise<DocumentUpload> => {
+    const response = await apiClient.get(`/parser/uploads/${id}/`);
+    return response.data;
+};
+
+export const uploadDocument = async (file: File, buildingId: number): Promise<DocumentUpload> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('building', buildingId.toString());
+
+    const response = await apiClient.post('/parser/uploads/', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+    return response.data;
+};
+
+export const processDocument = async (id: string | number): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/parser/uploads/${id}/process/`);
+    return response.data;
+};
+
+export const confirmDocument = async (id: string | number, data: ConfirmDocumentRequest): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/parser/uploads/${id}/confirm/`, data);
+    return response.data;
+};
+
+export const deleteDocument = async (id: string | number): Promise<void> => {
+    await apiClient.delete(`/parser/uploads/${id}/`);
+};

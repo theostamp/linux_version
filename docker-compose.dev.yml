@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16
+    env_file: .env
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    ports: ["15432:5432"]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["16379:6379"]
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: /app/entrypoint.sh
+    volumes:
+      - ./backend/:/app/
+      - static_dev:/vol/static
+      - media_dev:/vol/media
+    env_file: .env
+    environment:
+      - AUTO_MAKEMIGRATIONS=true
+      - CELERY_ENABLED=false  # Απενεργοποίηση Celery για development
+    depends_on: [db]
+    ports: ["8000:8000"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    command: npm run dev
+    volumes:
+      - ./frontend/:/app/
+      - /app/node_modules
+    env_file: .env
+    ports: ["3001:3000"]
+    depends_on: [backend]
+
+volumes:
+  pgdata_dev:
+  redis_data:
+  static_dev:
+  media_dev:

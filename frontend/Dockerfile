@@ -2,33 +2,22 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Set npm configuration for better network handling
-RUN npm config set registry https://registry.npmjs.org/
-RUN npm config set fetch-retries 5
-RUN npm config set fetch-retry-mintimeout 20000
-RUN npm config set fetch-retry-maxtimeout 120000
-
+# Copy package files first for better caching
 COPY package*.json ./
 
-# Use npm install instead of npm ci for better compatibility
-RUN npm install --no-optional
+# Install dependencies with timeout settings
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm config set fetch-retries 3 && \
+    npm config set fetch-retry-mintimeout 10000 && \
+    npm config set fetch-retry-maxtimeout 60000 && \
+    npm install --no-optional --timeout=300000
 
+# Copy source code
 COPY . ./
 
-# Pre-cache SWC packages to avoid download delay on first startup
-# Create Next.js cache directory structure
-RUN mkdir -p /root/.cache/next-swc
-
-# Download common SWC packages that Next.js typically needs
-RUN npx --yes @next/swc-linux-x64-gnu@latest --version || true
-RUN npx --yes @next/swc-linux-x64-musl@latest --version || true
-
-# Pre-build Next.js to cache SWC packages and reduce startup time
+# Set environment variables
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build || true
-
-# Clean up build artifacts but keep SWC cache
-RUN rm -rf .next/static .next/server || true
+ENV NODE_ENV=development
 
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
