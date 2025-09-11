@@ -54,6 +54,11 @@ export interface CommonExpenseModalProps {
   buildingAddress?: string;
   buildingCity?: string;
   buildingPostalCode?: string;
+  // Management office details
+  managementOfficeName?: string;
+  managementOfficePhone?: string;
+  managementOfficeAddress?: string;
+  managementOfficeLogo?: string;
 }
 
 // Type for the result of the data validation

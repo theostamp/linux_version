@@ -6,6 +6,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { Trash2, AlertTriangle } from 'lucide-react';
 
 type Overview = {
   item: any | null;
@@ -87,11 +89,97 @@ export default function ScheduledMaintenanceOverviewModal({
     window.URL.revokeObjectURL(url);
   };
 
+  const deleteInstallment = async (installmentId: number) => {
+    const confirmed = window.confirm(
+      'Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή τη δόση;\n\nΑυτή η ενέργεια δεν μπορεί να αναιρεθεί.'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      await api.delete(`/maintenance/payment-installments/${installmentId}/`);
+      toast.success('Η δόση διαγράφηκε επιτυχώς!');
+      await refresh();
+    } catch (error) {
+      toast.error('Σφάλμα κατά τη διαγραφή της δόσης');
+      console.error('Error deleting installment:', error);
+    }
+  };
+
+  const deleteReceipt = async (receiptId: number) => {
+    const confirmed = window.confirm(
+      'Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή την απόδειξη;\n\nΑυτή η ενέργεια δεν μπορεί να αναιρεθεί.'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      await api.delete(`/maintenance/payment-receipts/${receiptId}/`);
+      toast.success('Η απόδειξη διαγράφηκε επιτυχώς!');
+      await refresh();
+    } catch (error) {
+      toast.error('Σφάλμα κατά τη διαγραφή της απόδειξης');
+      console.error('Error deleting receipt:', error);
+    }
+  };
+
+  const deleteEntireProject = async () => {
+    const confirmed = window.confirm(
+      `Είστε σίγουροι ότι θέλετε να διαγράψετε ολόκληρο το έργο "${data.item?.title}";\n\nΑυτό θα διαγράψει:\n- Όλες τις δόσεις\n- Όλες τις αποδείξεις\n- Την ίδια τη δαπάνη\n\nΑυτή η ενέργεια δεν μπορεί να αναιρεθεί.`
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      // Διαγραφή όλων των δόσεων
+      for (const installment of data.installments || []) {
+        try {
+          await api.delete(`/maintenance/payment-installments/${installment.id}/`);
+        } catch (error) {
+          console.warn(`Failed to delete installment ${installment.id}:`, error);
+        }
+      }
+      
+      // Διαγραφή όλων των αποδείξεων
+      for (const receipt of data.receipts || []) {
+        try {
+          await api.delete(`/maintenance/payment-receipts/${receipt.id}/`);
+        } catch (error) {
+          console.warn(`Failed to delete receipt ${receipt.id}:`, error);
+        }
+      }
+      
+      // Διαγραφή του έργου συντήρησης
+      await api.delete(`/maintenance/scheduled/${id}/`);
+      
+      toast.success('Το έργο και όλα τα σχετικά στοιχεία διαγράφηκαν επιτυχώς!');
+      onOpenChange(false); // Κλείνει το modal
+      
+      // Ενημέρωση της σελίδας
+      window.dispatchEvent(new CustomEvent('expense-deleted'));
+      
+    } catch (error) {
+      toast.error('Σφάλμα κατά τη διαγραφή του έργου');
+      console.error('Error deleting project:', error);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Οικονομική Επισκόπηση Έργου</DialogTitle>
+          <DialogTitle className="flex items-center justify-between">
+            <span>Οικονομική Επισκόπηση Έργου</span>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={deleteEntireProject}
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Διαγραφή Έργου
+            </Button>
+          </DialogTitle>
         </DialogHeader>
         {loading && <div className="text-sm text-muted-foreground">Φόρτωση…</div>}
         {!loading && (
@@ -161,10 +249,18 @@ export default function ScheduledMaintenanceOverviewModal({
                       <div>Ποσό: <span className="font-medium">€ {Number(i.amount || 0).toFixed(2)}</span></div>
                       <div>Κατάσταση: <span className="font-medium">{i.status || '—'}</span></div>
                       <div>Περιγραφή: <span className="font-medium">{i.description || '—'}</span></div>
-                      <div className="text-right">
+                      <div className="text-right flex gap-1">
                         {i.status !== 'paid' && (
-                          <Button size="xs" onClick={() => markInstallmentPaid(i.id)}>Εξόφληση</Button>
+                          <Button size="sm" onClick={() => markInstallmentPaid(i.id)}>Εξόφληση</Button>
                         )}
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          onClick={() => deleteInstallment(i.id)}
+                          className="flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -184,8 +280,16 @@ export default function ScheduledMaintenanceOverviewModal({
                       <div>Ημ/νία: <span className="font-medium">{r.payment_date ? new Date(r.payment_date).toLocaleDateString('el-GR') : '—'}</span></div>
                       <div>Ποσό: <span className="font-medium">€ {Number(r.amount || 0).toFixed(2)}</span></div>
                       <div>Τύπος: <span className="font-medium">{r.receipt_type || '—'}</span></div>
-                      <div className="text-right">
-                        <Button size="xs" variant="outline" onClick={() => downloadReceiptPdf(r.id, r.receipt_number)}>PDF</Button>
+                      <div className="text-right flex gap-1">
+                        <Button size="sm" variant="outline" onClick={() => downloadReceiptPdf(r.id, r.receipt_number)}>PDF</Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          onClick={() => deleteReceipt(r.id)}
+                          className="flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
                       </div>
                     </div>
                   ))}

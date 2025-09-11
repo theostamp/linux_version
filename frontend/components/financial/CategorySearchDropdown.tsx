@@ -103,6 +103,7 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'permits_licenses', label: 'Άδειες & Αποδοχές', group: 'Άλλες Δαπάνες' },
   { value: 'taxes_fees', label: 'Φόροι & Τέλη', group: 'Άλλες Δαπάνες' },
   { value: 'utilities_other', label: 'Άλλες Κοινόχρηστες Υπηρεσίες', group: 'Άλλες Δαπάνες' },
+  { value: 'other', label: 'Άλλο', group: 'Άλλες Δαπάνες' },
 ];
 
 export const CategorySearchDropdown: React.FC<CategorySearchDropdownProps> = ({

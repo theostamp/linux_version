@@ -141,6 +141,56 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                 expense.delete()
                 raise ValidationError(f"Σφάλμα στο upload αρχείου: {str(e)}")
         
+        # Προσθήκη στο ημερολόγιο αν ζητηθεί
+        if expense.add_to_calendar:
+            self._add_expense_to_calendar(expense)
+        
+    def _add_expense_to_calendar(self, expense):
+        """Προσθήκη δαπάνης στο ημερολόγιο ως TodoItem"""
+        try:
+            from todo_management.models import TodoCategory, TodoItem
+            from django.contrib.auth import get_user_model
+            from django.utils import timezone
+            from datetime import datetime
+            
+            User = get_user_model()
+            actor = self.request.user if self.request.user.is_authenticated else User.objects.filter(is_superuser=True).first()
+            
+            # Δημιουργία ή λήψη κατηγορίας για δαπάνες
+            category, _ = TodoCategory.objects.get_or_create(
+                building_id=expense.building.id,
+                name="Λειτουργικές Δαπάνες",
+                defaults={
+                    "icon": "trending-up",
+                    "color": "blue",
+                    "description": "Αυτόματα TODOs από λειτουργικές δαπάνες",
+                },
+            )
+            
+            # Προσδιορισμός ημερομηνίας λήξης
+            if expense.due_date:
+                due_dt = timezone.make_aware(datetime.combine(expense.due_date, datetime.min.time()))
+            else:
+                # Αν δεν υπάρχει due_date, χρησιμοποιούμε την ημερομηνία της δαπάνης
+                due_dt = timezone.make_aware(datetime.combine(expense.date, datetime.min.time()))
+            
+            # Δημιουργία TodoItem
+            TodoItem.objects.create(
+                title=f"Πληρωμή: {expense.title}",
+                description=f"Δαπάνη €{expense.amount} - {expense.get_category_display()}",
+                category=category,
+                building=expense.building,
+                apartment=None,
+                priority="medium",
+                status="pending",
+                due_date=due_dt,
+                created_by=actor,
+                tags=["expense", f"expense:{expense.id}", expense.category]
+            )
+        except Exception as e:
+            # Log το σφάλμα αλλά μην σταματήσεις τη δημιουργία της δαπάνης
+            print(f"⚠️ Σφάλμα προσθήκης δαπάνης στο ημερολόγιο: {e}")
+        
         # Αυτόματη χρέωση διαμερισμάτων αν η δαπάνη είναι εκδοθείσα
         # Σημείωση: Όλες οι δαπάνες θεωρούνται πλέον εκδοθείσες
         if True:  # expense.is_issued removed

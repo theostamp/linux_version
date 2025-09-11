@@ -471,95 +471,13 @@ docker system prune -af --volumes
 docker compose up --build -d
 
 
-docker rmi $(docker images -q)
-
-
-## Εκτέλεση script για καθαρισμό δεδομένων
-# Αντιγραφή script στο container
-docker cp clear_financial_data_simple.py linux_version-backend-1:/app/
-
-# Εκτέλεση
-docker exec -it linux_version-backend-1 python /app/clear_financial_data_simple.py
-
-
-# Πλήρες reset και εκκίνηση
-./reset_and_start.sh
-
-# Ή με interactive menu
-./clean_and_restart.sh
-```
-
-### Επιλεκτικός Καθαρισμός
-```bash
-# Διαγραφή μόνο των unused containers
-docker container prune -f
-
-# Διαγραφή μόνο των unused images
-docker image prune -af
-
-# Διαγραφή μόνο των unused volumes
-docker volume prune -f
-```
-
----
-
-
-
-### Αναλυτική Διαδικασία Ενημέρωσης
-```bash
-# 1. Έλεγχος τρέχουσας κατάστασης
-git status
-git log --oneline -5
-
-# 2. Pull τελευταίων αλλαγών από remote
-git pull origin main
-
-# 3. Προσθήκη αλλαγών
-git add .
-
-# 4. Commit με περιγραφικό μήνυμα
-git commit -m "feat: προσθήκη νέων χαρακτηριστικών οικονομικής διαχείρισης"
-
-# 5. Push στο GitHub
-git push origin main
-
-# 6. Έλεγχος ότι τα πάντα ανέβηκαν σωστά
-git status
-```
-
-### Χρήσιμες Εντολές Git
-```bash
-# Δημιουργία νέου branch
-git checkout -b feature/new-feature
-
-# Αλλαγή branch
-git checkout main
-
-# Merge branch
-git merge feature/new-feature
-
-# Διαγραφή local branch
-git branch -d feature/new-feature
-
-# Διαγραφή remote branch
-git push origin --delete feature/new-feature
-
-# Undo τελευταίου commit (χωρίς να χαθούν οι αλλαγές)
-git reset --soft HEAD~1
-
-# Δημιουργία tag
-git tag -a v2.1.0 -m "Version 2.1.0"
-git push origin v2.1.0
-```
-
-
 
 ## 📤 Ενημέρωση GitHub Repository
 
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "Ολοκληρωση επεξεργασίας προβληματων υπηρεσιών και συνδεσης με δαπανες ."
+git commit -m "φιχ Ολοκληρωση επεξεργασίας προβληματων υπηρεσιών και συνδεσης με δαπανες ."
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

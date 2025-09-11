@@ -57,6 +57,22 @@ export interface Expense {
     receipt_type: string;
     amount: number;
   }>;
+  
+  // Installment information
+  has_installments?: boolean;
+  linked_maintenance_projects?: Array<{
+    id: number;
+    title: string;
+    description: string;
+    scheduled_date: string;
+    status: string;
+    priority: string;
+    payment_schedule?: {
+      id: number;
+      total_amount: number;
+      installment_count: number;
+    };
+  }>;
 }
 
 export interface Transaction {
@@ -181,6 +197,8 @@ export interface ExpenseFormData {
   supplier?: number;
   notes?: string;
   attachment?: File;
+  due_date?: string; // Ημερομηνία πληρωμής
+  add_to_calendar?: boolean; // Προσθήκη στο ημερολόγιο
 }
 
 export interface PaymentFormData {
@@ -417,6 +435,7 @@ export const ExpenseCategory = {
   PERMITS_LICENSES: 'permits_licenses',
   TAXES_FEES: 'taxes_fees',
   UTILITIES_OTHER: 'utilities_other',
+  OTHER: 'other',
 } as const;
 
 export type ExpenseCategory = typeof ExpenseCategory[keyof typeof ExpenseCategory];

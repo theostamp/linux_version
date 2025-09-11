@@ -23,6 +23,11 @@ interface PdfGeneratorParams {
   managerApartment?: string;
   managerPhone?: string;
   managerCollectionSchedule?: string;
+  // Management office details
+  managementOfficeName?: string;
+  managementOfficePhone?: string;
+  managementOfficeAddress?: string;
+  managementOfficeLogo?: string;
   expenseBreakdown: ExpenseBreakdown;
   reserveFundInfo: ReserveFundInfo;
   managementFeeInfo: ManagementFeeInfo;
@@ -45,6 +50,10 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
     managerApartment,
     managerPhone,
     managerCollectionSchedule,
+    managementOfficeName,
+    managementOfficePhone,
+    managementOfficeAddress,
+    managementOfficeLogo,
     expenseBreakdown,
     reserveFundInfo,
     managementFeeInfo,

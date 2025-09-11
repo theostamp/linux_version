@@ -29,13 +29,14 @@ import {
   X,
   Info
 } from 'lucide-react';
-import { CalculatorState } from './CalculatorWizard';
+import { CalculatorState } from './types/financial';
 import { useCommonExpenses } from '@/hooks/useCommonExpenses';
 import { toast } from 'sonner';
 import { CommonExpenseModal } from './CommonExpenseModal';
 import { useApartmentsWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
 import { useMonthRefresh } from '@/hooks/useMonthRefresh';
 import { api } from '@/lib/api';
+import { useAuth } from '@/components/contexts/AuthContext';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { usePayments } from '@/hooks/usePayments';
 
@@ -61,6 +62,9 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [calculationProgress, setCalculationProgress] = useState(0);
   const [calculationSuccess, setCalculationSuccess] = useState(false);
+  
+  // Get user office details
+  const { user } = useAuth();
 
   // Dashboard summary (up to today)
   interface DashboardSummary {
@@ -185,10 +189,23 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
       const expenseIds: number[] = [];
       
       Object.entries(state.shares).forEach(([apartmentId, share]) => {
+        // Type assertion to ensure share has the expected structure
+        const typedShare = share as {
+          total_amount: number;
+          breakdown?: Array<{
+            expense_id: number;
+            expense_title: string;
+            expense_amount: number;
+            apartment_share: number;
+            distribution_type: string;
+            distribution_type_display: string;
+          }>;
+        };
+        
         transformedShares[apartmentId] = {
-          total_amount: share.total_amount,
-          breakdown: share.breakdown
-            ? share.breakdown.reduce(
+          total_amount: typedShare.total_amount,
+          breakdown: typedShare.breakdown
+            ? typedShare.breakdown.reduce(
                 (
                   acc: Record<
                     number,
@@ -213,15 +230,15 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                     expense_title: item.expense_title,
                     expense_amount: item.expense_amount,
                     apartment_share: item.apartment_share,
-              distribution_type: item.distribution_type,
-              distribution_type_display: item.distribution_type_display
-            };
-            // Collect expense IDs
-            if (!expenseIds.includes(item.expense_id)) {
-              expenseIds.push(item.expense_id);
-            }
-            return acc;
-          }, {} as Record<string, any>) : {}
+                    distribution_type: item.distribution_type,
+                    distribution_type_display: item.distribution_type_display
+                  };
+                  // Collect expense IDs
+                  if (!expenseIds.includes(item.expense_id)) {
+                    expenseIds.push(item.expense_id);
+                  }
+                  return acc;
+                }, {} as Record<string, any>) : {}
         };
       });
       
@@ -514,7 +531,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         <body>
           <!-- Header Section -->
           <div class="header">
-            <div class="brand">Digital Concierge App</div>
+            <div class="brand">${user?.office_name || 'Γραφείο Διαχείρισης'}</div>
             <div class="subtitle">online έκδοση κοινοχρήστων</div>
             <div class="main-title">Φύλλο Κοινοχρήστων</div>
             <div class="period">${period}</div>
@@ -1405,6 +1422,10 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
         buildingAddress={buildingData?.address || ""}
         buildingCity={buildingData?.city || ""}
         buildingPostalCode={buildingData?.postal_code || ""}
+        managementOfficeName={user?.office_name || ""}
+        managementOfficePhone={user?.office_phone || ""}
+        managementOfficeAddress={user?.office_address || ""}
+        managementOfficeLogo={user?.office_logo || ""}
       />
     </div>
   );

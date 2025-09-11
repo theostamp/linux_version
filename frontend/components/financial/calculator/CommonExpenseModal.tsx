@@ -40,6 +40,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { X, Building, PieChart, Receipt, BarChart, FileText, Calendar } from 'lucide-react';
 import { CommonExpenseModalProps } from './types/financial';
 import { useCommonExpenseCalculator } from './hooks/useCommonExpenseCalculator';
+import { api, API_BASE_URL } from '@/lib/api';
 import { TraditionalViewTab } from './tabs/TraditionalViewTab';
 import { ExportTab } from './tabs/ExportTab';
 import { ExpenseBreakdownSection } from './ExpenseBreakdownSection';
@@ -63,14 +64,17 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     onClose,
     state,
     buildingName = 'Άγνωστο Κτίριο',
+    managementOfficeName,
+    managementOfficePhone,
+    managementOfficeAddress,
+    managementOfficeLogo,
   } = props;
 
   // State for expense sheet month selection
   const [expenseSheetMonth, setExpenseSheetMonth] = React.useState(() => {
-    // Default to previous month if available, otherwise current month
+    // Default to current month
     const currentMonth = new Date();
-    const previousMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
-    return `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`;
+    return `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
   });
 
   // Generate month options for the last 12 months
@@ -133,7 +137,27 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
       <div key={expenseSheetMonth} className="bg-white rounded-lg max-w-[95vw] w-full max-h-[85vh] overflow-y-auto print-content">
         <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between no-print">
             <div className="flex items-center gap-4">
-                <h2 className="text-lg font-bold text-blue-600">Digital Concierge App</h2>
+                {/* Office Logo */}
+                {managementOfficeLogo && (
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-white border">
+                    <img 
+                      src={managementOfficeLogo.startsWith('http') ? managementOfficeLogo : `${API_BASE_URL}${managementOfficeLogo.startsWith('/') ? managementOfficeLogo : `/${managementOfficeLogo}`}`}
+                      alt="Office Logo" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                )}
+                <div>
+                  <h2 className="text-lg font-bold text-blue-600">
+                    {managementOfficeName || 'Γραφείο Διαχείρισης'}
+                  </h2>
+                  {managementOfficePhone && (
+                    <p className="text-xs text-gray-600">📞 {managementOfficePhone}</p>
+                  )}
+                  {managementOfficeAddress && (
+                    <p className="text-xs text-gray-600">📍 {managementOfficeAddress}</p>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                     <Building className="h-6 w-6 text-blue-600" />
                     <div>

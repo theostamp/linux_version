@@ -69,6 +69,76 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
   const handleDeleteExpense = async (expense: Expense, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the expense selection
     
+    // Έλεγχος αν η δαπάνη συνδέεται με έργο
+    const isProjectRelated = (
+      // Δαπάνες με δόσεις/διακανονισμούς
+      (expense.has_installments && expense.linked_maintenance_projects && expense.linked_maintenance_projects.length > 0) ||
+      // Δαπάνες που συνδέονται με προγραμματισμένα έργα (ανεξάρτητα από δόσεις)
+      (expense.linked_maintenance_projects && expense.linked_maintenance_projects.length > 0) ||
+      // Δαπάνες που έχουν maintenance-related κατηγορίες
+      [
+        // Κτίριο
+        'building_maintenance',
+        'roof_maintenance', 'roof_repair',
+        'facade_maintenance', 'facade_repair',
+        'painting_exterior', 'painting_interior',
+        'garden_maintenance', 'parking_maintenance', 'entrance_maintenance',
+        
+        // Ανελκυστήρας
+        'elevator_maintenance', 'elevator_repair', 'elevator_inspection', 'elevator_modernization',
+        
+        // Ηλεκτρικά
+        'electrical_maintenance', 'electrical_repair', 'electrical_upgrade',
+        'lighting_common', 'intercom_system',
+        
+        // Υδραυλικά
+        'plumbing_maintenance', 'plumbing_repair',
+        'water_tank_cleaning', 'water_tank_maintenance', 'sewage_system',
+        
+        // Θέρμανση
+        'heating_maintenance', 'heating_repair', 'heating_inspection', 'heating_modernization',
+        
+        // Έκτακτες
+        'emergency_repair', 'storm_damage', 'flood_damage', 'fire_damage', 'earthquake_damage', 'vandalism_repair',
+        
+        // Ειδικές επισκευές
+        'locksmith', 'glass_repair', 'door_repair', 'window_repair', 'balcony_repair', 'staircase_repair',
+        
+        // Ασφάλεια & Πρόσβαση
+        'security_system', 'cctv_installation', 'access_control', 'fire_alarm', 'fire_extinguishers',
+        
+        // Ειδικές εργασίες
+        'asbestos_removal', 'lead_paint_removal', 'mold_removal', 'pest_control', 'tree_trimming', 'snow_removal',
+        
+        // Ενεργειακή απόδοση
+        'energy_upgrade', 'insulation_work', 'solar_panel_installation', 'led_lighting', 'smart_systems'
+      ].includes(expense.category as string)
+    );
+    
+    if (isProjectRelated) {
+      const project = expense.linked_maintenance_projects?.[0];
+      const projectInfo = project ? ` με έργο "${project.title}"` : '';
+      
+      toast.info(
+        `Η δαπάνη "${expense.title}" σχετίζεται${projectInfo}. Για τη διαχείρισή της θα μεταφερθείτε στο οικονομικό dashboard του έργου.`
+      );
+      
+      // Ανοίγει το modal "Οικονομική Επισκόπηση Έργου"
+      if (project?.id) {
+        window.dispatchEvent(new CustomEvent('open-maintenance-overview', { 
+          detail: { maintenanceId: project.id } 
+        }));
+      } else {
+        // Αν δεν υπάρχει συγκεκριμένο έργο, ανοίγει γενικό maintenance dashboard
+        toast.info('Αυτή η δαπάνη σχετίζεται με έργο συντήρησης. Θα μεταφερθείτε στη διαχείριση έργων για περαιτέρω ενέργειες.');
+        setTimeout(() => {
+          window.open('/maintenance?tab=overview', '_blank');
+        }, 1500); // Μικρή καθυστέρηση για να διαβάσει ο χρήστης το μήνυμα
+      }
+      return;
+    }
+    
+    // Για απλές δαπάνες χωρίς δόσεις
     const confirmed = window.confirm(
       `Είστε σίγουροι ότι θέλετε να διαγράψετε τη δαπάνη "${expense.title}" (${formatCurrency(expense.amount)})?\n\nΑυτή η ενέργεια δεν μπορεί να αναιρεθεί.`
     );

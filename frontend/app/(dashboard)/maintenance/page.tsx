@@ -23,6 +23,7 @@ import { useBuildingEvents } from '@/lib/useBuildingEvents';
 import { getRelativeTimeEl } from '@/lib/date';
 import { useRole } from '@/lib/auth';
 import { BackButton } from '@/components/ui/BackButton';
+import { ExpenseForm } from '@/components/financial/ExpenseForm';
 
 interface MaintenanceStats {
   total_contractors: number;
@@ -34,10 +35,244 @@ interface MaintenanceStats {
   total_spent: number;
 }
 
+// Operational Expenses Tab Component
+function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
+  const [showExpenseForm, setShowExpenseForm] = useState(false);
+  
+  // Query for operational expenses (utilities and regular monthly bills ONLY)
+  const operationalExpensesQ = useQuery({
+    queryKey: ['operational-expenses', { building: buildingId }],
+    queryFn: async () => {
+      const response = await api.get('/financial/expenses/', {
+        params: {
+          building_id: buildingId,
+          category__in: [
+            'electricity_common',
+            'water_common', 
+            'heating_fuel',
+            'heating_gas',
+            'garbage_collection'
+          ].join(','),
+          ordering: '-date',
+          limit: 50
+        }
+      });
+      return response.data;
+    },
+    enabled: !!buildingId
+  });
+
+  const expenseRows = extractResults<any>(operationalExpensesQ.data ?? []);
+  const totalOperationalExpenses = expenseRows.reduce((sum: number, expense: any) => sum + (Number(expense?.amount) || 0), 0);
+
+  if (showExpenseForm) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold tracking-tight">Νέος Μηνιαίος Λογαριασμός</h2>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowExpenseForm(false)}
+          >
+            Ακύρωση
+          </Button>
+        </div>
+        <ExpenseForm
+          buildingId={buildingId || 1}
+          onSuccess={() => {
+            setShowExpenseForm(false);
+            operationalExpensesQ.refetch();
+          }}
+          onCancel={() => setShowExpenseForm(false)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Λειτουργικές Δαπάνες</h2>
+          <p className="text-muted-foreground">
+            Διαχείριση μηνιαίων λογαριασμών κτιρίου (ρεύμα, νερό, θέρμανση, απορρίμματα)
+          </p>
+        </div>
+        <Button onClick={() => setShowExpenseForm(true)}>
+          <FileText className="w-4 h-4 mr-2" />
+          Νέος Λογαριασμός
+        </Button>
+      </div>
+
+      {/* Stats for Operational Expenses */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Συνολικές Δαπάνες</CardTitle>
+            <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">€{Math.round(totalOperationalExpenses).toLocaleString('el-GR')}</div>
+            <p className="text-xs text-muted-foreground">Φέτος</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Αριθμός Δαπανών</CardTitle>
+            <div className="p-2 rounded-lg bg-green-50 text-green-600">
+              <FileText className="w-4 h-4" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{expenseRows.length}</div>
+            <p className="text-xs text-muted-foreground">Καταχωρήσεις</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Μέσος Όρος/Μήνα</CardTitle>
+            <div className="p-2 rounded-lg bg-yellow-50 text-yellow-600">
+              <Calendar className="w-4 h-4" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              €{expenseRows.length > 0 ? Math.round(totalOperationalExpenses / Math.max(expenseRows.length, 1)).toLocaleString('el-GR') : 0}
+            </div>
+            <p className="text-xs text-muted-foreground">Ανά καταχώρηση</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Τελευταία Ενημέρωση</CardTitle>
+            <div className="p-2 rounded-lg bg-purple-50 text-purple-600">
+              <Clock className="w-4 h-4" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {expenseRows.length > 0 ? getRelativeTimeEl(new Date(expenseRows[0]?.date || new Date())) : 'Καμία'}
+            </div>
+            <p className="text-xs text-muted-foreground">Δαπάνη</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Operational Expenses */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Πρόσφατες Λειτουργικές Δαπάνες</CardTitle>
+          <CardDescription>
+            Τελευταίες καταχωρήσεις μηνιαίων λογαριασμών κτιρίου (ρεύμα, νερό, θέρμανση, απορρίμματα)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {operationalExpensesQ.isLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+          ) : expenseRows.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-sm text-muted-foreground mb-4">Δεν υπάρχουν μηνιαίοι λογαριασμοί.</p>
+              <Button onClick={() => setShowExpenseForm(true)}>
+                Προσθήκη πρώτου λογαριασμού
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {expenseRows.slice(0, 5).map((expense: any) => (
+                <div key={expense.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-2 rounded-lg bg-blue-50">
+                      <FileText className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{expense.title || 'Λειτουργική Δαπάνη'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(expense.date).toLocaleDateString('el-GR')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold">€{Number(expense.amount).toLocaleString('el-GR')}</p>
+                    <Badge variant="outline" className="text-xs">
+                      {expense.category === 'electricity_common' ? 'ΔΕΗ' :
+                       expense.category === 'water_common' ? 'ΕΥΔΑΠ' :
+                       expense.category === 'heating_fuel' ? 'Πετρέλαιο' :
+                       expense.category === 'heating_gas' ? 'Αέριο' :
+                       expense.category === 'garbage_collection' ? 'Απορρίμματα' :
+                       'Λειτουργικά'}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+              {expenseRows.length > 5 && (
+                <div className="text-center pt-4">
+                  <Button variant="outline" asChild>
+                    <Link href="/financial">Δείτε όλες τις δαπάνες</Link>
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions for Operational Expenses */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Γρήγορες Ενέργειες</CardTitle>
+          <CardDescription>
+            Συχνές λειτουργίες για μηνιαίους λογαριασμούς κτιρίου
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Button 
+              variant="outline" 
+              className="h-auto p-4 flex-col"
+              onClick={() => setShowExpenseForm(true)}
+            >
+              <FileText className="w-6 h-6 mb-2" />
+              <span>Νέος Λογαριασμός</span>
+            </Button>
+            <Button asChild variant="outline" className="h-auto p-4 flex-col">
+              <Link href="/financial">
+                <TrendingUp className="w-6 h-6 mb-2" />
+                <span>Όλες οι Δαπάνες</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-auto p-4 flex-col">
+              <Link href="/financial/common-expenses">
+                <Calendar className="w-6 h-6 mb-2" />
+                <span>Κοινόχρηστα</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-auto p-4 flex-col">
+              <Link href="/financial/reports">
+                <CheckCircle className="w-6 h-6 mb-2" />
+                <span>Αναφορές</span>
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function MaintenanceDashboard() {
   useBuildingEvents();
   const { isAdmin, isManager } = useRole();
   const buildingId = getActiveBuildingId();
+  const [activeTab, setActiveTab] = useState('overview');
 
   const contractorsQ = useQuery({
     queryKey: ['contractors', { building: buildingId }],
@@ -146,7 +381,6 @@ export default function MaintenanceDashboard() {
   };
 
   const receiptsPendingRows = extractResults<any>(receiptsQ.data ?? []);
-  const receiptsPaidRows = extractResults<any>(receiptsCompletedQ.data ?? []);
 
   const getCompletionDate = (r: any): Date | null => {
     return (
@@ -313,9 +547,9 @@ export default function MaintenanceDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Υπηρεσίες</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Υπηρεσίες & Δαπάνες</h1>
           <p className="text-muted-foreground">
-            Διαχείριση συνεργείων, αποδείξεων και προγραμματισμένων έργων
+            Διαχείριση Συνεργείων,  Πληρωμές Δαπανών και Προγραμματισμένων Έργων
           </p>
         </div>
         {(isAdmin || isManager) && (
@@ -336,6 +570,15 @@ export default function MaintenanceDashboard() {
           </div>
         )}
       </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="overview">Επισκόπηση & Έργα</TabsTrigger>
+          <TabsTrigger value="operational-expenses">Λειτουργικές Δαπάνες</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="space-y-6 mt-6">
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -458,6 +701,12 @@ export default function MaintenanceDashboard() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="operational-expenses" className="space-y-6 mt-6">
+          <OperationalExpensesTab buildingId={buildingId} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 } 

@@ -132,6 +132,7 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'permits_licenses', label: 'Άδειες & Αποδοχές', group: 'Άλλες' },
   { value: 'taxes_fees', label: 'Φόροι & Τέλη', group: 'Άλλες' },
   { value: 'utilities_other', label: 'Άλλες Κοινόχρηστες Υπηρεσίες', group: 'Άλλες' },
+  { value: 'other', label: 'Άλλο', group: 'Άλλες' },
 ];
 
 const DISTRIBUTION_TYPES: { value: DistributionType; label: string }[] = [
@@ -167,6 +168,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
       building: buildingId,
       distribution_type: 'by_participation_mills',
       date: new Date().toISOString().split('T')[0],
+      add_to_calendar: true, // Αυτόματη προσθήκη στο ημερολόγιο
     },
     mode: 'onChange'
   });
@@ -174,6 +176,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
   const selectedCategory = watch('category');
   const selectedSupplier = watch('supplier');
   const selectedTitle = watch('title');
+  const selectedDate = watch('date');
 
   // Get selected supplier details
   const selectedSupplierDetails = suppliers.find(s => s.id === selectedSupplier);
@@ -279,8 +282,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Νέα Δαπάνη</h1>
-          <p className="text-gray-600 mt-1">Καταχώρηση νέας δαπάνης για το κτίριο</p>
+          <p className="text-gray-600">Καταχώρηση νέας δαπάνης για το κτίριο</p>
         </div>
         {isValid && (
           <Badge variant="outline" className="text-green-700 border-green-200 bg-green-50">
@@ -353,6 +355,29 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
                   <p className="text-sm text-red-600">{errors.title.message}</p>
                 )}
               </div>
+
+              {/* Περιγραφή για "Άλλο" */}
+              {selectedCategory === 'other' && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Περιγραφή Κατηγορίας *
+                  </label>
+                  <input
+                    type="text"
+                    {...register('title', { 
+                      required: selectedCategory === 'other' ? 'Απαιτείται περιγραφή για την κατηγορία "Άλλο"' : false 
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Περιγράψτε την κατηγορία δαπάνης..."
+                  />
+                  <p className="text-xs text-gray-500">
+                    Περιγράψτε την κατηγορία δαπάνης για καλύτερη κατηγοριοποίηση
+                  </p>
+                  {errors.title && (
+                    <p className="text-sm text-red-600">{errors.title.message}</p>
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -422,6 +447,40 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
                 {errors.date && (
                   <p className="text-sm text-red-600">{errors.date.message}</p>
                 )}
+              </div>
+
+              {/* Πληρωτέο ως */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Πληρωτέο ως
+                </label>
+                <input
+                  type="date"
+                  {...register('due_date')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <p className="text-xs text-gray-500">
+                  Ημερομηνία πληρωμής της δαπάνης (προαιρετικό)
+                </p>
+              </div>
+
+              {/* Αυτόματη προσθήκη στο ημερολόγιο */}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">
+                      Αυτόματη προσθήκη στο ημερολόγιο
+                    </p>
+                    <p className="text-xs text-blue-700">
+                      Η δαπάνη θα προστεθεί αυτόματα στο ημερολόγιο για υπενθύμιση πληρωμής
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Τρόπος Κατανομής */}

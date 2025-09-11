@@ -1092,7 +1092,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 <div className="space-y-3">
                   {/* Πραγματικά έξοδα */}
                   <div className="space-y-1">
-                    <div className="text-xs text-red-600 font-medium">Λειτουργικές Δαπάνες</div>
+                    <div className="text-xs text-red-600 font-medium"> Δαπάνες</div>
                     <div className="text-lg font-bold text-red-700">
                     {formatCurrency(financialSummary.average_monthly_expenses || 0)}
                     </div>
@@ -1522,8 +1522,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         {/* Section 2: Overall Financial Health */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-            Συνολική Οικονομική Υγεία Κτιρίου
-          </h3>
+            Ρύθμιση Αποθεματικού & Εξοδα Διαχείρησης    </h3>
           <div className="grid grid-cols-1 lg:grid-cols-10 gap-3 sm:gap-4">
             {/* Reserve Fund Goal Card - 70% width */}
             <Card className={`col-span-1 lg:col-span-7 ${getReserveFundCardColors(reserveProgress)} relative ${refreshingReserve ? 'opacity-75' : ''}`}>

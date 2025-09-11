@@ -469,14 +469,48 @@ export default function ScheduledMaintenanceForm({
       console.log('isEditing:', isEditing, 'initialData:', initialData);
       
       if (isEditing && initialData) {
-        // Basic change detection only
+        // Comprehensive change detection
         const hasBasicChanges = (
           values.title !== initialData.title ||
-          values.priority !== initialData.priority
+          values.priority !== initialData.priority ||
+          values.description !== (initialData.description || '') ||
+          values.contractor !== initialData.contractor ||
+          values.scheduled_date !== initialData.scheduled_date ||
+          values.price !== (initialData.price || undefined) ||
+          values.estimated_duration !== (initialData.estimated_duration || undefined)
         );
+
+        // Payment config change detection
+        const initialPaymentConfig = (initialData as any)?.payment_config || {};
+        const currentPaymentConfig = values.payment_config || {};
         
-        if (!hasBasicChanges) {
-          console.log('❌ No basic changes detected');
+        console.log('💰 Payment Config Comparison:');
+        console.log('Initial payment_type:', initialPaymentConfig.payment_type);
+        console.log('Current payment_type:', currentPaymentConfig.payment_type);
+        console.log('Initial payment config:', initialPaymentConfig);
+        console.log('Current payment config:', currentPaymentConfig);
+        
+        const hasPaymentConfigChanges = (
+          currentPaymentConfig.enabled !== initialPaymentConfig.enabled ||
+          currentPaymentConfig.payment_type !== initialPaymentConfig.payment_type ||
+          currentPaymentConfig.total_amount !== initialPaymentConfig.total_amount ||
+          currentPaymentConfig.advance_percentage !== initialPaymentConfig.advance_percentage ||
+          currentPaymentConfig.installment_count !== initialPaymentConfig.installment_count ||
+          currentPaymentConfig.installment_frequency !== initialPaymentConfig.installment_frequency ||
+          currentPaymentConfig.periodic_frequency !== initialPaymentConfig.periodic_frequency ||
+          currentPaymentConfig.periodic_amount !== initialPaymentConfig.periodic_amount ||
+          currentPaymentConfig.start_date !== initialPaymentConfig.start_date ||
+          currentPaymentConfig.notes !== initialPaymentConfig.notes ||
+          currentPaymentConfig.advance_amount !== initialPaymentConfig.advance_amount ||
+          currentPaymentConfig.remaining_amount !== initialPaymentConfig.remaining_amount ||
+          currentPaymentConfig.installment_amount !== initialPaymentConfig.installment_amount
+        );
+
+        const hasAnyChanges = hasBasicChanges || hasPaymentConfigChanges;
+        
+        if (!hasAnyChanges) {
+          console.log('❌ No changes detected');
+          console.log('Basic changes:', hasBasicChanges, 'Payment config changes:', hasPaymentConfigChanges);
           toast({ 
             title: 'Καμία Αλλαγή', 
             description: 'Δεν εντοπίστηκαν αλλαγές για αποθήκευση.',
@@ -486,6 +520,7 @@ export default function ScheduledMaintenanceForm({
         }
         
         console.log('✅ Changes detected, proceeding...');
+        console.log('Basic changes:', hasBasicChanges, 'Payment config changes:', hasPaymentConfigChanges);
       }
     
       const payload: any = {

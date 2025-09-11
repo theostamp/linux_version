@@ -33,6 +33,10 @@ class ExpenseSerializer(serializers.ModelSerializer):
     linked_service_receipt = serializers.SerializerMethodField()
     linked_scheduled_maintenance = serializers.SerializerMethodField()
     maintenance_payment_receipts = serializers.SerializerMethodField()
+    
+    # Installment information
+    has_installments = serializers.SerializerMethodField()
+    linked_maintenance_projects = serializers.SerializerMethodField()
 
     class Meta:
         model = Expense
@@ -40,8 +44,9 @@ class ExpenseSerializer(serializers.ModelSerializer):
             'id', 'building', 'building_name', 'title', 'amount', 'date', 
             'category', 'category_display', 'distribution_type', 'distribution_type_display',
             'supplier', 'supplier_name', 'supplier_details', 'attachment', 'attachment_url',
-            'notes', 'created_at', 'updated_at',
-            'linked_service_receipt', 'linked_scheduled_maintenance', 'maintenance_payment_receipts'
+            'notes', 'due_date', 'add_to_calendar', 'created_at', 'updated_at',
+            'linked_service_receipt', 'linked_scheduled_maintenance', 'maintenance_payment_receipts',
+            'has_installments', 'linked_maintenance_projects'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
     
@@ -117,6 +122,34 @@ class ExpenseSerializer(serializers.ModelSerializer):
             return result
         except Exception as e:
             # In case of import error or other issues, return empty list
+            return []
+    
+    def get_has_installments(self, obj):
+        """Ελέγχει αν η δαπάνη έχει δόσεις/διακανονισμούς"""
+        return obj.has_installments()
+    
+    def get_linked_maintenance_projects(self, obj):
+        """Επιστρέφει τα συνδεδεμένα έργα συντήρησης με δόσεις"""
+        try:
+            projects = obj.get_linked_maintenance_projects()
+            result = []
+            for project in projects:
+                project_data = {
+                    'id': project.id,
+                    'title': project.title,
+                    'description': project.description,
+                    'scheduled_date': project.scheduled_date,
+                    'status': project.status,
+                    'priority': project.priority,
+                    'payment_schedule': {
+                        'id': project.payment_schedule.id,
+                        'total_amount': float(project.payment_schedule.total_amount),
+                        'installment_count': project.payment_schedule.installment_count,
+                    } if project.payment_schedule else None
+                }
+                result.append(project_data)
+            return result
+        except Exception as e:
             return []
 
 

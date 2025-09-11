@@ -75,6 +75,14 @@ export const useExpenses = (buildingId?: number, selectedMonth?: string) => {
       if (data.attachment) {
         formData.append('attachment', data.attachment);
       }
+      
+      if (data.due_date) {
+        formData.append('due_date', data.due_date);
+      }
+      
+      if (data.add_to_calendar !== undefined) {
+        formData.append('add_to_calendar', data.add_to_calendar.toString());
+      }
 
       const response = await api.post('/financial/expenses/', formData, {
         headers: {

@@ -209,6 +209,7 @@ class Expense(models.Model):
         ('permits_licenses', 'Άδειες & Αποδοχές'),
         ('taxes_fees', 'Φόροι & Τέλη'),
         ('utilities_other', 'Άλλες Κοινόχρηστες Υπηρεσίες'),
+        ('other', 'Άλλο'),
     ]
     
     DISTRIBUTION_TYPES = [
@@ -240,6 +241,17 @@ class Expense(models.Model):
         help_text="Παραστατικό ή άλλο σχετικό αρχείο"
     )
     notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
+    due_date = models.DateField(
+        null=True, 
+        blank=True, 
+        verbose_name="Πληρωτέο ως",
+        help_text="Ημερομηνία πληρωμής της δαπάνης"
+    )
+    add_to_calendar = models.BooleanField(
+        default=True,
+        verbose_name="Προσθήκη στο ημερολόγιο",
+        help_text="Προσθήκη της δαπάνης στο ημερολόγιο για υπενθύμιση"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -247,6 +259,16 @@ class Expense(models.Model):
         verbose_name = "Δαπάνη"
         verbose_name_plural = "Δαπάνες"
         ordering = ['-date', '-created_at']
+    
+    def has_installments(self):
+        """Ελέγχει αν η δαπάνη έχει δόσεις/διακανονισμούς μέσω συνδεδεμένων έργων συντήρησης"""
+        return self.scheduled_maintenance_tasks.exists()
+    
+    def get_linked_maintenance_projects(self):
+        """Επιστρέφει τα συνδεδεμένα έργα συντήρησης με δόσεις"""
+        return self.scheduled_maintenance_tasks.filter(
+            payment_schedule__isnull=False
+        ).select_related('payment_schedule')
     
     def __str__(self):
         return f"{self.title} - {self.amount}€ ({self.get_category_display()})"

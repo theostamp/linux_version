@@ -1,1 +1,1 @@
-# Commands package for financial app
+# Management commands package for financial app

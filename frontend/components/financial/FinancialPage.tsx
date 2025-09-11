@@ -15,6 +15,7 @@ import {
 
   FinancialOverviewTab
 } from './index';
+import ScheduledMaintenanceOverviewModal from '../maintenance/ScheduledMaintenanceOverviewModal';
 import { ApartmentBalancesTab } from './ApartmentBalancesTab';
 
 import { MeterReadingList } from './MeterReadingList';
@@ -76,6 +77,10 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   });
   const [apartments, setApartments] = useState<ApartmentList[]>([]);
   const [reserveFundMonthlyAmount, setReserveFundMonthlyAmount] = useState<number>(0); // No hardcoded default - will be set from building data
+  
+  // State for maintenance overview modal
+  const [maintenanceOverviewOpen, setMaintenanceOverviewOpen] = useState(false);
+  const [selectedMaintenanceId, setSelectedMaintenanceId] = useState<number | null>(null);
   const { canCreateExpense, canAccessReports, canCalculateCommonExpenses } = useFinancialPermissions();
   
 
@@ -85,6 +90,20 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 
   // Ref for expense list to refresh data
   const expenseListRef = useRef<{ refresh: () => void }>(null);
+  
+  // Event listener for opening maintenance overview modal
+  useEffect(() => {
+    const handleOpenMaintenanceOverview = (event: CustomEvent) => {
+      setSelectedMaintenanceId(event.detail.maintenanceId);
+      setMaintenanceOverviewOpen(true);
+    };
+    
+    window.addEventListener('open-maintenance-overview', handleOpenMaintenanceOverview as EventListener);
+    
+    return () => {
+      window.removeEventListener('open-maintenance-overview', handleOpenMaintenanceOverview as EventListener);
+    };
+  }, []);
   
   // Auto-refresh financial data when expenses change
   useFinancialAutoRefresh(
@@ -834,6 +853,12 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         )}
       </ConditionalRender>
       
+      {/* Maintenance Overview Modal */}
+      <ScheduledMaintenanceOverviewModal
+        open={maintenanceOverviewOpen}
+        onOpenChange={setMaintenanceOverviewOpen}
+        maintenanceId={selectedMaintenanceId}
+      />
 
     </div>
   );
