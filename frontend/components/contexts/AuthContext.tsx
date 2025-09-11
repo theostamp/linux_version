@@ -18,7 +18,6 @@ import FullPageSpinner from '@/components/FullPageSpinner';
 
 interface AuthCtx {
   user: User | null;
-  tokens: { access: string; refresh: string } | null;
   login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -32,7 +31,6 @@ const AuthContext = createContext<AuthCtx | undefined>(undefined);
 
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [userState, setUserState] = useState<User | null>(null);
-  const [tokensState, setTokensState] = useState<{ access: string; refresh: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
@@ -51,7 +49,6 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     localStorage.removeItem('refresh');
     localStorage.removeItem('user');
     setUser(null);
-    setTokensState(null);
     console.log('AuthContext: Client-side logout performed.');
   }, [setUser]);
 
@@ -60,11 +57,6 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       setIsLoading(true);
       const { user: loggedInUser } = await loginUser(email, password);
       setUser(loggedInUser);
-      const access = localStorage.getItem('access');
-      const refresh = localStorage.getItem('refresh');
-      if (access && refresh) {
-        setTokensState({ access, refresh });
-      }
       console.log('AuthContext: Login successful for user:', loggedInUser?.email);
       
       // Ensure states are properly set after successful login
@@ -77,7 +69,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       console.error('AuthContext: Login failed:', error);
       throw error;
     }
-  }, [setUser, setTokensState]);
+  }, [setUser]);
 
   const logout = useCallback(async () => {
     try {
@@ -121,16 +113,14 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     const loadUserOnMount = async () => {
       setIsLoading(true);
 
-      const accessToken = localStorage.getItem('access');
-      const refreshToken = localStorage.getItem('refresh');
+      const token = localStorage.getItem('access');
       const cachedUser = localStorage.getItem('user');
 
       // Skip auto-login to simplify the flow - users can manually login
 
-      if (!accessToken) {
+      if (!token) {
         console.log('AuthContext: No token found on mount');
         setUser(null);
-        setTokensState(null);
         setIsLoading(false);
         setIsAuthReady(true);
         return;
@@ -138,9 +128,6 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
 
       if (cachedUser) {
         try {
-          if (accessToken && refreshToken) {
-            setTokensState({ access: accessToken, refresh: refreshToken });
-          }
           const parsedUser = JSON.parse(cachedUser) as User;
           
           // Always verify user data with API to ensure permissions are up to date
@@ -162,7 +149,6 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
           console.error('AuthContext: Failed to parse cached user', e);
           localStorage.removeItem('user');
           setUser(null);
-          setTokensState(null);
         }
       }
 
@@ -170,9 +156,6 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         console.log('AuthContext: Fetching current user');
         const me = await getCurrentUser();
         setUser(me);
-        if (accessToken && refreshToken) {
-          setTokensState({ access: accessToken, refresh: refreshToken });
-        }
         console.log('AuthContext: Current user fetched successfully:', me?.email);
       } catch (error: any) {
         console.error('AuthContext: Failed to fetch current user', error);
@@ -218,7 +201,6 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const contextValue = React.useMemo(
     () => ({ 
       user: userState, 
-      tokens: tokensState,
       login, 
       logout, 
       isLoading, 
@@ -227,7 +209,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       refreshUser,
       setUser 
     }),
-    [userState, tokensState, login, logout, isLoading, isAuthReady, isAuthenticated, refreshUser, setUser]
+    [userState, login, logout, isLoading, isAuthReady, isAuthenticated, refreshUser, setUser]
   );
 
   // Εμφάνιση του spinner μόνο κατά το αρχικό φόρτωμα, όχι κατά το login

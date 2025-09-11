@@ -78,9 +78,6 @@ urlpatterns = [
     # Integrations (Google Calendar, etc.)
     path('api/integrations/', include('integrations.urls')),
 
-    # Document Parser (AI)
-    path('api/parser/', include('document_parser.urls')),
-
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]

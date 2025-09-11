@@ -42,18 +42,7 @@ find . -name "*.sh" -type f | grep -v ".venv" | grep -v "node_modules" | xargs c
 
 ### 📝 Changelog (September 2025)
 
-#### ⚡ **Performance Optimization & Celery Setup** - LATEST
-- **Celery Beat Configuration Fix**: Επίλυση σφάλματος "relation django_celery_beat_crontabschedule does not exist"
-  - Μετακίνηση `django_celery_beat` και `django_celery_results` από `TENANT_APPS` στο `SHARED_APPS`
-  - Δημιουργία tables στο public schema για σωστή λειτουργία Celery Beat
-  - Απενεργοποίηση scheduled tasks για development mode
-- **Light Development Mode**: Νέο script `./start_dev_light.sh` για γρηγορότερη development
-  - Εξοικονόμηση ~500MB RAM (απενεργοποίηση Celery services)
-  - 40% γρηγορότερη εκκίνηση για development
-  - Δημιουργία `docker-compose.dev.yml` για development configuration
-- **Performance Monitoring**: Βελτίωση resource usage και monitoring
-
-#### 🔧 **Maintenance Application Improvements**
+#### 🔧 **Maintenance Application Improvements** - LATEST
 - **Enhanced Error Messages**: Detailed field-specific validation με Greek field names
   - Αντικατάσταση generic "Το πεδίο αυτό είναι απαραίτητο" με συγκεκριμένα field names
   - Visual indicators (red borders) στα problematic fields 
@@ -188,9 +177,6 @@ find . -name "*.sh" -type f | grep -v ".venv" | grep -v "node_modules" | xargs c
 - `add_expenses_via_api.py` - Δημιουργία ανέκδοτων δαπανών
 - `add_mills_to_athens_building.py` - Προσθήκη χιλιοστών συμμετοχής
 - `debug_expenses.py` - Εντοπισμός προβλημάτων δαπανών
-- `start_dev_light.sh` - Light development mode (χωρίς Celery)
-- `docker-compose.dev.yml` - Development compose configuration
-- `check_document_parser.sh` - Έλεγχος Document Parser functionality
 
 ---
 
@@ -309,93 +295,6 @@ python manage.py create_tenant --schema_name=demo --name="Demo Tenant"
 
 # Δημιουργία sample data
 python create_sample_data.py
-```
-
----
-
-## ⚡ Επιλογές Εκκίνησης & Βελτιστοποίηση
-
-### 🚀 **Light Development Mode** (Συνιστάται για Development)
-
-Για γρηγορότερη development χωρίς Celery services:
-
-```bash
-# Εκκίνηση μόνο βασικών services (γρηγορότερο)
-./start_dev_light.sh
-```
-
-**Συμπεριλαμβάνει:**
-- ✅ Database (PostgreSQL)
-- ✅ Redis  
-- ✅ Backend (Django)
-- ✅ Frontend (Next.js)
-- ❌ Celery Worker (απενεργοποιημένο)
-- ❌ Celery Beat (απενεργοποιημένο)
-- ❌ Flower (απενεργοποιημένο)
-
-**Εξοικονόμηση:** ~500MB RAM
-
-**⚠️ Περιορισμοί Light Mode:**
-- **Document Parser**: Δεν λειτουργεί (χρειάζεται Celery Worker)
-- **Background Tasks**: Δεν εκτελούνται
-- **Scheduled Tasks**: Δεν τρέχουν
-
-### 🔧 **Full Production Mode** (Για Testing Celery Features)
-
-```bash
-# Πλήρης εκκίνηση με όλα τα services
-./startup.sh
-```
-
-**Συμπεριλαμβάνει:**
-- ✅ Όλα τα βασικά services
-- ✅ Celery Worker (background tasks)
-- ✅ Celery Beat (scheduled tasks)
-- ✅ Flower (monitoring interface)
-
-### 📊 **Σύγκριση Απόδοσης**
-
-| Mode | RAM Usage | Services | Χρήση |
-|------|-----------|----------|-------|
-| **Light** | ~700MB | 4 containers | Development |
-| **Full** | ~1.2GB | 7 containers | Production/Testing |
-
-### 🎯 **Προτάσεις Χρήσης**
-
-1. **Για καθημερινή development** (χωρίς Document Parser): `./start_dev_light.sh`
-2. **Για testing Document Parser & Celery features**: `./startup.sh`
-3. **Για production**: `docker-compose.prod.yml`
-
-**💡 Συμβουλή**: Αν χρειάζεσαι Document Parser, χρησιμοποίησε πάντα το Full Mode!
-
-### ⚠️ **Σημαντικές Σημειώσεις**
-
-- **Celery Beat Tables**: Μετακινήθηκαν στο `SHARED_APPS` για σωστή λειτουργία
-- **Scheduled Tasks**: Απενεργοποιημένα για development (ενεργοποιούνται μόνο σε production)
-- **Performance**: Το Light Mode είναι 40% γρηγορότερο για development
-
-### 📄 **Document Parser Feature**
-
-Το σύστημα περιλαμβάνει **Document Parser** που:
-- **Ανεβάζει έγγραφα**: PDF, εικόνες, αποδείξεις, λογαριασμούς
-- **Επεξεργάζεται με Google Document AI**: Αυτόματη εξαγωγή δεδομένων
-- **Εξάγει πληροφορίες**: Ποσά, ημερομηνίες, προμηθευτές, κ.λπ.
-- **Αυτοματοποιεί καταχώρηση**: Δαπάνες, πληρωμές, κοινοχρήστα
-
-**⚠️ Προσοχή**: Το Document Parser **χρειάζεται Celery Worker** και δεν λειτουργεί στο Light Mode!
-
-### 🔧 **Χρήσιμες Εντολές**
-
-```bash
-# Έλεγχος Document Parser
-./check_document_parser.sh
-
-# Έλεγχος Celery services
-docker logs linux_version-celery-1
-docker logs linux_version-celery-beat-1
-
-# Έλεγχος system health
-docker stats --no-stream
 ```
 
 ---
@@ -660,7 +559,7 @@ git push origin v2.1.0
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "./start_dev_light.sh  &  ./startup.sh "
+git commit -m "Ολοκληρωση επεξεργασίας προβληματων υπηρεσιών και συνδεσης με δαπανες ."
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

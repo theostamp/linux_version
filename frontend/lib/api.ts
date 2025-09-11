@@ -55,10 +55,6 @@ export function getApiBase(): string {
     if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
       return `http://${hostname}:8000`;
     }
-    // For localhost, always use localhost:8000 to avoid CORS issues
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8000';
-    }
   }
   if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_BASE_URL) {
     return process.env.NEXT_PUBLIC_API_BASE_URL as string;

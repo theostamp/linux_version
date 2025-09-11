@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Logo Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .logo-test { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        img { max-width: 200px; border: 1px solid #ddd; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Logo Test</h1>
+    
+    <div class="logo-test">
+        <h3>Test 1: Direct URL</h3>
+        <p>URL: <code>http://localhost:8000/media/office_logos/logo.jpg</code></p>
+        <img 
+            id="logo1"
+            src="http://localhost:8000/media/office_logos/logo.jpg" 
+            alt="Test Logo 1"
+            onload="document.getElementById('status1').innerHTML = '✅ Logo loaded successfully'; document.getElementById('status1').className = 'success';"
+            onerror="document.getElementById('status1').innerHTML = '❌ Failed to load logo: ' + this.src; document.getElementById('status1').className = 'error';"
+        />
+        <p id="status1">Loading...</p>
+    </div>
+    
+    <div class="logo-test">
+        <h3>Test 2: API Base URL Construction</h3>
+        <p>API_BASE_URL: <code>http://localhost:8000</code></p>
+        <p>office_logo: <code>/media/office_logos/logo.jpg</code></p>
+        <p>Constructed URL: <code id="constructed-url"></code></p>
+        <img 
+            id="logo2"
+            src="" 
+            alt="Test Logo 2"
+            onload="document.getElementById('status2').innerHTML = '✅ Logo loaded successfully'; document.getElementById('status2').className = 'success';"
+            onerror="document.getElementById('status2').innerHTML = '❌ Failed to load logo: ' + this.src; document.getElementById('status2').className = 'error';"
+        />
+        <p id="status2">Loading...</p>
+    </div>
+    
+    <script>
+        // Test 2: API Base URL Construction
+        const API_BASE_URL = 'http://localhost:8000';
+        const office_logo = '/media/office_logos/logo.jpg';
+        const fullUrl = office_logo.startsWith('http') ? office_logo : `${API_BASE_URL}${office_logo.startsWith('/') ? office_logo : `/${office_logo}`}`;
+        
+        document.getElementById('constructed-url').textContent = fullUrl;
+        document.getElementById('logo2').src = fullUrl;
+        
+        console.log('🔍 Logo Test Results:');
+        console.log('  API_BASE_URL:', API_BASE_URL);
+        console.log('  office_logo:', office_logo);
+        console.log('  Full URL:', fullUrl);
+    </script>
+</body>
+</html>
+
