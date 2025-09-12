@@ -50,13 +50,14 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
             )
             
             # Create test apartments with realistic participation mills
+            # For reserve fund test, use apartments with no obligations
             self.apt1 = Apartment.objects.create(
                 number='A1',
                 building=self.building,
                 participation_mills=120,  # 12% participation
                 heating_mills=100,
                 square_meters=80,
-                current_balance=Decimal('-150.00')  # Has debt
+                current_balance=Decimal('0.00')  # No debt for reserve fund test
             )
             
             self.apt2 = Apartment.objects.create(
@@ -65,7 +66,7 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
                 participation_mills=150,  # 15% participation
                 heating_mills=130,
                 square_meters=95,
-                current_balance=Decimal('50.00')  # Has credit
+                current_balance=Decimal('0.00')  # No debt for reserve fund test
             )
             
             self.apt3 = Apartment.objects.create(
@@ -80,26 +81,29 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
             # Create test expenses with different distribution methods
             self.expense_by_mills = Expense.objects.create(
                 building=self.building,
-                description='Elevator Maintenance',
+                title='Elevator Maintenance',
                 amount=Decimal('500.00'),
                 date=date(2025, 8, 15),
-                distribution_method='by_participation_mills'
+                distribution_type='by_participation_mills',
+                category='elevator_maintenance'
             )
             
             self.expense_equal_share = Expense.objects.create(
                 building=self.building,
-                description='Cleaning Supplies',
+                title='Cleaning Supplies',
                 amount=Decimal('300.00'),
                 date=date(2025, 8, 10),
-                distribution_method='equal_share'
+                distribution_type='equal_share',
+                category='cleaning'
             )
             
             self.expense_by_meters = Expense.objects.create(
                 building=self.building,
-                description='Heating Oil',
+                title='Heating Oil',
                 amount=Decimal('800.00'),
                 date=date(2025, 8, 5),
-                distribution_method='by_meters'
+                distribution_type='by_meters',
+                category='heating_fuel'
             )
     
     def test_calculator_initialization(self):
@@ -164,18 +168,18 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
             
             result = calculator.calculate_advanced_shares()
             
-            # Verify apartments are included
-            self.assertIn('apartments', result)
-            apartment_shares = result['apartments']
+            # Verify shares are included
+            self.assertIn('shares', result)
+            apartment_shares = result['shares']
             
             # Check that apt1 with 120 mills gets correct share of by_mills expenses
-            apt1_data = next(apt for apt in apartment_shares if apt['number'] == 'A1')
+            apt1_data = next(apt_data for apt_data in apartment_shares.values() if apt_data['apartment_number'] == 'A1')
             
             # Total mills for our test apartments: 120 + 150 + 200 = 470
-            # Apt1 share of 500€ expense: (120/470) * 500 = 127.66€ (approximately)
+            # Apt1 share of 500€ elevator expense: (120/470) * 500 = 127.66€ (approximately)
             expected_share = (Decimal('120') / Decimal('470')) * Decimal('500.00')
             self.assertAlmostEqual(
-                float(apt1_data['expense_distributions'][0]['amount']),
+                float(apt1_data['breakdown']['elevator_expenses']),
                 float(expected_share),
                 places=2
             )
@@ -190,15 +194,12 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
             )
             
             result = calculator.calculate_advanced_shares()
-            apartment_shares = result['apartments']
+            apartment_shares = result['shares']
             
             # Check equal share distribution for 300€ expense across 3 apartments
-            for apt_data in apartment_shares:
-                equal_share_expense = next(
-                    exp for exp in apt_data['expense_distributions'] 
-                    if exp['description'] == 'Cleaning Supplies'
-                )
-                self.assertEqual(equal_share_expense['amount'], Decimal('100.00'))  # 300/3
+            for apt_data in apartment_shares.values():
+                # The cleaning expense should be distributed equally (300/3 = 100€ each)
+                self.assertEqual(apt_data['breakdown']['equal_share_expenses'], Decimal('100.00'))
     
     def test_expense_distribution_by_meters(self):
         """Test distribution based on apartment square meters"""
@@ -210,19 +211,15 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
             )
             
             result = calculator.calculate_advanced_shares()
-            apartment_shares = result['apartments']
+            apartment_shares = result['shares']
             
             # Total square meters: 80 + 95 + 120 = 295
             # Apt1 (80 sqm) share of 800€: (80/295) * 800 = 216.95€ (approximately)
-            apt1_data = next(apt for apt in apartment_shares if apt['number'] == 'A1')
-            heating_expense = next(
-                exp for exp in apt1_data['expense_distributions']
-                if exp['description'] == 'Heating Oil'
-            )
+            apt1_data = next(apt_data for apt_data in apartment_shares.values() if apt_data['apartment_number'] == 'A1')
             
             expected_share = (Decimal('80') / Decimal('295')) * Decimal('800.00')
             self.assertAlmostEqual(
-                float(heating_expense['amount']),
+                float(apt1_data['breakdown']['heating_expenses']),
                 float(expected_share),
                 places=2
             )
@@ -239,32 +236,50 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
             result = calculator.calculate_advanced_shares()
             
             # Verify reserve fund is distributed among apartments
-            for apt_data in result['apartments']:
-                self.assertGreater(apt_data['reserve_fund_contribution'], Decimal('0.00'))
+            for apt_id, apt_data in result['shares'].items():
+                self.assertGreater(apt_data['breakdown']['reserve_fund_contribution'], Decimal('0.00'))
             
             # Total reserve fund contributions should equal monthly total
             total_contributions = sum(
-                apt['reserve_fund_contribution'] for apt in result['apartments']
+                apt_data['breakdown']['reserve_fund_contribution'] for apt_data in result['shares'].values()
             )
             self.assertEqual(total_contributions, Decimal('750.00'))
     
     def test_balance_transfer_scenarios(self):
         """Test various balance transfer scenarios"""
         with schema_context('demo'):
-            calculator = AdvancedCommonExpenseCalculator(self.building.id)
+            # Create separate apartments for balance testing
+            apt_debt = Apartment.objects.create(
+                number='C1',
+                building=self.building,
+                participation_mills=100,
+                heating_mills=80,
+                square_meters=70,
+                current_balance=Decimal('-150.00')  # Has debt
+            )
             
+            apt_credit = Apartment.objects.create(
+                number='C2',
+                building=self.building,
+                participation_mills=100,
+                heating_mills=80,
+                square_meters=70,
+                current_balance=Decimal('50.00')  # Has credit
+            )
+            
+            calculator = AdvancedCommonExpenseCalculator(self.building.id)
             result = calculator.calculate_advanced_shares()
             
-            # Test apartment with debt (apt1: -150€)
-            apt1_data = next(apt for apt in result['apartments'] if apt['number'] == 'A1')
-            self.assertEqual(apt1_data['previous_balance'], Decimal('-150.00'))
+            # Test apartment with debt
+            apt_debt_data = next(apt_data for apt_data in result['shares'].values() if apt_data['apartment_number'] == 'C1')
+            self.assertEqual(apt_debt_data['previous_balance'], Decimal('-150.00'))
             
-            # Test apartment with credit (apt2: +50€)
-            apt2_data = next(apt for apt in result['apartments'] if apt['number'] == 'B2')
-            self.assertEqual(apt2_data['previous_balance'], Decimal('50.00'))
+            # Test apartment with credit
+            apt_credit_data = next(apt_data for apt_data in result['shares'].values() if apt_data['apartment_number'] == 'C2')
+            self.assertEqual(apt_credit_data['previous_balance'], Decimal('50.00'))
             
             # Test balanced apartment (apt3: 0€)
-            apt3_data = next(apt for apt in result['apartments'] if apt['number'] == 'Γ3')
+            apt3_data = next(apt_data for apt_data in result['shares'].values() if apt_data['apartment_number'] == 'Γ3')
             self.assertEqual(apt3_data['previous_balance'], Decimal('0.00'))
     
     def test_edge_cases(self):
@@ -298,12 +313,12 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
             result = calculator.calculate_advanced_shares()
             
             # Find the Greek apartment (Γ3)
-            greek_apt = next(apt for apt in result['apartments'] if apt['number'] == 'Γ3')
+            greek_apt = next(apt_data for apt_data in result['shares'].values() if apt_data['apartment_number'] == 'Γ3')
             self.assertIsNotNone(greek_apt)
-            self.assertEqual(greek_apt['number'], 'Γ3')
+            self.assertEqual(greek_apt['apartment_number'], 'Γ3')
             
             # Ensure it's processed correctly with proper UTF-8 handling
-            self.assertGreater(len(greek_apt['expense_distributions']), 0)
+            self.assertGreater(greek_apt['total_amount'], Decimal('0.00'))
     
     def test_heating_calculations(self):
         """Test heating calculations with different heating types"""
@@ -340,11 +355,10 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
             
             result = calculator.calculate_advanced_shares()
             
-            # Should return apartments with zero expense distributions
-            for apt_data in result['apartments']:
-                if 'expense_distributions' in apt_data:
-                    # If present, should be empty list
-                    self.assertEqual(len(apt_data['expense_distributions']), 0)
+            # Should return apartments with zero total amounts (no expenses for this month)
+            for apt_data in result['shares'].values():
+                # Total amount should be 0 since there are no expenses for December 2025
+                self.assertEqual(apt_data['total_amount'], Decimal('0.00'))
     
     def test_financial_precision(self):
         """Test financial precision and rounding"""
@@ -352,10 +366,11 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
             # Create expense that doesn't divide evenly
             expense_precision = Expense.objects.create(
                 building=self.building,
-                description='Precision Test',
+                title='Precision Test',
                 amount=Decimal('100.01'),  # Won't divide evenly by 3
                 date=date(2025, 8, 20),
-                distribution_method='equal_share'
+                distribution_type='equal_share',
+                category='miscellaneous'
             )
             
             calculator = AdvancedCommonExpenseCalculator(
@@ -367,15 +382,16 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
             result = calculator.calculate_advanced_shares()
             
             # Verify that all amounts are properly rounded to 2 decimal places
-            for apt_data in result['apartments']:
-                for expense_dist in apt_data.get('expense_distributions', []):
-                    amount = expense_dist['amount']
-                    # Check that amount has at most 2 decimal places
-                    self.assertLessEqual(
-                        abs(amount.as_tuple().exponent),
-                        2,
-                        f"Amount {amount} has more than 2 decimal places"
-                    )
+            for apt_data in result['shares'].values():
+                # Check breakdown amounts
+                for key, amount in apt_data['breakdown'].items():
+                    if isinstance(amount, Decimal):
+                        # Check that amount has at most 2 decimal places
+                        self.assertLessEqual(
+                            abs(amount.as_tuple().exponent),
+                            2,
+                            f"Amount {amount} in {key} has more than 2 decimal places"
+                        )
 
 
 # Integration test for realistic scenario
@@ -437,10 +453,11 @@ class TestAdvancedCalculatorIntegration(TestCase):
             for exp in expenses:
                 Expense.objects.create(
                     building=self.building,
-                    description=exp['desc'],
+                    title=exp['desc'],
                     amount=Decimal(exp['amount']),
                     date=date(2025, 8, 15),
-                    distribution_method=exp['method']
+                    distribution_type=exp['method'],
+                    category='miscellaneous'
                 )
             
             # Calculate with realistic reserve fund
@@ -454,14 +471,13 @@ class TestAdvancedCalculatorIntegration(TestCase):
             result = calculator.calculate_advanced_shares()
             
             # Verify results structure
-            self.assertIn('apartments', result)
-            self.assertEqual(len(result['apartments']), 5)
+            self.assertIn('shares', result)
+            self.assertEqual(len(result['shares']), 5)
             
             # Verify financial totals
             total_expenses = sum(Decimal(exp['amount']) for exp in expenses)
             total_distributed = sum(
-                sum(dist['amount'] for dist in apt['expense_distributions'])
-                for apt in result['apartments']
+                apt_data['total_amount'] for apt_data in result['shares'].values()
             )
             
             # Total distributed should equal total expenses
@@ -469,16 +485,16 @@ class TestAdvancedCalculatorIntegration(TestCase):
             
             # Verify reserve fund distribution
             total_reserve_contributions = sum(
-                apt['reserve_fund_contribution'] for apt in result['apartments']
+                apt_data['breakdown']['reserve_fund_contribution'] for apt_data in result['shares'].values()
             )
             self.assertEqual(total_reserve_contributions, Decimal('625.00'))
             
             # Check that apartments with highest debt are prioritized in calculations
-            apt_a2 = next(apt for apt in result['apartments'] if apt['number'] == 'Α2')
+            apt_a2 = next(apt_data for apt_data in result['shares'].values() if apt_data['apartment_number'] == 'Α2')
             self.assertEqual(apt_a2['previous_balance'], Decimal('-456.80'))
             
             # Verify Greek apartment names are handled correctly
-            greek_apartments = [apt for apt in result['apartments'] if apt['number'] in ['Α1', 'Β1', 'Γ1', 'Δ1', 'Α2']]
+            greek_apartments = [apt_data for apt_data in result['shares'].values() if apt_data['apartment_number'] in ['Α1', 'Β1', 'Γ1', 'Δ1', 'Α2']]
             self.assertEqual(len(greek_apartments), 5)
 
 

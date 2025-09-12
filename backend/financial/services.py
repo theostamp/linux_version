@@ -2194,7 +2194,10 @@ class AdvancedCommonExpenseCalculator:
                     from django.utils import timezone
                     from datetime import datetime
                     from django.db.models import Sum
-                    end_datetime = timezone.make_aware(datetime.combine(self.period_end_date, datetime.max.time()))
+                    
+                    # Use current date if period_end_date is None
+                    end_date = self.period_end_date or timezone.now().date()
+                    end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
                     
                     reserve_charges = Transaction.objects.filter(
                         apartment=apt,
