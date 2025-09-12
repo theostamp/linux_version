@@ -79,6 +79,18 @@ export const HeatingAnalysisModal: React.FC<HeatingAnalysisModalProps> = ({
   const [meterReadings, setMeterReadings] = useState<Record<number, number>>({});
   const [isCalculating, setIsCalculating] = useState(false);
 
+  // Update state when building props change
+  useEffect(() => {
+    if (buildingHeatingSystem === 'conventional') {
+      setHeatingType('central');
+    } else if (buildingHeatingSystem === 'hour_meters' || buildingHeatingSystem === 'heat_meters') {
+      setHeatingType('autonomous');
+    } else {
+      setHeatingType('none');
+    }
+    setFixedPercentage(buildingHeatingFixedPercentage);
+  }, [buildingHeatingSystem, buildingHeatingFixedPercentage]);
+
   // Υπολογισμός ανάλυσης θέρμανσης
   const heatingBreakdown = useMemo(() => {
     if (!isOpen) return null;

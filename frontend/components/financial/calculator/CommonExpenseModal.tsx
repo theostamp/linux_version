@@ -40,7 +40,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { X, Building, PieChart, Receipt, BarChart, FileText, Calendar } from 'lucide-react';
 import { CommonExpenseModalProps } from './types/financial';
 import { useCommonExpenseCalculator } from './hooks/useCommonExpenseCalculator';
-import { api, API_BASE_URL } from '@/lib/api';
+import { api, API_BASE_URL, fetchBuilding } from '@/lib/api';
 import { TraditionalViewTab } from './tabs/TraditionalViewTab';
 import { ExportTab } from './tabs/ExportTab';
 import { ExpenseBreakdownSection } from './ExpenseBreakdownSection';
@@ -76,6 +76,9 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     const currentMonth = new Date();
     return `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
   });
+
+  // State for building data
+  const [buildingData, setBuildingData] = React.useState<any>(null);
 
   // Generate month options for the last 12 months
   const generateMonthOptions = () => {
@@ -116,6 +119,23 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     getTotalPreviousBalance,
     getFinalTotalExpenses
   } = useCommonExpenseCalculator({ ...props, selectedMonth: expenseSheetMonth });
+
+  // Load building data
+  React.useEffect(() => {
+    const loadBuildingData = async () => {
+      try {
+        const building = await fetchBuilding(props.buildingId);
+        setBuildingData(building);
+        console.log('🏢 CommonExpenseModal: Building data loaded:', building);
+      } catch (error) {
+        console.error('Error loading building data:', error);
+      }
+    };
+
+    if (props.buildingId) {
+      loadBuildingData();
+    }
+  }, [props.buildingId]);
 
   // Debug: Log when expenseSheetMonth changes
   React.useEffect(() => {
@@ -243,6 +263,8 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
           setHeatingBreakdown(breakdown);
           toast.success('✅ Υπολογισμοί θέρμανσης εφαρμόστηκαν!');
         }}
+        buildingHeatingSystem={buildingData?.heating_system}
+        buildingHeatingFixedPercentage={buildingData?.heating_fixed_percentage}
       />
     </div>
   );
