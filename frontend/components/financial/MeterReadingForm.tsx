@@ -170,7 +170,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
                         </SelectItem>
                       ))
                     ) : (
-                      <SelectItem value="" disabled>
+                      <SelectItem value="loading" disabled>
                         {apartmentsLoading ? 'Φόρτωση διαμερισμάτων...' : 'Δεν βρέθηκαν διαμερίσματα'}
                       </SelectItem>
                     )}
