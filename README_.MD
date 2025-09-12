@@ -477,7 +477,7 @@ docker compose up --build -d
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "φι2χ Ολοκληρωση επεξεργασίας προβληματων υπηρεσιών και συνδεσης με δαπανες ."
+git commit -m "fix 3 Ολοκληρωση επεξεργασίας προβληματων υπηρεσιών και συνδεσης με δαπανες ."
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
@@ -486,7 +486,7 @@ git push -u origin main
 git push --force
 ---
 
-git reset --hard 9906d237a5
+git reset --hard 9906d23898987a5
 ### Πλήρης Καθαρισμός Docker
 ```bash
 
