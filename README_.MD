@@ -477,7 +477,7 @@ docker compose up --build -d
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "1η αποπειρα εισαγωγηης μερησης θερμανσης."
+git commit -m "fix some issues εισαγωγηης μερησης θερμανσης."
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
