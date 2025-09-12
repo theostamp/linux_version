@@ -140,7 +140,7 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
                 apartment=self.apt1,
                 amount=Decimal('200.00'),
                 date=date(2025, 7, 15),
-                payment_method='bank_transfer'
+                method='bank_transfer'
             )
             
             # Create transaction history
@@ -168,12 +168,22 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
             
             result = calculator.calculate_advanced_shares()
             
+            # Debug: Check if expenses are found
+            print(f"Debug: Building ID: {self.building.id}")
+            print(f"Debug: Expenses found: {calculator.expenses.count()}")
+            for expense in calculator.expenses:
+                print(f"Debug: Expense: {expense.title} - {expense.amount}€ ({expense.distribution_type})")
+            
             # Verify shares are included
             self.assertIn('shares', result)
             apartment_shares = result['shares']
             
             # Check that apt1 with 120 mills gets correct share of by_mills expenses
             apt1_data = next(apt_data for apt_data in apartment_shares.values() if apt_data['apartment_number'] == 'A1')
+            
+            # Debug: Check the breakdown
+            print(f"Debug: Apt1 breakdown: {apt1_data['breakdown']}")
+            print(f"Debug: Apt1 total amount: {apt1_data['total_amount']}")
             
             # Total mills for our test apartments: 120 + 150 + 200 = 470
             # Apt1 share of 500€ elevator expense: (120/470) * 500 = 127.66€ (approximately)
@@ -295,7 +305,7 @@ class TestAdvancedCommonExpenseCalculator(TestCase):
             result = calculator.calculate_advanced_shares()
             
             # Should handle empty results gracefully
-            self.assertIn('apartments', result)
+            self.assertIn('shares', result)
             
             # Test with invalid date formats
             calculator_invalid_date = AdvancedCommonExpenseCalculator(
