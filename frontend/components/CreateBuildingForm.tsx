@@ -60,6 +60,13 @@ export default function CreateBuildingForm({
   submitText,
   buildingId,
 }: Readonly<Props>) {
+  console.log('🔥 CreateBuildingForm: initialData received:', {
+    heating_system: initialData.heating_system,
+    heating_fixed_percentage: initialData.heating_fixed_percentage,
+    buildingId,
+    full_initialData: initialData
+  });
+
   const router = useRouter();
   const { setBuildings, refreshBuildings } = useBuilding();
   const { user } = useAuth();
@@ -158,6 +165,15 @@ export default function CreateBuildingForm({
       processedValue = value.replace(/\s/g, '').replace(/[^0-9]/g, '');
       // Limit to 5 digits
       processedValue = processedValue.slice(0, 5);
+    }
+    
+    // Debug logging για heating fields
+    if (name === 'heating_system' || name === 'heating_fixed_percentage') {
+      console.log('🔥 CreateBuildingForm: Heating field changed:', {
+        name,
+        value: processedValue,
+        originalValue: value
+      });
     }
     
     setForm((prev) => ({
@@ -318,6 +334,12 @@ export default function CreateBuildingForm({
     delete formData.coordinates;
     
     console.log('📍 CreateBuildingForm: Final formData being sent:', formData);
+    console.log('🔥 CreateBuildingForm: Heating system fields:', {
+      heating_system: formData.heating_system,
+      heating_fixed_percentage: formData.heating_fixed_percentage,
+      original_form_heating_system: form.heating_system,
+      original_form_heating_fixed_percentage: form.heating_fixed_percentage
+    });
     console.log('📍 CreateBuildingForm: Final coordinates in formData:', {
       latitude: formData.latitude,
       longitude: formData.longitude
