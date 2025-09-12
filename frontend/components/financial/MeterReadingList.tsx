@@ -48,6 +48,7 @@ import {
 import { format } from 'date-fns';
 // import { el } from 'date-fns/locale/el';
 import { MeterReadingForm } from './MeterReadingForm';
+import { getCurrentMonthRange } from '@/lib/dateUtils';
 
 interface MeterReadingListProps {
   buildingId: number;
@@ -157,6 +158,15 @@ export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId, 
       date_to: '',
       apartment_id: '',
     });
+  };
+
+  const setCurrentMonthFilter = () => {
+    const range = getCurrentMonthRange();
+    setFilters(prev => ({
+      ...prev,
+      date_from: range.from,
+      date_to: range.to
+    }));
   };
 
   return (
@@ -284,17 +294,27 @@ export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId, 
             {/* Κουμπιά */}
             <div className="space-y-2">
               <Label>&nbsp;</Label>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={clearFilters}
-                  className="flex-1"
-                >
-                  Καθαρισμός
-                </Button>
+              <div className="grid grid-cols-1 gap-2">
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={clearFilters}
+                    className="flex-1"
+                  >
+                    Καθαρισμός
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={setCurrentMonthFilter}
+                    className="flex-1 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Τρέχον Μήνας
+                  </Button>
+                </div>
                 <Button
                   onClick={() => setShowForm(true)}
-                  className="flex-1"
+                  className="w-full"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Νέα Μετρήση

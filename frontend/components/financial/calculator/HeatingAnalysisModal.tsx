@@ -33,10 +33,14 @@ interface HeatingAnalysisModalProps {
     participation_mills: number;
   }>;
   onHeatingCalculated: (heatingBreakdown: HeatingBreakdown) => void;
+  // New props for building heating system
+  buildingHeatingSystem?: string;
+  buildingHeatingFixedPercentage?: number;
 }
 
 interface HeatingBreakdown {
-  type: 'autonomous' | 'central';
+  type: 'autonomous' | 'central' | 'none';
+  subtype?: 'hour_meters' | 'heat_meters' | 'conventional';
   fixedPercentage: number;
   fixedCost: number;
   variableCost: number;
@@ -61,10 +65,17 @@ export const HeatingAnalysisModal: React.FC<HeatingAnalysisModalProps> = ({
   buildingId,
   totalHeatingCost,
   apartments,
-  onHeatingCalculated
+  onHeatingCalculated,
+  buildingHeatingSystem = 'none',
+  buildingHeatingFixedPercentage = 30
 }) => {
-  const [heatingType, setHeatingType] = useState<'autonomous' | 'central'>('autonomous');
-  const [fixedPercentage, setFixedPercentage] = useState(30);
+  // Initialize state based on building settings
+  const [heatingType, setHeatingType] = useState<'autonomous' | 'central' | 'none'>(() => {
+    if (buildingHeatingSystem === 'conventional') return 'central';
+    if (buildingHeatingSystem === 'hour_meters' || buildingHeatingSystem === 'heat_meters') return 'autonomous';
+    return 'none';
+  });
+  const [fixedPercentage, setFixedPercentage] = useState(buildingHeatingFixedPercentage);
   const [meterReadings, setMeterReadings] = useState<Record<number, number>>({});
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -74,9 +85,10 @@ export const HeatingAnalysisModal: React.FC<HeatingAnalysisModalProps> = ({
 
     const breakdown: HeatingBreakdown = {
       type: heatingType,
+      subtype: buildingHeatingSystem as 'hour_meters' | 'heat_meters' | 'conventional',
       fixedPercentage,
-      fixedCost: (totalHeatingCost * fixedPercentage) / 100,
-      variableCost: totalHeatingCost - ((totalHeatingCost * fixedPercentage) / 100),
+      fixedCost: heatingType === 'none' ? 0 : (totalHeatingCost * fixedPercentage) / 100,
+      variableCost: heatingType === 'none' ? 0 : totalHeatingCost - ((totalHeatingCost * fixedPercentage) / 100),
       apartmentShares: {},
       totalDistributed: 0
     };
@@ -171,6 +183,44 @@ export const HeatingAnalysisModal: React.FC<HeatingAnalysisModalProps> = ({
         </div>
 
         <div className="p-6">
+          {/* Σύστημα κτιρίου */}
+          {buildingHeatingSystem !== 'none' && (
+            <Card className="mb-6 bg-blue-50 border-blue-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-blue-800">
+                  <Thermometer className="h-5 w-5" />
+                  Σύστημα Θέρμανσης Κτιρίου
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-blue-700">Τύπος Συστήματος</p>
+                    <p className="text-lg font-semibold text-blue-900">
+                      {buildingHeatingSystem === 'conventional' && '🏢 Συμβατικό'}
+                      {buildingHeatingSystem === 'hour_meters' && '⏱️ Ωρομετρητές'}  
+                      {buildingHeatingSystem === 'heat_meters' && '⚡ Θερμιδομετρητές'}
+                    </p>
+                  </div>
+                  {buildingHeatingSystem !== 'conventional' && (
+                    <div>
+                      <p className="text-sm font-medium text-blue-700">Πάγιο Ποσοστό</p>
+                      <p className="text-lg font-semibold text-blue-900">{buildingHeatingFixedPercentage}%</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-blue-700">Μέθοδος Κατανομής</p>
+                    <p className="text-sm text-blue-800">
+                      {buildingHeatingSystem === 'conventional' && '100% ανά χιλιοστά'}
+                      {buildingHeatingSystem === 'hour_meters' && `${buildingHeatingFixedPercentage}% πάγιο + κατανάλωση ωρών`}
+                      {buildingHeatingSystem === 'heat_meters' && `${buildingHeatingFixedPercentage}% πάγιο + κατανάλωση kWh`}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Ρυθμίσεις */}
           <Card className="mb-6">
             <CardHeader>
@@ -245,6 +295,9 @@ export const HeatingAnalysisModal: React.FC<HeatingAnalysisModalProps> = ({
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
                   Μετρήσεις Κατανάλωσης
+                  <span className="text-sm font-normal text-gray-600">
+                    ({buildingHeatingSystem === 'hour_meters' ? 'σε ώρες' : buildingHeatingSystem === 'heat_meters' ? 'σε kWh/MWh' : 'μονάδες'})
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -260,7 +313,7 @@ export const HeatingAnalysisModal: React.FC<HeatingAnalysisModalProps> = ({
                         min="0"
                         max="999999.99"
                         step="0.01"
-                        placeholder="0.00"
+                        placeholder={buildingHeatingSystem === 'hour_meters' ? '0.00 (ώρες)' : buildingHeatingSystem === 'heat_meters' ? '0.00 (kWh)' : '0.00'}
                         value={meterReadings[apartment.id] ? Number(meterReadings[apartment.id]).toFixed(2) : ''}
                         onChange={(e) => {
                           const value = parseFloat(e.target.value);

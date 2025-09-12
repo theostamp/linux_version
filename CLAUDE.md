@@ -292,3 +292,4 @@ npm run lint                          # ESLint validation
 - **Reverse Proxy**: Nginx for production deployments
 
 This system handles real financial data for Greek residential buildings. Precision, security, and tenant isolation are critical requirements.
+- κρατησε το σημειο αυτο ωστε να συνεχισουμε σε νεα συνδρια με την εντολη "θερμανση"

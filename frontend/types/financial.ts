@@ -485,9 +485,10 @@ export enum PayerType {
 }
 
 export enum MeterType {
-  HEATING = 'heating',
   WATER = 'water',
   ELECTRICITY = 'electricity',
+  HEATING_HOURS = 'heating_hours',     // Ωρομετρητές θέρμανσης
+  HEATING_ENERGY = 'heating_energy',   // Θερμιδομετρητές (kWh/MWh)
 }
 
 // Utility types

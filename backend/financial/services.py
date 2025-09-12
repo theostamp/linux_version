@@ -1755,7 +1755,7 @@ class AdvancedCommonExpenseCalculator:
     Υλοποιεί τον πλήρη αλγόριθμο με όλες τις κατηγορίες δαπανών.
     """
     
-    def __init__(self, building_id: int, period_start_date: str = None, period_end_date: str = None, reserve_fund_monthly_total: Optional[Decimal] = None, heating_type: str = 'autonomous', heating_fixed_percentage: int = 30):
+    def __init__(self, building_id: int, period_start_date: str = None, period_end_date: str = None, reserve_fund_monthly_total: Optional[Decimal] = None, heating_type: str = None, heating_fixed_percentage: int = None):
         self.building_id = building_id
         self.building = Building.objects.get(id=building_id)
         self.apartments = Apartment.objects.filter(building_id=building_id)
@@ -1778,9 +1778,25 @@ class AdvancedCommonExpenseCalculator:
                 building_id=building_id
             )
         
-        # Παράμετροι υπολογισμού θέρμανσης
-        self.heating_type = heating_type  # 'autonomous' ή 'central'
-        self.heating_fixed_percentage = Decimal(str(heating_fixed_percentage)) / Decimal('100')  # Πάγιο ποσοστό θέρμανσης
+        # Παράμετροι υπολογισμού θέρμανσης - χρήση από το κτίριο
+        if heating_type is not None:
+            # Backward compatibility: αν παρέχεται παράμετρος, χρησιμοποίησέ την
+            self.heating_type = 'autonomous' if heating_type == 'autonomous' else 'central'
+        else:
+            # Χρήση του νέου πεδίου από το κτίριο
+            if self.building.heating_system == Building.HEATING_SYSTEM_CONVENTIONAL:
+                self.heating_type = 'central'
+            elif self.building.heating_system in [Building.HEATING_SYSTEM_HOUR_METERS, Building.HEATING_SYSTEM_HEAT_METERS]:
+                self.heating_type = 'autonomous'
+            else:
+                self.heating_type = 'none'  # Χωρίς θέρμανση
+        
+        if heating_fixed_percentage is not None:
+            # Backward compatibility: αν παρέχεται παράμετρος, χρησιμοποίησέ την
+            self.heating_fixed_percentage = Decimal(str(heating_fixed_percentage)) / Decimal('100')
+        else:
+            # Χρήση του πεδίου από το κτίριο
+            self.heating_fixed_percentage = Decimal(str(self.building.heating_fixed_percentage)) / Decimal('100')
         
         # Συνολική μηνιαία εισφορά αποθεματικού για όλο το κτίριο (όχι ανά διαμέρισμα)
         # 1) Αν δοθεί  expl. από το frontend, το χρησιμοποιούμε
@@ -2036,7 +2052,12 @@ class AdvancedCommonExpenseCalculator:
         from datetime import timedelta
         
         # Υπολογισμός πάγιου και μεταβλητού κόστους
-        if self.heating_type == 'autonomous':
+        if self.heating_type == 'none':
+            # Χωρίς θέρμανση: δεν υπάρχουν δαπάνες θέρμανσης
+            fixed_cost = Decimal('0.00')
+            variable_cost = Decimal('0.00')
+            total_heating_cost = Decimal('0.00')  # Αγνόηση δαπανών θέρμανσης
+        elif self.heating_type == 'autonomous':
             # Αυτονομία: πάγιο + μεταβλητό
             fixed_cost = total_heating_cost * self.heating_fixed_percentage
             variable_cost = total_heating_cost - fixed_cost
@@ -2061,10 +2082,15 @@ class AdvancedCommonExpenseCalculator:
                 start_date = now.replace(day=1).date()
                 end_date = now.date()
             
+            # Προσδιορισμός τύπου μετρητή βάσει συστήματος θέρμανσης
+            meter_type = MeterReading.METER_TYPE_HEATING_HOURS  # Default
+            if self.building.heating_system == Building.HEATING_SYSTEM_HEAT_METERS:
+                meter_type = MeterReading.METER_TYPE_HEATING_ENERGY
+            
             # Λήψη μετρήσεων θέρμανσης
             meter_readings = MeterReading.objects.filter(
                 apartment__building_id=self.building_id,
-                meter_type='heating',
+                meter_type=meter_type,
                 reading_date__gte=start_date,
                 reading_date__lte=end_date
             ).order_by('apartment', 'reading_date')

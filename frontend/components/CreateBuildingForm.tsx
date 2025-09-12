@@ -28,6 +28,8 @@ interface BuildingFormData {
   city?: string;
   postal_code?: string;
   apartments_count?: number;
+  heating_system?: string;
+  heating_fixed_percentage?: number;
   internal_manager_name?: string;
   internal_manager_phone?: string;
   internal_manager_apartment?: string;
@@ -67,6 +69,8 @@ export default function CreateBuildingForm({
     city: '',
     postal_code: '',
     apartments_count: undefined,
+    heating_system: 'none',
+    heating_fixed_percentage: 30,
     internal_manager_name: '',
     internal_manager_phone: '',
     internal_manager_apartment: '',
@@ -397,6 +401,112 @@ export default function CreateBuildingForm({
             </select>
           </div>
         </div>
+      </div>
+
+      {/* Heating System Configuration */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center">
+          🔥 Σύστημα Θέρμανσης
+        </h3>
+        
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="flex items-start space-x-2">
+            <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm text-blue-800 font-medium">Ρύθμιση Συστήματος Θέρμανσης</p>
+              <p className="text-xs text-blue-700 mt-1">
+                Επιλέξτε τον τρόπο κατανομής των δαπανών θέρμανσης για το κτίριο. 
+                Αυτό θα επηρεάσει τον τρόπο υπολογισμού των κοινοχρήστων.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="heating_system">
+              Τύπος Συστήματος Θέρμανσης
+            </label>
+            <select
+              id="heating_system"
+              name="heating_system"
+              value={form.heating_system ?? 'none'}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="none">Χωρίς Κεντρική Θέρμανση</option>
+              <option value="conventional">Συμβατικό (Κατανομή με χιλιοστά)</option>
+              <option value="hour_meters">Αυτονομία με Ωρομετρητές</option>
+              <option value="heat_meters">Αυτονομία με Θερμιδομετρητές</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Επιλέξτε τον τρόπο κατανομής δαπανών θέρμανσης
+            </p>
+          </div>
+          
+          {(form.heating_system === 'hour_meters' || form.heating_system === 'heat_meters') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="heating_fixed_percentage">
+                Ποσοστό Παγίου Θέρμανσης (%)
+              </label>
+              <select
+                id="heating_fixed_percentage"
+                name="heating_fixed_percentage"
+                value={form.heating_fixed_percentage ?? 30}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value={20}>20% (Πάγιο) - 80% (Μεταβλητό)</option>
+                <option value={25}>25% (Πάγιο) - 75% (Μεταβλητό)</option>
+                <option value={30}>30% (Πάγιο) - 70% (Μεταβλητό)</option>
+                <option value={35}>35% (Πάγιο) - 65% (Μεταβλητό)</option>
+                <option value={40}>40% (Πάγιο) - 60% (Μεταβλητό)</option>
+                <option value={50}>50% (Πάγιο) - 50% (Μεταβλητό)</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Το πάγιο κατανέμεται ανά χιλιοστά, το μεταβλητό ανά κατανάλωση
+              </p>
+            </div>
+          )}
+        </div>
+        
+        {/* Information boxes for different heating systems */}
+        {form.heating_system === 'none' && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-gray-700">
+              <strong>Χωρίς Κεντρική Θέρμανση:</strong> Οι δαπάνες θέρμανσης δεν θα κατανέμονται στα διαμερίσματα.
+            </p>
+          </div>
+        )}
+        
+        {form.heating_system === 'conventional' && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <p className="text-sm text-green-800">
+              <strong>Συμβατικό Σύστημα:</strong> Όλες οι δαπάνες θέρμανσης (100%) κατανέμονται ανάλογα 
+              με τα χιλιοστά συμμετοχής κάθε διαμερίσματος.
+            </p>
+          </div>
+        )}
+        
+        {form.heating_system === 'hour_meters' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              <strong>Αυτονομία με Ωρομετρητές:</strong> Το {form.heating_fixed_percentage || 30}% κατανέμεται ως πάγιο 
+              (ανά χιλιοστά), το υπόλοιπο {100 - (form.heating_fixed_percentage || 30)}% ως μεταβλητό 
+              (ανά ώρες λειτουργίας). Απαιτείται καταχώρηση ενδείξεων ωρομετρητών.
+            </p>
+          </div>
+        )}
+        
+        {form.heating_system === 'heat_meters' && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <p className="text-sm text-purple-800">
+              <strong>Αυτονομία με Θερμιδομετρητές:</strong> Το {form.heating_fixed_percentage || 30}% κατανέμεται ως πάγιο 
+              (ανά χιλιοστά), το υπόλοιπο {100 - (form.heating_fixed_percentage || 30)}% ως μεταβλητό 
+              (ανά kWh/MWh κατανάλωσης). Απαιτείται καταχώρηση ενδείξεων θερμιδομετρητών.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Address Information with Google Maps Integration */}

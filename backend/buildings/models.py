@@ -1,6 +1,6 @@
 # backend/buildings/models.py
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 
 
@@ -145,12 +145,32 @@ class Building(models.Model):
         help_text=_("Τρέχον αποθεματικό του κτιρίου σε ευρώ")
     )
 
-    heating_fixed_percentage = models.DecimalField(
-        _("Ποσοστό Παγίου Θέρμανσης"),
-        max_digits=5,
-        decimal_places=2,
-        default=30.0,
-        help_text=_("Ποσοστό παγίου κόστους θέρμανσης (π.χ. 30% = 30.00)")
+    # 🔥 Σύστημα Θέρμανσης
+    HEATING_SYSTEM_NONE = 'none'
+    HEATING_SYSTEM_CONVENTIONAL = 'conventional'
+    HEATING_SYSTEM_HOUR_METERS = 'hour_meters'
+    HEATING_SYSTEM_HEAT_METERS = 'heat_meters'
+
+    HEATING_SYSTEM_CHOICES = [
+        (HEATING_SYSTEM_NONE, _('Χωρίς Κεντρική Θέρμανση')),
+        (HEATING_SYSTEM_CONVENTIONAL, _('Συμβατικό (Κατανομή με χιλιοστά)')),
+        (HEATING_SYSTEM_HOUR_METERS, _('Αυτονομία με Ωρομετρητές')),
+        (HEATING_SYSTEM_HEAT_METERS, _('Αυτονομία με Θερμιδομετρητές')),
+    ]
+
+    heating_system = models.CharField(
+        _("Σύστημα Θέρμανσης"),
+        max_length=20,
+        choices=HEATING_SYSTEM_CHOICES,
+        default=HEATING_SYSTEM_NONE,
+        help_text=_("Επιλέξτε τον τρόπο κατανομής των δαπανών θέρμανσης.")
+    )
+
+    heating_fixed_percentage = models.PositiveIntegerField(
+        _("Ποσοστό Παγίου Θέρμανσης (%)"),
+        default=30,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text=_("Το ποσοστό της δαπάνης που κατανέμεται ως πάγιο (π.χ. 30%). Εφαρμόζεται μόνο σε συστήματα με αυτονομία.")
     )
 
     reserve_contribution_per_apartment = models.DecimalField(

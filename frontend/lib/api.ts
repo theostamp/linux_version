@@ -547,6 +547,9 @@ export type Building = {
   city: string; // Make city required to fix undefined errors
   postal_code?: string;
   apartments_count?: number;
+  // 🔥 Heating system fields
+  heating_system?: string;
+  heating_fixed_percentage?: number;
   internal_manager_name?: string;
   internal_manager_phone?: string;
   management_office_name?: string;

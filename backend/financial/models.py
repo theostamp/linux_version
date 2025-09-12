@@ -574,16 +574,27 @@ class ExpenseApartment(models.Model):
 class MeterReading(models.Model):
     """Μοντέλο για τις μετρήσεις (θέρμανση, νερό, κλπ.)"""
     
+    METER_TYPE_WATER = 'water'
+    METER_TYPE_ELECTRICITY = 'electricity'
+    METER_TYPE_HEATING_HOURS = 'heating_hours'
+    METER_TYPE_HEATING_ENERGY = 'heating_energy'  # για θερμιδομετρητές
+
     METER_TYPES = [
-        ('heating', 'Θέρμανση'),
-        ('water', 'Νερό'),
-        ('electricity', 'Ηλεκτρικό'),
+        (METER_TYPE_WATER, 'Νερό'),
+        (METER_TYPE_ELECTRICITY, 'Ηλεκτρικό'),
+        (METER_TYPE_HEATING_HOURS, 'Θέρμανση (Ώρες)'),
+        (METER_TYPE_HEATING_ENERGY, 'Θέρμανση (kWh/MWh)'),
     ]
     
     apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name='meter_readings')
     reading_date = models.DateField(verbose_name="Ημερομηνία Μετρήσης")
-    value = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Τιμή Μετρήσης")
-    meter_type = models.CharField(max_length=50, choices=METER_TYPES, verbose_name="Τύπος Μετρητή")
+    value = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Ένδειξη")
+    meter_type = models.CharField(
+        max_length=20,
+        choices=METER_TYPES,
+        default=METER_TYPE_WATER,
+        verbose_name="Τύπος Μετρητή"
+    )
     notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
     created_at = models.DateTimeField(auto_now_add=True)
     
