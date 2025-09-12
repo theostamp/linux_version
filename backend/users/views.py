@@ -54,7 +54,7 @@ def login_view(request):
         )
 
     # Χρήση του custom EmailBackend για authentication με email
-    user = authenticate(request, email=email, password=password)
+    user = authenticate(request, username=email, password=password)
     print(">>> Χρήστης από authenticate():", user)
 
     if user is None:
@@ -68,11 +68,17 @@ def login_view(request):
     access = str(refresh.access_token)
 
     # Προετοιμασία user data για απάντηση
+    role_value = getattr(user, 'role', None)
+    print(f">>> DEBUG: user.role = {repr(role_value)}")
+    
     user_data = {
         'id': user.id,
         'email': user.email,
         'first_name': user.first_name,
         'last_name': user.last_name,
+        'is_staff': user.is_staff,
+        'is_superuser': user.is_superuser,
+        'role': getattr(user, 'role', None),
         'office_name': user.office_name,
         'office_phone': user.office_phone,
         'office_address': user.office_address,
@@ -82,6 +88,9 @@ def login_view(request):
         'office_bank_iban': user.office_bank_iban,
         'office_bank_beneficiary': user.office_bank_beneficiary,
     }
+    
+    print(f">>> DEBUG: user_data keys = {list(user_data.keys())}")
+    print(f">>> DEBUG: user_data['role'] = {repr(user_data.get('role'))}")
 
     return Response({
         'access': access,

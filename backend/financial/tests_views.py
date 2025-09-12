@@ -66,9 +66,21 @@ def execute_test_command(command: List[str], test_type: str) -> Dict[str, Any]:
                 stdout_lines.append(line)
                 test_execution_state['logs'].append(line)
                 
-                # Update current test based on output
-                if 'test_' in line.lower():
+                # Update current test and progress based on output
+                if '🧪 Running' in line:
                     test_execution_state['current_test'] = line
+                    # Calculate progress based on completed suites
+                    if 'calculator' in line.lower():
+                        test_execution_state['progress'] = 25
+                    elif 'dashboard' in line.lower():
+                        test_execution_state['progress'] = 50
+                    elif 'balance' in line.lower():
+                        test_execution_state['progress'] = 75
+                    elif 'distribution' in line.lower():
+                        test_execution_state['progress'] = 90
+                elif '✅ Test suite completed' in line:
+                    test_execution_state['progress'] = 100
+                    test_execution_state['current_test'] = 'Ολοκληρώθηκε!'
                 
         # Get any remaining output
         stdout, stderr = process.communicate()
@@ -262,6 +274,10 @@ def run_financial_tests(request):
     """
     global test_execution_state
     
+    print(f"[DEBUG] run_financial_tests called by user: {request.user}")
+    print(f"[DEBUG] request.data: {request.data}")
+    print(f"[DEBUG] current is_running: {test_execution_state['is_running']}")
+    
     if test_execution_state['is_running']:
         return JsonResponse({
             'status': 'error',
@@ -271,9 +287,10 @@ def run_financial_tests(request):
     test_type = request.data.get('test_type', 'all')
     detailed = request.data.get('detailed', True)
     
-    # Determine command based on test type - use our actual test runner
+    print(f"[DEBUG] test_type: {test_type}, detailed: {detailed}")
+    
+    # Determine command based on test type - run directly since we're already in the container
     command = [
-        'docker', 'exec', 'linux_version-backend-1',
         'python', '/app/run_ui_financial_tests.py', '--type', test_type
     ]
     

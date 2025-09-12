@@ -174,7 +174,7 @@ const navigationGroups = [
         href: '/financial-tests',
         label: 'Automated Tests Οικονομικού Πυρήνα',
         icon: <TestTube2 className="w-4 h-4" />,
-        roles: ['manager', 'staff', 'superuser'],
+        roles: ['manager', 'staff', 'superuser', 'admin'],
       },
     ]
   }

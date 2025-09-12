@@ -65,6 +65,9 @@ def run_financial_test_suite(test_type: str = 'all') -> Dict[str, Any]:
         print(f"🧪 Running {suite_name}...")
         results['logs'].append(f"🧪 Running {suite_name}...")
         
+        # Add realistic delay for demonstration
+        time.sleep(2)  # 2 second delay per suite
+        
         # Execute the test file
         suite_result = run_single_test_file(test_file, suite_name)
         suite_results.append(suite_result)
