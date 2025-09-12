@@ -483,7 +483,7 @@ git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
 
 
-
+git push --force
 ---
 
 git reset --hard 9906d237a5
