@@ -243,34 +243,54 @@ export const HeatingAnalysisModal: React.FC<HeatingAnalysisModalProps> = ({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Τύπος θέρμανσης */}
+                {/* Τύπος θέρμανσης - Read Only από κτίριο */}
                 <div>
-                  <Label htmlFor="heating-type">Τύπος Θέρμανσης</Label>
-                  <Select value={heatingType} onValueChange={(value: 'autonomous' | 'central') => setHeatingType(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="autonomous">Αυτονομία Θέρμανσης</SelectItem>
-                      <SelectItem value="central">Κεντρική Θέρμανση</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Τύπος Θέρμανσης (από ρυθμίσεις κτιρίου)</Label>
+                  <div className="p-2 bg-gray-50 border rounded-md">
+                    <div className="flex items-center gap-2">
+                      {buildingHeatingSystem === 'conventional' && (
+                        <>
+                          <span>🏢</span>
+                          <span className="font-medium">Συμβατικό Σύστημα</span>
+                        </>
+                      )}
+                      {buildingHeatingSystem === 'hour_meters' && (
+                        <>
+                          <span>⏱️</span>
+                          <span className="font-medium">Αυτονομία με Ωρομετρητές</span>
+                        </>
+                      )}
+                      {buildingHeatingSystem === 'heat_meters' && (
+                        <>
+                          <span>⚡</span>
+                          <span className="font-medium">Αυτονομία με Θερμιδομετρητές</span>
+                        </>
+                      )}
+                      {buildingHeatingSystem === 'none' && (
+                        <>
+                          <span>❌</span>
+                          <span className="font-medium">Χωρίς Κεντρική Θέρμανση</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Πάγιο ποσοστό */}
+                {/* Πάγιο ποσοστό - Read Only από κτίριο */}
                 {heatingType === 'autonomous' && (
                   <div>
-                    <Label htmlFor="fixed-percentage">Πάγιο Ποσοστό (%)</Label>
-                    <Input
-                      id="fixed-percentage"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={fixedPercentage}
-                      onChange={(e) => setFixedPercentage(parseInt(e.target.value) || 0)}
-                    />
+                    <Label>Πάγιο Ποσοστό (από ρυθμίσεις κτιρίου)</Label>
+                    <div className="p-2 bg-gray-50 border rounded-md">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-semibold text-blue-600">{fixedPercentage}%</span>
+                        <span className="text-sm text-gray-600">πάγιο</span>
+                        <span className="text-gray-400">|</span>
+                        <span className="text-lg font-semibold text-green-600">{100 - fixedPercentage}%</span>
+                        <span className="text-sm text-gray-600">μεταβλητό</span>
+                      </div>
+                    </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      Ποσοστό που κατανομείται ανά χιλιοστά θέρμανσης
+                      Πάγιο κατανομείται ανά χιλιοστά θέρμανσης, μεταβλητό ανά ενδείξεις μετρητών
                     </p>
                   </div>
                 )}
