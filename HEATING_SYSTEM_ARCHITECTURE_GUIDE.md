@@ -70,7 +70,7 @@ class Apartment(models.Model):
 
 #### 3. MeterReading Model (μετρήσεις)
 ```python
-# financial/models.py:574-609
+# financial/models.py:574-634
 class MeterReading(models.Model):
     METER_TYPES = [
         ('water', 'Νερό'),
@@ -83,6 +83,73 @@ class MeterReading(models.Model):
     reading_date = models.DateField()
     value = models.DecimalField(max_digits=10, decimal_places=2)
     meter_type = models.CharField(max_length=20, choices=METER_TYPES)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    # ✅ ΔΙΟΡΘΩΜΕΝΕΣ ΜΕΘΟΔΟΙ (Sept 2025)
+    def get_previous_reading(self):
+        """Λήψη της προηγούμενης μετρήσης για το ίδιο διαμέρισμα και τύπο μετρητή"""
+        try:
+            return MeterReading.objects.filter(
+                apartment=self.apartment,
+                meter_type=self.meter_type,
+                reading_date__lt=self.reading_date
+            ).order_by('-reading_date').first()
+        except Exception:
+            return None
+    
+    def calculate_consumption(self):
+        """Υπολογισμός κατανάλωσης σε σχέση με την προηγούμενη μέτρηση"""
+        previous_reading = self.get_previous_reading()
+        if previous_reading and self.value > previous_reading.value:
+            return float(self.value) - float(previous_reading.value)
+        return 0.0
+    
+    def get_consumption_period(self):
+        """Επιστρέφει την περίοδο κατανάλωσης (από προηγούμενη μέτρηση μέχρι τρέχουσα)"""
+        previous_reading = self.get_previous_reading()
+        if previous_reading:
+            return previous_reading.reading_date, self.reading_date
+        return self.reading_date, self.reading_date
+```
+
+#### 4. MeterReadingSerializer (API)
+```python
+# financial/serializers.py:315-349
+class MeterReadingSerializer(serializers.ModelSerializer):
+    """Serializer για τις μετρήσεις"""
+    
+    meter_type_display = serializers.CharField(source='get_meter_type_display', read_only=True)
+    apartment_number = serializers.CharField(source='apartment.number', read_only=True)
+    building_name = serializers.CharField(source='apartment.building.name', read_only=True)
+    previous_value = serializers.SerializerMethodField()
+    consumption = serializers.SerializerMethodField()
+    consumption_period = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = MeterReading
+        fields = [
+            'id', 'apartment', 'apartment_number', 'building_name', 'reading_date',
+            'value', 'meter_type', 'meter_type_display', 'previous_value', 'consumption',
+            'consumption_period', 'notes', 'created_at'
+        ]
+    
+    def get_previous_value(self, obj):
+        """Προηγούμενη ένδειξη"""
+        previous = obj.get_previous_reading()
+        return float(previous.value) if previous else None
+    
+    def get_consumption(self, obj):
+        """Υπολογισμός κατανάλωσης"""
+        return obj.calculate_consumption()
+    
+    def get_consumption_period(self, obj):
+        """Λήψη περιόδου κατανάλωσης"""
+        start_date, end_date = obj.get_consumption_period()
+        return {
+            'start_date': start_date,
+            'end_date': end_date
+        } if start_date else None
 ```
 
 ### ⚙️ Business Logic Services
@@ -232,6 +299,48 @@ useEffect(() => {
 }
 {buildingHeatingSystem === 'heat_meters' && 
   '💡 Για αυτό το κτίριο χρησιμοποιήστε "Θέρμανση (kWh/MWh)"'
+}
+```
+
+#### 4. MeterReadingList.tsx & MeterReadingDatasheet.tsx
+**Σκοπός:** Εμφάνιση και διαχείριση μετρήσεων
+
+**✅ ΔΙΟΡΘΩΣΕΙΣ (Sept 2025):**
+```tsx
+// ❌ ΠΑΛΙΟ: Σφάλμα με toFixed() σε string values
+{reading.value.toFixed(2)}
+{reading.previous_value ? reading.previous_value.toFixed(2) : '-'}
+
+// ✅ ΝΕΟ: Χρήση parseFloat() για ασφάλεια
+{parseFloat(reading.value).toFixed(2)}
+{reading.previous_value ? parseFloat(reading.previous_value).toFixed(2) : '-'}
+{reading.consumption ? (
+  <span className={parseFloat(reading.consumption) > 0 ? 'text-green-600' : 'text-red-600'}>
+    {parseFloat(reading.consumption) > 0 ? '+' : ''}{parseFloat(reading.consumption).toFixed(2)}
+  </span>
+) : '-'}
+```
+
+**TypeScript Interface:**
+```tsx
+// types/financial.ts
+export interface MeterReading {
+  id: number;
+  apartment: number;
+  apartment_number?: string;
+  building_name?: string;
+  reading_date: string;
+  value: number | string; // ✅ Υποστήριξη string από DecimalField serialization
+  meter_type: string;
+  meter_type_display?: string;
+  previous_value?: number | string; // ✅ ΝΕΟ
+  consumption?: number | string; // ✅ ΝΕΟ
+  consumption_period?: { // ✅ ΝΕΟ
+    start_date: string;
+    end_date: string;
+  };
+  notes?: string;
+  created_at: string;
 }
 ```
 
@@ -604,6 +713,60 @@ console.log('API response:', await fetchBuilding(buildingId));
 | `HT003` | Λάθος τύπος μετρητή | Χρήση σωστού `meter_type` |
 | `HT004` | Διαφορά αθροισμάτων | Έλεγχος στρογγυλοποιήσεων |
 | `HT005` | Μηδενικά χιλιοστά | Ρύθμιση `heating_mills` |
+| `HT006` | `AttributeError: get_previous_reading` | ✅ **ΛΥΘΗΚΕ** Προσθήκη μεθόδων στο model |
+| `HT007` | `TypeError: reading.value.toFixed is not a function` | ✅ **ΛΥΘΗΚΕ** Χρήση parseFloat() |
+
+### 🔧 Πρόσφατες Διορθώσεις (Sept 2025)
+
+#### Πρόβλημα: AttributeError στο Serializer
+**Σφάλμα:**
+```
+AttributeError: 'MeterReading' object has no attribute 'get_previous_reading'
+AttributeError: 'MeterReading' object has no attribute 'get_consumption_period'
+```
+
+**✅ Λύση:**
+Προστέθηκαν οι λείπουσες μέθοδοι στο `MeterReading` model:
+```python
+def get_previous_reading(self): # Βρίσκει προηγούμενη μέτρηση
+def calculate_consumption(self): # Υπολογίζει κατανάλωση
+def get_consumption_period(self): # Επιστρέφει περίοδο κατανάλωσης
+```
+
+#### Πρόβλημα: TypeError στο Frontend
+**Σφάλμα:**
+```
+TypeError: reading.value.toFixed is not a function
+```
+
+**✅ Λύση:**
+- **Αιτία:** Django DecimalField serialization επιστρέφει string αντί για number
+- **Διόρθωση:** Χρήση `parseFloat()` πριν από `toFixed()`
+- **TypeScript:** Ενημέρωση interface `value: number | string`
+
+#### Verification Commands
+```bash
+# Backend test
+docker exec linux_version-backend-1 python -c "
+import os, sys, django
+sys.path.append('/app')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
+django.setup()
+
+from django_tenants.utils import schema_context
+from financial.models import MeterReading
+
+with schema_context('demo'):
+    meter_reading = MeterReading.objects.first()
+    if meter_reading:
+        period = meter_reading.get_consumption_period()
+        consumption = meter_reading.calculate_consumption()
+        print(f'✅ Methods work: period={period}, consumption={consumption}')
+"
+
+# Frontend test (στο browser console)
+# Verify no more toFixed errors στο Network tab
+```
 
 ---
 
@@ -645,6 +808,25 @@ console.log('API response:', await fetchBuilding(buildingId));
 
 ---
 
-*Οδηγός δημιουργήθηκε: {{ current_date }}*  
+*Οδηγός δημιουργήθηκε: September 2025*  
 *Έκδοση Συστήματος: New Concierge v2.1*  
-*Τελευταία ενημέρωση: 🔥 Θέρμανση Architecture Guide*
+*Τελευταία ενημέρωση: 🔧 Fixed MeterReading Serializer & Frontend Issues*
+
+---
+
+## 📝 Change Log
+
+### Sept 12, 2025 - Meter Reading System Fixes
+- ✅ **Backend**: Προσθήκη λείπουσων μεθόδων στο MeterReading model
+- ✅ **Serializer**: Διόρθωση AttributeError για SerializerMethodField
+- ✅ **Frontend**: Διόρθωση TypeError για DecimalField values  
+- ✅ **TypeScript**: Ενημέρωση interfaces για mixed types
+- ✅ **Documentation**: Ενημέρωση με troubleshooting steps
+
+**Files Modified:**
+- `backend/financial/models.py` (lines 621-633)
+- `backend/financial/serializers.py` (lines 315-349) 
+- `frontend/components/financial/MeterReadingList.tsx` (lines 447-457)
+- `frontend/types/financial.ts` (lines 130-141)
+
+**Status:** ✅ Meter reading datasheet fully functional

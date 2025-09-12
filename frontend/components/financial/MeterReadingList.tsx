@@ -43,11 +43,13 @@ import {
   Calendar,
   Thermometer,
   Droplets,
-  Zap
+  Zap,
+  FileSpreadsheet
 } from 'lucide-react';
 import { format } from 'date-fns';
 // import { el } from 'date-fns/locale/el';
 import { MeterReadingForm } from './MeterReadingForm';
+import { MeterReadingDatasheet } from './MeterReadingDatasheet';
 import { getCurrentMonthRange } from '@/lib/dateUtils';
 
 interface MeterReadingListProps {
@@ -57,6 +59,7 @@ interface MeterReadingListProps {
 
 export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId, selectedMonth }) => {
   const [showForm, setShowForm] = useState(false);
+  const [showDatasheet, setShowDatasheet] = useState(false);
   const [editingReading, setEditingReading] = useState<MeterReading | null>(null);
   const [filters, setFilters] = useState({
     meter_type: '',
@@ -118,6 +121,15 @@ export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId, 
     setShowForm(false);
     setEditingReading(null);
     fetchReadings();
+  };
+
+  const handleDatasheetSuccess = () => {
+    setShowDatasheet(false);
+    fetchReadings();
+  };
+
+  const handleDatasheetCancel = () => {
+    setShowDatasheet(false);
   };
 
   const handleFormCancel = () => {
@@ -209,27 +221,57 @@ export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId, 
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Plus className="h-5 w-5 text-purple-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Νέα Μετρήση</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Plus className="h-5 w-5 text-purple-500" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Νέες Μετρήσεις</p>
+                    <p className="text-xs text-gray-500">Επιλέξτε τρόπο εισαγωγής</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {/* Single Reading Form */}
                   <Dialog open={showForm} onOpenChange={setShowForm}>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm">
-                        Προσθήκη
+                        <Plus className="h-3 w-3 mr-1" />
+                        Μονή
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl">
                       <DialogHeader>
                         <DialogTitle>Νέα Μετρήση</DialogTitle>
                         <DialogDescription>
-                          Εισαγωγή νέας μετρήσης για το κτίριο
+                          Εισαγωγή μετρήσης για ένα διαμέρισμα
                         </DialogDescription>
                       </DialogHeader>
                       <MeterReadingForm
                         buildingId={buildingId}
                         onSuccess={handleFormSuccess}
                         onCancel={handleFormCancel}
+                      />
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Datasheet Form */}
+                  <Dialog open={showDatasheet} onOpenChange={setShowDatasheet}>
+                    <DialogTrigger asChild>
+                      <Button variant="default" size="sm">
+                        <FileSpreadsheet className="h-3 w-3 mr-1" />
+                        Φύλλο
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Φύλλο Μετρήσεων - Landscape View</DialogTitle>
+                        <DialogDescription>
+                          Εισαγωγή μετρήσεων για όλα τα διαμερίσματα σε μορφή πίνακα
+                        </DialogDescription>
+                      </DialogHeader>
+                      <MeterReadingDatasheet
+                        buildingId={buildingId}
+                        onSuccess={handleDatasheetSuccess}
+                        onCancel={handleDatasheetCancel}
                       />
                     </DialogContent>
                   </Dialog>
@@ -312,13 +354,23 @@ export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId, 
                     Τρέχον Μήνας
                   </Button>
                 </div>
-                <Button
-                  onClick={() => setShowForm(true)}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Νέα Μετρήση
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={() => setShowForm(true)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Μονή Μετρήση
+                  </Button>
+                  <Button
+                    onClick={() => setShowDatasheet(true)}
+                    className="w-full"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Φύλλο Μετρήσεων
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -392,15 +444,15 @@ export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId, 
                         {format(new Date(reading.reading_date), 'dd/MM/yyyy')}
                       </TableCell>
                       <TableCell className="font-mono">
-                        {reading.value.toFixed(2)}
+                        {parseFloat(reading.value).toFixed(2)}
                       </TableCell>
                       <TableCell className="font-mono text-muted-foreground">
-                        {reading.previous_value ? reading.previous_value.toFixed(2) : '-'}
+                        {reading.previous_value ? parseFloat(reading.previous_value).toFixed(2) : '-'}
                       </TableCell>
                       <TableCell className="font-mono">
                         {reading.consumption ? (
-                          <span className={reading.consumption > 0 ? 'text-green-600' : 'text-red-600'}>
-                            {reading.consumption > 0 ? '+' : ''}{reading.consumption.toFixed(2)}
+                          <span className={parseFloat(reading.consumption) > 0 ? 'text-green-600' : 'text-red-600'}>
+                            {parseFloat(reading.consumption) > 0 ? '+' : ''}{parseFloat(reading.consumption).toFixed(2)}
                           </span>
                         ) : '-'}
                       </TableCell>

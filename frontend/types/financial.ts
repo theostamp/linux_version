@@ -127,9 +127,15 @@ export interface MeterReading {
   apartment_number?: string;
   building_name?: string;
   reading_date: string;
-  value: number;
+  value: number | string; // Can be string from DecimalField serialization
   meter_type: string;
   meter_type_display?: string;
+  previous_value?: number | string;
+  consumption?: number | string;
+  consumption_period?: {
+    start_date: string;
+    end_date: string;
+  };
   notes?: string;
   created_at: string;
 }

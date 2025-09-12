@@ -606,6 +606,31 @@ class MeterReading(models.Model):
     
     def __str__(self):
         return f"{self.apartment.number} - {self.get_meter_type_display()} - {self.value} ({self.reading_date})"
+    
+    def get_previous_reading(self):
+        """Λήψη της προηγούμενης μετρήσης για το ίδιο διαμέρισμα και τύπο μετρητή"""
+        try:
+            return MeterReading.objects.filter(
+                apartment=self.apartment,
+                meter_type=self.meter_type,
+                reading_date__lt=self.reading_date
+            ).order_by('-reading_date').first()
+        except Exception:
+            return None
+    
+    def calculate_consumption(self):
+        """Υπολογισμός κατανάλωσης σε σχέση με την προηγούμενη μέτρηση"""
+        previous_reading = self.get_previous_reading()
+        if previous_reading and self.value > previous_reading.value:
+            return float(self.value) - float(previous_reading.value)
+        return 0.0
+    
+    def get_consumption_period(self):
+        """Επιστρέφει την περίοδο κατανάλωσης (από προηγούμενη μέτρηση μέχρι τρέχουσα)"""
+        previous_reading = self.get_previous_reading()
+        if previous_reading:
+            return previous_reading.reading_date, self.reading_date
+        return self.reading_date, self.reading_date
 
 class CommonExpensePeriod(models.Model):
     building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='common_expense_periods')

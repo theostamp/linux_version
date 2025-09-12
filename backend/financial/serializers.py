@@ -327,9 +327,9 @@ class MeterReadingSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'apartment', 'apartment_number', 'building_name', 'reading_date',
             'value', 'meter_type', 'meter_type_display', 'previous_value', 'consumption',
-            'consumption_period', 'notes', 'created_at', 'updated_at'
+            'consumption_period', 'notes', 'created_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at']
     
     def get_previous_value(self, obj):
         """Λήψη της προηγούμενης τιμής μετρήσης"""
