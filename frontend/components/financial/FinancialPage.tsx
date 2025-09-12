@@ -35,7 +35,8 @@ import {
 import { useFinancialPermissions } from '@/hooks/useFinancialPermissions';
 import { ProtectedFinancialRoute, ConditionalRender, PermissionButton } from './ProtectedFinancialRoute';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { fetchApartments, ApartmentList } from '@/lib/api';
+import { fetchApartments, ApartmentList, api } from '@/lib/api';
+import { toast } from 'sonner';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useModalState } from '@/hooks/useModalState';
 import useFinancialAutoRefresh from '@/hooks/useFinancialAutoRefresh';
@@ -93,14 +94,39 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   
   // Event listener for opening maintenance overview modal
   useEffect(() => {
-    const handleOpenMaintenanceOverview = (event: CustomEvent) => {
-      setSelectedMaintenanceId(event.detail.maintenanceId);
-      setMaintenanceOverviewOpen(true);
+    const handleOpenMaintenanceOverview = async (event: CustomEvent) => {
+      console.log('🎯 FinancialPage received open-maintenance-overview event:', event.detail);
+      const maintenanceId = event.detail.maintenanceId;
+      
+      if (!maintenanceId) {
+        console.warn('⚠️ No maintenance ID provided in event');
+        return;
+      }
+      
+      // Validate that the maintenance exists before opening the modal
+      try {
+        console.log('🔍 Validating maintenance ID:', maintenanceId);
+        await api.get(`/maintenance/scheduled/${maintenanceId}/`);
+        console.log('✅ Maintenance exists, opening modal');
+        setSelectedMaintenanceId(maintenanceId);
+        setMaintenanceOverviewOpen(true);
+      } catch (error: any) {
+        console.error('❌ Maintenance validation failed:', error);
+        if (error.response?.status === 404) {
+          console.warn(`⚠️ Maintenance with ID ${maintenanceId} not found`);
+          toast.error(`Το έργο με ID ${maintenanceId} δεν βρέθηκε`);
+        } else {
+          console.error('Error validating maintenance:', error);
+          toast.error('Σφάλμα κατά την επαλήθευση του έργου');
+        }
+      }
     };
     
+    console.log('👂 FinancialPage setting up open-maintenance-overview event listener');
     window.addEventListener('open-maintenance-overview', handleOpenMaintenanceOverview as EventListener);
     
     return () => {
+      console.log('🧹 FinancialPage cleaning up open-maintenance-overview event listener');
       window.removeEventListener('open-maintenance-overview', handleOpenMaintenanceOverview as EventListener);
     };
   }, []);

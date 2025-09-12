@@ -454,7 +454,7 @@ NEXT_PUBLIC_API_URL=https://api.yourdomain.com
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-
+## ###################################################################################
 ## 🧹 Καθαρισμός Docker
 
 ### Πλήρης Καθαρισμός Docker
@@ -477,36 +477,12 @@ docker compose up --build -d
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "φιχ Ολοκληρωση επεξεργασίας προβληματων υπηρεσιών και συνδεσης με δαπανες ."
+git commit -m "φι2χ Ολοκληρωση επεξεργασίας προβληματων υπηρεσιών και συνδεσης με δαπανες ."
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
- 
-### 🔁 Διπλό push: GitHub + τοπικός δίσκος E: (WSL)
 
-- Χρησιμοποίησε το WSL path για τον δίσκο E: (`/mnt/e/`).
 
-```bash
-# 1) Δημιούργησε bare repo στον E:
-mkdir -p /mnt/e/git-repos
-git init --bare /mnt/e/git-repos/linux_version.git
-
-# 2) Πρόσθεσε διπλό push στο ίδιο remote (origin)
-git remote set-url --push origin --add git@github-ssh443:theostamp/linux_version.git
-git remote set-url --push origin --add /mnt/e/git-repos/linux_version.git
-
-# 3) Έλεγχος
-git remote -v
-
-# 4) Push και στα δύο με μία εντολή
-git push origin main
-```
-
-Εναλλακτικά, με δεύτερο remote:
-```bash
-git remote add local /mnt/e/git-repos/linux_version.git
-git push --all origin && git push --all local
-```
 
 ---
 
@@ -514,14 +490,7 @@ git reset --hard 9906d237a5
 ### Πλήρης Καθαρισμός Docker
 ```bash
 
-docker stop $(docker ps -aq)
-docker rm $(docker ps -aq)
-docker volume prune -f
-docker network prune -f
-docker builder prune -af
-docker system prune -af --volumes
-
-docker compose up --build -d
+## ########################4##########################################################
 
 ## 🔮 Επόμενα Βήματα & Μελλοντικές Βελτιώσεις
 

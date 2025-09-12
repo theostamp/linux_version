@@ -72,6 +72,7 @@ export type ScheduledMaintenance = {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   status?: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
   estimated_duration?: number | null;
+  estimated_cost?: number | null;
 };
 
 export default function ScheduledMaintenanceForm({
@@ -418,8 +419,27 @@ export default function ScheduledMaintenanceForm({
         periodic_frequency: pc.periodic_frequency,
         periodic_amount: pc.periodic_amount,
         start_date: pc.start_date || new Date().toISOString().slice(0, 10),
-        notes: pc.notes,
+        notes: pc.notes || '',
       };
+      
+      // Validate required fields based on payment type
+      if (schedulePayload.payment_type === 'advance_installments') {
+        if (!schedulePayload.total_amount || schedulePayload.total_amount <= 0) {
+          console.warn('Invalid total_amount for advance_installments:', schedulePayload.total_amount);
+          return; // Skip payment schedule creation if invalid data
+        }
+        if (!schedulePayload.installment_count || schedulePayload.installment_count <= 0) {
+          console.warn('Invalid installment_count for advance_installments:', schedulePayload.installment_count);
+          return; // Skip payment schedule creation if invalid data
+        }
+      }
+      
+      // Clean up undefined/null values that might cause backend validation issues
+      Object.keys(schedulePayload).forEach(key => {
+        if (schedulePayload[key] === undefined || schedulePayload[key] === null) {
+          delete schedulePayload[key];
+        }
+      });
       
       // Always check for existing schedules to prevent duplicates
       let foundExistingSchedules = [];
@@ -435,25 +455,37 @@ export default function ScheduledMaintenanceForm({
       
       if (existingScheduleId && foundExistingSchedules.find((s: any) => s.id === existingScheduleId)) {
         // Update the known existing payment schedule
+        console.log('🔄 Updating existing payment schedule:', existingScheduleId);
         await api.patch(`/maintenance/payment-schedules/${existingScheduleId}/`, schedulePayload);
       } else {
-        // Clean up any existing schedules to prevent duplicates
-        for (const schedule of foundExistingSchedules) {
+        // Check if there's already a payment schedule for this maintenance (OneToOneField constraint)
+        if (foundExistingSchedules.length > 0) {
+          console.log('⚠️ Found existing payment schedule, updating instead of creating new one');
+          const existingSchedule = foundExistingSchedules[0];
+          await api.patch(`/maintenance/payment-schedules/${existingSchedule.id}/`, schedulePayload);
+        } else {
+          // Create new payment schedule
+          console.log('🔍 Creating payment schedule with payload:', schedulePayload);
+          console.log('🔍 API endpoint:', `/maintenance/scheduled/${savedId}/create_payment_schedule/`);
+          
+          // Verify the maintenance exists before creating payment schedule
           try {
-            await api.delete(`/maintenance/payment-schedules/${schedule.id}/`);
-            console.log('Deleted existing payment schedule:', schedule.id);
-          } catch (deleteError) {
-            console.warn('Failed to delete existing payment schedule:', schedule.id, deleteError);
+            const maintenanceCheck = await api.get(`/maintenance/scheduled/${savedId}/`);
+            console.log('✅ Maintenance exists:', maintenanceCheck.data?.title);
+          } catch (checkError) {
+            console.error('❌ Maintenance not found:', savedId, checkError);
+            return; // Skip payment schedule creation if maintenance doesn't exist
           }
+          
+          await api.post(`/maintenance/scheduled/${savedId}/create_payment_schedule/`, schedulePayload);
         }
-        
-        // Create new payment schedule
-        await api.post(`/maintenance/scheduled/${savedId}/create_payment_schedule/`, schedulePayload);
       }
       
       console.timeEnd('Background payment configuration processing');
     } catch (error: any) {
       console.error('Background payment configuration error:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       // Don't show error toast in background processing to avoid confusion
     }
   };
@@ -476,7 +508,7 @@ export default function ScheduledMaintenanceForm({
           values.description !== (initialData.description || '') ||
           values.contractor !== initialData.contractor ||
           values.scheduled_date !== initialData.scheduled_date ||
-          values.price !== (initialData.price || undefined) ||
+          values.price !== (initialData.estimated_cost || undefined) ||
           values.estimated_duration !== (initialData.estimated_duration || undefined)
         );
 

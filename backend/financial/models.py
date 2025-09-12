@@ -265,10 +265,17 @@ class Expense(models.Model):
         return self.scheduled_maintenance_tasks.exists()
     
     def get_linked_maintenance_projects(self):
-        """Επιστρέφει τα συνδεδεμένα έργα συντήρησης με δόσεις"""
-        return self.scheduled_maintenance_tasks.filter(
+        """Επιστρέφει τα συνδεδεμένα έργα συντήρησης (με ή χωρίς δόσεις)"""
+        # Πρώτα επιστρέφουμε έργα με payment schedule
+        projects_with_schedule = self.scheduled_maintenance_tasks.filter(
             payment_schedule__isnull=False
         ).select_related('payment_schedule')
+        
+        # Αν δεν υπάρχουν, επιστρέφουμε όλα τα συνδεδεμένα έργα
+        if projects_with_schedule.exists():
+            return projects_with_schedule
+        else:
+            return self.scheduled_maintenance_tasks.all().select_related('payment_schedule')
     
     def __str__(self):
         return f"{self.title} - {self.amount}€ ({self.get_category_display()})"

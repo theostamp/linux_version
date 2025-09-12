@@ -1,5 +1,17 @@
 'use client';
 
+/**
+ * Maintenance Dashboard - Services & Expenses
+ * 
+ * This page separates services/maintenance expenses from operational expenses:
+ * 
+ * - "Όλες οι Δαπάνες" tab (default): Shows all operational expenses (utilities, monthly bills)
+ *   (electricity_common, water_common, heating_fuel, heating_gas, garbage_collection)
+ * 
+ * - "Επισκόπηση & Έργα" tab: Shows contractors, maintenance projects, and service-related expenses
+ *   (excludes operational expenses like utilities, monthly bills)
+ */
+
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, extractCount, extractResults, getActiveBuildingId } from '@/lib/api';
@@ -272,7 +284,7 @@ export default function MaintenanceDashboard() {
   useBuildingEvents();
   const { isAdmin, isManager } = useRole();
   const buildingId = getActiveBuildingId();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('operational-expenses');
 
   const contractorsQ = useQuery({
     queryKey: ['contractors', { building: buildingId }],
@@ -291,7 +303,29 @@ export default function MaintenanceDashboard() {
   const yearStart = `${year}-01-01`;
   const yearEnd = `${year}-12-31`;
 
-  // Total expenses for the year from Financial Expenses API
+  // Service/Maintenance expenses for the year (excludes operational expenses)
+  const serviceExpensesYearQ = useQuery({
+    queryKey: ['service-expenses-year', { building: buildingId, year }],
+    queryFn: async () => (await api.get(`/financial/expenses/`, { 
+      params: { 
+        building_id: buildingId, 
+        date__gte: yearStart, 
+        date__lte: yearEnd, 
+        limit: 1000,
+        // Exclude operational expenses (utilities, monthly bills)
+        category__not_in: [
+          'electricity_common',
+          'water_common', 
+          'heating_fuel',
+          'heating_gas',
+          'garbage_collection'
+        ].join(',')
+      } 
+    })).data,
+    staleTime: 30_000,
+  });
+
+  // Total expenses for the year from Financial Expenses API (for operational expenses tab)
   const expensesYearQ = useQuery({
     queryKey: ['expenses-year', { building: buildingId, year }],
     queryFn: async () => (await api.get(`/financial/expenses/`, { params: { building_id: buildingId, date__gte: yearStart, date__lte: yearEnd, limit: 1000 } })).data,
@@ -326,9 +360,16 @@ export default function MaintenanceDashboard() {
     staleTime: 30_000,
   });
 
-  const loading = contractorsQ.isLoading || receiptsQ.isLoading || receiptsCompletedQ.isLoading || scheduledQ.isLoading || urgentScheduledQ.isLoading || expensesYearQ.isLoading || completedYearQ.isLoading || receiptsYearQ.isLoading;
+  const loading = contractorsQ.isLoading || receiptsQ.isLoading || receiptsCompletedQ.isLoading || scheduledQ.isLoading || urgentScheduledQ.isLoading || serviceExpensesYearQ.isLoading || expensesYearQ.isLoading || completedYearQ.isLoading || receiptsYearQ.isLoading;
   const contractorRows = extractResults<any>(contractorsQ.data ?? []);
   const scheduledRows = extractResults<any>(scheduledQ.data ?? []);
+  // Service/Maintenance expenses total for the year (for overview tab)
+  const totalServiceSpentThisYear = useMemo(() => {
+    const rows = extractResults<any>(serviceExpensesYearQ.data ?? []);
+    return rows.reduce((sum: number, r: any) => sum + (Number(r?.amount) || 0), 0);
+  }, [serviceExpensesYearQ.data]);
+
+  // Total expenses for the year (for operational expenses tab)
   const totalSpentThisYear = useMemo(() => {
     const rows = extractResults<any>(expensesYearQ.data ?? []);
     return rows.reduce((sum: number, r: any) => sum + (Number(r?.amount) || 0), 0);
@@ -460,7 +501,7 @@ export default function MaintenanceDashboard() {
     scheduled_maintenance: extractCount(scheduledQ.data ?? []),
     urgent_maintenance: extractCount(urgentScheduledQ.data ?? []),
     completed_maintenance: completedThisYear,
-    total_spent: totalSpentThisYear,
+    total_spent: totalServiceSpentThisYear, // Use service expenses for overview tab
   };
 
   const stats: MaintenanceStats = publicCountersQ.data ? {
@@ -470,7 +511,7 @@ export default function MaintenanceDashboard() {
     scheduled_maintenance: publicCountersQ.data.scheduled_total,
     urgent_maintenance: publicCountersQ.data.urgent_total,
     completed_maintenance: completedThisYear,
-    total_spent: totalSpentThisYear,
+    total_spent: totalServiceSpentThisYear, // Use service expenses for overview tab
   } : baseStats;
 
   const StatCard = ({ 
@@ -574,10 +615,24 @@ export default function MaintenanceDashboard() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="operational-expenses">Όλες οι Δαπάνες</TabsTrigger>
           <TabsTrigger value="overview">Επισκόπηση & Έργα</TabsTrigger>
-          <TabsTrigger value="operational-expenses">Λειτουργικές Δαπάνες</TabsTrigger>
         </TabsList>
         
+        {/* Tab Descriptions */}
+        <div className="text-sm text-muted-foreground mt-2">
+          {activeTab === 'operational-expenses' && (
+            <span>💰 Διαχείριση όλων των δαπανών κτιρίου (λειτουργικές δαπάνες, μηνιαίοι λογαριασμοί, ρεύμα, νερό, θέρμανση)</span>
+          )}
+          {activeTab === 'overview' && (
+            <span>📊 Επισκόπηση συνεργείων, έργων συντήρησης και δαπανών συντήρησης (χωρίς λειτουργικές δαπάνες)</span>
+          )}
+        </div>
+        
+        <TabsContent value="operational-expenses" className="space-y-6 mt-6">
+          <OperationalExpensesTab buildingId={buildingId} />
+        </TabsContent>
+
         <TabsContent value="overview" className="space-y-6 mt-6">
 
       {/* Stats Grid */}
@@ -626,9 +681,9 @@ export default function MaintenanceDashboard() {
           color="success"
         />
         <StatCard
-          title="Συνολικά Έξοδα"
+          title="Συνολικά Έξοδα Συντήρησης"
           value={`€${Math.round(stats.total_spent).toLocaleString('el-GR')}`}
-          description="Φέτος"
+          description="Φέτος (Έργα & Συντήρηση)"
           icon={<TrendingUp className="w-4 h-4" />}
           color="default"
         />
@@ -701,10 +756,6 @@ export default function MaintenanceDashboard() {
           )}
         </CardContent>
       </Card>
-        </TabsContent>
-
-        <TabsContent value="operational-expenses" className="space-y-6 mt-6">
-          <OperationalExpensesTab buildingId={buildingId} />
         </TabsContent>
       </Tabs>
     </div>

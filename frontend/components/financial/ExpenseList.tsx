@@ -119,21 +119,67 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
       const project = expense.linked_maintenance_projects?.[0];
       const projectInfo = project ? ` με έργο "${project.title}"` : '';
       
+      // Debug logging
+      console.log('🔍 Project-related expense detected:', {
+        expenseTitle: expense.title,
+        expenseCategory: expense.category,
+        hasInstallments: expense.has_installments,
+        linkedProjects: expense.linked_maintenance_projects,
+        project: project
+      });
+      
       toast.info(
         `Η δαπάνη "${expense.title}" σχετίζεται${projectInfo}. Για τη διαχείρισή της θα μεταφερθείτε στο οικονομικό dashboard του έργου.`
       );
       
       // Ανοίγει το modal "Οικονομική Επισκόπηση Έργου"
       if (project?.id) {
+        console.log('🚀 Dispatching open-maintenance-overview event with ID:', project.id);
         window.dispatchEvent(new CustomEvent('open-maintenance-overview', { 
           detail: { maintenanceId: project.id } 
         }));
       } else {
-        // Αν δεν υπάρχει συγκεκριμένο έργο, ανοίγει γενικό maintenance dashboard
-        toast.info('Αυτή η δαπάνη σχετίζεται με έργο συντήρησης. Θα μεταφερθείτε στη διαχείριση έργων για περαιτέρω ενέργειες.');
-        setTimeout(() => {
-          window.open('/maintenance?tab=overview', '_blank');
-        }, 1500); // Μικρή καθυστέρηση για να διαβάσει ο χρήστης το μήνυμα
+        console.log('⚠️ No project ID found in linked_maintenance_projects, trying to find project by category match...');
+        
+        // Fallback: Προσπάθεια εύρεσης έργου με βάση την κατηγορία και το τίτλο
+        // Αυτό θα πρέπει να γίνει μέσω API call για να βρούμε το πιο πιθανό έργο
+        const searchForRelatedProject = async () => {
+          try {
+            // Αναζήτηση έργων που ταιριάζουν με την κατηγορία και το τίτλο
+            const response = await api.get('/maintenance/scheduled-maintenance/', {
+              params: {
+                building: expense.building,
+                search: expense.title,
+                limit: 5
+              }
+            });
+            
+            const projects = response.data?.results || response.data || [];
+            const matchingProject = projects.find((p: any) => 
+              p.title?.toLowerCase().includes(expense.title.toLowerCase()) ||
+              expense.title.toLowerCase().includes(p.title?.toLowerCase())
+            );
+            
+            if (matchingProject?.id) {
+              console.log('🎯 Found matching project via API:', matchingProject);
+              window.dispatchEvent(new CustomEvent('open-maintenance-overview', { 
+                detail: { maintenanceId: matchingProject.id } 
+              }));
+              return;
+            }
+          } catch (error) {
+            console.error('Error searching for related project:', error);
+          }
+          
+          // Αν δεν βρέθηκε έργο, ανοίγει γενικό maintenance dashboard
+          console.log('⚠️ No matching project found, redirecting to maintenance page');
+          toast.info('Αυτή η δαπάνη σχετίζεται με έργο συντήρησης. Θα μεταφερθείτε στη διαχείριση έργων για περαιτέρω ενέργειες.');
+          setTimeout(() => {
+            window.open('/maintenance?tab=overview', '_blank');
+          }, 1500);
+        };
+        
+        searchForRelatedProject();
       }
       return;
     }

@@ -41,11 +41,25 @@ export default function ScheduledMaintenanceOverviewModal({
         const schedule = item?.payment_schedule ?? null;
         const { installments = [], receipts = [] } = history || {};
         setData({ item, schedule, installments, receipts });
+      } catch (error: any) {
+        console.error('Error loading maintenance data:', error);
+        console.error('Error response:', error.response?.data);
+        console.error('Error status:', error.response?.status);
+        
+        // If maintenance doesn't exist (404), close the modal
+        if (error.response?.status === 404) {
+          console.warn(`Maintenance with ID ${id} not found, closing modal`);
+          onOpenChange(false);
+          return;
+        }
+        
+        // For other errors, set empty data
+        setData({ item: null, schedule: null, installments: [], receipts: [] });
       } finally {
         setLoading(false);
       }
     })();
-  }, [open, id]);
+  }, [open, id, onOpenChange]);
 
   const totalInstallmentsAmount = useMemo(() => {
     return (data.installments ?? []).reduce((sum: number, i: any) => sum + Number(i.amount || 0), 0);
@@ -62,31 +76,49 @@ export default function ScheduledMaintenanceOverviewModal({
 
   const refresh = async () => {
     if (!id) return;
-    const [{ data: item }, { data: history }] = await Promise.all([
-      api.get(`/maintenance/scheduled/${id}/`),
-      api.get(`/maintenance/scheduled/${id}/payment_history/`),
-    ]);
-    const schedule = item?.payment_schedule ?? null;
-    const { installments = [], receipts = [] } = history || {};
-    setData({ item, schedule, installments, receipts });
+    try {
+      const [{ data: item }, { data: history }] = await Promise.all([
+        api.get(`/maintenance/scheduled/${id}/`),
+        api.get(`/maintenance/scheduled/${id}/payment_history/`),
+      ]);
+      const schedule = item?.payment_schedule ?? null;
+      const { installments = [], receipts = [] } = history || {};
+      setData({ item, schedule, installments, receipts });
+    } catch (error: any) {
+      console.error('Error refreshing maintenance data:', error);
+      if (error.response?.status === 404) {
+        console.warn(`Maintenance with ID ${id} not found during refresh, closing modal`);
+        onOpenChange(false);
+      }
+    }
   };
 
   const markInstallmentPaid = async (installmentId: number) => {
-    await api.post(`/maintenance/payment-installments/${installmentId}/mark_paid/`, {});
-    await refresh();
+    try {
+      await api.post(`/maintenance/payment-installments/${installmentId}/mark_paid/`, {});
+      await refresh();
+    } catch (error: any) {
+      console.error('Error marking installment as paid:', error);
+      toast.error('Σφάλμα κατά την ενημέρωση της δόσης');
+    }
   };
 
   const downloadReceiptPdf = async (receiptId: number, receiptNumber?: string) => {
-    const res = await api.post(`/maintenance/payment-receipts/${receiptId}/generate_pdf/`, {}, { responseType: 'blob' as any });
-    const blob = new Blob([res.data], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `receipt_${receiptNumber || receiptId}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
+    try {
+      const res = await api.post(`/maintenance/payment-receipts/${receiptId}/generate_pdf/`, {}, { responseType: 'blob' as any });
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `receipt_${receiptNumber || receiptId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error('Error downloading receipt PDF:', error);
+      toast.error('Σφάλμα κατά τη λήψη του PDF');
+    }
   };
 
   const deleteInstallment = async (installmentId: number) => {
@@ -100,9 +132,17 @@ export default function ScheduledMaintenanceOverviewModal({
       await api.delete(`/maintenance/payment-installments/${installmentId}/`);
       toast.success('Η δόση διαγράφηκε επιτυχώς!');
       await refresh();
-    } catch (error) {
-      toast.error('Σφάλμα κατά τη διαγραφή της δόσης');
+    } catch (error: any) {
       console.error('Error deleting installment:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      if (error.response?.status === 404) {
+        toast.error('Η δόση δεν βρέθηκε ή έχει ήδη διαγραφεί');
+        await refresh(); // Refresh to update the UI
+      } else {
+        toast.error('Σφάλμα κατά τη διαγραφή της δόσης');
+      }
     }
   };
 
@@ -117,9 +157,17 @@ export default function ScheduledMaintenanceOverviewModal({
       await api.delete(`/maintenance/payment-receipts/${receiptId}/`);
       toast.success('Η απόδειξη διαγράφηκε επιτυχώς!');
       await refresh();
-    } catch (error) {
-      toast.error('Σφάλμα κατά τη διαγραφή της απόδειξης');
+    } catch (error: any) {
       console.error('Error deleting receipt:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      if (error.response?.status === 404) {
+        toast.error('Η απόδειξη δεν βρέθηκε ή έχει ήδη διαγραφεί');
+        await refresh(); // Refresh to update the UI
+      } else {
+        toast.error('Σφάλμα κατά τη διαγραφή της απόδειξης');
+      }
     }
   };
 
@@ -158,9 +206,20 @@ export default function ScheduledMaintenanceOverviewModal({
       // Ενημέρωση της σελίδας
       window.dispatchEvent(new CustomEvent('expense-deleted'));
       
-    } catch (error) {
-      toast.error('Σφάλμα κατά τη διαγραφή του έργου');
+    } catch (error: any) {
       console.error('Error deleting project:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      // If maintenance doesn't exist (404), show specific message and close modal
+      if (error.response?.status === 404) {
+        toast.error('Το έργο δεν βρέθηκε ή έχει ήδη διαγραφεί');
+        onOpenChange(false);
+        return;
+      }
+      
+      // For other errors, show generic error message
+      toast.error('Σφάλμα κατά τη διαγραφή του έργου');
     }
   };
 
@@ -168,19 +227,21 @@ export default function ScheduledMaintenanceOverviewModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Οικονομική Επισκόπηση Έργου</span>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={deleteEntireProject}
-              className="flex items-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Διαγραφή Έργου
-            </Button>
-          </DialogTitle>
+          <DialogTitle>Οικονομική Επισκόπηση Έργου</DialogTitle>
         </DialogHeader>
+        
+        {/* Action Buttons Section */}
+        <div className="flex justify-end mb-4">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={deleteEntireProject}
+            className="flex items-center gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            Διαγραφή Έργου
+          </Button>
+        </div>
         {loading && <div className="text-sm text-muted-foreground">Φόρτωση…</div>}
         {!loading && (
           <div className="space-y-6">
