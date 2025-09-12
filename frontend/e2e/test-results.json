@@ -1,0 +1,1060 @@
+{
+  "config": {
+    "configFile": "/home/theo/projects/linux_version/frontend/playwright.config.ts",
+    "rootDir": "/home/theo/projects/linux_version/frontend/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "e2e/test-results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "e2e/test-results.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/home/theo/projects/linux_version/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/theo/projects/linux_version/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/theo/projects/linux_version/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/home/theo/projects/linux_version/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/theo/projects/linux_version/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/home/theo/projects/linux_version/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/theo/projects/linux_version/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "/home/theo/projects/linux_version/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/theo/projects/linux_version/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "/home/theo/projects/linux_version/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.0",
+    "workers": 2,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": true,
+      "timeout": 120000,
+      "stdout": "pipe",
+      "stderr": "pipe"
+    }
+  },
+  "suites": [
+    {
+      "title": "financial-core.spec.ts",
+      "file": "financial-core.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Financial Core - Common Expenses Calculation",
+          "file": "financial-core.spec.ts",
+          "line": 24,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Complete flow: Select month -> Calculate common expenses -> Verify results",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-24be1abb63dba366aaad",
+              "file": "financial-core.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "Expense distribution algorithms verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-8819be3217fa44073cbf",
+              "file": "financial-core.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "Balance transfer scenarios",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-8acaa7699c585088a228",
+              "file": "financial-core.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "Reserve fund calculations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-81c5267bcab67dd068cd",
+              "file": "financial-core.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "Error handling for invalid scenarios",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-33ee75c87d18766fd1e4",
+              "file": "financial-core.spec.ts",
+              "line": 187,
+              "column": 7
+            },
+            {
+              "title": "Greek language and currency formatting",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-78664604d7e66784b52f",
+              "file": "financial-core.spec.ts",
+              "line": 210,
+              "column": 7
+            },
+            {
+              "title": "Responsive design verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-a2dbf2e7978843f65840",
+              "file": "financial-core.spec.ts",
+              "line": 239,
+              "column": 7
+            },
+            {
+              "title": "Complete flow: Select month -> Calculate common expenses -> Verify results",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-543885bcfc5be141612e",
+              "file": "financial-core.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "Expense distribution algorithms verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-7460fe1e9fbfd13a737d",
+              "file": "financial-core.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "Balance transfer scenarios",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-99c611d315c2bd337581",
+              "file": "financial-core.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "Reserve fund calculations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-68314b4ade70fb59b7d9",
+              "file": "financial-core.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "Error handling for invalid scenarios",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-009a589d71b20e180451",
+              "file": "financial-core.spec.ts",
+              "line": 187,
+              "column": 7
+            },
+            {
+              "title": "Greek language and currency formatting",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-10931977de523a55c2d3",
+              "file": "financial-core.spec.ts",
+              "line": 210,
+              "column": 7
+            },
+            {
+              "title": "Responsive design verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-e93796e7006db4139b17",
+              "file": "financial-core.spec.ts",
+              "line": 239,
+              "column": 7
+            },
+            {
+              "title": "Complete flow: Select month -> Calculate common expenses -> Verify results",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-e5d89c86ea68668fe59e",
+              "file": "financial-core.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "Expense distribution algorithms verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-2e8bcc2a113ff3639182",
+              "file": "financial-core.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "Balance transfer scenarios",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-8e64e2a8554cfcb63d34",
+              "file": "financial-core.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "Reserve fund calculations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-b8f0cb025ffec7eee080",
+              "file": "financial-core.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "Error handling for invalid scenarios",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-7aaa1e735398e22d1ef5",
+              "file": "financial-core.spec.ts",
+              "line": 187,
+              "column": 7
+            },
+            {
+              "title": "Greek language and currency formatting",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-002388e6518c6b4834bc",
+              "file": "financial-core.spec.ts",
+              "line": 210,
+              "column": 7
+            },
+            {
+              "title": "Responsive design verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-f0825069b4d63892fd21",
+              "file": "financial-core.spec.ts",
+              "line": 239,
+              "column": 7
+            },
+            {
+              "title": "Complete flow: Select month -> Calculate common expenses -> Verify results",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-86793b19e2e0de92d119",
+              "file": "financial-core.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "Expense distribution algorithms verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-131b9e3be47e4bd2ec03",
+              "file": "financial-core.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "Balance transfer scenarios",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-14148138db7e05aa0c31",
+              "file": "financial-core.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "Reserve fund calculations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-28889da5f9ab33790062",
+              "file": "financial-core.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "Error handling for invalid scenarios",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-7041c48ad6cef6e991e7",
+              "file": "financial-core.spec.ts",
+              "line": 187,
+              "column": 7
+            },
+            {
+              "title": "Greek language and currency formatting",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-7ee75090e2e50cba13e3",
+              "file": "financial-core.spec.ts",
+              "line": 210,
+              "column": 7
+            },
+            {
+              "title": "Responsive design verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-ff819d97c1482f2403fa",
+              "file": "financial-core.spec.ts",
+              "line": 239,
+              "column": 7
+            },
+            {
+              "title": "Complete flow: Select month -> Calculate common expenses -> Verify results",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-cdea44d8ab04304dad13",
+              "file": "financial-core.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "Expense distribution algorithms verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-736137cc6a017fb727f3",
+              "file": "financial-core.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "Balance transfer scenarios",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-4ce6e9caa1483ebbedfa",
+              "file": "financial-core.spec.ts",
+              "line": 123,
+              "column": 7
+            },
+            {
+              "title": "Reserve fund calculations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-3c68eb9a696926132657",
+              "file": "financial-core.spec.ts",
+              "line": 160,
+              "column": 7
+            },
+            {
+              "title": "Error handling for invalid scenarios",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-b42662326eeec58eb1ad",
+              "file": "financial-core.spec.ts",
+              "line": 187,
+              "column": 7
+            },
+            {
+              "title": "Greek language and currency formatting",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-0ebc21764a0a07520078",
+              "file": "financial-core.spec.ts",
+              "line": 210,
+              "column": 7
+            },
+            {
+              "title": "Responsive design verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-98667ac12d2d7ae7e592",
+              "file": "financial-core.spec.ts",
+              "line": 239,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Financial Core - Edge Cases",
+          "file": "financial-core.spec.ts",
+          "line": 268,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Performance with large number of apartments",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-a578d8b405629ed8fb0f",
+              "file": "financial-core.spec.ts",
+              "line": 273,
+              "column": 7
+            },
+            {
+              "title": "Network interruption handling",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-8f0533fe532573ae41e5",
+              "file": "financial-core.spec.ts",
+              "line": 297,
+              "column": 7
+            },
+            {
+              "title": "Performance with large number of apartments",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-36416498c0cc6bcfccfc",
+              "file": "financial-core.spec.ts",
+              "line": 273,
+              "column": 7
+            },
+            {
+              "title": "Network interruption handling",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-c75c09b5f4183345877b",
+              "file": "financial-core.spec.ts",
+              "line": 297,
+              "column": 7
+            },
+            {
+              "title": "Performance with large number of apartments",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-3cdfaba4441884dd7093",
+              "file": "financial-core.spec.ts",
+              "line": 273,
+              "column": 7
+            },
+            {
+              "title": "Network interruption handling",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-44bdf3ee11c488d158ce",
+              "file": "financial-core.spec.ts",
+              "line": 297,
+              "column": 7
+            },
+            {
+              "title": "Performance with large number of apartments",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-987eb02642ba097443b7",
+              "file": "financial-core.spec.ts",
+              "line": 273,
+              "column": 7
+            },
+            {
+              "title": "Network interruption handling",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-fe9789e25adb50c72ecc",
+              "file": "financial-core.spec.ts",
+              "line": 297,
+              "column": 7
+            },
+            {
+              "title": "Performance with large number of apartments",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-44c0f3d08adcb2b3765f",
+              "file": "financial-core.spec.ts",
+              "line": 273,
+              "column": 7
+            },
+            {
+              "title": "Network interruption handling",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e444bc115c4bb82424cc-748844a55b34ff3c853e",
+              "file": "financial-core.spec.ts",
+              "line": 297,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-09-12T09:12:32.998Z",
+    "duration": 202.46399999999971,
+    "expected": 0,
+    "skipped": 45,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

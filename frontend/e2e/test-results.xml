@@ -1,0 +1,192 @@
+<testsuites id="" name="" tests="45" failures="0" skipped="45" errors="0" time="0.20246399999999973">
+<testsuite name="financial-core.spec.ts" timestamp="2025-09-12T09:12:33.199Z" hostname="chromium" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testcase name="Financial Core - Common Expenses Calculation › Complete flow: Select month -&gt; Calculate common expenses -&gt; Verify results" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Expense distribution algorithms verification" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Balance transfer scenarios" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Reserve fund calculations" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Error handling for invalid scenarios" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Greek language and currency formatting" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Responsive design verification" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Edge Cases › Performance with large number of apartments" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Edge Cases › Network interruption handling" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="financial-core.spec.ts" timestamp="2025-09-12T09:12:33.199Z" hostname="firefox" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testcase name="Financial Core - Common Expenses Calculation › Complete flow: Select month -&gt; Calculate common expenses -&gt; Verify results" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Expense distribution algorithms verification" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Balance transfer scenarios" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Reserve fund calculations" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Error handling for invalid scenarios" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Greek language and currency formatting" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Responsive design verification" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Edge Cases › Performance with large number of apartments" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Edge Cases › Network interruption handling" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="financial-core.spec.ts" timestamp="2025-09-12T09:12:33.199Z" hostname="webkit" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testcase name="Financial Core - Common Expenses Calculation › Complete flow: Select month -&gt; Calculate common expenses -&gt; Verify results" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Expense distribution algorithms verification" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Balance transfer scenarios" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Reserve fund calculations" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Error handling for invalid scenarios" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Greek language and currency formatting" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Responsive design verification" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Edge Cases › Performance with large number of apartments" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Edge Cases › Network interruption handling" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="financial-core.spec.ts" timestamp="2025-09-12T09:12:33.199Z" hostname="Mobile Chrome" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testcase name="Financial Core - Common Expenses Calculation › Complete flow: Select month -&gt; Calculate common expenses -&gt; Verify results" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Expense distribution algorithms verification" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Balance transfer scenarios" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Reserve fund calculations" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Error handling for invalid scenarios" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Greek language and currency formatting" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Responsive design verification" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Edge Cases › Performance with large number of apartments" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Edge Cases › Network interruption handling" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="financial-core.spec.ts" timestamp="2025-09-12T09:12:33.199Z" hostname="Mobile Safari" tests="9" failures="0" skipped="9" time="0" errors="0">
+<testcase name="Financial Core - Common Expenses Calculation › Complete flow: Select month -&gt; Calculate common expenses -&gt; Verify results" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Expense distribution algorithms verification" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Balance transfer scenarios" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Reserve fund calculations" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Error handling for invalid scenarios" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Greek language and currency formatting" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Common Expenses Calculation › Responsive design verification" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Edge Cases › Performance with large number of apartments" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Financial Core - Edge Cases › Network interruption handling" classname="financial-core.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

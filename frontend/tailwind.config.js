@@ -8,8 +8,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-roboto-condensed)', 'sans-serif'],
-        heading: ['var(--font-roboto-condensed)', 'sans-serif'],
+        sans: ['var(--font-open-sans)', 'sans-serif'],
+        heading: ['var(--font-open-sans)', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
