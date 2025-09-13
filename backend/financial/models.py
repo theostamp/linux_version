@@ -297,7 +297,7 @@ class Expense(models.Model):
             if share_amount > 0:
                 # Calculate balances
                 current_balance = apartment.current_balance or Decimal('0.00')
-                new_balance = current_balance - share_amount
+                new_balance = current_balance + share_amount  # Προσθήκη χρέους
                 
                 # Convert expense.date (DateField) to DateTimeField for Transaction
                 expense_datetime = datetime.combine(self.date, datetime.min.time())
@@ -423,7 +423,7 @@ class Transaction(models.Model):
             if share_amount > 0:
                 # Calculate balances
                 current_balance = apartment.current_balance or Decimal('0.00')
-                new_balance = current_balance - share_amount
+                new_balance = current_balance + share_amount  # Προσθήκη χρέους
                 
                 # Create transaction for this apartment
                 Transaction.objects.create(
