@@ -28,7 +28,6 @@ interface ApartmentReading {
   current_reading: number;
   heating_percentage: number;
   amount?: number;
-  notes?: string;
 }
 
 interface MeterReadingDatasheetFormData {
@@ -143,11 +142,6 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
     }
   }, [buildingId, getExpenses]);
 
-  // Calculate amount for each apartment based on consumption
-  const calculateApartmentAmount = useCallback((consumption: number, totalConsumption: number, totalExpenseAmount: number) => {
-    if (totalConsumption === 0 || totalExpenseAmount === 0) return 0;
-    return (consumption / totalConsumption) * totalExpenseAmount;
-  }, []);
 
   // Load building data and apartments
   useEffect(() => {
@@ -414,8 +408,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
             apartment: reading.apartment_id,
             reading_date: data.reading_date,
             value: reading.current_reading,
-            meter_type: data.meter_type,
-            notes: reading.notes || ''
+            meter_type: data.meter_type
           });
         }
         return Promise.resolve();
@@ -582,13 +575,18 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                       Κατανάλωση<br/>(Διαφορά)
                     </th>
                     {(watchedMeterType === 'heating_hours' || watchedMeterType === 'heating_kwh') && (
-                      <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight">
-                        Ποσό<br/>(€)
-                      </th>
+                      <>
+                        <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight bg-blue-50">
+                          Πάγιο<br/>(€)
+                        </th>
+                        <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight bg-green-50">
+                          Κατανάλωση<br/>(€)
+                        </th>
+                        <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight">
+                          Σύνολο<br/>(€)
+                        </th>
+                      </>
                     )}
-                    <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight">
-                      Σημειώσεις
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -605,7 +603,6 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                       const currentReading = watch(`readings.${index}.current_reading`);
                       const previousReading = field.previous_reading || 0;
                       const consumption = currentReading > previousReading ? currentReading - previousReading : 0;
-                      const apartmentAmount = calculateApartmentAmount(consumption, totalConsumption, heatingExpenseAmount);
 
                       return (
                       <tr key={field.id} className={`border-b hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
@@ -653,12 +650,33 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                                 <div className="space-y-1">
                                   <Input
                                     {...inputField}
+                                    ref={(el) => {
+                                      if (el) {
+                                        el.setAttribute('data-index', index.toString());
+                                      }
+                                    }}
                                     type="number"
                                     min="0"
                                     step="0.01"
-                                    placeholder="0"
+                                    placeholder=""
+                                    value={inputField.value === 0 ? '' : inputField.value}
                                     className={`w-20 text-center ${isInvalid ? 'border-red-500 bg-red-50' : ''}`}
-                                    onChange={(e) => inputField.onChange(parseFloat(e.target.value) || 0)}
+                                    onChange={(e) => {
+                                      const value = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                                      inputField.onChange(value);
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        // Find next "Νέα Μέτρηση" input field
+                                        const currentIndex = parseInt(e.currentTarget.getAttribute('data-index') || '0');
+                                        const nextInput = document.querySelector(`input[data-index="${currentIndex + 1}"]`) as HTMLInputElement;
+                                        if (nextInput) {
+                                          nextInput.focus();
+                                          nextInput.select();
+                                        }
+                                      }
+                                    }}
                                   />
                                   {isInvalid && (
                                     <div className="text-xs text-red-600 text-center">
@@ -679,29 +697,50 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                           </div>
                         </td>
                         
-                        {(watchedMeterType === 'heating_hours' || watchedMeterType === 'heating_kwh') && (
-                          <td className="p-3 text-center">
-                            <div className={`text-sm font-medium px-2 py-1 rounded ${
-                              apartmentAmount > 0 ? 'text-orange-700 bg-orange-100' : 'text-gray-500'
-                            }`}>
-                              {apartmentAmount > 0 ? `€${apartmentAmount.toFixed(2)}` : '-'}
-                            </div>
-                          </td>
-                        )}
-                        
-                        <td className="p-3">
-                          <Controller
-                            name={`readings.${index}.notes`}
-                            control={control}
-                            render={({ field: inputField }) => (
-                              <Input
-                                {...inputField}
-                                placeholder="Σημειώσεις..."
-                                className="w-32 text-xs"
-                              />
-                            )}
-                          />
-                        </td>
+                        {(watchedMeterType === 'heating_hours' || watchedMeterType === 'heating_kwh') && (() => {
+                          // Calculate fixed charge based on participation mills (building properties)
+                          const fixedChargePercentage = 0.3; // 30% fixed charge typical for heating systems
+                          const fixedAmount = (field.participation_mills / 1000) * heatingExpenseAmount * fixedChargePercentage;
+                          
+                          // Calculate consumption charge based on heating mills and actual consumption
+                          const variableChargePercentage = 0.7; // 70% variable charge based on consumption
+                          const consumptionAmount = totalConsumption > 0 
+                            ? (consumption / totalConsumption) * heatingExpenseAmount * variableChargePercentage
+                            : 0;
+                          
+                          const totalAmount = fixedAmount + consumptionAmount;
+                          
+                          return (
+                            <>
+                              {/* Fixed Charge Column */}
+                              <td className="p-3 text-center">
+                                <div className={`text-sm font-medium px-2 py-1 rounded bg-blue-50 ${
+                                  fixedAmount > 0 ? 'text-blue-700' : 'text-gray-500'
+                                }`}>
+                                  {fixedAmount > 0 ? `€${fixedAmount.toFixed(2)}` : '-'}
+                                </div>
+                              </td>
+                              
+                              {/* Consumption Charge Column */}
+                              <td className="p-3 text-center">
+                                <div className={`text-sm font-medium px-2 py-1 rounded bg-green-50 ${
+                                  consumptionAmount > 0 ? 'text-green-700' : 'text-gray-500'
+                                }`}>
+                                  {consumptionAmount > 0 ? `€${consumptionAmount.toFixed(2)}` : '-'}
+                                </div>
+                              </td>
+                              
+                              {/* Total Amount Column */}
+                              <td className="p-3 text-center">
+                                <div className={`text-sm font-medium px-2 py-1 rounded ${
+                                  totalAmount > 0 ? 'text-orange-700 bg-orange-100' : 'text-gray-500'
+                                }`}>
+                                  {totalAmount > 0 ? `€${totalAmount.toFixed(2)}` : '-'}
+                                </div>
+                              </td>
+                            </>
+                          );
+                        })()}
                       </tr>
                       );
                     });
@@ -713,7 +752,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
 
           {/* Summary Stats */}
           {fields.length > 0 && watchedMeterType && (
-            <div className={`grid grid-cols-1 ${(watchedMeterType === 'heating_hours' || watchedMeterType === 'heating_kwh') ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4 p-4 bg-green-50 rounded-lg border border-green-200`}>
+            <div className={`grid grid-cols-1 ${(watchedMeterType === 'heating_hours' || watchedMeterType === 'heating_kwh') ? 'md:grid-cols-6' : 'md:grid-cols-3'} gap-4 p-4 bg-green-50 rounded-lg border border-green-200`}>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-700">{fields.length}</div>
                 <div className="text-sm text-green-600">Διαμερίσματα</div>
@@ -731,12 +770,29 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                 <div className="text-2xl font-bold text-green-700">{totalHeatingMills}‰</div>
                 <div className="text-sm text-green-600">Χιλιοστά Θέρμανσης</div>
               </div>
-              {(watchedMeterType === 'heating_hours' || watchedMeterType === 'heating_kwh') && (
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-700">€{heatingExpenseAmount.toFixed(2)}</div>
-                  <div className="text-sm text-orange-600">Δαπάνη Θέρμανσης</div>
-                </div>
-              )}
+              {(watchedMeterType === 'heating_hours' || watchedMeterType === 'heating_kwh') && (() => {
+                const fixedChargePercentage = 0.3;
+                const variableChargePercentage = 0.7;
+                const totalFixedAmount = heatingExpenseAmount * fixedChargePercentage;
+                const totalVariableAmount = heatingExpenseAmount * variableChargePercentage;
+                
+                return (
+                  <>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-700">€{heatingExpenseAmount.toFixed(2)}</div>
+                      <div className="text-sm text-orange-600">Σύνολο Δαπάνης</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-700">€{totalFixedAmount.toFixed(2)}</div>
+                      <div className="text-sm text-blue-600">Πάγιο (30%)</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-700">€{totalVariableAmount.toFixed(2)}</div>
+                      <div className="text-sm text-green-600">Κατανάλωση (70%)</div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           )}
 
