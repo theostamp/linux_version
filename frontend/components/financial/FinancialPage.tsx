@@ -244,7 +244,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         if (tabContent) {
           // Scroll to just before the tab content, keeping tabs visible
           const elementTop = tabContent.getBoundingClientRect().top + window.pageYOffset;
-          const offsetPosition = elementTop - 120; // Keep tabs visible with some padding
+          const offsetPosition = elementTop - 200; // Keep tabs visible with some padding (header + tabs + extra)
           
           window.scrollTo({
             top: offsetPosition,
@@ -275,7 +275,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       if (tabContent) {
         // Scroll to just before the tab content, keeping tabs visible
         const elementTop = tabContent.getBoundingClientRect().top + window.pageYOffset;
-        const offsetPosition = elementTop - 120; // Keep tabs visible with some padding
+        const offsetPosition = elementTop - 200; // Keep tabs visible with some padding (header + tabs + extra)
         
         window.scrollTo({
           top: offsetPosition,
@@ -455,7 +455,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6" data-tabs-container>
         {/* Enhanced Navigation with Cards - Sticky */}
-        <div className="w-full sticky top-0 bg-white z-10 pb-4 shadow-sm">
+        <div className="w-full sticky top-20 bg-white z-10 pb-4 shadow-sm">
           {/* Mobile: Scrollable horizontal menu */}
           <div className="block lg:hidden">
             <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-2">

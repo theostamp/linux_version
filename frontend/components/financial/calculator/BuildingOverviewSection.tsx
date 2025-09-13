@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+// import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Building2, 
   Target, 
@@ -24,8 +24,8 @@ import {
   Building,
   Package,
   BarChart3,
-  ChevronDown,
-  ChevronUp,
+  // ChevronDown,
+  // ChevronUp,
   Info,
   PieChart,
   Eye
@@ -106,7 +106,11 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const [showReserveFundInfoModal, setShowReserveFundInfoModal] = useState(false);
 
 
-  const currentBuilding = buildings.find(b => b.id === buildingId);
+  // Memoize currentBuilding to prevent unnecessary re-renders
+  const currentBuilding = useMemo(() => 
+    buildings.find(b => b.id === buildingId), 
+    [buildings, buildingId]
+  );
 
   // Helper functions for timeline editing
   const getMonthOptions = () => {
@@ -315,19 +319,19 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       }
       
       const apiUrl = `/financial/dashboard/summary/?${params}`;
-      console.log('🌐 BuildingOverviewSection: Calling API:', apiUrl);
-      console.log('🌐 BuildingOverviewSection: selectedMonth parameter:', selectedMonth);
+      // console.log('🌐 BuildingOverviewSection: Calling API:', apiUrl);
+      // console.log('🌐 BuildingOverviewSection: selectedMonth parameter:', selectedMonth);
       
       const response = await makeRequestWithRetry({
         method: 'get',
         url: apiUrl
       });
       const apiData = response.data;
-      console.log('📊 BuildingOverviewSection: API response data:', apiData);
-      console.log('📊 BuildingOverviewSection: API response status:', response.status);
-      console.log('📊 BuildingOverviewSection: API total_expenses_month:', apiData.total_expenses_month);
-      console.log('📊 BuildingOverviewSection: API average_monthly_expenses:', apiData.average_monthly_expenses);
-      console.log('📊 BuildingOverviewSection: API has_monthly_activity:', apiData.has_monthly_activity);
+      // console.log('📊 BuildingOverviewSection: API response data:', apiData);
+      // console.log('📊 BuildingOverviewSection: API response status:', response.status);
+      // console.log('📊 BuildingOverviewSection: API total_expenses_month:', apiData.total_expenses_month);
+      // console.log('📊 BuildingOverviewSection: API average_monthly_expenses:', apiData.average_monthly_expenses);
+      // console.log('📊 BuildingOverviewSection: API has_monthly_activity:', apiData.has_monthly_activity);
       
       // Clean old data before loading
       const wasOldDataCleared = cleanOldReserveFundData();
@@ -512,9 +516,9 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   ], [buildingId, currentBuilding?.id, selectedMonth]);
 
   useEffect(() => {
-    console.log('🔄 BuildingOverviewSection: useEffect triggered with dependencies:', dependencies);
-    console.log('🔄 BuildingOverviewSection: selectedMonth changed to:', selectedMonth);
-    console.log('🔄 BuildingOverviewSection: Current financial summary before update:', financialSummary?.last_calculation_date);
+    // console.log('🔄 BuildingOverviewSection: useEffect triggered with dependencies:', dependencies);
+    // console.log('🔄 BuildingOverviewSection: selectedMonth changed to:', selectedMonth);
+    // console.log('🔄 BuildingOverviewSection: Current financial summary before update:', financialSummary?.last_calculation_date);
     
     // Single unified effect that handles all dependency changes
     fetchFinancialSummary(true); // Always force refresh for consistency
@@ -1060,11 +1064,11 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     );
   }
 
-  // Debug render data
-  console.log('🎨 BuildingOverviewSection: RENDER - financialSummary:', financialSummary);
-  console.log('🎨 BuildingOverviewSection: RENDER - current_obligations:', financialSummary?.current_obligations);
-  console.log('🎨 BuildingOverviewSection: RENDER - selectedMonth:', selectedMonth);
-  console.log('🎨 BuildingOverviewSection: RENDER - average_monthly_expenses:', financialSummary?.average_monthly_expenses);
+  // Debug render data (commented out to reduce console spam)
+  // console.log('🎨 BuildingOverviewSection: RENDER - financialSummary:', financialSummary);
+  // console.log('🎨 BuildingOverviewSection: RENDER - current_obligations:', financialSummary?.current_obligations);
+  // console.log('🎨 BuildingOverviewSection: RENDER - selectedMonth:', selectedMonth);
+  // console.log('🎨 BuildingOverviewSection: RENDER - average_monthly_expenses:', financialSummary?.average_monthly_expenses);
 
   if (!financialSummary) {
     return null;
@@ -1353,31 +1357,25 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         {/* Section 1.5: Με μια ματιά - Progress Bar */}
         <div className="space-y-4">
           <Card className="border-2 border-green-200 bg-green-50/30">
-            <Collapsible defaultOpen={true}>
-              <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-green-50 transition-colors">
-                  <CardTitle className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Eye className="h-5 w-5 text-green-600" />
-                      <span className="font-semibold text-sm text-green-900">
-                        Με μια ματιά
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-xs text-green-700">
-                        Προβολή κάλυψης υποχρεώσεων με progress bar
-                      </div>
-                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                        Progress Bar
-                      </Badge>
-
-                      <ChevronDown className="h-4 w-4 text-green-600 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className="p-4">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Eye className="h-5 w-5 text-green-600" />
+                  <span className="font-semibold text-sm text-green-900">
+                    Με μια ματιά
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-green-700">
+                    Προβολή κάλυψης υποχρεώσεων με progress bar
+                  </div>
+                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                    Progress Bar
+                  </Badge>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
               
               {(() => {
                 // Υπολογισμός συνολικού ποσού που οφείλεται (τρέχοντες + προηγούμενες οφειλές)
@@ -1513,9 +1511,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   </div>
                 );
               })()}
-                </CardContent>
-              </CollapsibleContent>
-            </Collapsible>
+            </CardContent>
           </Card>
         </div>
 

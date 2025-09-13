@@ -416,47 +416,65 @@ export const MeterReadingList: React.FC<MeterReadingListProps> = ({ buildingId, 
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Διαμέρισμα</TableHead>
-                    <TableHead>Τύπος</TableHead>
-                    <TableHead>Ημερομηνία</TableHead>
-                    <TableHead>Τιμή</TableHead>
-                    <TableHead>Προηγούμενη</TableHead>
-                    <TableHead>Κατανάλωση</TableHead>
-                    <TableHead>Σημειώσεις</TableHead>
-                    <TableHead className="text-right">Ενέργειες</TableHead>
+                    <TableHead className="text-xs leading-tight">
+                      <div className="text-center">Διαμέρισμα</div>
+                    </TableHead>
+                    <TableHead className="text-xs leading-tight">
+                      <div className="text-center">Τύπος<br/>Μετρητή</div>
+                    </TableHead>
+                    <TableHead className="text-xs leading-tight">
+                      <div className="text-center">Ημερομηνία<br/>Μέτρησης</div>
+                    </TableHead>
+                    <TableHead className="text-xs leading-tight">
+                      <div className="text-center">Νέα<br/>Μέτρηση</div>
+                    </TableHead>
+                    <TableHead className="text-xs leading-tight">
+                      <div className="text-center">Προηγούμενη<br/>Μέτρηση</div>
+                    </TableHead>
+                    <TableHead className="text-xs leading-tight">
+                      <div className="text-center">Κατανάλωση<br/>(Διαφορά)</div>
+                    </TableHead>
+                    <TableHead className="text-xs leading-tight">
+                      <div className="text-center">Σημειώσεις</div>
+                    </TableHead>
+                    <TableHead className="text-xs leading-tight text-right">
+                      <div className="text-center">Ενέργειες</div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {readings.map((reading) => (
                     <TableRow key={reading.id}>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium text-center text-blue-700">
                         {reading.apartment_number}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         <Badge className={getMeterTypeColor(reading.meter_type)}>
                           <span className="flex items-center space-x-1">
                             {getMeterTypeIcon(reading.meter_type)}
-                            <span>{reading.meter_type_display}</span>
+                            <span className="text-xs">{reading.meter_type_display}</span>
                           </span>
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-center text-sm">
                         {format(new Date(reading.reading_date), 'dd/MM/yyyy')}
                       </TableCell>
-                      <TableCell className="font-mono">
+                      <TableCell className="font-mono text-center font-semibold text-green-700">
                         {parseFloat(reading.value).toFixed(2)}
                       </TableCell>
-                      <TableCell className="font-mono text-muted-foreground">
+                      <TableCell className="font-mono text-center text-muted-foreground bg-gray-50">
                         {reading.previous_value ? parseFloat(reading.previous_value).toFixed(2) : '-'}
                       </TableCell>
-                      <TableCell className="font-mono">
+                      <TableCell className="font-mono text-center">
                         {reading.consumption ? (
-                          <span className={parseFloat(reading.consumption) > 0 ? 'text-green-600' : 'text-red-600'}>
+                          <span className={`font-medium px-2 py-1 rounded text-sm ${parseFloat(reading.consumption) > 0 ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'}`}>
                             {parseFloat(reading.consumption) > 0 ? '+' : ''}{parseFloat(reading.consumption).toFixed(2)}
                           </span>
-                        ) : '-'}
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
                       </TableCell>
-                      <TableCell className="max-w-xs truncate">
+                      <TableCell className="max-w-xs truncate text-center text-sm">
                         {reading.notes || '-'}
                       </TableCell>
                       <TableCell className="text-right">
