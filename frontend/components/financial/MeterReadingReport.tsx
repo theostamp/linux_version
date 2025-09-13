@@ -53,6 +53,8 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
   const [buildingData, setBuildingData] = useState<any>(null);
   const [apartments, setApartments] = useState<any[]>([]);
   const [heatingExpenseAmount, setHeatingExpenseAmount] = useState<number>(0);
+  const [previousMonthExpense, setPreviousMonthExpense] = useState<number>(0);
+  const [yearlyExpenseTotal, setYearlyExpenseTotal] = useState<number>(0);
   const [apartmentsLoading, setApartmentsLoading] = useState(true);
   const [showEditDatasheet, setShowEditDatasheet] = useState(false);
   
@@ -100,23 +102,78 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
     const loadHeatingExpenses = async () => {
       if ((heatingMeterType === 'heating_hours' || heatingMeterType === 'heating_kwh') && buildingId) {
         try {
-          let filters: any = {
+          // Current month expenses
+          let currentFilters: any = {
             building_id: buildingId,
             category: 'heating'
           };
           
           if (selectedMonth) {
-            // selectedMonth format: "2025-09"
             const [year, month] = selectedMonth.split('-');
             const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-            filters.date_from = `${selectedMonth}-01`;
-            filters.date_to = `${selectedMonth}-${lastDay.toString().padStart(2, '0')}`;
+            currentFilters.date_from = `${selectedMonth}-01`;
+            currentFilters.date_to = `${selectedMonth}-${lastDay.toString().padStart(2, '0')}`;
           }
-          const expenses = await getExpenses(filters);
-          setHeatingExpenseAmount(expenses.reduce((sum: number, exp: any) => sum + parseFloat(exp.amount.toString()), 0));
+          
+          const currentExpenses = await getExpenses(currentFilters);
+          const currentTotal = currentExpenses.reduce((sum: number, exp: any) => sum + parseFloat(exp.amount.toString()), 0);
+          setHeatingExpenseAmount(currentTotal);
+          
+          // Previous month expenses
+          if (selectedMonth) {
+            const [year, month] = selectedMonth.split('-');
+            const prevMonth = parseInt(month) - 1;
+            const prevYear = prevMonth === 0 ? parseInt(year) - 1 : parseInt(year);
+            const actualPrevMonth = prevMonth === 0 ? 12 : prevMonth;
+            const prevMonthStr = `${prevYear}-${actualPrevMonth.toString().padStart(2, '0')}`;
+            
+            const prevLastDay = new Date(prevYear, actualPrevMonth, 0).getDate();
+            const prevFilters = {
+              building_id: buildingId,
+              category: 'heating',
+              date_from: `${prevMonthStr}-01`,
+              date_to: `${prevMonthStr}-${prevLastDay.toString().padStart(2, '0')}`
+            };
+            
+            try {
+              const prevExpenses = await getExpenses(prevFilters);
+              const prevTotal = prevExpenses.reduce((sum: number, exp: any) => sum + parseFloat(exp.amount.toString()), 0);
+              setPreviousMonthExpense(prevTotal);
+            } catch (error) {
+              setPreviousMonthExpense(0);
+            }
+          }
+          
+          // Yearly total expenses
+          if (selectedMonth) {
+            const [year] = selectedMonth.split('-');
+            const yearlyFilters = {
+              building_id: buildingId,
+              category: 'heating',
+              date_from: `${year}-01-01`,
+              date_to: `${year}-12-31`
+            };
+            
+            try {
+              const yearlyExpenses = await getExpenses(yearlyFilters);
+              const yearlyTotal = yearlyExpenses.reduce((sum: number, exp: any) => sum + parseFloat(exp.amount.toString()), 0);
+              setYearlyExpenseTotal(yearlyTotal);
+            } catch (error) {
+              setYearlyExpenseTotal(0);
+            }
+          }
+          
+          console.log('🔥 MeterReadingReport heating expenses loaded:', {
+            current: currentTotal,
+            previous: 'loading...',
+            yearly: 'loading...'
+          });
+          
         } catch (error) {
           console.error('Error fetching heating expenses:', error);
           setHeatingExpenseAmount(0);
+          setPreviousMonthExpense(0);
+          setYearlyExpenseTotal(0);
         }
       }
     };
@@ -128,11 +185,33 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
   const apartmentReadings = useMemo(() => {
     if (!apartments.length || !readings.length) return [];
 
+    console.log('🏠 MeterReadingReport apartmentReadings calculation:', {
+      apartments: apartments.length,
+      readings: readings.length,
+      heatingMeterType,
+      sampleApartment: apartments[0] ? { id: apartments[0].id, number: apartments[0].number } : null,
+      sampleReading: readings[0] ? { apartment: readings[0].apartment, meter_type: readings[0].meter_type } : null
+    });
+
     return apartments.map(apartment => {
       // Find readings for this apartment with the heating meter type
-      const apartmentReadingData = readings.filter(
-        r => r.apartment === apartment.id && r.meter_type === heatingMeterType
-      );
+      // Since apartment field in readings contains strings like "Αλκμάνος 22 - 1", we need to match by apartment number
+      const apartmentReadingData = readings.filter(r => {
+        if (r.meter_type !== heatingMeterType) return false;
+        
+        // Try exact ID match first (in case apartment is a number)
+        if (r.apartment === apartment.id) return true;
+        
+        // Try apartment number match (for string format like "Αλκμάνος 22 - 1")
+        const apartmentStr = r.apartment?.toString() || '';
+        const apartmentNumberFromString = apartmentStr.split(' - ')[1] || apartmentStr.split('-')[1]?.trim();
+        
+        return apartmentNumberFromString === apartment.number?.toString();
+      });
+      
+      console.log(`🔍 Apartment ${apartment.number} (ID: ${apartment.id}) - Found ${apartmentReadingData.length} readings for ${heatingMeterType}`, {
+        readingApartmentValues: readings.map(r => r.apartment).slice(0, 3)
+      });
 
       // Get the most recent reading
       const mostRecentReading = apartmentReadingData
@@ -209,46 +288,77 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
       {/* Header με στατιστικά - optimized for print */}
       {statistics && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 print:gap-2">
+          {/* Current Month Expense */}
           <Card>
             <CardContent className="p-4 print:p-2">
               <div className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-blue-500 print:h-4 print:w-4" />
+                <TrendingUp className="h-5 w-5 text-blue-600 print:h-4 print:w-4" />
                 <div>
-                  <p className="text-sm text-muted-foreground print:text-xs">Συνολικές Μετρήσεις</p>
-                  <p className="text-2xl font-bold print:text-lg">{statistics.total_readings}</p>
+                  <p className="text-sm text-muted-foreground print:text-xs">Τρέχων Μήνας</p>
+                  <p className="text-2xl font-bold text-blue-600 print:text-lg">€{heatingExpenseAmount.toFixed(0)}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
+          
+          {/* Previous Month Expense */}
           <Card>
             <CardContent className="p-4 print:p-2">
               <div className="flex items-center space-x-2">
-                <Building className="h-5 w-5 text-green-500 print:h-4 print:w-4" />
+                <CalendarIcon className="h-5 w-5 text-gray-500 print:h-4 print:w-4" />
                 <div>
-                  <p className="text-sm text-muted-foreground print:text-xs">Διαμερίσματα</p>
-                  <p className="text-2xl font-bold print:text-lg">{apartmentReadings.length}</p>
+                  <p className="text-sm text-muted-foreground print:text-xs">Προηγ. Μήνας</p>
+                  <p className="text-2xl font-bold text-gray-600 print:text-lg">€{previousMonthExpense.toFixed(0)}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
+          
+          {/* Monthly Difference */}
           <Card>
             <CardContent className="p-4 print:p-2">
               <div className="flex items-center space-x-2">
-                {getMeterTypeIcon(heatingMeterType)}
-                <div>
-                  <p className="text-sm text-muted-foreground print:text-xs">Συνολική Κατανάλωση</p>
-                  <p className="text-2xl font-bold print:text-lg">{totalConsumption.toFixed(2)}</p>
-                </div>
+                {(() => {
+                  const difference = heatingExpenseAmount - previousMonthExpense;
+                  const isIncrease = difference > 0;
+                  const percentage = previousMonthExpense > 0 ? ((difference / previousMonthExpense) * 100) : 0;
+                  
+                  return (
+                    <>
+                      <div className={`h-5 w-5 print:h-4 print:w-4 ${isIncrease ? 'text-red-500' : difference < 0 ? 'text-green-500' : 'text-gray-500'}`}>
+                        {isIncrease ? '📈' : difference < 0 ? '📉' : '➖'}
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground print:text-xs">Διαφορά</p>
+                        <p className={`text-2xl font-bold print:text-lg ${isIncrease ? 'text-red-600' : difference < 0 ? 'text-green-600' : 'text-gray-600'}`}>
+                          {difference > 0 ? '+' : ''}€{difference.toFixed(0)}
+                        </p>
+                        {previousMonthExpense > 0 && (
+                          <p className={`text-xs print:text-[10px] ${isIncrease ? 'text-red-500' : difference < 0 ? 'text-green-500' : 'text-gray-500'}`}>
+                            {percentage > 0 ? '+' : ''}{percentage.toFixed(1)}%
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>
+          
+          {/* Yearly Total */}
           <Card>
             <CardContent className="p-4 print:p-2">
               <div className="flex items-center space-x-2">
-                <FileSpreadsheet className="h-5 w-5 text-purple-500 print:h-4 print:w-4" />
+                <Building className="h-5 w-5 text-purple-600 print:h-4 print:w-4" />
                 <div>
-                  <p className="text-sm text-muted-foreground print:text-xs">Φύλλο Μετρήσεων</p>
-                  <p className="text-xs text-gray-500 print:text-[10px]">Read-only</p>
+                  <p className="text-sm text-muted-foreground print:text-xs">Σύνολο Έτους</p>
+                  <p className="text-2xl font-bold text-purple-600 print:text-lg">€{yearlyExpenseTotal.toFixed(0)}</p>
+                  {selectedMonth && (
+                    <p className="text-xs text-gray-500 print:text-[10px]">
+                      {selectedMonth.split('-')[0]}
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -257,29 +367,37 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
       )}
 
       {/* Action Buttons */}
-      {apartmentReadings.length > 0 && (
+      {apartments.length > 0 && (
         <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg border print:hidden">
           <div>
             <p className="font-medium text-blue-900">Ενέργειες</p>
-            <p className="text-sm text-blue-700">Επεξεργασία ή εκτύπωση φύλλου</p>
+            <p className="text-sm text-blue-700">
+              {apartmentReadings.length > 0 ? 'Επεξεργασία ή εκτύπωση φύλλου' : 'Δημιουργία νέου φύλλου μετρήσεων'}
+            </p>
           </div>
           <div className="flex gap-3">
             <Dialog open={showEditDatasheet} onOpenChange={setShowEditDatasheet}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="bg-white hover:bg-blue-50">
                   <Edit className="h-4 w-4 mr-2" />
-                  Επεξεργασία
+                  {apartmentReadings.length > 0 ? 'Επεξεργασία' : 'Νέα Μέτρηση'}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Επεξεργασία Φύλλου Μετρήσεων</DialogTitle>
+                  <DialogTitle>
+                    {apartmentReadings.length > 0 ? 'Επεξεργασία Φύλλου Μετρήσεων' : 'Νέο Φύλλο Μετρήσεων'}
+                  </DialogTitle>
                   <DialogDescription>
-                    Επεξεργασία όλων των μετρήσεων σε μορφή πίνακα - Αλλάξτε όποιες τιμές χρειάζεται
+                    {apartmentReadings.length > 0 
+                      ? 'Επεξεργασία όλων των μετρήσεων σε μορφή πίνακα - Αλλάξτε όποιες τιμές χρειάζεται'
+                      : 'Δημιουργία νέου φύλλου μετρήσεων για όλα τα διαμερίσματα'
+                    }
                   </DialogDescription>
                 </DialogHeader>
                 <MeterReadingDatasheet
                   buildingId={buildingId}
+                  selectedMonth={selectedMonth}
                   onSuccess={handleEditDatasheetSuccess}
                   onCancel={handleEditDatasheetCancel}
                 />
@@ -379,9 +497,9 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
                     const consumption = Math.max(0, reading.current_reading - (reading.previous_reading || 0));
                     
                     // Calculate amounts if heating expense exists
-                    const fixedChargePercentage = 0.3;
+                    const fixedChargePercentage = (buildingData?.heating_fixed_percentage || 30) / 100;
                     const fixedAmount = (reading.participation_mills / 1000) * heatingExpenseAmount * fixedChargePercentage;
-                    const variableChargePercentage = 0.7;
+                    const variableChargePercentage = 1 - fixedChargePercentage;
                     const consumptionAmount = totalConsumption > 0 
                       ? (consumption / totalConsumption) * heatingExpenseAmount * variableChargePercentage
                       : 0;
@@ -433,7 +551,7 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
                               <div className={`text-sm font-medium px-2 py-1 rounded bg-blue-50 print:bg-transparent ${
                                 fixedAmount > 0 ? 'text-blue-700' : 'text-gray-500'
                               }`}>
-                                {fixedAmount > 0 ? `€${fixedAmount.toFixed(2)}` : '-'}
+                                {heatingExpenseAmount > 0 ? `€${fixedAmount.toFixed(2)}` : '€0.00'}
                               </div>
                             </td>
                             
@@ -442,7 +560,7 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
                               <div className={`text-sm font-medium px-2 py-1 rounded bg-green-50 print:bg-transparent ${
                                 consumptionAmount > 0 ? 'text-green-700' : 'text-gray-500'
                               }`}>
-                                {consumptionAmount > 0 ? `€${consumptionAmount.toFixed(2)}` : '-'}
+                                {heatingExpenseAmount > 0 ? `€${consumptionAmount.toFixed(2)}` : '€0.00'}
                               </div>
                             </td>
                             
@@ -451,7 +569,7 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
                               <div className={`text-sm font-medium px-2 py-1 rounded ${
                                 totalAmount > 0 ? 'text-orange-700 bg-orange-100 print:bg-transparent' : 'text-gray-500'
                               }`}>
-                                {totalAmount > 0 ? `€${totalAmount.toFixed(2)}` : '-'}
+                                {heatingExpenseAmount > 0 ? `€${totalAmount.toFixed(2)}` : '€0.00'}
                               </div>
                             </td>
                           </>
@@ -464,6 +582,20 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Warning message when no heating expenses */}
+      {apartmentReadings.length > 0 && (heatingMeterType === 'heating_hours' || heatingMeterType === 'heating_kwh') && heatingExpenseAmount === 0 && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 print:hidden">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                <strong>Σημείωση:</strong> Τα ποσά εμφανίζονται ως €0.00 επειδή δεν έχει καταχωρηθεί δαπάνη θέρμανσης για τον μήνα {selectedMonth || 'αυτό'}.
+                Προσθέστε δαπάνη θέρμανσης για να υπολογιστούν τα σωστά ποσά.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Summary Stats - optimized for print */}
@@ -484,8 +616,8 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
             <div className="text-sm text-green-600 print:text-xs">Χιλιοστά Θέρμανσης</div>
           </div>
           {(heatingMeterType === 'heating_hours' || heatingMeterType === 'heating_kwh') && (() => {
-            const fixedChargePercentage = 0.3;
-            const variableChargePercentage = 0.7;
+            const fixedChargePercentage = (buildingData?.heating_fixed_percentage || 30) / 100;
+            const variableChargePercentage = 1 - fixedChargePercentage;
             const totalFixedAmount = heatingExpenseAmount * fixedChargePercentage;
             const totalVariableAmount = heatingExpenseAmount * variableChargePercentage;
             
@@ -497,11 +629,11 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-700 print:text-lg">€{totalFixedAmount.toFixed(2)}</div>
-                  <div className="text-sm text-blue-600 print:text-xs">Πάγιο (30%)</div>
+                  <div className="text-sm text-blue-600 print:text-xs">Πάγιο ({(fixedChargePercentage * 100).toFixed(0)}%)</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-700 print:text-lg">€{totalVariableAmount.toFixed(2)}</div>
-                  <div className="text-sm text-green-600 print:text-xs">Κατανάλωση (70%)</div>
+                  <div className="text-sm text-green-600 print:text-xs">Κατανάλωση ({(variableChargePercentage * 100).toFixed(0)}%)</div>
                 </div>
               </>
             );

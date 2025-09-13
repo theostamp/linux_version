@@ -292,4 +292,114 @@ npm run lint                          # ESLint validation
 - **Reverse Proxy**: Nginx for production deployments
 
 This system handles real financial data for Greek residential buildings. Precision, security, and tenant isolation are critical requirements.
+
+## Recent Development Progress - Meter Reading & Heating System
+
+### 📊 MeterReadingDatasheet Modal Enhancements (Sept 2025)
+
+**Problem Solved**: Enhanced the meter reading input modal for better user experience and data integrity.
+
+**Key Changes**:
+1. **Empty Input Fields** - Changed default value from "0" to empty string in "Νέα Μέτρηση" fields
+   - `value={inputField.value === 0 ? '' : inputField.value}`
+   - Cleaner UI without confusing zeros
+
+2. **Enter Key Navigation** - Added keyboard navigation between reading fields
+   - `onKeyDown` handler with Enter key detection
+   - Automatic focus to next "Νέα Μέτρηση" field using `data-index` attributes
+   - Improved data entry speed for multiple apartments
+
+3. **Reading Validation** - Added real-time validation to prevent incorrect readings
+   - Visual warning (red border) when new reading < previous reading
+   - Error message: "Μικρότερη από προηγούμενη"
+   - Form submission blocked if validation fails
+
+4. **Financial Calculations** - Enhanced heating expense distribution
+   - **Πάγιο (30%)** - Fixed charge based on participation mills (`participation_mills / 1000 * expense * 0.3`)
+   - **Κατανάλωση (70%)** - Variable charge based on actual consumption (`consumption / totalConsumption * expense * 0.7`)
+   - **Σύνολο** - Sum of fixed + variable charges
+   - Transparent cost breakdown for residents
+
+### 📋 MeterReadingList → MeterReadingReport Transformation
+
+**Problem Solved**: Converted editable list to read-only report optimized for supervision and printing.
+
+**Architecture Decision**: Complete component redesign
+- **Old**: `MeterReadingList` was editable with filters, actions, and individual row editing
+- **New**: `MeterReadingList` → simple wrapper → `MeterReadingReport` (read-only, print-optimized)
+
+**Key Features**:
+1. **Read-Only Design** - No edit/delete buttons in table rows
+2. **Print Optimization** - CSS classes with `print:` prefixes for clean printing
+3. **Action Bar** - Centralized Edit and Print buttons (hidden in print mode)
+4. **Identical Data Structure** - Same table layout as MeterReadingDatasheet modal
+5. **Financial Transparency** - All cost calculations visible (Πάγιο, Κατανάλωση, Σύνολο)
+
+### 🗂️ Component Cleanup & Architecture
+
+**Removed Unnecessary Fields**:
+- **"Σημειώσεις" (Notes)** column removed from both modal and report
+- Interface cleanup: removed `notes?: string` from `ApartmentReading` interfaces
+- API submission cleanup: removed notes field from meter reading creation
+- **Reasoning**: Notes were rarely used and cluttered the interface
+
+**Error Fixes**:
+- **TypeScript Errors**: Fixed `r.apartment?.id` → `r.apartment` (apartment is number, not object)
+- **Hook Dependencies**: Replaced `fetchHeatingExpenses` with proper `getExpenses` from useExpenses
+- **Date Formatting**: Fixed month calculation for API filters (`${selectedMonth}-01` to `${selectedMonth}-${lastDay}`)
+
+### 💡 Business Logic & User Experience
+
+**Heating System Integration**:
+- Automatic detection of heating meter type (`heating_hours` vs `heating_kwh`)
+- Dynamic expense loading based on building configuration
+- Real-time cost calculations with 30/70 split (industry standard for Greek buildings)
+
+**Workflow Improvement**:
+1. **Data Entry**: MeterReadingDatasheet modal with keyboard navigation
+2. **Supervision**: MeterReadingReport for viewing and verification  
+3. **Action Flow**: Edit → Print → Archive (clear separation of concerns)
+
+**Greek Market Compliance**:
+- Cost transparency required by Greek building management regulations
+- Heating mills (χιλιοστά θέρμανσης) proper calculation and display
+- Multi-tenant building management standards
+
+### 🔧 Technical Implementation Notes
+
+**React Architecture**:
+```typescript
+// Old complex component
+MeterReadingList (editable, complex state management)
+
+// New simplified architecture  
+MeterReadingList (wrapper) → MeterReadingReport (read-only, optimized)
+```
+
+**Validation Logic**:
+```typescript
+// Real-time validation
+const isInvalid = currentValue > 0 && 
+                  field.previous_reading !== undefined && 
+                  currentValue < previousValue;
+
+// Form submission validation
+const invalidReadings = data.readings.filter(reading => 
+  reading.current_reading > 0 && 
+  reading.previous_reading !== undefined && 
+  reading.current_reading < reading.previous_reading
+);
+```
+
+**Financial Calculations**:
+```typescript
+// Fixed charge (30% - based on ownership)
+const fixedAmount = (participation_mills / 1000) * heatingExpenseAmount * 0.3;
+
+// Variable charge (70% - based on consumption)  
+const consumptionAmount = (consumption / totalConsumption) * heatingExpenseAmount * 0.7;
+```
+
+This refactoring improves data quality, user experience, and provides full transparency in heating cost distribution for Greek multi-tenant buildings.
+
 - κρατησε το σημειο αυτο ωστε να συνεχισουμε σε νεα συνδρια με την εντολη "θερμανση"

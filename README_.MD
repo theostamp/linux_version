@@ -477,7 +477,7 @@ docker compose up --build -d
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "21 προσθηκη παλιασ καταναλωσης κατανομη θερμανσης HEATING_SYSTEM_ARCHITECTURE_GUIDE.md"
+git commit -m "fix more problems κατανομη θερμανσης HEATING_SYSTEM_ARCHITECTURE_GUIDE.md"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

@@ -38,12 +38,14 @@ interface MeterReadingDatasheetFormData {
 
 interface MeterReadingDatasheetProps {
   buildingId: number;
+  selectedMonth?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
   buildingId,
+  selectedMonth: propSelectedMonth,
   onSuccess,
   onCancel,
 }) => {
@@ -52,6 +54,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
   const [apartments, setApartments] = useState<any[]>([]);
   const [apartmentsLoading, setApartmentsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedMonth, setSelectedMonth] = useState<string>(propSelectedMonth || format(new Date(), 'yyyy-MM'));
   const [totalHeatingMills, setTotalHeatingMills] = useState(0);
   const [heatingExpenseAmount, setHeatingExpenseAmount] = useState<number>(0);
   const [loadingPreviousReadings, setLoadingPreviousReadings] = useState(false);
@@ -115,14 +118,22 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
       const monthStart = format(new Date(date), 'yyyy-MM-01');
       const monthEnd = format(new Date(new Date(date).getFullYear(), new Date(date).getMonth() + 1, 0), 'yyyy-MM-dd');
       
+      // Fetch all heating-related expenses
       const expenses = await getExpenses({
+        building_id: buildingId,
+        category: 'heating', // Generic heating category
+        date_from: monthStart,
+        date_to: monthEnd
+      });
+      
+      // Also check for specific heating fuel types
+      const fuelExpenses = await getExpenses({
         building_id: buildingId,
         category: 'heating_fuel', // πετρέλαιο θέρμανσης
         date_from: monthStart,
         date_to: monthEnd
       });
 
-      // Also check for natural gas expenses
       const gasExpenses = await getExpenses({
         building_id: buildingId,
         category: 'heating_gas', // φυσικό αέριο θέρμανσης
@@ -130,7 +141,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
         date_to: monthEnd
       });
 
-      const totalAmount = [...expenses, ...gasExpenses].reduce((sum, exp) => sum + exp.amount, 0);
+      const totalAmount = [...expenses, ...fuelExpenses, ...gasExpenses].reduce((sum, exp) => sum + exp.amount, 0);
       setHeatingExpenseAmount(totalAmount);
       
       console.log('🔥 Heating expenses for month:', { expenses, gasExpenses, totalAmount });
@@ -299,17 +310,24 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
 
     // Group readings by apartment and get the previous_value from the API response
     const latestReadings = apartments.map(apartment => {
-      // First try exact apartment ID match, then try apartment number match as fallback
-      let apartmentReadings = readings?.filter(
-        (r: any) => r.apartment === apartment.id && r.meter_type === watchedMeterType
-      ) || [];
-      
-      // Fallback: if no readings found by apartment ID, try matching by apartment number
-      if (apartmentReadings.length === 0) {
-        apartmentReadings = readings?.filter(
-          (r: any) => r.apartment_number === apartment.number && r.meter_type === watchedMeterType
-        ) || [];
-      }
+      // Enhanced matching logic for apartment readings
+      let apartmentReadings = readings?.filter((r: any) => {
+        if (r.meter_type !== watchedMeterType) return false;
+        
+        // Try exact ID match first (in case apartment is a number)
+        if (r.apartment === apartment.id) return true;
+        
+        // Try apartment number match (for string format like "Αλκμάνος 22 - 1")
+        const apartmentStr = r.apartment?.toString() || '';
+        const apartmentNumberFromString = apartmentStr.split(' - ')[1] || apartmentStr.split('-')[1]?.trim();
+        
+        if (apartmentNumberFromString === apartment.number?.toString()) return true;
+        
+        // Fallback: try apartment_number field if it exists
+        if (r.apartment_number === apartment.number) return true;
+        
+        return false;
+      }) || [];
       
       console.log(`📋 Apartment ${apartment.number} (ID: ${apartment.id}) readings for ${watchedMeterType}:`, apartmentReadings.length);
       if (apartmentReadings.length > 0) {
@@ -328,18 +346,27 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
         ));
       }
       
-      // Sort by reading_date to get the most recent reading
-      const sortedReadings = apartmentReadings.sort(
+      // Filter readings to only include those BEFORE the selected month
+      const selectedMonthStart = new Date(`${selectedMonth}-01`);
+      const previousMonthReadings = apartmentReadings.filter((r: any) => {
+        const readingDate = new Date(r.reading_date);
+        return readingDate < selectedMonthStart;
+      });
+      
+      // Sort by reading_date to get the most recent reading before selected month
+      const sortedPreviousReadings = previousMonthReadings.sort(
         (a: any, b: any) => new Date(b.reading_date).getTime() - new Date(a.reading_date).getTime()
       );
 
-      // Use the current value of the most recent reading as the "previous reading" for the new entry
-      const latestReading = sortedReadings[0];
-      const currentValueOfLatestReading = latestReading?.value; // This becomes our "previous reading"
+      // Use the most recent reading before selected month as the "previous reading"
+      const latestPreviousReading = sortedPreviousReadings[0];
+      const currentValueOfLatestReading = latestPreviousReading?.value; // This becomes our "previous reading"
       
-      console.log(`📋 Latest reading for apt ${apartment.number}:`, {
-        latestCurrentValue: currentValueOfLatestReading,
-        latestDate: latestReading?.reading_date,
+      console.log(`📋 Previous month reading for apt ${apartment.number}:`, {
+        selectedMonth,
+        previousReadingsCount: previousMonthReadings.length,
+        latestPreviousValue: currentValueOfLatestReading,
+        latestPreviousDate: latestPreviousReading?.reading_date,
         willBeUsedAsPrevious: currentValueOfLatestReading
       });
 
@@ -371,17 +398,33 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
         console.log('ℹ️ No changes detected in previous readings');
       }
     }
-  }, [readings, apartments, watchedMeterType, stableReplace]);
+  }, [readings, apartments, watchedMeterType, selectedMonth, stableReplace]);
 
-  // Fetch heating expenses when meter type is heating related
+  // Fetch heating expenses when meter type or month changes
   useEffect(() => {
     if (watchedMeterType && (watchedMeterType === 'heating_hours' || watchedMeterType === 'heating_kwh')) {
-      const readingDate = watch('reading_date');
-      if (readingDate) {
-        fetchHeatingExpenses(readingDate);
-      }
+      // Use the selected month to determine the date for expense calculation
+      const monthDate = `${selectedMonth}-15`; // Use middle of month for calculation
+      fetchHeatingExpenses(monthDate);
     }
-  }, [watchedMeterType, watch, fetchHeatingExpenses]);
+  }, [watchedMeterType, selectedMonth, fetchHeatingExpenses]);
+
+  // Update selectedMonth when prop changes
+  useEffect(() => {
+    if (propSelectedMonth) {
+      setSelectedMonth(propSelectedMonth);
+    }
+  }, [propSelectedMonth]);
+
+  // Update reading date when month changes
+  useEffect(() => {
+    if (selectedMonth) {
+      // Set reading date to middle of selected month
+      const monthDate = `${selectedMonth}-15`;
+      setValue('reading_date', monthDate);
+      setSelectedDate(new Date(monthDate));
+    }
+  }, [selectedMonth, setValue]);
 
   const onSubmit = async (data: MeterReadingDatasheetFormData) => {
     try {
@@ -468,6 +511,41 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
               </div>
             )}
             
+            {/* Month Selection */}
+            <div className="space-y-2">
+              <Label>Μήνας Μετρήσων *</Label>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Επιλέξτε μήνα" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(() => {
+                    const currentDate = new Date();
+                    const months = [];
+                    // Add current and next 3 months
+                    for (let i = 0; i <= 3; i++) {
+                      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() + i, 1);
+                      const monthStr = format(date, 'yyyy-MM');
+                      const monthLabel = format(date, 'MMMM yyyy', { locale: el });
+                      months.push({ value: monthStr, label: monthLabel });
+                    }
+                    // Add previous 6 months
+                    for (let i = 1; i <= 6; i++) {
+                      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+                      const monthStr = format(date, 'yyyy-MM');
+                      const monthLabel = format(date, 'MMMM yyyy', { locale: el });
+                      months.unshift({ value: monthStr, label: monthLabel });
+                    }
+                    return months.map(month => (
+                      <SelectItem key={month.value} value={month.value}>
+                        {month.label}
+                      </SelectItem>
+                    ));
+                  })()}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Date Selection */}
             <div className="space-y-2">
               <Label>Ημερομηνία Μετρήσης *</Label>
@@ -699,7 +777,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                         
                         {(watchedMeterType === 'heating_hours' || watchedMeterType === 'heating_kwh') && (() => {
                           // Calculate fixed charge based on participation mills (building properties)
-                          const fixedChargePercentage = 0.3; // 30% fixed charge typical for heating systems
+                          const fixedChargePercentage = (buildingData?.heating_fixed_percentage || 30) / 100;
                           const fixedAmount = (field.participation_mills / 1000) * heatingExpenseAmount * fixedChargePercentage;
                           
                           // Calculate consumption charge based on heating mills and actual consumption
@@ -771,8 +849,8 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                 <div className="text-sm text-green-600">Χιλιοστά Θέρμανσης</div>
               </div>
               {(watchedMeterType === 'heating_hours' || watchedMeterType === 'heating_kwh') && (() => {
-                const fixedChargePercentage = 0.3;
-                const variableChargePercentage = 0.7;
+                const fixedChargePercentage = (buildingData?.heating_fixed_percentage || 30) / 100;
+                const variableChargePercentage = 1 - fixedChargePercentage;
                 const totalFixedAmount = heatingExpenseAmount * fixedChargePercentage;
                 const totalVariableAmount = heatingExpenseAmount * variableChargePercentage;
                 
@@ -784,11 +862,11 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-blue-700">€{totalFixedAmount.toFixed(2)}</div>
-                      <div className="text-sm text-blue-600">Πάγιο (30%)</div>
+                      <div className="text-sm text-blue-600">Πάγιο ({(fixedChargePercentage * 100).toFixed(0)}%)</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-green-700">€{totalVariableAmount.toFixed(2)}</div>
-                      <div className="text-sm text-green-600">Κατανάλωση (70%)</div>
+                      <div className="text-sm text-green-600">Κατανάλωση ({(variableChargePercentage * 100).toFixed(0)}%)</div>
                     </div>
                   </>
                 );
