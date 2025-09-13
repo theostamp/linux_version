@@ -399,7 +399,7 @@ class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):
                 count = payment_schedule.installment_count or 0
                 if count > 0:
                     remaining_amount = total - advance_amount  
-                    amount = remaining_amount / count
+                    amount = remaining_amount / Decimal(str(count))
                 else:
                     amount = Decimal('0')
                 from datetime import timedelta, datetime
@@ -718,6 +718,7 @@ class PaymentScheduleViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def summary(self, request, pk=None):
         """Get payment schedule summary with statistics"""
+        from decimal import Decimal
         payment_schedule = self.get_object()
         installments = payment_schedule.installments.all()
         
@@ -742,7 +743,7 @@ class PaymentScheduleViewSet(viewsets.ModelViewSet):
                 'total_amount': payment_schedule.total_amount,
                 'total_paid': total_paid,
                 'remaining_amount': payment_schedule.total_amount - total_paid,
-                'completion_percentage': (total_paid / payment_schedule.total_amount * 100) if payment_schedule.total_amount > 0 else 0
+                'completion_percentage': float(total_paid / payment_schedule.total_amount * Decimal('100')) if payment_schedule.total_amount > 0 else 0
             }
         }
         
