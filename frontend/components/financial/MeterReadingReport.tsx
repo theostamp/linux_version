@@ -102,21 +102,33 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
     const loadHeatingExpenses = async () => {
       if ((heatingMeterType === 'heating_hours' || heatingMeterType === 'heating_kwh') && buildingId) {
         try {
-          // Current month expenses
-          let currentFilters: any = {
-            building_id: buildingId,
-            category: 'heating'
+          // Current month expenses - get all heating-related categories
+          const baseFilters: any = {
+            building_id: buildingId
           };
           
           if (selectedMonth) {
             const [year, month] = selectedMonth.split('-');
             const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-            currentFilters.date_from = `${selectedMonth}-01`;
-            currentFilters.date_to = `${selectedMonth}-${lastDay.toString().padStart(2, '0')}`;
+            baseFilters.date_from = `${selectedMonth}-01`;
+            baseFilters.date_to = `${selectedMonth}-${lastDay.toString().padStart(2, '0')}`;
           }
           
-          const currentExpenses = await getExpenses(currentFilters);
-          const currentTotal = currentExpenses.reduce((sum: number, exp: any) => sum + parseFloat(exp.amount.toString()), 0);
+          // Get heating expenses from all heating-related categories
+          const heatingCategories = ['heating_fuel', 'heating_gas', 'heating_maintenance', 'heating_repair', 'heating_inspection', 'heating_modernization'];
+          const allExpenses = [];
+          
+          // Try each heating category separately to handle errors gracefully
+          for (const category of heatingCategories) {
+            try {
+              const expenses = await getExpenses({ ...baseFilters, category });
+              allExpenses.push(...expenses);
+            } catch (error) {
+              console.warn(`🔥 Could not fetch ${category} expenses:`, error);
+            }
+          }
+          
+          const currentTotal = allExpenses.reduce((sum: number, exp: any) => sum + parseFloat(exp.amount.toString()), 0);
           setHeatingExpenseAmount(currentTotal);
           
           // Previous month expenses
@@ -128,39 +140,53 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
             const prevMonthStr = `${prevYear}-${actualPrevMonth.toString().padStart(2, '0')}`;
             
             const prevLastDay = new Date(prevYear, actualPrevMonth, 0).getDate();
-            const prevFilters = {
+            const prevBaseFilters = {
               building_id: buildingId,
-              category: 'heating',
               date_from: `${prevMonthStr}-01`,
               date_to: `${prevMonthStr}-${prevLastDay.toString().padStart(2, '0')}`
             };
             
-            try {
-              const prevExpenses = await getExpenses(prevFilters);
-              const prevTotal = prevExpenses.reduce((sum: number, exp: any) => sum + parseFloat(exp.amount.toString()), 0);
-              setPreviousMonthExpense(prevTotal);
-            } catch (error) {
-              setPreviousMonthExpense(0);
+            // Get previous month expenses from all heating-related categories
+            const allPrevExpenses = [];
+            
+            // Try each heating category separately to handle errors gracefully
+            for (const category of heatingCategories) {
+              try {
+                const prevExpenses = await getExpenses({ ...prevBaseFilters, category });
+                allPrevExpenses.push(...prevExpenses);
+              } catch (error) {
+                console.warn(`🔥 Could not fetch ${category} expenses for previous month:`, error);
+              }
             }
+            
+            const prevTotal = allPrevExpenses.reduce((sum: number, exp: any) => sum + parseFloat(exp.amount.toString()), 0);
+            setPreviousMonthExpense(prevTotal);
           }
           
           // Yearly total expenses
           if (selectedMonth) {
             const [year] = selectedMonth.split('-');
-            const yearlyFilters = {
+            const yearlyBaseFilters = {
               building_id: buildingId,
-              category: 'heating',
               date_from: `${year}-01-01`,
               date_to: `${year}-12-31`
             };
             
-            try {
-              const yearlyExpenses = await getExpenses(yearlyFilters);
-              const yearlyTotal = yearlyExpenses.reduce((sum: number, exp: any) => sum + parseFloat(exp.amount.toString()), 0);
-              setYearlyExpenseTotal(yearlyTotal);
-            } catch (error) {
-              setYearlyExpenseTotal(0);
+            // Get yearly expenses from all heating-related categories
+            const allYearlyExpenses = [];
+            
+            // Try each heating category separately to handle errors gracefully
+            for (const category of heatingCategories) {
+              try {
+                const yearlyExpenses = await getExpenses({ ...yearlyBaseFilters, category });
+                allYearlyExpenses.push(...yearlyExpenses);
+              } catch (error) {
+                console.warn(`🔥 Could not fetch ${category} expenses for yearly total:`, error);
+              }
             }
+            
+            const yearlyTotal = allYearlyExpenses.reduce((sum: number, exp: any) => sum + parseFloat(exp.amount.toString()), 0);
+            setYearlyExpenseTotal(yearlyTotal);
           }
           
           console.log('🔥 MeterReadingReport heating expenses loaded:', {
