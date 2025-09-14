@@ -487,25 +487,59 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                     <td className="py-2 px-2 text-sm">{apartment.participation_mills}</td>
                     <td className="py-2 px-2 text-sm text-right">
                       <span className={`font-medium ${
-                        apartment.previous_balance > 0.10 ? 'text-red-600' : 
-                        apartment.previous_balance < -0.10 ? 'text-green-600' : 'text-gray-500'
+                        Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
+                        apartment.previous_balance > 0.30 ? 'text-red-600' : 
+                        apartment.previous_balance < -0.30 ? 'text-green-600' : 'text-gray-500'
                       }`}>
-                        {Math.abs(apartment.previous_balance) <= 0.10 ? '-' : formatCurrency(apartment.previous_balance)}
+                        {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : formatCurrency(apartment.previous_balance)}
                       </span>
                     </td>
                     <td className="py-2 px-2 text-sm text-right">
                       <span className={`font-medium ${
-                        apartment.net_obligation > 0.10 ? 'text-red-600' : 
-                        apartment.net_obligation < -0.10 ? 'text-green-600' : 'text-gray-900'
+                        apartment.net_obligation > 0.30 ? 'text-red-600' : 
+                        apartment.net_obligation < -0.30 ? 'text-green-600' : 'text-gray-900'
                       }`}>
-                        {Math.abs(apartment.net_obligation) <= 0.10 ? '-' : formatCurrency(apartment.net_obligation)}
+                        {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : formatCurrency(apartment.net_obligation)}
                       </span>
                     </td>
                     <td className="py-3 px-2 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        {getStatusIcon(apartment.status)}
-                        <Badge variant={getStatusBadgeVariant(apartment.status)}>
-                          {apartment.status}
+                        {(() => {
+                          const netObligation = apartment.net_obligation;
+                          if (Math.abs(netObligation) <= 0.30) {
+                            return <CheckCircle className="h-4 w-4 text-blue-500" />;
+                          } else if (netObligation > 100) {
+                            return <AlertTriangle className="h-4 w-4 text-red-500" />;
+                          } else if (netObligation > 0.30) {
+                            return <TrendingDown className="h-4 w-4 text-orange-500" />;
+                          } else {
+                            return <TrendingUp className="h-4 w-4 text-green-500" />;
+                          }
+                        })()}
+                        <Badge variant={(() => {
+                          const netObligation = apartment.net_obligation;
+                          if (Math.abs(netObligation) <= 0.30) {
+                            return 'default' as const;
+                          } else if (netObligation > 100) {
+                            return 'destructive' as const;
+                          } else if (netObligation > 0.30) {
+                            return 'destructive' as const;
+                          } else {
+                            return 'secondary' as const;
+                          }
+                        })()}>
+                          {(() => {
+                            const netObligation = apartment.net_obligation;
+                            if (Math.abs(netObligation) <= 0.30) {
+                              return 'Ενήμερο';
+                            } else if (netObligation > 100) {
+                              return 'Κρίσιμο';
+                            } else if (netObligation > 0.30) {
+                              return 'Οφειλή';
+                            } else {
+                              return 'Πιστωτικό';
+                            }
+                          })()}
                         </Badge>
                       </div>
                     </td>

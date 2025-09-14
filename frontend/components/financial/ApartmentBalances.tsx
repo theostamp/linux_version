@@ -80,10 +80,10 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
   };
 
   const getBalanceBadge = (balance: number) => {
-    if (balance > 0.10) {
+    if (balance > 0.30) {
       return <Badge className="bg-green-100 text-green-800">Πιστωτικό</Badge>;
     }
-    if (balance < -0.10) {
+    if (balance < -0.30) {
       return <Badge className="bg-red-100 text-red-800">Οφειλή</Badge>;
     }
     return <Badge className="bg-gray-100 text-gray-800">Εξοφλημένο</Badge>;

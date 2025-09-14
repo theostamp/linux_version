@@ -38,10 +38,10 @@ export const SharePreview: React.FC<SharePreviewProps> = ({
   };
 
   const getShareBadge = (share: CommonExpenseShare) => {
-    if (share.amount > 0.10) {
+    if (share.amount > 0.30) {
       return <Badge className="bg-green-100 text-green-800">Πιστωτικό</Badge>;
     }
-    if (share.amount < -0.10) {
+    if (share.amount < -0.30) {
       return <Badge className="bg-red-100 text-red-800">Οφειλή</Badge>;
     }
     return <Badge className="bg-gray-100 text-gray-800">Ουδέτερο</Badge>;

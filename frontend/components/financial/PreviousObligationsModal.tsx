@@ -277,7 +277,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                           </div>
                           <div>
                             <span className="text-gray-600">Προηγούμενο Υπόλοιπο:</span>
-                            <div className="font-medium">{Math.abs(apartment.previous_balance) <= 0.10 ? '-' : formatCurrency(apartment.previous_balance)}</div>
+                            <div className="font-medium">{Math.abs(apartment.net_obligation) <= 0.30 ? '-' : formatCurrency(apartment.previous_balance)}</div>
                           </div>
                           <div>
                             <span className="text-gray-600">Μερίδιο Δαπανών:</span>

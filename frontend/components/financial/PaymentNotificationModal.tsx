@@ -273,7 +273,7 @@ export default function PaymentNotificationModal({
                 <div className="bg-white border border-gray-200 rounded-lg p-3">
                   <span className="text-sm text-gray-600">Παλαιότερες Οφειλές:</span>
                   <div className="font-medium text-lg">
-                    {Math.abs(apartment.previous_balance) <= 0.10 ? '-' : formatCurrency(apartment.previous_balance)}
+                    {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : formatCurrency(apartment.previous_balance)}
                   </div>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-lg p-3">
