@@ -353,10 +353,9 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
           <div className="flex items-center gap-3 text-white">
             <Euro className="h-6 w-6" />
             <div>
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-semibold">
                 Νέα Εισπραξη{buildingName ? ` • ${buildingName}` : ''}{selectedMonth ? ` – ${new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' })}` : ''}
               </h2>
-              <p className="text-sm text-green-100">Καταχώρηση νέας πληρωμής από ενοίκο</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={handleClose} className="text-white hover:bg-green-700">
@@ -367,13 +366,13 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-red-600 text-sm">{error}</p>
+            <div className="mb-4 p-2 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-red-600 text-xs">{error}</p>
             </div>
           )}
           {calcError && (
-            <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-md">
-              <p className="text-orange-700 text-sm">{calcError}</p>
+            <div className="mb-4 p-2 bg-orange-50 border border-orange-200 rounded-md">
+              <p className="text-orange-700 text-xs">{calcError}</p>
             </div>
           )}
 
@@ -381,7 +380,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
             {/* Apartment Selection */}
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <Label htmlFor="apartment" className="flex items-center gap-2">
+                <Label htmlFor="apartment" className="flex items-center gap-2 text-sm">
                   <Home className="h-4 w-4" />
                   Διαμέρισμα *
                 </Label>
@@ -426,7 +425,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
                 {/* Apartment Info */}
                 {selectedApartment && (
                   <div className="mt-2 p-3 bg-gray-50 rounded-md">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                       <div>
                         <span className="text-gray-600">Ενοίκος:</span>
                         <p className="font-medium">
@@ -484,7 +483,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
             {/* Payment Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="amount" className="flex items-center gap-2">
+                <Label htmlFor="amount" className="flex items-center gap-2 text-sm">
                   <Euro className="h-4 w-4" />
                   Ποσό Κοινόχρηστων *
                 </Label>
@@ -587,7 +586,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
             {/* Date */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="date" className="flex items-center gap-2">
+                <Label htmlFor="date" className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4" />
                   Ημερομηνία *
                   {monthContext && (
@@ -624,7 +623,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
             {/* Payment Method & Type */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="method" className="flex items-center gap-2">
+                <Label htmlFor="method" className="flex items-center gap-2 text-sm">
                   <CreditCard className="h-4 w-4" />
                   Τρόπος Πληρωμής *
                 </Label>
@@ -645,7 +644,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
               </div>
 
               <div>
-                <Label htmlFor="payment_type" className="flex items-center gap-2">
+                <Label htmlFor="payment_type" className="flex items-center gap-2 text-sm">
                   <User className="h-4 w-4" />
                   Τύπος Πληρωμής *
                 </Label>
@@ -694,7 +693,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
 
             {/* Receipt Upload */}
             <div>
-              <Label htmlFor="receipt" className="flex items-center gap-2">
+              <Label htmlFor="receipt" className="flex items-center gap-2 text-sm">
                 <Upload className="h-4 w-4" />
                 Απόδειξη / Παραστατικό
               </Label>

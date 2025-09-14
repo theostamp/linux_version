@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X, Calendar, Euro, CreditCard, Receipt } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { api } from '@/lib/api';
 
 export interface PaymentHistoryItem {
   id: number;
@@ -27,7 +28,7 @@ interface PaymentHistoryModalProps {
     apartment_id: number;
     apartment_number: string;
     owner_name: string;
-    payment_breakdown: PaymentHistoryItem[];
+    payment_breakdown?: PaymentHistoryItem[]; // Κάνε το optional
   } | null;
 }
 
@@ -38,13 +39,71 @@ export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentBreakdown, setPaymentBreakdown] = useState<PaymentHistoryItem[]>([]);
+
+  useEffect(() => {
+    if (isOpen && apartment) {
+      loadPaymentHistory();
+    }
+  }, [isOpen, apartment?.apartment_id]);
+
+  const loadPaymentHistory = async () => {
+    if (!apartment) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Get the building ID from localStorage or context
+      const buildingId = localStorage.getItem('selectedBuildingId') || '1';
+      
+      console.log('🔍 Loading payment history for apartment:', apartment.apartment_id);
+      
+      // Call API to get payments for this apartment
+      // Use the same pattern as other financial endpoints
+      const params = new URLSearchParams({
+        apartment_id: apartment.apartment_id.toString(),
+        building_id: buildingId,
+        limit: '100'
+      });
+      
+      console.log('📡 API call:', `/financial/payments/?apartment=${apartment.apartment_id}&ordering=-date&limit=100`);
+      const response = await api.get(`/financial/payments/?apartment=${apartment.apartment_id}&ordering=-date&limit=100`);
+      
+      // Transform the response data to match our interface
+      const payments: PaymentHistoryItem[] = (response.data.results || response.data || []).map((payment: any) => ({
+        id: payment.id,
+        amount: payment.amount,
+        date: payment.date,
+        method: payment.method || 'cash',
+        method_display: payment.method === 'bank_transfer' ? 'Τραπεζική Κατάθεση' : 
+                        payment.method === 'card' ? 'Κάρτα' : 'Μετρητά',
+        payment_type: payment.payment_type || 'common_expense',
+        payment_type_display: payment.payment_type === 'common_expense' ? 'Κοινόχρηστα' :
+                             payment.payment_type === 'reserve_fund' ? 'Αποθεματικό' : 
+                             payment.payment_type === 'previous_obligations' ? 'Παλαιότερες Οφειλές' : 'Άλλο',
+        reference_number: payment.reference_number,
+        notes: payment.notes,
+        payer_name: payment.payer_name
+      }));
+      
+      console.log('✅ Payments loaded:', payments.length, 'items');
+      setPaymentBreakdown(payments);
+    } catch (err: any) {
+      console.error('❌ Error loading payment history:', err);
+      console.error('Error details:', err.response?.data || err.message);
+      setError('Σφάλμα κατά τη φόρτωση του ιστορικού πληρωμών');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (!isOpen || !apartment) {
     return null;
   }
 
-  const totalPayments = apartment.payment_breakdown.reduce((sum, payment) => sum + payment.amount, 0);
-  const paymentCount = apartment.payment_breakdown.length;
+  const totalPayments = paymentBreakdown.reduce((sum, payment) => sum + payment.amount, 0);
+  const paymentCount = paymentBreakdown.length;
 
   return (
     <div 
@@ -108,8 +167,8 @@ export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
                 <span className="text-sm font-medium text-gray-600">Τελευταία Πληρωμή</span>
               </div>
               <p className="text-lg font-semibold text-purple-600 mt-1">
-                {apartment.payment_breakdown.length > 0 
-                  ? formatDate(apartment.payment_breakdown[0].date)
+                {paymentBreakdown.length > 0 
+                  ? formatDate(paymentBreakdown[0].date)
                   : 'Δεν υπάρχουν πληρωμές'
                 }
               </p>
@@ -135,7 +194,7 @@ export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
               <div className="text-center py-8">
                 <p className="text-red-600">{error}</p>
               </div>
-            ) : apartment.payment_breakdown.length === 0 ? (
+            ) : paymentBreakdown.length === 0 ? (
               <div className="text-center py-8">
                 <Receipt className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">Δεν βρέθηκαν πληρωμές για αυτό το διαμέρισμα</p>
@@ -154,7 +213,7 @@ export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {apartment.payment_breakdown.map((payment, index) => (
+                    {paymentBreakdown.map((payment, index) => (
                       <tr key={`${payment.id}-${payment.date}-${index}`} className="border-b hover:bg-gray-50">
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">

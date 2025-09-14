@@ -992,7 +992,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           {/* Amount and Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="common_expense_amount">Ποσό Κοινόχρηστων (€) *</Label>
+              <Label htmlFor="common_expense_amount" className="text-sm">Ποσό Κοινόχρηστων (€) *</Label>
               <Input
                 id="common_expense_amount"
                 type="number"
@@ -1035,7 +1035,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="previous_obligations_amount">Παλαιότερες Οφειλές (€)</Label>
+              <Label htmlFor="previous_obligations_amount" className="text-sm">Παλαιότερες Οφειλές (€)</Label>
               <Input
                 id="previous_obligations_amount"
                 type="number"
@@ -1087,7 +1087,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
           {/* Date */}
           <div className="space-y-2">
-            <Label htmlFor="payment_date">Ημερομηνία Εισπράξεως *</Label>
+            <Label htmlFor="payment_date" className="text-sm">Ημερομηνία Εισπράξεως *</Label>
             <Input
               id="payment_date"
               type="date"

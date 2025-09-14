@@ -60,8 +60,8 @@ interface ApartmentBalanceWithDetails {
   total_payments: number;
   net_obligation: number;
   status: string;
-  expense_breakdown: ExpenseBreakdown[];
-  payment_breakdown: PaymentHistoryItem[];
+  expense_breakdown?: ExpenseBreakdown[];
+  payment_breakdown?: PaymentHistoryItem[];
 }
 
 interface ApartmentBalancesTabProps {
@@ -249,6 +249,8 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
         return <Clock className="w-4 h-4 text-yellow-500" />;
       case 'κρίσιμο':
         return <AlertTriangle className="w-4 h-4 text-red-600" />;
+      case 'πιστωτικό':
+        return <CheckCircle className="w-4 h-4 text-blue-500" />; // Μπλε για πιστωτικό υπόλοιπο
       default:
         return <div className="w-2 h-2 bg-gray-500 rounded-full" />;
     }
@@ -266,6 +268,8 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
         return 'secondary' as const;
       case 'κρίσιμο':
         return 'destructive' as const;
+      case 'πιστωτικό':
+        return 'secondary' as const; // Γκρι-μπλε για πιστωτικό υπόλοιπο
       default:
         return 'outline' as const;
     }
@@ -429,24 +433,33 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
             </div>
           )}
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-2">Διαμέρισμα</th>
-                  <th className="text-left py-3 px-2">Ιδιοκτήτης</th>
-                  <th className="text-left py-3 px-2">Χιλιοστά</th>
-                  <th className="text-right py-3 px-2">Καθαρή Οφειλή</th>
-                  <th className="text-center py-3 px-2">Κατάσταση</th>
-                  <th className="text-center py-3 px-2">Ενέργειες</th>
+                  <th className="text-left py-2 px-2 text-xs font-semibold text-gray-600">Διαμέρισμα</th>
+                  <th className="text-left py-2 px-2 text-xs font-semibold text-gray-600">Ιδιοκτήτης</th>
+                  <th className="text-left py-2 px-2 text-xs font-semibold text-gray-600">Χιλιοστά</th>
+                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-600">Προηγούμενο Υπόλοιπο</th>
+                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-600">Καθαρή Οφειλή</th>
+                  <th className="text-center py-2 px-2 text-xs font-semibold text-gray-600">Κατάσταση</th>
+                  <th className="text-center py-2 px-2 text-xs font-semibold text-gray-600">Ενέργειες</th>
                 </tr>
               </thead>
               <tbody>
                 {apartmentBalances.map((apartment) => (
                   <tr key={apartment.apartment_id} className="border-b hover:bg-gray-50">
-                    <td className="py-3 px-2 font-medium">{apartment.apartment_number}</td>
-                    <td className="py-3 px-2">{apartment.owner_name}</td>
-                    <td className="py-3 px-2">{apartment.participation_mills}</td>
-                    <td className="py-3 px-2 text-right">
+                    <td className="py-2 px-2 text-sm font-medium">{apartment.apartment_number}</td>
+                    <td className="py-2 px-2 text-sm">{apartment.owner_name}</td>
+                    <td className="py-2 px-2 text-sm">{apartment.participation_mills}</td>
+                    <td className="py-2 px-2 text-sm text-right">
+                      <span className={`font-medium ${
+                        apartment.previous_balance > 0 ? 'text-red-600' : 
+                        apartment.previous_balance < 0 ? 'text-green-600' : 'text-gray-500'
+                      }`}>
+                        {formatCurrency(apartment.previous_balance)}
+                      </span>
+                    </td>
+                    <td className="py-2 px-2 text-sm text-right">
                       <span className={`font-medium ${
                         apartment.net_obligation > 0 ? 'text-red-600' : 
                         apartment.net_obligation < 0 ? 'text-green-600' : 'text-gray-900'
@@ -546,7 +559,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Νέα Εισπράξη</h2>
+              <h2 className="text-lg font-semibold">Εισπράξη Πληρωμής</h2>
               <Button 
                 variant="ghost" 
                 size="sm"

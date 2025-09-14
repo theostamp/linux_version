@@ -477,7 +477,7 @@ docker compose up --build -d
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "fix bug μη χρεωσης διαμερισματων λανθασμενο signal"
+git commit -m "FINANCIAL_SYSTEM_REPORT_SEP2025.md"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

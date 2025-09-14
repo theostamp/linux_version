@@ -587,10 +587,12 @@ class FinancialDashboardService:
         
         # Calculate total balance based on view type
         if month:
-            # For snapshot view, total balance should be negative of total monthly obligations
-            # This includes expenses + reserve fund contribution (only if within period)
+            # For snapshot view, total balance should be payments minus all obligations
+            # This includes current monthly expenses + previous obligations + reserve fund contribution
             total_monthly_obligations = total_expenses_this_month + total_management_cost + reserve_fund_monthly_target
-            total_balance = -total_monthly_obligations
+            
+            # We'll calculate previous_obligations later, so for now use placeholder
+            total_balance = total_payments_this_month - total_monthly_obligations
         else:
             # For current view, use current reserve
             total_balance = current_reserve
@@ -637,18 +639,87 @@ class FinancialDashboardService:
                     _, last_day = monthrange(year, mon - 1)
                     previous_month_end = date(year, mon - 1, last_day)
                 
-                # Calculate total previous obligations across all apartments
+                # ΔΙΟΡΘΩΣΗ: Υπολογισμός previous obligations από MonthlyBalance records
+                # Αυτό εξασφαλίζει σταθερή και αξιόπιστη αποθήκευση στη βάση δεδομένων
                 previous_obligations = Decimal('0.00')
-                for apartment in apartments:
-                    historical_balance = self._calculate_historical_balance(apartment, previous_month_end)
-                    if historical_balance < 0:
-                        previous_obligations += abs(historical_balance)
+                
+                try:
+                    from .models import MonthlyBalance
+                    
+                    # Αναζήτηση του MonthlyBalance record για τον συγκεκριμένο μήνα
+                    monthly_balance = MonthlyBalance.objects.filter(
+                        building_id=self.building_id,
+                        year=year,
+                        month=mon
+                    ).first()
+                    
+                    if monthly_balance:
+                        # Χρησιμοποιούμε τo αποθηκευμένο previous_obligations
+                        previous_obligations = monthly_balance.previous_obligations
+                        print(f"🔍 Found MonthlyBalance record: previous_obligations = €{previous_obligations}")
+                    else:
+                        # Fallback: δημιουργούμε το record αυτόματα
+                        print(f"⚠️ No MonthlyBalance found for {year}-{mon:02d}, creating...")
+                        
+                        # Calculate data for this month
+                        month_expenses = Expense.objects.filter(
+                            building_id=self.building_id,
+                            date__year=year,
+                            date__month=mon
+                        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                        
+                        month_payments = Payment.objects.filter(
+                            apartment__building_id=self.building_id,
+                            date__year=year,
+                            date__month=mon
+                        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                        
+                        # Get previous month's carry forward
+                        prev_month = mon - 1
+                        prev_year = year
+                        if prev_month < 1:
+                            prev_month = 12
+                            prev_year -= 1
+                        
+                        prev_monthly_balance = MonthlyBalance.objects.filter(
+                            building_id=self.building_id,
+                            year=prev_year,
+                            month=prev_month
+                        ).first()
+                        
+                        prev_carry_forward = prev_monthly_balance.carry_forward if prev_monthly_balance else Decimal('0.00')
+                        
+                        # Create the MonthlyBalance record
+                        monthly_balance = MonthlyBalance.objects.create(
+                            building_id=self.building_id,
+                            year=year,
+                            month=mon,
+                            total_expenses=month_expenses,
+                            total_payments=month_payments,
+                            previous_obligations=prev_carry_forward,
+                            reserve_fund_amount=Decimal('0.00'),
+                            management_fees=Decimal('0.00'),
+                            carry_forward=Decimal('0.00'),
+                        )
+                        
+                        previous_obligations = monthly_balance.previous_obligations
+                        print(f"✅ Created MonthlyBalance: previous_obligations = €{previous_obligations}")
+                        
+                except Exception as e:
+                    print(f"⚠️ Error accessing MonthlyBalance: {e}")
+                    previous_obligations = Decimal('0.00')
             except Exception as e:
                 print(f"⚠️ Error calculating previous obligations for {month}: {e}")
                 previous_obligations = apartment_obligations
         else:
             # For current view, use current apartment obligations
             previous_obligations = apartment_obligations
+        
+        # ΔΙΟΡΘΩΣΗ: Για snapshot view, προσθήκη previous_obligations στον υπολογισμό total_balance
+        if month:
+            # Πλήρης υπολογισμός: Πληρωμές μείον (Προηγούμενες Οφειλές + Τρέχουσες Υποχρεώσεις)
+            total_balance = total_payments_this_month - (previous_obligations + current_obligations)
+            print(f"🔧 BALANCE CORRECTION: payments={total_payments_this_month} - (previous={previous_obligations} + current={current_obligations}) = {total_balance}")
         
         return {
             'total_balance': float(total_balance),
@@ -837,28 +908,66 @@ class FinancialDashboardService:
                 end_date = None
         
         for apartment in apartments:
-            # Υπολογισμός υπολοίπου με βάση την ημερομηνία
+            # ΔΙΟΡΘΩΣΗ: Πάντα υπολογίζω το balance από transactions για συνέπεια
             if end_date:
                 calculated_balance = self._calculate_historical_balance(apartment, end_date)
                 # Τελευταία πληρωμή μέχρι την ημερομηνία
                 last_payment = apartment.payments.filter(date__lt=end_date).order_by('-date').first()
             else:
-                calculated_balance = apartment.current_balance or Decimal('0.00')
+                # Για current view, χρησιμοποίησε current date
+                from datetime import date
+                calculated_balance = self._calculate_historical_balance(apartment, date.today())
                 # Τελευταία πληρωμή συνολικά
                 last_payment = apartment.payments.order_by('-date').first()
             
-            # Υπολογισμός κατάστασης βασισμένη στο υπόλοιπο
-            if calculated_balance > 0:
-                if calculated_balance > 100:  # More than 100€ debt
-                    status = 'Κρίσιμο'
-                elif calculated_balance > 50:  # More than 50€ debt
-                    status = 'Οφειλή'
-                else:
-                    status = 'Ενεργό'
-            elif calculated_balance < 0:
+            # ΔΙΟΡΘΩΣΗ: Υπολογισμός κατάστασης βασισμένη στο υπόλοιπο
+            if calculated_balance > 100:  # More than 100€ debt
+                status = 'Κρίσιμο'
+            elif calculated_balance > 0:  # Any debt > 0€
+                status = 'Οφειλή'
+            elif calculated_balance < 0:  # Credit balance
                 status = 'Πιστωτικό'
-            else:
-                status = 'Ενεργό'
+            else:  # Exactly 0€
+                status = 'Ενήμερο'
+            
+            # ΔΙΟΡΘΩΣΗ: Υπολογισμός previous_balance και net_obligation για snapshot view
+            previous_balance = Decimal('0.00')
+            net_obligation = Decimal('0.00')
+            expense_share = Decimal('0.00')
+            
+            if month and end_date:
+                # Για snapshot view, υπολογίζουμε previous balance και net obligation
+                
+                # ΔΙΟΡΘΩΣΗ: month_start πρέπει να είναι η αρχή του επιλεγμένου μήνα
+                year, mon = map(int, month.split('-'))
+                month_start = date(year, mon, 1)
+                
+                # 1. Previous Balance = οφειλές από προηγούμενους μήνες (πριν τον επιλεγμένο μήνα)
+                previous_balance = self._calculate_historical_balance(apartment, month_start)
+                
+                # 2. Current month expense share (για net_obligation)
+                month_expenses = Expense.objects.filter(
+                    building_id=apartment.building_id,
+                    date__gte=month_start,
+                    date__lt=end_date
+                )
+                
+                # Υπολογισμός μεριδίου διαμερίσματος από τις δαπάνες του μήνα
+                total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
+                    total=Sum('participation_mills'))['total'] or 1000
+                    
+                for expense in month_expenses:
+                    apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
+                    expense_share += apartment_share
+                
+                # 3. Net Obligation = Previous Balance + Current Month Expenses - Payments this month
+                month_payments = Payment.objects.filter(
+                    apartment=apartment,
+                    date__gte=month_start,
+                    date__lt=end_date
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                
+                net_obligation = previous_balance + expense_share - month_payments
             
             balances.append({
                 'id': apartment.id,
@@ -867,6 +976,9 @@ class FinancialDashboardService:
                 'apartment_number': apartment.number,
                 'owner_name': apartment.owner_name or 'Άγνωστος',
                 'current_balance': calculated_balance,
+                'previous_balance': previous_balance,  # ← ΝΕΟ FIELD
+                'expense_share': expense_share,        # ← ΝΕΟ FIELD  
+                'net_obligation': net_obligation,      # ← ΝΕΟ FIELD
                 'participation_mills': apartment.participation_mills or 0,
                 'status': status,
                 'last_payment_date': last_payment.date if last_payment else None,
@@ -930,18 +1042,13 @@ class FinancialDashboardService:
         else:
             total_charges = Decimal('0.00')
         
-        # Υπολογισμός επιπλέον εισπράξεων από συναλλαγές (εκτός από τις κανονικές πληρωμές)
-        # Μετατροπή end_date σε timezone-aware datetime για σύγκριση
-        end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
+        # ΔΙΟΡΘΩΣΗ: Μη διπλομέτρηση πληρωμών - χρησιμοποίησε μόνο Payment model
+        # Οι συναλλαγές τύπου 'common_expense_payment' δημιουργούνται αυτόματα όταν 
+        # καταχωρείται Payment, οπότε δεν πρέπει να προστίθενται ξανά
         
-        additional_payments = Transaction.objects.filter(
-            apartment_number=apartment.number,
-            date__lt=end_datetime,
-            type__in=['common_expense_payment', 'payment_received', 'refund']
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        # Υπολογισμός τελικού υπολοίπου: (πληρωμές + επιπλέον εισπράξεις) - χρεώσεις
-        historical_balance = total_payments + additional_payments - total_charges
+        # ΔΙΟΡΘΩΣΗ ΠΡΟΣΗΜΟΥ: Χρέος = θετικό υπόλοιπο, Πίστωση = αρνητικό υπόλοιπο  
+        # Υπόλοιπο = Χρεώσεις - Πληρωμές (θετικό = χρέος, αρνητικό = πίστωση)
+        historical_balance = total_charges - total_payments
         
         return historical_balance
     
