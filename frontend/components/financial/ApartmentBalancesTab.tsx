@@ -153,10 +153,35 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
   };
 
   const handlePayment = (apartment: ApartmentBalanceWithDetails) => {
+    // Calculate payment amounts to zero out debt
+    const totalDebt = Math.max(0, apartment.net_obligation);
+    
+    // If there's a previous balance debt, allocate it to previous obligations
+    const previousDebt = Math.max(0, apartment.previous_balance);
+    
+    // Current month expense share (cannot be negative)
+    const currentMonthShare = Math.max(0, apartment.expense_share);
+    
+    // Calculate how to split the payment:
+    // If total debt <= current month share, put it all in common expenses
+    // If total debt > current month share, split between current and previous
+    let commonExpenseAmount = 0;
+    let previousObligationsAmount = 0;
+    
+    if (totalDebt <= currentMonthShare) {
+      // All debt can be covered by current month common expenses
+      commonExpenseAmount = totalDebt;
+      previousObligationsAmount = 0;
+    } else {
+      // Need to pay current month share + previous balance
+      commonExpenseAmount = currentMonthShare;
+      previousObligationsAmount = Math.min(previousDebt, totalDebt - currentMonthShare);
+    }
+    
     setPaymentModalData({
       apartment_id: apartment.apartment_id,
-      common_expense_amount: apartment.expense_share,
-      previous_obligations_amount: apartment.previous_balance,
+      common_expense_amount: commonExpenseAmount,
+      previous_obligations_amount: previousObligationsAmount,
     });
     setShowPaymentModal(true);
   };
