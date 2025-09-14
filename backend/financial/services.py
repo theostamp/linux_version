@@ -969,6 +969,17 @@ class FinancialDashboardService:
                 
                 net_obligation = previous_balance + expense_share - month_payments
             
+            # ΔΙΟΡΘΩΣΗ: Υπολογισμός total_payments για κάθε διαμέρισμα
+            if end_date:
+                # Για historical view, μόνο πληρωμές μέχρι την ημερομηνία
+                apartment_payments = apartment.payments.filter(date__lt=end_date)
+            else:
+                # Για current view, όλες οι πληρωμές
+                apartment_payments = apartment.payments.all()
+                
+            total_payments_apartment = apartment_payments.aggregate(
+                total=Sum('amount'))['total'] or Decimal('0.00')
+
             balances.append({
                 'id': apartment.id,
                 'apartment_id': apartment.id,
@@ -979,6 +990,7 @@ class FinancialDashboardService:
                 'previous_balance': previous_balance,  # ← ΝΕΟ FIELD
                 'expense_share': expense_share,        # ← ΝΕΟ FIELD  
                 'net_obligation': net_obligation,      # ← ΝΕΟ FIELD
+                'total_payments': total_payments_apartment,  # ← ΝΕΟ FIELD - Διόρθωση!
                 'participation_mills': apartment.participation_mills or 0,
                 'status': status,
                 'last_payment_date': last_payment.date if last_payment else None,

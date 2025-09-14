@@ -1342,7 +1342,8 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
             
             # Υπολογισμός summary statistics από τα δεδομένα του service
             total_obligations = sum(float(apt.get('current_balance', 0)) for apt in apartment_balances if float(apt.get('current_balance', 0)) > 0)
-            total_payments = sum(float(apt.get('last_payment_amount', 0)) for apt in apartment_balances if apt.get('last_payment_amount'))
+            # ΔΙΟΡΘΩΣΗ: Χρήση του νέου total_payments field αντί για last_payment_amount
+            total_payments = sum(float(apt.get('total_payments', 0)) for apt in apartment_balances)
             total_net_obligations = sum(float(apt.get('net_obligation', 0)) for apt in apartment_balances if float(apt.get('net_obligation', 0)) > 0)
             
             # Count apartments by status

@@ -378,7 +378,10 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{apartmentBalances.length}</div>
+            <div className="text-2xl font-bold text-blue-600">{apartmentBalances.length}</div>
+            <p className="text-xs text-muted-foreground">
+              διαμερίσματα κτιρίου
+            </p>
           </CardContent>
         </Card>
 
@@ -391,18 +394,24 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
             <div className="text-2xl font-bold text-red-600">
               {formatCurrency(apartmentBalances.reduce((sum, apt) => sum + Math.max(0, apt.net_obligation), 0))}
             </div>
+            <p className="text-xs text-muted-foreground">
+              συνολικό χρέος κτιρίου
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Συνολικές Πληρωμές</CardTitle>
+            <CardTitle className="text-sm font-medium">Σύνολο Εισπράξεων</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
               {formatCurrency(apartmentBalances.reduce((sum, apt) => sum + apt.total_payments, 0))}
             </div>
+            <p className="text-xs text-muted-foreground">
+              συνολικές πληρωμές
+            </p>
           </CardContent>
         </Card>
 
@@ -418,7 +427,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
               {getDebtApartmentsCount()}/{apartmentBalances.length}
             </div>
             <p className="text-xs text-muted-foreground">
-              με οφειλή {getDebtApartmentsCount() > 0 ? `(${getDebtApartmentsCount()} οφειλή)` : ''}
+              με οφειλές {getDebtApartmentsCount() > 0 ? `(${getDebtApartmentsCount()} διαμερίσματα)` : ''}
             </p>
           </CardContent>
         </Card>

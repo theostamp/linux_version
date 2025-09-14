@@ -37,6 +37,7 @@ import { toast } from 'react-hot-toast';
 import { ServicePackageModal } from '../ServicePackageModal';
 import { AmountDetailsModal } from '../AmountDetailsModal';
 import { PreviousObligationsModal } from '../PreviousObligationsModal';
+import { ApartmentOverviewIntegrated } from '../ApartmentOverviewIntegrated';
 
 
 interface BuildingOverviewSectionProps {
@@ -1511,6 +1512,33 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   </div>
                 );
               })()}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Section 1.6: Κατάσταση Διαμερισμάτων - Integrated Overview */}
+        <div className="space-y-4">
+          <Card className="border-2 border-blue-200 bg-blue-50/30">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-blue-600" />
+                  <span className="font-semibold text-sm text-blue-900">
+                    Κατάσταση Διαμερισμάτων
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-blue-700">
+                    Επισκόπηση υπολοίπων και οφειλών
+                  </div>
+                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                    Συνοπτικά
+                  </Badge>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <ApartmentOverviewIntegrated buildingId={buildingId} selectedMonth={selectedMonth} />
             </CardContent>
           </Card>
         </div>
