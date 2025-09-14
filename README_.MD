@@ -477,7 +477,7 @@ docker compose up --build -d
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "fix all allmost issues FINANCIAL_SYSTEM_REPORT_SEP2025.md"
+git commit -m "change layout of financial page FINANCIAL_SYSTEM_REPORT_SEP2025.md"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

@@ -1469,46 +1469,6 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       </div>
                     </div>
                     
-                    {/* Status Message */}
-                    <div className={`p-4 rounded-lg text-sm ${
-                      coveragePercentage >= 100 
-                        ? 'bg-green-50 text-green-800 border border-green-200' 
-                        : coveragePercentage >= 80 
-                          ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-                          : coveragePercentage >= 50
-                            ? 'bg-orange-50 text-orange-800 border border-orange-200'
-                            : 'bg-red-50 text-red-800 border border-red-200'
-                    }`}>
-                      {coveragePercentage >= 100 ? (
-                        <div className="flex items-center gap-2">
-                          <Check className="h-4 w-4" />
-                          <span className="font-medium">Όλες οι υποχρεώσεις έχουν καλυφθεί!</span>
-                        </div>
-                      ) : coveragePercentage >= 80 ? (
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle className="h-4 w-4" />
-                          <span className="font-medium">Καλή κάλυψη - χρειάζεται επιπλέον εισπράξεις</span>
-                        </div>
-                      ) : coveragePercentage >= 50 ? (
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle className="h-4 w-4" />
-                          <span className="font-medium">Μέτρια κάλυψη - απαιτούνται εισπράξεις</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle className="h-4 w-4" />
-                          <span className="font-medium">Χαμηλή κάλυψη - απαιτούνται άμεσες εισπράξεις</span>
-                        </div>
-                      )}
-                      <div className="mt-2 text-xs opacity-75">
-                        Εισπράξεις: {formatCurrency(actualPayments)} | Συνολικές Υποχρεώσεις: {formatCurrency(totalObligations)}
-                        {previousObligations > 0 && (
-                          <div className="mt-1 text-xs">
-                            (Τρέχοντες: {formatCurrency(currentMonthObligations)} + Προηγούμενες: {formatCurrency(previousObligations)})
-                          </div>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 );
               })()}
@@ -1922,29 +1882,6 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
           </div>
         </div>
 
-        {/* Pending Payments Section */}
-        {(financialSummary?.pending_payments || 0) > 0 && (
-          <div className="space-y-4">
-            <Card className="border-yellow-200 bg-yellow-50/50">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                  <div>
-                    <h3 className="text-sm font-semibold text-yellow-900">
-                      Εκκρεμείς Πληρωμές
-                    </h3>
-                    <p className="text-xs text-yellow-800 mt-1">
-                      Υπάρχουν <span className="font-bold">{financialSummary?.pending_payments || 0}</span> πληρωμές που δεν έχουν επιβεβαιωθεί.
-                    </p>
-                    <p className="text-xs text-yellow-700 mt-2">
-                      Ελέγξτε τα οικονομικά στοιχεία για λεπτομέρειες.
-                    </p>
-          </div>
-        </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
       </CardContent>
 
       {/* Service Package Modal */}

@@ -94,9 +94,10 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   
   // Event listener for opening maintenance overview modal
   useEffect(() => {
-    const handleOpenMaintenanceOverview = async (event: CustomEvent) => {
-      console.log('🎯 FinancialPage received open-maintenance-overview event:', event.detail);
-      const maintenanceId = event.detail.maintenanceId;
+    const handleOpenMaintenanceOverview = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('🎯 FinancialPage received open-maintenance-overview event:', customEvent.detail);
+      const maintenanceId = customEvent.detail.maintenanceId;
       
       if (!maintenanceId) {
         console.warn('⚠️ No maintenance ID provided in event');
@@ -123,11 +124,11 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
     };
     
     console.log('👂 FinancialPage setting up open-maintenance-overview event listener');
-    window.addEventListener('open-maintenance-overview', handleOpenMaintenanceOverview as EventListener);
+    window.addEventListener('open-maintenance-overview', handleOpenMaintenanceOverview);
     
     return () => {
       console.log('🧹 FinancialPage cleaning up open-maintenance-overview event listener');
-      window.removeEventListener('open-maintenance-overview', handleOpenMaintenanceOverview as EventListener);
+      window.removeEventListener('open-maintenance-overview', handleOpenMaintenanceOverview);
     };
   }, []);
   
@@ -332,10 +333,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       <div className="flex flex-col space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Οικονομική Διαχείριση</h1>
-            <p className="text-sm text-muted-foreground">
-              Διαχείριση δαπανών, κοινοχρήστων και εισπράξεων
-            </p>
+            <h1 className="text-2xl font-bold font-condensed">Οικονομική Διαχείριση</h1>
           </div>
           <Button
             onClick={() => {
@@ -359,39 +357,36 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               <Building2 className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-blue-900">
-                Ενεργό Κτίριο
-              </p>
-              <p className="text-lg font-bold text-blue-700">
+              <p className="text-lg font-bold text-blue-700 font-condensed">
                 {currentBuildingName}
-              </p>
-              <p className="text-xs text-blue-600">
-                {(selectedBuilding || currentBuilding)?.address || ''}
               </p>
             </div>
           </div>
           
-          {/* Month Info */}
+          {/* Month Selector */}
           <div className="flex-1 flex items-center gap-3">
             <div className="p-2 bg-indigo-100 rounded-lg">
               <Calendar className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-indigo-900">
-                Επιλεγμένη Περίοδος
-              </p>
-              <p className="text-lg font-bold text-indigo-700">
-                {selectedMonth ? 
-                  new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { 
-                    month: 'long', 
-                    year: 'numeric' 
-                  }) : 
-                  'Τρέχων Μήνας'
-                }
-              </p>
-              <p className="text-xs text-indigo-600">
-                {selectedMonth ? 'Snapshot δεδομένων' : 'Ζωντανά δεδομένα'}
-              </p>
+              <div className="flex items-center gap-2">
+                <MonthSelector
+                  selectedMonth={selectedMonth}
+                  onMonthChange={handleMonthChange}
+                />
+                <Button
+                  onClick={() => {
+                    const now = new Date();
+                    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                    handleMonthChange(currentMonth);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white hover:bg-indigo-50 border-indigo-300 text-indigo-700 hover:text-indigo-800 transition-colors"
+                >
+                  Τρέχων
+                </Button>
+              </div>
             </div>
           </div>
           
@@ -405,49 +400,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         </div>
       </div>
       
-      {/* Building Overview Section */}
-      <BuildingOverviewSection 
-        ref={buildingOverviewRef}
-        buildingId={activeBuildingId}
-        selectedMonth={selectedMonth}
-        onReserveFundAmountChange={setReserveFundMonthlyAmount}
-      />
-      
-      {/* Enhanced Month Filter with Auto-Refresh */}
-      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Calendar className="h-4 w-4 text-blue-600" />
-            </div>
-            <span className="text-sm font-semibold text-blue-800">Φιλτράρισμα ανά μήνα:</span>
-          </div>
-          <MonthSelector
-            selectedMonth={selectedMonth}
-            onMonthChange={handleMonthChange}
-          />
-          <Button
-            onClick={() => {
-              const now = new Date();
-              const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-              handleMonthChange(currentMonth);
-            }}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 bg-white hover:bg-blue-50 border-blue-300 text-blue-700 hover:text-blue-800 transition-colors"
-          >
-            <Calendar className="h-4 w-4" />
-            Τρέχων Μήνας
-          </Button>
-        </div>
-        
-        {/* Auto-refresh indicator */}
-        <div className="flex items-center gap-2 text-xs text-blue-600">
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-          <span className="font-medium">Αυτόματη ενημέρωση ενεργή</span>
-        </div>
-      </div>
-      
 
       
 
@@ -455,10 +407,23 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6" data-tabs-container>
         {/* Enhanced Navigation with Cards - Sticky */}
-        <div className="w-full sticky top-20 bg-white z-10 pb-4 shadow-sm">
+        <div className="w-full sticky top-[10px] bg-white z-10 pb-4 shadow-md border-b border-gray-100">
           {/* Mobile: Scrollable horizontal menu */}
           <div className="block lg:hidden">
             <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-2">
+              <ConditionalRender permission="financial_write">
+                <button
+                  onClick={() => handleTabChange('calculator')}
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
+                    activeTab === 'calculator' 
+                      ? 'bg-blue-100 border-blue-300 text-blue-700 shadow-sm' 
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                  }`}
+                >
+                  <Calculator className="h-4 w-4" />
+                  <span className="text-sm font-medium whitespace-nowrap">Κοινοχρήστων</span>
+                </button>
+              </ConditionalRender>
               <ConditionalRender permission="financial_read">
                 <button
                   onClick={() => handleTabChange('balances')}
@@ -470,19 +435,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 >
                   <DollarSign className="h-4 w-4" />
                   <span className="text-sm font-medium whitespace-nowrap">Εισπράξεις</span>
-                </button>
-              </ConditionalRender>
-              <ConditionalRender permission="financial_read">
-                <button
-                  onClick={() => handleTabChange('overview')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
-                    activeTab === 'overview' 
-                      ? 'bg-indigo-100 border-indigo-300 text-indigo-700 shadow-sm' 
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
-                  }`}
-                >
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Συνοπτική Εικόνα</span>
                 </button>
               </ConditionalRender>
               <ConditionalRender permission="expense_manage">
@@ -498,20 +450,19 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   <span className="text-sm font-medium whitespace-nowrap">Δαπάνες</span>
                 </button>
               </ConditionalRender>
-              <ConditionalRender permission="financial_write">
+              <ConditionalRender permission="financial_read">
                 <button
-                  onClick={() => handleTabChange('calculator')}
+                  onClick={() => handleTabChange('overview')}
                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
-                    activeTab === 'calculator' 
-                      ? 'bg-blue-100 border-blue-300 text-blue-700 shadow-sm' 
+                    activeTab === 'overview' 
+                      ? 'bg-indigo-100 border-indigo-300 text-indigo-700 shadow-sm' 
                       : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
                   }`}
                 >
-                  <Calculator className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Κοινοχρήστων</span>
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="text-sm font-medium whitespace-nowrap">Συνοπτική Εικόνα</span>
                 </button>
               </ConditionalRender>
-
               <ConditionalRender permission="financial_write">
                 <button
                   onClick={() => handleTabChange('meters')}
@@ -527,19 +478,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
               </ConditionalRender>
               <ConditionalRender permission="financial_read">
                 <button
-                  onClick={() => handleTabChange('charts')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
-                    activeTab === 'charts' 
-                      ? 'bg-purple-100 border-purple-300 text-purple-700 shadow-sm' 
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
-                  }`}
-                >
-                  <PieChart className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Γραφήματα</span>
-                </button>
-              </ConditionalRender>
-              <ConditionalRender permission="financial_read">
-                <button
                   onClick={() => handleTabChange('history')}
                   className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
                     activeTab === 'history' 
@@ -551,13 +489,50 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   <span className="text-sm font-medium whitespace-nowrap">Ιστορικό</span>
                 </button>
               </ConditionalRender>
-
-
+              <ConditionalRender permission="financial_read">
+                <button
+                  onClick={() => handleTabChange('charts')}
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
+                    activeTab === 'charts' 
+                      ? 'bg-purple-100 border-purple-300 text-purple-700 shadow-sm' 
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                  }`}
+                >
+                  <PieChart className="h-4 w-4" />
+                  <span className="text-sm font-medium whitespace-nowrap">Γραφήματα</span>
+                </button>
+              </ConditionalRender>
             </div>
           </div>
 
           {/* Desktop: Card Grid Layout */}
           <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-7 gap-3">
+            <ConditionalRender permission="financial_write">
+              <button
+                onClick={() => handleTabChange('calculator')}
+                className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
+                  activeTab === 'calculator' 
+                    ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                    : 'bg-white border-gray-200 hover:border-blue-200 hover:bg-blue-50/30'
+                }`}
+              >
+                <div className={`mb-3 p-3 rounded-full transition-colors ${
+                  activeTab === 'calculator' 
+                    ? 'bg-blue-100 text-blue-600' 
+                    : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
+                }`}>
+                  <Calculator className="h-6 w-6" />
+                </div>
+                <h3 className={`font-semibold text-sm font-condensed ${
+                  activeTab === 'calculator' ? 'text-blue-700' : 'text-gray-700'
+                }`}>
+                  Κοινόχρηστα
+                </h3>
+                <p className="text-xs text-gray-500 text-center mt-1">
+                  Υπολογισμός & Έκδοση
+                </p>
+              </button>
+            </ConditionalRender>
             <ConditionalRender permission="financial_read">
               <button
                 onClick={() => handleTabChange('balances')}
@@ -574,39 +549,13 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 }`}>
                   <DollarSign className="h-6 w-6" />
                 </div>
-                <h3 className={`font-semibold text-sm ${
+                <h3 className={`font-semibold text-sm font-condensed ${
                   activeTab === 'balances' ? 'text-emerald-700' : 'text-gray-700'
                 }`}>
                   Εισπράξεις
                 </h3>
                 <p className="text-xs text-gray-500 text-center mt-1">
                   Κατάσταση Διαμερισμάτων
-                </p>
-              </button>
-            </ConditionalRender>
-            <ConditionalRender permission="financial_read">
-              <button
-                onClick={() => handleTabChange('overview')}
-                className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
-                  activeTab === 'overview' 
-                    ? 'bg-indigo-50 border-indigo-200 shadow-sm' 
-                    : 'bg-white border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/30'
-                }`}
-              >
-                <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'overview' 
-                    ? 'bg-indigo-100 text-indigo-600' 
-                    : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600'
-                }`}>
-                  <TrendingUp className="h-6 w-6" />
-                </div>
-                <h3 className={`font-semibold text-sm ${
-                  activeTab === 'overview' ? 'text-indigo-700' : 'text-gray-700'
-                }`}>
-                  Συνοπτική Εικόνα
-                </h3>
-                <p className="text-xs text-gray-500 text-center mt-1">
-                  Καλυψη & Προοδος
                 </p>
               </button>
             </ConditionalRender>
@@ -626,7 +575,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 }`}>
                   <Plus className="h-6 w-6" />
                 </div>
-                <h3 className={`font-semibold text-sm ${
+                <h3 className={`font-semibold text-sm font-condensed ${
                   activeTab === 'expenses' ? 'text-green-700' : 'text-gray-700'
                 }`}>
                   Δαπάνες
@@ -636,36 +585,32 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 </p>
               </button>
             </ConditionalRender>
-
-            <ConditionalRender permission="financial_write">
+            <ConditionalRender permission="financial_read">
               <button
-                onClick={() => handleTabChange('calculator')}
+                onClick={() => handleTabChange('overview')}
                 className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
-                  activeTab === 'calculator' 
-                    ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                    : 'bg-white border-gray-200 hover:border-blue-200 hover:bg-blue-50/30'
+                  activeTab === 'overview' 
+                    ? 'bg-indigo-50 border-indigo-200 shadow-sm' 
+                    : 'bg-white border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/30'
                 }`}
               >
                 <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'calculator' 
-                    ? 'bg-blue-100 text-blue-600' 
-                    : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
+                  activeTab === 'overview' 
+                    ? 'bg-indigo-100 text-indigo-600' 
+                    : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600'
                 }`}>
-                  <Calculator className="h-6 w-6" />
+                  <TrendingUp className="h-6 w-6" />
                 </div>
-                <h3 className={`font-semibold text-sm ${
-                  activeTab === 'calculator' ? 'text-blue-700' : 'text-gray-700'
+                <h3 className={`font-semibold text-sm font-condensed ${
+                  activeTab === 'overview' ? 'text-indigo-700' : 'text-gray-700'
                 }`}>
-                  Κοινόχρηστα
+                  Συνοπτική Εικόνα
                 </h3>
                 <p className="text-xs text-gray-500 text-center mt-1">
-                  Υπολογισμός & Έκδοση
+                  Καλυψη & Προοδος
                 </p>
               </button>
             </ConditionalRender>
-
-
-
             <ConditionalRender permission="financial_write">
               <button
                 onClick={() => handleTabChange('meters')}
@@ -682,7 +627,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 }`}>
                   <TrendingUp className="h-6 w-6" />
                 </div>
-                <h3 className={`font-semibold text-sm ${
+                <h3 className={`font-semibold text-sm font-condensed ${
                   activeTab === 'meters' ? 'text-orange-700' : 'text-gray-700'
                 }`}>
                   Μετρητές
@@ -692,34 +637,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 </p>
               </button>
             </ConditionalRender>
-
-            <ConditionalRender permission="financial_read">
-              <button
-                onClick={() => handleTabChange('charts')}
-                className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
-                  activeTab === 'charts' 
-                    ? 'bg-purple-50 border-purple-200 shadow-sm' 
-                    : 'bg-white border-gray-200 hover:border-purple-200 hover:bg-purple-50/30'
-                }`}
-              >
-                <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'charts' 
-                    ? 'bg-purple-100 text-purple-600' 
-                    : 'bg-gray-100 text-gray-500 group-hover:bg-purple-100 group-hover:text-purple-600'
-                }`}>
-                  <PieChart className="h-6 w-6" />
-                </div>
-                <h3 className={`font-semibold text-sm ${
-                  activeTab === 'charts' ? 'text-purple-700' : 'text-gray-700'
-                }`}>
-                  Γραφήματα
-                </h3>
-                <p className="text-xs text-gray-500 text-center mt-1">
-                  Οπτικοποίηση Δεδομένων
-                </p>
-              </button>
-            </ConditionalRender>
-
             <ConditionalRender permission="financial_read">
               <button
                 onClick={() => handleTabChange('history')}
@@ -736,7 +653,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 }`}>
                   <History className="h-6 w-6" />
                 </div>
-                <h3 className={`font-semibold text-sm ${
+                <h3 className={`font-semibold text-sm font-condensed ${
                   activeTab === 'history' ? 'text-indigo-700' : 'text-gray-700'
                 }`}>
                   Ιστορικό
@@ -746,8 +663,32 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 </p>
               </button>
             </ConditionalRender>
-
-
+            <ConditionalRender permission="financial_read">
+              <button
+                onClick={() => handleTabChange('charts')}
+                className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
+                  activeTab === 'charts' 
+                    ? 'bg-purple-50 border-purple-200 shadow-sm' 
+                    : 'bg-white border-gray-200 hover:border-purple-200 hover:bg-purple-50/30'
+                }`}
+              >
+                <div className={`mb-3 p-3 rounded-full transition-colors ${
+                  activeTab === 'charts' 
+                    ? 'bg-purple-100 text-purple-600' 
+                    : 'bg-gray-100 text-gray-500 group-hover:bg-purple-100 group-hover:text-purple-600'
+                }`}>
+                  <PieChart className="h-6 w-6" />
+                </div>
+                <h3 className={`font-semibold text-sm font-condensed ${
+                  activeTab === 'charts' ? 'text-purple-700' : 'text-gray-700'
+                }`}>
+                  Γραφήματα
+                </h3>
+                <p className="text-xs text-gray-500 text-center mt-1">
+                  Οπτικοποίηση Δεδομένων
+                </p>
+              </button>
+            </ConditionalRender>
           </div>
         </div>
         
@@ -774,40 +715,19 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         
         <TabsContent value="expenses" className="space-y-4" data-tab="expenses">
           <ProtectedFinancialRoute requiredPermission="expense_manage">
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Διαχείριση Δαπανών</span>
-                    <Button 
-                      onClick={expenseModal.openModal}
-                      className="flex items-center gap-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Προσθήκη Νέας Δαπάνης
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    Εδώ μπορείτε να δείτε και να διαχειριστείτε όλες τις δαπάνες του κτιρίου.
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <ExpenseList 
-                ref={expenseListRef}
-                buildingId={activeBuildingId}
-                buildingName={currentBuildingName}
-                selectedMonth={selectedMonth}
-                onMonthChange={handleMonthChange}
-                onExpenseSelect={(expense) => {
-                  console.log('Selected expense:', expense);
-                  // Here you could open an expense detail modal or navigate to expense details
-                }}
-                showActions={true}
-              />
-            </div>
+            <ExpenseList 
+              ref={expenseListRef}
+              buildingId={activeBuildingId}
+              buildingName={currentBuildingName}
+              selectedMonth={selectedMonth}
+              onMonthChange={handleMonthChange}
+              onExpenseSelect={(expense) => {
+                console.log('Selected expense:', expense);
+                // Here you could open an expense detail modal or navigate to expense details
+              }}
+              showActions={true}
+              onAddExpense={expenseModal.openModal}
+            />
           </ProtectedFinancialRoute>
         </TabsContent>
         
@@ -847,6 +767,14 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         
 
       </Tabs>
+      
+      {/* Building Overview Section */}
+      <BuildingOverviewSection 
+        ref={buildingOverviewRef}
+        buildingId={activeBuildingId}
+        selectedMonth={selectedMonth}
+        onReserveFundAmountChange={setReserveFundMonthlyAmount}
+      />
       
       {/* Expense Form Modal */}
       <ConditionalRender permission="expense_manage">

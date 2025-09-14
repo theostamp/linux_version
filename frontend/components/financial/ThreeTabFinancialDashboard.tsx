@@ -111,29 +111,11 @@ export default function ThreeTabFinancialDashboard({ buildingId, selectedMonth }
     info: []
   };
 
-  // Critical alerts
-  if ((data?.obligation_coverage?.total_obligations_coverage?.percentage || 0) < 30) {
-    alerts.critical.push({
-      icon: XCircle,
-      title: 'Κρίσιμα χαμηλή κάλυψη οφειλών',
-      description: `Μόνο ${(data?.obligation_coverage?.total_obligations_coverage?.percentage || 0).toFixed(1)}% των οφειλών έχει καλυφθεί`
-    });
-  }
-
   if ((data?.total_obligations?.grand_total || 0) > (data?.obligation_coverage?.total_obligations_coverage?.paid || 0) * 3) {
     alerts.critical.push({
       icon: AlertTriangle,
       title: 'Υψηλές ανεξόφλητες οφειλές',
       description: `Συνολικές οφειλές: ${formatCurrency(data?.total_obligations?.grand_total || 0)}`
-    });
-  }
-
-  // Warning alerts
-  if ((data?.obligation_coverage?.total_obligations_coverage?.percentage || 0) >= 30 && (data?.obligation_coverage?.total_obligations_coverage?.percentage || 0) < 70) {
-    alerts.warning.push({
-      icon: AlertTriangle,
-      title: 'Μέτρια κάλυψη οφειλών',
-      description: `${(data?.obligation_coverage?.total_obligations_coverage?.percentage || 0).toFixed(1)}% κάλυψη - χρειάζονται περισσότερες εισπράξεις`
     });
   }
 

@@ -3,7 +3,7 @@ import React from 'react';
 import AppProviders from '@/components/AppProviders';
 import DevCompileIndicator from '@/components/DevCompileIndicator';
 import StartupWrapper from '@/components/StartupWrapper';
-import { Open_Sans, Roboto_Condensed } from 'next/font/google';
+import { Open_Sans, Roboto_Condensed, Inter_Tight } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 
 const openSans = Open_Sans({
@@ -18,6 +18,12 @@ const robotoCondensed = Roboto_Condensed({
   variable: '--font-roboto-condensed',
 });
 
+const interTight = Inter_Tight({
+  subsets: ['latin', 'greek'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-inter-tight',
+});
+
 export const metadata = {
   title: 'My App',
   description: '...',
@@ -26,7 +32,7 @@ export const metadata = {
 export default function RootLayout({ children }: { readonly children: React.ReactNode }) {
   return (
     <html lang="el">
-      <body className={`${openSans.variable} ${robotoCondensed.variable}`}>
+      <body className={`${openSans.variable} ${robotoCondensed.variable} ${interTight.variable}`}>
         <DevCompileIndicator />
         <StartupWrapper>
           <AppProviders>{children}</AppProviders>

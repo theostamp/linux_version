@@ -14,6 +14,7 @@ import { FilePreview } from '@/components/ui/FilePreview';
 import { toast } from 'sonner';
 import { api, fetchScheduledMaintenances, updateScheduledMaintenance, deleteServiceReceipt } from '@/lib/api';
 import { ExpenseViewModal } from './ExpenseViewModal';
+import { Plus } from 'lucide-react';
 
 interface ExpenseListProps {
   buildingId: number;
@@ -22,6 +23,7 @@ interface ExpenseListProps {
   showActions?: boolean;
   selectedMonth?: string; // Add selectedMonth prop
   onMonthChange?: (month: string) => void; // Add month change handler
+  onAddExpense?: () => void; // Add expense handler
   ref?: React.Ref<{ refresh: () => void }>;
 }
 
@@ -32,6 +34,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
   showActions = true,
   selectedMonth,
   onMonthChange,
+  onAddExpense,
 }, ref) => {
   const { expenses, isLoading, error, loadExpenses, deleteExpense } = useExpenses(buildingId, selectedMonth);
   const [searchTerm, setSearchTerm] = useState('');
@@ -363,6 +366,15 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
               }
             </p>
           </div>
+          {onAddExpense && (
+            <Button 
+              onClick={onAddExpense}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Προσθήκη Νέας Δαπάνης
+            </Button>
+          )}
         </div>
         
         {/* Statistics Row */}
@@ -532,10 +544,10 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                 <Button 
                   variant="outline" 
                   className="gap-2"
-                  onClick={() => {
-                    // Trigger new expense modal
+                  onClick={onAddExpense || (() => {
+                    // Fallback: Trigger new expense modal via URL
                     window.location.href = `/financial?tab=expenses&modal=expense-form&building=${buildingId}`;
-                  }}
+                  })}
                 >
                   ➕ Προσθήκη Πρώτης Δαπάνης
                 </Button>

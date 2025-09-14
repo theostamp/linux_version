@@ -38,6 +38,33 @@ import {
 // Grouped navigation links with categories
 const navigationGroups = [
   {
+    id: 'operations',
+    title: 'Οικονομικά και Έργα',
+    color: 'orange',
+    bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+    borderColor: 'border-orange-200 dark:border-orange-800',
+    links: [
+      {
+        href: '/financial',
+        label: 'Οικονομικά',
+        icon: <Euro className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/maintenance',
+        label: 'Υπηρεσίες & Δαπάνες',
+        icon: <Wrench className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/projects',
+        label: 'Προσφορές & Έργα',
+        icon: <FileText className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+    ]
+  },
+  {
     id: 'main',
     title: 'Kiosk',
     color: 'blue',
@@ -105,33 +132,6 @@ const navigationGroups = [
         href: '/data-migration',
         label: 'Μετανάστευση Δεδομένων',
         icon: <RefreshCw className="w-4 h-4" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-    ]
-  },
-  {
-    id: 'operations',
-    title: 'Λειτουργίες & Συντήρηση',
-    color: 'orange',
-    bgColor: 'bg-orange-50 dark:bg-orange-900/20',
-    borderColor: 'border-orange-200 dark:border-orange-800',
-    links: [
-      {
-        href: '/maintenance',
-        label: 'Υπηρεσίες & Δαπάνες',
-        icon: <Wrench className="w-4 h-4" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-      {
-        href: '/financial',
-        label: 'Οικονομικά',
-        icon: <Euro className="w-4 h-4" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-      {
-        href: '/projects',
-        label: 'Προσφορές & Έργα',
-        icon: <FileText className="w-4 h-4" />,
         roles: ['manager', 'staff', 'superuser'],
       },
     ]
@@ -453,8 +453,8 @@ export default function Sidebar() {
               <Building2 className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-gray-800 dark:text-gray-100 tracking-tight leading-tight">Digital Concierge</h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400 tracking-wide leading-tight">Διαχείριση Κτιρίων</p>
+              <h1 className="text-base font-bold text-gray-800 dark:text-gray-100 tracking-tight leading-tight font-condensed">Digital Concierge</h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 tracking-wide leading-tight font-condensed">Διαχείριση Κτιρίων</p>
             </div>
           </div>
           <div className="relative group" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
@@ -494,7 +494,7 @@ export default function Sidebar() {
               group.borderColor
             )}>
               <h3 className={cn(
-                "text-xs font-semibold mb-2 px-2 py-1 rounded tracking-wide",
+                "text-xs font-semibold mb-2 px-2 py-1 rounded tracking-wide font-condensed",
                 `text-${group.color}-700 dark:text-${group.color}-300`,
                 `bg-${group.color}-100 dark:bg-${group.color}-900/30`
               )}>
@@ -533,7 +533,7 @@ export default function Sidebar() {
         {/* Calculator Section */}
         <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <div className="rounded-lg border border-gray-200 dark:border-gray-600 p-2 bg-white dark:bg-gray-800">
-            <h3 className="text-xs font-semibold mb-2 px-2 py-1 rounded tracking-wide text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700">
+            <h3 className="text-xs font-semibold mb-2 px-2 py-1 rounded tracking-wide text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 font-condensed">
               Εργαλεία
             </h3>
             <CalculatorModal>
