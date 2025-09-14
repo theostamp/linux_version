@@ -273,7 +273,7 @@ export default function PaymentNotificationModal({
                 <div className="bg-white border border-gray-200 rounded-lg p-3">
                   <span className="text-sm text-gray-600">Παλαιότερες Οφειλές:</span>
                   <div className="font-medium text-lg">
-                    {formatCurrency(apartment.previous_balance)}
+                    {Math.abs(apartment.previous_balance) <= 0.10 ? '-' : formatCurrency(apartment.previous_balance)}
                   </div>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-lg p-3">
@@ -292,13 +292,13 @@ export default function PaymentNotificationModal({
             </div>
 
             {/* Expense Breakdown */}
-            {apartment.expense_breakdown.length > 0 && (
+            {apartment.expense_breakdown && apartment.expense_breakdown.length > 0 && (
               <div>
                 <h3 className="font-semibold text-gray-900 mb-3">Ανάλυση Κοινοχρήστων</h3>
                 <div className="space-y-3 max-h-60 overflow-y-auto print:max-h-none">
                   {(() => {
                     // Group expenses by month
-                    const groupedExpenses = apartment.expense_breakdown.reduce((groups, expense) => {
+                    const groupedExpenses = (apartment.expense_breakdown || []).reduce((groups, expense) => {
                       const month = expense.month;
                       if (!groups[month]) {
                         groups[month] = {

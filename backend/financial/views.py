@@ -1252,21 +1252,21 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         # Distribution by participation mills
                         mills = apartment.participation_mills or 0
                         if total_mills > 0:
-                            share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
+                            share_amount = float((expense.amount * Decimal(str(mills)) / Decimal(str(total_mills))).quantize(Decimal('0.01')))
                         else:
-                            share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
+                            share_amount = float((expense.amount / Decimal(str(apartments_count))).quantize(Decimal('0.01')))
                     
                     elif expense.distribution_type == 'equal_share':
                         # Equal distribution
-                        share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
+                        share_amount = float((expense.amount / Decimal(str(apartments_count))).quantize(Decimal('0.01')))
                     
                     elif expense.distribution_type in ['by_meters', 'specific_apartments']:
                         # Fallback to participation mills for now
                         mills = apartment.participation_mills or 0
                         if total_mills > 0:
-                            share_amount = round(float(expense.amount * (Decimal(str(mills)) / Decimal(str(total_mills)))), 2)
+                            share_amount = float((expense.amount * Decimal(str(mills)) / Decimal(str(total_mills))).quantize(Decimal('0.01')))
                         else:
-                            share_amount = round(float(expense.amount / Decimal(str(apartments_count))), 2)
+                            share_amount = float((expense.amount / Decimal(str(apartments_count))).quantize(Decimal('0.01')))
                     
                     apartment_data['total_obligations'] += share_amount
                     apartment_data['expense_breakdown'].append({

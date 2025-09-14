@@ -162,20 +162,20 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
     // Current month expense share (cannot be negative)
     const currentMonthShare = Math.max(0, apartment.expense_share);
     
-    // Calculate how to split the payment:
-    // If total debt <= current month share, put it all in common expenses
-    // If total debt > current month share, split between current and previous
+    // Calculate how to split the payment based on debt composition:
+    // Priority: Previous balance first, then current month expenses
     let commonExpenseAmount = 0;
     let previousObligationsAmount = 0;
     
-    if (totalDebt <= currentMonthShare) {
-      // All debt can be covered by current month common expenses
+    if (previousDebt > 0) {
+      // If there are previous obligations, pay them first
+      previousObligationsAmount = roundToCents(Math.min(previousDebt, totalDebt));
+      const remainingDebt = totalDebt - previousObligationsAmount;
+      commonExpenseAmount = roundToCents(Math.max(0, remainingDebt));
+    } else {
+      // No previous debt, all goes to current expenses
       commonExpenseAmount = roundToCents(totalDebt);
       previousObligationsAmount = 0;
-    } else {
-      // Need to pay current month share + previous balance
-      commonExpenseAmount = roundToCents(currentMonthShare);
-      previousObligationsAmount = roundToCents(Math.min(previousDebt, totalDebt - currentMonthShare));
     }
     
     setPaymentModalData({
@@ -487,18 +487,18 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                     <td className="py-2 px-2 text-sm">{apartment.participation_mills}</td>
                     <td className="py-2 px-2 text-sm text-right">
                       <span className={`font-medium ${
-                        apartment.previous_balance > 0 ? 'text-red-600' : 
-                        apartment.previous_balance < 0 ? 'text-green-600' : 'text-gray-500'
+                        apartment.previous_balance > 0.10 ? 'text-red-600' : 
+                        apartment.previous_balance < -0.10 ? 'text-green-600' : 'text-gray-500'
                       }`}>
-                        {formatCurrency(apartment.previous_balance)}
+                        {Math.abs(apartment.previous_balance) <= 0.10 ? '-' : formatCurrency(apartment.previous_balance)}
                       </span>
                     </td>
                     <td className="py-2 px-2 text-sm text-right">
                       <span className={`font-medium ${
-                        apartment.net_obligation > 0 ? 'text-red-600' : 
-                        apartment.net_obligation < 0 ? 'text-green-600' : 'text-gray-900'
+                        apartment.net_obligation > 0.10 ? 'text-red-600' : 
+                        apartment.net_obligation < -0.10 ? 'text-green-600' : 'text-gray-900'
                       }`}>
-                        {formatCurrency(apartment.net_obligation)}
+                        {Math.abs(apartment.net_obligation) <= 0.10 ? '-' : formatCurrency(apartment.net_obligation)}
                       </span>
                     </td>
                     <td className="py-3 px-2 text-center">

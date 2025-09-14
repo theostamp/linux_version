@@ -92,9 +92,9 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
   const getStatusBadge = (status: string, netObligation: number) => {
     if (netObligation > 100) {
       return <Badge variant="destructive" className="text-xs">Κρίσιμο</Badge>;
-    } else if (netObligation > 0) {
+    } else if (netObligation > 0.10) {
       return <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800">Οφειλή</Badge>;
-    } else if (netObligation < 0) {
+    } else if (netObligation < -0.10) {
       return <Badge variant="outline" className="text-xs bg-green-100 text-green-800">Πιστωτικό</Badge>;
     } else {
       return <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800">Ενήμερο</Badge>;
@@ -104,9 +104,9 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
   const getStatusIcon = (netObligation: number) => {
     if (netObligation > 100) {
       return <AlertTriangle className="h-4 w-4 text-red-500" />;
-    } else if (netObligation > 0) {
+    } else if (netObligation > 0.10) {
       return <TrendingDown className="h-4 w-4 text-orange-500" />;
-    } else if (netObligation < 0) {
+    } else if (netObligation < -0.10) {
       return <TrendingUp className="h-4 w-4 text-green-500" />;
     } else {
       return <CheckCircle className="h-4 w-4 text-blue-500" />;

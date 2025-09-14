@@ -277,7 +277,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                           </div>
                           <div>
                             <span className="text-gray-600">Προηγούμενο Υπόλοιπο:</span>
-                            <div className="font-medium">{formatCurrency(apartment.previous_balance)}</div>
+                            <div className="font-medium">{Math.abs(apartment.previous_balance) <= 0.10 ? '-' : formatCurrency(apartment.previous_balance)}</div>
                           </div>
                           <div>
                             <span className="text-gray-600">Μερίδιο Δαπανών:</span>
@@ -285,13 +285,13 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                           </div>
                         </div>
 
-                                                 {apartment.expense_breakdown.length > 0 && (
+                                                 {apartment.expense_breakdown && apartment.expense_breakdown.length > 0 && (
                            <div className="mt-3 pt-3 border-t border-gray-200">
                              <h4 className="text-sm font-medium text-gray-700 mb-2">Breakdown Δαπανών:</h4>
                              <div className="space-y-2">
                                {(() => {
                                  // Group expenses by month
-                                 const groupedExpenses = apartment.expense_breakdown.reduce((groups, expense) => {
+                                 const groupedExpenses = (apartment.expense_breakdown || []).reduce((groups, expense) => {
                                    const month = expense.month;
                                    if (!groups[month]) {
                                      groups[month] = {

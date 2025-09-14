@@ -722,19 +722,19 @@ class FinancialDashboardService:
             print(f"🔧 BALANCE CORRECTION: payments={total_payments_this_month} - (previous={previous_obligations} + current={current_obligations}) = {total_balance}")
         
         return {
-            'total_balance': float(total_balance),
-            'current_obligations': float(current_obligations),
-            'previous_obligations': float(previous_obligations),  # ← ΝΕΟ FIELD
-            'reserve_fund_contribution': float(reserve_fund_contribution),
-            'current_reserve': float(current_reserve),
+            'total_balance': float(total_balance.quantize(Decimal('0.01'))),
+            'current_obligations': float(current_obligations.quantize(Decimal('0.01'))),
+            'previous_obligations': float(previous_obligations.quantize(Decimal('0.01'))),  # ← ΝΕΟ FIELD
+            'reserve_fund_contribution': float(reserve_fund_contribution.quantize(Decimal('0.01'))),
+            'current_reserve': float(current_reserve.quantize(Decimal('0.01'))),
             'has_monthly_activity': has_monthly_activity,
             'apartments_count': apartments_count,
             'pending_payments': pending_payments,
-            'average_monthly_expenses': float(average_monthly_expenses),
+            'average_monthly_expenses': float(average_monthly_expenses.quantize(Decimal('0.01'))),
             'last_calculation_date': timezone.now().strftime('%Y-%m-%d'),
-            'total_expenses_month': float(total_expenses_this_month),
-            'total_payments_month': float(total_payments_this_month),
-            'pending_expenses': float(pending_expenses),
+            'total_expenses_month': float(total_expenses_this_month.quantize(Decimal('0.01'))),
+            'total_payments_month': float(total_payments_this_month.quantize(Decimal('0.01'))),
+            'pending_expenses': float(pending_expenses.quantize(Decimal('0.01'))),
             'recent_transactions': list(recent_transactions),
             'recent_transactions_count': len(recent_transactions),
             'apartment_balances': apartment_balances,
