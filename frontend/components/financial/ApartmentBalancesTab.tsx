@@ -170,12 +170,12 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
     
     if (totalDebt <= currentMonthShare) {
       // All debt can be covered by current month common expenses
-      commonExpenseAmount = totalDebt;
+      commonExpenseAmount = Math.round(totalDebt * 100) / 100;
       previousObligationsAmount = 0;
     } else {
       // Need to pay current month share + previous balance
-      commonExpenseAmount = currentMonthShare;
-      previousObligationsAmount = Math.min(previousDebt, totalDebt - currentMonthShare);
+      commonExpenseAmount = Math.round(currentMonthShare * 100) / 100;
+      previousObligationsAmount = Math.round(Math.min(previousDebt, totalDebt - currentMonthShare) * 100) / 100;
     }
     
     setPaymentModalData({

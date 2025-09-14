@@ -193,9 +193,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     
     try {
       // Optimize: Pre-calculate values to reduce computation in the async function
-      const commonExpenseAmount = data.common_expense_amount || 0;
-      const previousObligationsAmount = data.previous_obligations_amount || 0;
-      const totalAmount = commonExpenseAmount + previousObligationsAmount;
+      const commonExpenseAmount = Math.round((data.common_expense_amount || 0) * 100) / 100;
+      const previousObligationsAmount = Math.round((data.previous_obligations_amount || 0) * 100) / 100;
+      const totalAmount = Math.round((commonExpenseAmount + previousObligationsAmount) * 100) / 100;
       const reserveFundAmount = buildingData?.reserve_contribution_per_apartment || 0;
       
       const paymentData: PaymentFormData = {
@@ -614,7 +614,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
           <div class="amount-section">
             <h2>ΠΟΣΟ ΕΙΣΠΡΑΞΕΩΣ</h2>
-            <div class="amount-value">${paymentToPrint.amount}€</div>
+            <div class="amount-value">${formatCurrency(paymentToPrint.amount)}</div>
             <p>Ολογράφως: ${numberToWords(Number(paymentToPrint.amount))} ευρώ</p>
           </div>
 
