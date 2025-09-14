@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { Expense, ExpenseCategory, DistributionType, CommonExpenseShare } from '@/types/financial';
+import { roundToCents } from '@/lib/utils';
 
 interface Apartment {
   id: number;
@@ -40,7 +41,7 @@ export const useExpenseCalculator = () => {
   ): CommonExpenseShare[] => {
     if (apartments.length === 0) return [];
     
-    const sharePerApartment = Math.round((amount / apartments.length) * 100) / 100;
+    const sharePerApartment = roundToCents(amount / apartments.length);
     
     return apartments.map(apartment => ({
       apartment_id: apartment.id,
@@ -68,7 +69,7 @@ export const useExpenseCalculator = () => {
     
     return apartments.map(apartment => {
       const mills = apartment.participation_mills || 0;
-      const shareAmount = Math.round((mills / totalMills) * amount * 100) / 100;
+      const shareAmount = roundToCents((mills / totalMills) * amount);
       const percentage = totalMills > 0 ? (mills / totalMills) * 100 : 0;
       
       return {
@@ -121,7 +122,7 @@ export const useExpenseCalculator = () => {
     
     return apartments.map(apartment => {
       const meterReading = apartment.meters?.[meterType!] || 0;
-      const shareAmount = totalMeterReading > 0 ? Math.round((meterReading / totalMeterReading) * amount * 100) / 100 : 0;
+      const shareAmount = totalMeterReading > 0 ? roundToCents((meterReading / totalMeterReading) * amount) : 0;
       const percentage = totalMeterReading > 0 ? (meterReading / totalMeterReading) * 100 : 0;
       
       return {

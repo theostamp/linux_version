@@ -91,6 +91,26 @@ export function formatCurrency(amount: number | string | null | undefined, local
 }
 
 /**
+ * Properly rounds an amount to 2 decimal places avoiding floating-point precision issues
+ * @param amount - The amount to round
+ * @returns Number rounded to exactly 2 decimal places
+ */
+export function roundToCents(amount: number | string | null | undefined): number {
+  if (amount === null || amount === undefined) {
+    return 0;
+  }
+  
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  
+  if (isNaN(numAmount)) {
+    return 0;
+  }
+  
+  // Use Number.EPSILON to handle floating-point precision issues
+  return Math.round((numAmount + Number.EPSILON) * 100) / 100;
+}
+
+/**
  * Formats a date string using date-fns
  * @param dateString - The date string to format
  * @param formatString - The format string for date-fns

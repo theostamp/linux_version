@@ -14,7 +14,7 @@ import { usePayments } from '@/hooks/usePayments';
 import { Payment, PaymentMethod, PaymentType, PayerType, PaymentFormData } from '@/types/financial';
 import { useToast } from '@/hooks/use-toast';
 import { ReceiptPrintModal } from './ReceiptPrintModal';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, roundToCents } from '@/lib/utils';
 
 const paymentFormSchema = z.object({
   apartment_id: z.number().min(1, 'Παρακαλώ επιλέξτε διαμέρισμα'),
@@ -193,9 +193,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     
     try {
       // Optimize: Pre-calculate values to reduce computation in the async function
-      const commonExpenseAmount = Math.round((data.common_expense_amount || 0) * 100) / 100;
-      const previousObligationsAmount = Math.round((data.previous_obligations_amount || 0) * 100) / 100;
-      const totalAmount = Math.round((commonExpenseAmount + previousObligationsAmount) * 100) / 100;
+      const commonExpenseAmount = roundToCents(data.common_expense_amount || 0);
+      const previousObligationsAmount = roundToCents(data.previous_obligations_amount || 0);
+      const totalAmount = roundToCents(commonExpenseAmount + previousObligationsAmount);
       const reserveFundAmount = buildingData?.reserve_contribution_per_apartment || 0;
       
       const paymentData: PaymentFormData = {
@@ -1012,7 +1012,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                     // Round to 2 decimal places when user finishes editing
                     const value = parseFloat(e.target.value);
                     if (!isNaN(value)) {
-                      const roundedValue = Math.round(value * 100) / 100;
+                      const roundedValue = roundToCents(value);
                       e.target.value = roundedValue.toFixed(2);
                       setValue('common_expense_amount', roundedValue);
                     }
@@ -1055,7 +1055,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                     // Round to 2 decimal places when user finishes editing
                     const value = parseFloat(e.target.value);
                     if (!isNaN(value)) {
-                      const roundedValue = Math.round(value * 100) / 100;
+                      const roundedValue = roundToCents(value);
                       e.target.value = roundedValue.toFixed(2);
                       setValue('previous_obligations_amount', roundedValue);
                     }
