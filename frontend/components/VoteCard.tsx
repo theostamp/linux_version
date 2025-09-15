@@ -17,6 +17,7 @@ type Vote = {
   start_date: string;
   end_date: string;
   building_name: string;
+  total_votes?: number; // Total number of votes cast
 };
 
 export default function VoteCard({ vote }: { readonly vote: Vote }) {

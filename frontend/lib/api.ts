@@ -495,6 +495,7 @@ export type Vote = {
   building_name?: string; // Building name
   choices?: string[]; is_active?: boolean; created_at?: string; updated_at?: string;
   status_display?: string; creator_name?: string; is_urgent?: boolean;
+  total_votes?: number; // Total number of votes cast
 };
 
 export type VoteSubmission = { 

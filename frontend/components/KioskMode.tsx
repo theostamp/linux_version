@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useKeenSlider } from 'keen-slider/react';
-import { Bell, Calendar, Clock, MapPin, Users, Vote, AlertTriangle, Building, ExternalLink, Settings, Phone, Euro, Wrench, FileText, TrendingUp } from 'lucide-react';
+import { Bell, Calendar, Clock, MapPin, Users, Vote, AlertTriangle, Building, ExternalLink, Settings, Phone, Euro, Wrench, FileText, TrendingUp, Globe, Home } from 'lucide-react';
 import { Announcement, Vote as VoteType, Building as BuildingType } from '@/lib/api';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { safeFormatDate } from '@/lib/utils';
 import BuildingSelector from './BuildingSelector';
 import DataStatusIndicator from './DataStatusIndicator';
+import KioskMultilingualMessageCard from './KioskMultilingualMessageCard';
 
 interface KioskModeProps {
   announcements: Announcement[];
@@ -61,6 +62,12 @@ interface KioskModeProps {
     total_budget: number;
     total_spent: number;
   };
+  multilingualMessages?: Array<{
+    id: number;
+    language: string;
+    title: string;
+    content: string;
+  }>;
   onBuildingChange?: (buildingId: number | null) => void;
   isLoading?: boolean;
   isError?: boolean;
@@ -76,6 +83,7 @@ export default function KioskMode({
   financialInfo,
   maintenanceInfo,
   projectsInfo,
+  multilingualMessages = [],
   onBuildingChange,
   isLoading = false,
   isError = false,
@@ -256,7 +264,7 @@ export default function KioskMode({
                       {announcement.title}
                     </h3>
                     <p className="text-sm opacity-90 mb-4 leading-relaxed flex-1 text-blue-100">
-                      {announcement.content}
+                      {announcement.description}
                     </p>
                     <div className="flex items-center text-xs opacity-75 mt-auto">
                       <Calendar className="w-4 h-4 mr-1 text-blue-300" />
@@ -283,6 +291,102 @@ export default function KioskMode({
     }
     return slides;
   };
+
+  // NEW LAYOUT: A modern grid-based dashboard slide
+  const createDashboardGridSlide = () => {
+    const topAnnouncement = announcements.length > 0 ? announcements[0] : null;
+    const topVote = votes.length > 0 ? votes[0] : null;
+
+    // We need at least two items to make a grid meaningful
+    if ([topAnnouncement, topVote, financialInfo, multilingualMessages.length > 0].filter(Boolean).length < 2) {
+      return [];
+    }
+
+    return [{
+      id: 'dashboard-grid',
+      title: 'Επισκόπηση Κτιρίου',
+      icon: Home,
+      content: (
+        <div className="grid grid-cols-2 grid-rows-2 gap-4 lg:gap-6 h-full">
+          {/* Top-Left: Main Announcement */}
+          <div className="col-span-1 row-span-1 bg-gradient-to-br from-blue-900/40 to-indigo-900/40 backdrop-blur-sm p-4 lg:p-6 rounded-xl border border-blue-500/30 shadow-lg flex flex-col">
+            {topAnnouncement ? (
+              <>
+                <div className="flex items-center space-x-3 mb-3">
+                  <Bell className="w-5 h-5 lg:w-6 lg:h-6 text-blue-300" />
+                  <h3 className="text-base lg:text-lg font-semibold text-white">Σημαντική Ανακοίνωση</h3>
+                </div>
+                <h4 className="text-lg lg:text-xl font-bold text-white mb-2 line-clamp-2">{topAnnouncement.title}</h4>
+                <p className="text-xs lg:text-sm opacity-90 text-blue-100 flex-1 line-clamp-4">{topAnnouncement.description}</p>
+                <div className="text-xs opacity-75 mt-2 text-blue-200">
+                  {safeFormatDate(topAnnouncement.created_at, 'dd/MM/yyyy', { locale: el })}
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full text-blue-300 opacity-50">
+                <Bell className="w-10 h-10" />
+              </div>
+            )}
+          </div>
+
+          {/* Top-Right: Active Vote */}
+          <div className="col-span-1 row-span-1 bg-gradient-to-br from-green-900/40 to-emerald-900/40 backdrop-blur-sm p-4 lg:p-6 rounded-xl border border-green-500/30 shadow-lg flex flex-col">
+            {topVote ? (
+              <>
+                <div className="flex items-center space-x-3 mb-3">
+                  <Vote className="w-5 h-5 lg:w-6 lg:h-6 text-green-300" />
+                  <h3 className="text-base lg:text-lg font-semibold text-white">Ενεργή Ψηφοφορία</h3>
+                </div>
+                <h4 className="text-lg lg:text-xl font-bold text-white mb-2 line-clamp-2">{topVote.title}</h4>
+                <p className="text-xs lg:text-sm opacity-90 text-green-100 flex-1 line-clamp-4">{topVote.description}</p>
+                <div className="text-xs opacity-75 mt-2 text-green-200">
+                  Λήξη: {safeFormatDate(topVote.end_date, 'dd/MM/yyyy', { locale: el })}
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full text-green-300 opacity-50">
+                <Vote className="w-10 h-10" />
+              </div>
+            )}
+          </div>
+
+          {/* Bottom-Left: Multilingual Messages */}
+          <div className="col-span-1 row-span-1">
+            {multilingualMessages.length > 0 ? (
+              <KioskMultilingualMessageCard messages={multilingualMessages} />
+            ) : (
+              <div className="h-full flex items-center justify-center bg-gradient-to-br from-purple-900/20 to-violet-900/20 rounded-xl border border-purple-500/20 text-purple-300 opacity-50">
+                <Globe className="w-10 h-10" />
+              </div>
+            )}
+          </div>
+
+          {/* Bottom-Right: Financial Info */}
+          <div className="col-span-1 row-span-1 bg-gradient-to-br from-orange-900/40 to-amber-900/40 backdrop-blur-sm p-4 lg:p-6 rounded-xl border border-orange-500/30 shadow-lg flex flex-col justify-center">
+            {financialInfo ? (
+              <>
+                <div className="flex items-center space-x-3 mb-3">
+                  <Euro className="w-5 h-5 lg:w-6 lg:h-6 text-orange-300" />
+                  <h3 className="text-base lg:text-lg font-semibold text-white">Οικονομικά</h3>
+                </div>
+                <div className="text-center">
+                  <p className="text-orange-100 text-sm">Ποσοστό Είσπραξης</p>
+                  <p className="text-3xl lg:text-4xl font-bold text-white my-2">{financialInfo.collection_rate}%</p>
+                  <div className="w-full bg-orange-900/50 rounded-full h-2.5">
+                    <div className="bg-orange-400 h-2.5 rounded-full" style={{ width: `${financialInfo.collection_rate}%` }}></div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full text-orange-300 opacity-50">
+                <Euro className="w-10 h-10" />
+              </div>
+            )}
+          </div>
+        </div>
+      ),
+    }];
+  }
 
   // Helper function to create vote slides in pairs
   const createVoteSlides = () => {
