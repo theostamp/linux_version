@@ -15,6 +15,10 @@ class DocumentUploadSerializer(serializers.ModelSerializer):
             validated_data['original_filename'] = file.name
             validated_data['file_size'] = file.size
             validated_data['mime_type'] = file.content_type
+            
+            # Generate file URL for preview
+            if hasattr(file, 'url'):
+                validated_data['original_file_url'] = file.url
         
         return super().create(validated_data)
     
@@ -28,6 +32,7 @@ class DocumentUploadSerializer(serializers.ModelSerializer):
             'uploaded_by_name',
             'file',
             'original_filename',
+            'original_file_url',
             'file_size',
             'mime_type',
             'status',
@@ -37,6 +42,7 @@ class DocumentUploadSerializer(serializers.ModelSerializer):
             'extracted_data',
             'confidence_score',
             'error_message',
+            'linked_expense',
             'created_at',
             'updated_at',
         ]
@@ -44,6 +50,7 @@ class DocumentUploadSerializer(serializers.ModelSerializer):
             'id',
             'uploaded_by',
             'original_filename',
+            'original_file_url',
             'file_size',
             'mime_type',
             'status',
@@ -53,6 +60,7 @@ class DocumentUploadSerializer(serializers.ModelSerializer):
             'extracted_data',
             'confidence_score',
             'error_message',
+            'linked_expense',
             'created_at',
             'updated_at',
         ]

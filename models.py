@@ -1,42 +1,44 @@
 from django.db import models
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
+from django.conf import settings
+from tenants.models import TenantAwareModel
 from buildings.models import Building
-from users.models import CustomUser
 
-class DocumentUpload(models.Model):
+class DocumentUpload(TenantAwareModel):
     STATUS_CHOICES = [
-        ('pending', 'Εκκρεμεί Επεξεργασία'),
-        ('processing', 'Σε Εξέλιξη'),
+        ('pending', 'Εκκρεμεί'),
+        ('processing', 'Σε Επεξεργασία'),
         ('awaiting_confirmation', 'Αναμονή Επιβεβαίωσης'),
         ('completed', 'Ολοκληρώθηκε'),
-        ('failed', 'Αποτυχία'),
+        ('failed', 'Απέτυχε'),
     ]
 
-    building = models.ForeignKey(Building, on_delete=models.CASCADE, verbose_name="Κτίριο")
-    uploaded_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, verbose_name="Χρήστης")
-    original_file = models.FileField(upload_to='document_uploads/%Y/%m/', verbose_name="Αρχικό Αρχείο")
+    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='document_uploads')
+    original_file = models.FileField(upload_to='document_uploads/%Y/%m/')
+    original_filename = models.CharField(max_length=255)
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='pending')
     
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='pending', verbose_name="Κατάσταση")
-    
-    # Δεδομένα από το AI
-    raw_text = models.TextField(blank=True, null=True, verbose_name="Ακατέργαστο Κείμενο (OCR)")
-    extracted_data = models.JSONField(blank=True, null=True, verbose_name="Εξαγόμενα Δεδομένα")
-    
-    # Σύνδεση με το τελικό αντικείμενο (π.χ. Expense, Payment)
-    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True)
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    linked_object = GenericForeignKey('content_type', 'object_id')
-
-    error_message = models.TextField(blank=True, null=True, verbose_name="Μήνυμα Σφάλματος")
-    
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    
+    # AI Processing fields
+    extracted_data = models.JSONField(null=True, blank=True)
+    raw_analysis = models.JSONField(null=True, blank=True)
+    confidence_score = models.FloatField(null=True, blank=True)
+    error_message = models.TextField(blank=True, null=True)
 
-    class Meta:
-        verbose_name = "Ανέβασμα Εγγράφου"
-        verbose_name_plural = "Ανεβάσματα Εγγράφων"
-        ordering = ['-created_at']
+    # Confirmation and Linking
+    confirmed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='confirmed_documents')
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    
+    # 🔗 Η ΚΡΙΣΙΜΗ ΣΥΝΔΕΣΗ
+    linked_expense = models.OneToOneField(
+        'financial.Expense',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='source_document',
+        verbose_name="Συνδεδεμένη Δαπάνη"
+    )
 
     def __str__(self):
-        return f"Έγγραφο {self.id} για το κτίριο {self.building.name}"
+        return f"Παραστατικό: {self.original_filename} ({self.get_status_display()})"

@@ -11,6 +11,7 @@ class DocumentUpload(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('processing', 'Processing'),
+        ('awaiting_confirmation', 'Awaiting Confirmation'),
         ('completed', 'Completed'),
         ('failed', 'Failed'),
     ]
@@ -30,8 +31,11 @@ class DocumentUpload(models.Model):
     file_size = models.PositiveIntegerField()
     mime_type = models.CharField(max_length=100)
     
+    # File URL for preview
+    original_file_url = models.URLField(blank=True, null=True)
+    
     # Processing status
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='pending')
     processing_started_at = models.DateTimeField(null=True, blank=True)
     processing_completed_at = models.DateTimeField(null=True, blank=True)
     
@@ -42,6 +46,15 @@ class DocumentUpload(models.Model):
     
     # Error handling
     error_message = models.TextField(null=True, blank=True)
+    
+    # Link to created expense
+    linked_expense = models.ForeignKey(
+        'financial.Expense',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='source_document'
+    )
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

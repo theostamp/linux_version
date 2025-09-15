@@ -78,11 +78,19 @@ urlpatterns = [
     # Integrations (Google Calendar, etc.)
     path('api/integrations/', include('integrations.urls')),
 
+    # Document Parser
+    path('api/parser/', include('document_parser.urls')),
+
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]
 
 if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns = [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns
+    
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 else:

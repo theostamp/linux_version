@@ -67,9 +67,9 @@ class DocumentUploadViewSet(viewsets.ModelViewSet):
         """Confirm and save extracted data"""
         document = self.get_object()
         
-        if document.status != 'completed':
+        if document.status != 'awaiting_confirmation':
             return Response(
-                {'error': 'Document processing is not completed'},
+                {'error': 'Document is not awaiting confirmation'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -80,3 +80,50 @@ class DocumentUploadViewSet(viewsets.ModelViewSet):
             {'message': 'Document data confirmed and saved'},
             status=status.HTTP_200_OK
         )
+    
+    @action(detail=True, methods=['post'])
+    def confirm_and_create_expense(self, request, pk=None):
+        """Confirm extracted data and create expense record"""
+        document = self.get_object()
+        
+        if document.status != 'awaiting_confirmation':
+            return Response(
+                {'error': 'Document is not awaiting confirmation'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Import here to avoid circular imports
+            from financial.models import Expense
+            
+            # Create expense from extracted data
+            expense_data = request.data
+            
+            # Map extracted data to expense fields
+            expense = Expense.objects.create(
+                building=document.building,
+                amount=expense_data.get('amount', 0),
+                description=expense_data.get('description', ''),
+                category=expense_data.get('category', 'other'),
+                date=expense_data.get('date'),
+                supplier=expense_data.get('supplier', ''),
+                invoice_number=expense_data.get('invoice_number', ''),
+                created_by=request.user,
+            )
+            
+            # Link expense to document
+            document.linked_expense = expense
+            document.status = 'completed'
+            document.save()
+            
+            return Response(
+                {'message': 'Document confirmed and expense created successfully', 'expense_id': expense.id},
+                status=status.HTTP_200_OK
+            )
+            
+        except Exception as e:
+            logger.error(f"Error creating expense from document {document.id}: {str(e)}")
+            return Response(
+                {'error': 'Failed to create expense from document'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

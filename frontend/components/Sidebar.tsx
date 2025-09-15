@@ -51,6 +51,12 @@ const navigationGroups = [
         roles: ['manager', 'staff', 'superuser'],
       },
       {
+        href: '/documents',
+        label: 'Παραστατικά',
+        icon: <FileText className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
+      {
         href: '/maintenance',
         label: 'Υπηρεσίες & Δαπάνες',
         icon: <Wrench className="w-4 h-4" />,

@@ -26,6 +26,10 @@ const formatLabel = (key: string) => {
         total_amount: 'Συνολικό Ποσό',
         vat_amount: 'Ποσό ΦΠΑ',
         net_amount: 'Καθαρό Ποσό',
+        supplier_name: 'Όνομα Προμηθευτή',
+        invoice_date: 'Ημερομηνία Τιμολογίου',
+        due_date: 'Ημερομηνία Λήξης',
+        currency: 'Νόμισμα',
     };
 
     if (labelMap[key]) {
@@ -190,7 +194,9 @@ export default function DocumentReviewPage() {
                     <CardContent>
                         {hasFormFields ? (
                             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                                {Object.keys(extractedData).map((key) => {
+                                {Object.keys(extractedData)
+                                  .filter(key => key !== 'text') // Μην εμφανίζεις το raw text ως πεδίο φόρμας
+                                  .map((key) => {
                                     const value = extractedData[key];
                                     
                                     // Skip complex objects and arrays

@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
     retry_backoff=True,
     retry_backoff_max=600,  # Max 10 minutes between retries
     retry_jitter=True,
+    time_limit=300,  # 5 minutes hard limit
+    soft_time_limit=240,  # 4 minutes soft limit
 )
 def process_document(self, document_id):
     """Process a document using Google Document AI"""
@@ -39,7 +41,7 @@ def process_document(self, document_id):
         document.raw_analysis = result.get('raw_analysis')
         document.extracted_data = result.get('extracted_data')
         document.confidence_score = result.get('confidence_score')
-        document.status = 'completed'
+        document.status = 'awaiting_confirmation'
         document.processing_completed_at = timezone.now()
         document.save()
         
@@ -47,6 +49,19 @@ def process_document(self, document_id):
         
     except DocumentUpload.DoesNotExist:
         return f"Document {document_id} not found"
+    except SoftTimeLimitExceeded:
+        # Handle soft time limit exceeded
+        logger.warning(f"Soft time limit exceeded for document {document_id}")
+        try:
+            document = DocumentUpload.objects.get(id=document_id)
+            document.status = 'failed'
+            document.error_message = "Επεξεργασία διακόπηκε λόγω χρονικού ορίου"
+            document.processing_completed_at = timezone.now()
+            document.save()
+        except DocumentUpload.DoesNotExist:
+            pass
+        return f"Document {document_id} processing timed out"
+        
     except Exception as e:
         # Update document with error
         try:
@@ -59,7 +74,13 @@ def process_document(self, document_id):
             pass
         
         logger.error(f"Error processing document {document_id}: {str(e)}")
-        raise  # Re-raise to trigger retry
+        
+        # Don't retry for certain types of errors
+        if "Processor ID" in str(e) or "credentials" in str(e).lower():
+            logger.error(f"Configuration error for document {document_id}, not retrying")
+            return f"Document {document_id} failed due to configuration error"
+        
+        raise  # Re-raise to trigger retry for other errors
 
 
 @shared_task
