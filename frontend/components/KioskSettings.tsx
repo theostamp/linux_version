@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2, Save, Monitor } from 'lucide-react';
+import { Plus, Trash2, Save, Monitor, Bell, BarChart, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AdvertisingBanner {
@@ -49,6 +49,10 @@ export default function KioskSettings({ buildingId }: KioskSettingsProps) {
     showWeather: true,
     showNewsTicker: true,
     slideDuration: 10,
+    // New content modules
+    showAnnouncements: true,
+    showFinancialSummary: false,
+    showMaintenanceSchedule: true,
   });
 
   const addBanner = () => {
@@ -153,6 +157,59 @@ export default function KioskSettings({ buildingId }: KioskSettingsProps) {
                 value={settings.slideDuration}
                 onChange={(e) => 
                   setSettings({ ...settings, slideDuration: parseInt(e.target.value) })
+                }
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Content Modules */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Ενότητες Περιεχομένου</CardTitle>
+          <CardDescription>
+            Επιλέξτε ποιες δυναμικές πληροφορίες θα εμφανίζονται στο kiosk.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Bell className="w-5 h-5 text-blue-500" />
+                <Label htmlFor="showAnnouncements">Ανακοινώσεις Κτιρίου</Label>
+              </div>
+              <Switch
+                id="showAnnouncements"
+                checked={settings.showAnnouncements}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, showAnnouncements: checked })
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Wrench className="w-5 h-5 text-orange-500" />
+                <Label htmlFor="showMaintenanceSchedule">Προγραμματισμένες Συντηρήσεις</Label>
+              </div>
+              <Switch
+                id="showMaintenanceSchedule"
+                checked={settings.showMaintenanceSchedule}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, showMaintenanceSchedule: checked })
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <BarChart className="w-5 h-5 text-green-500" />
+                <Label htmlFor="showFinancialSummary">Οικονομική Επισκόπηση</Label>
+              </div>
+              <Switch
+                id="showFinancialSummary"
+                checked={settings.showFinancialSummary}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, showFinancialSummary: checked })
                 }
               />
             </div>

@@ -159,6 +159,71 @@ class DocumentUploadViewSet(viewsets.ModelViewSet):
             logger.error(f"Error downloading document {document.id}: {str(e)}")
             raise Http404("Error downloading file")
 
+    @action(detail=True, methods=['get'], permission_classes=[])
+    def preview(self, request, pk=None):
+        """Preview the document file (allows iframe embedding)"""
+        from rest_framework.permissions import IsAuthenticated
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+
+        # Check for token in query params for iframe requests
+        token = request.GET.get('token')
+        if token:
+            from rest_framework_simplejwt.tokens import AccessToken
+            try:
+                # Validate the token
+                validated_token = AccessToken(token)
+                user_id = validated_token.get('user_id')
+                if user_id:
+                    request.user = User.objects.get(id=user_id)
+                else:
+                    return Response(
+                        {'error': 'Invalid token'},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
+            except Exception as e:
+                logger.error(f"Token validation failed: {str(e)}")
+                return Response(
+                    {'error': 'Authentication failed'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+        else:
+            # If no token in query params, require standard authentication
+            permission_check = IsAuthenticated()
+            if not permission_check.has_permission(request, self):
+                return Response(
+                    {'error': 'Authentication required'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+        # Now get the document using the authenticated user
+        try:
+            document = DocumentUpload.objects.get(pk=pk)
+        except DocumentUpload.DoesNotExist:
+            raise Http404("Document not found")
+
+        if not document.file:
+            raise Http404("Document file not found")
+
+        try:
+            file_path = document.file.path
+            if os.path.exists(file_path):
+                response = FileResponse(
+                    open(file_path, 'rb'),
+                    content_type=document.mime_type or 'application/octet-stream'
+                )
+                # Allow iframe embedding for preview
+                response['X-Frame-Options'] = 'SAMEORIGIN'
+                # Inline display instead of download
+                response['Content-Disposition'] = f'inline; filename="{document.original_filename}"'
+                return response
+            else:
+                raise Http404("File not found on server")
+        except Exception as e:
+            logger.error(f"Error previewing document {document.id}: {str(e)}")
+            raise Http404("Error previewing file")
+
     @action(detail=False, methods=['post'])
     def cleanup_stale(self, request):
         """Clean up failed or stuck documents older than specified hours"""
@@ -208,11 +273,10 @@ class DocumentUploadViewSet(viewsets.ModelViewSet):
     def celery_status(self, request):
         """Get Celery worker status"""
         from celery import current_app
-        from celery.task.control import inspect
 
         try:
             # Get Celery inspector
-            i = inspect()
+            i = current_app.control.inspect()
 
             # Get active tasks
             active = i.active()
@@ -222,16 +286,16 @@ class DocumentUploadViewSet(viewsets.ModelViewSet):
             scheduled = i.scheduled()
             scheduled_count = sum(len(tasks) for tasks in (scheduled or {}).values())
 
-            # Determine status
+            # Determine celery status
             if active_count > 0:
-                status = 'active'
+                celery_status = 'active'
             elif scheduled_count > 0:
-                status = 'scheduled'
+                celery_status = 'scheduled'
             else:
-                status = 'idle'
+                celery_status = 'idle'
 
             return Response({
-                'status': status,
+                'status': celery_status,
                 'active_tasks': active_count,
                 'scheduled_tasks': scheduled_count,
                 'workers': len(active or {})

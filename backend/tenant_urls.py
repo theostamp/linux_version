@@ -65,6 +65,9 @@ urlpatterns = [
     # Data migration
     path('api/data-migration/', include('data_migration.urls')),
 
+    # Document parser
+    path('api/parser/', include('document_parser.urls')),
+
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]

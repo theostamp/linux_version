@@ -259,6 +259,23 @@ export default function DocumentsPage() {
                 </div>
             </div>
 
+            {/* Technical Warning */}
+            <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20">
+                <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                <AlertDescription className="text-orange-800 dark:text-orange-200">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="font-semibold">Τεχνική Προειδοποίηση - BETA</span>
+                        <Badge variant="outline" className="text-orange-600 border-orange-300 dark:text-orange-400 dark:border-orange-600">
+                            BETA
+                        </Badge>
+                    </div>
+                    <p className="text-sm">
+                        Αυτή η λειτουργία βρίσκεται σε δοκιμαστική φάση. Η επεξεργασία παραστατικών με AI μπορεί να έχει περιορισμούς 
+                        στην ακρίβεια και την ταχύτητα. Παρακαλούμε να ελέγχετε προσεκτικά τα αποτελέσματα πριν την οριστικοποίηση.
+                    </p>
+                </AlertDescription>
+            </Alert>
+
             {/* Documents List */}
             <div className="space-y-4">
                 {data?.results?.length === 0 ? (

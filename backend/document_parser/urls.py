@@ -9,6 +9,7 @@ app_name = 'document_parser'
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('celery-status/', views.DocumentUploadViewSet.as_view({'get': 'celery_status'}), name='celery-status'),
 ]
 
 

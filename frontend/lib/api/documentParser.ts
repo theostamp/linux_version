@@ -13,6 +13,7 @@ export interface DocumentUpload {
         last_name: string;
     };
     original_file_url: string;
+    file_url: string | null;
     status: 'pending' | 'processing' | 'awaiting_confirmation' | 'completed' | 'failed';
     extracted_data: Record<string, any> | null;
     created_at: string;
@@ -79,17 +80,29 @@ export const deleteDocument = async (id: string | number): Promise<void> => {
 };
 
 export const bulkDeleteDocuments = async (ids: number[]): Promise<{ message: string; count: number }> => {
-    const response = await apiClient.post('/parser/uploads/bulk_delete/', { ids });
+    const response = await apiClient.post('/parser/uploads/bulk_delete/', { ids }, {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
     return response.data;
 };
 
 export const cleanupStaleDocuments = async (hours: number = 24): Promise<{ message: string; count: number }> => {
-    const response = await apiClient.post('/parser/uploads/cleanup_stale/', { hours });
+    const response = await apiClient.post('/parser/uploads/cleanup_stale/', { hours }, {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
     return response.data;
 };
 
 export const retryDocumentProcessing = async (id: string | number): Promise<{ message: string; document_id: number }> => {
-    const response = await apiClient.post(`/parser/uploads/${id}/retry_processing/`);
+    const response = await apiClient.post(`/parser/uploads/${id}/retry_processing/`, {}, {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
     return response.data;
 };
 

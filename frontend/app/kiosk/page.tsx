@@ -14,6 +14,12 @@ export default function KioskPage() {
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
   const [buildings, setBuildings] = useState<any[]>([]);
   const [isLoadingBuildings, setIsLoadingBuildings] = useState(true);
+  const [maintenanceInfo, setMaintenanceInfo] = useState({
+    active_contractors: 0,
+    pending_receipts: 0,
+    scheduled_maintenance: 0,
+    urgent_maintenance: 0,
+  });
   const searchParams = useSearchParams();
 
   // Use the selected building ID for data fetching
@@ -29,6 +35,34 @@ export default function KioskPage() {
     },
     showToast: false // Disable toast notifications for kiosk mode
   });
+
+  // Fetch maintenance info when building changes
+  useEffect(() => {
+    async function loadMaintenanceInfo() {
+      try {
+        const b = data?.building_info?.id ?? selectedBuildingId ?? 1;
+        const counters = await fetchPublicMaintenanceCounters(b);
+        setMaintenanceInfo({
+          active_contractors: counters.active_contractors,
+          pending_receipts: counters.pending_receipts,
+          scheduled_maintenance: counters.scheduled_total,
+          urgent_maintenance: counters.urgent_total,
+        });
+      } catch (error) {
+        console.error('Failed to load maintenance info:', error);
+        setMaintenanceInfo({
+          active_contractors: 0,
+          pending_receipts: 0,
+          scheduled_maintenance: 0,
+          urgent_maintenance: 0,
+        });
+      }
+    }
+
+    if (data?.building_info?.id || selectedBuildingId) {
+      loadMaintenanceInfo();
+    }
+  }, [data?.building_info?.id, selectedBuildingId]);
 
   // Load all buildings for selection
   useEffect(() => {
@@ -149,20 +183,7 @@ export default function KioskPage() {
           advertisingBanners={data?.advertising_banners}
           generalInfo={data?.general_info}
           financialInfo={data?.financial_info}
-          maintenanceInfo={await (async () => {
-            try {
-              const b = data?.building_info?.id ?? selectedBuildingId ?? 1;
-              const counters = await fetchPublicMaintenanceCounters(b);
-              return {
-                active_contractors: counters.active_contractors,
-                pending_receipts: counters.pending_receipts,
-                scheduled_maintenance: counters.scheduled_total,
-                urgent_maintenance: counters.urgent_total,
-              };
-            } catch {
-              return { active_contractors: 0, pending_receipts: 0, scheduled_maintenance: 0, urgent_maintenance: 0 };
-            }
-          })()}
+          maintenanceInfo={maintenanceInfo}
           projectsInfo={{
             active_projects: 3,
             pending_offers: 5,
@@ -180,8 +201,6 @@ export default function KioskPage() {
   );
 }
 
-'use client';
-import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchPublicProjects, type PublicProject } from '@/lib/apiPublic';
 

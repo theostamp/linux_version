@@ -4,10 +4,20 @@ from .models import DocumentUpload
 
 class DocumentUploadSerializer(serializers.ModelSerializer):
     """Serializer for DocumentUpload model"""
-    
+
     uploaded_by_name = serializers.CharField(source='uploaded_by.get_full_name', read_only=True)
     building_name = serializers.CharField(source='building.name', read_only=True)
-    
+    file_url = serializers.SerializerMethodField()
+
+    def get_file_url(self, obj):
+        """Generate URL for file preview"""
+        if obj.file:
+            request = self.context.get('request')
+            if request:
+                # Return the preview endpoint URL (allows iframe)
+                return f"/api/parser/uploads/{obj.id}/preview/"
+        return None
+
     def create(self, validated_data):
         """Override create to extract filename and file info from uploaded file"""
         file = validated_data.get('file')
@@ -31,6 +41,7 @@ class DocumentUploadSerializer(serializers.ModelSerializer):
             'uploaded_by',
             'uploaded_by_name',
             'file',
+            'file_url',
             'original_filename',
             'original_file_url',
             'file_size',

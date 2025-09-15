@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useForm, Controller } from 'react-hook-form';
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
 
 // Helper για πιο ευανάγνωστα labels
 const formatLabel = (key: string) => {
@@ -45,6 +46,7 @@ export default function DocumentReviewPage() {
     const params = useParams();
     const router = useRouter();
     const id = params.id as string;
+    const { getToken } = useAuth();
 
     const { data: document, isLoading, isError, error } = useGetDocumentUpload(id);
     const confirmMutation = useConfirmDocument(id);
@@ -166,10 +168,10 @@ export default function DocumentReviewPage() {
                         <CardTitle>Προεπισκόπηση Εγγράφου</CardTitle>
                     </CardHeader>
                     <CardContent className="p-2 h-full">
-                        {document.original_file_url ? (
-                            <iframe 
-                                src={document.original_file_url} 
-                                className="w-full h-full border-0" 
+                        {document.file_url ? (
+                            <iframe
+                                src={`http://demo.localhost:8000${document.file_url}?token=${getToken()}`}
+                                className="w-full h-full border-0"
                                 title={`Προεπισκόπηση παραστατικού ${id}`}
                             />
                         ) : (

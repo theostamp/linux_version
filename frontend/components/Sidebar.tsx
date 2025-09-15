@@ -35,8 +35,27 @@ import {
   TestTube2,
 } from 'lucide-react';
 
+// Navigation link interface
+interface NavigationLink {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  roles: string[];
+  isBeta?: boolean;
+}
+
+// Navigation group interface
+interface NavigationGroup {
+  id: string;
+  title: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  links: NavigationLink[];
+}
+
 // Grouped navigation links with categories
-const navigationGroups = [
+const navigationGroups: NavigationGroup[] = [
   {
     id: 'operations',
     title: 'Οικονομικά και Έργα',
@@ -51,12 +70,6 @@ const navigationGroups = [
         roles: ['manager', 'staff', 'superuser'],
       },
       {
-        href: '/documents',
-        label: 'Παραστατικά',
-        icon: <FileText className="w-4 h-4" />,
-        roles: ['manager', 'staff', 'superuser'],
-      },
-      {
         href: '/maintenance',
         label: 'Υπηρεσίες & Δαπάνες',
         icon: <Wrench className="w-4 h-4" />,
@@ -67,6 +80,13 @@ const navigationGroups = [
         label: 'Προσφορές & Έργα',
         icon: <FileText className="w-4 h-4" />,
         roles: ['manager', 'staff', 'superuser'],
+      },
+      {
+        href: '/documents',
+        label: 'Παραστατικά',
+        icon: <FileText className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+        isBeta: true,
       },
     ]
   },
@@ -528,7 +548,17 @@ export default function Sidebar() {
                     )}>
                       {link.icon}
                     </span>
-                    <span className="text-left">{link.label}</span>
+                    <span className="text-left flex-1">{link.label}</span>
+                    {link.isBeta && (
+                      <span className={cn(
+                        'ml-2 px-1.5 py-0.5 text-xs font-bold rounded-full transition-colors duration-200',
+                        pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/dashboard')
+                          ? 'bg-white/20 text-white'
+                          : 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400'
+                      )}>
+                        BETA
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
