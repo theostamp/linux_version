@@ -477,7 +477,7 @@ docker compose up --build -d
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "δοκιμες document AI"
+git commit -m "δοκιμες document AI  2"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

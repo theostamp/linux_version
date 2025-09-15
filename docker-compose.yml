@@ -19,6 +19,7 @@ services:
     command: celery -A new_concierge_backend worker -l info
     volumes:
       - ./backend/:/app/
+      - media_dev:/vol/media
     env_file: .env
     environment:
       # Google Document AI settings (should be set in .env file)

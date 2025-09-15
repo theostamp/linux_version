@@ -77,3 +77,34 @@ export const confirmDocument = async (id: string | number, data: ConfirmDocument
 export const deleteDocument = async (id: string | number): Promise<void> => {
     await apiClient.delete(`/parser/uploads/${id}/`);
 };
+
+export const bulkDeleteDocuments = async (ids: number[]): Promise<{ message: string; count: number }> => {
+    const response = await apiClient.post('/parser/uploads/bulk_delete/', { ids });
+    return response.data;
+};
+
+export const cleanupStaleDocuments = async (hours: number = 24): Promise<{ message: string; count: number }> => {
+    const response = await apiClient.post('/parser/uploads/cleanup_stale/', { hours });
+    return response.data;
+};
+
+export const retryDocumentProcessing = async (id: string | number): Promise<{ message: string; document_id: number }> => {
+    const response = await apiClient.post(`/parser/uploads/${id}/retry_processing/`);
+    return response.data;
+};
+
+export const downloadDocument = async (id: string | number, filename: string): Promise<void> => {
+    const response = await apiClient.get(`/parser/uploads/${id}/download/`, {
+        responseType: 'blob',
+    });
+
+    // Create blob link to download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+};

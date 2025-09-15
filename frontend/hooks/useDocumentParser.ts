@@ -1,5 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDocumentUploads, uploadDocument, getDocumentUpload, confirmDocument } from '@/lib/api/documentParser';
+import {
+    getDocumentUploads,
+    uploadDocument,
+    getDocumentUpload,
+    confirmDocument,
+    deleteDocument,
+    bulkDeleteDocuments,
+    cleanupStaleDocuments,
+    retryDocumentProcessing,
+    downloadDocument
+} from '@/lib/api/documentParser';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
@@ -50,6 +60,84 @@ export const useConfirmDocument = (id: string | number) => {
         onError: (error: any) => {
             const errorMessage = error?.response?.data?.detail || 'Προέκυψε σφάλμα κατά την επιβεβαίωση.';
             toast.error(errorMessage);
+        },
+    });
+};
+
+export const useDeleteDocument = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: string | number) => deleteDocument(id),
+        onSuccess: () => {
+            toast.success('Το έγγραφο διαγράφηκε επιτυχώς.');
+            queryClient.invalidateQueries({ queryKey: ['documentUploads'] });
+        },
+        onError: (error: any) => {
+            console.error("Delete error:", error);
+            toast.error('Σφάλμα κατά τη διαγραφή του εγγράφου.');
+        },
+    });
+};
+
+export const useBulkDeleteDocuments = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (ids: number[]) => bulkDeleteDocuments(ids),
+        onSuccess: (data) => {
+            toast.success(`Διαγράφηκαν ${data.count} έγγραφα επιτυχώς.`);
+            queryClient.invalidateQueries({ queryKey: ['documentUploads'] });
+        },
+        onError: (error: any) => {
+            console.error("Bulk delete error:", error);
+            toast.error('Σφάλμα κατά τη μαζική διαγραφή.');
+        },
+    });
+};
+
+export const useCleanupStaleDocuments = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (hours: number = 24) => cleanupStaleDocuments(hours),
+        onSuccess: (data) => {
+            toast.success(`Διαγράφηκαν ${data.count} παλιά έγγραφα.`);
+            queryClient.invalidateQueries({ queryKey: ['documentUploads'] });
+        },
+        onError: (error: any) => {
+            console.error("Cleanup error:", error);
+            toast.error('Σφάλμα κατά τον καθαρισμό.');
+        },
+    });
+};
+
+export const useRetryDocumentProcessing = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: string | number) => retryDocumentProcessing(id),
+        onSuccess: () => {
+            toast.success('Το έγγραφο τέθηκε ξανά σε επεξεργασία.');
+            queryClient.invalidateQueries({ queryKey: ['documentUploads'] });
+        },
+        onError: (error: any) => {
+            console.error("Retry error:", error);
+            toast.error('Σφάλμα κατά την επανεκκίνηση της επεξεργασίας.');
+        },
+    });
+};
+
+export const useDownloadDocument = () => {
+    return useMutation({
+        mutationFn: ({ id, filename }: { id: string | number; filename: string }) =>
+            downloadDocument(id, filename),
+        onSuccess: () => {
+            toast.success('Το έγγραφο κατέβηκε επιτυχώς.');
+        },
+        onError: (error: any) => {
+            console.error("Download error:", error);
+            toast.error('Σφάλμα κατά το κατέβασμα του εγγράφου.');
         },
     });
 };

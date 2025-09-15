@@ -1,25 +1,34 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useGetDocumentUploads } from '@/hooks/useDocumentParser';
+import {
+    useGetDocumentUploads,
+    useCleanupStaleDocuments,
+    useBulkDeleteDocuments
+} from '@/hooks/useDocumentParser';
 import { DocumentUploadModal } from '@/components/DocumentUploadModal';
 import { DocumentStatusLog, useDocumentLogs } from '@/components/DocumentStatusLog';
 import { DocumentLogProvider } from '@/components/contexts/DocumentLogContext';
+import { DocumentActions } from '@/components/documents/DocumentActions';
+import { CeleryStatusIndicator } from '@/components/documents/CeleryStatusIndicator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-    FileText, 
-    Upload, 
-    Clock, 
-    CheckCircle, 
-    XCircle, 
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+    FileText,
+    Upload,
+    Clock,
+    CheckCircle,
+    XCircle,
     AlertTriangle,
     Eye,
     RefreshCw,
-    Activity
+    Activity,
+    Trash2,
+    Download
 } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -62,13 +71,52 @@ export default function DocumentsPage() {
     const [page, setPage] = useState(1);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+    const [selectedDocuments, setSelectedDocuments] = useState<number[]>([]);
+    const [showBulkActions, setShowBulkActions] = useState(false);
+
     const { data, isLoading, isError, error, refetch } = useGetDocumentUploads(page);
     const { logs, addLog, clearLogs } = useDocumentLogs();
+    const cleanupStale = useCleanupStaleDocuments();
+    const bulkDelete = useBulkDeleteDocuments();
 
     // Προσθήκη logs για διάφορες ενέργειες
     const handleRefetch = () => {
         addLog('info', 'Ανανέωση λίστας παραστατικών', 'Φόρτωση νέων δεδομένων...');
         refetch();
+    };
+
+    const handleCleanupStale = async () => {
+        const result = await cleanupStale.mutateAsync(24);
+        addLog('success', 'Καθαρισμός παλιών εγγράφων', `Διαγράφηκαν ${result.count} έγγραφα`);
+        refetch();
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedDocuments.length === 0) return;
+        const result = await bulkDelete.mutateAsync(selectedDocuments);
+        addLog('success', 'Μαζική διαγραφή', `Διαγράφηκαν ${result.count} έγγραφα`);
+        setSelectedDocuments([]);
+        setShowBulkActions(false);
+        refetch();
+    };
+
+    const toggleDocumentSelection = (id: number) => {
+        setSelectedDocuments(prev =>
+            prev.includes(id)
+                ? prev.filter(docId => docId !== id)
+                : [...prev, id]
+        );
+    };
+
+    const selectAll = () => {
+        const selectableIds = data?.results
+            ?.filter(doc => ['pending', 'processing', 'failed', 'awaiting_confirmation'].includes(doc.status))
+            ?.map(doc => doc.id) || [];
+        setSelectedDocuments(selectableIds);
+    };
+
+    const clearSelection = () => {
+        setSelectedDocuments([]);
     };
 
     const handleViewDocument = (document: any) => {
@@ -142,6 +190,40 @@ export default function DocumentsPage() {
                     </p>
                 </div>
                 <div className="flex items-center space-x-2">
+                    <CeleryStatusIndicator />
+
+                    {selectedDocuments.length > 0 && (
+                        <div className="flex items-center space-x-2 border-l pl-2">
+                            <span className="text-sm text-muted-foreground">
+                                {selectedDocuments.length} επιλεγμένα
+                            </span>
+                            <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={handleBulkDelete}
+                            >
+                                <Trash2 className="mr-1 h-3 w-3" />
+                                Διαγραφή
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={clearSelection}
+                            >
+                                Καθαρισμός
+                            </Button>
+                        </div>
+                    )}
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCleanupStale}
+                    >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Καθαρισμός Παλιών
+                    </Button>
+
                     <Button
                         variant="outline"
                         onClick={handleRefetch}
@@ -150,6 +232,7 @@ export default function DocumentsPage() {
                         <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
                         Ανανέωση
                     </Button>
+
                     <Button
                         variant="outline"
                         onClick={() => setIsLogModalOpen(true)}
@@ -158,14 +241,15 @@ export default function DocumentsPage() {
                         <Activity className="mr-2 h-4 w-4" />
                         Logs
                         {logs.length > 0 && (
-                            <Badge 
-                                variant="destructive" 
+                            <Badge
+                                variant="destructive"
                                 className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
                             >
                                 {logs.length}
                             </Badge>
                         )}
                     </Button>
+
                     <DocumentUploadModal>
                         <Button>
                             <Upload className="mr-2 h-4 w-4" />
@@ -198,11 +282,20 @@ export default function DocumentsPage() {
                         const statusInfo = getStatusConfig(document.status);
                         const StatusIcon = statusInfo.icon;
 
+                        const isSelectable = ['pending', 'processing', 'failed', 'awaiting_confirmation'].includes(document.status);
+                        const isSelected = selectedDocuments.includes(document.id);
+
                         return (
-                            <Card key={document.id} className="hover:shadow-md transition-shadow">
+                            <Card key={document.id} className={`hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-primary' : ''}`}>
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-4">
+                                            {isSelectable && (
+                                                <Checkbox
+                                                    checked={isSelected}
+                                                    onCheckedChange={() => toggleDocumentSelection(document.id)}
+                                                />
+                                            )}
                                             <div className="flex-shrink-0">
                                                 <FileText className="h-8 w-8 text-muted-foreground" />
                                             </div>
@@ -232,32 +325,11 @@ export default function DocumentsPage() {
                                                 <StatusIcon className="mr-1 h-3 w-3" />
                                                 {statusInfo.label}
                                             </Badge>
-                                            
-                                            {document.status === 'awaiting_confirmation' && (
-                                                <Link href={`/documents/${document.id}/review`}>
-                                                    <Button 
-                                                        size="sm" 
-                                                        variant="outline"
-                                                        onClick={() => handleViewDocument(document)}
-                                                    >
-                                                        <Eye className="mr-1 h-4 w-4" />
-                                                        Έλεγχος
-                                                    </Button>
-                                                </Link>
-                                            )}
-                                            
-                                            {document.status === 'completed' && (
-                                                <Link href={`/documents/${document.id}/review`}>
-                                                    <Button 
-                                                        size="sm" 
-                                                        variant="outline"
-                                                        onClick={() => handleViewDocument(document)}
-                                                    >
-                                                        <Eye className="mr-1 h-4 w-4" />
-                                                        Προβολή
-                                                    </Button>
-                                                </Link>
-                                            )}
+
+                                            <DocumentActions
+                                                document={document}
+                                                onActionComplete={refetch}
+                                            />
                                         </div>
                                     </div>
                                 </CardContent>
