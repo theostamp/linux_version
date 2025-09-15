@@ -59,7 +59,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
   const [heatingExpenseAmount, setHeatingExpenseAmount] = useState<number>(0);
   const [loadingPreviousReadings, setLoadingPreviousReadings] = useState(false);
   const loadingReadingsRef = useRef(false);
-  const { createReading, fetchMeterTypes, fetchReadings, readings, loading } = useMeterReadings(buildingId);
+  const { createReading, updateReading, fetchMeterTypes, fetchReadings, readings, loading } = useMeterReadings(buildingId);
   
   // Debug log readings changes
   useEffect(() => {
@@ -444,20 +444,49 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
         return;
       }
       
-      // Create readings for each apartment
-      const promises = data.readings.map(reading => {
-        if (reading.current_reading > 0) {
-          return createReading({
-            apartment: reading.apartment_id,
-            reading_date: data.reading_date,
-            value: reading.current_reading,
-            meter_type: data.meter_type
-          });
+      // Create or update readings for each apartment with delay to avoid database conflicts
+      const validReadings = data.readings.filter(reading => reading.current_reading > 0);
+      
+      for (let i = 0; i < validReadings.length; i++) {
+        const reading = validReadings[i];
+        
+        try {
+          // Check if reading already exists for this apartment, date, and meter type
+          const existingReadings = readings.filter(r => 
+            r.apartment === reading.apartment_id && 
+            r.meter_type === data.meter_type &&
+            r.reading_date === data.reading_date
+          );
+          
+          if (existingReadings.length > 0) {
+            // Update existing reading
+            console.log(`🔄 Updating existing reading for apartment ${reading.apartment_id}`);
+            await updateReading(existingReadings[0].id, {
+              apartment: reading.apartment_id,
+              reading_date: data.reading_date,
+              value: reading.current_reading,
+              meter_type: data.meter_type
+            });
+          } else {
+            // Create new reading
+            console.log(`➕ Creating new reading for apartment ${reading.apartment_id}`);
+            await createReading({
+              apartment: reading.apartment_id,
+              reading_date: data.reading_date,
+              value: reading.current_reading,
+              meter_type: data.meter_type
+            });
+          }
+        } catch (error) {
+          console.error(`❌ Error processing reading for apartment ${reading.apartment_id}:`, error);
+          // Continue with next reading instead of stopping
         }
-        return Promise.resolve();
-      });
-
-      await Promise.all(promises);
+        
+        // Add small delay between requests to avoid database conflicts
+        if (i < validReadings.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
+        }
+      }
       
       reset();
       onSuccess?.();
