@@ -254,21 +254,11 @@ export default function GoogleCalendarSettings({ building }: GoogleCalendarSetti
 
               <Button 
                 onClick={handleConnectGoogle}
-                disabled={isConnecting}
                 size="lg"
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                {isConnecting ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Συνδέονται...
-                  </>
-                ) : (
-                  <>
-                    <Link className="w-4 h-4 mr-2" />
-                    Σύνδεση με Google Calendar
-                  </>
-                )}
+                <Link className="w-4 h-4 mr-2" />
+                Σύνδεση με Google Calendar
               </Button>
 
               {/* Benefits */}
@@ -308,7 +298,7 @@ export default function GoogleCalendarSettings({ building }: GoogleCalendarSetti
       </Card>
 
       {/* Sync Settings Card */}
-      {connectionStatus === 'connected' && (
+      {isConnected && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

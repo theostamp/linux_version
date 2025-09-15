@@ -91,7 +91,7 @@ export const ApartmentOverviewIntegrated: React.FC<ApartmentOverviewIntegratedPr
 
   const getStatusBadge = (status: string, netObligation: number) => {
     if (netObligation > 100) {
-      return <Badge variant="destructive" className="text-xs">Κρίσιμο</Badge>;
+      return <Badge variant="destructive" className="text-xs">Οφειλή</Badge>;
     } else if (netObligation > 0.30) {
       return <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800">Οφειλή</Badge>;
     } else if (netObligation < -0.30) {

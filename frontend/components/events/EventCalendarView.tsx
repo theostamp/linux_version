@@ -25,11 +25,14 @@ export default function EventCalendarView({ selectedDate, onDateSelect }: EventC
   const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
   const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
 
-  const { data: events = [], isLoading } = useCalendarEvents({
+  // Memoize filters to prevent infinite re-renders
+  const calendarFilters = useMemo(() => ({
     building: selectedBuilding?.id,
     start_date: monthStart.toISOString(),
     end_date: monthEnd.toISOString()
-  });
+  }), [selectedBuilding?.id, currentMonth.getFullYear(), currentMonth.getMonth()]);
+
+  const { data: events = [], isLoading } = useCalendarEvents(calendarFilters);
 
   // Group events by date
   const eventsByDate = useMemo(() => {

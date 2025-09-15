@@ -480,7 +480,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                             if (Math.abs(netObligation) <= 0.30) {
                               return 'Ενήμερο';
                             } else if (netObligation > 100) {
-                              return 'Κρίσιμο';
+                              return 'Οφειλή';
                             } else if (netObligation > 0.30) {
                               return 'Οφειλή';
                             } else {

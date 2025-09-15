@@ -654,7 +654,7 @@ class FinancialDashboardService:
                         previous_obligations += apartment_previous_balance
                     
                     print(f"🔍 Calculated previous obligations from transactions: €{previous_obligations}")
-                    
+                        
                 except Exception as e:
                     print(f"⚠️ Error calculating previous obligations from transactions: {e}")
                     previous_obligations = Decimal('0.00')

@@ -3,6 +3,7 @@ from .models import DocumentUpload
 from .services import GoogleDocumentAIService
 import os
 import mimetypes
+from .services import GoogleDocumentAIService # Υποθέτουμε ότι υπάρχει αυτό το service
 import logging
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -11,9 +12,12 @@ logger = logging.getLogger(__name__)
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def process_document(self, document_id):
+@shared_task
+def process_document_ai(document_id):
     """
     Ασύγχρονη εργασία Celery για την επεξεργασία ενός εγγράφου με AI.
     Περιλαμβάνει λογική για retries σε περίπτωση προσωρινών σφαλμάτων.
+    Ασύγχρονο task για την επεξεργασία ενός εγγράφου μέσω του Google Document AI.
     """
     doc = None
     try:
@@ -28,11 +32,14 @@ def process_document(self, document_id):
             # Default to a common type if guessing fails, or handle error
             mime_type = 'application/pdf'
             logger.warning(f"Could not guess mime type for {file_path}. Defaulting to {mime_type}.")
+        logger.info(f"Starting AI processing for document: {document_id}")
 
         # --- Real AI Service Call ---
+        # Υποθετική κλήση στο service της Google
         service = GoogleDocumentAIService()
         extracted_data, raw_text = service.parse_document(file_path, mime_type)
         # ----------------------------
+        extracted_data, raw_text = service.parse_document(doc.original_file.path)
 
         doc.extracted_data = extracted_data
         doc.raw_text = raw_text
@@ -59,12 +66,17 @@ def process_document(self, document_id):
                 }
             )
             logger.info(f"Sent notification for document {doc.id} to group {group_name}")
+        logger.info(f"Successfully processed document: {document_id}")
+        # Εδώ μπορεί να σταλεί μια WebSocket ειδοποίηση στον χρήστη
 
     except DocumentUpload.DoesNotExist:
         logger.error(f"DocumentUpload with id={document_id} does not exist. Task will not be retried.")
+        logger.error(f"Document with id {document_id} not found for AI processing.")
     except Exception as e:
         logger.error(f"An error occurred while processing document {document_id}: {e}", exc_info=True)
         if doc:
+        logger.error(f"Failed to process document {document_id}: {e}", exc_info=True)
+        if 'doc' in locals():
             doc.status = 'failed'
             doc.error_message = str(e)
             doc.save(update_fields=['status', 'error_message'])
