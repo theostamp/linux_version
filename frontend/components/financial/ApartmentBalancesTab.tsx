@@ -370,76 +370,13 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
         </Alert>
       )}
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Σύνολο Διαμερισμάτων</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{apartmentBalances.length}</div>
-            <p className="text-xs text-muted-foreground">
-              διαμερίσματα κτιρίου
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Συνολικές Οφειλές</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {formatCurrency(apartmentBalances.reduce((sum, apt) => sum + Math.max(0, apt.net_obligation), 0))}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              συνολικό χρέος κτιρίου
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Σύνολο Εισπράξεων</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(apartmentBalances.reduce((sum, apt) => sum + apt.total_payments, 0))}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              συνολικές πληρωμές
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Κατάσταση</CardTitle>
-            <div className="flex items-center gap-1">
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {getDebtApartmentsCount()}/{apartmentBalances.length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              με οφειλές {getDebtApartmentsCount() > 0 ? `(${getDebtApartmentsCount()} διαμερίσματα)` : ''}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Apartment Balances Table */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Calculator className="w-5 h-5" />
-              Υπόλοιπα Διαμερισμάτων
+              Κατάσταση Διαμερισμάτων
               {selectedMonth && (
                 <Badge variant="outline" className="ml-2">
                   {formatMonthDisplay(selectedMonth)}
@@ -469,23 +406,24 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2 px-2 text-xs font-semibold text-gray-600">Διαμέρισμα</th>
-                  <th className="text-left py-2 px-2 text-xs font-semibold text-gray-600">Ιδιοκτήτης</th>
-                  <th className="text-left py-2 px-2 text-xs font-semibold text-gray-600">Χιλιοστά</th>
-                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-600">Προηγούμενο Υπόλοιπο</th>
-                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-600">Καθαρή Οφειλή</th>
-                  <th className="text-center py-2 px-2 text-xs font-semibold text-gray-600">Κατάσταση</th>
-                  <th className="text-center py-2 px-2 text-xs font-semibold text-gray-600">Ενέργειες</th>
+                <tr className="border-b bg-gray-50">
+                  <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Α/Δ</th>
+                  <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Ιδιοκτήτης</th>
+                  <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Χιλιοστά</th>
+                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Παλαιές Οφειλές</th>
+                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Τρέχουσα Οφειλή</th>
+                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Συνολική Οφειλή</th>
+                  <th className="text-center py-2 px-2 text-xs font-semibold text-gray-700">Κατάσταση</th>
+                  <th className="text-center py-2 px-2 text-xs font-semibold text-gray-700">Ενέργειες</th>
                 </tr>
               </thead>
               <tbody>
                 {apartmentBalances.map((apartment) => (
                   <tr key={apartment.apartment_id} className="border-b hover:bg-gray-50">
-                    <td className="py-2 px-2 text-sm font-medium">{apartment.apartment_number}</td>
-                    <td className="py-2 px-2 text-sm">{apartment.owner_name}</td>
-                    <td className="py-2 px-2 text-sm">{apartment.participation_mills}</td>
-                    <td className="py-2 px-2 text-sm text-right">
+                    <td className="py-2 px-2 text-xs font-medium">{apartment.apartment_number}</td>
+                    <td className="py-2 px-2 text-xs">{apartment.owner_name}</td>
+                    <td className="py-2 px-2 text-xs">{apartment.participation_mills}</td>
+                    <td className="py-2 px-2 text-xs text-right">
                       <span className={`font-medium ${
                         Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
                         apartment.previous_balance > 0.30 ? 'text-red-600' : 
@@ -494,7 +432,16 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                         {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : formatCurrency(apartment.previous_balance)}
                       </span>
                     </td>
-                    <td className="py-2 px-2 text-sm text-right">
+                    <td className="py-2 px-2 text-xs text-right">
+                      <span className={`font-medium ${
+                        Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
+                        apartment.expense_share > 0.30 ? 'text-orange-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : 
+                         Math.abs(apartment.expense_share) <= 0.30 ? '-' : formatCurrency(apartment.expense_share)}
+                      </span>
+                    </td>
+                    <td className="py-2 px-2 text-xs text-right">
                       <span className={`font-medium ${
                         apartment.net_obligation > 0.30 ? 'text-red-600' : 
                         apartment.net_obligation < -0.30 ? 'text-green-600' : 'text-gray-900'
@@ -502,18 +449,18 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                         {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : formatCurrency(apartment.net_obligation)}
                       </span>
                     </td>
-                    <td className="py-3 px-2 text-center">
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="py-2 px-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
                         {(() => {
                           const netObligation = apartment.net_obligation;
                           if (Math.abs(netObligation) <= 0.30) {
-                            return <CheckCircle className="h-4 w-4 text-blue-500" />;
+                            return <CheckCircle className="h-3 w-3 text-blue-500" />;
                           } else if (netObligation > 100) {
-                            return <AlertTriangle className="h-4 w-4 text-red-500" />;
+                            return <AlertTriangle className="h-3 w-3 text-red-500" />;
                           } else if (netObligation > 0.30) {
-                            return <TrendingDown className="h-4 w-4 text-orange-500" />;
+                            return <TrendingDown className="h-3 w-3 text-orange-500" />;
                           } else {
-                            return <TrendingUp className="h-4 w-4 text-green-500" />;
+                            return <TrendingUp className="h-3 w-3 text-green-500" />;
                           }
                         })()}
                         <Badge variant={(() => {
@@ -527,7 +474,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                           } else {
                             return 'secondary' as const;
                           }
-                        })()}>
+                        })()} className="text-xs">
                           {(() => {
                             const netObligation = apartment.net_obligation;
                             if (Math.abs(netObligation) <= 0.30) {
@@ -543,13 +490,13 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                         </Badge>
                       </div>
                     </td>
-                    <td className="py-3 px-2 text-center">
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="py-2 px-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleViewDetails(apartment)}
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 text-xs"
                         >
                           <Eye className="h-3 w-3" />
                           Ειδοποιητήριο
@@ -558,7 +505,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                           variant="outline"
                           size="sm"
                           onClick={() => handleViewHistory(apartment)}
-                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border-blue-200"
+                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border-blue-200 text-xs"
                           title="Προβολή ιστορικού πληρωμών"
                         >
                           <History className="h-3 w-3" />
@@ -568,7 +515,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                           variant="outline"
                           size="sm"
                           onClick={() => handleViewTransactionHistory(apartment)}
-                          className="flex items-center gap-1 text-purple-600 hover:text-purple-800 hover:bg-purple-50 border-purple-200"
+                          className="flex items-center gap-1 text-purple-600 hover:text-purple-800 hover:bg-purple-50 border-purple-200 text-xs"
                           title="Προβολή ιστορικού κινήσεων (χρεώσεις και πληρωμές)"
                         >
                           <TrendingUp className="h-3 w-3" />
@@ -579,7 +526,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                             variant="default"
                             size="sm"
                             onClick={() => handlePayment(apartment)}
-                            className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700"
+                            className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-xs"
                           >
                             <CreditCard className="h-3 w-3" />
                             Πληρωμή
@@ -589,7 +536,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                           variant="outline"
                           size="sm"
                           onClick={() => handleDeletePayments(apartment)}
-                          className="flex items-center gap-1 text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200"
+                          className="flex items-center gap-1 text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200 text-xs"
                           title="Διαγραφή όλων των πληρωμών αυτού του διαμερίσματος"
                         >
                           <Trash2 className="h-3 w-3" />

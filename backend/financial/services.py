@@ -391,10 +391,10 @@ class FinancialDashboardService:
         apartments = Apartment.objects.filter(building_id=self.building_id)
         
         # Συνολικές οφειλές: αρνητικά υπόλοιπα + ανέκδοτες δαπάνες
-        apartment_obligations = sum(
+        apartment_obligations = Decimal(str(sum(
             abs(apt.current_balance) for apt in apartments 
             if apt.current_balance and apt.current_balance < 0
-        )
+        )))
         
         # Σημείωση: Όλες οι δαπάνες θεωρούνται πλέον εκδομένες
         # Δεν υπάρχουν πια "ανέκδοτες" δαπάνες
@@ -639,74 +639,24 @@ class FinancialDashboardService:
                     _, last_day = monthrange(year, mon - 1)
                     previous_month_end = date(year, mon - 1, last_day)
                 
-                # ΔΙΟΡΘΩΣΗ: Υπολογισμός previous obligations από MonthlyBalance records
-                # Αυτό εξασφαλίζει σταθερή και αξιόπιστη αποθήκευση στη βάση δεδομένων
+                # ΔΙΟΡΘΩΣΗ: Υπολογισμός previous obligations από transaction data
+                # Χρησιμοποιούμε την ίδια λογική με τη get_apartment_balances για συνέπεια
                 previous_obligations = Decimal('0.00')
                 
                 try:
-                    from .models import MonthlyBalance
+                    # Υπολογισμός συνολικών προηγούμενων οφειλών από όλα τα διαμερίσματα
+                    apartments = Apartment.objects.filter(building_id=self.building_id)
+                    month_start = date(year, mon, 1)
                     
-                    # Αναζήτηση του MonthlyBalance record για τον συγκεκριμένο μήνα
-                    monthly_balance = MonthlyBalance.objects.filter(
-                        building_id=self.building_id,
-                        year=year,
-                        month=mon
-                    ).first()
+                    for apartment in apartments:
+                        # Υπολογισμός προηγούμενων οφειλών για κάθε διαμέρισμα
+                        apartment_previous_balance = self._calculate_historical_balance(apartment, month_start)
+                        previous_obligations += apartment_previous_balance
                     
-                    if monthly_balance:
-                        # Χρησιμοποιούμε τo αποθηκευμένο previous_obligations
-                        previous_obligations = monthly_balance.previous_obligations
-                        print(f"🔍 Found MonthlyBalance record: previous_obligations = €{previous_obligations}")
-                    else:
-                        # Fallback: δημιουργούμε το record αυτόματα
-                        print(f"⚠️ No MonthlyBalance found for {year}-{mon:02d}, creating...")
-                        
-                        # Calculate data for this month
-                        month_expenses = Expense.objects.filter(
-                            building_id=self.building_id,
-                            date__year=year,
-                            date__month=mon
-                        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-                        
-                        month_payments = Payment.objects.filter(
-                            apartment__building_id=self.building_id,
-                            date__year=year,
-                            date__month=mon
-                        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-                        
-                        # Get previous month's carry forward
-                        prev_month = mon - 1
-                        prev_year = year
-                        if prev_month < 1:
-                            prev_month = 12
-                            prev_year -= 1
-                        
-                        prev_monthly_balance = MonthlyBalance.objects.filter(
-                            building_id=self.building_id,
-                            year=prev_year,
-                            month=prev_month
-                        ).first()
-                        
-                        prev_carry_forward = prev_monthly_balance.carry_forward if prev_monthly_balance else Decimal('0.00')
-                        
-                        # Create the MonthlyBalance record
-                        monthly_balance = MonthlyBalance.objects.create(
-                            building_id=self.building_id,
-                            year=year,
-                            month=mon,
-                            total_expenses=month_expenses,
-                            total_payments=month_payments,
-                            previous_obligations=prev_carry_forward,
-                            reserve_fund_amount=Decimal('0.00'),
-                            management_fees=Decimal('0.00'),
-                            carry_forward=Decimal('0.00'),
-                        )
-                        
-                        previous_obligations = monthly_balance.previous_obligations
-                        print(f"✅ Created MonthlyBalance: previous_obligations = €{previous_obligations}")
-                        
+                    print(f"🔍 Calculated previous obligations from transactions: €{previous_obligations}")
+                    
                 except Exception as e:
-                    print(f"⚠️ Error accessing MonthlyBalance: {e}")
+                    print(f"⚠️ Error calculating previous obligations from transactions: {e}")
                     previous_obligations = Decimal('0.00')
             except Exception as e:
                 print(f"⚠️ Error calculating previous obligations for {month}: {e}")
@@ -1045,7 +995,7 @@ class FinancialDashboardService:
         # Υπολογισμός χρεώσεων μόνο από αυτές τις δαπάνες
         if expense_ids_before_month:
             total_charges = Transaction.objects.filter(
-                apartment_number=apartment.number,
+                apartment=apartment,  # ΔΙΟΡΘΩΣΗ: Χρήση apartment object αντί για apartment_number
                 reference_type='expense',
                 reference_id__in=[str(exp_id) for exp_id in expense_ids_before_month],
                 type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
