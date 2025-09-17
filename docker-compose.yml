@@ -53,7 +53,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: bash -c "pip install flower && python -m flower -A new_concierge_backend --port=5555 --url_prefix=flower"
+    command: bash -c "pip install flower && celery -A new_concierge_backend flower --port=5555 --url_prefix=flower"
     ports:
       - "5555:5555"
     env_file: .env
