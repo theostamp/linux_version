@@ -724,7 +724,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         </div>
 
         {/* Right Column - Building Overview Section Only */}
-        <div className="xl:col-span-1 space-y-6">
+        <div className="xl:col-span-1 space-y-6 sticky top-4 h-fit">
           {/* Building Overview Section - Moved to Right Column */}
           <BuildingOverviewSection 
             ref={buildingOverviewRef}

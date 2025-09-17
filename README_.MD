@@ -477,7 +477,7 @@ docker compose up --build -d
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "2nd major layout update"
+git commit -m "3nd major layout update"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

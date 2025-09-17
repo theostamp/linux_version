@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Building2, 
   Target, 
@@ -105,6 +106,9 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const [selectedAmountTitle, setSelectedAmountTitle] = useState('');
   const [showPreviousObligationsModal, setShowPreviousObligationsModal] = useState(false);
   const [showReserveFundInfoModal, setShowReserveFundInfoModal] = useState(false);
+  const [showOverviewModal, setShowOverviewModal] = useState(false);
+  const [showReserveGoalModal, setShowReserveGoalModal] = useState(false);
+  const [showManagementExpensesModal, setShowManagementExpensesModal] = useState(false);
 
 
   // Memoize currentBuilding to prevent unnecessary re-renders
@@ -1221,19 +1225,6 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     </div>
                     
                     {/* Προειδοποιήσεις */}
-                    {!isPositiveBalance && (
-                      <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
-                        <div className="flex items-center gap-2 mb-1">
-                          <AlertTriangle className="h-4 w-4 text-red-600" />
-                          <div className="text-sm text-red-800 font-semibold">
-                            Προσοχή: Αρνητικό Υπόλοιπο
-                          </div>
-                        </div>
-                        <div className="text-xs text-red-700">
-                          Το κτίριο έχει αρνητικό υπόλοιπο. Χρειάζεται να πληρωθούν οι τρέχουσες υποχρεώσεις πρώτα.
-                        </div>
-                      </div>
-                    )}
                   </div>
                   
                 </div>
@@ -1242,12 +1233,10 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
           </div>
         </div>
 
-        {/* Section 1.5: Με μια ματιά - Progress Bar Accordion */}
+        {/* Section 1.5: Με μια ματιά - Modal */}
         <div className="space-y-2">
           <Card className="border-2 border-green-200 bg-green-50/30">
-            <Collapsible defaultOpen={false}>
-              <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-green-100/50 transition-colors">
+            <CardHeader className="cursor-pointer hover:bg-green-100/50 transition-colors" onClick={() => setShowOverviewModal(true)}>
               <CardTitle className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Eye className="h-5 w-5 text-green-600" />
@@ -1255,124 +1244,13 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     Με μια ματιά
                   </span>
                 </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                        Progress Bar
-                      </Badge>
-                    </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                    Progress Bar
+                  </Badge>
+                </div>
               </CardTitle>
             </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-            <CardContent className="p-4">
-              
-              {(() => {
-                // Υπολογισμός συνολικού ποσού που οφείλεται (τρέχοντες + προηγούμενες οφειλές)
-                const currentMonthObligations = (financialSummary.total_expenses_month || 0) + 
-                                               (financialSummary.total_management_cost || 0) + 
-                                               (financialSummary.reserve_fund_monthly_target || 0);
-                
-                // Προηγούμενες οφειλές (συμπεριλαμβανομένων εκ των υστέρων δαπανών)
-                const previousObligations = financialSummary.previous_obligations || 0;
-                
-                // Συνολικές υποχρεώσεις = τρέχοντες + προηγούμενες
-                const totalObligations = currentMonthObligations + previousObligations;
-                
-                // Πληρωμές που έχουν γίνει για τον τρέχοντα μήνα
-                const actualPayments = financialSummary.total_payments_month || 0;
-                
-                // Υπολογισμός ποσοστού κάλυψης
-                const coveragePercentage = totalObligations > 0 ? Math.min(100, (actualPayments / totalObligations * 100)) : 0;
-                
-                // Υπολογισμός εκκρεμών πληρωμών
-                const pendingPayments = Math.max(0, totalObligations - actualPayments);
-                
-                return (
-                  <div className="space-y-6">
-                    {/* Progress Bar */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-700">
-                            Κάλυψη Υποχρεώσεων
-                            {previousObligations > 0 && (
-                              <span className="text-xs text-gray-500 ml-1">(συμπεριλαμβανομένων προηγούμενων)</span>
-                            )}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleRefresh}
-                            disabled={refreshing}
-                            className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700"
-                            title="Ανανέωση δεδομένων (χειροκίνητο)"
-                          >
-                            <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
-                          </Button>
-                        </div>
-                        <span className="text-sm font-bold text-green-600">
-                          {coveragePercentage.toFixed(1)}%
-                        </span>
-                      </div>
-                      
-                      <div className="w-full bg-gray-200 rounded-full h-6 relative overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-500 ease-out"
-                          style={{ width: `${coveragePercentage}%` }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-xs font-bold text-white drop-shadow-sm">
-                            {formatCurrency(actualPayments)} / {formatCurrency(totalObligations)}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-xs text-gray-600">
-                        <span>0€</span>
-                        <span>{formatCurrency(totalObligations)}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Στατιστικά */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                        <div className="text-lg font-bold text-green-700">
-                          {formatCurrency(actualPayments)}
-                        </div>
-                        <div className="text-xs text-green-600">Πληρωμένες</div>
-                      </div>
-                      
-                      <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
-                        <div className="text-lg font-bold text-red-700">
-                          {formatCurrency(pendingPayments)}
-                        </div>
-                        <div className="text-xs text-red-600">Εκκρεμείς</div>
-                      </div>
-                      
-                      <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="text-lg font-bold text-blue-700">
-                          {formatCurrency(totalObligations)}
-                        </div>
-                        <div className="text-xs text-blue-600">Σύνολο</div>
-                      </div>
-                    </div>
-                    
-                    {/* Διαμερίσματα με οφειλές */}
-                    <div className="pt-4 border-t border-gray-200">
-                      <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-                        <div className="text-lg font-bold text-orange-700">
-                          0/{financialSummary?.apartments_count || 0}
-                  </div>
-                        <div className="text-xs text-orange-600">με οφειλές</div>
-                      </div>
-        </div>
-
-                </div>
-                );
-              })()}
-            </CardContent>
-              </CollapsibleContent>
-            </Collapsible>
           </Card>
         </div>
 
@@ -1382,286 +1260,43 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
           <div className="grid grid-cols-1 gap-3 sm:gap-4">
             {/* Reserve Fund Goal Card - Full width */}
             <Card className={`col-span-1 ${getReserveFundCardColors(reserveProgress)} relative ${refreshingReserve ? 'opacity-75' : ''}`}>
-              <Collapsible defaultOpen={false}>
-                <CollapsibleTrigger asChild>
-                  <CardContent className="p-4 cursor-pointer hover:bg-orange-50/50 transition-colors">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Target className={`h-5 w-5 ${getProgressColors(reserveProgress).text}`} />
-                        <h3 className={`font-semibold text-sm ${getProgressColors(reserveProgress).text}`}>Στόχος Αποθεματικού</h3>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRefreshReserve();
-                          }}
-                          disabled={refreshingReserve}
-                          className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
-                          title="Ανανέωση δεδομένων"
-                        >
-                          <RefreshCw className={`h-4 w-4 ${refreshingReserve ? 'animate-spin' : ''}`} />
-                        </Button>
-                        {!editingGoal && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingGoal(true);
-                            }}
-                            className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
-                            title="Επεξεργασία στόχου"
-                          >
-                            <Edit3 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="p-4 pt-0">
-                
-                {editingGoal ? (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label htmlFor="new-goal" className="text-sm font-medium">Νέος στόχος (€)</Label>
-                        <Input
-                          id="new-goal"
-                          type="number"
-                          value={newGoal}
-                          onChange={(e) => setNewGoal(e.target.value)}
-                          placeholder="0.00"
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="new-installments" className="text-sm font-medium">Δόσεις (μήνες)</Label>
-                        <Input
-                          id="new-installments"
-                          type="number"
-                          value={newInstallments}
-                          onChange={(e) => setNewInstallments(e.target.value)}
-                          placeholder="12"
-                          min="1"
-                          max="60"
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                    {/* Preview */}
-                    {newGoal && newInstallments && parseFloat(newGoal) > 0 && parseInt(newInstallments) > 0 && (
-                      <div className="p-3 bg-blue-50 rounded border border-blue-200">
-                        <div className="text-sm text-blue-700 font-medium mb-1">
-                          Προεπισκόπηση:
-                        </div>
-                        <div className="text-xs text-blue-600 space-y-1">
-                          <div>• Μηνιαία εισφορά: {(parseFloat(newGoal) / parseInt(newInstallments)).toFixed(2)}€</div>
-                          <div>• Συνολικό ποσό: {parseFloat(newGoal).toFixed(2)}€</div>
-                          <div>• Διάρκεια: {newInstallments} μήνες</div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Timeline Configuration */}
-                    <div className="mt-4 p-3 bg-gray-50 rounded border border-gray-200">
-                      <div className="text-sm font-medium text-gray-700 mb-3">Πρόγραμμα Συλλογής</div>
-                      <div className="grid grid-cols-3 gap-3">
-                        <div>
-                          <Label htmlFor="start-month" className="text-xs font-medium">Μήνας Έναρξης</Label>
-                          <Select value={newStartMonth} onValueChange={setNewStartMonth}>
-                            <SelectTrigger className="mt-1">
-                              <SelectValue placeholder="Επιλογή μήνα" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getMonthOptions().map((month) => (
-                                <SelectItem key={month.value} value={month.value}>
-                                  {month.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="start-year" className="text-xs font-medium">Έτος Έναρξης</Label>
-                          <Select value={newStartYear} onValueChange={setNewStartYear}>
-                            <SelectTrigger className="mt-1">
-                              <SelectValue placeholder="Επιλογή έτους" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getYearOptions().map((year) => (
-                                <SelectItem key={year.value} value={year.value}>
-                                  {year.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="duration" className="text-xs font-medium">Διάρκεια</Label>
-                          <Select value={newDurationMonths} onValueChange={setNewDurationMonths}>
-                            <SelectTrigger className="mt-1">
-                              <SelectValue placeholder="Επιλογή διάρκειας" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getDurationOptions().map((duration) => (
-                                <SelectItem key={duration.value} value={duration.value}>
-                                  {duration.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      
-                      {/* Timeline Preview */}
-                      {newStartMonth && newStartYear && newDurationMonths && (
-                        <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-200">
-                          <div className="text-xs text-blue-700 font-medium mb-1">Προεπισκόπηση Προγράμματος:</div>
-                          <div className="text-xs text-blue-600">
-                            • Έναρξη: {getMonthOptions().find(m => m.value === newStartMonth)?.label} {newStartYear}
-                            • Διάρκεια: {newDurationMonths} μήνες
-                            • Ολοκλήρωση: {(() => {
-                              const startDate = new Date(parseInt(newStartYear), parseInt(newStartMonth) - 1, 1);
-                              const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + parseInt(newDurationMonths), 0);
-                              return `${getMonthOptions().find(m => m.value === (endDate.getMonth() + 1).toString().padStart(2, '0'))?.label} ${endDate.getFullYear()}`;
-                            })()}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex gap-2 pt-2">
-                      <Button size="sm" onClick={handleSaveGoal} className="flex-1 bg-orange-600 hover:bg-orange-700">
-                        <Check className="h-4 w-4 mr-1" />
-                        Αποθήκευση
-                      </Button>
+              <CardContent className="p-4 cursor-pointer hover:bg-orange-50/50 transition-colors" onClick={() => setShowReserveGoalModal(true)}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Target className={`h-5 w-5 ${getProgressColors(reserveProgress).text}`} />
+                    <h3 className={`font-semibold text-sm ${getProgressColors(reserveProgress).text}`}>Στόχος Αποθεματικού</h3>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRefreshReserve();
+                      }}
+                      disabled={refreshingReserve}
+                      className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
+                      title="Ανανέωση δεδομένων"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${refreshingReserve ? 'animate-spin' : ''}`} />
+                    </Button>
+                    {!editingGoal && (
                       <Button
+                        variant="ghost"
                         size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingGoal(false);
-                          setNewGoal((financialSummary?.reserve_fund_goal || 0).toString());
-                          setNewInstallments((financialSummary?.reserve_fund_duration_months || 0).toString());
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingGoal(true);
                         }}
-                        className="border-orange-200 text-orange-600 hover:bg-orange-50"
+                        className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
+                        title="Επεξεργασία στόχου"
                       >
-                        <X className="h-4 w-4" />
-                        Ακύρωση
+                        <Edit3 className="h-4 w-4" />
                       </Button>
-                    </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Column 1: Goal and Installments */}
-                    <div className="space-y-3">
-                      <div className="space-y-1">
-                        <div className="text-xs text-orange-700 font-medium">Στόχος:</div>
-                        <div className={`text-lg font-bold ${getProgressColors(reserveProgress).text}`}>
-                          {formatCurrency(financialSummary?.reserve_fund_goal || 0)}
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-xs text-orange-700 font-medium">Μηνιαία Δόση:</div>
-                        <div className={`text-sm font-bold ${getProgressColors(reserveProgress).text}`}>
-                          {formatCurrency(financialSummary?.reserve_fund_monthly_target || 0)}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Column 2: Progress */}
-                    <div className="space-y-2 p-3 bg-orange-50/50 rounded-lg border border-orange-100">
-                      <div className="flex justify-between text-xs text-orange-600">
-                        <span>Πρόοδος</span>
-                        <span>{Math.round(reserveProgress)}%</span>
-                      </div>
-                      <div className={`w-full rounded-full h-2 ${getProgressColors(reserveProgress).bg}`}>
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${getProgressColors(reserveProgress).fill}`}
-                          style={{ width: `${Math.min(100, Math.max(0, reserveProgress))}%` }}
-                        ></div>
-                      </div>
-                      <div className="text-xs text-gray-500 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <span>{`${formatCurrency(financialSummary?.current_reserve || 0)} / ${formatCurrency(financialSummary?.reserve_fund_goal || 0)}`}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleShowAmountDetails('current_reserve', financialSummary?.current_reserve || 0, 'Τρέχον Ισοζύγιο')}
-                            className="h-4 px-1 text-xs text-orange-600 hover:text-orange-700"
-                            title="Δείτε λεπτομέρειες ισοζυγίου"
-                          >
-                            Λεπτομέρειες
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Column 3: Installment Schedule */}
-                    <div className="space-y-1">
-                      {financialSummary?.reserve_fund_duration_months && (
-                        <div className="text-xs text-orange-600 space-y-2">
-                          <div className="font-medium">Πρόγραμμα {financialSummary.reserve_fund_duration_months} δόσεων:</div>
-                          {(() => {
-                            const installments = getReserveFundInstallmentMonths();
-                            const hasStarted = installments.length > 0 && !installments[0]?.isFuture;
-                            
-                            if (installments.length === 0) {
-                              return (
-                                <div className="text-xs text-gray-500 italic bg-gray-50 px-2 py-1 rounded">
-                                  Δεν έχει οριστεί πρόγραμμα.
-                                </div>
-                              );
-                            }
-
-                            return (
-                              <>
-                                {!hasStarted && (
-                                  <div className="text-xs text-blue-600 italic bg-blue-50 px-2 py-1 rounded">
-                                    ⏳ Η συλλογή ξεκινάει {installments[0]?.displayText?.split(': ')[1]}
-                                  </div>
-                                )}
-                                <div className="space-y-1 max-h-24 overflow-y-auto">
-                                  {installments.map((installment, index) => (
-                                    <div 
-                                      key={index}
-                                      className={`text-xs px-2 py-1 rounded ${
-                                        installment.isCurrent 
-                                          ? 'font-bold text-orange-800 bg-orange-100 border border-orange-200' 
-                                          : installment.isFuture 
-                                            ? 'text-gray-500 italic bg-gray-50' 
-                                            : 'text-orange-600 bg-orange-50'
-                                      }`}
-                                      title={installment.isCurrent ? 'Τρέχουσα δόση' : installment.isFuture ? 'Μελλοντική δόση' : 'Παρελθούσα δόση'}
-                                    >
-                                      {installment.displayText}
-                                    </div>
-                                  ))}
-                                </div>
-                              </>
-                            );
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                {refreshingReserve && (
-                  <div className="mt-3 p-2 bg-orange-50 rounded border border-orange-200">
-                    <div className="text-xs text-orange-600 text-center flex items-center justify-center gap-2">
-                      <RefreshCw className="h-3 w-3 animate-spin" />
-                      Ενημέρωση δεδομένων...
-                    </div>
-                  </div>
-                )}
-                  </CardContent>
-                </CollapsibleContent>
-              </Collapsible>
+                </div>
+              </CardContent>
             </Card>
 
           </div>
@@ -1670,118 +1305,43 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         {/* Section 3: Management Expenses - New Row */}
         <div className="space-y-2">
           <Card className={`border-purple-200 bg-purple-50/30 relative ${applyingServicePackage ? 'opacity-75' : ''}`}>
-            <Collapsible defaultOpen={false}>
-              <CollapsibleTrigger asChild>
-                <CardContent className="p-3 sm:p-4 cursor-pointer hover:bg-purple-50/50 transition-colors">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Building className="h-5 w-5 text-purple-600" />
-                      <h3 className="text-sm font-semibold text-purple-900">Δαπάνες Διαχείρισης</h3>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowServicePackageModal(true);
-                        }}
-                        className="h-8 px-2 text-purple-600 hover:text-purple-700"
-                        title="Επιλογή πακέτου υπηρεσιών"
-                      >
-                        <Package className="h-4 w-4 mr-1" />
-                        Πακέτα
-                      </Button>
-                      {!editingManagementFee && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingManagementFee(true);
-                          }}
-                          className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700"
-                          title="Επεξεργασία αμοιβής διαχείρισης"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className="p-3 sm:p-4 pt-0">
-              
-              {editingManagementFee ? (
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="management-fee" className="text-xs">Αμοιβή ανά διαμέρισμα (€)</Label>
-                    <Input
-                      id="management-fee"
-                      type="number"
-                      value={newManagementFee}
-                      onChange={(e) => setNewManagementFee(e.target.value)}
-                      placeholder="0.00"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSaveManagementFee} className="flex-1">
-                      <Check className="h-4 w-4 mr-1" />
-                      Αποθήκευση
-                    </Button>
+            <CardContent className="p-3 sm:p-4 cursor-pointer hover:bg-purple-50/50 transition-colors" onClick={() => setShowManagementExpensesModal(true)}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Building className="h-5 w-5 text-purple-600" />
+                  <h3 className="text-sm font-semibold text-purple-900">Δαπάνες Διαχείρισης</h3>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowServicePackageModal(true);
+                    }}
+                    className="h-8 px-2 text-purple-600 hover:text-purple-700"
+                    title="Επιλογή πακέτου υπηρεσιών"
+                  >
+                    <Package className="h-4 w-4 mr-1" />
+                    Πακέτα
+                  </Button>
+                  {!editingManagementFee && (
                     <Button
+                      variant="ghost"
                       size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setEditingManagementFee(false);
-                        setNewManagementFee((financialSummary?.management_fee_per_apartment || 0).toString());
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingManagementFee(true);
                       }}
+                      className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700"
+                      title="Επεξεργασία αμοιβής διαχείρισης"
                     >
-                      <X className="h-4 w-4" />
+                      <Edit3 className="h-4 w-4" />
                     </Button>
-                  </div>
+                  )}
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Column 1: Management Fee per Apartment */}
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="text-xs text-purple-700 font-medium">Αμοιβή ανά διαμέρισμα/μήνα:</div>
-                      <div className="text-sm font-bold text-purple-700">
-                        {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}/μήνα
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Column 2: Total Management Cost */}
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="text-xs text-purple-700 font-medium">Συνολικό κόστος διαχείρισης/μήνα:</div>
-                      <div className="text-sm font-bold text-purple-700">
-                        {formatCurrency((financialSummary?.management_fee_per_apartment || 0) * (financialSummary?.apartments_count || 0))}/μήνα
-                      </div>
-                      <div className="text-xs text-purple-600">
-                        {financialSummary?.apartments_count || 0} διαμερίσματα × {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}/μήνα
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Loading overlay for service package application */}
-              {applyingServicePackage && (
-                <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
-                  <div className="flex items-center gap-2 text-purple-600">
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    <span className="text-sm font-medium">Ενημέρωση δαπανών διαχείρισης...</span>
-                  </div>
-                </div>
-              )}
-                </CardContent>
-              </CollapsibleContent>
-            </Collapsible>
+              </div>
+            </CardContent>
           </Card>
         </div>
 
@@ -1911,6 +1471,448 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         </div>
       )}
 
+      {/* Overview Modal */}
+      <Dialog open={showOverviewModal} onOpenChange={setShowOverviewModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-green-600" />
+              Με μια ματιά - Κάλυψη Υποχρεώσεων
+            </DialogTitle>
+            <DialogDescription>
+              Προβολή κάλυψης υποχρεώσεων με progress bar και στατιστικά
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
+            {(() => {
+              // Υπολογισμός συνολικού ποσού που οφείλεται (τρέχοντες + προηγούμενες οφειλές)
+              const currentMonthObligations = (financialSummary?.total_expenses_month || 0) + 
+                                             (financialSummary?.total_management_cost || 0) + 
+                                             (financialSummary?.reserve_fund_monthly_target || 0);
+              
+              // Προηγούμενες οφειλές (συμπεριλαμβανομένων εκ των υστέρων δαπανών)
+              const previousObligations = financialSummary?.previous_obligations || 0;
+              
+              // Συνολικές υποχρεώσεις = τρέχοντες + προηγούμενες
+              const totalObligations = currentMonthObligations + previousObligations;
+              
+              // Πληρωμές που έχουν γίνει για τον τρέχοντα μήνα
+              const actualPayments = financialSummary?.total_payments_month || 0;
+              
+              // Υπολογισμός ποσοστού κάλυψης
+              const coveragePercentage = totalObligations > 0 ? Math.min(100, (actualPayments / totalObligations * 100)) : 0;
+              
+              // Υπολογισμός εκκρεμών πληρωμών
+              const pendingPayments = Math.max(0, totalObligations - actualPayments);
+              
+              return (
+                <>
+                  {/* Progress Bar */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">Κάλυψη Υποχρεώσεων</span>
+                        {previousObligations > 0 && (
+                          <span className="text-xs text-gray-500">(συμπεριλαμβανομένων προηγούμενων)</span>
+                        )}
+                      </div>
+                      <span className="text-sm font-bold text-green-600">
+                        {coveragePercentage.toFixed(1)}%
+                      </span>
+                    </div>
+                    
+                    <div className="w-full bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${coveragePercentage}%` }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-xs font-bold text-white drop-shadow-sm">
+                          {formatCurrency(actualPayments)} / {formatCurrency(totalObligations)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-xs text-gray-600">
+                      <span>0€</span>
+                      <span>{formatCurrency(totalObligations)}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Στατιστικά */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div className="text-lg font-bold text-green-700">
+                        {formatCurrency(actualPayments)}
+                      </div>
+                      <div className="text-xs text-green-600">Πληρωμένες</div>
+                    </div>
+                    
+                    <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
+                      <div className="text-lg font-bold text-red-700">
+                        {formatCurrency(pendingPayments)}
+                      </div>
+                      <div className="text-xs text-red-600">Εκκρεμείς</div>
+                    </div>
+                    
+                    <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="text-lg font-bold text-blue-700">
+                        {formatCurrency(totalObligations)}
+                      </div>
+                      <div className="text-xs text-blue-600">Σύνολο</div>
+                    </div>
+                  </div>
+                  
+                  {/* Διαμερίσματα με οφειλές */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <div className="text-lg font-bold text-orange-700">
+                        0/{financialSummary?.apartments_count || 0}
+                      </div>
+                      <div className="text-xs text-orange-600">με οφειλές</div>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reserve Goal Modal */}
+      <Dialog open={showReserveGoalModal} onOpenChange={setShowReserveGoalModal}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-orange-600" />
+              Στόχος Αποθεματικού
+            </DialogTitle>
+            <DialogDescription>
+              Διαχείριση στόχου αποθεματικού και προγράμματος συλλογής
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
+            {editingGoal ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="new-goal" className="text-sm font-medium">Νέος στόχος (€)</Label>
+                    <Input
+                      id="new-goal"
+                      type="number"
+                      value={newGoal}
+                      onChange={(e) => setNewGoal(e.target.value)}
+                      placeholder="0.00"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="new-installments" className="text-sm font-medium">Δόσεις (μήνες)</Label>
+                    <Input
+                      id="new-installments"
+                      type="number"
+                      value={newInstallments}
+                      onChange={(e) => setNewInstallments(e.target.value)}
+                      placeholder="12"
+                      min="1"
+                      max="60"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                {/* Preview */}
+                {newGoal && newInstallments && parseFloat(newGoal) > 0 && parseInt(newInstallments) > 0 && (
+                  <div className="p-3 bg-blue-50 rounded border border-blue-200">
+                    <div className="text-sm text-blue-700 font-medium mb-1">
+                      Προεπισκόπηση:
+                    </div>
+                    <div className="text-xs text-blue-600 space-y-1">
+                      <div>• Μηνιαία εισφορά: {(parseFloat(newGoal) / parseInt(newInstallments)).toFixed(2)}€</div>
+                      <div>• Συνολικό ποσό: {parseFloat(newGoal).toFixed(2)}€</div>
+                      <div>• Διάρκεια: {newInstallments} μήνες</div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Timeline Configuration */}
+                <div className="mt-4 p-3 bg-gray-50 rounded border border-gray-200">
+                  <div className="text-sm font-medium text-gray-700 mb-3">Πρόγραμμα Συλλογής</div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label htmlFor="start-month" className="text-xs font-medium">Μήνας Έναρξης</Label>
+                      <Select value={newStartMonth} onValueChange={setNewStartMonth}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Επιλογή μήνα" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getMonthOptions().map((month) => (
+                            <SelectItem key={month.value} value={month.value}>
+                              {month.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="start-year" className="text-xs font-medium">Έτος Έναρξης</Label>
+                      <Select value={newStartYear} onValueChange={setNewStartYear}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Επιλογή έτους" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getYearOptions().map((year) => (
+                            <SelectItem key={year.value} value={year.value}>
+                              {year.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="duration" className="text-xs font-medium">Διάρκεια</Label>
+                      <Select value={newDurationMonths} onValueChange={setNewDurationMonths}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Επιλογή διάρκειας" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getDurationOptions().map((duration) => (
+                            <SelectItem key={duration.value} value={duration.value}>
+                              {duration.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  {/* Timeline Preview */}
+                  {newStartMonth && newStartYear && newDurationMonths && (
+                    <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-200">
+                      <div className="text-xs text-blue-700 font-medium mb-1">Προεπισκόπηση Προγράμματος:</div>
+                      <div className="text-xs text-blue-600">
+                        • Έναρξη: {getMonthOptions().find(m => m.value === newStartMonth)?.label} {newStartYear}
+                        • Διάρκεια: {newDurationMonths} μήνες
+                        • Ολοκλήρωση: {(() => {
+                          const startDate = new Date(parseInt(newStartYear), parseInt(newStartMonth) - 1, 1);
+                          const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + parseInt(newDurationMonths), 0);
+                          return `${getMonthOptions().find(m => m.value === (endDate.getMonth() + 1).toString().padStart(2, '0'))?.label} ${endDate.getFullYear()}`;
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex gap-2 pt-2">
+                  <Button size="sm" onClick={handleSaveGoal} className="flex-1 bg-orange-600 hover:bg-orange-700">
+                    <Check className="h-4 w-4 mr-1" />
+                    Αποθήκευση
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setEditingGoal(false);
+                      setNewGoal((financialSummary?.reserve_fund_goal || 0).toString());
+                      setNewInstallments((financialSummary?.reserve_fund_duration_months || 0).toString());
+                    }}
+                    className="border-orange-200 text-orange-600 hover:bg-orange-50"
+                  >
+                    <X className="h-4 w-4" />
+                    Ακύρωση
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Column 1: Goal and Installments */}
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="text-xs text-orange-700 font-medium">Στόχος:</div>
+                    <div className={`text-lg font-bold ${getProgressColors(reserveProgress).text}`}>
+                      {formatCurrency(financialSummary?.reserve_fund_goal || 0)}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs text-orange-700 font-medium">Μηνιαία Δόση:</div>
+                    <div className={`text-sm font-bold ${getProgressColors(reserveProgress).text}`}>
+                      {formatCurrency(financialSummary?.reserve_fund_monthly_target || 0)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 2: Progress */}
+                <div className="space-y-2 p-3 bg-orange-50/50 rounded-lg border border-orange-100">
+                  <div className="flex justify-between text-xs text-orange-600">
+                    <span>Πρόοδος</span>
+                    <span>{Math.round(reserveProgress)}%</span>
+                  </div>
+                  <div className={`w-full rounded-full h-2 ${getProgressColors(reserveProgress).bg}`}>
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${getProgressColors(reserveProgress).fill}`}
+                      style={{ width: `${Math.min(100, Math.max(0, reserveProgress))}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-gray-500 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <span>{`${formatCurrency(financialSummary?.current_reserve || 0)} / ${formatCurrency(financialSummary?.reserve_fund_goal || 0)}`}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleShowAmountDetails('current_reserve', financialSummary?.current_reserve || 0, 'Τρέχον Ισοζύγιο')}
+                        className="h-4 px-1 text-xs text-orange-600 hover:text-orange-700"
+                        title="Δείτε λεπτομέρειες ισοζυγίου"
+                      >
+                        Λεπτομέρειες
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 3: Installment Schedule */}
+                <div className="space-y-1">
+                  {financialSummary?.reserve_fund_duration_months && (
+                    <div className="text-xs text-orange-600 space-y-2">
+                      <div className="font-medium">Πρόγραμμα {financialSummary.reserve_fund_duration_months} δόσεων:</div>
+                      {(() => {
+                        const installments = getReserveFundInstallmentMonths();
+                        const hasStarted = installments.length > 0 && !installments[0]?.isFuture;
+                        
+                        if (installments.length === 0) {
+                          return (
+                            <div className="text-xs text-gray-500 italic bg-gray-50 px-2 py-1 rounded">
+                              Δεν έχει οριστεί πρόγραμμα.
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <>
+                            {!hasStarted && (
+                              <div className="text-xs text-blue-600 italic bg-blue-50 px-2 py-1 rounded">
+                                ⏳ Η συλλογή ξεκινάει {installments[0]?.displayText?.split(': ')[1]}
+                              </div>
+                            )}
+                            <div className="space-y-1 max-h-24 overflow-y-auto">
+                              {installments.map((installment, index) => (
+                                <div 
+                                  key={index}
+                                  className={`text-xs px-2 py-1 rounded ${
+                                    installment.isCurrent 
+                                      ? 'font-bold text-orange-800 bg-orange-100 border border-orange-200' 
+                                      : installment.isFuture 
+                                        ? 'text-gray-500 italic bg-gray-50' 
+                                        : 'text-orange-600 bg-orange-50'
+                                  }`}
+                                  title={installment.isCurrent ? 'Τρέχουσα δόση' : installment.isFuture ? 'Μελλοντική δόση' : 'Παρελθούσα δόση'}
+                                >
+                                  {installment.displayText}
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {refreshingReserve && (
+              <div className="mt-3 p-2 bg-orange-50 rounded border border-orange-200">
+                <div className="text-xs text-orange-600 text-center flex items-center justify-center gap-2">
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                  Ενημέρωση δεδομένων...
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Management Expenses Modal */}
+      <Dialog open={showManagementExpensesModal} onOpenChange={setShowManagementExpensesModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5 text-purple-600" />
+              Δαπάνες Διαχείρισης
+            </DialogTitle>
+            <DialogDescription>
+              Διαχείριση αμοιβών διαχείρισης και πακέτων υπηρεσιών
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
+            {editingManagementFee ? (
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="management-fee" className="text-xs">Αμοιβή ανά διαμέρισμα (€)</Label>
+                  <Input
+                    id="management-fee"
+                    type="number"
+                    value={newManagementFee}
+                    onChange={(e) => setNewManagementFee(e.target.value)}
+                    placeholder="0.00"
+                    className="mt-1"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleSaveManagementFee} className="flex-1">
+                    <Check className="h-4 w-4 mr-1" />
+                    Αποθήκευση
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setEditingManagementFee(false);
+                      setNewManagementFee((financialSummary?.management_fee_per_apartment || 0).toString());
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Column 1: Management Fee per Apartment */}
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="text-xs text-purple-700 font-medium">Αμοιβή ανά διαμέρισμα/μήνα:</div>
+                    <div className="text-sm font-bold text-purple-700">
+                      {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}/μήνα
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 2: Total Management Cost */}
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="text-xs text-purple-700 font-medium">Συνολικό κόστος διαχείρισης/μήνα:</div>
+                    <div className="text-sm font-bold text-purple-700">
+                      {formatCurrency((financialSummary?.management_fee_per_apartment || 0) * (financialSummary?.apartments_count || 0))}/μήνα
+                    </div>
+                    <div className="text-xs text-purple-600">
+                      {financialSummary?.apartments_count || 0} διαμερίσματα × {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}/μήνα
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Loading overlay for service package application */}
+            {applyingServicePackage && (
+              <div className="p-2 bg-purple-50 rounded border border-purple-200">
+                <div className="text-xs text-purple-600 text-center flex items-center justify-center gap-2">
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                  Ενημέρωση δαπανών διαχείρισης...
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
     </Card>
   );
