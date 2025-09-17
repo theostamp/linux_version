@@ -19,7 +19,7 @@ export function useBuildingEvents(buildingIdParam?: number) {
     // Avoid connecting in development if backend WS isn’t available
     if (typeof window === 'undefined') return;
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const host = `${window.location.hostname}:8000`;
+    const host = `${window.location.hostname}:18000`;
     const wsUrl = `${protocol}://${host}/ws/chat/${buildingId}/`;
 
     // Guard: try a quick HEAD to backend HTTP root to infer availability

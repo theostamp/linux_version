@@ -53,13 +53,13 @@ export function getApiBase(): string {
     const hostname = window.location.hostname;
     // Use tenant-specific host if available (e.g., demo.localhost)
     if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
-      return `http://${hostname}:8000`;
+      return `http://${hostname}:18000`;
     }
   }
   if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_BASE_URL) {
     return process.env.NEXT_PUBLIC_API_BASE_URL as string;
   }
-  return 'http://localhost:8000';
+  return 'http://localhost:18000';
 }
 
 export async function apiGet<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
@@ -142,12 +142,15 @@ const getApiBaseUrl = () => {
     
     // Αν είναι tenant subdomain (π.χ. demo.localhost), χρησιμοποιούμε το ίδιο subdomain για το API
     if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
-      const apiUrl = `http://${hostname}:8000/api`;
+      // Extract port from environment variable or use 18000 as default
+      const envUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:18000/api';
+      const envPort = envUrl.match(/:(\d+)/)?.[1] ?? '18000';
+      const apiUrl = `http://${hostname}:${envPort}/api`;
       console.log(`[API] Using tenant-specific API URL: ${apiUrl}`);
       return apiUrl;
     }
   }
-  let base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api';
+  let base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:18000/api';
   base = base.replace(/\/$/, '');
   if (!/\/api$/.test(base)) {
     base = `${base}/api`;
@@ -165,11 +168,6 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    // Add X-Forwarded-Host header for Django tenant system (browser-safe alternative)
-    ...(typeof window !== 'undefined' && window.location.hostname.includes('.localhost') 
-      ? { 'X-Forwarded-Host': window.location.hostname }
-      : { 'X-Forwarded-Host': 'demo.localhost' }
-    ),
   },
 });
 

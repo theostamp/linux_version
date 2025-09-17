@@ -9,7 +9,7 @@ const getApiBaseUrl = () => {
     
     // Αν είναι tenant subdomain (π.χ. demo.localhost), χρησιμοποιούμε το ίδιο subdomain για το API
     if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
-      const apiUrl = `http://${hostname}:8000/api`;
+      const apiUrl = `http://${hostname}:18000/api`;
       console.log(`[API PUBLIC] Using tenant-specific API URL: ${apiUrl}`);
       return apiUrl;
     }

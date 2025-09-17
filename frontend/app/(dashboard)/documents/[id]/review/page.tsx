@@ -170,7 +170,7 @@ export default function DocumentReviewPage() {
                     <CardContent className="p-2 h-full">
                         {document.file_url ? (
                             <iframe
-                                src={`http://demo.localhost:8000${document.file_url}?token=${getToken()}`}
+                                src={`http://demo.localhost:18000${document.file_url}?token=${getToken()}`}
                                 className="w-full h-full border-0"
                                 title={`Προεπισκόπηση παραστατικού ${id}`}
                             />
