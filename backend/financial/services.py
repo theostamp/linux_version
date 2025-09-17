@@ -935,8 +935,9 @@ class FinancialDashboardService:
             else:  # Exactly 0€
                 status = 'Ενήμερο'
             
-            # ΔΙΟΡΘΩΣΗ: Υπολογισμός previous_balance και net_obligation για snapshot view
+            # ΔΙΟΡΘΩΣΗ: Υπολογισμός previous_balance, reserve_fund_share και net_obligation για snapshot view
             previous_balance = Decimal('0.00')
+            reserve_fund_share = Decimal('0.00')
             net_obligation = Decimal('0.00')
             expense_share = Decimal('0.00')
             
@@ -965,14 +966,33 @@ class FinancialDashboardService:
                     apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
                     expense_share += apartment_share
                 
-                # 3. Net Obligation = Previous Balance + Current Month Expenses - Payments this month
+                # 3. Υπολογισμός αποθεματικού για τον μήνα
+                if (self.building.reserve_fund_goal and 
+                    self.building.reserve_fund_duration_months and
+                    self.building.reserve_fund_start_date and
+                    month_start >= self.building.reserve_fund_start_date):
+                    
+                    # Έλεγχος αν ο μήνας είναι εντός της περιόδου συλλογής αποθεματικού
+                    if (not self.building.reserve_fund_target_date or 
+                        month_start <= self.building.reserve_fund_target_date):
+                        
+                        monthly_reserve_target = self.building.reserve_fund_goal / self.building.reserve_fund_duration_months
+                        
+                        # Κατανομή ανά χιλιοστά
+                        total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
+                            total=Sum('participation_mills'))['total'] or 1000
+                        
+                        if total_mills > 0:
+                            reserve_fund_share = (monthly_reserve_target * apartment.participation_mills) / total_mills
+                
+                # 4. Net Obligation = Previous Balance + Current Month Expenses + Reserve Fund - Payments this month
                 month_payments = Payment.objects.filter(
                     apartment=apartment,
                     date__gte=month_start,
                     date__lt=end_date
                 ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
                 
-                net_obligation = previous_balance + expense_share - month_payments
+                net_obligation = previous_balance + expense_share + reserve_fund_share - month_payments
             
             # ΔΙΟΡΘΩΣΗ: Υπολογισμός total_payments για κάθε διαμέρισμα
             if end_date:
@@ -993,6 +1013,7 @@ class FinancialDashboardService:
                 'owner_name': apartment.owner_name or 'Άγνωστος',
                 'current_balance': calculated_balance,
                 'previous_balance': previous_balance,  # ← ΝΕΟ FIELD
+                'reserve_fund_share': reserve_fund_share,  # ← ΝΕΟ FIELD - Αποθεματικό
                 'expense_share': expense_share,        # ← ΝΕΟ FIELD  
                 'net_obligation': net_obligation,      # ← ΝΕΟ FIELD
                 'total_payments': total_payments_apartment,  # ← ΝΕΟ FIELD - Διόρθωση!

@@ -55,6 +55,7 @@ interface ApartmentBalanceWithDetails {
   participation_mills: number;
   current_balance: number;
   previous_balance: number;
+  reserve_fund_share: number;  // ← ΝΕΟ FIELD - Αποθεματικό
   expense_share: number;
   total_obligations: number;
   total_payments: number;
@@ -85,6 +86,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
     apartment_id: number;
     common_expense_amount: number;
     previous_obligations_amount: number;
+    reserve_fund_amount: number;
   } | null>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [apartmentToDelete, setApartmentToDelete] = useState<ApartmentBalanceWithDetails | null>(null);
@@ -162,19 +164,37 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
     // Current month expense share (cannot be negative)
     const currentMonthShare = Math.max(0, apartment.expense_share);
     
+    // Reserve fund share (cannot be negative)
+    const reserveFundShare = Math.max(0, apartment.reserve_fund_share || 0);
+    
     // Calculate how to split the payment based on debt composition:
-    // Priority: Previous balance first, then current month expenses
+    // Priority: Previous balance first, then reserve fund, then current month expenses
     let commonExpenseAmount = 0;
     let previousObligationsAmount = 0;
+    let reserveFundAmount = 0;
     
     if (previousDebt > 0) {
       // If there are previous obligations, pay them first
       previousObligationsAmount = roundToCents(Math.min(previousDebt, totalDebt));
       const remainingDebt = totalDebt - previousObligationsAmount;
-      commonExpenseAmount = roundToCents(Math.max(0, remainingDebt));
+      
+      // Then pay reserve fund if available
+      if (reserveFundShare > 0 && remainingDebt > 0) {
+        reserveFundAmount = roundToCents(Math.min(reserveFundShare, remainingDebt));
+        const finalRemainingDebt = remainingDebt - reserveFundAmount;
+        commonExpenseAmount = roundToCents(Math.max(0, finalRemainingDebt));
+      } else {
+        commonExpenseAmount = roundToCents(Math.max(0, remainingDebt));
+      }
     } else {
-      // No previous debt, all goes to current expenses
-      commonExpenseAmount = roundToCents(totalDebt);
+      // No previous debt, check for reserve fund first
+      if (reserveFundShare > 0) {
+        reserveFundAmount = roundToCents(Math.min(reserveFundShare, totalDebt));
+        const remainingDebt = totalDebt - reserveFundAmount;
+        commonExpenseAmount = roundToCents(Math.max(0, remainingDebt));
+      } else {
+        commonExpenseAmount = roundToCents(totalDebt);
+      }
       previousObligationsAmount = 0;
     }
     
@@ -182,6 +202,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       apartment_id: apartment.apartment_id,
       common_expense_amount: commonExpenseAmount,
       previous_obligations_amount: previousObligationsAmount,
+      reserve_fund_amount: reserveFundAmount,
     });
     setShowPaymentModal(true);
   };
@@ -411,6 +432,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                   <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Ιδιοκτήτης</th>
                   <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Χιλιοστά</th>
                   <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Παλαιές Οφειλές</th>
+                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Αποθεματικό</th>
                   <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Τρέχουσα Οφειλή</th>
                   <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Συνολική Οφειλή</th>
                   <th className="text-center py-2 px-2 text-xs font-semibold text-gray-700">Κατάσταση</th>
@@ -430,6 +452,15 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                         apartment.previous_balance < -0.30 ? 'text-green-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : formatCurrency(apartment.previous_balance)}
+                      </span>
+                    </td>
+                    <td className="py-2 px-2 text-xs text-right">
+                      <span className={`font-medium ${
+                        Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
+                        (apartment.reserve_fund_share || 0) > 0.30 ? 'text-blue-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : 
+                         Math.abs(apartment.reserve_fund_share || 0) <= 0.30 ? '-' : formatCurrency(apartment.reserve_fund_share || 0)}
                       </span>
                     </td>
                     <td className="py-2 px-2 text-xs text-right">
@@ -497,29 +528,28 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                           size="sm"
                           onClick={() => handleViewDetails(apartment)}
                           className="flex items-center gap-1 text-xs"
+                          title="Ενημέρωση διαμερίσματος"
                         >
                           <Eye className="h-3 w-3" />
-                          Ειδοποιητήριο
+                          Ενημέρωση
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleViewHistory(apartment)}
-                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border-blue-200 text-xs"
+                          className="flex items-center justify-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 border-blue-200 text-xs w-10 h-8"
                           title="Προβολή ιστορικού πληρωμών"
                         >
-                          <History className="h-3 w-3" />
-                          Ιστορικό
+                          <History className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleViewTransactionHistory(apartment)}
-                          className="flex items-center gap-1 text-purple-600 hover:text-purple-800 hover:bg-purple-50 border-purple-200 text-xs"
+                          className="flex items-center justify-center text-purple-600 hover:text-purple-800 hover:bg-purple-50 border-purple-200 text-xs w-10 h-8"
                           title="Προβολή ιστορικού κινήσεων (χρεώσεις και πληρωμές)"
                         >
-                          <TrendingUp className="h-3 w-3" />
-                          Κινήσεις
+                          <TrendingUp className="h-4 w-4" />
                         </Button>
                         {apartment.net_obligation > 0 && (
                           <Button
@@ -536,10 +566,10 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                           variant="outline"
                           size="sm"
                           onClick={() => handleDeletePayments(apartment)}
-                          className="flex items-center gap-1 text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200 text-xs"
+                          className="flex items-center justify-center text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200 text-xs w-10 h-8"
                           title="Διαγραφή όλων των πληρωμών αυτού του διαμερίσματος"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </td>
@@ -600,6 +630,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                 apartment_id: 0,
                 common_expense_amount: 0,
                 previous_obligations_amount: 0,
+                reserve_fund_amount: 0,
               }}
             />
           </div>

@@ -477,7 +477,7 @@ docker compose up --build -d
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m " fix αποθεματικο μελλοντιες καταχωρησεις"
+git commit -m " fix λιστα εισπραξεων με προσθηκη καινουριας στήλης αποθεματικου"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

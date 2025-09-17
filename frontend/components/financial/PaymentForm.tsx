@@ -28,6 +28,11 @@ const paymentFormSchema = z.object({
     z.string().regex(/^\d*\.?\d*$/, 'Παρακαλώ εισάγετε έγκυρο ποσό').transform((val) => val === '' ? 0 : parseFloat(val)),
     z.literal('')
   ]).optional(),
+  reserve_fund_amount: z.union([
+    z.number().min(0, 'Το ποσό αποθεματικού δεν μπορεί να είναι αρνητικό'),
+    z.string().regex(/^\d*\.?\d*$/, 'Παρακαλώ εισάγετε έγκυρο ποσό').transform((val) => val === '' ? 0 : parseFloat(val)),
+    z.literal('')
+  ]).optional(),
   date: z.string().min(1, 'Παρακαλώ επιλέξτε ημερομηνία'),
   method: z.string().min(1, 'Παρακαλώ επιλέξτε μέθοδο εισπράξεως'),
   payment_type: z.string().min(1, 'Παρακαλώ επιλέξτε τύπο εισπράξεως'),
@@ -45,12 +50,15 @@ const paymentFormSchema = z.object({
     const previousAmount = typeof data.previous_obligations_amount === 'string' && data.previous_obligations_amount === '' 
       ? 0 
       : Number(data.previous_obligations_amount) || 0;
+    const reserveAmount = typeof data.reserve_fund_amount === 'string' && data.reserve_fund_amount === '' 
+      ? 0 
+      : Number(data.reserve_fund_amount) || 0;
     
     // At least one field must have a value > 0
-    return commonAmount > 0 || previousAmount > 0;
+    return commonAmount > 0 || previousAmount > 0 || reserveAmount > 0;
   },
   {
-    message: 'Πρέπει να συμπληρώσετε τουλάχιστον ένα από τα πεδία "Ποσό Κοινόχρηστων" ή "Παλαιότερες Οφειλές"',
+    message: 'Πρέπει να συμπληρώσετε τουλάχιστον ένα από τα πεδία "Ποσό Κοινόχρηστων", "Παλαιότερες Οφειλές" ή "Αποθεματικό"',
     path: ['common_expense_amount'],
   }
 );
@@ -99,6 +107,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       apartment_id: initialData?.apartment_id || 0,
       common_expense_amount: initialData?.common_expense_amount || undefined,
       previous_obligations_amount: initialData?.previous_obligations_amount || undefined,
+      reserve_fund_amount: initialData?.reserve_fund_amount || undefined,
       date: initialData?.date || new Date().toISOString().split('T')[0],
       method: initialData?.method || PaymentMethod.CASH,
       payment_type: initialData?.payment_type || PaymentType.COMMON_EXPENSE,
@@ -175,6 +184,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       if (initialData.previous_obligations_amount) {
         setValue('previous_obligations_amount', initialData.previous_obligations_amount);
       }
+      if (initialData.reserve_fund_amount) {
+        setValue('reserve_fund_amount', initialData.reserve_fund_amount);
+      }
     }
   }, [initialData, setValue]);
 
@@ -195,8 +207,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       // Optimize: Pre-calculate values to reduce computation in the async function
       const commonExpenseAmount = roundToCents(data.common_expense_amount || 0);
       const previousObligationsAmount = roundToCents(data.previous_obligations_amount || 0);
-      const totalAmount = roundToCents(commonExpenseAmount + previousObligationsAmount);
-      const reserveFundAmount = buildingData?.reserve_contribution_per_apartment || 0;
+      const reserveFundAmount = roundToCents(data.reserve_fund_amount || 0);
+      const totalAmount = roundToCents(commonExpenseAmount + previousObligationsAmount + reserveFundAmount);
       
       const paymentData: PaymentFormData = {
         apartment_id: data.apartment_id,
@@ -990,7 +1002,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           </div>
 
           {/* Amount and Date */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="common_expense_amount" className="text-sm">Ποσό Κοινόχρηστων (€) *</Label>
               <Input
@@ -1027,11 +1039,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               {errors.root && (
                 <p className="text-sm text-red-600">{errors.root.message}</p>
               )}
-              {buildingData?.reserve_contribution_per_apartment && buildingData.reserve_contribution_per_apartment > 0 && (
-                <p className="text-xs text-blue-600 mt-1">
-                  💡 Το ποσό περιλαμβάνει και αποθεματικό {formatCurrency(buildingData.reserve_contribution_per_apartment)}
-                </p>
-              )}
             </div>
 
             <div className="space-y-2">
@@ -1067,6 +1074,45 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 <p className="text-sm text-red-600">{errors.previous_obligations_amount.message}</p>
               )}
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reserve_fund_amount" className="text-sm">Αποθεματικό (€)</Label>
+              <Input
+                id="reserve_fund_amount"
+                type="number"
+                step="0.01"
+                min="0"
+                max="999999.99"
+                {...register('reserve_fund_amount', { 
+                  valueAsNumber: true,
+                  onChange: (e) => {
+                    // Allow user to type freely
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                      setValue('reserve_fund_amount', value);
+                    }
+                  },
+                  onBlur: (e) => {
+                    // Round to 2 decimal places when user finishes editing
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                      const roundedValue = roundToCents(value);
+                      e.target.value = roundedValue.toFixed(2);
+                      setValue('reserve_fund_amount', roundedValue);
+                    }
+                  }
+                })}
+                placeholder="0,00"
+              />
+              {errors.reserve_fund_amount && (
+                <p className="text-sm text-red-600">{errors.reserve_fund_amount.message}</p>
+              )}
+              {buildingData?.reserve_contribution_per_apartment && buildingData.reserve_contribution_per_apartment > 0 && (
+                <p className="text-xs text-blue-600 mt-1">
+                  💡 Προτεινόμενο: {formatCurrency(buildingData.reserve_contribution_per_apartment)}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Total Amount Display */}
@@ -1074,10 +1120,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             <Label>Συνολικό Ποσό Εισπράξεως</Label>
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="text-lg font-semibold text-blue-900">
-                {formatCurrency((watch('common_expense_amount') || 0) + (watch('previous_obligations_amount') || 0))}
+                {formatCurrency((watch('common_expense_amount') || 0) + (watch('previous_obligations_amount') || 0) + (watch('reserve_fund_amount') || 0))}
               </div>
               <div className="text-sm text-blue-700">
-                Κοινόχρηστα: {formatCurrency(watch('common_expense_amount') || 0)} + Παλαιότερες Οφειλές: {formatCurrency(watch('previous_obligations_amount') || 0)}
+                Κοινόχρηστα: {formatCurrency(watch('common_expense_amount') || 0)} + Παλαιότερες Οφειλές: {formatCurrency(watch('previous_obligations_amount') || 0)} + Αποθεματικό: {formatCurrency(watch('reserve_fund_amount') || 0)}
                 {buildingData?.reserve_contribution_per_apartment && buildingData.reserve_contribution_per_apartment > 0 && (
                   <span> (συμπεριλαμβανομένου αποθεματικού {formatCurrency(buildingData.reserve_contribution_per_apartment)})</span>
                 )}
