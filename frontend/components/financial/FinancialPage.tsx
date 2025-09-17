@@ -11,9 +11,7 @@ import {
   ChartsContainer,
   BulkImportWizard,
   ExpenseList,
-  BuildingOverviewSection,
-
-  FinancialOverviewTab
+  BuildingOverviewSection
 } from './index';
 import ScheduledMaintenanceOverviewModal from '../maintenance/ScheduledMaintenanceOverviewModal';
 import { ApartmentBalancesTab } from './ApartmentBalancesTab';
@@ -55,7 +53,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   const [activeTab, setActiveTab] = useState(() => {
     // Check URL parameters for tab, apartment, and amount
     const params = new URLSearchParams(window.location.search);
-    return params.get('tab') || 'overview';
+    return params.get('tab') || 'calculator';
   });
   
   // Use custom hook for modal management
@@ -404,8 +402,11 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
       
 
       
-      {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6" data-tabs-container>
+      {/* Main Content - Two Column Layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        {/* Left Column - Main Tabs Content */}
+        <div className="xl:col-span-3">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6" data-tabs-container>
         {/* Enhanced Navigation with Cards - Sticky */}
         <div className="w-full sticky top-[10px] bg-white z-10 pb-4 shadow-md border-b border-gray-100">
           {/* Mobile: Scrollable horizontal menu */}
@@ -448,19 +449,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 >
                   <Plus className="h-4 w-4" />
                   <span className="text-sm font-medium whitespace-nowrap">Δαπάνες</span>
-                </button>
-              </ConditionalRender>
-              <ConditionalRender permission="financial_read">
-                <button
-                  onClick={() => handleTabChange('overview')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
-                    activeTab === 'overview' 
-                      ? 'bg-indigo-100 border-indigo-300 text-indigo-700 shadow-sm' 
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
-                  }`}
-                >
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Συνοπτική Εικόνα</span>
                 </button>
               </ConditionalRender>
               <ConditionalRender permission="financial_write">
@@ -506,7 +494,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </div>
 
           {/* Desktop: Card Grid Layout */}
-          <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-7 gap-3">
+          <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-6 gap-3">
             <ConditionalRender permission="financial_write">
               <button
                 onClick={() => handleTabChange('calculator')}
@@ -582,32 +570,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 </h3>
                 <p className="text-xs text-gray-500 text-center mt-1">
                   Διαχείριση Εξόδων
-                </p>
-              </button>
-            </ConditionalRender>
-            <ConditionalRender permission="financial_read">
-              <button
-                onClick={() => handleTabChange('overview')}
-                className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
-                  activeTab === 'overview' 
-                    ? 'bg-indigo-50 border-indigo-200 shadow-sm' 
-                    : 'bg-white border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/30'
-                }`}
-              >
-                <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'overview' 
-                    ? 'bg-indigo-100 text-indigo-600' 
-                    : 'bg-gray-100 text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600'
-                }`}>
-                  <TrendingUp className="h-6 w-6" />
-                </div>
-                <h3 className={`font-semibold text-sm font-condensed ${
-                  activeTab === 'overview' ? 'text-indigo-700' : 'text-gray-700'
-                }`}>
-                  Συνοπτική Εικόνα
-                </h3>
-                <p className="text-xs text-gray-500 text-center mt-1">
-                  Καλυψη & Προοδος
                 </p>
               </button>
             </ConditionalRender>
@@ -694,14 +656,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         
 
         
-        <TabsContent value="overview" className="space-y-4" data-tab="overview">
-          <ProtectedFinancialRoute requiredPermission="financial_read">
-            <FinancialOverviewTab 
-              buildingId={activeBuildingId} 
-              selectedMonth={selectedMonth}
-            />
-          </ProtectedFinancialRoute>
-        </TabsContent>
         
         <TabsContent value="calculator" className="space-y-4" data-tab="calculator">
           <ProtectedFinancialRoute requiredPermission="financial_write">
@@ -766,15 +720,20 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
         </TabsContent>
         
 
-      </Tabs>
-      
-      {/* Building Overview Section */}
-      <BuildingOverviewSection 
-        ref={buildingOverviewRef}
-        buildingId={activeBuildingId}
-        selectedMonth={selectedMonth}
-        onReserveFundAmountChange={setReserveFundMonthlyAmount}
-      />
+          </Tabs>
+        </div>
+
+        {/* Right Column - Building Overview Section Only */}
+        <div className="xl:col-span-1 space-y-6">
+          {/* Building Overview Section - Moved to Right Column */}
+          <BuildingOverviewSection 
+            ref={buildingOverviewRef}
+            buildingId={activeBuildingId}
+            selectedMonth={selectedMonth}
+            onReserveFundAmountChange={setReserveFundMonthlyAmount}
+          />
+        </div>
+      </div>
       
       {/* Expense Form Modal */}
       <ConditionalRender permission="expense_manage">

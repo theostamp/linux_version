@@ -64,8 +64,8 @@ export default function DashboardLayout({ children, fullWidth = false }: Dashboa
         
         {/* Scrollable Main Content */}
         <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950">
-          <div className={!fullWidth ? "p-4 sm:p-6 md:p-8 lg:p-10" : ""}>
-            <div className={!fullWidth ? "max-w-7xl mx-auto" : ""}>
+          <div className="pt-[5px] px-4 sm:px-6 md:px-8 lg:px-10 pb-4 sm:pb-6 md:pb-8 lg:pb-10">
+            <div className="w-full">
               {children}
             </div>
           </div>

@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-// import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Building2, 
   Target, 
@@ -24,8 +24,8 @@ import {
   Building,
   Package,
   BarChart3,
-  // ChevronDown,
-  // ChevronUp,
+  ChevronDown,
+  ChevronUp,
   Info,
   PieChart,
   Eye
@@ -1080,110 +1080,10 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
   return (
     <Card className="border-none shadow-none"> {/* Removed border and shadow to blend in */}
-      <CardContent className="space-y-8 pt-0"> {/* Removed top padding */}
-        {/* Section 1: Period Overview */}
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            {/* Month-Specific Data Card */}
-            <Card className="border-2 border-blue-200 bg-blue-50/30">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Receipt className="h-5 w-5 text-blue-600" />
-                  <h3 className="font-semibold text-sm text-blue-900">
-                    Οικονομικές Υποχρεώσεις Περιόδου
-                  </h3>
-                </div>
-                
-                <div className="space-y-3">
-                  {/* Πραγματικά έξοδα */}
-                  <div className="space-y-1">
-                    <div className="text-xs text-red-600 font-medium"> Δαπάνες</div>
-                    <div className="text-lg font-bold text-red-700">
-                    {formatCurrency(financialSummary.average_monthly_expenses || 0)}
-                    </div>
-                    {(financialSummary.average_monthly_expenses || 0) === 0 && (
-                      <div className="text-xs text-gray-500 italic">Δεν υπάρχουν δαπάνες</div>
-                    )}
-                  </div>
-                  
-                  {/* Κόστος διαχείρισης */}
-                  {(financialSummary.total_management_cost || 0) > 0 && (
-                    <div className="space-y-1">
-                      <div className="text-xs text-blue-600 font-medium">Κόστος διαχείρισης/μήνα:</div>
-                      <div className="text-lg font-bold text-blue-700">
-                        {formatCurrency(financialSummary.total_management_cost || 0)}/μήνα
-                      </div>
-                      <div className="text-xs text-blue-600 italic">
-                        {financialSummary.apartments_count || 0} διαμερίσματα × {formatCurrency(financialSummary.management_fee_per_apartment || 0)}/μήνα
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Εισφορά αποθεματικού - εμφανίζεται αν είμαστε στην περίοδο συλλογής */}
-                  {(financialSummary.reserve_fund_monthly_target || 0) > 0 && isMonthWithinReserveFundPeriod() && (
-                    <div className="space-y-1">
-                      <div className="text-xs text-green-600 font-medium">Εισφορά αποθεματικού:</div>
-                      <div className={`text-lg font-bold ${(financialSummary.reserve_fund_contribution || 0) === 0 ? 'text-gray-500' : 'text-green-700'}`}>
-                        {formatCurrency(financialSummary.reserve_fund_monthly_target || 0)}
-                        {(financialSummary.reserve_fund_contribution || 0) === 0 && (
-                          <span className="text-xs text-red-600 ml-2">(Αναστολή)</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className={`text-xs italic ${(financialSummary.reserve_fund_contribution || 0) === 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          {(financialSummary.reserve_fund_contribution || 0) === 0 ? 'Θα αρχίσει να συλλέγεται μόλις εκπληρωθούν οι λειτουργικές δαπάνες' : 'Συσσώρευση κεφαλαίων'}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowReserveFundInfoModal(true)}
-                          className="h-4 w-4 p-0 text-green-600 hover:text-green-700"
-                          title="Πληροφορίες για την εισφορά αποθεματικού"
-                        >
-                          <Info className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  
-                                      {/* Μηνιαίες Υποχρεώσεις (αν υπάρχουν πραγματικές δαπάνες, κόστος διαχείρισης ή αποθεματικό στην περίοδο) */}
-                  {((financialSummary.average_monthly_expenses || 0) > 0 || (financialSummary.total_management_cost || 0) > 0 || ((financialSummary.reserve_fund_monthly_target || 0) > 0 && isMonthWithinReserveFundPeriod())) && (
-                    <div className="space-y-1 pt-2 border-t border-gray-200">
-                      <div className="text-xs text-gray-700 font-medium">Μηνιαίες υποχρεώσεις (τρέχοντος μήνα):</div>
-                      <div className="text-xl font-bold text-gray-800">
-                        {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (isMonthWithinReserveFundPeriod() ? (financialSummary.reserve_fund_monthly_target || 0) : 0))}
-                      </div>
-                      <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">
-                        {(() => {
-                          const hasExpenses = (financialSummary.average_monthly_expenses || 0) > 0;
-                          const hasManagement = (financialSummary.total_management_cost || 0) > 0;
-                          const hasReserve = (financialSummary.reserve_fund_monthly_target || 0) > 0 && isMonthWithinReserveFundPeriod();
-                          
-                          if (hasExpenses && hasManagement && hasReserve) return 'Έξοδα + Διαχείριση + Εισφορά';
-                          if (hasExpenses && hasManagement) return 'Έξοδα + Διαχείριση';
-                          if (hasExpenses && hasReserve) return 'Έξοδα + Εισφορά';
-                          if (hasManagement && hasReserve) return 'Διαχείριση + Εισφορά';
-                          if (hasExpenses) return 'Μόνο έξοδα';
-                          if (hasManagement) return 'Μόνο διαχείριση';
-                          if (hasReserve) return 'Μόνο εισφορά';
-                          return 'Δεν υπάρχουν υποχρεώσεις';
-                        })()}
-                      </Badge>
-                    </div>
-                  )}
-                  
-                  <div className="text-xs text-blue-600 mt-2">
-                    <strong>Περίοδος:</strong> {selectedMonth ? 
-                      new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' }) : 
-                      'Τρέχων Μήνας'
-                    }
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-
-
+      <CardContent className="space-y-4 pt-0"> {/* Removed top padding */}
+        {/* Section 1: Total Balance Card - Now Full Width */}
+        <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4">
             {/* Total Balance Card */}
             <Card className={`border-2 ${getBalanceCardColors(financialSummary?.total_balance || 0).cardBg}`}>
               <CardContent className="p-3 sm:p-4">
@@ -1336,29 +1236,18 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     )}
                   </div>
                   
-                  {isPositiveBalance && (
-                    <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <div className="flex items-center gap-2 mb-1">
-                        <TrendingUp className="h-4 w-4 text-green-600" />
-                        <div className="text-sm text-green-800 font-semibold">
-                          Καλή Κατάσταση
-                        </div>
-                      </div>
-                      <div className="text-xs text-green-700">
-                        Το κτίριο δεν έχει αρνητικό υπόλοιπο.
-                      </div>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Section 1.5: Με μια ματιά - Progress Bar */}
-        <div className="space-y-4">
+        {/* Section 1.5: Με μια ματιά - Progress Bar Accordion */}
+        <div className="space-y-2">
           <Card className="border-2 border-green-200 bg-green-50/30">
-            <CardHeader>
+            <Collapsible defaultOpen={false}>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-green-100/50 transition-colors">
               <CardTitle className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Eye className="h-5 w-5 text-green-600" />
@@ -1366,16 +1255,15 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     Με μια ματιά
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-xs text-green-700">
-                    Προβολή κάλυψης υποχρεώσεων με progress bar
-                  </div>
-                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                    Progress Bar
-                  </Badge>
-                </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                        Progress Bar
+                      </Badge>
+                    </div>
               </CardTitle>
             </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
             <CardContent className="p-4">
               
               {(() => {
@@ -1469,77 +1357,73 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       </div>
                     </div>
                     
+                    {/* Διαμερίσματα με οφειλές */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                        <div className="text-lg font-bold text-orange-700">
+                          0/{financialSummary?.apartments_count || 0}
                   </div>
+                        <div className="text-xs text-orange-600">με οφειλές</div>
+                      </div>
+        </div>
+
+                </div>
                 );
               })()}
             </CardContent>
+              </CollapsibleContent>
+            </Collapsible>
           </Card>
         </div>
 
-        {/* Section 1.6: Κατάσταση Διαμερισμάτων - Integrated Overview */}
-        <div className="space-y-4">
-          <Card className="border-2 border-blue-200 bg-blue-50/30">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-blue-600" />
-                  <span className="font-semibold text-sm text-blue-900">
-                    Κατάσταση Διαμερισμάτων
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-xs text-blue-700">
-                    Επισκόπηση υπολοίπων και οφειλών
-                  </div>
-                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                    Συνοπτικά
-                  </Badge>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <ApartmentOverviewIntegrated buildingId={buildingId} selectedMonth={selectedMonth} />
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Section 2: Overall Financial Health */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-            Ρύθμιση Αποθεματικού & Εξοδα Διαχείρησης    </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-10 gap-3 sm:gap-4">
-            {/* Reserve Fund Goal Card - 70% width */}
-            <Card className={`col-span-1 lg:col-span-7 ${getReserveFundCardColors(reserveProgress)} relative ${refreshingReserve ? 'opacity-75' : ''}`}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Target className={`h-5 w-5 ${getProgressColors(reserveProgress).text}`} />
-                    <h3 className={`font-semibold text-base ${getProgressColors(reserveProgress).text}`}>Στόχος Αποθεματικού</h3>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleRefreshReserve}
-                      disabled={refreshingReserve}
-                      className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
-                      title="Ανανέωση δεδομένων"
-                    >
-                      <RefreshCw className={`h-4 w-4 ${refreshingReserve ? 'animate-spin' : ''}`} />
-                    </Button>
-                    {!editingGoal && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingGoal(true)}
-                        className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
-                        title="Επεξεργασία στόχου"
-                      >
-                        <Edit3 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
+        <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4">
+            {/* Reserve Fund Goal Card - Full width */}
+            <Card className={`col-span-1 ${getReserveFundCardColors(reserveProgress)} relative ${refreshingReserve ? 'opacity-75' : ''}`}>
+              <Collapsible defaultOpen={false}>
+                <CollapsibleTrigger asChild>
+                  <CardContent className="p-4 cursor-pointer hover:bg-orange-50/50 transition-colors">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Target className={`h-5 w-5 ${getProgressColors(reserveProgress).text}`} />
+                        <h3 className={`font-semibold text-sm ${getProgressColors(reserveProgress).text}`}>Στόχος Αποθεματικού</h3>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRefreshReserve();
+                          }}
+                          disabled={refreshingReserve}
+                          className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
+                          title="Ανανέωση δεδομένων"
+                        >
+                          <RefreshCw className={`h-4 w-4 ${refreshingReserve ? 'animate-spin' : ''}`} />
+                        </Button>
+                        {!editingGoal && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingGoal(true);
+                            }}
+                            className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
+                            title="Επεξεργασία στόχου"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="p-4 pt-0">
                 
                 {editingGoal ? (
                   <div className="space-y-3">
@@ -1775,111 +1659,130 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     </div>
                   </div>
                 )}
-              </CardContent>
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
             </Card>
 
-            {/* Management & Services Card - 30% width */}
-            <Card className={`col-span-1 lg:col-span-3 border-purple-200 bg-purple-50/30 relative ${applyingServicePackage ? 'opacity-75' : ''}`}>
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Building className="h-5 w-5 text-purple-600" />
-                    <h3 className="text-lg font-semibold text-purple-900">Δαπάνες Διαχείρισης</h3>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowServicePackageModal(true)}
-                      className="h-8 px-2 text-purple-600 hover:text-purple-700"
-                      title="Επιλογή πακέτου υπηρεσιών"
-                    >
-                      <Package className="h-4 w-4 mr-1" />
-                      Πακέτα
-                    </Button>
-                    {!editingManagementFee && (
+          </div>
+        </div>
+
+        {/* Section 3: Management Expenses - New Row */}
+        <div className="space-y-2">
+          <Card className={`border-purple-200 bg-purple-50/30 relative ${applyingServicePackage ? 'opacity-75' : ''}`}>
+            <Collapsible defaultOpen={false}>
+              <CollapsibleTrigger asChild>
+                <CardContent className="p-3 sm:p-4 cursor-pointer hover:bg-purple-50/50 transition-colors">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Building className="h-5 w-5 text-purple-600" />
+                      <h3 className="text-sm font-semibold text-purple-900">Δαπάνες Διαχείρισης</h3>
+                    </div>
+                    <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setEditingManagementFee(true)}
-                        className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700"
-                        title="Επεξεργασία αμοιβής διαχείρισης"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowServicePackageModal(true);
+                        }}
+                        className="h-8 px-2 text-purple-600 hover:text-purple-700"
+                        title="Επιλογή πακέτου υπηρεσιών"
                       >
-                        <Edit3 className="h-4 w-4" />
+                        <Package className="h-4 w-4 mr-1" />
+                        Πακέτα
                       </Button>
-                    )}
+                      {!editingManagementFee && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingManagementFee(true);
+                          }}
+                          className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700"
+                          title="Επεξεργασία αμοιβής διαχείρισης"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="p-3 sm:p-4 pt-0">
+              
+              {editingManagementFee ? (
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="management-fee" className="text-xs">Αμοιβή ανά διαμέρισμα (€)</Label>
+                    <Input
+                      id="management-fee"
+                      type="number"
+                      value={newManagementFee}
+                      onChange={(e) => setNewManagementFee(e.target.value)}
+                      placeholder="0.00"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSaveManagementFee} className="flex-1">
+                      <Check className="h-4 w-4 mr-1" />
+                      Αποθήκευση
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setEditingManagementFee(false);
+                        setNewManagementFee((financialSummary?.management_fee_per_apartment || 0).toString());
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-                
-                {editingManagementFee ? (
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Column 1: Management Fee per Apartment */}
                   <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="management-fee" className="text-xs">Αμοιβή ανά διαμέρισμα (€)</Label>
-                      <Input
-                        id="management-fee"
-                        type="number"
-                        value={newManagementFee}
-                        onChange={(e) => setNewManagementFee(e.target.value)}
-                        placeholder="0.00"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={handleSaveManagementFee} className="flex-1">
-                        <Check className="h-4 w-4 mr-1" />
-                        Αποθήκευση
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingManagementFee(false);
-                          setNewManagementFee((financialSummary?.management_fee_per_apartment || 0).toString());
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Column 1: Management Fee per Apartment */}
-                    <div className="space-y-3">
-                      <div className="space-y-1">
-                        <div className="text-xs text-purple-700 font-medium">Αμοιβή ανά διαμέρισμα/μήνα:</div>
-                        <div className="text-sm font-bold text-purple-700">
-                          {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}/μήνα
-                        </div>
+                    <div className="space-y-1">
+                      <div className="text-xs text-purple-700 font-medium">Αμοιβή ανά διαμέρισμα/μήνα:</div>
+                      <div className="text-sm font-bold text-purple-700">
+                        {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}/μήνα
                       </div>
                     </div>
+                  </div>
 
-                    {/* Column 2: Total Management Cost */}
-                    <div className="space-y-3">
-                      <div className="space-y-1">
-                        <div className="text-xs text-purple-700 font-medium">Συνολικό κόστος διαχείρισης/μήνα:</div>
-                        <div className="text-sm font-bold text-purple-700">
-                          {formatCurrency((financialSummary?.management_fee_per_apartment || 0) * (financialSummary?.apartments_count || 0))}/μήνα
-                        </div>
-                        <div className="text-xs text-purple-600">
-                          {financialSummary?.apartments_count || 0} διαμερίσματα × {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}/μήνα
-                        </div>
+                  {/* Column 2: Total Management Cost */}
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <div className="text-xs text-purple-700 font-medium">Συνολικό κόστος διαχείρισης/μήνα:</div>
+                      <div className="text-sm font-bold text-purple-700">
+                        {formatCurrency((financialSummary?.management_fee_per_apartment || 0) * (financialSummary?.apartments_count || 0))}/μήνα
+                      </div>
+                      <div className="text-xs text-purple-600">
+                        {financialSummary?.apartments_count || 0} διαμερίσματα × {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}/μήνα
                       </div>
                     </div>
                   </div>
-                )}
-                
-                {/* Loading overlay for service package application */}
-                {applyingServicePackage && (
-                  <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
-                    <div className="flex items-center gap-2 text-purple-600">
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      <span className="text-sm font-medium">Ενημέρωση δαπανών διαχείρισης...</span>
-                    </div>
+                </div>
+              )}
+              
+              {/* Loading overlay for service package application */}
+              {applyingServicePackage && (
+                <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
+                  <div className="flex items-center gap-2 text-purple-600">
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span className="text-sm font-medium">Ενημέρωση δαπανών διαχείρισης...</span>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                </div>
+              )}
+                </CardContent>
+              </CollapsibleContent>
+            </Collapsible>
+          </Card>
         </div>
 
       </CardContent>
