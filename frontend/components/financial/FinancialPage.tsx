@@ -11,9 +11,7 @@ import {
   ChartsContainer,
   BulkImportWizard,
   ExpenseList,
-  BuildingOverviewSection,
-  MonthlyBalanceManager,
-  HybridBalanceManager
+  BuildingOverviewSection
 } from './index';
 import ScheduledMaintenanceOverviewModal from '../maintenance/ScheduledMaintenanceOverviewModal';
 import { ApartmentBalancesTab } from './ApartmentBalancesTab';
@@ -492,19 +490,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   <span className="text-sm font-medium whitespace-nowrap">Γραφήματα</span>
                 </button>
               </ConditionalRender>
-              <ConditionalRender permission="financial_read">
-                <button
-                  onClick={() => handleTabChange('monthly-balances')}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg border transition-all duration-200 ${
-                    activeTab === 'monthly-balances' 
-                      ? 'bg-cyan-100 border-cyan-300 text-cyan-700 shadow-sm' 
-                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
-                  }`}
-                >
-                  <DollarSign className="h-4 w-4" />
-                  <span className="text-sm font-medium whitespace-nowrap">Υπόλοιπα</span>
-                </button>
-              </ConditionalRender>
             </div>
           </div>
 
@@ -666,32 +651,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 </p>
               </button>
             </ConditionalRender>
-            <ConditionalRender permission="financial_read">
-              <button
-                onClick={() => handleTabChange('monthly-balances')}
-                className={`group flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
-                  activeTab === 'monthly-balances' 
-                    ? 'bg-cyan-50 border-cyan-200 shadow-sm' 
-                    : 'bg-white border-gray-200 hover:border-cyan-200 hover:bg-cyan-50/30'
-                }`}
-              >
-                <div className={`mb-3 p-3 rounded-full transition-colors ${
-                  activeTab === 'monthly-balances' 
-                    ? 'bg-cyan-100 text-cyan-600' 
-                    : 'bg-gray-100 text-gray-500 group-hover:bg-cyan-100 group-hover:text-cyan-600'
-                }`}>
-                  <DollarSign className="h-6 w-6" />
-                </div>
-                <h3 className={`font-semibold text-sm font-condensed ${
-                  activeTab === 'monthly-balances' ? 'text-cyan-700' : 'text-gray-700'
-                }`}>
-                  Υπόλοιπα
-                </h3>
-                <p className="text-xs text-gray-500 text-center mt-1">
-                  Υβριδικό Σύστημα
-                </p>
-              </button>
-            </ConditionalRender>
           </div>
         </div>
         
@@ -760,14 +719,6 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           </ProtectedFinancialRoute>
         </TabsContent>
         
-        <TabsContent value="monthly-balances" className="space-y-4" data-tab="monthly-balances">
-          <ProtectedFinancialRoute requiredPermission="financial_read">
-            <div className="space-y-6">
-              <HybridBalanceManager buildingId={activeBuildingId} />
-              <MonthlyBalanceManager buildingId={activeBuildingId} />
-            </div>
-          </ProtectedFinancialRoute>
-        </TabsContent>
         
 
           </Tabs>

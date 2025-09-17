@@ -1110,8 +1110,14 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   {/* Συνολικό υπόλοιπο */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <div className={`text-xl font-bold ${getBalanceCardColors(financialSummary?.total_balance || 0).amount}`}>
-                        {formatCurrency(Math.abs((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (financialSummary.reserve_fund_monthly_target || 0) + (financialSummary.previous_obligations || 0)))}
+                      <div className="text-xl font-bold">
+                        <span className="text-green-600">
+                          {formatCurrency(financialSummary?.total_payments_month || 0)}
+                        </span>
+                        <span className="text-gray-500 mx-1">/</span>
+                        <span className="text-red-600">
+                          {formatCurrency(Math.abs((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (financialSummary.reserve_fund_monthly_target || 0) + (financialSummary.previous_obligations || 0)))}
+                        </span>
                       </div>
                       <Button
                         variant="ghost"
