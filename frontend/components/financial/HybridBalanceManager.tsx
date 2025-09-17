@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Calendar, 
   TrendingUp, 
@@ -23,7 +24,9 @@ import {
   Unlock,
   Building2,
   PiggyBank,
-  Settings
+  Settings,
+  BarChart3,
+  RefreshCw
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
@@ -35,12 +38,12 @@ interface MonthlyBalance {
   total_expenses: number;
   total_payments: number;
   previous_obligations: number;
-  carry_forward: number;
   reserve_fund_amount: number;
   management_fees: number;
   total_obligations: number;
-  net_result: number;
-  // Υβριδικό Σύστημα - Νέα πεδία
+  carry_forward: number;
+  annual_carry_forward: number;
+  balance_year: number;
   main_balance_carry_forward: number;
   reserve_balance_carry_forward: number;
   management_balance_carry_forward: number;
@@ -50,17 +53,29 @@ interface MonthlyBalance {
   main_net_result: number;
   reserve_net_result: number;
   management_net_result: number;
+  net_result: number;
   is_closed: boolean;
   closed_at: string | null;
   created_at: string;
   updated_at: string;
 }
 
-interface MonthlyBalanceManagerProps {
+interface HybridBalanceSummary {
+  building_id: number;
+  year: number | null;
+  total_main_balance: number;
+  total_reserve_balance: number;
+  total_management_balance: number;
+  last_balance: MonthlyBalance | null;
+  balances_count: number;
+  hybrid_system_active: boolean;
+}
+
+interface HybridBalanceManagerProps {
   buildingId: number;
 }
 
-export const MonthlyBalanceManager: React.FC<MonthlyBalanceManagerProps> = ({ buildingId }) => {
+export const HybridBalanceManager: React.FC<HybridBalanceManagerProps> = ({ buildingId }) => {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -79,6 +94,16 @@ export const MonthlyBalanceManager: React.FC<MonthlyBalanceManagerProps> = ({ bu
     enabled: !!buildingId
   });
 
+  // Fetch hybrid balance summary
+  const { data: summary, isLoading: summaryLoading } = useQuery({
+    queryKey: ['hybrid-balance-summary', buildingId],
+    queryFn: async () => {
+      const response = await api.get(`/financial/monthly-balances/hybrid_balance_summary/?building_id=${buildingId}`);
+      return response.data;
+    },
+    enabled: !!buildingId
+  });
+
   // Create month mutation
   const createMonthMutation = useMutation({
     mutationFn: async ({ year, month }: { year: number; month: number }) => {
@@ -91,6 +116,7 @@ export const MonthlyBalanceManager: React.FC<MonthlyBalanceManagerProps> = ({ bu
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monthly-balances', buildingId] });
+      queryClient.invalidateQueries({ queryKey: ['hybrid-balance-summary', buildingId] });
       setShowCreateDialog(false);
     }
   });
@@ -107,6 +133,7 @@ export const MonthlyBalanceManager: React.FC<MonthlyBalanceManagerProps> = ({ bu
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monthly-balances', buildingId] });
+      queryClient.invalidateQueries({ queryKey: ['hybrid-balance-summary', buildingId] });
     }
   });
 
@@ -173,7 +200,7 @@ export const MonthlyBalanceManager: React.FC<MonthlyBalanceManagerProps> = ({ bu
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Μηνιαία Υπόλοιπα - Υβριδικό Σύστημα</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Υβριδικό Σύστημα Υπολοίπων</h2>
           <p className="text-muted-foreground">
             Διαχείριση ξεχωριστών υπολοίπων: Κύριο, Αποθεματικό, Διαχείριση
           </p>
@@ -237,6 +264,49 @@ export const MonthlyBalanceManager: React.FC<MonthlyBalanceManagerProps> = ({ bu
         </Dialog>
       </div>
 
+      {/* Hybrid Balance Summary */}
+      {summary && (
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-blue-600" />
+              Σύνοψη Υβριδικού Συστήματος
+            </CardTitle>
+            <CardDescription>
+              Συνολικά υπολοιπα ανά κατηγορία
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-white rounded-lg border">
+                <Building2 className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                <p className="text-sm font-medium text-gray-600">Κύριο Υπόλοιπο</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {formatCurrency(summary.total_main_balance)}
+                </p>
+                <p className="text-xs text-gray-500">Κανονικές Δαπάνες + Παλαιότερες Οφειλές</p>
+              </div>
+              <div className="text-center p-4 bg-white rounded-lg border">
+                <PiggyBank className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <p className="text-sm font-medium text-gray-600">Αποθεματικό Υπόλοιπο</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {formatCurrency(summary.total_reserve_balance)}
+                </p>
+                <p className="text-xs text-gray-500">Αποταμίευση για μελλοντικές δαπάνες</p>
+              </div>
+              <div className="text-center p-4 bg-white rounded-lg border">
+                <Settings className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+                <p className="text-sm font-medium text-gray-600">Διαχείριση Υπόλοιπο</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {formatCurrency(summary.total_management_balance)}
+                </p>
+                <p className="text-xs text-gray-500">Έξοδα διαχείρισης κτιρίου</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Monthly Balances List */}
       <div className="grid gap-4">
         {balances?.length === 0 ? (
@@ -272,23 +342,12 @@ export const MonthlyBalanceManager: React.FC<MonthlyBalanceManagerProps> = ({ bu
                   </div>
                   
                   <div className="flex items-center space-x-6">
-                    {/* Net Result */}
-                    <div className="text-center">
-                      <div className={`flex items-center justify-center space-x-1 ${getNetResultColor(balance.net_result)}`}>
-                        {getNetResultIcon(balance.net_result)}
-                        <span className="text-lg font-bold">
-                          {formatCurrency(Math.abs(balance.net_result))}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500">Καθαρό Αποτέλεσμα</p>
-                    </div>
-
                     {/* Hybrid Balance Display */}
                     <div className="text-center">
                       <div className="flex items-center justify-center space-x-1 text-blue-600">
                         <Building2 className="w-4 h-4" />
                         <span className="text-lg font-bold">
-                          {formatCurrency(balance.main_balance_carry_forward || 0)}
+                          {formatCurrency(balance.main_balance_carry_forward)}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500">Κύριο</p>
@@ -298,7 +357,7 @@ export const MonthlyBalanceManager: React.FC<MonthlyBalanceManagerProps> = ({ bu
                       <div className="flex items-center justify-center space-x-1 text-green-600">
                         <PiggyBank className="w-4 h-4" />
                         <span className="text-lg font-bold">
-                          {formatCurrency(balance.reserve_balance_carry_forward || 0)}
+                          {formatCurrency(balance.reserve_balance_carry_forward)}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500">Αποθεματικό</p>
@@ -308,7 +367,7 @@ export const MonthlyBalanceManager: React.FC<MonthlyBalanceManagerProps> = ({ bu
                       <div className="flex items-center justify-center space-x-1 text-orange-600">
                         <Settings className="w-4 h-4" />
                         <span className="text-lg font-bold">
-                          {formatCurrency(balance.management_balance_carry_forward || 0)}
+                          {formatCurrency(balance.management_balance_carry_forward)}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500">Διαχείριση</p>
@@ -366,11 +425,11 @@ export const MonthlyBalanceManager: React.FC<MonthlyBalanceManagerProps> = ({ bu
 
       {/* Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              Λεπτομέρειες Μηνιαίου Υπολοίπου
+              Λεπτομέρειες Υβριδικού Συστήματος
             </DialogTitle>
             <DialogDescription>
               Πλήρεις πληροφορίες για το επιλεγμένο μηνιαίο υπόλοιπο
@@ -388,85 +447,93 @@ export const MonthlyBalanceManager: React.FC<MonthlyBalanceManagerProps> = ({ bu
                   <label className="text-sm font-medium text-gray-500">Κατάσταση</label>
                   <div>{getStatusBadge(selectedBalance)}</div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-500">Συνολικές Δαπάνες</label>
-                  <p className="text-lg font-bold text-red-600">{formatCurrency(selectedBalance.total_expenses)}</p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-500">Συνολικές Εισπράξεις</label>
-                  <p className="text-lg font-bold text-green-600">{formatCurrency(selectedBalance.total_payments)}</p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-500">Παλαιότερες Οφειλές</label>
-                  <p className="text-lg font-bold text-purple-600">{formatCurrency(selectedBalance.previous_obligations)}</p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-500">Αποθεματικό</label>
-                  <p className="text-lg font-bold text-blue-600">{formatCurrency(selectedBalance.reserve_fund_amount)}</p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-500">Έξοδα Διαχείρισης</label>
-                  <p className="text-lg font-bold text-orange-600">{formatCurrency(selectedBalance.management_fees)}</p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-500">Συνολικές Υποχρεώσεις</label>
-                  <p className="text-lg font-bold text-gray-800">{formatCurrency(selectedBalance.total_obligations)}</p>
-                </div>
               </div>
 
-              {/* Υβριδικό Σύστημα - Ξεχωριστά Υπολοιπα */}
-              <div className="pt-4 border-t">
-                <h4 className="text-lg font-semibold mb-4">Υβριδικό Σύστημα - Ξεχωριστά Υπολοιπα</h4>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="space-y-2 p-4 bg-blue-50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-5 h-5 text-blue-600" />
-                      <label className="text-sm font-medium text-gray-700">Κύριο Υπόλοιπο</label>
-                    </div>
-                    <p className="text-lg font-bold text-blue-600">{formatCurrency(selectedBalance.main_obligations || 0)}</p>
-                    <p className="text-xs text-gray-500">Κανονικές Δαπάνες + Παλαιότερες Οφειλές</p>
-                    <p className="text-sm font-medium text-blue-600">Carry Forward: {formatCurrency(selectedBalance.main_balance_carry_forward || 0)}</p>
-                  </div>
-                  <div className="space-y-2 p-4 bg-green-50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <PiggyBank className="w-5 h-5 text-green-600" />
-                      <label className="text-sm font-medium text-gray-700">Αποθεματικό Υπόλοιπο</label>
-                    </div>
-                    <p className="text-lg font-bold text-green-600">{formatCurrency(selectedBalance.reserve_obligations || 0)}</p>
-                    <p className="text-xs text-gray-500">Μόνο για αποταμίευση</p>
-                    <p className="text-sm font-medium text-green-600">Carry Forward: {formatCurrency(selectedBalance.reserve_balance_carry_forward || 0)}</p>
-                  </div>
-                  <div className="space-y-2 p-4 bg-orange-50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Settings className="w-5 h-5 text-orange-600" />
-                      <label className="text-sm font-medium text-gray-700">Διαχείριση Υπόλοιπο</label>
-                    </div>
-                    <p className="text-lg font-bold text-orange-600">{formatCurrency(selectedBalance.management_obligations || 0)}</p>
-                    <p className="text-xs text-gray-500">Έξοδα διαχείρισης</p>
-                    <p className="text-sm font-medium text-orange-600">Carry Forward: {formatCurrency(selectedBalance.management_balance_carry_forward || 0)}</p>
-                  </div>
-                </div>
-              </div>
+              {/* Hybrid System Details */}
+              <Tabs defaultValue="main" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="main" className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4" />
+                    Κύριο Υπόλοιπο
+                  </TabsTrigger>
+                  <TabsTrigger value="reserve" className="flex items-center gap-2">
+                    <PiggyBank className="w-4 h-4" />
+                    Αποθεματικό
+                  </TabsTrigger>
+                  <TabsTrigger value="management" className="flex items-center gap-2">
+                    <Settings className="w-4 h-4" />
+                    Διαχείριση
+                  </TabsTrigger>
+                </TabsList>
 
-              {/* Results */}
-              <div className="pt-4 border-t">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-500">Καθαρό Αποτέλεσμα</label>
-                    <div className={`flex items-center space-x-2 ${getNetResultColor(selectedBalance.net_result)}`}>
-                      {getNetResultIcon(selectedBalance.net_result)}
-                      <p className="text-xl font-bold">{formatCurrency(selectedBalance.net_result)}</p>
+                <TabsContent value="main" className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-500">Κανονικές Δαπάνες</label>
+                      <p className="text-lg font-bold text-red-600">{formatCurrency(selectedBalance.total_expenses)}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-500">Παλαιότερες Οφειλές</label>
+                      <p className="text-lg font-bold text-purple-600">{formatCurrency(selectedBalance.previous_obligations)}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-500">Κύριες Υποχρεώσεις</label>
+                      <p className="text-lg font-bold text-blue-600">{formatCurrency(selectedBalance.main_obligations)}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-500">Κύριο Καθαρό Αποτέλεσμα</label>
+                      <div className={`flex items-center space-x-2 ${getNetResultColor(selectedBalance.main_net_result)}`}>
+                        {getNetResultIcon(selectedBalance.main_net_result)}
+                        <p className="text-lg font-bold">{formatCurrency(selectedBalance.main_net_result)}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-500">Κύριο Carry Forward</label>
+                      <p className="text-lg font-bold text-blue-600">{formatCurrency(selectedBalance.main_balance_carry_forward)}</p>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-500">Μεταφορά στον Επόμενο Μήνα</label>
-                    <div className={`flex items-center space-x-2 ${selectedBalance.carry_forward < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      <TrendingDown className="w-5 h-5" />
-                      <p className="text-xl font-bold">{formatCurrency(selectedBalance.carry_forward)}</p>
+                </TabsContent>
+
+                <TabsContent value="reserve" className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-500">Αποθεματικό Ταμείο</label>
+                      <p className="text-lg font-bold text-green-600">{formatCurrency(selectedBalance.reserve_fund_amount)}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-500">Αποθεματικό Καθαρό Αποτέλεσμα</label>
+                      <div className={`flex items-center space-x-2 ${getNetResultColor(selectedBalance.reserve_net_result)}`}>
+                        {getNetResultIcon(selectedBalance.reserve_net_result)}
+                        <p className="text-lg font-bold">{formatCurrency(selectedBalance.reserve_net_result)}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-500">Αποθεματικό Carry Forward</label>
+                      <p className="text-lg font-bold text-green-600">{formatCurrency(selectedBalance.reserve_balance_carry_forward)}</p>
                     </div>
                   </div>
-                </div>
-              </div>
+                </TabsContent>
+
+                <TabsContent value="management" className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-500">Έξοδα Διαχείρισης</label>
+                      <p className="text-lg font-bold text-orange-600">{formatCurrency(selectedBalance.management_fees)}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-500">Διαχειριστικό Καθαρό Αποτέλεσμα</label>
+                      <div className={`flex items-center space-x-2 ${getNetResultColor(selectedBalance.management_net_result)}`}>
+                        {getNetResultIcon(selectedBalance.management_net_result)}
+                        <p className="text-lg font-bold">{formatCurrency(selectedBalance.management_net_result)}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-500">Διαχείριση Carry Forward</label>
+                      <p className="text-lg font-bold text-orange-600">{formatCurrency(selectedBalance.management_balance_carry_forward)}</p>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
 
               {/* Actions */}
               <div className="flex justify-end space-x-2 pt-4 border-t">

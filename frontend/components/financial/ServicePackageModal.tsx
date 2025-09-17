@@ -171,10 +171,11 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
       // Enhanced success message with more details
       const newFee = result.new_fee || result.fee_per_apartment;
       const totalCost = newFee * apartmentsCount;
+      const startDate = result.start_date ? new Date(result.start_date).toLocaleDateString('el-GR') : 'Σήμερα';
       
       toast.success(
-        `🎉 Πακέτο εφαρμόστηκε επιτυχώς!\n💰 Αμοιβή: ${newFee}€/διαμέρισμα/μήνα\n🏢 Συνολικό μηνιαίο: ${totalCost.toFixed(2)}€/μήνα`,
-        { duration: 3000 }
+        `🎉 Πακέτο εφαρμόστηκε επιτυχώς!\n💰 Αμοιβή: ${newFee}€/διαμέρισμα/μήνα\n🏢 Συνολικό μηνιαίο: ${totalCost.toFixed(2)}€/μήνα\n📅 Έναρξη: ${startDate}`,
+        { duration: 4000 }
       );
       
       // Call callback if provided
@@ -416,6 +417,11 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
                   <p className="text-lg font-bold">{formatCurrency(currentFee * apartmentsCount)}/μήνα</p>
                   <p className="text-xs text-gray-500">{apartmentsCount} διαμερίσματα</p>
                 </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <p className="text-xs text-gray-500">
+                  💡 <strong>Νέο σύστημα:</strong> Το πακέτο θα ισχύει από την ημερομηνία εφαρμογής μέχρι να αλλάξει με νέο πακέτο
+                </p>
               </div>
             </CardContent>
           </Card>

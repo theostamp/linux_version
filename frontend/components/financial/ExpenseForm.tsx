@@ -19,6 +19,7 @@ import { Info, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface ExpenseFormProps {
   buildingId: number;
+  selectedMonth?: string; // Format: YYYY-MM
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -142,7 +143,7 @@ const DISTRIBUTION_TYPES: { value: DistributionType; label: string }[] = [
   { value: 'by_meters', label: 'Μετρητές' },
 ];
 
-export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess, onCancel }) => {
+export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, selectedMonth, onSuccess, onCancel }) => {
   const { createExpense, isLoading, error } = useExpenses();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   
@@ -189,7 +190,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
       setValue('distribution_type', suggestedDistribution);
 
       // Auto-set date
-      const suggestedDate = getSuggestedDate(selectedCategory as ExpenseCategory);
+      const suggestedDate = getSuggestedDate(selectedCategory as ExpenseCategory, selectedMonth);
       setValue('date', suggestedDate);
 
       // Auto-fill title if empty
@@ -200,7 +201,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
         }
       }
     }
-  }, [selectedCategory, selectedSupplierDetails, setValue, getSuggestedDistribution, getSuggestedDate, selectedTitle]);
+  }, [selectedCategory, selectedSupplierDetails, setValue, getSuggestedDistribution, getSuggestedDate, selectedTitle, selectedMonth]);
 
   const getDefaultDistributionType = (category: ExpenseCategory): DistributionType => {
     const heatingCategories: ExpenseCategory[] = ['heating_fuel', 'heating_gas'];
@@ -221,7 +222,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ buildingId, onSuccess,
       
       // Auto-set date for monthly expenses
       if (isMonthlyExpense(category)) {
-        const suggestedDate = getSuggestedDate(category);
+        const suggestedDate = getSuggestedDate(category, selectedMonth);
         setValue('date', suggestedDate);
       }
       

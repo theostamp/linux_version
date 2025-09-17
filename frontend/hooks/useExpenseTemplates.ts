@@ -112,11 +112,23 @@ const getLastDayOfMonth = (date: Date) => {
 };
 
 // Calculate suggested date based on expense type
-const calculateSuggestedDate = (category: ExpenseCategory, isMonthly: boolean) => {
+const calculateSuggestedDate = (category: ExpenseCategory, isMonthly: boolean, selectedMonth?: string) => {
   const now = new Date();
   
-  if (isMonthly) {
-    // For monthly expenses, suggest last day of current month
+  if (isMonthly && selectedMonth) {
+    // For monthly expenses with selected month, use the selected month
+    try {
+      const [year, month] = selectedMonth.split('-').map(Number);
+      const lastDay = new Date(year, month, 0); // Last day of the selected month
+      return lastDay.toISOString().split('T')[0];
+    } catch (error) {
+      console.warn('Invalid selectedMonth format:', selectedMonth);
+      // Fallback to current month
+      const lastDay = getLastDayOfMonth(now);
+      return lastDay.toISOString().split('T')[0];
+    }
+  } else if (isMonthly) {
+    // For monthly expenses without selected month, suggest last day of current month
     const lastDay = getLastDayOfMonth(now);
     return lastDay.toISOString().split('T')[0];
   } else {
@@ -170,7 +182,7 @@ const generateTitleSuggestions = (
 
 interface UseExpenseTemplatesReturn {
   getTitleSuggestions: (category: ExpenseCategory, supplier?: Supplier, customPrefix?: string) => string[];
-  getSuggestedDate: (category: ExpenseCategory) => string;
+  getSuggestedDate: (category: ExpenseCategory, selectedMonth?: string) => string;
   getSuggestedDistribution: (category: ExpenseCategory) => string;
   getTemplate: (category: ExpenseCategory) => typeof EXPENSE_TEMPLATES[keyof typeof EXPENSE_TEMPLATES] | null;
   isMonthlyExpense: (category: ExpenseCategory) => boolean;
@@ -184,9 +196,9 @@ export const useExpenseTemplates = (): UseExpenseTemplatesReturn => {
   );
 
   const getSuggestedDate = useMemo(() => 
-    (category: ExpenseCategory) => {
+    (category: ExpenseCategory, selectedMonth?: string) => {
       const template = EXPENSE_TEMPLATES[category as keyof typeof EXPENSE_TEMPLATES];
-      return calculateSuggestedDate(category, template?.isMonthly || false);
+      return calculateSuggestedDate(category, template?.isMonthly || false, selectedMonth);
     },
     []
   );

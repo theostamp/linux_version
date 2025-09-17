@@ -17,11 +17,11 @@ def get_query_params(request):
     """
     return getattr(request, 'query_params', request.GET)
 
-from .models import Expense, Transaction, Payment, MeterReading, Supplier, CommonExpensePeriod, ApartmentShare, FinancialReceipt
+from .models import Expense, Transaction, Payment, MeterReading, Supplier, CommonExpensePeriod, ApartmentShare, FinancialReceipt, MonthlyBalance
 from .serializers import (
     ExpenseSerializer, TransactionSerializer, PaymentSerializer,
     MeterReadingSerializer, SupplierSerializer,
-    FinancialSummarySerializer, FinancialReceiptSerializer
+    FinancialSummarySerializer, FinancialReceiptSerializer, MonthlyBalanceSerializer
 )
 from .services import CommonExpenseCalculator, AdvancedCommonExpenseCalculator, FinancialDashboardService, PaymentProcessor, FileUploadService
 from buildings.models import Building
@@ -2837,3 +2837,182 @@ class FinancialReceiptViewSet(viewsets.ModelViewSet):
         """Λήψη διαθέσιμων τύπων αποδείξεων"""
         receipt_types = [{'value': choice[0], 'label': choice[1]} for choice in FinancialReceipt.RECEIPT_TYPES]
         return Response(receipt_types)
+
+
+class MonthlyBalanceViewSet(viewsets.ModelViewSet):
+    """ViewSet για τα μηνιαία υπολοιπα (Υβριδικό Σύστημα)"""
+    
+    queryset = MonthlyBalance.objects.all()
+    serializer_class = MonthlyBalanceSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.format_kwarg = None
+    
+    def get_queryset(self):
+        """Φιλτράρισμα ανά κτίριο"""
+        queryset = super().get_queryset()
+        building_id = self.request.query_params.get('building_id')
+        
+        if building_id:
+            queryset = queryset.filter(building_id=building_id)
+        
+        return queryset.order_by('-year', '-month')
+    
+    @action(detail=False, methods=['get'])
+    def by_building(self, request):
+        """Λήψη μηνιαίων υπολοίπων ανά κτίριο"""
+        building_id = request.query_params.get('building_id')
+        
+        if not building_id:
+            return Response(
+                {'error': 'Building ID is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            balances = MonthlyBalance.objects.filter(
+                building_id=building_id
+            ).select_related('building').order_by('-year', '-month')
+            
+            serializer = self.get_serializer(balances, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'])
+    def create_month(self, request):
+        """Δημιουργία νέου μηνιαίου υπολοίπου"""
+        building_id = request.data.get('building_id')
+        year = request.data.get('year')
+        month = request.data.get('month')
+        
+        if not all([building_id, year, month]):
+            return Response(
+                {'error': 'Building ID, year, and month are required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from buildings.models import Building
+            from decimal import Decimal
+            
+            building = Building.objects.get(id=building_id)
+            
+            # Δημιουργία νέου μηνιαίου υπολοίπου
+            balance = MonthlyBalance.objects.create(
+                building=building,
+                year=year,
+                month=month,
+                total_expenses=Decimal('0.00'),
+                total_payments=Decimal('0.00'),
+                previous_obligations=Decimal('0.00'),
+                reserve_fund_amount=Decimal('0.00'),
+                management_fees=Decimal('0.00'),
+                carry_forward=Decimal('0.00'),
+                annual_carry_forward=Decimal('0.00'),
+                balance_year=year,
+                main_balance_carry_forward=Decimal('0.00'),
+                reserve_balance_carry_forward=Decimal('0.00'),
+                management_balance_carry_forward=Decimal('0.00'),
+            )
+            
+            serializer = self.get_serializer(balance)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Building.DoesNotExist:
+            return Response(
+                {'error': 'Το κτίριο δεν βρέθηκε'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'])
+    def close_month(self, request):
+        """Κλείσιμο μηνιαίου υπολοίπου"""
+        building_id = request.data.get('building_id')
+        year = request.data.get('year')
+        month = request.data.get('month')
+        
+        if not all([building_id, year, month]):
+            return Response(
+                {'error': 'Building ID, year, and month are required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            balance = MonthlyBalance.objects.get(
+                building_id=building_id,
+                year=year,
+                month=month
+            )
+            
+            # Κλείσιμο μήνα
+            balance.close_month()
+            
+            serializer = self.get_serializer(balance)
+            return Response(serializer.data)
+        except MonthlyBalance.DoesNotExist:
+            return Response(
+                {'error': 'Το μηνιαίο υπόλοιπο δεν βρέθηκε'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'])
+    def hybrid_balance_summary(self, request):
+        """Σύνοψη υβριδικού συστήματος υπολοίπων"""
+        building_id = request.query_params.get('building_id')
+        year = request.query_params.get('year')
+        
+        if not building_id:
+            return Response(
+                {'error': 'Building ID is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from decimal import Decimal
+            
+            queryset = MonthlyBalance.objects.filter(building_id=building_id)
+            if year:
+                queryset = queryset.filter(year=year)
+            
+            balances = queryset.order_by('year', 'month')
+            
+            # Υπολογισμός συνολικών υπολοίπων
+            total_main_balance = sum(b.main_balance_carry_forward for b in balances)
+            total_reserve_balance = sum(b.reserve_balance_carry_forward for b in balances)
+            total_management_balance = sum(b.management_balance_carry_forward for b in balances)
+            
+            # Τελευταίο μηνιαίο υπόλοιπο
+            last_balance = balances.last()
+            
+            summary = {
+                'building_id': int(building_id),
+                'year': int(year) if year else None,
+                'total_main_balance': float(total_main_balance),
+                'total_reserve_balance': float(total_reserve_balance),
+                'total_management_balance': float(total_management_balance),
+                'last_balance': self.get_serializer(last_balance).data if last_balance else None,
+                'balances_count': balances.count(),
+                'hybrid_system_active': True
+            }
+            
+            return Response(summary)
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

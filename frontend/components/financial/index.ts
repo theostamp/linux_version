@@ -43,4 +43,8 @@ export {
   ConditionalRender, 
   PermissionButton, 
   PermissionIcon 
-} from './ProtectedFinancialRoute'; 
+} from './ProtectedFinancialRoute';
+
+// Monthly Balance components
+export { MonthlyBalanceManager } from './MonthlyBalanceManager';
+export { HybridBalanceManager } from './HybridBalanceManager'; 

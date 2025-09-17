@@ -240,6 +240,13 @@ class Building(models.Model):
         verbose_name=_("Πακέτο Υπηρεσιών"),
         help_text=_("Επιλεγμένο πακέτο υπηρεσιών διαχείρισης")
     )
+    
+    service_package_start_date = models.DateField(
+        _("Ημερομηνία Έναρξης Πακέτου"),
+        null=True,
+        blank=True,
+        help_text=_("Ημερομηνία έναρξης ισχύος του πακέτου υπηρεσιών")
+    )
 
     # 📅 Google Calendar Integration
     google_calendar_id = models.CharField(

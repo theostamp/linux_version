@@ -774,6 +774,50 @@ class MonthlyBalance(models.Model):
     reserve_fund_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Αποθεματικό")
     management_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Έξοδα Διαχείρισης")
     
+    # Ετήσια μεταφορά υπολοίπων
+    annual_carry_forward = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0, 
+        verbose_name="Ετήσια Μεταφορά",
+        help_text="Υπόλοιπο που μεταφέρεται στο νέο έτος (μόνο για Δεκέμβριο)"
+    )
+    
+    balance_year = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Έτος Υπολοίπου",
+        help_text="Έτος που ανήκει το υπόλοιπο (για ετήσια μεταφορά)"
+    )
+    
+    # Υβριδικό Σύστημα - Ξεχωριστά Υπολοιπα
+    # Κύριο Υπόλοιπο: Κανονικές Δαπάνες + Παλαιότερες Οφειλές
+    main_balance_carry_forward = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0, 
+        verbose_name="Κύριο Υπόλοιπο Μεταφορά",
+        help_text="Μεταφορά κύριου υπολοίπου (κανονικές δαπάνες + παλαιότερες οφειλές)"
+    )
+    
+    # Αποθεματικό Υπόλοιπο: Μόνο για αποταμίευση
+    reserve_balance_carry_forward = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0, 
+        verbose_name="Αποθεματικό Υπόλοιπο Μεταφορά",
+        help_text="Μεταφορά αποθεματικού υπολοίπου (μόνο για αποταμίευση)"
+    )
+    
+    # Διαχείριση Υπόλοιπο: Έξοδα διαχείρισης
+    management_balance_carry_forward = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0, 
+        verbose_name="Διαχείριση Υπόλοιπο Μεταφορά",
+        help_text="Μεταφορά υπολοίπου διαχείρισης (έξοδα διαχείρισης)"
+    )
+    
     # Κατάσταση
     is_closed = models.BooleanField(default=False, verbose_name="Κλειστός Μήνας")
     closed_at = models.DateTimeField(null=True, blank=True, verbose_name="Ημερομηνία Κλεισίματος")
@@ -799,47 +843,123 @@ class MonthlyBalance(models.Model):
         """Συνολικές υποχρεώσεις = δαπάνες + παλιές οφειλές + αποθεματικό + διαχείριση"""
         return self.total_expenses + self.previous_obligations + self.reserve_fund_amount + self.management_fees
     
+    # Υβριδικό Σύστημα - Ξεχωριστά Υπολοιπα
+    @property
+    def main_obligations(self):
+        """Κύριες υποχρεώσεις = κανονικές δαπάνες + παλαιότερες οφειλές"""
+        return self.total_expenses + self.previous_obligations
+    
+    @property
+    def reserve_obligations(self):
+        """Αποθεματικές υποχρεώσεις = μόνο αποθεματικό"""
+        return self.reserve_fund_amount
+    
+    @property
+    def management_obligations(self):
+        """Διαχειριστικές υποχρεώσεις = μόνο έξοδα διαχείρισης"""
+        return self.management_fees
+    
+    @property
+    def main_net_result(self):
+        """Κύριο καθαρό αποτέλεσμα = εισπράξεις - κύριες υποχρεώσεις"""
+        return self.total_payments - self.main_obligations
+    
+    @property
+    def reserve_net_result(self):
+        """Αποθεματικό καθαρό αποτέλεσμα = εισπράξεις - αποθεματικές υποχρεώσεις"""
+        return self.total_payments - self.reserve_obligations
+    
+    @property
+    def management_net_result(self):
+        """Διαχειριστικό καθαρό αποτέλεσμα = εισπράξεις - διαχειριστικές υποχρεώσεις"""
+        return self.total_payments - self.management_obligations
+    
     @property
     def net_result(self):
-        """Καθαρό αποτέλεσμα = εισπράξεις - υποχρεώσεις"""
+        """Καθαρό αποτέλεσμα = εισπράξεις - υποχρεώσεις (συμβατότητα)"""
         return self.total_payments - self.total_obligations
     
     def close_month(self):
-        """Κλείνει τον μήνα και υπολογίζει το carry_forward"""
+        """Κλείνει τον μήνα και υπολογίζει τα carry_forward (Υβριδικό Σύστημα)"""
         from django.utils import timezone
+        from decimal import Decimal
         
+        # Υπολογισμός carry_forward για συμβατότητα (αρνητικό = οφειλή)
         self.carry_forward = -self.net_result if self.net_result < 0 else Decimal('0.00')
+        
+        # Υβριδικό Σύστημα - Υπολογισμός ξεχωριστών carry_forward
+        # Κύριο Υπόλοιπο: Κανονικές Δαπάνες + Παλαιότερες Οφειλές
+        self.main_balance_carry_forward = -self.main_net_result if self.main_net_result < 0 else Decimal('0.00')
+        
+        # Αποθεματικό Υπόλοιπο: Μόνο για αποταμίευση (θετικό = πλεόνασμα)
+        self.reserve_balance_carry_forward = self.reserve_net_result if self.reserve_net_result > 0 else Decimal('0.00')
+        
+        # Διαχείριση Υπόλοιπο: Έξοδα διαχείρισης (αρνητικό = οφειλή)
+        self.management_balance_carry_forward = -self.management_net_result if self.management_net_result < 0 else Decimal('0.00')
+        
+        # Αν είναι Δεκέμβριος, υπολογισμός ετήσιας μεταφοράς
+        if self.month == 12:
+            self.annual_carry_forward = self.carry_forward
+            self.balance_year = self.year
+            print(f"📅 Δεκέμβριος {self.year}: Ετήσια μεταφορά = €{self.annual_carry_forward}")
+            print(f"   🏠 Κύριο Υπόλοιπο: €{self.main_balance_carry_forward}")
+            print(f"   🏦 Αποθεματικό: €{self.reserve_balance_carry_forward}")
+            print(f"   🏢 Διαχείριση: €{self.management_balance_carry_forward}")
+        
         self.is_closed = True
         self.closed_at = timezone.now()
         self.save()
         
-        # Δημιουργεί τον επόμενο μήνα με previous_obligations = carry_forward
+        # Δημιουργεί τον επόμενο μήνα
         self.create_next_month()
     
     def create_next_month(self):
-        """Δημιουργεί τον επόμενο μήνα με παλιές οφειλές"""
+        """Δημιουργεί τον επόμενο μήνα με παλιές οφειλές (Υβριδικό Σύστημα)"""
         from decimal import Decimal
         
         next_month = self.month + 1
         next_year = self.year
         
+        # Υβριδικό Σύστημα - Προσδιορισμός previous_obligations
         if next_month > 12:
+            # Ετήσια μεταφορά: Δεκέμβριος → Ιανουάριος
             next_month = 1 
             next_year += 1
+            previous_obligations = self.annual_carry_forward
+            print(f"🔄 Ετήσια μεταφορά: Δεκέμβριος {self.year} → Ιανουάριος {next_year} = €{previous_obligations}")
+        else:
+            # Μηνιαία μεταφορά: Ν → Ν+1 (μόνο κύριο υπόλοιπο)
+            previous_obligations = self.main_balance_carry_forward
+            print(f"📅 Μηνιαία μεταφορά: {self.month:02d}/{self.year} → {next_month:02d}/{next_year} = €{previous_obligations}")
         
-        MonthlyBalance.objects.get_or_create(
+        next_balance, created = MonthlyBalance.objects.get_or_create(
             building=self.building,
             year=next_year,
             month=next_month,
             defaults={
-                'previous_obligations': self.carry_forward,
+                'previous_obligations': previous_obligations,
+                'balance_year': next_year,
                 'total_expenses': Decimal('0.00'),
                 'total_payments': Decimal('0.00'),
                 'reserve_fund_amount': Decimal('0.00'),
                 'management_fees': Decimal('0.00'),
                 'carry_forward': Decimal('0.00'),
+                'annual_carry_forward': Decimal('0.00'),
+                'main_balance_carry_forward': Decimal('0.00'),
+                'reserve_balance_carry_forward': Decimal('0.00'),
+                'management_balance_carry_forward': Decimal('0.00'),
             }
         )
+        
+        # Αν το record υπάρχει ήδη, ενημερώνουμε τα πεδία μεταφοράς
+        if not created:
+            next_balance.previous_obligations = previous_obligations
+            next_balance.balance_year = next_year
+            next_balance.save()
+            print(f"   📝 Ενημερώθηκε υπάρχον record: {next_balance.month_display}")
+            print(f"   🏠 Κύριο Υπόλοιπο: €{previous_obligations}")
+            print(f"   🏦 Αποθεματικό: €{self.reserve_balance_carry_forward}")
+            print(f"   🏢 Διαχείριση: €{self.management_balance_carry_forward}")
 
 
 # Import του audit model στο τέλος για να αποφύγουμε circular imports

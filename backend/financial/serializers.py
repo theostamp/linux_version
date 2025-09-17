@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Expense, Transaction, Payment, ExpenseApartment, MeterReading, Supplier, FinancialReceipt
+from .models import Expense, Transaction, Payment, ExpenseApartment, MeterReading, Supplier, FinancialReceipt, MonthlyBalance
 from .services import FileUploadService
 
 
@@ -389,6 +389,76 @@ class MeterReadingSerializer(serializers.ModelSerializer):
                     f"Η νέα μετρήση ({value}) δεν μπορεί να είναι μικρότερη "
                     f"από την προηγούμενη ({previous_reading.value})."
                 )
+        
+        return data
+
+
+class MonthlyBalanceSerializer(serializers.ModelSerializer):
+    """Serializer για τα μηνιαία υπολοιπα (Υβριδικό Σύστημα)"""
+    
+    month_display = serializers.SerializerMethodField()
+    building_name = serializers.CharField(source='building.name', read_only=True)
+    
+    # Υβριδικό Σύστημα - Ξεχωριστά Υπολοιπα (Serialized Properties)
+    main_obligations = serializers.SerializerMethodField()
+    reserve_obligations = serializers.SerializerMethodField()
+    management_obligations = serializers.SerializerMethodField()
+    
+    main_net_result = serializers.SerializerMethodField()
+    reserve_net_result = serializers.SerializerMethodField()
+    management_net_result = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = MonthlyBalance
+        fields = [
+            'id', 'building', 'building_name', 'year', 'month', 'month_display',
+            'total_expenses', 'total_payments', 'previous_obligations',
+            'reserve_fund_amount', 'management_fees', 'total_obligations',
+            'carry_forward', 'annual_carry_forward', 'balance_year',
+            'main_balance_carry_forward', 'reserve_balance_carry_forward', 'management_balance_carry_forward',
+            'main_obligations', 'reserve_obligations', 'management_obligations',
+            'main_net_result', 'reserve_net_result', 'management_net_result',
+            'net_result', 'is_closed', 'closed_at', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_main_obligations(self, obj):
+        """Κύριες υποχρεώσεις = κανονικές δαπάνες + παλαιότερες οφειλές"""
+        return float(obj.total_expenses + obj.previous_obligations)
+    
+    def get_reserve_obligations(self, obj):
+        """Αποθεματικές υποχρεώσεις = μόνο αποθεματικό"""
+        return float(obj.reserve_fund_amount)
+    
+    def get_management_obligations(self, obj):
+        """Διαχειριστικές υποχρεώσεις = μόνο έξοδα διαχείρισης"""
+        return float(obj.management_fees)
+    
+    def get_main_net_result(self, obj):
+        """Κύριο καθαρό αποτέλεσμα = εισπράξεις - κύριες υποχρεώσεις"""
+        return float(obj.total_payments - (obj.total_expenses + obj.previous_obligations))
+    
+    def get_reserve_net_result(self, obj):
+        """Αποθεματικό καθαρό αποτέλεσμα = εισπράξεις - αποθεματικές υποχρεώσεις"""
+        return float(obj.total_payments - obj.reserve_fund_amount)
+    
+    def get_management_net_result(self, obj):
+        """Διαχειριστικό καθαρό αποτέλεσμα = εισπράξεις - διαχειριστικές υποχρεώσεις"""
+        return float(obj.total_payments - obj.management_fees)
+    
+    def get_month_display(self, obj):
+        """Μορφή μήνα/έτους"""
+        return f"{obj.month:02d}/{obj.year}"
+    
+    def to_representation(self, instance):
+        """Override για να μετατρέψουμε Decimal σε float"""
+        data = super().to_representation(instance)
+        
+        # Μετατροπή Decimal fields σε float
+        decimal_fields = ['total_obligations', 'net_result']
+        for field in decimal_fields:
+            if field in data and data[field] is not None:
+                data[field] = float(data[field])
         
         return data
 

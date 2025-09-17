@@ -124,16 +124,20 @@ class ServicePackageViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
+            from datetime import date
+            
             building = Building.objects.get(id=building_id)
             building.service_package = service_package
             building.management_fee_per_apartment = service_package.fee_per_apartment
+            building.service_package_start_date = date.today()  # Ημερομηνία έναρξης = σήμερα
             building.save()
             
             return Response({
                 'message': f'Πακέτο "{service_package.name}" εφαρμόστηκε επιτυχώς',
                 'building_id': building.id,
                 'service_package_id': service_package.id,
-                'new_fee': float(service_package.fee_per_apartment)
+                'new_fee': float(service_package.fee_per_apartment),
+                'start_date': building.service_package_start_date.isoformat() if building.service_package_start_date else None
             })
             
         except Building.DoesNotExist:

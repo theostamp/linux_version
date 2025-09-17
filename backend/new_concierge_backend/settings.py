@@ -29,6 +29,7 @@ ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
 # 2️⃣  Προσθέτουμε το wildcard μόνο σε dev
 if DEBUG:
     ALLOWED_HOSTS += [".localhost"]      # οποιοδήποτε sub-domain *.localhost
+    ALLOWED_HOSTS += ["backend"]         # Docker container hostname
 
 IS_PRODUCTION = os.getenv("ENV", "development") == "production"
 

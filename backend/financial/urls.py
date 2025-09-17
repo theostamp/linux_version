@@ -5,7 +5,7 @@ from .views import (
     FinancialDashboardViewSet, CommonExpenseViewSet, MeterReadingViewSet,
     ReportViewSet, SupplierViewSet, ApartmentTransactionViewSet,
     SystemHealthCheckView, auto_fix_system_issues, financial_overview,
-    FinancialReceiptViewSet
+    FinancialReceiptViewSet, MonthlyBalanceViewSet
 )
 from .tests_views import (
     run_financial_tests, stop_financial_tests, get_tests_status,
@@ -23,6 +23,7 @@ router.register(r'meter-readings', MeterReadingViewSet)
 router.register(r'reports', ReportViewSet, basename='reports')
 router.register(r'apartments', ApartmentTransactionViewSet, basename='apartment-transactions')
 router.register(r'receipts', FinancialReceiptViewSet)
+router.register(r'monthly-balances', MonthlyBalanceViewSet, basename='monthly-balances')
 
 urlpatterns = [
     path('', include(router.urls)),

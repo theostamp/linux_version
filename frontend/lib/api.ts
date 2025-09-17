@@ -165,6 +165,11 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    // Add X-Forwarded-Host header for Django tenant system (browser-safe alternative)
+    ...(typeof window !== 'undefined' && window.location.hostname.includes('.localhost') 
+      ? { 'X-Forwarded-Host': window.location.hostname }
+      : { 'X-Forwarded-Host': 'demo.localhost' }
+    ),
   },
 });
 
