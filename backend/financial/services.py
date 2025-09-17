@@ -358,7 +358,51 @@ class CommonExpenseCalculator:
                     'distribution_type': 'reserve_fund',
                     'distribution_type_display': 'Εισφορά Αποθεματικού'
                 })
+        
+        # 🆕 Αυτόματη δημιουργία δαπάνης αποθεματικού αν δεν υπάρχει
+        self._create_reserve_fund_expense_if_needed(monthly_target)
     
+    def _create_reserve_fund_expense_if_needed(self, monthly_target: float):
+        """Δημιουργεί αυτόματα δαπάνη αποθεματικού αν δεν υπάρχει για τον τρέχον μήνα"""
+        if not self.month or monthly_target <= 0:
+            return
+        
+        try:
+            from datetime import date
+            year, month = map(int, self.month.split('-'))
+            expense_date = date(year, month, 1)
+            
+            # Έλεγχος αν υπάρχει ήδη δαπάνη αποθεματικού για αυτόν τον μήνα
+            existing_expense = Expense.objects.filter(
+                building=self.building,
+                category='reserve_fund',
+                date__year=year,
+                date__month=month
+            ).first()
+            
+            if existing_expense:
+                print(f"✅ Δαπάνη αποθεματικού υπάρχει ήδη για {self.month}: €{existing_expense.amount}")
+                return
+            
+            # Δημιουργία νέας δαπάνης αποθεματικού
+            from decimal import Decimal
+            
+            expense = Expense.objects.create(
+                building=self.building,
+                title=f"Εισφορά Αποθεματικού - {expense_date.strftime('%B %Y')}",
+                amount=Decimal(str(monthly_target)),
+                date=expense_date,
+                category='reserve_fund',
+                expense_type='reserve_fund',
+                distribution_type='by_participation_mills',
+                notes=f"Αυτόματη δημιουργία - Μηνιαία εισφορά αποθεματικού (στόχος: €{self.building.reserve_fund_goal})"
+            )
+            
+            print(f"🆕 Δημιουργήθηκε δαπάνη αποθεματικού για {self.month}: €{monthly_target}")
+            
+        except Exception as e:
+            print(f"❌ Σφάλμα δημιουργίας δαπάνης αποθεματικού: {e}")
+
     def get_total_expenses(self) -> Decimal:
         """Επιστρέφει το συνολικό ποσό ανέκδοτων δαπανών"""
         return sum(exp.amount for exp in self.expenses)

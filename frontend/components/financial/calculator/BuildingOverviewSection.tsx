@@ -1762,11 +1762,40 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       {(() => {
                         const installments = parseInt(newInstallments);
-                        const startMonth = newStartMonth || '07';
-                        const startYear = newStartYear || '2025';
+                        // Χρήση των πραγματικών τιμών που έχει ο χρήστης
+                        let startMonth, startYear;
+                        
+                        if (newStartMonth && newStartYear) {
+                          // Αν ο χρήστης έχει επιλέξει νέες τιμές, χρησιμοποιούμε αυτές
+                          startMonth = newStartMonth;
+                          startYear = newStartYear;
+                        } else if (financialSummary?.reserve_fund_start_date) {
+                          // Αν υπάρχει αποθηκευμένη ημερομηνία, χρησιμοποιούμε αυτή
+                          const startDate = new Date(financialSummary.reserve_fund_start_date);
+                          startMonth = (startDate.getMonth() + 1).toString().padStart(2, '0');
+                          startYear = startDate.getFullYear().toString();
+                        } else {
+                          // Fallback σε τρέχον μήνα/έτος
+                          const now = new Date();
+                          startMonth = (now.getMonth() + 1).toString().padStart(2, '0');
+                          startYear = now.getFullYear().toString();
+                        }
                         
                         const months = [];
                         const startDate = new Date(parseInt(startYear), parseInt(startMonth) - 1, 1);
+                        
+                        // Debug: Εκτύπωση τιμών για έλεγχο
+                        console.log('🔍 Reserve Fund Timeline Debug:', {
+                          newStartMonth,
+                          newStartYear,
+                          finalStartMonth: startMonth,
+                          finalStartYear: startYear,
+                          startDate: startDate.toISOString(),
+                          installments,
+                          financialSummaryStartDate: financialSummary?.reserve_fund_start_date,
+                          hasUserSelection: !!(newStartMonth && newStartYear),
+                          hasStoredDate: !!financialSummary?.reserve_fund_start_date
+                        });
                         
                         for (let i = 0; i < installments; i++) {
                           const currentDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
