@@ -564,6 +564,7 @@ export type Building = {
   // Add missing reserve fund properties
   reserve_fund_goal?: number;
   reserve_fund_duration_months?: number;
+  reserve_fund_priority?: 'after_obligations' | 'always';
   created_at: string;
   updated_at?: string;
   street_view_image?: string;

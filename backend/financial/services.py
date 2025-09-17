@@ -281,33 +281,39 @@ class CommonExpenseCalculator:
                 print(f"Error parsing month {self.month}: {e}")
                 return
         
-        # Έλεγχος αν υπάρχουν εκκρεμότητες (εξαιρώντας το αποθεματικό για αποφυγή κυκλικής παγίδας)
-        # Χρήση ιστορικών υπολοίπων για τον έλεγχο εκκρεμοτήτων
-        total_obligations = 0
-        for apt in self.apartments:
-            historical_balance = self._get_historical_balance(apt, self.period_end_date)
+        # Έλεγχος προτεραιότητας συλλογής αποθεματικού
+        # Αν η προτεραιότητα είναι 'after_obligations', ελέγχουμε για εκκρεμότητες
+        if self.building.reserve_fund_priority == 'after_obligations':
+            # Έλεγχος αν υπάρχουν εκκρεμότητες (εξαιρώντας το αποθεματικό για αποφυγή κυκλικής παγίδας)
+            # Χρήση ιστορικών υπολοίπων για τον έλεγχο εκκρεμοτήτων
+            total_obligations = 0
+            for apt in self.apartments:
+                historical_balance = self._get_historical_balance(apt, self.period_end_date)
+                
+                if historical_balance < 0:
+                    # Αφαίρεση τυχόν χρεώσεων αποθεματικού για αποφυγή κυκλικής παγίδας
+                    from django.utils import timezone
+                    from datetime import datetime
+                    end_datetime = timezone.make_aware(datetime.combine(self.period_end_date, datetime.max.time()))
+                    
+                    from django.db.models import Sum
+                    reserve_charges = Transaction.objects.filter(
+                        apartment=apt,
+                        date__lt=end_datetime,
+                        description__icontains='αποθεματικ'
+                    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                    
+                    # Προσαρμογή υπολοίπου αφαιρώντας χρεώσεις αποθεματικού
+                    adjusted_balance = historical_balance + reserve_charges
+                    
+                    if adjusted_balance < 0:
+                        total_obligations += abs(adjusted_balance)
             
-            if historical_balance < 0:
-                # Αφαίρεση τυχόν χρεώσεων αποθεματικού για αποφυγή κυκλικής παγίδας
-                from django.utils import timezone
-                from datetime import datetime
-                end_datetime = timezone.make_aware(datetime.combine(self.period_end_date, datetime.max.time()))
-                
-                from django.db.models import Sum
-                reserve_charges = Transaction.objects.filter(
-                    apartment=apt,
-                    date__lt=end_datetime,
-                    description__icontains='αποθεματικ'
-                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-                
-                # Προσαρμογή υπολοίπου αφαιρώντας χρεώσεις αποθεματικού
-                adjusted_balance = historical_balance + reserve_charges
-                
-                if adjusted_balance < 0:
-                    total_obligations += abs(adjusted_balance)
-        
-        if total_obligations > 0:
-            return
+            if total_obligations > 0:
+                print(f"🚫 Αποθεματικό: Υπάρχουν εκκρεμότητες €{total_obligations}, δεν συλλέγεται (προτεραιότητα: after_obligations)")
+                return
+        else:
+            print(f"✅ Αποθεματικό: Συλλογή ανεξάρτητα από εκκρεμότητες (προτεραιότητα: always)")
         
         # Υπολογισμός μηνιαίας εισφοράς αποθεματικού
         monthly_target = 0
@@ -706,8 +712,8 @@ class FinancialDashboardService:
     def _calculate_reserve_fund_contribution(self, current_reserve: Decimal, total_obligations: Decimal) -> Decimal:
         """
         Υπολογίζει την εισφορά αποθεματικού με βάση την προτεραιότητα:
-        1. Πρώτα πρέπει να καλυφθούν οι τρέχουσες υποχρεώσεις (εκτός από διαχείριση)
-        2. Μετά υπολογίζεται η εισφορά αποθεματικού
+        1. Αν προτεραιότητα = 'after_obligations': Πρώτα πρέπει να καλυφθούν οι τρέχουσες υποχρεώσεις
+        2. Αν προτεραιότητα = 'always': Συλλέγεται πάντα ανεξάρτητα από εκκρεμότητες
         """
         # Υπολογίζουμε τις εκκρεμότητες ΕΚΤΟΣ από το κόστος διαχείρισης
         # Το κόστος διαχείρισης είναι τακτική υποχρέωση, όχι εκκρεμότητα
@@ -719,9 +725,14 @@ class FinancialDashboardService:
         # Εκκρεμότητες = total_obligations - management_cost
         actual_obligations = total_obligations - management_cost
         
-        # Αν υπάρχουν πραγματικές εκκρεμότητες (εκτός διαχείρισης), δεν υπολογίζουμε αποθεματικό
-        if actual_obligations > 0:
-            return Decimal('0.00')
+        # Έλεγχος προτεραιότητας συλλογής αποθεματικού
+        if building.reserve_fund_priority == 'after_obligations':
+            # Αν υπάρχουν πραγματικές εκκρεμότητες (εκτός διαχείρισης), δεν υπολογίζουμε αποθεματικό
+            if actual_obligations > 0:
+                print(f"🚫 FinancialDashboard: Υπάρχουν εκκρεμότητες €{actual_obligations}, δεν συλλέγεται αποθεματικό (προτεραιότητα: after_obligations)")
+                return Decimal('0.00')
+        else:
+            print(f"✅ FinancialDashboard: Συλλογή αποθεματικού ανεξάρτητα από εκκρεμότητες €{actual_obligations} (προτεραιότητα: always)")
         
         # Αν δεν υπάρχουν πραγματικές εκκρεμότητες, υπολογίζουμε την κανονική εισφορά αποθεματικού
         # Χρησιμοποιούμε τον ίδιο υπολογισμό με το CommonExpenseCalculator

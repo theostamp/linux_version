@@ -214,6 +214,18 @@ class Building(models.Model):
         help_text=_("Ημερομηνία ολοκλήρωσης του στόχου αποθεματικού")
     )
 
+    # 🎛️ Προτεραιότητα Συλλογής Αποθεματικού
+    reserve_fund_priority = models.CharField(
+        _("Προτεραιότητα Συλλογής Αποθεματικού"),
+        max_length=20,
+        choices=[
+            ('after_obligations', 'Μετά τις Εκκρεμότητες'),
+            ('always', 'Πάντα (Ανεξάρτητα)')
+        ],
+        default='after_obligations',
+        help_text=_("Πότε να συλλέγεται το αποθεματικό: μετά τις εκκρεμότητες ή πάντα")
+    )
+
     # 💼 Έξοδα Διαχείρισης
     management_fee_per_apartment = models.DecimalField(
         _("Αμοιβή Διαχείρισης ανά Διαμέρισμα"),

@@ -109,6 +109,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const [showOverviewModal, setShowOverviewModal] = useState(false);
   const [showReserveGoalModal, setShowReserveGoalModal] = useState(false);
   const [showManagementExpensesModal, setShowManagementExpensesModal] = useState(false);
+  const [reserveFundPriority, setReserveFundPriority] = useState<'after_obligations' | 'always'>('after_obligations');
 
 
   // Memoize currentBuilding to prevent unnecessary re-renders
@@ -348,6 +349,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const apiGoal = apiData.reserve_fund_goal || 0;
       const apiDurationMonths = apiData.reserve_fund_duration_months || 0;
       const apiMonthlyTarget = apiData.reserve_fund_monthly_target || 0;
+      const apiPriority = apiData.reserve_fund_priority || 'after_obligations';
       
       // Use API data only - no localStorage fallback to prevent hardcoded values
       const savedGoal = apiGoal;
@@ -464,6 +466,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       
       setFinancialSummary(finalData);
       setNewGoal(financialData.reserve_fund_goal.toString());
+      setReserveFundPriority(apiPriority);
       
       // Αφαιρέθηκε το notification για auto-refresh
       // if (isRefresh) {
@@ -642,7 +645,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         reserve_fund_goal: goalValue,
         reserve_fund_duration_months: installmentsValue,
         reserve_fund_start_date: newStartDate,
-        reserve_fund_target_date: newEndDate
+        reserve_fund_target_date: newEndDate,
+        reserve_fund_priority: reserveFundPriority
       });
       
       setFinancialSummary(prev => prev ? { 
@@ -1702,6 +1706,126 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     </div>
                   )}
                 </div>
+                
+                {/* Προτεραιότητα Συλλογής Αποθεματικού */}
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="text-sm font-semibold text-gray-800 mb-4">Προτεραιότητα Συλλογής Αποθεματικού</div>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-h-[60px]">
+                      <div className="text-sm font-medium text-gray-700 mb-2">
+                        {reserveFundPriority === 'after_obligations' 
+                          ? 'Μετά τις Εκκρεμότητες' 
+                          : 'Πάντα (Ανεξάρτητα)'
+                        }
+                      </div>
+                      <div className="text-xs text-gray-600 leading-relaxed">
+                        {reserveFundPriority === 'after_obligations' 
+                          ? 'Το αποθεματικό συλλέγεται μόνο όταν δεν υπάρχουν εκκρεμότητες από προηγούμενους μήνες. Πρώτα καλύπτονται οι τρέχουσες οφειλές, μετά το αποθεματικό.'
+                          : 'Το αποθεματικό συλλέγεται πάντα, ανεξάρτητα από εκκρεμότητες. Μπορεί να οδηγήσει σε συσσώρευση οφειλών.'
+                        }
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-3 min-w-[120px]">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-medium text-gray-600">Μετά Εκκρεμότητες</span>
+                        <button
+                          type="button"
+                          onClick={() => setReserveFundPriority(
+                            reserveFundPriority === 'after_obligations' ? 'always' : 'after_obligations'
+                          )}
+                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
+                            reserveFundPriority === 'always' ? 'bg-orange-600' : 'bg-gray-300'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${
+                              reserveFundPriority === 'always' ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                        <span className="text-xs font-medium text-gray-600">Πάντα</span>
+                      </div>
+                      <div className="text-xs text-center text-gray-500">
+                        {reserveFundPriority === 'after_obligations' 
+                          ? 'Συντηρητική προσέγγιση'
+                          : 'Ενεργητική προσέγγιση'
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Λίστα Ενεργών Μηνών */}
+                {newGoal && newInstallments && parseFloat(newGoal) > 0 && parseInt(newInstallments) > 0 && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="text-sm font-semibold text-blue-800 mb-3">Ενεργοί Μήνες Συλλογής</div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {(() => {
+                        const installments = parseInt(newInstallments);
+                        const startMonth = newStartMonth || '07';
+                        const startYear = newStartYear || '2025';
+                        
+                        const months = [];
+                        const startDate = new Date(parseInt(startYear), parseInt(startMonth) - 1, 1);
+                        
+                        for (let i = 0; i < installments; i++) {
+                          const currentDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+                          const monthName = currentDate.toLocaleDateString('el-GR', { month: 'long' });
+                          const year = currentDate.getFullYear();
+                          const isCurrentMonth = currentDate.getMonth() === new Date().getMonth() && 
+                                               currentDate.getFullYear() === new Date().getFullYear();
+                          const isPastMonth = currentDate < new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+                          const isFutureMonth = currentDate > new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+                          
+                          months.push({
+                            month: monthName,
+                            year: year,
+                            isCurrent: isCurrentMonth,
+                            isPast: isPastMonth,
+                            isFuture: isFutureMonth,
+                            index: i + 1
+                          });
+                        }
+                        
+                        return months.map((month, index) => (
+                          <div
+                            key={index}
+                            className={`p-2 rounded text-xs font-medium text-center ${
+                              month.isCurrent 
+                                ? 'bg-orange-200 text-orange-800 border border-orange-300' 
+                                : month.isPast 
+                                  ? 'bg-gray-200 text-gray-600 border border-gray-300'
+                                  : 'bg-green-100 text-green-700 border border-green-300'
+                            }`}
+                          >
+                            <div className="font-semibold">{month.index}η</div>
+                            <div>{month.month}</div>
+                            <div className="text-xs opacity-75">{month.year}</div>
+                            {month.isCurrent && (
+                              <div className="text-xs font-bold mt-1">ΤΡΕΧΩΝ</div>
+                            )}
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                    <div className="mt-3 text-xs text-blue-600">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 bg-gray-200 border border-gray-300 rounded"></div>
+                          <span>Περασμένοι</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 bg-orange-200 border border-orange-300 rounded"></div>
+                          <span>Τρέχων</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 bg-green-100 border border-green-300 rounded"></div>
+                          <span>Μέλλοντες</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="flex gap-2 pt-2">
                   <Button size="sm" onClick={handleSaveGoal} className="flex-1 bg-orange-600 hover:bg-orange-700">
