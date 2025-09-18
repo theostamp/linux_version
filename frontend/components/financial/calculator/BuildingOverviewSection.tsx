@@ -1306,6 +1306,16 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     )}
                   </div>
                 </div>
+                
+                {/* Reserve Fund Content */}
+                <div className="mt-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-orange-600 font-medium">Σύνολο / Δόσεις:</span>
+                    <span className={`text-sm font-bold ${getProgressColors(reserveProgress).text}`}>
+                      {formatCurrency(financialSummary?.reserve_fund_goal || 0)} / {financialSummary?.reserve_fund_duration_months || 0}
+                    </span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -1896,6 +1906,12 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     <div className="text-xs text-orange-700 font-medium">Μηνιαία Δόση:</div>
                     <div className={`text-sm font-bold ${getProgressColors(reserveProgress).text}`}>
                       {formatCurrency(financialSummary?.reserve_fund_monthly_target || 0)}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs text-orange-700 font-medium">Σύνολο / Δόσεις:</div>
+                    <div className={`text-sm font-bold ${getProgressColors(reserveProgress).text}`}>
+                      {formatCurrency(financialSummary?.reserve_fund_goal || 0)} / {financialSummary?.reserve_fund_duration_months || 0} Δόσεις
                     </div>
                   </div>
                 </div>
