@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, AlertTriangle, CheckCircle, Clock, Plus, Trash2, Pencil } from 'lucide-react';
 import { useRole } from '@/lib/auth';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { ServiceDeletionConfirmDialog } from '@/components/maintenance/ServiceDeletionConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import ScheduledMaintenanceOverviewModal from '@/components/maintenance/ScheduledMaintenanceOverviewModal';
 
@@ -174,13 +174,12 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
         ))}
       </div>
 
-      <ConfirmDialog
+      <ServiceDeletionConfirmDialog
         open={toDeleteId !== null}
         onOpenChange={(open) => !open && setToDeleteId(null)}
-        title="Επιβεβαίωση Διαγραφής"
-        description="Θέλετε σίγουρα να διαγράψετε το έργο;"
-        confirmText="Διαγραφή"
-        confirmVariant="destructive"
+        maintenanceTitle={items.find(item => item.id === toDeleteId)?.title}
+        relatedExpensesCount={0} // Will be calculated in onConfirm
+        totalAmount={0} // Will be calculated in onConfirm
         isConfirmLoading={deleting}
         onConfirm={async () => {
           if (toDeleteId === null || !buildingId) return;
@@ -192,6 +191,9 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
             const maintenanceTitle = itemToDelete?.title || '';
             
             // First, find and delete related expenses
+            let deletedExpensesCount = 0;
+            let totalDeletedAmount = 0;
+            
             try {
               const allExpenses = await getExpenses({ building_id: buildingId });
               const normalizedMaintenanceTitle = maintenanceTitle.toLowerCase();
@@ -206,17 +208,21 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
               });
               
               if (relatedExpenses.length > 0) {
-                let deletedCount = 0;
                 for (const expense of relatedExpenses) {
                   try {
                     await deleteExpense(expense.id);
-                    deletedCount += 1;
+                    deletedExpensesCount += 1;
+                    totalDeletedAmount += expense.amount || 0;
                   } catch (expenseError) {
                     console.error('Error deleting related expense:', expenseError);
                   }
                 }
-                if (deletedCount > 0) {
-                  toast({ title: 'Καθαρισμός Δαπανών', description: `Διαγράφηκαν ${deletedCount} σχετικές δαπάνες.` });
+                
+                if (deletedExpensesCount > 0) {
+                  toast({ 
+                    title: 'Καθαρισμός Δαπανών', 
+                    description: `Διαγράφηκαν ${deletedExpensesCount} σχετικές δαπάνες (${totalDeletedAmount.toFixed(2)}€).` 
+                  });
                 }
               }
             } catch (expenseError) {
@@ -227,9 +233,22 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
             // Delete the scheduled maintenance
             await deleteScheduledMaintenance(toDeleteId);
             qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled'] });
-            toast({ title: 'Διαγράφηκε', description: 'Το έργο και οι σχετικές δαπάνες διαγράφηκαν επιτυχώς.' });
+            
+            // Enhanced success message
+            const successMessage = deletedExpensesCount > 0 
+              ? `Το έργο "${maintenanceTitle}" και ${deletedExpensesCount} σχετικές δαπάνες διαγράφηκαν επιτυχώς.`
+              : `Το έργο "${maintenanceTitle}" διαγράφηκε επιτυχώς.`;
+              
+            toast({ 
+              title: 'Διαγραφή Ολοκληρώθηκε', 
+              description: successMessage 
+            });
           } catch (e) {
-            toast({ title: 'Σφάλμα', description: 'Αποτυχία διαγραφής.', variant: 'destructive' as any });
+            toast({ 
+              title: 'Σφάλμα Διαγραφής', 
+              description: 'Αποτυχία διαγραφής του έργου. Παρακαλώ δοκιμάστε ξανά.', 
+              variant: 'destructive' as any 
+            });
           } finally {
             setDeleting(false);
             setToDeleteId(null);

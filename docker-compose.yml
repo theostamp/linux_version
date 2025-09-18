@@ -80,9 +80,9 @@ services:
     env_file: .env
     environment:
       - AUTO_MAKEMIGRATIONS=true
-      - GOOGLE_CLIENT_ID=18479237023-toafs2t3stm3i6lvcb87aopaqhe7pv4s.apps.googleusercontent.com
-      - GOOGLE_CLIENT_SECRET=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
-      - GOOGLE_CALENDAR_ENABLED=True
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALENDAR_ENABLED=${GOOGLE_CALENDAR_ENABLED:-True}
       # Google Document AI settings (should be set in .env file)
       - GOOGLE_CLOUD_PROJECT_ID=${GOOGLE_CLOUD_PROJECT_ID:-}
       - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-us}

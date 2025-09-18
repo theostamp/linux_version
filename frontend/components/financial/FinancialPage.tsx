@@ -38,6 +38,7 @@ import { toast } from 'sonner';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useModalState } from '@/hooks/useModalState';
 import useFinancialAutoRefresh from '@/hooks/useFinancialAutoRefresh';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface FinancialPageProps {
   buildingId: number;
@@ -47,6 +48,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { currentBuilding, selectedBuilding } = useBuilding();
+  const queryClient = useQueryClient();
   
   // Use selectedBuilding ID if available, otherwise use the passed buildingId
   const activeBuildingId = selectedBuilding?.id || buildingId;
@@ -334,9 +336,31 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
             <h1 className="text-2xl font-bold font-condensed">Οικονομική Διαχείριση</h1>
           </div>
           <Button
-            onClick={() => {
+            onClick={async () => {
+              // 🧹 Cache invalidation - Clear all financial-related queries
+              await queryClient.invalidateQueries({ 
+                queryKey: ['financial'] 
+              });
+              await queryClient.invalidateQueries({ 
+                queryKey: ['apartment-balances'] 
+              });
+              await queryClient.invalidateQueries({ 
+                queryKey: ['expenses'] 
+              });
+              await queryClient.invalidateQueries({ 
+                queryKey: ['transactions'] 
+              });
+              
+              console.log(`🧹 FinancialPage: Cache invalidated for financial data`);
+              
+              // Refresh components
               if (buildingOverviewRef.current) buildingOverviewRef.current.refresh();
               if (expenseListRef.current) expenseListRef.current.refresh();
+              
+              // Show success message
+              toast.success('Ενημερώθηκαν όλα τα οικονομικά δεδομένα', {
+                description: 'Το cache καθαρίστηκε και τα δεδομένα ανανεώθηκαν'
+              });
             }}
             variant="outline"
             size="sm"

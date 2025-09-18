@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Calendar, 
   Clock, 
@@ -134,11 +134,21 @@ export default function CalendarWidget({ className }: CalendarWidgetProps) {
   const { status, isLoading, isConnected, lastSyncFormatted } = useCalendarStatusExtended(selectedBuilding?.id);
   const syncMutation = useSyncCalendar();
 
+  // Memoize date calculations to prevent infinite re-renders
+  const dateRange = useMemo(() => {
+    const today = new Date();
+    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+    
+    return {
+      start_date: today.toISOString().split('T')[0], // Today
+      end_date: thirtyDaysFromNow.toISOString().split('T')[0] // Next 30 days
+    };
+  }, []); // Empty dependency array - dates should be calculated once
+
   // Get real events from API
   const { data: events = [], isLoading: eventsLoading } = useCalendarEvents({
     building: selectedBuilding?.id,
-    start_date: new Date().toISOString().split('T')[0], // Today
-    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Next 30 days
+    ...dateRange
   });
 
   // Map and sort events by start time and get upcoming ones

@@ -36,6 +36,9 @@ import { getRelativeTimeEl } from '@/lib/date';
 import { useRole } from '@/lib/auth';
 import { BackButton } from '@/components/ui/BackButton';
 import { ExpenseForm } from '@/components/financial/ExpenseForm';
+import { useExpenses } from '@/hooks/useExpenses';
+import { useToast } from '@/hooks/use-toast';
+import { Trash2 } from 'lucide-react';
 
 interface MaintenanceStats {
   total_contractors: number;
@@ -50,6 +53,9 @@ interface MaintenanceStats {
 // Operational Expenses Tab Component
 function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [deletingExpenseId, setDeletingExpenseId] = useState<number | null>(null);
+  const { toast } = useToast();
+  const { deleteExpense } = useExpenses(buildingId || 0);
   
   // Query for operational expenses (utilities and regular monthly bills ONLY)
   const operationalExpensesQ = useQuery({
@@ -76,6 +82,38 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
 
   const expenseRows = extractResults<any>(operationalExpensesQ.data ?? []);
   const totalOperationalExpenses = expenseRows.reduce((sum: number, expense: any) => sum + (Number(expense?.amount) || 0), 0);
+
+  // Handle expense deletion
+  const handleDeleteExpense = async (expenseId: number, expenseTitle: string) => {
+    try {
+      setDeletingExpenseId(expenseId);
+      const success = await deleteExpense(expenseId);
+      
+      if (success) {
+        toast({
+          title: 'Διαγραφή Επιτυχής',
+          description: `Η δαπάνη "${expenseTitle}" διαγράφηκε επιτυχώς.`
+        });
+        // Refresh the query
+        operationalExpensesQ.refetch();
+      } else {
+        toast({
+          title: 'Σφάλμα Διαγραφής',
+          description: 'Αποτυχία διαγραφής της δαπάνης. Παρακαλώ δοκιμάστε ξανά.',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      toast({
+        title: 'Σφάλμα Διαγραφής',
+        description: 'Αποτυχία διαγραφής της δαπάνης. Παρακαλώ δοκιμάστε ξανά.',
+        variant: 'destructive'
+      });
+    } finally {
+      setDeletingExpenseId(null);
+    }
+  };
 
   if (showExpenseForm) {
     return (
@@ -212,16 +250,28 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold">€{Number(expense.amount).toLocaleString('el-GR')}</p>
-                    <Badge variant="outline" className="text-xs">
-                      {expense.category === 'electricity_common' ? 'ΔΕΗ' :
-                       expense.category === 'water_common' ? 'ΕΥΔΑΠ' :
-                       expense.category === 'heating_fuel' ? 'Πετρέλαιο' :
-                       expense.category === 'heating_gas' ? 'Αέριο' :
-                       expense.category === 'garbage_collection' ? 'Απορρίμματα' :
-                       'Λειτουργικά'}
-                    </Badge>
+                  <div className="flex items-center space-x-3">
+                    <div className="text-right">
+                      <p className="text-sm font-bold">€{Number(expense.amount).toLocaleString('el-GR')}</p>
+                      <Badge variant="outline" className="text-xs">
+                        {expense.category === 'electricity_common' ? 'ΔΕΗ' :
+                         expense.category === 'water_common' ? 'ΕΥΔΑΠ' :
+                         expense.category === 'heating_fuel' ? 'Πετρέλαιο' :
+                         expense.category === 'heating_gas' ? 'Αέριο' :
+                         expense.category === 'garbage_collection' ? 'Απορρίμματα' :
+                         'Λειτουργικά'}
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteExpense(expense.id, expense.title || 'Λειτουργική Δαπάνη')}
+                      disabled={deletingExpenseId === expense.id}
+                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                      title="Διαγραφή δαπάνης"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}

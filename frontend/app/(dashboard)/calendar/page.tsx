@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Calendar, Plus, Filter, Users, Clock, AlertCircle, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,21 +21,33 @@ function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [activeTab, setActiveTab] = useState('calendar'); // 'calendar' | 'google-settings'
 
-  // Get events for today's stats
-  const today = new Date();
-  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  // Memoize date calculations to prevent infinite re-renders
+  const dateRanges = useMemo(() => {
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const weekEnd = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    return {
+      today: {
+        start_date: todayStart.toISOString(),
+        end_date: todayEnd.toISOString()
+      },
+      upcoming: {
+        start_date: today.toISOString(),
+        end_date: weekEnd.toISOString()
+      }
+    };
+  }, []); // Empty dependency array - dates should be calculated once
 
   const { data: todayEvents = [] } = useCalendarEvents({
     building: selectedBuilding?.id,
-    start_date: todayStart.toISOString(),
-    end_date: todayEnd.toISOString()
+    ...dateRanges.today
   });
 
   const { data: upcomingEvents = [] } = useCalendarEvents({
     building: selectedBuilding?.id,
-    start_date: today.toISOString(),
-    end_date: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    ...dateRanges.upcoming
   });
 
   // Calculate stats

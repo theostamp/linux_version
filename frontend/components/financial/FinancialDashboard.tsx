@@ -24,6 +24,7 @@ import ReportsManager from './ReportsManager';
 import { useRouter } from 'next/navigation';
 import { useMonthRefresh } from '@/hooks/useMonthRefresh';
 import useFinancialAutoRefresh from '@/hooks/useFinancialAutoRefresh';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface FinancialDashboardProps {
   buildingId: number;
@@ -45,6 +46,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const loadSummary = useCallback(async () => {
     try {
@@ -52,6 +54,22 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
       setError(null);
       
       console.log(`🔄 FinancialDashboard: Loading summary for building ${buildingId}, month: ${selectedMonth || 'current'}`);
+      
+      // 🧹 Cache invalidation - Clear all financial-related queries
+      await queryClient.invalidateQueries({ 
+        queryKey: ['financial'] 
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ['apartment-balances'] 
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ['expenses'] 
+      });
+      await queryClient.invalidateQueries({ 
+        queryKey: ['transactions'] 
+      });
+      
+      console.log(`🧹 FinancialDashboard: Cache invalidated for financial data`);
       
       const params = new URLSearchParams({
         building_id: buildingId.toString(),
@@ -75,7 +93,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
     } finally {
       setIsLoading(false);
     }
-  }, [buildingId, selectedMonth]);
+  }, [buildingId, selectedMonth, queryClient]);
 
   useEffect(() => {
     loadSummary();
