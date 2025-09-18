@@ -268,14 +268,21 @@ class CommonExpenseCalculator:
                 year, mon = map(int, self.month.split('-'))
                 selected_month_date = date(year, mon, 1)
                 
+                # Συγκρίνουμε μήνες, όχι ημερομηνίες
+                selected_year_month = (selected_month_date.year, selected_month_date.month)
+                start_year_month = (self.building.reserve_fund_start_date.year, self.building.reserve_fund_start_date.month)
+                
                 # Έλεγχος αν ο επιλεγμένος μήνας είναι πριν την έναρξη συλλογής
-                if selected_month_date < self.building.reserve_fund_start_date:
+                if selected_year_month < start_year_month:
+                    print(f"⏭️ Μήνας {self.month} είναι πριν την έναρξη συλλογής - παρακάμπτεται")
                     return  # Δεν συλλέγουμε αποθεματικό πριν την έναρξη
                 
                 # Έλεγχος αν ο επιλεγμένος μήνας είναι μετά την ολοκλήρωση
-                if (self.building.reserve_fund_target_date and 
-                    selected_month_date > self.building.reserve_fund_target_date):
-                    return  # Δεν συλλέγουμε αποθεματικό μετά την ολοκλήρωση
+                if self.building.reserve_fund_target_date:
+                    target_year_month = (self.building.reserve_fund_target_date.year, self.building.reserve_fund_target_date.month)
+                    if selected_year_month > target_year_month:
+                        print(f"⏭️ Μήνας {self.month} είναι μετά την ολοκλήρωση συλλογής - παρακάμπτεται")
+                        return  # Δεν συλλέγουμε αποθεματικό μετά την ολοκλήρωση
                     
             except Exception as e:
                 print(f"Error parsing month {self.month}: {e}")
@@ -287,31 +294,46 @@ class CommonExpenseCalculator:
             # Έλεγχος αν υπάρχουν εκκρεμότητες (εξαιρώντας το αποθεματικό για αποφυγή κυκλικής παγίδας)
             # Χρήση ιστορικών υπολοίπων για τον έλεγχο εκκρεμοτήτων
             total_obligations = 0
-            for apt in self.apartments:
-                historical_balance = self._get_historical_balance(apt, self.period_end_date)
-                
-                if historical_balance < 0:
-                    # Αφαίρεση τυχόν χρεώσεων αποθεματικού για αποφυγή κυκλικής παγίδας
-                    from django.utils import timezone
-                    from datetime import datetime
-                    end_datetime = timezone.make_aware(datetime.combine(self.period_end_date, datetime.max.time()))
-                    
-                    from django.db.models import Sum
-                    reserve_charges = Transaction.objects.filter(
-                        apartment=apt,
-                        date__lt=end_datetime,
-                        description__icontains='αποθεματικ'
-                    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-                    
-                    # Προσαρμογή υπολοίπου αφαιρώντας χρεώσεις αποθεματικού
-                    adjusted_balance = historical_balance + reserve_charges
-                    
-                    if adjusted_balance < 0:
-                        total_obligations += abs(adjusted_balance)
             
-            if total_obligations > 0:
-                print(f"🚫 Αποθεματικό: Υπάρχουν εκκρεμότητες €{total_obligations}, δεν συλλέγεται (προτεραιότητα: after_obligations)")
-                return
+            # Αν δεν υπάρχει period_end_date, χρησιμοποιούμε τον τρέχον μήνα
+            end_date = self.period_end_date
+            if end_date is None and self.month:
+                from datetime import date
+                try:
+                    year, mon = map(int, self.month.split('-'))
+                    end_date = date(year, mon, 1)
+                except Exception as e:
+                    print(f"Error parsing month {self.month}: {e}")
+                    end_date = None
+            
+            if end_date:
+                for apt in self.apartments:
+                    historical_balance = self._get_historical_balance(apt, end_date)
+                    
+                    if historical_balance < 0:
+                        # Αφαίρεση τυχόν χρεώσεων αποθεματικού για αποφυγή κυκλικής παγίδας
+                        from django.utils import timezone
+                        from datetime import datetime
+                        end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
+                        
+                        from django.db.models import Sum
+                        reserve_charges = Transaction.objects.filter(
+                            apartment=apt,
+                            date__lt=end_datetime,
+                            description__icontains='αποθεματικ'
+                        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                        
+                        # Προσαρμογή υπολοίπου αφαιρώντας χρεώσεις αποθεματικού
+                        adjusted_balance = historical_balance + reserve_charges
+                        
+                        if adjusted_balance < 0:
+                            total_obligations += abs(adjusted_balance)
+                
+                if total_obligations > 0:
+                    print(f"🚫 Αποθεματικό: Υπάρχουν εκκρεμότητες €{total_obligations}, δεν συλλέγεται (προτεραιότητα: after_obligations)")
+                    return
+            else:
+                print(f"⚠️ Αποθεματικό: Δεν μπορεί να ελεγχθεί για εκκρεμότητες (no end_date)")
         else:
             print(f"✅ Αποθεματικό: Συλλογή ανεξάρτητα από εκκρεμότητες (προτεραιότητα: always)")
         
@@ -368,9 +390,14 @@ class CommonExpenseCalculator:
             return
         
         try:
-            from datetime import date
+            from datetime import date, timedelta
             year, month = map(int, self.month.split('-'))
             expense_date = date(year, month, 1)
+            
+            # Έλεγχος αν ο τρέχον μήνας ανήκει στο reserve fund timeline
+            if not self._is_month_in_reserve_fund_timeline(expense_date):
+                print(f"⏭️ Μήνας {self.month} δεν ανήκει στο reserve fund timeline - παρακάμπτεται")
+                return
             
             # Έλεγχος αν υπάρχει ήδη δαπάνη αποθεματικού για αυτόν τον μήνα
             existing_expense = Expense.objects.filter(
@@ -402,6 +429,22 @@ class CommonExpenseCalculator:
             
         except Exception as e:
             print(f"❌ Σφάλμα δημιουργίας δαπάνης αποθεματικού: {e}")
+    
+    def _is_month_in_reserve_fund_timeline(self, target_date) -> bool:
+        """Ελέγχει αν ένας μήνας ανήκει στο reserve fund timeline"""
+        if not self.building.reserve_fund_start_date or not self.building.reserve_fund_duration_months:
+            return False
+        
+        start_date = self.building.reserve_fund_start_date
+        end_date = start_date + timedelta(days=30 * self.building.reserve_fund_duration_months)
+        
+        # Συγκρίνουμε μήνες, όχι ημερομηνίες
+        target_year_month = (target_date.year, target_date.month)
+        start_year_month = (start_date.year, start_date.month)
+        end_year_month = (end_date.year, end_date.month)
+        
+        # Έλεγχος αν ο target μήνας είναι εντός του timeline
+        return start_year_month <= target_year_month < end_year_month
 
     def get_total_expenses(self) -> Decimal:
         """Επιστρέφει το συνολικό ποσό ανέκδοτων δαπανών"""

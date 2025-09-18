@@ -748,15 +748,17 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const totalManagementCost = feeValue * (currentBuilding?.apartments_count || 0);
       saveToLocalStorage('total_management_cost', totalManagementCost);
 
-      // Save to API
+      // Save to API - clear service_package when manually setting management fee
       await api.patch(`/buildings/list/${buildingId}/`, { 
-        management_fee_per_apartment: feeValue 
+        management_fee_per_apartment: feeValue,
+        service_package: null  // Clear service package when manually setting fee
       });
       
       setFinancialSummary(prev => prev ? {
         ...prev,
         management_fee_per_apartment: feeValue,
-        total_management_cost: totalManagementCost
+        total_management_cost: totalManagementCost,
+        service_package: null  // Clear service package from state
       } : null);
       setEditingManagementFee(false);
       // Αφαιρέθηκε το notification
@@ -1137,9 +1139,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       {isPositiveBalance ? 'Θετικό Υπόλοιπο' : 'Αρνητικό Υπόλοιπο'}
                     </Badge>
                     
-                    <div className="text-xs text-gray-600 mt-2">
-                      <strong>Τύπος:</strong> {selectedMonth ? 'Προβολή για τον επιλεγμένο μήνα' : 'Τρέχουσα κατάσταση'}
-                    </div>
+                  
                   </div>
 
                   {/* Ανάλυση κάλυψης υποχρεώσεων */}
