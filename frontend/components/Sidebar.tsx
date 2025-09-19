@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils';
 import useCsrf from '@/hooks/useCsrf';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import BuildingSelectorButton from '@/components/BuildingSelectorButton';
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 import { CalculatorModal } from '@/components/ui/CalculatorModal';
 import {
@@ -209,37 +208,16 @@ const navigationGroups: NavigationGroup[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [hasSeenTooltip, setHasSeenTooltip] = useState(false);
   useCsrf();
 
   const { user, isLoading: authIsLoading, isAuthReady } = useAuth();
   const {
     buildings,
     currentBuilding,
-    selectedBuilding,
-    setSelectedBuilding,
     isLoading: buildingsIsLoading,
   } = useBuilding();
   const { navigateWithLoading } = useNavigationWithLoading();
 
-  // Auto-show tooltip for first-time users
-  useEffect(() => {
-    const seen = localStorage.getItem('sidebar-tooltip-seen');
-    if (!seen) {
-      const timer = setTimeout(() => {
-        setShowTooltip(true);
-        setTimeout(() => {
-          setShowTooltip(false);
-          setHasSeenTooltip(true);
-          localStorage.setItem('sidebar-tooltip-seen', 'true');
-        }, 5000);
-      }, 3000);
-      return () => clearTimeout(timer);
-    } else {
-      setHasSeenTooltip(true);
-    }
-  }, []);
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -267,17 +245,6 @@ export default function Sidebar() {
     };
   }, [isMobileMenuOpen]);
 
-  const handleMouseEnter = () => {
-    if (hasSeenTooltip) {
-      setShowTooltip(true);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (hasSeenTooltip) {
-      setShowTooltip(false);
-    }
-  };
 
   const handleNavigation = async (href: string, message?: string) => {
     // Close mobile menu if open
@@ -482,32 +449,6 @@ export default function Sidebar() {
               <h1 className="text-base font-bold text-gray-800 dark:text-gray-100 tracking-tight leading-tight font-condensed">Digital Concierge</h1>
               <p className="text-xs text-gray-500 dark:text-gray-400 tracking-wide leading-tight font-condensed">Διαχείριση Κτιρίων</p>
             </div>
-          </div>
-          <div className="relative group" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-            <BuildingSelectorButton
-              onBuildingSelect={setSelectedBuilding}
-              selectedBuilding={selectedBuilding}
-              className="w-full text-xs"
-            />
-            
-            {/* Hover Tooltip */}
-            {showTooltip && (
-              <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 opacity-100 transition-opacity duration-300 pointer-events-none z-10">
-                <div className="bg-white/95 backdrop-blur-sm text-gray-800 text-xs rounded-lg p-2 shadow-lg border border-gray-200 max-w-xs">
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full mt-1 flex-shrink-0"></div>
-                    <div>
-                      <p className="font-medium mb-1 text-xs">Επιλογέας Κτιρίων</p>
-                      <p className="text-gray-600 text-xs leading-relaxed">
-                        Επιλέξτε το κτίριο που θέλετε να διαχειριστείτε.
-                      </p>
-                    </div>
-                  </div>
-                  {/* Arrow */}
-                  <div className="absolute top-1/2 left-0 transform -translate-y-1/2 -translate-x-1 w-0 h-0 border-t-3 border-b-3 border-r-3 border-transparent border-r-white/95"></div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 

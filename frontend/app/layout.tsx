@@ -3,6 +3,7 @@ import React from 'react';
 import AppProviders from '@/components/AppProviders';
 import DevCompileIndicator from '@/components/DevCompileIndicator';
 import StartupWrapper from '@/components/StartupWrapper';
+import IntroWrapper from '@/components/IntroWrapper';
 import { Open_Sans, Roboto_Condensed, Inter_Tight } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -33,11 +34,13 @@ export default function RootLayout({ children }: { readonly children: React.Reac
   return (
     <html lang="el">
       <body className={`${openSans.variable} ${robotoCondensed.variable} ${interTight.variable}`}>
-        <DevCompileIndicator />
-        <StartupWrapper>
-          <AppProviders>{children}</AppProviders>
-          <Toaster />
-        </StartupWrapper>
+        <IntroWrapper>
+          <DevCompileIndicator />
+          <StartupWrapper>
+            <AppProviders>{children}</AppProviders>
+            <Toaster />
+          </StartupWrapper>
+        </IntroWrapper>
       </body>
     </html>
   );

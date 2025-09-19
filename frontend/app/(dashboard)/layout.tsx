@@ -10,6 +10,7 @@ import Sidebar from '@/components/Sidebar';
 import { Toaster } from 'react-hot-toast';
 import { Toaster as SonnerToaster } from 'sonner';
 import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
+import GoToTopButton from '@/components/GoToTopButton';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -64,7 +65,7 @@ export default function DashboardLayout({ children, fullWidth = false }: Dashboa
         
         {/* Scrollable Main Content */}
         <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950">
-          <div className="pt-[5px] px-4 sm:px-6 md:px-8 lg:px-10 pb-4 sm:pb-6 md:pb-8 lg:pb-10">
+          <div className="pt-[8px] px-4 sm:px-6 md:px-8 lg:px-10 pb-4 sm:pb-6 md:pb-8 lg:pb-10">
             <div className="w-full">
               {children}
             </div>
@@ -74,6 +75,9 @@ export default function DashboardLayout({ children, fullWidth = false }: Dashboa
       
       {/* Global Loading Overlay */}
       <GlobalLoadingOverlay />
+      
+      {/* Go to Top Button */}
+      <GoToTopButton />
       
       <Toaster position="top-right" />
       <SonnerToaster position="top-right" richColors />

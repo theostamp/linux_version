@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { IntroAnimation } from '@/components/LoadingAnimation';
+import EnhancedIntroAnimation from '@/components/EnhancedIntroAnimation';
 
 
 export default function Home() {
@@ -45,7 +45,7 @@ export default function Home() {
   }
 
   if (showIntro) {
-    return <IntroAnimation />;
+    return <EnhancedIntroAnimation onComplete={() => setShowIntro(false)} />;
   }
 
   return (
