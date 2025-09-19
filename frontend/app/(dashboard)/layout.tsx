@@ -62,10 +62,10 @@ export default function DashboardLayout({ children, fullWidth = false }: Dashboa
       <div className="flex-1 flex flex-col overflow-hidden lg:ml-64">
         {/* Fixed Header */}
         <GlobalHeader />
-        
+
         {/* Scrollable Main Content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950">
-          <div className="pt-[8px] px-4 sm:px-6 md:px-8 lg:px-10 pb-4 sm:pb-6 md:pb-8 lg:pb-10">
+        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 pt-20">
+          <div className="px-4 sm:px-6 md:px-8 lg:px-10 pb-4 sm:pb-6 md:pb-8 lg:pb-10">
             <div className="w-full">
               {children}
             </div>

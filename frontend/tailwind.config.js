@@ -9,8 +9,9 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['var(--font-open-sans)', 'sans-serif'],
-        heading: ['var(--font-open-sans)', 'sans-serif'],
+        heading: ['var(--font-ubuntu-condensed)', 'Ubuntu Condensed', 'sans-serif'],
         condensed: ['var(--font-inter-tight)', 'Inter Tight', 'system-ui', 'sans-serif'],
+        'ubuntu-condensed': ['var(--font-ubuntu-condensed)', 'Ubuntu Condensed', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
