@@ -42,16 +42,16 @@ export default function ProjectsDashboard() {
   const projectsQ = useQuery({ queryKey: ['projects', { building: buildingId }], queryFn: async () => (await api.get('/projects/projects/', { params: { building: buildingId, page_size: 1_000 } })).data });
   const activeProjectsQ = useQuery({ queryKey: ['projects', { building: buildingId, status: 'in_progress' }], queryFn: async () => (await api.get('/projects/projects/', { params: { building: buildingId, status: 'in_progress', page_size: 1_000 } })).data });
   const completedProjectsQ = useQuery({ queryKey: ['projects', { building: buildingId, status: 'completed' }], queryFn: async () => (await api.get('/projects/projects/', { params: { building: buildingId, status: 'completed', page_size: 1_000 } })).data });
-  const pendingOffersQ = useQuery({ queryKey: ['offers', { status: 'pending' }], queryFn: async () => (await api.get('/projects/offers/', { params: { status: 'pending', page_size: 1_000 } })).data });
-  const activeContractsQ = useQuery({ queryKey: ['contracts', { status: 'active' }], queryFn: async () => (await api.get('/projects/contracts/', { params: { status: 'active', page_size: 1_000 } })).data });
+  const pendingOffersQ = useQuery({ queryKey: ['offers', { status: 'submitted' }], queryFn: async () => (await api.get('/projects/offers/', { params: { status: 'submitted', page_size: 1_000 } })).data });
+  const approvedOffersQ = useQuery({ queryKey: ['offers', { status: 'accepted' }], queryFn: async () => (await api.get('/projects/offers/', { params: { status: 'accepted', page_size: 1_000 } })).data });
 
-  const loading = projectsQ.isLoading || activeProjectsQ.isLoading || completedProjectsQ.isLoading || pendingOffersQ.isLoading || activeContractsQ.isLoading;
+  const loading = projectsQ.isLoading || activeProjectsQ.isLoading || completedProjectsQ.isLoading || pendingOffersQ.isLoading || approvedOffersQ.isLoading;
   const stats: ProjectStats = {
     total_projects: extractCount(projectsQ.data ?? []),
     active_projects: extractCount(activeProjectsQ.data ?? []),
     completed_projects: extractCount(completedProjectsQ.data ?? []),
     pending_offers: extractCount(pendingOffersQ.data ?? []),
-    active_contracts: extractCount(activeContractsQ.data ?? []),
+    active_contracts: extractCount(approvedOffersQ.data ?? []),
     total_budget: 0,
     total_spent: 0,
     average_completion_rate: 0,
@@ -78,7 +78,7 @@ export default function ProjectsDashboard() {
   const projectsRows = extractResults<any>(projectsQ.data ?? []);
   const completedRows = extractResults<any>(completedProjectsQ.data ?? []);
   const pendingOffersRows = extractResults<any>(pendingOffersQ.data ?? []);
-  const activeContractsRows = extractResults<any>(activeContractsQ.data ?? []);
+  const approvedOffersRows = extractResults<any>(approvedOffersQ.data ?? []);
 
   const getProjectRelevantDate = (r: any): Date | null => {
     return (
@@ -95,8 +95,8 @@ export default function ProjectsDashboard() {
   };
 
   const latestCompletedProject = [...completedRows].sort(byLatest(getProjectRelevantDate))[0];
-  const latestPendingOffer = [...pendingOffersRows].sort(byLatest((r: any) => toDate(r?.updated_at) || toDate(r?.created_at)))[0];
-  const latestActiveContract = [...activeContractsRows].sort(byLatest((r: any) => toDate(r?.updated_at) || toDate(r?.start_date) || toDate(r?.created_at)))[0];
+  const latestPendingOffer = [...pendingOffersRows].sort(byLatest((r: any) => toDate(r?.submitted_at) || toDate(r?.created_at)))[0];
+  const latestApprovedOffer = [...approvedOffersRows].sort(byLatest((r: any) => toDate(r?.reviewed_at) || toDate(r?.submitted_at)))[0];
 
   const activityItems: ActivityItem[] = [];
 
@@ -115,34 +115,34 @@ export default function ProjectsDashboard() {
   }
 
   if (latestPendingOffer) {
-    const d = toDate(latestPendingOffer?.updated_at) || toDate(latestPendingOffer?.created_at) || new Date();
-    const amount = latestPendingOffer?.amount || latestPendingOffer?.total_amount;
+    const d = toDate(latestPendingOffer?.submitted_at) || toDate(latestPendingOffer?.created_at) || new Date();
+    const amount = latestPendingOffer?.amount;
     const amountStr = typeof amount === 'number' ? ` — €${amount.toLocaleString()}` : '';
     activityItems.push({
       key: `offer-${latestPendingOffer.id}`,
       icon: <Award className="w-4 h-4 text-yellow-600" />,
       bgClass: 'bg-yellow-50',
-      text: latestPendingOffer?.title
-        ? `Νέα προσφορά: ${latestPendingOffer.title}${amountStr}`
+      text: latestPendingOffer?.contractor_name
+        ? `Νέα προσφορά: ${latestPendingOffer.contractor_name}${amountStr}`
         : `Προστέθηκε νέα προσφορά${amountStr}`,
       date: d,
       badge: { label: 'Εκκρεμεί', variant: 'outline' },
     });
   }
 
-  if (latestActiveContract) {
-    const d = toDate(latestActiveContract?.updated_at) || toDate(latestActiveContract?.start_date) || toDate(latestActiveContract?.created_at) || new Date();
-    const price = latestActiveContract?.monthly_price || latestActiveContract?.price;
-    const priceStr = typeof price === 'number' ? ` — €${price.toLocaleString()}/μήνα` : '';
+  if (latestApprovedOffer) {
+    const d = toDate(latestApprovedOffer?.reviewed_at) || toDate(latestApprovedOffer?.submitted_at) || new Date();
+    const amount = latestApprovedOffer?.amount;
+    const amountStr = typeof amount === 'number' ? ` — €${amount.toLocaleString()}` : '';
     activityItems.push({
-      key: `contract-${latestActiveContract.id}`,
-      icon: <FileCheck className="w-4 h-4 text-blue-600" />,
-      bgClass: 'bg-blue-50',
-      text: latestActiveContract?.title
-        ? `Ενεργό συμβόλαιο: ${latestActiveContract.title}${priceStr}`
-        : `Υπογράφηκε νέο συμβόλαιο${priceStr}`,
+      key: `approved-offer-${latestApprovedOffer.id}`,
+      icon: <FileCheck className="w-4 h-4 text-green-600" />,
+      bgClass: 'bg-green-50',
+      text: latestApprovedOffer?.contractor_name
+        ? `Εγκεκριμένη προσφορά: ${latestApprovedOffer.contractor_name}${amountStr}`
+        : `Εγκρίθηκε προσφορά${amountStr}`,
       date: d,
-      badge: { label: 'Ενεργό', variant: 'secondary' },
+      badge: { label: 'Εγκεκριμένη', variant: 'secondary' },
     });
   }
 
@@ -254,12 +254,12 @@ export default function ProjectsDashboard() {
           href="/projects/offers?status=pending"
         />
         <StatCard
-          title="Ενεργά Συμβόλαια"
+          title="Εγκεκριμένες Προσφορές"
           value={stats.active_contracts}
-          description="Σε ισχύ"
+          description="Επιλεγμένες"
           icon={<FileCheck className="w-4 h-4" />}
           color="success"
-          href="/projects/contracts?status=active"
+          href="/projects/offers?status=accepted"
         />
       </div>
 
@@ -367,9 +367,9 @@ export default function ProjectsDashboard() {
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/projects/contracts">
-                <FileCheck className="w-6 h-6 mb-2" />
-                <span>Συμβόλαια</span>
+              <Link href="/projects/votes">
+                <Users className="w-6 h-6 mb-2" />
+                <span>Ψηφοφορίες</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto p-4 flex-col">

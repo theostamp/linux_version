@@ -3,18 +3,18 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ProjectViewSet,
     OfferViewSet,
-    ContractViewSet,
-    MilestoneViewSet,
+    OfferFileViewSet,
+    ProjectVoteViewSet,
+    ProjectExpenseViewSet,
     PublicProjectsAPIView,
-    RFQViewSet,
 )
 
 router = DefaultRouter()
 router.register(r'projects', ProjectViewSet)
-router.register(r'rfqs', RFQViewSet)
 router.register(r'offers', OfferViewSet)
-router.register(r'contracts', ContractViewSet)
-router.register(r'milestones', MilestoneViewSet)
+router.register(r'offer-files', OfferFileViewSet)
+router.register(r'project-votes', ProjectVoteViewSet)
+router.register(r'project-expenses', ProjectExpenseViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

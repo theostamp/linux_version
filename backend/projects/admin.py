@@ -1,89 +1,85 @@
 from django.contrib import admin
-from .models import Project, Offer, Contract
+from .models import Project, Offer, OfferFile, ProjectVote, ProjectExpense
+
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['title', 'building', 'project_type', 'status', 'budget', 'start_date']
-    list_filter = ['project_type', 'status', 'start_date', 'building']
-    search_fields = ['title', 'building__name', 'description']
+    list_display = ['title', 'building', 'status', 'priority', 'estimated_cost', 'created_at']
+    list_filter = ['status', 'priority', 'created_at', 'building']
+    search_fields = ['title', 'building__name', 'description', 'selected_contractor']
     readonly_fields = ['created_at', 'updated_at']
-    date_hierarchy = 'start_date'
+    date_hierarchy = 'created_at'
     
     fieldsets = (
         ('Βασικές Πληροφορίες', {
-            'fields': ('title', 'description', 'building', 'project_type')
+            'fields': ('title', 'description', 'building', 'priority')
         }),
         ('Κατάσταση & Ημερομηνίες', {
-            'fields': ('status', 'start_date', 'end_date', 'estimated_duration')
+            'fields': ('status', 'deadline', 'tender_deadline', 'general_assembly_date')
         }),
         ('Οικονομικά', {
-            'fields': ('budget', 'actual_cost')
+            'fields': ('estimated_cost', 'final_cost', 'payment_terms')
         }),
-        ('Περιγραφή', {
-            'fields': ('location', 'specifications', 'requirements', 'notes')
+        ('Αποτελέσματα', {
+            'fields': ('selected_contractor',)
         }),
         ('Δημιουργία', {
             'fields': ('created_by', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
+
 
 @admin.register(Offer)
 class OfferAdmin(admin.ModelAdmin):
-    list_display = ['project', 'contractor', 'amount', 'delivery_time', 'status', 'submitted_date']
-    list_filter = ['status', 'submitted_date', 'project__project_type']
-    search_fields = ['project__title', 'contractor__name', 'description']
-    readonly_fields = ['submitted_date']
-    date_hierarchy = 'submitted_date'
+    list_display = ['contractor_name', 'project', 'amount', 'status', 'submitted_at']
+    list_filter = ['status', 'submitted_at', 'project__status']
+    search_fields = ['project__title', 'contractor_name', 'description']
+    readonly_fields = ['submitted_at']
+    date_hierarchy = 'submitted_at'
     
     fieldsets = (
         ('Βασικές Πληροφορίες', {
-            'fields': ('project', 'contractor', 'amount', 'description')
+            'fields': ('project', 'contractor_name', 'amount', 'description')
         }),
-        ('Τεχνικές Προδιαγραφές', {
-            'fields': ('technical_specifications', 'delivery_time', 'warranty_period')
+        ('Στοιχεία Συνεργείου', {
+            'fields': ('contractor_contact', 'contractor_phone', 'contractor_email', 'contractor_address')
+        }),
+        ('Προσφορά', {
+            'fields': ('payment_terms', 'warranty_period', 'completion_time')
         }),
         ('Κατάσταση & Αξιολόγηση', {
-            'fields': ('status', 'evaluation_date', 'evaluation_notes', 'evaluation_score')
-        }),
-        ('Αρχείο', {
-            'fields': ('offer_file',)
+            'fields': ('status', 'reviewed_at', 'notes', 'reviewed_by')
         }),
         ('Δημιουργία', {
-            'fields': ('created_by', 'submitted_date'),
+            'fields': ('submitted_at',),
             'classes': ('collapse',)
         }),
     )
 
-@admin.register(Contract)
-class ContractAdmin(admin.ModelAdmin):
-    list_display = ['contract_number', 'title', 'contractor', 'contract_type', 'status', 'amount']
-    list_filter = ['contract_type', 'status', 'start_date', 'end_date']
-    search_fields = ['contract_number', 'title', 'contractor__name', 'project__title']
-    readonly_fields = ['created_at', 'updated_at']
-    date_hierarchy = 'start_date'
-    
-    fieldsets = (
-        ('Βασικές Πληροφορίες', {
-            'fields': ('contract_number', 'title', 'description', 'project', 'contractor')
-        }),
-        ('Συμβόλαιο', {
-            'fields': ('offer', 'contract_type', 'amount')
-        }),
-        ('Ημερομηνίες & Κατάσταση', {
-            'fields': ('start_date', 'end_date', 'status')
-        }),
-        ('Όροι', {
-            'fields': ('payment_terms', 'warranty_terms')
-        }),
-        ('Αρχείο', {
-            'fields': ('contract_file',)
-        }),
-        ('Σημειώσεις', {
-            'fields': ('notes',)
-        }),
-        ('Δημιουργία', {
-            'fields': ('created_by', 'created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
+
+@admin.register(OfferFile)
+class OfferFileAdmin(admin.ModelAdmin):
+    list_display = ['filename', 'offer', 'file_type', 'file_size', 'uploaded_at']
+    list_filter = ['file_type', 'uploaded_at', 'offer__project']
+    search_fields = ['filename', 'offer__contractor_name', 'offer__project__title']
+    readonly_fields = ['uploaded_at', 'file_size']
+    date_hierarchy = 'uploaded_at'
+
+
+@admin.register(ProjectVote)
+class ProjectVoteAdmin(admin.ModelAdmin):
+    list_display = ['voter_name', 'apartment', 'project', 'vote_type', 'participation_mills', 'voted_at']
+    list_filter = ['vote_type', 'voted_at', 'project__status']
+    search_fields = ['voter_name', 'apartment', 'project__title']
+    readonly_fields = ['voted_at']
+    date_hierarchy = 'voted_at'
+
+
+@admin.register(ProjectExpense)
+class ProjectExpenseAdmin(admin.ModelAdmin):
+    list_display = ['description', 'project', 'expense_type', 'amount', 'expense_date']
+    list_filter = ['expense_type', 'expense_date', 'project__status']
+    search_fields = ['description', 'project__title']
+    readonly_fields = ['created_at']
+    date_hierarchy = 'expense_date'

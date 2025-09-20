@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import os
 import sys
 import django
@@ -8,22 +7,36 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from django.db import connection
+from django_tenants.utils import schema_context
 
-with connection.cursor() as cursor:
-    cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'maintenance_payment%' AND table_schema = 'demo';")
-    tables = cursor.fetchall()
-    
-    print("Payment-related tables:")
-    for table in tables:
-        print(f"  - {table[0]}")
+with schema_context('demo'):
+    with connection.cursor() as cursor:
+        # Check if projects tables exist
+        cursor.execute("""
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'demo' 
+            AND table_name LIKE 'projects_%'
+            ORDER BY table_name;
+        """)
+        tables = cursor.fetchall()
         
-    if not tables:
-        print("No payment tables found!")
+        print('Projects tables in demo schema:')
+        for table in tables:
+            print(f'  - {table[0]}')
         
-        # Check all maintenance tables
-        cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'maintenance_%' AND table_schema = 'demo';")
-        all_tables = cursor.fetchall()
+        if not tables:
+            print('  No projects tables found!')
+            
+        # Check migration status
+        cursor.execute("""
+            SELECT app, name, applied 
+            FROM django_migrations 
+            WHERE app = 'projects'
+            ORDER BY applied DESC;
+        """)
+        migrations = cursor.fetchall()
         
-        print("\nAll maintenance tables:")
-        for table in all_tables:
-            print(f"  - {table[0]}")
+        print('\nProjects migrations status:')
+        for migration in migrations:
+            print(f'  - {migration[0]}.{migration[1]} (applied: {migration[2]})')

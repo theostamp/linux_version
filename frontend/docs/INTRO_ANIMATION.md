@@ -243,3 +243,5 @@ export const greekPatterns = {
 - [ ] Προσαρμογή animation βάσει user preferences
 - [ ] Analytics για animation performance
 - [ ] A/B testing για διαφορετικές εκδόσεις
+
+

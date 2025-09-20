@@ -300,7 +300,7 @@ class TodoLink(models.Model):
     """Σύνδεση domain αντικειμένων (Ticket/WorkOrder/Project/Milestone) με TodoItem"""
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
+    object_id = models.TextField()  # Changed to TextField to support UUIDs
     content_object = GenericForeignKey('content_type', 'object_id')
 
     todo = models.ForeignKey(TodoItem, on_delete=models.CASCADE, related_name='links')
