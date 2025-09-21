@@ -32,16 +32,17 @@ def update_project_schedule(project, offer=None):
         # Υπολογισμός ημερομηνίας πληρωμής (αν έχει deadline χρησιμοποίησε αυτό, αλλιώς 30 μέρες από σήμερα)
         due_date = project.deadline or (datetime.now().date() + timedelta(days=30))
 
-        # Δημιουργία περιγραφής με στοιχεία πληρωμής
-        description = f"Έργο: {project.description or ''}"
+        # Δημιουργία σημειώσεων με στοιχεία πληρωμής
+        notes_text = f"Έργο: {project.description or ''}"
         if project.payment_method:
-            description += f"\nΤρόπος Πληρωμής: {project.payment_method}"
+            notes_text += f"\nΤρόπος Πληρωμής: {project.payment_method}"
         if project.installments and project.installments > 1:
-            description += f"\nΔόσεις: {project.installments}"
+            notes_text += f"\nΔόσεις: {project.installments}"
         if project.advance_payment:
-            description += f"\nΠροκαταβολή: €{project.advance_payment}"
+            notes_text += f"\nΠροκαταβολή: €{project.advance_payment}"
         if project.payment_terms:
-            description += f"\nΌροι: {project.payment_terms}"
+            notes_text += f"\nΌροι: {project.payment_terms}"
+        notes_text += f"\nΑνάδοχος: {project.selected_contractor}"
 
         # Επιλογή κατάλληλης κατηγορίας δαπάνης
         category = 'project'  # default
@@ -59,21 +60,18 @@ def update_project_schedule(project, offer=None):
             defaults={
                 'amount': project.final_cost or project.estimated_cost or Decimal('0.00'),
                 'category': category,
-                'description': description,
                 'date': project.created_at.date(),
                 'due_date': due_date,
                 'distribution_type': 'by_participation_mills',  # Συνήθως τα έργα χρεώνονται με χιλιοστά
-                'created_by': project.created_by,
-                'notes': f"Ανάδοχος: {project.selected_contractor}\nΑυτόματη καταχώρηση από έγκριση προσφοράς",
+                'notes': notes_text + "\nΑυτόματη καταχώρηση από έγκριση προσφοράς",
             }
         )
 
         if not created:
             # Ενημέρωση υπάρχουσας δαπάνης
             expense.amount = project.final_cost or project.estimated_cost or expense.amount
-            expense.description = description
             expense.due_date = due_date
-            expense.notes = f"Ανάδοχος: {project.selected_contractor}\nΑυτόματη ενημέρωση από έγκριση προσφοράς"
+            expense.notes = notes_text + "\nΑυτόματη ενημέρωση από έγκριση προσφοράς"
             expense.save()
 
         # Σύνδεση του έργου με τη δαπάνη

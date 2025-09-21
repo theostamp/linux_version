@@ -11,6 +11,8 @@ import { Toaster } from 'react-hot-toast';
 import { Toaster as SonnerToaster } from 'sonner';
 import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
 import GoToTopButton from '@/components/GoToTopButton';
+import { TodoSidebarProvider } from '@/components/todos/TodoSidebarContext';
+import TodoSidebar from '@/components/todos/TodoSidebar';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -54,33 +56,38 @@ export default function DashboardLayout({ children, fullWidth = false }: Dashboa
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
-      {/* Fixed Sidebar */}
-      <Sidebar />
-      
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden lg:ml-64">
-        {/* Fixed Header */}
-        <GlobalHeader />
+    <TodoSidebarProvider>
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
+        {/* Fixed Sidebar */}
+        <Sidebar />
+        
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden lg:ml-64">
+          {/* Fixed Header */}
+          <GlobalHeader />
 
-        {/* Scrollable Main Content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 pt-20">
-          <div className="px-4 sm:px-6 md:px-8 lg:px-10 pb-4 sm:pb-6 md:pb-8 lg:pb-10">
-            <div className="w-full">
-              {children}
+          {/* Scrollable Main Content */}
+          <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 pt-20">
+            <div className="px-4 sm:px-6 md:px-8 lg:px-10 pb-4 sm:pb-6 md:pb-8 lg:pb-10">
+              <div className="w-full">
+                {children}
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
+        
+        {/* Todo Sidebar */}
+        <TodoSidebar />
+        
+        {/* Global Loading Overlay */}
+        <GlobalLoadingOverlay />
+        
+        {/* Go to Top Button */}
+        <GoToTopButton />
+        
+        <Toaster position="top-right" />
+        <SonnerToaster position="top-right" richColors />
       </div>
-      
-      {/* Global Loading Overlay */}
-      <GlobalLoadingOverlay />
-      
-      {/* Go to Top Button */}
-      <GoToTopButton />
-      
-      <Toaster position="top-right" />
-      <SonnerToaster position="top-right" richColors />
-    </div>
+    </TodoSidebarProvider>
   );
 }

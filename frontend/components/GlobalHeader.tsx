@@ -7,6 +7,7 @@ import BuildingSelectorButton from './BuildingSelectorButton';
 import LogoutButton from './LogoutButton';
 import OfficeSettingsModal from './OfficeSettingsModal';
 import { EventNotificationBell, EventSidebar } from '@/components/events';
+import TodoNotificationBell from '@/components/todos/TodoNotificationBell';
 import { User, Building as BuildingIcon, Settings, Menu, Calendar } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/api';
 
@@ -120,6 +121,11 @@ export default function GlobalHeader() {
               {/* <div className="hidden sm:block">
                 <EventNotificationBell onClick={handleEventSidebarOpen} />
               </div> */}
+
+              {/* Todo Notifications - Hidden on small mobile */}
+              <div className="hidden sm:block">
+                <TodoNotificationBell />
+              </div>
               
               {/* Settings - Desktop */}
               <button 
