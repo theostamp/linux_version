@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { BackButton } from '@/components/ui/BackButton';
 import React, { useMemo, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchScheduledMaintenances, type ScheduledMaintenance, deleteScheduledMaintenance } from '@/lib/api';
+import { fetchScheduledMaintenances, type ScheduledMaintenance, deleteScheduledMaintenance, deleteProject } from '@/lib/api';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,13 @@ import ScheduledMaintenanceOverviewModal from '@/components/maintenance/Schedule
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type Status = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+
+// Extended type to handle both scheduled maintenance and projects
+type CombinedMaintenanceItem = Omit<ScheduledMaintenance, 'id'> & {
+  id: string | number;
+  is_project?: boolean;
+  project_id?: string;
+};
 
 type ScheduledMaintenanceItem = ScheduledMaintenance;
 
@@ -105,13 +112,13 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
   const { isAdmin, isManager } = useRole();
   const { toast } = useToast();
   const { getExpenses, deleteExpense } = useExpenses(buildingId || 0);
-  const [toDeleteId, setToDeleteId] = React.useState<number | null>(null);
+  const [toDeleteId, setToDeleteId] = React.useState<string | number | null>(null);
   const [deleting, setDeleting] = React.useState(false);
   const [overviewOpen, setOverviewOpen] = React.useState(false);
   const [overviewId, setOverviewId] = React.useState<number | null>(null);
 
   // Combine scheduled maintenance items with approved projects
-  const combinedItems = useMemo(() => {
+  const combinedItems: CombinedMaintenanceItem[] = useMemo(() => {
     return [...items, ...approvedProjects];
   }, [items, approvedProjects]);
 
@@ -218,7 +225,7 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
       <ServiceDeletionConfirmDialog
         open={toDeleteId !== null}
         onOpenChange={(open) => !open && setToDeleteId(null)}
-        maintenanceTitle={items.find(item => item.id === toDeleteId)?.title}
+        maintenanceTitle={combinedItems.find(item => item.id === toDeleteId)?.title}
         relatedExpensesCount={0} // Will be calculated in onConfirm
         totalAmount={0} // Will be calculated in onConfirm
         isConfirmLoading={deleting}
@@ -228,7 +235,7 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
             setDeleting(true);
             
             // Find the maintenance item to get its title
-            const itemToDelete = items.find(item => item.id === toDeleteId);
+            const itemToDelete = combinedItems.find(item => item.id === toDeleteId);
             const maintenanceTitle = itemToDelete?.title || '';
             
             // First, find and delete related expenses
@@ -271,9 +278,17 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
               // Continue with maintenance deletion even if expense check fails
             }
             
-            // Delete the scheduled maintenance
-            await deleteScheduledMaintenance(toDeleteId);
-            qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled'] });
+            // Delete the scheduled maintenance or project
+            if (typeof toDeleteId === 'string' && toDeleteId.startsWith('project-')) {
+              // For projects, extract the UUID and delete via projects API
+              const projectId = toDeleteId.replace('project-', '');
+              await deleteProject(projectId);
+              qc.invalidateQueries({ queryKey: ['projects', 'approved'] });
+            } else {
+              // For regular scheduled maintenance, use the numeric ID
+              await deleteScheduledMaintenance(toDeleteId as number);
+              qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled'] });
+            }
             
             // Enhanced success message
             const successMessage = deletedExpensesCount > 0 

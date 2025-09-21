@@ -2304,6 +2304,10 @@ export async function deleteScheduledMaintenance(id: number): Promise<void> {
   await api.delete(`/maintenance/scheduled/${id}/`, { xToastSuppress: true } as any);
 }
 
+export async function deleteProject(id: string): Promise<void> {
+  await api.delete(`/projects/projects/${id}/`, { xToastSuppress: true } as any);
+}
+
 // Handles refreshing the access token and retrying the original request.
 async function handleTokenRefresh(originalRequest: InternalAxiosRequestConfig & { _retry?: boolean }, error: AxiosError) {
   originalRequest._retry = true;
