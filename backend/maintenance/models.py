@@ -267,12 +267,60 @@ class ScheduledMaintenance(models.Model):
         verbose_name="Συνολικό Κόστος",
         help_text="Ενοποιημένο πεδίο κόστους για απλοποιημένη διεπαφή"
     )
+
+    # Πεδία πληρωμής (ευθυγραμμισμένα με Projects/Offers)
+    payment_method = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="Τρόπος Πληρωμής",
+        help_text="Μετρητά, Τραπεζική Μεταφορά, Επιταγή, Κάρτα, Δόσεις"
+    )
+    installments = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        default=1,
+        verbose_name="Αριθμός Δόσεων"
+    )
+    advance_payment = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Προκαταβολή"
+    )
     location = models.CharField(
         max_length=255,
         blank=True,
         verbose_name="Τοποθεσία"
     )
     notes = models.TextField(blank=True, verbose_name="Σημειώσεις")
+
+    # Στοιχεία συνεργείου (απευθείας πεδία για ευελιξία)
+    contractor_name = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        verbose_name="Όνομα Συνεργείου"
+    )
+    contractor_contact = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        verbose_name="Επαφή Συνεργείου"
+    )
+    contractor_phone = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name="Τηλέφωνο Συνεργείου"
+    )
+    contractor_email = models.EmailField(
+        blank=True,
+        null=True,
+        verbose_name="Email Συνεργείου"
+    )
+
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,

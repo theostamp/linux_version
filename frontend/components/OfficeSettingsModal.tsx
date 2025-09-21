@@ -41,6 +41,10 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
 
   // Initialize form with user's current office details
   useEffect(() => {
+    // TEMPORARILY DISABLED - causing infinite re-rendering
+    console.log('[OfficeSettingsModal] useEffect disabled to debug hanging issue');
+    return;
+    
     if (user) {
       setForm({
         office_name: user.office_name || '',

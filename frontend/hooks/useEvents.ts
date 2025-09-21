@@ -113,8 +113,19 @@ const eventsApi = {
     const params = new URLSearchParams();
     if (buildingId) params.append('building', buildingId.toString());
     
-    const response = await api.get(`/events/pending_count/?${params.toString()}`);
-    return response.data;
+    console.log(`[EVENTS API] Fetching pending count for building: ${buildingId}`);
+    const startTime = Date.now();
+    
+    try {
+      const response = await api.get(`/events/pending_count/?${params.toString()}`);
+      const duration = Date.now() - startTime;
+      console.log(`[EVENTS API] Pending count response received in ${duration}ms:`, response.data);
+      return response.data;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      console.error(`[EVENTS API] Error fetching pending count after ${duration}ms:`, error);
+      throw error;
+    }
   },
 
   createEvent: async (eventData: CreateEventData): Promise<Event> => {
@@ -165,6 +176,8 @@ export const useCalendarEvents = (filters: CalendarEventsFilters = {}, options: 
 };
 
 export const useEventsPendingCount = (buildingId?: number) => {
+  console.log('[useEventsPendingCount] Hook called with buildingId:', buildingId);
+  
   return useQuery({
     queryKey: ['events', 'pending-count', buildingId],
     queryFn: () => eventsApi.getPendingCount(buildingId),
@@ -173,7 +186,30 @@ export const useEventsPendingCount = (buildingId?: number) => {
     refetchOnWindowFocus: false, // Don't refetch on window focus
     refetchOnReconnect: false, // Don't refetch on reconnect
     staleTime: 10 * 60 * 1000, // 10 minutes
-    select: (data) => data.pending_count
+    gcTime: 15 * 60 * 1000, // 15 minutes (formerly cacheTime)
+    retry: (failureCount, error: any) => {
+      // Don't retry on 4xx errors (client errors)
+      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        return false;
+      }
+      // Retry up to 2 times for other errors
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    select: (data) => {
+      console.log('[useEventsPendingCount] Data selected:', data);
+      return data.pending_count;
+    },
+    // Add timeout to prevent hanging
+    networkMode: 'online' as const,
+    onSuccess: (data) => {
+      console.log('[useEventsPendingCount] Query successful:', data);
+    },
+    onError: (error) => {
+      console.error('[useEventsPendingCount] Query error:', error);
+    },
+    // Prevent refetching when buildingId is undefined
+    enabled: buildingId !== undefined,
   });
 };
 

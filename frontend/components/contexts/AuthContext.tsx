@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [userState, setUserState] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Always sync user to localStorage
   const setUser = useCallback((user: User | null) => {
@@ -111,6 +112,13 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
 
   useEffect(() => {
     const loadUserOnMount = async () => {
+      if (hasInitialized) {
+        console.log('[AuthContext] Already initialized, skipping...');
+        return;
+      }
+      
+      console.log('[AuthContext] loadUserOnMount starting...');
+      setHasInitialized(true);
       setIsLoading(true);
 
       const token = localStorage.getItem('access');
@@ -174,13 +182,17 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
 
     loadUserOnMount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [hasInitialized]);
 
   // Compute isAuthenticated based on user state and token existence
   const isAuthenticated = !!userState && !!localStorage.getItem('access');
 
   // Εκτελούμε έλεγχο του token κάθε λεπτό
   useEffect(() => {
+    // TEMPORARILY DISABLED - might be causing hanging issues
+    console.log('[AuthContext] Token check interval disabled to debug hanging issue');
+    return;
+    
     if (!isAuthenticated) return;
     
     const checkTokenInterval = setInterval(() => {

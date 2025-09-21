@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { Bell } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useEventsPendingCount } from '@/hooks/useEvents';
@@ -11,27 +11,29 @@ interface EventNotificationBellProps {
   onClick: () => void;
 }
 
-export default function EventNotificationBell({ className, onClick }: EventNotificationBellProps) {
+const EventNotificationBell = React.memo(({ className, onClick }: EventNotificationBellProps) => {
   const { selectedBuilding } = useBuilding();
   const queryClient = useQueryClient();
-  const { data: pendingCount = 0, refetch } = useEventsPendingCount(selectedBuilding?.id);
+  const buildingId = useMemo(() => selectedBuilding?.id, [selectedBuilding?.id]);
+  const { data: pendingCount = 0, refetch } = useEventsPendingCount(buildingId);
 
-  const hasUnread = pendingCount > 0;
+  console.log('[EventNotificationBell] Rendering with pendingCount:', pendingCount, 'buildingId:', buildingId);
+
+  const hasUnread = useMemo(() => pendingCount > 0, [pendingCount]);
 
   // Only refresh when page becomes visible (the hook already handles auto-refresh)
+  const handleVisibilityChange = useCallback(() => {
+    if (!document.hidden) {
+      refetch();
+    }
+  }, [refetch]);
+
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        refetch();
-      }
-    };
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [refetch]);
+  }, [handleVisibilityChange]);
 
   return (
     <button
@@ -52,4 +54,8 @@ export default function EventNotificationBell({ className, onClick }: EventNotif
       )}
     </button>
   );
-}
+});
+
+EventNotificationBell.displayName = 'EventNotificationBell';
+
+export default EventNotificationBell;

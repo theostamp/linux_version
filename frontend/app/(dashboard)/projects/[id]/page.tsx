@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 interface Project {
-  id: number;
+  id: string | number;  // Support both UUID strings and numeric IDs
   title: string;
   description?: string;
   status: string;
@@ -26,7 +26,7 @@ interface Project {
 
 export default function ProjectDetailsPage() {
   const params = useParams<{ id: string }>();
-  const projectId = useMemo(() => Number(params?.id), [params]);
+  const projectId = params?.id; // Keep as string for UUID support
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +36,7 @@ export default function ProjectDetailsPage() {
 
   useEffect(() => {
     const fetchProject = async () => {
-      if (!projectId || !isFinite(projectId)) return;
+      if (!projectId) return;
       setLoading(true);
       setError(null);
       try {
@@ -217,7 +217,7 @@ export default function ProjectDetailsPage() {
   );
 }
 
-function ProjectOffersTab({ projectId, onApproved }: { projectId: number; onApproved?: () => void }) {
+function ProjectOffersTab({ projectId, onApproved }: { projectId: string; onApproved?: () => void }) {
   const { toast } = useToast();
   const [offers, setOffers] = React.useState<Array<{ id: number; amount: number; status: string; description: string; submitted_date: string }>>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
@@ -299,7 +299,7 @@ function ProjectOffersTab({ projectId, onApproved }: { projectId: number; onAppr
   );
 }
 
-function ProjectMilestonesTab({ projectId }: { projectId: number }) {
+function ProjectMilestonesTab({ projectId }: { projectId: string }) {
   const { toast } = useToast();
   const [milestones, setMilestones] = React.useState<Array<{ id: number; title: string; status: string; due_at: string | null; amount: number | null }>>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
@@ -477,7 +477,7 @@ function ProjectMilestonesTab({ projectId }: { projectId: number }) {
   );
 }
 
-function ProjectRFQsTab({ projectId }: { projectId: number }) {
+function ProjectRFQsTab({ projectId }: { projectId: string }) {
   const { toast } = useToast();
   const [rfqs, setRfqs] = React.useState<Array<{ id: number; title: string; status: string; due_date: string | null }>>([]);
   const [loading, setLoading] = React.useState(true);

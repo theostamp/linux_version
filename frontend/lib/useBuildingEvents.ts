@@ -15,8 +15,12 @@ export function useBuildingEvents(buildingIdParam?: number) {
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
+    // TEMPORARILY DISABLED - WebSocket connection causing hanging issues
+    console.log('[useBuildingEvents] WebSocket connection temporarily disabled to debug hanging issue');
+    return;
+
     const buildingId = buildingIdParam ?? getActiveBuildingId();
-    // Avoid connecting in development if backend WS isn’t available
+    // Avoid connecting in development if backend WS isn't available
     if (typeof window === 'undefined') return;
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const host = `${window.location.hostname}:18000`;

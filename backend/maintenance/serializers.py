@@ -53,10 +53,15 @@ class ScheduledMaintenanceSerializer(serializers.ModelSerializer):
     building_name = serializers.CharField(source='building.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     payment_config = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = ScheduledMaintenance
         fields = '__all__'
+        extra_kwargs = {
+            'payment_method': {'required': False, 'allow_null': True},
+            'installments': {'required': False, 'allow_null': True},
+            'advance_payment': {'required': False, 'allow_null': True},
+        }
     
     def get_payment_config(self, obj):
         """Get payment configuration from related PaymentSchedule"""
@@ -79,10 +84,11 @@ class ScheduledMaintenanceSerializer(serializers.ModelSerializer):
             elif obj.total_cost:
                 return {
                     'enabled': True,
-                    'payment_type': 'lump_sum',
+                    'payment_type': obj.payment_method or 'lump_sum',
                     'total_amount': float(obj.total_cost),
                     'advance_percentage': 30,
-                    'installment_count': 3,
+                    'installment_count': obj.installments or 3,
+                    'advance_payment': float(obj.advance_payment) if obj.advance_payment else None,
                     'start_date': obj.scheduled_date.isoformat() if obj.scheduled_date else None,
                 }
             return {'enabled': False}

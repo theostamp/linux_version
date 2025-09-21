@@ -70,6 +70,37 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
     enabled: true,
     staleTime: 30_000,
   });
+
+  // Also fetch approved projects from offers
+  const { data: approvedProjects = [] } = useQuery({
+    queryKey: ['approved-projects-for-scheduled', { buildingId }],
+    queryFn: async () => {
+      const { api } = await import('@/lib/api');
+      const response = await api.get('/projects/projects/', {
+        params: {
+          building: buildingId,
+          status__in: 'approved,in_progress',
+          page_size: 100
+        }
+      });
+      // Transform projects to match ScheduledMaintenance interface
+      return (response.data?.results || []).map((project: any) => ({
+        id: `project-${project.id}`,
+        title: project.title,
+        description: project.description,
+        contractor_name: project.selected_contractor,
+        priority: project.priority || 'medium',
+        status: project.status === 'approved' ? 'scheduled' : 'in_progress',
+        scheduled_date: project.deadline || project.created_at,
+        estimated_cost: project.final_cost || project.estimated_cost,
+        building: buildingId,
+        is_project: true,
+        project_id: project.id
+      }));
+    },
+    enabled: !!buildingId,
+    staleTime: 30_000,
+  });
   const qc = useQueryClient();
   const { isAdmin, isManager } = useRole();
   const { toast } = useToast();
@@ -79,10 +110,15 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
   const [overviewOpen, setOverviewOpen] = React.useState(false);
   const [overviewId, setOverviewId] = React.useState<number | null>(null);
 
+  // Combine scheduled maintenance items with approved projects
+  const combinedItems = useMemo(() => {
+    return [...items, ...approvedProjects];
+  }, [items, approvedProjects]);
+
   const filtered = useMemo(() => {
-    if (!priorityFilter) return items;
-    return items.filter((i) => i.priority === priorityFilter);
-  }, [items, priorityFilter]);
+    if (!priorityFilter) return combinedItems;
+    return combinedItems.filter((i) => i.priority === priorityFilter);
+  }, [combinedItems, priorityFilter]);
 
   useEffect(() => {
     if (!highlightId) return;
@@ -125,7 +161,12 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
           >
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
               <div>
-                <CardTitle className="text-base">{item.title}</CardTitle>
+                <CardTitle className="text-base">
+                  {item.title}
+                  {(item as any).is_project && (
+                    <Badge variant="secondary" className="ml-2">Έργο</Badge>
+                  )}
+                </CardTitle>
                 <CardDescription>
                   {item.contractor_name ? `Συνεργείο: ${item.contractor_name}` : 'Χωρίς συνεργείο'}
                 </CardDescription>

@@ -251,7 +251,7 @@ export default function ProjectsDashboard() {
           description="Περιμένουν αξιολόγηση"
           icon={<Award className="w-4 h-4" />}
           color="danger"
-          href="/projects/offers?status=pending"
+          href="/projects/offers?status=submitted"
         />
         <StatCard
           title="Εγκεκριμένες Προσφορές"

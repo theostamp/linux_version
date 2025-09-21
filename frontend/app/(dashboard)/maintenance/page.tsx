@@ -402,6 +402,22 @@ export default function MaintenanceDashboard() {
     queryFn: async () => (await api.get(`/maintenance/scheduled/`, { params: { building: buildingId, priority: 'urgent' } })).data,
   });
 
+  // Query for approved projects (from offers that were accepted)
+  const approvedProjectsQ = useQuery({
+    queryKey: ['approved-projects', { building: buildingId }],
+    queryFn: async () => {
+      const response = await api.get('/projects/projects/', {
+        params: {
+          building: buildingId,
+          status__in: 'approved,in_progress',
+          page_size: 100
+        }
+      });
+      return response.data;
+    },
+    enabled: !!buildingId
+  });
+
   // Public counters fallback when private endpoints return 401/are unavailable
   const publicCountersQ = useQuery({
     queryKey: ['maintenance-public-counters', { building: buildingId }],
@@ -544,11 +560,14 @@ export default function MaintenanceDashboard() {
       badge: { label: 'Νέο', variant: 'secondary' },
     });
   }
+  // Count approved projects from offers
+  const approvedProjectsCount = extractCount(approvedProjectsQ.data ?? []);
+
   const baseStats: MaintenanceStats = {
     total_contractors: contractorRows.length,
     active_contractors: contractorRows.filter((c: any) => c.status === 'active' || c.is_active === true).length,
     pending_receipts: extractCount(receiptsQ.data ?? []),
-    scheduled_maintenance: extractCount(scheduledQ.data ?? []),
+    scheduled_maintenance: extractCount(scheduledQ.data ?? []) + approvedProjectsCount, // Include approved projects
     urgent_maintenance: extractCount(urgentScheduledQ.data ?? []),
     completed_maintenance: completedThisYear,
     total_spent: totalServiceSpentThisYear, // Use service expenses for overview tab
@@ -558,7 +577,7 @@ export default function MaintenanceDashboard() {
     total_contractors: publicCountersQ.data.active_contractors, // public API doesn't expose total; mirror active
     active_contractors: publicCountersQ.data.active_contractors,
     pending_receipts: publicCountersQ.data.pending_receipts,
-    scheduled_maintenance: publicCountersQ.data.scheduled_total,
+    scheduled_maintenance: publicCountersQ.data.scheduled_total + approvedProjectsCount, // Include approved projects
     urgent_maintenance: publicCountersQ.data.urgent_total,
     completed_maintenance: completedThisYear,
     total_spent: totalServiceSpentThisYear, // Use service expenses for overview tab

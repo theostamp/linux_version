@@ -21,34 +21,102 @@ from .serializers import (
 from core.utils import publish_building_event
 
 
-def update_project_schedule(project):
-    """Ενημερώνει το σχήμα 'Προγραμματισμός έργου' στο financial module"""
+def update_project_schedule(project, offer=None):
+    """Ενημερώνει το σχήμα 'Προγραμματισμός έργου' στο financial και maintenance modules"""
     try:
         from financial.models import Expense
+        from maintenance.models import ScheduledMaintenance
         from decimal import Decimal
-        
+        from datetime import datetime, timedelta
+
+        # Υπολογισμός ημερομηνίας πληρωμής (αν έχει deadline χρησιμοποίησε αυτό, αλλιώς 30 μέρες από σήμερα)
+        due_date = project.deadline or (datetime.now().date() + timedelta(days=30))
+
+        # Δημιουργία περιγραφής με στοιχεία πληρωμής
+        description = f"Έργο: {project.description or ''}"
+        if project.payment_method:
+            description += f"\nΤρόπος Πληρωμής: {project.payment_method}"
+        if project.installments and project.installments > 1:
+            description += f"\nΔόσεις: {project.installments}"
+        if project.advance_payment:
+            description += f"\nΠροκαταβολή: €{project.advance_payment}"
+        if project.payment_terms:
+            description += f"\nΌροι: {project.payment_terms}"
+
+        # Επιλογή κατάλληλης κατηγορίας δαπάνης
+        category = 'project'  # default
+        if 'συντήρηση' in project.title.lower() or 'επισκευή' in project.title.lower():
+            category = 'maintenance_project'
+        elif 'ανακαίνιση' in project.title.lower():
+            category = 'renovation'
+        elif 'αναβάθμιση' in project.title.lower():
+            category = 'upgrade'
+
         # Δημιουργία ή ενημέρωση δαπάνης για το έργο
         expense, created = Expense.objects.get_or_create(
             title=f"Έργο: {project.title}",
             building=project.building,
             defaults={
                 'amount': project.final_cost or project.estimated_cost or Decimal('0.00'),
-                'category': 'project',
-                'description': f"Έργο: {project.description or ''}",
+                'category': category,
+                'description': description,
                 'date': project.created_at.date(),
+                'due_date': due_date,
+                'distribution_type': 'by_participation_mills',  # Συνήθως τα έργα χρεώνονται με χιλιοστά
                 'created_by': project.created_by,
+                'notes': f"Ανάδοχος: {project.selected_contractor}\nΑυτόματη καταχώρηση από έγκριση προσφοράς",
             }
         )
-        
+
         if not created:
             # Ενημέρωση υπάρχουσας δαπάνης
             expense.amount = project.final_cost or project.estimated_cost or expense.amount
-            expense.description = f"Έργο: {project.description or ''}"
+            expense.description = description
+            expense.due_date = due_date
+            expense.notes = f"Ανάδοχος: {project.selected_contractor}\nΑυτόματη ενημέρωση από έγκριση προσφοράς"
             expense.save()
-        
+
         # Σύνδεση του έργου με τη δαπάνη
         project.linked_expense = expense
         project.save(update_fields=['linked_expense'])
+
+        # Δημιουργία ή ενημέρωση ScheduledMaintenance για το έργο
+        scheduled_maintenance, created = ScheduledMaintenance.objects.get_or_create(
+            title=project.title,
+            building=project.building,
+            defaults={
+                'description': project.description or '',
+                'scheduled_date': project.deadline or (datetime.now().date() + timedelta(days=30)),
+                'priority': project.priority or 'medium',
+                'status': 'in_progress' if project.status == 'approved' else 'pending',
+                'contractor_name': project.selected_contractor,
+                'contractor_contact': offer.contractor_contact if offer else '',
+                'contractor_phone': offer.contractor_phone if offer else '',
+                'contractor_email': offer.contractor_email if offer else '',
+                'total_cost': project.final_cost or project.estimated_cost or Decimal('0.00'),
+                'payment_method': project.payment_method,
+                'installments': project.installments or 1,
+                'advance_payment': project.advance_payment,
+                'created_by': project.created_by,
+            }
+        )
+
+        if not created:
+            # Ενημέρωση υπάρχοντος ScheduledMaintenance
+            scheduled_maintenance.description = project.description or ''
+            scheduled_maintenance.scheduled_date = project.deadline or (datetime.now().date() + timedelta(days=30))
+            scheduled_maintenance.priority = project.priority or 'medium'
+            scheduled_maintenance.status = 'in_progress' if project.status == 'approved' else 'pending'
+            scheduled_maintenance.contractor_name = project.selected_contractor
+            if offer:
+                scheduled_maintenance.contractor_contact = offer.contractor_contact or ''
+                scheduled_maintenance.contractor_phone = offer.contractor_phone or ''
+                scheduled_maintenance.contractor_email = offer.contractor_email or ''
+            scheduled_maintenance.total_cost = project.final_cost or project.estimated_cost or scheduled_maintenance.total_cost
+            scheduled_maintenance.payment_method = project.payment_method
+            scheduled_maintenance.installments = project.installments or 1
+            scheduled_maintenance.advance_payment = project.advance_payment
+            scheduled_maintenance.save()
         
         # Ενημέρωση με WebSocket
         publish_building_event(
@@ -137,15 +205,21 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 reviewed_by=request.user
             )
             
-            # Ενημερώνει το έργο
+            # Ενημερώνει το έργο με όλα τα πεδία πληρωμής και στοιχεία συνεργείου
             project.selected_contractor = offer.contractor_name
             project.final_cost = offer.amount
             project.payment_terms = offer.payment_terms
+            project.payment_method = offer.payment_method
+            project.installments = offer.installments
+            project.advance_payment = offer.advance_payment
             project.status = 'approved'
+            # Προσθήκη: αποθήκευση των στοιχείων επικοινωνίας στο object της προσφοράς
+            # για να τα περάσουμε στο ScheduledMaintenance
+            project.selected_offer = offer
             project.save()
             
-            # Ενημερώνει το σχήμα "Προγραμματισμός έργου" στο financial module
-            update_project_schedule(project)
+            # Ενημερώνει το σχήμα "Προγραμματισμός έργου" στο financial και maintenance modules
+            update_project_schedule(project, offer)
         
         publish_building_event(
             building_id=project.building_id,
@@ -163,6 +237,14 @@ class OfferViewSet(viewsets.ModelViewSet):
     search_fields = ['description', 'project__title', 'contractor_name']
     ordering_fields = ['submitted_at', 'amount']
     ordering = ['-submitted_at']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Filter by building if provided
+        building_id = self.request.query_params.get('building')
+        if building_id:
+            queryset = queryset.filter(project__building_id=building_id)
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'retrieve':

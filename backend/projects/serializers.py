@@ -15,6 +15,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             'estimated_cost', 'priority', 'status', 'created_at', 'updated_at',
             'deadline', 'tender_deadline', 'general_assembly_date',
             'selected_contractor', 'final_cost', 'payment_terms',
+            'payment_method', 'installments', 'advance_payment',
             'created_by', 'created_by_name', 'offers_count', 'votes_count',
             'linked_expense'
         ]
@@ -39,7 +40,8 @@ class OfferSerializer(serializers.ModelSerializer):
             'id', 'project', 'project_title', 'building_name',
             'contractor_name', 'contractor_contact', 'contractor_phone',
             'contractor_email', 'contractor_address', 'amount', 'description',
-            'payment_terms', 'warranty_period', 'completion_time',
+            'payment_terms', 'payment_method', 'installments', 'advance_payment',
+            'warranty_period', 'completion_time',
             'status', 'submitted_at', 'reviewed_at', 'notes',
             'reviewed_by', 'reviewed_by_name', 'files_count'
         ]

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
 import { api, getActiveBuildingId } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,14 +9,24 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Lightbulb, Plus } from 'lucide-react';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-interface Building {
-  id: number;
-  name: string;
-  address: string;
-}
+// Προτεινόμενα έργα πολυκατοικίας
+const SUGGESTED_PROJECTS = [
+  { title: 'Στεγανοποίηση Ταράτσας', description: 'Πλήρης στεγανοποίηση ταράτσας με ασφαλτόπανο και τσιμεντοκονίαμα', priority: 'high' },
+  { title: 'Επισκευή Όψεων Κτιρίου', description: 'Επισκευή ρωγμών, σοβάτισμα και βάψιμο εξωτερικών όψεων', priority: 'medium' },
+  { title: 'Αντικατάσταση Λέβητα', description: 'Αντικατάσταση παλαιού λέβητα με νέο ενεργειακής κλάσης Α', priority: 'high' },
+  { title: 'Συντήρηση Ανελκυστήρα', description: 'Ετήσια συντήρηση και πιστοποίηση ανελκυστήρα', priority: 'medium' },
+  { title: 'Αντικατάσταση Κουφωμάτων', description: 'Αντικατάσταση παλαιών κουφωμάτων με ενεργειακά αλουμίνια', priority: 'medium' },
+  { title: 'Μόνωση Σωληνώσεων', description: 'Θερμομόνωση σωληνώσεων θέρμανσης και ύδρευσης', priority: 'low' },
+  { title: 'Αντικατάσταση Πλακιδίων Εισόδου', description: 'Αντικατάσταση φθαρμένων πλακιδίων στην είσοδο του κτιρίου', priority: 'low' },
+  { title: 'Εγκατάσταση Συστήματος Ασφαλείας', description: 'Τοποθέτηση καμερών και συναγερμού στους κοινόχρηστους χώρους', priority: 'medium' },
+  { title: 'Ανακαίνιση Κλιμακοστασίου', description: 'Βάψιμο, φωτισμός και αντικατάσταση κιγκλιδωμάτων', priority: 'low' },
+  { title: 'Καθαρισμός Φρεατίων', description: 'Καθαρισμός και απόφραξη φρεατίων ομβρίων και αποχέτευσης', priority: 'high' }
+];
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -37,21 +46,27 @@ export default function NewProjectPage() {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const buildingsQ = useQuery({
-    queryKey: ['buildings'],
-    queryFn: async () => {
-      return (await api.get('/buildings/buildings/')).data;
-    }
-  });
-
-  const buildings = buildingsQ.data?.results || [];
+  const [selectedTab, setSelectedTab] = useState<'new' | 'suggested'>('new');
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleSelectSuggestedProject = (project: typeof SUGGESTED_PROJECTS[0]) => {
+    setFormData(prev => ({
+      ...prev,
+      title: project.title,
+      description: project.description,
+      priority: project.priority as 'low' | 'medium' | 'high' | 'urgent'
+    }));
+    setSelectedTab('new');
+    toast({
+      title: 'Έργο επιλέχθηκε',
+      description: `Το έργο "${project.title}" προστέθηκε στη φόρμα`
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,14 +131,69 @@ export default function NewProjectPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Επιλογή Έργου */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lightbulb className="w-5 h-5" />
+              Επιλογή Έργου
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as 'new' | 'suggested')}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="new">Νέο Έργο</TabsTrigger>
+                <TabsTrigger value="suggested">Προτεινόμενα Έργα</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="suggested" className="mt-6">
+                <div className="grid gap-3 md:grid-cols-2">
+                  {SUGGESTED_PROJECTS.map((project, index) => (
+                    <div
+                      key={index}
+                      className="relative rounded-lg border p-4 hover:bg-accent cursor-pointer transition-colors"
+                      onClick={() => handleSelectSuggestedProject(project)}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-medium">{project.title}</h4>
+                        <Badge
+                          variant={
+                            project.priority === 'high' ? 'destructive' :
+                            project.priority === 'medium' ? 'default' :
+                            'secondary'
+                          }
+                          className="ml-2"
+                        >
+                          {project.priority === 'high' ? 'Υψηλή' :
+                           project.priority === 'medium' ? 'Μεσαία' :
+                           'Χαμηλή'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {project.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="new">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Συμπληρώστε τα στοιχεία του νέου έργου στη φόρμα παρακάτω
+                </p>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
         {/* Βασικές Πληροφορίες */}
         <Card>
           <CardHeader>
             <CardTitle>Βασικές Πληροφορίες</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="md:col-span-2">
+            <div className="grid gap-4">
+              <div>
                 <Label htmlFor="title">Τίτλος Έργου *</Label>
                 <Input
                   id="title"
@@ -133,8 +203,8 @@ export default function NewProjectPage() {
                   required
                 />
               </div>
-              
-              <div className="md:col-span-2">
+
+              <div>
                 <Label htmlFor="description">Περιγραφή</Label>
                 <Textarea
                   id="description"
@@ -143,23 +213,6 @@ export default function NewProjectPage() {
                   placeholder="Λεπτομερής περιγραφή του έργου..."
                   rows={4}
                 />
-              </div>
-
-              <div>
-                <Label htmlFor="building">Κτίριο</Label>
-                <select
-                  id="building"
-                  value={formData.building}
-                  onChange={(e) => handleInputChange('building', e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                  required
-                >
-                  {buildings.map((building: Building) => (
-                    <option key={building.id} value={building.id}>
-                      {building.name} - {building.address}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               <div>

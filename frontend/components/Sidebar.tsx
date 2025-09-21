@@ -208,7 +208,8 @@ const navigationGroups: NavigationGroup[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  useCsrf();
+  // TEMPORARILY DISABLED - might be causing hanging issues
+  // useCsrf();
 
   const { user, isLoading: authIsLoading, isAuthReady } = useAuth();
   const {

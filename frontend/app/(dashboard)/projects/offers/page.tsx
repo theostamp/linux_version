@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'next/navigation';
 import { api, extractCount, extractResults, getActiveBuildingId } from '@/lib/api';
 import { getRelativeTimeEl } from '@/lib/date';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Award, 
-  Calendar, 
+import {
+  Award,
+  Calendar,
   AlertTriangle,
   CheckCircle,
   Clock,
@@ -21,7 +22,11 @@ import {
   Filter,
   Phone,
   Mail,
-  MapPin
+  MapPin,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Eye
 } from 'lucide-react';
 import Link from 'next/link';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
@@ -78,15 +83,16 @@ export default function OffersListPage() {
   useBuildingEvents();
   const { isAdmin, isManager } = useRole();
   const buildingId = getActiveBuildingId();
-  
+  const searchParams = useSearchParams();
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>(searchParams.get('status') || '');
   const [projectFilter, setProjectFilter] = useState<string>('');
 
-  const offersQ = useQuery({ 
-    queryKey: ['offers', { building: buildingId, search: searchTerm, status: statusFilter, project: projectFilter }], 
+  const offersQ = useQuery({
+    queryKey: ['offers', { building: buildingId, search: searchTerm, status: statusFilter, project: projectFilter }],
     queryFn: async () => {
-      const params: any = { page_size: 1000 };
+      const params: any = { building: buildingId, page_size: 1000 };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
       if (projectFilter) params.project = projectFilter;
@@ -295,12 +301,24 @@ export default function OffersListPage() {
                 </div>
               )}
 
-              <div className="pt-2">
-                <Button asChild variant="outline" className="w-full">
+              <div className="pt-2 flex gap-2">
+                <Button asChild variant="outline" size="sm" className="flex-1">
                   <Link href={`/projects/offers/${offer.id}`}>
-                    Προβολή Λεπτομερειών
+                    <Eye className="w-4 h-4" />
                   </Link>
                 </Button>
+                {(isAdmin || isManager) && (
+                  <>
+                    <Button asChild variant="outline" size="sm" className="flex-1">
+                      <Link href={`/projects/offers/${offer.id}/edit`}>
+                        <Edit className="w-4 h-4" />
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>

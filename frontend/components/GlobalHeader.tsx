@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import BuildingSelectorButton from './BuildingSelectorButton';
@@ -11,12 +11,23 @@ import { User, Building as BuildingIcon, Settings, Menu, Calendar } from 'lucide
 import { API_BASE_URL } from '@/lib/api';
 
 export default function GlobalHeader() {
+  console.log('[GlobalHeader] Rendering');
+  
   const { user } = useAuth();
   const { selectedBuilding, setSelectedBuilding } = useBuilding();
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isEventSidebarOpen, setIsEventSidebarOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [logoLoading, setLogoLoading] = useState(false);
+
+  // Memoized callbacks to prevent re-renders
+  const handleEventSidebarOpen = useCallback(() => {
+    setIsEventSidebarOpen(true);
+  }, []);
+
+  const handleSettingsModalOpen = useCallback(() => {
+    setIsSettingsModalOpen(true);
+  }, []);
 
   // Reset logo error when user changes
   React.useEffect(() => {
@@ -105,14 +116,14 @@ export default function GlobalHeader() {
                 <Calendar className="w-5 h-5" />
               </button>
 
-              {/* Event Notifications - Hidden on small mobile */}
-              <div className="hidden sm:block">
-                <EventNotificationBell onClick={() => setIsEventSidebarOpen(true)} />
-              </div>
+              {/* Event Notifications - Hidden on small mobile - TEMPORARILY DISABLED */}
+              {/* <div className="hidden sm:block">
+                <EventNotificationBell onClick={handleEventSidebarOpen} />
+              </div> */}
               
               {/* Settings - Desktop */}
               <button 
-                onClick={() => setIsSettingsModalOpen(true)}
+                onClick={handleSettingsModalOpen}
                 className="hidden sm:block p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
                 title="Ρυθμίσεις Γραφείου Διαχείρισης"
               >

@@ -68,14 +68,26 @@ class Project(models.Model):
     # Αποτελέσματα
     selected_contractor = models.CharField(max_length=200, null=True, blank=True, verbose_name="Επιλεγμένος Αναδόχος")
     final_cost = models.DecimalField(
-        max_digits=10, 
+        max_digits=10,
         decimal_places=2,
         null=True,
         blank=True,
         validators=[MinValueValidator(Decimal('0.00'))],
         verbose_name="Τελικό Κόστος"
     )
+
+    # Πεδία πληρωμής
     payment_terms = models.TextField(null=True, blank=True, verbose_name="Όροι Πληρωμής")
+    payment_method = models.CharField(max_length=50, null=True, blank=True, verbose_name="Τρόπος Πληρωμής")
+    installments = models.PositiveIntegerField(null=True, blank=True, default=1, verbose_name="Αριθμός Δόσεων")
+    advance_payment = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name="Προκαταβολή"
+    )
     
     # Στοιχεία δημιουργίας
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="Δημιουργήθηκε από")
@@ -123,13 +135,26 @@ class Offer(models.Model):
     
     # Στοιχεία προσφοράς
     amount = models.DecimalField(
-        max_digits=10, 
+        max_digits=10,
         decimal_places=2,
         validators=[MinValueValidator(Decimal('0.00'))],
         verbose_name="Ποσό Προσφοράς"
     )
     description = models.TextField(null=True, blank=True, verbose_name="Περιγραφή Προσφοράς")
+
+    # Πεδία πληρωμής (ευθυγραμμισμένα με τα έργα)
     payment_terms = models.TextField(null=True, blank=True, verbose_name="Όροι Πληρωμής")
+    payment_method = models.CharField(max_length=50, null=True, blank=True, verbose_name="Τρόπος Πληρωμής")
+    installments = models.PositiveIntegerField(null=True, blank=True, default=1, verbose_name="Αριθμός Δόσεων")
+    advance_payment = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name="Προκαταβολή"
+    )
+
     warranty_period = models.CharField(max_length=100, null=True, blank=True, verbose_name="Περίοδος Εγγύησης")
     completion_time = models.CharField(max_length=100, null=True, blank=True, verbose_name="Χρόνος Ολοκλήρωσης")
     

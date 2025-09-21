@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { api, getActiveBuildingId } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ export default function NewOfferPage() {
   const router = useRouter();
   const { toast } = useToast();
   const buildingId = getActiveBuildingId();
-  
+
   const [formData, setFormData] = useState({
     project: '',
     contractor_name: '',
@@ -34,10 +34,13 @@ export default function NewOfferPage() {
     amount: '',
     description: '',
     payment_terms: '',
+    payment_method: '',
+    installments: '1',
+    advance_payment: '',
     warranty_period: '',
     completion_time: '',
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const projectsQ = useQuery({
@@ -76,12 +79,15 @@ export default function NewOfferPage() {
       const payload = {
         ...formData,
         amount: parseFloat(formData.amount),
+        installments: parseInt(formData.installments) || 1,
+        advance_payment: formData.advance_payment ? parseFloat(formData.advance_payment) : null,
         contractor_contact: formData.contractor_contact || null,
         contractor_phone: formData.contractor_phone || null,
         contractor_email: formData.contractor_email || null,
         contractor_address: formData.contractor_address || null,
         description: formData.description || null,
         payment_terms: formData.payment_terms || null,
+        payment_method: formData.payment_method || null,
         warranty_period: formData.warranty_period || null,
         completion_time: formData.completion_time || null,
       };
@@ -124,32 +130,44 @@ export default function NewOfferPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Βασικές Πληροφορίες */}
+        {/* Επιλογή Έργου */}
         <Card>
           <CardHeader>
-            <CardTitle>Βασικές Πληροφορίες</CardTitle>
+            <CardTitle>Επιλογή Έργου</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div>
+              <Label htmlFor="project">Επιλέξτε Έργο *</Label>
+              <select
+                id="project"
+                value={formData.project}
+                onChange={(e) => handleInputChange('project', e.target.value)}
+                className="w-full p-2 border rounded-md mt-2"
+                required
+              >
+                <option value="">Επιλέξτε έργο για το οποίο υποβάλλεται η προσφορά...</option>
+                {projects.map((project: Project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.title}
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm text-muted-foreground mt-2">
+                Επιλέξτε το έργο για το οποίο υποβάλλεται η προσφορά από το συνεργείο.
+                Αν το έργο δεν υπάρχει, πρέπει πρώτα να δημιουργηθεί από τη σελίδα έργων.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Στοιχεία Συνεργείου */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Στοιχεία Συνεργείου</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
-                <Label htmlFor="project">Έργο *</Label>
-                <select
-                  id="project"
-                  value={formData.project}
-                  onChange={(e) => handleInputChange('project', e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                  required
-                >
-                  <option value="">Επιλέξτε έργο...</option>
-                  {projects.map((project: Project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.title} - {project.building_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
                 <Label htmlFor="contractor_name">Όνομα Συνεργείου *</Label>
                 <Input
                   id="contractor_name"
@@ -246,13 +264,57 @@ export default function NewOfferPage() {
                 />
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <Label htmlFor="payment_terms">Όροι Πληρωμής</Label>
-                <Input
+                <Textarea
                   id="payment_terms"
                   value={formData.payment_terms}
                   onChange={(e) => handleInputChange('payment_terms', e.target.value)}
                   placeholder="π.χ. 50% προκαταβολή, 50% κατά την παράδοση"
+                  rows={2}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="payment_method">Τρόπος Πληρωμής</Label>
+                <select
+                  id="payment_method"
+                  value={formData.payment_method}
+                  onChange={(e) => handleInputChange('payment_method', e.target.value)}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">Επιλέξτε τρόπο πληρωμής...</option>
+                  <option value="cash">Μετρητά</option>
+                  <option value="bank_transfer">Τραπεζική Μεταφορά</option>
+                  <option value="check">Επιταγή</option>
+                  <option value="card">Κάρτα</option>
+                  <option value="installments">Δόσεις</option>
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="installments">Αριθμός Δόσεων</Label>
+                <Input
+                  id="installments"
+                  type="number"
+                  min="1"
+                  max="48"
+                  value={formData.installments}
+                  onChange={(e) => handleInputChange('installments', e.target.value)}
+                  placeholder="1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="advance_payment">Προκαταβολή (€)</Label>
+                <Input
+                  id="advance_payment"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.advance_payment}
+                  onChange={(e) => handleInputChange('advance_payment', e.target.value)}
+                  placeholder="0.00"
                 />
               </div>
             </div>
