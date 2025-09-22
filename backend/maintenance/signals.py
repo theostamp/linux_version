@@ -246,6 +246,59 @@ def create_or_update_maintenance_event(sender, instance, created, **kwargs):
         print(f"Error creating/updating event for maintenance {instance.id}: {e}")
 
 
+@receiver(post_save, sender=ScheduledMaintenance)
+def sync_scheduled_maintenance_to_project(sender, instance, created, **kwargs):
+    """
+    When a ScheduledMaintenance is saved, update the linked Project with payment data
+    """
+    if not instance.linked_project:
+        return
+
+    # Avoid infinite loop - check if we're already syncing
+    if hasattr(instance, '_syncing'):
+        return
+
+    try:
+        project = instance.linked_project
+
+        # Flag to avoid infinite recursion
+        project._syncing = True
+
+        # Update project fields from scheduled maintenance
+        updated = False
+
+        if project.payment_method != instance.payment_method:
+            project.payment_method = instance.payment_method
+            updated = True
+
+        if project.installments != instance.installments:
+            project.installments = instance.installments
+            updated = True
+
+        if project.advance_payment != instance.advance_payment:
+            project.advance_payment = instance.advance_payment
+            updated = True
+
+        if project.payment_terms != instance.payment_terms:
+            project.payment_terms = instance.payment_terms
+            updated = True
+
+        if project.final_cost != instance.total_cost:
+            project.final_cost = instance.total_cost
+            updated = True
+
+        if updated:
+            project.save(update_fields=['payment_method', 'installments', 'advance_payment', 'payment_terms', 'final_cost'])
+            print(f"Synced ScheduledMaintenance #{instance.id} payment fields to Project #{project.id}")
+
+    except Exception as e:
+        print(f"Error syncing ScheduledMaintenance to Project: {e}")
+    finally:
+        # Clean up the flag
+        if hasattr(project, '_syncing'):
+            delattr(project, '_syncing')
+
+
 @receiver(post_delete, sender=ScheduledMaintenance)
 def delete_maintenance_event(sender, instance, **kwargs):
     """

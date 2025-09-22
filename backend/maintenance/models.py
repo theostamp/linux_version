@@ -289,6 +289,12 @@ class ScheduledMaintenance(models.Model):
         blank=True,
         verbose_name="Προκαταβολή"
     )
+    payment_terms = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name="Όροι Πληρωμής",
+        help_text="Όροι και προϋποθέσεις πληρωμής από την εγκεκριμένη προσφορά"
+    )
     location = models.CharField(
         max_length=255,
         blank=True,
@@ -336,6 +342,16 @@ class ScheduledMaintenance(models.Model):
         blank=True,
         related_name='scheduled_maintenance_tasks',
         verbose_name="Συνδεδεμένη Δαπάνη"
+    )
+    # Project integration
+    linked_project = models.ForeignKey(
+        'projects.Project',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='scheduled_maintenances',
+        verbose_name="Συνδεδεμένο Έργο",
+        help_text="Αν προέρχεται από εγκεκριμένη προσφορά"
     )
     completed_at = models.DateTimeField(null=True, blank=True, verbose_name="Ημερομηνία Ολοκλήρωσης")
     created_at = models.DateTimeField(auto_now_add=True)

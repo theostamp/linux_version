@@ -153,10 +153,32 @@ export default function ScheduledMaintenanceForm({
           status: data.status ?? 'scheduled',
           estimated_duration: 1,
         });
-        // Prefill price from estimated_cost (fallback to actual_cost)
+        // Prefill price from total_cost (fallback to estimated_cost)
         try {
-          setValue('price', (data.estimated_cost ?? data.actual_cost) as any);
+          setValue('price', (data.total_cost ?? data.estimated_cost ?? data.actual_cost) as any);
         } catch {}
+
+        // Prefill payment fields if they exist (from linked project)
+        if (data.payment_method) {
+          // Map payment_method to the format expected by payment_config
+          const paymentType = data.payment_method === 'installments' ? 'advance_installments' : 'lump_sum';
+          setValue('payment_config.enabled', true as any);
+          setValue('payment_config.payment_type', paymentType as any);
+          setValue('payment_config.total_amount', Number(data.total_cost || 0) as any);
+
+          if (data.installments && data.installments > 1) {
+            setValue('payment_config.installment_count', data.installments as any);
+            const advancePercentage = data.advance_payment && data.total_cost
+              ? (Number(data.advance_payment) / Number(data.total_cost) * 100)
+              : 30;
+            setValue('payment_config.advance_percentage', advancePercentage as any);
+            setValue('payment_config.advance_amount', Number(data.advance_payment || 0) as any);
+          }
+
+          if (data.payment_terms) {
+            setValue('payment_config.notes', data.payment_terms as any);
+          }
+        }
 
         // Try to load existing payment schedule and prefill payment_config
         try {

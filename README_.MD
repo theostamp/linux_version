@@ -477,7 +477,7 @@ docker compose up --build -d
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m " fix some bugs συνδεσιμοτητα προσφορων δαπανων "
+git commit -m " εγινε η οικονομικη συνδεση προσφορων και δαπανων  με εργα "
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

@@ -355,9 +355,9 @@ export default function ProjectsDashboard() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/projects">
+              <Link href="/projects/projects">
                 <FileText className="w-6 h-6 mb-2" />
-                <span>Διαχείριση Έργων</span>
+                <span>Όλα τα Έργα</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto p-4 flex-col">
@@ -367,15 +367,15 @@ export default function ProjectsDashboard() {
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto p-4 flex-col">
-              <Link href="/projects/votes">
+              <Link href="/projects/contracts">
                 <Users className="w-6 h-6 mb-2" />
-                <span>Ψηφοφορίες</span>
+                <span>Συμβόλαια</span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto p-4 flex-col">
               <Link href="/projects/reports">
                 <TrendingUp className="w-6 h-6 mb-2" />
-                <span>Reports</span>
+                <span>Αναφορές</span>
               </Link>
             </Button>
           </div>

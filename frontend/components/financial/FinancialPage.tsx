@@ -414,10 +414,34 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
           
           {/* Status Indicator */}
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium text-green-700">
-              Δεδομένα ενημερωμένα
-            </span>
+            {(() => {
+              const now = new Date();
+              const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+              const isCurrentMonth = selectedMonth === currentMonth;
+
+              if (isCurrentMonth) {
+                return (
+                  <>
+                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium text-green-700">
+                      Δεδομένα ενημερωμένα
+                    </span>
+                  </>
+                );
+              } else {
+                const selectedDate = new Date(selectedMonth + '-01');
+                const monthName = selectedDate.toLocaleDateString('el-GR', { month: 'long', year: 'numeric' });
+
+                return (
+                  <>
+                    <div className="w-3 h-3 bg-amber-400 rounded-full"></div>
+                    <span className="text-sm font-medium text-amber-700">
+                      ⚠️ Προβολή ιστορικών δεδομένων ({monthName})
+                    </span>
+                  </>
+                );
+              }
+            })()}
           </div>
         </div>
       </div>

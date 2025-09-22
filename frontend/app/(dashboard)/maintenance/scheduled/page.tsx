@@ -63,7 +63,6 @@ function StatusBadge({ status }: { status: Status }) {
 
 export default function ScheduledMaintenancePage({ searchParams }: { searchParams?: Promise<{ priority?: string; highlight?: string }> | { priority?: string; highlight?: string } }) {
   // Next.js 15: searchParams may be a Promise; unwrap with React.use when needed
-  // @ts-expect-error next 15 searchParams can be promise-like
   const sp = (typeof (searchParams as any)?.then === 'function' ? React.use(searchParams as Promise<{ priority?: string; highlight?: string }>) : (searchParams as { priority?: string; highlight?: string } | undefined));
   const priorityFilter = (sp?.priority || '').toLowerCase() as Priority | '';
   const highlightParam = sp?.highlight ? parseInt(String(sp.highlight), 10) : NaN;
@@ -90,20 +89,58 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
           page_size: 100
         }
       });
-      // Transform projects to match ScheduledMaintenance interface
-      return (response.data?.results || []).map((project: any) => ({
-        id: `project-${project.id}`,
-        title: project.title,
-        description: project.description,
-        contractor_name: project.selected_contractor,
-        priority: project.priority || 'medium',
-        status: project.status === 'approved' ? 'scheduled' : 'in_progress',
-        scheduled_date: project.deadline || project.created_at,
-        estimated_cost: project.final_cost || project.estimated_cost,
-        building: buildingId,
-        is_project: true,
-        project_id: project.id
-      }));
+
+      // Fetch detailed project info with offers for each project
+      const projectsWithOffers = await Promise.all(
+        (response.data?.results || []).map(async (project: any) => {
+          try {
+            // Fetch the detailed project with offers
+            const detailResponse = await api.get(`/projects/projects/${project.id}/`);
+            const projectWithOffers = detailResponse.data;
+
+            // Find the accepted offer for payment details
+            const acceptedOffer = projectWithOffers.offers?.find((offer: any) => offer.status === 'accepted');
+
+            return {
+              id: `project-${project.id}`,
+              title: project.title,
+              description: project.description,
+              contractor_name: project.selected_contractor,
+              priority: project.priority || 'medium',
+              status: project.status === 'approved' ? 'scheduled' : 'in_progress',
+              scheduled_date: project.deadline || project.created_at,
+              estimated_cost: project.final_cost || project.estimated_cost,
+              building: buildingId,
+              is_project: true,
+              project_id: project.id,
+              payment_method: acceptedOffer?.payment_method || null,
+              installments: acceptedOffer?.installments || null,
+              advance_payment: acceptedOffer?.advance_payment || null
+            };
+          } catch (error) {
+            console.error(`Error fetching project details for ${project.id}:`, error);
+            // Return project without payment details if fetch fails
+            return {
+              id: `project-${project.id}`,
+              title: project.title,
+              description: project.description,
+              contractor_name: project.selected_contractor,
+              priority: project.priority || 'medium',
+              status: project.status === 'approved' ? 'scheduled' : 'in_progress',
+              scheduled_date: project.deadline || project.created_at,
+              estimated_cost: project.final_cost || project.estimated_cost,
+              building: buildingId,
+              is_project: true,
+              project_id: project.id,
+              payment_method: null,
+              installments: null,
+              advance_payment: null
+            };
+          }
+        })
+      );
+
+      return projectsWithOffers;
     },
     enabled: !!buildingId,
     staleTime: 30_000,
@@ -115,7 +152,7 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
   const [toDeleteId, setToDeleteId] = React.useState<string | number | null>(null);
   const [deleting, setDeleting] = React.useState(false);
   const [overviewOpen, setOverviewOpen] = React.useState(false);
-  const [overviewId, setOverviewId] = React.useState<number | null>(null);
+  const [overviewId, setOverviewId] = React.useState<number | string | null>(null);
 
   // Combine scheduled maintenance items with approved projects
   const combinedItems: CombinedMaintenanceItem[] = useMemo(() => {
@@ -189,6 +226,26 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
               <div>
                 <StatusBadge status={item.status as Status} />
               </div>
+              {((item as any).payment_method || (item as any).installments) && (
+                <div className="text-sm text-muted-foreground">
+                  {(item as any).payment_method && (
+                    <div>
+                      Πληρωμή: {
+                        (item as any).payment_method === 'cash' ? 'Μετρητά' :
+                        (item as any).payment_method === 'bank_transfer' ? 'Τραπεζική Μεταφορά' :
+                        (item as any).payment_method === 'check' ? 'Επιταγή' :
+                        (item as any).payment_method === 'card' ? 'Κάρτα' :
+                        (item as any).payment_method === 'installments' ? 'Δόσεις' :
+                        (item as any).payment_method
+                      }
+                      {(item as any).installments > 1 && ` (${(item as any).installments} δόσεις)`}
+                    </div>
+                  )}
+                  {(item as any).advance_payment > 0 && (
+                    <div>Προκαταβολή: €{Number((item as any).advance_payment).toFixed(2)}</div>
+                  )}
+                </div>
+              )}
               <div className="pt-2 flex gap-2">
                 <Button
                   variant="outline"

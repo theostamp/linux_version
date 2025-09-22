@@ -99,8 +99,6 @@ services:
       - ./frontend/:/app/
       - /app/node_modules         # κρατά τα container-node_modules μέσα
     env_file: .env
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:18000/api
     ports: ["3001:3000"]
 
 volumes:

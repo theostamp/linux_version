@@ -22,67 +22,23 @@ from core.utils import publish_building_event
 
 
 def update_project_schedule(project, offer=None):
-    """Ενημερώνει το σχήμα 'Προγραμματισμός έργου' στο financial και maintenance modules"""
+    """Ενημερώνει το σχήμα 'Προγραμματισμός έργου' με σωστό επιμερισμό δόσεων"""
     try:
         from financial.models import Expense
-        from maintenance.models import ScheduledMaintenance
+        from maintenance.models import ScheduledMaintenance, PaymentSchedule
         from decimal import Decimal
         from datetime import datetime, timedelta
+        import calendar
 
-        # Υπολογισμός ημερομηνίας πληρωμής (αν έχει deadline χρησιμοποίησε αυτό, αλλιώς 30 μέρες από σήμερα)
+        # Υπολογισμός ημερομηνίας πληρωμής
         due_date = project.deadline or (datetime.now().date() + timedelta(days=30))
 
-        # Δημιουργία σημειώσεων με στοιχεία πληρωμής
-        notes_text = f"Έργο: {project.description or ''}"
-        if project.payment_method:
-            notes_text += f"\nΤρόπος Πληρωμής: {project.payment_method}"
-        if project.installments and project.installments > 1:
-            notes_text += f"\nΔόσεις: {project.installments}"
-        if project.advance_payment:
-            notes_text += f"\nΠροκαταβολή: €{project.advance_payment}"
-        if project.payment_terms:
-            notes_text += f"\nΌροι: {project.payment_terms}"
-        notes_text += f"\nΑνάδοχος: {project.selected_contractor}"
-
-        # Επιλογή κατάλληλης κατηγορίας δαπάνης
-        category = 'project'  # default
-        if 'συντήρηση' in project.title.lower() or 'επισκευή' in project.title.lower():
-            category = 'maintenance_project'
-        elif 'ανακαίνιση' in project.title.lower():
-            category = 'renovation'
-        elif 'αναβάθμιση' in project.title.lower():
-            category = 'upgrade'
-
-        # Δημιουργία ή ενημέρωση δαπάνης για το έργο
-        expense, created = Expense.objects.get_or_create(
-            title=f"Έργο: {project.title}",
-            building=project.building,
-            defaults={
-                'amount': project.final_cost or project.estimated_cost or Decimal('0.00'),
-                'category': category,
-                'date': project.created_at.date(),
-                'due_date': due_date,
-                'distribution_type': 'by_participation_mills',  # Συνήθως τα έργα χρεώνονται με χιλιοστά
-                'notes': notes_text + "\nΑυτόματη καταχώρηση από έγκριση προσφοράς",
-            }
-        )
-
-        if not created:
-            # Ενημέρωση υπάρχουσας δαπάνης
-            expense.amount = project.final_cost or project.estimated_cost or expense.amount
-            expense.due_date = due_date
-            expense.notes = notes_text + "\nΑυτόματη ενημέρωση από έγκριση προσφοράς"
-            expense.save()
-
-        # Σύνδεση του έργου με τη δαπάνη
-        project.linked_expense = expense
-        project.save(update_fields=['linked_expense'])
-
-        # Δημιουργία ή ενημέρωση ScheduledMaintenance για το έργο
+        # Δημιουργία ή ενημέρωση ScheduledMaintenance
         scheduled_maintenance, created = ScheduledMaintenance.objects.get_or_create(
-            title=project.title,
+            linked_project=project,
             building=project.building,
             defaults={
+                'title': project.title,
                 'description': project.description or '',
                 'scheduled_date': project.deadline or (datetime.now().date() + timedelta(days=30)),
                 'priority': project.priority or 'medium',
@@ -95,6 +51,8 @@ def update_project_schedule(project, offer=None):
                 'payment_method': project.payment_method,
                 'installments': project.installments or 1,
                 'advance_payment': project.advance_payment,
+                'payment_terms': project.payment_terms,
+                'estimated_duration': 8,  # Default 8 hours for a workday
                 'created_by': project.created_by,
             }
         )
@@ -114,16 +72,126 @@ def update_project_schedule(project, offer=None):
             scheduled_maintenance.payment_method = project.payment_method
             scheduled_maintenance.installments = project.installments or 1
             scheduled_maintenance.advance_payment = project.advance_payment
+            scheduled_maintenance.payment_terms = project.payment_terms
             scheduled_maintenance.save()
-        
+
+        # Υπολογισμός ποσών για επιμερισμό
+        total_amount = project.final_cost or project.estimated_cost or Decimal('0.00')
+        installments = project.installments or 1
+        advance_payment = project.advance_payment or Decimal('0.00')
+
+        # Επιλογή κατηγορίας
+        category = 'project'
+        if 'συντήρηση' in project.title.lower() or 'επισκευή' in project.title.lower():
+            category = 'maintenance_project'
+        elif 'ανακαίνιση' in project.title.lower():
+            category = 'renovation'
+        elif 'αναβάθμιση' in project.title.lower():
+            category = 'upgrade'
+
+        # Διαγραφή παλιών δαπανών για αυτό το έργο (αν υπάρχουν)
+        old_expenses = Expense.objects.filter(
+            building=project.building,
+            title__icontains=project.title
+        )
+        old_expenses.delete()
+
+        # Αν έχουμε δόσεις, δημιουργούμε επιμερισμένες δαπάνες
+        if installments > 1 and total_amount > 0:
+            # Υπολογισμός ποσοστού προκαταβολής
+            advance_percentage = (advance_payment / total_amount * 100) if advance_payment and total_amount else 30
+
+            # Δημιουργία PaymentSchedule
+            payment_schedule, ps_created = PaymentSchedule.objects.get_or_create(
+                scheduled_maintenance=scheduled_maintenance,
+                defaults={
+                    'payment_type': 'advance_installments',
+                    'total_amount': total_amount,
+                    'advance_percentage': advance_percentage,
+                    'installment_count': installments,
+                    'installment_frequency': 'monthly',
+                    'start_date': datetime.now().date(),
+                    'notes': project.payment_terms or '',
+                    'status': 'active',
+                }
+            )
+
+            if not ps_created:
+                payment_schedule.total_amount = total_amount
+                payment_schedule.advance_percentage = advance_percentage
+                payment_schedule.installment_count = installments
+                payment_schedule.notes = project.payment_terms or ''
+                payment_schedule.save()
+
+            # Δημιουργία προκαταβολής (τρέχων μήνας)
+            if advance_payment > 0:
+                advance_expense = Expense.objects.create(
+                    building=project.building,
+                    title=f"{project.title} - Προκαταβολή ({advance_percentage:.0f}%)",
+                    amount=advance_payment,
+                    category=category,
+                    date=datetime.now().date(),
+                    due_date=datetime.now().date() + timedelta(days=15),
+                    distribution_type='by_participation_mills',
+                    notes=f"Προκαταβολή {advance_percentage:.0f}% για έργο. Συνολικό κόστος: {total_amount}€. Ανάδοχος: {project.selected_contractor}",
+                )
+
+            # Δημιουργία δόσεων (μελλοντικοί μήνες)
+            remaining_amount = total_amount - advance_payment
+            installment_amount = remaining_amount / installments
+
+            base_date = datetime.now().date()
+            for i in range(1, installments + 1):
+                # Υπολογισμός ημερομηνίας δόσης (πρώτη του κάθε μήνα)
+                installment_date = base_date.replace(day=1)
+                # Προσθήκη μηνών
+                month = installment_date.month + i
+                year = installment_date.year
+                while month > 12:
+                    month -= 12
+                    year += 1
+                installment_date = installment_date.replace(month=month, year=year)
+
+                # Τελευταία μέρα του μήνα για due_date
+                last_day = calendar.monthrange(installment_date.year, installment_date.month)[1]
+                due_date = installment_date.replace(day=last_day)
+
+                installment_expense = Expense.objects.create(
+                    building=project.building,
+                    title=f"{project.title} - Δόση {i}/{installments}",
+                    amount=installment_amount,
+                    category=category,
+                    date=installment_date,
+                    due_date=due_date,
+                    distribution_type='by_participation_mills',
+                    notes=f"Δόση {i} από {installments} για έργο. Ποσό δόσης: {installment_amount:.2f}€. Ανάδοχος: {project.selected_contractor}",
+                )
+
+        else:
+            # Αν δεν έχουμε δόσεις, δημιουργούμε μία δαπάνη
+            expense = Expense.objects.create(
+                building=project.building,
+                title=f"Έργο: {project.title}",
+                amount=total_amount,
+                category=category,
+                date=project.created_at.date(),
+                due_date=due_date,
+                distribution_type='by_participation_mills',
+                notes=f"Έργο: {project.description or ''}\nΑνάδοχος: {project.selected_contractor}\nΑυτόματη καταχώρηση από έγκριση προσφοράς",
+            )
+
+            # Σύνδεση του έργου με τη δαπάνη
+            project.linked_expense = expense
+            project.save(update_fields=['linked_expense'])
+
         # Ενημέρωση με WebSocket
         publish_building_event(
             building_id=project.building_id,
-            event_type="financial.expense.updated",
+            event_type="maintenance.scheduled.created" if created else "maintenance.scheduled.updated",
             payload={
-                "id": expense.id,
-                "title": expense.title,
-                "amount": str(expense.amount),
+                "id": scheduled_maintenance.id,
+                "title": scheduled_maintenance.title,
+                "total_cost": str(scheduled_maintenance.total_cost),
                 "project_id": str(project.id),
             },
         )
@@ -266,13 +334,19 @@ class OfferViewSet(viewsets.ModelViewSet):
                 reviewed_by=request.user
             )
 
-            # Ενημερώνει το έργο
+            # Ενημερώνει το έργο με ΟΛΑ τα payment fields
             project = offer.project
             project.selected_contractor = offer.contractor_name
             project.final_cost = offer.amount
+            project.payment_method = offer.payment_method
+            project.installments = offer.installments or 1
+            project.advance_payment = offer.advance_payment
             project.payment_terms = offer.payment_terms
             project.status = 'approved'
             project.save()
+
+            # Δημιουργεί/ενημερώνει το ScheduledMaintenance και τις δαπάνες
+            update_project_schedule(project, offer)
 
         publish_building_event(
             building_id=offer.project.building_id,

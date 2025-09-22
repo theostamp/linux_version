@@ -145,7 +145,7 @@ const getApiBaseUrl = () => {
       // Extract port from environment variable or use 18000 as default
       const envUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:18000/api';
       const envPort = envUrl.match(/:(\d+)/)?.[1] ?? '18000';
-      const apiUrl = `http://${hostname}:${envPort}/api`;
+      const apiUrl = `http://${hostname}:18000/api`;
       console.log(`[API] Using tenant-specific API URL: ${apiUrl}`);
       return apiUrl;
     }
@@ -2251,11 +2251,19 @@ export type ScheduledMaintenance = {
   building: number;
   contractor?: number | null;
   contractor_name?: string;
+  contractor_contact?: string;
+  contractor_phone?: string;
+  contractor_email?: string;
   scheduled_date?: string | null;
   estimated_duration?: number | null;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
   estimated_cost?: number | null;
+  total_cost?: number | null;
+  payment_method?: string;
+  installments?: number;
+  advance_payment?: number | null;
+  payment_terms?: string;
   payment_config?: {
     enabled: boolean;
     payment_type?: 'lump_sum' | 'advance_installments' | 'periodic' | 'milestone_based';
