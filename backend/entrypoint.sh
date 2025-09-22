@@ -32,7 +32,17 @@ echo ""
 echo "📦 Collecting static files..."
 python manage.py collectstatic --no-input
 
-# 5. Start Django server
+# 5. Start frontend warm-up in background
+echo ""
+echo "🔥 Initiating frontend warm-up process..."
+if [ -f "/app/entrypoint_warm_up.sh" ]; then
+  /app/entrypoint_warm_up.sh &
+  echo "   Warm-up running in background..."
+else
+  echo "   Warm-up script not found, skipping..."
+fi
+
+# 6. Start Django server
 echo ""
 echo "🚀 Launching Django runserver..."
 echo "   Frontend: http://demo.localhost:8080"

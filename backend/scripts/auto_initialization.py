@@ -10,6 +10,8 @@ import os
 import sys
 import django
 import time
+import requests
+import threading
 from datetime import timedelta
 from django.utils import timezone
 
@@ -474,6 +476,69 @@ def create_demo_data(tenant_schema):
         print("ℹ️ Δεν δημιουργούνται οικονομικά δεδομένα - μηδενικά demo ποσά")
         print("✅ Ολοκληρώθηκε η δημιουργία οικονομικών δεδομένων")
 
+def warm_up_frontend():
+    """
+    Κάνει warm-up το frontend με το να ζητάει τις κύριες σελίδες
+    ώστε να γίνει το compile και να είναι γρήγορες στη χρήση
+    """
+    print("\n🔥 Frontend Warm-up...")
+    print("=" * 50)
+
+    # Περιμένουμε λίγο για να ξεκινήσει το frontend
+    time.sleep(5)
+
+    # URLs που θα κάνουμε warm-up
+    base_url = "http://frontend:3000"  # Internal Docker network
+    pages = [
+        "/",
+        "/login",
+        "/dashboard",
+        "/financial",
+        "/apartments",
+        "/buildings",
+        "/maintenance",
+        "/maintenance/scheduled",
+        "/announcements",
+        "/projects"
+    ]
+
+    def warm_up_page(url):
+        """Κάνει warm-up μια σελίδα"""
+        try:
+            response = requests.get(url, timeout=120)  # 2 λεπτά timeout
+            if response.status_code == 200:
+                print(f"✅ Warmed up: {url.replace(base_url, '')}")
+            else:
+                print(f"⚠️ Failed to warm up: {url.replace(base_url, '')} (Status: {response.status_code})")
+        except requests.exceptions.Timeout:
+            print(f"⏱️ Timeout warming up: {url.replace(base_url, '')} (αλλά μάλλον compiled)")
+        except requests.exceptions.ConnectionError:
+            print(f"❌ Cannot connect to frontend: {url.replace(base_url, '')}")
+        except Exception as e:
+            print(f"❌ Error warming up {url.replace(base_url, '')}: {str(e)}")
+
+    # Πρώτα κάνουμε warm-up τη βασική σελίδα (αυτή παίρνει το περισσότερο χρόνο)
+    print("\n📄 Warming up main page (this takes ~50 seconds on first run)...")
+    warm_up_page(base_url + "/")
+
+    # Μετά κάνουμε warm-up τις υπόλοιπες σελίδες παράλληλα
+    print("\n📄 Warming up other pages in parallel...")
+    threads = []
+    for page in pages[1:]:  # Skip "/" since we already did it
+        url = base_url + page
+        thread = threading.Thread(target=warm_up_page, args=(url,))
+        thread.start()
+        threads.append(thread)
+        time.sleep(2)  # Μικρή καθυστέρηση μεταξύ των threads
+
+    # Περιμένουμε να τελειώσουν όλα τα threads
+    for thread in threads:
+        thread.join(timeout=120)
+
+    print("\n✅ Frontend warm-up completed!")
+    print("   All pages are now compiled and will load quickly")
+    print("=" * 50)
+
 def save_credentials():
     """Αποθήκευση credentials σε αρχείο"""
     log_dir = os.path.join("backend", "logs")
@@ -615,28 +680,34 @@ def main():
     """Κύρια λειτουργία"""
     print("🎯 ΑΥΤΟΜΑΤΗ ΑΡΧΙΚΟΠΟΙΗΣΗ DIGITAL CONCIERGE")
     print("=" * 50)
-    
+
     # 1. Αναμονή για τη βάση δεδομένων
     if not wait_for_database():
         return False
-    
+
     # 2. Migrations
     if not run_migrations():
         return False
-    
+
     # 3. Δημιουργία public tenant
     create_public_tenant()
-    
+
     # 4. Δημιουργία demo tenant
     tenant = create_demo_tenant()
-    
+
     # 5. Δημιουργία demo δεδομένων
     create_demo_data('demo')
-    
+
     # 6. Αποθήκευση credentials
     credentials_file = save_credentials()
-    
-    # 7. Τελικό μήνυμα
+
+    # 7. Frontend warm-up (εκτελείται σε background thread)
+    print("\n🔥 Starting frontend warm-up in background...")
+    warmup_thread = threading.Thread(target=warm_up_frontend)
+    warmup_thread.daemon = True  # Daemon thread ώστε να μην κρατάει το script
+    warmup_thread.start()
+
+    # 8. Τελικό μήνυμα
     print("\n" + "=" * 50)
     print("✅ ΟΛΟΚΛΗΡΩΘΗΚΕ Η ΑΥΤΟΜΑΤΗ ΑΡΧΙΚΟΠΟΙΗΣΗ!")
     print("=" * 50)
