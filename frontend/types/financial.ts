@@ -144,20 +144,41 @@ export interface MeterReading {
 export interface FinancialSummary {
   current_reserve: number;
   total_obligations: number;
+  previous_obligations?: number;
+  current_obligations?: number;
   total_expenses_this_month: number;
   total_payments_this_month: number;
   recent_transactions: Transaction[];
+  average_monthly_expenses?: number;
+  reserve_fund_monthly_target?: number;
+  reserve_fund_contribution?: number;
+  total_management_cost?: number;
+  management_fee_per_apartment?: number;
+  apartments_count?: number;
+  reserve_fund_goal?: number;
+  reserve_fund_duration_months?: number;
+  reserve_fund_start_date?: string;
+  reserve_fund_target_date?: string;
+  reserve_fund_priority?: string;
+  has_monthly_activity?: boolean;
+  total_expenses_month?: number;
 }
 
 export interface ApartmentBalance {
-  id: number;
-  number: string;
+  apartment_id: number;
+  apartment_number: string;
   owner_name: string;
   building_name?: string;
   current_balance: number;
   participation_mills: number;
   last_payment_date?: string;
   last_payment_amount?: number;
+  total_payments?: number;
+  total_expenses?: number;
+  recent_payments?: Array<{
+    amount: number;
+    payment_date: string;
+  }>;
 }
 
 // Common Expense types

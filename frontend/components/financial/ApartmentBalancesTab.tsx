@@ -112,31 +112,43 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
 
     try {
       console.log('🔍 Loading apartment balances for building:', buildingId);
-      
+
       const params = new URLSearchParams({
         building_id: buildingId.toString(),
         ...(selectedMonth && { month: selectedMonth })
       });
-      
-      const response = await api.get(`/financial/dashboard/apartment_balances/?${params}`);
-      const responseData = response.data;
-      
+
+      // Fetch both apartment balances and financial summary
+      const [balancesResponse, summaryResponse] = await Promise.all([
+        api.get(`/financial/dashboard/apartment_balances/?${params}`),
+        api.get(`/financial/dashboard/summary/?${params}`)
+      ]);
+
+      const responseData = balancesResponse.data;
+      const financialSummary = summaryResponse.data;
+
       setApartmentBalances(responseData.apartments || []);
-      setSummary(responseData.summary || {});
-      
+
+      // Merge the summary data from both endpoints
+      setSummary({
+        ...(responseData.summary || {}),
+        management_fee_per_apartment: financialSummary.management_fee_per_apartment || 0
+      });
+
       // Validate if the returned data matches the selected month
       if (selectedMonth) {
         const validation = validateFinancialDataMonth(responseData, selectedMonth);
         setDateValidation(validation);
-        
+
         console.log('🔍 Date validation result:', {
           selectedMonth,
           validation,
           responseDataKeys: Object.keys(responseData)
         });
       }
-      
+
       console.log('✅ Apartment balances loaded:', responseData);
+      console.log('✅ Management fee per apartment:', financialSummary.management_fee_per_apartment);
     } catch (err: any) {
       console.error('❌ Error loading apartment balances:', err);
       setError(err.response?.data?.detail || err.message || 'Σφάλμα φόρτωσης δεδομένων');
@@ -440,7 +452,13 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {apartmentBalances.map((apartment) => (
+                {apartmentBalances.map((apartment) => {
+                  // Υπολογισμός εξόδων διαχείρισης με ίσο επιμερισμό
+                  const managementFeePerApartment = summary?.management_fee_per_apartment || 0; // Λήψη από το API
+                  const currentExpenseWithManagement = apartment.expense_share + managementFeePerApartment;
+                  const totalObligationWithManagement = apartment.previous_balance + (apartment.reserve_fund_share || 0) + currentExpenseWithManagement;
+
+                  return (
                   <tr key={apartment.apartment_id} className="border-b hover:bg-gray-50">
                     <td className="py-2 px-2 text-xs font-medium">{apartment.apartment_number}</td>
                     <td className="py-2 px-2 text-xs">{apartment.owner_name}</td>
@@ -465,25 +483,25 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                     </td>
                     <td className="py-2 px-2 text-xs text-right">
                       <span className={`font-medium ${
-                        Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
-                        apartment.expense_share > 0.30 ? 'text-orange-600' : 'text-gray-500'
+                        Math.abs(totalObligationWithManagement) <= 0.30 ? 'text-gray-500' :
+                        currentExpenseWithManagement > 0.30 ? 'text-orange-600' : 'text-gray-500'
                       }`}>
-                        {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : 
-                         Math.abs(apartment.expense_share) <= 0.30 ? '-' : formatCurrency(apartment.expense_share)}
+                        {Math.abs(totalObligationWithManagement) <= 0.30 ? '-' :
+                         Math.abs(currentExpenseWithManagement) <= 0.30 ? '-' : formatCurrency(currentExpenseWithManagement)}
                       </span>
                     </td>
                     <td className="py-2 px-2 text-xs text-right">
                       <span className={`font-medium ${
-                        apartment.net_obligation > 0.30 ? 'text-red-600' : 
-                        apartment.net_obligation < -0.30 ? 'text-green-600' : 'text-gray-900'
+                        totalObligationWithManagement > 0.30 ? 'text-red-600' :
+                        totalObligationWithManagement < -0.30 ? 'text-green-600' : 'text-gray-900'
                       }`}>
-                        {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : formatCurrency(apartment.net_obligation)}
+                        {Math.abs(totalObligationWithManagement) <= 0.30 ? '-' : formatCurrency(totalObligationWithManagement)}
                       </span>
                     </td>
                     <td className="py-2 px-2 text-center">
                       <div className="flex items-center justify-center gap-1">
                         {(() => {
-                          const netObligation = apartment.net_obligation;
+                          const netObligation = totalObligationWithManagement;
                           if (Math.abs(netObligation) <= 0.30) {
                             return <CheckCircle className="h-3 w-3 text-blue-500" />;
                           } else if (netObligation > 100) {
@@ -574,7 +592,8 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

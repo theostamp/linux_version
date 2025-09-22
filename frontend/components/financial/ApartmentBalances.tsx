@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Eye } from 'lucide-react';
 import { useFinancialDashboard } from '@/hooks/useFinancialDashboard';
 import { ApartmentBalance } from '@/types/financial';
 import { formatCurrency } from '@/lib/utils';
@@ -21,10 +22,23 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
   onApartmentSelect,
   showActions = true,
 }) => {
-  const { apartmentBalances, isLoading, error } = useFinancialDashboard(buildingId);
+  const { getApartmentBalances, isLoading, error } = useFinancialDashboard();
+  const [apartmentBalances, setApartmentBalances] = useState<ApartmentBalance[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [balanceFilter, setBalanceFilter] = useState<string>('debt');
   const [sortBy, setSortBy] = useState<string>('balance');
+
+  // Fetch apartment balances when buildingId changes
+  useEffect(() => {
+    const fetchApartmentBalances = async () => {
+      const balances = await getApartmentBalances(buildingId);
+      setApartmentBalances(balances);
+    };
+
+    if (buildingId) {
+      fetchApartmentBalances();
+    }
+  }, [buildingId, getApartmentBalances]);
 
   const filteredAndSortedBalances = useMemo(() => {
     if (!apartmentBalances) return [];
@@ -285,8 +299,9 @@ export const ApartmentBalances: React.FC<ApartmentBalancesProps> = ({
                           e.stopPropagation();
                           onApartmentSelect?.(balance.apartment_id);
                         }}
+                        title="Λεπτομέρειες"
                       >
-                        Λεπτομέρειες
+                        <Eye className="h-4 w-4" />
                       </Button>
                       {balance.current_balance < 0 && (
                         <Button

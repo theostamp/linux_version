@@ -1129,6 +1129,35 @@ class FinancialDashboardService:
         
         # ΔΙΟΡΘΩΣΗ ΠΡΟΣΗΜΟΥ: Χρέος = θετικό υπόλοιπο, Πίστωση = αρνητικό υπόλοιπο  
         # Υπόλοιπο = Χρεώσεις - Πληρωμές (θετικό = χρέος, αρνητικό = πίστωση)
+
+        # ΠΡΟΣΘΗΚΗ: Υπολογισμός δαπανών διαχείρισης για προηγούμενους μήνες
+        management_fee_per_apartment = apartment.building.management_fee_per_apartment or Decimal('0.00')
+        
+        if management_fee_per_apartment > 0:
+            # Βρίσκουμε την αρχική ημερομηνία για υπολογισμό (Ιανουάριος 2025)
+            from datetime import date
+            start_date = date(2025, 1, 1)
+        
+            # Υπολογίζουμε πόσους μήνες πρέπει να χρεώσουμε
+            months_to_charge = 0
+            current_date = start_date
+        
+            while current_date < month_start:
+                months_to_charge += 1
+                # Πάμε στον επόμενο μήνα
+                if current_date.month == 12:
+                    current_date = current_date.replace(year=current_date.year + 1, month=1)
+                else:
+                    current_date = current_date.replace(month=current_date.month + 1)
+        
+            # Προσθέτουμε τις δαπάνες διαχείρισης στις συνολικές χρεώσεις
+            management_fees_total = management_fee_per_apartment * months_to_charge
+            total_charges += management_fees_total
+        
+            # Debug output για να βλέπουμε τι υπολογίζεται
+            if months_to_charge > 0:
+                print(f"💰 Management fees for apt {apartment.number}: {months_to_charge} months × €{management_fee_per_apartment} = €{management_fees_total}")
+        
         historical_balance = total_charges - total_payments
         
         return historical_balance

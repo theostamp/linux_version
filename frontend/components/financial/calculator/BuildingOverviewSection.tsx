@@ -212,7 +212,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
   // Initialize editing states when financial summary changes
   useEffect(() => {
-    if (financialSummary && !editingTimeline) {
+    if (financialSummary) {
+      // Always update reserve fund data when financial summary changes
       if (financialSummary.reserve_fund_start_date) {
         const startDate = new Date(financialSummary.reserve_fund_start_date);
         const month = (startDate.getMonth() + 1).toString().padStart(2, '0');
@@ -234,13 +235,56 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         setNewDurationMonths('12');
         setNewInstallments('12');
       }
-    }
-    
-    // Initialize management fee
-    if (financialSummary) {
+
+      // Initialize reserve fund priority
+      if (financialSummary.reserve_fund_priority) {
+        setReserveFundPriority(financialSummary.reserve_fund_priority);
+      }
+
+      // Initialize reserve fund goal
+      if (financialSummary.reserve_fund_goal) {
+        setNewGoal(financialSummary.reserve_fund_goal.toString());
+      }
+
+      // Initialize management fee
       setNewManagementFee((financialSummary.management_fee_per_apartment || 0).toString());
     }
-  }, [financialSummary, editingTimeline, currentBuilding]);
+  }, [financialSummary, currentBuilding]);
+
+  // Re-initialize modal states when the reserve goal modal opens
+  useEffect(() => {
+    if (showReserveGoalModal && financialSummary) {
+      // Re-initialize start date
+      if (financialSummary.reserve_fund_start_date) {
+        const startDate = new Date(financialSummary.reserve_fund_start_date);
+        const month = (startDate.getMonth() + 1).toString().padStart(2, '0');
+        const year = startDate.getFullYear().toString();
+        setNewStartMonth(month);
+        setNewStartYear(year);
+      } else {
+        // Default to current month/year if no start date is set
+        const now = new Date();
+        setNewStartMonth((now.getMonth() + 1).toString().padStart(2, '0'));
+        setNewStartYear(now.getFullYear().toString());
+      }
+
+      // Re-initialize duration
+      if (financialSummary.reserve_fund_duration_months) {
+        setNewDurationMonths(financialSummary.reserve_fund_duration_months.toString());
+        setNewInstallments(financialSummary.reserve_fund_duration_months.toString());
+      }
+
+      // Re-initialize goal
+      if (financialSummary.reserve_fund_goal) {
+        setNewGoal(financialSummary.reserve_fund_goal.toString());
+      }
+
+      // Re-initialize priority
+      if (financialSummary.reserve_fund_priority) {
+        setReserveFundPriority(financialSummary.reserve_fund_priority);
+      }
+    }
+  }, [showReserveGoalModal, financialSummary]);
 
   // Function to handle showing amount details modal
   const handleShowAmountDetails = (
@@ -622,13 +666,16 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const targetDateString = targetDate.toISOString().split('T')[0];
       saveToLocalStorage('target_date', targetDateString);
       
-      // Calculate start and end dates based on timeline configuration
-      const newStartDate = newStartMonth && newStartYear ? 
-        calculateNewDates(newStartMonth, newStartYear, installmentsValue).startDate :
-        new Date().toISOString().split('T')[0];
-      const newEndDate = newStartMonth && newStartYear ? 
-        calculateNewDates(newStartMonth, newStartYear, installmentsValue).endDate :
-        new Date(new Date().getFullYear(), new Date().getMonth() + installmentsValue, 0).toISOString().split('T')[0];
+      // Use the actual selected start month/year from the modal
+      const actualStartMonth = newStartMonth || ((new Date().getMonth() + 1).toString().padStart(2, '0'));
+      const actualStartYear = newStartYear || new Date().getFullYear().toString();
+
+      // Calculate start and end dates based on the actual timeline configuration
+      const { startDate: newStartDate, endDate: newEndDate } = calculateNewDates(
+        actualStartMonth,
+        actualStartYear,
+        installmentsValue
+      );
       
       // Recalculate reserve fund debt with new goal and installments
       const existingStartDate = new Date(financialSummary?.reserve_fund_start_date || newStartDate);
@@ -1128,7 +1175,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700"
                         title="Δείτε λεπτομέρειες"
                       >
-                        Λεπτομέρειες
+                        <Eye className="h-3 w-3" />
                       </Button>
                     </div>
                     
@@ -1161,7 +1208,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                             className="h-6 px-2 text-xs text-red-600 hover:text-red-700"
                             title="Δείτε λεπτομέρειες"
                           >
-                            Λεπτομέρειες
+                            <Eye className="h-3 w-3" />
                           </Button>
                         </div>
                       </div>
@@ -1185,7 +1232,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                               className="h-6 px-2 text-xs text-purple-600 hover:text-purple-700"
                               title="Δείτε λεπτομέρειες"
                             >
-                              Λεπτομέρειες
+                              <Eye className="h-3 w-3" />
                             </Button>
                           </div>
                         </div>
@@ -1359,6 +1406,19 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       <Edit3 className="h-4 w-4" />
                     </Button>
                   )}
+                </div>
+              </div>
+
+              {/* Management Fee Content */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-purple-700">Μηνιαία δόση πολυκατοικίας:</span>
+                  <span className="text-sm font-bold text-purple-900">
+                    {formatCurrency((financialSummary?.management_fee_per_apartment || 0) * (financialSummary?.apartments_count || 0))}
+                  </span>
+                </div>
+                <div className="text-xs text-purple-600">
+                  {financialSummary?.apartments_count || 0} διαμ. × {formatCurrency(financialSummary?.management_fee_per_apartment || 0)}/μήνα
                 </div>
               </div>
             </CardContent>
@@ -1938,7 +1998,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         className="h-4 px-1 text-xs text-orange-600 hover:text-orange-700"
                         title="Δείτε λεπτομέρειες ισοζυγίου"
                       >
-                        Λεπτομέρειες
+                        <Eye className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
@@ -2075,7 +2135,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                 </div>
               </div>
             )}
-            
+
             {/* Loading overlay for service package application */}
             {applyingServicePackage && (
               <div className="p-2 bg-purple-50 rounded border border-purple-200">
