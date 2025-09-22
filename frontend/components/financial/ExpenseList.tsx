@@ -71,9 +71,29 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
   // Handle expense deletion
   const handleDeleteExpense = async (expense: Expense, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the expense selection
-    
-    // Έλεγχος αν η δαπάνη συνδέεται με έργο
+
+    // 🔴 ΠΡΟΣΤΑΣΙΑ ΔΑΠΑΝΩΝ ΑΠΟ ΕΡΓΑ/ΠΡΟΣΦΟΡΕΣ
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Έλεγχος αν η δαπάνη προέρχεται από:
+    // 1. Προγραμματισμένο έργο (ScheduledMaintenance)
+    // 2. Εγκεκριμένη προσφορά (Approved Offer)
+    // 3. Project με δόσεις
+    //
+    // Δείτε: OFFER_PROJECT_EXPENSE_ARCHITECTURE.md
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // Έλεγχος αν η δαπάνη είναι από προσφορά/έργο
+    const isFromApprovedOffer =
+      expense.notes?.toLowerCase().includes('προγραμματισμένο έργο #') ||
+      expense.notes?.toLowerCase().includes('maintenance id:') ||
+      expense.notes?.toLowerCase().includes('project id:') ||
+      expense.title?.includes(' - Προκαταβολή') ||
+      expense.title?.includes(' - Δόση ') ||
+      expense.title?.includes(' - Installment ');
+
     const isProjectRelated = (
+      // Δαπάνες που προέρχονται από εγκεκριμένες προσφορές
+      isFromApprovedOffer ||
       // Δαπάνες με δόσεις/διακανονισμούς
       (expense.has_installments && expense.linked_maintenance_projects && expense.linked_maintenance_projects.length > 0) ||
       // Δαπάνες που συνδέονται με προγραμματισμένα έργα (ανεξάρτητα από δόσεις)
@@ -131,20 +151,42 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
         project: project
       });
 
+      // Καθορισμός τύπου προέλευσης
+      let sourceType = 'προγραμματισμένο έργο';
+      let navigationTarget = '/maintenance/scheduled';
+      let navigationLabel = 'Προγραμματισμένα Έργα';
+
+      if (isFromApprovedOffer) {
+        sourceType = 'εγκεκριμένη προσφορά';
+
+        // Προσπάθεια εύρεσης του project ID από τα notes
+        const projectIdMatch = expense.notes?.match(/project id:\s*([a-f0-9-]+)/i);
+        if (projectIdMatch && projectIdMatch[1]) {
+          navigationTarget = `/projects/${projectIdMatch[1]}`;
+          navigationLabel = 'Έργα & Προσφορές';
+        } else {
+          navigationTarget = '/projects';
+          navigationLabel = 'Έργα & Προσφορές';
+        }
+      }
+
       // Δημιουργία custom dialog για ενημέρωση
       const messageDiv = document.createElement('div');
       messageDiv.innerHTML = `
         <div style="padding: 20px; text-align: center;">
-          <h3 style="color: #dc2626; margin-bottom: 10px;">⚠️ Προσοχή</h3>
+          <h3 style="color: #dc2626; margin-bottom: 10px;">🔒 Προστατευμένη Δαπάνη</h3>
           <p style="margin-bottom: 15px;">
-            Η δαπάνη <strong>"${expense.title}"</strong> ${projectInfo ? `συνδέεται με το έργο <strong>"${project.title}"</strong> και` : 'προέρχεται από προγραμματισμένο έργο και'}
-            η διαγραφή της μπορεί να γίνει μόνο από τη σελίδα <strong>"Προγραμματισμένα Έργα"</strong>.
+            Η δαπάνη <strong>"${expense.title}"</strong> ${projectInfo ? `συνδέεται με το έργο <strong>"${project.title}"</strong> και` : `προέρχεται από ${sourceType} και`}
+            <strong style="color: #dc2626;">ΔΕΝ μπορεί να διαγραφεί απευθείας</strong>.
           </p>
           <p style="margin-bottom: 20px; color: #666;">
-            Αυτό διασφαλίζει ότι δεν θα υπάρξουν ορφανές εγγραφές και διατηρείται η ακεραιότητα των δεδομένων.
+            Για να διαγράψετε αυτή τη δαπάνη, πρέπει να:
+            <br>• Μεταβείτε στη σελίδα <strong>"${navigationLabel}"</strong>
+            <br>• Βρείτε το σχετικό έργο/προσφορά
+            <br>• Διαγράψετε ολόκληρο το έργο ή αλλάξετε τις ρυθμίσεις πληρωμής
           </p>
-          <p style="margin-bottom: 0;">
-            Θα μεταφερθείτε στη σελίδα διαχείρισης των προγραμματισμένων έργων.
+          <p style="margin-bottom: 0; font-weight: bold;">
+            Θα μεταφερθείτε αυτόματα στη σωστή σελίδα σε 5 δευτερόλεπτα...
           </p>
         </div>
       `;

@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# 🔴 Pre-commit Hook για προστασία της κρίσιμης ροής Offer → Project → Expense
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Εγκατάσταση:
+#   cp .githooks/pre-commit-offer-flow .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+#
+# Αυτό το hook ελέγχει αν έχουν αλλαχθεί κρίσιμα αρχεία
+# και εμφανίζει προειδοποίηση
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Χρώματα για output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+# Κρίσιμα αρχεία που δεν πρέπει να αλλάζουν χωρίς προσοχή
+CRITICAL_FILES=(
+    "backend/projects/views.py"
+    "frontend/app/(dashboard)/projects/[id]/page.tsx"
+    "backend/maintenance/models.py"
+    "backend/projects/models.py"
+)
+
+# Έλεγχος αν κάποιο κρίσιμο αρχείο έχει αλλαχθεί
+CHANGED_CRITICAL=()
+for file in "${CRITICAL_FILES[@]}"; do
+    if git diff --cached --name-only | grep -q "$file"; then
+        CHANGED_CRITICAL+=("$file")
+    fi
+done
+
+# Αν έχουν αλλαχθεί κρίσιμα αρχεία
+if [ ${#CHANGED_CRITICAL[@]} -gt 0 ]; then
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${RED}🔴 ΠΡΟΕΙΔΟΠΟΙΗΣΗ: Αλλαγές σε ΚΡΙΣΙΜΑ αρχεία της ροής Offer→Project→Expense${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    echo -e "${YELLOW}Τα παρακάτω κρίσιμα αρχεία έχουν αλλαχθεί:${NC}"
+    for file in "${CHANGED_CRITICAL[@]}"; do
+        echo -e "  ${YELLOW}• $file${NC}"
+    done
+    echo ""
+    echo -e "${YELLOW}⚠️  ΠΡΟΣΟΧΗ: Αυτά τα αρχεία περιέχουν την κρίσιμη λογική για:${NC}"
+    echo -e "${YELLOW}   1. Έγκριση προσφορών${NC}"
+    echo -e "${YELLOW}   2. Δημιουργία ScheduledMaintenance${NC}"
+    echo -e "${YELLOW}   3. Αυτόματη δημιουργία δαπανών${NC}"
+    echo ""
+    echo -e "${YELLOW}📚 ΠΡΙΝ ΣΥΝΕΧΙΣΕΤΕ, ελέγξτε:${NC}"
+    echo -e "${YELLOW}   • OFFER_PROJECT_EXPENSE_ARCHITECTURE.md${NC}"
+    echo -e "${YELLOW}   • test_and_fix_offer_flow.py${NC}"
+    echo ""
+
+    # Έλεγχος αν έχουν αλλαχθεί οι κρίσιμες συναρτήσεις
+    if git diff --cached backend/projects/views.py | grep -q "def approve\|update_project_schedule"; then
+        echo -e "${RED}⚠️  ΕΝΤΟΠΙΣΤΗΚΑΝ αλλαγές στις ΚΡΙΣΙΜΕΣ συναρτήσεις:${NC}"
+        echo -e "${RED}   • approve() - Έγκριση προσφοράς${NC}"
+        echo -e "${RED}   • update_project_schedule() - Σύνδεση με maintenance${NC}"
+        echo ""
+        echo -e "${RED}🔥 ΣΥΣΤΑΣΗ: Τρέξτε τα tests ΠΡΙΝ το commit:${NC}"
+        echo -e "${GREEN}   docker exec -it linux_version-backend-1 python /app/test_and_fix_offer_flow.py${NC}"
+        echo ""
+    fi
+
+    # Ρωτάμε αν θέλει να συνεχίσει
+    echo -e "${YELLOW}Θέλετε να συνεχίσετε με το commit; (y/n)${NC}"
+    read -r response
+    if [[ ! "$response" =~ ^[Yy]$ ]]; then
+        echo -e "${RED}Commit ακυρώθηκε.${NC}"
+        exit 1
+    fi
+
+    echo -e "${GREEN}✓ Συνεχίζετε με δική σας ευθύνη. Μην ξεχάσετε να τρέξετε τα tests!${NC}"
+    echo ""
+fi
+
+# Έλεγχος αν το documentation έχει ενημερωθεί
+if [ ${#CHANGED_CRITICAL[@]} -gt 0 ]; then
+    if ! git diff --cached --name-only | grep -q "OFFER_PROJECT_EXPENSE_ARCHITECTURE.md"; then
+        echo -e "${YELLOW}💡 Υπενθύμιση: Αν κάνατε σημαντικές αλλαγές, ενημερώστε το:${NC}"
+        echo -e "${YELLOW}   OFFER_PROJECT_EXPENSE_ARCHITECTURE.md${NC}"
+        echo ""
+    fi
+fi
+
+exit 0

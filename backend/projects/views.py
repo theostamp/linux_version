@@ -22,7 +22,22 @@ from core.utils import publish_building_event
 
 
 def update_project_schedule(project, offer=None):
-    """Ενημερώνει το σχήμα 'Προγραμματισμός έργου' με σωστό επιμερισμό δόσεων"""
+    """
+    🔴 ΚΡΙΣΙΜΗ ΣΥΝΑΡΤΗΣΗ - ΑΥΤΟΜΑΤΗ ΣΥΝΔΕΣΗ ΠΡΟΣΦΟΡΑΣ → ΕΡΓΟΥ → ΔΑΠΑΝΩΝ
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    Καλείται από: OfferViewSet.approve() και ProjectViewSet.update_status()
+
+    ΛΕΙΤΟΥΡΓΙΑ:
+    1. Δημιουργεί ScheduledMaintenance από approved offer
+    2. Μεταφέρει στοιχεία συνεργείου (contractor_name, phone, email)
+    3. Δημιουργεί Expenses (Προκαταβολή + Δόσεις)
+    4. Δημιουργεί Transactions για κάθε διαμέρισμα
+
+    ⚠️ ΠΡΟΣΟΧΗ: ΜΗΝ αλλάξετε τη λογική χωρίς να ελέγξετε:
+    - test_and_fix_offer_flow.py
+    - OFFER_PROJECT_EXPENSE_ARCHITECTURE.md
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    """
     try:
         from financial.models import Expense
         from maintenance.models import ScheduledMaintenance, PaymentSchedule
@@ -33,7 +48,8 @@ def update_project_schedule(project, offer=None):
         # Υπολογισμός ημερομηνίας πληρωμής
         due_date = project.deadline or (datetime.now().date() + timedelta(days=30))
 
-        # Δημιουργία ή ενημέρωση ScheduledMaintenance
+        # 🔴 ΚΡΙΣΙΜΟ: Δημιουργία ή ενημέρωση ScheduledMaintenance με linked_project
+        # Αυτό συνδέει το approved project με το maintenance module
         scheduled_maintenance, created = ScheduledMaintenance.objects.get_or_create(
             linked_project=project,
             building=project.building,
@@ -319,33 +335,48 @@ class OfferViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
+        """
+        🔴 ΚΡΙΣΙΜΗ ΣΥΝΑΡΤΗΣΗ - ΜΗΝ ΑΛΛΑΞΕΤΕ ΧΩΡΙΣ ΈΓΚΡΙΣΗ
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        Εγκρίνει προσφορά και δημιουργεί αυτόματα:
+        1. ScheduledMaintenance (Προγραμματισμένο Έργο)
+        2. Expenses (Δαπάνες με δόσεις)
+        3. Transactions (Χρεώσεις διαμερισμάτων)
+
+        ΠΡΟΣΟΧΗ: Η update_project_schedule() είναι ΑΠΑΡΑΙΤΗΤΗ
+        Δείτε: OFFER_PROJECT_EXPENSE_ARCHITECTURE.md
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        """
         offer = self.get_object()
         with transaction.atomic():
-            # Εγκρίνει την προσφορά
+            # ΒΗΜΑ 1: Εγκρίνει την προσφορά
             offer.status = 'accepted'
             offer.reviewed_at = timezone.now()
             offer.reviewed_by = request.user
             offer.save()
 
-            # Απορρίπτει τις άλλες προσφορές για το ίδιο έργο
+            # ΒΗΜΑ 2: Απορρίπτει τις άλλες προσφορές για το ίδιο έργο
             Offer.objects.filter(project=offer.project).exclude(id=offer.id).update(
                 status='rejected',
                 reviewed_at=timezone.now(),
                 reviewed_by=request.user
             )
 
-            # Ενημερώνει το έργο με ΟΛΑ τα payment fields
+            # ΒΗΜΑ 3: Ενημερώνει το έργο με ΟΛΑ τα payment fields
+            # ⚠️ ΚΡΙΣΙΜΟ: Πρέπει να αντιγραφούν ΟΛΑ τα πεδία από την προσφορά
             project = offer.project
-            project.selected_contractor = offer.contractor_name
-            project.final_cost = offer.amount
-            project.payment_method = offer.payment_method
-            project.installments = offer.installments or 1
-            project.advance_payment = offer.advance_payment
+            project.selected_contractor = offer.contractor_name  # ΑΠΑΡΑΙΤΗΤΟ για ScheduledMaintenance
+            project.final_cost = offer.amount                    # ΑΠΑΡΑΙΤΗΤΟ για δαπάνες
+            project.payment_method = offer.payment_method        # ΑΠΑΡΑΙΤΗΤΟ για τύπο πληρωμής
+            project.installments = offer.installments or 1       # ΑΠΑΡΑΙΤΗΤΟ για δόσεις
+            project.advance_payment = offer.advance_payment      # ΑΠΑΡΑΙΤΗΤΟ για προκαταβολή
             project.payment_terms = offer.payment_terms
             project.status = 'approved'
             project.save()
 
-            # Δημιουργεί/ενημερώνει το ScheduledMaintenance και τις δαπάνες
+            # ΒΗΜΑ 4: 🔴 ΚΡΙΣΙΜΟ - ΜΗΝ ΑΦΑΙΡΕΣΕΤΕ ΑΥΤΗ ΤΗ ΓΡΑΜΜΗ
+            # Δημιουργεί αυτόματα ScheduledMaintenance και Expenses
+            # Χωρίς αυτήν ΔΕΝ θα υπάρξει σύνδεση με το maintenance module!
             update_project_schedule(project, offer)
 
         publish_building_event(

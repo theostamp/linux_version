@@ -255,7 +255,25 @@ function ProjectOffersTab({ projectId, onApproved }: { projectId: string; onAppr
           if (!confirm.id) return;
           try {
             setIsApproving(true);
-            await makeRequestWithRetry({ method: 'post', url: `/projects/offers/${confirm.id}/approve/`, xToastSuppress: true } as any);
+
+            // 🔴 ΚΡΙΣΙΜΟ ENDPOINT - ΜΗΝ ΑΛΛΑΞΕΤΕ
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // ΣΩΣΤΟ: /projects/offers/{id}/approve/
+            // ΛΑΘΟΣ: /projects/offers/{id}/ με PATCH
+            //
+            // Το approve endpoint:
+            // 1. Εγκρίνει την προσφορά
+            // 2. Δημιουργεί ScheduledMaintenance
+            // 3. Δημιουργεί Expenses (δαπάνες)
+            //
+            // Δείτε: OFFER_PROJECT_EXPENSE_ARCHITECTURE.md
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            await makeRequestWithRetry({
+              method: 'post',
+              url: `/projects/offers/${confirm.id}/approve/`,  // ⚠️ ΚΡΙΣΙΜΟ: Χρήση του approve action
+              xToastSuppress: true
+            } as any);
+
             toast({ title: 'Επιτυχία', description: 'Η προσφορά εγκρίθηκε.' });
             setRefresh((n) => n + 1);
             onApproved && onApproved();
