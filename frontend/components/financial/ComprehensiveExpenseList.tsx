@@ -76,7 +76,71 @@ export const ComprehensiveExpenseList = React.forwardRef<{ refresh: () => void }
   // Handle expense deletion
   const handleDeleteExpense = async (expense: Expense, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
+    // Έλεγχος αν η δαπάνη συνδέεται με έργο
+    const isProjectRelated = (
+      // Δαπάνες με δόσεις/διακανονισμούς
+      (expense.has_installments && expense.linked_maintenance_projects && expense.linked_maintenance_projects.length > 0) ||
+      // Δαπάνες που συνδέονται με προγραμματισμένα έργα
+      (expense.linked_maintenance_projects && expense.linked_maintenance_projects.length > 0)
+    );
+
+    if (isProjectRelated) {
+      const project = expense.linked_maintenance_projects?.[0];
+      const projectInfo = project ? ` με έργο "${project.title}"` : '';
+
+      // Δημιουργία custom dialog για ενημέρωση
+      const messageDiv = document.createElement('div');
+      messageDiv.innerHTML = `
+        <div style="padding: 20px; text-align: center;">
+          <h3 style="color: #dc2626; margin-bottom: 10px;">⚠️ Προσοχή</h3>
+          <p style="margin-bottom: 15px;">
+            Η δαπάνη <strong>"${expense.title}"</strong> ${projectInfo ? `συνδέεται με το έργο <strong>"${project.title}"</strong> και` : 'προέρχεται από προγραμματισμένο έργο και'}
+            η διαγραφή της μπορεί να γίνει μόνο από τη σελίδα <strong>"Προγραμματισμένα Έργα"</strong>.
+          </p>
+          <p style="margin-bottom: 20px; color: #666;">
+            Αυτό διασφαλίζει ότι δεν θα υπάρξουν ορφανές εγγραφές και διατηρείται η ακεραιότητα των δεδομένων.
+          </p>
+          <p style="margin-bottom: 0;">
+            Θα μεταφερθείτε στη σελίδα διαχείρισης των προγραμματισμένων έργων.
+          </p>
+        </div>
+      `;
+
+      // Χρήση toast με HTML content και μεγαλύτερη διάρκεια
+      toast.error(
+        <div dangerouslySetInnerHTML={{ __html: messageDiv.innerHTML }} />,
+        {
+          duration: 5000,
+          action: {
+            label: 'Μετάβαση',
+            onClick: () => {
+              // Redirect στη σελίδα προγραμματισμένων έργων
+              if (project?.id) {
+                // Αν έχουμε το ID του έργου, πάμε απευθείας στη σελίδα επεξεργασίας
+                window.location.href = `/maintenance/scheduled/${project.id}/edit`;
+              } else {
+                // Αλλιώς πάμε στη γενική σελίδα προγραμματισμένων έργων
+                window.location.href = '/maintenance/scheduled';
+              }
+            }
+          }
+        }
+      );
+
+      // Αυτόματη μετάβαση μετά από 5 δευτερόλεπτα αν ο χρήστης δεν πατήσει το κουμπί
+      setTimeout(() => {
+        if (project?.id) {
+          window.location.href = `/maintenance/scheduled/${project.id}/edit`;
+        } else {
+          window.location.href = '/maintenance/scheduled';
+        }
+      }, 5000);
+
+      return;
+    }
+
+    // Για απλές δαπάνες χωρίς συνδέσεις με έργα
     if (window.confirm(`Είστε σίγουροι ότι θέλετε να διαγράψετε τη δαπάνη "${expense.title}";`)) {
       try {
         const success = await deleteExpense(expense.id);

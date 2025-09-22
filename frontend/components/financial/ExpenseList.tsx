@@ -121,7 +121,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
     if (isProjectRelated) {
       const project = expense.linked_maintenance_projects?.[0];
       const projectInfo = project ? ` με έργο "${project.title}"` : '';
-      
+
       // Debug logging
       console.log('🔍 Project-related expense detected:', {
         expenseTitle: expense.title,
@@ -130,60 +130,55 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
         linkedProjects: expense.linked_maintenance_projects,
         project: project
       });
-      
-      toast.info(
-        `Η δαπάνη "${expense.title}" σχετίζεται${projectInfo}. Για τη διαχείρισή της θα μεταφερθείτε στο οικονομικό dashboard του έργου.`
-      );
-      
-      // Ανοίγει το modal "Οικονομική Επισκόπηση Έργου"
-      if (project?.id) {
-        console.log('🚀 Dispatching open-maintenance-overview event with ID:', project.id);
-        window.dispatchEvent(new CustomEvent('open-maintenance-overview', { 
-          detail: { maintenanceId: project.id } 
-        }));
-      } else {
-        console.log('⚠️ No project ID found in linked_maintenance_projects, trying to find project by category match...');
-        
-        // Fallback: Προσπάθεια εύρεσης έργου με βάση την κατηγορία και το τίτλο
-        // Αυτό θα πρέπει να γίνει μέσω API call για να βρούμε το πιο πιθανό έργο
-        const searchForRelatedProject = async () => {
-          try {
-            // Αναζήτηση έργων που ταιριάζουν με την κατηγορία και το τίτλο
-            const response = await api.get('/maintenance/scheduled-maintenance/', {
-              params: {
-                building: expense.building,
-                search: expense.title,
-                limit: 5
+
+      // Δημιουργία custom dialog για ενημέρωση
+      const messageDiv = document.createElement('div');
+      messageDiv.innerHTML = `
+        <div style="padding: 20px; text-align: center;">
+          <h3 style="color: #dc2626; margin-bottom: 10px;">⚠️ Προσοχή</h3>
+          <p style="margin-bottom: 15px;">
+            Η δαπάνη <strong>"${expense.title}"</strong> ${projectInfo ? `συνδέεται με το έργο <strong>"${project.title}"</strong> και` : 'προέρχεται από προγραμματισμένο έργο και'}
+            η διαγραφή της μπορεί να γίνει μόνο από τη σελίδα <strong>"Προγραμματισμένα Έργα"</strong>.
+          </p>
+          <p style="margin-bottom: 20px; color: #666;">
+            Αυτό διασφαλίζει ότι δεν θα υπάρξουν ορφανές εγγραφές και διατηρείται η ακεραιότητα των δεδομένων.
+          </p>
+          <p style="margin-bottom: 0;">
+            Θα μεταφερθείτε στη σελίδα διαχείρισης των προγραμματισμένων έργων.
+          </p>
+        </div>
+      `;
+
+      // Χρήση toast με HTML content και μεγαλύτερη διάρκεια
+      toast.error(
+        <div dangerouslySetInnerHTML={{ __html: messageDiv.innerHTML }} />,
+        {
+          duration: 5000,
+          action: {
+            label: 'Μετάβαση',
+            onClick: () => {
+              // Redirect στη σελίδα προγραμματισμένων έργων
+              if (project?.id) {
+                // Αν έχουμε το ID του έργου, πάμε απευθείας στη σελίδα επεξεργασίας
+                window.location.href = `/maintenance/scheduled/${project.id}/edit`;
+              } else {
+                // Αλλιώς πάμε στη γενική σελίδα προγραμματισμένων έργων
+                window.location.href = '/maintenance/scheduled';
               }
-            });
-            
-            const projects = response.data?.results || response.data || [];
-            const matchingProject = projects.find((p: any) => 
-              p.title?.toLowerCase().includes(expense.title.toLowerCase()) ||
-              expense.title.toLowerCase().includes(p.title?.toLowerCase())
-            );
-            
-            if (matchingProject?.id) {
-              console.log('🎯 Found matching project via API:', matchingProject);
-              window.dispatchEvent(new CustomEvent('open-maintenance-overview', { 
-                detail: { maintenanceId: matchingProject.id } 
-              }));
-              return;
             }
-          } catch (error) {
-            console.error('Error searching for related project:', error);
           }
-          
-          // Αν δεν βρέθηκε έργο, ανοίγει γενικό maintenance dashboard
-          console.log('⚠️ No matching project found, redirecting to maintenance page');
-          toast.info('Αυτή η δαπάνη σχετίζεται με έργο συντήρησης. Θα μεταφερθείτε στη διαχείριση έργων για περαιτέρω ενέργειες.');
-          setTimeout(() => {
-            window.open('/maintenance?tab=overview', '_blank');
-          }, 1500);
-        };
-        
-        searchForRelatedProject();
-      }
+        }
+      );
+
+      // Αυτόματη μετάβαση μετά από 5 δευτερόλεπτα αν ο χρήστης δεν πατήσει το κουμπί
+      setTimeout(() => {
+        if (project?.id) {
+          window.location.href = `/maintenance/scheduled/${project.id}/edit`;
+        } else {
+          window.location.href = '/maintenance/scheduled';
+        }
+      }, 5000);
+
       return;
     }
     
