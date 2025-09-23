@@ -1146,26 +1146,16 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                 # Use balance from service (which handles historical filtering)
                 current_balance = float(balance_dict.get(apartment.id, 0))
                 
-                # Calculate previous_balance (obligations from months before the selected month)
+                # Use the previous_balance from the service (which correctly calculates historical obligations)
                 previous_balance = 0.0
                 if month:
-                    try:
-                        # Get the previous month's balance
-                        year, mon = map(int, month.split('-'))
-                        if mon == 1:
-                            prev_month = f"{year-1}-12"
-                        else:
-                            prev_month = f"{year}-{mon-1:02d}"
-                        
-                        # Get balance for the previous month
-                        prev_balances = service.get_apartment_balances(prev_month)
-                        prev_balance_dict = {b['id']: b['current_balance'] for b in prev_balances}
-                        previous_balance = float(prev_balance_dict.get(apartment.id, 0))
-                    except Exception:
-                        previous_balance = 0.0
+                    # Get the previous_balance from the service's apartment_balances
+                    apt_balance_data = next((b for b in apartment_balances if b['id'] == apartment.id), None)
+                    if apt_balance_data:
+                        previous_balance = float(apt_balance_data.get('previous_balance', 0))
                 else:
-                    # If no month specified, use the apartment's previous_balance field
-                    previous_balance = float(apartment.previous_balance or 0)
+                    # If no month specified, use the apartment's current_balance as previous_balance
+                    previous_balance = float(apartment.current_balance or 0)
                 
                 # Calculate monthly due using the service
                 try:
