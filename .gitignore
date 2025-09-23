@@ -44,6 +44,7 @@ frontend/node_modules/
 frontend/.next/
 frontend/.next-old/
 frontend/.next_backup/
+frontend/.next.backup/
 
 # OS/Editor
 .DS_Store
