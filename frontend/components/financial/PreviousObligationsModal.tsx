@@ -137,9 +137,11 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
     return 'Μηδενικό Υπόλοιπο';
   };
 
-  const totalObligations = apartmentObligations.reduce((sum, apt) => sum + apt.total_obligations, 0);
+  // Use the correct previous_obligations from API instead of calculating from apartments
+  const totalObligations = summary?.previous_obligations || 0;
   const totalPayments = apartmentObligations.reduce((sum, apt) => sum + apt.total_payments, 0);
-  const totalNetObligations = apartmentObligations.reduce((sum, apt) => sum + Math.max(0, apt.net_obligation), 0);
+  // Use the same value as totalObligations since this represents previous obligations
+  const totalNetObligations = totalObligations;
   const apartmentsWithObligations = apartmentObligations.filter(apt => apt.net_obligation > 0).length;
 
   return (
@@ -175,7 +177,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
         ) : (
           <div className="space-y-6">
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <Card className="border-2 border-purple-100 bg-gradient-to-r from-purple-50 to-indigo-50">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -231,7 +233,117 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                   </div>
                 </CardContent>
               </Card>
+
+              <Card className="border-2 border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <TrendingDown className="h-5 w-5 text-indigo-600" />
+                      <span className="text-sm font-medium text-indigo-700">Μελλοντικές Δαπάνες</span>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-indigo-800 mt-2">
+                    {formatCurrency((apartmentObligations.reduce((sum, apt) => sum + apt.total_obligations, 0)) - (summary?.previous_obligations || 0))}
+                  </div>
+                  <div className="text-xs text-indigo-600 mt-1">
+                    (δόσεις έργων)
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+
+            {/* Analysis of Previous Obligations */}
+            <Card className="border-2 border-purple-100 bg-gradient-to-r from-purple-50 to-indigo-50">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Calculator className="h-5 w-5 text-purple-600" />
+                  <span className="font-medium text-lg text-purple-800">Ανάλυση Παλαιότερων Οφειλών</span>
+                </div>
+                <div className="space-y-3">
+                  {/* Συσσωρευμένες οφειλές διαμερισμάτων */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-gray-700">Συσσωρευμένες οφειλές διαμερισμάτων:</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm text-red-700">
+                        {formatCurrency(totalObligations)}
+                      </span>
+                      <span className="text-xs text-gray-500">(αρνητικά υπόλοιπα)</span>
+                    </div>
+                  </div>
+                  
+                  {/* Εκκρεμείς πληρωμές προηγούμενων μηνών */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-gray-700">Εκκρεμείς πληρωμές προηγούμενων μηνών:</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm text-orange-700">
+                        {formatCurrency(summary?.pending_payments || 0)}
+                      </span>
+                      <span className="text-xs text-gray-500">(μη εξοφλημένες)</span>
+                    </div>
+                  </div>
+                  
+                  {/* Δαπάνες που δεν έχουν καλυφθεί */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-gray-700">Δαπάνες που δεν έχουν καλυφθεί:</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm text-yellow-700">
+                        {formatCurrency(summary?.pending_expenses || 0)}
+                      </span>
+                      <span className="text-xs text-gray-500">(εκκρεμείς δαπάνες)</span>
+                    </div>
+                  </div>
+                  
+                  {/* Μελλοντικές δαπάνες από δόσεις έργων */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-gray-700">Μελλοντικές δαπάνες (δόσεις έργων):</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm text-indigo-700">
+                        {formatCurrency((apartmentObligations.reduce((sum, apt) => sum + apt.total_obligations, 0)) - (summary?.previous_obligations || 0))}
+                      </span>
+                      <span className="text-xs text-gray-500">(δόσεις έργων)</span>
+                    </div>
+                  </div>
+                  
+                  {/* Συνολικές παλαιότερες οφειλές */}
+                  <div className="pt-2 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-800">Συνολικές παλαιότερες οφειλές:</span>
+                      <span className="font-bold text-lg text-purple-600">
+                        {formatCurrency(totalObligations)}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Συσσωρευμένες οφειλές διαμερισμάτων + Εκκρεμείς πληρωμές + Δαπάνες που δεν έχουν καλυφθεί
+                    </div>
+                  </div>
+                  
+                  {/* Συνολικό ποσό με μελλοντικές δαπάνες */}
+                  <div className="pt-2 border-t-2 border-indigo-200 bg-indigo-50 p-3 rounded">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-indigo-800">Συνολικό ποσό (συμπεριλαμβανομένων μελλοντικών):</span>
+                      <span className="font-bold text-lg text-indigo-700">
+                        {formatCurrency(apartmentObligations.reduce((sum, apt) => sum + apt.total_obligations, 0))}
+                      </span>
+                    </div>
+                    <div className="text-xs text-indigo-600 mt-1">
+                      Παλαιότερες οφειλές + Μελλοντικές δαπάνες (δόσεις έργων)
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Apartment Details */}
             <Tabs defaultValue="apartments" className="w-full">

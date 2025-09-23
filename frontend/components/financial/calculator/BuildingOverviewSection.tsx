@@ -1204,7 +1204,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleShowAmountDetails('current_obligations', financialSummary?.average_monthly_expenses || 0, 'Οικονομικές Υποχρεώσεις Περιόδου')}
+                            onClick={() => handleShowAmountDetails('current_obligations', financialSummary?.current_obligations || 0, 'Οικονομικές Υποχρεώσεις Περιόδου')}
                             className="h-6 px-2 text-xs text-red-600 hover:text-red-700"
                             title="Δείτε λεπτομέρειες"
                           >

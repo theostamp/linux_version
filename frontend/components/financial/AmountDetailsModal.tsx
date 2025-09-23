@@ -406,15 +406,8 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
   const totalPayments = summary?.total_payments_month || 0;
   const totalExpenses = summary?.total_expenses_month || 0;
   
-  // Calculate the correct amount for current obligations
+  // Use the amount as provided by the API - it's already correctly calculated
   let displayAmount = amount;
-  if (amountType === 'current_obligations') {
-    // For current obligations, use the sum of expenses as the real obligation
-    displayAmount = totalExpenses;
-  } else if (amountType === 'previous_obligations') {
-    // For previous obligations, use the amount as is (it's already calculated correctly)
-    displayAmount = amount;
-  }
   
   const maxAmount = Math.max(totalPayments, totalExpenses, Math.abs(displayAmount));
 
@@ -526,7 +519,139 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                           <span className="font-bold text-lg text-red-600">
                             {formatCurrency(Math.abs(displayAmount))}
                           </span>
+                        </div>
+                      </div>
                     </div>
+                  </div>
+                )}
+
+                {/* Current Obligations Breakdown */}
+                {amountType === 'current_obligations' && (
+                  <div className="bg-white p-4 rounded-lg border mt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <BarChart3 className="h-4 w-4 text-red-600" />
+                      <span className="font-medium text-sm">Ανάλυση Τρεχουσών Υποχρεώσεων</span>
+                    </div>
+                    <div className="space-y-3">
+                      {/* Μηνιαίες δαπάνες */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                          <span className="text-sm font-medium text-gray-700">Μηνιαίες δαπάνες:</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-blue-700">
+                            {formatCurrency(totalExpenses)}
+                          </span>
+                          <span className="text-xs text-gray-500">(τρέχον μήνας)</span>
+                        </div>
+                      </div>
+                      
+                      {/* Δαπάνες διαχείρισης */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                          <span className="text-sm font-medium text-gray-700">Δαπάνες διαχείρισης:</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-purple-700">
+                            {formatCurrency(summary?.total_management_cost || 0)}
+                          </span>
+                          <span className="text-xs text-gray-500">(διαχειριστικά τέλη)</span>
+                        </div>
+                      </div>
+                      
+                      {/* Εισφορά αποθεματικού */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                          <span className="text-sm font-medium text-gray-700">Εισφορά αποθεματικού:</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-orange-700">
+                            {formatCurrency(summary?.reserve_fund_contribution || 0)}
+                          </span>
+                          <span className="text-xs text-gray-500">(μηνιαία εισφορά)</span>
+                        </div>
+                      </div>
+                      
+                      {/* Συνολικές τρέχουσες υποχρεώσεις */}
+                      <div className="pt-2 border-t border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-gray-800">Συνολικές τρέχουσες υποχρεώσεις:</span>
+                          <span className="font-bold text-lg text-red-600">
+                            {formatCurrency(Math.abs(displayAmount))}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Μηνιαίες δαπάνες + Δαπάνες διαχείρισης + Εισφορά αποθεματικού
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Previous Obligations Breakdown */}
+                {amountType === 'previous_obligations' && (
+                  <div className="bg-white p-4 rounded-lg border mt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <BarChart3 className="h-4 w-4 text-purple-600" />
+                      <span className="font-medium text-sm">Ανάλυση Παλαιότερων Οφειλών</span>
+                    </div>
+                    <div className="space-y-3">
+                      {/* Συσσωρευμένες οφειλές διαμερισμάτων */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                          <span className="text-sm font-medium text-gray-700">Συσσωρευμένες οφειλές διαμερισμάτων:</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-red-700">
+                            {formatCurrency(Math.abs(displayAmount))}
+                          </span>
+                          <span className="text-xs text-gray-500">(αρνητικά υπόλοιπα)</span>
+                        </div>
+                      </div>
+                      
+                      {/* Εκκρεμείς πληρωμές προηγούμενων μηνών */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                          <span className="text-sm font-medium text-gray-700">Εκκρεμείς πληρωμές προηγούμενων μηνών:</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-orange-700">
+                            {formatCurrency(summary?.pending_payments || 0)}
+                          </span>
+                          <span className="text-xs text-gray-500">(μη εξοφλημένες)</span>
+                        </div>
+                      </div>
+                      
+                      {/* Δαπάνες που δεν έχουν καλυφθεί */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                          <span className="text-sm font-medium text-gray-700">Δαπάνες που δεν έχουν καλυφθεί:</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-yellow-700">
+                            {formatCurrency(summary?.pending_expenses || 0)}
+                          </span>
+                          <span className="text-xs text-gray-500">(εκκρεμείς δαπάνες)</span>
+                        </div>
+                      </div>
+                      
+                      {/* Συνολικές παλαιότερες οφειλές */}
+                      <div className="pt-2 border-t border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-gray-800">Συνολικές παλαιότερες οφειλές:</span>
+                          <span className="font-bold text-lg text-purple-600">
+                            {formatCurrency(Math.abs(displayAmount))}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Συσσωρευμένες οφειλές διαμερισμάτων + Εκκρεμείς πληρωμές + Δαπάνες που δεν έχουν καλυφθεί
+                        </div>
                       </div>
                     </div>
                   </div>
