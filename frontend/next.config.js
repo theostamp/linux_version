@@ -106,6 +106,7 @@ const nextConfig = {
   // Environment variables
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
+    NEXT_PUBLIC_FEATURE_PROJECTS_UNIFIED: 'true',
   },
 };
 

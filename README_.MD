@@ -479,7 +479,7 @@ docker compose up --build -d
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "fix υπολοιπα"
+git commit -m "fix flagNEXT_PUBLIC_FEATURE_PROJECTS_UNIFIED "
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
