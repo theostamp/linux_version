@@ -19,16 +19,17 @@ import { ApartmentBalancesTab } from './ApartmentBalancesTab';
 import { MeterReadingList } from './MeterReadingList';
 import { MonthSelector } from './MonthSelector';
 import { 
-  Calculator, 
-  Plus, 
-  History,
-  TrendingUp,
-  PieChart,
-  Calendar,
+  AlertTriangle,
   Building2,
+  Calculator, 
+  Calendar,
+  DollarSign,
+  History,
+  PieChart,
+  Plus, 
   RefreshCw,
-
-  DollarSign
+  TrendingUp,
+  X
 } from 'lucide-react';
 import { useFinancialPermissions } from '@/hooks/useFinancialPermissions';
 import { ProtectedFinancialRoute, ConditionalRender, PermissionButton } from './ProtectedFinancialRoute';
@@ -435,8 +436,8 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                 return (
                   <>
                     <div className="w-3 h-3 bg-amber-400 rounded-full"></div>
-                    <span className="text-sm font-medium text-amber-700">
-                      ⚠️ Προβολή ιστορικών δεδομένων ({monthName})
+                    <span className="text-sm font-medium text-amber-700 flex items-center gap-1">
+                      <AlertTriangle className="h-4 w-4" /> Προβολή ιστορικών δεδομένων ({monthName})
                     </span>
                   </>
                 );
@@ -802,7 +803,7 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
                   size="sm"
                   onClick={handleExpenseCancel}
                 >
-                  ✕
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
               <ExpenseForm 
@@ -825,4 +826,4 @@ export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
 
     </div>
   );
-}; 
+};

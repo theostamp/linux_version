@@ -311,7 +311,7 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
     // Group readings by apartment and get the previous_value from the API response
     const latestReadings = apartments.map(apartment => {
       // Enhanced matching logic for apartment readings
-      let apartmentReadings = readings?.filter((r: any) => {
+      const apartmentReadings = readings?.filter((r: any) => {
         if (r.meter_type !== watchedMeterType) return false;
         
         // Try exact ID match first (in case apartment is a number)

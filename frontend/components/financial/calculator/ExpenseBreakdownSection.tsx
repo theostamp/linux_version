@@ -320,9 +320,9 @@ export const ExpenseBreakdownSection: React.FC<ExpenseBreakdownSectionProps> = (
                             size="sm"
                             className="w-full mt-3"
                             onClick={() => onViewDetails(category)}
+                            title="Λεπτομέρειες"
                           >
-                            <Eye className="h-4 w-4 mr-2" />
-                            Λεπτομέρειες
+                            <Eye className="h-4 w-4" />
                           </Button>
                         )}
                       </CardContent>

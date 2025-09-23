@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { MeterReadingChart } from './MeterReadingChart';
 import { ConsumptionChart } from './ConsumptionChart';
 import { TrendAnalysis } from './TrendAnalysis';
+import { HeatingConsumptionChart } from './HeatingConsumptionChart';
+import { ElectricityExpensesChart } from './ElectricityExpensesChart';
 
 interface ChartsContainerProps {
   apartmentId?: number;
@@ -10,7 +12,7 @@ interface ChartsContainerProps {
   selectedMonth?: string; // Add selectedMonth prop
 }
 
-type ChartType = 'readings' | 'consumption' | 'trends';
+type ChartType = 'readings' | 'consumption' | 'trends' | 'heating' | 'electricity';
 
 export const ChartsContainer: React.FC<ChartsContainerProps> = ({
   apartmentId,
@@ -18,15 +20,22 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
   buildingId,
   selectedMonth,
 }) => {
-  const [activeChart, setActiveChart] = useState<ChartType>('readings');
-  const [chartSubType, setChartSubType] = useState<string>('line');
+  const [activeChart, setActiveChart] = useState<ChartType>('heating');
+  const [chartSubType, setChartSubType] = useState<string>('bar');
   const [period, setPeriod] = useState<'month' | 'quarter' | 'year'>('month');
   const [showPredictions, setShowPredictions] = useState(true);
+  const currentYear = new Date().getFullYear();
+  const [heatingYear, setHeatingYear] = useState<string>(currentYear.toString());
+  const [electricityYear, setElectricityYear] = useState<string>(currentYear.toString());
+  const [compareYear, setCompareYear] = useState<string>((currentYear - 1).toString());
+  const [showComparison, setShowComparison] = useState(false);
 
+  // Simplified chart types - focus on heating and electricity
   const chartTypes = [
-    { id: 'readings', label: 'Μετρήσεις', icon: '📊' },
-    { id: 'consumption', label: 'Κατανάλωση', icon: '⚡' },
-    { id: 'trends', label: 'Τάσεις', icon: '📈' },
+    { id: 'heating', label: 'Θέρμανση', icon: '🔥', description: 'Κατανάλωση θέρμανσης (Σεπ-Μάι)' },
+    { id: 'electricity', label: 'Ηλεκτρικό Ρεύμα', icon: '💡', description: 'Δαπάνες ρεύματος (Ιαν-Δεκ)' },
+    { id: 'readings', label: 'Μετρήσεις', icon: '📊', description: 'Μετρήσεις διαμερισμάτων' },
+    { id: 'consumption', label: 'Κατανάλωση', icon: '⚡', description: 'Ανάλυση κατανάλωσης' },
   ];
 
   const chartSubTypes = {
@@ -42,6 +51,14 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
     ],
     trends: [
       { id: 'area', label: 'Περιοχή' },
+    ],
+    heating: [
+      { id: 'line', label: 'Γραμμικό' },
+      { id: 'bar', label: 'Ράβδων' },
+    ],
+    electricity: [
+      { id: 'bar', label: 'Ράβδων' },
+      { id: 'line', label: 'Γραμμικό' },
     ],
   };
 
@@ -83,6 +100,28 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
             predictionMonths={3}
           />
         );
+      case 'heating':
+        return (
+          <HeatingConsumptionChart
+            buildingId={buildingId || 1}
+            heatingYear={heatingYear}
+            compareYear={compareYear}
+            showComparison={showComparison}
+            chartType={chartSubType as 'line' | 'bar'}
+            height={height}
+          />
+        );
+      case 'electricity':
+        return (
+          <ElectricityExpensesChart
+            buildingId={buildingId || 1}
+            year={electricityYear}
+            compareYear={compareYear}
+            showComparison={showComparison}
+            chartType={chartSubType as 'line' | 'bar' | 'area'}
+            height={height}
+          />
+        );
       default:
         return null;
     }
@@ -90,63 +129,81 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
 
   return (
     <div className="bg-white rounded-lg shadow-md">
-      {/* Header Controls */}
-      <div className="p-4 border-b border-gray-200">
-        {/* Month indicator */}
-        {selectedMonth && (
-          <div className="mb-3 flex items-center gap-2">
-            <div className="text-sm font-medium text-blue-700">
-              📅 Δεδομένα για: {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { 
-                month: 'long', 
-                year: 'numeric' 
+      {/* Main Header */}
+      <div className="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-t-lg border-b border-gray-200">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-semibold text-gray-800">Ενεργειακά Διαγράμματα Κτιρίου</h2>
+          {selectedMonth && (
+            <div className="text-sm text-gray-600">
+              📅 Τρέχων μήνας: {new Date(selectedMonth + '-01').toLocaleDateString('el-GR', {
+                month: 'long',
+                year: 'numeric'
               })}
             </div>
-          </div>
-        )}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* Chart Type Selector */}
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-700">Γράφημα:</span>
-            <div className="flex bg-gray-100 rounded-lg p-1">
-              {chartTypes.map((chart) => (
-                <button
-                  key={chart.id}
-                  onClick={() => {
-                    setActiveChart(chart.id as ChartType);
-                    // Reset subtype to first available option
-                    const firstSubType = chartSubTypes[chart.id as ChartType]?.[0]?.id;
-                    if (firstSubType) {
-                      setChartSubType(firstSubType);
-                    }
-                  }}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                    activeChart === chart.id
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                >
-                  <span className="mr-1">{chart.icon}</span>
-                  {chart.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Period Selector */}
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-700">Περίοδος:</span>
-            <select
-              value={period}
-              onChange={(e) => setPeriod(e.target.value as 'month' | 'quarter' | 'year')}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          )}
+        </div>
+        {/* Chart Type Tabs */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {chartTypes.map((chart) => (
+            <button
+              key={chart.id}
+              onClick={() => {
+                setActiveChart(chart.id as ChartType);
+                const firstSubType = chartSubTypes[chart.id as ChartType]?.[0]?.id;
+                if (firstSubType) {
+                  setChartSubType(firstSubType);
+                }
+              }}
+              className={`p-3 rounded-lg transition-all ${
+                activeChart === chart.id
+                  ? 'bg-white shadow-md border-2 border-blue-500'
+                  : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+              }`}
             >
-              {periods.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="flex flex-col items-center">
+                <span className="text-2xl mb-1">{chart.icon}</span>
+                <span className="font-medium text-sm">{chart.label}</span>
+                <span className="text-xs text-gray-500 mt-1">{chart.description}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Controls Section */}
+      <div className="p-4 bg-gray-50 border-b border-gray-200">
+        <div className="flex flex-wrap items-center gap-4">
+
+          {/* Period Selector - only for relevant charts */}
+          {(activeChart === 'readings' || activeChart === 'consumption') && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">Περίοδος:</span>
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value as 'month' | 'quarter' | 'year')}
+                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {periods.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Comparison Toggle */}
+          {(activeChart === 'heating' || activeChart === 'electricity') && (
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={showComparison}
+                onChange={(e) => setShowComparison(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Σύγκριση με προηγούμενη περίοδο</span>
+            </label>
+          )}
 
           {/* Apartment Filter */}
           {apartmentId && (
@@ -181,20 +238,77 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
           </div>
         )}
 
-        {/* Trend-specific controls */}
-        {activeChart === 'trends' && (
-          <div className="mt-3 flex items-center space-x-4">
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={showPredictions}
-                onChange={(e) => setShowPredictions(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">Εμφάνιση προβλέψεων</span>
-            </label>
-          </div>
-        )}
+        {/* Chart-specific controls */}
+        <div className="mt-3">
+          {activeChart === 'heating' && (
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-700">🔥 Περίοδος θέρμανσης:</span>
+                <select
+                  value={heatingYear}
+                  onChange={(e) => setHeatingYear(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  {[2022, 2023, 2024, 2025].map(year => (
+                    <option key={year} value={year.toString()}>
+                      {year}-{year + 1} (Σεπτέμβριος - Μάιος)
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {showComparison && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Σύγκριση με:</span>
+                  <select
+                    value={compareYear}
+                    onChange={(e) => setCompareYear(e.target.value)}
+                    className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                  >
+                    {[2021, 2022, 2023, 2024].map(year => (
+                      <option key={year} value={year.toString()}>
+                        {year}-{year + 1}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+          {activeChart === 'electricity' && (
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-700">💡 Έτος ηλεκτρικού:</span>
+                <select
+                  value={electricityYear}
+                  onChange={(e) => setElectricityYear(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  {[2022, 2023, 2024, 2025].map(year => (
+                    <option key={year} value={year.toString()}>
+                      {year} (Ιανουάριος - Δεκέμβριος)
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {showComparison && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Σύγκριση με:</span>
+                  <select
+                    value={compareYear}
+                    onChange={(e) => setCompareYear(e.target.value)}
+                    className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                  >
+                    {[2021, 2022, 2023, 2024].map(year => (
+                      <option key={year} value={year.toString()}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Chart Content */}
@@ -203,21 +317,26 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
       </div>
 
       {/* Footer Info */}
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
-        <div className="flex items-center justify-between text-xs text-gray-500">
+      <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-blue-50 border-t border-gray-200 rounded-b-lg">
+        <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <span>Ενεργό γράφημα: {chartTypes.find(c => c.id === activeChart)?.label}</span>
-            <span>•</span>
-            <span>Περίοδος: {periods.find(p => p.id === period)?.label}</span>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">Ενεργό:</span>
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {chartTypes.find(c => c.id === activeChart)?.icon} {chartTypes.find(c => c.id === activeChart)?.label}
+              </span>
+            </div>
             {chartSubTypes[activeChart] && chartSubTypes[activeChart].length > 1 && (
-              <>
-                <span>•</span>
-                <span>Τύπος: {chartSubTypes[activeChart].find(s => s.id === chartSubType)?.label}</span>
-              </>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">Τύπος:</span>
+                <span className="text-sm font-medium text-gray-800">
+                  {chartSubTypes[activeChart].find(s => s.id === chartSubType)?.label}
+                </span>
+              </div>
             )}
           </div>
           <div className="text-right">
-            <span>Τελευταία ενημέρωση: {new Date().toLocaleTimeString('el-GR')}</span>
+            <span className="text-xs text-gray-500">Τελευταία ενημέρωση: {new Date().toLocaleTimeString('el-GR')}</span>
           </div>
         </div>
       </div>

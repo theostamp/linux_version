@@ -16,6 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import never_cache
 import redis
 import logging
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,10 @@ class HealthCheckView(View):
         redis_status = self._check_redis()
         health_data['checks']['redis'] = redis_status
         
+        # Flower health check
+        flower_status = self._check_flower()
+        health_data['checks']['flower'] = flower_status
+        
         # System metrics
         system_metrics = self._get_system_metrics()
         health_data['metrics']['system'] = system_metrics
@@ -60,7 +65,7 @@ class HealthCheckView(View):
         health_data['metrics']['application'] = app_metrics
         
         # Overall health determination
-        all_checks = [db_status, cache_status, redis_status]
+        all_checks = [db_status, cache_status, redis_status, flower_status]
         if all(check['status'] == 'healthy' for check in all_checks):
             health_data['status'] = 'healthy'
             status_code = 200
@@ -178,6 +183,54 @@ class HealthCheckView(View):
             
         except Exception as e:
             logger.error(f"Redis health check failed: {e}")
+            return {
+                'status': 'degraded',
+                'error': str(e)
+            }
+    
+    def _check_flower(self):
+        """Check Flower monitoring interface accessibility"""
+        try:
+            start_time = time.time()
+            
+            # Try to connect to Flower with proper URL prefix
+            flower_url = os.environ.get('FLOWER_URL', 'http://flower:5555/flower')
+            
+            # Set timeout to avoid hanging
+            response = requests.get(flower_url, timeout=5)
+            
+            response_time = round((time.time() - start_time) * 1000, 2)
+            
+            if response.status_code == 200:
+                return {
+                    'status': 'healthy',
+                    'response_time_ms': response_time,
+                    'url': flower_url,
+                    'status_code': response.status_code
+                }
+            else:
+                return {
+                    'status': 'degraded',
+                    'response_time_ms': response_time,
+                    'url': flower_url,
+                    'status_code': response.status_code,
+                    'error': f'HTTP {response.status_code}'
+                }
+            
+        except requests.exceptions.ConnectionError:
+            return {
+                'status': 'degraded',
+                'error': 'Connection refused - Flower may not be running',
+                'url': flower_url
+            }
+        except requests.exceptions.Timeout:
+            return {
+                'status': 'degraded',
+                'error': 'Request timeout - Flower may be overloaded',
+                'url': flower_url
+            }
+        except Exception as e:
+            logger.error(f"Flower health check failed: {e}")
             return {
                 'status': 'degraded',
                 'error': str(e)
