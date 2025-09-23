@@ -43,6 +43,7 @@ node_modules/
 frontend/node_modules/
 frontend/.next/
 frontend/.next-old/
+frontend/.next_backup/
 
 # OS/Editor
 .DS_Store
