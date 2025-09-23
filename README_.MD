@@ -467,6 +467,8 @@ docker volume prune -f
 docker network prune -f
 docker builder prune -af
 docker system prune -af --volumes
+docker builder prune --all
+docker system prune -a
 
 docker compose up --build -d
 
