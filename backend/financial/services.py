@@ -1145,16 +1145,20 @@ class FinancialDashboardService:
         # Υπολογισμός αρχής του μήνα
         month_start = end_date.replace(day=1)
         
-        # ΚΑΝΟΝΑΣ ΑΠΟΜΟΝΩΣΗΣ ΕΤΟΥΣ: Όλες οι μεταφορές υπολοίπων αφορούν το ίδιο λογιστικό έτος
-        # Για Σεπτέμβριο 2025: Παλαιότερες οφειλές = μόνο Ιαν-Αυγ 2025 (όχι 2024)
+        # Συνεχής μεταφορά ποσών: Όλες οι μεταφορές υπολοίπων είναι συνεχείς
+        # Για Ιανουάριο 2026: Παλαιότερες οφειλές = Ιούνιος-Δεκέμβριος 2025
         
-        # Υπολογισμός αποτελεσματικής αρχής του έτους (λαμβάνει υπόψη την ημερομηνία έναρξης συστήματος)
+        # Συνεχής μεταφορά ποσών - χωρίς ετήσια απομόνωση
+        # Κρατάμε μόνο την ημερομηνία έναρξης υπολογισμών (1-6-2025)
         from datetime import date
-        year_start = self.building.get_effective_year_start(end_date.year)
+        system_start_date = self.building.financial_system_start_date
         
-        # Αν δεν υπάρχουν δεδομένα για αυτό το έτος, επιστρέφουμε 0
-        if year_start is None:
+        # Αν δεν υπάρχει ημερομηνία έναρξης συστήματος, επιστρέφουμε 0
+        if system_start_date is None:
             return Decimal('0.00')
+        
+        # Χρησιμοποιούμε την ημερομηνία έναρξης συστήματος ως αρχή υπολογισμών
+        year_start = system_start_date
         
         # Βρίσκουμε δαπάνες που δημιουργήθηκαν μέσα στο ίδιο έτος, πριν από τον επιλεγμένο μήνα
         expenses_before_month = Expense.objects.filter(
@@ -1203,11 +1207,11 @@ class FinancialDashboardService:
         # και όχι από τα expense_created transactions που δημιουργούνται αυτόματα
         
         # Υπολογισμός management fees από Expenses (όχι από transactions)
-        # ΚΑΝΟΝΑΣ ΑΠΟΜΟΝΩΣΗΣ ΕΤΟΥΣ: Μόνο δαπάνες του ίδιου έτους
+        # Συνεχής μεταφορά: Όλες οι δαπάνες από την ημερομηνία έναρξης συστήματος
         management_expenses = Expense.objects.filter(
             building_id=apartment.building_id,
             category='management_fees',
-            date__gte=year_start,  # Μόνο δαπάνες του ίδιου έτους
+            date__gte=year_start,  # Από την ημερομηνία έναρξης συστήματος
             date__lt=month_start   # Πριν από τον επιλεγμένο μήνα
         )
         
