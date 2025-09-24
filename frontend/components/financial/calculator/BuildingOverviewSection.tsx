@@ -1206,7 +1206,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         </span>
                         <span className="text-gray-500 mx-1">/</span>
                         <span className="text-red-600">
-                          {formatCurrency(Math.abs((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (financialSummary.reserve_fund_monthly_target || 0) + (financialSummary.previous_obligations || 0)))}
+                          {formatCurrency(Math.abs((financialSummary.average_monthly_expenses || 0) + (financialSummary.reserve_fund_monthly_target || 0) + (financialSummary.previous_obligations || 0)))}
                         </span>
                       </div>
                       <Button
@@ -1288,7 +1288,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-gray-800">Μηνιαίο σύνολο:</span>
                         <span className="text-lg font-bold text-gray-900">
-                          {formatCurrency((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (isMonthWithinReserveFundPeriod() ? (financialSummary.reserve_fund_monthly_target || 0) : 0) + (financialSummary.previous_obligations || 0))}
+                          {formatCurrency((financialSummary.average_monthly_expenses || 0) + (isMonthWithinReserveFundPeriod() ? (financialSummary.reserve_fund_monthly_target || 0) : 0) + (financialSummary.previous_obligations || 0))}
                         </span>
                       </div>
                       <div className="text-xs text-gray-500 mt-1 text-[10px]">
@@ -1607,8 +1607,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
           <div className="space-y-6">
             {(() => {
               // Υπολογισμός συνολικού ποσού που οφείλεται (τρέχοντες + προηγούμενες οφειλές)
-              const currentMonthObligations = (financialSummary?.total_expenses_month || 0) + 
-                                             (financialSummary?.total_management_cost || 0) + 
+              // Το total_expenses_month ήδη περιλαμβάνει τις δαπάνες διαχείρισης - δεν προσθέτουμε total_management_cost ξανά
+              const currentMonthObligations = (financialSummary?.total_expenses_month || 0) +
                                              (financialSummary?.reserve_fund_monthly_target || 0);
               
               // Προηγούμενες οφειλές (συμπεριλαμβανομένων εκ των υστέρων δαπανών)

@@ -453,9 +453,9 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
               </thead>
               <tbody>
                 {apartmentBalances.map((apartment) => {
-                  // Υπολογισμός εξόδων διαχείρισης με ίσο επιμερισμό
-                  const managementFeePerApartment = summary?.management_fee_per_apartment || 0; // Λήψη από το API
-                  const currentExpenseWithManagement = apartment.expense_share + managementFeePerApartment;
+                  // Το expense_share από το backend ήδη περιλαμβάνει τις δαπάνες διαχείρισης
+                  // Δεν χρειάζεται να προσθέσουμε ξανά το management_fee_per_apartment
+                  const currentExpenseWithManagement = apartment.expense_share;
                   const totalObligationWithManagement = apartment.previous_balance + (apartment.reserve_fund_share || 0) + currentExpenseWithManagement;
 
                   return (
