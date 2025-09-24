@@ -399,8 +399,9 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Φιλτράρισμα ανά building και μήνα"""
         queryset = self.queryset
-        building_id = self.request.query_params.get('building_id')
-        month = self.request.query_params.get('month')
+        query_params = get_query_params(self.request)
+        building_id = query_params.get('building_id')
+        month = query_params.get('month')
         
         if building_id:
             queryset = queryset.filter(building_id=building_id)
@@ -531,8 +532,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Φιλτράρισμα ανά building και μήνα"""
         queryset = self.queryset
-        building_id = self.request.query_params.get('building_id')
-        month = self.request.query_params.get('month')
+        query_params = get_query_params(self.request)
+        building_id = query_params.get('building_id')
+        month = query_params.get('month')
         
         if building_id:
             queryset = queryset.filter(building_id=building_id)
@@ -760,8 +762,9 @@ class PaymentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Φιλτράρισμα ανά building και μήνα"""
         queryset = self.queryset
-        building_id = self.request.query_params.get('building_id')
-        month = self.request.query_params.get('month')
+        query_params = get_query_params(self.request)
+        building_id = query_params.get('building_id')
+        month = query_params.get('month')
         
         if building_id:
             queryset = queryset.filter(apartment__building_id=building_id)
@@ -1982,8 +1985,9 @@ class MeterReadingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Φιλτράρισμα ανά building και μήνα"""
         queryset = self.queryset
-        building_id = self.request.query_params.get('building_id')
-        month = self.request.query_params.get('month')
+        query_params = get_query_params(self.request)
+        building_id = query_params.get('building_id')
+        month = query_params.get('month')
         
         if building_id:
             queryset = queryset.filter(apartment__building_id=building_id)

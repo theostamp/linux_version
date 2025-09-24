@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Script to debug management fees calculation in historical balance
+Script για debug του υπολογισμού management fees
+Ελέγχει τι ακριβώς συμβαίνει στον υπολογισμό
 """
 
 import os
@@ -14,142 +15,110 @@ sys.path.append('/app')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
 django.setup()
 
-from django.db.models import Sum, Q
 from django_tenants.utils import schema_context
-
+from buildings.models import Building
 from apartments.models import Apartment
-from financial.models import Payment, Expense, Transaction
-from financial.services import FinancialDashboardService
+from financial.models import Transaction, Expense
+from django.utils import timezone
+from django.db.models import Sum
 
 def debug_management_fees_calculation():
-    """Debug why management fees are being calculated incorrectly"""
+    """Debug του υπολογισμού management fees"""
     
     with schema_context('demo'):
-        print("=" * 80)
-        print("🔍 ΕΡΕΥΝΑ ΥΠΟΛΟΓΙΣΜΟΥ ΔΑΠΑΝΩΝ ΔΙΑΧΕΙΡΙΣΗΣ")
-        print("=" * 80)
+        print("🔍 DEBUG Management Fees Calculation")
+        print("=" * 60)
         
-        building_id = 1
+        # Βρίσκουμε το κτίριο Αλκμάνος 22
+        building = Building.objects.filter(name__icontains='Αλκμάνος').first()
+        if not building:
+            print("❌ Δεν βρέθηκε κτίριο Αλκμάνος")
+            return
         
-        # Get building info
-        from buildings.models import Building
-        building = Building.objects.get(id=building_id)
-        management_fee_per_apartment = building.management_fee_per_apartment or Decimal('0.00')
+        print(f"🏢 Κτίριο: {building.name}")
         
-        print(f"Δαπάνη διαχείρισης ανά διαμέρισμα: {management_fee_per_apartment:.2f} €")
+        # Ελέγχος για Σεπτέμβριο 2024
+        current_month = "2024-09"
+        print(f"📅 Τρέχον μήνας: {current_month}")
         
-        # Check September 2024 calculation
-        print(f"\n📅 ΥΠΟΛΟΓΙΣΜΟΣ ΣΕΠΤΕΜΒΡΙΟΥ 2024:")
-        print("-" * 50)
+        # Υπολογισμός month_start
+        year, mon = map(int, current_month.split('-'))
+        month_start = date(year, mon, 1)
+        print(f"📅 Month start: {month_start}")
         
-        sept_service = FinancialDashboardService(building_id)
-        sept_apartments = sept_service.get_apartment_balances('2024-09')
+        # Ελέγχος διαμερισμάτων
+        apartments = Apartment.objects.filter(building=building)
+        print(f"🏠 Αριθμός διαμερισμάτων: {apartments.count()}")
         
-        # Manual calculation of management fees for September 2024
-        month_start = date(2024, 9, 1)
-        start_date = date(2025, 1, 1)  # This is the problem!
+        # Ελέγχος expenses
+        print(f"\n📊 Management Fees Expenses:")
+        management_expenses = Expense.objects.filter(
+            building=building,
+            category='management_fees'
+        ).order_by('date')
         
-        print(f"Αρχική ημερομηνία υπολογισμού: {start_date}")
-        print(f"Ημερομηνία μήνα: {month_start}")
+        print(f"   - Συνολικός αριθμός: {management_expenses.count()}")
         
-        months_to_charge = 0
-        current_date = start_date
+        for expense in management_expenses:
+            print(f"   - {expense.date.strftime('%Y-%m')}: €{expense.amount}")
         
-        while current_date < month_start:
-            months_to_charge += 1
-            print(f"  Μήνας {months_to_charge}: {current_date.year}-{current_date.month:02d}")
-            # Πάμε στον επόμενο μήνα
-            if current_date.month == 12:
-                current_date = current_date.replace(year=current_date.year + 1, month=1)
-            else:
-                current_date = current_date.replace(month=current_date.month + 1)
+        # Ελέγχος transactions για ένα διαμέρισμα
+        apartment = apartments.first()
+        print(f"\n🏠 Ελέγχος διαμερίσματος {apartment.number}:")
         
-        print(f"\nΣυνολικοί μήνες για χρέωση: {months_to_charge}")
+        # Όλες οι expense_created transactions
+        all_expense_created = Transaction.objects.filter(
+            apartment=apartment,
+            type='expense_created',
+            reference_type='expense'
+        ).order_by('date')
         
-        if management_fee_per_apartment > 0:
-            total_management_fees = management_fee_per_apartment * months_to_charge
-            print(f"Συνολικές δαπάνες διαχείρισης ανά διαμέρισμα: {total_management_fees:.2f} €")
-            
-            # Calculate total for all apartments
-            apartments = Apartment.objects.filter(building_id=building_id)
-            total_management_fees_all = total_management_fees * apartments.count()
-            print(f"Συνολικές δαπάνες διαχείρισης για όλα τα διαμερίσματα: {total_management_fees_all:.2f} €")
+        print(f"   - Όλες οι expense_created transactions: {all_expense_created.count()}")
         
-        # Check what the service actually returns
-        print(f"\n📊 ΑΠΟΤΕΛΕΣΜΑΤΑ ΑΠΟ ΤΟ SERVICE:")
-        print("-" * 50)
+        for transaction in all_expense_created:
+            print(f"   - {transaction.date.strftime('%Y-%m-%d')}: €{transaction.amount} (ref: {transaction.reference_id})")
         
-        total_previous_balance = 0
-        for apt_data in sept_apartments:
-            apt_id = apt_data['id']
-            apartment = Apartment.objects.get(id=apt_id)
-            previous_balance = apt_data.get('previous_balance', 0)
-            total_previous_balance += abs(previous_balance)
-            
-            print(f"Διαμέρισμα {apartment.number}: {previous_balance:.2f} €")
+        # Transactions πριν από month_start
+        transactions_before = Transaction.objects.filter(
+            apartment=apartment,
+            type='expense_created',
+            reference_type='expense',
+            date__lt=month_start
+        )
         
-        print(f"\nΣυνολικές παλαιότερες οφειλές: {total_previous_balance:.2f} €")
+        print(f"\n📅 Transactions πριν από {month_start}:")
+        print(f"   - Αριθμός: {transactions_before.count()}")
         
-        # Check if this matches the expected calculation
-        expected_management_fees = management_fee_per_apartment * months_to_charge * apartments.count()
-        print(f"Αναμενόμενες δαπάνες διαχείρισης: {expected_management_fees:.2f} €")
+        for transaction in transactions_before:
+            print(f"   - {transaction.date.strftime('%Y-%m-%d')}: €{transaction.amount} (ref: {transaction.reference_id})")
         
-        # Check the difference
-        difference = total_previous_balance - expected_management_fees
-        print(f"Διαφορά: {difference:.2f} €")
+        # Φιλτράρισμα για management_fees expenses
+        management_expense_ids = []
+        for transaction in transactions_before:
+            try:
+                expense_id = int(transaction.reference_id)
+                expense = Expense.objects.filter(id=expense_id, category='management_fees').first()
+                if expense:
+                    management_expense_ids.append(expense_id)
+                    print(f"   ✅ Management fee expense: {expense_id} - {expense.date.strftime('%Y-%m')} - €{expense.amount}")
+            except (ValueError, TypeError):
+                print(f"   ❌ Invalid reference_id: {transaction.reference_id}")
         
-        # Check what the original balance should be (without management fees)
-        print(f"\n🔍 ΕΛΕΓΧΟΣ ΧΩΡΙΣ ΔΑΠΑΝΕΣ ΔΙΑΧΕΙΡΙΣΗΣ:")
-        print("-" * 50)
+        print(f"\n📊 Management fee expense IDs: {management_expense_ids}")
         
-        # Calculate balance without management fees
-        sept_start = date(2024, 9, 1)
-        
-        for apt_data in sept_apartments:
-            apt_id = apt_data['id']
-            apartment = Apartment.objects.get(id=apt_id)
-            
-            # Get payments
-            total_payments = Payment.objects.filter(
+        # Υπολογισμός συνολικού ποσού
+        if management_expense_ids:
+            management_fees_total = Transaction.objects.filter(
                 apartment=apartment,
-                date__lt=sept_start
+                type='expense_created',
+                reference_id__in=[str(exp_id) for exp_id in management_expense_ids],
+                date__lt=month_start
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
-            # Get charges from expenses before September
-            expenses_before_sept = Expense.objects.filter(
-                building_id=building_id,
-                date__lt=sept_start
-            )
-            
-            expense_ids_before_sept = list(expenses_before_sept.values_list('id', flat=True))
-            
-            if expense_ids_before_sept:
-                total_charges = Transaction.objects.filter(
-                    apartment=apartment,
-                    reference_type='expense',
-                    reference_id__in=[str(exp_id) for exp_id in expense_ids_before_sept],
-                    type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
-                             'interest_charge', 'penalty_charge']
-                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-            else:
-                total_charges = Decimal('0.00')
-            
-            balance_without_management = total_charges - total_payments
-            
-            print(f"Διαμέρισμα {apartment.number}:")
-            print(f"  Χρεώσεις: {total_charges:.2f} €")
-            print(f"  Πληρωμές: {total_payments:.2f} €")
-            print(f"  Υπόλοιπο χωρίς διαχείριση: {balance_without_management:.2f} €")
-            print(f"  Υπόλοιπο με διαχείριση: {apt_data.get('previous_balance', 0):.2f} €")
-            print()
+            print(f"💰 Συνολικό ποσό management fees: €{management_fees_total}")
         
-        print("=" * 80)
-        print("📋 ΣΥΜΠΕΡΑΣΜΑ:")
-        print("=" * 80)
-        print("❌ ΠΡΟΒΛΗΜΑ: Η αρχική ημερομηνία υπολογισμού είναι 2025-01-01")
-        print("   αλλά υπολογίζουμε για Σεπτέμβριο 2024!")
-        print("   Αυτό προκαλεί υπολογισμό δαπανών διαχείρισης για 9 μήνες")
-        print("   που δεν υπάρχουν ακόμα (Ιαν-Σεπ 2024)")
+        print("\n" + "=" * 60)
+        print("✅ Debug ολοκληρώθηκε")
 
 if __name__ == "__main__":
     debug_management_fees_calculation()

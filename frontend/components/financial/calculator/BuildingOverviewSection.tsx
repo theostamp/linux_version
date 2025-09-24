@@ -157,8 +157,22 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const calculateNewDates = (startMonth: string, startYear: string, durationMonths: number) => {
     const year = parseInt(startYear) || new Date().getFullYear();
     const month = parseInt(startMonth) || 1;
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month - 1 + durationMonths, 0); // Last day of end month
+    
+    // Create dates in UTC to avoid timezone issues
+    const startDate = new Date(Date.UTC(year, month - 1, 1));
+    const endDate = new Date(Date.UTC(year, month - 1 + durationMonths, 0)); // Last day of end month
+    
+    // Debug logging to track the issue
+    console.log('🔍 calculateNewDates Debug:', {
+      inputMonth: startMonth,
+      inputYear: startYear,
+      parsedMonth: month,
+      parsedYear: year,
+      startDateUTC: startDate.toISOString(),
+      endDateUTC: endDate.toISOString(),
+      startDateLocal: startDate.toLocaleDateString('el-GR'),
+      endDateLocal: endDate.toLocaleDateString('el-GR')
+    });
     
     return {
       startDate: startDate.toISOString().split('T')[0],
@@ -218,6 +232,16 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         const startDate = new Date(financialSummary.reserve_fund_start_date);
         const month = (startDate.getMonth() + 1).toString().padStart(2, '0');
         const year = startDate.getFullYear().toString();
+        
+        // Debug logging to help identify the issue
+        console.log('🔍 Reserve Fund Form Initialization:', {
+          storedStartDate: financialSummary.reserve_fund_start_date,
+          parsedStartDate: startDate.toISOString(),
+          calculatedMonth: month,
+          calculatedYear: year,
+          monthName: startDate.toLocaleDateString('el-GR', { month: 'long' })
+        });
+        
         setNewStartMonth(month);
         setNewStartYear(year);
       } else {
@@ -670,12 +694,29 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const actualStartMonth = newStartMonth || ((new Date().getMonth() + 1).toString().padStart(2, '0'));
       const actualStartYear = newStartYear || new Date().getFullYear().toString();
 
+      // Debug logging for save operation
+      console.log('🔍 Reserve Fund Save Operation:', {
+        newStartMonth,
+        newStartYear,
+        actualStartMonth,
+        actualStartYear,
+        installmentsValue,
+        goalValue
+      });
+
       // Calculate start and end dates based on the actual timeline configuration
       const { startDate: newStartDate, endDate: newEndDate } = calculateNewDates(
         actualStartMonth,
         actualStartYear,
         installmentsValue
       );
+      
+      console.log('🔍 Calculated Dates:', {
+        newStartDate,
+        newEndDate,
+        startDateMonth: new Date(newStartDate).getMonth() + 1,
+        startDateMonthName: new Date(newStartDate).toLocaleDateString('el-GR', { month: 'long' })
+      });
       
       // Recalculate reserve fund debt with new goal and installments
       const existingStartDate = new Date(financialSummary?.reserve_fund_start_date || newStartDate);
@@ -1858,7 +1899,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         }
                         
                         const months = [];
-                        const startDate = new Date(parseInt(startYear), parseInt(startMonth) - 1, 1);
+                        const startDate = new Date(Date.UTC(parseInt(startYear), parseInt(startMonth) - 1, 1));
                         
                         // Debug: Εκτύπωση τιμών για έλεγχο
                         console.log('🔍 Reserve Fund Timeline Debug:', {
@@ -1870,15 +1911,17 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                           installments,
                           financialSummaryStartDate: financialSummary?.reserve_fund_start_date,
                           hasUserSelection: !!(newStartMonth && newStartYear),
-                          hasStoredDate: !!financialSummary?.reserve_fund_start_date
+                          hasStoredDate: !!financialSummary?.reserve_fund_start_date,
+                          startDateMonth: startDate.getUTCMonth() + 1,
+                          startDateMonthName: startDate.toLocaleDateString('el-GR', { month: 'long' })
                         });
                         
                         for (let i = 0; i < installments; i++) {
-                          const currentDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+                          const currentDate = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth() + i, 1));
                           const monthName = currentDate.toLocaleDateString('el-GR', { month: 'long' });
-                          const year = currentDate.getFullYear();
-                          const isCurrentMonth = currentDate.getMonth() === new Date().getMonth() && 
-                                               currentDate.getFullYear() === new Date().getFullYear();
+                          const year = currentDate.getUTCFullYear();
+                          const isCurrentMonth = currentDate.getUTCMonth() === new Date().getMonth() && 
+                                               currentDate.getUTCFullYear() === new Date().getFullYear();
                           const isPastMonth = currentDate < new Date(new Date().getFullYear(), new Date().getMonth(), 1);
                           const isFutureMonth = currentDate > new Date(new Date().getFullYear(), new Date().getMonth(), 1);
                           

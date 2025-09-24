@@ -44,7 +44,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
             'id', 'building', 'building_name', 'title', 'amount', 'date', 
             'category', 'category_display', 'distribution_type', 'distribution_type_display',
             'supplier', 'supplier_name', 'supplier_details', 'attachment', 'attachment_url',
-            'notes', 'due_date', 'add_to_calendar', 'created_at', 'updated_at',
+            'notes', 'due_date', 'add_to_calendar', 'expense_type', 'created_at', 'updated_at',
             'linked_service_receipt', 'linked_scheduled_maintenance', 'maintenance_payment_receipts',
             'has_installments', 'linked_maintenance_projects'
         ]

@@ -699,8 +699,28 @@ class FinancialDashboardService:
         # Calculate current obligations (should include management costs and reserve fund for consistency)
         if month:
             # For snapshot view, current obligations should include management costs and reserve fund
-            # This ensures consistency between "Οικονομικές Υποχρεώσεις Περιόδου" and "Υπόλοιπο Περιόδου"
-            current_obligations = total_expenses_this_month + total_management_cost + reserve_fund_monthly_target
+            # ΔΙΟΡΘΩΣΗ: Μη διπλό μέτρημα - τα management fees περιλαμβάνονται ήδη στο total_expenses_this_month
+            # Αφαιρούμε τα management fees από το total_management_cost για να αποφύγουμε διπλό μέτρημα
+            from datetime import date
+            if month:
+                year, mon = map(int, month.split('-'))
+                month_start = date(year, mon, 1)
+                month_end = date(year, mon + 1, 1) if mon < 12 else date(year + 1, 1, 1)
+            else:
+                month_start = date.today().replace(day=1)
+                month_end = date.today()
+            
+            management_fees_in_expenses = Expense.objects.filter(
+                building_id=self.building_id,
+                category='management_fees',
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            # Αφαιρούμε τα management fees που ήδη περιλαμβάνονται στο total_expenses_this_month
+            management_cost_adjustment = total_management_cost - management_fees_in_expenses
+            
+            current_obligations = total_expenses_this_month + management_cost_adjustment + reserve_fund_monthly_target
         else:
             # For current view, use total obligations
             current_obligations = total_obligations
@@ -958,7 +978,13 @@ class FinancialDashboardService:
         for apartment in apartments:
             # ΔΙΟΡΘΩΣΗ: Πάντα υπολογίζω το balance από transactions για συνέπεια
             if end_date:
-                calculated_balance = self._calculate_historical_balance(apartment, end_date)
+                # Για snapshot view, υπολογίζουμε το balance μέχρι την αρχή του μήνα (πριν τον επιλεγμένο μήνα)
+                if month:
+                    year, mon = map(int, month.split('-'))
+                    month_start = date(year, mon, 1)
+                    calculated_balance = self._calculate_historical_balance(apartment, month_start)
+                else:
+                    calculated_balance = self._calculate_historical_balance(apartment, end_date)
                 # Τελευταία πληρωμή μέχρι την ημερομηνία
                 last_payment = apartment.payments.filter(date__lt=end_date).order_by('-date').first()
             else:
@@ -992,7 +1018,8 @@ class FinancialDashboardService:
                 month_start = date(year, mon, 1)
                 
                 # 1. Previous Balance = οφειλές από προηγούμενους μήνες (πριν τον επιλεγμένο μήνα)
-                previous_balance = self._calculate_historical_balance(apartment, month_start)
+                # ΔΙΟΡΘΩΣΗ: Χρησιμοποίησε το calculated_balance που ήδη υπολογίστηκε παραπάνω
+                previous_balance = calculated_balance
                 
                 # 2. Current month expense share (για net_obligation)
                 month_expenses = Expense.objects.filter(
@@ -1006,7 +1033,15 @@ class FinancialDashboardService:
                     total=Sum('participation_mills'))['total'] or 1000
                     
                 for expense in month_expenses:
-                    apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
+                    # ΔΙΟΡΘΩΣΗ: Management fees είναι ισόποσα, άλλες δαπάνες ανά χιλιοστά
+                    if expense.category == 'management_fees':
+                        # Ισόποση κατανομή για management fees
+                        apartment_count = Apartment.objects.filter(building_id=apartment.building_id).count()
+                        apartment_share = expense.amount / apartment_count
+                    else:
+                        # Κατανομή ανά χιλιοστά για άλλες δαπάνες
+                        apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
+                    
                     expense_share += apartment_share
                 
                 # 3. Υπολογισμός αποθεματικού για τον μήνα
@@ -1112,14 +1147,29 @@ class FinancialDashboardService:
         expense_ids_before_month = list(expenses_before_month.values_list('id', flat=True))
         
         # Υπολογισμός χρεώσεων μόνο από αυτές τις δαπάνες
+        # ΔΙΟΡΘΩΣΗ: Αφαιρούμε τα management_fees expenses από τα transactions
+        # γιατί θα τα υπολογίσουμε ξεχωριστά παρακάτω
         if expense_ids_before_month:
-            total_charges = Transaction.objects.filter(
-                apartment=apartment,  # ΔΙΟΡΘΩΣΗ: Χρήση apartment object αντί για apartment_number
-                reference_type='expense',
-                reference_id__in=[str(exp_id) for exp_id in expense_ids_before_month],
-                type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
-                         'interest_charge', 'penalty_charge']
-            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            # Βρίσκουμε τα management_fees expense IDs για να τα αφαιρέσουμε
+            management_expense_ids = list(Expense.objects.filter(
+                id__in=expense_ids_before_month,
+                category='management_fees'
+            ).values_list('id', flat=True))
+            
+            # Αφαιρούμε τα management_fees από τα expense_ids
+            non_management_expense_ids = [exp_id for exp_id in expense_ids_before_month 
+                                        if exp_id not in management_expense_ids]
+            
+            if non_management_expense_ids:
+                total_charges = Transaction.objects.filter(
+                    apartment=apartment,  # ΔΙΟΡΘΩΣΗ: Χρήση apartment object αντί για apartment_number
+                    reference_type='expense',
+                    reference_id__in=[str(exp_id) for exp_id in non_management_expense_ids],
+                    type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
+                             'interest_charge', 'penalty_charge']
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            else:
+                total_charges = Decimal('0.00')
         else:
             total_charges = Decimal('0.00')
         
@@ -1130,33 +1180,35 @@ class FinancialDashboardService:
         # ΔΙΟΡΘΩΣΗ ΠΡΟΣΗΜΟΥ: Χρέος = θετικό υπόλοιπο, Πίστωση = αρνητικό υπόλοιπο  
         # Υπόλοιπο = Χρεώσεις - Πληρωμές (θετικό = χρέος, αρνητικό = πίστωση)
 
-        # ΠΡΟΣΘΗΚΗ: Υπολογισμός δαπανών διαχείρισης για προηγούμενους μήνες
-        management_fee_per_apartment = apartment.building.management_fee_per_apartment or Decimal('0.00')
+        # ΔΙΟΡΘΩΣΗ: Μη διπλό μέτρημα - τα management fees υπολογίζονται από τα Expenses
+        # και όχι από τα expense_created transactions που δημιουργούνται αυτόματα
         
-        if management_fee_per_apartment > 0:
-            # Βρίσκουμε την αρχική ημερομηνία για υπολογισμό (Ιανουάριος 2025)
-            from datetime import date
-            start_date = date(2025, 1, 1)
+        # Υπολογισμός management fees από Expenses (όχι από transactions)
+        management_expenses = Expense.objects.filter(
+            building_id=apartment.building_id,
+            category='management_fees',
+            date__lt=month_start
+        )
         
-            # Υπολογίζουμε πόσους μήνες πρέπει να χρεώσουμε
-            months_to_charge = 0
-            current_date = start_date
-        
-            while current_date < month_start:
-                months_to_charge += 1
-                # Πάμε στον επόμενο μήνα
-                if current_date.month == 12:
-                    current_date = current_date.replace(year=current_date.year + 1, month=1)
-                else:
-                    current_date = current_date.replace(month=current_date.month + 1)
-        
-            # Προσθέτουμε τις δαπάνες διαχείρισης στις συνολικές χρεώσεις
-            management_fees_total = management_fee_per_apartment * months_to_charge
-            total_charges += management_fees_total
-        
-            # Debug output για να βλέπουμε τι υπολογίζεται
-            if months_to_charge > 0:
-                print(f"💰 Management fees for apt {apartment.number}: {months_to_charge} months × €{management_fee_per_apartment} = €{management_fees_total}")
+        if management_expenses.exists():
+            # Υπολογισμός μεριδίου διαμερίσματος από τα management_fees expenses
+            total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
+                total=Sum('participation_mills'))['total'] or 1000
+            
+            management_fees_share = Decimal('0.00')
+            for expense in management_expenses:
+                # ΔΙΟΡΘΩΣΗ: Management fees είναι πάντα ισόποσα ανά διαμέρισμα
+                # και όχι ανά χιλιοστά (όπως τα κοινόχρηστα)
+                apartment_count = Apartment.objects.filter(building_id=apartment.building_id).count()
+                apartment_share = expense.amount / apartment_count
+                
+                management_fees_share += apartment_share
+            
+            total_charges += management_fees_share
+            
+            # Debug output
+            if management_fees_share > 0:
+                print(f"💰 Management fees from expenses for apt {apartment.number}: €{management_fees_share}")
         
         historical_balance = total_charges - total_payments
         

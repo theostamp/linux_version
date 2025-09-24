@@ -479,7 +479,7 @@ docker compose up --build -d
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "διορθωση modal παλιοτερες οφειλες"
+git commit -m "διορθωσεις οικονομικων 1"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

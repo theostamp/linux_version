@@ -10,7 +10,7 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, AlertTriangle, CheckCircle, Clock, Plus, Trash2, Pencil } from 'lucide-react';
+import { Calendar, AlertTriangle, CheckCircle, Clock, Plus, Trash2, Pencil, RefreshCw } from 'lucide-react';
 import { useRole } from '@/lib/auth';
 import { ServiceDeletionConfirmDialog } from '@/components/maintenance/ServiceDeletionConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
@@ -153,10 +153,23 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
   const [deleting, setDeleting] = React.useState(false);
   const [overviewOpen, setOverviewOpen] = React.useState(false);
   const [overviewId, setOverviewId] = React.useState<number | string | null>(null);
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
 
-  // Combine scheduled maintenance items with approved projects
+  // Combine scheduled maintenance items with approved projects, avoiding duplicates
   const combinedItems: CombinedMaintenanceItem[] = useMemo(() => {
-    return [...items, ...approvedProjects];
+    // Get project IDs that are already linked to scheduled maintenance
+    const linkedProjectIds = new Set(
+      items
+        .filter(item => (item as any).linked_project)
+        .map(item => (item as any).linked_project)
+    );
+    
+    // Filter out projects that are already linked to scheduled maintenance
+    const unlinkedProjects = approvedProjects.filter(
+      project => !linkedProjectIds.has(project.project_id)
+    );
+    
+    return [...items, ...unlinkedProjects];
   }, [items, approvedProjects]);
 
   const filtered = useMemo(() => {
@@ -174,6 +187,32 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
     }
   }, [highlightId, filtered]);
 
+  // Refresh data when returning from edit page
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Page became visible again, refresh data
+        qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled', { buildingId, priorityFilter }] });
+        qc.invalidateQueries({ queryKey: ['approved-projects-for-scheduled', { buildingId }] });
+      }
+    };
+
+    const handleFocus = () => {
+      // Window gained focus, refresh data
+      qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled', { buildingId, priorityFilter }] });
+      qc.invalidateQueries({ queryKey: ['approved-projects-for-scheduled', { buildingId }] });
+    };
+
+    // Listen for page visibility changes and focus events
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [qc, buildingId, priorityFilter]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -182,12 +221,41 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
           <h1 className="text-3xl font-bold tracking-tight">Προγραμματισμένα Έργα</h1>
           <p className="text-muted-foreground">Λίστα εργασιών συντήρησης ανά προτεραιότητα</p>
         </div>
-        <Button asChild>
-          <Link href="/maintenance/scheduled/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Νέο Έργο
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              setIsRefreshing(true);
+              try {
+                await qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled', { buildingId, priorityFilter }] });
+                await qc.invalidateQueries({ queryKey: ['approved-projects-for-scheduled', { buildingId }] });
+                toast({
+                  title: 'Ανανέωση',
+                  description: 'Τα δεδομένα ανανεώθηκαν επιτυχώς.',
+                });
+              } catch (error) {
+                toast({
+                  title: 'Σφάλμα',
+                  description: 'Αποτυχία ανανέωσης των δεδομένων.',
+                  variant: 'destructive' as any,
+                });
+              } finally {
+                setIsRefreshing(false);
+              }
+            }}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Ανανέωση
+          </Button>
+          <Button asChild>
+            <Link href="/maintenance/scheduled/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Νέο Έργο
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -340,12 +408,19 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
               // For projects, extract the UUID and delete via projects API
               const projectId = toDeleteId.replace('project-', '');
               await deleteProject(projectId);
-              qc.invalidateQueries({ queryKey: ['projects', 'approved'] });
+              // Invalidate all related queries
+              await qc.invalidateQueries({ queryKey: ['projects', 'approved'] });
+              await qc.invalidateQueries({ queryKey: ['approved-projects-for-scheduled'] });
             } else {
               // For regular scheduled maintenance, use the numeric ID
               await deleteScheduledMaintenance(toDeleteId as number);
-              qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled'] });
+              // Invalidate all related queries
+              await qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled'] });
             }
+            
+            // Invalidate combined queries to refresh the page
+            await qc.invalidateQueries({ queryKey: ['maintenance', 'scheduled', { buildingId, priorityFilter }] });
+            await qc.invalidateQueries({ queryKey: ['approved-projects-for-scheduled', { buildingId }] });
             
             // Enhanced success message
             const successMessage = deletedExpensesCount > 0 
