@@ -943,7 +943,7 @@ class MonthlyBalance(models.Model):
                 'total_payments': Decimal('0.00'),
                 'reserve_fund_amount': Decimal('0.00'),
                 'management_fees': Decimal('0.00'),
-                'carry_forward': Decimal('0.00'),
+                'carry_forward': previous_obligations,  # Συνεχής μεταφορά
                 'annual_carry_forward': Decimal('0.00'),
                 'main_balance_carry_forward': Decimal('0.00'),
                 'reserve_balance_carry_forward': Decimal('0.00'),
@@ -954,6 +954,7 @@ class MonthlyBalance(models.Model):
         # Αν το record υπάρχει ήδη, ενημερώνουμε τα πεδία μεταφοράς
         if not created:
             next_balance.previous_obligations = previous_obligations
+            next_balance.carry_forward = previous_obligations  # Συνεχής μεταφορά
             # Συνεχής μεταφορά - balance_year παραμένει το ίδιο
             next_balance.save()
             print(f"   📝 Ενημερώθηκε υπάρχον record: {next_balance.month_display}")
