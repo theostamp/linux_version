@@ -984,7 +984,7 @@ class FinancialDashboardService:
                     month_start = date(year, mon, 1)
                     calculated_balance = self._calculate_historical_balance(apartment, month_start)
                 else:
-                calculated_balance = self._calculate_historical_balance(apartment, end_date)
+                    calculated_balance = self._calculate_historical_balance(apartment, end_date)
                 # Τελευταία πληρωμή μέχρι την ημερομηνία
                 last_payment = apartment.payments.filter(date__lt=end_date).order_by('-date').first()
             else:
