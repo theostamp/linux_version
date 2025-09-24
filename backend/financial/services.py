@@ -455,16 +455,23 @@ class CommonExpenseCalculator:
         management_fee = self.building.management_fee_per_apartment or Decimal('0.00')
         
         if management_fee > 0:
-            for apartment in self.apartments:
-                shares[apartment.id]['total_amount'] += management_fee
-                shares[apartment.id]['breakdown'].append({
-                    'expense_id': None,
-                    'expense_title': 'Δαπάνες Διαχείρισης',
-                    'expense_amount': management_fee,
-                    'apartment_share': management_fee,
-                    'distribution_type': 'management_fee',
-                    'distribution_type_display': 'Δαπάνες Διαχείρισης'
-                })
+            # Ελέγχουμε αν υπάρχουν ήδη management_fees expenses
+            management_expenses_exist = any(
+                expense.category == 'management_fees' for expense in self.expenses
+            )
+            
+            # Προσθέτουμε management fee μόνο αν δεν υπάρχουν ήδη management_fees expenses
+            if not management_expenses_exist:
+                for apartment in self.apartments:
+                    shares[apartment.id]['total_amount'] += management_fee
+                    shares[apartment.id]['breakdown'].append({
+                        'expense_id': None,
+                        'expense_title': 'Δαπάνες Διαχείρισης',
+                        'expense_amount': management_fee,
+                        'apartment_share': management_fee,
+                        'distribution_type': 'management_fee',
+                        'distribution_type_display': 'Δαπάνες Διαχείρισης'
+                    })
     
     def get_apartments_count(self) -> int:
         """Επιστρέφει τον αριθμό διαμερισμάτων"""
