@@ -445,7 +445,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
           return 0; // No reserve fund debt when expenses take priority
         }
         
-        const today = new Date();
+        // ΔΙΟΡΘΩΣΗ: Χρήση επιλεγμένου μήνα αντί για σήμερα για month-specific view
+        const referenceDate = selectedMonth ? new Date(selectedMonth + '-01') : new Date();
         
         // If no start date is set, return 0 debt
         if (!savedStartDate) {
@@ -454,10 +455,10 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         
         const startDate = new Date(savedStartDate);
         
-        // Calculate months that have passed since start
+        // Calculate months that have passed since start up to the reference date
         const monthsPassed = Math.max(0, 
-          (today.getFullYear() - startDate.getFullYear()) * 12 + 
-          (today.getMonth() - startDate.getMonth())
+          (referenceDate.getFullYear() - startDate.getFullYear()) * 12 + 
+          (referenceDate.getMonth() - startDate.getMonth())
         );
         
         // Calculate expected contributions so far
@@ -720,9 +721,11 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       
       // Recalculate reserve fund debt with new goal and installments
       const existingStartDate = new Date(financialSummary?.reserve_fund_start_date || newStartDate);
+      // ΔΙΟΡΘΩΣΗ: Χρήση επιλεγμένου μήνα αντί για σήμερα
+      const referenceDate = selectedMonth ? new Date(selectedMonth + '-01') : today;
       const monthsPassed = Math.max(0, 
-        (today.getFullYear() - existingStartDate.getFullYear()) * 12 + 
-        (today.getMonth() - existingStartDate.getMonth())
+        (referenceDate.getFullYear() - existingStartDate.getFullYear()) * 12 + 
+        (referenceDate.getMonth() - existingStartDate.getMonth())
       );
       const expectedSoFar = monthsPassed * newMonthlyTarget;
       const currentReserve = financialSummary?.current_reserve || 0;
@@ -785,9 +788,11 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       // Recalculate reserve fund debt with new timeline
       const today = new Date();
       const newStartDate = new Date(startDate);
+      // ΔΙΟΡΘΩΣΗ: Χρήση επιλεγμένου μήνα αντί για σήμερα
+      const referenceDate = selectedMonth ? new Date(selectedMonth + '-01') : today;
       const monthsPassed = Math.max(0, 
-        (today.getFullYear() - newStartDate.getFullYear()) * 12 + 
-        (today.getMonth() - newStartDate.getMonth())
+        (referenceDate.getFullYear() - newStartDate.getFullYear()) * 12 + 
+        (referenceDate.getMonth() - newStartDate.getMonth())
       );
       const expectedSoFar = monthsPassed * monthlyTarget;
       const currentReserve = financialSummary?.current_reserve || 0;
