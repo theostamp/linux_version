@@ -984,7 +984,7 @@ class FinancialDashboardService:
                     month_start = date(year, mon, 1)
                     calculated_balance = self._calculate_historical_balance(apartment, month_start)
                 else:
-                    calculated_balance = self._calculate_historical_balance(apartment, end_date)
+                calculated_balance = self._calculate_historical_balance(apartment, end_date)
                 # Τελευταία πληρωμή μέχρι την ημερομηνία
                 last_payment = apartment.payments.filter(date__lt=end_date).order_by('-date').first()
             else:
@@ -1040,7 +1040,7 @@ class FinancialDashboardService:
                         apartment_share = expense.amount / apartment_count
                     else:
                         # Κατανομή ανά χιλιοστά για άλλες δαπάνες
-                        apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
+                    apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
                     
                     expense_share += apartment_share
                 
@@ -1138,10 +1138,22 @@ class FinancialDashboardService:
         # Υπολογισμός αρχής του μήνα
         month_start = end_date.replace(day=1)
         
-        # Βρίσκουμε δαπάνες που δημιουργήθηκαν ΠΡΙΝ από την αρχή του μήνα
+        # ΚΑΝΟΝΑΣ ΑΠΟΜΟΝΩΣΗΣ ΕΤΟΥΣ: Όλες οι μεταφορές υπολοίπων αφορούν το ίδιο λογιστικό έτος
+        # Για Σεπτέμβριο 2025: Παλαιότερες οφειλές = μόνο Ιαν-Αυγ 2025 (όχι 2024)
+        
+        # Υπολογισμός αποτελεσματικής αρχής του έτους (λαμβάνει υπόψη την ημερομηνία έναρξης συστήματος)
+        from datetime import date
+        year_start = self.building.get_effective_year_start(end_date.year)
+        
+        # Αν δεν υπάρχουν δεδομένα για αυτό το έτος, επιστρέφουμε 0
+        if year_start is None:
+            return Decimal('0.00')
+        
+        # Βρίσκουμε δαπάνες που δημιουργήθηκαν μέσα στο ίδιο έτος, πριν από τον επιλεγμένο μήνα
         expenses_before_month = Expense.objects.filter(
             building_id=apartment.building_id,
-            date__lt=month_start
+            date__gte=year_start,  # Μόνο δαπάνες του ίδιου έτους
+            date__lt=month_start   # Πριν από τον επιλεγμένο μήνα
         )
         
         expense_ids_before_month = list(expenses_before_month.values_list('id', flat=True))
@@ -1161,13 +1173,13 @@ class FinancialDashboardService:
                                         if exp_id not in management_expense_ids]
             
             if non_management_expense_ids:
-                total_charges = Transaction.objects.filter(
-                    apartment=apartment,  # ΔΙΟΡΘΩΣΗ: Χρήση apartment object αντί για apartment_number
-                    reference_type='expense',
+            total_charges = Transaction.objects.filter(
+                apartment=apartment,  # ΔΙΟΡΘΩΣΗ: Χρήση apartment object αντί για apartment_number
+                reference_type='expense',
                     reference_id__in=[str(exp_id) for exp_id in non_management_expense_ids],
-                    type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
-                             'interest_charge', 'penalty_charge']
-                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
+                         'interest_charge', 'penalty_charge']
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             else:
                 total_charges = Decimal('0.00')
         else:
@@ -1184,10 +1196,12 @@ class FinancialDashboardService:
         # και όχι από τα expense_created transactions που δημιουργούνται αυτόματα
         
         # Υπολογισμός management fees από Expenses (όχι από transactions)
+        # ΚΑΝΟΝΑΣ ΑΠΟΜΟΝΩΣΗΣ ΕΤΟΥΣ: Μόνο δαπάνες του ίδιου έτους
         management_expenses = Expense.objects.filter(
             building_id=apartment.building_id,
             category='management_fees',
-            date__lt=month_start
+            date__gte=year_start,  # Μόνο δαπάνες του ίδιου έτους
+            date__lt=month_start   # Πριν από τον επιλεγμένο μήνα
         )
         
         if management_expenses.exists():

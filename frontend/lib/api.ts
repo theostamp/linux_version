@@ -565,6 +565,8 @@ export type Building = {
   reserve_fund_goal?: number;
   reserve_fund_duration_months?: number;
   reserve_fund_priority?: 'after_obligations' | 'always';
+  // 📅 Financial System Start Date
+  financial_system_start_date?: string; // Ημερομηνία έναρξης του οικονομικού συστήματος
   created_at: string;
   updated_at?: string;
   street_view_image?: string;

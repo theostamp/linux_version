@@ -41,6 +41,7 @@ interface BuildingFormData {
   latitude?: number | string;
   longitude?: number | string;
   coordinates?: { lat: number; lng: number };
+  financial_system_start_date?: string; // Ημερομηνία έναρξης του οικονομικού συστήματος
 }
 
 interface BuildingResident {
@@ -526,6 +527,56 @@ export default function CreateBuildingForm({
               <strong>Αυτονομία με Θερμιδομετρητές:</strong> Το {form.heating_fixed_percentage || 30}% κατανέμεται ως πάγιο 
               (ανά χιλιοστά), το υπόλοιπο {100 - (form.heating_fixed_percentage || 30)}% ως μεταβλητό 
               (ανά kWh/MWh κατανάλωσης). Απαιτείται καταχώρηση ενδείξεων θερμιδομετρητών.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Financial System Configuration */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center">
+          📅 Οικονομικό Σύστημα
+        </h3>
+        
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="flex items-start space-x-2">
+            <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm text-blue-800 font-medium">Ημερομηνία Έναρξης Οικονομικού Συστήματος</p>
+              <p className="text-xs text-blue-700 mt-1">
+                Ορίστε πότε ξεκίνησε η χρήση του οικονομικού συστήματος για το κτίριο. 
+                Αν δεν οριστεί, χρησιμοποιείται η 1η Ιανουαρίου του έτους.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="financial_system_start_date">
+            Ημερομηνία Έναρξης Συστήματος
+          </label>
+          <input
+            id="financial_system_start_date"
+            name="financial_system_start_date"
+            type="date"
+            value={form.financial_system_start_date ?? ''}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="π.χ. 2025-03-01"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            💡 Χρήσιμο για κτίρια που ξεκινούν mid-year. Αν αφεθεί κενό, χρησιμοποιείται η 1η Ιανουαρίου.
+          </p>
+        </div>
+        
+        {/* Information about the financial system start date */}
+        {form.financial_system_start_date && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <p className="text-sm text-green-800">
+              <strong>Επιλεγμένη ημερομηνία:</strong> {new Date(form.financial_system_start_date).toLocaleDateString('el-GR')}
+            </p>
+            <p className="text-xs text-green-700 mt-1">
+              Το σύστημα θα μετρήσει οικονομικές υποχρεώσεις μόνο από αυτή την ημερομηνία και μετά.
             </p>
           </div>
         )}
