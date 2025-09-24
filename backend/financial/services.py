@@ -1040,7 +1040,7 @@ class FinancialDashboardService:
                         apartment_share = expense.amount / apartment_count
                     else:
                         # Κατανομή ανά χιλιοστά για άλλες δαπάνες
-                    apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
+                        apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
                     
                     expense_share += apartment_share
                 
@@ -1173,13 +1173,13 @@ class FinancialDashboardService:
                                         if exp_id not in management_expense_ids]
             
             if non_management_expense_ids:
-            total_charges = Transaction.objects.filter(
-                apartment=apartment,  # ΔΙΟΡΘΩΣΗ: Χρήση apartment object αντί για apartment_number
-                reference_type='expense',
+                total_charges = Transaction.objects.filter(
+                    apartment=apartment,  # ΔΙΟΡΘΩΣΗ: Χρήση apartment object αντί για apartment_number
+                    reference_type='expense',
                     reference_id__in=[str(exp_id) for exp_id in non_management_expense_ids],
-                type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
-                         'interest_charge', 'penalty_charge']
-            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                    type__in=['common_expense_charge', 'expense_created', 'expense_issued',
+                             'interest_charge', 'penalty_charge']
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             else:
                 total_charges = Decimal('0.00')
         else:

@@ -1394,7 +1394,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
                 <div className="text-left">
                   <div>Φύλλο Κοινοχρήστων</div>
                   <div className="text-xs text-blue-100 font-normal">
-                    Λεπτομερή προβολή
+                    Λεπτομερής προβολή
                   </div>
                 </div>
               </div>
