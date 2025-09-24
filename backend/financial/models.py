@@ -897,14 +897,12 @@ class MonthlyBalance(models.Model):
         # Διαχείριση Υπόλοιπο: Έξοδα διαχείρισης (αρνητικό = οφειλή)
         self.management_balance_carry_forward = -self.management_net_result if self.management_net_result < 0 else Decimal('0.00')
         
-        # Αν είναι Δεκέμβριος, υπολογισμός ετήσιας μεταφοράς
-        if self.month == 12:
-            self.annual_carry_forward = self.carry_forward
-            self.balance_year = self.year
-            print(f"📅 Δεκέμβριος {self.year}: Ετήσια μεταφορά = €{self.annual_carry_forward}")
-            print(f"   🏠 Κύριο Υπόλοιπο: €{self.main_balance_carry_forward}")
-            print(f"   🏦 Αποθεματικό: €{self.reserve_balance_carry_forward}")
-            print(f"   🏢 Διαχείριση: €{self.management_balance_carry_forward}")
+        # Συνεχής μεταφορά ποσών - χωρίς ετήσια απομόνωση
+        # Κρατάμε μόνο την ημερομηνία έναρξης υπολογισμών (1-6-2025)
+        print(f"📅 {self.month:02d}/{self.year}: Συνεχής μεταφορά = €{self.carry_forward}")
+        print(f"   🏠 Κύριο Υπόλοιπο: €{self.main_balance_carry_forward}")
+        print(f"   🏦 Αποθεματικό: €{self.reserve_balance_carry_forward}")
+        print(f"   🏢 Διαχείριση: €{self.management_balance_carry_forward}")
         
         self.is_closed = True
         self.closed_at = timezone.now()
@@ -920,16 +918,18 @@ class MonthlyBalance(models.Model):
         next_month = self.month + 1
         next_year = self.year
         
-        # Υβριδικό Σύστημα - Προσδιορισμός previous_obligations
+        # Συνεχής μεταφορά ποσών ανεξάρτητα του έτους
+        # Μόνο η ημερομηνία έναρξης υπολογισμών (1-6-2025) είναι σημαντική
         if next_month > 12:
-            # Ετήσια μεταφορά: Δεκέμβριος → Ιανουάριος
+            # Δεκέμβριος → Ιανουάριος (συνεχής μεταφορά)
             next_month = 1 
             next_year += 1
-            previous_obligations = self.annual_carry_forward
-            print(f"🔄 Ετήσια μεταφορά: Δεκέμβριος {self.year} → Ιανουάριος {next_year} = €{previous_obligations}")
+            # Συνεχής μεταφορά όλων των υπολοίπων χωρίς μηδενισμό
+            previous_obligations = self.carry_forward
+            print(f"🔄 Συνεχής μεταφορά: Δεκέμβριος {self.year} → Ιανουάριος {next_year} = €{previous_obligations}")
         else:
-            # Μηνιαία μεταφορά: Ν → Ν+1 (μόνο κύριο υπόλοιπο)
-            previous_obligations = self.main_balance_carry_forward
+            # Μηνιαία μεταφορά: Ν → Ν+1 (συνεχής μεταφορά)
+            previous_obligations = self.carry_forward
             print(f"📅 Μηνιαία μεταφορά: {self.month:02d}/{self.year} → {next_month:02d}/{next_year} = €{previous_obligations}")
         
         next_balance, created = MonthlyBalance.objects.get_or_create(
@@ -954,12 +954,10 @@ class MonthlyBalance(models.Model):
         # Αν το record υπάρχει ήδη, ενημερώνουμε τα πεδία μεταφοράς
         if not created:
             next_balance.previous_obligations = previous_obligations
-            next_balance.balance_year = next_year
+            # Συνεχής μεταφορά - balance_year παραμένει το ίδιο
             next_balance.save()
             print(f"   📝 Ενημερώθηκε υπάρχον record: {next_balance.month_display}")
-            print(f"   🏠 Κύριο Υπόλοιπο: €{previous_obligations}")
-            print(f"   🏦 Αποθεματικό: €{self.reserve_balance_carry_forward}")
-            print(f"   🏢 Διαχείριση: €{self.management_balance_carry_forward}")
+            print(f"   💰 Συνεχής μεταφορά: €{previous_obligations}")
 
 
 # Import του audit model στο τέλος για να αποφύγουμε circular imports
