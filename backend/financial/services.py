@@ -1061,14 +1061,38 @@ class FinancialDashboardService:
                     if (not self.building.reserve_fund_target_date or 
                         month_start <= self.building.reserve_fund_target_date):
                         
-                        monthly_reserve_target = self.building.reserve_fund_goal / self.building.reserve_fund_duration_months
+                        # ΔΙΟΡΘΩΣΗ: Έλεγχος προτεραιότητας αποθεματικού
+                        should_collect_reserve = False
                         
-                        # Κατανομή ανά χιλιοστά
-                        total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
-                            total=Sum('participation_mills'))['total'] or 1000
+                        if self.building.reserve_fund_priority == 'always':
+                            # Πάντα συλλέγουμε αποθεματικό ανεξάρτητα από εκκρεμότητες
+                            should_collect_reserve = True
+                            print(f"✅ Αποθεματικό: Συλλογή ανεξάρτητα από εκκρεμότητες (προτεραιότητα: always)")
+                        elif self.building.reserve_fund_priority == 'after_obligations':
+                            # Συλλέγουμε μόνο αν δεν υπάρχουν εκκρεμότητες
+                            # Έλεγχος εκκρεμοτήτων (εξαιρώντας management fees)
+                            total_obligations = 0
+                            for apt in Apartment.objects.filter(building_id=apartment.building_id):
+                                apt_historical_balance = self._calculate_historical_balance(apt, month_start)
+                                if apt_historical_balance < 0:
+                                    total_obligations += abs(apt_historical_balance)
+                            
+                            if total_obligations == 0:
+                                should_collect_reserve = True
+                                print(f"✅ Αποθεματικό: Δεν υπάρχουν εκκρεμότητες - συλλέγεται (προτεραιότητα: after_obligations)")
+                            else:
+                                print(f"🚫 Αποθεματικό: Υπάρχουν εκκρεμότητες €{total_obligations} - δεν συλλέγεται (προτεραιότητα: after_obligations)")
                         
-                        if total_mills > 0:
-                            reserve_fund_share = (monthly_reserve_target * apartment.participation_mills) / total_mills
+                        if should_collect_reserve:
+                            monthly_reserve_target = self.building.reserve_fund_goal / self.building.reserve_fund_duration_months
+                            
+                            # Κατανομή ανά χιλιοστά
+                            total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
+                                total=Sum('participation_mills'))['total'] or 1000
+                            
+                            if total_mills > 0:
+                                reserve_fund_share = (monthly_reserve_target * apartment.participation_mills) / total_mills
+                                print(f"💰 Αποθεματικό για διαμέρισμα {apartment.number}: €{reserve_fund_share:.2f}")
                 
                 # 4. Net Obligation = Previous Balance + Current Month Expenses + Reserve Fund - Payments this month
                 month_payments = Payment.objects.filter(

@@ -222,7 +222,7 @@ class Building(models.Model):
             ('after_obligations', 'Μετά τις Εκκρεμότητες'),
             ('always', 'Πάντα (Ανεξάρτητα)')
         ],
-        default='after_obligations',
+        default='always',
         help_text=_("Πότε να συλλέγεται το αποθεματικό: μετά τις εκκρεμότητες ή πάντα")
     )
 
