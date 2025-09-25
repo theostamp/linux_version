@@ -33,6 +33,7 @@ import {
   Calculator,
   TestTube2,
   Monitor,
+  Settings,
 } from 'lucide-react';
 
 // Navigation link interface
@@ -92,7 +93,7 @@ const navigationGroups: NavigationGroup[] = [
   },
   {
     id: 'main',
-    title: 'Kiosk',
+    title: 'Κύρια Λειτουργίες',
     color: 'blue',
     bgColor: 'bg-blue-50 dark:bg-blue-900/20',
     borderColor: 'border-blue-200 dark:border-blue-800',
@@ -127,10 +128,25 @@ const navigationGroups: NavigationGroup[] = [
         icon: <MessageCircle className="w-4 h-4" />,
         roles: ['manager', 'resident', 'staff', 'superuser'],
       },
+    ]
+  },
+  {
+    id: 'kiosk',
+    title: 'Kiosk & Display',
+    color: 'purple',
+    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+    borderColor: 'border-purple-200 dark:border-purple-800',
+    links: [
+      {
+        href: '/kiosk',
+        label: 'Kiosk Display',
+        icon: <Monitor className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
+      },
       {
         href: '/dashboard/kiosk-widgets',
-        label: 'Kiosk Widgets',
-        icon: <Monitor className="w-4 h-4" />,
+        label: 'Διαχείριση Widgets',
+        icon: <Settings className="w-4 h-4" />,
         roles: ['manager', 'staff', 'superuser'],
       },
     ]
@@ -171,9 +187,9 @@ const navigationGroups: NavigationGroup[] = [
   {
     id: 'collaboration',
     title: 'Συνεργασίες & Ομάδες',
-    color: 'purple',
-    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-    borderColor: 'border-purple-200 dark:border-purple-800',
+    color: 'indigo',
+    bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
+    borderColor: 'border-indigo-200 dark:border-indigo-800',
     links: [
       {
         href: '/teams',

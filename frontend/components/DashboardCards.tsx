@@ -9,7 +9,9 @@ import {
   CheckCircle, 
   FileText, 
   ArrowRight,
-  TrendingUp
+  TrendingUp,
+  Monitor,
+  Settings
 } from 'lucide-react';
 
 type DashboardCardConfig = {
@@ -155,5 +157,28 @@ export const quickStatsCards: DashboardCardConfig[] = [
     icon: <TrendingUp className="w-5 h-5 text-purple-600" />,
     link: '/buildings',
     description: 'Διαχείριση κτιρίων'
+  }
+];
+
+export const kioskCards: DashboardCardConfig[] = [
+  {
+    key: 'kiosk_display',
+    label: 'Kiosk Display',
+    icon: <Monitor className="w-5 h-5 text-purple-600" />,
+    bgColor: 'bg-purple-50',
+    borderColor: 'border-purple-200',
+    textColor: 'text-purple-900',
+    link: '/kiosk',
+    description: 'Εμφάνιση κιόσκ'
+  },
+  {
+    key: 'kiosk_widgets',
+    label: 'Διαχείριση Widgets',
+    icon: <Settings className="w-5 h-5 text-purple-600" />,
+    bgColor: 'bg-purple-50',
+    borderColor: 'border-purple-200',
+    textColor: 'text-purple-900',
+    link: '/dashboard/kiosk-widgets',
+    description: 'Ρύθμιση widgets'
   }
 ];

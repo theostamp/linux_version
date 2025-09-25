@@ -19,7 +19,7 @@ import {
 } from 'recharts';
 
 import LogoutButton from '@/components/LogoutButton';
-import DashboardCards from '@/components/DashboardCards';
+import DashboardCards, { kioskCards } from '@/components/DashboardCards';
 import ErrorMessage from '@/components/ErrorMessage';
 import AnnouncementsCarousel from '@/components/AnnouncementsCarousel';
 import BuildingStats from '@/components/BuildingStats';
@@ -55,6 +55,7 @@ import {
   CloudRain,
   CloudSnow
 } from 'lucide-react';
+import { Monitor } from 'lucide-react';
 
 export default function DashboardPage() {
   return (
@@ -464,6 +465,17 @@ function DashboardContent() {
             <p className="text-sm text-gray-600 mt-1">Διαχείριση κτιρίων</p>
           </div>
         </Link>
+      </div>
+
+      {/* Kiosk Management Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-semibold tracking-tight text-gray-800 flex items-center">
+            <Monitor className="w-5 h-5 mr-2 text-purple-600" />
+            Kiosk & Display
+          </h2>
+        </div>
+        <DashboardCards data={[]} cards={kioskCards} />
       </div>
 
       {/* Compact Announcements Section */}
