@@ -86,8 +86,8 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
     const htmlContent = `
         <div style="
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          font-size: 10px;
-          line-height: 1.2;
+          font-size: 12px;
+          line-height: 1.3;
           margin: 0;
           padding: 20px 40px;
           color: #333;
@@ -423,7 +423,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
             <table style="
               width: 100%;
               border-collapse: collapse;
-              font-size: 8px;
+              font-size: 10px;
             ">
               <thead>
                 <tr style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">
@@ -512,21 +512,28 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
       console.log('JPG Export - Element created, children count:', element.children.length);
 
       try {
-        // Wait for rendering
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait for rendering - increased time for high quality
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
         console.log('JPG Export - Starting canvas generation...');
         console.log('JPG Export - Element dimensions:', element.offsetWidth, 'x', element.offsetHeight);
 
-        // Generate screenshot with simpler options first
+        // Generate screenshot with high quality settings
         const canvas = await html2canvas(element, {
           backgroundColor: '#ffffff',
           width: 1123,
           height: 794,
-          scale: 1,
-          logging: true,
+          scale: 2.5, // Increased scale for higher resolution
+          logging: false, // Disable logging for cleaner output
           useCORS: true,
-          allowTaint: true
+          allowTaint: true,
+          foreignObjectRendering: false,
+          removeContainer: true,
+          imageTimeout: 15000,
+          onclone: function(clonedDoc) {
+            // Ensure fonts are rendered properly in clone
+            clonedDoc.body.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          }
         });
 
         console.log('JPG Export - Canvas generated:', canvas.width, 'x', canvas.height);
@@ -537,8 +544,8 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
         const hasContent = imageData.data.some((pixel, i) => i % 4 !== 3 && pixel !== 255); // Check for non-white pixels
         console.log('JPG Export - Canvas has content:', hasContent);
 
-        // Create and download JPG
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        // Create and download JPG with maximum quality
+        const imgData = canvas.toDataURL('image/jpeg', 1.0); // Maximum JPEG quality
         console.log('JPG Export - Data URL length:', imgData.length);
         console.log('JPG Export - Data URL start:', imgData.substring(0, 50));
         const link = document.createElement('a');
