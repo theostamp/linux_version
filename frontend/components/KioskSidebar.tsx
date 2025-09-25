@@ -9,6 +9,12 @@ interface WeatherData {
   temperature: number;
   weathercode: number;
   description: string;
+  forecast?: Array<{
+    date: string;
+    temperature_max: number;
+    temperature_min: number;
+    weathercode: number;
+  }>;
 }
 
 interface AdvertisingBanner {
@@ -256,20 +262,49 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
               <p className="text-xs sm:text-sm text-blue-200 mt-2">Φόρτωση καιρού...</p>
             </div>
           ) : weather ? (
-            <div className="text-center">
-              <div className="flex justify-center mb-2 sm:mb-3 lg:mb-4">
-                {getWeatherIcon(weather.weathercode)}
+            <div className="space-y-3">
+              {/* Current Weather */}
+              <div className="text-center">
+                <div className="flex justify-center mb-2">
+                  {getWeatherIcon(weather.weathercode)}
+                </div>
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-1">
+                  {weather.temperature}°C
+                </div>
+                <div className="text-xs sm:text-sm text-blue-200 mb-1">
+                  {weather.description}
+                </div>
+                <div className="flex items-center justify-center text-xs text-blue-300">
+                  <MapPin className="w-3 h-3 mr-1" />
+                  {buildingInfo?.city || 'Αθήνα'}, Ελλάδα
+                </div>
               </div>
-              <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white mb-1 sm:mb-2">
-                {weather.temperature}°C
-              </div>
-              <div className="text-xs sm:text-sm text-blue-200 mb-2 lg:mb-3">
-                {weather.description}
-              </div>
-              <div className="flex items-center justify-center text-xs text-blue-300">
-                <MapPin className="w-3 h-3 mr-1" />
-                {buildingInfo?.city || 'Αθήνα'}, Ελλάδα
-              </div>
+
+              {/* 3-Day Forecast */}
+              {weather.forecast && weather.forecast.length > 0 && (
+                <div className="border-t border-blue-400/30 pt-3">
+                  <div className="text-xs font-semibold text-blue-200 mb-2">Πρόγνωση 3 Ημερών</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {weather.forecast.slice(0, 3).map((day, idx) => (
+                      <div key={idx} className="bg-white/5 rounded p-2 text-center">
+                        <div className="text-xs text-blue-200 mb-1">
+                          {new Date(day.date).toLocaleDateString('el-GR', { weekday: 'short' })}
+                        </div>
+                        <div className="flex justify-center mb-1">
+                          {getWeatherIcon(day.weathercode).type({
+                            ...getWeatherIcon(day.weathercode).props,
+                            className: "w-4 h-4"
+                          })}
+                        </div>
+                        <div className="text-xs text-white">
+                          <span className="text-orange-300">{Math.round(day.temperature_max)}°</span>
+                          <span className="text-blue-300 ml-1">{Math.round(day.temperature_min)}°</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-2 sm:py-3 lg:py-4">

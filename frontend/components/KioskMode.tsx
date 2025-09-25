@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useKeenSlider } from 'keen-slider/react';
-import { Bell, Calendar, Clock, MapPin, Users, Vote, AlertTriangle, Building, ExternalLink, Settings, Phone, Euro, Wrench, FileText, TrendingUp, Globe, Home } from 'lucide-react';
+import { Bell, Calendar, Clock, MapPin, Users, Vote, AlertTriangle, Building, ExternalLink, Settings, Phone, Euro, Wrench, FileText, TrendingUp, Globe, Home, Shield, Flame, Heart, Droplets, UserCheck, DoorOpen, Car, Package } from 'lucide-react';
 import { Announcement, Vote as VoteType, Building as BuildingType } from '@/lib/api';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
@@ -107,6 +107,7 @@ export default function KioskMode({
       spacing: 0,
     },
     renderMode: 'performance',
+    duration: 1000, // Smooth transition duration
     created(s) {
       s.container.addEventListener('mouseenter', () => {
         if (intervalRef.current) clearInterval(intervalRef.current);
@@ -292,94 +293,175 @@ export default function KioskMode({
     return slides;
   };
 
-  // NEW LAYOUT: A modern grid-based dashboard slide
-  const createDashboardGridSlide = () => {
-    const topAnnouncement = announcements.length > 0 ? announcements[0] : null;
-    const topVote = votes.length > 0 ? votes[0] : null;
+  // Dashboard Overview - Main slide with all key information
+  const createDashboardOverviewSlide = () => {
+    const hasContent = announcements.length > 0 || votes.length > 0 ||
+                      financialInfo || maintenanceInfo || projectsInfo;
 
-    // We need at least two items to make a grid meaningful
-    if ([topAnnouncement, topVote, financialInfo, multilingualMessages.length > 0].filter(Boolean).length < 2) {
-      return [];
-    }
+    if (!hasContent) return [];
 
     return [{
-      id: 'dashboard-grid',
+      id: 'dashboard-overview',
       title: 'Επισκόπηση Κτιρίου',
       icon: Home,
       content: (
-        <div className="grid grid-cols-2 grid-rows-2 gap-4 lg:gap-6 h-full">
-          {/* Top-Left: Main Announcement */}
-          <div className="col-span-1 row-span-1 bg-gradient-to-br from-blue-900/40 to-indigo-900/40 backdrop-blur-sm p-4 lg:p-6 rounded-xl border border-blue-500/30 shadow-lg flex flex-col">
-            {topAnnouncement ? (
+        <div className="grid grid-cols-12 grid-rows-6 gap-3 h-full">
+          {/* Top Section - Latest Announcement (spans 7 cols) */}
+          <div className="col-span-7 row-span-3 bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm p-4 rounded-xl border border-slate-600/30 shadow-xl flex flex-col">
+            {announcements.length > 0 ? (
               <>
-                <div className="flex items-center space-x-3 mb-3">
-                  <Bell className="w-5 h-5 lg:w-6 lg:h-6 text-blue-300" />
-                  <h3 className="text-base lg:text-lg font-semibold text-white">Σημαντική Ανακοίνωση</h3>
+                <div className="flex items-center space-x-2 mb-2">
+                  <Bell className="w-5 h-5 text-sky-400" />
+                  <h3 className="text-sm font-semibold text-sky-100">Τελευταία Ανακοίνωση</h3>
                 </div>
-                <h4 className="text-lg lg:text-xl font-bold text-white mb-2 line-clamp-2">{topAnnouncement.title}</h4>
-                <p className="text-xs lg:text-sm opacity-90 text-blue-100 flex-1 line-clamp-4">{topAnnouncement.description}</p>
-                <div className="text-xs opacity-75 mt-2 text-blue-200">
-                  {safeFormatDate(topAnnouncement.created_at, 'dd/MM/yyyy', { locale: el })}
+                <h4 className="text-lg font-bold text-white mb-2 line-clamp-2">{announcements[0].title}</h4>
+                <p className="text-sm text-slate-300 flex-1 line-clamp-3">{announcements[0].description}</p>
+                <div className="text-xs text-slate-400 mt-auto pt-2">
+                  {safeFormatDate(announcements[0].created_at, 'dd/MM/yyyy HH:mm', { locale: el })}
                 </div>
               </>
             ) : (
-              <div className="flex items-center justify-center h-full text-blue-300 opacity-50">
-                <Bell className="w-10 h-10" />
-              </div>
-            )}
-          </div>
-
-          {/* Top-Right: Active Vote */}
-          <div className="col-span-1 row-span-1 bg-gradient-to-br from-green-900/40 to-emerald-900/40 backdrop-blur-sm p-4 lg:p-6 rounded-xl border border-green-500/30 shadow-lg flex flex-col">
-            {topVote ? (
-              <>
-                <div className="flex items-center space-x-3 mb-3">
-                  <Vote className="w-5 h-5 lg:w-6 lg:h-6 text-green-300" />
-                  <h3 className="text-base lg:text-lg font-semibold text-white">Ενεργή Ψηφοφορία</h3>
+              <div className="flex items-center justify-center h-full text-slate-500">
+                <div className="text-center">
+                  <Bell className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-sm">Δεν υπάρχουν ανακοινώσεις</p>
                 </div>
-                <h4 className="text-lg lg:text-xl font-bold text-white mb-2 line-clamp-2">{topVote.title}</h4>
-                <p className="text-xs lg:text-sm opacity-90 text-green-100 flex-1 line-clamp-4">{topVote.description}</p>
-                <div className="text-xs opacity-75 mt-2 text-green-200">
-                  Λήξη: {safeFormatDate(topVote.end_date, 'dd/MM/yyyy', { locale: el })}
-                </div>
-              </>
-            ) : (
-              <div className="flex items-center justify-center h-full text-green-300 opacity-50">
-                <Vote className="w-10 h-10" />
               </div>
             )}
           </div>
 
-          {/* Bottom-Left: Multilingual Messages */}
-          <div className="col-span-1 row-span-1">
-            {multilingualMessages.length > 0 ? (
-              <KioskMultilingualMessageCard messages={multilingualMessages} />
-            ) : (
-              <div className="h-full flex items-center justify-center bg-gradient-to-br from-purple-900/20 to-violet-900/20 rounded-xl border border-purple-500/20 text-purple-300 opacity-50">
-                <Globe className="w-10 h-10" />
-              </div>
-            )}
-          </div>
-
-          {/* Bottom-Right: Financial Info */}
-          <div className="col-span-1 row-span-1 bg-gradient-to-br from-orange-900/40 to-amber-900/40 backdrop-blur-sm p-4 lg:p-6 rounded-xl border border-orange-500/30 shadow-lg flex flex-col justify-center">
+          {/* Top Right - Financial Quick Stats (spans 5 cols) */}
+          <div className="col-span-5 row-span-3 bg-gradient-to-br from-emerald-800/60 to-emerald-900/60 backdrop-blur-sm p-4 rounded-xl border border-emerald-600/30 shadow-xl">
             {financialInfo ? (
               <>
-                <div className="flex items-center space-x-3 mb-3">
-                  <Euro className="w-5 h-5 lg:w-6 lg:h-6 text-orange-300" />
-                  <h3 className="text-base lg:text-lg font-semibold text-white">Οικονομικά</h3>
+                <div className="flex items-center space-x-2 mb-3">
+                  <Euro className="w-5 h-5 text-emerald-400" />
+                  <h3 className="text-sm font-semibold text-emerald-100">Οικονομική Κατάσταση</h3>
                 </div>
-                <div className="text-center">
-                  <p className="text-orange-100 text-sm">Ποσοστό Είσπραξης</p>
-                  <p className="text-3xl lg:text-4xl font-bold text-white my-2">{financialInfo.collection_rate}%</p>
-                  <div className="w-full bg-orange-900/50 rounded-full h-2.5">
-                    <div className="bg-orange-400 h-2.5 rounded-full" style={{ width: `${financialInfo.collection_rate}%` }}></div>
+                <div className="space-y-2">
+                  <div>
+                    <div className="text-xs text-emerald-200">Ποσοστό Είσπραξης</div>
+                    <div className="flex items-center space-x-2">
+                      <div className="text-2xl font-bold text-white">{financialInfo.collection_rate}%</div>
+                      <div className="flex-1 bg-emerald-900/50 rounded-full h-2">
+                        <div className="bg-emerald-400 h-2 rounded-full transition-all"
+                             style={{ width: `${financialInfo.collection_rate}%` }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <div className="text-emerald-200">Εισπραχθέντα</div>
+                      <div className="text-white font-semibold">€{financialInfo.total_collected.toLocaleString()}</div>
+                    </div>
+                    <div>
+                      <div className="text-emerald-200">Εκκρεμότητες</div>
+                      <div className="text-yellow-300 font-semibold">{financialInfo.pending_payments}</div>
+                    </div>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="flex items-center justify-center h-full text-orange-300 opacity-50">
-                <Euro className="w-10 h-10" />
+              <div className="flex items-center justify-center h-full text-emerald-500">
+                <Euro className="w-8 h-8" />
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Left - Active Vote (spans 4 cols) */}
+          <div className="col-span-4 row-span-3 bg-gradient-to-br from-violet-800/60 to-violet-900/60 backdrop-blur-sm p-4 rounded-xl border border-violet-600/30 shadow-xl">
+            {votes.length > 0 ? (
+              <>
+                <div className="flex items-center space-x-2 mb-2">
+                  <Vote className="w-5 h-5 text-violet-400" />
+                  <h3 className="text-sm font-semibold text-violet-100">Ψηφοφορία</h3>
+                </div>
+                <h4 className="text-sm font-bold text-white mb-1 line-clamp-2">{votes[0].title}</h4>
+                <p className="text-xs text-violet-200 line-clamp-2">{votes[0].description}</p>
+                <div className="mt-auto pt-2 space-y-1 text-xs">
+                  <div className="flex justify-between text-violet-300">
+                    <span>Ψήφοι:</span>
+                    <span className="font-semibold">{votes[0].total_votes || 0}</span>
+                  </div>
+                  <div className="text-violet-400">
+                    Λήξη: {safeFormatDate(votes[0].end_date, 'dd/MM', { locale: el })}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full text-violet-500">
+                <Vote className="w-8 h-8" />
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Middle - Maintenance Status (spans 4 cols) */}
+          <div className="col-span-4 row-span-3 bg-gradient-to-br from-amber-800/60 to-amber-900/60 backdrop-blur-sm p-4 rounded-xl border border-amber-600/30 shadow-xl">
+            {maintenanceInfo ? (
+              <>
+                <div className="flex items-center space-x-2 mb-2">
+                  <Wrench className="w-5 h-5 text-amber-400" />
+                  <h3 className="text-sm font-semibold text-amber-100">Συντήρηση</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-amber-900/30 p-2 rounded">
+                    <div className="text-amber-200">Συνεργεία</div>
+                    <div className="text-lg font-bold text-white">{maintenanceInfo.active_contractors}</div>
+                  </div>
+                  <div className="bg-amber-900/30 p-2 rounded">
+                    <div className="text-amber-200">Εκκρεμότητες</div>
+                    <div className="text-lg font-bold text-white">{maintenanceInfo.pending_receipts}</div>
+                  </div>
+                  <div className="bg-amber-900/30 p-2 rounded">
+                    <div className="text-amber-200">Προγραμματισμένα</div>
+                    <div className="text-lg font-bold text-white">{maintenanceInfo.scheduled_maintenance}</div>
+                  </div>
+                  <div className="bg-red-900/30 p-2 rounded">
+                    <div className="text-red-200">Επείγοντα</div>
+                    <div className="text-lg font-bold text-red-300">{maintenanceInfo.urgent_maintenance}</div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full text-amber-500">
+                <Wrench className="w-8 h-8" />
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Right - Projects Summary (spans 4 cols) */}
+          <div className="col-span-4 row-span-3 bg-gradient-to-br from-cyan-800/60 to-cyan-900/60 backdrop-blur-sm p-4 rounded-xl border border-cyan-600/30 shadow-xl">
+            {projectsInfo ? (
+              <>
+                <div className="flex items-center space-x-2 mb-2">
+                  <FileText className="w-5 h-5 text-cyan-400" />
+                  <h3 className="text-sm font-semibold text-cyan-100">Έργα</h3>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-cyan-200">Ενεργά Έργα</span>
+                    <span className="text-white font-bold text-base">{projectsInfo.active_projects}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-cyan-200">Προσφορές</span>
+                    <span className="text-yellow-300 font-bold">{projectsInfo.pending_offers}</span>
+                  </div>
+                  <div className="pt-2 border-t border-cyan-600/30">
+                    <div className="text-xs text-cyan-200">Προϋπολογισμός</div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-white font-semibold">€{((projectsInfo.total_budget - projectsInfo.total_spent) / 1000).toFixed(0)}k</span>
+                      <span className="text-xs text-cyan-300">διαθέσιμα</span>
+                    </div>
+                    <div className="w-full bg-cyan-900/50 rounded-full h-1.5 mt-1">
+                      <div className="bg-cyan-400 h-1.5 rounded-full"
+                           style={{ width: `${100 - Math.round((projectsInfo.total_spent / projectsInfo.total_budget) * 100)}%` }}></div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full text-cyan-500">
+                <FileText className="w-8 h-8" />
               </div>
             )}
           </div>
@@ -621,6 +703,231 @@ export default function KioskMode({
     }];
   };
 
+  // Helper function to create building statistics slide
+  const createBuildingStatisticsSlide = () => {
+    const totalApartments = buildingInfo?.apartments_count || 24;
+    const occupiedApartments = Math.floor(totalApartments * 0.92); // 92% occupancy
+    const parkingSpots = Math.floor(totalApartments * 1.5);
+    const availableParking = Math.floor(parkingSpots * 0.15);
+
+    return [{
+      id: 'building-statistics',
+      title: 'Στατιστικά Κτιρίου',
+      icon: Building,
+      content: (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 h-full">
+          {/* Occupancy Statistics */}
+          <div className="bg-gradient-to-br from-emerald-900/40 to-green-900/40 backdrop-blur-sm p-6 rounded-xl border border-emerald-500/30 shadow-lg">
+            <div className="flex items-center space-x-3 mb-4">
+              <DoorOpen className="w-6 h-6 text-emerald-300" />
+              <h3 className="text-base font-semibold text-white">Διαμερίσματα</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white">{totalApartments}</div>
+                <div className="text-sm text-emerald-200">Σύνολο</div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-emerald-900/30 p-2 rounded text-center">
+                  <div className="text-emerald-300 font-bold">{occupiedApartments}</div>
+                  <div className="text-emerald-100">Κατοικημένα</div>
+                </div>
+                <div className="bg-emerald-900/30 p-2 rounded text-center">
+                  <div className="text-yellow-300 font-bold">{totalApartments - occupiedApartments}</div>
+                  <div className="text-yellow-100">Διαθέσιμα</div>
+                </div>
+              </div>
+              <div className="w-full bg-emerald-900/50 rounded-full h-2">
+                <div className="bg-emerald-400 h-2 rounded-full" style={{ width: `${(occupiedApartments/totalApartments)*100}%` }}></div>
+              </div>
+              <div className="text-xs text-center text-emerald-200">
+                Πληρότητα: {Math.round((occupiedApartments/totalApartments)*100)}%
+              </div>
+            </div>
+          </div>
+
+          {/* Residents Statistics */}
+          <div className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 backdrop-blur-sm p-6 rounded-xl border border-blue-500/30 shadow-lg">
+            <div className="flex items-center space-x-3 mb-4">
+              <UserCheck className="w-6 h-6 text-blue-300" />
+              <h3 className="text-base font-semibold text-white">Κάτοικοι</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white">{occupiedApartments * 3}</div>
+                <div className="text-sm text-blue-200">Εγγεγραμμένοι</div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-blue-900/30 p-2 rounded text-center">
+                  <div className="text-blue-300 font-bold">{Math.floor(occupiedApartments * 3 * 0.6)}</div>
+                  <div className="text-blue-100">Ενήλικες</div>
+                </div>
+                <div className="bg-blue-900/30 p-2 rounded text-center">
+                  <div className="text-cyan-300 font-bold">{Math.floor(occupiedApartments * 3 * 0.4)}</div>
+                  <div className="text-cyan-100">Παιδιά</div>
+                </div>
+              </div>
+              <div className="bg-blue-900/30 p-3 rounded">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-blue-200">Μέσος όρος/διαμ.</span>
+                  <span className="text-white font-bold">3.0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Parking Statistics */}
+          <div className="bg-gradient-to-br from-purple-900/40 to-violet-900/40 backdrop-blur-sm p-6 rounded-xl border border-purple-500/30 shadow-lg">
+            <div className="flex items-center space-x-3 mb-4">
+              <Car className="w-6 h-6 text-purple-300" />
+              <h3 className="text-base font-semibold text-white">Parking</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white">{parkingSpots}</div>
+                <div className="text-sm text-purple-200">Θέσεις</div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-purple-900/30 p-2 rounded text-center">
+                  <div className="text-purple-300 font-bold">{parkingSpots - availableParking}</div>
+                  <div className="text-purple-100">Κατειλημμένες</div>
+                </div>
+                <div className="bg-purple-900/30 p-2 rounded text-center">
+                  <div className="text-green-300 font-bold">{availableParking}</div>
+                  <div className="text-green-100">Διαθέσιμες</div>
+                </div>
+              </div>
+              <div className="bg-purple-900/30 p-3 rounded">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-purple-200">Υπόγειο</span>
+                  <span className="text-white font-bold">-1 & -2</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Storage Statistics */}
+          <div className="bg-gradient-to-br from-amber-900/40 to-orange-900/40 backdrop-blur-sm p-6 rounded-xl border border-amber-500/30 shadow-lg">
+            <div className="flex items-center space-x-3 mb-4">
+              <Package className="w-6 h-6 text-amber-300" />
+              <h3 className="text-base font-semibold text-white">Αποθήκες</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white">{totalApartments}</div>
+                <div className="text-sm text-amber-200">Σύνολο</div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-amber-900/30 p-2 rounded text-center">
+                  <div className="text-amber-300 font-bold">{Math.floor(totalApartments * 0.85)}</div>
+                  <div className="text-amber-100">Χρησιμοποιούνται</div>
+                </div>
+                <div className="bg-amber-900/30 p-2 rounded text-center">
+                  <div className="text-green-300 font-bold">{Math.floor(totalApartments * 0.15)}</div>
+                  <div className="text-green-100">Ελεύθερες</div>
+                </div>
+              </div>
+              <div className="bg-amber-900/30 p-3 rounded">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-amber-200">Μέσο μέγεθος</span>
+                  <span className="text-white font-bold">4m²</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+    }];
+  };
+
+  // Helper function to create emergency contacts slide
+  const createEmergencyContactsSlide = () => {
+    return [{
+      id: 'emergency-contacts',
+      title: 'Τηλέφωνα Έκτακτης Ανάγκης',
+      icon: Shield,
+      content: (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+          {/* Essential Services */}
+          <div className="bg-gradient-to-br from-red-900/40 to-orange-900/40 backdrop-blur-sm p-6 rounded-xl border border-red-500/30 shadow-lg">
+            <div className="flex items-center space-x-4 mb-4">
+              <Shield className="w-8 h-8 text-red-300" />
+              <h3 className="text-xl font-semibold text-white">Υπηρεσίες Έκτακτης Ανάγκης</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-red-900/30 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Flame className="w-5 h-5 text-red-400" />
+                  <span className="text-white">Πυροσβεστική</span>
+                </div>
+                <span className="text-2xl font-bold text-red-300">199</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-red-900/30 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Heart className="w-5 h-5 text-red-400" />
+                  <span className="text-white">ΕΚΑΒ</span>
+                </div>
+                <span className="text-2xl font-bold text-red-300">166</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-red-900/30 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Shield className="w-5 h-5 text-blue-400" />
+                  <span className="text-white">Αστυνομία</span>
+                </div>
+                <span className="text-2xl font-bold text-blue-300">100</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-red-900/30 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Phone className="w-5 h-5 text-green-400" />
+                  <span className="text-white">Ευρωπαϊκός Αριθμός</span>
+                </div>
+                <span className="text-2xl font-bold text-green-300">112</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Building Services */}
+          <div className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 backdrop-blur-sm p-6 rounded-xl border border-blue-500/30 shadow-lg">
+            <div className="flex items-center space-x-4 mb-4">
+              <Building className="w-8 h-8 text-blue-300" />
+              <h3 className="text-xl font-semibold text-white">Υπηρεσίες Κτιρίου</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-blue-900/30 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Wrench className="w-5 h-5 text-yellow-400" />
+                  <span className="text-white">Συντηρητής</span>
+                </div>
+                <span className="text-lg font-bold text-yellow-300">210-1234567</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-blue-900/30 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Droplets className="w-5 h-5 text-cyan-400" />
+                  <span className="text-white">Υδραυλικός</span>
+                </div>
+                <span className="text-lg font-bold text-cyan-300">210-2345678</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-blue-900/30 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Building className="w-5 h-5 text-green-400" />
+                  <span className="text-white">Διαχείριση</span>
+                </div>
+                <span className="text-lg font-bold text-green-300">{buildingInfo?.management_office_phone || '210-5566368'}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-blue-900/30 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Users className="w-5 h-5 text-purple-400" />
+                  <span className="text-white">Εσωτ. Διαχειριστής</span>
+                </div>
+                <span className="text-lg font-bold text-purple-300">{buildingInfo?.internal_manager_phone || '697-1234567'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+    }];
+  };
+
   // Helper function to create projects slides
   const createProjectsSlides = () => {
     if (!projectsInfo) return [];
@@ -698,14 +1005,24 @@ export default function KioskMode({
     }];
   };
 
-  // Create slides with priority: announcements first, then votes, then financial, maintenance, projects, then requests
+  // Create slides with smart ordering:
+  // 1. Dashboard overview (if data exists)
+  // 2. Building statistics (always show)
+  // 3. Emergency contacts (always show)
+  // 4. Important announcements
+  // 5. Active votes
+  // 6. Detailed financial/maintenance/projects (if relevant)
   const slides = [
+    ...createDashboardOverviewSlide(),
+    ...createBuildingStatisticsSlide(),
+    ...createEmergencyContactsSlide(),
     ...createAnnouncementSlides(),
     ...createVoteSlides(),
-    ...createFinancialSlides(),
-    ...createMaintenanceSlides(),
-    ...createProjectsSlides(),
-    ...createRequestSlides(),
+    ...(financialInfo && maintenanceInfo ? [
+      ...createFinancialSlides(),
+      ...createMaintenanceSlides(),
+    ] : []),
+    ...(projectsInfo ? createProjectsSlides() : []),
   ];
 
   return (
@@ -862,7 +1179,7 @@ export default function KioskMode({
         </div>
       )}
 
-      {/* Custom CSS for marquee animation */}
+      {/* Custom CSS for marquee animation and slide transitions */}
       <style jsx>{`
         @keyframes marquee {
           0% { transform: translateX(100%); }
@@ -875,6 +1192,34 @@ export default function KioskMode({
         }
         .animate-marquee:hover {
           animation-play-state: paused;
+        }
+
+        /* Smooth slide transitions */
+        .keen-slider__slide {
+          opacity: 0;
+          transform: scale(0.98);
+          transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+
+        .keen-slider__slide[aria-hidden="false"] {
+          opacity: 1;
+          transform: scale(1);
+        }
+
+        /* Fade effect for slide content */
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .keen-slider__slide[aria-hidden="false"] > div {
+          animation: fadeInUp 0.8s ease-out;
         }
       `}</style>
     </div>

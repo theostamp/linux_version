@@ -32,6 +32,7 @@ import {
   Activity,
   Calculator,
   TestTube2,
+  Monitor,
 } from 'lucide-react';
 
 // Navigation link interface
@@ -125,6 +126,12 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Chat',
         icon: <MessageCircle className="w-4 h-4" />,
         roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+      {
+        href: '/dashboard/kiosk-widgets',
+        label: 'Kiosk Widgets',
+        icon: <Monitor className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
       },
     ]
   },

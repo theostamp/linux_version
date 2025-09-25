@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.10",
+    "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.2.1",
     "@pdf-lib/standard-fonts": "^1.0.0",
     "@radix-ui/react-alert-dialog": "^1.1.15",

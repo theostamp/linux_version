@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePublicInfo } from '@/hooks/usePublicInfo';
 import { useBuildingChange } from '@/hooks/useBuildingChange';
-import KioskMode from '@/components/KioskMode';
-import KioskSidebar from '@/components/KioskSidebar';
+import KioskWidgetRenderer from '@/components/KioskWidgetRenderer';
 import FullPageSpinner from '@/components/FullPageSpinner';
 import { fetchAllBuildingsPublic } from '@/lib/api';
 import { fetchPublicMaintenanceCounters, fetchPublicScheduledMaintenance } from '@/lib/apiPublic';
@@ -150,53 +149,11 @@ export default function KioskPage() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden max-w-full max-h-full">
-      {/* Weather and Advertisement Sidebar - Left Side */}
-      <KioskSidebar buildingInfo={data?.building_info} />
-      
-      {/* Main Kiosk Content - Right Side */}
-      <div className="flex-1 overflow-hidden min-w-0 relative">
-        {/* Loading overlay during building change */}
-        {isChangingBuilding && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white bg-opacity-90 rounded-lg p-6 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-              <p className="text-gray-700 font-medium">Αλλαγή κτιρίου...</p>
-            </div>
-          </div>
-        )}
-        
-        {/* Data loading indicator */}
-        {isFetching && !isChangingBuilding && (
-          <div className="absolute top-4 right-4 z-40">
-            <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm flex items-center space-x-2">
-              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-              <span>Ενημέρωση...</span>
-            </div>
-          </div>
-        )}
-        
-        <KioskMode
-          announcements={data?.announcements ?? []}
-          votes={data?.votes ?? []}
-          buildingInfo={data?.building_info}
-          advertisingBanners={data?.advertising_banners}
-          generalInfo={data?.general_info}
-          financialInfo={data?.financial_info}
-          maintenanceInfo={maintenanceInfo}
-          projectsInfo={{
-            active_projects: 3,
-            pending_offers: 5,
-            active_contracts: 6,
-            total_budget: 125000.00,
-            total_spent: 89000.50,
-          }}
-          onBuildingChange={changeBuilding}
-          isLoading={isLoading}
-          isError={!!error}
-          isFetching={isFetching}
-        />
-      </div>
+    <div className="h-screen w-screen overflow-hidden">
+      <KioskWidgetRenderer
+        selectedBuildingId={selectedBuildingId}
+        onBuildingChange={changeBuilding}
+      />
     </div>
   );
 }
