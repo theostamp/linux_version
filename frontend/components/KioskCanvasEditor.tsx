@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { DndContext, DragEndEvent, DragOverEvent, DragStartEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverEvent, DragStartEvent, closestCenter, PointerSensor, useSensor, useSensors, useDroppable } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -142,6 +142,38 @@ function DraggableWidget({ widget, isInPalette = false, onRemove }: DraggableWid
   );
 }
 
+interface DroppableCellProps {
+  row: number;
+  col: number;
+  children: React.ReactNode;
+  isOccupied: boolean;
+}
+
+function DroppableCell({ row, col, children, isOccupied }: DroppableCellProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `cell-${row}-${col}`,
+    data: { row, col },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`border border-gray-200 rounded text-xs flex items-center justify-center cursor-pointer transition-all relative ${
+        isOccupied
+          ? 'bg-blue-100 border-blue-300'
+          : isOver
+          ? 'bg-green-100 border-green-400 scale-105'
+          : 'bg-white hover:bg-gray-100'
+      }`}
+      style={{ width: CELL_SIZE, height: CELL_SIZE }}
+      data-row={row}
+      data-col={col}
+    >
+      {children}
+    </div>
+  );
+}
+
 interface CanvasGridProps {
   grid: CanvasGridCell[][];
   widgets: KioskWidget[];
@@ -162,43 +194,76 @@ function CanvasGrid({ grid, widgets, onCellClick, onWidgetMove }: CanvasGridProp
 
   return (
     <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-4">
-      <div className="grid gap-1" style={{
-        gridTemplateColumns: `repeat(${GRID_SIZE.cols}, ${CELL_SIZE}px)`,
-        gridTemplateRows: `repeat(${GRID_SIZE.rows}, ${CELL_SIZE}px)`,
-      }}>
-        {Array.from({ length: GRID_SIZE.rows }, (_, row) =>
-          Array.from({ length: GRID_SIZE.cols }, (_, col) => {
-            const widget = getWidgetAtPosition(row, col);
-            const isOccupied = !!widget;
-            const isFirstCell = widget && 
-              widget.gridPosition?.row === row && 
-              widget.gridPosition?.col === col;
+      {/* Column Headers */}
+      <div className="flex mb-1">
+        <div className="w-8"></div> {/* Space for row headers */}
+        {Array.from({ length: GRID_SIZE.cols }, (_, col) => (
+          <div
+            key={`col-header-${col}`}
+            className="text-xs font-semibold text-gray-600 text-center"
+            style={{ width: CELL_SIZE }}
+          >
+            {col + 1}
+          </div>
+        ))}
+      </div>
 
-            return (
-              <div
-                key={`${row}-${col}`}
-                className={`border border-gray-200 rounded text-xs flex items-center justify-center cursor-pointer transition-colors ${
-                  isOccupied 
-                    ? 'bg-blue-100 border-blue-300' 
-                    : 'bg-white hover:bg-gray-100'
-                }`}
-                onClick={() => onCellClick(row, col)}
-                style={{ width: CELL_SIZE, height: CELL_SIZE }}
-              >
-                {isFirstCell && widget && (
-                  <div className="text-center">
-                    <div className="font-medium text-blue-800 truncate px-1">
-                      {widget.name}
+      <div className="flex">
+        {/* Row Headers */}
+        <div>
+          {Array.from({ length: GRID_SIZE.rows }, (_, row) => (
+            <div
+              key={`row-header-${row}`}
+              className="text-xs font-semibold text-gray-600 flex items-center justify-center mr-1"
+              style={{ height: CELL_SIZE }}
+            >
+              {row + 1}
+            </div>
+          ))}
+        </div>
+
+        {/* Grid */}
+        <div className="grid gap-1" style={{
+          gridTemplateColumns: `repeat(${GRID_SIZE.cols}, ${CELL_SIZE}px)`,
+          gridTemplateRows: `repeat(${GRID_SIZE.rows}, ${CELL_SIZE}px)`,
+        }}>
+          {Array.from({ length: GRID_SIZE.rows }, (_, row) =>
+            Array.from({ length: GRID_SIZE.cols }, (_, col) => {
+              const widget = getWidgetAtPosition(row, col);
+              const isOccupied = !!widget;
+              const isFirstCell = widget &&
+                widget.gridPosition?.row === row &&
+                widget.gridPosition?.col === col;
+
+              return (
+                <DroppableCell
+                  key={`${row}-${col}`}
+                  row={row}
+                  col={col}
+                  isOccupied={isOccupied}
+                >
+                  {/* Cell Position Indicator */}
+                  {!isOccupied && (
+                    <div className="absolute top-0.5 left-0.5 text-[9px] text-gray-400">
+                      {row+1},{col+1}
                     </div>
-                    <div className="text-xs text-blue-600">
-                      {widget.gridPosition?.rowSpan}x{widget.gridPosition?.colSpan}
+                  )}
+
+                  {isFirstCell && widget && (
+                    <div className="text-center">
+                      <div className="font-medium text-blue-800 truncate px-1">
+                        {widget.name}
+                      </div>
+                      <div className="text-xs text-blue-600">
+                        {widget.gridPosition?.rowSpan}x{widget.gridPosition?.colSpan}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            );
-          })
-        )}
+                  )}
+                </DroppableCell>
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );
@@ -292,9 +357,11 @@ export default function KioskCanvasEditor({ buildingId }: KioskCanvasEditorProps
     const widgetId = active.id as string;
     const targetId = over.id as string;
 
-    // If dropping on canvas
-    if (targetId.startsWith('canvas-')) {
-      const [_, row, col] = targetId.split('-').map(Number);
+    // If dropping on canvas cell
+    if (targetId.startsWith('cell-')) {
+      const [_, rowStr, colStr] = targetId.split('-');
+      const row = parseInt(rowStr);
+      const col = parseInt(colStr);
       await handleWidgetPlacement(widgetId, row, col);
     }
     // If reordering in palette
@@ -371,6 +438,45 @@ export default function KioskCanvasEditor({ buildingId }: KioskCanvasEditorProps
       gridPosition: undefined
     });
     toast.success('Widget αφαιρέθηκε από το canvas');
+  };
+
+  const handleResizeWidget = async (widgetId: string, newRowSpan: number, newColSpan: number) => {
+    const widget = config.widgets.find(w => w.id === widgetId);
+    if (!widget || !widget.gridPosition) return;
+
+    // Validate new size
+    if (newRowSpan < 1 || newColSpan < 1) {
+      toast.error('Το μέγεθος πρέπει να είναι τουλάχιστον 1x1');
+      return;
+    }
+
+    // Check if new size fits in grid
+    if (widget.gridPosition.row + newRowSpan > gridSize.rows ||
+        widget.gridPosition.col + newColSpan > gridSize.cols) {
+      toast.error('Το widget δεν χωράει στο grid με αυτό το μέγεθος');
+      return;
+    }
+
+    // Check if new size overlaps with other widgets
+    for (let r = widget.gridPosition.row; r < widget.gridPosition.row + newRowSpan; r++) {
+      for (let c = widget.gridPosition.col; c < widget.gridPosition.col + newColSpan; c++) {
+        if (grid[r] && grid[r][c] && grid[r][c].occupied && grid[r][c].widgetId !== widgetId) {
+          toast.error('Το νέο μέγεθος επικαλύπτει άλλο widget');
+          return;
+        }
+      }
+    }
+
+    // Update widget size
+    await updateWidgetSettings(widgetId, {
+      gridPosition: {
+        ...widget.gridPosition,
+        rowSpan: newRowSpan,
+        colSpan: newColSpan,
+      }
+    });
+
+    toast.success('Το μέγεθος του widget ενημερώθηκε');
   };
 
   const handleGridSizeChange = (newSize: { rows: number; cols: number }) => {
@@ -522,26 +628,27 @@ export default function KioskCanvasEditor({ buildingId }: KioskCanvasEditorProps
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Widget Palette */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Palette className="w-5 h-5 mr-2" />
-                Widget Palette
-              </CardTitle>
-              <CardDescription>
-                Σύρετε widgets στο canvas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-              >
+      {/* Single DndContext for all drag and drop */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Widget Palette */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Palette className="w-5 h-5 mr-2" />
+                  Widget Palette
+                </CardTitle>
+                <CardDescription>
+                  Σύρετε widgets στο canvas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                 <SortableContext
                   items={availableWidgets.map(w => w.id)}
                   strategy={verticalListSortingStrategy}
@@ -562,36 +669,29 @@ export default function KioskCanvasEditor({ buildingId }: KioskCanvasEditorProps
                     )}
                   </div>
                 </SortableContext>
-              </DndContext>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* Canvas */}
-        <div className="lg:col-span-3">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Monitor className="w-5 h-5 mr-2" />
-                Kiosk Canvas
-              </CardTitle>
-              <CardDescription>
-                {selectedWidget ? (
-                  <span className="text-blue-600">
-                    Επιλέξτε θέση για: {selectedWidget.name}
-                  </span>
-                ) : (
-                  'Κάντε κλικ σε ένα widget από την παλέτα και μετά σε μια θέση στο canvas'
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-              >
+          {/* Canvas */}
+          <div className="lg:col-span-3">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Monitor className="w-5 h-5 mr-2" />
+                  Kiosk Canvas
+                </CardTitle>
+                <CardDescription>
+                  {selectedWidget ? (
+                    <span className="text-blue-600">
+                      Επιλέξτε θέση για: {selectedWidget.name}
+                    </span>
+                  ) : (
+                    'Σύρετε widgets από την παλέτα στο canvas'
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-4">
                   {/* Canvas Grid */}
                   <CanvasGrid
@@ -607,28 +707,97 @@ export default function KioskCanvasEditor({ buildingId }: KioskCanvasEditorProps
                       <h3 className="text-sm font-medium text-gray-700 mb-2">
                         Τοποθετημένα Widgets ({placedWidgets.length})
                       </h3>
-                      <SortableContext
-                        items={placedWidgets.map(w => w.id)}
-                        strategy={rectSortingStrategy}
-                      >
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                          {placedWidgets.map((widget) => (
-                            <DraggableWidget
-                              key={widget.id}
-                              widget={widget}
-                              onRemove={handleRemoveWidget}
-                            />
-                          ))}
-                        </div>
-                      </SortableContext>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {placedWidgets.map((widget) => (
+                          <div
+                            key={widget.id}
+                            className="bg-white border rounded-lg p-3 shadow-sm"
+                          >
+                            <div className="flex flex-col space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <h4 className="text-sm font-medium text-gray-900">
+                                    {widget.name}
+                                  </h4>
+                                  <p className="text-xs text-gray-600">
+                                    Pos: ({(widget.gridPosition?.row ?? 0) + 1}, {(widget.gridPosition?.col ?? 0) + 1})
+                                    Size: {widget.gridPosition?.rowSpan ?? 2}x{widget.gridPosition?.colSpan ?? 2}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveWidget(widget.id)}
+                                  className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              {/* Size Controls */}
+                              <div className="flex items-center space-x-2 text-xs">
+                                <span className="text-gray-600">Size:</span>
+                                <div className="flex items-center space-x-1">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-5 w-5 p-0"
+                                    onClick={() => handleResizeWidget(widget.id,
+                                      (widget.gridPosition?.rowSpan ?? 2) - 1,
+                                      widget.gridPosition?.colSpan ?? 2)}
+                                    disabled={(widget.gridPosition?.rowSpan ?? 2) <= 1}
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </Button>
+                                  <span className="w-4 text-center">{widget.gridPosition?.rowSpan ?? 2}</span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-5 w-5 p-0"
+                                    onClick={() => handleResizeWidget(widget.id,
+                                      (widget.gridPosition?.rowSpan ?? 2) + 1,
+                                      widget.gridPosition?.colSpan ?? 2)}
+                                    disabled={(widget.gridPosition?.row ?? 0) + (widget.gridPosition?.rowSpan ?? 2) >= gridSize.rows}
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </Button>
+                                  <span className="text-gray-600 mx-1">x</span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-5 w-5 p-0"
+                                    onClick={() => handleResizeWidget(widget.id,
+                                      widget.gridPosition?.rowSpan ?? 2,
+                                      (widget.gridPosition?.colSpan ?? 2) - 1)}
+                                    disabled={(widget.gridPosition?.colSpan ?? 2) <= 1}
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </Button>
+                                  <span className="w-4 text-center">{widget.gridPosition?.colSpan ?? 2}</span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-5 w-5 p-0"
+                                    onClick={() => handleResizeWidget(widget.id,
+                                      widget.gridPosition?.rowSpan ?? 2,
+                                      (widget.gridPosition?.colSpan ?? 2) + 1)}
+                                    disabled={(widget.gridPosition?.col ?? 0) + (widget.gridPosition?.colSpan ?? 2) >= gridSize.cols}
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
-              </DndContext>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      </DndContext>
 
       {/* Preview Mode */}
       {previewMode && (

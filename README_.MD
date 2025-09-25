@@ -102,6 +102,38 @@ find . -name "*.sh" -type f | grep -v ".venv" | grep -v "node_modules" | xargs c
 
 #### 🔥 **Σημερινές Αλλαγές (Detailed Implementation)**
 
+### 🎨 **Kiosk Mode Improvements** - MAJOR UPDATE (January 2025)
+
+#### 📺 **Enhanced Kiosk Display System**
+- **Emergency Contacts Slide**: Τηλέφωνα έκτακτης ανάγκης (199, 166, 100, 112) και κτιρίου
+- **3-Day Weather Forecast**: Ενημερωμένο widget με πρόγνωση 3 ημερών και min/max temps
+- **Building Statistics Dashboard**: Πλήρη στατιστικά κτιρίου (διαμερίσματα, κάτοικοι, parking, αποθήκες)
+- **Smooth Animations**: Fade-in/out transitions και scale effects μεταξύ slides
+
+#### 🎯 **Kiosk Canvas Editor Fixes** - FULLY FUNCTIONAL
+- **Grid Numbering System**:
+  - Προστέθηκαν row/column headers (1-8, 1-12)
+  - Cell position indicators (π.χ. "1,1" σε κάθε κενό κελί)
+  - Καθαρή οπτική αναπαράσταση του grid
+
+- **Drag & Drop Fixed**:
+  - Σωστή υλοποίηση με `@dnd-kit/core`
+  - DroppableCell component για κάθε κελί
+  - Visual feedback (πράσινο highlight) κατά το hover
+  - Ενιαίο DndContext για όλο το interface
+
+- **Widget Resize Controls**:
+  - Κουμπιά +/- για row/column sizing
+  - Validation για grid boundaries και overlaps
+  - Real-time size display (π.χ. "2x2")
+  - Auto-disable στα όρια του grid
+
+#### 🛠️ **Technical Improvements**
+- **KioskCanvasEditor.tsx**: Complete refactor με proper DnD implementation
+- **KioskMode.tsx**: Προσθήκη νέων slides και βελτιωμένα animations
+- **KioskSidebar.tsx**: Enhanced weather widget με forecast functionality
+- **Type Safety**: Fixed all TypeScript errors και warnings
+
 **Frontend Changes:**
 - ✅ `ServicePackageModal.tsx`: Πλήρης rebuild με service selector interface
 - ✅ `checkbox.tsx`: Custom checkbox component (καινούργιο αρχείο)
@@ -481,7 +513,7 @@ git commit -m "διορθωσεις οικονομικων ερ"
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "kiosk evolution 5 "
+git commit -m "kiosk evolution 6 "
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
