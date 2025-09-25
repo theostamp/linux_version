@@ -85,37 +85,37 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
           <title>Φύλλο Κοινοχρήστων - ${selectedMonth}</title>
           <style>
             @page {
-              size: A4;
-              margin: 10mm;
+              size: A4 landscape;
+              margin: 8mm;
             }
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              font-size: 11px;
-              line-height: 1.3;
+              font-size: 10px;
+              line-height: 1.2;
               margin: 0;
               padding: 0;
               color: #333;
             }
             .container { max-width: 100%; }
-            .header { margin-bottom: 10px; }
+            .header { margin-bottom: 8px; }
             .management-info {
               display: flex;
               align-items: center;
-              gap: 10px;
-              margin-bottom: 5px;
-              padding: 6px 8px;
+              gap: 8px;
+              margin-bottom: 4px;
+              padding: 4px 6px;
               background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
               border: 1px solid #0284c7;
-              border-radius: 4px;
+              border-radius: 3px;
             }
             .management-info h2 {
               color: #0284c7;
-              font-size: 14px;
+              font-size: 12px;
               font-weight: bold;
               margin: 0;
             }
             .management-info .contact {
-              font-size: 9px;
+              font-size: 8px;
               color: #475569;
               margin: 0;
             }
@@ -123,33 +123,33 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
               display: flex;
               align-items: center;
               justify-content: space-between;
-              margin: 8px 0;
+              margin: 6px 0;
             }
             .title {
-              font-size: 16px;
+              font-size: 14px;
               font-weight: bold;
               color: #1f2937;
             }
             .badge {
               background: #dbeafe;
               color: #1d4ed8;
-              padding: 4px 8px;
-              border-radius: 4px;
-              font-size: 12px;
+              padding: 3px 6px;
+              border-radius: 3px;
+              font-size: 10px;
               font-weight: bold;
               border: 1px solid #3b82f6;
             }
             .content-grid {
               display: grid;
-              grid-template-columns: 200px 1fr 180px;
-              gap: 8px;
+              grid-template-columns: 260px 1fr 200px;
+              gap: 12px;
               margin-bottom: 8px;
             }
             .info-card {
-              padding: 8px;
-              border-radius: 4px;
+              padding: 6px;
+              border-radius: 3px;
               border: 1px solid;
-              margin-bottom: 6px;
+              margin-bottom: 4px;
             }
             .card-building {
               background: linear-gradient(135deg, #eff6ff, #dbeafe);
@@ -168,143 +168,143 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
               border-color: #22c55e;
             }
             .card-title {
-              font-size: 9px;
+              font-size: 8px;
               font-weight: bold;
-              margin-bottom: 2px;
+              margin-bottom: 1px;
               display: flex;
               align-items: center;
-              gap: 3px;
+              gap: 2px;
             }
             .card-content {
-              font-size: 10px;
+              font-size: 9px;
               font-weight: 600;
               margin: 1px 0;
             }
             .card-subtitle {
-              font-size: 8px;
+              font-size: 7px;
               margin: 1px 0;
             }
             .analysis-section {
               background: linear-gradient(135deg, #f9fafb, #f3f4f6);
               border: 1px solid #d1d5db;
-              border-radius: 4px;
-              padding: 8px;
+              border-radius: 3px;
+              padding: 6px;
             }
             .analysis-title {
-              font-size: 10px;
+              font-size: 9px;
               font-weight: bold;
               text-align: center;
-              margin-bottom: 6px;
+              margin-bottom: 4px;
               color: #374151;
             }
             .expense-item {
               display: flex;
               justify-content: space-between;
               align-items: center;
-              padding: 4px 6px;
+              padding: 3px 4px;
               background: white;
               border: 1px solid #e5e7eb;
               border-radius: 2px;
-              margin-bottom: 2px;
+              margin-bottom: 1px;
             }
             .expense-item .number {
               font-weight: 500;
               color: #6b7280;
-              font-size: 9px;
-              width: 10px;
+              font-size: 8px;
+              width: 8px;
             }
             .expense-item .label {
               font-weight: 600;
               color: #374151;
-              font-size: 9px;
+              font-size: 8px;
               flex: 1;
-              margin-left: 6px;
+              margin-left: 4px;
             }
             .expense-item .amount {
               font-weight: bold;
               color: #2563eb;
-              font-size: 9px;
+              font-size: 8px;
             }
             .total-item {
               background: #dbeafe !important;
               border-color: #3b82f6 !important;
-              padding: 6px !important;
+              padding: 4px !important;
             }
             .total-item .number { font-weight: bold; color: #1d4ed8; }
             .total-item .label { font-weight: bold; color: #1e40af; }
-            .total-item .amount { font-size: 11px; color: #1d4ed8; }
+            .total-item .amount { font-size: 9px; color: #1d4ed8; }
             .notes-section {
               background: linear-gradient(135deg, #fffbeb, #fef3c7);
               border: 1px solid #f59e0b;
-              border-radius: 4px;
-              padding: 8px;
+              border-radius: 3px;
+              padding: 6px;
             }
             .notes-title {
-              font-size: 9px;
+              font-size: 8px;
               font-weight: bold;
               text-align: center;
-              margin-bottom: 4px;
+              margin-bottom: 3px;
               color: #92400e;
             }
             .notes-content {
               background: white;
               border: 1px solid #fbbf24;
               border-radius: 2px;
-              padding: 6px;
+              padding: 4px;
               text-align: center;
             }
             .notes-main {
-              font-size: 9px;
+              font-size: 8px;
               font-weight: 500;
               color: #92400e;
               margin: 0;
             }
             .notes-sub {
-              font-size: 8px;
+              font-size: 7px;
               color: #a16207;
-              margin: 2px 0 0 0;
+              margin: 1px 0 0 0;
             }
             .table-section {
-              margin-top: 8px;
+              margin-top: 6px;
               border: 1px solid #d1d5db;
-              border-radius: 4px;
+              border-radius: 3px;
               overflow: hidden;
             }
             .table-header {
               background: #f3f4f6;
-              padding: 6px 8px;
+              padding: 4px 6px;
               border-bottom: 1px solid #d1d5db;
             }
             .table-header h3 {
               font-weight: bold;
               color: #374151;
               margin: 0;
-              font-size: 11px;
+              font-size: 9px;
             }
             .table-header p {
-              font-size: 8px;
+              font-size: 7px;
               color: #6b7280;
-              margin: 2px 0 0 0;
+              margin: 1px 0 0 0;
             }
             table {
               width: 100%;
               border-collapse: collapse;
-              font-size: 8px;
+              font-size: 7px;
             }
             th {
               background: #f9fafb;
-              padding: 4px 3px;
+              padding: 3px 2px;
               text-align: center;
               font-weight: bold;
               color: #374151;
               border: 1px solid #e5e7eb;
-              font-size: 7px;
+              font-size: 6px;
             }
             td {
-              padding: 3px 4px;
+              padding: 2px 3px;
               text-align: center;
               border: 1px solid #e5e7eb;
-              font-size: 7px;
+              font-size: 6px;
             }
             tr:nth-child(even) { background: #f9fafb; }
             .text-left { text-align: left !important; }
@@ -468,7 +468,7 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
     });
     const imgData = canvas.toDataURL('image/png');
 
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdf = new jsPDF('l', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
