@@ -69,38 +69,35 @@ export function useKioskWidgets(buildingId?: number) {
       console.log('✅ Config saved to localStorage:', storageKey);
     }
 
-    // For now, skip API call since endpoint doesn't exist yet
-    // Later we can add the API call here when backend is ready
-    /*
-    if (!buildingId) {
-      return true;
-    }
+    // Also save to API if buildingId is provided
+    if (buildingId) {
+      try {
+        const response = await fetch(`/api/kiosk/widgets/config`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            building_id: buildingId,
+            config: newConfig,
+          }),
+        });
 
-    try {
-      const response = await fetch(`/api/kiosk/widgets/config`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          building_id: buildingId,
-          config: newConfig,
-        }),
-      });
-
-      if (response.ok) {
-        return true;
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Αποτυχία αποθήκευσης ρυθμίσεων');
+        if (response.ok) {
+          console.log('✅ Config saved to API successfully');
+          return true;
+        } else {
+          const errorData = await response.json();
+          console.error('❌ API save failed:', errorData);
+          setError(errorData.message || 'Αποτυχία αποθήκευσης ρυθμίσεων');
+          return false;
+        }
+      } catch (err) {
+        console.error('Failed to save widget config to API:', err);
+        setError('Αποτυχία αποθήκευσης ρυθμίσεων');
         return false;
       }
-    } catch (err) {
-      console.error('Failed to save widget config:', err);
-      setError('Αποτυχία αποθήκευσης ρυθμίσεων');
-      return false;
     }
-    */
 
     return true;
   }, [buildingId]);
@@ -151,12 +148,10 @@ export function useKioskWidgets(buildingId?: number) {
     console.log('📝 New config after update:', newConfig);
     setConfig(newConfig); // Update local state immediately for better UX
 
-    // For now, skip API call since endpoint doesn't exist yet
-    // const success = await saveConfig(newConfig);
-    // return success;
-
-    return true; // Return success for now
-  }, [config]);
+    // Save the updated config
+    const success = await saveConfig(newConfig);
+    return success;
+  }, [config, saveConfig]);
 
   // Update global settings
   const updateGlobalSettings = useCallback(async (settings: Partial<WidgetConfig['settings']>) => {

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePublicInfo } from '@/hooks/usePublicInfo';
 import { useBuildingChange } from '@/hooks/useBuildingChange';
 import KioskWidgetRenderer from '@/components/KioskWidgetRenderer';
+import KioskCanvasRenderer from '@/components/KioskCanvasRenderer';
 import FullPageSpinner from '@/components/FullPageSpinner';
 import { fetchAllBuildingsPublic } from '@/lib/api';
 import { fetchPublicMaintenanceCounters, fetchPublicScheduledMaintenance } from '@/lib/apiPublic';
@@ -13,6 +14,7 @@ export default function KioskPage() {
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
   const [buildings, setBuildings] = useState<any[]>([]);
   const [isLoadingBuildings, setIsLoadingBuildings] = useState(true);
+  const [useCanvasMode, setUseCanvasMode] = useState(false);
   const [maintenanceInfo, setMaintenanceInfo] = useState({
     active_contractors: 0,
     pending_receipts: 0,
@@ -34,6 +36,21 @@ export default function KioskPage() {
     },
     showToast: false // Disable toast notifications for kiosk mode
   });
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Toggle canvas mode with Ctrl+Alt+C
+      if (event.ctrlKey && event.altKey && event.key === 'c') {
+        event.preventDefault();
+        setUseCanvasMode(!useCanvasMode);
+        console.log('🎨 Canvas mode toggled:', !useCanvasMode);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [useCanvasMode]);
 
   // Fetch maintenance info when building changes
   useEffect(() => {
@@ -150,10 +167,17 @@ export default function KioskPage() {
 
   return (
     <div className="h-screen w-screen overflow-hidden">
-      <KioskWidgetRenderer
-        selectedBuildingId={selectedBuildingId}
-        onBuildingChange={changeBuilding}
-      />
+      {useCanvasMode ? (
+        <KioskCanvasRenderer
+          selectedBuildingId={selectedBuildingId}
+          onBuildingChange={changeBuilding}
+        />
+      ) : (
+        <KioskWidgetRenderer
+          selectedBuildingId={selectedBuildingId}
+          onBuildingChange={changeBuilding}
+        />
+      )}
     </div>
   );
 }
