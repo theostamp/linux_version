@@ -1259,7 +1259,45 @@ class FinancialDashboardService:
             if management_fees_share > 0:
                 print(f"💰 Management fees from expenses for apt {apartment.number}: €{management_fees_share}")
         
-        historical_balance = total_charges - total_payments
+        # ΔΙΟΡΘΩΣΗ: Προσθήκη αποθεματικού από προηγούμενους μήνες
+        # Για τον υπολογισμό των "Παλαιότερων Οφειλών", πρέπει να συμπεριλάβουμε
+        # το αποθεματικό που συλλέχθηκε στους προηγούμενους μήνες
+        reserve_fund_from_previous_months = Decimal('0.00')
+        
+        if (self.building.reserve_fund_goal and 
+            self.building.reserve_fund_duration_months and
+            self.building.reserve_fund_start_date):
+            
+            monthly_reserve_target = self.building.reserve_fund_goal / self.building.reserve_fund_duration_months
+            
+            # Υπολογισμός αποθεματικού για κάθε μήνα πριν από τον επιλεγμένο μήνα
+            current_date = self.building.reserve_fund_start_date
+            
+            while current_date < month_start:
+                # Έλεγχος αν ο μήνας είναι εντός της περιόδου συλλογής αποθεματικού
+                if (current_date >= self.building.reserve_fund_start_date and
+                    (not self.building.reserve_fund_target_date or current_date <= self.building.reserve_fund_target_date)):
+                    
+                    # Υπολογισμός μεριδίου διαμερίσματος από το αποθεματικό αυτού του μήνα
+                    total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
+                        total=Sum('participation_mills'))['total'] or 1000
+                    
+                    if total_mills > 0:
+                        apartment_reserve_share = (monthly_reserve_target * apartment.participation_mills) / total_mills
+                        reserve_fund_from_previous_months += apartment_reserve_share
+                
+                # Μετακίνηση στον επόμενο μήνα
+                if current_date.month == 12:
+                    current_date = current_date.replace(year=current_date.year + 1, month=1)
+                else:
+                    current_date = current_date.replace(month=current_date.month + 1)
+        
+        # Συνολικό ιστορικό υπόλοιπο = χρεώσεις + αποθεματικό προηγούμενων μηνών - πληρωμές
+        historical_balance = total_charges + reserve_fund_from_previous_months - total_payments
+        
+        # Debug output
+        if reserve_fund_from_previous_months > 0:
+            print(f"💰 Reserve fund from previous months for apt {apartment.number}: €{reserve_fund_from_previous_months}")
         
         return historical_balance
     
