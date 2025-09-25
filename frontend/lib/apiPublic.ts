@@ -54,7 +54,7 @@ export async function fetchPublicScheduledMaintenance(params: { building: number
   if (params.status) search.append('status', params.status);
   if (params.ordering) search.append('ordering', params.ordering);
 
-  const url = `/maintenance/public/scheduled/${search.toString() ? `?${search.toString()}` : ''}`;
+  const url = `/maintenance/public/scheduled/?${search.toString()}`;
   const resp = await apiPublic.get(url);
   const data = resp.data;
   return Array.isArray(data) ? data : data.results ?? [];

@@ -86,7 +86,7 @@ export default function KioskWidgetRenderer({
         try {
           const [counters, scheduled] = await Promise.all([
             fetchPublicMaintenanceCounters(selectedBuildingId),
-            fetchPublicScheduledMaintenance(selectedBuildingId)
+            fetchPublicScheduledMaintenance({ building: selectedBuildingId })
           ]);
           
           setMaintenanceInfo({
