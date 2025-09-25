@@ -381,6 +381,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
         managementOfficePhone: props.managementOfficePhone,
         managementOfficeAddress: props.managementOfficeAddress,
         managementOfficeLogo: props.managementOfficeLogo,
+        selectedMonth,
         expenseBreakdown,
         reserveFundInfo,
         managementFeeInfo,
