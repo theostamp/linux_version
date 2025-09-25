@@ -1559,13 +1559,14 @@ export async function fetchApartmentsWithFinancialData(buildingId: number, month
   console.log('[API CALL] Attempting to fetch apartments with financial data:', buildingId, 'month:', month);
   
   try {
-    // Try the optimized endpoint first
+    // Use the apartment_balances endpoint which has expense_share data
     const params = new URLSearchParams();
+    params.append('building_id', buildingId.toString());
     if (month) {
       params.append('month', month);
     }
     const queryString = params.toString();
-    const url = `/financial/building/${buildingId}/apartments-summary/${queryString ? `?${queryString}` : ''}`;
+    const url = `/financial/dashboard/apartment_balances/?${queryString}`;
     
     const { data } = await makeRequestWithRetry({
       method: 'get',
@@ -1579,7 +1580,7 @@ export async function fetchApartmentsWithFinancialData(buildingId: number, month
       sampleData: Array.isArray(data) && data.length > 0 ? data[0] : 'No data'
     });
     
-    const result = data.results || data || [];
+    const result = data.apartments || data || [];
     console.log('[API CALL] Processed result:', {
       resultType: typeof result,
       isArray: Array.isArray(result),
