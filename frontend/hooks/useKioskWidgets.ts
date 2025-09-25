@@ -10,24 +10,42 @@ export function useKioskWidgets(buildingId?: number) {
 
   // Load widget configuration
   const loadConfig = useCallback(async () => {
-    if (!buildingId) {
-      setConfig(DEFAULT_WIDGET_CONFIG);
-      setIsLoading(false);
-      return;
-    }
-
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await fetch(`/api/kiosk/widgets/config?building_id=${buildingId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setConfig(data);
-      } else {
-        // If no config exists, use default
-        setConfig(DEFAULT_WIDGET_CONFIG);
+
+      // Try to load from localStorage first
+      if (typeof window !== 'undefined') {
+        const storageKey = buildingId ? `kiosk_config_${buildingId}` : 'kiosk_config_default';
+        const savedConfig = localStorage.getItem(storageKey);
+
+        if (savedConfig) {
+          try {
+            const parsedConfig = JSON.parse(savedConfig);
+            console.log('📂 Loaded config from localStorage:', parsedConfig);
+            setConfig(parsedConfig);
+            setIsLoading(false);
+            return;
+          } catch (e) {
+            console.error('Failed to parse saved config:', e);
+          }
+        }
       }
+
+      // If no saved config, use default
+      console.log('📦 Using default config');
+      setConfig(DEFAULT_WIDGET_CONFIG);
+
+      // Later we can add API call here when backend is ready
+      /*
+      if (buildingId) {
+        const response = await fetch(`/api/kiosk/widgets/config?building_id=${buildingId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setConfig(data);
+        }
+      }
+      */
     } catch (err) {
       console.error('Failed to load widget config:', err);
       setError('Αποτυχία φόρτωσης ρυθμίσεων widgets');
@@ -39,14 +57,26 @@ export function useKioskWidgets(buildingId?: number) {
 
   // Save widget configuration
   const saveConfig = useCallback(async (newConfig: WidgetConfig) => {
+    console.log('💾 Saving config:', newConfig);
+
+    // Update local state
+    setConfig(newConfig);
+
+    // Store in localStorage for persistence
+    if (typeof window !== 'undefined') {
+      const storageKey = buildingId ? `kiosk_config_${buildingId}` : 'kiosk_config_default';
+      localStorage.setItem(storageKey, JSON.stringify(newConfig));
+      console.log('✅ Config saved to localStorage:', storageKey);
+    }
+
+    // For now, skip API call since endpoint doesn't exist yet
+    // Later we can add the API call here when backend is ready
+    /*
     if (!buildingId) {
-      setConfig(newConfig);
-      return;
+      return true;
     }
 
     try {
-      setError(null);
-      
       const response = await fetch(`/api/kiosk/widgets/config`, {
         method: 'POST',
         headers: {
@@ -59,7 +89,6 @@ export function useKioskWidgets(buildingId?: number) {
       });
 
       if (response.ok) {
-        setConfig(newConfig);
         return true;
       } else {
         const errorData = await response.json();
@@ -71,6 +100,9 @@ export function useKioskWidgets(buildingId?: number) {
       setError('Αποτυχία αποθήκευσης ρυθμίσεων');
       return false;
     }
+    */
+
+    return true;
   }, [buildingId]);
 
   // Update widget enabled state
@@ -100,17 +132,31 @@ export function useKioskWidgets(buildingId?: number) {
   }, [config, saveConfig]);
 
   // Update widget settings
-  const updateWidgetSettings = useCallback(async (widgetId: string, settings: Record<string, any>) => {
+  const updateWidgetSettings = useCallback(async (widgetId: string, updates: Record<string, any>) => {
+    console.log('🔧 Updating widget settings:', { widgetId, updates });
+
     const newConfig = {
       ...config,
       widgets: config.widgets.map(widget =>
-        widget.id === widgetId ? { ...widget, settings: { ...widget.settings, ...settings } } : widget
+        widget.id === widgetId
+          ? {
+              ...widget,
+              ...updates,  // Apply updates directly to widget (for gridPosition, etc.)
+              settings: updates.settings ? { ...widget.settings, ...updates.settings } : widget.settings
+            }
+          : widget
       ),
     };
-    
-    const success = await saveConfig(newConfig);
-    return success;
-  }, [config, saveConfig]);
+
+    console.log('📝 New config after update:', newConfig);
+    setConfig(newConfig); // Update local state immediately for better UX
+
+    // For now, skip API call since endpoint doesn't exist yet
+    // const success = await saveConfig(newConfig);
+    // return success;
+
+    return true; // Return success for now
+  }, [config]);
 
   // Update global settings
   const updateGlobalSettings = useCallback(async (settings: Partial<WidgetConfig['settings']>) => {

@@ -513,7 +513,7 @@ git commit -m "διορθωσεις οικονομικων ερ"
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "kiosk evolution 8"
+git commit -m "kiosk evolution 9"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

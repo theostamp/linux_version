@@ -342,17 +342,23 @@ export default function KioskCanvasEditor({ buildingId }: KioskCanvasEditorProps
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
+    console.log('🎯 Drag Start:', active.id);
     const widget = config.widgets.find(w => w.id === active.id);
     if (widget) {
+      console.log('📦 Selected Widget:', widget);
       setSelectedWidget(widget);
     }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    console.log('🎯 Drag End:', { activeId: active.id, overId: over?.id });
     setSelectedWidget(null);
 
-    if (!over) return;
+    if (!over) {
+      console.log('❌ No drop target');
+      return;
+    }
 
     const widgetId = active.id as string;
     const targetId = over.id as string;
@@ -362,6 +368,7 @@ export default function KioskCanvasEditor({ buildingId }: KioskCanvasEditorProps
       const [_, rowStr, colStr] = targetId.split('-');
       const row = parseInt(rowStr);
       const col = parseInt(colStr);
+      console.log('📍 Dropping on cell:', { row, col });
       await handleWidgetPlacement(widgetId, row, col);
     }
     // If reordering in palette
@@ -379,12 +386,17 @@ export default function KioskCanvasEditor({ buildingId }: KioskCanvasEditorProps
   };
 
   const handleWidgetPlacement = async (widgetId: string, row: number, col: number) => {
+    console.log('🎨 Placing widget:', { widgetId, row, col });
     const widget = config.widgets.find(w => w.id === widgetId);
-    if (!widget) return;
+    if (!widget) {
+      console.error('❌ Widget not found:', widgetId);
+      return;
+    }
 
     // Check if position is available
     const canPlace = checkPositionAvailability(row, col, widget);
     if (!canPlace) {
+      console.log('❌ Position not available');
       toast.error('Η θέση δεν είναι διαθέσιμη');
       return;
     }
@@ -393,17 +405,24 @@ export default function KioskCanvasEditor({ buildingId }: KioskCanvasEditorProps
     const rowSpan = widget.gridPosition?.rowSpan || 2;
     const colSpan = widget.gridPosition?.colSpan || 2;
 
-    // Update widget position
-    await updateWidgetSettings(widgetId, {
-      gridPosition: {
-        row,
-        col,
-        rowSpan,
-        colSpan,
-      }
-    });
+    console.log('📐 Widget size:', { rowSpan, colSpan });
 
-    toast.success('Widget τοποθετήθηκε επιτυχώς');
+    // Update widget position
+    try {
+      await updateWidgetSettings(widgetId, {
+        gridPosition: {
+          row,
+          col,
+          rowSpan,
+          colSpan,
+        }
+      });
+      console.log('✅ Widget placed successfully');
+      toast.success('Widget τοποθετήθηκε επιτυχώς');
+    } catch (error) {
+      console.error('❌ Error placing widget:', error);
+      toast.error('Σφάλμα κατά την τοποθέτηση');
+    }
   };
 
   const checkPositionAvailability = (row: number, col: number, widget: KioskWidget) => {
@@ -493,21 +512,29 @@ export default function KioskCanvasEditor({ buildingId }: KioskCanvasEditorProps
   };
 
   const handleSaveLayout = async () => {
+    console.log('💾 Starting save layout...');
     setIsSaving(true);
+
+    const layoutData = {
+      ...config,
+      canvasLayout: {
+        gridSize,
+        widgetPositions: Object.fromEntries(
+          config.widgets
+            .filter(w => w.gridPosition)
+            .map(w => [w.id, w.gridPosition!])
+        ),
+      }
+    };
+
+    console.log('📋 Layout data to save:', layoutData);
+
     try {
-      await saveConfig({
-        ...config,
-        canvasLayout: {
-          gridSize,
-          widgetPositions: Object.fromEntries(
-            config.widgets
-              .filter(w => w.gridPosition)
-              .map(w => [w.id, w.gridPosition!])
-          ),
-        }
-      });
+      const result = await saveConfig(layoutData);
+      console.log('✅ Save successful:', result);
       toast.success('Layout αποθηκεύτηκε επιτυχώς');
     } catch (error) {
+      console.error('❌ Save failed:', error);
       toast.error('Αποτυχία αποθήκευσης layout');
     } finally {
       setIsSaving(false);
