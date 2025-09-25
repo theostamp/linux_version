@@ -45,14 +45,14 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             <TableHead className="text-center border"></TableHead>
             <TableHead className="text-center border"></TableHead>
             <TableHead className="text-center border"></TableHead>
-            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", fontSize: "10px", width: "80px"}}>ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
-            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚ/ΡΑΣ</TableHead>
-            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜΑΝΣΗ</TableHead>
-            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΚΟΙΝΟΧΡΗΣΤΑ</TableHead>
-            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚ/ΡΑΣ</TableHead>
-            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜΑΝΣΗ</TableHead>
+            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", fontSize: "10px", width: "80px"}}>Κ/ΧΡΗΣΤΑ</TableHead>
+            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛ/ΡΑΣ</TableHead>
+            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜ/ΣΗ</TableHead>
+            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>Κ/ΧΡΗΣΤΑ</TableHead>
+            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛ/ΡΑΣ</TableHead>
+            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜ/ΣΗ</TableHead>
             <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΔΙΑΧΕΙΡΙΣΗ</TableHead>
-            {showOwnerExpenses && (<> <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΚΟΙΝΟΧΡΗΣΤΑ</TableHead> <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛΚ/ΡΑΣ</TableHead> <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜΑΝΣΗ</TableHead> </>)}
+            {showOwnerExpenses && (<> <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>Κ/ΧΡΗΣΤΑ</TableHead> <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛ/ΡΑΣ</TableHead> <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜ/ΣΗ</TableHead> </>)}
             <TableHead className="text-center border"></TableHead>
           </TableRow>
         </TableHeader>
