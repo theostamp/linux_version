@@ -89,49 +89,70 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
           font-size: 10px;
           line-height: 1.2;
           margin: 0;
-          padding: 20px;
+          padding: 20px 40px;
           color: #333;
           background: white;
           width: 1083px;
           min-height: 754px;
           box-sizing: border-box;
         ">
-          <!-- Header Section - Single Line -->
+          <!-- Header Section - Dark Background -->
           <div style="
             display: flex;
-            justify-content: center;
             align-items: center;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #dc2626;
-            gap: 15px;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            margin: -20px -40px 15px -40px;
+            padding: 12px 40px;
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           ">
-            <span style="
+            <!-- Left: Γραφείο Διαχείρισης -->
+            <div style="
               font-size: 14px;
               font-weight: bold;
-              color: #dc2626;
               text-transform: uppercase;
               letter-spacing: 1px;
-            ">Γραφείο Διαχείρισης</span>
+              color: #fbbf24;
+            ">
+              Γραφείο Διαχείρισης
+            </div>
 
-            <span style="
-              font-size: 16px;
-              font-weight: bold;
-              color: #1f2937;
-            ">Φύλλο Κοινοχρήστων</span>
+            <!-- Right: Other Info with Separators -->
+            <div style="
+              display: flex;
+              align-items: center;
+              gap: 20px;
+              color: white;
+            ">
+              <span style="
+                font-size: 16px;
+                font-weight: bold;
+              ">Φύλλο Κοινοχρήστων</span>
 
-            <span style="
-              font-size: 13px;
-              color: #4b5563;
-              font-weight: 600;
-            ">${selectedMonthDisplay}</span>
+              <span style="
+                width: 1px;
+                height: 20px;
+                background: rgba(255, 255, 255, 0.3);
+              "></span>
 
-            <span style="
-              font-size: 12px;
-              color: #dc2626;
-              font-weight: 600;
-            ">Πληρωτέο μέχρι ${paymentDueDate}</span>
+              <span style="
+                font-size: 13px;
+                font-weight: 600;
+              ">${selectedMonthDisplay}</span>
+
+              <span style="
+                width: 1px;
+                height: 20px;
+                background: rgba(255, 255, 255, 0.3);
+              "></span>
+
+              <span style="
+                font-size: 12px;
+                font-weight: 600;
+                color: #fbbf24;
+              ">Πληρωτέο μέχρι ${paymentDueDate}</span>
+            </div>
           </div>
 
           <!-- Traditional View Grid Layout -->
