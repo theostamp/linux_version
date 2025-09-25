@@ -100,7 +100,6 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                         <span className="text-sm font-medium text-gray-700">1</span>
                         <div>
                             <p className="text-sm font-semibold text-gray-800">Λειτουργικές Δαπάνες</p>
-                            <p className="text-xs text-gray-600">Ρεύμα, νερό, καθαρισμός, κλπ.</p>
                         </div>
                     </div>
                     <span className="text-sm font-bold text-blue-600">{formatAmount(expenseBreakdown.common || 0)}€</span>
@@ -112,7 +111,6 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                         <span className="text-sm font-medium text-gray-700">2</span>
                         <div>
                             <p className="text-sm font-semibold text-gray-800">Κόστος διαχείρισης</p>
-                            <p className="text-xs text-gray-600">Αμοιβή διαχειριστή</p>
                         </div>
                     </div>
                     <span className="text-sm font-bold text-blue-600">{formatAmount(managementFeeInfo.totalFee || 0)}€</span>
@@ -124,7 +122,6 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                         <span className="text-sm font-medium text-gray-700">3</span>
                         <div>
                             <p className="text-sm font-semibold text-gray-800">Αποθεματικό Ταμείο</p>
-                            <p className="text-xs text-gray-600">Μηνιαία εισφορά</p>
                         </div>
                     </div>
                     <span className="text-sm font-bold text-blue-600">{formatAmount(reserveFundInfo.monthlyAmount || 0)}€</span>
@@ -136,7 +133,6 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                         <span className="text-sm font-medium text-gray-700">4</span>
                         <div>
                             <p className="text-sm font-semibold text-gray-800">Παλαιότερες οφειλές</p>
-                            <p className="text-xs text-gray-600">Οφειλές προηγούμενων μηνών</p>
                         </div>
                     </div>
                     <span className="text-sm font-bold text-blue-600">{formatAmount(getTotalPreviousBalance() || 0)}€</span>
@@ -148,7 +144,6 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                         <span className="text-sm font-bold text-blue-700">Σ</span>
                         <div>
                             <p className="text-sm font-bold text-blue-800">ΣΥΝΟΛΟ</p>
-                            <p className="text-xs text-blue-600">Όλες οι δαπάνες + παλαιότερες οφειλές</p>
                         </div>
                     </div>
                     <span className="text-lg font-bold text-blue-700">{formatAmount(getFinalTotalExpenses() || 0)}€</span>

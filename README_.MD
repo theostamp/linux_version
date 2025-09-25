@@ -481,7 +481,7 @@ git commit -m "διορθωσεις οικονομικων ερ"
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "αφαιρεση - με μια ματια"
+git commit -m "αφαιρεση - perigrafvn sto fyllo"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
