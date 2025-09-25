@@ -402,25 +402,8 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             margin-top: 16px;
           ">
-            <div style="
-              background: #f3f4f6;
-              padding: 10px 12px;
-              border-bottom: 1px solid #d1d5db;
-            ">
-              <h3 style="
-                font-weight: bold;
-                color: #374151;
-                margin: 0;
-                font-size: 13px;
-              ">ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ</h3>
-              <p style="
-                font-size: 9px;
-                color: #6b7280;
-                margin: 2px 0 0 0;
-              ">Πληρωτέο ποσό για ${selectedMonth ? new Date(selectedMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' }) : period}</p>
-            </div>
-
             <table style="
+              margin-top: 8px;
               width: 100%;
               border-collapse: collapse;
               font-size: 10px;
