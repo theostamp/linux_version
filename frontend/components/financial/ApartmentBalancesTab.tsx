@@ -465,42 +465,45 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                     <td className="py-2 px-2 text-xs">{apartment.participation_mills}</td>
                     <td className="py-2 px-2 text-xs text-right">
                       <span className={`font-medium ${
+                        Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
                         Math.abs(apartment.previous_balance) <= 0.30 ? 'text-gray-500' :
                         apartment.previous_balance > 0.30 ? 'text-red-600' : 
                         apartment.previous_balance < -0.30 ? 'text-green-600' : 'text-gray-500'
                       }`}>
-                        {Math.abs(apartment.previous_balance) <= 0.30 ? '-' : formatCurrency(apartment.previous_balance)}
+                        {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(apartment.previous_balance) <= 0.30 ? '-' : formatCurrency(apartment.previous_balance)}
                       </span>
                     </td>
                     <td className="py-2 px-2 text-xs text-right">
                       <span className={`font-medium ${
+                        Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
                         Math.abs(apartment.reserve_fund_share || 0) <= 0.30 ? 'text-gray-500' :
                         (apartment.reserve_fund_share || 0) > 0.30 ? 'text-blue-600' : 'text-gray-500'
                       }`}>
-                        {Math.abs(apartment.reserve_fund_share || 0) <= 0.30 ? '-' : formatCurrency(apartment.reserve_fund_share || 0)}
+                        {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(apartment.reserve_fund_share || 0) <= 0.30 ? '-' : formatCurrency(apartment.reserve_fund_share || 0)}
                       </span>
                     </td>
                     <td className="py-2 px-2 text-xs text-right">
                       <span className={`font-medium ${
+                        Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
                         Math.abs(currentExpenseWithManagement) <= 0.30 ? 'text-gray-500' :
                         currentExpenseWithManagement > 0.30 ? 'text-orange-600' : 'text-gray-500'
                       }`}>
-                        {Math.abs(currentExpenseWithManagement) <= 0.30 ? '-' : formatCurrency(currentExpenseWithManagement)}
+                        {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(currentExpenseWithManagement) <= 0.30 ? '-' : formatCurrency(currentExpenseWithManagement)}
                       </span>
                     </td>
                     <td className="py-2 px-2 text-xs text-right">
                       <span className={`font-medium ${
-                        Math.abs(totalObligationWithManagement) <= 0.30 ? 'text-gray-500' :
-                        totalObligationWithManagement > 0.30 ? 'text-red-600' :
-                        totalObligationWithManagement < -0.30 ? 'text-green-600' : 'text-gray-900'
+                        Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
+                        apartment.net_obligation > 0.30 ? 'text-red-600' :
+                        apartment.net_obligation < -0.30 ? 'text-green-600' : 'text-gray-900'
                       }`}>
-                        {Math.abs(totalObligationWithManagement) <= 0.30 ? '-' : formatCurrency(totalObligationWithManagement)}
+                        {Math.abs(apartment.net_obligation) <= 0.30 ? '-' : formatCurrency(apartment.net_obligation)}
                       </span>
                     </td>
                     <td className="py-2 px-2 text-center">
                       <div className="flex items-center justify-center gap-1">
                         {(() => {
-                          const netObligation = totalObligationWithManagement;
+                          const netObligation = apartment.net_obligation;
                           if (Math.abs(netObligation) <= 0.30) {
                             return <CheckCircle className="h-3 w-3 text-blue-500" />;
                           } else if (netObligation > 100) {
