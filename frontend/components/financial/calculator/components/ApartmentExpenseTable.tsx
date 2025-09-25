@@ -34,7 +34,7 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
           <TableRow className="bg-gray-50">
             <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>Α/Δ</TableHead>
             <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΟΝΟΜΑΤΕΠΩΝΥΜΟ</TableHead>
-            <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΠΑΛΑΙΟΤΕΡΕΣ ΟΦΕΙΛΕΣ</TableHead>
+            <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΟΦΕΙΛΕΣ</TableHead>
             <TableHead className="text-center border font-bold text-xs text-white" colSpan={3} style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)"}}>ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ</TableHead>
             <TableHead className="text-center border font-bold text-xs text-white" colSpan={4} style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)"}}>ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ</TableHead>
             {showOwnerExpenses && <TableHead className="text-center border font-bold text-xs text-white" colSpan={3} style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)"}}>ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ</TableHead>}
@@ -80,9 +80,9 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 <TableCell>{share.identifier || share.apartment_number}</TableCell>
                 <TableCell>{share.owner_name || 'Μη καταχωρημένος'}</TableCell>
                 <TableCell>{formatAmount(previousBalance)}€</TableCell>
-                <TableCell>{commonMills.toFixed(2)}</TableCell>
-                <TableCell>{elevatorMills.toFixed(2)}</TableCell>
-                <TableCell>{heatingMills.toFixed(2)}</TableCell>
+                <TableCell>{Math.round(commonMills)}</TableCell>
+                <TableCell>{Math.round(elevatorMills)}</TableCell>
+                <TableCell>{Math.round(heatingMills)}</TableCell>
                 <TableCell>{formatAmount(commonAmount + apartmentReserveFund)}</TableCell>
                 <TableCell>{formatAmount(elevatorAmount)}</TableCell>
                 <TableCell>{formatAmount(heatingAmount)}</TableCell>
@@ -96,9 +96,9 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
           <TableRow className="bg-gray-100 font-bold">
             <TableCell colSpan={2}>ΣΥΝΟΛΑ</TableCell>
             <TableCell>{formatAmount(sharesArray.reduce((s, a) => s + Math.abs(aptWithFinancial.find(apt => apt.id === a.apartment_id)?.previous_balance ?? 0), 0))}€</TableCell>
-            <TableCell>{sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.participation_mills ?? 0), 0).toFixed(2)}</TableCell>
-            <TableCell>{sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.participation_mills ?? 0), 0).toFixed(2)}</TableCell>
-            <TableCell>{sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.heating_mills ?? 0), 0).toFixed(2)}</TableCell>
+            <TableCell>{Math.round(sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.participation_mills ?? 0), 0))}</TableCell>
+            <TableCell>{Math.round(sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.participation_mills ?? 0), 0))}</TableCell>
+            <TableCell>{Math.round(sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.heating_mills ?? 0), 0))}</TableCell>
             <TableCell>{formatAmount(sharesArray.reduce((s, a) => s + toNumber(aptWithFinancial.find(apt => apt.id === a.apartment_id)?.expense_share || 0), 0) + reserveFundInfo.monthlyAmount)}</TableCell>
             <TableCell>{formatAmount(expenseBreakdown.elevator)}</TableCell>
             <TableCell>{formatAmount(expenseBreakdown.heating)}</TableCell>

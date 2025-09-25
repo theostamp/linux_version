@@ -154,13 +154,17 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
         </div>
 
         {/* Right Column */}
-        {showOwnerExpenses ? (
-            <div className="bg-green-50 p-3 rounded border">{/* ... Owner expenses placeholder ... */}</div>
-            ) : (
-            reserveFundInfo.monthlyAmount > 0 && (
-            <div className="bg-blue-50 p-3 rounded border">{/* ... Reserve fund info ... */}</div>
-            )
-        )}
+        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-lg border border-yellow-200 shadow-sm">
+            <h3 className="font-bold text-yellow-800 mb-3 text-center text-sm flex items-center justify-center gap-2">
+                <FileText className="h-4 w-4 text-yellow-600" />
+                ΠΑΡΑΤΗΡΗΣΕΙΣ
+            </h3>
+            
+            <div className="bg-white p-3 rounded border border-yellow-200">
+                <p className="text-sm font-medium text-yellow-900 text-center">ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ</p>
+                <p className="text-xs text-yellow-700 text-center mt-1">ΔΕΥΤΕΡΑ & ΤΕΤΑΡΤΗ ΑΠΟΓΕΥΜΑ</p>
+            </div>
+        </div>
       </div>
 
       <div className="bg-white border rounded-lg overflow-hidden">
@@ -180,17 +184,6 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
         </div>
       )}
 
-      <div className="bg-gray-50 p-4 rounded-lg border">
-        <div className="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 mb-4">
-            <h3 className="font-semibold text-yellow-800 text-sm">ΠΑΡΑΤΗΡΗΣΕΙΣ</h3>
-            <p className="text-sm font-medium text-yellow-900">ΕΙΣΠΡΑΞΗ ΚΟΙΝΟΧΡΗΣΤΩΝ: ΔΕΥΤΕΡΑ & ΤΕΤΑΡΤΗ ΑΠΟΓΕΥΜΑ</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div><strong>ΗΜΕΡΟΜΗΝΙΑ ΕΚΔΟΣΗΣ:</strong> {new Date().toLocaleDateString('el-GR')}</div>
-            <div><strong>ΣΥΝΟΛΟ ΔΙΑΜΕΡΙΣΜΑΤΩΝ:</strong> {Object.keys(state.shares).length}</div>
-            <div><strong>ΣΥΝΟΛΟ ΔΑΠΑΝΩΝ:</strong> {formatAmount(totalExpenses)}€</div>
-        </div>
-      </div>
     </div>
   );
 };
