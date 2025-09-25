@@ -83,7 +83,7 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 <TableCell>{commonMills.toFixed(2)}</TableCell>
                 <TableCell>{elevatorMills.toFixed(2)}</TableCell>
                 <TableCell>{heatingMills.toFixed(2)}</TableCell>
-                <TableCell>{formatAmount(commonAmount)}</TableCell>
+                <TableCell>{formatAmount(commonAmount + apartmentReserveFund)}</TableCell>
                 <TableCell>{formatAmount(elevatorAmount)}</TableCell>
                 <TableCell>{formatAmount(heatingAmount)}</TableCell>
                 <TableCell>{formatAmount(managementFee)}</TableCell>
@@ -99,7 +99,7 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             <TableCell>{sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.participation_mills ?? 0), 0).toFixed(2)}</TableCell>
             <TableCell>{sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.participation_mills ?? 0), 0).toFixed(2)}</TableCell>
             <TableCell>{sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.heating_mills ?? 0), 0).toFixed(2)}</TableCell>
-            <TableCell>{formatAmount(expenseBreakdown.common)}</TableCell>
+            <TableCell>{formatAmount(expenseBreakdown.common + reserveFundInfo.monthlyAmount)}</TableCell>
             <TableCell>{formatAmount(expenseBreakdown.elevator)}</TableCell>
             <TableCell>{formatAmount(expenseBreakdown.heating)}</TableCell>
             <TableCell>{formatAmount(managementFeeInfo.totalFee)}</TableCell>
