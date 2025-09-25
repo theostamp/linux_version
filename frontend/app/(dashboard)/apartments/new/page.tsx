@@ -158,7 +158,7 @@ export default function NewApartmentPage() {
           <div className="space-y-6">
             <div className="flex items-center space-x-2 mb-4">
               <Home className="w-5 h-5 text-gray-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Βασικά Στοιχεία</h2>
+              <h2 className="text-2xl font-semibold tracking-tight text-gray-800">Βασικά Στοιχεία</h2>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -250,7 +250,7 @@ export default function NewApartmentPage() {
           <div className="space-y-6">
             <div className="flex items-center space-x-2 mb-4">
               <User className="w-5 h-5 text-gray-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Στοιχεία Ιδιοκτησίας</h2>
+              <h2 className="text-2xl font-semibold tracking-tight text-gray-800">Στοιχεία Ιδιοκτησίας</h2>
             </div>
 
             <div>
@@ -333,7 +333,7 @@ export default function NewApartmentPage() {
         <div className="mt-8 pt-8 border-t border-gray-200">
                       <div className="flex items-center space-x-2 mb-6">
               <UserCheck className="w-5 h-5 text-gray-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Στοιχεία Ενοικιαστή</h2>
+              <h2 className="text-2xl font-semibold tracking-tight text-gray-800">Στοιχεία Ενοικιαστή</h2>
             </div>
 
                       <div className="space-y-3 mb-4">

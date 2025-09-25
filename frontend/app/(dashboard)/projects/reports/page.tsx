@@ -74,7 +74,7 @@ export default function ProjectsReportsPage(): JSX.Element {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Αναφορές Έργων</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Αναφορές Έργων</h1>
           <p className="text-muted-foreground">Συγκεντρωτική εικόνα έργων, προσφορών και συμβολαίων</p>
         </div>
         <div className="flex gap-2">

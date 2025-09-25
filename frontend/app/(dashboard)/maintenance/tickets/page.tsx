@@ -7,6 +7,7 @@ import { getActiveBuildingId } from '@/lib/api';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
 import { withAuth } from '@/lib/auth';
 import { BackButton } from '@/components/ui/BackButton';
+import { typography } from '@/lib/typography';
 
 function TicketsListInner() {
   const buildingId = getActiveBuildingId();
@@ -40,10 +41,10 @@ function TicketsListInner() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-3 py-2 text-left">Τίτλος</th>
-              <th className="px-3 py-2 text-left">Κατάσταση</th>
-              <th className="px-3 py-2 text-left">Προτεραιότητα</th>
-              <th className="px-3 py-2 text-left">Ημ/νία</th>
+              <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Τίτλος</th>
+              <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Κατάσταση</th>
+              <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Προτεραιότητα</th>
+              <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Ημ/νία</th>
             </tr>
           </thead>
           <tbody>

@@ -15,6 +15,7 @@ import { Payment, PaymentMethod, PaymentType, PayerType, PaymentFormData } from 
 import { useToast } from '@/hooks/use-toast';
 import { ReceiptPrintModal } from './ReceiptPrintModal';
 import { formatCurrency, roundToCents } from '@/lib/utils';
+import { typography } from '@/lib/typography';
 
 const paymentFormSchema = z.object({
   apartment_id: z.number().min(1, 'Παρακαλώ επιλέξτε διαμέρισμα'),
@@ -820,7 +821,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Νέα Είσπραξη</CardTitle>
+        <CardTitle className={typography.cardTitle}>Νέα Είσπραξη</CardTitle>
       </CardHeader>
       <CardContent>
         {/* Print Receipt Controls - Always at top for visibility */}
@@ -1004,7 +1005,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           {/* Amount and Date */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="common_expense_amount" className="text-sm">Ποσό Κοινόχρηστων (€) *</Label>
+              <Label htmlFor="common_expense_amount" className={typography.formLabel}>Ποσό Κοινόχρηστων (€) *</Label>
               <Input
                 id="common_expense_amount"
                 type="number"
@@ -1033,7 +1034,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 placeholder="0,00"
               />
               {errors.common_expense_amount && (
-                <p className="text-sm text-red-600">{errors.common_expense_amount.message}</p>
+                <p className={typography.formError}>{errors.common_expense_amount.message}</p>
               )}
               {/* Custom validation error for the refine rule */}
               {errors.root && (
@@ -1042,7 +1043,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="previous_obligations_amount" className="text-sm">Παλαιότερες Οφειλές (€)</Label>
+              <Label htmlFor="previous_obligations_amount" className={typography.formLabel}>Παλαιότερες Οφειλές (€)</Label>
               <Input
                 id="previous_obligations_amount"
                 type="number"
@@ -1076,7 +1077,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reserve_fund_amount" className="text-sm">Αποθεματικό (€)</Label>
+              <Label htmlFor="reserve_fund_amount" className={typography.formLabel}>Αποθεματικό (€)</Label>
               <Input
                 id="reserve_fund_amount"
                 type="number"
@@ -1133,7 +1134,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
           {/* Date */}
           <div className="space-y-2">
-            <Label htmlFor="payment_date" className="text-sm">Ημερομηνία Εισπράξεως *</Label>
+            <Label htmlFor="payment_date" className={typography.formLabel}>Ημερομηνία Εισπράξεως *</Label>
             <Input
               id="payment_date"
               type="date"

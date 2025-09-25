@@ -203,7 +203,7 @@ export default function DataMigrationPage() {
   if (!canManage) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">🔄 Μετανάστευση Δεδομένων</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">🔄 Μετανάστευση Δεδομένων</h1>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">
             Δεν έχετε δικαίωμα πρόσβασης στη μετανάστευση δεδομένων.
@@ -216,7 +216,7 @@ export default function DataMigrationPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold">🔄 Μετανάστευση Δεδομένων</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">🔄 Μετανάστευση Δεδομένων</h1>
         <p className="text-gray-600">
           Μετατρέψτε φορμές κοινοχρήστων σε δεδομένα με τη βοήθεια AI
         </p>

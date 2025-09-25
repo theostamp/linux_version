@@ -12,6 +12,7 @@ import { Payment, PaymentMethod } from '@/types/financial';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { PaymentDetailModal } from './PaymentDetailModal';
 import { AddPaymentModal } from './AddPaymentModal';
+import { typography } from '@/lib/typography';
 
 interface PaymentWithProgressiveBalance extends Payment {
   progressiveBalance: number; // Καθολικό υπόλοιπο (προηγούμενο + μηνιαίο)
@@ -419,34 +420,34 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
               {/* Table Header */}
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
-                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24 lg:w-auto">
+                  <th className={`px-3 lg:px-6 py-3 text-left ${typography.tableHeader} w-24 lg:w-auto`}>
                     Διαμέρισμα
                   </th>
-                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32 lg:w-auto">
+                  <th className={`px-3 lg:px-6 py-3 text-left ${typography.tableHeader} w-32 lg:w-auto`}>
                     Ενοίκος
                   </th>
-                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20 lg:w-auto hidden sm:table-cell">
+                  <th className={`px-3 lg:px-6 py-3 text-left ${typography.tableHeader} w-20 lg:w-auto hidden sm:table-cell`}>
                     Πληρωμές
                   </th>
-                  <th className="px-3 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24 lg:w-auto">
+                  <th className={`px-3 lg:px-6 py-3 text-right ${typography.tableHeader} w-24 lg:w-auto`}>
                     Τελ. Καταβολή
                   </th>
-                  <th className="px-3 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24 lg:w-auto hidden md:table-cell">
+                  <th className={`px-3 lg:px-6 py-3 text-left ${typography.tableHeader} w-24 lg:w-auto hidden md:table-cell`}>
                     Ημερομηνία
                   </th>
-                  <th className="px-3 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24 lg:w-auto">
+                  <th className={`px-3 lg:px-6 py-3 text-right ${typography.tableHeader} w-24 lg:w-auto`}>
                     Μην. Οφειλή
                   </th>
-                  <th className="px-3 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28 lg:w-auto">
+                  <th className={`px-3 lg:px-6 py-3 text-right ${typography.tableHeader} w-28 lg:w-auto`}>
                     Προηγ. Υπόλοιπο
                   </th>
-                  <th className="px-3 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28 lg:w-auto">
+                  <th className={`px-3 lg:px-6 py-3 text-right ${typography.tableHeader} w-28 lg:w-auto`}>
                     Υπόλοιπο Μήνα
                   </th>
-                  <th className="px-3 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-28 lg:w-auto">
+                  <th className={`px-3 lg:px-6 py-3 text-right ${typography.tableHeader} w-28 lg:w-auto`}>
                     Καθολικό Υπόλοιπο
                   </th>
-                  <th className="px-3 lg:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20 lg:w-auto">
+                  <th className={`px-3 lg:px-6 py-3 text-center ${typography.tableHeader} w-20 lg:w-auto`}>
                     Ενέργειες
                   </th>
                 </tr>

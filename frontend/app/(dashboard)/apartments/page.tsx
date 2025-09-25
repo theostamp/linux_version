@@ -301,7 +301,7 @@ export default function ApartmentsPage() {
           <div className="space-y-6">
             {/* Πληροφορίες κτιρίου */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-xl font-semibold mb-2">{data.building.name}</h2>
+              <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">{data.building.name}</h2>
               <p className="text-gray-600 mb-4">{data.building.address}</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                 <div className="bg-blue-50 rounded-lg p-3">
@@ -503,7 +503,7 @@ export default function ApartmentsPage() {
           <div className="space-y-6">
             {/* Πληροφορίες κτιρίου για κατοίκους */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-xl font-semibold mb-2">{selectedBuilding?.name}</h2>
+              <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">{selectedBuilding?.name}</h2>
               <p className="text-gray-600 mb-4">{selectedBuilding?.address}</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
                 <div className="bg-blue-50 rounded-lg p-3">

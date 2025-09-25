@@ -139,7 +139,7 @@ export default function ProjectsListPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Έργα</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Έργα</h1>
           <p className="text-muted-foreground">
             Διαχείριση έργων και συντηρήσεων
           </p>

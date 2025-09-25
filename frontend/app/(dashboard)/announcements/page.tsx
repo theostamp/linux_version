@@ -50,7 +50,7 @@ export default function AnnouncementsPage() {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">📢 Ανακοινώσεις</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">📢 Ανακοινώσεις</h1>
           <Button asChild>
             <Link href="/announcements/new">
               {selectedBuilding 
@@ -73,7 +73,7 @@ export default function AnnouncementsPage() {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">📢 Ανακοινώσεις</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">📢 Ανακοινώσεις</h1>
           <Button asChild>
             <Link href="/announcements/new">
               {selectedBuilding 
@@ -93,7 +93,7 @@ export default function AnnouncementsPage() {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">📢 Ανακοινώσεις</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">📢 Ανακοινώσεις</h1>
           <Button asChild>
             <Link href="/announcements/new">
               {selectedBuilding 

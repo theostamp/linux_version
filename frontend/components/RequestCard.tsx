@@ -11,6 +11,7 @@ import { toggleSupportRequest } from '@/lib/api';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Calendar, MapPin, User, Clock, AlertTriangle, CheckCircle, UserPlus } from 'lucide-react';
+import { typography } from '@/lib/typography';
 
 type Props = {
   request: UserRequest;
@@ -84,10 +85,10 @@ export default function RequestCard({ request }: Readonly<Props>) {
       {/* Header with priority and status */}
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-2">
-          <span className={`text-lg ${categoryInfo.color}`}>
+          <span className={`${typography.cardTitle} ${categoryInfo.color}`}>
             {categoryInfo.icon}
           </span>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className={typography.cardTitle}>
             {title}
             {is_urgent && <span className="ml-2 text-red-600">🔥</span>}
           </h2>
@@ -116,7 +117,7 @@ export default function RequestCard({ request }: Readonly<Props>) {
               </div>
             ))}
             {photos.length > 3 && (
-              <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-lg border flex items-center justify-center text-xs text-gray-500">
+              <div className={`flex-shrink-0 w-16 h-16 bg-gray-100 rounded-lg border flex items-center justify-center ${typography.small}`}>
                 +{photos.length - 3}
               </div>
             )}
@@ -125,11 +126,11 @@ export default function RequestCard({ request }: Readonly<Props>) {
       )}
 
       {/* Description */}
-      <p className="text-gray-700 line-clamp-2 mb-3">{description}</p>
+      <p className={`${typography.body} line-clamp-2 mb-3`}>{description}</p>
 
       {/* Location and apartment info */}
       {(location || apartment_number) && (
-        <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+        <div className={`flex items-center gap-4 ${typography.bodySmall} mb-3`}>
           {location && (
             <span className="flex items-center gap-1">
               <MapPin className="w-4 h-4" />
@@ -146,7 +147,7 @@ export default function RequestCard({ request }: Readonly<Props>) {
       )}
 
       {/* Assignment and dates */}
-      <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+      <div className={`flex items-center justify-between ${typography.bodySmall} mb-3`}>
         <div className="flex items-center gap-4">
           {/* Creator information */}
           {created_by_username && (
@@ -185,7 +186,7 @@ export default function RequestCard({ request }: Readonly<Props>) {
 
       {/* Completion info */}
       {completed_at && (
-        <div className="flex items-center gap-1 text-sm text-green-600 mb-3">
+        <div className={`flex items-center gap-1 ${typography.bodySmall} text-green-600 mb-3`}>
           <CheckCircle className="w-4 h-4" />
           Ολοκληρώθηκε: {safeFormatDate(completed_at, 'd MMM yyyy', { locale: el })}
         </div>
@@ -193,14 +194,14 @@ export default function RequestCard({ request }: Readonly<Props>) {
 
       {/* Footer with supporters */}
       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-        <span className="text-sm text-gray-600">
+        <span className={typography.bodySmall}>
           🤝 Υποστηρικτές: <strong>{supportCount}</strong>
         </span>
         
         <button
           onClick={handleSupport}
           disabled={supporting}
-          className="text-sm text-blue-600 hover:text-blue-700 hover:underline disabled:opacity-50"
+          className={`${typography.linkText} disabled:opacity-50`}
         >
           {supporting ? 'Επεξεργασία...' : '✅ Υποστήριξη'}
         </button>

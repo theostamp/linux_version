@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import ApartmentStatusModal from './ApartmentStatusModal';
 import ApartmentEditModal from './ApartmentEditModal';
 import ContactLink from './ContactLink';
+import { typography } from '@/lib/typography';
 
 interface ApartmentTableProps {
   apartments: ApartmentList[];
@@ -137,44 +138,44 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
       <table ref={tableRef} className="w-full min-w-[900px] resizable-table">
         <thead className="table-header-gradient-blue sticky top-0 z-10">
           <tr>
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider w-[55px] min-w-[55px] max-w-[55px]">
+            <th className={`px-2 py-6 text-center ${typography.tableHeader} w-[55px] min-w-[55px] max-w-[55px]`}>
               <div className="flex flex-col items-center space-y-1">
                 <div className="writing-mode-vertical transform -rotate-90 origin-center mt-4">
                   <span>Διαμέρισμα</span>
                 </div>
               </div>
             </th>
-            <th className="px-4 py-6 pr-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className={`px-4 py-6 pr-6 text-left ${typography.tableHeader}`}>
               Ιδιοκτήτης & Επικοινωνία
             </th>
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider w-[55px] min-w-[55px] max-w-[55px]">
+            <th className={`px-2 py-6 text-center ${typography.tableHeader} w-[55px] min-w-[55px] max-w-[55px]`}>
               <div className="flex flex-col items-center space-y-1">
                 <div className="writing-mode-vertical transform -rotate-90 origin-center mt-4">
                   <span>Χιλιοστά<br/>Ιδιοκτησίας</span>
                 </div>
               </div>
             </th>
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider w-[55px] min-w-[55px] max-w-[55px]">
+            <th className={`px-2 py-6 text-center ${typography.tableHeader} w-[55px] min-w-[55px] max-w-[55px]`}>
               <div className="flex flex-col items-center space-y-1">
                 <div className="writing-mode-vertical transform -rotate-90 origin-center mt-4">
                   <span>Χιλιοστά<br/>Θέρμανσης</span>
                 </div>
               </div>
             </th>
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider w-[55px] min-w-[55px] max-w-[55px]">
+            <th className={`px-2 py-6 text-center ${typography.tableHeader} w-[55px] min-w-[55px] max-w-[55px]`}>
               <div className="flex flex-col items-center space-y-1">
                 <div className="writing-mode-vertical transform -rotate-90 origin-center mt-4">
                   <span>Χιλιοστά<br/>Ανελκυστήρα</span>
                 </div>
               </div>
             </th>
-            <th className="px-4 py-6 pr-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className={`px-4 py-6 pr-6 text-left ${typography.tableHeader}`}>
               Ενοικιαστής & Επικοινωνία
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className={`px-4 py-3 text-left ${typography.tableHeader}`}>
               Κατάσταση
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className={`px-4 py-3 text-left ${typography.tableHeader}`}>
               Ενέργειες
             </th>
           </tr>

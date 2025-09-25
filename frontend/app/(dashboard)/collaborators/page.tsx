@@ -161,7 +161,7 @@ export default function CollaboratorsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Διαχείριση Συνεργατών</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Διαχείριση Συνεργατών</h1>
           <p className="text-muted-foreground">
             Διαχείριση εξωτερικών συνεργατών και έργων
           </p>

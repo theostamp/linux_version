@@ -100,7 +100,7 @@ export default function BuildingDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Building Info */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-xl font-semibold mb-4">Πληροφορίες</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-4">Πληροφορίες</h2>
           
           <div className="space-y-4">
             <div>
@@ -150,7 +150,7 @@ export default function BuildingDetailPage() {
         
         {/* Street View */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-xl font-semibold mb-4">Street View</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-4">Street View</h2>
           <BuildingStreetView 
             buildingId={id} 
             address={building?.address}

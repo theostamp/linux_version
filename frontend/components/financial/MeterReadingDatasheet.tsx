@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { cn } from '../../lib/utils';
+import { typography } from '@/lib/typography';
 
 interface ApartmentReading {
   apartment_id: number;
@@ -653,43 +654,43 @@ export const MeterReadingDatasheet: React.FC<MeterReadingDatasheetProps> = ({
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight">
+                    <th className={`p-2 text-center ${typography.tableHeader} leading-tight`}>
                       Διαμέρισμα
                     </th>
-                    <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight">
+                    <th className={`p-2 text-center ${typography.tableHeader} leading-tight`}>
                       Ιδιοκτήτης
                     </th>
-                    <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight">
+                    <th className={`p-2 text-center ${typography.tableHeader} leading-tight`}>
                       Χιλιοστά<br/>Συμμετοχής
                     </th>
                     {(buildingData?.heating_system === 'hour_meters' || buildingData?.heating_system === 'heat_meters') && (
                       <>
-                        <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight">
+                        <th className={`p-2 text-center ${typography.tableHeader} leading-tight`}>
                           Χιλιοστά<br/>Θέρμανσης
                         </th>
-                        <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight">
+                        <th className={`p-2 text-center ${typography.tableHeader} leading-tight`}>
                           %<br/>Θέρμανσης
                         </th>
                       </>
                     )}
-                    <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight">
+                    <th className={`p-2 text-center ${typography.tableHeader} leading-tight`}>
                       Προηγούμενη<br/>Μέτρηση
                     </th>
-                    <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight">
+                    <th className={`p-2 text-center ${typography.tableHeader} leading-tight`}>
                       Νέα<br/>Μέτρηση *
                     </th>
-                    <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight">
+                    <th className={`p-2 text-center ${typography.tableHeader} leading-tight`}>
                       Κατανάλωση<br/>(Διαφορά)
                     </th>
                     {(watchedMeterType === 'heating_hours' || watchedMeterType === 'heating_kwh') && (
                       <>
-                        <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight bg-blue-50">
+                        <th className={`p-2 text-center ${typography.tableHeader} leading-tight bg-blue-50`}>
                           Πάγιο<br/>(€)
                         </th>
-                        <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight bg-green-50">
+                        <th className={`p-2 text-center ${typography.tableHeader} leading-tight bg-green-50`}>
                           Κατανάλωση<br/>(€)
                         </th>
-                        <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight">
+                        <th className={`p-2 text-center ${typography.tableHeader} leading-tight`}>
                           Σύνολο<br/>(€)
                         </th>
                       </>

@@ -122,7 +122,7 @@ export default function NewOfferPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Νέα Προσφορά</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Νέα Προσφορά</h1>
           <p className="text-muted-foreground">
             Δημιουργία νέας προσφοράς από συνεργείο
           </p>

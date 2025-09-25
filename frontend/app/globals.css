@@ -93,94 +93,153 @@
   }
 
   :root {
-    --background: 0 0% 100%;
-    --foreground: 20 14.3% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 20 14.3% 4.1%;
+    /* 🎨 Modern Blue/Teal Color Palette */
+
+    /* Primary Colors - Cyan based */
+    --primary: 200 98% 39%;        /* Cyan-600: #0891b2 */
+    --primary-foreground: 0 0% 100%; /* White */
+    --primary-hover: 200 98% 31%;   /* Cyan-700: #0e7490 */
+    --primary-light: 185 96% 53%;   /* Cyan-500: #06b6d4 */
+
+    /* Secondary Colors - Teal based */
+    --secondary: 188 94% 37%;       /* Teal-600: #0d9488 */
+    --secondary-foreground: 0 0% 100%;
+    --secondary-hover: 188 85% 30%; /* Teal-700: #0f766e */
+    --secondary-light: 172 66% 50%; /* Teal-500: #14b8a6 */
+
+    /* Accent Colors */
+    --accent: 199 89% 48%;          /* Sky-500: #0ea5e9 */
+    --accent-foreground: 0 0% 100%;
+    --accent-hover: 200 98% 39%;    /* Sky-600: #0284c7 */
+
+    /* Background Colors - Light theme */
+    --background: 200 20% 98%;      /* Slate-50: #f8fafc */
+    --surface: 210 40% 96%;         /* Slate-100: #f1f5f9 */
+    --card: 0 0% 100%;              /* Pure white */
+    --card-foreground: 215 28% 17%; /* Slate-800: #1e293b */
+
+    /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 20 14.3% 4.1%;
-    --primary: 24 9.8% 10%;
-    --primary-foreground: 60 9.1% 97.8%;
-    --secondary: 60 4.8% 95.9%;
-    --secondary-foreground: 24 9.8% 10%;
-    --muted: 60 4.8% 95.9%;
-    --muted-foreground: 25 5.3% 44.7%;
-    --accent: 60 4.8% 95.9%;
-    --accent-foreground: 24 9.8% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 60 9.1% 97.8%;
-    --destructive-hover: 0 72% 51%;
-    --success: 142 71% 45%; /* green-500 */
-    --success-foreground: 60 9.1% 97.8%;
-    --success-hover: 142 76% 39%; /* green-600 */
-    --warning: 48 96% 53%; /* yellow-500 */
-    --warning-foreground: 24 9.8% 10%;
-    --warning-hover: 43 96% 50%; /* yellow-600 */
-    --border: 20 5.9% 90%;
-    --input: 20 5.9% 90%;
-    --ring: 20 14.3% 4.1%;
-    /* Brand Colors */
-    --brand: 217 91% 60%; /* blue-500 */
-    --brand-hover: 221 83% 53%; /* blue-600 */
-    --brand-darker: 224 76% 48%; /* blue-700 */
-    --brand-foreground: 210 40% 98%;
-    --brand-subtle: 216 91% 93%; /* blue-100 */
-    /* Neutral Colors for buttons etc. */
-    --neutral-btn: 215 9% 47%; /* gray-500 */
-    --neutral-btn-hover: 216 15% 35%; /* gray-600 */
-    --neutral-btn-darker: 215 25% 27%; /* gray-700 */
-    --neutral-btn-foreground: 210 40% 98%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem
+    --popover-foreground: 215 28% 17%;
+
+    /* Text Colors */
+    --foreground: 215 28% 17%;      /* Slate-800: #1e293b */
+    --muted: 210 40% 93%;           /* Slate-200: #e2e8f0 */
+    --muted-foreground: 215 16% 47%; /* Slate-500: #64748b */
+
+    /* Status Colors */
+    --success: 158 64% 52%;         /* Emerald-500: #10b981 */
+    --success-foreground: 0 0% 100%;
+    --success-hover: 160 84% 39%;   /* Emerald-600: #059669 */
+
+    --warning: 45 93% 58%;          /* Amber-500: #f59e0b */
+    --warning-foreground: 92 38% 8%; /* Amber-900: #78350f */
+    --warning-hover: 43 96% 50%;    /* Amber-600: #d97706 */
+
+    --destructive: 0 72% 51%;       /* Red-500: #ef4444 */
+    --destructive-foreground: 0 0% 100%;
+    --destructive-hover: 0 84% 43%; /* Red-600: #dc2626 */
+
+    /* UI Elements */
+    --border: 214 32% 91%;          /* Slate-200: #e2e8f0 */
+    --input: 214 32% 91%;           /* Slate-200: #e2e8f0 */
+    --ring: 200 98% 39%;            /* Primary color for focus */
+
+    /* Legacy Brand Colors - Updated to match new palette */
+    --brand: 200 98% 39%;           /* Primary cyan */
+    --brand-hover: 200 98% 31%;     /* Primary hover */
+    --brand-darker: 188 94% 37%;    /* Secondary teal */
+    --brand-foreground: 0 0% 100%;
+    --brand-subtle: 199 95% 92%;    /* Cyan-100: #cffafe */
+
+    /* Neutral Colors */
+    --neutral-btn: 215 16% 47%;     /* Slate-500: #64748b */
+    --neutral-btn-hover: 215 20% 38%; /* Slate-600: #475569 */
+    --neutral-btn-darker: 215 25% 27%; /* Slate-700: #334155 */
+    --neutral-btn-foreground: 0 0% 100%;
+
+    /* Chart Colors - Modern palette */
+    --chart-1: 200 98% 39%;         /* Primary */
+    --chart-2: 188 94% 37%;         /* Secondary */
+    --chart-3: 158 64% 52%;         /* Success */
+    --chart-4: 45 93% 58%;          /* Warning */
+    --chart-5: 199 89% 48%;         /* Accent */
+
+    --radius: 0.75rem               /* Slightly more rounded */
   }
   
   .dark {
-    --background: 20 14.3% 4.1%;
-    --foreground: 60 9.1% 97.8%;
-    --card: 20 14.3% 4.1%;
-    --card-foreground: 60 9.1% 97.8%;
-    --popover: 20 14.3% 4.1%;
-    --popover-foreground: 60 9.1% 97.8%;
-    --primary: 60 9.1% 97.8%;
-    --primary-foreground: 24 9.8% 10%;
-    --secondary: 12 6.5% 15.1%;
-    --secondary-foreground: 60 9.1% 97.8%;
-    --muted: 12 6.5% 15.1%;
-    --muted-foreground: 24 5.4% 63.9%;
-    --accent: 12 6.5% 15.1%;
-    --accent-foreground: 60 9.1% 97.8%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 60 9.1% 97.8%;
-    --destructive-hover: 0 72% 51%;
-    --success: 142 71% 45%;
-    --success-foreground: 60 9.1% 97.8%;
-    --success-hover: 142 76% 39%;
-    --warning: 48 96% 53%;
-    --warning-foreground: 24 9.8% 10%;
-    --warning-hover: 43 96% 50%;
-    --border: 12 6.5% 15.1%;
-    --input: 12 6.5% 15.1%;
-    --ring: 24 5.7% 82.9%;
-    /* Brand Colors */
-    --brand: 217 91% 60%;
-    --brand-hover: 221 83% 53%;
-    --brand-darker: 224 76% 48%;
-    --brand-foreground: 210 40% 98%;
-    --brand-subtle: 222 47% 11%; /* slate-900 */
-    /* Neutral Colors for buttons etc. */
-    --neutral-btn: 215 9% 47%;
-    --neutral-btn-hover: 216 15% 35%;
-    --neutral-btn-darker: 215 25% 27%;
-    --neutral-btn-foreground: 210 40% 98%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%
+    /* 🌙 Dark Mode - Modern Blue/Teal Palette */
+
+    /* Background Colors */
+    --background: 215 28% 4%;       /* Slate-950: #020617 */
+    --surface: 215 25% 7%;          /* Slate-900: #0f172a */
+    --card: 215 25% 7%;             /* Slate-900: #0f172a */
+    --card-foreground: 210 40% 98%; /* Slate-50: #f8fafc */
+
+    /* Text Colors */
+    --foreground: 210 40% 98%;      /* Slate-50: #f8fafc */
+    --muted: 215 20% 15%;           /* Slate-800: #1e293b */
+    --muted-foreground: 215 16% 65%; /* Slate-400: #94a3b8 */
+
+    /* Primary Colors - Keep same hues, adjust for dark */
+    --primary: 185 96% 53%;         /* Cyan-500: #06b6d4 - brighter for dark */
+    --primary-foreground: 215 28% 4%; /* Dark text on bright primary */
+    --primary-hover: 200 98% 39%;   /* Cyan-600: #0891b2 */
+    --primary-light: 185 96% 60%;   /* Brighter cyan */
+
+    /* Secondary Colors */
+    --secondary: 172 66% 50%;       /* Teal-500: #14b8a6 - brighter for dark */
+    --secondary-foreground: 215 28% 4%;
+    --secondary-hover: 188 94% 37%; /* Teal-600: #0d9488 */
+    --secondary-light: 172 66% 60%;
+
+    /* Accent */
+    --accent: 199 89% 55%;          /* Sky-400: #38bdf8 - brighter for dark */
+    --accent-foreground: 215 28% 4%;
+    --accent-hover: 199 89% 48%;    /* Sky-500: #0ea5e9 */
+
+    /* Popovers */
+    --popover: 215 25% 7%;          /* Slate-900 */
+    --popover-foreground: 210 40% 98%;
+
+    /* Status Colors - Adjusted for dark theme */
+    --success: 158 64% 60%;         /* Emerald-400: #34d399 - brighter */
+    --success-foreground: 215 28% 4%;
+    --success-hover: 158 64% 52%;   /* Emerald-500: #10b981 */
+
+    --warning: 45 93% 65%;          /* Amber-400: #fbbf24 - brighter */
+    --warning-foreground: 215 28% 4%;
+    --warning-hover: 45 93% 58%;    /* Amber-500: #f59e0b */
+
+    --destructive: 0 72% 60%;       /* Red-400: #f87171 - brighter */
+    --destructive-foreground: 215 28% 4%;
+    --destructive-hover: 0 72% 51%; /* Red-500: #ef4444 */
+
+    /* UI Elements */
+    --border: 215 20% 15%;          /* Slate-800: #1e293b */
+    --input: 215 20% 15%;           /* Slate-800: #1e293b */
+    --ring: 185 96% 53%;            /* Primary cyan for focus */
+
+    /* Brand Colors - Updated for dark theme */
+    --brand: 185 96% 53%;           /* Primary cyan - brighter */
+    --brand-hover: 200 98% 39%;     /* Cyan-600 */
+    --brand-darker: 172 66% 50%;    /* Teal-500 */
+    --brand-foreground: 215 28% 4%;
+    --brand-subtle: 215 20% 15%;    /* Slate-800 */
+
+    /* Neutral Colors */
+    --neutral-btn: 215 16% 65%;     /* Slate-400: #94a3b8 - brighter for dark */
+    --neutral-btn-hover: 215 16% 75%; /* Slate-300: #cbd5e1 */
+    --neutral-btn-darker: 215 16% 85%; /* Slate-200: #e2e8f0 */
+    --neutral-btn-foreground: 215 28% 4%;
+
+    /* Chart Colors - Bright versions for dark theme */
+    --chart-1: 185 96% 53%;         /* Primary cyan */
+    --chart-2: 172 66% 50%;         /* Secondary teal */
+    --chart-3: 158 64% 60%;         /* Success emerald */
+    --chart-4: 45 93% 65%;          /* Warning amber */
+    --chart-5: 199 89% 55%;         /* Accent sky */
   }
 }
 

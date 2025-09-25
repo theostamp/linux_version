@@ -45,7 +45,7 @@ export default function ChatPage() {
           <CardContent className="flex items-center justify-center h-96">
             <div className="text-center">
               <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Σφάλμα φόρτωσης</h2>
+              <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">Σφάλμα φόρτωσης</h2>
               <p className="text-gray-600 mb-4">
                 Δεν ήταν δυνατή η φόρτωση των στοιχείων χρήστη.
               </p>
@@ -69,7 +69,7 @@ export default function ChatPage() {
           <CardContent className="flex items-center justify-center h-96">
             <div className="text-center">
               <BuildingIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Δεν έχει επιλεγεί κτίριο</h2>
+              <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-2">Δεν έχει επιλεγεί κτίριο</h2>
               <p className="text-gray-600 mb-4">
                 Παρακαλώ επιλέξτε ένα κτίριο για να συνεχίσετε στο chat.
               </p>
@@ -98,7 +98,7 @@ export default function ChatPage() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold">Chat Room</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">Chat Room</h1>
               <p className="text-gray-600">
                 Επικοινωνήστε με τους κατοίκους και διαχειριστές του κτιρίου
               </p>

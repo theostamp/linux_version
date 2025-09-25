@@ -39,7 +39,7 @@ function WorkOrderDetailInner() {
       </div>
       
       <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-medium mb-4">Work Order Details</h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-4">Work Order Details</h2>
         <div className="space-y-2">
           <p><strong>Status:</strong> {w.status}</p>
           <p><strong>Priority:</strong> {w.priority}</p>

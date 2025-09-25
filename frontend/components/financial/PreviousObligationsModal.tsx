@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { typography } from '@/lib/typography';
 
 interface ApartmentObligation {
   apartment_id: number;
@@ -399,7 +400,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
 
                                                  {apartment.expense_breakdown && apartment.expense_breakdown.length > 0 && (
                            <div className="mt-3 pt-3 border-t border-gray-200">
-                             <h4 className="text-sm font-medium text-gray-700 mb-2">Breakdown Δαπανών:</h4>
+                             <h4 className={`${typography.smallHeader} mb-2`}>Breakdown Δαπανών:</h4>
                              <div className="space-y-2">
                                {(() => {
                                  // Group expenses by month
@@ -452,7 +453,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
               <TabsContent value="breakdown" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className={`flex items-center gap-2 ${typography.cardTitle}`}>
                       <Info className="h-5 w-5 text-blue-600" />
                       Πώς Υπολογίζονται οι Οφειλές
                     </CardTitle>

@@ -26,7 +26,7 @@ export default function EditProjectPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BackButton size="sm" />
-          <h1 className="text-3xl font-bold tracking-tight">Επεξεργασία Έργου #{id}</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Επεξεργασία Έργου #{id}</h1>
         </div>
       </div>
 

@@ -114,7 +114,7 @@ export default function BuildingDashboardPage() {
         {/* Building Details */}
         <div className="bg-white rounded-lg shadow-sm border">
           <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-4 flex items-center">
               <BuildingIcon className="w-5 h-5 mr-2 text-blue-600" />
               Πληροφορίες
             </h2>
@@ -202,7 +202,7 @@ export default function BuildingDashboardPage() {
         <div className="bg-white rounded-lg shadow-sm border">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold flex items-center">
+              <h2 className="text-2xl font-semibold tracking-tight text-gray-800 flex items-center">
                 <MapPin className="w-5 h-5 mr-2 text-green-600" />
                 Street View
               </h2>
@@ -241,7 +241,7 @@ export default function BuildingDashboardPage() {
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow-sm border">
         <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Γρήγορες Ενέργειες</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-4">Γρήγορες Ενέργειες</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link href={`/buildings/${id}/announcements`}>

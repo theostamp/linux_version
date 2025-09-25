@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Plus } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { api } from '@/lib/api';
+import { typography } from '@/lib/typography';
 
 interface CreateTeamFormProps {
   onTeamCreated: () => void;
@@ -97,7 +98,7 @@ export default function CreateTeamForm({ onTeamCreated }: CreateTeamFormProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Όνομα Ομάδας *</Label>
+            <Label htmlFor="name" className={typography.formLabel}>Όνομα Ομάδας *</Label>
             <Input
               id="name"
               value={formData.name}
@@ -108,7 +109,7 @@ export default function CreateTeamForm({ onTeamCreated }: CreateTeamFormProps) {
           </div>
           
           <div>
-            <Label htmlFor="team_type">Τύπος Ομάδας *</Label>
+            <Label htmlFor="team_type" className={typography.formLabel}>Τύπος Ομάδας *</Label>
             <Select
               value={formData.team_type}
               onValueChange={(value) => handleInputChange('team_type', value)}
@@ -128,7 +129,7 @@ export default function CreateTeamForm({ onTeamCreated }: CreateTeamFormProps) {
           </div>
           
           <div>
-            <Label htmlFor="description">Περιγραφή</Label>
+            <Label htmlFor="description" className={typography.formLabel}>Περιγραφή</Label>
             <Textarea
               id="description"
               value={formData.description}
@@ -139,7 +140,7 @@ export default function CreateTeamForm({ onTeamCreated }: CreateTeamFormProps) {
           </div>
           
           <div>
-            <Label htmlFor="max_members">Μέγιστος Αριθμός Μελών</Label>
+            <Label htmlFor="max_members" className={typography.formLabel}>Μέγιστος Αριθμός Μελών</Label>
             <Input
               id="max_members"
               type="number"
@@ -151,7 +152,7 @@ export default function CreateTeamForm({ onTeamCreated }: CreateTeamFormProps) {
           </div>
           
           <div>
-            <Label htmlFor="status">Κατάσταση</Label>
+            <Label htmlFor="status" className={typography.formLabel}>Κατάσταση</Label>
             <Select
               value={formData.status}
               onValueChange={(value) => handleInputChange('status', value)}

@@ -104,7 +104,7 @@ export default function TeamsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Διαχείριση Ομάδων</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Διαχείριση Ομάδων</h1>
           <p className="text-muted-foreground">
             Διαχείριση ομάδων εργασίας και συνεργατών
           </p>

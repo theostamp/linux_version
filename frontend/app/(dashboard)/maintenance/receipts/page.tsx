@@ -35,7 +35,7 @@ export default function ReceiptsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Αποδείξεις Υπηρεσιών</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Αποδείξεις Υπηρεσιών</h1>
           <p className="text-muted-foreground">Τιμολόγια/αποδείξεις συνεργείων</p>
         </div>
         <BackButton href="/maintenance" />

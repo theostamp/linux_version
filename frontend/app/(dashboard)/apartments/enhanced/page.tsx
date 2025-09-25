@@ -61,7 +61,7 @@ export default function EnhancedApartmentsPage() {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-2xl font-semibold tracking-tight text-gray-800">
                 Λίστα Διαμερισμάτων
               </h2>
               <p className="text-sm text-gray-500 mt-1">

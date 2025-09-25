@@ -7,6 +7,7 @@ import { getActiveBuildingId } from '@/lib/api';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
 import { withAuth } from '@/lib/auth';
 import { BackButton } from '@/components/ui/BackButton';
+import { typography } from '@/lib/typography';
 
 function WorkOrdersListInner() {
   const buildingId = getActiveBuildingId();
@@ -35,10 +36,10 @@ function WorkOrdersListInner() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-3 py-2 text-left">ID</th>
-              <th className="px-3 py-2 text-left">Ticket</th>
-              <th className="px-3 py-2 text-left">Κατάσταση</th>
-              <th className="px-3 py-2 text-left">Προγραμματισμένη</th>
+              <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>ID</th>
+              <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Ticket</th>
+              <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Κατάσταση</th>
+              <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Προγραμματισμένη</th>
             </tr>
           </thead>
           <tbody>

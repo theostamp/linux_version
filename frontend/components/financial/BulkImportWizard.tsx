@@ -4,17 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Upload, 
-  FileText, 
-  CheckCircle, 
-  AlertCircle, 
+import {
+  Upload,
+  FileText,
+  CheckCircle,
+  AlertCircle,
   Download,
   X,
   Eye,
   EyeOff
 } from 'lucide-react';
 import { useMeterReadings } from '../../hooks/useMeterReadings';
+import { typography } from '@/lib/typography';
 
 interface ImportRow {
   apartment_name: string;
@@ -298,12 +299,12 @@ export const BulkImportWizard: React.FC = () => {
                     <table className="w-full text-sm">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-3 py-2 text-left">Διαμέρισμα</th>
-                          <th className="px-3 py-2 text-left">Αριθμός</th>
-                          <th className="px-3 py-2 text-left">Ημερομηνία</th>
-                          <th className="px-3 py-2 text-left">Τρέχουσα</th>
-                          <th className="px-3 py-2 text-left">Προηγούμενη</th>
-                          <th className="px-3 py-2 text-left">Σημειώσεις</th>
+                          <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Διαμέρισμα</th>
+                          <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Αριθμός</th>
+                          <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Ημερομηνία</th>
+                          <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Τρέχουσα</th>
+                          <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Προηγούμενη</th>
+                          <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Σημειώσεις</th>
                         </tr>
                       </thead>
                       <tbody>

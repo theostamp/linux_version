@@ -6,10 +6,10 @@ import { useExpenses } from '../../hooks/useExpenses';
 import { fetchBuilding, fetchApartments } from '../../lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { 
-  CalendarIcon, 
-  Building, 
-  TrendingUp, 
+import {
+  CalendarIcon,
+  Building,
+  TrendingUp,
   FileSpreadsheet,
   Thermometer,
   Droplets,
@@ -18,17 +18,18 @@ import {
   Printer
 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from '../ui/dialog';
 import { MeterReadingDatasheet } from './MeterReadingDatasheet';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
+import { typography } from '@/lib/typography';
 
 interface ApartmentReading {
   apartment_id: number;
@@ -475,43 +476,43 @@ export const MeterReadingReport: React.FC<MeterReadingReportProps> = ({
               <table className="w-full text-sm print:text-xs">
                 <thead className="bg-gray-50 border-b print:bg-gray-100">
                   <tr>
-                    <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight print:p-1">
+                    <th className={`p-2 text-center ${typography.tableHeader} leading-tight print:p-1`}>
                       Διαμέρισμα
                     </th>
-                    <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight print:p-1">
+                    <th className={`p-2 text-center ${typography.tableHeader} leading-tight print:p-1`}>
                       Ιδιοκτήτης
                     </th>
-                    <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight print:p-1">
+                    <th className={`p-2 text-center ${typography.tableHeader} leading-tight print:p-1`}>
                       Χιλιοστά<br/>Συμμετοχής
                     </th>
                     {(buildingData?.heating_system === 'hour_meters' || buildingData?.heating_system === 'heat_meters') && (
                       <>
-                        <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight print:p-1">
+                        <th className={`p-2 text-center ${typography.tableHeader} leading-tight print:p-1`}>
                           Χιλιοστά<br/>Θέρμανσης
                         </th>
-                        <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight print:p-1">
+                        <th className={`p-2 text-center ${typography.tableHeader} leading-tight print:p-1`}>
                           %<br/>Θέρμανσης
                         </th>
                       </>
                     )}
-                    <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight print:p-1">
+                    <th className={`p-2 text-center ${typography.tableHeader} leading-tight print:p-1`}>
                       Προηγούμενη<br/>Μέτρηση
                     </th>
-                    <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight print:p-1">
+                    <th className={`p-2 text-center ${typography.tableHeader} leading-tight print:p-1`}>
                       Τρέχουσα<br/>Μέτρηση
                     </th>
-                    <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight print:p-1">
+                    <th className={`p-2 text-center ${typography.tableHeader} leading-tight print:p-1`}>
                       Κατανάλωση<br/>(Διαφορά)
                     </th>
                     {(heatingMeterType === 'heating_hours' || heatingMeterType === 'heating_kwh') && (
                       <>
-                        <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight bg-blue-50 print:p-1">
+                        <th className={`p-2 text-center ${typography.tableHeader} leading-tight bg-blue-50 print:p-1`}>
                           Πάγιο<br/>(€)
                         </th>
-                        <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight bg-green-50 print:p-1">
+                        <th className={`p-2 text-center ${typography.tableHeader} leading-tight bg-green-50 print:p-1`}>
                           Κατανάλωση<br/>(€)
                         </th>
-                        <th className="p-2 text-center text-xs font-medium text-gray-700 leading-tight print:p-1">
+                        <th className={`p-2 text-center ${typography.tableHeader} leading-tight print:p-1`}>
                           Σύνολο<br/>(€)
                         </th>
                       </>

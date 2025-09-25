@@ -6,6 +6,7 @@ import type { Building } from '@/lib/api';
 import { deleteBuilding } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import { typography } from '@/lib/typography';
 import { 
   Building as BuildingIcon, 
   Home, 
@@ -90,23 +91,23 @@ const BuildingTable: React.FC<BuildingTableProps> = ({ buildings, onRefresh }) =
         <table className="w-full min-w-[800px]">
           <thead className="bg-gray-50 border-b">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left ${typography.tableHeader}`}>
                 Κτίριο
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left ${typography.tableHeader}`}>
                 Διεύθυνση
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left ${typography.tableHeader}`}>
                 Διαμερίσματα
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left ${typography.tableHeader}`}>
                 Διαχειριστής
               </th>
 
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left ${typography.tableHeader}`}>
                 Ημ/νία Δημιουργίας
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-right ${typography.tableHeader}`}>
                 Ενέργειες
               </th>
             </tr>

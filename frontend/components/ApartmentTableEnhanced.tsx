@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import ApartmentStatusModal from './ApartmentStatusModal';
 import ApartmentEditModal from './ApartmentEditModal';
 import ContactLink from './ContactLink';
+import { typography } from '@/lib/typography';
 
 interface ApartmentTableEnhancedProps {
   apartments: ApartmentList[];
@@ -135,14 +136,14 @@ export default function ApartmentTableEnhanced({ apartments, onRefresh }: Apartm
         <thead className="table-header-gradient-blue sticky top-0 z-10">
           <tr>
             {/* Διαμέρισμα */}
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider min-w-[55px]">
+            <th className={`px-2 py-6 text-center ${typography.tableHeader} min-w-[55px]`}>
               <div className="flex flex-col items-center space-y-1">
                 <span>Διαμέρισμα</span>
               </div>
             </th>
             
             {/* Ιδιοκτήτης & Επικοινωνία */}
-            <th className="px-3 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[180px]">
+            <th className={`px-3 py-6 text-left ${typography.tableHeader} min-w-[180px]`}>
               <div className="flex flex-col items-start space-y-1">
                 <span>Ιδιοκτήτης</span>
                 <span className="text-[10px] text-gray-400">& Επικοινωνία</span>
@@ -150,28 +151,28 @@ export default function ApartmentTableEnhanced({ apartments, onRefresh }: Apartm
             </th>
             
             {/* Χιλιοστά Ιδιοκτησίας */}
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider min-w-[55px]">
+            <th className={`px-2 py-6 text-center ${typography.tableHeader} min-w-[55px]`}>
               <div className="flex flex-col items-center space-y-1">
                 <span className="mt-4">Χιλιοστά<br/>Ιδιοκτησίας</span>
               </div>
             </th>
             
             {/* Χιλιοστά Θέρμανσης */}
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider min-w-[55px]">
+            <th className={`px-2 py-6 text-center ${typography.tableHeader} min-w-[55px]`}>
               <div className="flex flex-col items-center space-y-1">
                 <span className="mt-4">Χιλιοστά<br/>Θέρμανσης</span>
               </div>
             </th>
             
             {/* Χιλιοστά Ανελκυστήρα */}
-            <th className="px-2 py-6 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider min-w-[55px]">
+            <th className={`px-2 py-6 text-center ${typography.tableHeader} min-w-[55px]`}>
               <div className="flex flex-col items-center space-y-1">
                 <span className="mt-4">Χιλιοστά<br/>Ανελκυστήρα</span>
               </div>
             </th>
             
             {/* Ενοικιαστής & Επικοινωνία */}
-            <th className="px-3 py-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[180px]">
+            <th className={`px-3 py-6 text-left ${typography.tableHeader} min-w-[180px]`}>
               <div className="flex flex-col items-start space-y-1">
                 <span>Ενοικιαστής</span>
                 <span className="text-[10px] text-gray-400">& Επικοινωνία</span>
@@ -179,14 +180,14 @@ export default function ApartmentTableEnhanced({ apartments, onRefresh }: Apartm
             </th>
             
             {/* Κατάσταση */}
-            <th className="px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+            <th className={`px-3 py-4 text-left ${typography.tableHeader} min-w-[100px]`}>
               <div className="flex flex-col items-start space-y-1">
                 <span>Κατάσταση</span>
               </div>
             </th>
             
             {/* Ενέργειες */}
-            <th className="px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">
+            <th className={`px-3 py-4 text-left ${typography.tableHeader} min-w-[80px]`}>
               <div className="flex flex-col items-start space-y-1">
                 <span>Ενέργειες</span>
               </div>

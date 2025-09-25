@@ -37,7 +37,7 @@ export default function ScheduledMaintenanceDetailPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BackButton size="sm" />
-          <h1 className="text-3xl font-bold tracking-tight">{item?.title ?? 'Προγραμματισμένο Έργο'}</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">{item?.title ?? 'Προγραμματισμένο Έργο'}</h1>
         </div>
         <Button variant="outline" onClick={() => router.push(`/maintenance/scheduled/${id}/edit`)}>Επεξεργασία</Button>
       </div>

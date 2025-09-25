@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./dialog";
 import { Button } from "./button";
+import { typography } from "@/lib/typography";
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -33,7 +34,7 @@ export function ConfirmDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        {description && <p className={typography.modalDescription}>{description}</p>}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isConfirmLoading}>
             {cancelText}

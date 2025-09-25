@@ -33,7 +33,7 @@ export default function NewAnnouncementPage() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">📢 Νέα Ανακοίνωση</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">📢 Νέα Ανακοίνωση</h1>
       <BuildingFilterIndicator className="mb-4" />
       <NewAnnouncementForm buildingId={currentBuilding?.id} />
     </div>

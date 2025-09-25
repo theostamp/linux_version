@@ -10,6 +10,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import { typography } from '@/lib/typography';
 
 export type Announcement = {
   id: number;
@@ -107,7 +108,7 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
       )}
       
       <div className="flex justify-between items-center mb-2 pr-10 pt-6">
-        <h2 className="text-lg font-semibold">{announcement.title}</h2>
+        <h2 className={typography.cardTitle}>{announcement.title}</h2>
         <span
           className={`text-xs font-medium px-3 py-1 rounded-full border ${
             isCurrentlyActive
@@ -119,19 +120,19 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
         </span>
       </div>
 
-      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line line-clamp-3">
+      <p className={`${typography.body} whitespace-pre-line line-clamp-3`}>
         {announcement.description}
       </p>
 
       <div className="mt-4 flex justify-between items-center">
-        <div className="text-xs text-gray-500 dark:text-gray-400">
+        <div className={typography.small}>
           Ενεργό από <strong>{formatDate(announcement.start_date)}</strong> έως{' '}
           <strong>{formatDate(announcement.end_date)}</strong>
         </div>
         
         <Link 
           href={`/announcements/${announcement.id}`}
-          className="text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline"
+          className={typography.linkText}
         >
           Περισσότερα →
         </Link>
@@ -143,7 +144,7 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
             href={announcement.file}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 underline text-sm font-medium"
+            className={`inline-flex items-center gap-1 ${typography.linkText}`}
           >
             📎 Προβολή Επισύναψης
           </a>

@@ -137,7 +137,7 @@ export default function VotesPage() {
               </button>
             )}
             <div className={`${!selectedBuilding && vote.building_name ? 'pt-8' : ''}`}>
-              <h2 className="text-lg font-semibold text-blue-700 pr-10">{vote.title}</h2>
+              <h2 className="text-2xl font-semibold tracking-tight text-gray-800 pr-10">{vote.title}</h2>
               <p className="text-sm text-gray-600">{vote.description}</p>
               <p className="text-xs text-gray-500">
                 Έναρξη: {vote.start_date} • Λήξη: {vote.end_date}

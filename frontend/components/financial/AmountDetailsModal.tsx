@@ -28,6 +28,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import { MonthlyTransactionsModal } from '@/components/financial/MonthlyTransactionsModal';
+import { typography } from '@/lib/typography';
 
 interface Transaction {
   id: number;
@@ -738,7 +739,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                   {/* Monthly Chart */}
                   <Card>
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+                      <CardTitle className={`flex items-center gap-2 ${typography.cardTitle}`}>
                         <BarChart3 className="h-5 w-5" />
                         Μηνιαία Εξέλιξη
                       </CardTitle>
@@ -803,7 +804,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                   {/* Transaction Types Distribution */}
                   <Card>
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+                      <CardTitle className={`flex items-center gap-2 ${typography.cardTitle}`}>
                         <PieChart className="h-5 w-5" />
                         Κατανομή Συναλλαγών
                       </CardTitle>
@@ -862,7 +863,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
               <TabsContent value="timeline" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className={`flex items-center gap-2 ${typography.cardTitle}`}>
                       <Calendar className="h-5 w-5" />
                       Μηνιαία Εξέλιξη (Τελευταίοι 12 Μήνες)
                     </CardTitle>
@@ -967,7 +968,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
               <TabsContent value="transactions" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className={`flex items-center gap-2 ${typography.cardTitle}`}>
                       <Clock className="h-5 w-5" />
                       Πρόσφατες Συναλλαγές
                     </CardTitle>

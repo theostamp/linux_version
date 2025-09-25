@@ -204,7 +204,7 @@ export default function ProjectsDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Προσφορές & Έργα</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Προσφορές & Έργα</h1>
           <p className="text-muted-foreground">
             Διαχείριση έργων, προσφορών και συμβολαίων
           </p>

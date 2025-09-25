@@ -27,7 +27,7 @@ export default function CalendarAdminPage() {
           <Calendar className="w-8 h-8 text-blue-600" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold">Διαχείριση Google Calendar</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Διαχείριση Google Calendar</h1>
           <p className="text-gray-600">
             Συνδέστε και διαχειριστείτε το Google Calendar για τα κτίριά σας
           </p>
@@ -48,7 +48,7 @@ export default function CalendarAdminPage() {
       {/* Widget Demo - Compact Version */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
+          <h2 className="text-2xl font-semibold tracking-tight text-gray-800 flex items-center gap-2">
             <Settings className="w-5 h-5" />
             Calendar Widget (Compact)
           </h2>
@@ -82,7 +82,7 @@ export default function CalendarAdminPage() {
 
         {/* Widget Demo - Full Version */}
         <div className="lg:col-span-2">
-          <h2 className="text-lg font-semibold mb-4">Calendar Widget (Full)</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-4">Calendar Widget (Full)</h2>
           <GoogleCalendarWidget
             building={mockBuilding}
             compact={false}
@@ -92,7 +92,7 @@ export default function CalendarAdminPage() {
 
       {/* Full Settings Component */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">Πλήρεις Ρυθμίσεις Google Calendar</h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-gray-800">Πλήρεις Ρυθμίσεις Google Calendar</h2>
         <GoogleCalendarSettings building={mockBuilding} />
       </div>
 

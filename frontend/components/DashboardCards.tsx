@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { typography } from '@/lib/typography';
 import { 
   AlertCircle, 
   Clock, 
@@ -61,14 +62,14 @@ export default function DashboardCards({ data, cards }: Props) {
                 card.textColor || 'text-gray-400'
               }`} />
             </div>
-            <div className={`text-2xl font-bold mb-1 ${card.textColor || 'text-gray-900'}`}>
+            <div className={`${typography.dashboardCardValue} mb-1 ${card.textColor || ''}`}>
               {count}
             </div>
-            <div className={`font-medium ${card.textColor || 'text-gray-900'}`}>
+            <div className={`${typography.dashboardCardLabel} ${card.textColor || ''}`}>
               {card.label}
             </div>
             {card.description && (
-              <div className={`text-sm mt-1 ${card.textColor ? 'opacity-80' : 'text-gray-600'}`}>
+              <div className={`${typography.caption} mt-1 ${card.textColor ? 'opacity-80' : ''}`}>
                 {card.description}
               </div>
             )}

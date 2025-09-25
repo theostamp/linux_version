@@ -132,7 +132,7 @@ export default function OffersListPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Προσφορές</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Προσφορές</h1>
           <p className="text-muted-foreground">
             Διαχείριση προσφορών από συνεργεία
           </p>

@@ -8,6 +8,7 @@ import { withAuth } from '@/lib/auth';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
 import { getActiveBuildingId } from '@/lib/api';
 import { BackButton } from '@/components/ui/BackButton';
+import { typography } from '@/lib/typography';
 
 function TicketDetailInner() {
   const params = useParams();
@@ -65,14 +66,14 @@ function TicketDetailInner() {
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold">Εντολές Εργασίας</h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-gray-800">Εντολές Εργασίας</h2>
         <div className="rounded border">
           <table className="w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-3 py-2 text-left">ID</th>
-                <th className="px-3 py-2 text-left">Κατάσταση</th>
-                <th className="px-3 py-2 text-left">Προγραμματισμένη</th>
+                <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>ID</th>
+                <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Κατάσταση</th>
+                <th className={`px-3 py-2 text-left ${typography.tableHeader}`}>Προγραμματισμένη</th>
               </tr>
             </thead>
             <tbody>

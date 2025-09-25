@@ -67,7 +67,7 @@ export default function EditReceiptPage() {
   return (
     <div className="space-y-6 p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Επεξεργασία Απόδειξης</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Επεξεργασία Απόδειξης</h1>
         <BackButton href="/maintenance/receipts" />
       </div>
 

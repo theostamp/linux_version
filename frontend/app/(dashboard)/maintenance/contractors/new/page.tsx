@@ -94,7 +94,7 @@ export default function NewContractorPage() {
   return (
     <div className="space-y-6 p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Νέο Συνεργείο</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Νέο Συνεργείο</h1>
         <BackButton href="/maintenance/contractors" />
       </div>
 

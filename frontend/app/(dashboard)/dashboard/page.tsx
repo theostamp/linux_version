@@ -63,7 +63,7 @@ export default function DashboardPage() {
       fallback={
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">Σύνδεση</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6 text-center">Σύνδεση</h1>
             <LoginForm />
           </div>
         </div>
@@ -470,7 +470,7 @@ function DashboardContent() {
       {announcements.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+            <h2 className="text-2xl font-semibold tracking-tight text-gray-800 flex items-center">
               <Bell className="w-5 h-5 mr-2 text-blue-600" />
               Πρόσφατες Ανακοινώσεις
             </h2>
@@ -527,7 +527,7 @@ function DashboardContent() {
       {/* Enhanced Requests Overview */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+          <h2 className="text-2xl font-semibold tracking-tight text-gray-800 flex items-center">
             <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
             Επισκόπηση Αιτημάτων
           </h2>
@@ -641,7 +641,7 @@ function DashboardContent() {
       {/* Staff Actions Section */}
       {user?.is_staff && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-4 flex items-center">
             <Users className="w-5 h-5 mr-2 text-blue-600" />
             Ενέργειες Διαχείρισης
           </h2>

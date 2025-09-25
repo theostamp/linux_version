@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Globe } from 'lucide-react';
+import { typography } from '@/lib/typography';
 
 interface MultilingualMessage {
   id: number;
@@ -46,16 +47,16 @@ export default function KioskMultilingualMessageCard({ messages, slideDuration =
   return (
     <div className="bg-gradient-to-br from-purple-900/40 to-violet-900/40 backdrop-blur-sm p-6 rounded-xl border border-purple-500/30 shadow-lg h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold text-white">
+        <h3 className={`${typography.cardTitle} text-white`}>
           {currentMessage.title}
         </h3>
-        <div className="flex items-center gap-2 px-3 py-1 bg-purple-900/50 rounded-full text-purple-200 text-sm">
+        <div className={`flex items-center gap-2 px-3 py-1 bg-purple-900/50 rounded-full text-purple-200 ${typography.bodySmall}`}>
           <Globe className="w-4 h-4" />
           <span>{supportedLanguages[currentMessage.language] || currentMessage.language.toUpperCase()}</span>
         </div>
       </div>
       
-      <div className="flex-1 text-purple-100 text-sm opacity-90 leading-relaxed whitespace-pre-wrap overflow-y-auto pr-2">
+      <div className={`flex-1 text-purple-100 ${typography.bodySmall} opacity-90 leading-relaxed whitespace-pre-wrap overflow-y-auto pr-2`}>
         {currentMessage.content}
       </div>
 

@@ -221,7 +221,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Προσφορά</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Προσφορά</h1>
             <p className="text-muted-foreground">
               {offer.contractor_name}
             </p>

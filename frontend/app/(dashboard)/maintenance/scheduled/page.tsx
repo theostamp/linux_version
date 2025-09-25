@@ -218,7 +218,7 @@ export default function ScheduledMaintenancePage({ searchParams }: { searchParam
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BackButton size="sm" href="/maintenance" />
-          <h1 className="text-3xl font-bold tracking-tight">Προγραμματισμένα Έργα</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Προγραμματισμένα Έργα</h1>
           <p className="text-muted-foreground">Λίστα εργασιών συντήρησης ανά προτεραιότητα</p>
         </div>
         <div className="flex gap-2">

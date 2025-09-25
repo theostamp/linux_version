@@ -127,7 +127,7 @@ export default function MaintenanceReportsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reports Συντήρησης</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Reports Συντήρησης</h1>
           <p className="text-muted-foreground">Συγκεντρωτικά στοιχεία για τον επιλεγμένο μήνα</p>
         </div>
         <MonthSelector selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />

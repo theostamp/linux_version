@@ -293,7 +293,7 @@ export default function VoteDetailPage() {
       ) : (
         statusInfo.canVote && vote.choices && (
           <div className="bg-white border rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">🗳️ Υποβολή Ψήφου</h2>
+            <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-4">🗳️ Υποβολή Ψήφου</h2>
             <VoteSubmitForm
               voteId={vote.id}
               choices={vote.choices}
@@ -311,7 +311,7 @@ export default function VoteDetailPage() {
       {/* Results Section */}
       {results && vote.choices && (
         <div className="bg-white border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">📊 Αποτελέσματα Ψηφοφορίας</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-4">📊 Αποτελέσματα Ψηφοφορίας</h2>
           <div className="space-y-4">
             {vote.choices.map((choice: string) => {
               const count = results.results[choice] || 0;

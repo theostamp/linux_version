@@ -5,6 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "../../lib/utils"
+import { typography } from "../../lib/typography"
 
 const Dialog = DialogPrimitive.Root
 
@@ -36,7 +37,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn(typography.modalDescription, className)}
     {...props}
   />
 ))
@@ -119,7 +120,7 @@ const DialogTitle = React.forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
+      typography.modalTitle,
       className
     )}
     {...props}

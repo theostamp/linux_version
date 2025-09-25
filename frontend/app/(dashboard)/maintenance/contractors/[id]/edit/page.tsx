@@ -67,7 +67,7 @@ export default function EditContractorPage() {
   return (
     <div className="space-y-6 p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Επεξεργασία Συνεργείου</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Επεξεργασία Συνεργείου</h1>
         <BackButton href="/maintenance/contractors" />
       </div>
 

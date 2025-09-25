@@ -119,7 +119,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight">Νέος Μηνιαίος Λογαριασμός</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-gray-800">Νέος Μηνιαίος Λογαριασμός</h2>
           <Button 
             variant="outline" 
             onClick={() => setShowExpenseForm(false)}
@@ -144,7 +144,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Λειτουργικές Δαπάνες</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-gray-800">Λειτουργικές Δαπάνες</h2>
           <p className="text-muted-foreground">
             Διαχείριση μηνιαίων λογαριασμών κτιρίου (ρεύμα, νερό, θέρμανση, απορρίμματα)
           </p>
@@ -693,7 +693,7 @@ export default function MaintenanceDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Υπηρεσίες & Δαπάνες</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Υπηρεσίες & Δαπάνες</h1>
           <p className="text-muted-foreground">
             Διαχείριση Συνεργείων,  Πληρωμές Δαπανών και Προγραμματισμένων Έργων
           </p>

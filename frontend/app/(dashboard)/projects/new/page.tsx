@@ -123,7 +123,7 @@ export default function NewProjectPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Νέο Έργο</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Νέο Έργο</h1>
           <p className="text-muted-foreground">
             Δημιουργία νέου έργου ή συντήρησης
           </p>

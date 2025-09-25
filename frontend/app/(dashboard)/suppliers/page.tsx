@@ -108,7 +108,7 @@ export default function SuppliersPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Διαχείριση Προμηθευτών</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Διαχείριση Προμηθευτών</h1>
           <p className="text-muted-foreground">
             Διαχείριση προμηθευτών και συνεργείων
           </p>

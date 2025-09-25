@@ -109,7 +109,7 @@ const BuildingsPage = () => {
   if (isLoading) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">🏢 Διαχείριση Κτιρίων</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">🏢 Διαχείριση Κτιρίων</h1>
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           <p className="ml-3 text-gray-600">Φόρτωση κτιρίων...</p>
@@ -121,7 +121,7 @@ const BuildingsPage = () => {
   if (error) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">🏢 Διαχείριση Κτιρίων</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">🏢 Διαχείριση Κτιρίων</h1>
         <ErrorMessage message={error} />
       </div>
     );
@@ -130,7 +130,7 @@ const BuildingsPage = () => {
   if (!Array.isArray(buildings)) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">🏢 Διαχείριση Κτιρίων</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">🏢 Διαχείριση Κτιρίων</h1>
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
           <BuildingIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 mb-4">Δεν βρέθηκαν κτίρια.</p>
@@ -152,7 +152,7 @@ const BuildingsPage = () => {
       {/* Header */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">🏢 Διαχείριση Κτιρίων</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">🏢 Διαχείριση Κτιρίων</h1>
           <div className="flex gap-2">
             {/* View Mode Toggle */}
             <div className="flex items-center bg-gray-100 rounded-lg p-1">

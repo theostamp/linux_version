@@ -68,7 +68,7 @@ export default function NewReceiptPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Νέα Απόδειξη Υπηρεσίας</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Νέα Απόδειξη Υπηρεσίας</h1>
           <p className="text-muted-foreground">Καταχώριση απόδειξης/τιμολογίου συνεργείου</p>
         </div>
         <BackButton href="/maintenance/receipts" />

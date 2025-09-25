@@ -9,6 +9,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { isValidDate, safeFormatDate } from '@/lib/utils';
+import { typography } from '@/lib/typography';
 
 type Vote = {
   id: number;
@@ -108,15 +109,15 @@ export default function VoteCard({ vote }: { readonly vote: Vote }) {
         </button>
       )}
       
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white pr-10">{vote.title}</h2>
-      <p className="text-gray-700 dark:text-gray-300 mt-2">{vote.description}</p>
+      <h2 className={`${typography.cardTitle} pr-10`}>{vote.title}</h2>
+      <p className={`${typography.body} mt-2`}>{vote.description}</p>
 
       <div className="mt-4">
         {(() => {
           if (userChoice) {
             return (
               <>
-                <p className="text-green-600 font-semibold">✅ Η ψήφος σας: {userChoice}</p>
+                <p className={`${typography.body} text-green-600 font-semibold`}>✅ Η ψήφος σας: {userChoice}</p>
                 <VoteResults voteId={vote.id} />
               </>
             );
@@ -148,17 +149,17 @@ export default function VoteCard({ vote }: { readonly vote: Vote }) {
             );
           } else {
             return (
-              <p className="text-yellow-600 font-semibold">
+              <p className={`${typography.body} text-yellow-600 font-semibold`}>
                 ⚠️ Η ψηφοφορία δεν είναι διαθέσιμη αυτή τη στιγμή.
               </p>
             );
           }
         })()}
 
-        {error && <p className="text-red-500 mt-2">{error}</p>}
+        {error && <p className={`${typography.formError} mt-2`}>{error}</p>}
       </div>
 
-      <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+      <div className={`mt-2 ${typography.small}`}>
         Από {formatDate(vote.start_date)} έως {formatDate(vote.end_date)}
       </div>
     </div>
