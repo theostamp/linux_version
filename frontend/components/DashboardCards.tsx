@@ -178,7 +178,7 @@ export const kioskCards: DashboardCardConfig[] = [
     bgColor: 'bg-purple-50',
     borderColor: 'border-purple-200',
     textColor: 'text-purple-900',
-    link: '/dashboard/kiosk-widgets',
+    link: '/kiosk-widgets',
     description: 'Ρύθμιση widgets'
   }
 ];

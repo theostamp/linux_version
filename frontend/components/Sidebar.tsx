@@ -144,7 +144,7 @@ const navigationGroups: NavigationGroup[] = [
         roles: ['manager', 'staff', 'superuser'],
       },
       {
-        href: '/dashboard/kiosk-widgets',
+        href: '/kiosk-widgets',
         label: 'Διαχείριση Widgets',
         icon: <Settings className="w-4 h-4" />,
         roles: ['manager', 'staff', 'superuser'],
