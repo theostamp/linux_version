@@ -106,7 +106,6 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const [selectedAmountTitle, setSelectedAmountTitle] = useState('');
   const [showPreviousObligationsModal, setShowPreviousObligationsModal] = useState(false);
   const [showReserveFundInfoModal, setShowReserveFundInfoModal] = useState(false);
-  const [showOverviewModal, setShowOverviewModal] = useState(false);
   const [showReserveGoalModal, setShowReserveGoalModal] = useState(false);
   const [showManagementExpensesModal, setShowManagementExpensesModal] = useState(false);
   const [reserveFundPriority, setReserveFundPriority] = useState<'after_obligations' | 'always'>('after_obligations');
@@ -1336,26 +1335,6 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
           </div>
         </div>
 
-        {/* Section 1.5: Με μια ματιά - Modal */}
-        <div className="space-y-2">
-          <Card className="border-2 border-green-200 bg-green-50/30">
-            <CardHeader className="cursor-pointer hover:bg-green-100/50 transition-colors" onClick={() => setShowOverviewModal(true)}>
-              <CardTitle className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-green-600" />
-                  <span className="font-semibold text-sm text-green-900">
-                    Με μια ματιά
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                    Progress Bar
-                  </Badge>
-                </div>
-              </CardTitle>
-            </CardHeader>
-          </Card>
-        </div>
 
 
         {/* Section 2: Overall Financial Health */}
@@ -1597,114 +1576,6 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         </div>
       )}
 
-      {/* Overview Modal */}
-      <Dialog open={showOverviewModal} onOpenChange={setShowOverviewModal}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5 text-green-600" />
-              Με μια ματιά - Κάλυψη Υποχρεώσεων
-            </DialogTitle>
-            <DialogDescription>
-              Προβολή κάλυψης υποχρεώσεων με progress bar και στατιστικά
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6">
-            {(() => {
-              // Υπολογισμός συνολικού ποσού που οφείλεται (τρέχοντες + προηγούμενες οφειλές)
-              // Το total_expenses_month ήδη περιλαμβάνει τις δαπάνες διαχείρισης - δεν προσθέτουμε total_management_cost ξανά
-              const currentMonthObligations = (financialSummary?.total_expenses_month || 0) +
-                                             (financialSummary?.reserve_fund_monthly_target || 0);
-              
-              // Προηγούμενες οφειλές (συμπεριλαμβανομένων εκ των υστέρων δαπανών)
-              const previousObligations = financialSummary?.previous_obligations || 0;
-              
-              // Συνολικές υποχρεώσεις = τρέχοντες + προηγούμενες
-              const totalObligations = currentMonthObligations + previousObligations;
-              
-              // Πληρωμές που έχουν γίνει για τον τρέχοντα μήνα
-              const actualPayments = financialSummary?.total_payments_month || 0;
-              
-              // Υπολογισμός ποσοστού κάλυψης
-              const coveragePercentage = totalObligations > 0 ? Math.min(100, (actualPayments / totalObligations * 100)) : 0;
-              
-              // Υπολογισμός εκκρεμών πληρωμών
-              const pendingPayments = Math.max(0, totalObligations - actualPayments);
-              
-              return (
-                <>
-                  {/* Progress Bar */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <BarChart3 className="h-4 w-4 text-green-600" />
-                        <span className="text-sm font-medium text-green-800">Κάλυψη Υποχρεώσεων</span>
-                        {previousObligations > 0 && (
-                          <span className="text-xs text-gray-500">(συμπεριλαμβανομένων προηγούμενων)</span>
-                        )}
-                      </div>
-                      <span className="text-sm font-bold text-green-600">
-                        {coveragePercentage.toFixed(1)}%
-                      </span>
-                    </div>
-                    
-                    <div className="w-full bg-gray-200 rounded-full h-6 relative overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-500 ease-out"
-                        style={{ width: `${coveragePercentage}%` }}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xs font-bold text-white drop-shadow-sm">
-                          {formatCurrency(actualPayments)} / {formatCurrency(totalObligations)}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-xs text-gray-600">
-                      <span>0€</span>
-                      <span>{formatCurrency(totalObligations)}</span>
-                    </div>
-                  </div>
-                  
-                  {/* Στατιστικά */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                      <div className="text-lg font-bold text-green-700">
-                        {formatCurrency(actualPayments)}
-                      </div>
-                      <div className="text-xs text-green-600">Πληρωμένες</div>
-                    </div>
-                    
-                    <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
-                      <div className="text-lg font-bold text-red-700">
-                        {formatCurrency(pendingPayments)}
-                      </div>
-                      <div className="text-xs text-red-600">Εκκρεμείς</div>
-                    </div>
-                    
-                    <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="text-lg font-bold text-blue-700">
-                        {formatCurrency(totalObligations)}
-                      </div>
-                      <div className="text-xs text-blue-600">Σύνολο</div>
-                    </div>
-                  </div>
-                  
-                  {/* Διαμερίσματα με οφειλές */}
-                  <div className="pt-4 border-t border-gray-200">
-                    <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-                      <div className="text-lg font-bold text-orange-700">
-                        0/{financialSummary?.apartments_count || 0}
-                      </div>
-                      <div className="text-xs text-orange-600">με οφειλές</div>
-                    </div>
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Reserve Goal Modal */}
       <Dialog open={showReserveGoalModal} onOpenChange={setShowReserveGoalModal}>
