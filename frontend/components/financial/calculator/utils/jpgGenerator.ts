@@ -76,6 +76,11 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
     const paymentDueDate = getPaymentDueDate(state);
     const selectedMonthDisplay = selectedMonth || period;
 
+    // Debug: Check if we have apartment data
+    console.log('JPG Export - aptWithFinancial length:', aptWithFinancial?.length || 0);
+    console.log('JPG Export - shares keys:', Object.keys(state.shares || {}));
+    console.log('JPG Export - buildingName:', buildingName);
+
     const htmlContent = `
         <div style="
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -376,7 +381,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                 </tr>
               </thead>
               <tbody>
-                ${aptWithFinancial.map((apt, index) => {
+                ${(aptWithFinancial && aptWithFinancial.length > 0) ? aptWithFinancial.map((apt, index) => {
                   const aptAmount = perApartmentAmounts[apt.id] || {};
                   const previousBalance = Math.abs(apt.previous_balance || 0);
                   const commonMills = apt.participation_mills || 0;
@@ -401,7 +406,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                       <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold; color: #2563eb;">${formatAmount(totalAmount)}€</td>
                     </tr>
                   `;
-                }).join('')}
+                }).join('') : '<tr><td colspan="12" style="text-align: center; padding: 20px; color: #666;">Δεν υπάρχουν δεδομένα διαμερισμάτων</td></tr>'}
 
                 <!-- Totals Row -->
                 <tr style="background: #f3f4f6; font-weight: bold;">
@@ -427,6 +432,9 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
         </div>
       `;
 
+      // Debug: Log the HTML content (first 1000 chars)
+      console.log('JPG Export - HTML Content (first 1000 chars):', htmlContent.substring(0, 1000));
+
       // Create temporary element
       const element = document.createElement('div');
       element.innerHTML = htmlContent;
@@ -436,22 +444,30 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
       element.style.width = '1123px';
       element.style.height = '794px';
       element.style.visibility = 'hidden';
+      element.style.backgroundColor = '#ffffff';
       document.body.appendChild(element);
+
+      console.log('JPG Export - Element created, children count:', element.children.length);
 
       try {
         // Wait for rendering
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Generate screenshot
+        console.log('JPG Export - Starting canvas generation...');
+        console.log('JPG Export - Element dimensions:', element.offsetWidth, 'x', element.offsetHeight);
+
+        // Generate screenshot with simpler options first
         const canvas = await html2canvas(element, {
-          scale: 1.5,
+          backgroundColor: '#ffffff',
           width: 1123,
           height: 794,
-          backgroundColor: '#ffffff',
+          scale: 1,
+          logging: true,
           useCORS: true,
-          allowTaint: false,
-          foreignObjectRendering: true
+          allowTaint: true
         });
+
+        console.log('JPG Export - Canvas generated:', canvas.width, 'x', canvas.height);
 
         // Create and download JPG
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
