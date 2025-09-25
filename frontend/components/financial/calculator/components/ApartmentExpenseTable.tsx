@@ -58,12 +58,12 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
         </TableHeader>
         <TableBody>
           {sharesArray.map((share) => {
-            const apartmentData = aptWithFinancial.find(apt => apt.id === share.apartment_id);
+            const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
             const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
             const elevatorMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
             const heatingMills = apartmentData?.heating_mills ?? toNumber(share.participation_mills);
             const breakdown = share.breakdown || {};
-            const commonAmount = toNumber(breakdown.general_expenses || 0);
+            const commonAmount = toNumber(apartmentData?.expense_share || 0);
             const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
             const heatingAmount = toNumber(breakdown.heating_expenses || 0);
             const managementFee = toNumber((breakdown as any).management_fee ?? managementFeeInfo.feePerApartment);
@@ -99,7 +99,7 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             <TableCell>{sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.participation_mills ?? 0), 0).toFixed(2)}</TableCell>
             <TableCell>{sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.participation_mills ?? 0), 0).toFixed(2)}</TableCell>
             <TableCell>{sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.heating_mills ?? 0), 0).toFixed(2)}</TableCell>
-            <TableCell>{formatAmount(expenseBreakdown.common + reserveFundInfo.monthlyAmount)}</TableCell>
+            <TableCell>{formatAmount(sharesArray.reduce((s, a) => s + toNumber(aptWithFinancial.find(apt => apt.id === a.apartment_id)?.expense_share || 0), 0) + reserveFundInfo.monthlyAmount)}</TableCell>
             <TableCell>{formatAmount(expenseBreakdown.elevator)}</TableCell>
             <TableCell>{formatAmount(expenseBreakdown.heating)}</TableCell>
             <TableCell>{formatAmount(managementFeeInfo.totalFee)}</TableCell>
