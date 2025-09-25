@@ -96,6 +96,54 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
           min-height: 754px;
           box-sizing: border-box;
         ">
+          <!-- Header Section -->
+          <div style="
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #dc2626;
+          ">
+            <div style="
+              font-size: 16px;
+              font-weight: bold;
+              color: #dc2626;
+              margin-bottom: 8px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            ">
+              Γραφείο Διαχείρισης
+            </div>
+            <div style="
+              font-size: 18px;
+              font-weight: bold;
+              color: #1f2937;
+              margin-bottom: 10px;
+            ">
+              Φύλλο Κοινοχρήστων
+            </div>
+            <div style="
+              font-size: 14px;
+              color: #4b5563;
+              margin-bottom: 5px;
+            ">
+              ${selectedMonthDisplay}
+            </div>
+            <div style="
+              font-size: 12px;
+              color: #dc2626;
+              font-weight: 600;
+            ">
+              Πληρωτέο μέχρι ${paymentDueDate}
+            </div>
+            <div style="
+              font-size: 12px;
+              color: #6b7280;
+              margin-top: 3px;
+            ">
+              ${selectedMonthDisplay}
+            </div>
+          </div>
+
           <!-- Traditional View Grid Layout -->
           <div style="
             display: grid;
