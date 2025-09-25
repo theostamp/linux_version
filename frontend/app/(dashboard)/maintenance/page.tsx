@@ -353,25 +353,53 @@ export default function MaintenanceDashboard() {
   const yearStart = `${year}-01-01`;
   const yearEnd = `${year}-12-31`;
 
-  // Service/Maintenance expenses for the year (excludes operational expenses)
+  // Service/Maintenance expenses for the year (excludes operational expenses and future management fees)
   const serviceExpensesYearQ = useQuery({
     queryKey: ['service-expenses-year', { building: buildingId, year }],
-    queryFn: async () => (await api.get(`/financial/expenses/`, { 
-      params: { 
-        building_id: buildingId, 
-        date__gte: yearStart, 
-        date__lte: yearEnd, 
-        limit: 1000,
-        // Exclude operational expenses (utilities, monthly bills)
-        category__not_in: [
-          'electricity_common',
-          'water_common', 
-          'heating_fuel',
-          'heating_gas',
-          'garbage_collection'
-        ].join(',')
-      } 
-    })).data,
+    queryFn: async () => {
+      const response = await api.get(`/financial/expenses/`, { 
+        params: { 
+          building_id: buildingId, 
+          date__gte: yearStart, 
+          date__lte: yearEnd, 
+          limit: 1000,
+          // Exclude operational expenses (utilities, monthly bills)
+          category__not_in: [
+            'electricity_common',
+            'water_common', 
+            'heating_fuel',
+            'heating_gas',
+            'garbage_collection'
+          ].join(',')
+        } 
+      });
+      
+      // Filter out future management fees on the client side
+      const expenses = extractResults<any>(response.data ?? []);
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth() + 1; // 1-based month
+      const currentYear = currentDate.getFullYear();
+      
+      const filteredExpenses = expenses.filter((expense: any) => {
+        // If it's a management fee, check if it's for a future month
+        if (expense.category === 'management_fees') {
+          const expenseDate = new Date(expense.date);
+          const expenseMonth = expenseDate.getMonth() + 1; // 1-based month
+          const expenseYear = expenseDate.getFullYear();
+          
+          // Exclude management fees for current and future months (only include past months)
+          if (expenseYear > currentYear || (expenseYear === currentYear && expenseMonth >= currentMonth)) {
+            return false;
+          }
+        }
+        return true;
+      });
+      
+      return {
+        ...response.data,
+        results: filteredExpenses
+      };
+    },
     staleTime: 30_000,
   });
 
@@ -562,12 +590,20 @@ export default function MaintenanceDashboard() {
   }
   // Count approved projects from offers
   const approvedProjectsCount = extractCount(approvedProjectsQ.data ?? []);
+  
+  // Count scheduled maintenance that are NOT linked to approved projects to avoid double counting
+  const scheduledMaintenanceCount = scheduledRows.length;
+  const linkedToProjectsCount = scheduledRows.filter((maintenance: any) => maintenance.linked_project).length;
+  const unlinkedScheduledCount = scheduledMaintenanceCount - linkedToProjectsCount;
+  
+  // Total maintenance work = unlinked scheduled maintenance + approved projects
+  const totalMaintenanceWork = unlinkedScheduledCount + approvedProjectsCount;
 
   const baseStats: MaintenanceStats = {
     total_contractors: contractorRows.length,
     active_contractors: contractorRows.filter((c: any) => c.status === 'active' || c.is_active === true).length,
     pending_receipts: extractCount(receiptsQ.data ?? []),
-    scheduled_maintenance: extractCount(scheduledQ.data ?? []) + approvedProjectsCount, // Include approved projects
+    scheduled_maintenance: totalMaintenanceWork, // Avoid double counting linked projects
     urgent_maintenance: extractCount(urgentScheduledQ.data ?? []),
     completed_maintenance: completedThisYear,
     total_spent: totalServiceSpentThisYear, // Use service expenses for overview tab
@@ -577,7 +613,7 @@ export default function MaintenanceDashboard() {
     total_contractors: publicCountersQ.data.active_contractors, // public API doesn't expose total; mirror active
     active_contractors: publicCountersQ.data.active_contractors,
     pending_receipts: publicCountersQ.data.pending_receipts,
-    scheduled_maintenance: publicCountersQ.data.scheduled_total + approvedProjectsCount, // Include approved projects
+    scheduled_maintenance: totalMaintenanceWork, // Use the same logic as baseStats to avoid double counting
     urgent_maintenance: publicCountersQ.data.urgent_total,
     completed_maintenance: completedThisYear,
     total_spent: totalServiceSpentThisYear, // Use service expenses for overview tab

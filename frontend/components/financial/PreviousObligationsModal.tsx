@@ -245,7 +245,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                     </div>
                   </div>
                   <div className="text-2xl font-bold text-indigo-800 mt-2">
-                    {formatCurrency((apartmentObligations.reduce((sum, apt) => sum + apt.total_obligations, 0)) - (summary?.previous_obligations || 0))}
+                    {formatCurrency(Math.max(0, (apartmentObligations.reduce((sum, apt) => sum + apt.total_obligations, 0)) - (summary?.previous_obligations || 0)))}
                   </div>
 
                 </CardContent>
@@ -310,7 +310,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-sm text-indigo-700">
-                        {formatCurrency((apartmentObligations.reduce((sum, apt) => sum + apt.total_obligations, 0)) - (summary?.previous_obligations || 0))}
+                        {formatCurrency(Math.max(0, (apartmentObligations.reduce((sum, apt) => sum + apt.total_obligations, 0)) - (summary?.previous_obligations || 0)))}
                       </span>
                       <span className="text-xs text-gray-500">(δόσεις έργων)</span>
                     </div>

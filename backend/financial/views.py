@@ -42,10 +42,18 @@ class ExpenseFilter(filters.FilterSet):
     """Custom filter for Expense model with date range support"""
     date__gte = DateFilter(field_name='date', lookup_expr='gte')
     date__lte = DateFilter(field_name='date', lookup_expr='lte')
+    category__not_in = filters.CharFilter(method='filter_category_not_in')
+    
+    def filter_category_not_in(self, queryset, name, value):
+        """Filter expenses that are NOT in the specified categories"""
+        if value:
+            categories = [cat.strip() for cat in value.split(',') if cat.strip()]
+            return queryset.exclude(category__in=categories)
+        return queryset
     
     class Meta:
         model = Expense
-        fields = ['building', 'category', 'date', 'distribution_type', 'supplier', 'date__gte', 'date__lte']
+        fields = ['building', 'category', 'date', 'distribution_type', 'supplier', 'date__gte', 'date__lte', 'category__not_in']
 
 
 class SupplierViewSet(viewsets.ModelViewSet):

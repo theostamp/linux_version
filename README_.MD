@@ -481,7 +481,7 @@ git commit -m "διορθωσεις οικονομικων ερ"
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "οκ με την προσθηκη αποθεματικου στις δπανες ως οφειλες"
+git commit -m "μαλλον ολα οκ στα οικονομικα"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
