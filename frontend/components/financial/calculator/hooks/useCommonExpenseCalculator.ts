@@ -20,6 +20,7 @@ import {
 import { toNumber, formatAmount } from '../utils/formatters';
 import { exportToPDF } from '../utils/pdfGenerator';
 import { exportToExcel } from '../utils/excelGenerator';
+import { exportToJPG } from '../utils/jpgGenerator';
 import { getPeriodInfo } from '../utils/periodHelpers';
 
 export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
@@ -366,7 +367,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
 
   const handlePrint = () => window.print();
 
-  const handleExport = useCallback(async (format: 'pdf' | 'excel') => {
+  const handleExport = useCallback(async (format: 'pdf' | 'excel' | 'jpg') => {
     const commonParams = {
         state,
         buildingName,
@@ -397,6 +398,8 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
       await exportToPDF(commonParams);
     } else if (format === 'excel') {
       await exportToExcel({...commonParams, reserveFundDetails: reserveFundInfo, getGroupedExpenses});
+    } else if (format === 'jpg') {
+      await exportToJPG(commonParams);
     }
   }, [state, props, expenseBreakdown, reserveFundInfo, managementFeeInfo, perApartmentAmounts, aptWithFinancial, totalExpenses, getFinalTotalExpenses, getTotalPreviousBalance, getGroupedExpenses]);
 

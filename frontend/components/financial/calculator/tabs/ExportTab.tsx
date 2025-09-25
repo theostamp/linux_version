@@ -2,10 +2,10 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Printer, Save, Thermometer, FileText } from 'lucide-react';
+import { Download, Printer, Save, Thermometer, FileText, Image } from 'lucide-react';
 
 interface ExportTabProps {
-  handleExport: (format: 'pdf' | 'excel') => void;
+  handleExport: (format: 'pdf' | 'excel' | 'jpg') => void;
   handlePrint: () => void;
   handleSave: () => void;
   isSaving: boolean;
@@ -38,7 +38,7 @@ export const ExportTab: React.FC<ExportTabProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="border-blue-200 bg-blue-50/30">
             <CardContent className="p-4">
               <div className="flex items-center gap-3 mb-3">
@@ -54,6 +54,25 @@ export const ExportTab: React.FC<ExportTabProps> = ({
               >
                 <Download className="h-4 w-4 mr-2" />
                 Λήψη PDF
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-teal-200 bg-teal-50/30">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <Image className="h-6 w-6 text-teal-600" />
+                <h3 className="font-semibold text-teal-800">Εξαγωγή JPG</h3>
+              </div>
+              <p className="text-sm text-teal-700 mb-4">
+                Screenshot υψηλής ποιότητας του φύλλου
+              </p>
+              <Button
+                onClick={() => handleExport('jpg')}
+                className="w-full bg-teal-600 hover:bg-teal-700"
+              >
+                <Image className="h-4 w-4 mr-2" />
+                Λήψη JPG
               </Button>
             </CardContent>
           </Card>
