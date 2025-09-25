@@ -1275,6 +1275,82 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                         'total_mills': total_mills
                     })
                 
+                # ΔΙΟΡΘΩΣΗ: Προσθήκη δυναμικού υπολογισμού αποθεματικού
+                from buildings.models import Building
+                building = Building.objects.get(id=building_id)
+                
+                # Υπολογισμός αποθεματικού αν υπάρχει στόχος και διάρκεια
+                if (building.reserve_fund_goal and 
+                    building.reserve_fund_duration_months and
+                    building.reserve_fund_start_date):
+                    
+                    monthly_reserve_target = building.reserve_fund_goal / building.reserve_fund_duration_months
+                    
+                    # Έλεγχος αν ο μήνας είναι εντός της περιόδου συλλογής αποθεματικού
+                    if month:
+                        try:
+                            from datetime import date
+                            year, mon = map(int, month.split('-'))
+                            month_start = date(year, mon, 1)
+                            
+                            # Έλεγχος αν ο μήνας είναι εντός της περιόδου συλλογής
+                            if (month_start >= building.reserve_fund_start_date and
+                                (not building.reserve_fund_target_date or month_start <= building.reserve_fund_target_date)):
+                                
+                                # Υπολογισμός μεριδίου αποθεματικού
+                                mills = apartment.participation_mills or 0
+                                if total_mills > 0:
+                                    reserve_share = float((monthly_reserve_target * Decimal(str(mills)) / Decimal(str(total_mills))).quantize(Decimal('0.01')))
+                                    
+                                    apartment_data['total_obligations'] += reserve_share
+                                    apartment_data['expense_breakdown'].append({
+                                        'expense_id': f'reserve_fund_{month}',
+                                        'expense_title': 'Εισφορά Αποθεματικού',
+                                        'expense_amount': float(monthly_reserve_target),
+                                        'share_amount': reserve_share,
+                                        'distribution_type': 'reserve_fund',
+                                        'date': month_start.isoformat(),
+                                        'month': month,
+                                        'month_display': month_start.strftime('%B %Y'),
+                                        'mills': mills,
+                                        'total_mills': total_mills
+                                    })
+                        except Exception as e:
+                            print(f"Error calculating reserve fund for month {month}: {e}")
+                    else:
+                        # Για current view, υπολογίζουμε αποθεματικό για όλους τους μήνες της περιόδου
+                        from datetime import date, timedelta
+                        today = date.today()
+                        start_date = building.reserve_fund_start_date
+                        end_date = building.reserve_fund_target_date or today
+                        
+                        current_date = start_date
+                        while current_date <= min(end_date, today):
+                            # Υπολογισμός μεριδίου αποθεματικού για τον μήνα
+                            mills = apartment.participation_mills or 0
+                            if total_mills > 0:
+                                reserve_share = float((monthly_reserve_target * Decimal(str(mills)) / Decimal(str(total_mills))).quantize(Decimal('0.01')))
+                                
+                                apartment_data['total_obligations'] += reserve_share
+                                apartment_data['expense_breakdown'].append({
+                                    'expense_id': f'reserve_fund_{current_date.strftime("%Y-%m")}',
+                                    'expense_title': 'Εισφορά Αποθεματικού',
+                                    'expense_amount': float(monthly_reserve_target),
+                                    'share_amount': reserve_share,
+                                    'distribution_type': 'reserve_fund',
+                                    'date': current_date.isoformat(),
+                                    'month': current_date.strftime('%Y-%m'),
+                                    'month_display': current_date.strftime('%B %Y'),
+                                    'mills': mills,
+                                    'total_mills': total_mills
+                                })
+                            
+                            # Επόμενος μήνας
+                            if current_date.month == 12:
+                                current_date = date(current_date.year + 1, 1, 1)
+                            else:
+                                current_date = date(current_date.year, current_date.month + 1, 1)
+                
                 # Calculate payments
                 payments = Payment.objects.filter(apartment=apartment)
                 for payment in payments:

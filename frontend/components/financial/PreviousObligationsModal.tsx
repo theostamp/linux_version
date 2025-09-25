@@ -28,6 +28,8 @@ interface ApartmentObligation {
   total_obligations: number;
   total_payments: number;
   net_obligation: number;
+  expense_share: number;
+  previous_balance: number;
   expense_breakdown: ExpenseBreakdown[];
   payment_breakdown: PaymentBreakdown[];
 }
@@ -245,9 +247,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                   <div className="text-2xl font-bold text-indigo-800 mt-2">
                     {formatCurrency((apartmentObligations.reduce((sum, apt) => sum + apt.total_obligations, 0)) - (summary?.previous_obligations || 0))}
                   </div>
-                  <div className="text-xs text-indigo-600 mt-1">
-                    (δόσεις έργων)
-                  </div>
+
                 </CardContent>
               </Card>
             </div>
@@ -306,7 +306,7 @@ export const PreviousObligationsModal: React.FC<PreviousObligationsModalProps> =
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
-                      <span className="text-sm font-medium text-gray-700">Μελλοντικές δαπάνες (δόσεις έργων):</span>
+                      <span className="text-sm font-medium text-gray-700">Μελλοντικές δαπάνες:</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-sm text-indigo-700">

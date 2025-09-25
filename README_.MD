@@ -474,7 +474,7 @@ docker compose up --build -d
 
 
 git add .
-git commit -m "διορθωσεις οικονομικων 43"
+git commit -m "διορθωσεις οικονομικων ερ"
 
 ## 📤 Ενημέρωση GitHub Repository
 
