@@ -25,13 +25,22 @@
 - **DELETE**: Διαγραφή διαμόρφωσης (επαναφορά στα προεπιλεγμένα)
 
 ### 4. Σελίδα Διαχείρισης (`frontend/app/dashboard/kiosk-widgets/page.tsx`)
-- Drag & Drop interface για αλλαγή σειράς widgets
+- **Canvas Editor**: Visual drag & drop interface για layout design
+- **Classic View**: Up/Down κουμπιά για αλλαγή σειράς widgets
 - Checkbox για ενεργοποίηση/απενεργοποίηση widgets
 - Γενικές ρυθμίσεις (διάρκεια slide, διάστημα ανανέωσης)
 - Preview mode για προεπισκόπηση
 - Επαναφορά στα προεπιλεγμένα
 
-### 5. Widget Renderer (`frontend/components/KioskWidgetRenderer.tsx`)
+### 5. Canvas Editor (`frontend/components/KioskCanvasEditor.tsx`)
+- **Visual Grid**: 8x12 grid system με δυνατότητα προσαρμογής
+- **Drag & Drop**: Σύρετε widgets από την παλέτα στο canvas
+- **Widget Palette**: Όλα τα διαθέσιμα widgets σε πλευρική μπάρα
+- **Real-time Preview**: Δείτε αμέσως το αποτέλεσμα
+- **Grid Controls**: Προσαρμόστε το μέγεθος του grid
+- **Layout Management**: Αποθήκευση και επαναφορά layouts
+
+### 6. Widget Renderer (`frontend/components/KioskWidgetRenderer.tsx`)
 - Νέο component που αντικαθιστά το KioskMode
 - Χρησιμοποιεί το σύστημα widgets για εμφάνιση
 - Δυναμική δημιουργία slides βάσει ενεργών widgets
@@ -67,12 +76,24 @@
 ## Χρήση
 
 ### Για Διαχειριστές
+
+#### Canvas Editor (Συνιστάται)
 1. Πηγαίνετε στο **Dashboard → Kiosk Widgets**
-2. Επιλέξτε ποια widgets θέλετε να εμφανίζονται
-3. Αλλάξτε τη σειρά με drag & drop
-4. Ρυθμίστε τις γενικές επιλογές
-5. Χρησιμοποιήστε το Preview για να δείτε το αποτέλεσμα
-6. Αποθηκεύστε τις αλλαγές
+2. Επιλέξτε **Canvas Editor** από τα toggle buttons
+3. **Σύρετε widgets** από την παλέτα στο canvas
+4. **Τοποθετήστε widgets** κάντοντας κλικ σε θέσεις του grid
+5. **Προσαρμόστε το grid** με τα +/- κουμπιά
+6. **Preview** για να δείτε το αποτέλεσμα
+7. **Αποθηκεύστε** το layout
+
+#### Classic View
+1. Πηγαίνετε στο **Dashboard → Kiosk Widgets**
+2. Επιλέξτε **Classic View** από τα toggle buttons
+3. Επιλέξτε ποια widgets θέλετε να εμφανίζονται
+4. Αλλάξτε τη σειρά με τα ↑↓ κουμπιά
+5. Ρυθμίστε τις γενικές επιλογές
+6. Χρησιμοποιήστε το Preview για να δείτε το αποτέλεσμα
+7. Αποθηκεύστε τις αλλαγές
 
 ### Προεπιλεγμένη Διαμόρφωση
 Όλα τα widgets είναι ενεργοποιημένα από προεπιλογή με τη σειρά που ορίζεται στο `DEFAULT_WIDGET_CONFIG`.

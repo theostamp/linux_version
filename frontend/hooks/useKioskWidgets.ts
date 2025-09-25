@@ -143,6 +143,12 @@ export function useKioskWidgets(buildingId?: number) {
       .sort((a, b) => a.order - b.order);
   }, [config.widgets]);
 
+  // Save complete config
+  const saveCompleteConfig = useCallback(async (newConfig: WidgetConfig) => {
+    const success = await saveConfig(newConfig);
+    return success;
+  }, [saveConfig]);
+
   // Load config on mount
   useEffect(() => {
     loadConfig();
@@ -159,7 +165,7 @@ export function useKioskWidgets(buildingId?: number) {
     resetToDefault,
     getEnabledWidgets,
     getAllEnabledWidgets,
-    saveConfig,
+    saveConfig: saveCompleteConfig,
     loadConfig,
   };
 }

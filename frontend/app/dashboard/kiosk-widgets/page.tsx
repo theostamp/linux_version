@@ -16,7 +16,6 @@ import {
   RotateCcw, 
   Eye, 
   EyeOff, 
-  GripVertical,
   Clock,
   Smartphone,
   Cloud,
@@ -53,7 +52,8 @@ import {
 import { useKioskWidgets } from '@/hooks/useKioskWidgets';
 import { KioskWidget, WidgetCategory } from '@/types/kiosk-widgets';
 import { toast } from 'sonner';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import KioskCanvasEditor from '@/components/KioskCanvasEditor';
+// import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 // Widget icons mapping
 const WIDGET_ICONS: Record<string, any> = {
@@ -107,6 +107,7 @@ export default function KioskWidgetsPage() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [useCanvasEditor, setUseCanvasEditor] = useState(true);
 
   // Group widgets by category
   const widgetsByCategory = config.widgets.reduce((acc, widget) => {
@@ -131,29 +132,47 @@ export default function KioskWidgetsPage() {
     }
   };
 
-  const handleDragEnd = async (result: DropResult) => {
-    if (!result.destination) return;
-
-    const { source, destination } = result;
-    
-    // Only allow reordering within the same category
-    if (source.droppableId !== destination.droppableId) return;
-
-    const category = source.droppableId as WidgetCategory;
+  const handleMoveUp = async (widgetId: string, category: WidgetCategory) => {
     const widgets = [...widgetsByCategory[category]];
-    const [reorderedWidget] = widgets.splice(source.index, 1);
-    widgets.splice(destination.index, 0, reorderedWidget);
+    const currentIndex = widgets.findIndex(w => w.id === widgetId);
+    
+    if (currentIndex > 0) {
+      const newIndex = currentIndex - 1;
+      [widgets[currentIndex], widgets[newIndex]] = [widgets[newIndex], widgets[currentIndex]];
+      
+      // Update order for all widgets in the category
+      const updates = widgets.map((widget, index) => 
+        updateWidgetOrder(widget.id, index)
+      );
 
-    // Update order for all widgets in the category
-    const updates = widgets.map((widget, index) => 
-      updateWidgetOrder(widget.id, index)
-    );
+      try {
+        await Promise.all(updates);
+        toast.success('Σειρά widgets ενημερώθηκε');
+      } catch (error) {
+        toast.error('Αποτυχία ενημέρωσης σειράς');
+      }
+    }
+  };
 
-    try {
-      await Promise.all(updates);
-      toast.success('Σειρά widgets ενημερώθηκε');
-    } catch (error) {
-      toast.error('Αποτυχία ενημέρωσης σειράς');
+  const handleMoveDown = async (widgetId: string, category: WidgetCategory) => {
+    const widgets = [...widgetsByCategory[category]];
+    const currentIndex = widgets.findIndex(w => w.id === widgetId);
+    
+    if (currentIndex < widgets.length - 1) {
+      const newIndex = currentIndex + 1;
+      [widgets[currentIndex], widgets[newIndex]] = [widgets[newIndex], widgets[currentIndex]];
+      
+      // Update order for all widgets in the category
+      const updates = widgets.map((widget, index) => 
+        updateWidgetOrder(widget.id, index)
+      );
+
+      try {
+        await Promise.all(updates);
+        toast.success('Σειρά widgets ενημερώθηκε');
+      } catch (error) {
+        toast.error('Αποτυχία ενημέρωσης σειράς');
+      }
     }
   };
 
@@ -232,6 +251,21 @@ export default function KioskWidgetsPage() {
         </div>
         <div className="flex items-center space-x-2">
           <Button
+            variant={useCanvasEditor ? "default" : "outline"}
+            onClick={() => setUseCanvasEditor(true)}
+          >
+            <Grid3X3 className="w-4 h-4 mr-2" />
+            Canvas Editor
+          </Button>
+          <Button
+            variant={!useCanvasEditor ? "default" : "outline"}
+            onClick={() => setUseCanvasEditor(false)}
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Classic View
+          </Button>
+          <Separator orientation="vertical" className="h-8" />
+          <Button
             variant="outline"
             onClick={() => setPreviewMode(!previewMode)}
           >
@@ -302,98 +336,97 @@ export default function KioskWidgetsPage() {
         </CardContent>
       </Card>
 
-      {/* Widgets by Category */}
-      <DragDropContext onDragEnd={handleDragEnd}>
-        {Object.entries(widgetsByCategory).map(([category, widgets]) => (
-          <Card key={category}>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Monitor className="w-5 h-5 mr-2" />
-                {CATEGORY_LABELS[category as WidgetCategory]}
-                <Badge 
-                  variant="outline" 
-                  className={`ml-2 ${CATEGORY_COLORS[category as WidgetCategory]}`}
-                >
-                  {widgets.filter(w => w.enabled).length} / {widgets.length}
-                </Badge>
-              </CardTitle>
-              <CardDescription>
-                {category === 'main_slides' && 'Κύρια περιεχόμενα που εμφανίζονται ως slides'}
-                {category === 'sidebar_widgets' && 'Widgets που εμφανίζονται στην πλευρική μπάρα'}
-                {category === 'top_bar_widgets' && 'Widgets που εμφανίζονται στην επάνω μπάρα'}
-                {category === 'special_widgets' && 'Ειδικά widgets (π.χ. news ticker)'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Droppable droppableId={category}>
-                {(provided, snapshot) => (
+      {/* Widgets by Category - Classic View */}
+      {!useCanvasEditor && Object.entries(widgetsByCategory).map(([category, widgets]) => (
+        <Card key={category}>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Monitor className="w-5 h-5 mr-2" />
+              {CATEGORY_LABELS[category as WidgetCategory]}
+              <Badge 
+                variant="outline" 
+                className={`ml-2 ${CATEGORY_COLORS[category as WidgetCategory]}`}
+              >
+                {widgets.filter(w => w.enabled).length} / {widgets.length}
+              </Badge>
+            </CardTitle>
+            <CardDescription>
+              {category === 'main_slides' && 'Κύρια περιεχόμενα που εμφανίζονται ως slides'}
+              {category === 'sidebar_widgets' && 'Widgets που εμφανίζονται στην πλευρική μπάρα'}
+              {category === 'top_bar_widgets' && 'Widgets που εμφανίζονται στην επάνω μπάρα'}
+              {category === 'special_widgets' && 'Ειδικά widgets (π.χ. news ticker)'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 min-h-[100px]">
+              {widgets.map((widget, index) => {
+                const IconComponent = WIDGET_ICONS[widget.id] || Settings;
+                return (
                   <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={`space-y-2 min-h-[100px] ${
-                      snapshot.isDraggingOver ? 'bg-blue-50 rounded-lg' : ''
-                    }`}
+                    key={widget.id}
+                    className="flex items-center space-x-3 p-3 bg-white border rounded-lg hover:shadow-md transition-shadow"
                   >
-                    {widgets.map((widget, index) => {
-                      const IconComponent = WIDGET_ICONS[widget.id] || Settings;
-                      return (
-                        <Draggable key={widget.id} draggableId={widget.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              className={`flex items-center space-x-3 p-3 bg-white border rounded-lg ${
-                                snapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
-                              } transition-shadow`}
-                            >
-                              <div
-                                {...provided.dragHandleProps}
-                                className="cursor-grab hover:cursor-grabbing"
-                              >
-                                <GripVertical className="w-4 h-4 text-gray-400" />
-                              </div>
-                              
-                              <div className="flex-shrink-0">
-                                <IconComponent className="w-5 h-5 text-gray-600" />
-                              </div>
-                              
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center space-x-2">
-                                  <h3 className="font-medium text-gray-900 truncate">
-                                    {widget.name}
-                                  </h3>
-                                  {widget.enabled && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      Ενεργό
-                                    </Badge>
-                                  )}
-                                </div>
-                                <p className="text-sm text-gray-600 truncate">
-                                  {widget.description}
-                                </p>
-                              </div>
-                              
-                              <div className="flex-shrink-0">
-                                <Switch
-                                  checked={widget.enabled}
-                                  onCheckedChange={(checked) => 
-                                    handleToggleWidget(widget.id, checked)
-                                  }
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </Draggable>
-                      );
-                    })}
-                    {provided.placeholder}
+                    <div className="flex flex-col space-y-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleMoveUp(widget.id, category as WidgetCategory)}
+                        disabled={index === 0}
+                        className="h-6 w-6 p-0"
+                      >
+                        ↑
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleMoveDown(widget.id, category as WidgetCategory)}
+                        disabled={index === widgets.length - 1}
+                        className="h-6 w-6 p-0"
+                      >
+                        ↓
+                      </Button>
+                    </div>
+                    
+                    <div className="flex-shrink-0">
+                      <IconComponent className="w-5 h-5 text-gray-600" />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <h3 className="font-medium text-gray-900 truncate">
+                          {widget.name}
+                        </h3>
+                        {widget.enabled && (
+                          <Badge variant="secondary" className="text-xs">
+                            Ενεργό
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 truncate">
+                        {widget.description}
+                      </p>
+                    </div>
+                    
+                    <div className="flex-shrink-0">
+                      <Switch
+                        checked={widget.enabled}
+                        onCheckedChange={(checked) => 
+                          handleToggleWidget(widget.id, checked)
+                        }
+                      />
+                    </div>
                   </div>
-                )}
-              </Droppable>
-            </CardContent>
-          </Card>
-        ))}
-      </DragDropContext>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+
+      {/* Canvas Editor or Classic View */}
+      {useCanvasEditor ? (
+        <KioskCanvasEditor buildingId={selectedBuilding?.id} />
+      ) : null}
 
       {/* Preview Section */}
       {previewMode && (

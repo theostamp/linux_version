@@ -7,6 +7,19 @@ export interface KioskWidget {
   enabled: boolean;
   order: number;
   settings?: Record<string, any>;
+  // Canvas layout properties
+  canvasPosition?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  gridPosition?: {
+    row: number;
+    col: number;
+    rowSpan: number;
+    colSpan: number;
+  };
 }
 
 export type WidgetCategory = 
@@ -34,6 +47,31 @@ export interface WidgetConfig {
     autoRefresh: boolean;
     refreshInterval: number;
   };
+  canvasLayout?: {
+    gridSize: {
+      rows: number;
+      cols: number;
+    };
+    widgetPositions: Record<string, {
+      row: number;
+      col: number;
+      rowSpan: number;
+      colSpan: number;
+    }>;
+  };
+}
+
+export interface CanvasGridCell {
+  row: number;
+  col: number;
+  occupied: boolean;
+  widgetId?: string;
+}
+
+export interface DragItem {
+  id: string;
+  type: 'widget';
+  widget: KioskWidget;
 }
 
 // Available widgets configuration
