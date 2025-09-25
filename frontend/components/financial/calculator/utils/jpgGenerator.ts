@@ -72,6 +72,8 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
   }
 
   try {
+    toast.info('Δημιουργία JPG... Παρακαλώ περιμένετε.');
+
     const period = getPeriodInfo(state);
     const paymentDueDate = getPaymentDueDate(state);
     const selectedMonthDisplay = selectedMonth || period;
@@ -435,16 +437,17 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
       // Debug: Log the HTML content (first 1000 chars)
       console.log('JPG Export - HTML Content (first 1000 chars):', htmlContent.substring(0, 1000));
 
-      // Create temporary element
+      // Create temporary element - make it visible for proper rendering
       const element = document.createElement('div');
       element.innerHTML = htmlContent;
       element.style.position = 'fixed';
-      element.style.top = '-10000px';
-      element.style.left = '-10000px';
+      element.style.top = '0px';
+      element.style.left = '0px';
       element.style.width = '1123px';
       element.style.height = '794px';
-      element.style.visibility = 'hidden';
+      element.style.zIndex = '9999';
       element.style.backgroundColor = '#ffffff';
+      element.style.overflow = 'hidden';
       document.body.appendChild(element);
 
       console.log('JPG Export - Element created, children count:', element.children.length);
@@ -469,8 +472,16 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
 
         console.log('JPG Export - Canvas generated:', canvas.width, 'x', canvas.height);
 
+        // Debug: Check if canvas has actual content
+        const ctx = canvas.getContext('2d');
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const hasContent = imageData.data.some((pixel, i) => i % 4 !== 3 && pixel !== 255); // Check for non-white pixels
+        console.log('JPG Export - Canvas has content:', hasContent);
+
         // Create and download JPG
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        console.log('JPG Export - Data URL length:', imgData.length);
+        console.log('JPG Export - Data URL start:', imgData.substring(0, 50));
         const link = document.createElement('a');
         link.href = imgData;
         link.download = `Κοινοχρηστα-${buildingName.replace(/[^a-zA-Z0-9]/g, '_')}-${selectedMonthDisplay.replace(/[^a-zA-Z0-9]/g, '_')}.jpg`;
@@ -478,12 +489,19 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
         link.click();
         document.body.removeChild(link);
 
+        toast.success('JPG αρχείο δημιουργήθηκε επιτυχώς!');
+
       } catch (error) {
         console.error('Error generating JPG:', error);
+        toast.error('Αποτυχία δημιουργίας JPG αρχείου');
         throw new Error('Failed to generate JPG file');
       } finally {
-        // Clean up
-        document.body.removeChild(element);
+        // Clean up - remove the temporary element
+        try {
+          document.body.removeChild(element);
+        } catch (e) {
+          console.log('Element already removed');
+        }
       }
     } catch (error) {
       console.error('Error in JPG export:', error);
