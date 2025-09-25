@@ -47,7 +47,8 @@ import {
   Heart,
   ExternalLink,
   Image as ImageIcon,
-  RefreshCw
+  RefreshCw,
+  Grid3X3
 } from 'lucide-react';
 import { useKioskWidgets } from '@/hooks/useKioskWidgets';
 import { KioskWidget, WidgetCategory } from '@/types/kiosk-widgets';
