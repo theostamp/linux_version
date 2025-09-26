@@ -88,7 +88,7 @@ export default function KioskPage() {
         const buildingsData = await fetchAllBuildingsPublic();
         console.log('[KIOSK] Buildings loaded successfully:', buildingsData.length);
         setBuildings(buildingsData);
-        
+
         // Check URL parameter for building ID
         const buildingParam = searchParams.get('building');
         if (buildingParam) {
@@ -142,8 +142,12 @@ export default function KioskPage() {
         setIsLoadingBuildings(false);
       }
     }
-    loadBuildings();
-  }, [searchParams]);
+
+    // Only load buildings once
+    if (isLoadingBuildings) {
+      loadBuildings();
+    }
+  }, [searchParams.get('building')]);  // Only depend on the building parameter, not the entire searchParams object
 
   if (isLoadingBuildings) {
     return <FullPageSpinner />;

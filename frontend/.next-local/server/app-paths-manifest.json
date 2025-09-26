@@ -1,6 +1,1 @@
-{
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/api/weather/route": "app/api/weather/route.js",
-  "/api/community-messages/route": "app/api/community-messages/route.js",
-  "/kiosk/page": "app/kiosk/page.js"
-}
+{}

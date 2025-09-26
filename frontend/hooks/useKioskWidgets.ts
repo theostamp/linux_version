@@ -54,8 +54,8 @@ export function useKioskWidgets(buildingId?: number) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Memoize default widgets to prevent re-creation
-  const defaultWidgets = useMemo(() => getDefaultWidgets(), []);
+  // Use constant default widgets to prevent re-creation
+  const defaultWidgets = DEFAULT_WIDGETS;
 
   // Memoize default settings
   const defaultSettings = useMemo(() => ({
@@ -324,10 +324,8 @@ export function useKioskWidgets(buildingId?: number) {
   };
 }
 
-// Default widgets configuration
-function getDefaultWidgets(): KioskWidget[] {
-  console.log('[getDefaultWidgets] Creating default widgets');
-  const widgets: KioskWidget[] = [
+// Default widgets configuration (defined outside the component to prevent recreation)
+const DEFAULT_WIDGETS: KioskWidget[] = [
     {
       id: 'dashboard_overview',
       name: 'Dashboard Overview',
@@ -481,8 +479,9 @@ function getDefaultWidgets(): KioskWidget[] {
       order: 0,
       settings: {}
     }
-  ];
-  
-  console.log('[getDefaultWidgets] Created', widgets.length, 'widgets');
-  return widgets;
+];
+
+// Function to get default widgets (now just returns the constant)
+function getDefaultWidgets(): KioskWidget[] {
+  return DEFAULT_WIDGETS;
 }

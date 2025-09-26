@@ -30,13 +30,13 @@ export default function AppProviders({ children }: { readonly children: ReactNod
 
   const isDashboard = dashboardRoutes.some(route => pathname?.startsWith(route));
 
-  // Debug logging για να δούμε τι συμβαίνει
+  // Debug logging για να δούμε τι συμβαίνει (only on pathname change)
   useEffect(() => {
     console.log('[AppProviders] Current pathname:', pathname);
     console.log('[AppProviders] Is Dashboard:', isDashboard);
     console.log('[AppProviders] Is Kiosk Mode:', isKioskMode);
     console.log('[AppProviders] Is Info Screen:', isInfoScreen);
-  }, [pathname, isDashboard, isKioskMode, isInfoScreen]);
+  }, [pathname]);  // Only log when pathname actually changes
 
   // Kiosk mode routes - no auth needed, no LayoutWrapper (they have their own layout)
   // IMPORTANT: Only /kiosk and /test-kiosk routes, NOT /kiosk-widgets
