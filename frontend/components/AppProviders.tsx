@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { AuthProvider } from '@/components/contexts/AuthContext';
 import { BuildingProvider } from '@/components/contexts/BuildingContext';
@@ -10,6 +10,12 @@ import LayoutWrapper from '@/components/LayoutWrapper';
 
 export default function AppProviders({ children }: { readonly children: ReactNode }) {
   const pathname = usePathname();
+  const [isClientReady, setIsClientReady] = useState(false);
+
+  useEffect(() => {
+    setIsClientReady(true);
+  }, []);
+
   const isInfoScreen = pathname?.startsWith('/info-screen');
   const isKioskMode = pathname?.startsWith('/kiosk') || pathname?.startsWith('/test-kiosk');
   // All routes from the (dashboard) directory should use auth
@@ -21,11 +27,20 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     '/chat', '/data-migration', '/kiosk-settings', '/suppliers', '/system-health',
     '/financial-tests'
   ];
-  
+
   const isDashboard = dashboardRoutes.some(route => pathname?.startsWith(route));
 
+  // Debug logging για να δούμε τι συμβαίνει
+  useEffect(() => {
+    console.log('[AppProviders] Current pathname:', pathname);
+    console.log('[AppProviders] Is Dashboard:', isDashboard);
+    console.log('[AppProviders] Is Kiosk Mode:', isKioskMode);
+    console.log('[AppProviders] Is Info Screen:', isInfoScreen);
+  }, [pathname, isDashboard, isKioskMode, isInfoScreen]);
+
   // Kiosk mode routes - no auth needed, no LayoutWrapper (they have their own layout)
-  if (isKioskMode) {
+  // IMPORTANT: Only /kiosk and /test-kiosk routes, NOT /kiosk-widgets
+  if (isKioskMode && !pathname?.includes('kiosk-widgets')) {
     return (
       <ReactQueryProvider>
         <LoadingProvider>
@@ -46,10 +61,9 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     );
   }
 
-  // Always provide AuthProvider for all routes - let individual components decide if they need auth
-  // Simplified logic: always provide AuthProvider, conditionally provide LayoutWrapper
+  // All other routes including /kiosk-widgets get AuthProvider
   const shouldUseLayoutWrapper = pathname && !isDashboard && !isKioskMode && !isInfoScreen;
-  
+
   return (
     <ReactQueryProvider>
       <LoadingProvider>
