@@ -1,7 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Use a different build directory to avoid permission issues
-  distDir: '.next-theo',
+  distDir: '.next-local',
+  
+  // Disable file system caching to avoid permission issues
+  experimental: {
+    // Disable file system caching
+    isrMemoryCacheSize: 0,
+    // Disable SWC cache
+    swcMinify: false,
+  },
   
   // Performance Optimizations
   compiler: {

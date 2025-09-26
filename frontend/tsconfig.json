@@ -34,10 +34,12 @@
     "**/*.ts",
     "**/*.tsx",
     ".next-clean/types/**/*.ts",
+    ".next-dev/types/**/*.ts",
+    ".next-theo/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
     "next.config.js",
-    ".next-theo/types/**/*.ts"
+    ".next-local/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
