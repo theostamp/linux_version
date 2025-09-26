@@ -198,42 +198,6 @@ export default function KioskWidgetRenderer({
   const enabledTopBarWidgets = useMemo(() => getEnabledWidgets('top_bar_widgets'), [config]);
   const enabledSpecialWidgets = useMemo(() => getEnabledWidgets('special_widgets'), [config]);
 
-  // Create slides based on enabled widgets (memoized)
-  const slides = useMemo(() => {
-    const slidesList: any[] = [];
-
-    enabledMainSlides.forEach(widget => {
-      switch (widget.id) {
-        case 'dashboard_overview':
-          slidesList.push(...createDashboardOverviewSlide());
-          break;
-        case 'building_statistics':
-          slidesList.push(...createBuildingStatisticsSlide());
-          break;
-        case 'emergency_contacts':
-          slidesList.push(...createEmergencyContactsSlide());
-          break;
-        case 'announcements':
-          slidesList.push(...createAnnouncementSlides());
-          break;
-        case 'votes':
-          slidesList.push(...createVoteSlides());
-          break;
-        case 'financial_overview':
-          slidesList.push(...createFinancialSlides());
-          break;
-        case 'maintenance_overview':
-          slidesList.push(...createMaintenanceSlides());
-          break;
-        case 'projects_overview':
-          slidesList.push(...createProjectsSlides());
-          break;
-      }
-    });
-
-    return slidesList;
-  }, [enabledMainSlides, data, maintenanceInfo]);
-
   // Slide creation functions (copied from KioskMode)
   const createDashboardOverviewSlide = () => {
     const hasContent = (data?.announcements?.length || 0) > 0 || (data?.votes?.length || 0) > 0 ||
@@ -630,6 +594,41 @@ export default function KioskWidgetRenderer({
     content: <div className="text-center text-gray-300 py-8">Projects Overview Slide</div>,
   }];
 
+  // Create slides based on enabled widgets (memoized)
+  const slides = useMemo(() => {
+    const slidesList: any[] = [];
+
+    enabledMainSlides.forEach(widget => {
+      switch (widget.id) {
+        case 'dashboard_overview':
+          slidesList.push(...createDashboardOverviewSlide());
+          break;
+        case 'building_statistics':
+          slidesList.push(...createBuildingStatisticsSlide());
+          break;
+        case 'emergency_contacts':
+          slidesList.push(...createEmergencyContactsSlide());
+          break;
+        case 'announcements':
+          slidesList.push(...createAnnouncementSlides());
+          break;
+        case 'votes':
+          slidesList.push(...createVoteSlides());
+          break;
+        case 'financial_overview':
+          slidesList.push(...createFinancialSlides());
+          break;
+        case 'maintenance_overview':
+          slidesList.push(...createMaintenanceSlides());
+          break;
+        case 'projects_overview':
+          slidesList.push(...createProjectsSlides());
+          break;
+      }
+    });
+
+    return slidesList;
+  }, [enabledMainSlides, data, maintenanceInfo]);
 
   return (
     <div className="h-screen w-screen text-white flex flex-col overflow-hidden font-ubuntu bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 max-w-full max-h-full">
