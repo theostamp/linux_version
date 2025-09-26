@@ -128,9 +128,12 @@ export default function KioskWidgetRenderer({
   // Auto-slide based on widget settings
   const startAutoSlide = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
+    const slideDuration = config?.settings?.slideDuration || 10;
     intervalRef.current = setInterval(() => {
-      instanceRef.current?.next();
-    }, config.settings.slideDuration * 1000);
+      if (instanceRef.current) {
+        instanceRef.current.next();
+      }
+    }, slideDuration * 1000);
   };
 
   useEffect(() => {
@@ -138,7 +141,7 @@ export default function KioskWidgetRenderer({
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [config.settings.slideDuration]);
+  }, [config?.settings?.slideDuration]);
 
   // Handle building selection
   const handleBuildingSelect = (building: any) => {
@@ -724,7 +727,11 @@ export default function KioskWidgetRenderer({
             {slides.map((_, index) => (
               <button
                 key={index}
-                onClick={() => instanceRef.current?.moveToIdx(index)}
+                onClick={() => {
+                  if (instanceRef.current) {
+                    instanceRef.current.moveToIdx(index);
+                  }
+                }}
                 className={`w-1.5 h-1.5 sm:w-2 sm:h-2 lg:w-3 lg:h-3 rounded-full transition-colors duration-200 flex-shrink-0 ${
                   currentSlide === index
                     ? 'bg-white'

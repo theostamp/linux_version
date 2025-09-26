@@ -284,8 +284,12 @@ export function useKioskWidgets(buildingId?: number) {
     }
   }, [createOrUpdateMutation]);
 
-  const getEnabledWidgets = useCallback((): KioskWidget[] => {
-    return config?.widgets?.filter(widget => widget.enabled) || [];
+  const getEnabledWidgets = useCallback((category?: string): KioskWidget[] => {
+    const widgets = config?.widgets?.filter(widget => widget.enabled) || [];
+    if (category) {
+      return widgets.filter(widget => widget.category === category);
+    }
+    return widgets;
   }, [config]);
 
   // Clear error when building ID changes

@@ -1,3 +1,5 @@
 {
+  "/login/page": "app/login/page.js",
+  "/kiosk/page": "app/kiosk/page.js",
   "/(dashboard)/kiosk-widgets/page": "app/(dashboard)/kiosk-widgets/page.js"
 }
