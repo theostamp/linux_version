@@ -81,7 +81,7 @@ export function useKioskWidgets(buildingId?: number) {
       }
 
       try {
-        const response = await api.get(`/kiosk/configs/get_by_building/?building_id=${buildingId}`);
+        const response = await api.get(`/kiosk/public/configs/get_by_building/?building_id=${buildingId}`);
         return response.data;
       } catch (error: any) {
         // If no config exists, return default

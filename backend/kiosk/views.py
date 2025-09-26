@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
 from django_tenants.utils import schema_context
 from .models import KioskWidgetConfig
@@ -147,6 +147,50 @@ class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def get_by_building(self, request):
         """Get configuration by building ID"""
+        building_id = request.query_params.get('building_id')
+        if not building_id:
+            return Response(
+                {'error': 'building_id parameter is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            config = KioskWidgetConfig.objects.get(building_id=building_id)
+            serializer = self.get_serializer(config)
+            return Response(serializer.data)
+        except KioskWidgetConfig.DoesNotExist:
+            # Return default configuration if none exists
+            default_config = {
+                'building_id': int(building_id),
+                'config': {
+                    'widgets': KioskWidgetConfig()._get_default_widgets(),
+                    'settings': {
+                        'slideDuration': 10,
+                        'refreshInterval': 30,
+                        'autoRefresh': True
+                    }
+                }
+            }
+            return Response(default_config)
+
+
+class PublicKioskWidgetConfigViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Public ViewSet for kiosk widget configurations (no authentication required)
+    """
+    serializer_class = KioskWidgetConfigSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        """Get configurations for the current building"""
+        building_id = self.request.query_params.get('building_id')
+        if building_id:
+            return KioskWidgetConfig.objects.filter(building_id=building_id)
+        return KioskWidgetConfig.objects.all()
+
+    @action(detail=False, methods=['get'])
+    def get_by_building(self, request):
+        """Get configuration by building ID (public access)"""
         building_id = request.query_params.get('building_id')
         if not building_id:
             return Response(
