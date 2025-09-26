@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { KioskWidget, WidgetConfig, DEFAULT_WIDGET_CONFIG } from '@/types/kiosk-widgets';
+import { getApiBaseUrl } from '@/lib/api';
 
 export function useKioskWidgets(buildingId?: number) {
   const [config, setConfig] = useState<WidgetConfig>(DEFAULT_WIDGET_CONFIG);
@@ -69,35 +70,38 @@ export function useKioskWidgets(buildingId?: number) {
       console.log('✅ Config saved to localStorage:', storageKey);
     }
 
-    // Also save to API if buildingId is provided
-    if (buildingId) {
-      try {
-        const response = await fetch(`/api/kiosk/widgets/config`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            building_id: buildingId,
-            config: newConfig,
-          }),
-        });
-
-        if (response.ok) {
-          console.log('✅ Config saved to API successfully');
-          return true;
-        } else {
-          const errorData = await response.json();
-          console.error('❌ API save failed:', errorData);
-          setError(errorData.message || 'Αποτυχία αποθήκευσης ρυθμίσεων');
-          return false;
-        }
-      } catch (err) {
-        console.error('Failed to save widget config to API:', err);
-        setError('Αποτυχία αποθήκευσης ρυθμίσεων');
-        return false;
-      }
-    }
+    // TODO: Save to API when backend endpoint is implemented
+    // For now, we only use localStorage
+    // if (buildingId) {
+    //   try {
+    //     const apiBaseUrl = getApiBaseUrl();
+    //     const response = await fetch(`${apiBaseUrl}/kiosk/widgets/config`, {
+    //       method: 'POST',
+    //       headers: {
+    //         'Content-Type': 'application/json',
+    //         'Authorization': `Bearer ${localStorage.getItem('access')}`,
+    //       },
+    //       body: JSON.stringify({
+    //         building_id: buildingId,
+    //         config: newConfig,
+    //       }),
+    //     });
+    //
+    //     if (response.ok) {
+    //       console.log('✅ Config saved to API successfully');
+    //       return true;
+    //     } else {
+    //       const errorData = await response.json();
+    //       console.error('❌ API save failed:', errorData);
+    //       setError(errorData.message || 'Αποτυχία αποθήκευσης ρυθμίσεων');
+    //       return false;
+    //     }
+    //   } catch (err) {
+    //     console.error('Failed to save widget config to API:', err);
+    //     setError('Αποτυχία αποθήκευσης ρυθμίσεων');
+    //     return false;
+    //   }
+    // }
 
     return true;
   }, [buildingId]);
