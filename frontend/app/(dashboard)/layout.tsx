@@ -20,9 +20,32 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children, fullWidth = false }: DashboardLayoutProps) {
-  // Always call hooks - they should be available since AuthProvider is always provided
-  const { user, isAuthReady, isLoading: authLoading } = useAuth();
-  const { isLoading: buildingLoading } = useBuilding();
+  // Safely access auth context with try-catch to handle provider mounting issues
+  let authContext;
+  let buildingContext;
+
+  try {
+    authContext = useAuth();
+  } catch (error) {
+    // If auth context not available, show loading state while providers mount
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-y-auto">
+        <div className="flex justify-center items-center h-full p-10">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <span className="ml-3 text-gray-600">Φόρτωση συστήματος...</span>
+        </div>
+      </div>
+    );
+  }
+
+  try {
+    buildingContext = useBuilding();
+  } catch (error) {
+    buildingContext = { isLoading: false };
+  }
+
+  const { user, isAuthReady, isLoading: authLoading } = authContext;
+  const { isLoading: buildingLoading } = buildingContext;
 
   const isLoading = authLoading || buildingLoading || !isAuthReady;
 
