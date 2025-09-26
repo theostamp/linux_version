@@ -116,10 +116,17 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         console.log('[AuthContext] Already initialized, skipping...');
         return;
       }
-      
+
       console.log('[AuthContext] loadUserOnMount starting...');
       setHasInitialized(true);
       setIsLoading(true);
+
+      // Set a timeout to prevent infinite hanging
+      const timeoutId = setTimeout(() => {
+        console.error('[AuthContext] Initialization timeout after 5 seconds, forcing ready state');
+        setIsLoading(false);
+        setIsAuthReady(true);
+      }, 5000);
 
       const token = localStorage.getItem('access');
       const cachedUser = localStorage.getItem('user');
@@ -127,7 +134,8 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       // Skip auto-login to simplify the flow - users can manually login
 
       if (!token) {
-        console.log('AuthContext: No token found on mount');
+        console.log('[AuthContext] No token found on mount, setting auth as ready');
+        clearTimeout(timeoutId);
         setUser(null);
         setIsLoading(false);
         setIsAuthReady(true);
@@ -149,7 +157,8 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
             console.error('AuthContext: Failed to refresh user, using cached:', apiError);
             setUser(parsedUser);
           }
-          
+
+          clearTimeout(timeoutId);
           setIsLoading(false);
           setIsAuthReady(true);
           return;
@@ -167,7 +176,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         console.log('AuthContext: Current user fetched successfully:', me?.email);
       } catch (error: any) {
         console.error('AuthContext: Failed to fetch current user', error);
-        
+
         // Αν το σφάλμα είναι 401, καθαρίζουμε τα tokens
         if (error?.response?.status === 401) {
           console.log('AuthContext: 401 error, clearing tokens');
@@ -175,6 +184,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
           // Skip auto-login fallback - keep it simple
         }
       } finally {
+        clearTimeout(timeoutId);
         setIsLoading(false);
         setIsAuthReady(true);
       }
@@ -224,8 +234,10 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     [userState, login, logout, isLoading, isAuthReady, isAuthenticated, refreshUser, setUser]
   );
 
-  // Εμφάνιση του spinner μόνο κατά το αρχικό φόρτωμα, όχι κατά το login
-  if (isLoading && !isAuthReady) {
+  // Εμφάνιση του spinner μόνο κατά το αρχικό φόρτωμα για πολύ σύντομο διάστημα
+  // Αν το isAuthReady δεν έχει γίνει true μετά από λίγο, προχωράμε κανονικά
+  // για να αποφύγουμε το infinite loading
+  if (isLoading && !isAuthReady && !hasInitialized) {
     return <FullPageSpinner message="Συνδέουμε τον λογαριασμό..." />;
   }
 
