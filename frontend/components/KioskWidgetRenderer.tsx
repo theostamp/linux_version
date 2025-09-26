@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useKeenSlider } from 'keen-slider/react';
 import { useKioskWidgets } from '@/hooks/useKioskWidgets';
 import { usePublicInfo } from '@/hooks/usePublicInfo';
@@ -192,47 +192,47 @@ export default function KioskWidgetRenderer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Get enabled widgets by category
-  const enabledMainSlides = getEnabledWidgets('main_slides');
-  const enabledSidebarWidgets = getEnabledWidgets('sidebar_widgets');
-  const enabledTopBarWidgets = getEnabledWidgets('top_bar_widgets');
-  const enabledSpecialWidgets = getEnabledWidgets('special_widgets');
+  // Get enabled widgets by category (memoized to prevent re-computation)
+  const enabledMainSlides = useMemo(() => getEnabledWidgets('main_slides'), [config]);
+  const enabledSidebarWidgets = useMemo(() => getEnabledWidgets('sidebar_widgets'), [config]);
+  const enabledTopBarWidgets = useMemo(() => getEnabledWidgets('top_bar_widgets'), [config]);
+  const enabledSpecialWidgets = useMemo(() => getEnabledWidgets('special_widgets'), [config]);
 
-  // Create slides based on enabled widgets
-  const createSlides = () => {
-    const slides: any[] = [];
+  // Create slides based on enabled widgets (memoized)
+  const slides = useMemo(() => {
+    const slidesList: any[] = [];
 
     enabledMainSlides.forEach(widget => {
       switch (widget.id) {
         case 'dashboard_overview':
-          slides.push(...createDashboardOverviewSlide());
+          slidesList.push(...createDashboardOverviewSlide());
           break;
         case 'building_statistics':
-          slides.push(...createBuildingStatisticsSlide());
+          slidesList.push(...createBuildingStatisticsSlide());
           break;
         case 'emergency_contacts':
-          slides.push(...createEmergencyContactsSlide());
+          slidesList.push(...createEmergencyContactsSlide());
           break;
         case 'announcements':
-          slides.push(...createAnnouncementSlides());
+          slidesList.push(...createAnnouncementSlides());
           break;
         case 'votes':
-          slides.push(...createVoteSlides());
+          slidesList.push(...createVoteSlides());
           break;
         case 'financial_overview':
-          slides.push(...createFinancialSlides());
+          slidesList.push(...createFinancialSlides());
           break;
         case 'maintenance_overview':
-          slides.push(...createMaintenanceSlides());
+          slidesList.push(...createMaintenanceSlides());
           break;
         case 'projects_overview':
-          slides.push(...createProjectsSlides());
+          slidesList.push(...createProjectsSlides());
           break;
       }
     });
 
-    return slides;
-  };
+    return slidesList;
+  }, [enabledMainSlides, data, maintenanceInfo]);
 
   // Slide creation functions (copied from KioskMode)
   const createDashboardOverviewSlide = () => {
@@ -630,7 +630,6 @@ export default function KioskWidgetRenderer({
     content: <div className="text-center text-gray-300 py-8">Projects Overview Slide</div>,
   }];
 
-  const slides = createSlides();
 
   return (
     <div className="h-screen w-screen text-white flex flex-col overflow-hidden font-ubuntu bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 max-w-full max-h-full">

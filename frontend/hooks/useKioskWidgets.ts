@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { apiPublic } from '@/lib/apiPublic';
@@ -54,31 +54,36 @@ export function useKioskWidgets(buildingId?: number) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Memoize default widgets to prevent re-creation
+  const defaultWidgets = useMemo(() => getDefaultWidgets(), []);
+
+  // Memoize default settings
+  const defaultSettings = useMemo(() => ({
+    slideDuration: 10,
+    refreshInterval: 30,
+    autoRefresh: true
+  }), []);
+
+  // Memoize default config structure
+  const defaultConfig = useMemo(() => ({
+    building: buildingId || 0,
+    config: {
+      widgets: defaultWidgets,
+      settings: defaultSettings
+    },
+    widgets: defaultWidgets,
+    settings: defaultSettings,
+    enabled_widgets_count: defaultWidgets.filter(w => w.enabled).length,
+    total_widgets_count: defaultWidgets.length
+  }), [buildingId, defaultWidgets, defaultSettings]);
+
   // Fetch kiosk configuration
   const { data: config, isLoading: isConfigLoading, error: configError } = useQuery({
     queryKey: ['kiosk-config', buildingId],
     queryFn: async () => {
       if (!buildingId) {
         // Return default config if no building ID
-        return {
-          building: buildingId || 0,
-          config: {
-            widgets: getDefaultWidgets(),
-            settings: {
-              slideDuration: 10,
-              refreshInterval: 30,
-              autoRefresh: true
-            }
-          },
-          widgets: getDefaultWidgets(),
-          settings: {
-            slideDuration: 10,
-            refreshInterval: 30,
-            autoRefresh: true
-          },
-          enabled_widgets_count: getDefaultWidgets().filter(w => w.enabled).length,
-          total_widgets_count: getDefaultWidgets().length
-        };
+        return defaultConfig;
       }
 
       try {
@@ -86,12 +91,12 @@ export function useKioskWidgets(buildingId?: number) {
         const hostname = window.location.hostname;
         const apiUrl = `http://${hostname}:18000/api`;
         console.log('[useKioskWidgets] Making API call to:', `${apiUrl}/kiosk/public/configs/get_by_building/?building_id=${buildingId}`);
-        
+
         const response = await fetch(`${apiUrl}/kiosk/public/configs/get_by_building/?building_id=${buildingId}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-          const data = await response.json();
+        const data = await response.json();
         console.log('[useKioskWidgets] API response:', data);
         return data;
       } catch (error: any) {
@@ -100,21 +105,13 @@ export function useKioskWidgets(buildingId?: number) {
           return {
             building: buildingId,
             config: {
-              widgets: getDefaultWidgets(),
-              settings: {
-                slideDuration: 10,
-                refreshInterval: 30,
-                autoRefresh: true
-              }
+              widgets: defaultWidgets,
+              settings: defaultSettings
             },
-            widgets: getDefaultWidgets(),
-            settings: {
-              slideDuration: 10,
-              refreshInterval: 30,
-              autoRefresh: true
-            },
-            enabled_widgets_count: getDefaultWidgets().filter(w => w.enabled).length,
-            total_widgets_count: getDefaultWidgets().length
+            widgets: defaultWidgets,
+            settings: defaultSettings,
+            enabled_widgets_count: defaultWidgets.filter(w => w.enabled).length,
+            total_widgets_count: defaultWidgets.length
           };
         }
         throw error;
@@ -122,6 +119,8 @@ export function useKioskWidgets(buildingId?: number) {
     },
     enabled: true,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false, // Prevent unnecessary refetches
+    refetchOnReconnect: false,
   });
 
   // Create/Update configuration mutation
@@ -312,27 +311,9 @@ export function useKioskWidgets(buildingId?: number) {
   }, [buildingId]);
 
   return {
-    config: config || {
-      building: buildingId || 0,
-      config: {
-        widgets: getDefaultWidgets(),
-        settings: {
-          slideDuration: 10,
-          refreshInterval: 30,
-          autoRefresh: true
-        }
-      },
-      widgets: getDefaultWidgets(),
-      settings: {
-        slideDuration: 10,
-        refreshInterval: 30,
-        autoRefresh: true
-      },
-      enabled_widgets_count: 0,
-      total_widgets_count: 0
-    },
+    config: config || defaultConfig,
     isLoading: isConfigLoading || isLoading,
-    error: error || (configError as string) || null,
+    error: error || (configError?.message) || null,
     toggleWidget,
     updateWidgetOrder,
     updateWidgetSettings,
@@ -346,12 +327,12 @@ export function useKioskWidgets(buildingId?: number) {
 // Default widgets configuration
 function getDefaultWidgets(): KioskWidget[] {
   console.log('[getDefaultWidgets] Creating default widgets');
-  const widgets = [
+  const widgets: KioskWidget[] = [
     {
       id: 'dashboard_overview',
       name: 'Dashboard Overview',
       description: 'Συνολική επισκόπηση του κτιρίου',
-      category: 'main_slides',
+      category: 'main_slides' as const,
       enabled: true,
       order: 0,
       settings: {}
@@ -360,7 +341,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'building_statistics',
       name: 'Building Statistics',
       description: 'Στατιστικά κτιρίου',
-      category: 'main_slides',
+      category: 'main_slides' as const,
       enabled: true,
       order: 1,
       settings: {}
@@ -369,7 +350,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'emergency_contacts',
       name: 'Emergency Contacts',
       description: 'Τηλέφωνα έκτακτης ανάγκης',
-      category: 'main_slides',
+      category: 'main_slides' as const,
       enabled: true,
       order: 2,
       settings: {}
@@ -378,7 +359,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'announcements',
       name: 'Announcements',
       description: 'Ανακοινώσεις',
-      category: 'main_slides',
+      category: 'main_slides' as const,
       enabled: true,
       order: 3,
       settings: {}
@@ -387,7 +368,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'votes',
       name: 'Votes',
       description: 'Ψηφοφορίες',
-      category: 'main_slides',
+      category: 'main_slides' as const,
       enabled: true,
       order: 4,
       settings: {}
@@ -396,7 +377,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'financial_overview',
       name: 'Financial Overview',
       description: 'Οικονομική επισκόπηση',
-      category: 'main_slides',
+      category: 'main_slides' as const,
       enabled: true,
       order: 5,
       settings: {}
@@ -405,7 +386,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'maintenance_overview',
       name: 'Maintenance Overview',
       description: 'Συντήρηση και επισκευές',
-      category: 'main_slides',
+      category: 'main_slides' as const,
       enabled: true,
       order: 6,
       settings: {}
@@ -414,7 +395,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'projects_overview',
       name: 'Projects Overview',
       description: 'Έργα και προσφορές',
-      category: 'main_slides',
+      category: 'main_slides' as const,
       enabled: true,
       order: 7,
       settings: {}
@@ -423,7 +404,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'current_time',
       name: 'Current Time',
       description: 'Τρέχουσα ώρα και ημερομηνία',
-      category: 'sidebar_widgets',
+      category: 'sidebar_widgets' as const,
       enabled: true,
       order: 0,
       settings: {}
@@ -432,7 +413,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'qr_code_connection',
       name: 'QR Code Connection',
       description: 'Σύνδεση με κινητό',
-      category: 'sidebar_widgets',
+      category: 'sidebar_widgets' as const,
       enabled: true,
       order: 1,
       settings: {}
@@ -441,7 +422,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'weather_widget_sidebar',
       name: 'Weather Widget',
       description: 'Πρόγνωση καιρού',
-      category: 'sidebar_widgets',
+      category: 'sidebar_widgets' as const,
       enabled: true,
       order: 2,
       settings: {}
@@ -450,7 +431,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'internal_manager_info',
       name: 'Internal Manager Info',
       description: 'Πληροφορίες διαχειριστή',
-      category: 'sidebar_widgets',
+      category: 'sidebar_widgets' as const,
       enabled: true,
       order: 3,
       settings: {}
@@ -459,7 +440,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'community_message',
       name: 'Community Message',
       description: 'Μήνυμα κοινότητας',
-      category: 'sidebar_widgets',
+      category: 'sidebar_widgets' as const,
       enabled: true,
       order: 4,
       settings: {}
@@ -468,7 +449,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'advertising_banners_sidebar',
       name: 'Advertising Banners',
       description: 'Χρήσιμες υπηρεσίες',
-      category: 'sidebar_widgets',
+      category: 'sidebar_widgets' as const,
       enabled: true,
       order: 5,
       settings: {}
@@ -477,7 +458,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'weather_widget_topbar',
       name: 'Weather Top Bar',
       description: 'Καιρός στην επάνω μπάρα',
-      category: 'top_bar_widgets',
+      category: 'top_bar_widgets' as const,
       enabled: true,
       order: 0,
       settings: {}
@@ -486,7 +467,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'advertising_banners_topbar',
       name: 'Advertising Top Bar',
       description: 'Διαφημίσεις στην επάνω μπάρα',
-      category: 'top_bar_widgets',
+      category: 'top_bar_widgets' as const,
       enabled: true,
       order: 1,
       settings: {}
@@ -495,7 +476,7 @@ function getDefaultWidgets(): KioskWidget[] {
       id: 'news_ticker',
       name: 'News Ticker',
       description: 'Τελευταία νέα',
-      category: 'special_widgets',
+      category: 'special_widgets' as const,
       enabled: true,
       order: 0,
       settings: {}
