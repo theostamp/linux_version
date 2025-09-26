@@ -82,6 +82,9 @@ TENANT_APPS = [
     'teams',
     'collaborators',
     
+    # 🖥️ Kiosk Widget Management
+    'kiosk',
+    
     # 🔄 AI Data Migration
     'data_migration',
     

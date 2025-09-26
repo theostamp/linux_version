@@ -54,7 +54,7 @@ import { useKioskWidgets } from '@/hooks/useKioskWidgets';
 import { KioskWidget, WidgetCategory } from '@/types/kiosk-widgets';
 import { toast } from 'sonner';
 import KioskCanvasEditor from '@/components/KioskCanvasEditor';
-// import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 // Widget icons mapping
 const WIDGET_ICONS: Record<string, any> = {
@@ -108,7 +108,7 @@ export default function KioskWidgetsPage() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
-  const [useCanvasEditor, setUseCanvasEditor] = useState(true);
+  const [useCanvasEditor, setUseCanvasEditor] = useState(false); // Default to Classic View
 
   // Group widgets by category
   const widgetsByCategory = config.widgets.reduce((acc, widget) => {
@@ -130,6 +130,39 @@ export default function KioskWidgetsPage() {
       toast.success(enabled ? 'Widget ενεργοποιήθηκε' : 'Widget απενεργοποιήθηκε');
     } else {
       toast.error('Αποτυχία ενημέρωσης widget');
+    }
+  };
+
+  // Drag and Drop handler for Classic View
+  const handleDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) return;
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    const category = source.droppableId as WidgetCategory;
+    const widgets = [...widgetsByCategory[category]];
+    
+    // Reorder widgets
+    const [reorderedWidget] = widgets.splice(source.index, 1);
+    widgets.splice(destination.index, 0, reorderedWidget);
+
+    // Update order for all widgets in the category
+    const updates = widgets.map((widget, index) => 
+      updateWidgetOrder(widget.id, index)
+    );
+
+    try {
+      await Promise.all(updates);
+      toast.success('Σειρά widgets ενημερώθηκε');
+    } catch (error) {
+      toast.error('Αποτυχία ενημέρωσης σειράς');
     }
   };
 
@@ -337,99 +370,115 @@ export default function KioskWidgetsPage() {
         </CardContent>
       </Card>
 
-      {/* Widgets by Category - Classic View */}
-      {!useCanvasEditor && Object.entries(widgetsByCategory).map(([category, widgets]) => (
-        <Card key={category}>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Monitor className="w-5 h-5 mr-2" />
-              {CATEGORY_LABELS[category as WidgetCategory]}
-              <Badge 
-                variant="outline" 
-                className={`ml-2 ${CATEGORY_COLORS[category as WidgetCategory]}`}
-              >
-                {widgets.filter(w => w.enabled).length} / {widgets.length}
-              </Badge>
-            </CardTitle>
-            <CardDescription>
-              {category === 'main_slides' && 'Κύρια περιεχόμενα που εμφανίζονται ως slides'}
-              {category === 'sidebar_widgets' && 'Widgets που εμφανίζονται στην πλευρική μπάρα'}
-              {category === 'top_bar_widgets' && 'Widgets που εμφανίζονται στην επάνω μπάρα'}
-              {category === 'special_widgets' && 'Ειδικά widgets (π.χ. news ticker)'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 min-h-[100px]">
-              {widgets.map((widget, index) => {
-                const IconComponent = WIDGET_ICONS[widget.id] || Settings;
-                return (
-                  <div
-                    key={widget.id}
-                    className="flex items-center space-x-3 p-3 bg-white border rounded-lg hover:shadow-md transition-shadow"
+      {/* Widgets by Category - Classic View with Drag & Drop */}
+      {!useCanvasEditor && (
+        <DragDropContext onDragEnd={handleDragEnd}>
+          {Object.entries(widgetsByCategory).map(([category, widgets]) => (
+            <Card key={category} className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Monitor className="w-5 h-5 mr-2" />
+                  {CATEGORY_LABELS[category as WidgetCategory]}
+                  <Badge 
+                    variant="outline" 
+                    className={`ml-2 ${CATEGORY_COLORS[category as WidgetCategory]}`}
                   >
-                    <div className="flex flex-col space-y-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleMoveUp(widget.id, category as WidgetCategory)}
-                        disabled={index === 0}
-                        className="h-6 w-6 p-0"
-                      >
-                        ↑
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleMoveDown(widget.id, category as WidgetCategory)}
-                        disabled={index === widgets.length - 1}
-                        className="h-6 w-6 p-0"
-                      >
-                        ↓
-                      </Button>
+                    {widgets.filter(w => w.enabled).length} / {widgets.length}
+                  </Badge>
+                </CardTitle>
+                <CardDescription>
+                  {category === 'main_slides' && 'Κύρια περιεχόμενα που εμφανίζονται ως slides'}
+                  {category === 'sidebar_widgets' && 'Widgets που εμφανίζονται στην πλευρική μπάρα'}
+                  {category === 'top_bar_widgets' && 'Widgets που εμφανίζονται στην επάνω μπάρα'}
+                  {category === 'special_widgets' && 'Ειδικά widgets (π.χ. news ticker)'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Droppable droppableId={category}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`space-y-2 min-h-[100px] p-2 rounded-lg transition-colors ${
+                        snapshot.isDraggingOver ? 'bg-blue-50 border-2 border-dashed border-blue-300' : 'bg-gray-50'
+                      }`}
+                    >
+                      {widgets.map((widget, index) => {
+                        const IconComponent = WIDGET_ICONS[widget.id] || Settings;
+                        return (
+                          <Draggable key={widget.id} draggableId={widget.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={`flex items-center space-x-3 p-3 bg-white border rounded-lg transition-all ${
+                                  snapshot.isDragging 
+                                    ? 'shadow-lg border-blue-400 bg-blue-50' 
+                                    : 'hover:shadow-md hover:border-gray-300'
+                                }`}
+                              >
+                                {/* Drag Handle */}
+                                <div 
+                                  {...provided.dragHandleProps}
+                                  className="flex flex-col space-y-1 cursor-grab active:cursor-grabbing"
+                                >
+                                  <div className="w-4 h-1 bg-gray-300 rounded"></div>
+                                  <div className="w-4 h-1 bg-gray-300 rounded"></div>
+                                  <div className="w-4 h-1 bg-gray-300 rounded"></div>
+                                </div>
+                                
+                                {/* Widget Icon */}
+                                <div className="flex-shrink-0">
+                                  <IconComponent className="w-5 h-5 text-gray-600" />
+                                </div>
+                                
+                                {/* Widget Info */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center space-x-2">
+                                    <h3 className="font-medium text-gray-900 truncate">
+                                      {widget.name}
+                                    </h3>
+                                    {widget.enabled && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        Ενεργό
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-gray-600 truncate">
+                                    {widget.description}
+                                  </p>
+                                </div>
+                                
+                                {/* Toggle Switch */}
+                                <div className="flex-shrink-0">
+                                  <Switch
+                                    checked={widget.enabled}
+                                    onCheckedChange={(checked) => 
+                                      handleToggleWidget(widget.id, checked)
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
                     </div>
-                    
-                    <div className="flex-shrink-0">
-                      <IconComponent className="w-5 h-5 text-gray-600" />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-medium text-gray-900 truncate">
-                          {widget.name}
-                        </h3>
-                        {widget.enabled && (
-                          <Badge variant="secondary" className="text-xs">
-                            Ενεργό
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 truncate">
-                        {widget.description}
-                      </p>
-                    </div>
-                    
-                    <div className="flex-shrink-0">
-                      <Switch
-                        checked={widget.enabled}
-                        onCheckedChange={(checked) => 
-                          handleToggleWidget(widget.id, checked)
-                        }
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+                  )}
+                </Droppable>
+              </CardContent>
+            </Card>
+          ))}
+        </DragDropContext>
+      )}
 
       {/* Canvas Editor or Classic View */}
       {useCanvasEditor ? (
         <KioskCanvasEditor buildingId={selectedBuilding?.id} />
       ) : null}
 
-      {/* Preview Section */}
+      {/* Enhanced Preview Section */}
       {previewMode && (
         <Card>
           <CardHeader>
@@ -442,30 +491,123 @@ export default function KioskWidgetsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(widgetsByCategory).map(([category, widgets]) => {
-                const enabledWidgets = widgets.filter(w => w.enabled);
-                if (enabledWidgets.length === 0) return null;
-                
-                return (
-                  <div key={category} className="space-y-2">
-                    <h4 className="font-medium text-sm text-gray-700">
-                      {CATEGORY_LABELS[category as WidgetCategory]}
-                    </h4>
-                    <div className="space-y-1">
-                      {enabledWidgets.map((widget) => {
-                        const IconComponent = WIDGET_ICONS[widget.id] || Settings;
-                        return (
-                          <div key={widget.id} className="flex items-center space-x-2 text-sm">
-                            <IconComponent className="w-4 h-4 text-gray-500" />
-                            <span className="text-gray-700">{widget.name}</span>
-                          </div>
-                        );
-                      })}
+            <div className="space-y-6">
+              {/* Summary Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="flex items-center space-x-2">
+                    <Monitor className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <div className="text-2xl font-bold text-blue-900">
+                        {Object.values(widgetsByCategory).flat().filter(w => w.enabled).length}
+                      </div>
+                      <div className="text-sm text-blue-700">Σύνολο Ενεργών</div>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <div className="flex items-center space-x-2">
+                    <Home className="w-5 h-5 text-green-600" />
+                    <div>
+                      <div className="text-2xl font-bold text-green-900">
+                        {widgetsByCategory.main_slides?.filter(w => w.enabled).length || 0}
+                      </div>
+                      <div className="text-sm text-green-700">Κύρια Slides</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <div className="flex items-center space-x-2">
+                    <Settings className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <div className="text-2xl font-bold text-purple-900">
+                        {(widgetsByCategory.sidebar_widgets?.filter(w => w.enabled).length || 0) + 
+                         (widgetsByCategory.top_bar_widgets?.filter(w => w.enabled).length || 0)}
+                      </div>
+                      <div className="text-sm text-purple-700">Sidebar & Top Bar</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="w-5 h-5 text-orange-600" />
+                    <div>
+                      <div className="text-2xl font-bold text-orange-900">
+                        {widgetsByCategory.special_widgets?.filter(w => w.enabled).length || 0}
+                      </div>
+                      <div className="text-sm text-orange-700">Ειδικά Widgets</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detailed Widget List */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.entries(widgetsByCategory).map(([category, widgets]) => {
+                  const enabledWidgets = widgets.filter(w => w.enabled);
+                  if (enabledWidgets.length === 0) return null;
+                  
+                  return (
+                    <div key={category} className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-3 h-3 rounded-full ${CATEGORY_COLORS[category as WidgetCategory].split(' ')[0]}`}></div>
+                        <h4 className="font-medium text-sm text-gray-700">
+                          {CATEGORY_LABELS[category as WidgetCategory]}
+                        </h4>
+                        <Badge variant="outline" className="text-xs">
+                          {enabledWidgets.length}
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {enabledWidgets.map((widget) => {
+                          const IconComponent = WIDGET_ICONS[widget.id] || Settings;
+                          return (
+                            <div key={widget.id} className="flex items-center space-x-3 p-2 bg-white border rounded-lg">
+                              <IconComponent className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium text-gray-900 truncate">
+                                  {widget.name}
+                                </div>
+                                <div className="text-xs text-gray-500 truncate">
+                                  {widget.description}
+                                </div>
+                              </div>
+                              <Badge variant="secondary" className="text-xs">
+                                Ενεργό
+                              </Badge>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Kiosk Preview Simulation */}
+              <div className="mt-6">
+                <h4 className="font-medium text-sm text-gray-700 mb-3">Προσομοίωση Kiosk</h4>
+                <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 rounded-lg p-4 text-white">
+                  <div className="text-center text-sm text-blue-200 mb-4">
+                    Προσομοίωση εμφάνισης στο kiosk
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                    {Object.values(widgetsByCategory).flat().filter(w => w.enabled).slice(0, 8).map((widget) => {
+                      const IconComponent = WIDGET_ICONS[widget.id] || Settings;
+                      return (
+                        <div key={widget.id} className="bg-blue-800/50 p-2 rounded border border-blue-600/30">
+                          <div className="text-center">
+                            <IconComponent className="w-4 h-4 mx-auto mb-1 text-blue-300" />
+                            <div className="text-xs text-blue-100 truncate">
+                              {widget.name.split(' ')[0]}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

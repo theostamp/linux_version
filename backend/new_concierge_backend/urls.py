@@ -81,6 +81,9 @@ urlpatterns = [
     # Integrations (Google Calendar, etc.)
     path('api/integrations/', include('integrations.urls')),
 
+    # Kiosk widget management
+    path('api/kiosk/', include('kiosk.urls')),
+
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]

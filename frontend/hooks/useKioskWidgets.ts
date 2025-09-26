@@ -1,216 +1,485 @@
-'use client';
-
 import { useState, useEffect, useCallback } from 'react';
-import { KioskWidget, WidgetConfig, DEFAULT_WIDGET_CONFIG } from '@/types/kiosk-widgets';
-import { getApiBaseUrl } from '@/lib/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+
+export interface KioskWidget {
+  id: string;
+  name: string;
+  description: string;
+  category: 'main_slides' | 'sidebar_widgets' | 'top_bar_widgets' | 'special_widgets';
+  enabled: boolean;
+  order: number;
+  settings: Record<string, any>;
+  gridPosition?: {
+    row: number;
+    col: number;
+    rowSpan: number;
+    colSpan: number;
+  };
+}
+
+export interface KioskSettings {
+  slideDuration: number;
+  refreshInterval: number;
+  autoRefresh: boolean;
+}
+
+export interface KioskConfig {
+  id?: number;
+  building: number;
+  building_name?: string;
+  building_address?: string;
+  config: {
+    widgets: KioskWidget[];
+    settings: KioskSettings;
+    canvasLayout?: {
+      gridSize: {
+        rows: number;
+        cols: number;
+      };
+      widgetPositions: Record<string, any>;
+    };
+  };
+  widgets: KioskWidget[];
+  settings: KioskSettings;
+  enabled_widgets_count: number;
+  total_widgets_count: number;
+  created_at?: string;
+  updated_at?: string;
+}
 
 export function useKioskWidgets(buildingId?: number) {
-  const [config, setConfig] = useState<WidgetConfig>(DEFAULT_WIDGET_CONFIG);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load widget configuration
-  const loadConfig = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Try to load from localStorage first
-      if (typeof window !== 'undefined') {
-        const storageKey = buildingId ? `kiosk_config_${buildingId}` : 'kiosk_config_default';
-        const savedConfig = localStorage.getItem(storageKey);
-
-        if (savedConfig) {
-          try {
-            const parsedConfig = JSON.parse(savedConfig);
-            console.log('📂 Loaded config from localStorage:', parsedConfig);
-            setConfig(parsedConfig);
-            setIsLoading(false);
-            return;
-          } catch (e) {
-            console.error('Failed to parse saved config:', e);
-          }
-        }
-      }
-
-      // If no saved config, use default
-      console.log('📦 Using default config');
-      setConfig(DEFAULT_WIDGET_CONFIG);
-
-      // Later we can add API call here when backend is ready
-      /*
-      if (buildingId) {
-        const response = await fetch(`/api/kiosk/widgets/config?building_id=${buildingId}`);
-        if (response.ok) {
-          const data = await response.json();
-          setConfig(data);
-        }
-      }
-      */
-    } catch (err) {
-      console.error('Failed to load widget config:', err);
-      setError('Αποτυχία φόρτωσης ρυθμίσεων widgets');
-      setConfig(DEFAULT_WIDGET_CONFIG);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [buildingId]);
-
-  // Save widget configuration
-  const saveConfig = useCallback(async (newConfig: WidgetConfig) => {
-    console.log('💾 Saving config:', newConfig);
-
-    // Update local state
-    setConfig(newConfig);
-
-    // Store in localStorage for persistence
-    if (typeof window !== 'undefined') {
-      const storageKey = buildingId ? `kiosk_config_${buildingId}` : 'kiosk_config_default';
-      localStorage.setItem(storageKey, JSON.stringify(newConfig));
-      console.log('✅ Config saved to localStorage:', storageKey);
-    }
-
-    // TODO: Save to API when backend endpoint is implemented
-    // For now, we only use localStorage
-    // if (buildingId) {
-    //   try {
-    //     const apiBaseUrl = getApiBaseUrl();
-    //     const response = await fetch(`${apiBaseUrl}/kiosk/widgets/config`, {
-    //       method: 'POST',
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //         'Authorization': `Bearer ${localStorage.getItem('access')}`,
-    //       },
-    //       body: JSON.stringify({
-    //         building_id: buildingId,
-    //         config: newConfig,
-    //       }),
-    //     });
-    //
-    //     if (response.ok) {
-    //       console.log('✅ Config saved to API successfully');
-    //       return true;
-    //     } else {
-    //       const errorData = await response.json();
-    //       console.error('❌ API save failed:', errorData);
-    //       setError(errorData.message || 'Αποτυχία αποθήκευσης ρυθμίσεων');
-    //       return false;
-    //     }
-    //   } catch (err) {
-    //     console.error('Failed to save widget config to API:', err);
-    //     setError('Αποτυχία αποθήκευσης ρυθμίσεων');
-    //     return false;
-    //   }
-    // }
-
-    return true;
-  }, [buildingId]);
-
-  // Update widget enabled state
-  const toggleWidget = useCallback(async (widgetId: string, enabled: boolean) => {
-    const newConfig = {
-      ...config,
-      widgets: config.widgets.map(widget =>
-        widget.id === widgetId ? { ...widget, enabled } : widget
-      ),
-    };
-    
-    const success = await saveConfig(newConfig);
-    return success;
-  }, [config, saveConfig]);
-
-  // Update widget order
-  const updateWidgetOrder = useCallback(async (widgetId: string, newOrder: number) => {
-    const newConfig = {
-      ...config,
-      widgets: config.widgets.map(widget =>
-        widget.id === widgetId ? { ...widget, order: newOrder } : widget
-      ),
-    };
-    
-    const success = await saveConfig(newConfig);
-    return success;
-  }, [config, saveConfig]);
-
-  // Update widget settings
-  const updateWidgetSettings = useCallback(async (widgetId: string, updates: Record<string, any>) => {
-    console.log('🔧 Updating widget settings:', { widgetId, updates });
-
-    const newConfig = {
-      ...config,
-      widgets: config.widgets.map(widget =>
-        widget.id === widgetId
-          ? {
-              ...widget,
-              ...updates,  // Apply updates directly to widget (for gridPosition, etc.)
-              settings: updates.settings ? { ...widget.settings, ...updates.settings } : widget.settings
+  // Fetch kiosk configuration
+  const { data: config, isLoading: isConfigLoading, error: configError } = useQuery({
+    queryKey: ['kiosk-config', buildingId],
+    queryFn: async () => {
+      if (!buildingId) {
+        // Return default config if no building ID
+        return {
+          building: buildingId || 0,
+          config: {
+            widgets: getDefaultWidgets(),
+            settings: {
+              slideDuration: 10,
+              refreshInterval: 30,
+              autoRefresh: true
             }
-          : widget
-      ),
-    };
+          },
+          widgets: getDefaultWidgets(),
+          settings: {
+            slideDuration: 10,
+            refreshInterval: 30,
+            autoRefresh: true
+          },
+          enabled_widgets_count: getDefaultWidgets().filter(w => w.enabled).length,
+          total_widgets_count: getDefaultWidgets().length
+        };
+      }
 
-    console.log('📝 New config after update:', newConfig);
-    setConfig(newConfig); // Update local state immediately for better UX
+      try {
+        const response = await api.get(`/kiosk/configs/get_by_building/?building_id=${buildingId}`);
+        return response.data;
+      } catch (error: any) {
+        // If no config exists, return default
+        if (error.response?.status === 404) {
+          return {
+            building: buildingId,
+            config: {
+              widgets: getDefaultWidgets(),
+              settings: {
+                slideDuration: 10,
+                refreshInterval: 30,
+                autoRefresh: true
+              }
+            },
+            widgets: getDefaultWidgets(),
+            settings: {
+              slideDuration: 10,
+              refreshInterval: 30,
+              autoRefresh: true
+            },
+            enabled_widgets_count: getDefaultWidgets().filter(w => w.enabled).length,
+            total_widgets_count: getDefaultWidgets().length
+          };
+        }
+        throw error;
+      }
+    },
+    enabled: true,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-    // Save the updated config
-    const success = await saveConfig(newConfig);
-    return success;
-  }, [config, saveConfig]);
+  // Create/Update configuration mutation
+  const createOrUpdateMutation = useMutation({
+    mutationFn: async (configData: Partial<KioskConfig>) => {
+      if (!buildingId) throw new Error('Building ID is required');
+      
+      const response = await api.post('/kiosk/configs/', {
+        building_id: buildingId,
+        config: configData.config || config?.config
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kiosk-config', buildingId] });
+    },
+    onError: (error: any) => {
+      setError(error.response?.data?.error || 'Failed to save configuration');
+    }
+  });
 
-  // Update global settings
-  const updateGlobalSettings = useCallback(async (settings: Partial<WidgetConfig['settings']>) => {
-    const newConfig = {
-      ...config,
-      settings: { ...config.settings, ...settings },
-    };
-    
-    const success = await saveConfig(newConfig);
-    return success;
-  }, [config, saveConfig]);
+  // Toggle widget mutation
+  const toggleWidgetMutation = useMutation({
+    mutationFn: async ({ widgetId, enabled }: { widgetId: string; enabled: boolean }) => {
+      if (!buildingId) throw new Error('Building ID is required');
+      
+      const response = await api.post(`/kiosk/configs/${buildingId}/toggle_widget/`, {
+        widget_id: widgetId,
+        enabled
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kiosk-config', buildingId] });
+    },
+    onError: (error: any) => {
+      setError(error.response?.data?.error || 'Failed to toggle widget');
+    }
+  });
 
-  // Reset to default configuration
-  const resetToDefault = useCallback(async () => {
-    const success = await saveConfig(DEFAULT_WIDGET_CONFIG);
-    return success;
-  }, [saveConfig]);
+  // Update widget order mutation
+  const updateWidgetOrderMutation = useMutation({
+    mutationFn: async ({ widgetId, order }: { widgetId: string; order: number }) => {
+      if (!buildingId) throw new Error('Building ID is required');
+      
+      const response = await api.post(`/kiosk/configs/${buildingId}/update_widget_order/`, {
+        widget_id: widgetId,
+        order
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kiosk-config', buildingId] });
+    },
+    onError: (error: any) => {
+      setError(error.response?.data?.error || 'Failed to update widget order');
+    }
+  });
 
-  // Get enabled widgets by category
-  const getEnabledWidgets = useCallback((category: KioskWidget['category']) => {
-    return config.widgets
-      .filter(widget => widget.category === category && widget.enabled)
-      .sort((a, b) => a.order - b.order);
-  }, [config.widgets]);
+  // Update widget settings mutation
+  const updateWidgetSettingsMutation = useMutation({
+    mutationFn: async ({ widgetId, settings }: { widgetId: string; settings: Record<string, any> }) => {
+      if (!buildingId) throw new Error('Building ID is required');
+      
+      const response = await api.post(`/kiosk/configs/${buildingId}/update_widget_settings/`, {
+        widget_id: widgetId,
+        settings
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kiosk-config', buildingId] });
+    },
+    onError: (error: any) => {
+      setError(error.response?.data?.error || 'Failed to update widget settings');
+    }
+  });
 
-  // Get all enabled widgets
-  const getAllEnabledWidgets = useCallback(() => {
-    return config.widgets
-      .filter(widget => widget.enabled)
-      .sort((a, b) => a.order - b.order);
-  }, [config.widgets]);
+  // Update global settings mutation
+  const updateGlobalSettingsMutation = useMutation({
+    mutationFn: async (settings: Partial<KioskSettings>) => {
+      if (!buildingId) throw new Error('Building ID is required');
+      
+      const response = await api.post(`/kiosk/configs/${buildingId}/update_global_settings/`, {
+        settings
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kiosk-config', buildingId] });
+    },
+    onError: (error: any) => {
+      setError(error.response?.data?.error || 'Failed to update global settings');
+    }
+  });
 
-  // Save complete config
-  const saveCompleteConfig = useCallback(async (newConfig: WidgetConfig) => {
-    const success = await saveConfig(newConfig);
-    return success;
-  }, [saveConfig]);
+  // Reset to default mutation
+  const resetToDefaultMutation = useMutation({
+    mutationFn: async () => {
+      if (!buildingId) throw new Error('Building ID is required');
+      
+      const response = await api.post(`/kiosk/configs/${buildingId}/reset_to_default/`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kiosk-config', buildingId] });
+    },
+    onError: (error: any) => {
+      setError(error.response?.data?.error || 'Failed to reset to default');
+    }
+  });
 
-  // Load config on mount
+  // Helper functions
+  const toggleWidget = useCallback(async (widgetId: string, enabled: boolean): Promise<boolean> => {
+    try {
+      await toggleWidgetMutation.mutateAsync({ widgetId, enabled });
+      return true;
+    } catch (error) {
+      console.error('Failed to toggle widget:', error);
+      return false;
+    }
+  }, [toggleWidgetMutation]);
+
+  const updateWidgetOrder = useCallback(async (widgetId: string, order: number): Promise<boolean> => {
+    try {
+      await updateWidgetOrderMutation.mutateAsync({ widgetId, order });
+      return true;
+    } catch (error) {
+      console.error('Failed to update widget order:', error);
+      return false;
+    }
+  }, [updateWidgetOrderMutation]);
+
+  const updateWidgetSettings = useCallback(async (widgetId: string, settings: Record<string, any>): Promise<boolean> => {
+    try {
+      await updateWidgetSettingsMutation.mutateAsync({ widgetId, settings });
+      return true;
+    } catch (error) {
+      console.error('Failed to update widget settings:', error);
+      return false;
+    }
+  }, [updateWidgetSettingsMutation]);
+
+  const updateGlobalSettings = useCallback(async (settings: Partial<KioskSettings>): Promise<boolean> => {
+    try {
+      await updateGlobalSettingsMutation.mutateAsync(settings);
+      return true;
+    } catch (error) {
+      console.error('Failed to update global settings:', error);
+      return false;
+    }
+  }, [updateGlobalSettingsMutation]);
+
+  const resetToDefault = useCallback(async (): Promise<boolean> => {
+    try {
+      await resetToDefaultMutation.mutateAsync();
+      return true;
+    } catch (error) {
+      console.error('Failed to reset to default:', error);
+      return false;
+    }
+  }, [resetToDefaultMutation]);
+
+  const saveConfig = useCallback(async (configData: Partial<KioskConfig>): Promise<boolean> => {
+    try {
+      await createOrUpdateMutation.mutateAsync(configData);
+      return true;
+    } catch (error) {
+      console.error('Failed to save config:', error);
+      return false;
+    }
+  }, [createOrUpdateMutation]);
+
+  const getEnabledWidgets = useCallback((): KioskWidget[] => {
+    return config?.widgets?.filter(widget => widget.enabled) || [];
+  }, [config]);
+
+  // Clear error when building ID changes
   useEffect(() => {
-    loadConfig();
-  }, [loadConfig]);
+    setError(null);
+  }, [buildingId]);
 
   return {
-    config,
-    isLoading,
-    error,
+    config: config || {
+      building: buildingId || 0,
+      config: {
+        widgets: getDefaultWidgets(),
+        settings: {
+          slideDuration: 10,
+          refreshInterval: 30,
+          autoRefresh: true
+        }
+      },
+      widgets: getDefaultWidgets(),
+      settings: {
+        slideDuration: 10,
+        refreshInterval: 30,
+        autoRefresh: true
+      },
+      enabled_widgets_count: 0,
+      total_widgets_count: 0
+    },
+    isLoading: isConfigLoading || isLoading,
+    error: error || (configError as string) || null,
     toggleWidget,
     updateWidgetOrder,
     updateWidgetSettings,
     updateGlobalSettings,
     resetToDefault,
+    saveConfig,
     getEnabledWidgets,
-    getAllEnabledWidgets,
-    saveConfig: saveCompleteConfig,
-    loadConfig,
   };
+}
+
+// Default widgets configuration
+function getDefaultWidgets(): KioskWidget[] {
+  return [
+    {
+      id: 'dashboard_overview',
+      name: 'Dashboard Overview',
+      description: 'Συνολική επισκόπηση του κτιρίου',
+      category: 'main_slides',
+      enabled: true,
+      order: 0,
+      settings: {}
+    },
+    {
+      id: 'building_statistics',
+      name: 'Building Statistics',
+      description: 'Στατιστικά κτιρίου',
+      category: 'main_slides',
+      enabled: true,
+      order: 1,
+      settings: {}
+    },
+    {
+      id: 'emergency_contacts',
+      name: 'Emergency Contacts',
+      description: 'Τηλέφωνα έκτακτης ανάγκης',
+      category: 'main_slides',
+      enabled: true,
+      order: 2,
+      settings: {}
+    },
+    {
+      id: 'announcements',
+      name: 'Announcements',
+      description: 'Ανακοινώσεις',
+      category: 'main_slides',
+      enabled: true,
+      order: 3,
+      settings: {}
+    },
+    {
+      id: 'votes',
+      name: 'Votes',
+      description: 'Ψηφοφορίες',
+      category: 'main_slides',
+      enabled: true,
+      order: 4,
+      settings: {}
+    },
+    {
+      id: 'financial_overview',
+      name: 'Financial Overview',
+      description: 'Οικονομική επισκόπηση',
+      category: 'main_slides',
+      enabled: true,
+      order: 5,
+      settings: {}
+    },
+    {
+      id: 'maintenance_overview',
+      name: 'Maintenance Overview',
+      description: 'Συντήρηση και επισκευές',
+      category: 'main_slides',
+      enabled: true,
+      order: 6,
+      settings: {}
+    },
+    {
+      id: 'projects_overview',
+      name: 'Projects Overview',
+      description: 'Έργα και προσφορές',
+      category: 'main_slides',
+      enabled: true,
+      order: 7,
+      settings: {}
+    },
+    {
+      id: 'current_time',
+      name: 'Current Time',
+      description: 'Τρέχουσα ώρα και ημερομηνία',
+      category: 'sidebar_widgets',
+      enabled: true,
+      order: 0,
+      settings: {}
+    },
+    {
+      id: 'qr_code_connection',
+      name: 'QR Code Connection',
+      description: 'Σύνδεση με κινητό',
+      category: 'sidebar_widgets',
+      enabled: true,
+      order: 1,
+      settings: {}
+    },
+    {
+      id: 'weather_widget_sidebar',
+      name: 'Weather Widget',
+      description: 'Πρόγνωση καιρού',
+      category: 'sidebar_widgets',
+      enabled: true,
+      order: 2,
+      settings: {}
+    },
+    {
+      id: 'internal_manager_info',
+      name: 'Internal Manager Info',
+      description: 'Πληροφορίες διαχειριστή',
+      category: 'sidebar_widgets',
+      enabled: true,
+      order: 3,
+      settings: {}
+    },
+    {
+      id: 'community_message',
+      name: 'Community Message',
+      description: 'Μήνυμα κοινότητας',
+      category: 'sidebar_widgets',
+      enabled: true,
+      order: 4,
+      settings: {}
+    },
+    {
+      id: 'advertising_banners_sidebar',
+      name: 'Advertising Banners',
+      description: 'Χρήσιμες υπηρεσίες',
+      category: 'sidebar_widgets',
+      enabled: true,
+      order: 5,
+      settings: {}
+    },
+    {
+      id: 'weather_widget_topbar',
+      name: 'Weather Top Bar',
+      description: 'Καιρός στην επάνω μπάρα',
+      category: 'top_bar_widgets',
+      enabled: true,
+      order: 0,
+      settings: {}
+    },
+    {
+      id: 'advertising_banners_topbar',
+      name: 'Advertising Top Bar',
+      description: 'Διαφημίσεις στην επάνω μπάρα',
+      category: 'top_bar_widgets',
+      enabled: true,
+      order: 1,
+      settings: {}
+    },
+    {
+      id: 'news_ticker',
+      name: 'News Ticker',
+      description: 'Τελευταία νέα',
+      category: 'special_widgets',
+      enabled: true,
+      order: 0,
+      settings: {}
+    }
+  ];
 }

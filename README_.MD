@@ -102,6 +102,34 @@ find . -name "*.sh" -type f | grep -v ".venv" | grep -v "node_modules" | xargs c
 
 #### 🔥 **Σημερινές Αλλαγές (Detailed Implementation)**
 
+### 🖥️ **Kiosk Widget Management System** - NEW MAJOR FEATURE (January 2025)
+
+#### 📋 **Classic View - Default Mode** - FULLY FUNCTIONAL
+- **Default Interface**: Classic View είναι το default mode για kiosk widget management
+- **Drag & Drop**: Πλήρης drag & drop functionality με `@hello-pangea/dnd`
+- **Enhanced UI**: Βελτιωμένο UI με visual feedback και smooth transitions
+- **Widget Categories**: 4 κατηγορίες widgets (Main Slides, Sidebar, Top Bar, Special)
+- **Real-time Preview**: Εκτεταμένο preview mode με statistics και kiosk simulation
+
+#### 🔧 **Backend API** - COMPLETE IMPLEMENTATION
+- **KioskWidgetConfig Model**: Πλήρες Django model με JSON configuration
+- **REST API Endpoints**: Πλήρες API για όλες τις λειτουργίες
+- **Database Schema**: Migrations δημιουργήθηκαν και εφαρμόστηκαν
+- **Default Data**: 17 default widgets με 4 κατηγορίες
+
+#### 🎨 **Frontend Integration** - SEAMLESS
+- **useKioskWidgets Hook**: React Query integration με caching
+- **TypeScript Types**: Πλήρη type definitions για όλα τα components
+- **API Integration**: Σύνδεση frontend-backend με error handling
+- **State Management**: Unified state management για widgets και settings
+
+#### 🚀 **Key Features**
+- **Widget Management**: Enable/disable, reorder, settings per widget
+- **Global Settings**: Slide duration, refresh interval, auto-refresh
+- **Preview Mode**: Real-time preview με statistics και kiosk simulation
+- **Reset Functionality**: Reset to default configuration
+- **Building-specific**: Κάθε κτίριο έχει δική του configuration
+
 ### 🎨 **Kiosk Mode Improvements** - MAJOR UPDATE (January 2025)
 
 #### 📺 **Enhanced Kiosk Display System**
@@ -513,7 +541,7 @@ git commit -m "διορθωσεις οικονομικων ερ"
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "kiosk problems fix permissions 5"
+git commit -m "kiosk mode classic view 1"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
@@ -603,9 +631,9 @@ git reset --hard 9906d23898987a5
 
 ---
 
-**Last Updated**: September 6, 2025  
-**Version**: 2.3.0  
-**Status**: Production Ready with Service Packages ✅
+**Last Updated**: January 26, 2025  
+**Version**: 2.4.0  
+**Status**: Production Ready with Kiosk Widget Management ✅
 
 
 
