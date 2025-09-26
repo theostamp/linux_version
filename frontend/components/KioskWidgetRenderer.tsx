@@ -130,17 +130,27 @@ export default function KioskWidgetRenderer({
     },
   });
 
+  // Debug logging for instanceRef
+  console.log('[KioskWidgetRenderer] instanceRef:', instanceRef);
+  console.log('[KioskWidgetRenderer] instanceRef.current:', instanceRef.current);
+
   // Auto-slide based on widget settings
   const startAutoSlide = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     const slideDuration = config?.settings?.slideDuration || 10;
     intervalRef.current = setInterval(() => {
-      if (instanceRef.current && instanceRef.current.next) {
+      if (instanceRef && instanceRef.current && typeof instanceRef.current.next === 'function') {
         try {
           instanceRef.current.next();
         } catch (error) {
           console.error('[KioskWidgetRenderer] Error calling next():', error);
         }
+      } else {
+        console.log('[KioskWidgetRenderer] instanceRef not ready:', {
+          instanceRef: !!instanceRef,
+          current: !!instanceRef?.current,
+          next: typeof instanceRef?.current?.next
+        });
       }
     }, slideDuration * 1000);
   };
@@ -743,12 +753,14 @@ export default function KioskWidgetRenderer({
               <button
                 key={index}
                 onClick={() => {
-                  if (instanceRef.current && instanceRef.current.moveToIdx) {
+                  if (instanceRef && instanceRef.current && typeof instanceRef.current.moveToIdx === 'function') {
                     try {
                       instanceRef.current.moveToIdx(index);
                     } catch (error) {
                       console.error('[KioskWidgetRenderer] Error calling moveToIdx():', error);
                     }
+                  } else {
+                    console.log('[KioskWidgetRenderer] instanceRef not ready for navigation');
                   }
                 }}
                 className={`w-1.5 h-1.5 sm:w-2 sm:h-2 lg:w-3 lg:h-3 rounded-full transition-colors duration-200 flex-shrink-0 ${
