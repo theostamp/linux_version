@@ -627,7 +627,7 @@ export default function KioskWidgetRenderer({
       />
 
       {/* Top Bar - Only show if widgets are enabled */}
-      {enabledTopBarWidgets.length > 0 && <KioskTopBar />}
+      {enabledTopBarWidgets.length > 0 && <KioskTopBar buildingId={selectedBuildingId ?? undefined} />}
 
       {/* Building Info Bar */}
       <div className="bg-black bg-opacity-30 p-2 sm:p-3 flex-shrink-0 min-h-0">

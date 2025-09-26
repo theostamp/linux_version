@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Sun, Cloud, CloudRain, CloudSnow, Wind, Thermometer, MapPin, ExternalLink } from 'lucide-react';
+import { Sun, Cloud, CloudRain, MapPin, ExternalLink } from 'lucide-react';
+import { useKioskWidgets } from '@/hooks/useKioskWidgets';
 
 interface WeatherData {
   temperature: number;
@@ -18,10 +19,18 @@ interface AdvertisingBanner {
   duration: number;
 }
 
-export default function KioskTopBar() {
+interface KioskTopBarProps {
+  buildingId?: number;
+}
+
+export default function KioskTopBar({ buildingId }: KioskTopBarProps = {}) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [currentBanner, setCurrentBanner] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  // Get enabled widgets from configuration
+  const { getEnabledWidgets } = useKioskWidgets(buildingId);
+  const enabledTopBarWidgets = getEnabledWidgets('top_bar_widgets');
 
   // Mock advertising banners - you can replace these with real data from your API
   const advertisingBanners: AdvertisingBanner[] = [
@@ -104,12 +113,23 @@ export default function KioskTopBar() {
     return <Cloud className="w-6 h-6 text-gray-500" />;
   }
 
+  // Helper function to check if a widget is enabled
+  const isWidgetEnabled = (widgetId: string) => {
+    return enabledTopBarWidgets.some(w => w.id === widgetId);
+  };
+
+  // If no widgets are enabled, don't render anything
+  if (enabledTopBarWidgets.length === 0) {
+    return null;
+  }
+
   return (
     <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4">
       <div className="flex items-center justify-between">
-        {/* Weather Widget */}
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+        {/* Weather Widget - Only show if enabled */}
+        {isWidgetEnabled('weather_widget_topbar') && (
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
             {loading ? (
               <div className="flex items-center space-x-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -134,10 +154,12 @@ export default function KioskTopBar() {
               </div>
             )}
           </div>
-        </div>
+          </div>
+        )}
 
-        {/* Advertisement Banners */}
-        <div className="flex items-center space-x-4">
+        {/* Advertisement Banners - Only show if enabled */}
+        {isWidgetEnabled('advertising_banners_topbar') && (
+          <div className="flex items-center space-x-4">
           {advertisingBanners.map((banner, index) => (
             <div
               key={banner.id}
@@ -174,7 +196,8 @@ export default function KioskTopBar() {
               />
             ))}
           </div>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

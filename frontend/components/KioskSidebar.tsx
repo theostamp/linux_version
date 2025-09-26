@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sun, Cloud, CloudRain, CloudSnow, Wind, Thermometer, MapPin, Clock, Calendar, Phone, Users, QrCode, Smartphone } from 'lucide-react';
 import QRCodeDisplay from './QRCodeDisplay';
+import { useKioskWidgets } from '@/hooks/useKioskWidgets';
 
 interface WeatherData {
   temperature: number;
@@ -49,6 +50,10 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
   const [currentBanner, setCurrentBanner] = useState(0);
   const [loading, setLoading] = useState(true);
   const [communityMessage, setCommunityMessage] = useState<string>('');
+
+  // Get enabled widgets from configuration
+  const { getEnabledWidgets } = useKioskWidgets(buildingInfo?.id);
+  const enabledSidebarWidgets = getEnabledWidgets('sidebar_widgets');
 
   // Enhanced advertising banners
   const advertisingBanners: AdvertisingBanner[] = [
@@ -183,10 +188,16 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
     return <Cloud className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-gray-400" />;
   }
 
+  // Helper function to check if a widget is enabled
+  const isWidgetEnabled = (widgetId: string) => {
+    return enabledSidebarWidgets.some(w => w.id === widgetId);
+  };
+
   return (
     <aside className="w-64 sm:w-72 md:w-80 lg:w-96 xl:w-[400px] bg-gradient-to-b from-blue-900 via-blue-800 to-indigo-900 border-r border-blue-700 p-2 sm:p-3 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6 overflow-y-auto text-white flex-shrink-0 font-roboto">
-      {/* Current Time */}
-      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+      {/* Current Time - Only show if enabled */}
+      {isWidgetEnabled('current_time') && (
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
         <CardContent className="pt-2 sm:pt-3 lg:pt-4">
           <div className="text-center">
             <div className="text-xl sm:text-2xl lg:text-3xl font-mono font-bold text-white mb-1 sm:mb-2">
@@ -208,9 +219,10 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
           </div>
         </CardContent>
       </Card>
+      )}
 
-      {/* QR Code Connection */}
-      {buildingInfo && (
+      {/* QR Code Connection - Only show if enabled */}
+      {isWidgetEnabled('qr_code_connection') && buildingInfo && (
         <Card className="bg-white/10 backdrop-blur-sm border-white/20">
           <CardHeader className="pb-2 lg:pb-3">
             <CardTitle className="flex items-center text-sm sm:text-base lg:text-lg text-blue-200">
@@ -247,8 +259,9 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
         </Card>
       )}
 
-      {/* Weather Widget */}
-      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+      {/* Weather Widget - Only show if enabled */}
+      {isWidgetEnabled('weather_widget_sidebar') && (
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
         <CardHeader className="pb-2 lg:pb-3">
           <CardTitle className="flex items-center text-sm sm:text-base lg:text-lg text-blue-200">
             <Thermometer className="w-4 h-4 lg:w-5 lg:h-5 mr-2 text-blue-300" />
@@ -314,9 +327,11 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
           )}
         </CardContent>
       </Card>
+      )}
 
-      {/* Quick Info - Internal Manager */}
-      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+      {/* Quick Info - Internal Manager - Only show if enabled */}
+      {isWidgetEnabled('internal_manager_info') && (
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
         <CardHeader className="pb-2 lg:pb-3">
           <CardTitle className="flex items-center text-sm sm:text-base lg:text-lg text-blue-200">
             <Users className="w-4 h-4 lg:w-5 lg:h-5 mr-2 text-blue-300" />
@@ -348,9 +363,10 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
           </div>
         </CardContent>
       </Card>
+      )}
 
-      {/* Community Message */}
-      {communityMessage && (
+      {/* Community Message - Only show if enabled */}
+      {isWidgetEnabled('community_message') && communityMessage && (
         <Card className="bg-white/10 backdrop-blur-sm border-white/20">
           <CardContent className="pt-2 sm:pt-3 lg:pt-4">
             <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-lg p-2 sm:p-3 text-white border border-white/20">
@@ -362,8 +378,9 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
         </Card>
       )}
 
-      {/* Advertising Banners */}
-      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+      {/* Advertising Banners - Only show if enabled */}
+      {isWidgetEnabled('advertising_banners_sidebar') && (
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
         <CardHeader className="pb-2 lg:pb-3">
           <CardTitle className="text-sm sm:text-base lg:text-lg text-blue-200">
             Χρήσιμες Υπηρεσίες
@@ -407,6 +424,7 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
           </div>
         </CardContent>
       </Card>
+      )}
     </aside>
   );
 } 
