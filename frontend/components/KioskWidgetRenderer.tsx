@@ -139,9 +139,20 @@ export default function KioskWidgetRenderer({
     if (intervalRef.current) clearInterval(intervalRef.current);
     const slideDuration = config?.settings?.slideDuration || 10;
     intervalRef.current = setInterval(() => {
-      if (instanceRef && instanceRef.current && typeof instanceRef.current.next === 'function') {
+      // Check if we have slides to navigate
+      if (slides.length <= 1) {
+        console.log('[KioskWidgetRenderer] No slides to navigate, skipping auto-slide');
+        return;
+      }
+      
+      if (instanceRef && instanceRef.current) {
         try {
-          instanceRef.current.next();
+          // Additional check to ensure the slider is properly initialized
+          if (instanceRef.current.track && instanceRef.current.track.details) {
+            instanceRef.current.next();
+          } else {
+            console.log('[KioskWidgetRenderer] Slider not fully initialized, skipping auto-slide');
+          }
         } catch (error) {
           console.error('[KioskWidgetRenderer] Error calling next():', error);
         }
@@ -149,7 +160,7 @@ export default function KioskWidgetRenderer({
         console.log('[KioskWidgetRenderer] instanceRef not ready:', {
           instanceRef: !!instanceRef,
           current: !!instanceRef?.current,
-          next: typeof instanceRef?.current?.next
+          slidesLength: slides.length
         });
       }
     }, slideDuration * 1000);
@@ -753,7 +764,7 @@ export default function KioskWidgetRenderer({
               <button
                 key={index}
                 onClick={() => {
-                  if (instanceRef && instanceRef.current && typeof instanceRef.current.moveToIdx === 'function') {
+                  if (instanceRef && instanceRef.current && instanceRef.current.track && instanceRef.current.track.details) {
                     try {
                       instanceRef.current.moveToIdx(index);
                     } catch (error) {
