@@ -80,12 +80,21 @@ export default function KioskPage() {
     }
   }, [data?.building_info?.id, selectedBuildingId]);
 
-  // Load all buildings for selection
+  // Load all buildings for selection (only once)
   useEffect(() => {
+    let isMounted = true; // Prevent state updates if component unmounts
+
     async function loadBuildings() {
+      if (!isLoadingBuildings || !isMounted) {
+        return; // Prevent multiple concurrent calls
+      }
+
       try {
         console.log('[KIOSK] Loading buildings for selection...');
         const buildingsData = await fetchAllBuildingsPublic();
+
+        if (!isMounted) return; // Component unmounted during fetch
+
         console.log('[KIOSK] Buildings loaded successfully:', buildingsData.length);
         setBuildings(buildingsData);
 
@@ -93,7 +102,6 @@ export default function KioskPage() {
         const buildingParam = searchParams.get('building');
         if (buildingParam) {
           if (buildingParam === 'all') {
-            // User selected "all buildings"
             console.log('[KIOSK] Using all buildings from URL');
             setSelectedBuildingId(null);
           } else {
@@ -103,7 +111,7 @@ export default function KioskPage() {
               setSelectedBuildingId(buildingId);
             } else {
               console.log('[KIOSK] Invalid building ID in URL, using fallback');
-              setSelectedBuildingId(3); // Default demo building
+              setSelectedBuildingId(3);
             }
           }
         } else {
@@ -113,41 +121,28 @@ export default function KioskPage() {
             setSelectedBuildingId(buildingsData[0].id);
           } else {
             console.log('[KIOSK] No buildings available, using fallback');
-            setSelectedBuildingId(3); // Default demo building
+            setSelectedBuildingId(3);
           }
         }
       } catch (error) {
+        if (!isMounted) return;
+
         console.error('[KIOSK] Failed to load buildings:', error);
-        // Fallback: Use URL parameter or default to building ID 3 (demo building)
-        const buildingParam = searchParams.get('building');
-        if (buildingParam) {
-          if (buildingParam === 'all') {
-            console.log('[KIOSK] Using all buildings from URL (fallback)');
-            setSelectedBuildingId(null);
-          } else {
-            const buildingId = parseInt(buildingParam);
-            if (!isNaN(buildingId)) {
-              console.log('[KIOSK] Using building ID from URL (fallback):', buildingId);
-              setSelectedBuildingId(buildingId);
-            } else {
-              console.log('[KIOSK] Invalid building ID, using default building 3');
-              setSelectedBuildingId(3); // Default demo building
-            }
-          }
-        } else {
-          console.log('[KIOSK] Using default building 3');
-          setSelectedBuildingId(3); // Default demo building
-        }
+        // Simple fallback
+        setSelectedBuildingId(3);
       } finally {
-        setIsLoadingBuildings(false);
+        if (isMounted) {
+          setIsLoadingBuildings(false);
+        }
       }
     }
 
-    // Only load buildings once
-    if (isLoadingBuildings) {
-      loadBuildings();
-    }
-  }, [searchParams.get('building')]);  // Only depend on the building parameter, not the entire searchParams object
+    loadBuildings();
+
+    return () => {
+      isMounted = false; // Cleanup function
+    };
+  }, []); // Empty dependency array - only run once on mount
 
   if (isLoadingBuildings) {
     return <FullPageSpinner />;

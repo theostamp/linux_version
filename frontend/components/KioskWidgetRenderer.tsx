@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useKeenSlider } from 'keen-slider/react';
 import { useKioskWidgets } from '@/hooks/useKioskWidgets';
 import { usePublicInfo } from '@/hooks/usePublicInfo';
@@ -81,27 +81,37 @@ export default function KioskWidgetRenderer({
 
   // Load maintenance info
   useEffect(() => {
+    let isMounted = true;
+
     const loadMaintenanceInfo = async () => {
-      if (selectedBuildingId) {
+      if (selectedBuildingId && isMounted) {
         try {
           const [counters, scheduled] = await Promise.all([
             fetchPublicMaintenanceCounters(selectedBuildingId),
             fetchPublicScheduledMaintenance({ building: selectedBuildingId })
           ]);
-          
-          setMaintenanceInfo({
-            active_contractors: counters.active_contractors || 0,
-            pending_receipts: counters.pending_receipts || 0,
-            scheduled_maintenance: scheduled.length || 0,
-            urgent_maintenance: counters.urgent_maintenance || 0,
-          });
+
+          if (isMounted) {
+            setMaintenanceInfo({
+              active_contractors: counters.active_contractors || 0,
+              pending_receipts: counters.pending_receipts || 0,
+              scheduled_maintenance: scheduled.length || 0,
+              urgent_maintenance: counters.urgent_maintenance || 0,
+            });
+          }
         } catch (error) {
-          console.error('Failed to load maintenance info:', error);
+          if (isMounted) {
+            console.error('Failed to load maintenance info:', error);
+          }
         }
       }
     };
 
     loadMaintenanceInfo();
+
+    return () => {
+      isMounted = false;
+    };
   }, [selectedBuildingId]);
 
   const [sliderContainerRef, instanceRef] = useKeenSlider<HTMLDivElement>({
@@ -127,43 +137,41 @@ export default function KioskWidgetRenderer({
 
 
   // Auto-slide based on widget settings
-  const startAutoSlide = () => {
+  const startAutoSlide = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
+
+    // Don't start auto-slide if no slides or not enough slides
+    if (slides.length <= 1) {
+      return;
+    }
+
     const slideDuration = config?.settings?.slideDuration || 10;
     intervalRef.current = setInterval(() => {
-      // Check if we have slides to navigate
-      if (slides.length <= 1) {
-        console.log('[KioskWidgetRenderer] No slides to navigate, skipping auto-slide');
-        return;
-      }
-      
       if (instanceRef && instanceRef.current) {
         try {
           // Additional check to ensure the slider is properly initialized
           if (instanceRef.current.track && instanceRef.current.track.details) {
             instanceRef.current.next();
-          } else {
-            console.log('[KioskWidgetRenderer] Slider not fully initialized, skipping auto-slide');
           }
         } catch (error) {
-          console.error('[KioskWidgetRenderer] Error calling next():', error);
+          console.error('[KioskWidgetRenderer] Error in auto-slide:', error);
         }
-      } else {
-        console.log('[KioskWidgetRenderer] instanceRef not ready:', {
-          instanceRef: !!instanceRef,
-          current: !!instanceRef?.current,
-          slidesLength: slides.length
-        });
       }
     }, slideDuration * 1000);
-  };
+  }, [slides.length, config?.settings?.slideDuration]);
 
+  // Start auto-slide when slider is ready and slides are available
   useEffect(() => {
-    startAutoSlide();
+    // Add a small delay to ensure slider is fully initialized
+    const timer = setTimeout(() => {
+      startAutoSlide();
+    }, 1000);
+
     return () => {
+      clearTimeout(timer);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [config?.settings?.slideDuration]);
+  }, [startAutoSlide]);
 
   // Handle building selection
   const handleBuildingSelect = (building: any) => {
@@ -754,8 +762,6 @@ export default function KioskWidgetRenderer({
                     } catch (error) {
                       console.error('[KioskWidgetRenderer] Error calling moveToIdx():', error);
                     }
-                  } else {
-                    console.log('[KioskWidgetRenderer] instanceRef not ready for navigation');
                   }
                 }}
                 className={`w-1.5 h-1.5 sm:w-2 sm:h-2 lg:w-3 lg:h-3 rounded-full transition-colors duration-200 flex-shrink-0 ${
