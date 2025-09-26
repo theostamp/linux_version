@@ -20,35 +20,9 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children, fullWidth = false }: DashboardLayoutProps) {
-  // Try to get auth context, but handle the case where it might not be available
-  let user, isAuthReady, authLoading;
-  let buildingLoading;
-  
-  try {
-    const authContext = useAuth();
-    user = authContext.user;
-    isAuthReady = authContext.isAuthReady;
-    authLoading = authContext.isLoading;
-  } catch (error) {
-    // AuthProvider not available yet, show loading
-    console.log('AuthProvider not available yet, showing loading state');
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-y-auto">
-        <div className="flex justify-center items-center h-full p-10">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <span className="ml-3 text-gray-600">Φόρτωση...</span>
-        </div>
-      </div>
-    );
-  }
-  
-  try {
-    const buildingContext = useBuilding();
-    buildingLoading = buildingContext.isLoading;
-  } catch (error) {
-    // BuildingProvider not available yet
-    buildingLoading = true;
-  }
+  // Always call hooks - they should be available since AuthProvider is always provided
+  const { user, isAuthReady, isLoading: authLoading } = useAuth();
+  const { isLoading: buildingLoading } = useBuilding();
 
   const isLoading = authLoading || buildingLoading || !isAuthReady;
 
