@@ -13,18 +13,16 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   const isInfoScreen = pathname?.startsWith('/info-screen');
   const isKioskMode = pathname?.startsWith('/kiosk') || pathname?.startsWith('/test-kiosk');
   // All routes from the (dashboard) directory should use auth
-  const isDashboard = pathname?.startsWith('/dashboard') || pathname?.startsWith('/announcements') ||
-                     pathname?.startsWith('/votes') || pathname?.startsWith('/requests') ||
-                     pathname?.startsWith('/buildings') || pathname?.startsWith('/apartments') ||
-                     pathname?.startsWith('/map-visualization') || pathname?.startsWith('/residents') ||
-                     pathname?.startsWith('/maintenance') || pathname?.startsWith('/collaborators') ||
-                     pathname?.startsWith('/documents') || pathname?.startsWith('/kiosk-widgets') ||
-                     pathname?.startsWith('/financial') || pathname?.startsWith('/projects') ||
-                     pathname?.startsWith('/teams') || pathname?.startsWith('/admin') ||
-                     pathname?.startsWith('/calendar') || pathname?.startsWith('/chat') ||
-                     pathname?.startsWith('/data-migration') || pathname?.startsWith('/kiosk-settings') ||
-                     pathname?.startsWith('/suppliers') || pathname?.startsWith('/system-health') ||
-                     pathname?.startsWith('/financial-tests');
+  // Check if the pathname starts with any of the dashboard routes
+  const dashboardRoutes = [
+    '/dashboard', '/announcements', '/votes', '/requests', '/buildings', '/apartments',
+    '/map-visualization', '/residents', '/maintenance', '/collaborators', '/documents',
+    '/kiosk-widgets', '/financial', '/projects', '/teams', '/admin', '/calendar',
+    '/chat', '/data-migration', '/kiosk-settings', '/suppliers', '/system-health',
+    '/financial-tests'
+  ];
+  
+  const isDashboard = dashboardRoutes.some(route => pathname?.startsWith(route));
 
   // Kiosk mode routes - no auth needed, no LayoutWrapper (they have their own layout)
   if (isKioskMode) {
@@ -48,26 +46,16 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     );
   }
 
-  if (isDashboard) {
-    return (
-      <ReactQueryProvider>
-        <LoadingProvider>
-          <AuthProvider>
-            <BuildingProvider>
-              {children}
-            </BuildingProvider>
-          </AuthProvider>
-        </LoadingProvider>
-      </ReactQueryProvider>
-    );
-  }
-
+  // Always provide AuthProvider for all routes - let individual components decide if they need auth
+  // Simplified logic: always provide AuthProvider, conditionally provide LayoutWrapper
+  const shouldUseLayoutWrapper = pathname && !isDashboard && !isKioskMode && !isInfoScreen;
+  
   return (
     <ReactQueryProvider>
       <LoadingProvider>
         <AuthProvider>
           <BuildingProvider>
-            <LayoutWrapper>{children}</LayoutWrapper>
+            {shouldUseLayoutWrapper ? <LayoutWrapper>{children}</LayoutWrapper> : children}
           </BuildingProvider>
         </AuthProvider>
       </LoadingProvider>

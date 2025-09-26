@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Use a different build directory to avoid permission issues
+  distDir: '.next-theo',
+  
   // Performance Optimizations
   compiler: {
     // Remove console.log in production
