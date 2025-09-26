@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { apiPublic } from '@/lib/apiPublic';
 
 export interface KioskWidget {
   id: string;
@@ -81,8 +82,18 @@ export function useKioskWidgets(buildingId?: number) {
       }
 
       try {
-        const response = await api.get(`/kiosk/public/configs/get_by_building/?building_id=${buildingId}`);
-        return response.data;
+        // Use direct axios call with correct URL for kiosk
+        const hostname = window.location.hostname;
+        const apiUrl = `http://${hostname}:18000/api`;
+        console.log('[useKioskWidgets] Making API call to:', `${apiUrl}/kiosk/public/configs/get_by_building/?building_id=${buildingId}`);
+        
+        const response = await fetch(`${apiUrl}/kiosk/public/configs/get_by_building/?building_id=${buildingId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('[useKioskWidgets] API response:', data);
+        return data;
       } catch (error: any) {
         // If no config exists, return default
         if (error.response?.status === 404) {
@@ -331,7 +342,8 @@ export function useKioskWidgets(buildingId?: number) {
 
 // Default widgets configuration
 function getDefaultWidgets(): KioskWidget[] {
-  return [
+  console.log('[getDefaultWidgets] Creating default widgets');
+  const widgets = [
     {
       id: 'dashboard_overview',
       name: 'Dashboard Overview',
@@ -486,4 +498,7 @@ function getDefaultWidgets(): KioskWidget[] {
       settings: {}
     }
   ];
+  
+  console.log('[getDefaultWidgets] Created', widgets.length, 'widgets');
+  return widgets;
 }
