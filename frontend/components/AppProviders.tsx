@@ -12,6 +12,7 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   const pathname = usePathname();
   const isInfoScreen = pathname?.startsWith('/info-screen');
   const isKioskMode = pathname?.startsWith('/kiosk') || pathname?.startsWith('/test-kiosk');
+  // All routes from the (dashboard) directory should use auth
   const isDashboard = pathname?.startsWith('/dashboard') || pathname?.startsWith('/announcements') ||
                      pathname?.startsWith('/votes') || pathname?.startsWith('/requests') ||
                      pathname?.startsWith('/buildings') || pathname?.startsWith('/apartments') ||
@@ -19,7 +20,11 @@ export default function AppProviders({ children }: { readonly children: ReactNod
                      pathname?.startsWith('/maintenance') || pathname?.startsWith('/collaborators') ||
                      pathname?.startsWith('/documents') || pathname?.startsWith('/kiosk-widgets') ||
                      pathname?.startsWith('/financial') || pathname?.startsWith('/projects') ||
-                     pathname?.startsWith('/teams');
+                     pathname?.startsWith('/teams') || pathname?.startsWith('/admin') ||
+                     pathname?.startsWith('/calendar') || pathname?.startsWith('/chat') ||
+                     pathname?.startsWith('/data-migration') || pathname?.startsWith('/kiosk-settings') ||
+                     pathname?.startsWith('/suppliers') || pathname?.startsWith('/system-health') ||
+                     pathname?.startsWith('/financial-tests');
 
   // Kiosk mode routes - no auth needed, no LayoutWrapper (they have their own layout)
   if (isKioskMode) {
