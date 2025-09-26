@@ -12,10 +12,14 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   const pathname = usePathname();
   const isInfoScreen = pathname?.startsWith('/info-screen');
   const isKioskMode = pathname?.startsWith('/kiosk') || pathname?.startsWith('/test-kiosk');
-  const isDashboard = pathname?.startsWith('/dashboard') || pathname?.startsWith('/announcements') || 
-                     pathname?.startsWith('/votes') || pathname?.startsWith('/requests') || 
+  const isDashboard = pathname?.startsWith('/dashboard') || pathname?.startsWith('/announcements') ||
+                     pathname?.startsWith('/votes') || pathname?.startsWith('/requests') ||
                      pathname?.startsWith('/buildings') || pathname?.startsWith('/apartments') ||
-                     pathname?.startsWith('/map-visualization') || pathname?.startsWith('/residents');
+                     pathname?.startsWith('/map-visualization') || pathname?.startsWith('/residents') ||
+                     pathname?.startsWith('/maintenance') || pathname?.startsWith('/collaborators') ||
+                     pathname?.startsWith('/documents') || pathname?.startsWith('/kiosk-widgets') ||
+                     pathname?.startsWith('/financial') || pathname?.startsWith('/projects') ||
+                     pathname?.startsWith('/teams');
 
   // Kiosk mode routes - no auth needed, no LayoutWrapper (they have their own layout)
   if (isKioskMode) {
