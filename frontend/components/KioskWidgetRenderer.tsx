@@ -135,8 +135,12 @@ export default function KioskWidgetRenderer({
     if (intervalRef.current) clearInterval(intervalRef.current);
     const slideDuration = config?.settings?.slideDuration || 10;
     intervalRef.current = setInterval(() => {
-      if (instanceRef.current) {
-        instanceRef.current.next();
+      if (instanceRef.current && instanceRef.current.next) {
+        try {
+          instanceRef.current.next();
+        } catch (error) {
+          console.error('[KioskWidgetRenderer] Error calling next():', error);
+        }
       }
     }, slideDuration * 1000);
   };
@@ -739,8 +743,12 @@ export default function KioskWidgetRenderer({
               <button
                 key={index}
                 onClick={() => {
-                  if (instanceRef.current) {
-                    instanceRef.current.moveToIdx(index);
+                  if (instanceRef.current && instanceRef.current.moveToIdx) {
+                    try {
+                      instanceRef.current.moveToIdx(index);
+                    } catch (error) {
+                      console.error('[KioskWidgetRenderer] Error calling moveToIdx():', error);
+                    }
                   }
                 }}
                 className={`w-1.5 h-1.5 sm:w-2 sm:h-2 lg:w-3 lg:h-3 rounded-full transition-colors duration-200 flex-shrink-0 ${
