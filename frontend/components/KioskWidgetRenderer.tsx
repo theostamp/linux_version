@@ -68,11 +68,6 @@ export default function KioskWidgetRenderer({
 
   // Use the widget system
   const { config, getEnabledWidgets } = useKioskWidgets(selectedBuildingId ?? undefined);
-  
-  // Debug logging
-  console.log('[KioskWidgetRenderer] selectedBuildingId:', selectedBuildingId);
-  console.log('[KioskWidgetRenderer] config:', config);
-  console.log('[KioskWidgetRenderer] config?.widgets:', config?.widgets);
 
   // Use the selected building ID for data fetching
   const { data, isLoading, error, isFetching } = usePublicInfo(selectedBuildingId ?? null);
@@ -130,9 +125,6 @@ export default function KioskWidgetRenderer({
     },
   });
 
-  // Debug logging for instanceRef
-  console.log('[KioskWidgetRenderer] instanceRef:', instanceRef);
-  console.log('[KioskWidgetRenderer] instanceRef.current:', instanceRef.current);
 
   // Auto-slide based on widget settings
   const startAutoSlide = () => {
@@ -205,12 +197,6 @@ export default function KioskWidgetRenderer({
   const enabledSidebarWidgets = getEnabledWidgets('sidebar_widgets');
   const enabledTopBarWidgets = getEnabledWidgets('top_bar_widgets');
   const enabledSpecialWidgets = getEnabledWidgets('special_widgets');
-  
-  // Debug logging
-  console.log('[KioskWidgetRenderer] enabledMainSlides:', enabledMainSlides);
-  console.log('[KioskWidgetRenderer] enabledSidebarWidgets:', enabledSidebarWidgets);
-  console.log('[KioskWidgetRenderer] enabledTopBarWidgets:', enabledTopBarWidgets);
-  console.log('[KioskWidgetRenderer] enabledSpecialWidgets:', enabledSpecialWidgets);
 
   // Create slides based on enabled widgets
   const createSlides = () => {

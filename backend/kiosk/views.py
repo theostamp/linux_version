@@ -204,15 +204,31 @@ class PublicKioskWidgetConfigViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(serializer.data)
         except KioskWidgetConfig.DoesNotExist:
             # Return default configuration if none exists
+            default_widgets = KioskWidgetConfig()._get_default_widgets()
             default_config = {
-                'building_id': int(building_id),
+                'id': None,
+                'building': int(building_id),
+                'building_name': 'Default Building',
+                'building_address': 'Default Address',
                 'config': {
-                    'widgets': KioskWidgetConfig()._get_default_widgets(),
+                    'widgets': default_widgets,
                     'settings': {
                         'slideDuration': 10,
                         'refreshInterval': 30,
                         'autoRefresh': True
                     }
-                }
+                },
+                'widgets': default_widgets,  # Add widgets at top level
+                'settings': {  # Add settings at top level
+                    'slideDuration': 10,
+                    'refreshInterval': 30,
+                    'autoRefresh': True
+                },
+                'enabled_widgets_count': len([w for w in default_widgets if w.get('enabled', True)]),
+                'total_widgets_count': len(default_widgets),
+                'created_at': None,
+                'updated_at': None,
+                'created_by': None,
+                'updated_by': None
             }
             return Response(default_config)

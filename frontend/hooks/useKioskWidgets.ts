@@ -91,7 +91,7 @@ export function useKioskWidgets(buildingId?: number) {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json();
+          const data = await response.json();
         console.log('[useKioskWidgets] API response:', data);
         return data;
       } catch (error: any) {
@@ -238,7 +238,7 @@ export function useKioskWidgets(buildingId?: number) {
   const toggleWidget = useCallback(async (widgetId: string, enabled: boolean): Promise<boolean> => {
     try {
       await toggleWidgetMutation.mutateAsync({ widgetId, enabled });
-      return true;
+    return true;
     } catch (error) {
       console.error('Failed to toggle widget:', error);
       return false;
@@ -296,11 +296,14 @@ export function useKioskWidgets(buildingId?: number) {
   }, [createOrUpdateMutation]);
 
   const getEnabledWidgets = useCallback((category?: string): KioskWidget[] => {
-    const widgets = config?.widgets?.filter(widget => widget.enabled) || [];
+    // The widgets are available at config.widgets (from serializer property)
+    const widgets = config?.widgets || [];
+    const enabledWidgets = widgets.filter(widget => widget.enabled);
+    
     if (category) {
-      return widgets.filter(widget => widget.category === category);
+      return enabledWidgets.filter(widget => widget.category === category);
     }
-    return widgets;
+    return enabledWidgets;
   }, [config]);
 
   // Clear error when building ID changes
