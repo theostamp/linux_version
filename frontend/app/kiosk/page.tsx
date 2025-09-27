@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { usePublicInfo } from '@/hooks/usePublicInfo';
 import { useBuildingChange } from '@/hooks/useBuildingChange';
 import KioskWidgetRenderer from '@/components/KioskWidgetRenderer';
@@ -13,9 +13,9 @@ import { useSearchParams } from 'next/navigation';
 // Global flag to prevent multiple building loads across component re-mounts
 let BUILDINGS_LOADED = false;
 let BUILDINGS_DATA: any[] = [];
+let BUILDINGS_LOADING = false; // Prevent concurrent loads
 
 export default function KioskPage() {
-  console.log('[KIOSK DEBUG] Component render, BUILDINGS_LOADED:', BUILDINGS_LOADED);
 
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
   const [buildings, setBuildings] = useState<any[]>(BUILDINGS_DATA);
@@ -91,9 +91,11 @@ export default function KioskPage() {
     let isMounted = true; // Prevent state updates if component unmounts
 
     async function loadBuildings() {
-      if (BUILDINGS_LOADED || !isMounted) {
+      if (BUILDINGS_LOADED || BUILDINGS_LOADING || !isMounted) {
         return; // Prevent multiple concurrent calls
       }
+
+      BUILDINGS_LOADING = true;
 
       try {
         console.log('[KIOSK] Loading buildings for selection...');
@@ -141,6 +143,7 @@ export default function KioskPage() {
         if (isMounted) {
           setIsLoadingBuildings(false);
           BUILDINGS_LOADED = true;
+          BUILDINGS_LOADING = false;
         }
       }
     }

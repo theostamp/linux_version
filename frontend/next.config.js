@@ -106,8 +106,8 @@ const nextConfig = {
   // Power by header removal
   poweredByHeader: false,
   
-  // Strict mode
-  reactStrictMode: true,
+  // Strict mode - disabled to prevent double calls in development
+  reactStrictMode: false,
   
   // SWC minification is on by default in modern Next, option removed
   
