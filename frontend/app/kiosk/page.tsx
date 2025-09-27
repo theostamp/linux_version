@@ -14,6 +14,7 @@ export default function KioskPage() {
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
   const [buildings, setBuildings] = useState<any[]>([]);
   const [isLoadingBuildings, setIsLoadingBuildings] = useState(true);
+  const [hasLoadedBuildings, setHasLoadedBuildings] = useState(false);
   const [useCanvasMode, setUseCanvasMode] = useState(false);
   const [maintenanceInfo, setMaintenanceInfo] = useState({
     active_contractors: 0,
@@ -85,7 +86,7 @@ export default function KioskPage() {
     let isMounted = true; // Prevent state updates if component unmounts
 
     async function loadBuildings() {
-      if (!isLoadingBuildings || !isMounted) {
+      if (hasLoadedBuildings || !isMounted) {
         return; // Prevent multiple concurrent calls
       }
 
@@ -133,6 +134,7 @@ export default function KioskPage() {
       } finally {
         if (isMounted) {
           setIsLoadingBuildings(false);
+          setHasLoadedBuildings(true);
         }
       }
     }

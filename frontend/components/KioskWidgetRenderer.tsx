@@ -136,42 +136,6 @@ export default function KioskWidgetRenderer({
   });
 
 
-  // Auto-slide based on widget settings
-  const startAutoSlide = useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-
-    // Don't start auto-slide if no slides or not enough slides
-    if (slides.length <= 1) {
-      return;
-    }
-
-    const slideDuration = config?.settings?.slideDuration || 10;
-    intervalRef.current = setInterval(() => {
-      if (instanceRef && instanceRef.current) {
-        try {
-          // Additional check to ensure the slider is properly initialized
-          if (instanceRef.current.track && instanceRef.current.track.details) {
-            instanceRef.current.next();
-          }
-        } catch (error) {
-          console.error('[KioskWidgetRenderer] Error in auto-slide:', error);
-        }
-      }
-    }, slideDuration * 1000);
-  }, [slides.length, config?.settings?.slideDuration]);
-
-  // Start auto-slide when slider is ready and slides are available
-  useEffect(() => {
-    // Add a small delay to ensure slider is fully initialized
-    const timer = setTimeout(() => {
-      startAutoSlide();
-    }, 1000);
-
-    return () => {
-      clearTimeout(timer);
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [startAutoSlide]);
 
   // Handle building selection
   const handleBuildingSelect = (building: any) => {
@@ -637,6 +601,43 @@ export default function KioskWidgetRenderer({
 
     return slidesList;
   }, [enabledMainSlides, data, maintenanceInfo]);
+
+  // Auto-slide functionality (after slides are defined)
+  const startAutoSlide = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    // Don't start auto-slide if no slides or not enough slides
+    if (slides.length <= 1) {
+      return;
+    }
+
+    const slideDuration = config?.settings?.slideDuration || 10;
+    intervalRef.current = setInterval(() => {
+      if (instanceRef && instanceRef.current) {
+        try {
+          // Additional check to ensure the slider is properly initialized
+          if (instanceRef.current.track && instanceRef.current.track.details) {
+            instanceRef.current.next();
+          }
+        } catch (error) {
+          console.error('[KioskWidgetRenderer] Error in auto-slide:', error);
+        }
+      }
+    }, slideDuration * 1000);
+  }, [slides.length, config?.settings?.slideDuration]);
+
+  // Start auto-slide when slider is ready and slides are available
+  useEffect(() => {
+    // Add a small delay to ensure slider is fully initialized
+    const timer = setTimeout(() => {
+      startAutoSlide();
+    }, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [startAutoSlide]);
 
   return (
     <div className="h-screen w-screen text-white flex flex-col overflow-hidden font-ubuntu bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 max-w-full max-h-full">
