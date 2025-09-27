@@ -250,7 +250,7 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
                 </p>
                 <div className="bg-blue-800/50 rounded p-2 mt-2">
                   <p className="text-xs text-blue-200">
-                    <strong>Link:</strong> {window.location.host}/connect?building={buildingInfo.id}
+                    <strong>Link:</strong> {typeof window !== 'undefined' ? window.location.host : 'domain'}/connect?building={buildingInfo.id}
                   </p>
                 </div>
               </div>
@@ -304,10 +304,9 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
                           {new Date(day.date).toLocaleDateString('el-GR', { weekday: 'short' })}
                         </div>
                         <div className="flex justify-center mb-1">
-                          {getWeatherIcon(day.weathercode).type({
-                            ...getWeatherIcon(day.weathercode).props,
-                            className: "w-4 h-4"
-                          })}
+                          <div className="w-4 h-4">
+                            {getWeatherIcon(day.weathercode)}
+                          </div>
                         </div>
                         <div className="text-xs text-white">
                           <span className="text-orange-300">{Math.round(day.temperature_max)}°</span>

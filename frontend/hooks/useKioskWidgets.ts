@@ -296,9 +296,20 @@ export function useKioskWidgets(buildingId?: number) {
 
   const getEnabledWidgets = useCallback((category?: string): KioskWidget[] => {
     // The widgets are available at config.widgets (from serializer property)
-    const widgets = config?.widgets || [];
+    let widgets: KioskWidget[] = [];
+
+    // Try multiple paths to find widgets
+    if (config?.widgets && Array.isArray(config.widgets)) {
+      widgets = config.widgets;
+    } else if (config?.config?.widgets && Array.isArray(config.config.widgets)) {
+      widgets = config.config.widgets;
+    } else {
+      // Fallback to default widgets
+      widgets = defaultWidgets;
+    }
+
     const enabledWidgets = widgets.filter(widget => widget.enabled);
-    
+
     if (category) {
       return enabledWidgets.filter(widget => widget.category === category);
     }

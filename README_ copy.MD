@@ -5,7 +5,7 @@
 ## Βασικές Εντολές Git
 
 git add .
-git commit -m "fix customer packets 2"
+git commit -m "fix κιοσκ "
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

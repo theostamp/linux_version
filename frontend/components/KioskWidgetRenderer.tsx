@@ -165,10 +165,10 @@ export default function KioskWidgetRenderer({
   }, []);
 
   // Get enabled widgets by category (memoized to prevent re-computation)
-  const enabledMainSlides = useMemo(() => getEnabledWidgets('main_slides'), [config]);
-  const enabledSidebarWidgets = useMemo(() => getEnabledWidgets('sidebar_widgets'), [config]);
-  const enabledTopBarWidgets = useMemo(() => getEnabledWidgets('top_bar_widgets'), [config]);
-  const enabledSpecialWidgets = useMemo(() => getEnabledWidgets('special_widgets'), [config]);
+  const enabledMainSlides = useMemo(() => getEnabledWidgets('main_slides'), [getEnabledWidgets]);
+  const enabledSidebarWidgets = useMemo(() => getEnabledWidgets('sidebar_widgets'), [getEnabledWidgets]);
+  const enabledTopBarWidgets = useMemo(() => getEnabledWidgets('top_bar_widgets'), [getEnabledWidgets]);
+  const enabledSpecialWidgets = useMemo(() => getEnabledWidgets('special_widgets'), [getEnabledWidgets]);
 
   // Slide creation functions (copied from KioskMode)
   const createDashboardOverviewSlide = () => {
