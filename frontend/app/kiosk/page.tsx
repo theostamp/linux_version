@@ -10,11 +10,16 @@ import { fetchAllBuildingsPublic } from '@/lib/api';
 import { fetchPublicMaintenanceCounters, fetchPublicScheduledMaintenance } from '@/lib/apiPublic';
 import { useSearchParams } from 'next/navigation';
 
+// Global flag to prevent multiple building loads across component re-mounts
+let BUILDINGS_LOADED = false;
+let BUILDINGS_DATA: any[] = [];
+
 export default function KioskPage() {
+  console.log('[KIOSK DEBUG] Component render, BUILDINGS_LOADED:', BUILDINGS_LOADED);
+
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
-  const [buildings, setBuildings] = useState<any[]>([]);
-  const [isLoadingBuildings, setIsLoadingBuildings] = useState(true);
-  const [hasLoadedBuildings, setHasLoadedBuildings] = useState(false);
+  const [buildings, setBuildings] = useState<any[]>(BUILDINGS_DATA);
+  const [isLoadingBuildings, setIsLoadingBuildings] = useState(!BUILDINGS_LOADED);
   const [useCanvasMode, setUseCanvasMode] = useState(false);
   const [maintenanceInfo, setMaintenanceInfo] = useState({
     active_contractors: 0,
@@ -86,7 +91,7 @@ export default function KioskPage() {
     let isMounted = true; // Prevent state updates if component unmounts
 
     async function loadBuildings() {
-      if (hasLoadedBuildings || !isMounted) {
+      if (BUILDINGS_LOADED || !isMounted) {
         return; // Prevent multiple concurrent calls
       }
 
@@ -97,6 +102,7 @@ export default function KioskPage() {
         if (!isMounted) return; // Component unmounted during fetch
 
         console.log('[KIOSK] Buildings loaded successfully:', buildingsData.length);
+        BUILDINGS_DATA = buildingsData;
         setBuildings(buildingsData);
 
         // Check URL parameter for building ID
@@ -134,7 +140,7 @@ export default function KioskPage() {
       } finally {
         if (isMounted) {
           setIsLoadingBuildings(false);
-          setHasLoadedBuildings(true);
+          BUILDINGS_LOADED = true;
         }
       }
     }
