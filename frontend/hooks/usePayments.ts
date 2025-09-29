@@ -1,0 +1,423 @@
+import { useState, useCallback, useEffect } from 'react';
+import { Payment, PaymentFormData, PaymentFilters } from '@/types/financial';
+import { api } from '@/lib/api';
+import { parseAmount } from '@/lib/utils';
+
+export const usePayments = (buildingId?: number, selectedMonth?: string) => {
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load payments when buildingId or selectedMonth changes
+  useEffect(() => {
+    if (buildingId) {
+      loadPayments();
+    }
+  }, [buildingId, selectedMonth]);
+
+  // Load payments for the current building
+  const loadPayments = useCallback(async () => {
+    if (!buildingId) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const params = new URLSearchParams({
+        building_id: buildingId.toString()
+      });
+      
+      // Add selectedMonth parameter if provided
+      if (selectedMonth) {
+        params.append('month', selectedMonth);
+      }
+      
+      const response = await api.get(`/financial/payments/?${params}`);
+      const data = response.data.results || response.data;
+      
+      // Normalize payment amounts to ensure they are numbers
+      const normalize = (p: any): Payment => ({
+        ...p,
+        amount: parseAmount(p?.amount),
+      });
+      
+      setPayments(Array.isArray(data) ? data.map(normalize) : []);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη των εισπράξεων';
+      setError(errorMessage);
+      setPayments([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [buildingId, selectedMonth]);
+
+  // Δημιουργία νέας πληρωμής
+  const createPayment = useCallback(async (data: PaymentFormData): Promise<Payment | null> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      let requestData: any;
+      const headers: any = {};
+      
+      // If there's a file upload, use FormData
+      if (data.receipt) {
+        const formData = new FormData();
+        formData.append('apartment', data.apartment_id.toString());
+        formData.append('amount', data.amount.toFixed(2));
+        formData.append('reserve_fund_amount', (data.reserve_fund_amount || 0).toString());
+        formData.append('previous_obligations_amount', (data.previous_obligations_amount || 0).toString());
+        formData.append('date', data.date);
+        formData.append('method', data.method);
+        formData.append('payment_type', data.payment_type);
+        formData.append('payer_type', data.payer_type);
+        if (data.payer_name) {
+          formData.append('payer_name', data.payer_name);
+        }
+        
+        if (data.reference_number) {
+          formData.append('reference_number', data.reference_number);
+        }
+        if (data.notes) {
+          formData.append('notes', data.notes);
+        }
+        
+        formData.append('receipt', data.receipt);
+        
+        requestData = formData;
+        headers['Content-Type'] = 'multipart/form-data';
+      } else {
+        // Use JSON for requests without file upload
+        requestData = {
+          apartment: data.apartment_id,
+          amount: parseFloat(data.amount.toFixed(2)),
+          reserve_fund_amount: parseFloat((data.reserve_fund_amount || 0).toString()),
+          previous_obligations_amount: parseFloat((data.previous_obligations_amount || 0).toString()),
+          date: data.date,
+          method: data.method,
+          payment_type: data.payment_type,
+          payer_type: data.payer_type,
+          payer_name: data.payer_name,
+          reference_number: data.reference_number,
+          notes: data.notes
+        };
+        headers['Content-Type'] = 'application/json';
+      }
+
+      const response = await api.post('/financial/payments/', requestData, { headers });
+
+      // Optimize: Don't refresh payments list immediately - let the parent component handle it
+      // This reduces the submit handler time and improves user experience
+      // The payments list will be refreshed when the modal closes or when needed
+
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη δημιουργία της πληρωμής';
+      setError(errorMessage);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadPayments]);
+
+  // Επεξεργασία πληρωμής (με ενημέρωση υπολοίπων)
+  const processPayment = useCallback(async (data: PaymentFormData): Promise<{success: boolean, transaction_id?: number}> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      let requestData: any;
+      const headers: any = {};
+      
+      // If there's a file upload, use FormData
+      if (data.receipt) {
+        const formData = new FormData();
+        formData.append('apartment', data.apartment_id.toString());
+        formData.append('amount', data.amount.toFixed(2));
+        formData.append('reserve_fund_amount', (data.reserve_fund_amount || 0).toString());
+        formData.append('previous_obligations_amount', (data.previous_obligations_amount || 0).toString());
+        formData.append('date', data.date);
+        formData.append('method', data.method);
+        formData.append('payment_type', data.payment_type);
+        formData.append('payer_type', data.payer_type);
+        if (data.payer_name) {
+          formData.append('payer_name', data.payer_name);
+        }
+        
+        if (data.reference_number) {
+          formData.append('reference_number', data.reference_number);
+        }
+        if (data.notes) {
+          formData.append('notes', data.notes);
+        }
+        
+        formData.append('receipt', data.receipt);
+        
+        requestData = formData;
+        headers['Content-Type'] = 'multipart/form-data';
+      } else {
+        // Use JSON for requests without file upload
+        requestData = {
+          apartment: data.apartment_id,
+          amount: parseFloat(data.amount.toFixed(2)),
+          reserve_fund_amount: parseFloat((data.reserve_fund_amount || 0).toString()),
+          previous_obligations_amount: parseFloat((data.previous_obligations_amount || 0).toString()),
+          date: data.date,
+          method: data.method,
+          payment_type: data.payment_type,
+          payer_type: data.payer_type,
+          payer_name: data.payer_name,
+          reference_number: data.reference_number,
+          notes: data.notes
+        };
+        headers['Content-Type'] = 'application/json';
+      }
+
+      const response = await api.post('/financial/payments/process_payment/', requestData, { headers });
+
+      // Refresh payments list after processing payment
+      await loadPayments();
+
+      return {
+        success: true,
+        transaction_id: response.data.transaction_id
+      };
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την επεξεργασία της πληρωμής';
+      setError(errorMessage);
+      return { success: false };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadPayments]);
+
+  // Λήψη πληρωμών με φίλτρα
+  const getPayments = useCallback(async (filters: PaymentFilters = {}): Promise<Payment[]> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const params = new URLSearchParams();
+      
+      if (filters.building_id) {
+        params.append('building_id', filters.building_id.toString());
+      }
+      if (filters.apartment_id) {
+        params.append('apartment_id', filters.apartment_id.toString());
+      }
+      if (filters.method) {
+        params.append('method', filters.method);
+      }
+      if (filters.date_from) {
+        params.append('date__gte', filters.date_from);
+      }
+      if (filters.date_to) {
+        params.append('date__lte', filters.date_to);
+      }
+
+      const response = await api.get(`/financial/payments/?${params}`);
+      const data = response.data.results || response.data;
+      
+      // Normalize payment amounts to ensure they are numbers
+      const normalize = (p: any): Payment => ({
+        ...p,
+        amount: parseAmount(p?.amount),
+      });
+      
+      return Array.isArray(data) ? data.map(normalize) : [];
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη των πληρωμών';
+      setError(errorMessage);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Λήψη πληρωμής ανά ID
+  const getPayment = useCallback(async (id: number): Promise<Payment | null> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await api.get(`/financial/payments/${id}/`);
+      const data = response.data;
+      
+      // Normalize payment amount to ensure it is a number
+      return {
+        ...data,
+        amount: parseAmount(data?.amount),
+      };
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη της πληρωμής';
+      setError(errorMessage);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Ενημέρωση πληρωμής
+  const updatePayment = useCallback(async (id: number, data: Partial<PaymentFormData>): Promise<Payment | null> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      let requestData: any;
+      const headers: any = {};
+      
+      // If there's a file upload, use FormData
+      if (data.receipt) {
+        const formData = new FormData();
+        
+        // Προσθήκη πεδίων που υπάρχουν
+        if (data.apartment_id !== undefined) {
+          formData.append('apartment', data.apartment_id.toString());
+        }
+        if (data.amount !== undefined) {
+          formData.append('amount', data.amount.toFixed(2));
+        }
+        if (data.date) {
+          formData.append('date', data.date);
+        }
+        if (data.method) {
+          formData.append('method', data.method);
+        }
+        if (data.payment_type) {
+          formData.append('payment_type', data.payment_type);
+        }
+        if (data.reference_number) {
+          formData.append('reference_number', data.reference_number);
+        }
+        if (data.notes) {
+          formData.append('notes', data.notes);
+        }
+        formData.append('receipt', data.receipt);
+        
+        requestData = formData;
+        headers['Content-Type'] = 'multipart/form-data';
+      } else {
+        // Use JSON for requests without file upload
+        requestData = {};
+        if (data.apartment_id !== undefined) {
+          requestData.apartment = data.apartment_id;
+        }
+        if (data.amount !== undefined) {
+          requestData.amount = data.amount;
+        }
+        if (data.date) {
+          requestData.date = data.date;
+        }
+        if (data.method) {
+          requestData.method = data.method;
+        }
+        if (data.payment_type) {
+          requestData.payment_type = data.payment_type;
+        }
+        if (data.reference_number) {
+          requestData.reference_number = data.reference_number;
+        }
+        if (data.notes) {
+          requestData.notes = data.notes;
+        }
+        headers['Content-Type'] = 'application/json';
+      }
+
+      const response = await api.patch(`/financial/payments/${id}/`, requestData, { headers });
+
+      // Refresh payments list after updating
+      await loadPayments();
+
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την ενημέρωση της πληρωμής';
+      setError(errorMessage);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadPayments]);
+
+  // Διαγραφή πληρωμής
+  const deletePayment = useCallback(async (id: number): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await api.delete(`/financial/payments/${id}/`);
+      
+      // Refresh payments list after deleting
+      await loadPayments();
+      
+      return true;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη διαγραφή της πληρωμής';
+      setError(errorMessage);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadPayments]);
+
+  // Μαζική διαγραφή πληρωμών διαμερίσματος (προαιρετικά για συγκεκριμένο μήνα)
+  const deletePaymentsForApartment = useCallback(
+    async (apartmentId: number, month?: string, buildingId?: number): Promise<{success: boolean; deleted_count?: number; total_amount?: number; message?: string}> => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams({ apartment_id: apartmentId.toString() });
+        if (month) params.append('month', month);
+        if (buildingId) params.append('building_id', buildingId.toString());
+
+        const response = await api.delete(`/financial/payments/bulk_delete/?${params.toString()}`);
+
+        // Refresh list after bulk delete
+        await loadPayments();
+
+        return { success: true, ...response.data };
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη μαζική διαγραφή πληρωμών';
+        setError(errorMessage);
+        return { success: false };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [loadPayments]
+  );
+
+  // Λήψη μεθόδων πληρωμής
+  const getPaymentMethods = useCallback(async (): Promise<Array<{value: string, label: string}>> => {
+    try {
+      const response = await api.get('/financial/payments/methods/');
+      return response.data;
+    } catch (err: any) {
+      console.error('Error fetching payment methods:', err);
+      return [];
+    }
+  }, []);
+
+  // Καθαρισμός σφάλματος
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  return {
+    // State
+    payments,
+    isLoading,
+    error,
+    
+    // Actions
+    createPayment,
+    processPayment,
+    getPayments,
+    getPayment,
+    updatePayment,
+    deletePayment,
+    deletePaymentsForApartment,
+    getPaymentMethods,
+    clearError,
+    loadPayments,
+  };
+}; 

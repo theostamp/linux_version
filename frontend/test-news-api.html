@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .news-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .news-ticker {
+            background: linear-gradient(to right, #dc2626, #ea580c);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .news-content {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .news-meta {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .loading {
+            color: #6b7280;
+            font-style: italic;
+        }
+        .error {
+            color: #dc2626;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>News API Test</h1>
+    
+    <div class="news-container">
+        <h2>News Ticker Preview</h2>
+        <div class="news-ticker">
+            <div class="news-content" id="newsContent">Loading news...</div>
+            <div class="news-meta" id="newsMeta"></div>
+        </div>
+        
+        <button onclick="loadNews()">Refresh News</button>
+        <button onclick="loadMultipleNews()">Load Multiple News</button>
+    </div>
+
+    <div class="news-container">
+        <h2>Recent News Items</h2>
+        <div id="newsList"></div>
+    </div>
+
+    <script>
+        async function loadNews() {
+            const newsContent = document.getElementById('newsContent');
+            const newsMeta = document.getElementById('newsMeta');
+            
+            newsContent.textContent = 'Loading...';
+            newsContent.className = 'news-content loading';
+            newsMeta.textContent = '';
+            
+            try {
+                const response = await fetch('/api/news');
+                const data = await response.json();
+                
+                newsContent.textContent = data.content;
+                newsContent.className = 'news-content';
+                newsMeta.textContent = `Source: ${data.source} | Time: ${new Date(data.timestamp).toLocaleString('el-GR')}`;
+            } catch (error) {
+                newsContent.textContent = 'Error loading news';
+                newsContent.className = 'news-content error';
+                newsMeta.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function loadMultipleNews() {
+            const newsList = document.getElementById('newsList');
+            newsList.innerHTML = '<p>Loading multiple news items...</p>';
+            
+            const newsItems = [];
+            
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch('/api/news');
+                    const data = await response.json();
+                    newsItems.push(data);
+                    
+                    // Small delay to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                } catch (error) {
+                    console.error('Error loading news item:', error);
+                }
+            }
+            
+            newsList.innerHTML = newsItems.map((item, index) => `
+                <div style="border: 1px solid #e5e7eb; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                    <h3>News Item ${index + 1}</h3>
+                    <p><strong>Content:</strong> ${item.content}</p>
+                    <p><strong>Source:</strong> ${item.source}</p>
+                    <p><strong>Time:</strong> ${new Date(item.timestamp).toLocaleString('el-GR')}</p>
+                </div>
+            `).join('');
+        }
+
+        // Load news on page load
+        loadNews();
+    </script>
+</body>
+</html> 

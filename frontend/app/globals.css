@@ -1,0 +1,813 @@
+/* frontend/app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* εδώ μπορείς να προσθέσεις δικά σου global styles */
+
+/* Enhanced Intro Animation Styles */
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* Fade in up animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@layer base {
+  /* Typography fixes for better line height */
+  body {
+    font-family: var(--font-open-sans), system-ui, -apple-system, sans-serif;
+    line-height: 1.4; /* Reduced from default 1.5 */
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-ubuntu-condensed), 'Ubuntu Condensed', sans-serif;
+    line-height: 1.2; /* Tighter line height for headings */
+    font-weight: 400;
+  }
+  
+  p {
+    line-height: 1.4; /* Consistent with body */
+  }
+  
+  .text-xs {
+    line-height: 1.3; /* Tighter for small text */
+  }
+  
+  .text-sm {
+    line-height: 1.35; /* Slightly tighter */
+  }
+  
+  /* Custom utility classes for better spacing */
+  .leading-tight {
+    line-height: 1.25 !important;
+  }
+  
+  .leading-snug {
+    line-height: 1.375 !important;
+  }
+  
+  /* Header and sidebar specific improvements */
+  .header-text {
+    line-height: 1.2;
+  }
+  
+  .sidebar-text {
+    line-height: 1.3;
+  }
+
+  :root {
+    /* 🎨 Kiosk Color Palette - Based on #0284C5 */
+
+    /* Primary Colors - Based on #0284C5 */
+    --primary: 201 96% 32%;        /* #0284C5 - Your base color */
+    --primary-foreground: 0 0% 100%; /* White */
+    --primary-hover: 201 96% 25%;   /* #0369A1 - Darker shade */
+    --primary-light: 199 89% 48%;   /* #0EA5E9 - Lighter shade */
+
+    /* Secondary Colors - Teal based */
+    --secondary: 188 94% 37%;       /* Teal-600: #0d9488 */
+    --secondary-foreground: 0 0% 100%;
+    --secondary-hover: 188 85% 30%; /* Teal-700: #0f766e */
+    --secondary-light: 172 66% 50%; /* Teal-500: #14b8a6 */
+
+    /* Accent Colors */
+    --accent: 199 89% 48%;          /* Sky-500: #0ea5e9 */
+    --accent-foreground: 0 0% 100%;
+    --accent-hover: 201 96% 32%;    /* #0284C5 - Your base color */
+
+    /* Background Colors - Light theme */
+    --background: 200 20% 98%;      /* Slate-50: #f8fafc */
+    --surface: 210 40% 96%;         /* Slate-100: #f1f5f9 */
+    --card: 0 0% 100%;              /* Pure white */
+    --card-foreground: 215 28% 17%; /* Slate-800: #1e293b */
+
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 17%;
+
+    /* Text Colors */
+    --foreground: 215 28% 17%;      /* Slate-800: #1e293b */
+    --muted: 210 40% 93%;           /* Slate-200: #e2e8f0 */
+    --muted-foreground: 215 16% 47%; /* Slate-500: #64748b */
+
+    /* Status Colors */
+    --success: 158 64% 52%;         /* Emerald-500: #10b981 */
+    --success-foreground: 0 0% 100%;
+    --success-hover: 160 84% 39%;   /* Emerald-600: #059669 */
+
+    --warning: 45 93% 58%;          /* Amber-500: #f59e0b */
+    --warning-foreground: 92 38% 8%; /* Amber-900: #78350f */
+    --warning-hover: 43 96% 50%;    /* Amber-600: #d97706 */
+
+    --destructive: 0 72% 51%;       /* Red-500: #ef4444 */
+    --destructive-foreground: 0 0% 100%;
+    --destructive-hover: 0 84% 43%; /* Red-600: #dc2626 */
+
+    /* UI Elements */
+    --border: 214 32% 91%;          /* Slate-200: #e2e8f0 */
+    --input: 214 32% 91%;           /* Slate-200: #e2e8f0 */
+    --ring: 200 98% 39%;            /* Primary color for focus */
+
+    /* Brand Colors - Based on #0284C5 */
+    --brand: 201 96% 32%;           /* #0284C5 - Your base color */
+    --brand-hover: 201 96% 25%;     /* #0369A1 - Darker shade */
+    --brand-darker: 188 94% 37%;    /* Secondary teal */
+    --brand-foreground: 0 0% 100%;
+    --brand-subtle: 201 96% 95%;    /* Very light blue tint */
+
+    /* Neutral Colors */
+    --neutral-btn: 215 16% 47%;     /* Slate-500: #64748b */
+    --neutral-btn-hover: 215 20% 38%; /* Slate-600: #475569 */
+    --neutral-btn-darker: 215 25% 27%; /* Slate-700: #334155 */
+    --neutral-btn-foreground: 0 0% 100%;
+
+    /* Chart Colors - Based on #0284C5 palette */
+    --chart-1: 201 96% 32%;         /* #0284C5 - Your base color */
+    --chart-2: 188 94% 37%;         /* Secondary teal */
+    --chart-3: 158 64% 52%;         /* Success emerald */
+    --chart-4: 45 93% 58%;          /* Warning amber */
+    --chart-5: 199 89% 48%;         /* Accent sky */
+
+    --radius: 0.75rem               /* Slightly more rounded */
+  }
+  
+  .dark {
+    /* 🌙 Dark Mode - Modern Blue/Teal Palette */
+
+    /* Background Colors */
+    --background: 215 28% 4%;       /* Slate-950: #020617 */
+    --surface: 215 25% 7%;          /* Slate-900: #0f172a */
+    --card: 215 25% 7%;             /* Slate-900: #0f172a */
+    --card-foreground: 210 40% 98%; /* Slate-50: #f8fafc */
+
+    /* Text Colors */
+    --foreground: 210 40% 98%;      /* Slate-50: #f8fafc */
+    --muted: 215 20% 15%;           /* Slate-800: #1e293b */
+    --muted-foreground: 215 16% 65%; /* Slate-400: #94a3b8 */
+
+    /* Primary Colors - Based on #0284C5, adjusted for dark */
+    --primary: 201 96% 45%;         /* #0284C5 - Your base color, brighter for dark */
+    --primary-foreground: 215 28% 4%; /* Dark text on bright primary */
+    --primary-hover: 201 96% 32%;   /* #0284C5 - Your base color */
+    --primary-light: 199 89% 55%;   /* #0EA5E9 - Brighter for dark */
+
+    /* Secondary Colors */
+    --secondary: 172 66% 50%;       /* Teal-500: #14b8a6 - brighter for dark */
+    --secondary-foreground: 215 28% 4%;
+    --secondary-hover: 188 94% 37%; /* Teal-600: #0d9488 */
+    --secondary-light: 172 66% 60%;
+
+    /* Accent */
+    --accent: 199 89% 55%;          /* Sky-400: #38bdf8 - brighter for dark */
+    --accent-foreground: 215 28% 4%;
+    --accent-hover: 199 89% 48%;    /* Sky-500: #0ea5e9 */
+
+    /* Popovers */
+    --popover: 215 25% 7%;          /* Slate-900 */
+    --popover-foreground: 210 40% 98%;
+
+    /* Status Colors - Adjusted for dark theme */
+    --success: 158 64% 60%;         /* Emerald-400: #34d399 - brighter */
+    --success-foreground: 215 28% 4%;
+    --success-hover: 158 64% 52%;   /* Emerald-500: #10b981 */
+
+    --warning: 45 93% 65%;          /* Amber-400: #fbbf24 - brighter */
+    --warning-foreground: 215 28% 4%;
+    --warning-hover: 45 93% 58%;    /* Amber-500: #f59e0b */
+
+    --destructive: 0 72% 60%;       /* Red-400: #f87171 - brighter */
+    --destructive-foreground: 215 28% 4%;
+    --destructive-hover: 0 72% 51%; /* Red-500: #ef4444 */
+
+    /* UI Elements */
+    --border: 215 20% 15%;          /* Slate-800: #1e293b */
+    --input: 215 20% 15%;           /* Slate-800: #1e293b */
+    --ring: 185 96% 53%;            /* Primary cyan for focus */
+
+    /* Brand Colors - Based on #0284C5 for dark theme */
+    --brand: 201 96% 45%;           /* #0284C5 - Your base color, brighter for dark */
+    --brand-hover: 201 96% 32%;     /* #0284C5 - Your base color */
+    --brand-darker: 172 66% 50%;    /* Teal-500 */
+    --brand-foreground: 215 28% 4%;
+    --brand-subtle: 215 20% 15%;    /* Slate-800 */
+
+    /* Neutral Colors */
+    --neutral-btn: 215 16% 65%;     /* Slate-400: #94a3b8 - brighter for dark */
+    --neutral-btn-hover: 215 16% 75%; /* Slate-300: #cbd5e1 */
+    --neutral-btn-darker: 215 16% 85%; /* Slate-200: #e2e8f0 */
+    --neutral-btn-foreground: 215 28% 4%;
+
+    /* Chart Colors - Based on #0284C5 for dark theme */
+    --chart-1: 201 96% 45%;         /* #0284C5 - Your base color, brighter for dark */
+    --chart-2: 172 66% 50%;         /* Secondary teal */
+    --chart-3: 158 64% 60%;         /* Success emerald */
+    --chart-4: 45 93% 65%;          /* Warning amber */
+    --chart-5: 199 89% 55%;         /* Accent sky */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  /* New Typographic Scale */
+  h1 {
+    @apply font-heading font-bold text-4xl tracking-tight lg:text-5xl;
+  }
+  h2 {
+    @apply font-heading font-bold text-3xl tracking-tight;
+  }
+  h3 {
+    @apply font-heading font-semibold text-2xl tracking-tight;
+  }
+  h4 {
+    @apply font-heading font-semibold text-xl tracking-tight;
+  }
+  h5 {
+    @apply font-heading font-medium text-lg tracking-tight;
+  }
+  h6 {
+    @apply font-heading font-medium text-base tracking-tight;
+  }
+  
+  p {
+    @apply leading-7 [&:not(:first-child)]:mt-6;
+  }
+
+  .muted {
+    @apply text-xs text-muted-foreground;
+  }
+}
+
+@layer utilities {
+  /* Line clamp utilities */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
+  
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+  
+  /* Smooth transitions */
+  .transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+  
+  /* Hover lift effect */
+  .hover-lift {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  /* Gradient backgrounds */
+  .bg-gradient-primary {
+    @apply bg-gradient-to-br from-brand to-brand-darker;
+  }
+  
+  .bg-gradient-secondary {
+    @apply bg-gradient-to-br from-neutral-btn to-neutral-btn-hover;
+  }
+  
+  .bg-gradient-success {
+    @apply bg-gradient-to-br from-success to-success-hover;
+  }
+  
+  .bg-gradient-warning {
+    @apply bg-gradient-to-br from-warning to-warning-hover;
+  }
+  
+  .bg-gradient-danger {
+    @apply bg-gradient-to-br from-destructive to-destructive-hover;
+  }
+  
+  .animate-marquee {
+    animation: marquee 20s linear infinite;
+  }
+  
+  /* Custom scrollbar */
+  body::-webkit-scrollbar {
+    @apply w-2;
+  }
+  body::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+  body::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-secondary hover:bg-secondary/80;
+  }
+  
+  /* Focus ring */
+  .focus-ring:focus {
+    @apply ring-2 ring-offset-2 ring-brand;
+  }
+  
+  /* Glass morphism effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  
+  .glass-dark {
+    background: rgba(17, 24, 39, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(55, 65, 81, 0.3);
+  }
+  
+  /* Loading spinner */
+  .spinner {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  /* Pulse animation */
+  .pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Bounce animation */
+  .bounce-slow {
+    animation: bounce 2s infinite;
+  }
+  
+  /* Fade in animation */
+  .fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 1s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Slide in animation */
+  .slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
+  }
+  
+  @keyframes slideInLeft {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  /* Mobile menu overlay */
+  .mobile-overlay {
+    backdrop-filter: blur(4px);
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Responsive text sizing */
+  .text-responsive {
+    font-size: clamp(0.875rem, 2vw, 1rem);
+  }
+  
+  .text-responsive-lg {
+    font-size: clamp(1.125rem, 3vw, 1.5rem);
+  }
+  
+  /* Gradient text */
+  .text-gradient {
+    @apply bg-gradient-primary bg-clip-text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  /* Shimmer effect */
+  .shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  
+  /* Resizable table columns - Excel style */
+  .resizable-table {
+    table-layout: fixed;
+    width: 100%;
+  }
+  
+  .resizable-table th {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .resizable-table th::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: transparent;
+    cursor: col-resize;
+    transition: background-color 0.2s ease;
+  }
+  
+  .resizable-table th:hover::after {
+    background: rgba(59, 130, 246, 0.3);
+  }
+  
+  .resizable-table th.resizing::after {
+    background: rgba(59, 130, 246, 0.6);
+  }
+  
+  /* Table header gradient styles */
+  .table-header-gradient {
+    @apply bg-gradient-to-br from-slate-50 via-slate-200 to-slate-300 border-b-2 border-slate-400;
+  }
+  
+  .table-header-gradient-blue {
+    @apply bg-gradient-to-br from-blue-50 via-blue-200 to-blue-300 border-b-2 border-brand;
+  }
+  
+  /* Vertical text for table headers */
+  .writing-mode-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    white-space: normal;
+    overflow: visible;
+    word-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+    text-align: center;
+  }
+  
+  /* Vertical header cell styles */
+  .vertical-header {
+    height: 35px;
+    min-width: 24px;
+    max-width: 24px;
+    padding: 1px 0px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    position: relative;
+  }
+  
+  .vertical-header-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center;
+    white-space: nowrap;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;    
+    @apply text-gray-700;
+  }
+  
+  /* Common expense table specific styles */
+  .common-expense-table {
+    font-size: 11px;
+    border-collapse: collapse;
+  }
+  
+  .common-expense-table th,
+  .common-expense-table td {
+    @apply border border-gray-300;
+    padding: 4px 6px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  
+  .common-expense-table th {
+    @apply bg-gray-50;
+    font-weight: 600;
+  }
+  
+  .common-expense-table .vertical-header {
+    @apply bg-gray-100 border-b-2 border-gray-300;
+    transition: background-color 0.2s ease;
+  }
+  
+  .common-expense-table .vertical-header:hover {
+    @apply bg-gray-200;
+  }
+  
+  /* Special handling for longer header texts */
+  .vertical-header-content .writing-mode-vertical {
+    display: inline-block;
+    max-height: 100%;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    text-align: center;
+    line-height: 1.1;
+  }
+  
+  /* Better text wrapping for vertical headers */
+  .writing-mode-vertical {
+    display: inline;
+  }
+  
+
+  
+  /* Adjust vertical header height for longer texts */
+  .vertical-header.long-text {
+    height: 45px;
+    min-width: 28px;
+    max-width: 28px;
+  }
+  
+  .vertical-header.long-text .vertical-header-content {
+    font-size: 8px;
+    letter-spacing: 0.1px;
+  }
+  
+  /* Mobile adjustments for longer texts */
+  @media (max-width: 768px) {
+    .vertical-header.long-text {
+      height: 32px;
+      min-width: 22px;
+      max-width: 22px;
+    }
+    
+    .vertical-header.long-text .vertical-header-content {
+      font-size: 7px;
+      letter-spacing: 0.05px;
+    }
+  }
+  
+  /* Responsive adjustments for vertical headers */
+  @media (max-width: 768px) {
+    .vertical-header {
+      height: 28px;
+      min-width: 20px;
+      max-width: 20px;
+      padding: 1px 0px;
+    }
+    
+    .vertical-header-content {
+      font-size: 8px;
+      letter-spacing: 0.2px;
+    }
+    
+    .common-expense-table {
+      font-size: 10px;
+    }
+    
+    .common-expense-table th,
+    .common-expense-table td {
+      padding: 2px 4px;
+    }
+  }
+
+  /* News ticker animation */
+  .animate-scroll-left {
+    animation: scroll-left 30s linear infinite;
+  }
+
+  @keyframes scroll-left {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+
+  /* Kiosk-specific improvements */
+  .kiosk-card {
+    @apply bg-kiosk-neutral-800/20 backdrop-blur-sm border-kiosk-primary/20 hover:bg-kiosk-neutral-800/30 transition-all duration-300;
+  }
+
+  .kiosk-card:hover {
+    @apply shadow-xl shadow-kiosk-primary/10;
+  }
+
+  .kiosk-text-primary {
+    @apply text-kiosk-primary-lighter;
+  }
+
+  .kiosk-text-secondary {
+    @apply text-kiosk-neutral-300;
+  }
+
+  .kiosk-text-muted {
+    @apply text-kiosk-neutral-400;
+  }
+
+  .kiosk-border {
+    @apply border-kiosk-primary/30;
+  }
+
+  .kiosk-gradient-primary {
+    @apply bg-gradient-to-br from-kiosk-primary to-kiosk-primary-light;
+  }
+
+  .kiosk-gradient-secondary {
+    @apply bg-gradient-to-br from-kiosk-secondary to-kiosk-secondary-light;
+  }
+
+  .kiosk-gradient-accent {
+    @apply bg-gradient-to-br from-kiosk-accent to-kiosk-accent-light;
+  }
+
+  /* Enhanced glass morphism for kiosk */
+  .kiosk-glass {
+    background: rgba(2, 132, 197, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(2, 132, 197, 0.2);
+  }
+
+  .kiosk-glass-dark {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(2, 132, 197, 0.3);
+  }
+
+  /* Improved typography for kiosk display */
+  .kiosk-heading {
+    @apply font-heading font-bold tracking-tight;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .kiosk-text {
+    @apply leading-relaxed;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Enhanced button styles for kiosk */
+  .kiosk-button {
+    @apply bg-kiosk-primary hover:bg-kiosk-primary-dark text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl;
+  }
+
+  .kiosk-button:hover {
+    @apply shadow-kiosk-primary/50;
+  }
+
+  /* Improved focus states */
+  .kiosk-focus:focus {
+    @apply ring-2 ring-kiosk-primary-lighter ring-offset-2 ring-offset-kiosk-neutral-900;
+  }
+
+  /* Enhanced animations for kiosk */
+  .kiosk-fade-in {
+    animation: kioskFadeIn 0.6s ease-out;
+  }
+
+  .kiosk-slide-up {
+    animation: kioskSlideUp 0.8s ease-out;
+  }
+
+  .kiosk-scale-in {
+    animation: kioskScaleIn 0.5s ease-out;
+  }
+
+  @keyframes kioskFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes kioskSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes kioskScaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Improved scrollbar for kiosk */
+  .kiosk-scrollbar::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  .kiosk-scrollbar::-webkit-scrollbar-track {
+    @apply bg-kiosk-neutral-800/50;
+  }
+
+  .kiosk-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-kiosk-primary/50 rounded-full;
+  }
+
+  .kiosk-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-kiosk-primary/70;
+  }
+}

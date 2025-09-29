@@ -1,0 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
+import { fetchAllBuildings } from '@/lib/api';
+
+export const useBuildings = () => {
+    return useQuery({
+        queryKey: ['buildings'],
+        queryFn: fetchAllBuildings,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime in v5)
+    });
+};

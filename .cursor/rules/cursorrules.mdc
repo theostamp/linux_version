@@ -1,0 +1,259 @@
+# New Concierge - Building Management System - Cursor AI Rules
+
+## Project Context
+You are an AI assistant working on a comprehensive building management system built with Django (backend) and Next.js (frontend). This system handles multi-tenancy, financial management, maintenance, and communication for residential buildings in Greece.
+
+## Critical Development Rules
+
+### 🐳 Docker Environment Requirements
+- **NEVER execute database operations outside Docker containers**
+- **ALL database scripts MUST run inside Docker**: `docker exec -it linux_version-backend-1 python manage.py <command>`
+- **Copy scripts to container BEFORE execution**: `docker cp script.py linux_version-backend-1:/app/`
+- **Database queries/migrations ONLY through Docker containers**
+- **NO local PostgreSQL connections allowed**
+
+### 🐍 Python Virtual Environment Rules
+- **ALWAYS activate .venv before ANY Python operations**: `source .venv/bin/activate`
+- **NEVER run Django commands without virtual environment activation**
+- **Virtual environment is MANDATORY for**: pip installs, Django management commands, Python script execution
+- **Check venv activation with**: `which python` (should show .venv path)
+
+### 🚫 Forbidden Actions
+- **DO NOT** run `python manage.py` commands directly without Docker for database operations
+- **DO NOT** execute migrations outside Docker environment
+- **DO NOT** install packages without explicit user request
+- **DO NOT** restart services automatically without permission
+- **DO NOT** run database queries on local PostgreSQL
+- **DO NOT** create files in restricted directories without confirmation
+
+### ✅ Required Actions Before Commands
+1. **For Database Operations**: Ensure Docker containers are running, copy scripts to container
+2. **For Python Development**: Activate virtual environment first
+3. **For Frontend Work**: Navigate to `/frontend` directory
+4. **For Any Terminal Command**: Request user confirmation first
+
+## Tech Stack & Architecture
+
+### Backend (Django + DRF)
+- **Framework**: Django 4.2+ with Django REST Framework
+- **Database**: PostgreSQL with django-tenants (multi-tenancy)
+- **Authentication**: JWT with djangorestframework-simplejwt
+- **Key Libraries**: psycopg2, django-cors-headers, gunicorn, whitenoise
+- **Language**: Python 3.8+ with type hints
+
+### Frontend (Next.js + TypeScript)
+- **Framework**: Next.js 15+ with App Router
+- **Language**: TypeScript 5+ (strict mode)
+- **UI**: Radix UI + Tailwind CSS
+- **State Management**: TanStack React Query v5
+- **Forms**: React Hook Form + Zod validation
+- **Real-time**: Socket.io client
+
+### Infrastructure
+- **Containerization**: Docker + Docker Compose
+- **Database**: PostgreSQL in Docker
+- **Reverse Proxy**: Nginx (production)
+- **Environment**: .env files for configuration
+
+## Development Workflow
+
+### Working Directory Guidelines
+- **Backend work**: Use project root directory, activate .venv
+- **Frontend work**: Always `cd frontend/` first
+- **Database scripts**: Copy to Docker container, execute inside
+- **Testing**: Use virtual environment for Python, Docker for database tests
+
+### Command Execution Pattern
+```bash
+# For Python development (non-database)
+source .venv/bin/activate
+python manage.py <command>
+
+# For database operations
+docker exec -it linux_version-backend-1 python manage.py <command>
+
+# For complex database scripts
+docker cp script.py linux_version-backend-1:/app/
+docker exec -it linux_version-backend-1 python /app/script.py
+
+# For Django scripts with tenant context
+docker cp script.py linux_version-backend-1:/app/
+docker exec -it linux_version-backend-1 python /app/script.py
+```
+
+### Django Setup Requirements
+- **Settings Module**: Always use `new_concierge_backend.settings`
+- **Python Path**: Add `/app` to sys.path
+- **Tenant Context**: Use `schema_context('demo')` for all database operations
+- **Multi-tenancy**: All database queries must be within tenant context
+- **User Model**: Use `from users.models import CustomUser` (not django.contrib.auth.models.User)
+- **User Creation**: CustomUser requires email field: `User.objects.create_user(email='test@example.com', password='testpass')`
+
+### Django Script Template
+```python
+import os
+import sys
+import django
+
+# Setup Django environment
+sys.path.append('/app')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
+django.setup()
+
+from django_tenants.utils import schema_context
+
+# All database operations must be within schema_context
+with schema_context('demo'):
+    # Your database queries here
+    pass
+```
+
+### 🏛️ Greek Language & Character Encoding
+- **Greek Characters**: Always consider Greek alphabet in apartment numbers (Α1, Β2, Γ3, etc.)
+- **Character Encoding**: Use UTF-8 for all Greek text handling
+- **Apartment Numbers**: May contain Greek letters (Α, Β, Γ, Δ) or Latin numbers (1, 2, 3)
+- **Database Queries**: When searching for apartments, consider both Greek and Latin characters
+- **Example**: `'Α1'` (Greek Alpha) vs `'A1'` (Latin A) are different
+
+### 🔍 Common Debugging Patterns
+- **Apartment Not Found**: Check if using correct character encoding (Greek vs Latin)
+- **Database Connection**: Always use Docker containers, never local connections
+- **Virtual Environment**: Always activate .venv before Python operations
+- **Tenant Context**: All database operations must be within `schema_context('demo')`
+
+### 🧪 API Testing Requirements
+- **Request Factory**: Use `from django.test import RequestFactory`
+- **Query Params**: Add `request.query_params = request.GET` for ViewSet testing
+- **User Authentication**: Use CustomUser model, not django.contrib.auth.models.User
+- **Response Status**: Always check `response.status_code` before accessing data
+- **Data Access**: Use `response.data` for ViewSet responses
+
+# All database operations must be within schema_context
+with schema_context('demo'):
+    # Your database queries here
+    pass
+```
+
+## Code Quality Standards
+
+### Python/Django Backend
+- Follow PEP 8 strictly
+- Use Black for formatting
+- Implement type hints
+- Write descriptive docstrings
+- Use Django ORM with select_related/prefetch_related
+- Implement proper error handling
+- Follow Django REST Framework best practices
+
+### TypeScript/React Frontend
+- Use TypeScript strict mode
+- Follow Next.js App Router conventions
+- Implement proper error boundaries
+- Use React Query for server state
+- Validate forms with Zod schemas
+- Create reusable components
+- Use proper TypeScript interfaces
+
+### Database & Models
+- Always consider tenant isolation
+- Use proper model relationships
+- Implement database constraints
+- Use migrations for schema changes
+- Optimize queries with proper indexing
+
+## Multi-Tenancy & Security
+- **Tenant Isolation**: All database queries must be tenant-aware
+- **Security**: Validate all user input, use CSRF protection
+- **JWT Handling**: Implement proper token management
+- **Data Sanitization**: Prevent XSS attacks
+- **Environment Variables**: Use for all sensitive configuration
+
+## Financial Module Specifics
+This project has complex financial calculations:
+- Support multiple allocation types: by_participation_mills, equal_share, specific_apartments, by_meters
+- Real-time balance calculations from transaction history
+- Common expenses (κοινόχρηστα) with proper breakdowns
+- Reserve fund management with audit trails
+
+### Financial Analysis Requirements
+- **Building ID 1**: Αραχώβης 12, Αθήνα 106 80 (Main demo building)
+- **Building ID 2**: Αλκμάνος 22, Αθήνα 115 28 (Secondary demo building)
+- **Tenant Schema**: Always use `schema_context('demo')` for financial data
+- **Participation Mills**: Total must equal 1000 across all apartments
+- **Reserve Fund**: Complex calculation with monthly targets and duration
+- **Calculation Services**: Use `CommonExpenseCalculator` and `AdvancedCommonExpenseCalculator`
+- **Data Validation**: Check for balance discrepancies and calculation accuracy
+
+### Financial Data Structure
+- **previous_balance**: Previous month's ending balance (use for "Παλαιότερες Οφειλές")
+- **expense_share**: Current month's expense allocation (use for "Ποσό Κοινόχρηστων")
+- **net_obligation**: Total obligations minus payments (includes current month)
+- **current_balance**: Real-time balance from transaction history
+- **total_obligations**: Historical + current obligations
+- **total_payments**: Historical + current payments
+
+### Common Financial Issues
+- **Wrong Previous Obligations**: Use `previous_balance` NOT `net_obligation` for "Παλαιότερες Οφειλές"
+- **Wrong Common Expenses**: Use `expense_share` NOT `net_obligation` for "Ποσό Κοινόχρηστων"
+- **Balance Mismatch**: Check transaction history vs calculated balance
+- **Greek Currency**: Always use € symbol and proper Greek formatting
+
+## File Organization & Naming
+- **Python**: snake_case for files and variables
+- **React Components**: PascalCase
+- **Component Files**: kebab-case
+- **Constants**: UPPER_CASE
+- **Descriptive names** that indicate purpose
+
+## Error Handling & Debugging
+- Implement proper error boundaries in React
+- Use structured logging
+- Show user-friendly error messages
+- Handle network errors gracefully
+- Test tenant isolation thoroughly
+
+## Performance Guidelines
+- Use database query optimization
+- Implement proper caching strategies
+- Use React Query for client-side caching
+- Optimize images and static assets
+- Monitor database query performance
+
+## Greek Language Support
+- Use proper UTF-8 encoding
+- Handle Greek date/time formatting
+- Support Greek currency formatting (€)
+- Consider Greek keyboard layouts
+
+## Testing Standards
+- Write unit tests for business logic
+- Use pytest for backend testing
+- Test API endpoints thoroughly
+- Mock external services
+- Test tenant isolation
+- Write integration tests for complex workflows
+
+## Git Workflow
+- Use feature branches for development
+- Write clear commit messages with prefixes: feat:, fix:, docs:, refactor:, test:
+- Keep commits focused and atomic
+- Update documentation with code changes
+
+## AI Assistant Behavior
+- **Always activate virtual environment** before Python operations
+- **Always use Docker** for database operations
+- **Request confirmation** before executing terminal commands
+- **Focus on requested files** when provided with @ symbol
+- **Never run migrations automatically** unless explicitly requested
+- **Never restart services automatically** unless explicitly requested
+- **Provide clear explanations** for technical decisions
+- **Follow Greek language requirements** when applicable
+
+## Emergency Procedures
+If you encounter issues:
+1. **Database Problems**: Check Docker container status, verify tenant isolation
+2. **Virtual Environment Issues**: Deactivate and reactivate .venv
+3. **Permission Errors**: Verify Docker permissions and file ownership
+4. **Import Errors**: Check if all dependencies are installed in virtual environment
+
+Remember: This is a production system handling real financial data for Greek buildings. Precision, security, and tenant isolation are paramount.

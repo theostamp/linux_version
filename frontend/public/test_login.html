@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login - Digital Concierge</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Test Login - Digital Concierge</h1>
+        <p>Δοκιμή authentication για το demo tenant</p>
+        
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" value="admin@demo.localhost">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" value="admin123456">
+        </div>
+        
+        <button onclick="login()">🔑 Login</button>
+        <button onclick="testMe()">👤 Test /users/me/</button>
+        <button onclick="testFinancial()">💰 Test Financial Dashboard</button>
+        <button onclick="clearTokens()">🗑️ Clear Tokens</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.textContent = message;
+        }
+        
+        function getAuthHeaders() {
+            const access = localStorage.getItem('access');
+            return access ? { 'Authorization': `Bearer ${access}` } : {};
+        }
+        
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                showResult('🔄 Κάνω login...', 'info');
+                
+                const response = await fetch(`${API_BASE}/users/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('access', data.access);
+                    localStorage.setItem('refresh', data.refresh);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    showResult(`✅ Login επιτυχής!
+👤 User: ${data.user.email}
+🔑 Access Token: ${data.access.substring(0, 20)}...
+🔄 Refresh Token: ${data.refresh.substring(0, 20)}...`, 'success');
+                } else {
+                    showResult(`❌ Login απέτυχε: ${data.error || 'Άγνωστο σφάλμα'}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Σφάλμα: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testMe() {
+            try {
+                showResult('🔄 Δοκιμάζω /users/me/...', 'info');
+                
+                const response = await fetch(`${API_BASE}/users/me/`, {
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ /users/me/ επιτυχής!
+👤 User: ${data.email}
+📝 Name: ${data.first_name} ${data.last_name}
+🔧 Role: ${data.role}
+👑 Staff: ${data.is_staff}
+👑 Superuser: ${data.is_superuser}`, 'success');
+                } else {
+                    showResult(`❌ /users/me/ απέτυχε: ${data.error || 'Άγνωστο σφάλμα'}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Σφάλμα: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testFinancial() {
+            try {
+                showResult('🔄 Δοκιμάζω Financial Dashboard...', 'info');
+                
+                const response = await fetch(`${API_BASE}/financial/dashboard/summary/?building_id=1`, {
+                    headers: getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ Financial Dashboard επιτυχής!
+💰 Current Reserve: ${data.current_reserve}€
+⚠️ Total Obligations: ${data.total_obligations}€
+💸 Expenses This Month: ${data.total_expenses_this_month}€
+💳 Payments This Month: ${data.total_payments_this_month}€
+📊 Recent Transactions: ${data.recent_transactions?.length || 0}`, 'success');
+                } else {
+                    showResult(`❌ Financial Dashboard απέτυχε: ${data.error || 'Άγνωστο σφάλμα'}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Σφάλμα: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearTokens() {
+            localStorage.removeItem('access');
+            localStorage.removeItem('refresh');
+            localStorage.removeItem('user');
+            showResult('🗑️ Tokens διαγράφηκαν!', 'info');
+        }
+        
+        // Εμφάνιση τρέχοντος status κατά τη φόρτωση
+        window.onload = function() {
+            const access = localStorage.getItem('access');
+            const user = localStorage.getItem('user');
+            
+            if (access && user) {
+                const userData = JSON.parse(user);
+                showResult(`🔐 Είστε συνδεδεμένοι ως: ${userData.email}
+🔑 Access Token: ${access.substring(0, 20)}...`, 'success');
+            } else {
+                showResult('🔓 Δεν είστε συνδεδεμένοι. Κάντε login για να συνεχίσετε.', 'info');
+            }
+        };
+    </script>
+</body>
+</html> 

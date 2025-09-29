@@ -1,0 +1,4 @@
+{
+  "/api/community-messages/route": "app/api/community-messages/route.js",
+  "/kiosk/page": "app/kiosk/page.js"
+}

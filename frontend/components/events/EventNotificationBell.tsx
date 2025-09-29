@@ -1,0 +1,61 @@
+'use client';
+
+import React, { useEffect, useCallback, useMemo } from 'react';
+import { Bell } from 'lucide-react';
+import { useBuilding } from '@/components/contexts/BuildingContext';
+import { useEventsPendingCount } from '@/hooks/useEvents';
+import { useQueryClient } from '@tanstack/react-query';
+
+interface EventNotificationBellProps {
+  className?: string;
+  onClick: () => void;
+}
+
+const EventNotificationBell = React.memo(({ className, onClick }: EventNotificationBellProps) => {
+  const { selectedBuilding } = useBuilding();
+  const queryClient = useQueryClient();
+  const buildingId = useMemo(() => selectedBuilding?.id, [selectedBuilding?.id]);
+  const { data: pendingCount = 0, refetch } = useEventsPendingCount(buildingId);
+
+  console.log('[EventNotificationBell] Rendering with pendingCount:', pendingCount, 'buildingId:', buildingId);
+
+  const hasUnread = useMemo(() => pendingCount > 0, [pendingCount]);
+
+  // Only refresh when page becomes visible (the hook already handles auto-refresh)
+  const handleVisibilityChange = useCallback(() => {
+    if (!document.hidden) {
+      refetch();
+    }
+  }, [refetch]);
+
+  useEffect(() => {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [handleVisibilityChange]);
+
+  return (
+    <button
+      onClick={onClick}
+      className={[
+        'relative p-2 rounded-lg transition-all duration-200',
+        'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400',
+        'hover:bg-blue-50 dark:hover:bg-blue-900/20',
+        className || '',
+      ].join(' ')}
+      title={hasUnread ? `Εκκρεμή συμβάντα: ${pendingCount}` : 'Συμβάντα'}
+    >
+      <Bell className="w-5 h-5" />
+      {hasUnread && (
+        <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center text-[10px] font-bold text-white bg-red-600 rounded-full min-w-[16px] h-[16px] px-1 shadow">
+          {pendingCount > 99 ? '99+' : pendingCount}
+        </span>
+      )}
+    </button>
+  );
+});
+
+EventNotificationBell.displayName = 'EventNotificationBell';
+
+export default EventNotificationBell;

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Logo Test</title>
+</head>
+<body>
+    <h1>Logo Test</h1>
+    <p>Testing logo URL: <code>http://localhost:8000/media/office_logos/logo.jpg</code></p>
+    
+    <img 
+        src="http://localhost:8000/media/office_logos/logo.jpg" 
+        alt="Test Logo"
+        style="max-width: 200px; border: 1px solid #ccc;"
+        onload="console.log('✅ Logo loaded successfully')"
+        onerror="console.error('❌ Failed to load logo:', this.src)"
+    />
+    
+    <script>
+        console.log('🔍 Testing logo URL...');
+        console.log('URL:', 'http://localhost:8000/media/office_logos/logo.jpg');
+    </script>
+</body>
+</html>
+

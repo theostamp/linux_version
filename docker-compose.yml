@@ -1,0 +1,122 @@
+services:
+  db:
+    image: postgres:16
+    env_file: .env
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    ports: ["15432:5432"]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["16379:6379"]
+    volumes:
+      - redis_data:/data
+
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A new_concierge_backend worker -l info
+    volumes:
+      - ./backend/:/app/
+      - media_dev:/vol/media
+    env_file: .env
+    environment:
+      # Google Document AI settings (should be set in .env file)
+      - GOOGLE_CLOUD_PROJECT_ID=${GOOGLE_CLOUD_PROJECT_ID:-}
+      - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-us}
+      - GOOGLE_DOCUMENT_AI_PROCESSOR_ID=${GOOGLE_DOCUMENT_AI_PROCESSOR_ID:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
+    depends_on:
+      - db
+      - redis
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A new_concierge_backend beat -l info
+    volumes:
+      - ./backend/:/app/
+    env_file: .env
+    environment:
+      # Google Document AI settings (should be set in .env file)
+      - GOOGLE_CLOUD_PROJECT_ID=${GOOGLE_CLOUD_PROJECT_ID:-}
+      - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-us}
+      - GOOGLE_DOCUMENT_AI_PROCESSOR_ID=${GOOGLE_DOCUMENT_AI_PROCESSOR_ID:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
+    depends_on:
+      - db
+      - redis
+
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: bash -c "pip install flower && celery -A new_concierge_backend flower --port=5555 --url_prefix=flower"
+    ports:
+      - "15555:5555"
+    env_file: .env
+    environment:
+      # Google Document AI settings (should be set in .env file)
+      - GOOGLE_CLOUD_PROJECT_ID=${GOOGLE_CLOUD_PROJECT_ID:-}
+      - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-us}
+      - GOOGLE_DOCUMENT_AI_PROCESSOR_ID=${GOOGLE_DOCUMENT_AI_PROCESSOR_ID:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
+    depends_on:
+      - redis
+      - celery
+
+  backend:
+    build:
+      context: ./backend          # ✅ μόνο τον φάκελο backend
+      dockerfile: Dockerfile
+    command: /app/entrypoint.sh      # τρέχει migrate, collectstatic, κ.λπ.
+    volumes:
+      - ./backend/:/app/          # hot-reload κώδικα
+      # - static_dev:/app/staticfiles
+      - static_dev:/vol/static
+      - media_dev:/vol/media
+    env_file: .env
+    environment:
+      - AUTO_MAKEMIGRATIONS=true
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALENDAR_ENABLED=${GOOGLE_CALENDAR_ENABLED:-True}
+      # Google Document AI settings (should be set in .env file)
+      - GOOGLE_CLOUD_PROJECT_ID=${GOOGLE_CLOUD_PROJECT_ID:-}
+      - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-us}
+      - GOOGLE_DOCUMENT_AI_PROCESSOR_ID=${GOOGLE_DOCUMENT_AI_PROCESSOR_ID:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
+    depends_on: [db]
+    ports: ["127.0.0.1:18000:8000"]
+
+  frontend:
+    build:
+      context: ./frontend         # ✅ μόνο τον φάκελο frontend
+    command: npm run dev
+    volumes:
+      - ./frontend/:/app/
+      - /app/node_modules         # κρατά τα container-node_modules μέσα
+    env_file: .env
+    environment:
+      - NEXT_PUBLIC_FEATURE_PROJECTS_UNIFIED=true
+      - NEXT_PUBLIC_API_URL=http://backend:8000/api
+      - NEXT_PUBLIC_API_BASE_URL=http://backend:8000
+    ports: ["3000:3000"]
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "3001:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  pgdata_dev:
+  static_dev:
+  media_dev:
+  redis_data:

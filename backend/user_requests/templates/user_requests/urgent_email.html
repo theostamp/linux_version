@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="el" xml:lang="el">
+<head>
+  <meta charset="UTF-8">
+  <title>Επείγον Αίτημα</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 20px;">
+  <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px;">
+    <h2 style="color: #d9534f;">🚨 Νέο Επείγον Αίτημα</h2>
+    <p><strong>Τίτλος:</strong> {{ request_title }}</p>
+    <p><strong>Περιγραφή:</strong> {{ request_description }}</p>
+    <p><strong>Υποστηρικτές:</strong> {{ supporter_count }}</p>
+    <p>Δείτε το αίτημα: <a href="{{ request_url }}" style="color: #0275d8;">Εδώ</a></p>
+    <hr>
+    <p style="font-size: 12px; color: gray;">Αυτό το μήνυμα στάλθηκε αυτόματα από το σύστημα Ψηφιακός Θυρωρός.</p>
+  </div>
+</body>
+</html>

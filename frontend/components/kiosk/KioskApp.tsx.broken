@@ -1,0 +1,473 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useKiosk } from '@/hooks/useKiosk';
+import { BuildingSelector } from '@/components/BuildingSelector';
+import { DataStatusIndicator } from '@/components/DataStatusIndicator';
+import KioskSlides from './KioskSlides';
+import KioskSidebar from './KioskSidebar';
+import KioskTopBar from './KioskTopBar';
+import KioskNavigation from './KioskNavigation';
+import { Building, Settings, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import PerformanceMonitor from './PerformanceMonitor';
+import { usePerformance } from '@/hooks/usePerformance';
+import ErrorBoundary from './ErrorBoundary';
+import AccessibilitySettings from './AccessibilitySettings';
+import TestingDashboard from './TestingDashboard';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+
+interface KioskAppProps {
+  buildingId?: number;
+  onBuildingChange?: (buildingId: number | null) => void;
+}
+
+export default function KioskApp({
+  buildingId: initialBuildingId,
+  onBuildingChange
+}: KioskAppProps) {
+  const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(initialBuildingId || null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [isChangingBuilding, setIsChangingBuilding] = useState(false);
+  const [performanceEnabled, setPerformanceEnabled] = useState(false);
+  const [showAccessibility, setShowAccessibility] = useState(false);
+  const [showTesting, setShowTesting] = useState(false);
+
+  // Performance monitoring
+  const { metrics, trackRenderStart, trackRenderEnd } = usePerformance({
+    enabled: performanceEnabled,
+    updateInterval: 5000
+  });
+
+  // Keyboard shortcuts
+  const { toggleFullscreen, refreshPage } = useKeyboardShortcuts({
+    onBuildingSelector: () => setShowSettings(true), // Show settings with building selector
+    onSettings: () => setShowSettings(true),
+    onFullscreen: toggleFullscreen,
+    onRefresh: refreshPage
+  });
+
+  // Use the new kiosk hook
+  const {
+    data,
+    isLoading,
+    error,
+    config,
+    settings,
+    slides,
+    currentSlide,
+    nextSlide,
+    prevSlide,
+    goToSlide,
+    toggleAutoSlide,
+    updateSettings,
+    toggleWidget,
+    updateWidgetSettings
+  } = useKiosk(selectedBuildingId);
+
+  // Handle building change
+  const handleBuildingChange = useCallback(async (buildingId: number | null) => {
+    setIsChangingBuilding(true);
+    try {
+      setSelectedBuildingId(buildingId);
+      if (onBuildingChange) {
+        onBuildingChange(buildingId);
+      }
+    } catch (error) {
+      console.error('Error changing building:', error);
+    } finally {
+      setIsChangingBuilding(false);
+    }
+  }, [onBuildingChange]);
+
+  // Auto-refresh functionality
+  useEffect(() => {
+    if (!settings.autoRefresh || !data) return;
+
+    const interval = setInterval(() => {
+      // Trigger data refresh
+      window.location.reload();
+    }, settings.refreshInterval * 1000);
+
+    return () => clearInterval(interval);
+  }, [settings.autoRefresh, settings.refreshInterval, data]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      switch (event.key) {
+        case 'ArrowLeft':
+          prevSlide();
+          break;
+        case 'ArrowRight':
+          nextSlide();
+          break;
+        case ' ':
+        case 'Enter':
+          event.preventDefault();
+          toggleAutoSlide();
+          break;
+        case 'Escape':
+          setShowSettings(false);
+          break;
+        case 's':
+        case 'S':
+          if (event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+            setShowSettings(true);
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [prevSlide, nextSlide, toggleAutoSlide]);
+
+  // Loading state
+  if (isLoading && !data) {
+    return (
+      <div className="h-screen w-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 flex items-center justify-center text-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-lg">Φόρτωση Kiosk...</p>
+          {selectedBuildingId && (
+            <p className="text-sm text-blue-200 mt-2">
+              Κτίριο ID: {selectedBuildingId}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error && !data) {
+    return (
+      <div className="h-screen w-screen bg-gradient-to-br from-red-900 to-red-800 flex items-center justify-center text-white">
+        <div className="text-center">
+          <Building className="w-16 h-16 mx-auto mb-4 text-red-300" />
+          <h1 className="text-2xl font-bold mb-4">Σφάλμα Φόρτωσης</h1>
+          <p className="text-red-200 text-lg mb-6">
+            {error}
+          </p>
+          <Button
+            onClick={() => window.location.reload()}
+            variant="outline"
+            className="text-white border-white hover:bg-white hover:text-red-800"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Επανάληψη
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-screen w-screen text-white overflow-hidden font-ubuntu bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900">
+      {/* Top Bar */}
+      {settings.showTopBar && (
+        <KioskTopBar buildingId={selectedBuildingId || undefined} />
+      )}
+
+      {/* Main Content Area */}
+      <div className="flex h-full">
+        {/* Main Slides Area */}
+        <div className={`${settings.showSidebar ? 'flex-1' : 'w-full'} flex flex-col`}>
+          {/* Building Info Bar */}
+          <div className="bg-black bg-opacity-30 p-2 sm:p-3 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1 overflow-hidden">
+                <Building className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 text-blue-300" />
+                <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm min-w-0 overflow-hidden">
+                  <span className="truncate font-medium text-white">
+                    {data?.building_info?.name || data?.building_info?.address || 'Όλα τα κτίρια'}
+                  </span>
+                  {isChangingBuilding && (
+                    <div className="flex items-center space-x-1 ml-2">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-300"></div>
+                      <span className="text-xs text-blue-300">Αλλαγή...</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <DataStatusIndicator
+                  isLoading={isLoading}
+                  isFetching={false}
+                  error={error}
+                />
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSettings(true)}
+                  className="text-white hover:bg-white/20"
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Slides Container */}
+          <div className="flex-1 overflow-hidden">
+            <KioskSlides
+              slides={slides}
+              currentSlide={currentSlide}
+              onSlideChange={goToSlide}
+              autoSlide={settings.autoRefresh}
+              slideDuration={settings.slideDuration}
+              isLoading={isLoading}
+              error={error}
+            />
+          </div>
+
+          {/* Navigation Controls */}
+          <KioskNavigation
+            totalSlides={slides.length}
+            currentSlide={currentSlide}
+            onSlideChange={goToSlide}
+            showControls={true}
+            autoSlide={settings.autoRefresh}
+            onToggleAutoSlide={toggleAutoSlide}
+          />
+        </div>
+
+        {/* Sidebar */}
+        {settings.showSidebar && (
+          <div className="w-80 flex-shrink-0">
+            <KioskSidebar
+              buildingInfo={data?.building_info}
+              buildingId={selectedBuildingId || undefined}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Building Selector Modal */}
+      <BuildingSelector
+        isOpen={!selectedBuildingId}
+        onBuildingSelect={handleBuildingChange}
+        selectedBuildingId={selectedBuildingId}
+        onClose={() => {}} // Prevent closing without selection
+      />
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-2xl mx-4 bg-white text-gray-900">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">Kiosk Settings</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSettings(false)}
+                >
+                  ×
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Building Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Building Selection
+                  </label>
+                  <div className="text-xs text-gray-500 mb-2">
+                    Press <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">Ctrl+Alt+B</kbd> or <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">Ctrl+Alt+Β</kbd> to open building selector
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Current Building: {data?.building_info?.name || 'Unknown'}
+                    </p>
+                    <Button
+                      onClick={() => setIsChangingBuilding(true)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Building className="w-4 h-4 mr-2" />
+                      Change Building
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Slide Duration (seconds)
+                  </label>
+                  <input
+                    type="number"
+                    min="5"
+                    max="60"
+                    value={settings.slideDuration}
+                    onChange={(e) => updateSettings({ slideDuration: parseInt(e.target.value) })}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Refresh Interval (seconds)
+                  </label>
+                  <input
+                    type="number"
+                    min="10"
+                    max="300"
+                    value={settings.refreshInterval}
+                    onChange={(e) => updateSettings({ refreshInterval: parseInt(e.target.value) })}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="autoRefresh"
+                    checked={settings.autoRefresh}
+                    onChange={(e) => updateSettings({ autoRefresh: e.target.checked })}
+                  />
+                  <label htmlFor="autoRefresh" className="text-sm font-medium">
+                    Auto Refresh
+                  </label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="showSidebar"
+                    checked={settings.showSidebar}
+                    onChange={(e) => updateSettings({ showSidebar: e.target.checked })}
+                  />
+                  <label htmlFor="showSidebar" className="text-sm font-medium">
+                    Show Sidebar
+                  </label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="showTopBar"
+                    checked={settings.showTopBar}
+                    onChange={(e) => updateSettings({ showTopBar: e.target.checked })}
+                  />
+                  <label htmlFor="showTopBar" className="text-sm font-medium">
+                    Show Top Bar
+                  </label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="performanceEnabled"
+                    checked={performanceEnabled}
+                    onChange={(e) => setPerformanceEnabled(e.target.checked)}
+                  />
+                  <label htmlFor="performanceEnabled" className="text-sm font-medium">
+                    Enable Performance Monitoring
+                  </label>
+                </div>
+              </div>
+
+              {/* Additional Settings */}
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-lg font-semibold">Advanced Settings</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button
+                    onClick={() => setShowAccessibility(true)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Accessibility Settings
+                  </Button>
+
+                  <Button
+                    onClick={() => setShowTesting(true)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Testing Dashboard
+                  </Button>
+              </div>
+
+              <div className="mt-6 flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowSettings(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Performance Monitor */}
+      <PerformanceMonitor
+        enabled={performanceEnabled}
+        onMetricsUpdate={(metrics) => {
+          console.log('Kiosk Performance Metrics:', metrics);
+        }}
+      />
+
+      {/* Accessibility Settings */}
+      <AccessibilitySettings
+        isOpen={showAccessibility}
+        onClose={() => setShowAccessibility(false)}
+      />
+
+      {/* Testing Dashboard */}
+      <TestingDashboard
+        isOpen={showTesting}
+        onClose={() => setShowTesting(false)}
+      />
+
+      {/* Building Change Modal */}
+      {isChangingBuilding && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4 bg-white text-gray-900">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">Change Building</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsChangingBuilding(false)}
+                >
+                  ×
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <BuildingSelector
+                  selectedBuildingId={selectedBuildingId}
+                  onSelectBuilding={handleBuildingChange}
+                />
+                <div className="flex space-x-2">
+                  <Button onClick={handleConfirmBuildingChange} size="sm">
+                    Confirm
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsChangingBuilding(false)}
+                    size="sm"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}

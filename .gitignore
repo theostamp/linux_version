@@ -1,0 +1,59 @@
+# Python
+*.pyc
+__pycache__/
+*.sqlite3
+*.db
+*.log
+*.pyo
+*.pyd
+*.coverage
+*.cover
+*.hypothesis/
+*.tox
+*.pytest_cache
+*.mypy_cache
+*.coverage.*
+
+# Virtual environment
+venv/
+.venv/
+
+# Env files
+
+
+# Egg
+*.egg-info/
+*.egg
+
+# macOS
+*.DS_Store
+
+# Node.js
+node_modules/
+
+# Shell Scripts Permissions
+# Τα .sh αρχεία είναι ήδη στο git με εκτελέσιμα permissions (100755)
+# Μετά από git clone σε νέο σύστημα, τρέξτε: ./fix_permissions.sh
+# για να διορθώσετε τα permissions αν χάνονται
+# Node/Next.js
+node_modules/
+.next/
+
+# Frontend caches
+frontend/node_modules/
+frontend/.next/
+frontend/.next-old/
+frontend/.next_backup/
+frontend/.next.backup/
+
+# OS/Editor
+.DS_Store
+*.log
+
+# Large files
+*.img
+*.iso
+*.zip
+*.tar.gz
+*.tar.bz2raspberry-pi-kiosk/*.img
+raspberry-pi-kiosk/raspios-lite.img

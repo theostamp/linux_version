@@ -1,0 +1,55 @@
+.
+├── (dashboard)
+│   ├── dashboard
+│   │   └── page.tsx
+│   └── layout.tsx
+├── announcements
+│   ├── new
+│   │   └── page.tsx
+│   └── page.tsx
+├── buildings
+│   ├── [id]
+│   │   ├── announcements
+│   │   │   └── page.tsx
+│   │   ├── edit
+│   │   │   └── page.tsx
+│   │   ├── layout.tsx
+│   │   └── requests
+│   │       └── page.tsx
+│   ├── new
+│   │   └── page.tsx
+│   └── page.tsx
+├── debug
+│   └── page.tsx
+├── favicon.ico
+├── globals.css
+├── layout.tsx
+├── login
+│   └── page.tsx
+├── logout
+│   └── page.tsx
+├── page.module.css
+├── page.tsx
+├── providers.tsx
+├── register
+│   └── page.tsx
+├── requests
+│   ├── [id]
+│   │   ├── edit
+│   │   │   └── page.tsx
+│   │   └── page.tsx
+│   ├── new
+│   │   └── page.tsx
+│   └── page.tsx
+├── tree.txt
+├── unauthorized
+│   └── page.tsx
+└── votes
+    ├── [id]
+    │   └── page.tsx
+    ├── new
+    │   ├── NewVoteClient.tsx
+    │   └── page.tsx
+    └── page.tsx
+
+23 directories, 30 files

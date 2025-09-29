@@ -1,0 +1,20 @@
+{
+  "css.lint.unknownAtRules": "ignore"
+}
+
+{
+    "git.ignoreLimitWarning": true,
+    "sonarlint.connectedMode.project": {
+        "connectionId": "theostamp",
+        "projectKey": "theostamp_linux_version"
+    },
+    "terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)",
+    "terminal.integrated.profiles.windows": {
+        "Ubuntu (WSL)": {
+            "path": "C:\\Windows\\System32\\wsl.exe",
+            "args": ["-d", "Ubuntu"],
+            "icon": "terminal-ubuntu"
+        }
+    },
+    "cursor.composer.shouldAllowCustomModes": true
+}

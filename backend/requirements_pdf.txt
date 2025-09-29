@@ -1,0 +1,5 @@
+reportlab==4.4.3
+pillow>=9.0.0
+charset-normalizer>=3.0.0
+fpdf2==2.8.4
+weasyprint==66.0

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Google Maps API Test</title>
+  <style>
+    #map {
+      height: 400px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Google Maps API Test</h1>
+  <div id="map"></div>
+  <div id="status">Loading...</div>
+  
+  <script>
+    function initMap() {
+      document.getElementById('status').innerHTML = 'Map initialization started';
+      try {
+        const map = new google.maps.Map(document.getElementById('map'), {
+          center: { lat: 37.9838, lng: 23.7275 },
+          zoom: 10
+        });
+        document.getElementById('status').innerHTML = 'Map created successfully';
+      } catch (error) {
+        document.getElementById('status').innerHTML = 'Error creating map: ' + error.message;
+        console.error('Map error:', error);
+      }
+    }
+
+    function loadScript() {
+      const apiKey = 'AIzaSyAAhw--f6ejdNH-0vfTkY9t6sO7nD2fxSk';
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap`;
+      script.async = true;
+      script.defer = true;
+      script.onerror = function() {
+        document.getElementById('status').innerHTML = 'Failed to load Google Maps API';
+      };
+      document.head.appendChild(script);
+    }
+
+    window.onload = loadScript;
+  </script>
+</body>
+</html>

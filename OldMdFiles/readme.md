@@ -1,0 +1,587 @@
+# 🏢 New Concierge - Building Management System
+
+## 📋 Επισκόπηση
+
+Το **New Concierge** είναι ένα ολοκληρωμένο σύστημα διαχείρισης κτιρίων που προσφέρει λύσεις για:
+- 🏠 Διαχείριση πολυκατοικιών και διαμερισμάτων
+- 💰 Οικονομική διαχείριση (δαπάνες, εισπράξεις, κοινοχρήστων)
+- 👥 Διαχείριση ιδιοκτητών και ενοικιαστών
+- 📢 Επικοινωνία και ανακοινώσεις
+- 🔧 Συντήρηση και επισκευές
+- 📊 Reports και analytics
+
+---
+
+## 🚀 Τελευταίες Ενημερώσεις (January 2025)
+
+### 🎯 **Service Package Management System** - NEW MAJOR FEATURE
+
+#### 📦 **Smart Service Package Creation** - NEW COMPONENT
+- **Professional Service Builder**: 21 πραγματικές υπηρεσίες διαχείρισης κτιρίων
+- **Market-Based Pricing**: Τιμές βάσει ελληνικής αγοράς 2024 (1.00€-8.00€/διαμέρισμα)
+- **4 Service Categories**: Βασικές, Επεκταμένες, Premium, Ειδικές υπηρεσίες
+- **Auto-Cost Calculation**: Έξυπνος υπολογισμός με real-time preview
+- **Custom Package Builder**: Checkbox selector με descriptions
+
+#### 🏗️ **Service Categories & Pricing**
+- **🟢 Βασικές (2.50-4.00€)**: Διαχείριση κοινόχρηστων, Τήρηση λογαριασμών, Εξόφληση, Συντήρηση
+- **🔵 Επεκταμένες (0.80-2.00€)**: Επίβλεψη εργασιών, Νομικές συμβουλές, 24/7 υποστήριξη
+- **🟣 Premium (1.50-3.00€)**: Ασφάλειες, Προγραμματισμός συντηρήσεων, Ψηφιακό αρχείο
+- **🟠 Ειδικές (2.50-8.00€)**: Φορολογικές υπηρεσίες, Ανακαινίσεις, Smart building
+
+#### 🔧 **Backend Enhancements** - UPDATED
+- **Full CRUD Operations**: ServicePackageViewSet με create/update/delete
+- **Dynamic Cost Calculation**: Auto-calculation με building context
+- **Professional API**: Πλήρης REST API για service package management
+- **Model Validation**: Robust data validation και error handling
+
+#### 🎨 **UX/UI Improvements** - ENHANCED
+- **Empty State → Creation Flow**: Προτεινόμενα templates αντί για error messages
+- **Two-Mode Interface**: Auto-calculate vs Manual entry modes
+- **Accessibility Compliant**: DialogDescription για screen readers
+- **Visual Categories**: Color-coded service categories με icons
+
+#### 🔥 **Σημερινές Αλλαγές (Detailed Implementation)**
+
+**Frontend Changes:**
+- ✅ `ServicePackageModal.tsx`: Πλήρης rebuild με service selector interface
+- ✅ `checkbox.tsx`: Custom checkbox component (καινούργιο αρχείο)
+- ✅ `api.ts`: Νέες functions (createServicePackage, updateServicePackage, deleteServicePackage)
+- ✅ 21 Real Services: Professional list με market-based pricing
+- ✅ Auto-calculation logic: Smart cost calculation βάσει επιλεγμένων υπηρεσιών
+
+**Backend Changes:**
+- ✅ `ServicePackageViewSet`: ReadOnlyModelViewSet → ModelViewSet (full CRUD)
+- ✅ Models & Serializers: Already compatible με τη νέα λειτουργικότητα
+- ✅ API Endpoints: Πλήρης support για create/update/delete operations
+
+**Accessibility & UI:**
+- ✅ DialogDescription: Fixed accessibility warnings
+- ✅ Category-based UI: Color-coded service categories
+- ✅ Real-time Preview: Live cost updates και validation
+- ✅ Professional UX: Empty state → creation flow transformation
+
+---
+
+### 🎯 **Προηγούμενες Βελτιώσεις - Payment List & Modals** (August 2025)
+
+#### 💰 **Enhanced Payment List** - NEW FEATURE
+- **Συγκεντρωτική Προβολή**: Μία εγγραφή ανά ενοίκο αντί για μεμονωμένες πληρωμές
+- **Προοδευτικά Υπόλοιπα**: Ακριβής real-time υπολογισμός από transaction history
+- **Smart UI**: Καθαρότερη εμφάνιση χωρίς περιττές ετικέτες
+- **Color-Coded Balances**: Οπτικές ενδείξεις για οφειλές/πιστώσεις
+
+#### 📋 **Payment Detail Modal** - NEW COMPONENT
+- **Μοναδικό Ιστορικό**: Διαφορετικά δεδομένα ανά διαμέρισμα
+- **Print-Ready**: Λειτουργική εκτύπωση με optimized CSS
+- **Real-Time Data**: Σύνδεση με νέο backend API endpoint
+- **Enhanced UX**: Loading states και error handling
+
+#### 🔧 **Backend API Improvements** - ENHANCED
+- **Dynamic Balance Calculation**: Υπολογισμός υπολοίπων από transaction history
+- **New Endpoint**: `/api/financial/apartments/{id}/transactions/`
+- **Enhanced Serializers**: Owner/tenant names και monthly due integration
+
+---
+
+## 🚀 Προηγούμενες Ενημερώσεις (December 5, 2024)
+
+### ✅ **Επιλύθηκαν Κρίσιμα Προβλήματα**
+
+#### 1. **Building Selector Issue** - FIXED
+- **Πρόβλημα**: Type mismatch μεταξύ components
+- **Λύση**: Ενοποίηση τύπων `buildingId` σε `number`
+- **Αποτέλεσμα**: Σωστή λειτουργία multi-building management
+
+#### 2. **CommonExpenseModal TypeError** - FIXED
+- **Πρόβλημα**: `share.breakdown.forEach is not a function`
+- **Λύση**: Array type checking με `Array.isArray()`
+- **Αποτέλεσμα**: Robust error handling
+
+#### 3. **Common Expenses Calculator** - FIXED
+- **Πρόβλημα**: Δαπάνες δεν εμφανίζονταν στον υπολογισμό
+- **Αιτία**: Έλλειψη ανέκδοτων δαπανών και χιλιοστών συμμετοχής
+- **Λύση**: 
+  - Δημιουργία 5 νέων δαπανών (1.050€ συνολικά)
+  - Προσθήκη χιλιοστών συμμετοχής (1.000 συνολικά)
+- **Αποτέλεσμα**: Πλήρης λειτουργικότητα υπολογισμού κοινοχρήστων
+
+#### 4. **CommonExpenseModal UI/UX** - ENHANCED
+- **Βελτιώσεις**:
+  - Μικρότερο ύψος (85% αντί για 95%)
+  - Μεγαλύτερο πλάτος (95% της οθόνης)
+  - 3-Column layout για καλύτερη οργάνωση
+  - Κουμπί "Αποθήκευση" με API integration
+- **Αποθήκευση**: JSON format για ελάχιστη επιβάρυνση πόρων
+
+### 🛠️ **Scripts που Δημιουργήθηκαν**
+- `add_expenses_via_api.py` - Δημιουργία ανέκδοτων δαπανών
+- `add_mills_to_athens_building.py` - Προσθήκη χιλιοστών συμμετοχής
+- `debug_expenses.py` - Εντοπισμός προβλημάτων δαπανών
+
+---
+
+## 🏗️ Αρχιτεκτονική
+
+### Backend (Django + Django Tenants)
+```
+backend/
+├── new_concierge_backend/     # Main Django project
+├── tenants/                   # Multi-tenancy support
+├── buildings/                 # Building management
+├── apartments/                # Apartment management
+├── financial/                 # Financial management
+├── users/                     # User management
+├── announcements/             # Communication
+└── maintenance/               # Maintenance & repairs
+```
+
+### Frontend (React + TypeScript)
+```
+frontend/
+├── components/                # Reusable UI components
+├── pages/                     # Page components
+├── hooks/                     # Custom React hooks
+├── types/                     # TypeScript definitions
+├── lib/                       # Utilities & configurations
+└── styles/                    # CSS & styling
+```
+
+---
+
+## 💰 Οικονομική Διαχείριση
+
+### Διαθέσιμες Λειτουργίες
+- ✅ **Δαπάνες**: Καταχώρηση και διαχείριση δαπανών κτιρίου
+- ✅ **Εισπράξεις**: Διαχείριση πληρωμών ιδιοκτητών
+- ✅ **Κοινοχρήστων**: Υπολογισμός και έκδοση κοινοχρήστων
+- ✅ **Reports**: Οικονομικά reports και analytics
+- ✅ **Αποθεματικό**: Διαχείριση ταμείου εφεδρείας με δόσεις
+- 🆕 **Service Packages**: Δημιουργία και διαχείριση πακέτων υπηρεσιών
+
+### 🆕 Service Package Management
+- **Professional Templates**: 3 προτεινόμενα πακέτα (Βασικό, Πρότυπο, Premium)
+- **Custom Package Builder**: Δημιουργία με 21 πραγματικές υπηρεσίες
+- **Market-Based Pricing**: Αυτόματος υπολογισμός βάσει επιλεγμένων υπηρεσιών
+- **Building-Specific Costs**: Υπολογισμός ανά αριθμό διαμερισμάτων
+- **Real-Time Preview**: Live cost calculation και service selection
+
+#### 📖 **Οδηγός Χρήσης Service Packages**
+
+**Για Administrators:**
+1. **Πρόσβαση**: Πηγαίνετε στο Building Overview → κουμπί "📦" δίπλα από Management Fee
+2. **Δημιουργία Πακέτου**: 
+   - Επιλέξτε ένα από τα 3 προτεινόμενα templates ή
+   - Πατήστε "Προσαρμοσμένο Πακέτο" για custom creation
+3. **Service Selection**: Ενεργοποιήστε "Auto-υπολογισμός τιμής" και επιλέξτε υπηρεσίες
+4. **Price Review**: Δείτε real-time το συνολικό κόστος ανά κτίριο
+5. **Apply Package**: Πατήστε "Εφαρμογή Πακέτου" για immediate activation
+
+**Market-Based Service Examples:**
+- 🟢 **Διαχείριση κοινόχρηστων**: 2.50€ (βασική υπηρεσία)
+- 🔵 **24/7 τηλεφωνική υποστήριξη**: 1.00€ (επεκταμένη)
+- 🟣 **Προγραμματισμός συντηρήσεων**: 3.00€ (premium)
+- 🟠 **Smart building υπηρεσίες**: 5.00€ (ειδική)
+
+### Υπολογιστής Κοινοχρήστων
+- **Τύποι Κατανομής**:
+  - Ανά Χιλιοστά (by_participation_mills)
+  - Ισόποσα (equal_share)
+  - Συγκεκριμένα (specific_apartments)
+  - Μετρητές (by_meters)
+
+- **Κατηγορίες Δαπανών**:
+  - Καθαρισμός Κοινοχρήστων
+  - ΔΕΗ Κοινοχρήστων
+  - Συντήρηση Ανελκυστήρα
+  - Θέρμανση
+  - Ασφάλεια Κτιρίου
+  - Και πολλές άλλες...
+
+---
+
+## 🔧 Εγκατάσταση & Εκκίνηση
+
+### Προαπαιτούμενα
+- Python 3.8+
+- Node.js 16+
+- PostgreSQL 12+
+- Docker (προαιρετικό)
+
+### Backend Setup
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# ή venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+### Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Database Setup
+```bash
+# Δημιουργία demo tenant
+python manage.py create_tenant --schema_name=demo --name="Demo Tenant"
+
+# Δημιουργία sample data
+python create_sample_data.py
+```
+
+---
+
+## 🧪 Testing
+
+### Backend Tests
+```bash
+cd backend
+python manage.py test
+```
+
+### Frontend Tests
+```bash
+cd frontend
+npm test
+```
+
+### API Tests
+```bash
+# Test building selector
+python test_building_selector_fix.py
+
+# Test financial calculations
+python test_advanced_calculator.py
+```
+
+---
+
+## 📊 Demo Data
+
+### Διαθέσιμα Κτίρια
+- **Αθηνών 12**: 6 διαμερίσματα (με χιλιοστά συμμετοχής)
+- **Πατησίων 45**: 6 διαμερίσματα
+- **Αραχώβης 12**: 12 διαμερίσματα (με χιλιοστά συμμετοχής)
+
+### Sample Δαπάνες
+- ΔΕΗ Κοινοχρήστων: 280€
+- Καθαρισμός Κοινοχρήστων: 320€
+- Συντήρηση Ανελκυστήρα: 180€
+- Νερό Κοινοχρήστων: 150€
+- Ασφάλεια Κτιρίου: 120€
+
+### Demo Credentials
+```
+Email: admin@demo.localhost
+Password: admin123456
+```
+
+---
+
+## 🔐 Security
+
+### Authentication
+- JWT-based authentication
+- Refresh tokens
+- Role-based access control
+- Multi-tenant isolation
+
+### Data Protection
+- Tenant isolation
+- Encrypted sensitive data
+- Audit logging
+- GDPR compliance
+
+---
+
+## 📈 Performance
+
+### Optimizations
+- Database query optimization
+- Caching strategies
+- Lazy loading
+- Image compression
+- CDN integration
+
+### Monitoring
+- Application performance monitoring
+- Error tracking
+- User analytics
+- System health checks
+
+---
+
+## 🤝 Contributing
+
+### Development Workflow
+1. Fork the repository
+2. Create feature branch
+3. Make changes
+4. Add tests
+5. Submit pull request
+
+### Code Standards
+- TypeScript for frontend
+- Python PEP 8 for backend
+- ESLint + Prettier
+- Black for Python formatting
+
+---
+
+## 📝 Documentation
+
+### Available Documentation
+- [API Documentation](docs/api/)
+- [User Guide](docs/user-guide/)
+- [Developer Guide](docs/developer-guide/)
+- [Deployment Guide](docs/deployment/)
+
+### Architecture Documents
+- [System Architecture](docs/architecture/)
+- [Database Schema](docs/database/)
+- [Security Model](docs/security/)
+
+---
+
+## 🚀 Deployment
+
+### Production Setup
+```bash
+# Backend deployment
+docker-compose -f docker-compose.prod.yml up -d
+
+# Frontend deployment
+npm run build
+# Deploy to CDN/static hosting
+```
+
+### Environment Variables
+```bash
+# Backend
+DATABASE_URL=postgresql://...
+SECRET_KEY=your-secret-key
+DEBUG=False
+
+# Frontend
+NEXT_PUBLIC_API_URL=https://api.yourdomain.com
+```
+
+---
+
+## 📞 Support
+
+### Contact Information
+- **Email**: support@newconcierge.com
+- **Documentation**: [docs.newconcierge.com](https://docs.newconcierge.com)
+- **Issues**: [GitHub Issues](https://github.com/newconcierge/issues)
+
+### Community
+- **Discord**: [Join our community](https://discord.gg/newconcierge)
+- **Blog**: [Latest updates](https://blog.newconcierge.com)
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🧹 Καθαρισμός Docker
+
+### Πλήρης Καθαρισμός Docker
+```bash
+
+docker stop $(docker ps -aq)
+
+docker rm $(docker ps -aq)
+docker volume prune -f
+docker network prune -f
+docker builder prune -af
+docker system prune -af --volumes
+
+docker compose up --build -d
+
+
+docker rmi $(docker images -q)
+
+# Πλήρες reset και εκκίνηση
+./reset_and_start.sh
+
+# Ή με interactive menu
+./clean_and_restart.sh
+```
+
+### Επιλεκτικός Καθαρισμός
+```bash
+# Διαγραφή μόνο των unused containers
+docker container prune -f
+
+# Διαγραφή μόνο των unused images
+docker image prune -af
+
+# Διαγραφή μόνο των unused volumes
+docker volume prune -f
+```
+
+---
+
+
+
+### Αναλυτική Διαδικασία Ενημέρωσης
+```bash
+# 1. Έλεγχος τρέχουσας κατάστασης
+git status
+git log --oneline -5
+
+# 2. Pull τελευταίων αλλαγών από remote
+git pull origin main
+
+# 3. Προσθήκη αλλαγών
+git add .
+
+# 4. Commit με περιγραφικό μήνυμα
+git commit -m "feat: προσθήκη νέων χαρακτηριστικών οικονομικής διαχείρισης"
+
+# 5. Push στο GitHub
+git push origin main
+
+# 6. Έλεγχος ότι τα πάντα ανέβηκαν σωστά
+git status
+```
+
+### Χρήσιμες Εντολές Git
+```bash
+# Δημιουργία νέου branch
+git checkout -b feature/new-feature
+
+# Αλλαγή branch
+git checkout main
+
+# Merge branch
+git merge feature/new-feature
+
+# Διαγραφή local branch
+git branch -d feature/new-feature
+
+# Διαγραφή remote branch
+git push origin --delete feature/new-feature
+
+# Undo τελευταίου commit (χωρίς να χαθούν οι αλλαγές)
+git reset --soft HEAD~1
+
+# Δημιουργία tag
+git tag -a v2.1.0 -m "Version 2.1.0"
+git push origin v2.1.0
+```
+
+
+
+## 📤 Ενημέρωση GitHub Repository
+
+### Βασικές Εντολές Git
+
+git add . 
+git commit -m "διορθωση εμφανισης ν dashboard " 
+git branch -M main 
+git remote add origin https://github.com/theostamp/linux_version.git
+git push -u origin main
+---
+
+### Πλήρης Καθαρισμός Docker
+```bash
+
+docker stop $(docker ps -aq)
+
+docker rm $(docker ps -aq)
+docker volume prune -f
+docker network prune -f
+docker builder prune -af
+docker system prune -af --volumes
+
+docker compose up --build -d
+
+## 🔮 Επόμενα Βήματα & Μελλοντικές Βελτιώσεις
+
+### 🎯 **Phase 1: Service Package Enhancements** (Q1 2025)
+- ✅ ~~Service Package Creation με real services~~
+- ✅ ~~Market-based pricing calculator~~
+- ✅ ~~Custom package builder~~
+- 🔄 **Package Templates Library**: Βιβλιοθήκη με προκατασκευασμένα packages
+- 🔄 **Package Versioning**: Version control για service packages
+- 🔄 **Package Cloning**: Αντιγραφή και προσαρμογή υπαρχόντων packages
+
+### 🎯 **Phase 2: Advanced Financial Tools** (Q2 2025)
+- 📋 **Service Package Analytics**: Reports για χρήση και απόδοση packages
+- 💰 **Dynamic Pricing**: Εποχιακές προσαρμογές τιμών
+- 📊 **Cost Comparison Tool**: Σύγκριση κόστους μεταξύ packages
+- 🎯 **ROI Calculator**: Υπολογισμός απόδοσης επένδυσης
+- 📈 **Pricing Trends**: Ανάλυση τάσεων τιμών αγοράς
+
+### 🎯 **Phase 3: AI & Automation** (Q3 2025)
+- 🤖 **Smart Package Recommendations**: AI-powered προτάσεις packages
+- 📱 **Mobile Package Builder**: Native mobile app για package creation
+- 🔄 **Auto-Renewal System**: Αυτόματη ανανέωση packages
+- 📧 **Package Notifications**: Email alerts για updates και renewals
+- 🎨 **Custom Branding**: Προσαρμογή branding για service packages
+
+### 🎯 **Phase 4: Integration & Expansion** (Q4 2025)
+- 🔗 **Third-Party Integrations**: Σύνδεση με external service providers
+- 🌐 **Multi-Language Support**: Υποστήριξη πολλαπλών γλωσσών
+- 📱 **Client Portal**: Πύλη για clients να βλέπουν τα packages τους
+- 🎭 **White-Label Solution**: Λύση για property management companies
+- 🌍 **International Markets**: Επέκταση σε διεθνείς αγορές
+
+### 🛠️ **Technical Debt & Improvements**
+- 🔧 **Performance Optimization**: Βελτίωση ταχύτητας calculation engines
+- 🔒 **Enhanced Security**: Multi-factor authentication, audit logs
+- 📊 **Advanced Analytics**: Deep insights με machine learning
+- 🎨 **UI/UX Redesign**: Modernization του interface
+- 📱 **PWA Support**: Progressive Web App capabilities
+
+### 🚀 **Innovation Features**
+- 🎯 **Predictive Maintenance**: AI για πρόβλεψη συντηρήσεων
+- 🏠 **IoT Integration**: Smart building sensors και automation
+- 🔍 **Computer Vision**: Αυτόματη αναγνώριση προβλημάτων από φωτογραφίες
+- 💬 **Chatbot Support**: AI assistant για property management
+- 🌱 **Sustainability Metrics**: Green building tracking
+
+---
+
+## 📋 Development Roadmap
+
+### 🎯 **Immediate Actions** (Next 2 weeks)
+1. **Service Package Testing**: Comprehensive testing σε production environment
+2. **User Documentation**: Δημιουργία user guides για service packages
+3. **Performance Monitoring**: Monitoring για package creation performance
+4. **Bug Fixes**: Addressing any issues από user feedback
+
+### 🎯 **Short Term** (Next month)
+1. **Package Templates**: Δημιουργία library με προκατασκευασμένα packages
+2. **Export Functionality**: PDF/Excel export για service packages
+3. **Audit Trail**: Logging για όλες τις package operations
+4. **API Documentation**: Complete API docs για service package endpoints
+
+### 🎯 **Medium Term** (Next quarter)
+1. **Analytics Dashboard**: Comprehensive analytics για service packages
+2. **Mobile Optimization**: Mobile-first design για package management
+3. **Integration APIs**: Webhooks και third-party integrations
+4. **Multi-tenant Enhancements**: Advanced tenant isolation features
+
+### 🎯 **Long Term** (Next year)
+1. **AI Recommendations**: Machine learning για package optimization
+2. **Market Intelligence**: Real-time market data integration
+3. **Compliance Automation**: Automated regulatory compliance checking
+4. **International Expansion**: Multi-currency και multi-market support
+
+---
+
+**Last Updated**: January 15, 2025  
+**Version**: 2.2.0  
+**Status**: Production Ready with Service Packages ✅

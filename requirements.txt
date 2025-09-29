@@ -1,0 +1,67 @@
+# Core Django dependencies
+Django>=4.2
+djangorestframework>=3.14
+psycopg2>=2.9
+django-filter>=23.5
+djangorestframework-simplejwt
+django-tenants
+
+# WebSocket & Real-time Communication
+channels==4.0.0
+channels-redis==4.1.0
+daphne==4.0.0
+redis==5.0.1
+
+# PostgreSQL driver
+psycopg2-binary==2.9.10
+
+# Environment utilities
+python-dotenv==1.1.0
+sqlparse==0.5.3
+
+# CORS handling
+django-cors-headers==4.3.1
+
+# Static files serving
+whitenoise==6.6.0
+
+# WSGI server
+gunicorn==21.2.0
+gevent==23.9.1
+
+# Performance & Monitoring
+django-debug-toolbar==4.2.0
+django-extensions==3.2.3
+psutil==5.9.6
+django-prometheus==2.3.1
+
+# Database optimization
+django-redis==5.4.0
+
+# Dev/debug tools
+requests==2.32.3
+ipython==8.24.0
+
+# Security
+python-decouple==3.8
+
+# File utilities
+python-magic>=0.4.27
+openpyxl==3.1.2
+
+# Date utilities
+python-dateutil>=2.8.2
+
+# Testing dependencies
+pytest
+pytest-django
+factory_boy
+pytest-cov==4.1.0
+pytest-asyncio==0.21.0
+pytest-mock==3.10.0
+
+# Google Calendar Integration
+google-auth>=2.23.4
+google-auth-oauthlib>=1.0.0
+google-auth-httplib2>=0.1.1
+google-api-python-client>=2.108.0

@@ -1,0 +1,9 @@
+# ρίζα (αν ποτέ στείλεις context ".")
+node_modules
+.git
+
+*.log
+*.pyc
+__pycache__
+*.pyo
+*.pyd           

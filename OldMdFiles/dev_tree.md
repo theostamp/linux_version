@@ -1,0 +1,98 @@
+# 📁 Django Development Tree
+
+📁 **announcements**
+  ⚙️ __init__.py 
+  ⚙️ admin.py 
+  ⚙️ apps.py 
+  ⚙️ models.py 
+  ⚙️ serializers.py 
+  ⚙️ tests.py 
+  ⚙️ urls.py 
+  ⚙️ views.py 
+📁 **api**
+  ⚙️ __init__.py 
+  ⚙️ admin.py 
+  ⚙️ apps.py 
+  ⚙️ models.py 
+  ⚙️ tests.py 
+  ⚙️ urls.py 
+  ⚙️ views.py 
+📁 **buildings**
+  ⚙️ __init__.py 
+  ⚙️ admin.py 
+  ⚙️ apps.py 
+  ⚙️ models.py 
+  ⚙️ serializers.py 
+  ⚙️ tests.py 
+  ⚙️ urls.py 
+  ⚙️ views.py 
+📁 **core**
+  📁 **management**
+    📁 **commands**
+      ⚙️ __init__.py 
+      ⚙️ exporttree.py 
+    ⚙️ __init__.py 
+  ⚙️ permissions.py 
+  ⚙️ urls.py 
+  ⚙️ views.py 
+📁 **new_concierge_backend**
+  ⚙️ __init__.py 
+  ⚙️ asgi.py 
+  ⚙️ settings.py 
+  ⚙️ urls.py 
+  ⚙️ wsgi.py 
+📁 **obligations**
+  ⚙️ __init__.py 
+  ⚙️ admin.py 
+  ⚙️ apps.py 
+  ⚙️ models.py 
+  ⚙️ tests.py 
+  ⚙️ urls.py 
+  ⚙️ views.py 
+📁 **tenants**
+  ⚙️ __init__.py 
+  ⚙️ admin.py 
+  ⚙️ apps.py 
+  ⚙️ models.py 
+  ⚙️ serializers.py 
+  ⚙️ tests.py 
+  ⚙️ urls.py 
+  ⚙️ views.py 
+📁 **user_requests**
+  📁 **management**
+    📁 **commands**
+      ⚙️ export_urgent_logs.py 
+  📁 **templates**
+    📁 **user_requests**
+      🖼️ urgent_email.html 
+      📄 urgent_email.txt 
+  ⚙️ __init__.py 
+  ⚙️ admin.py 
+  ⚙️ apps.py 
+  ⚙️ models.py 
+  ⚙️ serializers.py 
+  ⚙️ signals.py 
+  ⚙️ tests.py 
+  ⚙️ urls.py 
+  ⚙️ utils.py 
+  ⚙️ views.py 
+📁 **users**
+  ⚙️ __init__.py 
+  ⚙️ admin.py 
+  ⚙️ apps.py 
+  ⚙️ models.py 
+  ⚙️ serializers.py 
+  ⚙️ tests.py 
+  ⚙️ urls.py 
+  ⚙️ views.py 
+📁 **votes**
+  ⚙️ __init__.py 
+  ⚙️ admin.py 
+  ⚙️ apps.py 
+  ⚙️ models.py 
+  ⚙️ serializers.py 
+  ⚙️ tests.py 
+  ⚙️ urls.py 
+  ⚙️ views.py 
+⚙️ create_superuser.py 
+⚙️ manage.py 

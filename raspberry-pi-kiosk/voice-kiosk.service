@@ -1,0 +1,16 @@
+[Unit]
+Description=Voice-Enabled Building Management Kiosk
+After=network.target graphical-session.target sound.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi
+ExecStart=/home/pi/voice-kiosk.sh
+Restart=always
+RestartSec=10
+Environment=DISPLAY=:0
+Environment=PULSE_RUNTIME_PATH=/run/user/1000/pulse
+
+[Install]
+WantedBy=graphical-session.target
