@@ -21,12 +21,12 @@ import Link from 'next/link';
 import type { NotificationStatus, NotificationType, NotificationPriority } from '@/types/notifications';
 
 export default function NotificationsPage() {
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [typeFilter, setTypeFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
 
   const { data: notifications, isLoading } = useNotifications({
-    status: statusFilter || undefined,
-    notification_type: typeFilter || undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    notification_type: typeFilter !== 'all' ? typeFilter : undefined,
   });
 
   const { data: stats } = useNotificationStats();
@@ -161,7 +161,7 @@ export default function NotificationsPage() {
                 <SelectValue placeholder="Όλες οι καταστάσεις" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Όλες</SelectItem>
+                <SelectItem value="all">Όλες</SelectItem>
                 <SelectItem value="sent">Στάλθηκαν</SelectItem>
                 <SelectItem value="scheduled">Προγραμματισμένες</SelectItem>
                 <SelectItem value="sending">Σε αποστολή</SelectItem>
@@ -176,7 +176,7 @@ export default function NotificationsPage() {
                 <SelectValue placeholder="Όλοι οι τύποι" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Όλοι</SelectItem>
+                <SelectItem value="all">Όλοι</SelectItem>
                 <SelectItem value="email">Email</SelectItem>
                 <SelectItem value="sms">SMS</SelectItem>
                 <SelectItem value="both">Email & SMS</SelectItem>
@@ -184,12 +184,12 @@ export default function NotificationsPage() {
             </Select>
           </div>
 
-          {(statusFilter || typeFilter) && (
+          {(statusFilter !== 'all' || typeFilter !== 'all') && (
             <Button
               variant="outline"
               onClick={() => {
-                setStatusFilter('');
-                setTypeFilter('');
+                setStatusFilter('all');
+                setTypeFilter('all');
               }}
             >
               Καθαρισμός

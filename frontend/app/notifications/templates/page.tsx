@@ -33,10 +33,10 @@ import Link from 'next/link';
 import type { NotificationCategory } from '@/types/notifications';
 
 export default function NotificationTemplatesPage() {
-  const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   const { data: templates, isLoading } = useNotificationTemplates({
-    category: categoryFilter || undefined,
+    category: categoryFilter !== 'all' ? categoryFilter : undefined,
     is_active: true,
   });
 
@@ -148,7 +148,7 @@ export default function NotificationTemplatesPage() {
                 <SelectValue placeholder="Όλες οι κατηγορίες" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Όλες</SelectItem>
+                <SelectItem value="all">Όλες</SelectItem>
                 <SelectItem value="announcement">Ανακοινώσεις</SelectItem>
                 <SelectItem value="payment">Πληρωμές</SelectItem>
                 <SelectItem value="maintenance">Συντήρηση</SelectItem>
@@ -159,8 +159,8 @@ export default function NotificationTemplatesPage() {
             </Select>
           </div>
 
-          {categoryFilter && (
-            <Button variant="outline" onClick={() => setCategoryFilter('')}>
+          {categoryFilter !== 'all' && (
+            <Button variant="outline" onClick={() => setCategoryFilter('all')}>
               Καθαρισμός
             </Button>
           )}
