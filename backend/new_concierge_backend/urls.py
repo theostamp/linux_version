@@ -84,6 +84,9 @@ urlpatterns = [
     # Kiosk widget management
     path('api/kiosk/', include('kiosk.urls')),
 
+    # Notifications (Email/SMS)
+    path('api/notifications/', include('notifications.urls')),
+
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]

@@ -90,6 +90,9 @@ TENANT_APPS = [
     
     # 🔗 Integrations
     'integrations',
+
+    # 📬 Notifications System
+    'notifications',
 ]
 
 
