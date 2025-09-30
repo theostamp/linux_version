@@ -535,7 +535,7 @@ docker compose up --build -d
 
 
 git add .
-git commit -m "διορθωσεις οικονομικων ερ"
+git commit -m "διορθωσεις notifications"
 
 ## 📤 Ενημέρωση GitHub Repository
 
