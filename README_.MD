@@ -541,7 +541,7 @@ git commit -m "διορθωσεις οικονομικων ερ"
 
 ## Βασικές Εντολές Git
 git add .
-git commit -m "prepare for raspberry pi kiosk 12"
+git commit -m "prepare for raspberry pi kiosk voice"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
