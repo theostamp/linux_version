@@ -1,7 +1,7 @@
 /**
  * API client for notifications
  */
-import { apiClient } from './client';
+import { apiClient } from '@/lib/apiClient';
 import type {
   Notification,
   NotificationTemplate,
