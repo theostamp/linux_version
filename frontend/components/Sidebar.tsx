@@ -34,6 +34,7 @@ import {
   TestTube2,
   Monitor,
   Settings,
+  Send,
 } from 'lucide-react';
 
 // Navigation link interface
@@ -127,6 +128,12 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Chat',
         icon: <MessageCircle className="w-4 h-4" />,
         roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+      {
+        href: '/notifications',
+        label: 'Ειδοποιήσεις',
+        icon: <Send className="w-4 h-4" />,
+        roles: ['manager', 'staff', 'superuser'],
       },
     ]
   },
