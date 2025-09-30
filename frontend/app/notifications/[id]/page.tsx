@@ -78,7 +78,7 @@ export default function NotificationDetailPage({
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-full p-6">
+      <div className="w-full">
         <Card className="p-8 text-center">Φόρτωση...</Card>
       </div>
     );
@@ -86,7 +86,7 @@ export default function NotificationDetailPage({
 
   if (!notification) {
     return (
-      <div className="w-full max-w-full p-6">
+      <div className="w-full">
         <Card className="p-8 text-center">
           <XCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
           <p className="text-lg font-semibold">Η ειδοποίηση δεν βρέθηκε</p>
@@ -101,7 +101,7 @@ export default function NotificationDetailPage({
   const hasFailedRecipients = notification.failed_sends > 0;
 
   return (
-    <div className="w-full max-w-full p-6 space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
