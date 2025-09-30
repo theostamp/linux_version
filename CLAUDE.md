@@ -611,3 +611,43 @@ const mockData = {
 - 🔄 **Admin Panel**: Real-time content management
 
 Το Kiosk Display System είναι πλέον production-ready για Greek building management με professional appearance και real-time data integration.
+
+## 🎯 Strategic Pivot: MVP-First Approach (Σεπτέμβριος 2025)
+
+### Decision: Pause Voice Navigation, Focus on Core Features
+
+**Context:**
+- Kiosk displays will use **32"+ non-touch screens** (cost-prohibitive for touch)
+- Voice navigation development requires 5-8 days + €35-50/kiosk hardware cost
+- Critical features pending: SMS/Email, Subscriptions, Cloud Deployment
+
+**Strategic Decision:**
+1. ✅ **Pause voice navigation** - Archived to `feature/voice-navigation` branch
+2. ✅ **Implement passive auto-rotating kiosk** - Pi Zero 2W (~€15/kiosk)
+3. ✅ **Focus on core business features** - MVP-first approach
+4. ✅ **Optional remote control** - Wireless remote for manual navigation (~€12)
+
+**Kiosk Navigation Strategy:**
+- **Primary**: Auto-rotating slides (8-second intervals)
+- **Optional**: Wireless remote/keyboard for manual control
+- **Future**: Voice navigation if customers request it post-MVP
+
+**Voice Navigation Code:**
+- Preserved in `feature/voice-navigation` branch
+- Complete implementation ready (Vosk + WebSocket)
+- Can be reactivated in 1-2 days if needed
+- Files: `raspberry-pi-kiosk/`, `useOfflineVoiceNavigation.ts`, `voice-keyword-spotter.py`
+
+**Production Kiosk Setup:**
+- Hardware: Raspberry Pi Zero 2W + 32" HDMI display
+- Cost: €36-48/kiosk (vs €200-250 with voice)
+- Setup: 20 minutes (vs 30+ minutes with voice)
+- Documentation: `raspberry-pi-kiosk/KIOSK_SETUP_PASSIVE.md`
+
+**MVP Priorities (Next 3-4 weeks):**
+1. SMS/Email bulk notifications system
+2. Subscription management & payment tracking
+3. Cloud deployment & production testing
+4. Customer validation & feedback loop
+
+This pivot optimizes time-to-market while maintaining flexibility to add voice navigation later based on actual customer demand.
