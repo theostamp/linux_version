@@ -6,6 +6,7 @@ import { useNews } from '@/hooks/useNews';
 import { useKioskData } from '@/hooks/useKioskData';
 import { useKioskWeather } from '@/hooks/useKioskWeather';
 import { useVoiceNavigation } from '@/hooks/useVoiceNavigation';
+import { useOfflineVoiceNavigation } from '@/hooks/useOfflineVoiceNavigation';
 import BuildingSelector from '@/components/BuildingSelector';
 import { KioskWidget } from '@/types/kiosk';
 import { getSystemWidgets, hasWidgetData, getWidgetIcon } from '@/lib/kiosk/widgets/registry';
@@ -30,6 +31,7 @@ export default function KioskDisplayPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [useOfflineVoice, setUseOfflineVoice] = useState(true); // Default to offline
 
   // Fetch real data from APIs
   const { news, loading: newsLoading, error: newsError, lastUpdated } = useNews(300000); // Refresh every 5 minutes
@@ -87,34 +89,52 @@ export default function KioskDisplayPage() {
 
   // Voice navigation
   const mainSlides = widgets.filter(w => w.category === 'main_slides');
-  const {
-    isListening,
-    lastCommand,
-    error: voiceError,
-    startListening,
-    stopListening
-  } = useVoiceNavigation({
+
+  // Command handler (shared by both online and offline)
+  const handleVoiceCommand = (command: string) => {
+    console.log('Voice command:', command);
+
+    if (command === 'next') {
+      setCurrentSlide(prev => (prev + 1) % mainSlides.length);
+    } else if (command === 'previous') {
+      setCurrentSlide(prev => (prev - 1 + mainSlides.length) % mainSlides.length);
+    } else if (command === 'pause') {
+      setIsAutoPlay(false);
+    } else if (command === 'resume') {
+      setIsAutoPlay(true);
+    }
+  };
+
+  // Online voice (Web Speech API)
+  const onlineVoice = useVoiceNavigation({
     onSlideChange: (index) => {
       setCurrentSlide(index);
       setIsAutoPlay(false);
     },
-    onCommand: (command) => {
-      console.log('Voice command:', command);
-
-      if (command === 'next') {
-        setCurrentSlide(prev => (prev + 1) % mainSlides.length);
-      } else if (command === 'previous') {
-        setCurrentSlide(prev => (prev - 1 + mainSlides.length) % mainSlides.length);
-      } else if (command === 'pause') {
-        setIsAutoPlay(false);
-      } else if (command === 'resume') {
-        setIsAutoPlay(true);
-      }
-    },
+    onCommand: handleVoiceCommand,
     totalSlides: mainSlides.length,
     language: 'el-GR',
-    enabled: voiceEnabled
+    enabled: voiceEnabled && !useOfflineVoice
   });
+
+  // Offline voice (Vosk + WebSocket)
+  const offlineVoice = useOfflineVoiceNavigation({
+    onSlideChange: (index) => {
+      setCurrentSlide(index);
+      setIsAutoPlay(false);
+    },
+    onCommand: handleVoiceCommand,
+    totalSlides: mainSlides.length,
+    enabled: voiceEnabled && useOfflineVoice,
+    websocketUrl: 'ws://localhost:8765'
+  });
+
+  // Use the appropriate voice system
+  const {
+    isListening,
+    lastCommand,
+    error: voiceError
+  } = useOfflineVoice ? offlineVoice : onlineVoice;
 
   const sidebarWidgets = widgets.filter(w => w.category === 'sidebar_widgets');
   const topBarWidgets = widgets.filter(w => w.category === 'top_bar_widgets');
@@ -197,11 +217,20 @@ export default function KioskDisplayPage() {
       {/* Voice Status Indicator */}
       {voiceEnabled && (
         <div className="absolute top-24 left-4 bg-kiosk-neutral-900/90 border border-green-500/50 text-white px-4 py-2 rounded-lg z-40 backdrop-blur-sm">
-          <div className="flex items-center space-x-3">
-            <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`}></div>
-            <div className="text-sm">
-              {isListening ? '🎤 Ακούω...' : '🎤 Φωνητική πλοήγηση ενεργή'}
+          <div className="flex items-center justify-between space-x-4">
+            <div className="flex items-center space-x-3">
+              <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`}></div>
+              <div className="text-sm">
+                {isListening ? '🎤 Ακούω...' : '🎤 Φωνητική πλοήγηση ενεργή'}
+              </div>
             </div>
+            <button
+              onClick={() => setUseOfflineVoice(prev => !prev)}
+              className="text-xs px-2 py-1 bg-kiosk-neutral-700 hover:bg-kiosk-neutral-600 rounded transition-colors"
+              title={useOfflineVoice ? 'Χρήση Online Voice' : 'Χρήση Offline Voice'}
+            >
+              {useOfflineVoice ? '🖥️ Offline' : '☁️ Online'}
+            </button>
           </div>
           {lastCommand && (
             <div className="text-xs text-kiosk-neutral-300 mt-1">
@@ -211,6 +240,11 @@ export default function KioskDisplayPage() {
           {voiceError && (
             <div className="text-xs text-red-400 mt-1">
               {voiceError}
+            </div>
+          )}
+          {useOfflineVoice && (
+            <div className="text-xs text-kiosk-neutral-400 mt-1">
+              {offlineVoice.isConnected ? '✅ WebSocket connected' : '⏳ Connecting...'}
             </div>
           )}
         </div>
