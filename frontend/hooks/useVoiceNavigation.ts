@@ -279,6 +279,11 @@ export function useVoiceNavigation({
         return;
       }
 
+      if (event.error === 'aborted') {
+        // User stopped or browser aborted - don't show error
+        return;
+      }
+
       if (event.error === 'network') {
         setError('Απαιτείται σύνδεση στο διαδίκτυο');
       } else if (event.error === 'not-allowed') {
