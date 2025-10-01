@@ -58,6 +58,10 @@ export default function SendNotificationPage() {
     sms: string;
   } | null>(null);
 
+  // Building scope selection
+  const [buildingScope, setBuildingScope] = useState<'current' | 'specific' | 'all'>('current');
+  const [selectedBuildings, setSelectedBuildings] = useState<number[]>([]);
+
   // Context variables for template
   const [context, setContext] = useState<Record<string, string>>({
     building_name: 'Αλκμάνος 22',
@@ -68,7 +72,7 @@ export default function SendNotificationPage() {
   });
 
   const { data: templates } = useNotificationTemplates({ is_active: true });
-  const { buildings } = useBuilding();
+  const { buildings, currentBuilding } = useBuilding();
   const createMutation = useCreateNotification();
   const previewMutation = usePreviewTemplate();
 
@@ -184,6 +188,19 @@ export default function SendNotificationPage() {
       priority: data.priority,
       send_to_all: data.send_to_all,
     };
+
+    // Add building scope
+    if (buildingScope === 'current' && currentBuilding) {
+      requestData.building_ids = [currentBuilding.id];
+    } else if (buildingScope === 'specific') {
+      if (selectedBuildings.length === 0) {
+        alert('Παρακαλώ επιλέξτε τουλάχιστον ένα κτίριο');
+        return;
+      }
+      requestData.building_ids = selectedBuildings;
+    } else if (buildingScope === 'all') {
+      requestData.building_ids = buildings.map((b) => b.id);
+    }
 
     // Add template or manual content
     if (useTemplate && selectedTemplateId) {
@@ -444,6 +461,83 @@ export default function SendNotificationPage() {
           </div>
         </Card>
 
+        {/* Building Scope Selection */}
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <Users className="w-5 h-5 mr-2" />
+            Επιλογή Κτιρίων
+          </h2>
+
+          <div className="space-y-4">
+            <RadioGroup value={buildingScope} onValueChange={(value: any) => setBuildingScope(value)}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="current" id="current" />
+                <Label htmlFor="current" className="font-normal cursor-pointer">
+                  Τρέχον κτίριο μόνο
+                  <span className="text-sm text-muted-foreground block">
+                    Αποστολή μόνο στο επιλεγμένο κτίριο
+                  </span>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="specific" id="specific" />
+                <Label htmlFor="specific" className="font-normal cursor-pointer">
+                  Συγκεκριμένα κτίρια
+                  <span className="text-sm text-muted-foreground block">
+                    Επιλέξτε σε ποια κτίρια να σταλεί
+                  </span>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="all" id="all" />
+                <Label htmlFor="all" className="font-normal cursor-pointer">
+                  Όλα τα κτίρια
+                  <span className="text-sm text-muted-foreground block">
+                    Μαζική αποστολή σε όλες τις πολυκατοικίες
+                  </span>
+                </Label>
+              </div>
+            </RadioGroup>
+
+            {buildingScope === 'specific' && (
+              <div className="mt-4 p-4 bg-muted rounded-lg space-y-2">
+                <Label>Επιλέξτε Κτίρια:</Label>
+                <div className="space-y-2">
+                  {buildings.map((building) => (
+                    <div key={building.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`building-${building.id}`}
+                        checked={selectedBuildings.includes(building.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedBuildings([...selectedBuildings, building.id]);
+                          } else {
+                            setSelectedBuildings(selectedBuildings.filter((id) => id !== building.id));
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`building-${building.id}`} className="font-normal cursor-pointer">
+                        {building.name || `${building.street} ${building.number}`}
+                        <span className="text-xs text-muted-foreground ml-2">
+                          ({building.city})
+                        </span>
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {buildingScope === 'all' && (
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-sm text-blue-800 dark:text-blue-200 font-semibold">
+                  ⚠️ Η ειδοποίηση θα σταλεί σε όλα τα διαμερίσματα όλων των κτιρίων ({buildings.length} κτίρια)
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
+
         {/* Recipients Selection */}
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
@@ -457,7 +551,7 @@ export default function SendNotificationPage() {
                 checked={sendToAll}
                 onCheckedChange={(checked) => setValue('send_to_all', checked as boolean)}
               />
-              <Label>Αποστολή σε όλα τα διαμερίσματα</Label>
+              <Label>Αποστολή σε όλα τα διαμερίσματα του/των επιλεγμένου/ων κτιρίου/ων</Label>
             </div>
 
             {!sendToAll && (

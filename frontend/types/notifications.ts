@@ -103,6 +103,9 @@ export interface NotificationCreateRequest {
   // Template context
   context?: Record<string, string>;
 
+  // Building scope
+  building_ids?: number[]; // Array of building IDs for multi-building support
+
   // Recipients
   apartment_ids?: number[];
   send_to_all?: boolean;
