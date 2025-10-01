@@ -136,6 +136,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             'subject',
             'body',
             'sms_body',
+            'attachment',
             'notification_type',
             'notification_type_display',
             'priority',

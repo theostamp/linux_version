@@ -165,6 +165,12 @@ class Notification(models.Model):
         blank=True,
         help_text="Rendered SMS body (if applicable)"
     )
+    attachment = models.FileField(
+        upload_to='notifications/attachments/%Y/%m/',
+        null=True,
+        blank=True,
+        help_text="Optional attachment (e.g., common expenses sheet PDF/JPG)"
+    )
 
     # Metadata
     notification_type = models.CharField(
