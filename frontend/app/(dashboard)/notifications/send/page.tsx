@@ -130,6 +130,59 @@ export default function SendNotificationPage() {
   const notificationType = watch('notification_type');
   const sendToAll = watch('send_to_all');
 
+  // Auto-populate context from building data
+  const getSmartDefaultForVariable = (variable: string): string => {
+    // Apartment-specific variables (empty for multi-building)
+    const apartmentSpecificVars = [
+      'apartment_number',
+      'owner_name',
+      'common_expense_amount',
+      'previous_balance',
+      'total_amount',
+      'due_date',
+      'period'
+    ];
+
+    // If sending to multiple buildings/apartments, leave apartment-specific fields empty
+    if (buildingScope !== 'current' && apartmentSpecificVars.includes(variable)) {
+      return '';
+    }
+
+    // Building-level data (auto-populate from currentBuilding)
+    if (variable === 'building_name') {
+      return currentBuilding?.name || currentBuilding?.address || '';
+    }
+    if (variable === 'building_address') {
+      return currentBuilding?.address || '';
+    }
+    if (variable === 'manager_phone') {
+      return currentBuilding?.internal_manager_phone || currentBuilding?.management_office_phone || '';
+    }
+    if (variable === 'manager_email') {
+      return currentBuilding?.management_office_address || '';
+    }
+    if (variable === 'bank_account') {
+      return currentBuilding?.bank_account || ''; // TODO: Add to building model
+    }
+
+    // Date/time variables
+    if (variable === 'current_date') {
+      return new Date().toLocaleDateString('el-GR');
+    }
+    if (variable === 'period') {
+      const now = new Date();
+      return `${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+    }
+    if (variable === 'due_date') {
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 10); // 10 days from now
+      return dueDate.toLocaleDateString('el-GR');
+    }
+
+    // Empty for unknown variables
+    return '';
+  };
+
   // Handle template selection
   const handleTemplateChange = (templateId: string) => {
     const id = parseInt(templateId);
@@ -141,20 +194,28 @@ export default function SendNotificationPage() {
       setValue('body', template.body_template);
       setValue('sms_body', template.sms_template);
 
-      // Initialize context with empty values for template variables
+      // Initialize context with smart defaults
       const newContext: Record<string, string> = {};
       template.available_variables.forEach((variable) => {
-        // Set default values for common variables
-        if (variable === 'building_name') newContext[variable] = 'Αλκμάνος 22';
-        else if (variable === 'building_address') newContext[variable] = 'Αλκμάνος 22, Αθήνα 116 36';
-        else if (variable === 'current_date') newContext[variable] = new Date().toLocaleDateString('el-GR');
-        else if (variable === 'manager_phone') newContext[variable] = '210 1234567';
-        else if (variable === 'manager_email') newContext[variable] = 'manager@building.gr';
-        else newContext[variable] = ''; // Empty for user to fill
+        newContext[variable] = getSmartDefaultForVariable(variable);
       });
       setContext(newContext);
     }
   };
+
+  // Re-populate context when building scope changes
+  useEffect(() => {
+    if (useTemplate && selectedTemplateId) {
+      const template = templates?.find((t) => t.id === selectedTemplateId);
+      if (template) {
+        const newContext: Record<string, string> = {};
+        template.available_variables.forEach((variable) => {
+          newContext[variable] = getSmartDefaultForVariable(variable);
+        });
+        setContext(newContext);
+      }
+    }
+  }, [buildingScope, useTemplate, selectedTemplateId, templates]);
 
   // Handle preview
   const handlePreview = async () => {
@@ -300,50 +361,79 @@ export default function SendNotificationPage() {
                     </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {Object.entries(context).map(([key, value]) => (
-                      <div key={key} className="space-y-2">
-                        <Label className="text-sm font-medium text-foreground">
-                          <code className="bg-muted/50 px-2 py-1 rounded-md text-xs font-mono border border-border/30">
-                            {`{{${key}}}`}
-                          </code>
-                        </Label>
-                        {isDropdownField(key) ? (
-                          <Select
-                            value={value}
-                            onValueChange={(val) => {
-                              if (key === 'building_name') {
-                                handleBuildingSelect(val);
-                              } else {
-                                setContext((prev) => ({...prev, [key]: val}));
+                    {Object.entries(context).map(([key, value]) => {
+                      // Check if this is an apartment-specific field
+                      const apartmentSpecificVars = [
+                        'apartment_number',
+                        'owner_name',
+                        'common_expense_amount',
+                        'previous_balance',
+                        'total_amount',
+                      ];
+                      const isApartmentSpecific = apartmentSpecificVars.includes(key);
+                      const shouldHide = isApartmentSpecific && buildingScope !== 'current';
+
+                      // Don't render apartment-specific fields for multi-building notifications
+                      if (shouldHide) return null;
+
+                      // Check if field is auto-populated (has value and not apartment-specific when multi-building)
+                      const isAutoPopulated = value !== '' && !shouldHide;
+
+                      return (
+                        <div key={key} className="space-y-2">
+                          <Label className="text-sm font-medium text-foreground flex items-center gap-2">
+                            <code className="bg-muted/50 px-2 py-1 rounded-md text-xs font-mono border border-border/30">
+                              {`{{${key}}}`}
+                            </code>
+                            {isAutoPopulated && (
+                              <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                                ✓ Αυτόματο
+                              </span>
+                            )}
+                          </Label>
+                          {isDropdownField(key) ? (
+                            <Select
+                              value={value}
+                              onValueChange={(val) => {
+                                if (key === 'building_name') {
+                                  handleBuildingSelect(val);
+                                } else {
+                                  setContext((prev) => ({...prev, [key]: val}));
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="bg-background/50 border-border/50">
+                                <SelectValue placeholder={`Επιλέξτε ${key.replace(/_/g, ' ')}`} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getDropdownOptions(key).map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Input
+                              value={value}
+                              onChange={(e) =>
+                                setContext((prev) => ({
+                                  ...prev,
+                                  [key]: e.target.value,
+                                }))
                               }
-                            }}
-                          >
-                            <SelectTrigger className="bg-background/50 border-border/50">
-                              <SelectValue placeholder={`Επιλέξτε ${key.replace(/_/g, ' ')}`} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getDropdownOptions(key).map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Input
-                            value={value}
-                            onChange={(e) =>
-                              setContext((prev) => ({
-                                ...prev,
-                                [key]: e.target.value,
-                              }))
-                            }
-                            placeholder={`Εισάγετε ${key.replace(/_/g, ' ')}`}
-                            className="font-mono text-sm bg-background/50 border-border/50"
-                          />
-                        )}
-                      </div>
-                    ))}
+                              placeholder={isAutoPopulated ? value : `Εισάγετε ${key.replace(/_/g, ' ')}`}
+                              className={`font-mono text-sm border-border/50 ${
+                                isAutoPopulated
+                                  ? 'bg-green-50/50 border-green-200'
+                                  : 'bg-background/50'
+                              }`}
+                              disabled={isAutoPopulated && !isApartmentSpecific}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
