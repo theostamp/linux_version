@@ -441,8 +441,8 @@ class MonthlyTaskService:
             # Build context
             context = {
                 'period': period_month.strftime('%m/%Y'),
-                'apartment_number': apartment.apartment_number,
-                'owner_name': apartment.owner or 'Ιδιοκτήτης',
+                'apartment_number': apartment.number,
+                'owner_name': apartment.owner_name or 'Ιδιοκτήτης',
                 'common_expense_amount': f"{common_expense_amount:.2f}€",
                 'previous_balance': f"{previous_balance:.2f}€",
                 'total_amount': f"{total_amount:.2f}€",
@@ -467,7 +467,7 @@ class MonthlyTaskService:
             NotificationRecipient.objects.create(
                 notification=notification,
                 apartment=apartment,
-                recipient_name=apartment.owner or 'Ιδιοκτήτης',
+                recipient_name=apartment.owner_name or 'Ιδιοκτήτης',
                 email=apartment.owner_email or '',
                 phone=apartment.owner_phone or '',
                 status='pending'
@@ -507,8 +507,8 @@ class MonthlyTaskService:
         # Create recipients
         for apartment, balance in apartments_with_debt:
             context = {
-                'apartment_number': apartment.apartment_number,
-                'owner_name': apartment.owner or 'Ιδιοκτήτης',
+                'apartment_number': apartment.number,
+                'owner_name': apartment.owner_name or 'Ιδιοκτήτης',
                 'balance_amount': f"{balance:.2f}€",
                 'building_name': building.name or f"{building.street} {building.number}",
                 'manager_phone': building.manager_phone or '210 1234567',
@@ -527,7 +527,7 @@ class MonthlyTaskService:
             NotificationRecipient.objects.create(
                 notification=notification,
                 apartment=apartment,
-                recipient_name=apartment.owner or 'Ιδιοκτήτης',
+                recipient_name=apartment.owner_name or 'Ιδιοκτήτης',
                 email=apartment.owner_email or '',
                 phone=apartment.owner_phone or '',
                 status='pending'
@@ -575,7 +575,7 @@ class MonthlyTaskService:
             NotificationRecipient.objects.create(
                 notification=notification,
                 apartment=apartment,
-                recipient_name=apartment.owner or 'Ιδιοκτήτης',
+                recipient_name=apartment.owner_name or 'Ιδιοκτήτης',
                 email=apartment.owner_email or '',
                 phone=apartment.owner_phone or '',
                 status='pending'
@@ -610,7 +610,7 @@ class MonthlyTaskService:
                 if share:
                     return float(share.total_amount)
                 else:
-                    logger.warning(f"No ApartmentShare found for {apartment.apartment_number} in period {period.period_name}")
+                    logger.warning(f"No ApartmentShare found for {apartment.number} in period {period.period_name}")
             else:
                 logger.warning(f"No CommonExpensePeriod found for {apartment.building.name} in {period_month.strftime('%m/%Y')}")
         except Exception as e:
