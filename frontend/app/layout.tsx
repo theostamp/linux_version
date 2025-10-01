@@ -35,17 +35,18 @@ export const metadata = {
   title: 'New Concierge - Building Management',
   description: 'Διαχείριση Πολυκατοικίας - Κοινόχρηστα, Ανακοινώσεις, Συντήρηση',
   manifest: '/manifest.json',
-  themeColor: '#4f46e5',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'New Concierge',
   },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: '#4f46e5',
 };
 
 export default function RootLayout({ children }: { readonly children: React.ReactNode }) {
