@@ -130,18 +130,33 @@ export default function SendNotificationPage() {
 
   // Handle form submission
   const onSubmit = async (data: FormData) => {
-    const requestData = {
-      template_id: useTemplate ? selectedTemplateId || undefined : undefined,
-      subject: useTemplate ? undefined : data.subject,
-      body: useTemplate ? undefined : data.body,
-      sms_body: useTemplate ? undefined : data.sms_body,
-      context: useTemplate ? context : undefined,
+    const requestData: any = {
       notification_type: data.notification_type,
       priority: data.priority,
       send_to_all: data.send_to_all,
-      apartment_ids: data.send_to_all ? undefined : data.apartment_ids,
-      scheduled_at: data.scheduled_at || undefined,
     };
+
+    // Add template or manual content
+    if (useTemplate && selectedTemplateId) {
+      requestData.template_id = selectedTemplateId;
+      requestData.context = context;
+    } else {
+      requestData.subject = data.subject;
+      requestData.body = data.body;
+      if (data.sms_body) {
+        requestData.sms_body = data.sms_body;
+      }
+    }
+
+    // Add apartment selection
+    if (!data.send_to_all && data.apartment_ids && data.apartment_ids.length > 0) {
+      requestData.apartment_ids = data.apartment_ids;
+    }
+
+    // Add scheduled time
+    if (data.scheduled_at) {
+      requestData.scheduled_at = data.scheduled_at;
+    }
 
     try {
       const result = await createMutation.mutateAsync(requestData);
