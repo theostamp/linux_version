@@ -111,7 +111,10 @@ class NotificationViewSet(viewsets.ModelViewSet):
             "scheduled_at": "2025-10-01T10:00:00Z"  // optional
         }
         """
+        print(f"[NOTIFICATIONS] Create request data: {request.data}")
         serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print(f"[NOTIFICATIONS] Validation errors: {serializer.errors}")
         serializer.is_valid(raise_exception=True)
         
         data = serializer.validated_data
