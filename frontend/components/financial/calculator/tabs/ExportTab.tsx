@@ -2,13 +2,15 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Printer, Save, Thermometer, FileText, Image } from 'lucide-react';
+import { Download, Printer, Save, Thermometer, FileText, Image, Send } from 'lucide-react';
 
 interface ExportTabProps {
   handleExport: (format: 'pdf' | 'excel' | 'jpg') => void;
   handlePrint: () => void;
   handleSave: () => void;
+  handleSendToAll?: () => void;
   isSaving: boolean;
+  isSending?: boolean;
   setShowHeatingModal: (show: boolean) => void;
   buildingName: string;
   periodInfo: string;
@@ -21,7 +23,9 @@ export const ExportTab: React.FC<ExportTabProps> = ({
   handleExport,
   handlePrint,
   handleSave,
+  handleSendToAll,
   isSaving,
+  isSending = false,
   setShowHeatingModal,
   buildingName,
   periodInfo,
@@ -153,6 +157,28 @@ export const ExportTab: React.FC<ExportTabProps> = ({
               </Button>
             </CardContent>
           </Card>
+
+          {handleSendToAll && (
+            <Card className="border-indigo-200 bg-indigo-50/30">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <Send className="h-6 w-6 text-indigo-600" />
+                  <h3 className="font-semibold text-indigo-800">Αποστολή σε Όλους</h3>
+                </div>
+                <p className="text-sm text-indigo-700 mb-4">
+                  Αποστολή φύλλου κοινοχρήστων με email σε όλους τους ιδιοκτήτες
+                </p>
+                <Button
+                  onClick={handleSendToAll}
+                  disabled={isSending}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700"
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  {isSending ? 'Αποστολή...' : 'Αποστολή Email'}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Removed the summary section with building info, period, apartments count, and total expenses */}

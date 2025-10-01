@@ -20,7 +20,7 @@ import {
 import { toNumber, formatAmount } from '../utils/formatters';
 import { exportToPDF } from '../utils/pdfGenerator';
 import { exportToExcel } from '../utils/excelGenerator';
-import { exportToJPG } from '../utils/jpgGenerator';
+import { exportToJPG, exportAndSendJPG } from '../utils/jpgGenerator';
 import { getPeriodInfo } from '../utils/periodHelpers';
 
 export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
@@ -33,6 +33,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
   } = props;
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [showHeatingModal, setShowHeatingModal] = useState(false);
   const [heatingBreakdown, setHeatingBreakdown] = useState<any>(null);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
@@ -404,7 +405,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
   }, [state, props, expenseBreakdown, reserveFundInfo, managementFeeInfo, perApartmentAmounts, aptWithFinancial, totalExpenses, getFinalTotalExpenses, getTotalPreviousBalance, getGroupedExpenses]);
 
   const validateData = useCallback(() => {
-    const allTotalsMatch = true; 
+    const allTotalsMatch = true;
     if (allTotalsMatch) {
         toast.success('✅ Έλεγχος δεδομένων επιτυχής!');
     } else {
@@ -413,10 +414,64 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     setValidationResult({ isValid: allTotalsMatch, message: 'Validation result', details: { totalExpenses: 0, tenantExpensesTotal: 0, ownerExpensesTotal: 0, reserveFundTotal: 0, payableTotal: 0, differences: [] } });
   }, []);
 
+  const handleSendToAll = useCallback(async () => {
+    setIsSending(true);
+    try {
+      const commonParams = {
+        state,
+        buildingId,
+        buildingName,
+        buildingAddress: props.buildingAddress,
+        buildingCity: props.buildingCity,
+        buildingPostalCode: props.buildingPostalCode,
+        managerName: props.managerName,
+        managerApartment: props.managerApartment,
+        managerPhone: props.managerPhone,
+        managerCollectionSchedule: props.managerCollectionSchedule,
+        managementOfficeName: props.managementOfficeName,
+        managementOfficePhone: props.managementOfficePhone,
+        managementOfficeAddress: props.managementOfficeAddress,
+        managementOfficeLogo: props.managementOfficeLogo,
+        selectedMonth,
+        expenseBreakdown,
+        reserveFundInfo,
+        managementFeeInfo,
+        groupedExpenses: getGroupedExpenses(),
+        perApartmentAmounts,
+        aptWithFinancial,
+        totalExpenses,
+        getFinalTotalExpenses,
+        getTotalPreviousBalance,
+      };
+
+      await exportAndSendJPG(commonParams);
+    } catch (error) {
+      console.error('Error sending common expenses:', error);
+      // Error toast is already shown by exportAndSendJPG
+    } finally {
+      setIsSending(false);
+    }
+  }, [
+    state,
+    buildingId,
+    buildingName,
+    props,
+    selectedMonth,
+    expenseBreakdown,
+    reserveFundInfo,
+    managementFeeInfo,
+    perApartmentAmounts,
+    aptWithFinancial,
+    totalExpenses,
+    getFinalTotalExpenses,
+    getTotalPreviousBalance,
+    getGroupedExpenses,
+  ]);
+
   return {
-    isSaving, showHeatingModal, setShowHeatingModal, heatingBreakdown, setHeatingBreakdown,
+    isSaving, isSending, showHeatingModal, setShowHeatingModal, heatingBreakdown, setHeatingBreakdown,
     validationResult, setValidationResult, aptWithFinancial, occupantsByApartmentId, perApartmentAmounts,
     expenseBreakdown, managementFeeInfo, reserveFundInfo, totalExpenses, handleSave, handlePrint,
-    handleExport, validateData, getGroupedExpenses, getTotalPreviousBalance, getFinalTotalExpenses
+    handleExport, handleSendToAll, validateData, getGroupedExpenses, getTotalPreviousBalance, getFinalTotalExpenses
   };
 };

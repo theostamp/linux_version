@@ -100,6 +100,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
 
   const {
     isSaving,
+    isSending,
     showHeatingModal,
     setShowHeatingModal,
     heatingBreakdown,
@@ -114,6 +115,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     handleSave,
     handlePrint,
     handleExport,
+    handleSendToAll,
     validateData,
     getGroupedExpenses,
     getTotalPreviousBalance,
@@ -236,11 +238,13 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
             </TabsContent>
 
             <TabsContent value="export">
-                <ExportTab 
+                <ExportTab
                     handleExport={handleExport}
                     handlePrint={handlePrint}
                     handleSave={handleSave}
+                    handleSendToAll={handleSendToAll}
                     isSaving={isSaving}
+                    isSending={isSending}
                     setShowHeatingModal={setShowHeatingModal}
                     buildingName={buildingName}
                     periodInfo={getPeriodInfo(state)}
