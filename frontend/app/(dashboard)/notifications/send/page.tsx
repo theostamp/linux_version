@@ -11,6 +11,7 @@ import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import { useNotificationTemplates, usePreviewTemplate } from '@/hooks/useNotificationTemplates';
 import { useCreateNotification } from '@/hooks/useNotifications';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -67,8 +68,43 @@ export default function SendNotificationPage() {
   });
 
   const { data: templates } = useNotificationTemplates({ is_active: true });
+  const { buildings } = useBuilding();
   const createMutation = useCreateNotification();
   const previewMutation = usePreviewTemplate();
+
+  // Helper to check if field should be a dropdown
+  const isDropdownField = (fieldName: string) => {
+    return fieldName === 'building_name';
+  };
+
+  // Helper to get dropdown options for a field
+  const getDropdownOptions = (fieldName: string) => {
+    if (fieldName === 'building_name') {
+      return buildings.map((b) => ({
+        value: b.name || `${b.street} ${b.number}`,
+        label: b.name || `${b.street} ${b.number}`,
+        data: b,
+      }));
+    }
+    return [];
+  };
+
+  // Handle building selection - auto-populate related fields
+  const handleBuildingSelect = (buildingName: string) => {
+    const building = buildings.find((b) =>
+      (b.name || `${b.street} ${b.number}`) === buildingName
+    );
+
+    if (building) {
+      setContext((prev) => ({
+        ...prev,
+        building_name: building.name || `${building.street} ${building.number}`,
+        building_address: `${building.street} ${building.number}, ${building.city} ${building.postal_code}`,
+        manager_phone: building.manager_phone || '210 1234567',
+        manager_email: building.manager_email || 'manager@building.gr',
+      }));
+    }
+  };
 
   const {
     register,
@@ -251,17 +287,41 @@ export default function SendNotificationPage() {
                             {`{{${key}}}`}
                           </code>
                         </Label>
-                        <Input
-                          value={value}
-                          onChange={(e) =>
-                            setContext((prev) => ({
-                              ...prev,
-                              [key]: e.target.value,
-                            }))
-                          }
-                          placeholder={`Εισάγετε ${key.replace(/_/g, ' ')}`}
-                          className="font-mono text-sm"
-                        />
+                        {isDropdownField(key) ? (
+                          <Select
+                            value={value}
+                            onValueChange={(val) => {
+                              if (key === 'building_name') {
+                                handleBuildingSelect(val);
+                              } else {
+                                setContext((prev) => ({...prev, [key]: val}));
+                              }
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={`Επιλέξτε ${key.replace(/_/g, ' ')}`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getDropdownOptions(key).map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            value={value}
+                            onChange={(e) =>
+                              setContext((prev) => ({
+                                ...prev,
+                                [key]: e.target.value,
+                              }))
+                            }
+                            placeholder={`Εισάγετε ${key.replace(/_/g, ' ')}`}
+                            className="font-mono text-sm"
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
