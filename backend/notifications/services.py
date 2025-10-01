@@ -124,7 +124,7 @@ class NotificationService:
         return recipients_created
 
     @staticmethod
-    def send_notification(notification):
+    def send_notification(notification, attachment_path=None):
         """
         Send notification to all recipients.
 
@@ -155,6 +155,7 @@ class NotificationService:
                         recipient=recipient,
                         subject=notification.subject,
                         body=notification.body,
+                        attachment=notification.attachment if notification.attachment else None,
                     )
                     if success:
                         success_count += 1
@@ -199,7 +200,7 @@ class EmailService:
     """
 
     @staticmethod
-    def send_email(recipient, subject, body):
+    def send_email(recipient, subject, body, attachment=None):
         """
         Send email to a recipient.
 
@@ -207,6 +208,7 @@ class EmailService:
             recipient: NotificationRecipient instance
             subject: Email subject
             body: Email body (plain text or HTML)
+            attachment: FileField instance or file path (optional)
 
         Returns:
             bool: True if sent successfully
@@ -228,6 +230,27 @@ class EmailService:
             # Attach HTML version (if body contains HTML tags)
             if '<' in body and '>' in body:
                 email.attach_alternative(body, "text/html")
+
+            # Attach file if provided
+            if attachment:
+                try:
+                    # If attachment is a FileField, use its file
+                    if hasattr(attachment, 'file'):
+                        email.attach(
+                            attachment.name.split('/')[-1],  # filename
+                            attachment.file.read(),
+                            None  # auto-detect mimetype
+                        )
+                        attachment.file.seek(0)  # reset file pointer
+                    # If attachment is a file path string
+                    elif isinstance(attachment, str):
+                        import os
+                        filename = os.path.basename(attachment)
+                        with open(attachment, 'rb') as f:
+                            email.attach(filename, f.read(), None)
+                except Exception as attach_error:
+                    logger.error(f"Failed to attach file: {str(attach_error)}")
+                    # Continue sending email without attachment
 
             # Send
             email.send(fail_silently=False)

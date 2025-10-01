@@ -267,6 +267,74 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
+    @action(detail=False, methods=['post'])
+    def send_common_expenses(self, request):
+        """
+        Send common expenses sheet notification with JPG attachment.
+
+        POST /api/notifications/send_common_expenses/
+        Body (multipart/form-data):
+            - attachment: JPG file
+            - subject: Email subject
+            - body: Email body
+            - month: Month string (e.g., "2025-10")
+            - building_id: Building ID
+            - send_to_all: Boolean (default: true)
+        """
+        from buildings.models import Building
+        from django.core.files.base import ContentFile
+
+        # Get form data
+        attachment_file = request.FILES.get('attachment')
+        subject = request.data.get('subject', 'Λογαριασμός Κοινοχρήστων')
+        body = request.data.get('body', '')
+        building_id = request.data.get('building_id')
+        send_to_all = request.data.get('send_to_all', 'true').lower() == 'true'
+
+        if not attachment_file:
+            return Response(
+                {'error': 'Attachment file is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get building
+        building = get_object_or_404(Building, id=building_id)
+
+        # Create notification
+        notification = NotificationService.create_notification(
+            building=building,
+            created_by=request.user,
+            subject=subject,
+            body=body,
+            notification_type='email',
+            priority='normal',
+        )
+
+        # Save attachment
+        notification.attachment.save(
+            attachment_file.name,
+            ContentFile(attachment_file.read()),
+            save=True
+        )
+
+        # Add recipients
+        NotificationService.add_recipients(
+            notification=notification,
+            send_to_all=send_to_all,
+        )
+
+        # Send immediately
+        result = NotificationService.send_notification(notification)
+
+        return Response({
+            'id': notification.id,
+            'status': 'sent',
+            'total_recipients': notification.total_recipients,
+            'successful_sends': result['success'],
+            'failed_sends': result['failed'],
+            'attachment_url': notification.attachment.url if notification.attachment else None,
+        }, status=status.HTTP_201_CREATED)
+
 
 class NotificationRecipientViewSet(viewsets.ReadOnlyModelViewSet):
     """
