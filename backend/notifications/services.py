@@ -365,7 +365,7 @@ class MonthlyTaskService:
         Returns:
             Notification instance
         """
-        from financial.models import CommonExpense, Transaction
+        from financial.models import CommonExpensePeriod, ApartmentShare, Transaction
         from buildings.models import Building
         
         # Get building (or all buildings if task.building is None)
@@ -413,7 +413,7 @@ class MonthlyTaskService:
     @staticmethod
     def _generate_common_expense_notification(building, apartments, template, period_month, user):
         """Generate personalized common expense bill for each apartment."""
-        from financial.models import CommonExpense, Transaction
+        from financial.models import CommonExpensePeriod, ApartmentShare, Transaction
         
         # Calculate period range
         period_start = period_month
@@ -589,23 +589,33 @@ class MonthlyTaskService:
     @staticmethod
     def _calculate_common_expense(apartment, period_month):
         """Calculate common expense for apartment for given period."""
-        from financial.models import CommonExpense
-        
-        # Get common expense for period
+        from financial.models import CommonExpensePeriod, ApartmentShare
+
+        # Get common expense period for this month
         try:
-            common_expense = CommonExpense.objects.filter(
+            # Find period that includes this month
+            period = CommonExpensePeriod.objects.filter(
                 building=apartment.building,
-                period_start__year=period_month.year,
-                period_start__month=period_month.month
+                start_date__year=period_month.year,
+                start_date__month=period_month.month
             ).first()
-            
-            if common_expense:
-                # Get apartment share from CommonExpenseShare
-                share = common_expense.shares.filter(apartment=apartment).first()
-                return share.expense_share if share else 0.0
+
+            if period:
+                # Get apartment share for this period
+                share = ApartmentShare.objects.filter(
+                    period=period,
+                    apartment=apartment
+                ).first()
+
+                if share:
+                    return float(share.total_amount)
+                else:
+                    logger.warning(f"No ApartmentShare found for {apartment.apartment_number} in period {period.period_name}")
+            else:
+                logger.warning(f"No CommonExpensePeriod found for {apartment.building.name} in {period_month.strftime('%m/%Y')}")
         except Exception as e:
             logger.error(f"Error calculating common expense: {e}")
-        
+
         return 0.0
 
     @staticmethod
