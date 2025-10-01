@@ -148,6 +148,40 @@ export const notificationsApi = {
     );
     return response.data;
   },
+
+  /**
+   * Send common expenses sheet with JPG attachment
+   */
+  sendCommonExpenses: async (data: {
+    attachment: File;
+    subject: string;
+    body: string;
+    building_id: number;
+    month?: string;
+    send_to_all?: boolean;
+  }) => {
+    const formData = new FormData();
+    formData.append('attachment', data.attachment);
+    formData.append('subject', data.subject);
+    formData.append('body', data.body);
+    formData.append('building_id', String(data.building_id));
+    if (data.month) formData.append('month', data.month);
+    formData.append('send_to_all', String(data.send_to_all ?? true));
+
+    const response = await apiClient.post<{
+      id: number;
+      status: string;
+      total_recipients: number;
+      successful_sends: number;
+      failed_sends: number;
+      attachment_url?: string;
+    }>(`${BASE_URL}/notifications/send_common_expenses/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 };
 
 /**
