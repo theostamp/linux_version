@@ -100,6 +100,19 @@ export default function SendNotificationPage() {
       setValue('subject', template.subject);
       setValue('body', template.body_template);
       setValue('sms_body', template.sms_template);
+
+      // Initialize context with empty values for template variables
+      const newContext: Record<string, string> = {};
+      template.available_variables.forEach((variable) => {
+        // Set default values for common variables
+        if (variable === 'building_name') newContext[variable] = 'Αλκμάνος 22';
+        else if (variable === 'building_address') newContext[variable] = 'Αλκμάνος 22, Αθήνα 116 36';
+        else if (variable === 'current_date') newContext[variable] = new Date().toLocaleDateString('el-GR');
+        else if (variable === 'manager_phone') newContext[variable] = '210 1234567';
+        else if (variable === 'manager_email') newContext[variable] = 'manager@building.gr';
+        else newContext[variable] = ''; // Empty for user to fill
+      });
+      setContext(newContext);
     }
   };
 
@@ -222,13 +235,22 @@ export default function SendNotificationPage() {
               </div>
 
               {/* Template Context Variables */}
-              {selectedTemplateId && (
-                <div className="space-y-2">
-                  <Label>Μεταβλητές Template</Label>
+              {selectedTemplateId && Object.keys(context).length > 0 && (
+                <div className="space-y-3 border-t pt-4">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-base font-semibold">Παράμετροι Template</Label>
+                    <span className="text-xs text-muted-foreground">
+                      (Συμπληρώστε τις τιμές για τις μεταβλητές)
+                    </span>
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     {Object.entries(context).map(([key, value]) => (
-                      <div key={key}>
-                        <Label className="text-xs">{`{{${key}}}`}</Label>
+                      <div key={key} className="space-y-1">
+                        <Label className="text-sm font-medium">
+                          <code className="bg-muted px-1.5 py-0.5 rounded text-xs">
+                            {`{{${key}}}`}
+                          </code>
+                        </Label>
                         <Input
                           value={value}
                           onChange={(e) =>
@@ -237,7 +259,8 @@ export default function SendNotificationPage() {
                               [key]: e.target.value,
                             }))
                           }
-                          placeholder={key}
+                          placeholder={`Εισάγετε ${key.replace(/_/g, ' ')}`}
+                          className="font-mono text-sm"
                         />
                       </div>
                     ))}

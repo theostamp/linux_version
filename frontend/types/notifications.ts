@@ -41,6 +41,7 @@ export interface NotificationTemplate {
   is_active: boolean;
   is_system: boolean;
   building: number;
+  available_variables: string[];
   created_at: string;
   updated_at: string;
 }

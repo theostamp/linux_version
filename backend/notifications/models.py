@@ -78,6 +78,17 @@ class NotificationTemplate(models.Model):
     def __str__(self):
         return f"{self.name} ({self.get_category_display()})"
 
+    def get_available_variables(self):
+        """
+        Extract all placeholder variables from template.
+        Returns list of variable names (without {{ }})
+        """
+        import re
+        text = f"{self.subject} {self.body_template} {self.sms_template}"
+        pattern = r'\{\{(\w+)\}\}'
+        variables = list(set(re.findall(pattern, text)))
+        return sorted(variables)
+
     def render(self, context):
         """
         Render template with provided context variables.

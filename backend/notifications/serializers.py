@@ -10,6 +10,7 @@ class NotificationTemplateSerializer(serializers.ModelSerializer):
     """Serializer for notification templates."""
 
     category_display = serializers.CharField(source='get_category_display', read_only=True)
+    available_variables = serializers.SerializerMethodField()
 
     class Meta:
         model = NotificationTemplate
@@ -25,10 +26,15 @@ class NotificationTemplateSerializer(serializers.ModelSerializer):
             'is_active',
             'is_system',
             'building',
+            'available_variables',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'category_display']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'category_display', 'available_variables']
+
+    def get_available_variables(self, obj):
+        """Get list of placeholder variables from template."""
+        return obj.get_available_variables()
 
     def validate_is_system(self, value):
         """Prevent marking templates as system via API."""
