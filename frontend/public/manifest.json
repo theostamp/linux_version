@@ -1,23 +1,28 @@
 {
-    "name": "Ψηφιακός Θυρωρός",
-    "short_name": "Θυρωρός",
-    "description": "Η εφαρμογή διαχείρισης πολυκατοικίας.",
-    "start_url": "/announcements",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#0a0a0a",
-    "orientation": "portrait",
-    "icons": [
-      {
-        "src": "/icons/icon-192x192.png",
-        "sizes": "192x192",
-        "type": "image/png"
-      },
-      {
-        "src": "/icons/icon-512x512.png",
-        "sizes": "512x512",
-        "type": "image/png"
-      }
-    ]
-  }
+  "name": "New Concierge - Building Management",
+  "short_name": "New Concierge",
+  "description": "Διαχείριση Πολυκατοικίας - Κοινόχρηστα, Ανακοινώσεις, Συντήρηση",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "el",
+  "dir": "ltr"
+}
   

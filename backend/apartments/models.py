@@ -3,6 +3,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
 from buildings.models import Building
+import uuid
 
 
 class Apartment(models.Model):
@@ -190,7 +191,16 @@ class Apartment(models.Model):
         blank=True,
         verbose_name='Σημειώσεις'
     )
-    
+
+    # Kiosk QR Code access
+    kiosk_token = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        verbose_name='Kiosk Access Token',
+        help_text='Μοναδικό token για QR code access στο personal dashboard'
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

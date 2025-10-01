@@ -541,7 +541,7 @@ git commit -m "διορθωσεις notifications 6"
 
 ## Βασικές Εντολές Git
 git add .
-git commit -m "διορθωσεις notifications 7"
+git commit -m "διορθωσεις notifications 8"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

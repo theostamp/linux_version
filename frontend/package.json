@@ -18,6 +18,7 @@
     "performance": "npm run build && npm run analyze"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@googlemaps/js-api-loader": "^1.16.10",
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.2.1",
@@ -96,6 +97,7 @@
   "devDependencies": {
     "@playwright/test": "^1.55.0",
     "@types/file-saver": "^2.0.7",
+    "@types/minimatch": "^6.0.0",
     "@types/node": "^20.17.32",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19.1.12",

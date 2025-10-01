@@ -447,10 +447,10 @@ class MonthlyTaskService:
                 'previous_balance': f"{previous_balance:.2f}€",
                 'total_amount': f"{total_amount:.2f}€",
                 'due_date': (period_end + timezone.timedelta(days=10)).strftime('%d/%m/%Y'),
-                'bank_account': building.bank_account or 'GR00 0000 0000 0000 0000 0000 000',
-                'building_name': building.name or f"{building.street} {building.number}",
-                'manager_phone': building.manager_phone or '210 1234567',
-                'manager_email': building.manager_email or 'manager@building.gr',
+                'bank_account': 'GR00 0000 0000 0000 0000 0000 000',  # TODO: Add to Building model
+                'building_name': building.name or building.address,
+                'manager_phone': building.internal_manager_phone or building.management_office_phone or '210 1234567',
+                'manager_email': building.management_office_address or 'manager@building.gr',
             }
             
             # Render template
