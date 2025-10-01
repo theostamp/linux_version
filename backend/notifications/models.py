@@ -6,6 +6,7 @@ from django.utils import timezone
 from buildings.models import Building
 from apartments.models import Apartment
 from users.models import CustomUser
+from dateutil.relativedelta import relativedelta
 
 
 class NotificationTemplate(models.Model):
@@ -259,6 +260,132 @@ class Notification(models.Model):
         self.successful_sends = stats['successful']
         self.failed_sends = stats['failed']
         self.save(update_fields=['total_recipients', 'successful_sends', 'failed_sends'])
+
+
+class MonthlyNotificationTask(models.Model):
+    """
+    Tracks monthly recurring notification tasks (e.g., common expense bills).
+    Supports both manual confirmation and automatic sending.
+    """
+
+    TASK_TYPE_CHOICES = [
+        ('common_expense', 'Λογαριασμός Κοινοχρήστων'),
+        ('balance_reminder', 'Υπενθύμιση Οφειλών'),
+        ('custom', 'Προσαρμοσμένη'),
+    ]
+
+    STATUS_CHOICES = [
+        ('pending_confirmation', 'Αναμονή Επιβεβαίωσης'),
+        ('confirmed', 'Επιβεβαιωμένη'),
+        ('sent', 'Απεσταλμένη'),
+        ('skipped', 'Παραλήφθηκε'),
+        ('auto_sent', 'Απεστάλη Αυτόματα'),
+    ]
+
+    # Task configuration
+    task_type = models.CharField(
+        max_length=50,
+        choices=TASK_TYPE_CHOICES,
+        default='common_expense'
+    )
+    building = models.ForeignKey(
+        Building,
+        on_delete=models.CASCADE,
+        related_name='monthly_tasks',
+        null=True,
+        blank=True,
+        help_text="Null = applies to all buildings"
+    )
+    template = models.ForeignKey(
+        NotificationTemplate,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    # Scheduling
+    day_of_month = models.IntegerField(
+        default=1,
+        help_text="Day of month to trigger (1-31)"
+    )
+    time_to_send = models.TimeField(
+        default='09:00',
+        help_text="Time to send notification"
+    )
+
+    # Automation settings
+    auto_send_enabled = models.BooleanField(
+        default=False,
+        help_text="If True, send automatically without confirmation"
+    )
+
+    # Period tracking
+    period_month = models.DateField(
+        help_text="Month this task is for (YYYY-MM-01)"
+    )
+
+    # Status
+    status = models.CharField(
+        max_length=50,
+        choices=STATUS_CHOICES,
+        default='pending_confirmation',
+        db_index=True
+    )
+
+    # Related notification (after sending)
+    notification = models.ForeignKey(
+        'Notification',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='monthly_task'
+    )
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    # User who confirmed (if manual)
+    confirmed_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        ordering = ['-period_month', '-created_at']
+        indexes = [
+            models.Index(fields=['period_month', 'status']),
+            models.Index(fields=['building', 'period_month']),
+        ]
+        unique_together = [
+            ('building', 'task_type', 'period_month'),
+        ]
+
+    def __str__(self):
+        building_name = self.building.name if self.building else "Όλα τα κτίρια"
+        return f"{self.get_task_type_display()} - {building_name} - {self.period_month.strftime('%m/%Y')}"
+
+    @property
+    def is_due(self):
+        """Check if task is due to be sent."""
+        now = timezone.now()
+        target_date = self.period_month.replace(day=self.day_of_month)
+        target_datetime = timezone.make_aware(
+            timezone.datetime.combine(target_date, self.time_to_send)
+        )
+        return now >= target_datetime
+
+    @property
+    def can_auto_send(self):
+        """Check if task can be sent automatically."""
+        return (
+            self.auto_send_enabled
+            and self.status == 'pending_confirmation'
+            and self.is_due
+        )
 
 
 class NotificationRecipient(models.Model):

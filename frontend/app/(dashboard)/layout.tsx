@@ -1,7 +1,7 @@
 // frontend/app/(dashboard)/layout.tsx
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { Loader2 } from 'lucide-react';
@@ -13,6 +13,8 @@ import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
 import GoToTopButton from '@/components/GoToTopButton';
 import { TodoSidebarProvider } from '@/components/todos/TodoSidebarContext';
 import TodoSidebar from '@/components/todos/TodoSidebar';
+import { MonthlyTaskReminderModal } from '@/components/notifications/MonthlyTaskReminderModal';
+import { useMonthlyTasksReminder } from '@/hooks/useMonthlyTasksReminder';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -25,6 +27,21 @@ export default function DashboardLayout({ children, fullWidth = false }: Dashboa
   const { isLoading: buildingLoading } = useBuilding();
 
   const isLoading = authLoading || buildingLoading || !isAuthReady;
+
+  // Monthly tasks reminder
+  const { data: pendingTasks = [] } = useMonthlyTasksReminder();
+  const [showTaskModal, setShowTaskModal] = useState(false);
+
+  // Show modal when pending tasks are detected
+  useEffect(() => {
+    if (pendingTasks && pendingTasks.length > 0 && user && isAuthReady) {
+      // Show modal 2 seconds after dashboard loads
+      const timer = setTimeout(() => {
+        setShowTaskModal(true);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [pendingTasks, user, isAuthReady]);
 
   if (isLoading) {
     return (
@@ -85,7 +102,14 @@ export default function DashboardLayout({ children, fullWidth = false }: Dashboa
         
         {/* Go to Top Button */}
         <GoToTopButton />
-        
+
+        {/* Monthly Tasks Reminder Modal */}
+        <MonthlyTaskReminderModal
+          tasks={pendingTasks || []}
+          open={showTaskModal}
+          onClose={() => setShowTaskModal(false)}
+        />
+
         <Toaster position="top-right" />
         <SonnerToaster position="top-right" richColors />
       </div>

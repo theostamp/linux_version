@@ -143,3 +143,41 @@ export interface TemplatePreviewResponse {
   body: string;
   sms: string;
 }
+
+// Monthly Notification Tasks
+export type MonthlyTaskType = 'common_expense' | 'balance_reminder' | 'custom';
+
+export type MonthlyTaskStatus =
+  | 'pending_confirmation'
+  | 'confirmed'
+  | 'sent'
+  | 'skipped'
+  | 'auto_sent';
+
+export interface MonthlyNotificationTask {
+  id: number;
+  task_type: MonthlyTaskType;
+  task_type_display: string;
+  building: number | null;
+  building_name: string;
+  template: number | null;
+  template_name: string;
+  day_of_month: number;
+  time_to_send: string;
+  auto_send_enabled: boolean;
+  period_month: string; // YYYY-MM-DD format
+  status: MonthlyTaskStatus;
+  status_display: string;
+  notification: number | null;
+  created_at: string;
+  confirmed_at: string | null;
+  sent_at: string | null;
+  confirmed_by: number | null;
+  is_due: boolean;
+  can_auto_send: boolean;
+}
+
+export interface MonthlyTaskConfirmRequest {
+  send_immediately?: boolean;
+  enable_auto_send?: boolean;
+}

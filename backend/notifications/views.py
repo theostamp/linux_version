@@ -9,7 +9,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, Count, Avg
 from django.shortcuts import get_object_or_404
 
-from .models import NotificationTemplate, Notification, NotificationRecipient
+from .models import (
+    NotificationTemplate,
+    Notification,
+    NotificationRecipient,
+    MonthlyNotificationTask
+)
 from .serializers import (
     NotificationTemplateSerializer,
     NotificationSerializer,
@@ -17,6 +22,8 @@ from .serializers import (
     NotificationCreateSerializer,
     NotificationStatisticsSerializer,
     NotificationTemplatePreviewSerializer,
+    MonthlyNotificationTaskSerializer,
+    MonthlyTaskConfirmSerializer,
 )
 from .services import NotificationService, TemplateService
 
@@ -278,4 +285,145 @@ class NotificationRecipientViewSet(viewsets.ReadOnlyModelViewSet):
         # TODO: Add proper building permission filtering
         return NotificationRecipient.objects.select_related(
             'notification', 'apartment'
+        )
+
+
+class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for monthly notification tasks.
+    
+    Supports:
+    - Listing pending tasks
+    - Confirming tasks (with optional auto-send enable)
+    - Skipping tasks
+    - Enabling/disabling auto-send
+    """
+    
+    serializer_class = MonthlyNotificationTaskSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['status', 'task_type', 'building', 'period_month']
+    
+    def get_queryset(self):
+        """Filter by building context."""
+        building_id = self.request.query_params.get('building_id')
+        
+        queryset = MonthlyNotificationTask.objects.select_related(
+            'building',
+            'template',
+            'notification',
+            'confirmed_by'
+        )
+        
+        if building_id:
+            queryset = queryset.filter(
+                Q(building_id=building_id) | Q(building__isnull=True)
+            )
+        
+        return queryset.order_by('-period_month', '-created_at')
+    
+    @action(detail=False, methods=['get'])
+    def pending(self, request):
+        """
+        Get all pending tasks that need confirmation.
+        Used for dashboard modal.
+        """
+        queryset = self.get_queryset().filter(
+            status='pending_confirmation',
+            period_month__lte=timezone.now().date()
+        )
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def confirm(self, request, pk=None):
+        """
+        Confirm a monthly task and optionally send immediately.
+        
+        Body:
+        {
+            "send_immediately": true,
+            "enable_auto_send": false
+        }
+        """
+        task = self.get_object()
+        
+        if task.status != 'pending_confirmation':
+            return Response(
+                {'error': 'Task is not pending confirmation'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        serializer = MonthlyTaskConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # Update auto-send setting
+        if serializer.validated_data.get('enable_auto_send'):
+            task.auto_send_enabled = True
+        
+        # Confirm task
+        task.status = 'confirmed'
+        task.confirmed_at = timezone.now()
+        task.confirmed_by = request.user
+        task.save()
+        
+        # Send notification if requested
+        if serializer.validated_data.get('send_immediately', True):
+            from .services import MonthlyTaskService
+            notification = MonthlyTaskService.execute_task(task, request.user)
+            
+            task.notification = notification
+            task.status = 'sent'
+            task.sent_at = timezone.now()
+            task.save()
+        
+        return Response(
+            MonthlyNotificationTaskSerializer(task).data,
+            status=status.HTTP_200_OK
+        )
+    
+    @action(detail=True, methods=['post'])
+    def skip(self, request, pk=None):
+        """Skip a monthly task for this period."""
+        task = self.get_object()
+        
+        if task.status not in ['pending_confirmation', 'confirmed']:
+            return Response(
+                {'error': 'Cannot skip this task'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        task.status = 'skipped'
+        task.save()
+        
+        return Response(
+            MonthlyNotificationTaskSerializer(task).data,
+            status=status.HTTP_200_OK
+        )
+    
+    @action(detail=True, methods=['post'])
+    def enable_auto_send(self, request, pk=None):
+        """Enable automatic sending for this task (future periods)."""
+        task = self.get_object()
+        
+        task.auto_send_enabled = True
+        task.save()
+        
+        return Response(
+            {'message': 'Auto-send enabled', 'auto_send_enabled': True},
+            status=status.HTTP_200_OK
+        )
+    
+    @action(detail=True, methods=['post'])
+    def disable_auto_send(self, request, pk=None):
+        """Disable automatic sending for this task."""
+        task = self.get_object()
+        
+        task.auto_send_enabled = False
+        task.save()
+        
+        return Response(
+            {'message': 'Auto-send disabled', 'auto_send_enabled': False},
+            status=status.HTTP_200_OK
         )

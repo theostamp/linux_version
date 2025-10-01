@@ -2,7 +2,12 @@
 DRF Serializers for notifications app.
 """
 from rest_framework import serializers
-from .models import NotificationTemplate, Notification, NotificationRecipient
+from .models import (
+    NotificationTemplate,
+    Notification,
+    NotificationRecipient,
+    MonthlyNotificationTask
+)
 from apartments.models import Apartment
 
 
@@ -258,3 +263,57 @@ class NotificationStatisticsSerializer(serializers.Serializer):
     by_type = serializers.DictField(child=serializers.IntegerField())
     by_status = serializers.DictField(child=serializers.IntegerField())
     recent_notifications = NotificationSerializer(many=True)
+
+
+class MonthlyNotificationTaskSerializer(serializers.ModelSerializer):
+    """Serializer for monthly notification tasks."""
+
+    task_type_display = serializers.CharField(source='get_task_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    building_name = serializers.CharField(source='building.name', read_only=True)
+    template_name = serializers.CharField(source='template.name', read_only=True)
+    is_due = serializers.BooleanField(read_only=True)
+    can_auto_send = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = MonthlyNotificationTask
+        fields = [
+            'id',
+            'task_type',
+            'task_type_display',
+            'building',
+            'building_name',
+            'template',
+            'template_name',
+            'day_of_month',
+            'time_to_send',
+            'auto_send_enabled',
+            'period_month',
+            'status',
+            'status_display',
+            'notification',
+            'created_at',
+            'confirmed_at',
+            'sent_at',
+            'confirmed_by',
+            'is_due',
+            'can_auto_send',
+        ]
+        read_only_fields = [
+            'id',
+            'notification',
+            'created_at',
+            'confirmed_at',
+            'sent_at',
+            'confirmed_by',
+        ]
+
+
+class MonthlyTaskConfirmSerializer(serializers.Serializer):
+    """Serializer for confirming a monthly task."""
+
+    send_immediately = serializers.BooleanField(default=True)
+    enable_auto_send = serializers.BooleanField(
+        default=False,
+        help_text="Enable automatic sending for future months"
+    )

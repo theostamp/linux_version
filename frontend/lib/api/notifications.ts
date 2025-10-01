@@ -180,3 +180,88 @@ export const notificationRecipientsApi = {
     return response.data;
   },
 };
+
+/**
+ * Monthly Notification Tasks API
+ */
+export const monthlyTasksApi = {
+  /**
+   * Get all monthly tasks
+   */
+  list: async (params?: {
+    status?: string;
+    task_type?: string;
+    building?: number;
+    period_month?: string;
+  }) => {
+    const response = await apiClient.get<{ results: import('@/types/notifications').MonthlyNotificationTask[] }>(
+      `${BASE_URL}/monthly-tasks/`,
+      { params }
+    );
+    return response.data.results || response.data as any;
+  },
+
+  /**
+   * Get pending tasks (for modal)
+   */
+  pending: async () => {
+    const response = await apiClient.get<import('@/types/notifications').MonthlyNotificationTask[]>(
+      `${BASE_URL}/monthly-tasks/pending/`
+    );
+    return response.data;
+  },
+
+  /**
+   * Get task by ID
+   */
+  get: async (id: number) => {
+    const response = await apiClient.get<import('@/types/notifications').MonthlyNotificationTask>(
+      `${BASE_URL}/monthly-tasks/${id}/`
+    );
+    return response.data;
+  },
+
+  /**
+   * Confirm a monthly task
+   */
+  confirm: async (
+    id: number,
+    data: import('@/types/notifications').MonthlyTaskConfirmRequest
+  ) => {
+    const response = await apiClient.post<import('@/types/notifications').MonthlyNotificationTask>(
+      `${BASE_URL}/monthly-tasks/${id}/confirm/`,
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Skip a monthly task
+   */
+  skip: async (id: number) => {
+    const response = await apiClient.post<import('@/types/notifications').MonthlyNotificationTask>(
+      `${BASE_URL}/monthly-tasks/${id}/skip/`
+    );
+    return response.data;
+  },
+
+  /**
+   * Enable auto-send for task
+   */
+  enableAutoSend: async (id: number) => {
+    const response = await apiClient.post<{ message: string; auto_send_enabled: boolean }>(
+      `${BASE_URL}/monthly-tasks/${id}/enable_auto_send/`
+    );
+    return response.data;
+  },
+
+  /**
+   * Disable auto-send for task
+   */
+  disableAutoSend: async (id: number) => {
+    const response = await apiClient.post<{ message: string; auto_send_enabled: boolean }>(
+      `${BASE_URL}/monthly-tasks/${id}/disable_auto_send/`
+    );
+    return response.data;
+  },
+};
