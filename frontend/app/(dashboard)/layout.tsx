@@ -33,8 +33,32 @@ export default function DashboardLayout({ children, fullWidth = false }: Dashboa
   const [showTaskModal, setShowTaskModal] = useState(false);
 
   // Show modal when pending tasks are detected
+  // Persistence Logic:
+  // - If user dismisses/skips: Modal hides but reappears on next login/refresh (same day)
+  // - If user sends notification: localStorage cleared, modal won't reappear
+  // - If new day: Dismissal cleared, modal shows again for unsent tasks
   useEffect(() => {
     if (pendingTasks && pendingTasks.length > 0 && user && isAuthReady) {
+      // Check localStorage to see if user has dismissed this task today
+      const taskId = pendingTasks[0].id;
+      const dismissKey = `monthly-task-dismissed-${taskId}`;
+      const dismissedUntil = localStorage.getItem(dismissKey);
+
+      // If task was dismissed, check if it's still the same day
+      if (dismissedUntil) {
+        const dismissedDate = new Date(dismissedUntil);
+        const now = new Date();
+
+        // If it's a new day or different task, show modal again
+        if (dismissedDate.toDateString() === now.toDateString()) {
+          // Still same day - don't show modal
+          return;
+        } else {
+          // New day - clear old dismissal and show modal
+          localStorage.removeItem(dismissKey);
+        }
+      }
+
       // Show modal 2 seconds after dashboard loads
       const timer = setTimeout(() => {
         setShowTaskModal(true);
@@ -42,6 +66,19 @@ export default function DashboardLayout({ children, fullWidth = false }: Dashboa
       return () => clearTimeout(timer);
     }
   }, [pendingTasks, user, isAuthReady]);
+
+  // Handle modal close - store dismissal in localStorage
+  const handleModalClose = () => {
+    setShowTaskModal(false);
+
+    // If task was skipped (not sent), store dismissal date
+    // This will show modal again on next login/page refresh
+    if (pendingTasks && pendingTasks.length > 0) {
+      const taskId = pendingTasks[0].id;
+      const dismissKey = `monthly-task-dismissed-${taskId}`;
+      localStorage.setItem(dismissKey, new Date().toISOString());
+    }
+  };
 
   if (isLoading) {
     return (
@@ -107,7 +144,7 @@ export default function DashboardLayout({ children, fullWidth = false }: Dashboa
         <MonthlyTaskReminderModal
           tasks={pendingTasks || []}
           open={showTaskModal}
-          onClose={() => setShowTaskModal(false)}
+          onClose={handleModalClose}
         />
 
         <Toaster position="top-right" />

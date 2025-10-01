@@ -42,13 +42,20 @@ export function MonthlyTaskReminderModal({
         enable_auto_send: enableAutoSend,
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: 'Επιτυχία',
         description: enableAutoSend
           ? 'Η ειδοποίηση στάλθηκε και η αυτόματη αποστολή ενεργοποιήθηκε'
           : 'Η ειδοποίηση στάλθηκε επιτυχώς',
       });
+
+      // Clear localStorage dismissal since task was sent successfully
+      if (tasks.length > 0) {
+        const dismissKey = `monthly-task-dismissed-${tasks[0].id}`;
+        localStorage.removeItem(dismissKey);
+      }
+
       queryClient.invalidateQueries({ queryKey: ['monthly-tasks'] });
       onClose();
     },
