@@ -27,11 +27,12 @@ export const notificationTemplatesApi = {
     is_active?: boolean;
     building?: number;
   }) => {
-    const response = await apiClient.get<NotificationTemplate[]>(
+    const response = await apiClient.get<{ results: NotificationTemplate[] }>(
       `${BASE_URL}/templates/`,
       { params }
     );
-    return response.data;
+    // Return just the results array from paginated response
+    return response.data.results || response.data as any;
   },
 
   /**
@@ -98,11 +99,12 @@ export const notificationsApi = {
     priority?: string;
     building?: number;
   }) => {
-    const response = await apiClient.get<Notification[]>(
+    const response = await apiClient.get<{ results: Notification[] }>(
       `${BASE_URL}/notifications/`,
       { params }
     );
-    return response.data;
+    // Return just the results array from paginated response
+    return response.data.results || response.data as any;
   },
 
   /**
@@ -160,11 +162,12 @@ export const notificationRecipientsApi = {
     notification?: number;
     apartment?: number;
   }) => {
-    const response = await apiClient.get<NotificationRecipient[]>(
+    const response = await apiClient.get<{ results: NotificationRecipient[] }>(
       `${BASE_URL}/recipients/`,
       { params }
     );
-    return response.data;
+    // Return just the results array from paginated response
+    return response.data.results || response.data as any;
   },
 
   /**

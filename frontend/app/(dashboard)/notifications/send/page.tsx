@@ -66,18 +66,9 @@ export default function SendNotificationPage() {
     manager_email: 'manager@building.gr',
   });
 
-  const { data: templates, isLoading: templatesLoading, error: templatesError } = useNotificationTemplates({ is_active: true });
+  const { data: templates } = useNotificationTemplates({ is_active: true });
   const createMutation = useCreateNotification();
   const previewMutation = usePreviewTemplate();
-
-  // Debug logging
-  useEffect(() => {
-    console.log('[SendNotificationPage] Templates data:', templates);
-    console.log('[SendNotificationPage] Is Array:', Array.isArray(templates));
-    console.log('[SendNotificationPage] Templates length:', templates?.length);
-    console.log('[SendNotificationPage] Loading:', templatesLoading);
-    console.log('[SendNotificationPage] Error:', templatesError);
-  }, [templates, templatesLoading, templatesError]);
 
   const {
     register,
