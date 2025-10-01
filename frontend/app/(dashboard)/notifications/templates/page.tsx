@@ -71,17 +71,19 @@ export default function NotificationTemplatesPage() {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-8 animate-fade-in-up">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Templates Ειδοποιήσεων</h1>
-          <p className="text-muted-foreground">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-heading font-bold tracking-tight text-foreground">
+            Templates Ειδοποιήσεων
+          </h1>
+          <p className="text-lg text-muted-foreground leading-relaxed">
             Διαχείριση προκαθορισμένων templates για μαζικές ειδοποιήσεις
           </p>
         </div>
 
-        <Button size="lg" disabled>
+        <Button size="lg" disabled className="bg-gradient-secondary hover:shadow-lg transition-all duration-300">
           <Plus className="w-4 h-4 mr-2" />
           Νέο Template
           <Badge variant="outline" className="ml-2">
@@ -91,60 +93,71 @@ export default function NotificationTemplatesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Σύνολο Templates</p>
-              <p className="text-2xl font-bold">{templates?.length || 0}</p>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Σύνολο Templates</p>
+              <p className="text-3xl font-heading font-bold text-foreground">{templates?.length || 0}</p>
             </div>
-            <FileText className="w-8 h-8 text-blue-500" />
+            <div className="p-3 rounded-full bg-primary/10">
+              <FileText className="w-6 h-6 text-primary" />
+            </div>
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Πληρωμές</p>
-              <p className="text-2xl font-bold">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Πληρωμές</p>
+              <p className="text-3xl font-heading font-bold text-success">
                 {templates?.filter((t) => t.category === 'payment').length || 0}
               </p>
             </div>
-            <DollarSign className="w-8 h-8 text-green-500" />
+            <div className="p-3 rounded-full bg-success/10">
+              <DollarSign className="w-6 h-6 text-success" />
+            </div>
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Συντήρηση</p>
-              <p className="text-2xl font-bold">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Συντήρηση</p>
+              <p className="text-3xl font-heading font-bold text-warning">
                 {templates?.filter((t) => t.category === 'maintenance').length || 0}
               </p>
             </div>
-            <Wrench className="w-8 h-8 text-orange-500" />
+            <div className="p-3 rounded-full bg-warning/10">
+              <Wrench className="w-6 h-6 text-warning" />
+            </div>
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Συναντήσεις</p>
-              <p className="text-2xl font-bold">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Συναντήσεις</p>
+              <p className="text-3xl font-heading font-bold text-accent">
                 {templates?.filter((t) => t.category === 'meeting').length || 0}
               </p>
             </div>
-            <Users className="w-8 h-8 text-purple-500" />
+            <div className="p-3 rounded-full bg-accent/10">
+              <Users className="w-6 h-6 text-accent" />
+            </div>
           </div>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card className="p-4">
-        <div className="flex gap-4">
+      <Card className="p-6 bg-gradient-to-br from-card to-surface border-border/50">
+        <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Κατηγορία
+            </label>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-background/50 border-border/50">
                 <SelectValue placeholder="Όλες οι κατηγορίες" />
               </SelectTrigger>
               <SelectContent>
@@ -160,51 +173,72 @@ export default function NotificationTemplatesPage() {
           </div>
 
           {categoryFilter !== 'all' && (
-            <Button variant="outline" onClick={() => setCategoryFilter('all')}>
-              Καθαρισμός
-            </Button>
+            <div className="flex items-end">
+              <Button 
+                variant="outline" 
+                onClick={() => setCategoryFilter('all')}
+                className="bg-background/50 border-border/50 hover:bg-muted/50"
+              >
+                Καθαρισμός
+              </Button>
+            </div>
           )}
         </div>
       </Card>
 
       {/* Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading && (
-          <Card className="p-8 col-span-full text-center text-muted-foreground">
-            Φόρτωση...
+          <Card className="p-12 col-span-full text-center bg-gradient-to-br from-card to-surface border-border/50">
+            <div className="animate-pulse">
+              <div className="w-12 h-12 mx-auto mb-4 bg-muted rounded-full"></div>
+              <p className="text-lg font-medium text-muted-foreground">Φόρτωση...</p>
+            </div>
           </Card>
         )}
 
         {!isLoading && templates && templates.length === 0 && (
-          <Card className="p-8 col-span-full text-center">
-            <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-lg font-semibold">Δεν βρέθηκαν templates</p>
-            <p className="text-muted-foreground mb-4">
-              Δημιουργήστε το πρώτο σας template
-            </p>
+          <Card className="p-12 col-span-full text-center bg-gradient-to-br from-card to-surface border-border/50">
+            <div className="space-y-4">
+              <div className="p-4 rounded-full bg-muted/50 w-fit mx-auto">
+                <FileText className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-heading font-semibold text-foreground">
+                  Δεν βρέθηκαν templates
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Δημιουργήστε το πρώτο σας template
+                </p>
+              </div>
+            </div>
           </Card>
         )}
 
         {Array.isArray(templates) && templates.map((template) => (
-          <Card key={template.id} className="p-6 hover:shadow-lg transition-shadow">
-            <div className="space-y-4">
+          <Card key={template.id} className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50 transition-all duration-300 group">
+            <div className="space-y-6">
               {/* Header */}
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge className={getCategoryColor(template.category)}>
-                      <span className="flex items-center gap-1">
-                        {getCategoryIcon(template.category)}
-                        {template.category_display}
-                      </span>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge className={`${getCategoryColor(template.category)} border-0`}>
+                    <span className="flex items-center gap-1">
+                      {getCategoryIcon(template.category)}
+                      {template.category_display}
+                    </span>
+                  </Badge>
+                  {template.is_system && (
+                    <Badge variant="outline" className="border-primary/20 text-primary">
+                      Σύστημα
                     </Badge>
-                    {template.is_system && (
-                      <Badge variant="outline">Σύστημα</Badge>
-                    )}
-                  </div>
-                  <h3 className="text-lg font-semibold">{template.name}</h3>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-heading font-semibold text-foreground group-hover:text-primary transition-colors">
+                    {template.name}
+                  </h3>
                   {template.description && (
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       {template.description}
                     </p>
                   )}
@@ -212,11 +246,11 @@ export default function NotificationTemplatesPage() {
               </div>
 
               {/* Content Preview */}
-              <div className="bg-muted p-3 rounded-lg space-y-2">
-                <p className="text-sm font-semibold line-clamp-1">
+              <div className="bg-muted/50 p-4 rounded-lg space-y-3 border border-border/30">
+                <p className="text-sm font-semibold text-foreground line-clamp-1">
                   {template.subject}
                 </p>
-                <p className="text-xs text-muted-foreground line-clamp-2">
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                   {template.body_template.substring(0, 100)}...
                 </p>
               </div>
@@ -224,12 +258,12 @@ export default function NotificationTemplatesPage() {
               {/* Features */}
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 {template.body_template && (
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary">
                     📧 Email
                   </span>
                 )}
                 {template.sms_template && (
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-accent/10 text-accent">
                     💬 SMS
                   </span>
                 )}
@@ -238,28 +272,29 @@ export default function NotificationTemplatesPage() {
               {/* Actions */}
               <div className="flex gap-2">
                 <Link href={`/notifications/send?template=${template.id}`} className="flex-1">
-                  <Button variant="default" size="sm" className="w-full">
+                  <Button variant="default" size="sm" className="w-full bg-gradient-primary hover:shadow-lg transition-all duration-300">
                     <FileText className="w-4 h-4 mr-2" />
                     Χρήση
                   </Button>
                 </Link>
-                <Button variant="outline" size="sm" disabled>
+                <Button variant="outline" size="sm" disabled className="border-border/50">
                   <Eye className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   disabled={template.is_system}
+                  className="border-border/50"
                 >
                   <Edit className="w-4 h-4" />
                 </Button>
               </div>
 
               {/* Metadata */}
-              <div className="text-xs text-muted-foreground border-t pt-2">
-                <p>
-                  Δημιουργήθηκε:{' '}
-                  {new Date(template.created_at).toLocaleDateString('el-GR')}
+              <div className="text-xs text-muted-foreground border-t border-border/30 pt-3">
+                <p className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground"></span>
+                  Δημιουργήθηκε: {new Date(template.created_at).toLocaleDateString('el-GR')}
                 </p>
               </div>
             </div>

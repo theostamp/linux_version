@@ -87,18 +87,20 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-8 animate-fade-in-up">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Ειδοποιήσεις</h1>
-          <p className="text-muted-foreground">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-heading font-bold tracking-tight text-foreground">
+            Ειδοποιήσεις
+          </h1>
+          <p className="text-lg text-muted-foreground leading-relaxed">
             Ιστορικό αποσταλμένων ειδοποιήσεων Email & SMS
           </p>
         </div>
 
         <Link href="/notifications/send">
-          <Button size="lg">
+          <Button size="lg" className="bg-gradient-primary hover:shadow-lg transition-all duration-300">
             <Send className="w-4 h-4 mr-2" />
             Νέα Ειδοποίηση
           </Button>
@@ -107,57 +109,68 @@ export default function NotificationsPage() {
 
       {/* Statistics Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Σύνολο</p>
-                <p className="text-2xl font-bold">{stats.total_notifications}</p>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Σύνολο</p>
+                <p className="text-3xl font-heading font-bold text-foreground">{stats.total_notifications}</p>
               </div>
-              <Send className="w-8 h-8 text-blue-500" />
+              <div className="p-3 rounded-full bg-primary/10">
+                <Send className="w-6 h-6 text-primary" />
+              </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Επιτυχείς</p>
-                <p className="text-2xl font-bold text-green-600">{stats.total_sent}</p>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Επιτυχείς</p>
+                <p className="text-3xl font-heading font-bold text-success">{stats.total_sent}</p>
               </div>
-              <CheckCircle2 className="w-8 h-8 text-green-500" />
+              <div className="p-3 rounded-full bg-success/10">
+                <CheckCircle2 className="w-6 h-6 text-success" />
+              </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Αποτυχίες</p>
-                <p className="text-2xl font-bold text-red-600">{stats.total_failed}</p>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Αποτυχίες</p>
+                <p className="text-3xl font-heading font-bold text-destructive">{stats.total_failed}</p>
               </div>
-              <XCircle className="w-8 h-8 text-red-500" />
+              <div className="p-3 rounded-full bg-destructive/10">
+                <XCircle className="w-6 h-6 text-destructive" />
+              </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Μέσος Όρος Παράδοσης</p>
-                <p className="text-2xl font-bold">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Μέσος Όρος Παράδοσης</p>
+                <p className="text-3xl font-heading font-bold">
                   {formatDeliveryRate(stats.average_delivery_rate)}
                 </p>
               </div>
-              <TrendingUp className="w-8 h-8 text-blue-500" />
+              <div className="p-3 rounded-full bg-accent/10">
+                <TrendingUp className="w-6 h-6 text-accent" />
+              </div>
             </div>
           </Card>
         </div>
       )}
 
       {/* Filters */}
-      <Card className="p-4">
-        <div className="flex gap-4">
+      <Card className="p-6 bg-gradient-to-br from-card to-surface border-border/50">
+        <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Κατάσταση
+            </label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-background/50 border-border/50">
                 <SelectValue placeholder="Όλες οι καταστάσεις" />
               </SelectTrigger>
               <SelectContent>
@@ -171,8 +184,11 @@ export default function NotificationsPage() {
           </div>
 
           <div className="flex-1">
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Τύπος
+            </label>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-background/50 border-border/50">
                 <SelectValue placeholder="Όλοι οι τύποι" />
               </SelectTrigger>
               <SelectContent>
@@ -185,100 +201,125 @@ export default function NotificationsPage() {
           </div>
 
           {(statusFilter !== 'all' || typeFilter !== 'all') && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setStatusFilter('all');
-                setTypeFilter('all');
-              }}
-            >
-              Καθαρισμός
-            </Button>
+            <div className="flex items-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setStatusFilter('all');
+                  setTypeFilter('all');
+                }}
+                className="bg-background/50 border-border/50 hover:bg-muted/50"
+              >
+                Καθαρισμός
+              </Button>
+            </div>
           )}
         </div>
       </Card>
 
       {/* Notifications List */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {isLoading && (
-          <Card className="p-8 text-center text-muted-foreground">
-            Φόρτωση...
+          <Card className="p-12 text-center bg-gradient-to-br from-card to-surface border-border/50">
+            <div className="animate-pulse">
+              <div className="w-12 h-12 mx-auto mb-4 bg-muted rounded-full"></div>
+              <p className="text-lg font-medium text-muted-foreground">Φόρτωση...</p>
+            </div>
           </Card>
         )}
 
         {!isLoading && notifications && notifications.length === 0 && (
-          <Card className="p-8 text-center">
-            <Send className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-lg font-semibold">Δεν βρέθηκαν ειδοποιήσεις</p>
-            <p className="text-muted-foreground mb-4">
-              Δημιουργήστε την πρώτη σας ειδοποίηση
-            </p>
-            <Link href="/notifications/send">
-              <Button>Νέα Ειδοποίηση</Button>
-            </Link>
+          <Card className="p-12 text-center bg-gradient-to-br from-card to-surface border-border/50">
+            <div className="space-y-4">
+              <div className="p-4 rounded-full bg-muted/50 w-fit mx-auto">
+                <Send className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-heading font-semibold text-foreground">
+                  Δεν βρέθηκαν ειδοποιήσεις
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Δημιουργήστε την πρώτη σας ειδοποίηση
+                </p>
+              </div>
+              <Link href="/notifications/send">
+                <Button className="bg-gradient-primary hover:shadow-lg transition-all duration-300">
+                  Νέα Ειδοποίηση
+                </Button>
+              </Link>
+            </div>
           </Card>
         )}
 
-        {Array.isArray(notifications) && notifications.map((notification) => (
+        {Array.isArray(notifications) && notifications.map((notification, index) => (
           <Link key={notification.id} href={`/notifications/${notification.id}`}>
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="flex items-center text-muted-foreground">
+            <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50 cursor-pointer transition-all duration-300 group">
+              <div className="flex items-start justify-between gap-6">
+                <div className="flex-1 space-y-4">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center text-muted-foreground p-2 rounded-lg bg-muted/50">
                       {getTypeIcon(notification.notification_type)}
                     </div>
                     {getStatusBadge(notification.status)}
                     {notification.priority === 'urgent' && (
-                      <Badge variant="destructive">Επείγον</Badge>
+                      <Badge variant="destructive" className="animate-pulse">Επείγον</Badge>
                     )}
                     {notification.priority === 'high' && (
                       <Badge variant="default">Υψηλή Προτεραιότητα</Badge>
                     )}
                   </div>
 
-                  <h3 className="text-lg font-semibold mb-1">
-                    {notification.subject}
-                  </h3>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-heading font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {notification.subject}
+                    </h3>
 
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                    {notification.body.substring(0, 150)}...
-                  </p>
+                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                      {notification.body.substring(0, 150)}...
+                    </p>
+                  </div>
 
-                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                    <span>
-                      👤 {notification.created_by_name}
+                  <div className="flex items-center gap-6 text-sm text-muted-foreground flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-primary"></span>
+                      {notification.created_by_name}
                     </span>
-                    <span>
-                      📅 {new Date(notification.created_at).toLocaleDateString('el-GR')}
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-muted-foreground"></span>
+                      {new Date(notification.created_at).toLocaleDateString('el-GR')}
                     </span>
                     {notification.sent_at && (
-                      <span>
-                        🕐 {new Date(notification.sent_at).toLocaleTimeString('el-GR')}
+                      <span className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-success"></span>
+                        {new Date(notification.sent_at).toLocaleTimeString('el-GR')}
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="text-right ml-6">
-                  <div className="mb-2">
-                    <p className="text-sm text-muted-foreground">Παραλήπτες</p>
-                    <p className="text-2xl font-bold">{notification.total_recipients}</p>
+                <div className="text-right space-y-3 min-w-[120px]">
+                  <div className="p-4 rounded-lg bg-muted/30">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Παραλήπτες</p>
+                    <p className="text-2xl font-heading font-bold text-foreground">{notification.total_recipients}</p>
                   </div>
 
                   {notification.status === 'sent' && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-green-600">
-                        ✅ {notification.successful_sends}
-                      </span>
-                      {notification.failed_sends > 0 && (
-                        <span className="text-red-600">
-                          ❌ {notification.failed_sends}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-end gap-2 text-sm">
+                        <span className="text-success font-medium">
+                          ✅ {notification.successful_sends}
                         </span>
-                      )}
-                      <span className="text-muted-foreground">
-                        ({formatDeliveryRate(notification.delivery_rate)})
-                      </span>
+                        {notification.failed_sends > 0 && (
+                          <span className="text-destructive font-medium">
+                            ❌ {notification.failed_sends}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-muted-foreground">
+                          ({formatDeliveryRate(notification.delivery_rate)})
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>

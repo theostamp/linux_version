@@ -1,9 +1,17 @@
-const withPWA = require('@ducanh2912/next-pwa').default({
-  dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
-  register: true,
-  skipWaiting: true,
-});
+// PWA configuration (disabled in development to avoid errors)
+let withPWA;
+try {
+  withPWA = require('@ducanh2912/next-pwa').default({
+    dest: 'public',
+    disable: process.env.NODE_ENV === 'development',
+    register: true,
+    skipWaiting: true,
+  });
+} catch (error) {
+  // Fallback if PWA package not installed
+  console.log('PWA package not found, running without PWA support');
+  withPWA = (config) => config;
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

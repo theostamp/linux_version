@@ -535,13 +535,13 @@ docker compose up --build -d
 
 
 git add .
-git commit -m "διορθωσεις notifications 6"
+git commit -m "διορθωσεις notifications 9"
 
 ## 📤 Ενημέρωση GitHub Repository
 
 ## Βασικές Εντολές Git
 git add .
-git commit -m "διορθωσεις notifications 8"
+git commit -m "διορθωσεις notifications 9"
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
