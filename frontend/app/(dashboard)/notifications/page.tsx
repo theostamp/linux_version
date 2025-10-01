@@ -219,7 +219,7 @@ export default function NotificationsPage() {
           </Card>
         )}
 
-        {notifications?.map((notification) => (
+        {Array.isArray(notifications) && notifications.map((notification) => (
           <Link key={notification.id} href={`/notifications/${notification.id}`}>
             <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
               <div className="flex items-start justify-between">

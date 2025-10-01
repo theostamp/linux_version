@@ -185,7 +185,7 @@ export default function NotificationTemplatesPage() {
           </Card>
         )}
 
-        {templates?.map((template) => (
+        {Array.isArray(templates) && templates.map((template) => (
           <Card key={template.id} className="p-6 hover:shadow-lg transition-shadow">
             <div className="space-y-4">
               {/* Header */}

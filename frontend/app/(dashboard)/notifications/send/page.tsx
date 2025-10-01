@@ -191,7 +191,7 @@ export default function SendNotificationPage() {
                     <SelectValue placeholder="Επιλέξτε template" />
                   </SelectTrigger>
                   <SelectContent>
-                    {templates?.map((template) => (
+                    {Array.isArray(templates) && templates.map((template) => (
                       <SelectItem key={template.id} value={template.id.toString()}>
                         <div className="flex items-center gap-2">
                           <FileText className="w-4 h-4" />
