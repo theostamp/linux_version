@@ -228,15 +228,14 @@ class NotificationCreateSerializer(serializers.Serializer):
                 "Either provide apartment_ids or set send_to_all=true"
             )
 
-        # SMS requires sms_body
+        # SMS requires sms_body (or uses body as fallback)
         if data.get('notification_type') in ['sms', 'both']:
             if has_template:
                 # Template should have sms_template
                 pass  # Will be validated in view
-            elif not data.get('sms_body'):
-                raise serializers.ValidationError(
-                    "sms_body is required for SMS notifications"
-                )
+            elif not data.get('sms_body') and not has_template:
+                # Use body as fallback for SMS if sms_body not provided
+                data['sms_body'] = data.get('body', '')
 
         return data
 
