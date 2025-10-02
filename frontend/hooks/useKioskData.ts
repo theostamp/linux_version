@@ -106,100 +106,59 @@ export const useKioskData = (buildingId: number | null = 1) => {
     setError(null);
 
     try {
-      // Fetch all data in parallel using public API endpoints
-      const [
-        buildingInfo,
-        announcements,
-        financialData,
-        maintenanceData,
-        expenses,
-        requests
-      ] = await Promise.allSettled([
-        // Building info - use public endpoint or existing building data
-        apiGet<KioskBuildingInfo>(`/buildings/${buildingId}/public/`).catch(() =>
-          apiGet<KioskBuildingInfo>(`/buildings/${buildingId}/`)
-        ),
+      // Use unified public-info endpoint that returns all kiosk data
+      const publicData = await apiGet<{
+        building_info: any;
+        announcements: any[];
+        votes: any[];
+        financial: any;
+        maintenance: any;
+      }>(`/api/public-info/${buildingId}/`);
 
-        // Public announcements
-        apiGet<{ results: KioskAnnouncement[] }>(`/announcements/public/?building=${buildingId}`)
-          .catch(() => apiGet<{ results: KioskAnnouncement[] }>(`/announcements/?building=${buildingId}&limit=5`))
-          .then(data => Array.isArray(data) ? data : data.results || []),
+      // Transform announcements to match KioskAnnouncement interface
+      const announcementsResult: KioskAnnouncement[] = publicData.announcements.map((ann: any) => ({
+        id: ann.id,
+        title: ann.title,
+        description: ann.description,
+        content: ann.description || '',
+        created_at: ann.start_date,
+        date: ann.start_date,
+        priority: 'medium' as const
+      }));
 
-        // Financial summary (public safe data only)
-        apiGet<KioskFinancialInfo>(`/financial/dashboard/public-summary/?building_id=${buildingId}`)
-          .catch(() =>
-            apiGet<any>(`/financial/dashboard/summary/?building_id=${buildingId}`)
-              .then(data => ({
-                collection_rate: data.collection_rate || 0,
-                reserve_fund: data.reserve_fund || 0,
-                recent_transactions: data.recent_transactions?.slice(0, 3) || []
-              }))
-          ),
-
-        // Maintenance info (public/basic info only)
-        apiGet<KioskMaintenanceInfo>(`/maintenance/public-summary/?building_id=${buildingId}`)
-          .catch(() =>
-            // Fallback: get basic maintenance info from requests
-            Promise.resolve({
-              active_contractors: 0,
-              urgent_maintenance: 0,
-              active_tasks: []
-            })
-          ),
-
-        // Recent expenses for financial widget
-        apiGet<{ results: any[] }>(`/financial/expenses/?building_id=${buildingId}&limit=3`)
-          .catch(() => ({ results: [] })),
-
-        // Maintenance requests for maintenance widget
-        apiGet<any[]>(`/maintenance/requests/public/?building_id=${buildingId}&limit=5`)
-          .catch(() =>
-            apiGet<{ results: any[] }>(`/maintenance/requests/?building_id=${buildingId}&limit=5`)
-              .then(data => Array.isArray(data) ? data : data.results || [])
-          )
-      ]);
-
-      // Extract successful results
-      const buildingResult = buildingInfo.status === 'fulfilled' ? buildingInfo.value : null;
-      const announcementsResult = announcements.status === 'fulfilled' ? announcements.value : [];
-      const financialResult = financialData.status === 'fulfilled' ? financialData.value : {
-        collection_rate: 0,
-        reserve_fund: 0,
-        recent_transactions: []
+      // Use real financial data from backend
+      const financialResult: KioskFinancialInfo = {
+        collection_rate: publicData.financial?.collection_rate || 0,
+        reserve_fund: publicData.financial?.reserve_fund || 0,
+        recent_transactions: (publicData.financial?.recent_expenses || []).map((exp: any) => ({
+          id: exp.id,
+          description: exp.description,
+          amount: exp.amount,
+          date: exp.date
+        }))
       };
-      const maintenanceResult = maintenanceData.status === 'fulfilled' ? maintenanceData.value : {
-        active_contractors: 0,
-        urgent_maintenance: 0,
-        active_tasks: []
-      };
-      const expensesResult = expenses.status === 'fulfilled'
-        ? (Array.isArray(expenses.value) ? expenses.value : expenses.value.results || [])
-        : [];
-      const requestsResult = requests.status === 'fulfilled' ? requests.value : [];
 
-      // Process maintenance data from requests
+      // Use real maintenance data from backend
       const maintenanceInfo: KioskMaintenanceInfo = {
-        ...maintenanceResult,
-        active_tasks: requestsResult
-          .filter((req: any) => req.type === 'maintenance' && req.status !== 'completed')
-          .slice(0, 3)
-          .map((req: any) => ({
-            id: req.id,
-            description: req.title || req.description,
-            contractor: req.assigned_contractor || req.contractor,
-            priority: req.priority || 'medium',
-            due_date: req.due_date
-          }))
+        active_contractors: publicData.maintenance?.active_contractors || 0,
+        urgent_maintenance: publicData.maintenance?.urgent_maintenance || 0,
+        active_tasks: (publicData.maintenance?.active_tasks || []).map((task: any) => ({
+          id: task.id,
+          description: task.title || task.description,
+          contractor: task.assigned_to_name,
+          priority: task.priority || 'medium',
+          due_date: task.due_date
+        }))
       };
 
-      // Generate urgent priorities from all data sources
+      // Generate urgent priorities from announcements
       const urgentPriorities: KioskUrgentPriority[] = [];
 
       // Add urgent announcements
       announcementsResult
         .filter((ann: KioskAnnouncement) => ann.priority === 'high')
         .slice(0, 2)
-        .forEach((ann: KioskAnnouncement, index: number) => {
+        .forEach((ann: KioskAnnouncement) => {
           urgentPriorities.push({
             id: `announcement-${ann.id}`,
             title: ann.title,
@@ -207,22 +166,6 @@ export const useKioskData = (buildingId: number | null = 1) => {
             type: 'announcement',
             priority: 'high',
             dueDate: ann.date ? new Date(ann.date).toLocaleDateString('el-GR') : 'Σήμερα'
-          });
-        });
-
-      // Add urgent maintenance
-      maintenanceInfo.active_tasks
-        .filter((task: any) => task.priority === 'high')
-        .slice(0, 2)
-        .forEach((task: any) => {
-          urgentPriorities.push({
-            id: `maintenance-${task.id}`,
-            title: `Επείγουσα Συντήρηση: ${task.description}`,
-            description: task.contractor ? `Ανάδοχος: ${task.contractor}` : task.description,
-            type: 'maintenance',
-            priority: 'high',
-            dueDate: task.due_date ? new Date(task.due_date).toLocaleDateString('el-GR') : 'Άμεσα',
-            contact: task.contractor_phone
           });
         });
 
@@ -251,19 +194,21 @@ export const useKioskData = (buildingId: number | null = 1) => {
       }
 
       const kioskData: KioskData = {
-        building_info: buildingResult || {
-          id: buildingId,
-          name: `Κτίριο ${buildingId}`,
-          address: 'Αλκμάνος 22, Αθήνα 116 36',
-          city: 'Αθήνα'
+        building_info: {
+          id: publicData.building_info.id,
+          name: publicData.building_info.name,
+          address: publicData.building_info.address,
+          city: publicData.building_info.city,
+          total_apartments: publicData.building_info.apartments_count,
+          occupied: publicData.building_info.apartments_count // Assume all occupied for now
         },
         announcements: announcementsResult.slice(0, 5), // Limit to 5 most recent
         financial: financialResult,
         maintenance: maintenanceInfo,
         urgent_priorities: urgentPriorities.slice(0, 6), // Max 6 urgent items
         statistics: {
-          total_apartments: buildingResult?.total_apartments || 24,
-          occupied: buildingResult?.occupied || 22,
+          total_apartments: publicData.building_info.apartments_count || 10,
+          occupied: publicData.building_info.apartments_count || 10,
           collection_rate: financialResult.collection_rate
         }
       };
