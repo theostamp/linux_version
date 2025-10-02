@@ -72,64 +72,45 @@ export default function AssemblyWidget({ data, isLoading, error }: BaseWidgetPro
 
   return (
     <div className="h-full overflow-hidden flex flex-col">
-      <div className="flex items-center space-x-2 mb-4 pb-2 border-b border-purple-500/20">
-        <Calendar className="w-6 h-6 text-purple-300" />
-        <h2 className="text-lg font-bold text-white">Γενική Συνέλευση</h2>
+      {/* Compact Header με πληροφορίες */}
+      <div className="mb-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            <Calendar className="w-5 h-5 text-purple-300" />
+            <h2 className="text-base font-bold text-white">Γενική Συνέλευση</h2>
+          </div>
+          <div className="text-xs text-purple-200">
+            {topics.length} {topics.length === 1 ? 'Θέμα' : 'Θέματα'}
+          </div>
+        </div>
+
+        {/* Compact date/time/location */}
+        <div className="bg-purple-900/30 rounded-lg p-2 text-xs space-y-1">
+          <div className="flex items-center space-x-2 text-purple-200">
+            <Clock className="w-3 h-3" />
+            <span>{dateTimeInfo || 'Δεν έχει οριστεί'}</span>
+          </div>
+          <div className="flex items-center space-x-2 text-purple-200">
+            {isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+            <span>{isOnline ? 'Zoom Meeting' : (locationInfo || 'Θα ανακοινωθεί')}</span>
+          </div>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-4">
-        {/* Ημερομηνία & Ώρα */}
-        <div className="bg-gradient-to-br from-purple-900/50 to-indigo-900/50 backdrop-blur-sm p-4 rounded-xl border border-purple-500/30">
-          <div className="flex items-center space-x-3">
-            <div className="bg-purple-500/20 p-3 rounded-full">
-              <Clock className="w-6 h-6 text-purple-300" />
-            </div>
-            <div>
-              <p className="text-xs text-purple-300 uppercase tracking-wide mb-1">Ημερομηνία & Ώρα</p>
-              <p className="text-lg font-bold text-white">{dateTimeInfo || 'Δεν έχει οριστεί'}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Τοποθεσία/Zoom */}
-        <div className="bg-gradient-to-br from-purple-900/50 to-indigo-900/50 backdrop-blur-sm p-4 rounded-xl border border-purple-500/30">
-          <div className="flex items-center space-x-3">
-            <div className="bg-purple-500/20 p-3 rounded-full">
-              {isOnline ? (
-                <Video className="w-6 h-6 text-purple-300" />
-              ) : (
-                <MapPin className="w-6 h-6 text-purple-300" />
-              )}
-            </div>
-            <div className="flex-1">
-              <p className="text-xs text-purple-300 uppercase tracking-wide mb-1">
-                {isOnline ? 'Διαδικτυακή Συνέλευση' : 'Τοποθεσία'}
-              </p>
-              {isOnline ? (
-                <p className="text-sm text-white">Zoom Meeting</p>
-              ) : (
-                <p className="text-sm text-white">{locationInfo || 'Θα ανακοινωθεί'}</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Θέματα με Rich Formatting */}
-        {topicsContent && (
-          <div className="bg-gradient-to-br from-purple-900/50 to-indigo-900/50 backdrop-blur-sm p-4 rounded-xl border border-purple-500/30">
-            <h3 className="text-sm font-semibold text-purple-300 uppercase tracking-wide mb-3">
-              Θέματα Ημερήσιας Διάταξης {topics.length > 0 && `(${topics.length})`}
-            </h3>
-            <MarkdownRenderer content={topicsContent} className="space-y-2" />
-          </div>
+      {/* Θέματα - takes full remaining space */}
+      <div className="flex-1 overflow-y-auto">
+        {topicsContent ? (
+          <MarkdownRenderer content={topicsContent} className="space-y-3" />
+        ) : (
+          <p className="text-sm text-gray-400 italic">Δεν έχουν οριστεί θέματα ακόμα</p>
         )}
+      </div>
 
-        {/* Σημείωση */}
-        <div className="bg-yellow-900/20 border border-yellow-500/30 p-3 rounded-lg">
-          <p className="text-xs text-yellow-200 text-center">
-            ⚠️ Η συμμετοχή σας είναι απαραίτητη για την απαρτία
-          </p>
-        </div>
+      {/* Footer note */}
+      <div className="mt-3 bg-yellow-900/20 border border-yellow-500/30 p-2 rounded-lg">
+        <p className="text-xs text-yellow-200 text-center">
+          ⚠️ Η συμμετοχή σας είναι απαραίτητη
+        </p>
       </div>
     </div>
   );
