@@ -1,16 +1,28 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, extractCount, extractResults, getActiveBuildingId } from '@/lib/api';
 import { getRelativeTimeEl } from '@/lib/date';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  FileText, 
-  Calendar, 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
+import {
+  FileText,
+  Calendar,
   AlertTriangle,
   CheckCircle,
   Clock,
@@ -18,7 +30,8 @@ import {
   Building,
   Plus,
   Search,
-  Filter
+  Filter,
+  Trash2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
@@ -84,10 +97,13 @@ export default function ProjectsListPage() {
   useBuildingEvents();
   const { isAdmin, isManager } = useRole();
   const buildingId = getActiveBuildingId();
-  
+  const queryClient = useQueryClient();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
   const projectsQ = useQuery({ 
     queryKey: ['projects', { building: buildingId, search: searchTerm, status: statusFilter, priority: priorityFilter }], 
@@ -102,6 +118,33 @@ export default function ProjectsListPage() {
 
   const projects = extractResults<Project>(projectsQ.data ?? []);
   const loading = projectsQ.isLoading;
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      await api.delete(`/projects/projects/${projectId}/`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast.success('Το έργο διαγράφηκε επιτυχώς');
+      setDeleteDialogOpen(false);
+      setProjectToDelete(null);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Σφάλμα κατά τη διαγραφή του έργου');
+    },
+  });
+
+  const handleDeleteClick = (project: Project) => {
+    setProjectToDelete(project);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (projectToDelete) {
+      deleteMutation.mutate(projectToDelete.id);
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -231,8 +274,18 @@ export default function ProjectsListPage() {
                     {project.building_name}
                   </CardDescription>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                   {getStatusIcon(project.status)}
+                  {(isAdmin || isManager) && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => handleDeleteClick(project)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-2">
@@ -326,6 +379,42 @@ export default function ProjectsListPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Επιβεβαίωση Διαγραφής</AlertDialogTitle>
+            <AlertDialogDescription>
+              Είστε σίγουροι ότι θέλετε να διαγράψετε το έργο{' '}
+              <span className="font-semibold text-gray-900">
+                &quot;{projectToDelete?.title}&quot;
+              </span>
+              ;
+              <br />
+              <br />
+              Αυτή η ενέργεια είναι μη αναστρέψιμη και θα διαγράψει:
+              <ul className="list-disc list-inside mt-2 text-sm">
+                <li>Όλες τις προσφορές του έργου</li>
+                <li>Όλες τις ψηφοφορίες</li>
+                <li>Όλα τα σχετικά δεδομένα</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              Ακύρωση
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteMutation.isPending ? 'Διαγραφή...' : 'Διαγραφή Έργου'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
