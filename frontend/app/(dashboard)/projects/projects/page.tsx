@@ -385,20 +385,24 @@ export default function ProjectsListPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Επιβεβαίωση Διαγραφής</AlertDialogTitle>
-            <AlertDialogDescription>
-              Είστε σίγουροι ότι θέλετε να διαγράψετε το έργο{' '}
-              <span className="font-semibold text-gray-900">
-                &quot;{projectToDelete?.title}&quot;
-              </span>
-              ;
-              <br />
-              <br />
-              Αυτή η ενέργεια είναι μη αναστρέψιμη και θα διαγράψει:
-              <ul className="list-disc list-inside mt-2 text-sm">
-                <li>Όλες τις προσφορές του έργου</li>
-                <li>Όλες τις ψηφοφορίες</li>
-                <li>Όλα τα σχετικά δεδομένα</li>
-              </ul>
+            <AlertDialogDescription asChild>
+              <div>
+                <p>
+                  Είστε σίγουροι ότι θέλετε να διαγράψετε το έργο{' '}
+                  <span className="font-semibold text-gray-900">
+                    &quot;{projectToDelete?.title}&quot;
+                  </span>
+                  ;
+                </p>
+                <p className="mt-2">
+                  Αυτή η ενέργεια είναι μη αναστρέψιμη και θα διαγράψει:
+                </p>
+                <ul className="list-disc list-inside mt-2 text-sm">
+                  <li>Όλες τις προσφορές του έργου</li>
+                  <li>Όλες τις ψηφοφορίες</li>
+                  <li>Όλα τα σχετικά δεδομένα</li>
+                </ul>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
