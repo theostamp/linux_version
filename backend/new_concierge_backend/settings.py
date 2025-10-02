@@ -370,7 +370,11 @@ else:
 # ----------------------------------------
 # 📧 Email
 # ----------------------------------------
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# Use console backend for testing (emails printed to console)
+# Change to 'django.core.mail.backends.smtp.EmailBackend' for real email sending
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# SMTP settings (used when EMAIL_BACKEND = smtp.EmailBackend)
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
