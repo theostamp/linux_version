@@ -4,13 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 
 // Simple API get function for kiosk (no complex auth)
 async function apiGet<T>(path: string): Promise<T> {
-  const baseUrl = typeof window !== 'undefined'
-    ? window.location.origin
-    : 'http://localhost:18000';
+  // Always use backend URL for API calls
+  const backendUrl = 'http://localhost:18000';
 
-  const url = path.startsWith('/api/')
-    ? `${window.location.origin}${path}`
-    : `http://localhost:18000${path}`;
+  // Ensure path starts with /api/
+  const apiPath = path.startsWith('/api/') ? path : `/api${path}`;
+  const url = `${backendUrl}${apiPath}`;
 
   const response = await fetch(url, {
     headers: {
