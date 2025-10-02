@@ -14,6 +14,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 'building', 'building_name',
             'estimated_cost', 'priority', 'status', 'created_at', 'updated_at',
             'deadline', 'tender_deadline', 'general_assembly_date',
+            'assembly_time', 'assembly_is_online', 'assembly_location', 'assembly_zoom_link',
             'selected_contractor', 'final_cost', 'payment_terms',
             'payment_method', 'installments', 'advance_payment',
             'created_by', 'created_by_name', 'offers_count', 'votes_count',
