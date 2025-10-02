@@ -42,13 +42,17 @@ export default function NewProjectPage() {
     deadline: '',
     tender_deadline: '',
     general_assembly_date: '',
+    assembly_time: '',
+    assembly_is_online: false,
+    assembly_location: '',
+    assembly_zoom_link: '',
     payment_terms: '',
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'new' | 'suggested'>('new');
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -305,6 +309,65 @@ export default function NewProjectPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Στοιχεία Γενικής Συνέλευσης */}
+        {formData.general_assembly_date && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Στοιχεία Γενικής Συνέλευσης</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label htmlFor="assembly_time">Ώρα Συνέλευσης</Label>
+                  <Input
+                    id="assembly_time"
+                    type="time"
+                    value={formData.assembly_time || ''}
+                    onChange={(e) => handleInputChange('assembly_time', e.target.value)}
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2 pt-8">
+                  <input
+                    id="assembly_is_online"
+                    type="checkbox"
+                    checked={formData.assembly_is_online || false}
+                    onChange={(e) => handleInputChange('assembly_is_online', e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="assembly_is_online" className="cursor-pointer">
+                    Διαδικτυακή Συνέλευση (Zoom)
+                  </Label>
+                </div>
+              </div>
+
+              {formData.assembly_is_online ? (
+                <div>
+                  <Label htmlFor="assembly_zoom_link">Σύνδεσμος Zoom *</Label>
+                  <Input
+                    id="assembly_zoom_link"
+                    type="url"
+                    placeholder="https://zoom.us/j/..."
+                    value={formData.assembly_zoom_link || ''}
+                    onChange={(e) => handleInputChange('assembly_zoom_link', e.target.value)}
+                  />
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="assembly_location">Τοποθεσία Συνέλευσης</Label>
+                  <Input
+                    id="assembly_location"
+                    type="text"
+                    placeholder="π.χ. Pilotis, Διαμέρισμα Α2"
+                    value={formData.assembly_location || ''}
+                    onChange={(e) => handleInputChange('assembly_location', e.target.value)}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Submit Button */}
         <div className="flex justify-end gap-4">

@@ -60,10 +60,17 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ημερομηνία Δημιουργίας")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Ημερομηνία Ενημέρωσης")
     deadline = models.DateField(null=True, blank=True, verbose_name="Προθεσμία")
-    
+
     # Στοιχεία διαγωνισμού
     tender_deadline = models.DateField(null=True, blank=True, verbose_name="Προθεσμία Υποβολής Προσφορών")
     general_assembly_date = models.DateField(null=True, blank=True, verbose_name="Ημερομηνία Γενικής Συνελεύσης")
+
+    # Στοιχεία Γενικής Συνέλευσης
+    assembly_time = models.TimeField(null=True, blank=True, verbose_name="Ώρα Γενικής Συνέλευσης")
+    assembly_is_online = models.BooleanField(default=False, verbose_name="Διαδικτυακή Συνέλευση")
+    assembly_location = models.CharField(max_length=200, null=True, blank=True, verbose_name="Τοποθεσία Συνέλευσης",
+                                         help_text="π.χ. Pilotis, Διαμέρισμα Α2")
+    assembly_zoom_link = models.URLField(max_length=500, null=True, blank=True, verbose_name="Σύνδεσμος Zoom")
     
     # Αποτελέσματα
     selected_contractor = models.CharField(max_length=200, null=True, blank=True, verbose_name="Επιλεγμένος Αναδόχος")

@@ -35,10 +35,12 @@ import WeatherWidget from '@/components/kiosk/widgets/WeatherWidget';
 import QRCodeWidget from '@/components/kiosk/widgets/QRCodeWidget';
 import ManagerWidget from '@/components/kiosk/widgets/ManagerWidget';
 import UrgentPrioritiesWidget from '@/components/kiosk/widgets/UrgentPrioritiesWidget';
+import AssemblyWidget from '@/components/kiosk/widgets/AssemblyWidget';
 
 export const WIDGET_COMPONENTS: Record<string, React.ComponentType<any>> = {
   DashboardWidget,
   AnnouncementsWidget,
+  AssemblyWidget,
   TimeWidget,
   VotesWidget,
   FinancialWidget,
@@ -58,6 +60,7 @@ export const WIDGET_ICONS: Record<string, LucideIcon> = {
   // Main widgets
   DashboardWidget: Home,
   AnnouncementsWidget: Bell,
+  AssemblyWidget: Calendar,
   TimeWidget: Clock,
   VotesWidget: Vote,
   FinancialWidget: DollarSign,
@@ -188,6 +191,12 @@ export function hasWidgetData(widget: KioskWidget, data?: any): boolean {
     case 'AnnouncementsWidget':
       return data?.announcements && data.announcements.length > 0;
 
+    case 'AssemblyWidget':
+      // Show if there are assembly announcements
+      return data?.announcements && data.announcements.some((a: any) =>
+        a.title?.includes('Συνέλευση') || a.title?.includes('Σύγκληση')
+      );
+
     case 'VotesWidget':
       return data?.votes && data.votes.length > 0;
 
@@ -273,6 +282,22 @@ export const SYSTEM_WIDGETS: Omit<KioskWidget, 'id' | 'createdAt' | 'updatedAt' 
       backgroundColor: '#1E293B',
       dataSource: '/api/announcements',
       refreshInterval: 180,
+    },
+  },
+  {
+    name: 'General Assembly',
+    description: 'Upcoming general assembly information',
+    category: 'main_slides',
+    component: 'AssemblyWidget',
+    enabled: true,
+    order: 2.5,
+    settings: {
+      title: 'Γενική Συνέλευση',
+      showTitle: true,
+      gridSize: 'large',
+      backgroundColor: '#6B21A8',
+      dataSource: '/api/public-info',
+      refreshInterval: 300,
     },
   },
   {

@@ -1,6 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from .models import Project, Offer, ProjectVote
 from todo_management.services import ensure_linked_todo, complete_linked_todo
@@ -254,49 +255,92 @@ def create_vote_announcement(project: Project):
 
 
 def create_assembly_announcement(project: Project, check_existing: bool = False):
-    """Δημιουργεί ξεχωριστή ανακοίνωση για Γενική Συνέλευση"""
+    """Δημιουργεί ή ενημερώνει ανακοίνωση Γενικής Συνέλευσης (ομαδοποιημένα θέματα)"""
     try:
         from announcements.models import Announcement
         from datetime import timedelta
 
-        # Αν check_existing=True, ελέγχουμε αν υπάρχει ήδη ανακοίνωση για αυτή τη συνέλευση
-        if check_existing:
-            from django.db.models import Q
-
-            existing = Announcement.objects.filter(
-                Q(title__icontains="Γενική Συνέλευση") & Q(title__icontains=project.title[:50]),
-                building=project.building,
-                end_date=project.general_assembly_date,
-                is_active=True
-            ).exists()
-
-            if existing:
-                return  # Υπάρχει ήδη ανακοίνωση
-
-        # Υπολογίζουμε την ημέρα της ημέρας της συνέλευσης
         assembly_date = project.general_assembly_date
         today = project.created_at.date() if hasattr(project, 'created_at') else assembly_date
 
-        # Δημιουργία ανακοίνωσης για τη γενική συνέλευση
-        announcement = Announcement.objects.create(
+        # Αναζήτηση υπάρχουσας ανακοίνωσης για την ίδια ημερομηνία συνέλευσης
+        existing_announcement = Announcement.objects.filter(
             building=project.building,
-            author=project.created_by,
-            title=f"Σύγκληση Γενικής Συνέλευσης - {project.title}",
-            description=f"""
-Καλείστε να παραστείτε στη Γενική Συνέλευση των ιδιοκτητών για το έργο:
+            title__icontains="Σύγκληση Γενικής Συνέλευσης",
+            end_date=assembly_date,
+            is_active=True
+        ).first()
 
-**"{project.title}"**
+        if existing_announcement:
+            # ΕΝΗΜΕΡΩΣΗ υπάρχουσας ανακοίνωσης - προσθήκη νέου θέματος
+            current_description = existing_announcement.description
 
-**Ημερομηνία και Ώρα Συνέλευσης:** {assembly_date.strftime('%d/%m/%Y')}
+            # Βρίσκουμε πού τελειώνουν τα υπάρχοντα θέματα
+            if "**ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ:**" in current_description:
+                # Προσθήκη νέου θέματος στη λίστα
+                new_topic = f"""
+---
 
-**Θέματα Ημερήσιας Διάταξης:**
-1. Παρουσίαση του έργου
-2. Συζήτηση προσφορών και επιλογή αναδόχου
-3. Έγκριση προϋπολογισμού και τρόπου πληρωμής
-4. Ψηφοφορία για την εκτέλεση του έργου
+### Θέμα: {project.title}
 
 {f'**Εκτιμώμενο Κόστος:** €{project.estimated_cost:,.2f}' if project.estimated_cost else ''}
 {f'**Προθεσμία Ολοκλήρωσης:** {project.deadline.strftime("%d/%m/%Y")}' if project.deadline else ''}
+**Περιγραφή:** {project.description[:200]}{'...' if len(project.description) > 200 else ''}
+"""
+                # Προσθέτουμε το νέο θέμα πριν το "Σημαντικό:"
+                if "**Σημαντικό:**" in current_description:
+                    parts = current_description.split("**Σημαντικό:**")
+                    existing_announcement.description = parts[0] + new_topic + "\n\n**Σημαντικό:**" + parts[1]
+                else:
+                    existing_announcement.description = current_description + new_topic
+
+                existing_announcement.updated_at = timezone.now()
+                existing_announcement.save(update_fields=['description', 'updated_at'])
+
+                # Ενημέρωση με WebSocket
+                publish_building_event(
+                    building_id=project.building_id,
+                    event_type="announcement.updated",
+                    payload={
+                        "id": existing_announcement.id,
+                        "title": existing_announcement.title,
+                        "is_urgent": existing_announcement.is_urgent,
+                    },
+                )
+                return  # Τελείωσε η ενημέρωση
+
+        # ΔΗΜΙΟΥΡΓΙΑ νέας ανακοίνωσης (πρώτο θέμα για αυτή την ημερομηνία)
+
+        # Στοιχεία συνέλευσης
+        assembly_time_str = project.assembly_time.strftime('%H:%M') if project.assembly_time else '20:00'
+
+        # Τοποθεσία/Zoom
+        location_info = ""
+        if project.assembly_is_online and project.assembly_zoom_link:
+            location_info = f"\n**Τρόπος Συμμετοχής:** Διαδικτυακή Συνέλευση (Zoom)\n**Σύνδεσμος:** {project.assembly_zoom_link}"
+        elif project.assembly_location:
+            location_info = f"\n**Τοποθεσία:** {project.assembly_location}"
+
+        announcement = Announcement.objects.create(
+            building=project.building,
+            author=project.created_by,
+            title=f"Σύγκληση Γενικής Συνέλευσης - {assembly_date.strftime('%d/%m/%Y')}",
+            description=f"""
+Καλείστε να παραστείτε στη Γενική Συνέλευση των ιδιοκτητών.
+
+**Ημερομηνία και Ώρα Συνέλευσης:** {assembly_date.strftime('%d/%m/%Y')} στις {assembly_time_str}{location_info}
+
+**ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ:**
+
+---
+
+### Θέμα: {project.title}
+
+{f'**Εκτιμώμενο Κόστος:** €{project.estimated_cost:,.2f}' if project.estimated_cost else ''}
+{f'**Προθεσμία Ολοκλήρωσης:** {project.deadline.strftime("%d/%m/%Y")}' if project.deadline else ''}
+**Περιγραφή:** {project.description[:200]}{'...' if len(project.description) > 200 else ''}
+
+---
 
 **Σημαντικό:** Η παρουσία σας είναι απαραίτητη για την απαρτία της συνέλευσης.
 
@@ -304,8 +348,8 @@ def create_assembly_announcement(project: Project, check_existing: bool = False)
             """.strip(),
             published=True,
             is_active=True,
-            is_urgent=True,  # Η συνέλευση είναι επείγον θέμα
-            priority=20,  # Υψηλή προτεραιότητα
+            is_urgent=True,
+            priority=20,
             start_date=today,
             end_date=assembly_date,
         )
