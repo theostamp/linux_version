@@ -46,6 +46,41 @@ export const useKioskWeather = (refreshInterval: number = 300000) => { // 5 minu
 
       if (response.ok) {
         const data = await response.json();
+
+        // Helper function to get Greek day name
+        const getGreekDayName = (dateString: string, index: number): string => {
+          if (index === 0) return 'Αύριο';
+          if (index === 1) return 'Μεθαύριο';
+
+          const date = new Date(dateString);
+          const dayNames = ['Κυριακή', 'Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο'];
+          return dayNames[date.getDay()];
+        };
+
+        // Helper function to get weather emoji based on weathercode
+        const getWeatherIcon = (weathercode: number): string => {
+          if (weathercode === 0) return '☀️';
+          if (weathercode <= 3) return '🌤️';
+          if (weathercode <= 48) return '🌥️';
+          if (weathercode <= 67) return '🌧️';
+          if (weathercode <= 77) return '🌨️';
+          if (weathercode <= 82) return '🌧️';
+          if (weathercode <= 86) return '🌨️';
+          return '⛈️';
+        };
+
+        // Helper function to get weather description in Greek
+        const getWeatherDescription = (weathercode: number): string => {
+          if (weathercode === 0) return 'Καθαρός ουρανός';
+          if (weathercode <= 3) return 'Λίγα σύννεφα';
+          if (weathercode <= 48) return 'Συννεφιά';
+          if (weathercode <= 67) return 'Βροχή';
+          if (weathercode <= 77) return 'Χιόνι';
+          if (weathercode <= 82) return 'Ισχυρή βροχή';
+          if (weathercode <= 86) return 'Χιονόπτωση';
+          return 'Καταιγίδα';
+        };
+
         // Transform the API response to match our KioskWeatherData interface
         const transformedWeather: KioskWeatherData = {
           current: {
@@ -58,11 +93,18 @@ export const useKioskWeather = (refreshInterval: number = 300000) => { // 5 minu
             sunrise: '07:15',
             sunset: '19:30'
           },
-          forecast: [
-            { day: 'Αύριο', icon: '🌤️', high: (data.temperature || 20) + 2, low: (data.temperature || 20) - 3, condition: 'Ηλιόλουστα' },
-            { day: 'Μεθαύριο', icon: '☁️', high: (data.temperature || 20) + 1, low: (data.temperature || 20) - 4, condition: 'Συννεφιά' },
-            { day: 'Τετάρτη', icon: '🌧️', high: (data.temperature || 20) - 1, low: (data.temperature || 20) - 5, condition: 'Βροχή' }
-          ]
+          forecast: data.forecast && data.forecast.length > 0
+            ? data.forecast.slice(1, 4).map((day: any, index: number) => ({
+                day: getGreekDayName(day.date, index),
+                icon: getWeatherIcon(day.weathercode),
+                high: day.temperature_max,
+                low: day.temperature_min,
+                condition: getWeatherDescription(day.weathercode)
+              }))
+            : [
+                { day: 'Αύριο', icon: '🌤️', high: (data.temperature || 20) + 2, low: (data.temperature || 20) - 3, condition: 'Ηλιόλουστα' },
+                { day: 'Μεθαύριο', icon: '☁️', high: (data.temperature || 20) + 1, low: (data.temperature || 20) - 4, condition: 'Συννεφιά' }
+              ]
         };
         setWeather(transformedWeather);
         return;
@@ -82,6 +124,17 @@ export const useKioskWeather = (refreshInterval: number = 300000) => { // 5 minu
       ];
       const currentCondition = conditions[Math.floor(Math.random() * conditions.length)];
 
+      // Generate forecast for next 3 days with correct day names
+      const dayNames = ['Κυριακή', 'Δευτέρα', 'Τρίτη', 'Τετάρτη', 'Πέμπτη', 'Παρασκευή', 'Σάββατο'];
+      const getForecastDayName = (daysAhead: number): string => {
+        if (daysAhead === 1) return 'Αύριο';
+        if (daysAhead === 2) return 'Μεθαύριο';
+
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + daysAhead);
+        return dayNames[futureDate.getDay()];
+      };
+
       const mockWeather: KioskWeatherData = {
         current: {
           temperature: currentTemp,
@@ -95,21 +148,21 @@ export const useKioskWeather = (refreshInterval: number = 300000) => { // 5 minu
         },
         forecast: [
           {
-            day: 'Αύριο',
+            day: getForecastDayName(1),
             icon: '🌤️',
             high: currentTemp + Math.round(Math.random() * 4),
             low: currentTemp - Math.round(2 + Math.random() * 4),
             condition: 'Ηλιόλουστα'
           },
           {
-            day: 'Μεθαύριο',
+            day: getForecastDayName(2),
             icon: '🌧️',
             high: currentTemp - Math.round(Math.random() * 3),
             low: currentTemp - Math.round(4 + Math.random() * 4),
             condition: 'Βροχή'
           },
           {
-            day: 'Τετάρτη',
+            day: getForecastDayName(3),
             icon: '☁️',
             high: currentTemp + Math.round(Math.random() * 2),
             low: currentTemp - Math.round(3 + Math.random() * 3),
