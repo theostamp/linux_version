@@ -153,24 +153,32 @@ def update_project_schedule(project, offer=None):
                 )
 
             # Δημιουργία δόσεων (μελλοντικοί μήνες)
+            # ΔΙΟΡΘΩΣΗ: Οι δόσεις ξεκινούν από τον ΕΠΟΜΕΝΟ μήνα μετά την προκαταβολή
             remaining_amount = total_amount - advance_payment
             installment_amount = remaining_amount / installments
 
             base_date = datetime.now().date()
             for i in range(1, installments + 1):
-                # Υπολογισμός ημερομηνίας δόσης (πρώτη του κάθε μήνα)
-                installment_date = base_date.replace(day=1)
+                # Υπολογισμός μήνα πληρωμής (πρώτη του κάθε μήνα)
+                # ΔΙΟΡΘΩΣΗ: Αν έχουμε προκαταβολή, ξεκινάμε από τον επόμενο μήνα (i+1)
+                # Αν δεν έχουμε προκαταβολή, ξεκινάμε από τον τρέχοντα μήνα (i)
+                month_offset = i + 1 if advance_payment > 0 else i
+
+                payment_month_start = base_date.replace(day=1)
                 # Προσθήκη μηνών
-                month = installment_date.month + i
-                year = installment_date.year
+                month = payment_month_start.month + month_offset
+                year = payment_month_start.year
                 while month > 12:
                     month -= 12
                     year += 1
-                installment_date = installment_date.replace(month=month, year=year)
+                payment_month_start = payment_month_start.replace(month=month, year=year)
 
-                # Τελευταία μέρα του μήνα για due_date
-                last_day = calendar.monthrange(installment_date.year, installment_date.month)[1]
-                due_date = installment_date.replace(day=last_day)
+                # ΔΙΟΡΘΩΣΗ V2: Η ημερομηνία δημιουργίας της δόσης είναι η τελευταία του μήνα πληρωμής
+                # Έτσι η δόση του 11ου θα έχει date=30/11, και θα εμφανίζεται ως παλιά οφειλή στον 12ο
+                # Αυτό εξασφαλίζει ότι η προκαταβολή (π.χ. 03/10) και η Δόση 1 (30/11) δεν εμφανίζονται μαζί
+                last_day = calendar.monthrange(payment_month_start.year, payment_month_start.month)[1]
+                installment_date = payment_month_start.replace(day=last_day)
+                due_date = installment_date
 
                 installment_expense = Expense.objects.create(
                     building=project.building,
