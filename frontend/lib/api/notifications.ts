@@ -11,6 +11,12 @@ import type {
   NotificationStatistics,
   TemplatePreviewRequest,
   TemplatePreviewResponse,
+  NotificationEvent,
+  PendingEventsResponse,
+  DigestPreview,
+  DigestPreviewRequest,
+  SendDigestRequest,
+  SendDigestResponse,
 } from '@/types/notifications';
 
 const BASE_URL = '/notifications';
@@ -295,6 +301,76 @@ export const monthlyTasksApi = {
   disableAutoSend: async (id: number) => {
     const response = await apiClient.post<{ message: string; auto_send_enabled: boolean }>(
       `${BASE_URL}/monthly-tasks/${id}/disable_auto_send/`
+    );
+    return response.data;
+  },
+};
+
+/**
+ * Notification Events
+ */
+export const notificationEventsApi = {
+  /**
+   * Get all notification events
+   */
+  list: async (params?: {
+    event_type?: string;
+    building?: number;
+    is_urgent?: boolean;
+    included_in_digest?: boolean;
+    sent_immediately?: boolean;
+  }) => {
+    const response = await apiClient.get<{ results: NotificationEvent[] }>(
+      `${BASE_URL}/events/`,
+      { params }
+    );
+    return response.data.results || response.data as any;
+  },
+
+  /**
+   * Get event by ID
+   */
+  get: async (id: number) => {
+    const response = await apiClient.get<NotificationEvent>(
+      `${BASE_URL}/events/${id}/`
+    );
+    return response.data;
+  },
+
+  /**
+   * Get pending events (not sent yet)
+   */
+  pending: async (buildingId: number, sinceDate?: string) => {
+    const params: any = { building_id: buildingId };
+    if (sinceDate) {
+      params.since_date = sinceDate;
+    }
+
+    const response = await apiClient.get<PendingEventsResponse>(
+      `${BASE_URL}/events/pending/`,
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
+   * Preview digest email
+   */
+  previewDigest: async (request: DigestPreviewRequest) => {
+    const response = await apiClient.post<DigestPreview>(
+      `${BASE_URL}/events/digest_preview/`,
+      request
+    );
+    return response.data;
+  },
+
+  /**
+   * Send digest email to all residents
+   */
+  sendDigest: async (request: SendDigestRequest) => {
+    const response = await apiClient.post<SendDigestResponse>(
+      `${BASE_URL}/events/send_digest/`,
+      request
     );
     return response.data;
   },

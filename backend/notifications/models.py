@@ -394,6 +394,149 @@ class MonthlyNotificationTask(models.Model):
         )
 
 
+class NotificationEvent(models.Model):
+    """
+    Tracks events that generate notifications (announcements, votes, maintenance, etc.).
+    Events can be sent immediately or included in digest emails.
+    """
+
+    EVENT_TYPE_CHOICES = [
+        ('announcement', 'Ανακοίνωση'),
+        ('vote', 'Ψηφοφορία'),
+        ('maintenance', 'Συντήρηση'),
+        ('project', 'Έργο'),
+        ('common_expense', 'Κοινόχρηστα'),
+        ('urgent', 'Επείγουσα'),
+        ('meeting', 'Συνέλευση'),
+        ('general', 'Γενικό'),
+    ]
+
+    # Event metadata
+    event_type = models.CharField(
+        max_length=50,
+        choices=EVENT_TYPE_CHOICES,
+        db_index=True
+    )
+    building = models.ForeignKey(
+        Building,
+        on_delete=models.CASCADE,
+        related_name='notification_events'
+    )
+
+    # Content
+    title = models.CharField(
+        max_length=255,
+        help_text="Event title (e.g., 'Νέα Ανακοίνωση: Συντήρηση Ασανσέρ')"
+    )
+    description = models.TextField(
+        help_text="Event description/summary"
+    )
+    url = models.CharField(
+        max_length=500,
+        blank=True,
+        help_text="Link to event detail page (e.g., /announcements/123)"
+    )
+
+    # Icon/emoji for display
+    icon = models.CharField(
+        max_length=10,
+        blank=True,
+        help_text="Emoji or icon (e.g., 📢, 🗳️, 🔧)"
+    )
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    event_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the actual event occurs (e.g., meeting date)"
+    )
+
+    # Digest tracking
+    included_in_digest = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Has this been included in a digest email?"
+    )
+    digest_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When digest containing this event was sent"
+    )
+
+    # Immediate notification tracking
+    sent_immediately = models.BooleanField(
+        default=False,
+        help_text="Was this sent as immediate notification (urgent events)?"
+    )
+    immediate_notification = models.ForeignKey(
+        'Notification',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='source_events'
+    )
+
+    # Priority (for urgent events)
+    is_urgent = models.BooleanField(
+        default=False,
+        help_text="Send immediately, don't wait for digest"
+    )
+
+    # Related objects (optional, for reference)
+    related_announcement_id = models.IntegerField(null=True, blank=True)
+    related_vote_id = models.IntegerField(null=True, blank=True)
+    related_maintenance_id = models.IntegerField(null=True, blank=True)
+    related_project_id = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['building', '-created_at']),
+            models.Index(fields=['building', 'included_in_digest']),
+            models.Index(fields=['event_type', '-created_at']),
+            models.Index(fields=['is_urgent', 'sent_immediately']),
+        ]
+
+    def __str__(self):
+        return f"{self.get_event_type_display()}: {self.title}"
+
+    @property
+    def is_pending(self):
+        """Check if event is pending (not sent in any form)."""
+        return not self.included_in_digest and not self.sent_immediately
+
+    def mark_as_sent_in_digest(self):
+        """Mark event as included in digest."""
+        self.included_in_digest = True
+        self.digest_sent_at = timezone.now()
+        self.save(update_fields=['included_in_digest', 'digest_sent_at'])
+
+    def mark_as_sent_immediately(self, notification):
+        """Mark event as sent immediately."""
+        self.sent_immediately = True
+        self.immediate_notification = notification
+        self.save(update_fields=['sent_immediately', 'immediate_notification'])
+
+    def get_icon(self):
+        """Get icon/emoji for event type."""
+        if self.icon:
+            return self.icon
+
+        # Default icons by type
+        icon_map = {
+            'announcement': '📢',
+            'vote': '🗳️',
+            'maintenance': '🔧',
+            'project': '🏗️',
+            'common_expense': '💰',
+            'urgent': '🚨',
+            'meeting': '👥',
+            'general': 'ℹ️',
+        }
+        return icon_map.get(self.event_type, 'ℹ️')
+
+
 class NotificationRecipient(models.Model):
     """
     Individual recipient tracking for each notification.

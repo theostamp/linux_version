@@ -6,7 +6,8 @@ from .models import (
     NotificationTemplate,
     Notification,
     NotificationRecipient,
-    MonthlyNotificationTask
+    MonthlyNotificationTask,
+    NotificationEvent
 )
 from apartments.models import Apartment
 
@@ -317,4 +318,78 @@ class MonthlyTaskConfirmSerializer(serializers.Serializer):
     enable_auto_send = serializers.BooleanField(
         default=False,
         help_text="Enable automatic sending for future months"
+    )
+
+
+class NotificationEventSerializer(serializers.ModelSerializer):
+    """Serializer for notification events."""
+
+    event_type_display = serializers.CharField(source='get_event_type_display', read_only=True)
+    icon = serializers.SerializerMethodField()
+    is_pending = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = NotificationEvent
+        fields = [
+            'id',
+            'event_type',
+            'event_type_display',
+            'building',
+            'title',
+            'description',
+            'url',
+            'icon',
+            'created_at',
+            'event_date',
+            'included_in_digest',
+            'digest_sent_at',
+            'sent_immediately',
+            'immediate_notification',
+            'is_urgent',
+            'is_pending',
+            'related_announcement_id',
+            'related_vote_id',
+            'related_maintenance_id',
+            'related_project_id',
+        ]
+        read_only_fields = [
+            'id',
+            'created_at',
+            'event_type_display',
+            'icon',
+            'is_pending',
+            'included_in_digest',
+            'digest_sent_at',
+            'sent_immediately',
+            'immediate_notification',
+        ]
+
+    def get_icon(self, obj):
+        """Get icon/emoji for event."""
+        return obj.get_icon()
+
+
+class DigestPreviewSerializer(serializers.Serializer):
+    """Serializer for digest preview request."""
+
+    since_date = serializers.DateTimeField(
+        required=False,
+        help_text="Include events since this date (default: last 24 hours)"
+    )
+    building_id = serializers.IntegerField(
+        required=False,
+        help_text="Building ID (defaults to current building)"
+    )
+
+
+class SendDigestSerializer(serializers.Serializer):
+    """Serializer for sending digest email."""
+
+    since_date = serializers.DateTimeField(
+        required=False,
+        help_text="Include events since this date (default: last 24 hours)"
+    )
+    building_id = serializers.IntegerField(
+        required=False,
+        help_text="Building ID (defaults to current building)"
     )

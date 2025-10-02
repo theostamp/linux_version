@@ -5,7 +5,12 @@ from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.utils import timezone
 from django.db import transaction
-from .models import Notification, NotificationRecipient, NotificationTemplate
+from .models import (
+    Notification,
+    NotificationRecipient,
+    NotificationTemplate,
+    NotificationEvent
+)
 from apartments.models import Apartment
 import logging
 
@@ -660,3 +665,324 @@ class MonthlyTaskService:
                 balance -= transaction.amount
         
         return balance
+
+
+class NotificationEventService:
+    """
+    Service for creating and managing notification events.
+    Events can be sent immediately or included in digest emails.
+    """
+
+    @staticmethod
+    def create_event(
+        event_type,
+        building,
+        title,
+        description,
+        url='',
+        is_urgent=False,
+        icon='',
+        event_date=None,
+        related_announcement_id=None,
+        related_vote_id=None,
+        related_maintenance_id=None,
+        related_project_id=None,
+    ):
+        """
+        Create a notification event.
+
+        Args:
+            event_type: Type of event (announcement, vote, maintenance, etc.)
+            building: Building instance
+            title: Event title
+            description: Event description
+            url: Link to event detail page (optional)
+            is_urgent: If True, send immediately (default: False)
+            icon: Custom emoji/icon (optional)
+            event_date: When the event occurs (optional)
+            related_*_id: Related object IDs for reference (optional)
+
+        Returns:
+            NotificationEvent instance
+        """
+        event = NotificationEvent.objects.create(
+            event_type=event_type,
+            building=building,
+            title=title,
+            description=description,
+            url=url,
+            is_urgent=is_urgent,
+            icon=icon,
+            event_date=event_date,
+            related_announcement_id=related_announcement_id,
+            related_vote_id=related_vote_id,
+            related_maintenance_id=related_maintenance_id,
+            related_project_id=related_project_id,
+        )
+
+        logger.info(
+            f"Created notification event {event.id}: {title} "
+            f"for building {building.id} (urgent={is_urgent})"
+        )
+
+        # If urgent, send immediately
+        if is_urgent:
+            NotificationEventService.send_immediately(event)
+
+        return event
+
+    @staticmethod
+    def send_immediately(event):
+        """
+        Send event as immediate notification (for urgent events).
+
+        Args:
+            event: NotificationEvent instance
+
+        Returns:
+            Notification instance (or None if failed)
+        """
+        from users.models import CustomUser
+
+        # Get a system user for creating the notification
+        # TODO: Replace with proper admin user lookup
+        try:
+            admin_user = CustomUser.objects.filter(is_staff=True).first()
+            if not admin_user:
+                logger.error("No admin user found for sending immediate notification")
+                return None
+        except Exception as e:
+            logger.error(f"Error getting admin user: {e}")
+            return None
+
+        # Create notification
+        notification = NotificationService.create_notification(
+            building=event.building,
+            created_by=admin_user,
+            subject=event.title,
+            body=event.description,
+            notification_type='email',
+            priority='urgent' if event.is_urgent else 'high',
+        )
+
+        # Add all building residents as recipients
+        NotificationService.add_recipients(
+            notification,
+            send_to_all=True
+        )
+
+        # Send notification
+        NotificationService.send_notification(notification)
+
+        # Mark event as sent immediately
+        event.mark_as_sent_immediately(notification)
+
+        logger.info(f"Event {event.id} sent immediately as notification {notification.id}")
+
+        return notification
+
+    @staticmethod
+    def get_pending_events(building, since_date=None):
+        """
+        Get events that haven't been sent in any form.
+
+        Args:
+            building: Building instance
+            since_date: Filter events created after this date (optional)
+
+        Returns:
+            QuerySet of NotificationEvent
+        """
+        queryset = NotificationEvent.objects.filter(
+            building=building,
+            included_in_digest=False,
+            sent_immediately=False
+        )
+
+        if since_date:
+            queryset = queryset.filter(created_at__gte=since_date)
+
+        return queryset.order_by('-created_at')
+
+    @staticmethod
+    def group_events_by_type(events):
+        """
+        Group events by event_type for digest display.
+
+        Args:
+            events: QuerySet or list of NotificationEvent
+
+        Returns:
+            Dict with event_type as key, list of events as value
+        """
+        grouped = {}
+
+        for event in events:
+            event_type = event.get_event_type_display()
+            if event_type not in grouped:
+                grouped[event_type] = []
+            grouped[event_type].append(event)
+
+        return grouped
+
+
+class DigestService:
+    """
+    Service for creating and sending digest emails with grouped events.
+    """
+
+    @staticmethod
+    def send_digest(building, user, since_date=None):
+        """
+        Send digest email to all building residents with pending events.
+
+        Args:
+            building: Building instance
+            user: User sending the digest (admin/manager)
+            since_date: Include events since this date (default: last 24 hours)
+
+        Returns:
+            Notification instance (or None if no events)
+        """
+        # Default to last 24 hours
+        if not since_date:
+            since_date = timezone.now() - timezone.timedelta(days=1)
+
+        # Get pending events
+        events = NotificationEventService.get_pending_events(building, since_date)
+
+        if not events.exists():
+            logger.info(f"No pending events for building {building.id} - skipping digest")
+            return None
+
+        # Group events by type
+        grouped_events = NotificationEventService.group_events_by_type(events)
+
+        # Render digest email
+        subject = f"Ενημέρωση Πολυκατοικίας - {timezone.now().strftime('%d/%m/%Y')}"
+        body = DigestService._render_digest_body(grouped_events, building)
+
+        # Create notification
+        notification = NotificationService.create_notification(
+            building=building,
+            created_by=user,
+            subject=subject,
+            body=body,
+            notification_type='email',
+            priority='normal',
+        )
+
+        # Add all residents
+        NotificationService.add_recipients(notification, send_to_all=True)
+
+        # Send notification
+        NotificationService.send_notification(notification)
+
+        # Mark events as sent in digest
+        for event in events:
+            event.mark_as_sent_in_digest()
+
+        logger.info(
+            f"Sent digest notification {notification.id} "
+            f"with {events.count()} events to building {building.id}"
+        )
+
+        return notification
+
+    @staticmethod
+    def _render_digest_body(grouped_events, building):
+        """
+        Render HTML body for digest email.
+
+        Args:
+            grouped_events: Dict of {event_type: [events]}
+            building: Building instance
+
+        Returns:
+            HTML string
+        """
+        # Build HTML email
+        html_parts = [
+            f"<html><body style='font-family: Arial, sans-serif;'>",
+            f"<h2>Ενημέρωση Πολυκατοικίας</h2>",
+            f"<p><strong>{building.name or building.address}</strong></p>",
+            f"<p>Τα τελευταία νέα της πολυκατοικίας:</p>",
+            "<hr>",
+        ]
+
+        # Render each event type section
+        for event_type, events in grouped_events.items():
+            icon = events[0].get_icon() if events else 'ℹ️'
+            html_parts.append(f"<h3>{icon} {event_type} ({len(events)})</h3>")
+            html_parts.append("<ul style='list-style: none; padding-left: 0;'>")
+
+            for event in events:
+                # Format date
+                event_date = event.created_at.strftime('%d/%m/%Y')
+
+                # Add event item
+                if event.url:
+                    # Make title clickable if URL exists
+                    base_url = settings.FRONTEND_URL or 'http://demo.localhost:3000'
+                    full_url = f"{base_url}{event.url}"
+                    html_parts.append(
+                        f"<li style='margin-bottom: 15px;'>"
+                        f"<strong><a href='{full_url}' style='color: #2563eb; text-decoration: none;'>"
+                        f"{event.title}</a></strong> "
+                        f"<span style='color: #6b7280; font-size: 0.9em;'>({event_date})</span><br>"
+                        f"<span style='color: #374151;'>{event.description[:200]}</span>"
+                        f"</li>"
+                    )
+                else:
+                    html_parts.append(
+                        f"<li style='margin-bottom: 15px;'>"
+                        f"<strong>{event.title}</strong> "
+                        f"<span style='color: #6b7280; font-size: 0.9em;'>({event_date})</span><br>"
+                        f"<span style='color: #374151;'>{event.description[:200]}</span>"
+                        f"</li>"
+                    )
+
+            html_parts.append("</ul>")
+
+        # Footer
+        html_parts.extend([
+            "<hr>",
+            "<p style='color: #6b7280; font-size: 0.9em;'>",
+            "Με εκτίμηση,<br>",
+            f"Διαχείριση Κτιρίου - {building.name or building.address}",
+            "</p>",
+            "</body></html>",
+        ])
+
+        return "\n".join(html_parts)
+
+    @staticmethod
+    def get_digest_preview(building, since_date=None):
+        """
+        Get preview of digest email without sending.
+
+        Args:
+            building: Building instance
+            since_date: Include events since this date (optional)
+
+        Returns:
+            Dict with 'subject', 'body', 'event_count'
+        """
+        if not since_date:
+            since_date = timezone.now() - timezone.timedelta(days=1)
+
+        events = NotificationEventService.get_pending_events(building, since_date)
+        grouped_events = NotificationEventService.group_events_by_type(events)
+
+        subject = f"Ενημέρωση Πολυκατοικίας - {timezone.now().strftime('%d/%m/%Y')}"
+        body = DigestService._render_digest_body(grouped_events, building)
+
+        return {
+            'subject': subject,
+            'body': body,
+            'event_count': events.count(),
+            'events_by_type': {
+                event_type: len(event_list)
+                for event_type, event_list in grouped_events.items()
+            }
+        }

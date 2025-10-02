@@ -8,7 +8,7 @@ from django.dispatch import receiver
 from django.db import transaction
 from decimal import Decimal
 
-from .models import Transaction, Payment, Expense
+from .models import Transaction, Payment, Expense, CommonExpensePeriod
 from core.utils import publish_building_event
 from django.db.models import Sum
 
@@ -354,9 +354,38 @@ def update_financial_data_on_building_change(sender, instance, created, **kwargs
                 # Αν υπάρχει αλλαγή στο management fee, ενημερώνουμε όλες τις σχετικές οικονομικές καταστάσεις
                 print(f"✅ Building Signal: Ενημερώθηκε κτίριο {instance.name}")
                 print(f"📊 Νέα αμοιβή διαχείρισης: {instance.management_fee_per_apartment}€/διαμέρισμα")
-                
+
                 # Εδώ μπορούμε να προσθέσουμε επιπλέον λογική για ενημέρωση
                 # π.χ. invalidate cache, notify frontend, etc.
-    
+
     except Exception as e:
         print(f"❌ Σφάλμα στην ενημέρωση οικονομικών δεδομένων από αλλαγή κτιρίου: {e}")
+
+
+@receiver(post_save, sender=CommonExpensePeriod)
+def create_notification_event_for_common_expenses(sender, instance, created, **kwargs):
+    """
+    Αυτόματη δημιουργία NotificationEvent όταν δημιουργείται φύλλο κοινοχρήστων
+    """
+    if created:
+        try:
+            # Import here to avoid circular imports
+            from notifications.services import NotificationEventService
+
+            # Create notification event
+            NotificationEventService.create_event(
+                event_type='common_expense',
+                building=instance.building,
+                title=f"Νέο Φύλλο Κοινοχρήστων: {instance.period_name}",
+                description=f"Δημιουργήθηκε φύλλο κοινοχρήστων για την περίοδο {instance.period_name}. "
+                           f"Συνολικά έξοδα: {instance.total_expenses:.2f}€",
+                url=f"/financial/common-expenses/{instance.id}",
+                is_urgent=False,
+                icon='💰',
+                event_date=instance.end_date,
+            )
+
+            print(f"✅ Created NotificationEvent for CommonExpensePeriod: {instance.period_name}")
+
+        except Exception as e:
+            print(f"❌ Error creating NotificationEvent for CommonExpensePeriod: {e}")

@@ -184,3 +184,67 @@ export interface MonthlyTaskConfirmRequest {
   send_immediately?: boolean;
   enable_auto_send?: boolean;
 }
+
+// Notification Events
+export type NotificationEventType =
+  | 'announcement'
+  | 'vote'
+  | 'maintenance'
+  | 'project'
+  | 'common_expense'
+  | 'urgent'
+  | 'meeting'
+  | 'general';
+
+export interface NotificationEvent {
+  id: number;
+  event_type: NotificationEventType;
+  event_type_display: string;
+  building: number;
+  title: string;
+  description: string;
+  url: string;
+  icon: string;
+  created_at: string;
+  event_date: string | null;
+  included_in_digest: boolean;
+  digest_sent_at: string | null;
+  sent_immediately: boolean;
+  immediate_notification: number | null;
+  is_urgent: boolean;
+  is_pending: boolean;
+  related_announcement_id: number | null;
+  related_vote_id: number | null;
+  related_maintenance_id: number | null;
+  related_project_id: number | null;
+}
+
+export interface PendingEventsResponse {
+  count: number;
+  events: NotificationEvent[];
+  events_by_type: Record<string, number>;
+}
+
+export interface DigestPreview {
+  subject: string;
+  body: string;
+  event_count: number;
+  events_by_type: Record<string, number>;
+}
+
+export interface DigestPreviewRequest {
+  building_id: number;
+  since_date?: string;
+}
+
+export interface SendDigestRequest {
+  building_id: number;
+  since_date?: string;
+}
+
+export interface SendDigestResponse {
+  message: string;
+  notification_id: number | null;
+  subject?: string;
+  recipients?: number;
+}

@@ -14,7 +14,8 @@ from .models import (
     NotificationTemplate,
     Notification,
     NotificationRecipient,
-    MonthlyNotificationTask
+    MonthlyNotificationTask,
+    NotificationEvent
 )
 from .serializers import (
     NotificationTemplateSerializer,
@@ -25,8 +26,16 @@ from .serializers import (
     NotificationTemplatePreviewSerializer,
     MonthlyNotificationTaskSerializer,
     MonthlyTaskConfirmSerializer,
+    NotificationEventSerializer,
+    DigestPreviewSerializer,
+    SendDigestSerializer,
 )
-from .services import NotificationService, TemplateService
+from .services import (
+    NotificationService,
+    TemplateService,
+    NotificationEventService,
+    DigestService
+)
 
 
 class NotificationTemplateViewSet(viewsets.ModelViewSet):
@@ -491,8 +500,162 @@ class MonthlyNotificationTaskViewSet(viewsets.ModelViewSet):
         
         task.auto_send_enabled = False
         task.save()
-        
+
         return Response(
             {'message': 'Auto-send disabled', 'auto_send_enabled': False},
             status=status.HTTP_200_OK
         )
+
+
+class NotificationEventViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for notification events (read-only).
+
+    list: Get all events
+    retrieve: Get event details
+    pending: Get pending events (not sent yet)
+    digest_preview: Preview digest email
+    send_digest: Send digest email to all residents
+    """
+    serializer_class = NotificationEventSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['event_type', 'building', 'is_urgent', 'included_in_digest', 'sent_immediately']
+
+    def get_queryset(self):
+        """Filter events by building access."""
+        user = self.request.user
+        # TODO: Add proper building permission filtering
+        return NotificationEvent.objects.select_related('building', 'immediate_notification')
+
+    @action(detail=False, methods=['get'])
+    def pending(self, request):
+        """
+        Get pending events that haven't been sent.
+
+        GET /api/notifications/events/pending/?building_id=1&since_date=2025-10-01
+        """
+        building_id = request.query_params.get('building_id')
+        since_date = request.query_params.get('since_date')
+
+        if not building_id:
+            return Response(
+                {'error': 'building_id parameter is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        from buildings.models import Building
+        try:
+            building = Building.objects.get(id=building_id)
+        except Building.DoesNotExist:
+            return Response(
+                {'error': 'Building not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Parse since_date if provided
+        since_datetime = None
+        if since_date:
+            from dateutil import parser
+            try:
+                since_datetime = parser.parse(since_date)
+            except Exception:
+                return Response(
+                    {'error': 'Invalid since_date format. Use ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS)'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # Get pending events
+        events = NotificationEventService.get_pending_events(building, since_datetime)
+        serializer = self.get_serializer(events, many=True)
+
+        # Group events by type
+        grouped = NotificationEventService.group_events_by_type(events)
+
+        return Response({
+            'count': events.count(),
+            'events': serializer.data,
+            'events_by_type': {
+                event_type: len(event_list)
+                for event_type, event_list in grouped.items()
+            }
+        })
+
+    @action(detail=False, methods=['post'])
+    def digest_preview(self, request):
+        """
+        Get preview of digest email without sending.
+
+        POST /api/notifications/events/digest_preview/
+        Body: {"building_id": 1, "since_date": "2025-10-01T00:00:00Z"}
+        """
+        serializer = DigestPreviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        building_id = serializer.validated_data.get('building_id')
+        since_date = serializer.validated_data.get('since_date')
+
+        if not building_id:
+            return Response(
+                {'error': 'building_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        from buildings.models import Building
+        try:
+            building = Building.objects.get(id=building_id)
+        except Building.DoesNotExist:
+            return Response(
+                {'error': 'Building not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Get digest preview
+        preview = DigestService.get_digest_preview(building, since_date)
+
+        return Response(preview)
+
+    @action(detail=False, methods=['post'])
+    def send_digest(self, request):
+        """
+        Send digest email to all building residents.
+
+        POST /api/notifications/events/send_digest/
+        Body: {"building_id": 1, "since_date": "2025-10-01T00:00:00Z"}
+        """
+        serializer = SendDigestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        building_id = serializer.validated_data.get('building_id')
+        since_date = serializer.validated_data.get('since_date')
+
+        if not building_id:
+            return Response(
+                {'error': 'building_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        from buildings.models import Building
+        try:
+            building = Building.objects.get(id=building_id)
+        except Building.DoesNotExist:
+            return Response(
+                {'error': 'Building not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Send digest
+        notification = DigestService.send_digest(building, request.user, since_date)
+
+        if notification:
+            return Response({
+                'message': 'Digest sent successfully',
+                'notification_id': notification.id,
+                'subject': notification.subject,
+                'recipients': notification.total_recipients,
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response({
+                'message': 'No pending events to send',
+                'notification_id': None,
+            }, status=status.HTTP_200_OK)

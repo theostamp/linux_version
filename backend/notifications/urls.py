@@ -8,6 +8,7 @@ from .views import (
     NotificationViewSet,
     NotificationRecipientViewSet,
     MonthlyNotificationTaskViewSet,
+    NotificationEventViewSet,
 )
 
 router = DefaultRouter()
@@ -15,6 +16,7 @@ router.register(r'templates', NotificationTemplateViewSet, basename='notificatio
 router.register(r'notifications', NotificationViewSet, basename='notification')
 router.register(r'recipients', NotificationRecipientViewSet, basename='notification-recipient')
 router.register(r'monthly-tasks', MonthlyNotificationTaskViewSet, basename='monthly-task')
+router.register(r'events', NotificationEventViewSet, basename='notification-event')
 
 urlpatterns = [
     path('', include(router.urls)),
