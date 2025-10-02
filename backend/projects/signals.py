@@ -24,11 +24,21 @@ def sync_project_todo(sender, instance: Project, created, **kwargs):
             assigned_to=instance.created_by,
             created_by=instance.created_by,
         )
-    
+
     # Δημιουργία ανακοίνωσης για νέο έργο
     if created:
         create_project_announcement(instance)
-    
+
+        # Δημιουργία ξεχωριστής ανακοίνωσης για γενική συνέλευση αν υπάρχει
+        if instance.general_assembly_date:
+            create_assembly_announcement(instance)
+    else:
+        # Αν ενημερώνεται το έργο και προστέθηκε general_assembly_date
+        # ελέγχουμε αν υπάρχει ήδη ανακοίνωση για τη συνέλευση
+        if instance.general_assembly_date:
+            # Θα δημιουργήσουμε ανακοίνωση μόνο αν δεν υπάρχει ήδη για αυτή την ημερομηνία
+            create_assembly_announcement(instance, check_existing=True)
+
     publish_building_event(
         building_id=instance.building_id,
         event_type="project.updated",
@@ -202,7 +212,7 @@ def create_vote_announcement(project: Project):
     """Δημιουργεί ανακοίνωση για ψηφοφορία"""
     try:
         from announcements.models import Announcement
-        
+
         # Δημιουργία ανακοίνωσης για ψηφοφορία
         announcement = Announcement.objects.create(
             building=project.building,
@@ -224,7 +234,7 @@ def create_vote_announcement(project: Project):
             start_date=project.created_at.date(),
             end_date=project.general_assembly_date,
         )
-        
+
         # Ενημέρωση με WebSocket
         publish_building_event(
             building_id=project.building_id,
@@ -235,11 +245,104 @@ def create_vote_announcement(project: Project):
                 "is_urgent": announcement.is_urgent,
             },
         )
-        
+
     except Exception as e:
         # Log the error but don't fail the vote creation
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Failed to create vote announcement for project {project.id}: {e}")
+
+
+def create_assembly_announcement(project: Project, check_existing: bool = False):
+    """Δημιουργεί ξεχωριστή ανακοίνωση για Γενική Συνέλευση"""
+    try:
+        from announcements.models import Announcement
+        from datetime import timedelta
+
+        # Αν check_existing=True, ελέγχουμε αν υπάρχει ήδη ανακοίνωση για αυτή τη συνέλευση
+        if check_existing:
+            from django.db.models import Q
+
+            existing = Announcement.objects.filter(
+                Q(title__icontains="Γενική Συνέλευση") & Q(title__icontains=project.title[:50]),
+                building=project.building,
+                end_date=project.general_assembly_date,
+                is_active=True
+            ).exists()
+
+            if existing:
+                return  # Υπάρχει ήδη ανακοίνωση
+
+        # Υπολογίζουμε την ημέρα της ημέρας της συνέλευσης
+        assembly_date = project.general_assembly_date
+        today = project.created_at.date() if hasattr(project, 'created_at') else assembly_date
+
+        # Δημιουργία ανακοίνωσης για τη γενική συνέλευση
+        announcement = Announcement.objects.create(
+            building=project.building,
+            author=project.created_by,
+            title=f"Σύγκληση Γενικής Συνέλευσης - {project.title}",
+            description=f"""
+Καλείστε να παραστείτε στη Γενική Συνέλευση των ιδιοκτητών για το έργο:
+
+**"{project.title}"**
+
+**Ημερομηνία και Ώρα Συνέλευσης:** {assembly_date.strftime('%d/%m/%Y')}
+
+**Θέματα Ημερήσιας Διάταξης:**
+1. Παρουσίαση του έργου
+2. Συζήτηση προσφορών και επιλογή αναδόχου
+3. Έγκριση προϋπολογισμού και τρόπου πληρωμής
+4. Ψηφοφορία για την εκτέλεση του έργου
+
+{f'**Εκτιμώμενο Κόστος:** €{project.estimated_cost:,.2f}' if project.estimated_cost else ''}
+{f'**Προθεσμία Ολοκλήρωσης:** {project.deadline.strftime("%d/%m/%Y")}' if project.deadline else ''}
+
+**Σημαντικό:** Η παρουσία σας είναι απαραίτητη για την απαρτία της συνέλευσης.
+
+Για περισσότερες πληροφορίες και διευκρινήσεις, παρακαλούμε επικοινωνήστε με τη διοίκηση.
+            """.strip(),
+            published=True,
+            is_active=True,
+            is_urgent=True,  # Η συνέλευση είναι επείγον θέμα
+            priority=20,  # Υψηλή προτεραιότητα
+            start_date=today,
+            end_date=assembly_date,
+        )
+
+        # Ενημέρωση με WebSocket
+        publish_building_event(
+            building_id=project.building_id,
+            event_type="announcement.created",
+            payload={
+                "id": announcement.id,
+                "title": announcement.title,
+                "is_urgent": announcement.is_urgent,
+            },
+        )
+
+        # Δημιουργία NotificationEvent για το digest email
+        try:
+            from notifications.services import NotificationEventService
+
+            NotificationEventService.create_event(
+                event_type='meeting',
+                building=project.building,
+                title=f"Γενική Συνέλευση: {project.title}",
+                description=f"Σύγκληση γενικής συνέλευσης στις {assembly_date.strftime('%d/%m/%Y')} για συζήτηση και έγκριση του έργου.",
+                url=f"/projects/{project.id}",
+                is_urgent=True,
+                icon='📋',
+                event_date=assembly_date,
+                related_project_id=project.id
+            )
+        except Exception:
+            pass  # Αν δεν υπάρχει το NotificationEventService, συνεχίζουμε
+
+    except Exception as e:
+        # Log the error but don't fail the project creation
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to create assembly announcement for project {project.id}: {e}")
 
 
