@@ -4,6 +4,7 @@ import { BaseWidgetProps } from '@/types/kiosk';
 import { Calendar, Clock, MapPin, Video } from 'lucide-react';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
+import MarkdownRenderer from '@/components/kiosk/MarkdownRenderer';
 
 export default function AssemblyWidget({ data, isLoading, error }: BaseWidgetProps) {
   if (isLoading) {
@@ -57,6 +58,10 @@ export default function AssemblyWidget({ data, isLoading, error }: BaseWidgetPro
   const zoomLinkMatch = assembly.description.match(/\*\*Σύνδεσμος:\*\*\s*(https?:\/\/[^\s]+)/i);
   const isOnline = assembly.description.includes('Διαδικτυακή Συνέλευση') || assembly.description.includes('Zoom');
 
+  // Εξάγουμε το τμήμα των θεμάτων
+  const topicsSection = assembly.description.match(/\*\*ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ:\*\*([\s\S]*?)\*\*Σημαντικό:\*\*/);
+  const topicsContent = topicsSection ? topicsSection[1].trim() : '';
+
   // Εξάγουμε θέματα
   const topicsRegex = /###\s*Θέμα:\s*([^\n]+)/g;
   const topics: string[] = [];
@@ -109,25 +114,13 @@ export default function AssemblyWidget({ data, isLoading, error }: BaseWidgetPro
           </div>
         </div>
 
-        {/* Θέματα */}
-        {topics.length > 0 && (
+        {/* Θέματα με Rich Formatting */}
+        {topicsContent && (
           <div className="bg-gradient-to-br from-purple-900/50 to-indigo-900/50 backdrop-blur-sm p-4 rounded-xl border border-purple-500/30">
             <h3 className="text-sm font-semibold text-purple-300 uppercase tracking-wide mb-3">
-              Θέματα Ημερήσιας Διάταξης ({topics.length})
+              Θέματα Ημερήσιας Διάταξης {topics.length > 0 && `(${topics.length})`}
             </h3>
-            <ul className="space-y-2">
-              {topics.slice(0, 4).map((topic, index) => (
-                <li key={index} className="flex items-start space-x-2">
-                  <span className="text-purple-400 font-bold mt-0.5">{index + 1}.</span>
-                  <span className="text-sm text-white flex-1">{topic}</span>
-                </li>
-              ))}
-              {topics.length > 4 && (
-                <li className="text-xs text-purple-300 italic">
-                  +{topics.length - 4} ακόμα θέματα
-                </li>
-              )}
-            </ul>
+            <MarkdownRenderer content={topicsContent} className="space-y-2" />
           </div>
         )}
 

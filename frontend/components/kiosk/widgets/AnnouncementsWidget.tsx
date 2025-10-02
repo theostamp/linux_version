@@ -4,6 +4,7 @@ import { BaseWidgetProps } from '@/types/kiosk';
 import { Bell, Calendar, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
+import MarkdownRenderer from '@/components/kiosk/MarkdownRenderer';
 
 export default function AnnouncementsWidget({ data, isLoading, error }: BaseWidgetProps) {
   if (isLoading) {
@@ -60,9 +61,9 @@ export default function AnnouncementsWidget({ data, isLoading, error }: BaseWidg
               </div>
             </div>
             
-            <p className="text-xs text-blue-100 line-clamp-3 mb-3 leading-relaxed">
-              {announcement.description}
-            </p>
+            <div className="text-xs text-blue-100 line-clamp-3 mb-3 leading-relaxed">
+              <MarkdownRenderer content={announcement.description} />
+            </div>
             
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center text-blue-300">
