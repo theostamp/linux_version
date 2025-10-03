@@ -1,71 +1,107 @@
+#!/usr/bin/env python3
+"""
+🔍 Script για έλεγχο όλων των δαπανών
+"""
+
 import os
 import sys
-import django
+from datetime import datetime
 
 # Setup Django environment
 sys.path.append('/app')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
+
+import django
 django.setup()
 
 from django_tenants.utils import schema_context
-from financial.models import Expense, Transaction
+from buildings.models import Building
+from financial.models import Expense
 
-# All database operations within tenant context
-with schema_context('demo'):
-    print("=== Checking ALL Expenses ===")
+def check_all_expenses():
+    """Έλεγχος όλων των δαπανών"""
     
-    all_expenses = Expense.objects.filter(building_id=1).order_by('date')
+    print("🔍 ΕΛΕΓΧΟΣ ΟΛΩΝ ΤΩΝ ΔΑΠΑΝΩΝ")
+    print("=" * 70)
     
-    print(f"Total expenses in building: {all_expenses.count()}")
-    
-    for expense in all_expenses:
-        print(f"\n📋 Expense ID: {expense.id}")
-        print(f"   Title: {expense.title}")
-        print(f"   Amount: €{expense.amount}")
-        print(f"   Date: {expense.date} ({expense.date.month}/{expense.date.year})")
-        print(f"   Created at: {expense.created_at}")
+    with schema_context('demo'):
+        building = Building.objects.get(id=1)  # Αλκμάνος 22
         
-        # Check related transactions
-        transactions = Transaction.objects.filter(
-            reference_type='expense',
-            reference_id=str(expense.id)
-        )
-        print(f"   Transactions: {transactions.count()}")
+        print(f"🏢 Κτίριο: {building.name}")
+        print()
         
-        # Check transactions by title (as we did in the fix)
-        transactions_by_title = Transaction.objects.filter(
-            description__icontains=expense.title
-        )
-        print(f"   Transactions by title: {transactions_by_title.count()}")
+        # Έλεγχος όλων των δαπανών (όλων των ετών)
+        all_expenses = Expense.objects.filter(
+            building=building
+        ).order_by('date')
         
-        if transactions_by_title.exists():
-            total_amount = sum(tx.amount for tx in transactions_by_title)
-            print(f"   Total transaction amount: €{total_amount}")
+        print(f"💸 Σύνολο δαπανών (όλα τα έτη): {all_expenses.count()}")
+        print()
+        
+        if all_expenses.exists():
+            print("📋 ΟΛΕΣ ΟΙ ΔΑΠΑΝΕΣ:")
+            print("-" * 70)
             
-            # Show sample transactions
-            for tx in transactions_by_title[:3]:
-                print(f"     - {tx.apartment}: €{tx.amount} on {tx.date} ({tx.type})")
-    
-    print(f"\n🗓️ Date Analysis:")
-    print(f"   August 2025 expenses: {all_expenses.filter(date__year=2025, date__month=8).count()}")
-    print(f"   September 2025 expenses: {all_expenses.filter(date__year=2025, date__month=9).count()}")
-    print(f"   July 2025 expenses: {all_expenses.filter(date__year=2025, date__month=7).count()}")
-    
-    print(f"\n📊 Transaction Types for reference_type='expense':")
-    expense_transactions = Transaction.objects.filter(reference_type='expense')
-    print(f"   Total: {expense_transactions.count()}")
-    
-    for tx_type in ['expense_created', 'common_expense_charge', 'expense_issued']:
-        count = expense_transactions.filter(type=tx_type).count()
-        print(f"   {tx_type}: {count}")
-    
-    print(f"\n🔍 Previous Obligation Transactions:")
-    prev_obligation_transactions = Transaction.objects.filter(
-        description__icontains='Παλαιότερη οφειλή'
-    )
-    print(f"   Count: {prev_obligation_transactions.count()}")
-    
-    for tx in prev_obligation_transactions[:5]:
-        print(f"   - {tx.apartment}: €{tx.amount} on {tx.date}")
-        print(f"     Description: {tx.description}")
-        print(f"     Type: {tx.type}, Reference: {tx.reference_type}/{tx.reference_id}")
+            total_amount = 0
+            for expense in all_expenses:
+                category = expense.category or 'no_category'
+                print(f"📅 {expense.date.strftime('%Y-%m-%d')} | {category:20} | {expense.title:30} | €{expense.amount:,.2f}")
+                total_amount += expense.amount
+            
+            print("-" * 70)
+            print(f"💰 ΣΥΝΟΛΟ: €{total_amount:,.2f}")
+        else:
+            print("❌ Δεν υπάρχουν δαπάνες")
+        
+        print()
+        
+        # Έλεγχος δαπανών ανά έτος
+        print("📅 ΔΑΠΑΝΕΣ ΑΝΑ ΕΤΟΣ:")
+        print("-" * 50)
+        
+        years = set(expense.date.year for expense in all_expenses)
+        for year in sorted(years):
+            year_expenses = Expense.objects.filter(
+                building=building,
+                date__year=year
+            )
+            
+            total_year = sum(expense.amount for expense in year_expenses)
+            print(f"📅 {year}: {year_expenses.count()} δαπάνες, €{total_year:,.2f}")
+            
+            # Εμφάνιση δαπανών για κάθε μήνα του έτους
+            for month in range(1, 13):
+                month_expenses = year_expenses.filter(date__month=month)
+                if month_expenses.exists():
+                    month_name = datetime(year, month, 1).strftime('%B')
+                    total_month = sum(expense.amount for expense in month_expenses)
+                    print(f"   {month_name:>10}: {month_expenses.count()} δαπάνες, €{total_month:,.2f}")
+                    
+                    # Εμφάνιση λεπτομερειών για Οκτώβριο και Νοέμβριο 2024
+                    if year == 2024 and month in [10, 11]:
+                        for expense in month_expenses:
+                            category = expense.category or 'no_category'
+                            print(f"              - {category}: {expense.title} | €{expense.amount:,.2f}")
+        
+        print()
+        
+        # Έλεγχος κατηγοριών
+        print("📂 ΚΑΤΗΓΟΡΙΕΣ ΔΑΠΑΝΩΝ:")
+        print("-" * 50)
+        
+        categories = {}
+        for expense in all_expenses:
+            category = expense.category or 'no_category'
+            if category not in categories:
+                categories[category] = {'count': 0, 'total': 0}
+            categories[category]['count'] += 1
+            categories[category]['total'] += expense.amount
+        
+        for category, data in categories.items():
+            print(f"📂 {category:20}: {data['count']:3} δαπάνες, €{data['total']:,.2f}")
+        
+        print("\n" + "=" * 70)
+        print("✅ Ο έλεγχος ολοκληρώθηκε!")
+
+if __name__ == "__main__":
+    check_all_expenses()
