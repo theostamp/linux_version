@@ -127,7 +127,8 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
-      setError('Google Maps API key is missing');
+      console.warn('⚠️ Google Maps API key is missing - using fallback manual input');
+      // Don't set error - just use fallback manual input
       return;
     }
 
