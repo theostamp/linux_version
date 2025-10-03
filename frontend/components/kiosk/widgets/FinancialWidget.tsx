@@ -27,74 +27,94 @@ export default function FinancialWidget({ data, isLoading, error }: BaseWidgetPr
     <div className="h-full overflow-hidden">
       <div className="flex items-center space-x-2 mb-4 pb-2 border-b border-emerald-500/20">
         <Euro className="w-6 h-6 text-emerald-300" />
-        <h2 className="text-lg font-bold text-white">Φύλλο Κοινόχρηστων</h2>
+        <h2 className="text-lg font-bold text-white">Οικονομικά Στοιχεία</h2>
       </div>
       
       <div className="h-full overflow-y-auto">
-        {/* Φύλλο Κοινόχρηστων Image */}
-        <div className="bg-white rounded-lg p-4 h-full flex items-center justify-center">
-          <div className="text-center">
-            <div className="bg-gradient-to-br from-emerald-100 to-green-100 rounded-xl p-8 border-2 border-emerald-200 shadow-lg max-w-full max-h-full">
-              <div className="text-6xl mb-4">🧾</div>
-              <h3 className="text-2xl font-bold text-emerald-800 mb-2">Φύλλο Κοινόχρηστων</h3>
-              <div className="space-y-4 text-left max-w-md">
-                <div className="bg-white p-4 rounded-lg border border-emerald-200">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-semibold text-emerald-700">Κτίριο:</span>
-                    <span className="text-emerald-600">Αλκμάνος 22</span>
-                  </div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-semibold text-emerald-700">Περίοδος:</span>
-                    <span className="text-emerald-600">Δεκέμβριος 2024</span>
-                  </div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-semibold text-emerald-700">Συνολικό ποσό:</span>
-                    <span className="text-emerald-600 font-bold">€2,450.00</span>
-                  </div>
-                  <div className="border-t border-emerald-200 mt-3 pt-3">
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Καύσιμα:</span>
-                        <span>€850.00</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Ηλεκτρισμός:</span>
-                        <span>€420.00</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Καθαριότητα:</span>
-                        <span>€180.00</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Συντήρηση:</span>
-                        <span>€650.00</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Ασφάλεια:</span>
-                        <span>€200.00</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Άλλα έξοδα:</span>
-                        <span>€150.00</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-3 border-t border-emerald-200">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-emerald-600">Μερίδιο ανά διαμέρισμα:</span>
-                      <span className="font-bold text-emerald-800">€122.50</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-sm text-emerald-600 font-semibold">
-                    Προθεσμία πληρωμής: 31/01/2025
-                  </div>
-                  <div className="text-xs text-emerald-500 mt-1">
-                    Πληρωμή στο IBAN: GR12 3456 7890 1234 5678 9012 345
-                  </div>
-                </div>
+        <div className="space-y-4">
+          {/* Financial Overview Cards */}
+          <div className="bg-gradient-to-br from-emerald-900/40 to-green-900/40 backdrop-blur-sm p-4 rounded-xl border border-emerald-500/30">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-emerald-100">Σύνοψη Οικονομικών</h3>
+              <div className="flex items-center">
+                <TrendingUp className="w-4 h-4 text-green-400" />
               </div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-white mb-1">€0</div>
+              <div className="w-full bg-emerald-900/50 rounded-full h-3">
+                <div className="h-3 rounded-full transition-all bg-green-400" style={{width: '0%'}}></div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 backdrop-blur-sm p-3 rounded-xl border border-blue-500/30">
+              <div className="flex items-center space-x-2 mb-2">
+                <Euro className="w-4 h-4 text-blue-300" />
+                <h4 className="text-xs font-semibold text-blue-100">Συνολικές Πληρωμές</h4>
+              </div>
+              <div className="text-lg font-bold text-white">€0</div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-green-900/40 to-emerald-900/40 backdrop-blur-sm p-3 rounded-xl border border-green-500/30">
+              <div className="flex items-center space-x-2 mb-2">
+                <TrendingUp className="w-4 h-4 text-green-300" />
+                <h4 className="text-xs font-semibold text-green-100">Εισπράχθηκαν</h4>
+              </div>
+              <div className="text-lg font-bold text-white">€0</div>
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-yellow-900/40 to-amber-900/40 backdrop-blur-sm p-4 rounded-xl border border-yellow-500/30">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-yellow-100">Εκκρεμότητες</h3>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center">
+                <div className="text-lg font-bold text-yellow-300">0</div>
+                <div className="text-xs text-yellow-200">Εκκρεμείς</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-red-300">0</div>
+                <div className="text-xs text-red-200">Ληγμένες</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-purple-900/40 to-violet-900/40 backdrop-blur-sm p-4 rounded-xl border border-purple-500/30">
+            <div className="flex items-center space-x-2 mb-3">
+              <BarChart3 className="w-4 h-4 text-purple-300" />
+              <h3 className="text-sm font-semibold text-purple-100">Τάση Εισπράξεων</h3>
+            </div>
+            <div className="flex items-center justify-center h-16">
+              <div className="flex items-end space-x-1">
+                <div className="bg-purple-400 rounded-t" style={{width: '8px', height: '20px', opacity: 0.6}}></div>
+                <div className="bg-purple-400 rounded-t" style={{width: '8px', height: '30px', opacity: 0.6}}></div>
+                <div className="bg-purple-400 rounded-t" style={{width: '8px', height: '25px', opacity: 0.6}}></div>
+                <div className="bg-purple-400 rounded-t" style={{width: '8px', height: '35px', opacity: 0.6}}></div>
+                <div className="bg-purple-400 rounded-t" style={{width: '8px', height: '40px', opacity: 0.6}}></div>
+                <div className="bg-purple-400 rounded-t" style={{width: '8px', height: '45px', opacity: 0.6}}></div>
+                <div className="bg-purple-400 rounded-t" style={{width: '8px', height: '0px', opacity: 1}}></div>
+              </div>
+            </div>
+            <div className="text-center mt-2">
+              <div className="text-xs text-purple-300">Τρέχουσα περίοδος: 0%</div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-gradient-to-br from-gray-800/40 to-slate-800/40 backdrop-blur-sm p-2 rounded-lg border border-gray-600/30 text-center">
+              <PieChart className="w-4 h-4 mx-auto mb-1 text-gray-300" />
+              <div className="text-xs text-gray-300">Αναφορά</div>
+            </div>
+            <div className="bg-gradient-to-br from-gray-800/40 to-slate-800/40 backdrop-blur-sm p-2 rounded-lg border border-gray-600/30 text-center">
+              <Euro className="w-4 h-4 mx-auto mb-1 text-gray-300" />
+              <div className="text-xs text-gray-300">Καταθέσεις</div>
             </div>
           </div>
         </div>
