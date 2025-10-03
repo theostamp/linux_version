@@ -102,14 +102,21 @@ class Command(BaseCommand):
                         self.stdout.write(self.style.WARNING('    ⚠️  Δεν βρέθηκαν διαμερίσματα'))
                         total_skipped += 1
                         continue
-                    
+
                     total_amount = building.management_fee_per_apartment * apartments_count
-                    
+
+                    # ΔΙΟΡΘΩΣΗ: Η ημερομηνία είναι η τελευταία του μήνα (όπως τις δόσεις έργων)
+                    # Έτσι οι management fees εμφανίζονται ως παλιές οφειλές τον επόμενο μήνα
+                    import calendar
+                    last_day = calendar.monthrange(target_date.year, target_date.month)[1]
+                    expense_date = date(target_date.year, target_date.month, last_day)
+
                     # Δημιουργία δαπάνης (αν δεν είναι dry-run)
                     if options['dry_run']:
                         self.stdout.write(self.style.SUCCESS(
                             f'    ✅ [DRY-RUN] Θα δημιουργούσε δαπάνη: {total_amount}€ '
-                            f'({apartments_count} x {building.management_fee_per_apartment}€)'
+                            f'({apartments_count} x {building.management_fee_per_apartment}€) '
+                            f'με ημερομηνία {expense_date}'
                         ))
                     else:
                         try:
@@ -117,10 +124,11 @@ class Command(BaseCommand):
                                 building=building,
                                 title=f'Διαχειριστικά Έξοδα {target_date.strftime("%B %Y")}',
                                 amount=total_amount,
-                                date=target_date,
+                                date=expense_date,  # ΔΙΟΡΘΩΣΗ: Τελευταία του μήνα
+                                due_date=expense_date,  # Όπως τις δόσεις
                                 category='management_fees',
                                 expense_type='management_fee',  # Διακριτός τύπος για εύκολη αναγνώριση
-                                distribution_type='by_participation_mills',  # Κατανομή βάσει χιλιοστών
+                                distribution_type='equal_share',  # ΔΙΟΡΘΩΣΗ: Ισόποσο, όχι χιλιοστά
                                 notes=f'Αυτόματη καταχώρηση διαχειριστικών εξόδων για {month_str}\n'
                                       f'Ποσό ανά διαμέρισμα: {building.management_fee_per_apartment}€\n'
                                       f'Αριθμός διαμερισμάτων: {apartments_count}\n'
