@@ -136,6 +136,61 @@ def recalculate_building_reserve_on_payment_delete(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=Expense)
+def auto_create_common_expense_period(sender, instance, created, **kwargs):
+    """
+    Αυτόματη δημιουργία ή ενημέρωση CommonExpensePeriod όταν δημιουργείται δαπάνη
+
+    CRITICAL: Αυτό το signal εξασφαλίζει ότι κάθε δαπάνη συμπεριλαμβάνεται σε κοινόχρηστα.
+    ΜΗΝ ΔΙΑΓΡΑΨΕΤΕ - Χωρίς αυτό, οι δαπάνες δεν κατανέμονται στα διαμερίσματα.
+    """
+    if created:
+        try:
+            from datetime import date
+            import calendar
+
+            with transaction.atomic():
+                # Προσδιορισμός μήνα από την ημερομηνία της δαπάνης
+                expense_date = instance.date
+                year = expense_date.year
+                month = expense_date.month
+
+                # Υπολογισμός ημερομηνιών περιόδου
+                start_date = date(year, month, 1)
+                last_day = calendar.monthrange(year, month)[1]
+                end_date = date(year, month, last_day)
+
+                # Όνομα περιόδου
+                month_names = {
+                    1: 'Ιανουαρίου', 2: 'Φεβρουαρίου', 3: 'Μαρτίου', 4: 'Απριλίου',
+                    5: 'Μαΐου', 6: 'Ιουνίου', 7: 'Ιουλίου', 8: 'Αυγούστου',
+                    9: 'Σεπτεμβρίου', 10: 'Οκτωβρίου', 11: 'Νοεμβρίου', 12: 'Δεκεμβρίου'
+                }
+                period_name = f"Κοινόχρηστα {month_names[month]} {year}"
+
+                # Έλεγχος αν υπάρχει ήδη περίοδος για τον μήνα
+                existing_period = CommonExpensePeriod.objects.filter(
+                    building=instance.building,
+                    start_date__lte=end_date,
+                    end_date__gte=start_date
+                ).first()
+
+                if existing_period:
+                    print(f"✅ Expense Signal: Η δαπάνη '{instance.title}' προστέθηκε στην υπάρχουσα περίοδο '{existing_period.period_name}'")
+                else:
+                    # Δημιουργία νέας περιόδου
+                    new_period = CommonExpensePeriod.objects.create(
+                        building=instance.building,
+                        period_name=period_name,
+                        start_date=start_date,
+                        end_date=end_date
+                    )
+                    print(f"✅ Expense Signal: Δημιουργήθηκε νέα περίοδος '{period_name}' για δαπάνη '{instance.title}'")
+
+        except Exception as e:
+            print(f"❌ Σφάλμα στην αυτόματη δημιουργία CommonExpensePeriod: {e}")
+
+
+@receiver(post_save, sender=Expense)
 def create_transactions_for_expense(sender, instance, created, **kwargs):
     """
     Αυτόματη δημιουργία συναλλαγών όταν δημιουργείται δαπάνη
@@ -274,13 +329,21 @@ def create_notification_event_for_common_expenses(sender, instance, created, **k
             # Import here to avoid circular imports
             from notifications.services import NotificationEventService
 
+            # Υπολογισμός συνολικών εξόδων από τις δαπάνες της περιόδου
+            period_expenses = Expense.objects.filter(
+                building=instance.building,
+                date__gte=instance.start_date,
+                date__lte=instance.end_date
+            )
+            total_expenses = sum(exp.amount for exp in period_expenses) if period_expenses.exists() else Decimal('0.00')
+
             # Create notification event
             NotificationEventService.create_event(
                 event_type='common_expense',
                 building=instance.building,
                 title=f"Νέο Φύλλο Κοινοχρήστων: {instance.period_name}",
                 description=f"Δημιουργήθηκε φύλλο κοινοχρήστων για την περίοδο {instance.period_name}. "
-                           f"Συνολικά έξοδα: {instance.total_expenses:.2f}€",
+                           f"Συνολικά έξοδα: {total_expenses:.2f}€",
                 url=f"/financial/common-expenses/{instance.id}",
                 is_urgent=False,
                 icon='💰',

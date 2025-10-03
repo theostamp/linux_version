@@ -230,6 +230,11 @@ request.query_params = request.GET  # Required for ViewSets
 - **Previous Obligations**: Use `previous_balance` NOT `net_obligation`
 - **Common Expenses**: Use `expense_share` NOT `net_obligation`
 - **Tenant Context**: All financial queries within `schema_context('demo')`
+- **⚠️ CRITICAL - Auto-create Signal**:
+  - **NEVER** delete or disable `auto_create_common_expense_period` signal in `backend/financial/signals.py`
+  - This signal automatically creates `CommonExpensePeriod` when an `Expense` is created
+  - Without it, expenses will NOT be included in common expenses and will NOT be distributed to apartments
+  - Fixed in commit aa61a6cd (Oct 2025) - this signal is the solution to recurring "expenses without common expense periods" bugs
 
 ### Multi-tenancy Rules
 - **Database Queries**: All operations must be tenant-aware
@@ -293,7 +298,56 @@ npm run lint                          # ESLint validation
 
 This system handles real financial data for Greek residential buildings. Precision, security, and tenant isolation are critical requirements.
 
-## Recent Development Progress - Balance Calculation System Refactoring (Οκτώβριος 2025)
+## Recent Development Progress
+
+### 🔴 CRITICAL FIX: Auto-create CommonExpensePeriod Signal (Οκτώβριος 2025)
+
+**Problem Identified**: Recurring issue where expenses were created but NOT included in common expense periods, causing them to not be distributed to apartments.
+
+**Root Cause Analysis**:
+- ❌ No signal existed to auto-create `CommonExpensePeriod` when `Expense` was created
+- ❌ Manual creation of periods was required (error-prone)
+- ❌ Expenses for Oct, Dec 2025 and Jan 2026 had no periods
+- ❌ This was the source of 10+ "fixes" that kept breaking
+
+**Solution Implemented** (Commit: aa61a6cd):
+
+Created new signal in `backend/financial/signals.py`:
+```python
+@receiver(post_save, sender=Expense)
+def auto_create_common_expense_period(sender, instance, created, **kwargs):
+    """
+    CRITICAL: Auto-creates CommonExpensePeriod when Expense is created
+    ΜΗΝ ΔΙΑΓΡΑΨΕΤΕ - Without this, expenses won't be distributed to apartments
+    """
+```
+
+**Key Features**:
+- ✅ Auto-creates period for expense's month (e.g., "Κοινόχρηστα Οκτωβρίου 2025")
+- ✅ Checks for existing periods (avoids duplicates)
+- ✅ Proper Greek month names
+- ✅ Integrated with notification system
+- ✅ Fixed notification signal to calculate total_expenses dynamically
+
+**Results**:
+```
+✅ Οκτώβριος 2025: 1 expense (1,000€) → 1 common expense period
+✅ Δεκέμβριος 2025: 1 expense (3,000€) → 1 common expense period
+✅ Ιανουάριος 2026: 1 expense (3,000€) → 1 common expense period
+✅ Φεβρουάριος 2026: 1 expense (3,000€) → 1 common expense period
+```
+
+**⚠️ DEVELOPER WARNING**:
+This signal is **CRITICAL** for financial system operation. Never delete or disable `auto_create_common_expense_period`. Without it, the entire expense distribution system breaks.
+
+**Testing**:
+- Created `test_auto_create_period.py` - validates auto-creation
+- Created `fix_missing_periods.py` - backfilled missing periods
+- Created `final_check.py` - verified all expenses have periods
+
+---
+
+### 🏗️ Balance Calculation System Refactoring (Οκτώβριος 2025)
 
 ### 🏗️ Balance Calculation Architecture - MAJOR REFACTORING
 
