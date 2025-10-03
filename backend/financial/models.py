@@ -961,4 +961,201 @@ class MonthlyBalance(models.Model):
             print(f"   💰 Συνεχής μεταφορά: €{previous_obligations}")
 
 
+class RecurringExpenseConfig(models.Model):
+    """
+    Ρύθμιση επαναλαμβανόμενων δαπανών με ιστορικό αλλαγών.
+
+    Κρατά το ιστορικό των αλλαγών στα ποσά δαπανών διαχείρισης και αποθεματικού.
+    Κάθε αλλαγή ισχύει από την ημερομηνία effective_from και μετά.
+
+    Παραδείγματα:
+    - Διαχείριση €12/μήνα από 01/01/2025
+    - Διαχείριση €15/μήνα από 01/06/2025 (νέο πακέτο)
+    - Αποθεματικό 5% από 01/01/2025
+    - Αποθεματικό 10% από 01/03/2025
+    """
+
+    EXPENSE_TYPE_CHOICES = [
+        ('management_fee', 'Δαπάνες Διαχείρισης'),
+        ('reserve_fund', 'Αποθεματικό Ταμείο'),
+    ]
+
+    CALCULATION_METHOD_CHOICES = [
+        ('fixed_per_apartment', 'Σταθερό Ποσό ανά Διαμέρισμα'),
+        ('percentage_of_expenses', 'Ποσοστό επί Δαπανών'),
+        ('fixed_total', 'Σταθερό Συνολικό Ποσό'),
+    ]
+
+    building = models.ForeignKey(
+        Building,
+        on_delete=models.CASCADE,
+        related_name='recurring_expense_configs',
+        verbose_name="Κτίριο"
+    )
+
+    expense_type = models.CharField(
+        max_length=20,
+        choices=EXPENSE_TYPE_CHOICES,
+        verbose_name="Τύπος Δαπάνης"
+    )
+
+    effective_from = models.DateField(
+        verbose_name="Ισχύει από",
+        help_text="Ημερομηνία έναρξης ισχύος αυτής της ρύθμισης"
+    )
+
+    effective_until = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Ισχύει έως",
+        help_text="Ημερομηνία λήξης (null = ισχύει μέχρι σήμερα)"
+    )
+
+    calculation_method = models.CharField(
+        max_length=30,
+        choices=CALCULATION_METHOD_CHOICES,
+        default='fixed_per_apartment',
+        verbose_name="Μέθοδος Υπολογισμού"
+    )
+
+    # Για fixed_per_apartment
+    amount_per_apartment = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Ποσό ανά Διαμέρισμα (€)",
+        help_text="Χρησιμοποιείται για fixed_per_apartment"
+    )
+
+    # Για percentage_of_expenses
+    percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        verbose_name="Ποσοστό (%)",
+        help_text="Χρησιμοποιείται για percentage_of_expenses (π.χ. 5.00 για 5%)"
+    )
+
+    # Για fixed_total
+    total_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Συνολικό Ποσό (€)",
+        help_text="Χρησιμοποιείται για fixed_total"
+    )
+
+    distribution_type = models.CharField(
+        max_length=50,
+        choices=Expense.DISTRIBUTION_TYPES,
+        default='equal_share',
+        verbose_name="Τρόπος Κατανομής"
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Ενεργό",
+        help_text="Αν False, δεν θα δημιουργούνται νέες δαπάνες"
+    )
+
+    notes = models.TextField(
+        blank=True,
+        verbose_name="Σημειώσεις",
+        help_text="π.χ. 'Αλλαγή λόγω νέου πακέτου διαχείρισης'"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Ρύθμιση Επαναλαμβανόμενης Δαπάνης"
+        verbose_name_plural = "Ρυθμίσεις Επαναλαμβανόμενων Δαπανών"
+        ordering = ['building', 'expense_type', '-effective_from']
+        indexes = [
+            models.Index(fields=['building', 'expense_type', 'effective_from']),
+            models.Index(fields=['building', 'expense_type', 'is_active']),
+        ]
+        # Unique constraint: Δεν μπορούν να υπάρχουν overlapping periods
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(
+                    (models.Q(calculation_method='fixed_per_apartment') & models.Q(amount_per_apartment__isnull=False)) |
+                    (models.Q(calculation_method='percentage_of_expenses') & models.Q(percentage__isnull=False)) |
+                    (models.Q(calculation_method='fixed_total') & models.Q(total_amount__isnull=False))
+                ),
+                name='recurring_expense_valid_amount'
+            )
+        ]
+
+    def __str__(self):
+        amount_str = self.get_amount_display()
+        return f"{self.get_expense_type_display()} - {self.building.name} - {amount_str} (από {self.effective_from})"
+
+    def get_amount_display(self) -> str:
+        """Επιστρέφει human-readable string του ποσού"""
+        if self.calculation_method == 'fixed_per_apartment':
+            return f"€{self.amount_per_apartment}/διαμέρισμα"
+        elif self.calculation_method == 'percentage_of_expenses':
+            return f"{self.percentage}% επί δαπανών"
+        elif self.calculation_method == 'fixed_total':
+            return f"€{self.total_amount} σύνολο"
+        return "N/A"
+
+    def calculate_total_amount(self, month_expenses: 'Decimal' = None) -> 'Decimal':
+        """
+        Υπολογίζει το συνολικό ποσό της δαπάνης για τον μήνα.
+
+        Args:
+            month_expenses: Συνολικές δαπάνες μήνα (χρειάζεται για percentage_of_expenses)
+
+        Returns:
+            Decimal: Το συνολικό ποσό
+        """
+        from decimal import Decimal
+
+        if self.calculation_method == 'fixed_per_apartment':
+            num_apartments = Apartment.objects.filter(building=self.building).count()
+            return self.amount_per_apartment * num_apartments
+
+        elif self.calculation_method == 'percentage_of_expenses':
+            if month_expenses is None:
+                raise ValueError("month_expenses required for percentage_of_expenses calculation")
+            return (month_expenses * self.percentage) / Decimal('100')
+
+        elif self.calculation_method == 'fixed_total':
+            return self.total_amount
+
+        return Decimal('0')
+
+    @staticmethod
+    def get_active_config(building_id: int, expense_type: str, target_date: 'date') -> 'RecurringExpenseConfig':
+        """
+        Βρίσκει την ενεργή ρύθμιση για συγκεκριμένο κτίριο, τύπο δαπάνης και ημερομηνία.
+
+        Args:
+            building_id: ID κτιρίου
+            expense_type: 'management_fee' ή 'reserve_fund'
+            target_date: Ημερομηνία για την οποία ψάχνουμε τη ρύθμιση
+
+        Returns:
+            RecurringExpenseConfig ή None αν δεν βρεθεί
+        """
+        from datetime import date
+
+        configs = RecurringExpenseConfig.objects.filter(
+            building_id=building_id,
+            expense_type=expense_type,
+            is_active=True,
+            effective_from__lte=target_date
+        ).filter(
+            models.Q(effective_until__isnull=True) | models.Q(effective_until__gte=target_date)
+        ).order_by('-effective_from')
+
+        return configs.first()
+
+
 # Import του audit model στο τέλος για να αποφύγουμε circular imports

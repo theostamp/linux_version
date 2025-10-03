@@ -311,3 +311,166 @@ def check_building_balance_transfer_compliance(building) -> dict:
             'management_fee_per_apartment': building.management_fee_per_apartment
         }
     }
+
+
+class RecurringExpenseValidator:
+    """
+    ⚠️ ΚΡΙΣΙΜΟ: Validator για επαναλαμβανόμενες δαπάνες
+
+    Διασφαλίζει ότι:
+    1. Δεν υπάρχουν overlapping configurations
+    2. Οι δαπάνες δημιουργούνται με σωστές ημερομηνίες
+    3. Το ιστορικό αλλαγών διατηρείται σωστά
+    """
+
+    @staticmethod
+    def validate_no_overlaps(config: 'RecurringExpenseConfig') -> None:
+        """
+        Επαληθεύει ότι δεν υπάρχουν overlapping configurations.
+
+        ⚠️ ΚΡΙΣΙΜΟ: Δεν μπορούν να υπάρχουν 2 ρυθμίσεις ενεργές την ίδια ημερομηνία
+
+        Args:
+            config: Η νέα ρύθμιση προς έλεγχο
+
+        Raises:
+            ValidationError: Αν υπάρχει overlap
+        """
+        from financial.models import RecurringExpenseConfig
+        from django.db.models import Q
+
+        # Βρες overlapping configs
+        overlapping = RecurringExpenseConfig.objects.filter(
+            building=config.building,
+            expense_type=config.expense_type,
+            is_active=True
+        ).filter(
+            # Overlap condition:
+            # (new_start <= existing_end OR existing_end IS NULL) AND
+            # (new_end >= existing_start OR new_end IS NULL)
+            Q(effective_from__lte=config.effective_until) | Q(effective_until__isnull=True)
+        ).filter(
+            Q(effective_until__gte=config.effective_from) | Q(effective_until__isnull=True)
+        )
+
+        # Exclude self (για updates)
+        if config.pk:
+            overlapping = overlapping.exclude(pk=config.pk)
+
+        if overlapping.exists():
+            overlap_config = overlapping.first()
+            raise ValidationError(
+                f"Overlap detected με υπάρχουσα ρύθμιση: {overlap_config}. "
+                f"Παρακαλώ ενημερώστε το effective_until της παλιάς ρύθμισης."
+            )
+
+    @staticmethod
+    def validate_amount_fields(config: 'RecurringExpenseConfig') -> None:
+        """
+        Επαληθεύει ότι τα πεδία ποσού είναι σωστά για τη μέθοδο υπολογισμού.
+
+        Args:
+            config: Η ρύθμιση προς έλεγχο
+
+        Raises:
+            ValidationError: Αν τα πεδία δεν είναι σωστά
+        """
+        if config.calculation_method == 'fixed_per_apartment':
+            if not config.amount_per_apartment or config.amount_per_apartment <= 0:
+                raise ValidationError(
+                    "Για fixed_per_apartment πρέπει amount_per_apartment > 0"
+                )
+
+        elif config.calculation_method == 'percentage_of_expenses':
+            if not config.percentage or config.percentage <= 0:
+                raise ValidationError(
+                    "Για percentage_of_expenses πρέπει percentage > 0"
+                )
+
+        elif config.calculation_method == 'fixed_total':
+            if not config.total_amount or config.total_amount <= 0:
+                raise ValidationError(
+                    "Για fixed_total πρέπει total_amount > 0"
+                )
+
+    @staticmethod
+    def validate_effective_dates(config: 'RecurringExpenseConfig') -> None:
+        """
+        Επαληθεύει ότι οι ημερομηνίες ισχύος είναι λογικές.
+
+        Args:
+            config: Η ρύθμιση προς έλεγχο
+
+        Raises:
+            ValidationError: Αν οι ημερομηνίες δεν είναι λογικές
+        """
+        if config.effective_until and config.effective_until < config.effective_from:
+            raise ValidationError(
+                f"effective_until ({config.effective_until}) "
+                f"πρέπει να είναι >= effective_from ({config.effective_from})"
+            )
+
+    @staticmethod
+    def validate_recurring_expense_compliant(expense: 'Expense') -> dict:
+        """
+        Ελέγχει αν μια επαναλαμβανόμενη δαπάνη είναι compliant.
+
+        Args:
+            expense: Η δαπάνη προς έλεγχο
+
+        Returns:
+            dict με 'compliant' και 'warnings'
+        """
+        warnings = []
+
+        # Check 1: Είναι τελευταία μέρα του μήνα
+        last_day = calendar.monthrange(expense.date.year, expense.date.month)[1]
+        if expense.date.day != last_day:
+            warnings.append(
+                f"❌ Recurring expense date πρέπει να είναι τελευταία του μήνα. "
+                f"Τρέχον: {expense.date}, Αναμενόμενο: {expense.date.replace(day=last_day)}"
+            )
+
+        # Check 2: date == due_date
+        if expense.due_date and expense.date != expense.due_date:
+            warnings.append(
+                f"⚠️ Recurring expense: date != due_date. "
+                f"Συνιστάται date == due_date"
+            )
+
+        # Check 3: Υπάρχει ενεργή config
+        from financial.models import RecurringExpenseConfig
+
+        config = RecurringExpenseConfig.get_active_config(
+            building_id=expense.building_id,
+            expense_type=expense.expense_type,
+            target_date=expense.date
+        )
+
+        if not config:
+            warnings.append(
+                f"⚠️ Δεν βρέθηκε ενεργή RecurringExpenseConfig για {expense.date}"
+            )
+
+        return {
+            'compliant': len([w for w in warnings if w.startswith('❌')]) == 0,
+            'warnings': warnings,
+            'config': config
+        }
+
+
+def validate_recurring_expense_config(config: 'RecurringExpenseConfig') -> None:
+    """
+    ⚠️ ΚΡΙΣΙΜΟ: Full validation για RecurringExpenseConfig
+
+    Καλέστε αυτήν πριν από save() για να διασφαλίσετε ακεραιότητα.
+
+    Args:
+        config: Η ρύθμιση προς έλεγχο
+
+    Raises:
+        ValidationError: Αν υπάρχει πρόβλημα
+    """
+    RecurringExpenseValidator.validate_amount_fields(config)
+    RecurringExpenseValidator.validate_effective_dates(config)
+    RecurringExpenseValidator.validate_no_overlaps(config)
