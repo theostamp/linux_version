@@ -74,6 +74,9 @@ urlpatterns = [
 
     # Data migration
     path('api/data-migration/', include('data_migration.urls')),
+    
+    # API endpoints (including kiosk)
+    path('api/', include('api.urls')),
 
     # Document parser
     path('api/parser/', include('document_parser.urls')),

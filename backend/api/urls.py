@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from announcements.views import AnnouncementViewSet
 from votes.views import VoteViewSet
 from user_requests.views import UserRequestViewSet  
-from financial.views import PaymentViewSet, FinancialReceiptViewSet, BuildingAccountViewSet, FinancialTransactionViewSet, FinancialDashboardViewSet
+from financial.views import PaymentViewSet, FinancialReceiptViewSet, FinancialDashboardViewSet
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from django.http import JsonResponse
@@ -20,8 +20,6 @@ router.register(r'votes',         VoteViewSet,        basename='vote')
 router.register("user-requests", UserRequestViewSet, basename="userrequest")
 router.register(r'financial/payments', PaymentViewSet, basename='payment')
 router.register(r'financial/receipts', FinancialReceiptViewSet, basename='financial-receipt')
-router.register(r'financial/accounts', BuildingAccountViewSet, basename='building-account')
-router.register(r'financial/transactions', FinancialTransactionViewSet, basename='financial-transaction')
 router.register(r'financial/dashboard', FinancialDashboardViewSet, basename='financial-dashboard')
 
 # … register κι άλλα routes …
@@ -29,13 +27,14 @@ router.register(r'financial/dashboard', FinancialDashboardViewSet, basename='fin
 def csrf_token_view(request):
     return JsonResponse({"message": "CSRF cookie set"})
   
-urlpatterns = [    path('api/', include(router.urls)),
+urlpatterns = [
+    path('', include(router.urls)),
     # π.χ. path('api-auth/', include('rest_framework.urls')),
-    path('api/csrf/', csrf_token_view, name='csrf-token'),
-    path('api/public-info/<int:building_id>/', public_info, name='public-info'),
-    path('api/public-info/', public_info, name='public-info-all'),
+    path('csrf/', csrf_token_view, name='csrf-token'),
+    path('public-info/<int:building_id>/', public_info, name='public-info'),
+    path('public-info/', public_info, name='public-info-all'),
     # Kiosk endpoints for common expense bills
-    path('api/kiosk/upload-bill/', upload_common_expense_bill, name='kiosk-upload-bill'),
-    path('api/kiosk/latest-bill/', get_latest_common_expense_bill, name='kiosk-latest-bill'),
-    path('api/kiosk/list-bills/', list_common_expense_bills, name='kiosk-list-bills'),
+    path('kiosk/upload-bill/', upload_common_expense_bill, name='kiosk-upload-bill'),
+    path('kiosk/latest-bill/', get_latest_common_expense_bill, name='kiosk-latest-bill'),
+    path('kiosk/list-bills/', list_common_expense_bills, name='kiosk-list-bills'),
 ]

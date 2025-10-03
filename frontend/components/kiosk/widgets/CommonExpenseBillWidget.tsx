@@ -16,7 +16,12 @@ export default function CommonExpenseBillWidget({ data, isLoading, error }: Base
         setImageLoading(true);
         console.log('Fetching latest common expense bill from kiosk API...');
         
-        const response = await fetch('/api/kiosk/latest-bill/', {
+        // Get the correct API base URL
+        const apiBaseUrl = typeof window !== 'undefined' 
+          ? `http://${window.location.hostname}:18000/api`
+          : 'http://localhost:18000/api';
+        
+        const response = await fetch(`${apiBaseUrl}/kiosk/latest-bill/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -158,8 +163,13 @@ export default function CommonExpenseBillWidget({ data, isLoading, error }: Base
                       onClick={() => {
                         setImageLoading(true);
                         setImageError(false);
+                        // Get the correct API base URL
+                        const apiBaseUrl = typeof window !== 'undefined' 
+                          ? `http://${window.location.hostname}:18000/api`
+                          : 'http://localhost:18000/api';
+                        
                         // Re-fetch the latest bill
-                        fetch('/api/kiosk/latest-bill/', {
+                        fetch(`${apiBaseUrl}/kiosk/latest-bill/`, {
                           method: 'POST',
                           headers: {
                             'Content-Type': 'application/json',

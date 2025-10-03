@@ -546,7 +546,13 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
         // Send to kiosk API for display
         try {
           console.log('JPG Export - Sending to kiosk API...');
-          const kioskResponse = await fetch('/api/kiosk/upload-bill/', {
+          
+          // Get the correct API base URL
+          const apiBaseUrl = typeof window !== 'undefined' 
+            ? `http://${window.location.hostname}:18000/api`
+            : 'http://localhost:18000/api';
+          
+          const kioskResponse = await fetch(`${apiBaseUrl}/kiosk/upload-bill/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
