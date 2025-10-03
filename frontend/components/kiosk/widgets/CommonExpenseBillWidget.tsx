@@ -114,24 +114,6 @@ export default function CommonExpenseBillWidget({ data, isLoading, error }: Base
                   Για να εμφανιστεί το φύλλο κοινόχρηστων, εξάγετέ το πρώτα από το Dashboard
                 </p>
                 
-                {/* Current month info */}
-                <div className="bg-white p-4 rounded-lg border border-emerald-200 mb-4 text-left">
-                  <h4 className="font-semibold text-emerald-700 mb-2">Δεκέμβριος 2024</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>Συνολικό ποσό:</span>
-                      <span className="font-semibold">€2,450.00</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Μερίδιο ανά διαμέρισμα:</span>
-                      <span className="font-semibold text-emerald-600">€122.50</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Προθεσμία πληρωμής:</span>
-                      <span className="text-emerald-600">31/01/2025</span>
-                    </div>
-                  </div>
-                </div>
                 
                 {/* Instructions */}
                 <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-200 mb-4">
@@ -146,17 +128,6 @@ export default function CommonExpenseBillWidget({ data, isLoading, error }: Base
                   </div>
                 </div>
                 
-                {/* Additional info */}
-                <div className="space-y-2 text-sm text-emerald-700">
-                  <div className="flex items-center justify-center space-x-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>{new Date().toLocaleDateString('el-GR')}</span>
-                  </div>
-                  <div className="flex items-center justify-center space-x-2">
-                    <Euro className="w-4 h-4" />
-                    <span>IBAN: GR12 3456 7890 1234 5678 9012 345</span>
-                  </div>
-                </div>
                 
                     {/* Refresh button */}
                     <button 
