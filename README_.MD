@@ -535,7 +535,7 @@ docker compose up --build -d
 
 
 git add .
-git commit -m "διορθωσεις 5"
+git commit -m "διορθωσεις 6"
 
 ## 📤 Ενημέρωση GitHub Repository
 
