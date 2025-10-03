@@ -1210,7 +1210,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         </span>
                         <span className="text-gray-500 mx-1">/</span>
                         <span className="text-red-600">
-                          {formatCurrency(Math.abs((financialSummary.average_monthly_expenses || 0) + (financialSummary.reserve_fund_monthly_target || 0) + (financialSummary.previous_obligations || 0)))}
+                          {formatCurrency(Math.abs((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (isMonthWithinReserveFundPeriod() ? (financialSummary.reserve_fund_monthly_target || 0) : 0) + (financialSummary.previous_obligations || 0)))}
                         </span>
                       </div>
                       <Button
@@ -1286,46 +1286,6 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     )}
 
 
-                      
-                    {/* Συνολική κάλυψη */}
-                    <div className="space-y-1 pt-2 border-t-2 border-gray-300 bg-gray-50 p-2 rounded">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-800">Μηνιαίο σύνολο:</span>
-                        <span className="text-lg font-bold text-gray-900">
-                          {formatCurrency((financialSummary.average_monthly_expenses || 0) + (isMonthWithinReserveFundPeriod() ? (financialSummary.reserve_fund_monthly_target || 0) : 0) + (financialSummary.previous_obligations || 0))}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1 text-[10px]">
-                        {(() => {
-                          const hasExpenses = (financialSummary.average_monthly_expenses || 0) > 0;
-                          const hasManagement = (financialSummary.total_management_cost || 0) > 0;
-                          const hasReserve = (financialSummary.reserve_fund_monthly_target || 0) > 0 && isMonthWithinReserveFundPeriod();
-                          const hasPreviousObligations = (financialSummary.previous_obligations || 0) > 0;
-                          
-                          let description = '';
-                          const parts = [];
-                          
-                          // Προσθήκη "Οικονομικές Υποχρεώσεις Περιόδου" αν υπάρχουν τρέχουσες υποχρεώσεις
-                          if (hasExpenses || hasManagement || hasReserve) {
-                            parts.push('Οικονομικές Υποχρεώσεις Περιόδου');
-                          }
-                          
-                          // Προσθήκη "παλαιότερες οφειλές" αν υπάρχουν
-                          if (hasPreviousObligations) {
-                            parts.push('παλαιότερες οφειλές');
-                          }
-                          
-                          if (parts.length > 0) {
-                            description = parts.join(' + ');
-                          } else {
-                            description = 'Δεν υπάρχουν υποχρεώσεις';
-                          }
-                          
-                          return description;
-                        })()}
-                      </div>
-                    </div>
-                    
                     {/* Προειδοποιήσεις */}
                   </div>
                   
