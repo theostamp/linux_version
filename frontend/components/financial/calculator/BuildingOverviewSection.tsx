@@ -873,6 +873,24 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     }).format(amount);
   };
 
+  // Get Greek month name from selectedMonth (YYYY-MM format)
+  const getMonthName = () => {
+    if (!selectedMonth) return 'Τρέχον Υπόλοιπο';
+
+    const monthNames = [
+      'Ιανουάριος', 'Φεβρουάριος', 'Μάρτιος', 'Απρίλιος', 'Μάιος', 'Ιούνιος',
+      'Ιούλιος', 'Αύγουστος', 'Σεπτέμβριος', 'Οκτώβριος', 'Νοέμβριος', 'Δεκέμβριος'
+    ];
+
+    try {
+      const [year, month] = selectedMonth.split('-').map(Number);
+      const monthName = monthNames[month - 1];
+      return `${monthName} ${year}`;
+    } catch {
+      return 'Τρέχον Υπόλοιπο';
+    }
+  };
+
   // Dynamic progress bar colors based on percentage
   const getProgressColors = (percentage: number) => {
     if (percentage >= 100) {
@@ -1196,7 +1214,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     <TrendingDown className={`h-5 w-5 ${getBalanceCardColors(financialSummary?.total_balance || 0).icon}`} />
                   )}
                   <h3 className={`font-semibold text-sm ${getBalanceCardColors(financialSummary?.total_balance || 0).title}`}>
-                    {selectedMonth ? `Οικονομική Κατάσταση Μήνα` : 'Τρέχον Υπόλοιπο'}
+                    {getMonthName()}
                   </h3>
                 </div>
                 
