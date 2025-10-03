@@ -1188,13 +1188,30 @@ class FinancialDashboardService:
         
         # Χρησιμοποιούμε την ημερομηνία έναρξης συστήματος ως αρχή υπολογισμών
         year_start = system_start_date
-        
-        # Βρίσκουμε δαπάνες που δημιουργήθηκαν μέσα στο ίδιο έτος, πριν από τον επιλεγμένο μήνα
+
+        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        # ⚠️ ΚΡΙΣΙΜΟ: BALANCE TRANSFER LOGIC - ΜΗΝ ΑΛΛΑΞΕΤΕ ΧΩΡΙΣ TESTING!
+        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        #
+        # Βρίσκουμε δαπάνες που δημιουργήθηκαν ΠΡΙΝ από τον επιλεγμένο μήνα
+        #
+        # ΠΑΡΑΔΕΙΓΜΑ:
+        # - Αν month_start = 2025-11-01 (Νοέμβριος)
+        # - Θα βρούμε δαπάνες με date < 2025-11-01
+        # - Δηλαδή: 2025-10-31 ✅, 2025-11-01 ❌
+        #
+        # ΠΡΟΣΟΧΗ: Το date__lt (όχι date__lte) είναι ΣΚΟΠΙΜΟ!
+        # Αν αλλάξει σε date__lte, θα υπάρχει διπλή χρέωση!
+        #
+        # Βλέπε: BALANCE_TRANSFER_ARCHITECTURE.md
+        # Tests: financial/tests/test_balance_transfer_logic.py
+        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         expenses_before_month = Expense.objects.filter(
             building_id=apartment.building_id,
-            date__gte=year_start,  # Μόνο δαπάνες του ίδιου έτους
-            date__lt=month_start   # Πριν από τον επιλεγμένο μήνα
+            date__gte=year_start,  # Από την ημερομηνία έναρξης συστήματος
+            date__lt=month_start   # ⚠️ ΚΡΙΣΙΜΟ: < όχι <= !!!
         )
+        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         
         expense_ids_before_month = list(expenses_before_month.values_list('id', flat=True))
         

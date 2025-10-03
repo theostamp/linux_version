@@ -158,10 +158,29 @@ def update_project_schedule(project, offer=None):
             installment_amount = remaining_amount / installments
 
             base_date = datetime.now().date()
+
+            # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            # ⚠️ ΚΡΙΣΙΜΟ: PROJECT INSTALLMENTS LOGIC - ΜΗΝ ΑΛΛΑΞΕΤΕ ΧΩΡΙΣ TESTING!
+            # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            #
+            # ΠΡΟΒΛΗΜΑ ΠΟΥ ΛΥΘΗΚΕ:
+            # - Αν δόσεις ξεκινούσαν από τον ίδιο μήνα με την προκαταβολή,
+            #   υπήρχε διπλή χρέωση τον πρώτο μήνα
+            #
+            # ΛΥΣΗ:
+            # - Οι δόσεις ξεκινούν από τον ΕΠΟΜΕΝΟ μήνα μετά την προκαταβολή
+            # - month_offset = i + 1 (όχι i) όταν υπάρχει προκαταβολή
+            #
+            # ΠΑΡΑΔΕΙΓΜΑ:
+            # - Προκαταβολή: 03/10/2025 → Εμφανίζεται ως παλιά οφειλή στον 11ο
+            # - Δόση 1: 30/11/2025 (όχι 31/10!) → Εμφανίζεται ως παλιά οφειλή στον 12ο
+            #
+            # Βλέπε: BALANCE_TRANSFER_ARCHITECTURE.md
+            # Tests: financial/tests/test_balance_transfer_logic.py
+            # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
             for i in range(1, installments + 1):
-                # Υπολογισμός μήνα πληρωμής (πρώτη του κάθε μήνα)
-                # ΔΙΟΡΘΩΣΗ: Αν έχουμε προκαταβολή, ξεκινάμε από τον επόμενο μήνα (i+1)
-                # Αν δεν έχουμε προκαταβολή, ξεκινάμε από τον τρέχοντα μήνα (i)
+                # ⚠️ ΚΡΙΣΙΜΟ: Αν έχουμε προκαταβολή, οι δόσεις ξεκινούν από επόμενο μήνα
                 month_offset = i + 1 if advance_payment > 0 else i
 
                 payment_month_start = base_date.replace(day=1)
@@ -173,12 +192,11 @@ def update_project_schedule(project, offer=None):
                     year += 1
                 payment_month_start = payment_month_start.replace(month=month, year=year)
 
-                # ΔΙΟΡΘΩΣΗ V2: Η ημερομηνία δημιουργίας της δόσης είναι η τελευταία του μήνα πληρωμής
-                # Έτσι η δόση του 11ου θα έχει date=30/11, και θα εμφανίζεται ως παλιά οφειλή στον 12ο
-                # Αυτό εξασφαλίζει ότι η προκαταβολή (π.χ. 03/10) και η Δόση 1 (30/11) δεν εμφανίζονται μαζί
+                # ⚠️ ΚΡΙΣΙΜΟ: Η ημερομηνία δημιουργίας είναι η ΤΕΛΕΥΤΑΙΑ του μήνα
+                # Έτσι η δόση εμφανίζεται ως παλιά οφειλή τον ΕΠΟΜΕΝΟ μήνα
                 last_day = calendar.monthrange(payment_month_start.year, payment_month_start.month)[1]
                 installment_date = payment_month_start.replace(day=last_day)
-                due_date = installment_date
+                due_date = installment_date  # date == due_date για δόσεις
 
                 installment_expense = Expense.objects.create(
                     building=project.building,
