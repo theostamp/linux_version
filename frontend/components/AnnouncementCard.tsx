@@ -47,6 +47,20 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
         });
   };
 
+  const formatTimestamp = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return isNaN(date.getTime())
+      ? ''
+      : date.toLocaleString('el-GR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+  };
+
   // Use the backend is_currently_active property directly
   // Backend already handles all the logic for published, is_active, and date checks
   const isCurrentlyActive = announcement.is_currently_active === true;
@@ -87,6 +101,11 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
+      {/* Timestamp at the top */}
+      <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+        {formatTimestamp(announcement.created_at)}
+      </div>
+
       {/* Building badge - show only when viewing all buildings */}
       {!selectedBuilding && announcement.building_name && (
         <div className="absolute top-3 left-3 z-10">
@@ -95,7 +114,7 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
           </span>
         </div>
       )}
-      
+
       {canDelete && (
         <button
           onClick={handleDelete}
@@ -106,8 +125,8 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
           <Trash2 className="w-4 h-4" />
         </button>
       )}
-      
-      <div className="flex justify-between items-center mb-2 pr-10 pt-6">
+
+      <div className="flex justify-between items-center mb-2 pr-10">
         <h2 className={typography.cardTitle}>{announcement.title}</h2>
         <span
           className={`text-xs font-medium px-3 py-1 rounded-full border ${
@@ -119,10 +138,6 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
           {announcement.status_display ? announcement.status_display : isCurrentlyActive ? '✅ Ενεργή' : '⏸ Ανενεργή'}
         </span>
       </div>
-
-      <p className={`${typography.body} whitespace-pre-line line-clamp-3`}>
-        {announcement.description}
-      </p>
 
       <div className="mt-4 flex justify-between items-center">
         <div className={typography.small}>

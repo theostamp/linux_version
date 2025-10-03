@@ -39,6 +39,8 @@ def sync_project_todo(sender, instance: Project, created, **kwargs):
         if instance.general_assembly_date:
             # Θα δημιουργήσουμε ανακοίνωση μόνο αν δεν υπάρχει ήδη για αυτή την ημερομηνία
             create_assembly_announcement(instance, check_existing=True)
+            # Απενεργοποίηση ανακοίνωσης αν η ημερομηνία έχει περάσει
+            deactivate_assembly_announcement(instance)
 
     publish_building_event(
         building_id=instance.building_id,
@@ -64,11 +66,15 @@ def sync_offer_todo(sender, instance: Offer, created, **kwargs):
             assigned_to=None,  # Μπορεί να ανατεθεί σε διαχειριστή
             created_by=instance.project.created_by,
         )
-    
+
     # Δημιουργία ανακοίνωσης για νέα προσφορά
     if created and instance.status == 'submitted':
         create_offer_announcement(instance)
-    
+
+    # Απενεργοποίηση όλων των ανακοινώσεων προσφορών όταν επιλεγεί μία
+    if not created and instance.status == 'accepted':
+        deactivate_offer_announcements(instance.project)
+
     publish_building_event(
         building_id=instance.project.building_id,
         event_type="offer.updated",
@@ -312,7 +318,13 @@ def create_assembly_announcement(project: Project, check_existing: bool = False)
         # ΔΗΜΙΟΥΡΓΙΑ νέας ανακοίνωσης (πρώτο θέμα για αυτή την ημερομηνία)
 
         # Στοιχεία συνέλευσης
-        assembly_time_str = project.assembly_time.strftime('%H:%M') if project.assembly_time else '20:00'
+        if project.assembly_time:
+            if hasattr(project.assembly_time, 'strftime'):
+                assembly_time_str = project.assembly_time.strftime('%H:%M')
+            else:
+                assembly_time_str = str(project.assembly_time)
+        else:
+            assembly_time_str = '20:00'
 
         # Τοποθεσία/Zoom
         location_info = ""
@@ -388,5 +400,75 @@ def create_assembly_announcement(project: Project, check_existing: bool = False)
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Failed to create assembly announcement for project {project.id}: {e}")
+
+
+def deactivate_offer_announcements(project: Project):
+    """Απενεργοποιεί όλες τις ανακοινώσεις προσφορών για ένα έργο"""
+    try:
+        from announcements.models import Announcement
+
+        # Βρες όλες τις ανακοινώσεις προσφορών για αυτό το έργο
+        announcements = Announcement.objects.filter(
+            building=project.building,
+            title__icontains=f"Νέα Προσφορά για: {project.title}",
+            is_active=True
+        )
+
+        # Απενεργοποίησέ τις
+        updated_count = announcements.update(is_active=False)
+
+        if updated_count > 0:
+            # Ενημέρωση με WebSocket
+            publish_building_event(
+                building_id=project.building_id,
+                event_type="announcements.updated",
+                payload={
+                    "message": f"Απενεργοποιήθηκαν {updated_count} ανακοινώσεις προσφορών",
+                    "project_id": str(project.id),
+                },
+            )
+
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to deactivate offer announcements for project {project.id}: {e}")
+
+
+def deactivate_assembly_announcement(project: Project):
+    """Απενεργοποιεί την ανακοίνωση Γενικής Συνέλευσης αν η ημερομηνία έχει περάσει"""
+    try:
+        from announcements.models import Announcement
+
+        if not project.general_assembly_date:
+            return
+
+        # Έλεγχος αν η ημερομηνία έχει περάσει
+        if project.general_assembly_date < timezone.now().date():
+            # Βρες την ανακοίνωση της συνέλευσης
+            announcements = Announcement.objects.filter(
+                building=project.building,
+                title__icontains="Σύγκληση Γενικής Συνέλευσης",
+                end_date=project.general_assembly_date,
+                is_active=True
+            )
+
+            # Απενεργοποίησέ την
+            updated_count = announcements.update(is_active=False)
+
+            if updated_count > 0:
+                # Ενημέρωση με WebSocket
+                publish_building_event(
+                    building_id=project.building_id,
+                    event_type="announcements.updated",
+                    payload={
+                        "message": f"Απενεργοποιήθηκε ανακοίνωση συνέλευσης που έχει παρέλθει",
+                        "project_id": str(project.id),
+                    },
+                )
+
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to deactivate assembly announcement for project {project.id}: {e}")
 
 
