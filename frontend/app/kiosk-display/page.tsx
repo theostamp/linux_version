@@ -389,7 +389,7 @@ export default function KioskDisplayPage() {
                       
                       return hasAssemblyData ? (
                         <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg overflow-hidden shadow-sm flex items-center justify-center flex-1">
-                          <div className="w-[30%] h-full">
+                          <div className="w-full h-full">
                             <WidgetWrapper
                               widget={{
                                 id: 'assembly-widget',
