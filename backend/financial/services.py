@@ -1223,37 +1223,28 @@ class FinancialDashboardService:
         # ΔΙΟΡΘΩΣΗ ΠΡΟΣΗΜΟΥ: Χρέος = θετικό υπόλοιπο, Πίστωση = αρνητικό υπόλοιπο  
         # Υπόλοιπο = Χρεώσεις - Πληρωμές (θετικό = χρέος, αρνητικό = πίστωση)
 
-        # ΔΙΟΡΘΩΣΗ: Μη διπλό μέτρημα - τα management fees υπολογίζονται από τα Expenses
-        # και όχι από τα expense_created transactions που δημιουργούνται αυτόματα
-        
-        # Υπολογισμός management fees από Expenses (όχι από transactions)
-        # Συνεχής μεταφορά: Όλες οι δαπάνες από την ημερομηνία έναρξης συστήματος
-        management_expenses = Expense.objects.filter(
-            building_id=apartment.building_id,
-            category='management_fees',
-            date__gte=year_start,  # Από την ημερομηνία έναρξης συστήματος
-            date__lt=month_start   # Πριν από τον επιλεγμένο μήνα
-        )
-        
-        if management_expenses.exists():
-            # Υπολογισμός μεριδίου διαμερίσματος από τα management_fees expenses
-            total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
-                total=Sum('participation_mills'))['total'] or 1000
-            
-            management_fees_share = Decimal('0.00')
-            for expense in management_expenses:
-                # ΔΙΟΡΘΩΣΗ: Management fees είναι πάντα ισόποσα ανά διαμέρισμα
-                # και όχι ανά χιλιοστά (όπως τα κοινόχρηστα)
-                apartment_count = Apartment.objects.filter(building_id=apartment.building_id).count()
-                apartment_share = expense.amount / apartment_count
-                
-                management_fees_share += apartment_share
-            
+        # ΔΙΟΡΘΩΣΗ: Δυναμικός υπολογισμός management fees αντί για Expense lookup
+        # Τα management fees δεν αποθηκεύονται ως Expense objects αλλά υπολογίζονται δυναμικά
+
+        # Υπολογισμός management fees βάσει μηνιαίας χρέωσης × αριθμός μηνών
+        # Συνεχής μεταφορά: Όλοι οι μήνες από την ημερομηνία έναρξης συστήματος
+        management_fee_per_apartment = self.building.management_fee_per_apartment or Decimal('0.00')
+
+        if management_fee_per_apartment > 0:
+            # Υπολογισμός αριθμού μηνών από την ημερομηνία έναρξης μέχρι τον τρέχοντα μήνα
+            from dateutil.relativedelta import relativedelta
+
+            # Πόσοι μήνες έχουν περάσει από την ημερομηνία έναρξης μέχρι τον επιλεγμένο μήνα
+            months_diff = (month_start.year - year_start.year) * 12 + (month_start.month - year_start.month)
+
+            # Συνολικά management fees = μηνιαία χρέωση × αριθμός μηνών
+            management_fees_share = management_fee_per_apartment * months_diff
+
             total_charges += management_fees_share
-            
+
             # Debug output
             if management_fees_share > 0:
-                print(f"💰 Management fees from expenses for apt {apartment.number}: €{management_fees_share}")
+                print(f"💰 Management fees for apt {apartment.number}: {months_diff} months × €{management_fee_per_apartment} = €{management_fees_share}")
         
         # ΔΙΟΡΘΩΣΗ: Προσθήκη αποθεματικού από προηγούμενους μήνες
         # Για τον υπολογισμό των "Παλαιότερων Οφειλών", πρέπει να συμπεριλάβουμε
