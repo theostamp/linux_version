@@ -432,6 +432,20 @@ class CommonExpenseCalculator:
         management_fee = self.building.management_fee_per_apartment or Decimal('0.00')
         
         if management_fee > 0:
+            # 🔧 ΝΕΟ: Έλεγχος financial_system_start_date πριν χρέωση management fees
+            should_charge_management_fees = True
+            
+            if self.building.financial_system_start_date and self.period_start_date:
+                # Αν ο μήνας είναι πριν την έναρξη του οικονομικού συστήματος, μην χρεώνεις
+                # Αυτό σημαίνει ότι αν το financial_system_start_date είναι 2025-10-03,
+                # τότε ο Οκτώβριος 2025 (2025-10-01) είναι πριν την έναρξη και δεν πρέπει να χρεώνεται
+                if self.period_start_date < self.building.financial_system_start_date:
+                    should_charge_management_fees = False
+                    print(f"⏭️ Management fees παρακάμπονται για {self.period_start_date.strftime('%Y-%m')} - πριν από financial_system_start_date ({self.building.financial_system_start_date})")
+            
+            if not should_charge_management_fees:
+                return
+            
             # Ελέγχουμε αν υπάρχουν ήδη management_fees expenses
             management_expenses_exist = any(
                 expense.category == 'management_fees' for expense in self.expenses
@@ -463,6 +477,8 @@ class FinancialDashboardService:
         self.building = Building.objects.get(id=building_id)
     
     def get_summary(self, month: str | None = None) -> Dict[str, Any]:
+        # 🔧 ΝΕΟ: Αποθήκευση month context για reserve fund calculation
+        self.current_month = month
         """Επιστρέφει σύνοψη οικονομικών στοιχείων.
         Αν δοθεί month (YYYY-MM), υπολογίζει για τον συγκεκριμένο μήνα."""
         apartments = Apartment.objects.filter(building_id=self.building_id)
@@ -482,7 +498,34 @@ class FinancialDashboardService:
         building = Building.objects.get(id=self.building_id)
         management_fee_per_apartment = building.management_fee_per_apartment
         apartments_count = Apartment.objects.filter(building_id=self.building_id).count()
-        total_management_cost = management_fee_per_apartment * apartments_count
+        
+        # 🔧 ΝΕΟ: Έλεγχος financial_system_start_date για management fees
+        total_management_cost = Decimal('0.00')
+        effective_management_fee_per_apartment = Decimal('0.00')  # 🔧 ΝΕΟ: Effective fee based on start date
+        if management_fee_per_apartment > 0:
+            # Αν δόθηκε month, ελέγχουμε αν είναι μετά την έναρξη του συστήματος
+            if month:
+                try:
+                    year, mon = map(int, month.split('-'))
+                    month_start_date = date(year, mon, 1)
+                    
+                    # Αν ο μήνας είναι μετά την έναρξη του οικονομικού συστήματος, χρεώνουμε
+                    if not building.financial_system_start_date or month_start_date >= building.financial_system_start_date:
+                        total_management_cost = management_fee_per_apartment * apartments_count
+                        effective_management_fee_per_apartment = management_fee_per_apartment
+                        print(f"✅ Management fees χρεώνονται για {month} - μετά από financial_system_start_date")
+                    else:
+                        total_management_cost = Decimal('0.00')  # 🔧 ΝΕΟ: Ορισμός ρητά σε 0
+                        effective_management_fee_per_apartment = Decimal('0.00')  # 🔧 ΝΕΟ: Ορισμός ρητά σε 0
+                        print(f"⏭️ Management fees παρακάμπονται για {month} - πριν από financial_system_start_date ({building.financial_system_start_date})")
+                except Exception:
+                    # Fallback: χρεώνουμε αν δεν μπορούμε να κάνουμε parse το month
+                    total_management_cost = management_fee_per_apartment * apartments_count
+                    effective_management_fee_per_apartment = management_fee_per_apartment
+            else:
+                # Για current view, χρεώνουμε πάντα (για backwards compatibility)
+                total_management_cost = management_fee_per_apartment * apartments_count
+                effective_management_fee_per_apartment = management_fee_per_apartment
         
         # Συνολικές υποχρεώσεις = Υφιστάμενες οφειλές + Ανέκδοτες δαπάνες + Διαχειριστικά τέλη
         # This represents the TOTAL financial obligations, not month-specific
@@ -662,6 +705,20 @@ class FinancialDashboardService:
                 current_reserve, total_obligations
             )
         
+        # 🔧 ΝΕΟ: Ενημέρωση total_management_cost με βάση το financial_system_start_date
+        # Η _calculate_reserve_fund_contribution υπολογίζει το σωστό management_cost
+        if hasattr(self, 'current_month') and self.current_month and self.building.financial_system_start_date:
+            try:
+                year, mon = map(int, self.current_month.split('-'))
+                month_start_date = date(year, mon, 1)
+                if month_start_date < self.building.financial_system_start_date:
+                    # Ενημερώνουμε το total_management_cost για μήνες πριν την έναρξη
+                    total_management_cost = Decimal('0.00')
+                    effective_management_fee_per_apartment = Decimal('0.00')
+                    print(f"🔧 Final update: total_management_cost = 0.00 for {self.current_month}")
+            except Exception:
+                pass
+        
         # Calculate total balance based on view type
         if month:
             # For snapshot view, total balance should be payments minus all obligations
@@ -702,6 +759,7 @@ class FinancialDashboardService:
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
             
             # Αφαιρούμε τα management fees που ήδη περιλαμβάνονται στο total_expenses_this_month
+            # 🔧 ΝΕΟ: Χρησιμοποιούμε το total_management_cost που έχει ήδη ελέγξει το financial_system_start_date
             management_cost_adjustment = total_management_cost - management_fees_in_expenses
             
             current_obligations = total_expenses_this_month + management_cost_adjustment + reserve_fund_monthly_target
@@ -796,7 +854,7 @@ class FinancialDashboardService:
             'reserve_fund_start_date': self.building.reserve_fund_start_date.strftime('%Y-%m-%d') if self.building.reserve_fund_start_date else None,
             'reserve_fund_target_date': self.building.reserve_fund_target_date.strftime('%Y-%m-%d') if self.building.reserve_fund_target_date else None,
             # Management expenses
-            'management_fee_per_apartment': float(management_fee_per_apartment),
+            'management_fee_per_apartment': float(effective_management_fee_per_apartment),  # 🔧 ΝΕΟ: Χρήση effective fee
             'total_management_cost': float(total_management_cost)
         }
     
@@ -813,7 +871,30 @@ class FinancialDashboardService:
         building = Building.objects.get(id=self.building_id)
         apartments = Apartment.objects.filter(building_id=self.building_id)
         apartments_count = apartments.count()
-        management_cost = (building.management_fee_per_apartment or Decimal('0.00')) * apartments_count
+        
+        # 🔧 ΝΕΟ: Έλεγχος financial_system_start_date για management_cost
+        # Η μέθοδος χρησιμοποιείται από get_summary, οπότε πρέπει να ελέγχει το financial_system_start_date
+        management_fee_per_apartment = building.management_fee_per_apartment or Decimal('0.00')
+        if management_fee_per_apartment > 0:
+            # Ελέγχουμε αν υπάρχει financial_system_start_date και αν το month είναι πριν από αυτό
+            # Αν δεν έχουμε month context, χρεώνουμε πάντα (current view)
+            if hasattr(self, 'current_month') and self.current_month and building.financial_system_start_date:
+                try:
+                    year, mon = map(int, self.current_month.split('-'))
+                    month_start_date = date(year, mon, 1)
+                    if month_start_date < building.financial_system_start_date:
+                        management_cost = Decimal('0.00')
+                        print(f"⏭️ Reserve fund: No management fees for {self.current_month} - before financial_system_start_date")
+                    else:
+                        management_cost = management_fee_per_apartment * apartments_count
+                        print(f"✅ Reserve fund: Management fees charged for {self.current_month}")
+                except Exception:
+                    management_cost = management_fee_per_apartment * apartments_count
+            else:
+                # Current view ή fallback - χρεώνουμε πάντα
+                management_cost = management_fee_per_apartment * apartments_count
+        else:
+            management_cost = Decimal('0.00')
         
         # Εκκρεμότητες = total_obligations - management_cost
         actual_obligations = total_obligations - management_cost
@@ -1227,24 +1308,35 @@ class FinancialDashboardService:
         # Τα management fees δεν αποθηκεύονται ως Expense objects αλλά υπολογίζονται δυναμικά
 
         # Υπολογισμός management fees βάσει μηνιαίας χρέωσης × αριθμός μηνών
-        # Συνεχής μεταφορά: Όλοι οι μήνες από την ημερομηνία έναρξης συστήματος
+        # 🔧 ΝΕΟ: Έλεγχος financial_system_start_date πριν υπολογισμό management fees
         management_fee_per_apartment = self.building.management_fee_per_apartment or Decimal('0.00')
 
         if management_fee_per_apartment > 0:
             # Υπολογισμός αριθμού μηνών από την ημερομηνία έναρξης μέχρι τον τρέχοντα μήνα
             from dateutil.relativedelta import relativedelta
 
-            # Πόσοι μήνες έχουν περάσει από την ημερομηνία έναρξης μέχρι τον επιλεγμένο μήνα
-            months_diff = (month_start.year - year_start.year) * 12 + (month_start.month - year_start.month)
+            # 🔧 ΝΕΟ: Χρήση financial_system_start_date αν υπάρχει, αλλιώς year_start
+            if self.building.financial_system_start_date:
+                financial_start_year = self.building.financial_system_start_date.year
+                financial_start_month = self.building.financial_system_start_date.month
+                # Πόσοι μήνες έχουν περάσει από την ημερομηνία έναρξης οικονομικού συστήματος
+                months_diff = (month_start.year - financial_start_year) * 12 + (month_start.month - financial_start_month)
+                print(f"🔧 Financial system start date used: {self.building.financial_system_start_date}")
+            else:
+                # Fallback στο year_start αν δεν υπάρχει financial_system_start_date
+                months_diff = (month_start.year - year_start.year) * 12 + (month_start.month - year_start.month)
+                print(f"🔧 Year start used: {year_start}")
 
-            # Συνολικά management fees = μηνιαία χρέωση × αριθμός μηνών
-            management_fees_share = management_fee_per_apartment * months_diff
+            # Συνολικά management fees = μηνιαία χρέωση × αριθμός μηνών (μόνο θετικοί μήνες)
+            management_fees_share = management_fee_per_apartment * max(0, months_diff)
 
             total_charges += management_fees_share
 
             # Debug output
             if management_fees_share > 0:
-                print(f"💰 Management fees for apt {apartment.number}: {months_diff} months × €{management_fee_per_apartment} = €{management_fees_share}")
+                print(f"💰 Management fees for apt {apartment.number}: {max(0, months_diff)} months × €{management_fee_per_apartment} = €{management_fees_share}")
+            else:
+                print(f"⏭️ No management fees for apt {apartment.number} - before financial system start date")
         
         # ΔΙΟΡΘΩΣΗ: Προσθήκη αποθεματικού από προηγούμενους μήνες
         # Για τον υπολογισμό των "Παλαιότερων Οφειλών", πρέπει να συμπεριλάβουμε
@@ -2102,6 +2194,7 @@ class AdvancedCommonExpenseCalculator:
         self.building_id = building_id
         self.building = Building.objects.get(id=building_id)
         self.apartments = Apartment.objects.filter(building_id=building_id)
+        self.period_start_date = None
         self.period_end_date = None
         
         # Φιλτράρισμα δαπανών ανά περίοδο
@@ -2110,6 +2203,7 @@ class AdvancedCommonExpenseCalculator:
             start_date = datetime.strptime(period_start_date, '%Y-%m-%d').date()
             end_date = datetime.strptime(period_end_date, '%Y-%m-%d').date()
             # Αποθήκευση για χρήση στους υπολογισμούς ιστορικών υπολοίπων
+            self.period_start_date = start_date
             self.period_end_date = end_date
             self.expenses = Expense.objects.filter(
                 building_id=building_id,
@@ -2202,7 +2296,12 @@ class AdvancedCommonExpenseCalculator:
         
         # Get reserve fund information from building overview
         dashboard_service = FinancialDashboardService(self.building_id)
-        summary = dashboard_service.get_summary()
+        # 🔧 ΝΕΟ: Χρήση month-specific summary για σωστή λογική management fees
+        if self.period_start_date:
+            month_str = self.period_start_date.strftime('%Y-%m')
+            summary = dashboard_service.get_summary(month_str)
+        else:
+            summary = dashboard_service.get_summary()
         
         # Calculate correct monthly reserve fund amount
         reserve_fund_goal = summary.get('reserve_fund_goal', 0)

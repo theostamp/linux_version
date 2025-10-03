@@ -497,9 +497,9 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         reserve_fund_duration_months: savedDurationMonths,
         // Reserve Fund Contribution (from API)
         reserve_fund_contribution: apiData.reserve_fund_contribution || 0, // ← ΝΕΟ FIELD
-        // Management Expenses
-        management_fee_per_apartment: buildingData?.management_fee_per_apartment || 0,
-        total_management_cost: (buildingData?.management_fee_per_apartment || 0) * (buildingData?.apartments_count || 0),
+        // Management Expenses (use month-specific values from API)
+        management_fee_per_apartment: apiData.management_fee_per_apartment || 0,
+        total_management_cost: apiData.total_management_cost || 0,
         // Monthly Payment and Expense Data
         total_payments_month: apiData.total_payments_month || 0,
         total_expenses_month: apiData.total_expenses_month || 0
@@ -569,8 +569,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         reserve_fund_monthly_target: 0, // No hardcoded value - calculated from goal/duration
         reserve_fund_duration_months: 0, // No hardcoded value - will be set by user
         reserve_fund_contribution: 0, // No hardcoded value - from API
-        management_fee_per_apartment: buildingData?.management_fee_per_apartment || 0,
-        total_management_cost: (buildingData?.management_fee_per_apartment || 0) * (buildingData?.apartments_count || 0),
+        management_fee_per_apartment: 0, // Will be set by API
+        total_management_cost: 0, // Will be set by API
         // Monthly Payment and Expense Data
         total_payments_month: 0,
         total_expenses_month: 0
