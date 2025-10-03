@@ -50,43 +50,12 @@ class CommonExpenseCalculator:
             # No month specified, use all expenses
             self.expenses = Expense.objects.filter(building_id=building_id)
     
-    def _get_historical_balance(self, apartment, end_date):
-        """
-        Υπολογίζει το ιστορικό υπόλοιπο διαμερίσματος μέχρι την δοθείσα ημερομηνία
-        """
-        
-        if not end_date:
-            return apartment.current_balance or Decimal('0.00')
-        
-        # Μετατροπή end_date σε timezone-aware datetime
-        end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
-        
-        # Υπολογισμός από πληρωμές και συναλλαγές
-        total_payments = Payment.objects.filter(
-            apartment=apartment,
-            date__lt=end_date
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        # Υπολογισμός χρεώσεων μέχρι την ημερομηνία από συναλλαγές
-        total_charges = Transaction.objects.filter(
-            apartment_number=apartment.number,
-            date__lt=end_datetime,
-            type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
-                     'interest_charge', 'penalty_charge']
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        # Υπολογισμός επιπλέον εισπράξεων από συναλλαγές
-        additional_payments = Transaction.objects.filter(
-            apartment_number=apartment.number,
-            date__lt=end_datetime,
-            type__in=['common_expense_payment', 'payment_received', 'refund']
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        # ΔΙΟΡΘΩΣΗ: Σωστός υπολογισμός υπολοίπου
-        # Χρεώσεις αυξάνουν την οφειλή (αρνητικό υπόλοιπο)
-        # Πληρωμές μειώνουν την οφειλή (θετικό υπόλοιπο)
-        return total_charges - (total_payments + additional_payments)
-    
+    # ❌ DELETED: _get_historical_balance() - Use BalanceCalculationService instead
+    # This function was removed as part of the balance calculation refactoring.
+    # All callers have been migrated to use:
+    #   from financial.balance_service import BalanceCalculationService
+    #   BalanceCalculationService.calculate_historical_balance(apartment, end_date)
+
     def calculate_shares(self, include_reserve_fund: bool = True) -> Dict[str, Any]:
         """
         Υπολογισμός μεριδίων για κάθε διαμέρισμα
@@ -98,8 +67,11 @@ class CommonExpenseCalculator:
         
         # Αρχικοποίηση μεριδίων για κάθε διαμέρισμα
         for apartment in self.apartments:
-            # Χρήση ιστορικού υπολοίπου αν έχουμε period_end_date
-            historical_balance = self._get_historical_balance(apartment, self.period_end_date)
+            # ✅ ΜIGRATED: Use BalanceCalculationService
+            from .balance_service import BalanceCalculationService
+            historical_balance = BalanceCalculationService.calculate_historical_balance(
+                apartment, self.period_end_date
+            ) if self.period_end_date else (apartment.current_balance or Decimal('0.00'))
             
             shares[apartment.id] = {
                 'apartment_id': apartment.id,
@@ -311,7 +283,9 @@ class CommonExpenseCalculator:
             
             if end_date:
                 for apt in self.apartments:
-                    historical_balance = self._get_historical_balance(apt, end_date)
+                    # ✅ MIGRATED: Use BalanceCalculationService
+                    from .balance_service import BalanceCalculationService
+                    historical_balance = BalanceCalculationService.calculate_historical_balance(apt, end_date)
                     
                     if historical_balance < 0:
                         # Αφαίρεση τυχόν χρεώσεων αποθεματικού για αποφυγή κυκλικής παγίδας
@@ -2204,43 +2178,12 @@ class AdvancedCommonExpenseCalculator:
                 except Exception:
                     self.reserve_fund_monthly_total = Decimal('0.00')
     
-    def _get_historical_balance(self, apartment, end_date):
-        """
-        Υπολογίζει το ιστορικό υπόλοιπο διαμερίσματος μέχρι την δοθείσα ημερομηνία
-        """
-        
-        if not end_date:
-            return apartment.current_balance or Decimal('0.00')
-        
-        # Μετατροπή end_date σε timezone-aware datetime
-        end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
-        
-        # Υπολογισμός από πληρωμές και συναλλαγές
-        total_payments = Payment.objects.filter(
-            apartment=apartment,
-            date__lt=end_date
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        # Υπολογισμός χρεώσεων μέχρι την ημερομηνία από συναλλαγές
-        total_charges = Transaction.objects.filter(
-            apartment_number=apartment.number,
-            date__lt=end_datetime,
-            type__in=['common_expense_charge', 'expense_created', 'expense_issued', 
-                     'interest_charge', 'penalty_charge']
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        # Υπολογισμός επιπλέον εισπράξεων από συναλλαγές
-        additional_payments = Transaction.objects.filter(
-            apartment_number=apartment.number,
-            date__lt=end_datetime,
-            type__in=['common_expense_payment', 'payment_received', 'refund']
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        # ΔΙΟΡΘΩΣΗ: Σωστός υπολογισμός υπολοίπου
-        # Χρεώσεις αυξάνουν την οφειλή (αρνητικό υπόλοιπο)
-        # Πληρωμές μειώνουν την οφειλή (θετικό υπόλοιπο)
-        return total_charges - (total_payments + additional_payments)
-    
+    # ❌ DELETED: _get_historical_balance() - Use BalanceCalculationService instead
+    # This function was removed as part of the balance calculation refactoring.
+    # All callers have been migrated to use:
+    #   from financial.balance_service import BalanceCalculationService
+    #   BalanceCalculationService.calculate_historical_balance(apartment, end_date)
+
     def calculate_advanced_shares(self) -> Dict[str, Any]:
         """
         Υλοποίηση του αλγορίθμου από το TODO αρχείο
@@ -2326,10 +2269,13 @@ class AdvancedCommonExpenseCalculator:
     def _initialize_shares(self) -> Dict[str, Any]:
         """Αρχικοποίηση μεριδίων για κάθε διαμέρισμα"""
         shares = {}
-        
+
         for apartment in self.apartments:
-            # Χρήση ιστορικού υπολοίπου αν έχουμε period_end_date
-            historical_balance = self._get_historical_balance(apartment, self.period_end_date)
+            # ✅ MIGRATED: Use BalanceCalculationService
+            from .balance_service import BalanceCalculationService
+            historical_balance = BalanceCalculationService.calculate_historical_balance(
+                apartment, self.period_end_date
+            ) if self.period_end_date else (apartment.current_balance or Decimal('0.00'))
             
             shares[apartment.id] = {
                 'apartment_id': apartment.id,
@@ -2592,9 +2538,13 @@ class AdvancedCommonExpenseCalculator:
             # ε. Υπολογισμός Εισφοράς Αποθεματικού (κατανομή ανά χιλιοστά)
             # FIXED: Add obligations check like Basic Calculator (excluding reserve fund to avoid circular dependency)
             # Χρήση ιστορικών υπολοίπων για τον έλεγχο εκκρεμοτήτων
+            from .balance_service import BalanceCalculationService
             total_obligations = 0
             for apt in self.apartments:
-                historical_balance = self._get_historical_balance(apt, self.period_end_date)
+                # ✅ MIGRATED: Use BalanceCalculationService
+                historical_balance = BalanceCalculationService.calculate_historical_balance(
+                    apt, self.period_end_date
+                ) if self.period_end_date else (apt.current_balance or Decimal('0.00'))
                 
                 if historical_balance < 0:
                     # Αφαίρεση τυχόν χρεώσεων αποθεματικού για αποφυγή κυκλικής παγίδας

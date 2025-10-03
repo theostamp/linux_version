@@ -1,6 +1,8 @@
 # backend/financial/signals.py
 """
 Django signals για αυτόματη ενημέρωση οικονομικών υπολοίπων
+
+Updated: 2025-10-03 - Migrated to use BalanceCalculationService
 """
 
 from django.db.models.signals import post_save, post_delete
@@ -9,6 +11,7 @@ from django.db import transaction
 from decimal import Decimal
 
 from .models import Transaction, Payment, Expense, CommonExpensePeriod
+from .balance_service import BalanceCalculationService
 from core.utils import publish_building_event
 from django.db.models import Sum
 
@@ -17,41 +20,21 @@ from django.db.models import Sum
 def update_apartment_balance_on_transaction(sender, instance, created, **kwargs):
     """
     Αυτόματη ενημέρωση υπολοίπου διαμερίσματος όταν δημιουργείται/ενημερώνεται συναλλαγή
+
+    SIMPLIFIED: Now uses BalanceCalculationService for centralized logic
     """
     if not instance.apartment:
         return  # Δεν υπάρχει διαμέρισμα, δεν ενημερώνουμε
-    
+
     try:
         with transaction.atomic():
-            apartment = instance.apartment
-            
-            # Υπολογισμός νέου υπολοίπου από όλες τις συναλλαγές
-            transactions = Transaction.objects.filter(
-                apartment=apartment
-            ).order_by('date', 'id')
-            
-            new_balance = Decimal('0.00')
-            
-            for trans in transactions:
-                # Τύποι που προσθέτουν στο υπόλοιπο (εισπράξεις)
-                if trans.type in ['common_expense_payment', 'payment_received', 'refund']:
-                    new_balance += trans.amount
-                # Τύποι που αφαιρούν από το υπόλοιπο (χρεώσεις)
-                elif trans.type in ['common_expense_charge', 'expense_created', 'expense_issued', 
-                                  'interest_charge', 'penalty_charge']:
-                    new_balance -= trans.amount
-                # Για balance_adjustment χρησιμοποιούμε το balance_after
-                elif trans.type == 'balance_adjustment':
-                    if trans.balance_after is not None:
-                        new_balance = trans.balance_after
-            
-            # Ενημέρωση του διαμερίσματος
-            if apartment.current_balance != new_balance:
-                apartment.current_balance = new_balance
-                apartment.save(update_fields=['current_balance'])
-                
-                print(f"✅ Ενημερώθηκε υπόλοιπο διαμερίσματος {apartment.number}: {new_balance:,.2f}€")
-    
+            # ✅ SIMPLIFIED: Use BalanceCalculationService
+            new_balance = BalanceCalculationService.update_apartment_balance(
+                instance.apartment
+            )
+
+            print(f"✅ Ενημερώθηκε υπόλοιπο διαμερίσματος {instance.apartment.number}: {new_balance:,.2f}€")
+
     except Exception as e:
         print(f"❌ Σφάλμα στην ενημέρωση υπολοίπου διαμερίσματος: {e}")
 
@@ -60,78 +43,29 @@ def update_apartment_balance_on_transaction(sender, instance, created, **kwargs)
 def recalculate_apartment_balance_on_transaction_delete(sender, instance, **kwargs):
     """
     Επαναυπολογισμός υπολοίπου διαμερίσματος όταν διαγράφεται συναλλαγή
+
+    SIMPLIFIED: Now uses BalanceCalculationService for centralized logic
     """
     if not instance.apartment:
         return
-    
+
     try:
         with transaction.atomic():
-            apartment = instance.apartment
-            
-            # Επαναυπολογισμός από όλες τις εναπομείναντες συναλλαγές
-            transactions = Transaction.objects.filter(
-                apartment=apartment
-            ).order_by('date', 'id')
-            
-            new_balance = Decimal('0.00')
-            
-            for trans in transactions:
-                if trans.type in ['common_expense_payment', 'payment_received', 'refund']:
-                    new_balance += trans.amount
-                elif trans.type in ['common_expense_charge', 'expense_created', 'expense_issued', 
-                                  'interest_charge', 'penalty_charge']:
-                    new_balance -= trans.amount
-                elif trans.type == 'balance_adjustment':
-                    if trans.balance_after is not None:
-                        new_balance = trans.balance_after
-            
-            apartment.current_balance = new_balance
-            apartment.save(update_fields=['current_balance'])
-            
-            print(f"✅ Επαναυπολογίστηκε υπόλοιπο διαμερίσματος {apartment.number}: {new_balance:,.2f}€")
-    
+            # ✅ SIMPLIFIED: Use BalanceCalculationService
+            new_balance = BalanceCalculationService.update_apartment_balance(
+                instance.apartment
+            )
+
+            print(f"✅ Επαναυπολογίστηκε υπόλοιπο διαμερίσματος {instance.apartment.number}: {new_balance:,.2f}€")
+
     except Exception as e:
         print(f"❌ Σφάλμα στον επαναυπολογισμό υπολοίπου διαμερίσματος: {e}")
 
 
-@receiver(post_save, sender=Payment)
-def update_apartment_balance_on_payment(sender, instance, created, **kwargs):
-    """
-    Αυτόματη ενημέρωση υπολοίπου διαμερίσματος όταν δημιουργείται/ενημερώνεται πληρωμή
-    """
-    try:
-        with transaction.atomic():
-            apartment = instance.apartment
-            
-            # Υπολογισμός νέου υπολοίπου από πληρωμές
-            payments = Payment.objects.filter(apartment=apartment)
-            total_payments = payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-            
-            # Υπολογισμός χρεώσεων από CommonExpenseCalculator
-            try:
-                from financial.services import CommonExpenseCalculator
-                calculator = CommonExpenseCalculator(apartment.building.id)
-                shares = calculator.calculate_shares()
-                apartment_charges = shares.get(apartment.id, {}).get('total_amount', Decimal('0.00'))
-            except Exception:
-                # Fallback: χρήση transactions αν ο calculator αποτύχει
-                transactions = Transaction.objects.filter(apartment=apartment, type__in=[
-                    'common_expense_charge', 'expense_created', 'expense_issued'
-                ])
-                apartment_charges = transactions.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-            
-            # Νέο υπόλοιπο = πληρωμές - χρεώσεις
-            new_balance = total_payments - apartment_charges
-            
-            if apartment.current_balance != new_balance:
-                old_balance = apartment.current_balance
-                apartment.current_balance = new_balance
-                apartment.save(update_fields=['current_balance'])
-                
-                print(f"✅ Payment Signal: Διαμέρισμα {apartment.number}: {old_balance:,.2f}€ → {new_balance:,.2f}€")
-    
-    except Exception as e:
-        print(f"❌ Σφάλμα στην ενημέρωση υπολοίπου διαμερίσματος από payment: {e}")
+# ❌ DELETED: update_apartment_balance_on_payment
+# This signal was removed because Payment creates a Transaction,
+# and the Transaction signal (update_apartment_balance_on_transaction) handles the balance update.
+# This eliminates double processing and O(N²) complexity.
 
 
 @receiver(post_save, sender=Payment)
@@ -166,42 +100,10 @@ def update_building_reserve_on_payment(sender, instance, created, **kwargs):
         print(f"❌ Σφάλμα στην ενημέρωση αποθεματικού κτιρίου: {e}")
 
 
-@receiver(post_delete, sender=Payment)
-def recalculate_apartment_balance_on_payment_delete(sender, instance, **kwargs):
-    """
-    Επαναυπολογισμός υπολοίπου διαμερίσματος όταν διαγράφεται πληρωμή
-    """
-    try:
-        with transaction.atomic():
-            apartment = instance.apartment
-            
-            # Υπολογισμός νέου υπολοίπου από εναπομείναντες πληρωμές
-            payments = Payment.objects.filter(apartment=apartment)
-            total_payments = payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-            
-            # Υπολογισμός χρεώσεων
-            try:
-                from financial.services import CommonExpenseCalculator
-                calculator = CommonExpenseCalculator(apartment.building.id)
-                shares = calculator.calculate_shares()
-                apartment_charges = shares.get(apartment.id, {}).get('total_amount', Decimal('0.00'))
-            except Exception:
-                transactions = Transaction.objects.filter(apartment=apartment, type__in=[
-                    'common_expense_charge', 'expense_created', 'expense_issued'
-                ])
-                apartment_charges = transactions.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-            
-            # Νέο υπόλοιπο = πληρωμές - χρεώσεις
-            new_balance = total_payments - apartment_charges
-            
-            old_balance = apartment.current_balance
-            apartment.current_balance = new_balance
-            apartment.save(update_fields=['current_balance'])
-            
-            print(f"✅ Payment Delete Signal: Διαμέρισμα {apartment.number}: {old_balance:,.2f}€ → {new_balance:,.2f}€")
-    
-    except Exception as e:
-        print(f"❌ Σφάλμα στον επαναυπολογισμό υπολοίπου διαμερίσματος από payment delete: {e}")
+# ❌ DELETED: recalculate_apartment_balance_on_payment_delete
+# This signal was removed because Payment deletion deletes the associated Transaction,
+# and the Transaction delete signal handles the balance update.
+# This eliminates double processing.
 
 
 @receiver(post_delete, sender=Payment)
