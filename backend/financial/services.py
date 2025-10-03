@@ -1111,6 +1111,21 @@ class FinancialDashboardService:
                     
                     expense_share += apartment_share
                 
+                # 🔧 ΝΕΟ: Προσθήκη δυναμικών management fees στο expense_share
+                # Τα management fees υπολογίζονται δυναμικά βάσει financial_system_start_date
+                management_fee_per_apartment = self.building.management_fee_per_apartment or Decimal('0.00')
+                if management_fee_per_apartment > 0:
+                    # Ελέγχουμε αν ο μήνας είναι μετά την έναρξη του οικονομικού συστήματος
+                    if not self.building.financial_system_start_date or month_start >= self.building.financial_system_start_date:
+                        # Υπολογίζουμε μόνο τον τρέχοντα μήνα (όχι cumulative)
+                        # Το expense_share πρέπει να περιλαμβάνει μόνο τις δαπάνες του επιλεγμένου μήνα
+                        months_to_charge = 1  # Μόνο ο επιλεγμένος μήνας
+                        
+                        # Προσθέτουμε τα management fees στο expense_share
+                        monthly_management_fee = management_fee_per_apartment * months_to_charge
+                        expense_share += monthly_management_fee
+                        print(f"💰 Apartment {apartment.number}: Added {months_to_charge} months × €{management_fee_per_apartment} = €{monthly_management_fee} to expense_share")
+                
                 # 3. Υπολογισμός αποθεματικού για τον μήνα
                 if (self.building.reserve_fund_goal and 
                     self.building.reserve_fund_duration_months and
