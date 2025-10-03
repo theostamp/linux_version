@@ -147,53 +147,6 @@ export default function KioskDisplayPage() {
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-900 flex flex-col overflow-hidden">
-      {/* Top Bar */}
-      <div className="h-20 flex-shrink-0 bg-white/80 backdrop-blur-sm flex items-center justify-between px-8 py-4 border-b border-gray-200/50 shadow-sm">
-        <div className="flex items-center space-x-6">
-          <div className="text-xl font-bold text-gray-800">
-            {kioskData?.building_info?.address || 'Αλκμάνος 22, Αθήνα'}
-          </div>
-          <div className="text-sm text-gray-600">
-            {new Date().toLocaleDateString('el-GR', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-6">
-          {/* Current Time */}
-          <div className="text-lg font-semibold text-gray-800">
-            {new Date().toLocaleTimeString('el-GR', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </div>
-
-          {/* Voice Control Button */}
-          <button
-            onClick={() => setVoiceEnabled(prev => !prev)}
-            className={`p-2 rounded transition-all ${
-              voiceEnabled
-                ? 'bg-green-600/80 text-white animate-pulse'
-                : 'hover:bg-gray-200/80 text-gray-700'
-            }`}
-            title={voiceEnabled ? 'Απενεργοποίηση φωνητικής πλοήγησης' : 'Ενεργοποίηση φωνητικής πλοήγησης'}
-          >
-            🎤
-          </button>
-
-          <button
-            onClick={toggleFullscreen}
-            className="p-2 hover:bg-gray-200/80 text-gray-700 rounded transition-colors"
-            title="Toggle Fullscreen (F11)"
-          >
-            ⛶
-          </button>
-        </div>
-      </div>
 
       {/* Loading State */}
       {(kioskLoading || weatherLoading) && (
@@ -256,6 +209,50 @@ export default function KioskDisplayPage() {
         <div className="flex flex-1">
           {/* Sidebar */}
           <div className="w-64 sm:w-80 bg-white/60 backdrop-blur-sm p-2 sm:p-4 space-y-2 sm:space-y-4 overflow-y-auto border-r border-gray-300/30 shadow-sm">
+            {/* Header Info Card */}
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg p-3 hover:bg-white/90 transition-all duration-300 shadow-sm">
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-gray-800">
+                  {kioskData?.building_info?.address || 'Αλκμάνος 22, Αθήνα'}
+                </div>
+                <div className="text-xs text-gray-600">
+                  {new Date().toLocaleDateString('el-GR', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-semibold text-gray-800">
+                    {new Date().toLocaleTimeString('el-GR', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setVoiceEnabled(prev => !prev)}
+                      className={`p-1 rounded text-xs transition-all ${
+                        voiceEnabled
+                          ? 'bg-green-600/80 text-white animate-pulse'
+                          : 'hover:bg-gray-200/80 text-gray-700'
+                      }`}
+                      title={voiceEnabled ? 'Απενεργοποίηση φωνητικής πλοήγησης' : 'Ενεργοποίηση φωνητικής πλοήγησης'}
+                    >
+                      🎤
+                    </button>
+                    <button
+                      onClick={toggleFullscreen}
+                      className="p-1 hover:bg-gray-200/80 text-gray-700 rounded transition-colors text-xs"
+                      title="Toggle Fullscreen (F11)"
+                    >
+                      ⛶
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
             {/* Weather Widget */}
             {weather && (
               <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg p-4 hover:bg-white/90 transition-all duration-300 shadow-sm">
@@ -436,12 +433,12 @@ export default function KioskDisplayPage() {
                   <div className="w-[70%] flex flex-col gap-4">
                     {/* Top Right - Current Main Slide */}
                     <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg overflow-hidden shadow-sm flex-1">
-                      <WidgetWrapper
-                        widget={mainSlides[currentSlide]}
-                        data={combinedData}
-                        className="h-full"
-                      />
-                    </div>
+                  <WidgetWrapper
+                    widget={mainSlides[currentSlide]}
+                    data={combinedData}
+                    className="h-full"
+                  />
+                </div>
 
                     {/* Bottom Right - Previous Main Slide */}
                     <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg overflow-hidden shadow-sm flex-1">
