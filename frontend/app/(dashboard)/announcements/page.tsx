@@ -121,14 +121,21 @@ export default function AnnouncementsPage() {
     <div className="p-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">📢 Ανακοινώσεις</h1>
-        <Button asChild>
-          <Link href="/announcements/new">
-            {selectedBuilding 
-              ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
-              : "Νέα Ανακοίνωση"
-            }
-          </Link>
-        </Button>
+        <div className="flex gap-3">
+          <Button asChild variant="outline">
+            <Link href="/announcements/new-assembly">
+              🏛️ Νέα Συνέλευση
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/announcements/new">
+              {selectedBuilding 
+                ? `Νέα Ανακοίνωση για το κτίριο ${selectedBuilding.name}`
+                : "Νέα Ανακοίνωση"
+              }
+            </Link>
+          </Button>
+        </div>
       </div>
       <BuildingFilterIndicator className="mb-4" />
       <motion.div

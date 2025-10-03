@@ -57,9 +57,9 @@ export default function KioskDisplayPage() {
       const systemWidgets = getSystemWidgets(selectedBuildingId);
       const enabledWidgets = systemWidgets.filter(w => w.enabled);
 
-      // Filter widgets that have data
+      // Filter widgets that have data and exclude AssemblyWidget from main slides
       const widgetsWithData = enabledWidgets.filter(widget =>
-        hasWidgetData(widget, combinedData)
+        hasWidgetData(widget, combinedData) && widget.component !== 'AssemblyWidget'
       );
 
       setWidgets(widgetsWithData);
@@ -146,14 +146,14 @@ export default function KioskDisplayPage() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-kiosk-neutral-950 via-kiosk-primary-dark to-kiosk-secondary-dark text-white flex flex-col overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-900 flex flex-col overflow-hidden">
       {/* Top Bar */}
-      <div className="h-20 flex-shrink-0 bg-kiosk-neutral-900/80 backdrop-blur-sm flex items-center justify-between px-8 py-4 border-b border-kiosk-primary/30">
+      <div className="h-20 flex-shrink-0 bg-white/80 backdrop-blur-sm flex items-center justify-between px-8 py-4 border-b border-gray-200/50 shadow-sm">
         <div className="flex items-center space-x-6">
-          <div className="text-xl font-bold">
+          <div className="text-xl font-bold text-gray-800">
             {kioskData?.building_info?.address || 'Αλκμάνος 22, Αθήνα'}
           </div>
-          <div className="text-sm text-kiosk-neutral-300">
+          <div className="text-sm text-gray-600">
             {new Date().toLocaleDateString('el-GR', {
               weekday: 'long',
               year: 'numeric',
@@ -165,7 +165,7 @@ export default function KioskDisplayPage() {
 
         <div className="flex items-center space-x-6">
           {/* Current Time */}
-          <div className="text-lg font-semibold">
+          <div className="text-lg font-semibold text-gray-800">
             {new Date().toLocaleTimeString('el-GR', {
               hour: '2-digit',
               minute: '2-digit'
@@ -178,7 +178,7 @@ export default function KioskDisplayPage() {
             className={`p-2 rounded transition-all ${
               voiceEnabled
                 ? 'bg-green-600/80 text-white animate-pulse'
-                : 'hover:bg-kiosk-neutral-800/30'
+                : 'hover:bg-gray-200/80 text-gray-700'
             }`}
             title={voiceEnabled ? 'Απενεργοποίηση φωνητικής πλοήγησης' : 'Ενεργοποίηση φωνητικής πλοήγησης'}
           >
@@ -187,7 +187,7 @@ export default function KioskDisplayPage() {
 
           <button
             onClick={toggleFullscreen}
-            className="p-2 hover:bg-kiosk-neutral-800/30 rounded transition-colors"
+            className="p-2 hover:bg-gray-200/80 text-gray-700 rounded transition-colors"
             title="Toggle Fullscreen (F11)"
           >
             ⛶
@@ -197,17 +197,17 @@ export default function KioskDisplayPage() {
 
       {/* Loading State */}
       {(kioskLoading || weatherLoading) && (
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-kiosk-neutral-800 rounded-lg p-6 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-kiosk-primary mx-auto mb-4"></div>
-            <div className="text-white">Φόρτωση δεδομένων...</div>
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-50">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 text-center shadow-lg border border-gray-200">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <div className="text-gray-800">Φόρτωση δεδομένων...</div>
           </div>
         </div>
       )}
 
       {/* Error State */}
       {(kioskError || weatherError) && (
-        <div className="absolute top-24 right-4 bg-red-900/80 border border-red-700 text-red-100 px-4 py-2 rounded-lg z-40">
+        <div className="absolute top-24 right-4 bg-red-100/90 border border-red-300 text-red-800 px-4 py-2 rounded-lg z-40 backdrop-blur-sm">
           <div className="text-sm">
             ⚠️ {kioskError || weatherError}
           </div>
@@ -216,7 +216,7 @@ export default function KioskDisplayPage() {
 
       {/* Voice Status Indicator */}
       {voiceEnabled && (
-        <div className="absolute top-24 left-4 bg-kiosk-neutral-900/90 border border-green-500/50 text-white px-4 py-2 rounded-lg z-40 backdrop-blur-sm">
+        <div className="absolute top-24 left-4 bg-white/90 border border-green-300 text-gray-800 px-4 py-2 rounded-lg z-40 backdrop-blur-sm shadow-lg">
           <div className="flex items-center justify-between space-x-4">
             <div className="flex items-center space-x-3">
               <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`}></div>
@@ -226,24 +226,24 @@ export default function KioskDisplayPage() {
             </div>
             <button
               onClick={() => setUseOfflineVoice(prev => !prev)}
-              className="text-xs px-2 py-1 bg-kiosk-neutral-700 hover:bg-kiosk-neutral-600 rounded transition-colors"
+              className="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
               title={useOfflineVoice ? 'Χρήση Online Voice' : 'Χρήση Offline Voice'}
             >
               {useOfflineVoice ? '🖥️ Offline' : '☁️ Online'}
             </button>
           </div>
           {lastCommand && (
-            <div className="text-xs text-kiosk-neutral-300 mt-1">
+            <div className="text-xs text-gray-600 mt-1">
               Τελευταία εντολή: "{lastCommand}"
             </div>
           )}
           {voiceError && (
-            <div className="text-xs text-red-400 mt-1">
+            <div className="text-xs text-red-600 mt-1">
               {voiceError}
             </div>
           )}
           {useOfflineVoice && (
-            <div className="text-xs text-kiosk-neutral-400 mt-1">
+            <div className="text-xs text-gray-500 mt-1">
               {offlineVoice.isConnected ? '✅ WebSocket connected' : '⏳ Connecting...'}
             </div>
           )}
@@ -252,9 +252,101 @@ export default function KioskDisplayPage() {
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col">
-        {/* Top Row: Slides and Sidebar */}
+        {/* Top Row: Sidebar and Slides */}
         <div className="flex flex-1">
-          {/* Main Slides */}
+          {/* Sidebar */}
+          <div className="w-64 sm:w-80 bg-white/60 backdrop-blur-sm p-2 sm:p-4 space-y-2 sm:space-y-4 overflow-y-auto border-r border-gray-300/30 shadow-sm">
+            {/* Weather Widget */}
+            {weather && (
+              <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg p-4 hover:bg-white/90 transition-all duration-300 shadow-sm">
+                <h3 className="text-lg font-semibold text-blue-700 mb-4">🌤️ Καιρός</h3>
+                
+                {/* Current Weather */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-2xl font-bold text-gray-800">
+                      {weather.current.temperature}°C
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {weather.current.condition}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div>Υγρασία: {weather.current.humidity}%</div>
+                    <div>Άνεμος: {weather.current.wind_speed} km/h</div>
+                    <div>Ορατότητα: {weather.current.visibility} km</div>
+                    <div>Αίσθηση: {weather.current.feels_like}°C</div>
+                  </div>
+                  
+                  <div className="flex justify-between text-xs text-gray-600 mt-2">
+                    <div>Ανατολή: {weather.current.sunrise}</div>
+                    <div>Δύση: {weather.current.sunset}</div>
+                  </div>
+                </div>
+
+                {/* Weather Forecast */}
+                <div>
+                  <h4 className="text-sm font-semibold text-blue-600 mb-2">Πρόγνωση</h4>
+                  <div className="space-y-2">
+                    {weather.forecast.map((day: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between text-xs">
+                        <div className="text-gray-600">{day.day}</div>
+                        <div className="text-lg">{day.icon}</div>
+                        <div className="text-gray-800 font-semibold">
+                          {day.high}° / {day.low}°
+                        </div>
+                        <div className="text-gray-500">{day.condition}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* QR Code Widget */}
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg p-4 hover:bg-white/90 transition-all duration-300 shadow-sm">
+              <h3 className="text-lg font-semibold text-blue-700 mb-4">📱 Σύνδεση</h3>
+              <div className="flex flex-col items-center space-y-3">
+                <div className="bg-white p-2 rounded-lg">
+                  <QRCodeGenerator 
+                    url={`${window.location.origin}/dashboard`}
+                    size={100}
+                    className="rounded"
+                  />
+                </div>
+                <div className="text-center">
+                  <div className="text-sm font-semibold text-gray-800">Συνδεθείτε</div>
+                  <div className="text-xs text-gray-600">Σαρώστε για πρόσβαση στο Dashboard</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Manager Widget */}
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg p-4 hover:bg-white/90 transition-all duration-300 shadow-sm">
+              <h3 className="text-lg font-semibold text-blue-700 mb-4">👨‍💼 Διαχειριστής</h3>
+              <div className="space-y-3">
+                <div>
+                  <div className="text-sm font-semibold text-gray-800">Εσωτερικός Διαχειριστής</div>
+                  <div className="text-sm text-gray-600">Γιάννης Παπαδόπουλος</div>
+                  <div className="text-sm text-blue-600">+30 210 123 4567</div>
+                </div>
+                
+                <div className="border-t border-gray-200/50 pt-3">
+                  <div className="text-xs text-gray-600 mb-1">Διαμερίσματα:</div>
+                  <div className="text-sm text-gray-800">Α1, Α2, Β1, Β2, Γ1, Γ2</div>
+                </div>
+                
+                <div className="border-t border-gray-200/50 pt-3">
+                  <div className="text-xs text-gray-600 mb-1">Πληρωμή Κοινόχρηστων:</div>
+                  <div className="text-sm text-gray-800">Δευτέρα - Παρασκευή</div>
+                  <div className="text-xs text-gray-600">09:00 - 17:00</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content Area - 2x2 Grid Layout */}
           <div className="flex-1 p-2 sm:p-6 overflow-hidden">
             {mainSlides.length > 0 && combinedData && (
               <div className="h-full flex flex-col">
@@ -270,7 +362,7 @@ export default function KioskDisplayPage() {
                         className={`p-3 rounded-lg transition-all duration-300 ${
                           index === currentSlide
                             ? 'text-white shadow-lg scale-105'
-                            : 'bg-kiosk-neutral-800/50 text-kiosk-neutral-400 hover:bg-kiosk-primary/30 hover:text-kiosk-primary-lighter hover:shadow-md hover:shadow-kiosk-primary/30 hover:scale-105'
+                            : 'bg-white/80 text-gray-600 hover:bg-blue-100 hover:text-blue-700 hover:shadow-md hover:scale-105 border border-gray-200'
                         }`}
                         style={index === currentSlide ? {
                           backgroundColor: widgetBgColor,
@@ -284,17 +376,86 @@ export default function KioskDisplayPage() {
                   })}
                 </div>
 
-                {/* Slide Content - Fixed Height: calc(100% - 184px) where 184px = 56px nav + 128px priorities */}
-                <div className="relative overflow-hidden flex-1" style={{ height: 'calc(100% - 184px)' }}>
-                  <WidgetWrapper
-                    widget={mainSlides[currentSlide]}
-                    data={combinedData}
-                    className="h-full"
-                  />
+                {/* Custom Grid Content - Left 30%, Right 70% */}
+                <div className="relative overflow-hidden flex-1 flex gap-4 p-2" style={{ height: 'calc(100% - 184px)' }}>
+                  {/* Left Column - 30% */}
+                  <div className="w-[30%] flex flex-col gap-4">
+                    {/* Top Left - Assembly Widget (Permanent, only if has data) */}
+                    {(() => {
+                      // Check if there are assembly announcements
+                      const hasAssemblyData = combinedData?.announcements?.some((a: any) =>
+                        a.title?.includes('Συνέλευση') || a.title?.includes('Σύγκληση')
+                      );
+                      
+                      return hasAssemblyData ? (
+                        <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg overflow-hidden shadow-sm flex items-center justify-center flex-1">
+                          <div className="w-[30%] h-full">
+                            <WidgetWrapper
+                              widget={{
+                                id: 'assembly-widget',
+                                name: 'General Assembly',
+                                description: 'Upcoming general assembly information',
+                                category: 'main_slides',
+                                component: 'AssemblyWidget',
+                                enabled: true,
+                                order: 0,
+                            settings: {
+                              title: '',
+                              showTitle: false,
+                              gridSize: 'medium',
+                              dataSource: '/api/public-info',
+                              refreshInterval: 300,
+                            },
+                              }}
+                              data={combinedData}
+                              className="h-full"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg overflow-hidden flex items-center justify-center shadow-sm flex-1">
+                          <div className="text-center text-gray-500">
+                            <div className="text-4xl mb-2">📅</div>
+                            <div className="text-sm font-semibold">Δεν υπάρχει προγραμματισμένη συνέλευση</div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    
+                    {/* Bottom Left - Next Main Slide */}
+                    <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg overflow-hidden shadow-sm flex-1">
+                      <WidgetWrapper
+                        widget={mainSlides[(currentSlide + 1) % mainSlides.length]}
+                        data={combinedData}
+                        className="h-full"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right Column - 70% */}
+                  <div className="w-[70%] flex flex-col gap-4">
+                    {/* Top Right - Current Main Slide */}
+                    <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg overflow-hidden shadow-sm flex-1">
+                      <WidgetWrapper
+                        widget={mainSlides[currentSlide]}
+                        data={combinedData}
+                        className="h-full"
+                      />
+                    </div>
+
+                    {/* Bottom Right - Previous Main Slide */}
+                    <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg overflow-hidden shadow-sm flex-1">
+                      <WidgetWrapper
+                        widget={mainSlides[(currentSlide - 1 + mainSlides.length) % mainSlides.length]}
+                        data={combinedData}
+                        className="h-full"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                {/* Urgent Priorities Widget - Fixed Height: 128px (h-32) - Integrated with #0A7181 */}
-                <div className="h-32 backdrop-blur-sm border-t border-kiosk-primary/20 p-4 flex-shrink-0" style={{ backgroundColor: '#0A7181' }}>
+                {/* Urgent Priorities Widget - Fixed Height: 128px (h-32) - Light theme */}
+                <div className="h-32 backdrop-blur-sm border-t border-gray-200/50 p-4 flex-shrink-0 bg-white/90 shadow-sm">
                   <UrgentPrioritiesWidget
                     data={combinedData}
                     settings={{
@@ -309,115 +470,23 @@ export default function KioskDisplayPage() {
               </div>
             )}
           </div>
-
-          {/* Sidebar */}
-          <div className="w-64 sm:w-80 bg-kiosk-neutral-900/40 backdrop-blur-sm p-2 sm:p-4 space-y-2 sm:space-y-4 overflow-y-auto border-l border-kiosk-primary/20">
-            {/* Weather Widget */}
-            {weather && (
-              <div className="bg-kiosk-neutral-800/20 backdrop-blur-sm border border-kiosk-primary/20 rounded-lg p-4 hover:bg-kiosk-neutral-800/30 transition-all duration-300">
-                <h3 className="text-lg font-semibold text-kiosk-primary-lighter mb-4">🌤️ Καιρός</h3>
-                
-                {/* Current Weather */}
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-2xl font-bold text-white">
-                      {weather.current.temperature}°C
-                    </div>
-                    <div className="text-sm text-kiosk-neutral-300">
-                      {weather.current.condition}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 text-xs text-kiosk-neutral-300">
-                    <div>Υγρασία: {weather.current.humidity}%</div>
-                    <div>Άνεμος: {weather.current.wind_speed} km/h</div>
-                    <div>Ορατότητα: {weather.current.visibility} km</div>
-                    <div>Αίσθηση: {weather.current.feels_like}°C</div>
-                  </div>
-                  
-                  <div className="flex justify-between text-xs text-kiosk-neutral-300 mt-2">
-                    <div>Ανατολή: {weather.current.sunrise}</div>
-                    <div>Δύση: {weather.current.sunset}</div>
-                  </div>
-                </div>
-
-                {/* Weather Forecast */}
-                <div>
-                  <h4 className="text-sm font-semibold text-kiosk-primary-lighter mb-2">Πρόγνωση</h4>
-                  <div className="space-y-2">
-                    {weather.forecast.map((day: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between text-xs">
-                        <div className="text-kiosk-neutral-300">{day.day}</div>
-                        <div className="text-lg">{day.icon}</div>
-                        <div className="text-white font-semibold">
-                          {day.high}° / {day.low}°
-                        </div>
-                        <div className="text-kiosk-neutral-400">{day.condition}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* QR Code Widget */}
-            <div className="bg-kiosk-neutral-800/20 backdrop-blur-sm border border-kiosk-primary/20 rounded-lg p-4 hover:bg-kiosk-neutral-800/30 transition-all duration-300">
-              <h3 className="text-lg font-semibold text-kiosk-primary-lighter mb-4">📱 Σύνδεση</h3>
-              <div className="flex flex-col items-center space-y-3">
-                <div className="bg-white p-2 rounded-lg">
-                  <QRCodeGenerator 
-                    url={`${window.location.origin}/dashboard`}
-                    size={100}
-                    className="rounded"
-                  />
-                </div>
-                <div className="text-center">
-                  <div className="text-sm font-semibold text-white">Συνδεθείτε</div>
-                  <div className="text-xs text-kiosk-neutral-300">Σαρώστε για πρόσβαση στο Dashboard</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Manager Widget */}
-            <div className="bg-kiosk-neutral-800/20 backdrop-blur-sm border border-kiosk-primary/20 rounded-lg p-4 hover:bg-kiosk-neutral-800/30 transition-all duration-300">
-              <h3 className="text-lg font-semibold text-kiosk-primary-lighter mb-4">👨‍💼 Διαχειριστής</h3>
-              <div className="space-y-3">
-                <div>
-                  <div className="text-sm font-semibold text-white">Εσωτερικός Διαχειριστής</div>
-                  <div className="text-sm text-kiosk-neutral-300">Γιάννης Παπαδόπουλος</div>
-                  <div className="text-sm text-kiosk-primary-lighter">+30 210 123 4567</div>
-                </div>
-                
-                <div className="border-t border-kiosk-primary/20 pt-3">
-                  <div className="text-xs text-kiosk-neutral-300 mb-1">Διαμερίσματα:</div>
-                  <div className="text-sm text-white">Α1, Α2, Β1, Β2, Γ1, Γ2</div>
-                </div>
-                
-                <div className="border-t border-kiosk-primary/20 pt-3">
-                  <div className="text-xs text-kiosk-neutral-300 mb-1">Πληρωμή Κοινόχρηστων:</div>
-                  <div className="text-sm text-white">Δευτέρα - Παρασκευή</div>
-                  <div className="text-xs text-kiosk-neutral-300">09:00 - 17:00</div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
 
       {/* Footer */}
-      <div className="h-20 flex-shrink-0 bg-kiosk-neutral-900/80 backdrop-blur-sm border-t border-kiosk-primary/30">
+      <div className="h-20 flex-shrink-0 bg-white/80 backdrop-blur-sm border-t border-gray-200/50 shadow-sm">
         <div className="grid grid-cols-12 h-full">
 
 
           {/* News Ticker Section */}
           <div className="col-span-12 flex items-center px-6 py-4 overflow-hidden">
             <div className="flex items-center space-x-2 sm:space-x-3 w-full">
-              <div className="text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
+              <div className="text-xs sm:text-sm font-semibold text-gray-800 whitespace-nowrap">
                 📰 Ειδήσεις:
               </div>
               <div className="flex-1 overflow-hidden">
-                <div className="animate-scroll-left whitespace-nowrap text-xs sm:text-sm text-kiosk-neutral-300">
+                <div className="animate-scroll-left whitespace-nowrap text-xs sm:text-sm text-gray-600">
                   {news && news.map((title, index) => (
                     <span key={index}>
                       {title}
@@ -435,10 +504,10 @@ export default function KioskDisplayPage() {
       <div className="absolute bottom-32 right-4">
         <button
           onClick={() => setIsAutoPlay(prev => !prev)}
-          className={`px-3 py-1 rounded text-xs ${
+          className={`px-3 py-1 rounded text-xs border ${
             isAutoPlay
-              ? 'bg-kiosk-accent/80 text-white'
-              : 'bg-kiosk-neutral-600/80 text-kiosk-neutral-300'
+              ? 'bg-blue-600/90 text-white border-blue-500'
+              : 'bg-white/90 text-gray-700 border-gray-300'
           }`}
           title="Toggle Auto-play (Ctrl+Alt+S)"
         >

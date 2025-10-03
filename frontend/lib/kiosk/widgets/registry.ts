@@ -36,11 +36,13 @@ import QRCodeWidget from '@/components/kiosk/widgets/QRCodeWidget';
 import ManagerWidget from '@/components/kiosk/widgets/ManagerWidget';
 import UrgentPrioritiesWidget from '@/components/kiosk/widgets/UrgentPrioritiesWidget';
 import AssemblyWidget from '@/components/kiosk/widgets/AssemblyWidget';
+import CommonExpenseBillWidget from '@/components/kiosk/widgets/CommonExpenseBillWidget';
 
 export const WIDGET_COMPONENTS: Record<string, React.ComponentType<any>> = {
   DashboardWidget,
   AnnouncementsWidget,
   AssemblyWidget,
+  CommonExpenseBillWidget,
   TimeWidget,
   VotesWidget,
   FinancialWidget,
@@ -61,6 +63,7 @@ export const WIDGET_ICONS: Record<string, LucideIcon> = {
   DashboardWidget: Home,
   AnnouncementsWidget: Bell,
   AssemblyWidget: Calendar,
+  CommonExpenseBillWidget: FileText,
   TimeWidget: Clock,
   VotesWidget: Vote,
   FinancialWidget: DollarSign,
@@ -200,6 +203,10 @@ export function hasWidgetData(widget: KioskWidget, data?: any): boolean {
     case 'VotesWidget':
       return data?.votes && data.votes.length > 0;
 
+    case 'CommonExpenseBillWidget':
+      // Always show the common expense bill widget (it has fallback)
+      return true;
+
     case 'FinancialWidget':
       return data?.financial && (
         data.financial.collection_rate !== undefined ||
@@ -316,6 +323,22 @@ export const SYSTEM_WIDGETS: Omit<KioskWidget, 'id' | 'createdAt' | 'updatedAt' 
       backgroundColor: '#0F766E',
       dataSource: '/api/votes',
       refreshInterval: 300,
+    },
+  },
+  {
+    name: 'Common Expense Bill',
+    description: 'Current common expense bill as generated image',
+    category: 'main_slides',
+    component: 'CommonExpenseBillWidget',
+    enabled: true,
+    order: 3.5,
+    settings: {
+      title: 'Φύλλο Κοινόχρηστων',
+      showTitle: true,
+      gridSize: 'large',
+      backgroundColor: '#059669',
+      dataSource: '/api/common-expense-bills',
+      refreshInterval: 600,
     },
   },
   {

@@ -58,3 +58,4 @@ frontend/.next.backup/
 *.tar.bz2raspberry-pi-kiosk/*.img
 raspberry-pi-kiosk/raspios-lite.img
 backend/celerybeat-schedule
+kiosk_images/

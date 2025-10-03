@@ -1,14 +1,15 @@
 from django.urls import path, include 
- 
+
 from rest_framework.routers import DefaultRouter
 from announcements.views import AnnouncementViewSet
 from votes.views import VoteViewSet
 from user_requests.views import UserRequestViewSet  
 from financial.views import PaymentViewSet, FinancialReceiptViewSet, BuildingAccountViewSet, FinancialTransactionViewSet, FinancialDashboardViewSet
 from django.views.decorators.csrf import ensure_csrf_cookie
- 
+
 from django.http import JsonResponse
 from .views import public_info
+from .kiosk_views import upload_common_expense_bill, get_latest_common_expense_bill, list_common_expense_bills
  
 
 
@@ -33,4 +34,8 @@ urlpatterns = [    path('api/', include(router.urls)),
     path('api/csrf/', csrf_token_view, name='csrf-token'),
     path('api/public-info/<int:building_id>/', public_info, name='public-info'),
     path('api/public-info/', public_info, name='public-info-all'),
+    # Kiosk endpoints for common expense bills
+    path('api/kiosk/upload-bill/', upload_common_expense_bill, name='kiosk-upload-bill'),
+    path('api/kiosk/latest-bill/', get_latest_common_expense_bill, name='kiosk-latest-bill'),
+    path('api/kiosk/list-bills/', list_common_expense_bills, name='kiosk-list-bills'),
 ]

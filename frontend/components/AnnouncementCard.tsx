@@ -35,6 +35,28 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
   const [isDeleting, setIsDeleting] = useState(false);
   const { selectedBuilding } = useBuilding();
   
+  // Check if this is an assembly announcement
+  const isAssembly = announcement.title?.includes('Συνέλευση') || 
+                     announcement.title?.includes('Σύγκληση') ||
+                     announcement.description?.includes('ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ');
+  
+  // Extract assembly topics
+  const extractAssemblyTopics = () => {
+    if (!isAssembly) return [];
+    
+    const topicsSection = announcement.description.match(/\*\*ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ:\*\*([\s\S]*?)\*\*Σημαντικό:\*\*/);
+    if (!topicsSection) return [];
+    
+    const topicsContent = topicsSection[1];
+    const topicMatches = topicsContent.match(/###\s*Θέμα:\s*([^\n]+)/g);
+    
+    return topicMatches ? topicMatches.map(match => 
+      match.replace(/###\s*Θέμα:\s*/, '').trim()
+    ) : [];
+  };
+  
+  const assemblyTopics = extractAssemblyTopics();
+  
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '—';
     const date = new Date(dateStr);
@@ -96,7 +118,11 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
 
   return (
     <motion.div
-      className="p-4 rounded-2xl shadow bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 relative"
+      className={`p-4 rounded-2xl shadow text-gray-900 dark:text-gray-100 relative ${
+        isAssembly 
+          ? 'bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200' 
+          : 'bg-white dark:bg-gray-800'
+      }`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
@@ -109,8 +135,21 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
       {/* Building badge - show only when viewing all buildings */}
       {!selectedBuilding && announcement.building_name && (
         <div className="absolute top-3 left-3 z-10">
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-medium shadow-sm">
+          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${
+            isAssembly 
+              ? 'bg-purple-100 border border-purple-300 text-purple-700'
+              : 'bg-blue-50 border border-blue-200 text-blue-700'
+          }`}>
             🏢 {announcement.building_name}
+          </span>
+        </div>
+      )}
+
+      {/* Assembly badge */}
+      {isAssembly && (
+        <div className="absolute top-3 right-16 z-10">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-100 border border-purple-300 text-purple-700 rounded-full text-xs font-medium shadow-sm">
+            🏛️ Συνέλευση
           </span>
         </div>
       )}
@@ -138,6 +177,28 @@ export default function AnnouncementCard({ announcement }: { readonly announceme
           {announcement.status_display ? announcement.status_display : isCurrentlyActive ? '✅ Ενεργή' : '⏸ Ανενεργή'}
         </span>
       </div>
+
+      {/* Assembly Topics Preview */}
+      {isAssembly && assemblyTopics.length > 0 && (
+        <div className="mb-4 p-3 bg-white/70 rounded-lg border border-purple-200">
+          <h4 className="text-sm font-semibold text-purple-800 mb-2">
+            Θέματα Συνέλευσης ({assemblyTopics.length}):
+          </h4>
+          <div className="space-y-1">
+            {assemblyTopics.slice(0, 3).map((topic, index) => (
+              <div key={index} className="text-xs text-purple-700 flex items-start">
+                <span className="font-medium mr-2">{index + 1}.</span>
+                <span className="line-clamp-2">{topic}</span>
+              </div>
+            ))}
+            {assemblyTopics.length > 3 && (
+              <div className="text-xs text-purple-600 italic">
+                ...και {assemblyTopics.length - 3} ακόμα
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 flex justify-between items-center">
         <div className={typography.small}>

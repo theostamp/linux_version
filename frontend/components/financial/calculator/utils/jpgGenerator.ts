@@ -433,7 +433,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   const elevatorMills = apt.participation_mills || 0;
                   const heatingMills = apt.heating_mills || apt.participation_mills || 0;
                   const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
-                  const totalAmount = (aptAmount.common || 0) + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + (managementFeeInfo.perApartment || 0) + apartmentReserveFund + previousBalance;
+                  const totalAmount = (aptAmount.common || 0) + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + (managementFeeInfo.feePerApartment || 0) + apartmentReserveFund + previousBalance;
 
                   return `
                     <tr style="${index % 2 === 0 ? 'background: #f9fafb;' : 'background: white;'}">
@@ -446,7 +446,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                       <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${formatAmount((aptAmount.common || 0) + apartmentReserveFund)}€</td>
                       <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${formatAmount(aptAmount.elevator || 0)}€</td>
                       <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${formatAmount(aptAmount.heating || 0)}€</td>
-                      <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${formatAmount(managementFeeInfo.perApartment || 0)}€</td>
+                      <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${formatAmount(managementFeeInfo.feePerApartment || 0)}€</td>
                       <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${formatAmount(apartmentReserveFund)}€</td>
                       <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold; color: #2563eb;">${formatAmount(totalAmount)}€</td>
                     </tr>
@@ -524,14 +524,18 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
 
         // Debug: Check if canvas has actual content
         const ctx = canvas.getContext('2d');
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const hasContent = imageData.data.some((pixel, i) => i % 4 !== 3 && pixel !== 255); // Check for non-white pixels
-        console.log('JPG Export - Canvas has content:', hasContent);
+        if (ctx) {
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const hasContent = imageData.data.some((pixel, i) => i % 4 !== 3 && pixel !== 255); // Check for non-white pixels
+          console.log('JPG Export - Canvas has content:', hasContent);
+        }
 
         // Create and download JPG with maximum quality
         const imgData = canvas.toDataURL('image/jpeg', 1.0); // Maximum JPEG quality
         console.log('JPG Export - Data URL length:', imgData.length);
         console.log('JPG Export - Data URL start:', imgData.substring(0, 50));
+        
+        // Download the JPG file
         const link = document.createElement('a');
         link.href = imgData;
         link.download = `Κοινοχρηστα-${buildingName.replace(/[^a-zA-Z0-9]/g, '_')}-${selectedMonthDisplay.replace(/[^a-zA-Z0-9]/g, '_')}.jpg`;
@@ -539,7 +543,34 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
         link.click();
         document.body.removeChild(link);
 
-        toast.success('JPG αρχείο δημιουργήθηκε επιτυχώς!');
+        // Send to kiosk API for display
+        try {
+          console.log('JPG Export - Sending to kiosk API...');
+          const kioskResponse = await fetch('/api/kiosk/upload-bill/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              image_data: imgData,
+              building_name: buildingName,
+              period: selectedMonthDisplay,
+              timestamp: new Date().toISOString(),
+            }),
+          });
+
+          if (kioskResponse.ok) {
+            const result = await kioskResponse.json();
+            console.log('JPG Export - Kiosk upload successful:', result);
+            toast.success('JPG αρχείο δημιουργήθηκε και αποστάλθηκε στο kiosk επιτυχώς!');
+          } else {
+            console.warn('JPG Export - Kiosk upload failed:', kioskResponse.status);
+            toast.success('JPG αρχείο δημιουργήθηκε επιτυχώς! (Αποστολή στο kiosk απέτυχε)');
+          }
+        } catch (error) {
+          console.error('JPG Export - Error sending to kiosk:', error);
+          toast.success('JPG αρχείο δημιουργήθηκε επιτυχώς! (Αποστολή στο kiosk απέτυχε)');
+        }
 
       } catch (error) {
         console.error('Error generating JPG:', error);

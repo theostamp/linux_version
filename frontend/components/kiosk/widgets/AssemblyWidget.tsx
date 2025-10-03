@@ -2,9 +2,6 @@
 
 import { BaseWidgetProps } from '@/types/kiosk';
 import { Calendar, Clock, MapPin, Video } from 'lucide-react';
-import { format } from 'date-fns';
-import { el } from 'date-fns/locale';
-import MarkdownRenderer from '@/components/kiosk/MarkdownRenderer';
 
 export default function AssemblyWidget({ data, isLoading, error }: BaseWidgetProps) {
   if (isLoading) {
@@ -28,7 +25,9 @@ export default function AssemblyWidget({ data, isLoading, error }: BaseWidgetPro
 
   // Φιλτράρουμε ανακοινώσεις συνέλευσης
   const assemblyAnnouncements = data?.announcements?.filter((a: any) =>
-    a.title?.includes('Συνέλευση') || a.title?.includes('Σύγκληση')
+    a.title?.includes('Συνέλευση') || 
+    a.title?.includes('Σύγκληση') ||
+    a.description?.includes('ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ')
   ) || [];
 
   if (assemblyAnnouncements.length === 0) {
@@ -56,61 +55,79 @@ export default function AssemblyWidget({ data, isLoading, error }: BaseWidgetPro
   const dateTimeInfo = extractInfo(assembly.description, 'Ημερομηνία και Ώρα Συνέλευσης');
   const locationInfo = extractInfo(assembly.description, 'Τοποθεσία');
   const zoomLinkMatch = assembly.description.match(/\*\*Σύνδεσμος:\*\*\s*(https?:\/\/[^\s]+)/i);
-  const isOnline = assembly.description.includes('Διαδικτυακή Συνέλευση') || assembly.description.includes('Zoom');
+  const isOnline = assembly.description.includes('Zoom Meeting') || assembly.description.includes('Zoom');
 
-  // Εξάγουμε το τμήμα των θεμάτων
-  const topicsSection = assembly.description.match(/\*\*ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ:\*\*([\s\S]*?)\*\*Σημαντικό:\*\*/);
-  const topicsContent = topicsSection ? topicsSection[1].trim() : '';
+  // Εξάγουμε θέματα με απλή λογική
+  const extractTopics = (description: string): string[] => {
+    const topicsSection = description.match(/\*\*ΘΕΜΑΤΑ ΗΜΕΡΗΣΙΑΣ ΔΙΑΤΑΞΗΣ:\*\*([\s\S]*?)\*\*Σημαντικό:\*\*/);
+    if (!topicsSection) return [];
+    
+    const topicsContent = topicsSection[1];
+    
+    // Extract topics using regex for ### Θέμα: pattern
+    const topicMatches = topicsContent.match(/###\s*Θέμα:\s*([^\n]+)/g);
+    
+    if (topicMatches && topicMatches.length > 0) {
+      const topics = topicMatches.map(match => 
+        match.replace(/###\s*Θέμα:\s*/, '').trim()
+      ).filter(topic => topic.length > 0);
+      
+      // Remove duplicates and return
+      return [...new Set(topics)];
+    }
+    
+    return [];
+  };
 
-  // Εξάγουμε θέματα
-  const topicsRegex = /###\s*Θέμα:\s*([^\n]+)/g;
-  const topics: string[] = [];
-  let match;
-  while ((match = topicsRegex.exec(assembly.description)) !== null) {
-    topics.push(match[1].trim());
-  }
+  const topics = extractTopics(assembly.description);
+
+  // Format topics list
+  const formatTopicsList = () => {
+    if (topics.length === 0) return '';
+    if (topics.length === 1) return topics[0];
+    if (topics.length === 2) return `${topics[0]} και ${topics[1]}`;
+    return `${topics.slice(0, -1).join(', ')} και ${topics[topics.length - 1]}`;
+  };
 
   return (
+    <div className="flex-1 p-4">
     <div className="h-full overflow-hidden flex flex-col">
-      {/* Compact Header με πληροφορίες */}
-      <div className="mb-3">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-2">
-            <Calendar className="w-5 h-5 text-purple-300" />
-            <h2 className="text-base font-bold text-white">Γενική Συνέλευση</h2>
+        <div className="bg-teal-600 px-3 py-2 rounded-t-lg">
+          <h2 className="text-lg font-bold text-white">Γενική Συνέλευση</h2>
           </div>
-          <div className="text-xs text-purple-200">
-            {topics.length} {topics.length === 1 ? 'Θέμα' : 'Θέματα'}
+        <div className="flex-1 p-3 overflow-hidden">
+          <div className="h-full flex flex-col">
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                {topics.length > 0 ? (
+                  <p className="text-sm text-gray-800 leading-relaxed">
+                    Θα πραγματοποιηθεί γενική συνέλευση στις{' '}
+                    <span className="font-semibold text-teal-700">
+                      {dateTimeInfo || 'Δεν έχει οριστεί'}
+                    </span>{' '}
+                    στο{' '}
+                    <span className="font-semibold text-teal-700">
+                      {isOnline ? 'Zoom Meeting' : (locationInfo || 'Θα ανακοινωθεί')}
+                    </span>{' '}
+                    με {topics.length === 1 ? 'θέμα' : 'θέματα'}:{' '}
+                    <span className="font-semibold text-gray-900">
+                      {formatTopicsList()}
+                    </span>
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-600 italic">
+                    Δεν έχουν οριστεί θέματα ακόma
+                  </p>
+                )}
           </div>
         </div>
-
-        {/* Compact date/time/location */}
-        <div className="bg-purple-900/30 rounded-lg p-2 text-xs space-y-1">
-          <div className="flex items-center space-x-2 text-purple-200">
-            <Clock className="w-3 h-3" />
-            <span>{dateTimeInfo || 'Δεν έχει οριστεί'}</span>
+            <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded p-2">
+              <p className="text-xs text-yellow-700 text-center">
+                ⚠️ Η συμμετοχή σας είναι απαραίτητη
+              </p>
           </div>
-          <div className="flex items-center space-x-2 text-purple-200">
-            {isOnline ? <Video className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
-            <span>{isOnline ? 'Zoom Meeting' : (locationInfo || 'Θα ανακοινωθεί')}</span>
           </div>
         </div>
-      </div>
-
-      {/* Θέματα - takes full remaining space */}
-      <div className="flex-1 overflow-y-auto">
-        {topicsContent ? (
-          <MarkdownRenderer content={topicsContent} className="space-y-3" />
-        ) : (
-          <p className="text-sm text-gray-400 italic">Δεν έχουν οριστεί θέματα ακόμα</p>
-        )}
-      </div>
-
-      {/* Footer note */}
-      <div className="mt-3 bg-yellow-900/20 border border-yellow-500/30 p-2 rounded-lg">
-        <p className="text-xs text-yellow-200 text-center">
-          ⚠️ Η συμμετοχή σας είναι απαραίτητη
-        </p>
       </div>
     </div>
   );
