@@ -172,7 +172,56 @@ def create_offer_announcement(offer: Offer):
     try:
         from announcements.models import Announcement
         
-        # Δημιουργία ανακοίνωσης για τη νέα προσφορά
+        # Έλεγχος αν υπάρχει ήδη ανακοίνωση για προσφορές αυτού του έργου
+        existing_announcement = Announcement.objects.filter(
+            building=offer.project.building,
+            title__icontains=f"Νέα Προσφορά για: {offer.project.title}",
+            is_active=True
+        ).first()
+        
+        if existing_announcement:
+            # Ενημέρωση υπάρχουσας ανακοίνωσης - προσθήκη νέας προσφοράς
+            current_description = existing_announcement.description
+            
+            # Προσθήκη νέας προσφοράς στη λίστα
+            new_offer = f"""
+
+---
+
+### Νέα Προσφορά από: {offer.contractor_name}
+
+**Ποσό:** €{offer.amount:,.2f}
+**Περιγραφή:** {offer.description or 'Δεν υπάρχει περιγραφή'}
+{f'**Χρόνος Ολοκλήρωσης:** {offer.completion_time}' if offer.completion_time else ''}
+{f'**Εγγύηση:** {offer.warranty_period}' if offer.warranty_period else ''}
+{f'**Όροι Πληρωμής:** {offer.payment_terms}' if offer.payment_terms else ''}
+
+Η προσφορά βρίσκεται υπό αξιολόγηση.
+"""
+            
+            # Προσθέτουμε τη νέα προσφορά πριν το "Η προσφορά βρίσκεται υπό αξιολόγηση"
+            if "Η προσφορά βρίσκεται υπό αξιολόγηση" in current_description:
+                parts = current_description.split("Η προσφορά βρίσκεται υπό αξιολόγηση")
+                existing_announcement.description = parts[0] + new_offer + "\n" + "Η προσφορά βρίσκεται υπό αξιολόγηση" + parts[1]
+            else:
+                existing_announcement.description = current_description + new_offer
+            
+            existing_announcement.updated_at = timezone.now()
+            existing_announcement.save(update_fields=['description', 'updated_at'])
+            
+            # Ενημέρωση με WebSocket
+            publish_building_event(
+                building_id=offer.project.building_id,
+                event_type="announcement.updated",
+                payload={
+                    "id": existing_announcement.id,
+                    "title": existing_announcement.title,
+                    "is_urgent": existing_announcement.is_urgent,
+                },
+            )
+            return  # Τελείωσε η ενημέρωση
+        
+        # ΔΗΜΙΟΥΡΓΙΑ νέας ανακοίνωσης (πρώτη προσφορά για αυτό το έργο)
         announcement = Announcement.objects.create(
             building=offer.project.building,
             author=offer.project.created_by,
