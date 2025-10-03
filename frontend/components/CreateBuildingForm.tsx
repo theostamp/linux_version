@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Loader2, Camera, Building as BuildingIcon, Info, Users, ChevronDown } from 'lucide-react';
-import { createBuilding, updateBuilding, fetchBuildingResidents } from '@/lib/api';
+import { createBuilding, updateBuilding, fetchBuildingResidents, fetchApartments } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 import StreetViewImage from '@/components/StreetViewImage';
@@ -53,6 +53,11 @@ interface BuildingResident {
   email: string;
   type: 'owner' | 'tenant';
   display_text: string;
+}
+
+interface ApartmentOption {
+  id: number;
+  number: string;
 }
 
 export default function CreateBuildingForm({
@@ -101,11 +106,18 @@ export default function CreateBuildingForm({
   const [loadingResidents, setLoadingResidents] = useState(false);
   const [showResidentsDropdown, setShowResidentsDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // State για τη λίστα διαμερισμάτων
+  const [apartments, setApartments] = useState<ApartmentOption[]>([]);
+  const [loadingApartments, setLoadingApartments] = useState(false);
+  const [showApartmentsDropdown, setShowApartmentsDropdown] = useState(false);
+  const apartmentDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Φόρτωση ενοίκων του κτιρίου
+  // Φόρτωση ενοίκων και διαμερισμάτων του κτιρίου
   useEffect(() => {
     if (buildingId) {
       loadBuildingResidents();
+      loadBuildingApartments();
     }
   }, [buildingId]);
 
@@ -114,6 +126,9 @@ export default function CreateBuildingForm({
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowResidentsDropdown(false);
+      }
+      if (apartmentDropdownRef.current && !apartmentDropdownRef.current.contains(event.target as Node)) {
+        setShowApartmentsDropdown(false);
       }
     };
 
@@ -138,6 +153,21 @@ export default function CreateBuildingForm({
     }
   };
 
+  const loadBuildingApartments = async () => {
+    if (!buildingId) return;
+    
+    try {
+      setLoadingApartments(true);
+      const data = await fetchApartments(buildingId);
+      setApartments(data.map(apt => ({ id: apt.id, number: apt.number })));
+    } catch (error) {
+      console.error('Error loading building apartments:', error);
+      toast.error('Σφάλμα φόρτωσης διαμερισμάτων');
+    } finally {
+      setLoadingApartments(false);
+    }
+  };
+
   const handleResidentSelect = (resident: BuildingResident) => {
     setForm(prev => ({
       ...prev,
@@ -151,6 +181,20 @@ export default function CreateBuildingForm({
   const toggleResidentsDropdown = () => {
     if (residents.length > 0) {
       setShowResidentsDropdown(!showResidentsDropdown);
+    }
+  };
+
+  const handleApartmentSelect = (apartment: ApartmentOption) => {
+    setForm(prev => ({
+      ...prev,
+      internal_manager_apartment: apartment.number,
+    }));
+    setShowApartmentsDropdown(false);
+  };
+
+  const toggleApartmentsDropdown = () => {
+    if (apartments.length > 0) {
+      setShowApartmentsDropdown(!showApartmentsDropdown);
     }
   };
 
@@ -877,18 +921,57 @@ export default function CreateBuildingForm({
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+          <div className="relative" ref={apartmentDropdownRef}>
             <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="internal_manager_apartment">
               Διαμέρισμα Διαχειριστή
             </label>
-            <input
-              id="internal_manager_apartment"
-              name="internal_manager_apartment"
-              value={form.internal_manager_apartment ?? ''}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="π.χ. Α1, Β2, 1ος όροφος"
-            />
+            
+            {buildingId && apartments.length > 0 ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={toggleApartmentsDropdown}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white flex items-center justify-between"
+                >
+                  <span className={form.internal_manager_apartment ? 'text-gray-900' : 'text-gray-500'}>
+                    {form.internal_manager_apartment || 'Επιλέξτε διαμέρισμα...'}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showApartmentsDropdown ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {showApartmentsDropdown && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {apartments.map((apartment) => (
+                      <button
+                        key={apartment.id}
+                        type="button"
+                        onClick={() => handleApartmentSelect(apartment)}
+                        className="w-full px-3 py-2 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="font-medium text-gray-900">{apartment.number}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <input
+                id="internal_manager_apartment"
+                name="internal_manager_apartment"
+                value={form.internal_manager_apartment ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="π.χ. Α1, Β2, 1ος όροφος"
+              />
+            )}
+            
+            {buildingId && loadingApartments && (
+              <p className="text-xs text-gray-500 mt-1">Φόρτωση διαμερισμάτων...</p>
+            )}
+            
+            {buildingId && !loadingApartments && apartments.length === 0 && (
+              <p className="text-xs text-gray-500 mt-1">Δεν βρέθηκαν διαμερίσματα</p>
+            )}
           </div>
           
           <div>
