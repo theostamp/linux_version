@@ -2,14 +2,25 @@
 // Simplified types without drag & drop complexity
 
 export interface KioskWidget {
-  id: string;
+  id: string; // Widget ID (e.g., "dashboard_overview")
+  dbId?: number; // Database ID for edit operations
   name: string;
+  greekName?: string;
   description: string;
+  greekDescription?: string;
   category: 'main_slides' | 'sidebar_widgets' | 'top_bar_widgets' | 'special_widgets';
   component: string;
+  icon?: string;
   enabled: boolean;
   order: number;
   settings: Record<string, any>;
+  type?: 'system' | 'custom';
+  dataSource?: string;
+  refreshInterval?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+  lastModified?: Date;
+  buildingId?: number;
   // NO gridPosition - removed complexity
 }
 

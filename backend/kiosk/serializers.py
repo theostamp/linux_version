@@ -21,7 +21,8 @@ class KioskWidgetSerializer(serializers.ModelSerializer):
         
         # Rename fields to match frontend expectations
         return {
-            'id': data['widget_id'],
+            'id': data['widget_id'],  # Use widget_id as the main ID for frontend
+            'db_id': instance.id,     # Include database ID for edit operations
             'name': data['name'],
             'greekName': data['greek_name'],
             'description': data['description'],
@@ -36,6 +37,7 @@ class KioskWidgetSerializer(serializers.ModelSerializer):
             'isCustom': data['is_custom'],
             'lastModified': data['updated_at'],
             'createdAt': data['created_at'],
+            'buildingId': instance.building_id if instance.building else None,
         }
 
 

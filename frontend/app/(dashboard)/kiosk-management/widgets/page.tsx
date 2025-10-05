@@ -303,7 +303,7 @@ export default function WidgetManagementPage() {
                   </div>
 
                   {/* Edit Button */}
-                  <Link href={`/kiosk-management/widgets/${widget.id}/edit`}>
+                  <Link href={`/kiosk-management/widgets/${widget.dbId || widget.id}/edit`}>
                     <Button variant="outline" size="sm">
                       <Edit className="w-4 h-4" />
                     </Button>

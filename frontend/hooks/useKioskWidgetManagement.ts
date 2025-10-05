@@ -49,7 +49,8 @@ export function useKioskWidgetManagement(buildingId: number | null) {
       // Transform backend format to frontend KioskWidget format
       const backendWidgets = response.data?.widgets || [];
       const transformedWidgets: KioskWidget[] = backendWidgets.map((w: any) => ({
-        id: w.id, // Backend already sends 'id' (converted from widget_id)
+        id: w.id, // Backend sends widget_id as 'id'
+        dbId: w.db_id, // Database ID for edit operations
         name: w.name,
         greekName: w.greekName,
         description: w.description || '',
@@ -65,9 +66,11 @@ export function useKioskWidgetManagement(buildingId: number | null) {
         refreshInterval: w.settings?.refreshInterval,
         createdAt: new Date(w.createdAt),
         updatedAt: new Date(w.lastModified || w.createdAt),
-        lastModified: new Date(w.lastModified || w.createdAt)
+        lastModified: new Date(w.lastModified || w.createdAt),
+        buildingId: w.buildingId
       }));
 
+      console.log('[useKioskWidgetManagement] Transformed widgets:', transformedWidgets.map(w => ({ id: w.id, name: w.name, component: w.component })));
       setWidgets(transformedWidgets);
     } catch (err: any) {
       console.error('[useKioskWidgetManagement] Error fetching widgets:', err);
