@@ -38,9 +38,13 @@ export function useKioskWidgetManagement(buildingId: number | null) {
 
     try {
       // Use authenticated endpoint for management (includes disabled widgets)
-      const response = await apiClient.get<KioskWidgetsResponse>(
-        `/api/kiosk/configs/?building_id=${buildingId}`
-      );
+      const url = `/kiosk/configs/?building_id=${buildingId}`;
+      console.log('[useKioskWidgetManagement] Making API call to:', url);
+      console.log('[useKioskWidgetManagement] Full URL will be:', apiClient.defaults.baseURL + url);
+      console.log('[useKioskWidgetManagement] Building ID:', buildingId);
+      console.log('[useKioskWidgetManagement] Auth ready:', isAuthReady, 'Authenticated:', isAuthenticated);
+      
+      const response = await apiClient.get<KioskWidgetsResponse>(url);
 
       // Transform backend format to frontend KioskWidget format
       const backendWidgets = response.data?.widgets || [];
@@ -83,7 +87,7 @@ export function useKioskWidgetManagement(buildingId: number | null) {
       ));
 
       // Send update to backend
-      await apiClient.patch(`/api/kiosk/configs/${widgetId}/`, {
+      await apiClient.patch(`/kiosk/configs/${widgetId}/`, {
         enabled
       });
 
@@ -110,7 +114,7 @@ export function useKioskWidgetManagement(buildingId: number | null) {
       ));
 
       // Send update to backend
-      await apiClient.patch(`/api/kiosk/configs/${widgetId}/`, updates);
+      await apiClient.patch(`/kiosk/configs/${widgetId}/`, updates);
 
       console.log(`✓ Widget ${widgetId} updated`);
     } catch (err: any) {
@@ -131,7 +135,7 @@ export function useKioskWidgetManagement(buildingId: number | null) {
       setWidgets(prev => prev.filter(widget => widget.id !== widgetId));
 
       // Send delete to backend
-      await apiClient.delete(`/api/kiosk/configs/${widgetId}/`);
+      await apiClient.delete(`/kiosk/configs/${widgetId}/`);
 
       console.log(`✓ Widget ${widgetId} deleted`);
     } catch (err: any) {
@@ -148,7 +152,7 @@ export function useKioskWidgetManagement(buildingId: number | null) {
   // Create widget
   const createWidget = useCallback(async (widgetData: Partial<KioskWidget>) => {
     try {
-      const response = await apiClient.post('/api/kiosk/configs/', {
+      const response = await apiClient.post('/kiosk/configs/', {
         ...widgetData,
         buildingId: buildingId
       });
