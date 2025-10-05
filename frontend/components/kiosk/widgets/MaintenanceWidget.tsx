@@ -14,7 +14,12 @@ import {
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 
-export default function MaintenanceWidget({ data, isLoading, error }: BaseWidgetProps) {
+export default function MaintenanceWidget({ widget, data, isLoading, error, settings }: BaseWidgetProps) {
+  // Get settings
+  const maxItems = settings?.maxItems || widget?.settings?.maxItems || settings?.displayLimit || widget?.settings?.displayLimit || 3;
+  const showTitle = settings?.showTitle ?? widget?.settings?.showTitle ?? true;
+  const title = settings?.title || widget?.settings?.title || 'Συντήρηση & Επισκευές';
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -48,10 +53,12 @@ export default function MaintenanceWidget({ data, isLoading, error }: BaseWidget
 
   return (
     <div className="h-full overflow-hidden">
-      <div className="flex items-center space-x-2 mb-3 pb-2 border-b border-orange-500/20">
-        <Wrench className="w-8 h-8 text-orange-300" />
-        <h2 className="text-2xl font-bold text-white">Συντήρηση & Επισκευές</h2>
-      </div>
+      {showTitle && (
+        <div className="flex items-center space-x-2 mb-3 pb-2 border-b border-orange-500/20">
+          <Wrench className="w-8 h-8 text-orange-300" />
+          <h2 className="text-2xl font-bold text-white">{title}</h2>
+        </div>
+      )}
 
       <div className="space-y-3 h-full overflow-hidden">
         {/* Main Stats Grid - Compact */}
@@ -119,7 +126,7 @@ export default function MaintenanceWidget({ data, isLoading, error }: BaseWidget
             </div>
 
             <div className="space-y-1">
-              {maintenance.upcoming_maintenance.slice(0, 2).map((item: any) => (
+              {maintenance.upcoming_maintenance.slice(0, Math.min(maxItems, 2)).map((item: any) => (
                 <div key={item.id} className="bg-cyan-800/30 p-2 rounded-lg">
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-semibold text-white truncate">{item.title}</h4>
@@ -149,7 +156,7 @@ export default function MaintenanceWidget({ data, isLoading, error }: BaseWidget
             </div>
 
             <div className="space-y-1">
-              {maintenance.recent_work.slice(0, 2).map((item: any) => (
+              {maintenance.recent_work.slice(0, Math.min(maxItems, 2)).map((item: any) => (
                 <div key={item.id} className="bg-gray-700/30 p-2 rounded-lg">
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-semibold text-white truncate">{item.title}</h4>

@@ -5,7 +5,12 @@ import { Vote, Users, Calendar, TrendingUp, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 
-export default function VotesWidget({ data, isLoading, error }: BaseWidgetProps) {
+export default function VotesWidget({ widget, data, isLoading, error, settings }: BaseWidgetProps) {
+  // Get settings
+  const maxItems = settings?.maxItems || widget?.settings?.maxItems || settings?.displayLimit || widget?.settings?.displayLimit || 2;
+  const showTitle = settings?.showTitle ?? widget?.settings?.showTitle ?? true;
+  const title = settings?.title || widget?.settings?.title || 'Ψηφοφορίες';
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -47,11 +52,13 @@ export default function VotesWidget({ data, isLoading, error }: BaseWidgetProps)
 
   return (
     <div className="h-full overflow-hidden">
-      <div className="flex items-center space-x-2 mb-4 pb-2 border-b border-green-500/20">
-        <Vote className="w-6 h-6 text-green-300" />
-        <h2 className="text-lg font-bold text-white">Ψηφοφορίες</h2>
-      </div>
-      
+      {showTitle && (
+        <div className="flex items-center space-x-2 mb-4 pb-2 border-b border-green-500/20">
+          <Vote className="w-6 h-6 text-green-300" />
+          <h2 className="text-lg font-bold text-white">{title}</h2>
+        </div>
+      )}
+
       <div className="space-y-3 h-full overflow-y-auto">
         {/* Active Votes */}
         {activeVotes.length > 0 && (
@@ -60,7 +67,7 @@ export default function VotesWidget({ data, isLoading, error }: BaseWidgetProps)
               <TrendingUp className="w-3 h-3 mr-1" />
               Ενεργές Ψηφοφορίες
             </h3>
-            {activeVotes.slice(0, 2).map((vote: any) => (
+            {activeVotes.slice(0, maxItems).map((vote: any) => (
               <div 
                 key={vote.id} 
                 className="bg-gradient-to-br from-green-900/40 to-emerald-900/40 backdrop-blur-sm p-4 rounded-xl border border-green-500/30 mb-3"

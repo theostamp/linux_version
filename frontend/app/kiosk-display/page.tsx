@@ -10,6 +10,7 @@ import { useOfflineVoiceNavigation } from '@/hooks/useOfflineVoiceNavigation';
 import BuildingSelector from '@/components/BuildingSelector';
 import { KioskWidget } from '@/types/kiosk';
 import { getSystemWidgets, hasWidgetData, getWidgetIcon } from '@/lib/kiosk/widgets/registry';
+import { getIntelligentWidgetOrder, calculateWidgetPriority } from '@/lib/kiosk/widgetIntelligence';
 import WidgetWrapper from '@/components/kiosk/widgets/base/WidgetWrapper';
 import UrgentPrioritiesWidget from '@/components/kiosk/widgets/UrgentPrioritiesWidget';
 import QRCodeGenerator from '@/components/QRCodeGenerator';
@@ -51,9 +52,9 @@ export default function KioskDisplayPage() {
     };
   }, [kioskData, weather]);
 
-  // Initialize widgets with data filtering
+  // Initialize widgets with data filtering and intelligent ordering
   useEffect(() => {
-    if (selectedBuildingId) {
+    if (selectedBuildingId && combinedData) {
       const systemWidgets = getSystemWidgets(selectedBuildingId);
       const enabledWidgets = systemWidgets.filter(w => w.enabled);
 
@@ -62,7 +63,17 @@ export default function KioskDisplayPage() {
         hasWidgetData(widget, combinedData) && widget.component !== 'AssemblyWidget'
       );
 
-      setWidgets(widgetsWithData);
+      // Apply intelligent ordering to main slides
+      const mainSlides = widgetsWithData.filter(w => w.category === 'main_slides');
+      const intelligentlyOrderedSlides = getIntelligentWidgetOrder(mainSlides, combinedData, 'main_slides');
+
+      // Keep other categories as-is
+      const otherWidgets = widgetsWithData.filter(w => w.category !== 'main_slides');
+
+      // Combine intelligently ordered slides with other widgets
+      const finalWidgets = [...intelligentlyOrderedSlides, ...otherWidgets];
+
+      setWidgets(finalWidgets);
       setCurrentSlide(0); // Reset slide when widgets change
     }
   }, [selectedBuildingId, combinedData]);
@@ -497,8 +508,8 @@ export default function KioskDisplayPage() {
         </div>
       </div>
 
-      {/* Auto-play Status */}
-      <div className="absolute bottom-32 right-4">
+      {/* Auto-play Status & Priority Debug */}
+      <div className="absolute bottom-32 right-4 space-y-2">
         <button
           onClick={() => setIsAutoPlay(prev => !prev)}
           className={`px-3 py-1 rounded text-xs border ${
@@ -510,6 +521,34 @@ export default function KioskDisplayPage() {
         >
           {isAutoPlay ? '▶️ Auto' : '⏸️ Manual'}
         </button>
+
+        {/* Priority Debug Info (Development Only) */}
+        {process.env.NODE_ENV === 'development' && mainSlides.length > 0 && combinedData && (
+          <div className="bg-white/90 backdrop-blur-sm rounded p-2 text-xs border border-gray-300 max-w-xs">
+            <div className="font-semibold mb-1">Widget Priorities:</div>
+            <div className="space-y-1 max-h-48 overflow-y-auto">
+              {mainSlides.map((widget, idx) => {
+                const priority = calculateWidgetPriority(widget, combinedData);
+                return (
+                  <div
+                    key={widget.id}
+                    className={`p-1 rounded ${idx === currentSlide ? 'bg-blue-100 border border-blue-300' : 'bg-gray-50'}`}
+                  >
+                    <div className="font-semibold text-gray-800">
+                      #{idx + 1}: {widget.name}
+                    </div>
+                    <div className="text-gray-600">Score: {priority.score.toFixed(0)}</div>
+                    {priority.reasons.length > 0 && (
+                      <div className="text-gray-500 text-xs">
+                        {priority.reasons.join(', ')}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
 

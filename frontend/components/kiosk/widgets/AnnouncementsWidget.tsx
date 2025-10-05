@@ -6,7 +6,12 @@ import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import MarkdownRenderer from '@/components/kiosk/MarkdownRenderer';
 
-export default function AnnouncementsWidget({ data, isLoading, error }: BaseWidgetProps) {
+export default function AnnouncementsWidget({ widget, data, isLoading, error, settings }: BaseWidgetProps) {
+  // Get maxItems from settings (widget.settings or props settings)
+  const maxItems = settings?.maxItems || widget?.settings?.maxItems || settings?.displayLimit || widget?.settings?.displayLimit || 5;
+  const showTitle = settings?.showTitle ?? widget?.settings?.showTitle ?? true;
+  const title = settings?.title || widget?.settings?.title || 'Ανακοινώσεις';
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -40,13 +45,15 @@ export default function AnnouncementsWidget({ data, isLoading, error }: BaseWidg
 
   return (
     <div className="h-full overflow-hidden">
-      <div className="flex items-center space-x-2 mb-4 pb-2 border-b border-blue-500/20">
-        <Bell className="w-6 h-6 text-blue-300" />
-        <h2 className="text-lg font-bold text-white">Ανακοινώσεις</h2>
-      </div>
-      
+      {showTitle && (
+        <div className="flex items-center space-x-2 mb-4 pb-2 border-b border-blue-500/20">
+          <Bell className="w-6 h-6 text-blue-300" />
+          <h2 className="text-lg font-bold text-white">{title}</h2>
+        </div>
+      )}
+
       <div className="space-y-3 h-full overflow-y-auto">
-        {data.announcements.slice(0, 5).map((announcement: any, index: number) => (
+        {data.announcements.slice(0, maxItems).map((announcement: any, index: number) => (
           <div 
             key={announcement.id} 
             className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 backdrop-blur-sm p-4 rounded-xl border border-blue-500/30 hover:border-blue-400/50 transition-all"
@@ -85,11 +92,11 @@ export default function AnnouncementsWidget({ data, isLoading, error }: BaseWidg
             </div>
           </div>
         ))}
-        
-        {data.announcements.length > 5 && (
+
+        {data.announcements.length > maxItems && (
           <div className="text-center py-2">
             <p className="text-xs text-blue-300">
-              +{data.announcements.length - 5} περισσότερες ανακοινώσεις
+              +{data.announcements.length - maxItems} περισσότερες ανακοινώσεις
             </p>
           </div>
         )}

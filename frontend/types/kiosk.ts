@@ -76,8 +76,9 @@ export type WidgetId =
 
 // Base widget props interface
 export interface BaseWidgetProps {
-  data: any;
-  isLoading: boolean;
+  widget?: KioskWidget; // Optional for backwards compatibility
+  data?: any;
+  isLoading?: boolean;
   error?: string;
-  settings?: Record<string, any>;
+  settings?: Record<string, any>; // Can override widget.settings
 }
