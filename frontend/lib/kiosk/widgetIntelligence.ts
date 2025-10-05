@@ -105,7 +105,6 @@ export function calculateWidgetPriority(
       }
 
       // Higher priority early in the month (common expense payment period)
-      const dayOfMonth = currentTime.getDate();
       if (dayOfMonth <= 10) {
         score += 30;
         reasons.push('Περίοδος πληρωμής κοινοχρήστων');

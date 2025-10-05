@@ -3,7 +3,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, EyeOff, Settings, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, Search, Filter, Edit, Trash2, Eye, EyeOff, Settings, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,23 +11,61 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import Link from 'next/link';
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { useKioskWidgetManagement } from '@/hooks/useKioskWidgetManagement';
 import { KioskWidget } from '@/types/kiosk';
-import { getWidgetIcon } from '@/lib/kiosk/widgets/registry';
-import { toast } from 'react-hot-toast';
+import { getSystemWidgets, getWidgetIcon } from '@/lib/kiosk/widgets/registry';
 
 export default function WidgetManagementPage() {
   const { currentBuilding, selectedBuilding } = useBuilding();
   const building = selectedBuilding || currentBuilding;
 
-  // Fetch widgets from backend
-  const {
-    widgets,
-    isLoading,
-    error: fetchError,
-    toggleWidget,
-    deleteWidget,
-  } = useKioskWidgetManagement(building?.id || null);
+  // Mock data - in real implementation, this would come from API
+  const [widgets, setWidgets] = useState<KioskWidget[]>(() => {
+    const systemWidgets = getSystemWidgets(building?.id || 1);
+    // Add some mock custom widgets
+    const customWidgets: KioskWidget[] = [
+      {
+        id: 'custom_news_feed',
+        name: 'Neighborhood News',
+        description: 'Local neighborhood news and updates',
+        type: 'custom',
+        category: 'main_slides',
+        component: 'CustomNewsWidget',
+        enabled: false,
+        order: 10,
+        settings: {
+          title: 'Ειδήσεις Συνοικίας',
+          showTitle: true,
+          gridSize: 'medium',
+          backgroundColor: '#f0f9ff',
+        },
+        dataSource: '/api/custom/news',
+        refreshInterval: 900,
+        createdAt: new Date('2025-09-20'),
+        updatedAt: new Date('2025-09-25'),
+        createdBy: 1,
+      },
+      {
+        id: 'custom_events_calendar',
+        name: 'Events Calendar',
+        description: 'Upcoming building and community events',
+        type: 'custom',
+        category: 'sidebar_widgets',
+        component: 'CustomEventsWidget',
+        enabled: true,
+        order: 10,
+        settings: {
+          title: 'Προσεχή Γεγονότα',
+          showTitle: true,
+          gridSize: 'small',
+          backgroundColor: '#fef3c7',
+        },
+        createdAt: new Date('2025-09-22'),
+        updatedAt: new Date('2025-09-27'),
+        createdBy: 1,
+      },
+    ];
+    return [...systemWidgets, ...customWidgets];
+  });
 
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -45,23 +83,15 @@ export default function WidgetManagementPage() {
     });
   }, [widgets, searchTerm, categoryFilter, typeFilter]);
 
-  const handleToggleWidget = async (widgetId: string, enabled: boolean) => {
-    try {
-      await toggleWidget(widgetId, enabled);
-      toast.success(enabled ? 'Widget ενεργοποιήθηκε ✓' : 'Widget απενεργοποιήθηκε ✗');
-    } catch (err) {
-      toast.error('Σφάλμα κατά την ενημέρωση widget');
-    }
+  const handleToggleWidget = (widgetId: string, enabled: boolean) => {
+    setWidgets(prev => prev.map(widget =>
+      widget.id === widgetId ? { ...widget, enabled } : widget
+    ));
   };
 
-  const handleDeleteWidget = async (widgetId: string) => {
+  const handleDeleteWidget = (widgetId: string) => {
     if (confirm('Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το widget;')) {
-      try {
-        await deleteWidget(widgetId);
-        toast.success('Widget διαγράφηκε επιτυχώς');
-      } catch (err) {
-        toast.error('Σφάλμα κατά τη διαγραφή widget');
-      }
+      setWidgets(prev => prev.filter(widget => widget.id !== widgetId));
     }
   };
 
@@ -94,24 +124,6 @@ export default function WidgetManagementPage() {
 
   return (
     <div className="space-y-6">
-      {/* Loading State */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <span className="ml-3 text-gray-600">Φόρτωση widgets...</span>
-        </div>
-      )}
-
-      {/* Error State */}
-      {fetchError && (
-        <Card className="p-4 bg-red-50 border-red-200">
-          <div className="flex items-center space-x-2 text-red-800">
-            <AlertCircle className="w-5 h-5" />
-            <span>{fetchError}</span>
-          </div>
-        </Card>
-      )}
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -217,7 +229,7 @@ export default function WidgetManagementPage() {
 
       {/* Widget List */}
       <div className="grid grid-cols-1 gap-4">
-        {filteredWidgets.length === 0 && !isLoading ? (
+        {filteredWidgets.length === 0 ? (
           <Card className="p-8 text-center">
             <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Δεν βρέθηκαν widgets</h3>
@@ -242,13 +254,13 @@ export default function WidgetManagementPage() {
                   <div className="flex-shrink-0">
                     {(() => {
                       const IconComponent = getWidgetIcon(widget);
-                      const iconBgColor = widget.enabled
-                        ? 'bg-green-100'
+                      const iconBgColor = widget.enabled 
+                        ? 'bg-green-100' 
                         : 'bg-gray-100';
-                      const iconTextColor = widget.enabled
-                        ? 'text-green-600'
+                      const iconTextColor = widget.enabled 
+                        ? 'text-green-600' 
                         : 'text-gray-600';
-
+                      
                       return (
                         <div className={`w-12 h-12 ${iconBgColor} rounded-lg flex items-center justify-center transition-colors duration-200`}>
                           <IconComponent className={`w-6 h-6 ${iconTextColor}`} />
@@ -256,7 +268,7 @@ export default function WidgetManagementPage() {
                       );
                     })()}
                   </div>
-
+                  
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
                       <h3 className="font-semibold text-gray-900">{widget.name}</h3>
@@ -333,10 +345,10 @@ export default function WidgetManagementPage() {
           Εμφάνιση {filteredWidgets.length} από {widgets.length} widgets
         </p>
         <div className="flex space-x-2">
-          <Link href="/kiosk-display" target="_blank">
+          <Link href="/kiosk-management/preview">
             <Button variant="outline">
               <Eye className="w-4 h-4 mr-2" />
-              Άνοιγμα Kiosk Display
+              Preview Kiosk
             </Button>
           </Link>
           <Link href="/kiosk-management">

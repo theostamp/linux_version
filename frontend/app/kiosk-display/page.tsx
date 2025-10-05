@@ -5,11 +5,12 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useNews } from '@/hooks/useNews';
 import { useKioskData } from '@/hooks/useKioskData';
 import { useKioskWeather } from '@/hooks/useKioskWeather';
+import { useKioskWidgets } from '@/hooks/useKioskWidgets';
 import { useVoiceNavigation } from '@/hooks/useVoiceNavigation';
 import { useOfflineVoiceNavigation } from '@/hooks/useOfflineVoiceNavigation';
 import BuildingSelector from '@/components/BuildingSelector';
 import { KioskWidget } from '@/types/kiosk';
-import { getSystemWidgets, hasWidgetData, getWidgetIcon } from '@/lib/kiosk/widgets/registry';
+import { hasWidgetData, getWidgetIcon } from '@/lib/kiosk/widgets/registry';
 import { getIntelligentWidgetOrder, calculateWidgetPriority } from '@/lib/kiosk/widgetIntelligence';
 import WidgetWrapper from '@/components/kiosk/widgets/base/WidgetWrapper';
 import UrgentPrioritiesWidget from '@/components/kiosk/widgets/UrgentPrioritiesWidget';
@@ -38,6 +39,7 @@ export default function KioskDisplayPage() {
   const { news, loading: newsLoading, error: newsError, lastUpdated } = useNews(300000); // Refresh every 5 minutes
   const { data: kioskData, isLoading: kioskLoading, error: kioskError } = useKioskData(selectedBuildingId);
   const { weather, isLoading: weatherLoading, error: weatherError } = useKioskWeather(300000);
+  const { widgets: backendWidgets, isLoading: widgetsLoading, error: widgetsError } = useKioskWidgets(selectedBuildingId);
 
   // Combine real data with weather data for widget compatibility
   const combinedData = React.useMemo(() => {
@@ -54,12 +56,12 @@ export default function KioskDisplayPage() {
 
   // Initialize widgets with data filtering and intelligent ordering
   useEffect(() => {
-    if (selectedBuildingId && combinedData) {
-      const systemWidgets = getSystemWidgets(selectedBuildingId);
-      const enabledWidgets = systemWidgets.filter(w => w.enabled);
+    if (selectedBuildingId && combinedData && backendWidgets.length > 0) {
+      // Use widgets from backend (already filtered by enabled=true)
+      // Note: Backend returns only enabled widgets via PublicKioskWidgetConfigViewSet
 
       // Filter widgets that have data and exclude AssemblyWidget from main slides
-      const widgetsWithData = enabledWidgets.filter(widget =>
+      const widgetsWithData = backendWidgets.filter(widget =>
         hasWidgetData(widget, combinedData) && widget.component !== 'AssemblyWidget'
       );
 
@@ -76,7 +78,7 @@ export default function KioskDisplayPage() {
       setWidgets(finalWidgets);
       setCurrentSlide(0); // Reset slide when widgets change
     }
-  }, [selectedBuildingId, combinedData]);
+  }, [selectedBuildingId, combinedData, backendWidgets]);
 
   // Auto-slide functionality
   useEffect(() => {
@@ -160,7 +162,7 @@ export default function KioskDisplayPage() {
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-900 flex flex-col overflow-hidden">
 
       {/* Loading State */}
-      {(kioskLoading || weatherLoading) && (
+      {(kioskLoading || weatherLoading || widgetsLoading) && (
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-50">
           <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 text-center shadow-lg border border-gray-200">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
@@ -170,10 +172,10 @@ export default function KioskDisplayPage() {
       )}
 
       {/* Error State */}
-      {(kioskError || weatherError) && (
+      {(kioskError || weatherError || widgetsError) && (
         <div className="absolute top-24 right-4 bg-red-100/90 border border-red-300 text-red-800 px-4 py-2 rounded-lg z-40 backdrop-blur-sm">
           <div className="text-sm">
-            ⚠️ {kioskError || weatherError}
+            ⚠️ {kioskError || weatherError || widgetsError}
           </div>
         </div>
       )}
