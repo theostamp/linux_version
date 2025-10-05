@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { KioskWidget } from '@/types/kiosk';
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/lib/apiClient';
+import { useAuth } from '@/components/contexts/AuthContext';
 
 interface KioskWidgetsResponse {
   widgets: any[];
@@ -14,13 +15,21 @@ interface KioskWidgetsResponse {
  */
 export function useKioskWidgetManagement(buildingId: number | null) {
   const [widgets, setWidgets] = useState<KioskWidget[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthReady, isAuthenticated } = useAuth();
 
   // Fetch widgets from backend
   const fetchWidgets = useCallback(async () => {
+    // Don't fetch if auth is not ready or user is not authenticated
+    if (!isAuthReady || !isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+
     if (!buildingId) {
       setWidgets([]);
+      setIsLoading(false);
       return;
     }
 
@@ -34,21 +43,25 @@ export function useKioskWidgetManagement(buildingId: number | null) {
       );
 
       // Transform backend format to frontend KioskWidget format
-      const transformedWidgets: KioskWidget[] = response.widgets.map((w: any) => ({
-        id: w.widget_id || w.id,
+      const backendWidgets = response.data?.widgets || [];
+      const transformedWidgets: KioskWidget[] = backendWidgets.map((w: any) => ({
+        id: w.id, // Backend already sends 'id' (converted from widget_id)
         name: w.name,
+        greekName: w.greekName,
         description: w.description || '',
+        greekDescription: w.greekDescription,
         category: w.category as 'main_slides' | 'sidebar_widgets' | 'top_bar_widgets' | 'special_widgets',
         component: w.component,
+        icon: w.icon,
         enabled: w.enabled,
         order: w.order || 0,
         settings: w.settings || {},
-        type: w.is_custom ? 'custom' : 'system',
-        dataSource: w.data_source || '',
+        type: w.isCustom ? 'custom' : 'system',
+        dataSource: w.dataSource || '',
         refreshInterval: w.settings?.refreshInterval,
-        createdAt: new Date(w.created_at),
-        updatedAt: new Date(w.updated_at),
-        createdBy: w.created_by
+        createdAt: new Date(w.createdAt),
+        updatedAt: new Date(w.lastModified || w.createdAt),
+        lastModified: new Date(w.lastModified || w.createdAt)
       }));
 
       setWidgets(transformedWidgets);
@@ -59,7 +72,7 @@ export function useKioskWidgetManagement(buildingId: number | null) {
     } finally {
       setIsLoading(false);
     }
-  }, [buildingId]);
+  }, [buildingId, isAuthReady, isAuthenticated]);
 
   // Toggle widget enabled status
   const toggleWidget = useCallback(async (widgetId: string, enabled: boolean) => {
