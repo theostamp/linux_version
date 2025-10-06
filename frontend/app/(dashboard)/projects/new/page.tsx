@@ -138,23 +138,36 @@ export default function NewProjectPage() {
       
       // Δημιουργία ανακοίνωσης αν υπάρχει ημερομηνία γενικής συνέλευσης
       if (formData.general_assembly_date) {
-        const assemblyDetails = [];
+        // Προσδιορισμός τρόπου διεξαγωγής συνέλευσης
+        const assemblyMethods = [];
+        if (formData.assembly_is_physical && formData.assembly_location) {
+          assemblyMethods.push(`Φυσική παρουσία στο: ${formData.assembly_location}`);
+        }
+        if (formData.assembly_is_online && formData.assembly_zoom_link) {
+          assemblyMethods.push(`Διαδικτυακή συνέλευση (Zoom): ${formData.assembly_zoom_link}`);
+        }
         
+        // Προσδιορισμός τρόπου διεξαγωγής
+        let assemblyMethodText = '';
+        if (assemblyMethods.length === 2) {
+          assemblyMethodText = `Η συνέλευση θα διεξαχθεί με υβριδικό τρόπο:\n• ${assemblyMethods[0]}\n• ${assemblyMethods[1]}\n\nΟι κάτοικοι μπορούν να συμμετάσχουν είτε φυσικά είτε διαδικτυακά.`;
+        } else if (assemblyMethods.length === 1) {
+          if (formData.assembly_is_physical) {
+            assemblyMethodText = `Η συνέλευση θα διεξαχθεί με φυσική παρουσία στο: ${formData.assembly_location}`;
+          } else {
+            assemblyMethodText = `Η συνέλευση θα διεξαχθεί διαδικτυακά μέσω Zoom: ${formData.assembly_zoom_link}`;
+          }
+        }
+        
+        // Στοιχεία συνέλευσης
+        const assemblyDetails = [];
         if (formData.assembly_time) {
           assemblyDetails.push(`Ώρα: ${formData.assembly_time}`);
         }
         
-        if (formData.assembly_is_physical && formData.assembly_location) {
-          assemblyDetails.push(`Τοποθεσία: ${formData.assembly_location}`);
-        }
-        
-        if (formData.assembly_is_online && formData.assembly_zoom_link) {
-          assemblyDetails.push(`Zoom: ${formData.assembly_zoom_link}`);
-        }
-        
         const announcementPayload: CreateAnnouncementPayload = {
           title: `Γενική Συνέλευση - Έργο: ${formData.title}`,
-          description: `Ανακοίνωση για τη γενική συνέλευση σχετικά με το έργο "${formData.title}".\n\nΠεριγραφή έργου: ${formData.description || 'Δεν έχει δοθεί περιγραφή'}\n\nΕκτιμώμενο κόστος: ${formData.estimated_cost ? `${formData.estimated_cost}€` : 'Δεν έχει καθοριστεί'}\n\n${assemblyDetails.length > 0 ? `Στοιχεία συνέλευσης:\n${assemblyDetails.join('\n')}` : ''}`,
+          description: `Ανακοίνωση για τη γενική συνέλευση σχετικά με το έργο "${formData.title}".\n\nΠεριγραφή έργου: ${formData.description || 'Δεν έχει δοθεί περιγραφή'}\n\nΕκτιμώμενο κόστος: ${formData.estimated_cost ? `${formData.estimated_cost}€` : 'Δεν έχει καθοριστεί'}\n\n--- ΣΤΟΙΧΕΙΑ ΣΥΝΕΛΕΥΣΗΣ ---\n\n${assemblyMethodText}\n\n${assemblyDetails.length > 0 ? `\n${assemblyDetails.join('\n')}` : ''}\n\nΠαρακαλούμε να συμμετάσχετε στη συνέλευση για να εκφράσετε τη γνώμη σας σχετικά με τα προτεινόμενα θέματα.`,
           start_date: formData.general_assembly_date,
           end_date: formData.general_assembly_date, // Η ανακοίνωση ισχύει για την ημέρα της συνέλευσης
           building: buildingId,
