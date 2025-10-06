@@ -488,9 +488,32 @@ export default function NewProjectPage() {
                         Ρυθμίσεις
                       </Button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Κάντε κλικ στο "Ρυθμίσεις" για προχωρημένες επιλογές Zoom
-                    </p>
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs text-gray-500">
+                        Κάντε κλικ στο "Ρυθμίσεις" για προχωρημένες επιλογές Zoom
+                      </p>
+                      <p className="text-xs text-blue-600">
+                        <a 
+                          href="https://zoom.us/meeting/schedule" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="underline hover:text-blue-800"
+                        >
+                          📅 Δημιουργήστε νέα συνάντηση Zoom
+                        </a>
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Ή αν έχετε ήδη συνάντηση: 
+                        <a 
+                          href="https://zoom.us/meeting" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline hover:text-blue-800 ml-1"
+                        >
+                          Εισέλθετε στη συνάντησή σας
+                        </a>
+                      </p>
+                    </div>
                   </div>
 
                   {/* Εμφάνιση επιπλέον ρυθμίσεων αν έχουν οριστεί */}

@@ -137,9 +137,32 @@ export default function ZoomSettingsModal({
               {errors.meetingUrl && (
                 <p className="text-sm text-red-500 mt-1">{errors.meetingUrl}</p>
               )}
-              <p className="text-xs text-gray-500 mt-1">
-                Εισάγετε τον πλήρη σύνδεσμο της συνάντησης Zoom
-              </p>
+              <div className="mt-1 space-y-1">
+                <p className="text-xs text-gray-500">
+                  Εισάγετε τον πλήρη σύνδεσμο της συνάντησης Zoom
+                </p>
+                <p className="text-xs text-blue-600">
+                  <a 
+                    href="https://zoom.us/meeting/schedule" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-blue-800"
+                  >
+                    📅 Δημιουργήστε νέα συνάντηση Zoom
+                  </a>
+                </p>
+                <p className="text-xs text-gray-600">
+                  Ή αν έχετε ήδη συνάντηση: 
+                  <a 
+                    href="https://zoom.us/meeting" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline hover:text-blue-800 ml-1"
+                  >
+                    Εισέλθετε στη συνάντησή σας
+                  </a>
+                </p>
+              </div>
             </div>
 
             {settings.meetingId && (
