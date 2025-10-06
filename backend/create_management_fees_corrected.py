@@ -57,9 +57,8 @@ def create_management_fees():
             print(f"📅 {month_name} {year}")
             print(f"{'─'*80}\n")
 
-            # Ημερομηνία: Τελευταία του μήνα (όπως οι δόσεις έργων)
-            last_day = calendar.monthrange(year, month)[1]
-            expense_date = date(year, month, last_day)
+            # Ημερομηνία: ΠΡΩΤΗ του μήνα (όπως οι δόσεις έργων)
+            expense_date = date(year, month, 1)
 
             # Έλεγχος αν υπάρχει ήδη
             existing = Expense.objects.filter(

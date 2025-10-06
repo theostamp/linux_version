@@ -105,11 +105,9 @@ class Command(BaseCommand):
 
                     total_amount = building.management_fee_per_apartment * apartments_count
 
-                    # ΔΙΟΡΘΩΣΗ: Η ημερομηνία είναι η τελευταία του μήνα (όπως τις δόσεις έργων)
-                    # Έτσι οι management fees εμφανίζονται ως παλιές οφειλές τον επόμενο μήνα
-                    import calendar
-                    last_day = calendar.monthrange(target_date.year, target_date.month)[1]
-                    expense_date = date(target_date.year, target_date.month, last_day)
+                    # ΔΙΟΡΘΩΣΗ: Η ημερομηνία είναι η ΠΡΩΤΗ του μήνα
+                    # Έτσι οι management fees εμφανίζονται ως παλιές οφειλές τον ΕΠΟΜΕΝΟ μήνα
+                    expense_date = date(target_date.year, target_date.month, 1)
 
                     # Δημιουργία δαπάνης (αν δεν είναι dry-run)
                     if options['dry_run']:
@@ -124,7 +122,7 @@ class Command(BaseCommand):
                                 building=building,
                                 title=f'Διαχειριστικά Έξοδα {target_date.strftime("%B %Y")}',
                                 amount=total_amount,
-                                date=expense_date,  # ΔΙΟΡΘΩΣΗ: Τελευταία του μήνα
+                                date=expense_date,  # ΔΙΟΡΘΩΣΗ: Πρώτη του μήνα
                                 due_date=expense_date,  # Όπως τις δόσεις
                                 category='management_fees',
                                 expense_type='management_fee',  # Διακριτός τύπος για εύκολη αναγνώριση

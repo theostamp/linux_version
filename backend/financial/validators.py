@@ -45,12 +45,11 @@ class ExpenseDateValidator:
                 f"Τρέχον: date={expense_date}, due_date={expense_due_date}"
             )
 
-        # Check 2: Είναι τελευταία μέρα του μήνα
-        last_day = calendar.monthrange(expense_date.year, expense_date.month)[1]
-        if expense_date.day != last_day:
+        # Check 2: Είναι ΠΡΩΤΗ μέρα του μήνα (ΔΙΟΡΘΩΣΗ)
+        if expense_date.day != 1:
             raise ValidationError(
-                f"Δόση πρέπει να έχει date = τελευταία του μήνα. "
-                f"Τρέχον: {expense_date.day}, Αναμενόμενο: {last_day}"
+                f"Δόση πρέπει να έχει date = 1η του μήνα. "
+                f"Τρέχον: {expense_date.day}, Αναμενόμενο: 1"
             )
 
     @staticmethod
@@ -60,7 +59,7 @@ class ExpenseDateValidator:
         Επαληθεύει ότι το management fee έχει σωστή ημερομηνία και κατανομή
 
         ⚠️ ΚΡΙΣΙΜΟ: Management fees πρέπει να έχουν:
-        - date = τελευταία του μήνα
+        - date = 1η του μήνα (ΔΙΟΡΘΩΣΗ)
         - distribution_type = 'equal_share'
 
         Args:
@@ -74,12 +73,11 @@ class ExpenseDateValidator:
         if expense_category != 'management_fees':
             return  # Δεν είναι management fee
 
-        # Check 1: Είναι τελευταία μέρα του μήνα
-        last_day = calendar.monthrange(expense_date.year, expense_date.month)[1]
-        if expense_date.day != last_day:
+        # Check 1: Είναι ΠΡΩΤΗ μέρα του μήνα (ΔΙΟΡΘΩΣΗ)
+        if expense_date.day != 1:
             raise ValidationError(
-                f"Management fee πρέπει να έχει date = τελευταία του μήνα. "
-                f"Τρέχον: {expense_date.day}, Αναμενόμενο: {last_day}"
+                f"Management fee πρέπει να έχει date = 1η του μήνα. "
+                f"Τρέχον: {expense_date.day}, Αναμενόμενο: 1"
             )
 
         # Check 2: Distribution type πρέπει να είναι equal_share
@@ -423,12 +421,11 @@ class RecurringExpenseValidator:
         """
         warnings = []
 
-        # Check 1: Είναι τελευταία μέρα του μήνα
-        last_day = calendar.monthrange(expense.date.year, expense.date.month)[1]
-        if expense.date.day != last_day:
+        # Check 1: Είναι ΠΡΩΤΗ μέρα του μήνα (ΔΙΟΡΘΩΣΗ)
+        if expense.date.day != 1:
             warnings.append(
-                f"❌ Recurring expense date πρέπει να είναι τελευταία του μήνα. "
-                f"Τρέχον: {expense.date}, Αναμενόμενο: {expense.date.replace(day=last_day)}"
+                f"❌ Recurring expense date πρέπει να είναι 1η του μήνα. "
+                f"Τρέχον: {expense.date}, Αναμενόμενο: {expense.date.replace(day=1)}"
             )
 
         # Check 2: date == due_date

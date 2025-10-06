@@ -38,8 +38,10 @@ with schema_context('demo'):
     print(f'   Διαμερίσματα: {apartments_count}')
     print(f'   Συνολικό Fee: {total_fee}€')
 
-    # Test για Νοέμβριο 2025
-    year, month = 2025, 11
+    # Test για Νοέμβριο του τρέχοντος έτους
+    from datetime import datetime
+    current_year = datetime.now().year
+    year, month = current_year, 11
     print(f'\n🔧 Δημιουργία Management Fee για {month}/{year}...')
 
     # Έλεγχος αν υπάρχει ήδη
@@ -63,13 +65,12 @@ with schema_context('demo'):
     ).count()
     print(f'\n📊 CommonExpensePeriods πριν: {periods_before}')
 
-    # Δημιουργία management fee (όπως το command)
-    last_day = calendar.monthrange(year, month)[1]
-    expense_date = date(year, month, last_day)
+    # Δημιουργία management fee (όπως το command) - ΠΡΩΤΗ του μήνα
+    expense_date = date(year, month, 1)
 
     expense = Expense.objects.create(
         building=building,
-        title=f'Διαχειριστικά Έξοδα Νοεμβρίου 2025',
+        title=f'Διαχειριστικά Έξοδα Νοεμβρίου {year}',
         amount=total_fee,
         date=expense_date,
         due_date=expense_date,

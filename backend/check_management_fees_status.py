@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Management Fees Status Check - Σύμφωνα με MANAGEMENT_FEES_AUDIT_REPORT.md
-Ελέγχει την τρέχουσα κατάσταση των Management Fees για Σεπτέμβριο 2024
+Ελέγχει την τρέχουσα κατάσταση των Management Fees για τον τρέχοντα μήνα
 """
 
 import os
@@ -40,22 +40,24 @@ def check_management_fees_status():
         apartments = Apartment.objects.filter(building=building)
         print(f"🏠 Αριθμός διαμερισμάτων: {apartments.count()}")
         
-        # Ελέγχουμε τα Management Fees expenses για 2024
-        management_expenses_2024 = Expense.objects.filter(
+        # Ελέγχουμε τα Management Fees expenses για το τρέχον έτος
+        from datetime import datetime
+        current_year = datetime.now().year
+        management_expenses_current = Expense.objects.filter(
             building=building,
             category='management_fees',
-            date__year=2024
+            date__year=current_year
         ).order_by('date')
         
-        print(f"\n📊 MANAGEMENT FEES EXPENSES 2024:")
-        print(f"Αριθμός expenses: {management_expenses_2024.count()}")
+        print(f"\n📊 MANAGEMENT FEES EXPENSES {current_year}:")
+        print(f"Αριθμός expenses: {management_expenses_current.count()}")
         
-        total_management_2024 = 0
-        for expense in management_expenses_2024:
+        total_management_current = 0
+        for expense in management_expenses_current:
             print(f"  - {expense.date.strftime('%Y-%m')}: €{expense.amount:.2f}")
-            total_management_2024 += expense.amount
+            total_management_current += expense.amount
         
-        print(f"Συνολικό ποσό 2024: €{total_management_2024:.2f}")
+        print(f"Συνολικό ποσό {current_year}: €{total_management_current:.2f}")
         
         # Ελέγχουμε τον υπολογισμό για Σεπτέμβριο 2024
         print(f"\n🧮 ΥΠΟΛΟΓΙΣΜΟΣ ΣΕΠΤΕΜΒΡΙΟΥ 2024:")

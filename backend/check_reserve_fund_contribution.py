@@ -46,17 +46,18 @@ def check_reserve_fund_contribution():
             monthly_target = Decimal('0.00')
             print(f"💰 Μηνιαίος στόχος: {format_currency(monthly_target)} (δεν έχει οριστεί)")
         
-        # Έλεγχος αν ο Οκτώβριος 2025 ανήκει στο reserve fund timeline
-        from datetime import date
-        october_2025 = date(2025, 10, 1)
+        # Έλεγχος αν ο Οκτώβριος του τρέχοντος έτους ανήκει στο reserve fund timeline
+        from datetime import date, datetime
+        current_year = datetime.now().year
+        october_current = date(current_year, 10, 1)
         
         if building.reserve_fund_start_date and building.reserve_fund_target_date:
-            in_timeline = building.reserve_fund_start_date <= october_2025 <= building.reserve_fund_target_date
-            print(f"📅 Οκτώβριος 2025 ανήκει στο timeline: {'Ναι' if in_timeline else 'Όχι'}")
+            in_timeline = building.reserve_fund_start_date <= october_current <= building.reserve_fund_target_date
+            print(f"📅 Οκτώβριος {current_year} ανήκει στο timeline: {'Ναι' if in_timeline else 'Όχι'}")
             print(f"   Timeline: {building.reserve_fund_start_date} - {building.reserve_fund_target_date}")
         else:
             in_timeline = False
-            print(f"📅 Οκτώβριος 2025 ανήκει στο timeline: Όχι (δεν έχει οριστεί timeline)")
+            print(f"📅 Οκτώβριος {current_year} ανήκει στο timeline: Όχι (δεν έχει οριστεί timeline)")
         
         # Υπολογισμός συνολικού reserve fund contribution
         if in_timeline and monthly_target > 0:

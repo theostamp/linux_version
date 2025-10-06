@@ -61,9 +61,8 @@ with schema_context('demo'):
     for apt_num, balance in balances_before.items():
         print(f'   {apt_num}: {balance}€')
 
-    # Δημιουργία management fee
-    last_day = calendar.monthrange(year, month)[1]
-    expense_date = date(year, month, last_day)
+    # Δημιουργία management fee - ΠΡΩΤΗ του μήνα
+    expense_date = date(year, month, 1)
 
     expense = Expense.objects.create(
         building=building,
