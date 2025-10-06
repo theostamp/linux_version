@@ -2,17 +2,18 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, getActiveBuildingId } from '@/lib/api';
+import { api, getActiveBuildingId, createVote, CreateVotePayload } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Save, Lightbulb, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Lightbulb, Plus, Vote, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ZoomSettingsModal from '@/components/projects/ZoomSettingsModal';
 
 // Προτεινόμενα έργα πολυκατοικίας
 const SUGGESTED_PROJECTS = [
@@ -44,13 +45,27 @@ export default function NewProjectPage() {
     general_assembly_date: '',
     assembly_time: '',
     assembly_is_online: false,
+    assembly_is_physical: false,
     assembly_location: '',
     assembly_zoom_link: '',
+    assembly_zoom_settings: {
+      meetingUrl: '',
+      meetingId: '',
+      password: '',
+      waitingRoom: true,
+      participantVideo: false,
+      hostVideo: true,
+      muteOnEntry: true,
+      autoRecord: false,
+      notes: '',
+    },
     payment_terms: '',
+    should_create_vote: true, // Default value is YES
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'new' | 'suggested'>('new');
+  const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
@@ -73,6 +88,18 @@ export default function NewProjectPage() {
     });
   };
 
+  const handleZoomSettingsSave = (settings: any) => {
+    setFormData(prev => ({
+      ...prev,
+      assembly_zoom_link: settings.meetingUrl,
+      assembly_zoom_settings: settings
+    }));
+    toast({
+      title: 'Ρυθμίσεις Zoom',
+      description: 'Οι ρυθμίσεις Zoom αποθηκεύτηκαν επιτυχώς'
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -88,21 +115,60 @@ export default function NewProjectPage() {
     setIsSubmitting(true);
     
     try {
-      const payload = {
+      // Δημιουργία του έργου
+      const projectPayload = {
         ...formData,
         estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : null,
         deadline: formData.deadline || null,
         tender_deadline: formData.tender_deadline || null,
         general_assembly_date: formData.general_assembly_date || null,
         payment_terms: formData.payment_terms || null,
+        // Zoom ρυθμίσεις
+        assembly_zoom_meeting_id: formData.assembly_zoom_settings.meetingId || null,
+        assembly_zoom_password: formData.assembly_zoom_settings.password || null,
+        assembly_zoom_waiting_room: formData.assembly_zoom_settings.waitingRoom,
+        assembly_zoom_participant_video: formData.assembly_zoom_settings.participantVideo,
+        assembly_zoom_host_video: formData.assembly_zoom_settings.hostVideo,
+        assembly_zoom_mute_on_entry: formData.assembly_zoom_settings.muteOnEntry,
+        assembly_zoom_auto_record: formData.assembly_zoom_settings.autoRecord,
+        assembly_zoom_notes: formData.assembly_zoom_settings.notes || null,
       };
 
-      const response = await api.post('/projects/projects/', payload);
+      const response = await api.post('/projects/projects/', projectPayload);
       
-      toast({
-        title: 'Επιτυχία',
-        description: 'Το έργο δημιουργήθηκε επιτυχώς'
-      });
+      // Αν είναι επιλεγμένο το checkbox, δημιουργούμε ψηφοφορία
+      if (formData.should_create_vote) {
+        const votePayload: CreateVotePayload = {
+          title: `Έγκριση Έργου: ${formData.title}`,
+          description: `Ψηφοφορία για την έγκριση του έργου "${formData.title}".\n\nΠεριγραφή: ${formData.description || 'Δεν έχει δοθεί περιγραφή'}\n\nΕκτιμώμενο κόστος: ${formData.estimated_cost ? `${formData.estimated_cost}€` : 'Δεν έχει καθοριστεί'}`,
+          start_date: new Date().toISOString().split('T')[0], // Σημερινή ημερομηνία
+          end_date: formData.general_assembly_date || undefined,
+          choices: ['ΝΑΙ', 'ΟΧΙ', 'ΛΕΥΚΟ'],
+          building: buildingId,
+          is_active: true,
+        };
+
+        try {
+          await createVote(votePayload);
+          toast({
+            title: 'Επιτυχία',
+            description: 'Το έργο δημιουργήθηκε επιτυχώς και δημιουργήθηκε ψηφοφορία για την έγκρισή του'
+          });
+        } catch (voteError: any) {
+          // Αν αποτύχει η δημιουργία ψηφοφορίας, το έργο έχει ήδη δημιουργηθεί
+          console.error('Failed to create vote:', voteError);
+          toast({
+            title: 'Επιτυχία με προειδοποίηση',
+            description: 'Το έργο δημιουργήθηκε επιτυχώς, αλλά απέτυχε η δημιουργία της ψηφοφορίας',
+            variant: 'destructive'
+          });
+        }
+      } else {
+        toast({
+          title: 'Επιτυχία',
+          description: 'Το έργο δημιουργήθηκε επιτυχώς'
+        });
+      }
       
       router.push(`/projects/${response.data.id}`);
     } catch (error: any) {
@@ -233,6 +299,26 @@ export default function NewProjectPage() {
                   <option value="urgent">Επείγον</option>
                 </select>
               </div>
+
+              {/* Checkbox για ψηφοφορία */}
+              <div className="flex items-center space-x-3 pt-4 border-t">
+                <input
+                  id="should_create_vote"
+                  type="checkbox"
+                  checked={formData.should_create_vote}
+                  onChange={(e) => handleInputChange('should_create_vote', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <div className="flex items-center space-x-2">
+                  <Vote className="w-4 h-4 text-blue-600" />
+                  <Label htmlFor="should_create_vote" className="text-sm font-medium cursor-pointer">
+                    Να τεθεί σε ψηφοφορία
+                  </Label>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 ml-7">
+                Όταν επιλεγεί, θα δημιουργηθεί αυτόματα ψηφοφορία για την έγκριση του έργου από τους κατοίκους
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -327,42 +413,103 @@ export default function NewProjectPage() {
                     onChange={(e) => handleInputChange('assembly_time', e.target.value)}
                   />
                 </div>
+              </div>
 
-                <div className="flex items-center space-x-2 pt-8">
-                  <input
-                    id="assembly_is_online"
-                    type="checkbox"
-                    checked={formData.assembly_is_online || false}
-                    onChange={(e) => handleInputChange('assembly_is_online', e.target.checked)}
-                    className="h-4 w-4"
-                  />
-                  <Label htmlFor="assembly_is_online" className="cursor-pointer">
-                    Διαδικτυακή Συνέλευση (Zoom)
-                  </Label>
+              {/* Επιλογές παρουσίας */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Θέλετε να παραβρεθείτε με:</Label>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      id="assembly_is_physical"
+                      type="checkbox"
+                      checked={formData.assembly_is_physical || false}
+                      onChange={(e) => handleInputChange('assembly_is_physical', e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <Label htmlFor="assembly_is_physical" className="cursor-pointer">
+                      Φυσική Παρουσία
+                    </Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <input
+                      id="assembly_is_online"
+                      type="checkbox"
+                      checked={formData.assembly_is_online || false}
+                      onChange={(e) => handleInputChange('assembly_is_online', e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <Label htmlFor="assembly_is_online" className="cursor-pointer">
+                      Διαδικτυακή Συνέλευση (Zoom)
+                    </Label>
+                  </div>
                 </div>
               </div>
 
-              {formData.assembly_is_online ? (
+              {/* Πεδία για φυσική παρουσία */}
+              {formData.assembly_is_physical && (
                 <div>
-                  <Label htmlFor="assembly_zoom_link">Σύνδεσμος Zoom *</Label>
-                  <Input
-                    id="assembly_zoom_link"
-                    type="url"
-                    placeholder="https://zoom.us/j/..."
-                    value={formData.assembly_zoom_link || ''}
-                    onChange={(e) => handleInputChange('assembly_zoom_link', e.target.value)}
-                  />
-                </div>
-              ) : (
-                <div>
-                  <Label htmlFor="assembly_location">Τοποθεσία Συνέλευσης</Label>
+                  <Label htmlFor="assembly_location">Τοποθεσία Συνέλευσης *</Label>
                   <Input
                     id="assembly_location"
                     type="text"
                     placeholder="π.χ. Pilotis, Διαμέρισμα Α2"
                     value={formData.assembly_location || ''}
                     onChange={(e) => handleInputChange('assembly_location', e.target.value)}
+                    required={formData.assembly_is_physical}
                   />
+                </div>
+              )}
+
+              {/* Πεδία για διαδικτυακή συνέλευση */}
+              {formData.assembly_is_online && (
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="assembly_zoom_link">Σύνδεσμος Zoom *</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="assembly_zoom_link"
+                        type="url"
+                        placeholder="https://zoom.us/j/..."
+                        value={formData.assembly_zoom_link || ''}
+                        onChange={(e) => handleInputChange('assembly_zoom_link', e.target.value)}
+                        required={formData.assembly_is_online}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsZoomModalOpen(true)}
+                        className="flex items-center gap-2"
+                      >
+                        <Settings className="w-4 h-4" />
+                        Ρυθμίσεις
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Κάντε κλικ στο "Ρυθμίσεις" για προχωρημένες επιλογές Zoom
+                    </p>
+                  </div>
+
+                  {/* Εμφάνιση επιπλέον ρυθμίσεων αν έχουν οριστεί */}
+                  {formData.assembly_zoom_settings.meetingId && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <h4 className="text-sm font-medium text-blue-900 mb-2">Ρυθμίσεις Zoom:</h4>
+                      <div className="space-y-1 text-xs text-blue-800">
+                        <p><strong>Meeting ID:</strong> {formData.assembly_zoom_settings.meetingId}</p>
+                        {formData.assembly_zoom_settings.password && (
+                          <p><strong>Κωδικός:</strong> {formData.assembly_zoom_settings.password}</p>
+                        )}
+                        <p><strong>Αίθουσα Αναμονής:</strong> {formData.assembly_zoom_settings.waitingRoom ? 'Ναι' : 'Όχι'}</p>
+                        <p><strong>Σίγαση κατά Είσοδο:</strong> {formData.assembly_zoom_settings.muteOnEntry ? 'Ναι' : 'Όχι'}</p>
+                        {formData.assembly_zoom_settings.notes && (
+                          <p><strong>Σημειώσεις:</strong> {formData.assembly_zoom_settings.notes}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -380,6 +527,14 @@ export default function NewProjectPage() {
           </Button>
         </div>
       </form>
+
+      {/* Zoom Settings Modal */}
+      <ZoomSettingsModal
+        isOpen={isZoomModalOpen}
+        onClose={() => setIsZoomModalOpen(false)}
+        onSave={handleZoomSettingsSave}
+        initialSettings={formData.assembly_zoom_settings}
+      />
     </div>
   );
 }

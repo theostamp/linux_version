@@ -68,9 +68,20 @@ class Project(models.Model):
     # Στοιχεία Γενικής Συνέλευσης
     assembly_time = models.TimeField(null=True, blank=True, verbose_name="Ώρα Γενικής Συνέλευσης")
     assembly_is_online = models.BooleanField(default=False, verbose_name="Διαδικτυακή Συνέλευση")
+    assembly_is_physical = models.BooleanField(default=False, verbose_name="Φυσική Παρουσία")
     assembly_location = models.CharField(max_length=200, null=True, blank=True, verbose_name="Τοποθεσία Συνέλευσης",
                                          help_text="π.χ. Pilotis, Διαμέρισμα Α2")
     assembly_zoom_link = models.URLField(max_length=500, null=True, blank=True, verbose_name="Σύνδεσμος Zoom")
+    
+    # Επιπλέον ρυθμίσεις Zoom
+    assembly_zoom_meeting_id = models.CharField(max_length=50, null=True, blank=True, verbose_name="Meeting ID")
+    assembly_zoom_password = models.CharField(max_length=100, null=True, blank=True, verbose_name="Κωδικός Zoom")
+    assembly_zoom_waiting_room = models.BooleanField(default=True, verbose_name="Αίθουσα Αναμονής")
+    assembly_zoom_participant_video = models.BooleanField(default=False, verbose_name="Βίντεο Συμμετεχόντων")
+    assembly_zoom_host_video = models.BooleanField(default=True, verbose_name="Βίντεο Οργανωτή")
+    assembly_zoom_mute_on_entry = models.BooleanField(default=True, verbose_name="Σίγαση κατά Είσοδο")
+    assembly_zoom_auto_record = models.BooleanField(default=False, verbose_name="Αυτόματη Εγγραφή")
+    assembly_zoom_notes = models.TextField(null=True, blank=True, verbose_name="Σημειώσεις Zoom")
     
     # Αποτελέσματα
     selected_contractor = models.CharField(max_length=200, null=True, blank=True, verbose_name="Επιλεγμένος Αναδόχος")
