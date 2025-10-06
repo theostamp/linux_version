@@ -11,6 +11,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import AnnouncementContent from '@/components/AnnouncementContent';
 
 export default function AnnouncementDetailPage() {
   const params = useParams();
@@ -148,15 +149,12 @@ export default function AnnouncementDetailPage() {
       <div className="bg-white shadow-md rounded-lg p-6">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">{announcement.title}</h1>
         
-        <div className="flex items-center text-sm text-gray-500 mb-4">
-          <span>Ημ/νία έναρξης: {announcement.start_date ? new Date(announcement.start_date).toLocaleDateString('el-GR') : 'Μη καθορισμένη'}</span>
-          <span className="mx-2">•</span>
-          <span>Ημ/νία λήξης: {announcement.end_date ? new Date(announcement.end_date).toLocaleDateString('el-GR') : 'Μη καθορισμένη'}</span>
-        </div>
-        
-        <div className="prose max-w-none">
-          <p className="whitespace-pre-wrap">{announcement.description}</p>
-        </div>
+        <AnnouncementContent
+          title={announcement.title}
+          description={announcement.description}
+          startDate={announcement.start_date}
+          endDate={announcement.end_date}
+        />
         
         {announcement.file && (
           <div className="mt-6">
