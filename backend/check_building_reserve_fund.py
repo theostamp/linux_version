@@ -45,28 +45,29 @@ def check_all_buildings_reserve_fund():
                 monthly_target = building.reserve_fund_goal / building.reserve_fund_duration_months
                 print(f"📊 Μηνιαίος στόχος: {monthly_target:,.2f}€")
             
-            # Έλεγχος για Νοέμβριο 2024
+            # Έλεγχος για Νοέμβριο του τρέχοντος έτους
+            current_year = datetime.now().year
             november_expenses = Expense.objects.filter(
                 building=building,
-                date__year=2024,
+                date__year=current_year,
                 date__month=11,
                 category='reserve_fund'
             )
             
-            print(f"💸 Δαπάνες αποθεματικού Νοεμβρίου 2024: {november_expenses.count()}")
+            print(f"💸 Δαπάνες αποθεματικού Νοεμβρίου {current_year}: {november_expenses.count()}")
             if november_expenses.exists():
                 for expense in november_expenses:
                     print(f"   - {expense.description}: {expense.amount:,.2f}€ ({expense.date})")
             
-            # Έλεγχος για Οκτώβριο 2024 (για σύγκριση)
+            # Έλεγχος για Οκτώβριο του τρέχοντος έτους (για σύγκριση)
             october_expenses = Expense.objects.filter(
                 building=building,
-                date__year=2024,
+                date__year=current_year,
                 date__month=10,
                 category='reserve_fund'
             )
             
-            print(f"💸 Δαπάνες αποθεματικού Οκτωβρίου 2024: {october_expenses.count()}")
+            print(f"💸 Δαπάνες αποθεματικού Οκτωβρίου {current_year}: {october_expenses.count()}")
             if october_expenses.exists():
                 for expense in october_expenses:
                     print(f"   - {expense.description}: {expense.amount:,.2f}€ ({expense.date})")
@@ -84,19 +85,20 @@ def check_all_buildings_reserve_fund():
                 months_passed = ((current_date - building.reserve_fund_start_date).days) // 30
                 print(f"🏢 {building.name}: {months_passed} μήνες από την έναρξη")
                 
-                # Έλεγχος αν ο Νοέμβριος 2024 είναι μετά την έναρξη
-                november_2024 = datetime(2024, 11, 1).date()
-                if building.reserve_fund_start_date <= november_2024:
-                    print(f"   ✅ Νοέμβριος 2024 είναι μετά την έναρξη ({building.reserve_fund_start_date})")
+                # Έλεγχος αν ο Νοέμβριος του τρέχοντος έτους είναι μετά την έναρξη
+                current_year = datetime.now().year
+                november_current = datetime(current_year, 11, 1).date()
+                if building.reserve_fund_start_date <= november_current:
+                    print(f"   ✅ Νοέμβριος {current_year} είναι μετά την έναρξη ({building.reserve_fund_start_date})")
                 else:
-                    print(f"   ❌ Νοέμβριος 2024 είναι πριν την έναρξη ({building.reserve_fund_start_date})")
+                    print(f"   ❌ Νοέμβριος {current_year} είναι πριν την έναρξη ({building.reserve_fund_start_date})")
                 
-                # Έλεγχος αν ο Νοέμβριος 2024 είναι πριν την ολοκλήρωση
+                # Έλεγχος αν ο Νοέμβριος του τρέχοντος έτους είναι πριν την ολοκλήρωση
                 if building.reserve_fund_target_date:
-                    if november_2024 <= building.reserve_fund_target_date:
-                        print(f"   ✅ Νοέμβριος 2024 είναι πριν την ολοκλήρωση ({building.reserve_fund_target_date})")
+                    if november_current <= building.reserve_fund_target_date:
+                        print(f"   ✅ Νοέμβριος {current_year} είναι πριν την ολοκλήρωση ({building.reserve_fund_target_date})")
                     else:
-                        print(f"   ❌ Νοέμβριος 2024 είναι μετά την ολοκλήρωση ({building.reserve_fund_target_date})")
+                        print(f"   ❌ Νοέμβριος {current_year} είναι μετά την ολοκλήρωση ({building.reserve_fund_target_date})")
             else:
                 print(f"🏢 {building.name}: Δεν έχει ορισμένη ημερομηνία έναρξης")
         

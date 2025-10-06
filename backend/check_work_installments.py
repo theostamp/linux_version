@@ -55,19 +55,20 @@ def check_work_installments():
         
         print()
         
-        # Έλεγχος δόσεων ανά μήνα για το 2024
-        print("📅 ΔΟΣΕΣ ΕΡΓΟΥ ΑΝΑ ΜΗΝΑ 2024:")
+        # Έλεγχος δόσεων ανά μήνα για το τρέχον έτος
+        current_year = datetime.now().year
+        print(f"📅 ΔΟΣΕΣ ΕΡΓΟΥ ΑΝΑ ΜΗΝΑ {current_year}:")
         print("-" * 50)
         
         for month in range(1, 13):
             month_installments = Expense.objects.filter(
                 building=building,
                 category='project_installment',
-                date__year=2024,
+                date__year=current_year,
                 date__month=month
             )
             
-            month_name = datetime(2024, month, 1).strftime('%B')
+            month_name = datetime(current_year, month, 1).strftime('%B')
             if month_installments.exists():
                 total_month = sum(expense.amount for expense in month_installments)
                 print(f"{month_name:>10}: {month_installments.count()} δόσεις, €{total_month:,.2f}")
@@ -85,22 +86,22 @@ def check_work_installments():
         october_installments = Expense.objects.filter(
             building=building,
             category='project_installment',
-            date__year=2024,
+            date__year=current_year,
             date__month=10
         )
         
         november_installments = Expense.objects.filter(
             building=building,
             category='project_installment',
-            date__year=2024,
+            date__year=current_year,
             date__month=11
         )
         
-        print(f"📅 Οκτώβριος 2024: {october_installments.count()} δόσεις")
+        print(f"📅 Οκτώβριος {current_year}: {october_installments.count()} δόσεις")
         for expense in october_installments:
             print(f"   - {expense.date} | {expense.description} | €{expense.amount:,.2f}")
         
-        print(f"📅 Νοέμβριος 2024: {november_installments.count()} δόσεις")
+        print(f"📅 Νοέμβριος {current_year}: {november_installments.count()} δόσεις")
         for expense in november_installments:
             print(f"   - {expense.date} | {expense.description} | €{expense.amount:,.2f}")
         
@@ -112,10 +113,10 @@ def check_work_installments():
         
         all_expenses = Expense.objects.filter(
             building=building,
-            date__year=2024
+            date__year=current_year
         ).order_by('date')
         
-        print(f"💸 Σύνολο δαπανών 2024: {all_expenses.count()}")
+        print(f"💸 Σύνολο δαπανών {current_year}: {all_expenses.count()}")
         print()
         
         # Ομαδοποίηση ανά κατηγορία

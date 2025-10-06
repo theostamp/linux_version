@@ -126,7 +126,7 @@ def update_project_schedule(project, offer=None):
                     'advance_percentage': advance_percentage,
                     'installment_count': installments,
                     'installment_frequency': 'monthly',
-                    'start_date': datetime.now().date(),
+                    'start_date': project.deadline or (datetime.now().date() + timedelta(days=30)),
                     'notes': project.payment_terms or '',
                     'status': 'active',
                 }
@@ -141,13 +141,15 @@ def update_project_schedule(project, offer=None):
 
             # Δημιουργία προκαταβολής (τρέχων μήνας)
             if advance_payment > 0:
+                # Χρήση της ημερομηνίας έναρξης από το PaymentSchedule
+                advance_date = schedule.start_date
                 advance_expense = Expense.objects.create(
                     building=project.building,
                     title=f"{project.title} - Προκαταβολή ({advance_percentage:.0f}%)",
                     amount=advance_payment,
                     category=category,
-                    date=datetime.now().date(),
-                    due_date=datetime.now().date() + timedelta(days=15),
+                    date=advance_date,
+                    due_date=advance_date + timedelta(days=15),
                     distribution_type='by_participation_mills',
                     notes=f"Προκαταβολή {advance_percentage:.0f}% για έργο. Συνολικό κόστος: {total_amount}€. Ανάδοχος: {project.selected_contractor}",
                 )
@@ -157,7 +159,8 @@ def update_project_schedule(project, offer=None):
             remaining_amount = total_amount - advance_payment
             installment_amount = remaining_amount / installments
 
-            base_date = datetime.now().date()
+            # Χρήση της ημερομηνίας έναρξης από το PaymentSchedule ως base_date
+            base_date = schedule.start_date
 
             # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             # ⚠️ ΚΡΙΣΙΜΟ: PROJECT INSTALLMENTS LOGIC - ΜΗΝ ΑΛΛΑΞΕΤΕ ΧΩΡΙΣ TESTING!
@@ -192,10 +195,9 @@ def update_project_schedule(project, offer=None):
                     year += 1
                 payment_month_start = payment_month_start.replace(month=month, year=year)
 
-                # ⚠️ ΚΡΙΣΙΜΟ: Η ημερομηνία δημιουργίας είναι η ΤΕΛΕΥΤΑΙΑ του μήνα
+                # Αλλαγή: Η ημερομηνία δημιουργίας είναι η ΠΡΩΤΗ του μήνα
                 # Έτσι η δόση εμφανίζεται ως παλιά οφειλή τον ΕΠΟΜΕΝΟ μήνα
-                last_day = calendar.monthrange(payment_month_start.year, payment_month_start.month)[1]
-                installment_date = payment_month_start.replace(day=last_day)
+                installment_date = payment_month_start.replace(day=1)
                 due_date = installment_date  # date == due_date για δόσεις
 
                 installment_expense = Expense.objects.create(

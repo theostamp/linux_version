@@ -55,19 +55,20 @@ def check_reserve_fund_expenses():
         
         print()
         
-        # Έλεγχος δαπανών ανά μήνα για το 2024
-        print("📅 ΔΑΠΑΝΕΣ ΑΝΑ ΜΗΝΑ 2024:")
+        # Έλεγχος δαπανών ανά μήνα για το τρέχον έτος
+        current_year = datetime.now().year
+        print(f"📅 ΔΑΠΑΝΕΣ ΑΝΑ ΜΗΝΑ {current_year}:")
         print("-" * 50)
         
         for month in range(1, 13):
             month_expenses = Expense.objects.filter(
                 building=building,
                 category='reserve_fund',
-                date__year=2024,
+                date__year=current_year,
                 date__month=month
             )
             
-            month_name = datetime(2024, month, 1).strftime('%B')
+            month_name = datetime(current_year, month, 1).strftime('%B')
             if month_expenses.exists():
                 total_month = sum(expense.amount for expense in month_expenses)
                 print(f"{month_name:>10}: {month_expenses.count()} δαπάνες, €{total_month:,.2f}")
@@ -99,7 +100,7 @@ def check_reserve_fund_expenses():
             print("2. Ορισμός διάρκειας αποθεματικού (π.χ. 12 μήνες)")
         
         if building.reserve_fund_start_date is None:
-            print("3. Ορισμός ημερομηνίας έναρξης (π.χ. 2024-10-01)")
+            print("3. Ορισμός ημερομηνίας έναρξης (π.χ. 2025-10-01)")
         
         if building.reserve_fund_target_date is None and building.reserve_fund_start_date and building.reserve_fund_duration_months:
             from datetime import timedelta
