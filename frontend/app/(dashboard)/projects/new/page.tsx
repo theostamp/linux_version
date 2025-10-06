@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, getActiveBuildingId, createVote, CreateVotePayload } from '@/lib/api';
+import { api, getActiveBuildingId, createVote, CreateVotePayload, createAnnouncement, CreateAnnouncementPayload } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -136,6 +136,40 @@ export default function NewProjectPage() {
 
       const response = await api.post('/projects/projects/', projectPayload);
       
+      // Δημιουργία ανακοίνωσης αν υπάρχει ημερομηνία γενικής συνέλευσης
+      if (formData.general_assembly_date) {
+        const assemblyDetails = [];
+        
+        if (formData.assembly_time) {
+          assemblyDetails.push(`Ώρα: ${formData.assembly_time}`);
+        }
+        
+        if (formData.assembly_is_physical && formData.assembly_location) {
+          assemblyDetails.push(`Τοποθεσία: ${formData.assembly_location}`);
+        }
+        
+        if (formData.assembly_is_online && formData.assembly_zoom_link) {
+          assemblyDetails.push(`Zoom: ${formData.assembly_zoom_link}`);
+        }
+        
+        const announcementPayload: CreateAnnouncementPayload = {
+          title: `Γενική Συνέλευση - Έργο: ${formData.title}`,
+          description: `Ανακοίνωση για τη γενική συνέλευση σχετικά με το έργο "${formData.title}".\n\nΠεριγραφή έργου: ${formData.description || 'Δεν έχει δοθεί περιγραφή'}\n\nΕκτιμώμενο κόστος: ${formData.estimated_cost ? `${formData.estimated_cost}€` : 'Δεν έχει καθοριστεί'}\n\n${assemblyDetails.length > 0 ? `Στοιχεία συνέλευσης:\n${assemblyDetails.join('\n')}` : ''}`,
+          start_date: formData.general_assembly_date,
+          end_date: formData.general_assembly_date, // Η ανακοίνωση ισχύει για την ημέρα της συνέλευσης
+          building: buildingId,
+          is_active: true,
+        };
+
+        try {
+          await createAnnouncement(announcementPayload);
+          console.log('Announcement created successfully for assembly');
+        } catch (announcementError: any) {
+          console.error('Failed to create announcement:', announcementError);
+          // Δεν αποτυγχάνει η δημιουργία έργου αν αποτύχει η ανακοίνωση
+        }
+      }
+      
       // Αν είναι επιλεγμένο το checkbox, δημιουργούμε ψηφοφορία
       if (formData.should_create_vote) {
         const votePayload: CreateVotePayload = {
@@ -150,23 +184,42 @@ export default function NewProjectPage() {
 
         try {
           await createVote(votePayload);
+          
+          let successMessage = 'Το έργο δημιουργήθηκε επιτυχώς';
+          if (formData.general_assembly_date) {
+            successMessage += ' και δημιουργήθηκε ανακοίνωση για τη συνέλευση';
+          }
+          successMessage += ' και δημιουργήθηκε ψηφοφορία για την έγκρισή του';
+          
           toast({
             title: 'Επιτυχία',
-            description: 'Το έργο δημιουργήθηκε επιτυχώς και δημιουργήθηκε ψηφοφορία για την έγκρισή του'
+            description: successMessage
           });
         } catch (voteError: any) {
           // Αν αποτύχει η δημιουργία ψηφοφορίας, το έργο έχει ήδη δημιουργηθεί
           console.error('Failed to create vote:', voteError);
+          
+          let warningMessage = 'Το έργο δημιουργήθηκε επιτυχώς';
+          if (formData.general_assembly_date) {
+            warningMessage += ' και δημιουργήθηκε ανακοίνωση για τη συνέλευση';
+          }
+          warningMessage += ', αλλά απέτυχε η δημιουργία της ψηφοφορίας';
+          
           toast({
             title: 'Επιτυχία με προειδοποίηση',
-            description: 'Το έργο δημιουργήθηκε επιτυχώς, αλλά απέτυχε η δημιουργία της ψηφοφορίας',
+            description: warningMessage,
             variant: 'destructive'
           });
         }
       } else {
+        let successMessage = 'Το έργο δημιουργήθηκε επιτυχώς';
+        if (formData.general_assembly_date) {
+          successMessage += ' και δημιουργήθηκε ανακοίνωση για τη συνέλευση';
+        }
+        
         toast({
           title: 'Επιτυχία',
-          description: 'Το έργο δημιουργήθηκε επιτυχώς'
+          description: successMessage
         });
       }
       
