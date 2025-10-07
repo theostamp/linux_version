@@ -571,30 +571,44 @@ export default function KioskWidgetRenderer({
     const slidesList: any[] = [];
 
     enabledMainSlides.forEach(widget => {
-      switch (widget.id) {
+      // Try widget.id first, then widget.component as fallback
+      const widgetKey = widget.id || widget.component;
+      
+      switch (widgetKey) {
         case 'dashboard_overview':
+        case 'DashboardOverview':
           slidesList.push(...createDashboardOverviewSlide());
           break;
         case 'building_statistics':
+        case 'BuildingStatistics':
           slidesList.push(...createBuildingStatisticsSlide());
           break;
         case 'emergency_contacts':
+        case 'EmergencyContacts':
           slidesList.push(...createEmergencyContactsSlide());
           break;
         case 'announcements':
+        case 'Announcements':
           slidesList.push(...createAnnouncementSlides());
           break;
         case 'votes':
+        case 'Votes':
           slidesList.push(...createVoteSlides());
           break;
         case 'financial_overview':
+        case 'FinancialOverview':
           slidesList.push(...createFinancialSlides());
           break;
         case 'maintenance_overview':
+        case 'MaintenanceOverview':
           slidesList.push(...createMaintenanceSlides());
           break;
         case 'projects_overview':
+        case 'ProjectsOverview':
           slidesList.push(...createProjectsSlides());
+          break;
+        default:
+          console.warn(`[KioskWidgetRenderer] Unknown widget: ${widgetKey} (id: ${widget.id}, component: ${widget.component})`);
           break;
       }
     });
