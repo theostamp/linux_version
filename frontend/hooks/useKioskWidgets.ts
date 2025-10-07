@@ -1,12 +1,22 @@
 // hooks/useKioskWidgets.ts - Fetch kiosk widgets from backend
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { KioskWidget } from '@/types/kiosk';
 
 interface KioskWidgetsResponse {
   widgets: any[];
   count: number;
   timestamp: string;
+}
+
+interface KioskConfig {
+  settings: {
+    slideDuration: number;
+    autoSlide: boolean;
+    showNavigation: boolean;
+    backgroundImage?: string;
+    theme: string;
+  };
 }
 
 // Simple API get function for kiosk widgets (no auth required)
@@ -80,10 +90,29 @@ export function useKioskWidgets(buildingId: number | null) {
     return loadWidgets();
   }, [loadWidgets]);
 
+  // Get enabled widgets by category
+  const getEnabledWidgets = useCallback((category: string) => {
+    return widgets.filter(widget => 
+      widget.enabled && widget.category === category
+    ).sort((a, b) => a.order - b.order);
+  }, [widgets]);
+
+  // Default configuration
+  const config: KioskConfig = useMemo(() => ({
+    settings: {
+      slideDuration: 10, // 10 seconds
+      autoSlide: true,
+      showNavigation: true,
+      theme: 'default'
+    }
+  }), []);
+
   return {
     widgets,
     isLoading,
     error,
-    refetch
+    refetch,
+    getEnabledWidgets,
+    config
   };
 }
