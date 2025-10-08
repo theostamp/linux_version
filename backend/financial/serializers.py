@@ -21,32 +21,39 @@ class SupplierSerializer(serializers.ModelSerializer):
 
 class ExpenseSerializer(serializers.ModelSerializer):
     """Serializer για τις δαπάνες"""
-    
+
     category_display = serializers.CharField(source='get_category_display', read_only=True)
     distribution_type_display = serializers.CharField(source='get_distribution_type_display', read_only=True)
     building_name = serializers.CharField(source='building.name', read_only=True)
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     supplier_details = SupplierSerializer(source='supplier', read_only=True)
     attachment_url = serializers.SerializerMethodField()
-    
+
     # Linked maintenance/receipt (read-only)
     linked_service_receipt = serializers.SerializerMethodField()
     linked_scheduled_maintenance = serializers.SerializerMethodField()
     maintenance_payment_receipts = serializers.SerializerMethodField()
-    
+
     # Installment information
     has_installments = serializers.SerializerMethodField()
     linked_maintenance_projects = serializers.SerializerMethodField()
 
+    # 🔗 Project integration (new fields)
+    project_title = serializers.CharField(source='project.title', read_only=True)
+    project_status = serializers.CharField(source='project.status', read_only=True)
+    project_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Expense
         fields = [
-            'id', 'building', 'building_name', 'title', 'amount', 'date', 
+            'id', 'building', 'building_name', 'title', 'amount', 'date',
             'category', 'category_display', 'distribution_type', 'distribution_type_display',
             'supplier', 'supplier_name', 'supplier_details', 'attachment', 'attachment_url',
             'notes', 'due_date', 'add_to_calendar', 'expense_type', 'created_at', 'updated_at',
             'linked_service_receipt', 'linked_scheduled_maintenance', 'maintenance_payment_receipts',
-            'has_installments', 'linked_maintenance_projects'
+            'has_installments', 'linked_maintenance_projects',
+            # New project fields
+            'project', 'project_title', 'project_status', 'project_url', 'audit_trail',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
     
@@ -56,6 +63,12 @@ class ExpenseSerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(obj.attachment.url)
             return obj.attachment.url
+        return None
+
+    def get_project_url(self, obj):
+        """Return URL to project detail page"""
+        if obj.project:
+            return f"/projects/{obj.project.id}"
         return None
     
     def validate_amount(self, value):

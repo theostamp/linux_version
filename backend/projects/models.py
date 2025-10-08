@@ -124,9 +124,55 @@ class Project(models.Model):
         verbose_name = "Έργο"
         verbose_name_plural = "Έργα"
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return f"{self.title} - {self.building.name}"
+
+    @property
+    def has_approved_offer(self):
+        """Ελέγχει αν υπάρχει εγκεκριμένη προσφορά"""
+        return self.status == 'approved' or self.offers.filter(status='accepted').exists()
+
+    @property
+    def payment_fields_locked(self):
+        """
+        🔒 LOCK PAYMENT FIELDS
+        Τα payment fields κλειδώνουν όταν:
+        1. Υπάρχει εγκεκριμένη προσφορά
+        2. Έχουν δημιουργηθεί δαπάνες
+        3. Υπάρχει συνδεδεμένο ScheduledMaintenance
+        """
+        if self.has_approved_offer:
+            return True
+
+        # Έλεγχος για συνδεδεμένες δαπάνες
+        if self.project_expenses.exists():
+            return True
+
+        # Έλεγχος για ScheduledMaintenance
+        try:
+            from maintenance.models import ScheduledMaintenance
+            if ScheduledMaintenance.objects.filter(linked_project=self).exists():
+                return True
+        except:
+            pass
+
+        return False
+
+    def get_payment_lock_reason(self):
+        """Επιστρέφει την αιτία κλειδώματος των payment fields"""
+        if self.has_approved_offer:
+            return "Το έργο έχει εγκεκριμένη προσφορά"
+        if self.project_expenses.exists():
+            count = self.project_expenses.count()
+            return f"Υπάρχουν {count} συνδεδεμένες δαπάνες"
+        try:
+            from maintenance.models import ScheduledMaintenance
+            if ScheduledMaintenance.objects.filter(linked_project=self).exists():
+                return "Υπάρχει συνδεδεμένο προγραμματισμένο έργο"
+        except:
+            pass
+        return None
 
 
 class Offer(models.Model):

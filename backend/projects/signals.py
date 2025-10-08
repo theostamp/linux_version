@@ -531,22 +531,86 @@ def deactivate_assembly_announcement(project: Project):
         logger.error(f"Failed to deactivate assembly announcement for project {project.id}: {e}")
 
 
+@receiver(post_save, sender=Project)
+def sync_project_to_scheduled_maintenance(sender, instance: Project, created, **kwargs):
+    """
+    ⚙️ DUAL-DIRECTION SYNC: Project → ScheduledMaintenance
+    Όταν ενημερώνεται ένα Project, συγχρονίζει τα payment fields στο ScheduledMaintenance
+    """
+    # Αποφυγή άπειρου loop
+    if hasattr(instance, '_syncing_to_maintenance'):
+        return
+
+    # Μόνο αν το Project έχει linked ScheduledMaintenance
+    try:
+        from maintenance.models import ScheduledMaintenance
+
+        scheduled_maintenance = ScheduledMaintenance.objects.filter(
+            linked_project=instance
+        ).first()
+
+        if not scheduled_maintenance:
+            return
+
+        # Flag για αποφυγή άπειρου loop
+        scheduled_maintenance._syncing = True
+
+        # Ενημέρωση ScheduledMaintenance fields από Project
+        updated = False
+
+        if scheduled_maintenance.payment_method != instance.payment_method:
+            scheduled_maintenance.payment_method = instance.payment_method
+            updated = True
+
+        if scheduled_maintenance.installments != instance.installments:
+            scheduled_maintenance.installments = instance.installments
+            updated = True
+
+        if scheduled_maintenance.advance_payment != instance.advance_payment:
+            scheduled_maintenance.advance_payment = instance.advance_payment
+            updated = True
+
+        if scheduled_maintenance.payment_terms != instance.payment_terms:
+            scheduled_maintenance.payment_terms = instance.payment_terms
+            updated = True
+
+        if scheduled_maintenance.total_cost != instance.final_cost:
+            scheduled_maintenance.total_cost = instance.final_cost
+            updated = True
+
+        if updated:
+            scheduled_maintenance.save(update_fields=[
+                'payment_method', 'installments', 'advance_payment',
+                'payment_terms', 'total_cost'
+            ])
+            print(f"✅ Synced Project #{instance.id} payment fields to ScheduledMaintenance #{scheduled_maintenance.id}")
+
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to sync Project to ScheduledMaintenance for project {instance.id}: {e}")
+    finally:
+        # Καθαρισμός flag
+        if 'scheduled_maintenance' in locals() and hasattr(scheduled_maintenance, '_syncing'):
+            delattr(scheduled_maintenance, '_syncing')
+
+
 @receiver(pre_delete, sender=Project)
 def cleanup_project_todos(sender, instance: Project, **kwargs):
     """Διαγράφει συνδεδεμένα TODOs όταν διαγράφεται ένα Project"""
     try:
         from todo_management.models import TodoLink
-        
+
         ct = ContentType.objects.get_for_model(Project)
         links = TodoLink.objects.filter(
             content_type=ct,
             object_id=instance.pk
         ).select_related('todo')
-        
+
         for link in links:
             # Διαγραφή του TODO (το TodoLink θα διαγραφεί αυτόματα με CASCADE)
             link.todo.delete()
-            
+
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)

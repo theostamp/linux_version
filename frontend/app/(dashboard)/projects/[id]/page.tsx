@@ -14,6 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { PaymentFieldsLockAlert } from '@/components/projects/PaymentFieldsLockAlert';
+import { ManualSyncExpensesButton } from '@/components/projects/ManualSyncExpensesButton';
 
 interface Project {
   id: string | number;  // Support both UUID strings and numeric IDs
@@ -22,6 +24,9 @@ interface Project {
   status: string;
   project_type?: string;
   budget?: number;
+  payment_fields_locked?: boolean;
+  payment_lock_reason?: string | null;
+  expenses_count?: number;
 }
 
 export default function ProjectDetailsPage() {
@@ -124,9 +129,41 @@ export default function ProjectDetailsPage() {
 
         <TabsContent value="overview">
           <div className="space-y-4">
+            {/* Payment Fields Lock Alert */}
+            {project.payment_fields_locked && (
+              <PaymentFieldsLockAlert
+                isLocked={project.payment_fields_locked}
+                reason={project.payment_lock_reason}
+                expensesCount={project.expenses_count}
+              />
+            )}
+
             <Card>
               <CardHeader>
-                <CardTitle>Επισκόπηση Έργου</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Επισκόπηση Έργου</span>
+                  {/* Manual Sync Button - only show if payment fields are locked and there are expenses */}
+                  {project.payment_fields_locked && project.expenses_count && project.expenses_count > 0 && (
+                    <ManualSyncExpensesButton
+                      projectId={String(project.id)}
+                      expensesCount={project.expenses_count}
+                      onSyncComplete={async () => {
+                        // Refetch project data after sync
+                        try {
+                          const { data } = await api.get(`/projects/projects/${project.id}/`);
+                          setProject(data);
+                          toast({
+                            title: 'Επιτυχής Ανανέωση',
+                            description: 'Τα δεδομένα του έργου ανανεώθηκαν.'
+                          });
+                        } catch (e: any) {
+                          console.error('Failed to refetch project:', e);
+                        }
+                      }}
+                      size="sm"
+                    />
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">

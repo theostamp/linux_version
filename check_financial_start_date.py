@@ -39,3 +39,4 @@ for b in buildings:
     
     print('-'*70)
 
+

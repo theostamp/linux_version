@@ -7,7 +7,12 @@ class ProjectSerializer(serializers.ModelSerializer):
     votes_count = serializers.SerializerMethodField()
     building_name = serializers.CharField(source='building.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
-    
+
+    # 🔒 Payment lock fields
+    payment_fields_locked = serializers.BooleanField(read_only=True)
+    payment_lock_reason = serializers.SerializerMethodField()
+    expenses_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Project
         fields = [
@@ -21,15 +26,23 @@ class ProjectSerializer(serializers.ModelSerializer):
             'selected_contractor', 'final_cost', 'payment_terms',
             'payment_method', 'installments', 'advance_payment',
             'created_by', 'created_by_name', 'offers_count', 'votes_count',
-            'linked_expense'
+            'linked_expense',
+            # New lock fields
+            'payment_fields_locked', 'payment_lock_reason', 'expenses_count',
         ]
-        read_only_fields = ['created_at', 'updated_at', 'offers_count', 'votes_count']
+        read_only_fields = ['created_at', 'updated_at', 'offers_count', 'votes_count', 'payment_fields_locked', 'payment_lock_reason', 'expenses_count']
 
     def get_offers_count(self, obj):
         return obj.offers.count()
 
     def get_votes_count(self, obj):
         return obj.votes.count()
+
+    def get_payment_lock_reason(self, obj):
+        return obj.get_payment_lock_reason()
+
+    def get_expenses_count(self, obj):
+        return obj.project_expenses.count()
 
 
 class OfferSerializer(serializers.ModelSerializer):

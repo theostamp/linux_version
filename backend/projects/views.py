@@ -224,6 +224,19 @@ def update_project_schedule(project, offer=None):
                     due_date=advance_date + timedelta(days=15),
                     distribution_type='by_participation_mills',
                     notes=f"Προκαταβολή {advance_percentage:.0f}% για έργο. Συνολικό κόστος: {total_amount}€. Ανάδοχος: {project.selected_contractor}",
+                    # 🔗 Σύνδεση με project για ιχνηλασία
+                    project=project,
+                    # 📝 Audit Trail
+                    audit_trail={
+                        'created_from': 'offer_approval',
+                        'offer_id': str(offer.id) if offer else None,
+                        'project_id': str(project.id),
+                        'scheduled_maintenance_id': scheduled_maintenance.id if scheduled_maintenance else None,
+                        'installment_type': 'advance_payment',
+                        'installment_number': 0,
+                        'total_installments': installments,
+                        'created_at': datetime.now().isoformat(),
+                    },
                 )
 
             # Δημιουργία δόσεων (μελλοντικοί μήνες)
@@ -278,6 +291,19 @@ def update_project_schedule(project, offer=None):
                     due_date=due_date,
                     distribution_type='by_participation_mills',
                     notes=f"Δόση {i} από {installments} για έργο. Ποσό δόσης: {installment_amount:.2f}€. Ανάδοχος: {project.selected_contractor}",
+                    # 🔗 Σύνδεση με project για ιχνηλασία
+                    project=project,
+                    # 📝 Audit Trail
+                    audit_trail={
+                        'created_from': 'offer_approval',
+                        'offer_id': str(offer.id) if offer else None,
+                        'project_id': str(project.id),
+                        'scheduled_maintenance_id': scheduled_maintenance.id if scheduled_maintenance else None,
+                        'installment_type': 'monthly_installment',
+                        'installment_number': i,
+                        'total_installments': installments,
+                        'created_at': datetime.now().isoformat(),
+                    },
                 )
 
         else:
@@ -291,6 +317,19 @@ def update_project_schedule(project, offer=None):
                 due_date=due_date,
                 distribution_type='by_participation_mills',
                 notes=f"Έργο: {project.description or ''}\nΑνάδοχος: {project.selected_contractor}\nΑυτόματη καταχώρηση από έγκριση προσφοράς",
+                # 🔗 Σύνδεση με project για ιχνηλασία
+                project=project,
+                # 📝 Audit Trail
+                audit_trail={
+                    'created_from': 'offer_approval',
+                    'offer_id': str(offer.id) if offer else None,
+                    'project_id': str(project.id),
+                    'scheduled_maintenance_id': scheduled_maintenance.id if scheduled_maintenance else None,
+                    'installment_type': 'lump_sum',
+                    'installment_number': 0,
+                    'total_installments': 1,
+                    'created_at': datetime.now().isoformat(),
+                },
             )
 
             # Σύνδεση του έργου με τη δαπάνη
@@ -358,6 +397,118 @@ class ProjectViewSet(viewsets.ModelViewSet):
             payload={'id': project.id, 'status': project.status, 'title': project.title},
         )
         return Response(ProjectSerializer(project).data)
+
+    @action(detail=True, methods=['post'])
+    def sync_expenses(self, request, pk=None):
+        """
+        🔄 MANUAL EXPENSE SYNC TOOL
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        Επανασυγχρονίζει τις δαπάνες του έργου με τα τρέχοντα payment data.
+
+        Parameters:
+            - preview (bool): True για προεπισκόπηση, False για εκτέλεση
+            - confirm (bool): Απαιτείται True για εκτέλεση (safety check)
+
+        Returns:
+            - Αν preview=True: Λίστα με current/new expenses
+            - Αν preview=False: Αποτέλεσμα συγχρονισμού
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        """
+        from financial.models import Expense
+
+        project = self.get_object()
+        preview = request.data.get('preview', False)
+        confirm = request.data.get('confirm', False)
+
+        # Έλεγχος αν το project έχει approved offer
+        if not project.has_approved_offer:
+            return Response(
+                {'detail': 'Το έργο δεν έχει εγκεκριμένη προσφορά'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Εύρεση υπαρχουσών δαπανών που δημιουργήθηκαν από αυτό το project
+        current_expenses = Expense.objects.filter(project=project).order_by('date')
+
+        if preview:
+            # PREVIEW MODE: Επιστρέφει τι θα αλλάξει
+            # Υπολογισμός νέων δαπανών (χωρίς δημιουργία)
+            new_expenses_data = []
+
+            if project.installments and project.installments > 1:
+                # Προκαταβολή
+                if project.advance_payment and project.advance_payment > 0:
+                    new_expenses_data.append({
+                        'title': f"{project.title} - Προκαταβολή",
+                        'amount': str(project.advance_payment),
+                        'date': str(project.deadline or project.created_at.date()),
+                        'installment_number': 0,
+                    })
+
+                # Δόσεις
+                remaining = (project.final_cost or 0) - (project.advance_payment or 0)
+                installment_amount = remaining / project.installments
+
+                for i in range(1, project.installments + 1):
+                    new_expenses_data.append({
+                        'title': f"{project.title} - Δόση {i}/{project.installments}",
+                        'amount': f"{installment_amount:.2f}",
+                        'date': 'TBD',  # Θα υπολογιστεί στην πραγματική δημιουργία
+                        'installment_number': i,
+                    })
+            else:
+                # Εφάπαξ
+                new_expenses_data.append({
+                    'title': f"Έργο: {project.title}",
+                    'amount': str(project.final_cost or 0),
+                    'date': str(project.created_at.date()),
+                    'installment_number': 0,
+                })
+
+            return Response({
+                'will_delete': current_expenses.count(),
+                'will_create': len(new_expenses_data),
+                'current_expenses': [
+                    {
+                        'id': exp.id,
+                        'title': exp.title,
+                        'amount': str(exp.amount),
+                        'date': str(exp.date),
+                    }
+                    for exp in current_expenses
+                ],
+                'new_expenses': new_expenses_data,
+            })
+
+        else:
+            # EXECUTION MODE: Πραγματική επανασυγχρονισμός
+            if not confirm:
+                return Response(
+                    {'detail': 'Απαιτείται επιβεβαίωση (confirm=true)'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            with transaction.atomic():
+                # ΒΗΜΑ 1: Διαγραφή υπαρχουσών δαπανών
+                deleted_count = current_expenses.count()
+                current_expenses.delete()
+
+                # ΒΗΜΑ 2: Εύρεση εγκεκριμένης προσφοράς
+                approved_offer = project.offers.filter(status='accepted').first()
+
+                # ΒΗΜΑ 3: Επανακλήση update_project_schedule
+                update_project_schedule(project, approved_offer)
+
+                # Μέτρηση νέων δαπανών
+                new_expenses = Expense.objects.filter(project=project)
+                created_count = new_expenses.count()
+
+                return Response({
+                    'success': True,
+                    'deleted_count': deleted_count,
+                    'created_count': created_count,
+                    'message': f'Διαγράφηκαν {deleted_count} δαπάνες και δημιουργήθηκαν {created_count} νέες',
+                })
 
     @action(detail=True, methods=['post'])
     def approve_offer(self, request, pk=None):

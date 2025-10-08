@@ -225,14 +225,33 @@ class Expense(models.Model):
     date = models.DateField(verbose_name="Ημερομηνία")
     category = models.CharField(max_length=50, choices=EXPENSE_CATEGORIES, verbose_name="Κατηγορία")
     expense_type = models.CharField(
-        max_length=20, 
-        choices=EXPENSE_TYPE_CHOICES, 
+        max_length=20,
+        choices=EXPENSE_TYPE_CHOICES,
         default='regular',
         verbose_name="Τύπος Δαπάνης",
         help_text="Χρησιμοποιείται για αναγνώριση αυτόματων δαπανών"
     )
     distribution_type = models.CharField(max_length=50, choices=DISTRIBUTION_TYPES, verbose_name="Τρόπος Κατανομής")
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True, related_name='expenses', verbose_name="Προμηθευτής")
+
+    # 🔗 Σύνδεση με Projects για ιχνηλασία προέλευσης
+    project = models.ForeignKey(
+        'projects.Project',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='project_expenses',
+        verbose_name="Συνδεδεμένο Έργο",
+        help_text="Αν η δαπάνη δημιουργήθηκε από έγκριση προσφοράς έργου"
+    )
+
+    # 📝 Audit Trail για πλήρη ιχνηλασία
+    audit_trail = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name="Ιστορικό Αλλαγών",
+        help_text="Καταγραφή δημιουργίας και τροποποιήσεων: offer_id, project_id, created_by, etc."
+    )
     attachment = models.FileField(
         upload_to='expenses/',
         null=True, 
