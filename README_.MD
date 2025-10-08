@@ -542,6 +542,7 @@ git commit -m "διορθωσεις 31"
 ## Βασικές Εντολές Git
 git add .
 git commit -m "διορθωσεις kiosk widget"
+
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main

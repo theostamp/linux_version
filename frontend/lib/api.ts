@@ -139,26 +139,31 @@ import { toast } from '@/hooks/use-toast';
 // Βασικό URL του API. Χρησιμοποιούμε την ίδια λογική με το apiPublic για tenant-specific URLs
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
+    // Client-side (browser) - use localhost:18000
     (window as any).debugApiCalls = true;
     const hostname = window.location.hostname;
     console.log(`[API] Current hostname: ${hostname}`);
     
     // Αν είναι tenant subdomain (π.χ. demo.localhost), χρησιμοποιούμε το ίδιο subdomain για το API
     if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
-      // Extract port from environment variable or use 18000 as default
-      const envUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:18000/api';
-      const envPort = envUrl.match(/:(\d+)/)?.[1] ?? '18000';
       const apiUrl = `http://${hostname}:18000/api`;
       console.log(`[API] Using tenant-specific API URL: ${apiUrl}`);
       return apiUrl;
     }
+    
+    // Default για browser: localhost:18000
+    const apiUrl = 'http://localhost:18000/api';
+    console.log(`[API] Using browser API URL: ${apiUrl}`);
+    return apiUrl;
   }
-  let base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:18000/api';
+  
+  // Server-side - use backend container or env variable
+  let base = process.env.NEXT_PUBLIC_API_URL ?? 'http://backend:8000/api';
   base = base.replace(/\/$/, '');
   if (!/\/api$/.test(base)) {
     base = `${base}/api`;
   }
-  console.log(`[API] Using default API URL: ${base}`);
+  console.log(`[API] Using server-side API URL: ${base}`);
   return base;
 };
 
