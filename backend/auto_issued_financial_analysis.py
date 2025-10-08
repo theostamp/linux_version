@@ -175,37 +175,19 @@ def analyze_auto_issued_logic():
                 
                 total_building_balance += balance
             
-            # 4. ANALYSIS OF 334,85 €
-            print_header("🔍 ΑΝΑΛΥΣΗ ΤΟΥ ΠΟΣΟΥ 334,85 €")
-            
-            target_amount = Decimal('334.85')
-            
-            print(f"🎯 ΣΤΟΧΟΣ ΑΝΑΛΥΣΗΣ: {format_currency(target_amount)}")
+            # 4. FINANCIAL SUMMARY
+            print_header("🔍 ΟΙΚΟΝΟΜΙΚΗ ΣΥΝΟΨΗ")
+
             print(f"🏠 Διαμερίσματα: {apartments.count()}")
-            
+
             # Calculate per apartment
             if apartments.count() > 0:
-                per_apartment = target_amount / apartments.count()
-                print(f"💡 Ανά διαμέρισμα: {format_currency(per_apartment)}")
-            
-            print("\n🔍 ΠΙΘΑΝΕΣ ΠΗΓΕΣ:")
-            
-            # Check if it matches February expenses
-            if abs(feb_total - target_amount) < Decimal('5'):
-                print("✅ ΤΑΙΡΙΑΖΕΙ με δαπάνες Φεβρουαρίου!")
-                print(f"   Διαφορά: {format_currency(abs(feb_total - target_amount))}")
-            
-            # Check if it's related to total negative balances
+                per_apartment = feb_total / apartments.count()
+                print(f"💡 Μέσο ποσό ανά διαμέρισμα: {format_currency(per_apartment)}")
+
+            # Check negative balances
             total_negative = sum(negative_balances) if negative_balances else Decimal('0')
-            if abs(total_negative - target_amount) < Decimal('5'):
-                print("✅ ΤΑΙΡΙΑΖΕΙ με συνολικά χρεωστικά υπόλοιπα!")
-                print(f"   Διαφορά: {format_currency(abs(total_negative - target_amount))}")
-            
-            # Check if it's a monthly obligation calculation
-            monthly_obligation = feb_total / apartments.count() * apartments.count()
-            if abs(monthly_obligation - target_amount) < Decimal('5'):
-                print("✅ ΤΑΙΡΙΑΖΕΙ με μηνιαία υποχρέωση!")
-                print(f"   Διαφορά: {format_currency(abs(monthly_obligation - target_amount))}")
+            print(f"💳 Συνολικά χρεωστικά υπόλοιπα: {format_currency(total_negative)}")
             
             # 5. DETAILED BREAKDOWN
             print_subheader("📊 ΛΕΠΤΟΜΕΡΗΣ ΑΝΑΛΥΣΗ")

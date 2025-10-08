@@ -799,25 +799,20 @@ class FinancialDashboardService:
                 previous_obligations = Decimal('0.00')
                 
                 try:
-                    # Βήμα 1: Υπολογισμός συνολικού υπολοίπου από διαμερίσματα
-                    apartments = Apartment.objects.filter(building_id=self.building_id)
+                    # ΣΩΣΤΗ ΛΟΓΙΚΗ: Previous Obligations = Άθροισμα δαπανών ΠΡΙΝ από τον επιλεγμένο μήνα
+                    # Αυτό είναι απλό, σαφές και λειτουργεί σωστά
                     
-                    # Άθροισμα όλων των current_balance (οφειλές)
-                    total_current_balance = sum(apt.current_balance for apt in apartments)
-                    
-                    # Βήμα 2: Αφαίρεση δαπανών τρέχοντος μήνα για να βρούμε τις προηγούμενες οφειλές
-                    current_month_expenses = Expense.objects.filter(
+                    expenses_before_month = Expense.objects.filter(
                         building_id=self.building_id,
-                        date__year=year,
-                        date__month=mon
-                    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                        date__lt=date(year, mon, 1)
+                    )
                     
-                    # Previous obligations = Σημερινό υπόλοιπο - Δαπάνες τρέχοντος μήνα
-                    previous_obligations = max(total_current_balance - current_month_expenses, Decimal('0.00'))
+                    previous_obligations = expenses_before_month.aggregate(
+                        total=Sum('amount')
+                    )['total'] or Decimal('0.00')
                     
-                    print(f"🔍 Calculated previous obligations: €{previous_obligations:.2f}")
-                    print(f"   Total current balance: €{total_current_balance:.2f}")
-                    print(f"   Current month expenses: €{current_month_expenses:.2f}")
+                    print(f"🔍 Previous obligations for {year}-{mon:02d}: €{previous_obligations:.2f}")
+                    print(f"   Expenses before this month: {expenses_before_month.count()}")
                         
                 except Exception as e:
                     print(f"⚠️ Error calculating previous obligations: {e}")

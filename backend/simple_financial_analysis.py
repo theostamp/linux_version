@@ -157,21 +157,8 @@ def simple_analysis():
             
             # Calculate monthly obligation per apartment
             if apartments.count() > 0:
-                monthly_per_apt = Decimal('334.85') / apartments.count()
+                monthly_per_apt = total_expenses / apartments.count()
                 print(f"   4. Μηνιαία υποχρέωση/διαμέρισμα: {format_currency(monthly_per_apt)}")
-            
-            # Check if it matches any combination
-            target = Decimal('334.85')
-            print("\n🧮 ΣΥΓΚΡΙΣΗ ΜΕ ΣΤΟΧΟ (334,85 €):")
-            
-            if abs(total_expenses - target) < Decimal('1'):
-                print("✅ Ταιριάζει με δαπάνες μήνα!")
-            elif abs(all_expenses_total - target) < Decimal('1'):
-                print("✅ Ταιριάζει με συνολικές δαπάνες!")
-            elif abs(pending_total - target) < Decimal('1'):
-                print("✅ Ταιριάζει με εκκρεμείς πληρωμές!")
-            else:
-                print("🔍 Δεν ταιριάζει ακριβώς με κανένα από τα παραπάνω")
                 print("   Πιθανότατα συνδυασμός ή άλλος υπολογισμός")
             
             # 5. SUMMARY

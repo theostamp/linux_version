@@ -273,10 +273,10 @@ class BalanceCalculationService:
             f"{old_balance} → {new_balance} ({elapsed_time:.2f}ms)"
         )
 
-        # Log significant balance changes
-        if abs(new_balance - old_balance) > Decimal('100.00'):
+        # Log all balance changes
+        if new_balance != old_balance:
             logger.info(
-                f"⚠️  Large balance change for Apartment {apartment.number}: "
+                f"Balance change for Apartment {apartment.number}: "
                 f"{old_balance} → {new_balance} (Δ={new_balance - old_balance})"
             )
 

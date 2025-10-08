@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='building',
             name='management_fee_per_apartment',
-            field=models.DecimalField(decimal_places=2, default=15.0, help_text='Μηνιαία αμοιβή διαχείρισης ανά διαμέρισμα σε ευρώ', max_digits=6, verbose_name='Αμοιβή Διαχείρισης ανά Διαμέρισμα'),
+            field=models.DecimalField(decimal_places=2, default=0.0, help_text='Μηνιαία αμοιβή διαχείρισης ανά διαμέρισμα σε ευρώ', max_digits=6, verbose_name='Αμοιβή Διαχείρισης ανά Διαμέρισμα'),
         ),
     ]

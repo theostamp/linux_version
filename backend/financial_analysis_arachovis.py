@@ -269,8 +269,6 @@ def analyze_arachovis_building():
         
         calculated_total = monthly_common_expenses + monthly_service_costs + monthly_reserve_contribution
         print(f"\n🧮 ΥΠΟΛΟΓΙΣΜΕΝΟ ΣΥΝΟΛΟ: {format_currency(calculated_total)}")
-        print("🎯 ΣΤΟΧΟΣ (334,85 €): 334,85 €")
-        print(f"📊 ΔΙΑΦΟΡΑ: {format_currency(calculated_total - Decimal('334.85'))}")
 
         # 9. BALANCE ANALYSIS PER APARTMENT
         print_header("⚖️ ΑΝΑΛΥΣΗ ΥΠΟΛΟΙΠΩΝ ΑΝΑ ΔΙΑΜΕΡΙΣΜΑ")
@@ -300,15 +298,7 @@ def analyze_arachovis_building():
         print(f"💸 Συνολικές Δαπάνες: {format_currency(total_expenses)}")
         print(f"💰 Συνολικές Εισπράξεις: {format_currency(total_receipts)}")
         print(f"⏳ Εκκρεμείς Εισπράξεις: {pending_receipts.count()} ({format_currency(pending_amount)})")
-        print("🎯 Υποχρεώσεις Περιόδου: 334,85 €")
-        print(f"📊 Κάλυψη: {'✅ Επαρκής' if total_receipts >= Decimal('334.85') else '⚠️ Ανεπαρκής'}")
-
-        print("\n🔍 ΠΙΘΑΝΕΣ ΑΙΤΙΕΣ ΓΙΑ ΤΟ ΠΟΣΟ 334,85 €:")
-        print("   1. Υπολογισμός κοινοχρήστων βάσει τελευταίου φύλλου")
-        print("   2. Μηνιαίες δόσεις αποθεματικού")
-        print("   3. Κόστος πακέτων υπηρεσιών")
-        print("   4. Τρέχουσες ανεκδοτές δαπάνες")
-        print("   5. Combination των παραπάνω")
+        print(f"📊 Κάλυψη: {'✅ Επαρκής' if total_receipts >= total_expenses else '⚠️ Ανεπαρκής'}")
 
         print("\n🎯 ΠΡΟΤΑΣΕΙΣ ΕΝΕΡΓΕΙΩΝ:")
         print(f"   • Επιβεβαίωση των {pending_receipts.count()} εκκρεμών πληρωμών")

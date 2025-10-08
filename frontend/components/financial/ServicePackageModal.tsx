@@ -45,36 +45,15 @@ export const ServicePackageModal: React.FC<ServicePackageModalProps> = ({
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [calculateBasedOnServices, setCalculateBasedOnServices] = useState(false);
 
-  // Πραγματικές υπηρεσίες διαχείρισης με market-based pricing (€/διαμέρισμα/μήνα)
-  const realBuildingServices = [
-    // Βασικές Υπηρεσίες (2.50-4.00€)
-    { id: 'basic_admin', name: 'Διαχείριση κοινόχρηστων', cost: 2.50, category: 'Βασικές', essential: true, description: 'Υπολογισμός και αποστολή λογαριασμών' },
-    { id: 'bookkeeping', name: 'Τήρηση λογαριασμών', cost: 1.50, category: 'Βασικές', essential: true, description: 'Λογιστική παρακολούθηση εσόδων/εξόδων' },
-    { id: 'bill_payments', name: 'Εξόφληση κοινόχρηστων', cost: 1.00, category: 'Βασικές', essential: true, description: 'Πληρωμή λογαριασμών (ΔΕΗ, ΕΥΔΑΠ, κτλ.)' },
-    { id: 'maintenance_basic', name: 'Βασική συντήρηση κοινών χώρων', cost: 3.00, category: 'Βασικές', essential: true, description: 'Καθαρισμός και μικροσυντηρήσεις' },
-
-    // Επεκταμένες Υπηρεσίες (1.00-3.00€)  
-    { id: 'work_supervision', name: 'Επίβλεψη εργασιών', cost: 2.00, category: 'Επεκταμένες', essential: false, description: 'Παρακολούθηση εργασιών συντήρησης' },
-    { id: 'legal_advice', name: 'Νομικές συμβουλές', cost: 1.50, category: 'Επεκταμένες', essential: false, description: 'Βασική νομική υποστήριξη' },
-    { id: 'phone_support', name: '24/7 τηλεφωνική υποστήριξη', cost: 1.00, category: 'Επεκταμένες', essential: false, description: 'Αδιάλειπτη τηλεφωνική κάλυψη' },
-    { id: 'assembly_organization', name: 'Οργάνωση γενικών συνελεύσεων', cost: 0.80, category: 'Επεκταμένες', essential: false, description: 'Προετοιμασία και διεξαγωγή συνελεύσεων' },
-    { id: 'document_management', name: 'Διαχείριση εγγράφων', cost: 1.20, category: 'Επεκταμένες', essential: false, description: 'Αρχειοθέτηση και οργάνωση εγγράφων' },
-
-    // Premium Υπηρεσίες (1.50-4.00€)
-    { id: 'insurance_management', name: 'Διαχείριση ασφαλειών', cost: 2.50, category: 'Premium', essential: false, description: 'Παρακολούθηση και ανανέωση ασφαλιστηρίων' },
-    { id: 'maintenance_schedule', name: 'Προγραμματισμός συντηρήσεων', cost: 3.00, category: 'Premium', essential: false, description: 'Προληπτικός προγραμματισμός συντηρήσεων' },
-    { id: 'digital_archive', name: 'Ψηφιακό αρχείο εγγράφων', cost: 1.50, category: 'Premium', essential: false, description: 'Ψηφιοποίηση και cloud αποθήκευση' },
-    { id: 'energy_consulting', name: 'Συμβουλευτική εξοικονόμησης ενέργειας', cost: 2.00, category: 'Premium', essential: false, description: 'Προτάσεις για μείωση κόστους ενέργειας' },
-    { id: 'emergency_response', name: 'Υπηρεσία έκτακτης ανάγκης', cost: 2.50, category: 'Premium', essential: false, description: '24/7 άμεση αντιμετώπιση έκτακτων αναγκών' },
-    { id: 'quality_control', name: 'Έλεγχος ποιότητας υπηρεσιών', cost: 1.80, category: 'Premium', essential: false, description: 'Τακτικοί έλεγχοι ποιότητας παρεχόμενων υπηρεσιών' },
-
-    // Ειδικές Υπηρεσίες (2.00-5.00€)
-    { id: 'tax_services', name: 'Φορολογικές υπηρεσίες', cost: 3.50, category: 'Ειδικές', essential: false, description: 'Υποβολή δηλώσεων και φορολογική συμμόρφωση' },
-    { id: 'renovation_management', name: 'Διαχείριση ανακαινίσεων', cost: 4.00, category: 'Ειδικές', essential: false, description: 'Πλήρης διαχείριση έργων ανακαίνισης' },
-    { id: 'tenant_screening', name: 'Έλεγχος ενοικιαστών', cost: 2.50, category: 'Ειδικές', essential: false, description: 'Προέλεγχος και αξιολόγηση ενοικιαστών' },
-    { id: 'smart_building', name: 'Smart building υπηρεσίες', cost: 5.00, category: 'Ειδικές', essential: false, description: 'Εγκατάσταση και διαχείριση έξυπνων συστημάτων' },
-    { id: 'concierge_services', name: 'Υπηρεσίες θυρωρού', cost: 8.00, category: 'Ειδικές', essential: false, description: 'Φύλαξη και υποδοχή (ημερήσια)' },
-  ];
+  // Πραγματικές υπηρεσίες διαχείρισης (χωρίς hardcoded τιμές)
+  const realBuildingServices: Array<{
+    id: string;
+    name: string;
+    cost: number;
+    category: string;
+    essential: boolean;
+    description: string;
+  }> = [];
 
   // Default πακέτα που προσφέρονται για δημιουργία
   const defaultPackageTemplates = [

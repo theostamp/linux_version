@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='building',
             name='reserve_contribution_per_apartment',
-            field=models.DecimalField(decimal_places=2, default=5.0, help_text='Πάγια εισφορά αποθεματικού ανά διαμέρισμα σε ευρώ', max_digits=6, verbose_name='Πάγια Εισφορά Αποθεματικού ανά Διαμέρισμα'),
+            field=models.DecimalField(decimal_places=2, default=0.0, help_text='Πάγια εισφορά αποθεματικού ανά διαμέρισμα σε ευρώ', max_digits=6, verbose_name='Πάγια Εισφορά Αποθεματικού ανά Διαμέρισμα'),
         ),
     ]

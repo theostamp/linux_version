@@ -238,7 +238,7 @@ class Building(models.Model):
             # ⏳ Grace period για οφειλές πληρωμών (ημέρα μήνα)
     grace_day_of_month = models.PositiveSmallIntegerField(
         _("Ημέρα Έναρξης Οφειλής"),
-        default=15,
+        default=1,
         validators=[MinValueValidator(1)],
         help_text=_("Ημέρα του μήνα μετά την οποία οι οφειλές θεωρούνται καθυστερημένες")
     )
