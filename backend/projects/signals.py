@@ -1,7 +1,8 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.contrib.contenttypes.models import ContentType
 
 from .models import Project, Offer, ProjectVote
 from todo_management.services import ensure_linked_todo, complete_linked_todo
@@ -530,3 +531,23 @@ def deactivate_assembly_announcement(project: Project):
         logger.error(f"Failed to deactivate assembly announcement for project {project.id}: {e}")
 
 
+@receiver(pre_delete, sender=Project)
+def cleanup_project_todos(sender, instance: Project, **kwargs):
+    """Διαγράφει συνδεδεμένα TODOs όταν διαγράφεται ένα Project"""
+    try:
+        from todo_management.models import TodoLink
+        
+        ct = ContentType.objects.get_for_model(Project)
+        links = TodoLink.objects.filter(
+            content_type=ct,
+            object_id=instance.pk
+        ).select_related('todo')
+        
+        for link in links:
+            # Διαγραφή του TODO (το TodoLink θα διαγραφεί αυτόματα με CASCADE)
+            link.todo.delete()
+            
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to cleanup TODOs for project {instance.id}: {e}")
