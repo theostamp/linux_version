@@ -260,29 +260,16 @@ api.interceptors.request.use(
     }
     const access = typeof window !== 'undefined' ? localStorage.getItem('access') : null;
     
-    console.log(
-      `[AXIOS REQ INTERCEPTOR] URL: ${config.url}`,
-      `Token from localStorage: ${access ? 'Υπάρχει (...${access.slice(-10)})' : 'ΔΕΝ υπάρχει ή είναι null'}`
-    );
+    // Debug logs μόνο σε development και μόνο για errors
+    const isDevelopment = process.env.NODE_ENV === 'development';
     
-    // Debug: Check if token looks like a valid JWT
-    if (access) {
-      const tokenParts = access.split('.');
-      console.log(`[AXIOS REQ INTERCEPTOR] Token parts count: ${tokenParts.length}, Token length: ${access.length}`);
-      if (tokenParts.length !== 3) {
-        console.warn('[AXIOS REQ INTERCEPTOR] Token does not appear to be a valid JWT (should have 3 parts)');
-      }
-    }
-
     if (access && access.length > 0 && !config.url?.includes('/users/login/') && !config.url?.includes('/users/token/refresh/')) {
       config.headers.Authorization = `Bearer ${access}`;
-      console.log(`[AXIOS REQ INTERCEPTOR] Authorization header ΠΡΟΣΤΕΘΗΚΕ για: ${config.url}`);
     } else if (!config.url?.includes('/users/login/') && !config.url?.includes('/users/token/refresh/')) {
-      console.warn(
-        `[AXIOS REQ INTERCEPTOR] Authorization header ΔΕΝ ΠΡΟΣΤΕΘΗΚΕ για: ${config.url}.`,
-        `Access token: ${access ? 'Υπάρχει αλλά ίσως κενό;' : 'Δεν υπάρχει'}.`,
-        `Είναι login/refresh URL: ${config.url?.includes('/users/login/') || config.url?.includes('/users/token/refresh/')}`
-      );
+      // Log μόνο αν δεν υπάρχει token (potential issue)
+      if (isDevelopment && !access) {
+        console.warn(`[API] No auth token for: ${config.url}`);
+      }
     }
 
     // CSRF Token Logic
