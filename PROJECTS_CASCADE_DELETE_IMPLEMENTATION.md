@@ -446,27 +446,93 @@ fix(projects/signals): Σύνδεση auto-created announcements με projects
 - Cleaned up 6 orphan announcements from previous tests
 ```
 
+**ManyToMany Commit:**
+```
+feat(announcements): ManyToMany σχέση για Assembly Announcements
+
+- Added projects ManyToManyField to Announcement model
+- Updated AnnouncementSerializer with projects & projects_titles
+- Updated assembly signals to add projects via M2M
+- Assembly announcements now track all related projects
+- Tested: 2 projects → 1 assembly announcement with 2 connections
+```
+
 ---
 
-## ⚠️ Σημαντική Σημείωση: Assembly Announcements
+## 🔄 Assembly Announcements - ManyToMany Σχέση
 
-Οι ανακοινώσεις Γενικής Συνέλευσης (π.χ. "Σύγκληση Γενικής Συνέλευσης - 10/10/2025") **ΔΕΝ** συνδέονται με ένα μόνο project γιατί:
+Οι ανακοινώσεις Γενικής Συνέλευσης (π.χ. "Σύγκληση Γενικής Συνέλευσης - 10/10/2025") χρησιμοποιούν **ManyToMany** σχέση:
+
+### Διπλή Σύνδεση Projects:
+
+```python
+class Announcement(models.Model):
+    # 1. ForeignKey - Για μονά projects (CASCADE DELETE)
+    project = models.ForeignKey('projects.Project', ...)
+    
+    # 2. ManyToManyField - Για assembly announcements (ΔΕΝ διαγράφεται)
+    projects = models.ManyToManyField('projects.Project', ...)
+```
+
+### Χρήση:
+
+| Τύπος Ανακοίνωσης | Χρησιμοποιεί | Συμπεριφορά Διαγραφής |
+|-------------------|--------------|----------------------|
+| "Νέο Έργο: ..." | `project` (FK) | CASCADE - διαγράφεται με το project |
+| "Νέα Προσφορά για: ..." | `project` (FK) | CASCADE - διαγράφεται με το project |
+| "Ψηφοφορία για: ..." | `project` (FK) | CASCADE - διαγράφεται με το project |
+| "Γενική Συνέλευση - ..." | `projects` (M2M) | **Παραμένει** - αφαιρείται μόνο η σύνδεση |
+
+### Γιατί ManyToMany για Assembly:
 
 1. **Είναι ομαδοποιημένες**: Μία ανακοίνωση συνέλευσης μπορεί να περιέχει **πολλά θέματα (projects)**
-2. **Ενημερώνονται δυναμικά**: Όταν προστίθεται νέο project με την ίδια ημερομηνία συνέλευσης, η ανακοίνωση **ενημερώνεται** αντί να δημιουργείται νέα
-3. **Δεν πρέπει να διαγράφονται**: Αν διαγραφεί ένα project, η συνέλευση εξακολουθεί να υπάρχει για τα υπόλοιπα θέματα
+2. **Ενημερώνονται δυναμικά**: Όταν προστίθεται νέο project με την ίδια ημερομηνία συνέλευσης, η ανακοίνωση **ενημερώνεται** και προστίθεται το project
+3. **Δεν διαγράφονται**: Αν διαγραφεί ένα project, η συνέλευση εξακολουθεί να υπάρχει για τα υπόλοιπα θέματα
 
-**Παράδειγμα:**
+### Παράδειγμα:
+
+```python
+# Δημιουργία assembly announcement
+announcement = Announcement.objects.create(
+    title="Σύγκληση Γενικής Συνέλευσης - 10/10/2025",
+    ...
+)
+
+# Προσθήκη projects
+announcement.projects.add(project_a, project_b, project_c)
+
+# Πρόσβαση
+announcement.projects.all()  # [Project A, Project B, Project C]
+announcement.projects_titles  # ["Συντήρηση Ανελκυστήρα", "Επισκευή Όψεων", ...]
+
+# Διαγραφή project
+project_b.delete()
+
+# Αποτέλεσμα
+announcement.still_exists()  # True
+announcement.projects.all()  # [Project A, Project C]  ← Project B αφαιρέθηκε αυτόματα
+```
+
+### Σχηματικά:
+
 ```
 Σύγκληση Γενικής Συνέλευσης - 10/10/2025
 
 ΘΕΜΑΤΑ:
-1. Συντήρηση Ανελκυστήρα      ← Project A
-2. Επισκευή Όψεων Κτιρίου     ← Project B
-3. Ανακαίνιση Κοινόχρηστων    ← Project C
+1. Συντήρηση Ανελκυστήρα      ← Project A (συνδεδεμένο)
+2. Επισκευή Όψεων Κτιρίου     ← Project B (συνδεδεμένο)
+3. Ανακαίνιση Κοινόχρηστων    ← Project C (συνδεδεμένο)
 
-Αν διαγραφεί το Project B, η ανακοίνωση παραμένει
-για τα Projects A και C.
+╔════════════════════════════════════════╗
+║  Project B διαγράφεται                 ║
+╚════════════════════════════════════════╝
+                ↓
+Η ανακοίνωση ΠΑΡΑΜΕΝΕΙ, αλλά το Project B
+αφαιρείται από τη ManyToMany σχέση:
+
+ΘΕΜΑΤΑ:
+1. Συντήρηση Ανελκυστήρα      ← Project A (συνδεδεμένο)
+2. Ανακαίνιση Κοινόχρηστων    ← Project C (συνδεδεμένο)
 ```
 
 ---
