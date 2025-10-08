@@ -26,6 +26,12 @@ class Announcement(models.Model):
         blank=True,
         help_text="Σύνδεση με έργο - διαγράφεται αυτόματα όταν διαγραφεί το έργο"
     )
+    projects = models.ManyToManyField(
+        'projects.Project',
+        related_name='assembly_announcements',
+        blank=True,
+        help_text="Πολλαπλά έργα για ανακοινώσεις συνελεύσεων"
+    )
     title = models.CharField(max_length=255)
     description = models.TextField()
     file = models.FileField(upload_to='announcements/', blank=True, null=True)

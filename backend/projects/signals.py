@@ -354,6 +354,9 @@ def create_assembly_announcement(project: Project, check_existing: bool = False)
 
                 existing_announcement.updated_at = timezone.now()
                 existing_announcement.save(update_fields=['description', 'updated_at'])
+                
+                # Προσθήκη του project στη ManyToMany σχέση
+                existing_announcement.projects.add(project)
 
                 # Ενημέρωση με WebSocket
                 publish_building_event(
@@ -417,6 +420,9 @@ def create_assembly_announcement(project: Project, check_existing: bool = False)
             start_date=today,
             end_date=assembly_date,
         )
+        
+        # Προσθήκη του project στη ManyToMany σχέση
+        announcement.projects.add(project)
 
         # Ενημέρωση με WebSocket
         publish_building_event(

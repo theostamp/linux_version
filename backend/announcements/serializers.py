@@ -15,11 +15,17 @@ class AnnouncementSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
+    projects = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Project.objects.all(),
+        required=False
+    )
     is_currently_active = serializers.SerializerMethodField()
     days_remaining = serializers.SerializerMethodField()
     status_display = serializers.SerializerMethodField()
     author_name = serializers.SerializerMethodField()
     project_title = serializers.SerializerMethodField()
+    projects_titles = serializers.SerializerMethodField()
 
     class Meta:
         model = Announcement
@@ -34,6 +40,8 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             'building',
             'project',
             'project_title',
+            'projects',
+            'projects_titles',
             'file',
             'start_date',
             'end_date',
@@ -45,7 +53,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
             'days_remaining',
             'status_display',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'author', 'author_name', 'project_title']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'author', 'author_name', 'project_title', 'projects_titles']
 
     def validate_building(self, value):
         # If building is None (global announcement), allow it for staff users
@@ -102,12 +110,26 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     
     def get_project_title(self, obj):
         return obj.project.title if obj.project else None
+    
+    def get_projects_titles(self, obj):
+        return [p.title for p in obj.projects.all()]
 
     def create(self, validated_data):
+        projects_data = validated_data.pop('projects', [])
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
             validated_data['author'] = request.user
-        return super().create(validated_data)
+        announcement = super().create(validated_data)
+        if projects_data:
+            announcement.projects.set(projects_data)
+        return announcement
+    
+    def update(self, instance, validated_data):
+        projects_data = validated_data.pop('projects', None)
+        announcement = super().update(instance, validated_data)
+        if projects_data is not None:
+            announcement.projects.set(projects_data)
+        return announcement
 
 class AnnouncementListSerializer(serializers.ModelSerializer):
     """Simplified serializer for list views"""
