@@ -9,11 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Save, Lightbulb, Plus, Vote, Settings } from 'lucide-react';
-import Link from 'next/link';
+import { Save, Lightbulb, Plus, Vote, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ZoomSettingsModal from '@/components/projects/ZoomSettingsModal';
+import { BackButton } from '@/components/ui/BackButton';
 
 // Προτεινόμενα έργα πολυκατοικίας
 const SUGGESTED_PROJECTS = [
@@ -252,12 +252,7 @@ export default function NewProjectPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button asChild variant="outline" size="sm">
-          <Link href="/projects">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Επιστροφή
-          </Link>
-        </Button>
+        <BackButton href="/projects" label="Επιστροφή" size="sm" />
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Νέο Έργο</h1>
           <p className="text-muted-foreground">

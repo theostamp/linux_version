@@ -686,7 +686,7 @@ export default function ScheduledMaintenanceForm({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>{heading}</CardTitle>
-          <BackButton />
+          <BackButton href={maintenanceId ? undefined : '/maintenance/scheduled'} label="Πίσω" size="sm" />
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

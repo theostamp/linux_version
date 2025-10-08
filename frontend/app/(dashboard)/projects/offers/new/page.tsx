@@ -10,8 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Save } from 'lucide-react';
-import Link from 'next/link';
+import { BackButton } from '@/components/ui/BackButton';
+import { Save } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -115,12 +115,7 @@ export default function NewOfferPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button asChild variant="outline" size="sm">
-          <Link href="/projects/offers">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Επιστροφή
-          </Link>
-        </Button>
+        <BackButton href="/projects/offers" label="Πίσω" size="sm" />
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Νέα Προσφορά</h1>
           <p className="text-muted-foreground">
@@ -334,9 +329,7 @@ export default function NewOfferPage() {
 
         {/* Submit Button */}
         <div className="flex justify-end gap-4">
-          <Button asChild variant="outline">
-            <Link href="/projects/offers">Ακύρωση</Link>
-          </Button>
+          <BackButton href="/projects/offers" label="Ακύρωση" variant="outline" />
           <Button type="submit" disabled={isSubmitting}>
             <Save className="w-4 h-4 mr-2" />
             {isSubmitting ? 'Αποθήκευση...' : 'Δημιουργία Προσφοράς'}

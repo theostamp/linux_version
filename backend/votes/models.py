@@ -34,6 +34,14 @@ class Vote(models.Model):
         blank=True,
         related_name='created_votes'
     )
+    project = models.ForeignKey(
+        'projects.Project',
+        on_delete=models.CASCADE,
+        related_name='votes',
+        null=True,
+        blank=True,
+        help_text="Σύνδεση με έργο - διαγράφεται αυτόματα όταν διαγραφεί το έργο"
+    )
 
     class Meta:
         ordering = ['-created_at']

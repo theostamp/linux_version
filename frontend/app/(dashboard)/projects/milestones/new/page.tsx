@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useRole } from '@/lib/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BackButton } from '@/components/ui/BackButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -49,7 +50,10 @@ export default function NewMilestonePage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Νέο Ορόσημο</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Νέο Ορόσημο</CardTitle>
+          <BackButton href="/projects" label="Πίσω" size="sm" />
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

@@ -18,6 +18,14 @@ class Announcement(models.Model):
         on_delete=models.CASCADE,
         related_name='created_announcements'
     )
+    project = models.ForeignKey(
+        'projects.Project',
+        on_delete=models.CASCADE,
+        related_name='announcements',
+        null=True,
+        blank=True,
+        help_text="Σύνδεση με έργο - διαγράφεται αυτόματα όταν διαγραφεί το έργο"
+    )
     title = models.CharField(max_length=255)
     description = models.TextField()
     file = models.FileField(upload_to='announcements/', blank=True, null=True)

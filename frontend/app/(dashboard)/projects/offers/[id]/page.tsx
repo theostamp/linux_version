@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
+import { BackButton } from '@/components/ui/BackButton';
 import {
   Award,
   Calendar,
@@ -24,7 +25,6 @@ import {
   XCircle,
   AlertTriangle,
   Download,
-  ArrowLeft,
   Shield,
   DollarSign,
   Edit,
@@ -214,12 +214,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button asChild variant="ghost">
-            <Link href="/projects/offers">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Πίσω
-            </Link>
-          </Button>
+          <BackButton href="/projects/offers" label="Πίσω" size="sm" />
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">Προσφορά</h1>
             <p className="text-muted-foreground">

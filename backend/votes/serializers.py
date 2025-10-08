@@ -2,6 +2,7 @@
 from rest_framework import serializers
 from .models import Vote, VoteSubmission
 from buildings.models import Building
+from projects.models import Project
 
 class VoteSerializer(serializers.ModelSerializer):
     building = serializers.PrimaryKeyRelatedField(
@@ -10,12 +11,18 @@ class VoteSerializer(serializers.ModelSerializer):
         allow_null=True
     )
     creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    project = serializers.PrimaryKeyRelatedField(
+        queryset=Project.objects.all(),
+        required=False,
+        allow_null=True
+    )
     choices = serializers.SerializerMethodField()
     is_currently_active = serializers.SerializerMethodField()
     days_remaining = serializers.SerializerMethodField()
     status_display = serializers.SerializerMethodField()
     creator_name = serializers.SerializerMethodField()
     building_name = serializers.SerializerMethodField()
+    project_title = serializers.SerializerMethodField()
     total_votes = serializers.SerializerMethodField()
     participation_percentage = serializers.SerializerMethodField()
 
@@ -31,6 +38,8 @@ class VoteSerializer(serializers.ModelSerializer):
             'updated_at',
             'building',
             'building_name',
+            'project',
+            'project_title',
             'creator',
             'creator_name',
             'is_active',
@@ -43,7 +52,7 @@ class VoteSerializer(serializers.ModelSerializer):
             'total_votes',
             'participation_percentage',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'creator', 'creator_name']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'creator', 'creator_name', 'project_title']
 
     def validate_building(self, value):
         # If building is None (global vote), allow it for staff users
@@ -99,6 +108,9 @@ class VoteSerializer(serializers.ModelSerializer):
 
     def get_creator_name(self, obj):
         return obj.creator.get_full_name() or obj.creator.email if obj.creator else "Άγνωστος"
+    
+    def get_project_title(self, obj):
+        return obj.project.title if obj.project else None
 
     def get_building_name(self, obj):
         return obj.building.name if obj.building else "Όλα τα κτίρια"
