@@ -142,7 +142,7 @@ def update_project_schedule(project, offer=None):
             # Δημιουργία προκαταβολής (τρέχων μήνας)
             if advance_payment > 0:
                 # Χρήση της ημερομηνίας έναρξης από το PaymentSchedule
-                advance_date = schedule.start_date
+                advance_date = payment_schedule.start_date
                 advance_expense = Expense.objects.create(
                     building=project.building,
                     title=f"{project.title} - Προκαταβολή ({advance_percentage:.0f}%)",
@@ -160,7 +160,7 @@ def update_project_schedule(project, offer=None):
             installment_amount = remaining_amount / installments
 
             # Χρήση της ημερομηνίας έναρξης από το PaymentSchedule ως base_date
-            base_date = schedule.start_date
+            base_date = payment_schedule.start_date
 
             # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             # ⚠️ ΚΡΙΣΙΜΟ: PROJECT INSTALLMENTS LOGIC - ΜΗΝ ΑΛΛΑΞΕΤΕ ΧΩΡΙΣ TESTING!

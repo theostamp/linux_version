@@ -249,7 +249,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
                   onChange={(e) => setHeatingYear(e.target.value)}
                   className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 >
-                  {[2022, 2023, 2024, 2025].map(year => (
+                  {Array.from({ length: 5 }, (_, i) => currentYear - 3 + i).map(year => (
                     <option key={year} value={year.toString()}>
                       {year}-{year + 1} (Σεπτέμβριος - Μάιος)
                     </option>
@@ -264,7 +264,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
                     onChange={(e) => setCompareYear(e.target.value)}
                     className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
                   >
-                    {[2021, 2022, 2023, 2024].map(year => (
+                    {Array.from({ length: 5 }, (_, i) => currentYear - 4 + i).map(year => (
                       <option key={year} value={year.toString()}>
                         {year}-{year + 1}
                       </option>
@@ -283,7 +283,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
                   onChange={(e) => setElectricityYear(e.target.value)}
                   className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 >
-                  {[2022, 2023, 2024, 2025].map(year => (
+                  {Array.from({ length: 5 }, (_, i) => currentYear - 3 + i).map(year => (
                     <option key={year} value={year.toString()}>
                       {year} (Ιανουάριος - Δεκέμβριος)
                     </option>
@@ -298,7 +298,7 @@ export const ChartsContainer: React.FC<ChartsContainerProps> = ({
                     onChange={(e) => setCompareYear(e.target.value)}
                     className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
                   >
-                    {[2021, 2022, 2023, 2024].map(year => (
+                    {Array.from({ length: 5 }, (_, i) => currentYear - 4 + i).map(year => (
                       <option key={year} value={year.toString()}>
                         {year}
                       </option>
