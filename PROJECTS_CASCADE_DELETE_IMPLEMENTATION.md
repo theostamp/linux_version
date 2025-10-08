@@ -435,6 +435,40 @@ feat(projects): Σύνδεση Announcements & Votes με Projects + CASCADE DEL
 - Tested & verified cascade delete functionality
 ```
 
+**Signals Fix Commit:**
+```
+fix(projects/signals): Σύνδεση auto-created announcements με projects
+
+- Updated create_project_announcement() to link with project
+- Updated create_offer_announcement() to link with offer.project
+- Updated create_vote_announcement() to link with project
+- Assembly announcements remain unlinked (grouped by date)
+- Cleaned up 6 orphan announcements from previous tests
+```
+
+---
+
+## ⚠️ Σημαντική Σημείωση: Assembly Announcements
+
+Οι ανακοινώσεις Γενικής Συνέλευσης (π.χ. "Σύγκληση Γενικής Συνέλευσης - 10/10/2025") **ΔΕΝ** συνδέονται με ένα μόνο project γιατί:
+
+1. **Είναι ομαδοποιημένες**: Μία ανακοίνωση συνέλευσης μπορεί να περιέχει **πολλά θέματα (projects)**
+2. **Ενημερώνονται δυναμικά**: Όταν προστίθεται νέο project με την ίδια ημερομηνία συνέλευσης, η ανακοίνωση **ενημερώνεται** αντί να δημιουργείται νέα
+3. **Δεν πρέπει να διαγράφονται**: Αν διαγραφεί ένα project, η συνέλευση εξακολουθεί να υπάρχει για τα υπόλοιπα θέματα
+
+**Παράδειγμα:**
+```
+Σύγκληση Γενικής Συνέλευσης - 10/10/2025
+
+ΘΕΜΑΤΑ:
+1. Συντήρηση Ανελκυστήρα      ← Project A
+2. Επισκευή Όψεων Κτιρίου     ← Project B
+3. Ανακαίνιση Κοινόχρηστων    ← Project C
+
+Αν διαγραφεί το Project B, η ανακοίνωση παραμένει
+για τα Projects A και C.
+```
+
 ---
 
 **Ημερομηνία Υλοποίησης:** 08/10/2025  
