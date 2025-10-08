@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { KioskWidget } from '@/types/kiosk';
-import { getSystemWidgets } from '@/lib/kiosk/widgets/registry';
+import { useKioskWidgetManagement } from '@/hooks/useKioskWidgetManagement';
 
 export default function EditWidgetPage() {
   const router = useRouter();
@@ -35,17 +35,25 @@ export default function EditWidgetPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Fetch widgets from backend
+  const { widgets, isLoading: widgetsLoading } = useKioskWidgetManagement(building?.id || null);
+
   useEffect(() => {
-    // In real implementation, fetch widget from API
-    // For now, simulate with mock data
-    const allWidgets = getSystemWidgets(building?.id || 1);
-    const foundWidget = allWidgets.find(w => w.id === widgetId);
+    if (widgetsLoading) {
+      setLoading(true);
+      return;
+    }
+
+    // Try to find widget by dbId (numeric) or id (string)
+    const foundWidget = widgets.find(w => 
+      w.dbId?.toString() === widgetId || w.id === widgetId
+    );
 
     if (foundWidget) {
       setWidget(foundWidget);
     }
     setLoading(false);
-  }, [widgetId, building?.id]);
+  }, [widgetId, widgets, widgetsLoading]);
 
   const handleSave = async () => {
     if (!widget) return;
@@ -74,7 +82,7 @@ export default function EditWidgetPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading widget...</p>
+          <p className="text-gray-600">Φόρτωση widget...</p>
         </div>
       </div>
     );
@@ -85,12 +93,12 @@ export default function EditWidgetPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Widget Not Found</h1>
-          <p className="text-gray-600 mb-6">The widget you're looking for doesn't exist.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Δεν Βρέθηκε το Widget</h1>
+          <p className="text-gray-600 mb-6">Το widget που ψάχνετε δεν υπάρχει.</p>
           <Link href="/kiosk-management/widgets">
             <Button>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Widgets
+              Επιστροφή στα Widgets
             </Button>
           </Link>
         </div>
@@ -109,21 +117,21 @@ export default function EditWidgetPage() {
             <Link href="/kiosk-management/widgets">
               <Button variant="outline">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
+                Πίσω
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Edit Widget</h1>
-              <p className="text-gray-600">Modify widget settings and configuration</p>
+              <h1 className="text-2xl font-bold text-gray-900">Επεξεργασία Widget</h1>
+              <p className="text-gray-600">Τροποποίηση ρυθμίσεων και διαμόρφωσης widget</p>
             </div>
           </div>
 
           <div className="flex items-center space-x-2">
             <Badge variant={widget.enabled ? "default" : "secondary"}>
-              {widget.enabled ? "Enabled" : "Disabled"}
+              {widget.enabled ? "Ενεργό" : "Ανενεργό"}
             </Badge>
             <Badge variant={isSystemWidget ? "outline" : "default"}>
-              {isSystemWidget ? "System" : "Custom"}
+              {isSystemWidget ? "Σύστημα" : "Προσαρμοσμένο"}
             </Badge>
           </div>
         </div>
