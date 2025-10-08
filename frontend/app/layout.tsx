@@ -4,6 +4,7 @@ import AppProviders from '@/components/AppProviders';
 import DevCompileIndicator from '@/components/DevCompileIndicator';
 import StartupWrapper from '@/components/StartupWrapper';
 import IntroWrapper from '@/components/IntroWrapper';
+import NavigationLoader from '@/components/NavigationLoader';
 import { Open_Sans, Roboto_Condensed, Inter_Tight, Ubuntu_Condensed } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { readonly children: React.Reac
       <body className={`${openSans.variable} ${robotoCondensed.variable} ${interTight.variable} ${ubuntuCondensed.variable}`}>
         <IntroWrapper>
           <DevCompileIndicator />
+          <NavigationLoader />
           <StartupWrapper>
             <AppProviders>{children}</AppProviders>
             <Toaster />
