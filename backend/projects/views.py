@@ -46,7 +46,13 @@ def update_project_schedule(project, offer=None):
         import calendar
 
         # Υπολογισμός ημερομηνίας πληρωμής
-        due_date = project.deadline or (datetime.now().date() + timedelta(days=30))
+        # 🔧 FIX: Χρήση πρώτης μέρας τρέχοντος μήνα αντί για +30 ημέρες
+        # Αυτό εξασφαλίζει ότι η προκαταβολή πέφτει στον ίδιο μήνα με την έγκριση
+        if project.deadline:
+            due_date = project.deadline
+        else:
+            now = datetime.now().date()
+            due_date = now.replace(day=1)  # Πρώτη μέρα τρέχοντος μήνα
 
         # 🔴 ΚΡΙΣΙΜΟ: Δημιουργία ή ενημέρωση ScheduledMaintenance με linked_project
         # Αυτό συνδέει το approved project με το maintenance module
@@ -56,7 +62,7 @@ def update_project_schedule(project, offer=None):
             defaults={
                 'title': project.title,
                 'description': project.description or '',
-                'scheduled_date': project.deadline or (datetime.now().date() + timedelta(days=30)),
+                'scheduled_date': due_date,
                 'priority': project.priority or 'medium',
                 'status': 'in_progress' if project.status == 'approved' else 'pending',
                 'contractor_name': project.selected_contractor,
@@ -198,7 +204,7 @@ def update_project_schedule(project, offer=None):
                     'advance_percentage': advance_percentage,
                     'installment_count': installments,
                     'installment_frequency': 'monthly',
-                    'start_date': project.deadline or (datetime.now().date() + timedelta(days=30)),
+                    'start_date': due_date,
                     'notes': project.payment_terms or '',
                     'status': 'active',
                 }
@@ -208,6 +214,7 @@ def update_project_schedule(project, offer=None):
                 payment_schedule.total_amount = total_amount
                 payment_schedule.advance_percentage = advance_percentage
                 payment_schedule.installment_count = installments
+                payment_schedule.start_date = due_date  # 🔧 FIX: Ενημέρωση start_date
                 payment_schedule.notes = project.payment_terms or ''
                 payment_schedule.save()
 
