@@ -28,6 +28,7 @@ export default function ProjectDetailsPage() {
   const params = useParams<{ id: string }>();
   const projectId = params?.id; // Keep as string for UUID support
   const [project, setProject] = useState<Project | null>(null);
+  const [acceptedOffer, setAcceptedOffer] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -42,6 +43,19 @@ export default function ProjectDetailsPage() {
       try {
         const { data } = await api.get(`/projects/projects/${projectId}/`);
         setProject(data);
+        
+        // Fetch accepted offer for overview
+        try {
+          const offersResp = await api.get('/projects/offers/', {
+            params: { project: projectId, status: 'accepted' }
+          });
+          const acceptedOffers = offersResp.data.results || offersResp.data || [];
+          if (acceptedOffers.length > 0) {
+            setAcceptedOffer(acceptedOffers[0]);
+          }
+        } catch (e) {
+          // Ignore if no accepted offer
+        }
       } catch (err: any) {
         setError(err?.message ?? 'Σφάλμα φόρτωσης');
       } finally {
@@ -109,20 +123,95 @@ export default function ProjectDetailsPage() {
         </TabsList>
 
         <TabsContent value="overview">
-          <Card>
-            <CardHeader>
-              <CardTitle>Επισκόπηση</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div>Περιγραφή: {project.description || '—'}</div>
-                <div>Κατάσταση: {project.status}</div>
-                {typeof project.budget === 'number' && (
-                  <div>Προϋπολογισμός: €{project.budget.toLocaleString()}</div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Επισκόπηση Έργου</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">Περιγραφή</div>
+                    <div className="text-sm mt-1">{project.description || '—'}</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">Κατάσταση</div>
+                      <div className="text-sm mt-1">{project.status}</div>
+                    </div>
+                    {typeof project.budget === 'number' && (
+                      <div>
+                        <div className="text-sm font-medium text-muted-foreground">Προϋπολογισμός</div>
+                        <div className="text-sm mt-1">€{project.budget.toLocaleString()}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {acceptedOffer && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Εγκεκριμένο Συμβόλαιο</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">Ανάδοχος</div>
+                      <div className="text-sm mt-1 font-semibold">{acceptedOffer.contractor_name}</div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-sm font-medium text-muted-foreground">Συμβατικό Ποσό</div>
+                        <div className="text-lg font-bold text-blue-600 mt-1">
+                          €{Number(acceptedOffer.amount).toLocaleString()}
+                        </div>
+                      </div>
+                      
+                      {acceptedOffer.advance_payment && Number(acceptedOffer.advance_payment) > 0 && (
+                        <div>
+                          <div className="text-sm font-medium text-muted-foreground">Προκαταβολή</div>
+                          <div className="text-lg font-bold text-green-600 mt-1">
+                            €{Number(acceptedOffer.advance_payment).toLocaleString()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {acceptedOffer.installments && acceptedOffer.installments > 1 && (
+                        <div>
+                          <div className="text-sm font-medium text-muted-foreground">Αριθμός Δόσεων</div>
+                          <div className="text-sm mt-1">{acceptedOffer.installments}</div>
+                        </div>
+                      )}
+                      {acceptedOffer.warranty_period && (
+                        <div>
+                          <div className="text-sm font-medium text-muted-foreground">Εγγύηση</div>
+                          <div className="text-sm mt-1">{acceptedOffer.warranty_period}</div>
+                        </div>
+                      )}
+                      {acceptedOffer.completion_time && (
+                        <div>
+                          <div className="text-sm font-medium text-muted-foreground">Χρόνος Ολοκλήρωσης</div>
+                          <div className="text-sm mt-1">{acceptedOffer.completion_time}</div>
+                        </div>
+                      )}
+                    </div>
+
+                    {acceptedOffer.payment_terms && (
+                      <div>
+                        <div className="text-sm font-medium text-muted-foreground">Όροι Πληρωμής</div>
+                        <div className="text-sm mt-1 whitespace-pre-wrap">{acceptedOffer.payment_terms}</div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </TabsContent>
 
         <TabsContent value="procurement">

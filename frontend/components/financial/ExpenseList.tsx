@@ -610,16 +610,22 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
                         <Badge className={`${getCategoryColor(expense.category)} text-xs`}>
                           {expense.category_display || expense.category}
                         </Badge>
-                        <Badge variant="outline" className="text-blue-600 text-xs">
-                          📋 Καταχωρημένη
-                        </Badge>
+                        {expense.title?.toLowerCase().includes('προκαταβολή') ? (
+                          <Badge variant="default" className="bg-amber-500 hover:bg-amber-600 text-white text-xs">
+                            💰 Προκαταβολή
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-blue-600 text-xs">
+                            📋 Καταχωρημένη
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     
                     {/* Key Information Row */}
                     <div className="flex items-center gap-6 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
-                        <span className="font-semibold text-green-600 text-base">
+                        <span className={`font-semibold text-base ${expense.title?.toLowerCase().includes('προκαταβολή') ? 'text-amber-600' : 'text-green-600'}`}>
                           {formatCurrency(expense.amount)}
                         </span>
                       </div>

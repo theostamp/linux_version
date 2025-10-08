@@ -105,11 +105,83 @@ def update_project_schedule(project, offer=None):
         elif 'αναβάθμιση' in project.title.lower():
             category = 'upgrade'
 
-        # Διαγραφή παλιών δαπανών για αυτό το έργο (αν υπάρχουν)
+        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        # 🛡️ ΠΡΟΣΤΑΣΙΑ ΥΠΑΡΧΟΥΣΩΝ ΔΑΠΑΝΩΝ (Phase 1 - Oct 8, 2025)
+        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        # 
+        # ΠΡΟΒΛΗΜΑ: Η διαγραφή δαπανών χωρίς έλεγχο προκαλεί:
+        # - Απώλεια πληρωμών
+        # - Χάσιμο transactions
+        # - Διπλές καταχωρήσεις
+        #
+        # ΛΥΣΗ: Διαγραφή ΜΟΝΟ αν:
+        # 1. Δεν έχουν πληρωθεί
+        # 2. Είναι πρόσφατες (< 24 ώρες)
+        # 3. Δεν έχουν συνδεθεί με πληρωμές
+        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        
+        from django.utils import timezone
+        from datetime import timedelta
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
+        # Βρες υπάρχουσες δαπάνες
         old_expenses = Expense.objects.filter(
             building=project.building,
             title__icontains=project.title
         )
+        
+        if old_expenses.exists():
+            # Έλεγχος 1: Έχουν πληρωθεί;
+            paid_expenses = old_expenses.exclude(
+                paid_amount__isnull=True
+            ).exclude(paid_amount=0)
+            
+            if paid_expenses.exists():
+                logger.warning(
+                    f"⚠️ ΠΡΟΣΤΑΣΙΑ: Βρέθηκαν {paid_expenses.count()} πληρωμένες δαπάνες "
+                    f"για το έργο '{project.title}'. ΔΕΝ διαγράφονται!"
+                )
+                logger.info(f"   Πληρωμένες δαπάνες: {list(paid_expenses.values('id', 'title', 'amount', 'paid_amount'))}")
+                # ΜΗΝ συνεχίσεις τη διαγραφή - επέστρεψε
+                return
+            
+            # Έλεγχος 2: Είναι παλιές (> 24 ώρες);
+            cutoff_time = timezone.now() - timedelta(hours=24)
+            old_cutoff_expenses = old_expenses.filter(created_at__lt=cutoff_time)
+            
+            if old_cutoff_expenses.exists():
+                logger.warning(
+                    f"⚠️ ΠΡΟΣΤΑΣΙΑ: Βρέθηκαν {old_cutoff_expenses.count()} παλιές δαπάνες (>24h) "
+                    f"για το έργο '{project.title}'. ΔΕΝ διαγράφονται!"
+                )
+                logger.info(f"   Παλιές δαπάνες: {list(old_cutoff_expenses.values('id', 'title', 'created_at'))}")
+                # ΜΗΝ συνεχίσεις τη διαγραφή - επέστρεψε
+                return
+            
+            # Έλεγχος 3: Έχουν συνδεθεί με πληρωμές μέσω maintenance;
+            expenses_with_receipts = old_expenses.filter(
+                maintenance_payment_receipts__isnull=False
+            ).distinct()
+            
+            if expenses_with_receipts.exists():
+                logger.warning(
+                    f"⚠️ ΠΡΟΣΤΑΣΙΑ: Βρέθηκαν {expenses_with_receipts.count()} δαπάνες με συνδεδεμένες πληρωμές "
+                    f"για το έργο '{project.title}'. ΔΕΝ διαγράφονται!"
+                )
+                logger.info(f"   Δαπάνες με receipts: {list(expenses_with_receipts.values('id', 'title'))}")
+                # ΜΗΝ συνεχίσεις τη διαγραφή - επέστρεψε
+                return
+            
+            # Αν όλοι οι έλεγχοι πέρασαν, κάνε log και διέγραψε
+            logger.info(
+                f"✅ ΑΣΦΑΛΗΣ ΔΙΑΓΡΑΦΗ: {old_expenses.count()} νέες, μη-πληρωμένες δαπάνες "
+                f"για το έργο '{project.title}' θα διαγραφούν και θα ξαναδημιουργηθούν."
+            )
+            logger.debug(f"   Δαπάνες προς διαγραφή: {list(old_expenses.values('id', 'title', 'amount', 'date'))}")
+            
+        # Διαγραφή μόνο αν πέρασε όλους τους ελέγχους
         old_expenses.delete()
 
         # Αν έχουμε δόσεις, δημιουργούμε επιμερισμένες δαπάνες
