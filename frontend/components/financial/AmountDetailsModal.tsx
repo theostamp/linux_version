@@ -485,41 +485,44 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
                       <span className="font-medium text-sm">Διάκριση Υπολοίπου</span>
                     </div>
                     <div className="space-y-3">
-                      {/* Τρέχων μήνας */}
+                      {/* Αποθεματικό */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                          <span className="text-sm font-medium text-gray-700">Τρέχων μήνας:</span>
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <span className="text-sm font-medium text-gray-700">Τρέχον Αποθεματικό:</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm text-blue-700">
-                            {formatCurrency(totalExpenses)}
+                          <span className="font-semibold text-sm text-green-700">
+                            {formatCurrency(summary?.current_reserve || 0)}
                           </span>
-                          <span className="text-xs text-gray-500">(δαπάνες)</span>
+                          <span className="text-xs text-gray-500">(διαθέσιμο)</span>
                         </div>
                       </div>
-                      
-                      {/* Από μεταφορά προηγούμενων μηνών */}
+
+                      {/* Συνολικές Υποχρεώσεις */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                          <span className="text-sm font-medium text-gray-700">Από μεταφορά προηγούμενων μηνών:</span>
+                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                          <span className="text-sm font-medium text-gray-700">Συνολικές Υποχρεώσεις:</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm text-orange-700">
-                            {formatCurrency(Math.abs(displayAmount) - totalExpenses)}
+                          <span className="font-semibold text-sm text-red-700">
+                            {formatCurrency(summary?.current_obligations || 0)}
                           </span>
-                          <span className="text-xs text-gray-500">(συσσωρευμένες)</span>
+                          <span className="text-xs text-gray-500">(οφειλές)</span>
                         </div>
                       </div>
-                      
-                      {/* Συνολικό */}
+
+                      {/* Συνολικό Υπόλοιπο */}
                       <div className="pt-2 border-t border-gray-200">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-gray-800">Συνολικό:</span>
-                          <span className="font-bold text-lg text-red-600">
-                            {formatCurrency(Math.abs(displayAmount))}
+                          <span className="text-sm font-semibold text-gray-800">Καθαρό Υπόλοιπο:</span>
+                          <span className={`font-bold text-lg ${displayAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatCurrency(displayAmount)}
                           </span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1 text-right">
+                          Αποθεματικό - Υποχρεώσεις
                         </div>
                       </div>
                     </div>

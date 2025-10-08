@@ -824,11 +824,11 @@ class FinancialDashboardService:
             # For current view, use current apartment obligations
             previous_obligations = apartment_obligations
         
-        # ΔΙΟΡΘΩΣΗ: Για snapshot view, προσθήκη previous_obligations στον υπολογισμό total_balance
-        if month:
-            # Πλήρης υπολογισμός: Πληρωμές μείον (Προηγούμενες Οφειλές + Τρέχουσες Υποχρεώσεις)
-            total_balance = total_payments_this_month - (previous_obligations + current_obligations)
-            print(f"🔧 BALANCE CORRECTION: payments={total_payments_this_month} - (previous={previous_obligations} + current={current_obligations}) = {total_balance}")
+        # ΔΙΟΡΘΩΣΗ: total_balance είναι το Αποθεματικό μείον τις Συνολικές Υποχρεώσεις
+        # Δεν είναι πληρωμές μείον οφειλές - αυτό είναι το net cash flow
+        # Το total_balance αντιπροσωπεύει την οικονομική θέση του κτιρίου
+        total_balance = current_reserve - current_obligations
+        print(f"🔧 TOTAL BALANCE: current_reserve={current_reserve} - current_obligations={current_obligations} = {total_balance}")
         
         return {
             'total_balance': float(total_balance.quantize(Decimal('0.01'))),
