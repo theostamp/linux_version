@@ -794,26 +794,33 @@ class FinancialDashboardService:
                     _, last_day = monthrange(year, mon - 1)
                     previous_month_end = date(year, mon - 1, last_day)
                 
-                # ΔΙΟΡΘΩΣΗ: Υπολογισμός previous obligations από transaction data
-                # Χρησιμοποιούμε την ίδια λογική με τη get_apartment_balances για συνέπεια
+                # ΔΙΟΡΘΩΣΗ 2025-10-08: Υπολογισμός previous obligations από Apartment.current_balance
+                # Αυτό είναι πιο αξιόπιστο γιατί το current_balance ενημερώνεται αυτόματα από signals
                 previous_obligations = Decimal('0.00')
                 
                 try:
-                    # Υπολογισμός συνολικών προηγούμενων οφειλών από όλα τα διαμερίσματα
+                    # Βήμα 1: Υπολογισμός συνολικού υπολοίπου από διαμερίσματα
                     apartments = Apartment.objects.filter(building_id=self.building_id)
-                    month_start = date(year, mon, 1)
                     
-                    for apartment in apartments:
-                        # Υπολογισμός προηγούμενων οφειλών για κάθε διαμέρισμα
-                        apartment_previous_balance = self._calculate_historical_balance(apartment, month_start)
-                        # ΔΙΟΡΘΩΣΗ: Μόνο θετικές οφειλές προστίθενται στα previous_obligations
-                        if apartment_previous_balance > 0:
-                            previous_obligations += apartment_previous_balance
+                    # Άθροισμα όλων των current_balance (οφειλές)
+                    total_current_balance = sum(apt.current_balance for apt in apartments)
                     
-                    print(f"🔍 Calculated previous obligations from transactions: €{previous_obligations}")
+                    # Βήμα 2: Αφαίρεση δαπανών τρέχοντος μήνα για να βρούμε τις προηγούμενες οφειλές
+                    current_month_expenses = Expense.objects.filter(
+                        building_id=self.building_id,
+                        date__year=year,
+                        date__month=mon
+                    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                    
+                    # Previous obligations = Σημερινό υπόλοιπο - Δαπάνες τρέχοντος μήνα
+                    previous_obligations = max(total_current_balance - current_month_expenses, Decimal('0.00'))
+                    
+                    print(f"🔍 Calculated previous obligations: €{previous_obligations:.2f}")
+                    print(f"   Total current balance: €{total_current_balance:.2f}")
+                    print(f"   Current month expenses: €{current_month_expenses:.2f}")
                         
                 except Exception as e:
-                    print(f"⚠️ Error calculating previous obligations from transactions: {e}")
+                    print(f"⚠️ Error calculating previous obligations: {e}")
                     previous_obligations = Decimal('0.00')
             except Exception as e:
                 print(f"⚠️ Error calculating previous obligations for {month}: {e}")
