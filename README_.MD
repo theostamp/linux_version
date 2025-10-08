@@ -541,7 +541,7 @@ git commit -m "διορθωσεις 31"
 
 ## Βασικές Εντολές Git
 git add .
-git commit -m "διορθωσεις 89"
+git commit -m "διορθωσεις 90"
 
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
