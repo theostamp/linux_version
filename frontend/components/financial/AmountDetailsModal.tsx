@@ -108,138 +108,52 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
 
       // Load transaction history - try different endpoints
       let transactions = [];
-      
+      let transactionsLoadedSuccessfully = false;
+
+      // Always use expenses/payments fallback since transactions endpoint requires auth
+      console.log('💰 Loading expenses and payments separately (transactions endpoint requires auth)');
+
       try {
-        // First try the transactions endpoint
-      const transactionsParams = new URLSearchParams({
-        building_id: buildingId.toString(),
-          limit: '100'
-      });
-      
-        console.log('💳 Loading transactions from:', `/financial/transactions/?${transactionsParams}`);
-      const transactionsResponse = await api.get(`/financial/transactions/?${transactionsParams}`);
-        transactions = transactionsResponse.data.results || transactionsResponse.data || [];
-        console.log('💳 Transactions response:', transactions);
-        
-        // If transactions is empty, try loading expenses and payments separately
-        if (transactions.length === 0) {
-          console.log('⚠️ No transactions found, trying expenses and payments separately');
-          
-          try {
-            console.log('💰 Loading expenses from:', `/financial/expenses/?building_id=${buildingId}`);
-            const expensesResponse = await api.get(`/financial/expenses/?building_id=${buildingId}&limit=50`);
-            console.log('💰 Expenses response:', expensesResponse.data);
-            
-            console.log('💳 Loading payments from:', `/financial/payments/`);
-            const paymentsResponse = await api.get(`/financial/payments/?limit=100`);
-            console.log('💳 Payments response:', paymentsResponse.data);
-            
-            const expenses = expensesResponse.data.results || expensesResponse.data || [];
-            const allPayments = paymentsResponse.data.results || paymentsResponse.data || [];
-            
-            // Filter payments for this building (via apartments)
-            const payments = allPayments.filter((pay: any) => {
-              // We'll need to check if the payment's apartment belongs to this building
-              // For now, let's include all payments and filter later if needed
-              return true;
-            });
-            
-            console.log('💰 Found expenses:', expenses.length);
-            console.log('💳 Found payments:', payments.length);
-            
-            // Convert to transaction format
-            transactions = [
-              ...expenses.map((exp: any) => ({
-                id: exp.id,
-                date: exp.date,
-                amount: -exp.amount, // Negative for expenses
-                type: 'expense_created',
-                description: exp.title,
-                apartment_number: exp.apartment?.number,
-                category: exp.category
-              })),
-              ...payments.map((pay: any) => ({
-                id: pay.id,
-                date: pay.date,
-                amount: pay.amount, // Positive for payments
-                type: 'payment_received',
-                description: `Είσπραξη - ${pay.payer_name}`,
-                apartment_number: pay.apartment?.number,
-                category: pay.payment_type
-              }))
-            ];
-            
-            console.log('💳 Combined transactions from expenses/payments:', transactions);
-          } catch (separateError) {
-            console.error('❌ Expenses/payments endpoints failed:', separateError);
-          }
-        }
-      } catch (transactionsError) {
-        console.log('⚠️ Transactions endpoint failed, trying expenses and payments separately');
-        
-        // If transactions endpoint fails, try loading expenses and payments separately
-        try {
-          console.log('💰 Loading expenses from:', `/financial/expenses/?building_id=${buildingId}`);
-          const expensesResponse = await api.get(`/financial/expenses/?building_id=${buildingId}&limit=50`);
-          console.log('💰 Expenses response:', expensesResponse.data);
-          
-          console.log('💳 Loading payments from:', `/financial/payments/`);
-          const paymentsResponse = await api.get(`/financial/payments/?limit=100`);
-          console.log('💳 Payments response:', paymentsResponse.data);
-          
-          const expenses = expensesResponse.data.results || expensesResponse.data || [];
-          const allPayments = paymentsResponse.data.results || paymentsResponse.data || [];
-          
-          // Filter payments for this building (via apartments)
-          const payments = allPayments.filter((pay: any) => {
-            // We'll need to check if the payment's apartment belongs to this building
-            // For now, let's include all payments and filter later if needed
-            return true;
-          });
-          
-          console.log('💰 Found expenses:', expenses.length);
-          console.log('💳 Found payments:', payments.length);
-          
-          // Convert to transaction format
-          transactions = [
-            ...expenses.map((exp: any) => ({
-              id: exp.id,
-              date: exp.date,
-              amount: -exp.amount, // Negative for expenses
-              type: 'expense_created',
-              description: exp.title,
-              apartment_number: exp.apartment?.number,
-              category: exp.category
-            })),
-            ...payments.map((pay: any) => ({
-              id: pay.id,
-              date: pay.date,
-              amount: pay.amount, // Positive for payments
-              type: 'payment_received',
-              description: `Είσπραξη - ${pay.payer_name}`,
-              apartment_number: pay.apartment?.number,
-              category: pay.payment_type
-            }))
-          ];
-          
-          console.log('💳 Combined transactions from expenses/payments:', transactions);
-        } catch (separateError) {
-          console.error('❌ Both transaction endpoints failed:', separateError);
-          // Create a mock transaction for the current amount if no data is available
-          if (amount !== 0) {
-            const currentDate = new Date();
-            transactions = [{
-              id: 1,
-              date: currentDate.toISOString().split('T')[0],
-              amount: amount,
-              type: amount > 0 ? 'payment_received' : 'expense_created',
-              description: amount > 0 ? 'Είσπραξη' : 'Δαπάνη',
-              apartment_number: undefined,
-              category: 'demo'
-            }];
-            console.log('💳 Created mock transaction for amount:', amount);
-          }
-        }
+        console.log('💰 Loading expenses from:', `/financial/expenses/?building_id=${buildingId}`);
+        const expensesResponse = await api.get(`/financial/expenses/?building_id=${buildingId}&limit=100`);
+        console.log('💰 Expenses response:', expensesResponse.data);
+
+        console.log('💳 Loading payments from:', `/financial/payments/?building_id=${buildingId}`);
+        const paymentsResponse = await api.get(`/financial/payments/?building_id=${buildingId}&limit=100`);
+        console.log('💳 Payments response:', paymentsResponse.data);
+
+        const expenses = expensesResponse.data.results || expensesResponse.data || [];
+        const allPayments = paymentsResponse.data.results || paymentsResponse.data || [];
+
+        console.log('💰 Found expenses:', expenses.length);
+        console.log('💳 Found payments:', allPayments.length);
+
+        // Convert to transaction format
+        transactions = [
+          ...expenses.map((exp: any) => ({
+            id: `exp-${exp.id}`,
+            date: exp.date,
+            amount: -Math.abs(parseFloat(exp.amount)), // Always negative for expenses
+            type: 'expense_created',
+            description: exp.title,
+            apartment_number: exp.apartment?.number,
+            category: exp.category
+          })),
+          ...allPayments.map((pay: any) => ({
+            id: `pay-${pay.id}`,
+            date: pay.date,
+            amount: Math.abs(parseFloat(pay.amount)), // Always positive for payments
+            type: 'payment_received',
+            description: `Είσπραξη - ${pay.payer_name || 'Άγνωστος'}`,
+            apartment_number: pay.apartment?.number,
+            category: pay.payment_type
+          }))
+        ];
+
+        console.log('💳 Combined transactions from expenses/payments:', transactions.length);
+        console.log('💳 Sample transaction:', transactions[0]);
+      } catch (error) {
+        console.error('❌ Expenses/payments endpoints failed:', error);
       }
       
       setAllTransactions(transactions);
