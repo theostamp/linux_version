@@ -128,6 +128,7 @@ def create_project_announcement(project: Project):
         announcement = Announcement.objects.create(
             building=project.building,
             author=project.created_by,
+            project=project,  # ← ΣΥΝΔΕΣΗ ΜΕ PROJECT
             title=f"Νέο Έργο: {project.title}",
             description=f"""
 Δημιουργήθηκε νέο έργο στο κτίριο:
@@ -225,6 +226,7 @@ def create_offer_announcement(offer: Offer):
         announcement = Announcement.objects.create(
             building=offer.project.building,
             author=offer.project.created_by,
+            project=offer.project,  # ← ΣΥΝΔΕΣΗ ΜΕ PROJECT
             title=f"Νέα Προσφορά για: {offer.project.title}",
             description=f"""
 Υποβλήθηκε νέα προσφορά για το έργο "{offer.project.title}":
@@ -273,6 +275,7 @@ def create_vote_announcement(project: Project):
         announcement = Announcement.objects.create(
             building=project.building,
             author=project.created_by,
+            project=project,  # ← ΣΥΝΔΕΣΗ ΜΕ PROJECT
             title=f"Ψηφοφορία για: {project.title}",
             description=f"""
 Ανακοινώνεται ψηφοφορία για το έργο "{project.title}".
