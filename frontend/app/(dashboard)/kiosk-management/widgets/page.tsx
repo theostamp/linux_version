@@ -115,7 +115,7 @@ export default function WidgetManagementPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Widget Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Διαχείριση Widgets</h1>
           <p className="text-gray-600 mt-1">
             Διαχείριση όλων των widgets για το κτίριο {building?.name || 'Όλα τα κτίρια'}
           </p>
@@ -209,8 +209,8 @@ export default function WidgetManagementPage() {
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">Όλοι οι τύποι</option>
-            <option value="system">System</option>
-            <option value="custom">Custom</option>
+            <option value="system">Σύστημα</option>
+            <option value="custom">Προσαρμοσμένα</option>
           </select>
         </div>
       </Card>
@@ -259,30 +259,30 @@ export default function WidgetManagementPage() {
 
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <h3 className="font-semibold text-gray-900">{widget.name}</h3>
+                      <h3 className="font-semibold text-gray-900">{widget.greekName || widget.name}</h3>
                       <Badge className={getCategoryColor(widget.category)}>
                         {getCategoryLabel(widget.category)}
                       </Badge>
                       {widget.type === 'custom' && (
                         <Badge variant="outline" className="border-purple-600 text-purple-600">
-                          Custom
+                          Προσαρμοσμένο
                         </Badge>
                       )}
                       {widget.type === 'system' && (
                         <Badge variant="outline" className="border-blue-600 text-blue-600">
-                          System
+                          Σύστημα
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{widget.description}</p>
+                    <p className="text-sm text-gray-600 mb-2">{widget.greekDescription || widget.description}</p>
                     <div className="flex items-center space-x-4 text-xs text-gray-500">
-                      <span>Component: {widget.component}</span>
-                      <span>Order: {widget.order}</span>
+                      <span>Στοιχείο: {widget.component}</span>
+                      <span>Σειρά: {widget.order}</span>
                       {widget.refreshInterval && (
-                        <span>Refresh: {widget.refreshInterval}s</span>
+                        <span>Ανανέωση: {widget.refreshInterval}δ</span>
                       )}
                       <span>
-                        Updated: {widget.updatedAt.toLocaleDateString('el-GR')}
+                        Ενημέρωση: {widget.updatedAt.toLocaleDateString('el-GR')}
                       </span>
                     </div>
                   </div>
