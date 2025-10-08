@@ -115,3 +115,4 @@ export default function NavigationLoader() {
 // Add shimmer animation to global CSS if not exists
 // You can add this to your globals.css or tailwind.config.js
 
+
