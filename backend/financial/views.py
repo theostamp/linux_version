@@ -503,9 +503,118 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             
         except Exception as e:
             return Response(
-                {'error': f'Σφάλμα στο upload: {str(e)}'}, 
+                {'error': f'Σφάλμα στο upload: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=False, methods=['post'])
+    def backfill_management_fees(self, request):
+        """Δημιουργεί management fees για προηγούμενους μήνες"""
+        from datetime import date
+        from calendar import monthrange
+
+        building_id = request.data.get('building_id')
+        start_month = request.data.get('start_month')  # Format: 'YYYY-MM'
+        end_month = request.data.get('end_month')  # Optional, default: current month
+
+        if not building_id or not start_month:
+            return Response(
+                {'error': 'building_id and start_month are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            building = Building.objects.get(id=building_id)
+        except Building.DoesNotExist:
+            return Response(
+                {'error': 'Building not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if not building.management_fee_per_apartment or building.management_fee_per_apartment <= 0:
+            return Response(
+                {'error': 'No management fee configured for this building'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Parse dates
+        try:
+            start_year, start_mon = map(int, start_month.split('-'))
+            start_date = date(start_year, start_mon, 1)
+        except (ValueError, AttributeError):
+            return Response(
+                {'error': 'Invalid start_month format. Use YYYY-MM'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if end_month:
+            try:
+                end_year, end_mon = map(int, end_month.split('-'))
+                end_date = date(end_year, end_mon, 1)
+            except (ValueError, AttributeError):
+                return Response(
+                    {'error': 'Invalid end_month format. Use YYYY-MM'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            today = date.today()
+            end_date = date(today.year, today.month, 1)
+
+        # Check financial_system_start_date
+        if building.financial_system_start_date and start_date < building.financial_system_start_date:
+            start_date = building.financial_system_start_date
+
+        # Calculate total amount
+        apartments_count = Apartment.objects.filter(building=building).count()
+        total_amount = building.management_fee_per_apartment * apartments_count
+
+        created_count = 0
+        skipped_count = 0
+        current_date = start_date
+
+        while current_date <= end_date:
+            # Check if already exists
+            existing = Expense.objects.filter(
+                building=building,
+                category='management_fees',
+                date__year=current_date.year,
+                date__month=current_date.month
+            ).exists()
+
+            if existing:
+                skipped_count += 1
+            else:
+                # Last day of month
+                _, last_day_num = monthrange(current_date.year, current_date.month)
+                last_day = date(current_date.year, current_date.month, last_day_num)
+
+                Expense.objects.create(
+                    building=building,
+                    title=f'Διαχειριστικά Έξοδα {current_date.strftime("%B %Y")}',
+                    amount=total_amount,
+                    date=last_day,
+                    category='management_fees',
+                    description=f'Διαχειριστικά Έξοδα {current_date.strftime("%B %Y")}',
+                    distribution_type='equal_share',
+                    payer_responsibility='resident',
+                    approved=True
+                )
+                created_count += 1
+
+            # Next month
+            if current_date.month == 12:
+                current_date = date(current_date.year + 1, 1, 1)
+            else:
+                current_date = date(current_date.year, current_date.month + 1, 1)
+
+        return Response({
+            'success': True,
+            'building': building.name,
+            'created': created_count,
+            'skipped': skipped_count,
+            'start_month': start_month,
+            'end_month': end_month or 'current'
+        })
 
 
 class TransactionViewSet(viewsets.ModelViewSet):

@@ -19,6 +19,11 @@ app.conf.beat_schedule = {
         'task': 'notifications.tasks.check_and_execute_monthly_tasks',
         'schedule': crontab(minute=0),  # Every hour at :00
     },
+    # Create management fees on the 1st day of each month at 3:00 AM
+    'create-monthly-management-fees': {
+        'task': 'financial.tasks.create_monthly_management_fees',
+        'schedule': crontab(minute=0, hour=3, day_of_month=1),  # 1st of month at 3:00 AM
+    },
 }
 
 
