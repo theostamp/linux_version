@@ -120,7 +120,7 @@ class BuildingSerializer(serializers.ModelSerializer):
             'management_office_name', 'management_office_phone', 'management_office_address',
             'management_fee_per_apartment', 'service_package', 'service_package_id', 'service_package_start_date',
             'current_reserve', 'heating_system', 'heating_fixed_percentage', 'reserve_contribution_per_apartment',
-            'reserve_fund_goal', 'reserve_fund_duration_months', 'reserve_fund_start_date', 'reserve_fund_target_date', 'reserve_fund_priority',
+            'reserve_fund_goal', 'reserve_fund_duration_months', 'reserve_fund_start_date', 'reserve_fund_target_date',
             'financial_system_start_date', 'street_view_image', 'latitude', 'longitude', 'manager',
             'grace_day_of_month',
             'created_at', 'updated_at'

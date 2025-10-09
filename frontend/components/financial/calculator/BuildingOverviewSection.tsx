@@ -108,7 +108,6 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
   const [showReserveFundInfoModal, setShowReserveFundInfoModal] = useState(false);
   const [showReserveGoalModal, setShowReserveGoalModal] = useState(false);
   const [showManagementExpensesModal, setShowManagementExpensesModal] = useState(false);
-  const [reserveFundPriority, setReserveFundPriority] = useState<'after_obligations' | 'always'>('after_obligations');
 
 
   // Memoize currentBuilding to prevent unnecessary re-renders
@@ -259,11 +258,6 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         setNewInstallments('12');
       }
 
-      // Initialize reserve fund priority
-      if (financialSummary.reserve_fund_priority) {
-        setReserveFundPriority(financialSummary.reserve_fund_priority);
-      }
-
       // Initialize reserve fund goal
       if (financialSummary.reserve_fund_goal) {
         setNewGoal(financialSummary.reserve_fund_goal.toString());
@@ -300,11 +294,6 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       // Re-initialize goal
       if (financialSummary.reserve_fund_goal) {
         setNewGoal(financialSummary.reserve_fund_goal.toString());
-      }
-
-      // Re-initialize priority
-      if (financialSummary.reserve_fund_priority) {
-        setReserveFundPriority(financialSummary.reserve_fund_priority);
       }
     }
   }, [showReserveGoalModal, financialSummary]);
@@ -416,8 +405,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       const apiGoal = apiData.reserve_fund_goal || 0;
       const apiDurationMonths = apiData.reserve_fund_duration_months || 0;
       const apiMonthlyTarget = apiData.reserve_fund_monthly_target || 0;
-      const apiPriority = apiData.reserve_fund_priority || 'after_obligations';
-      
+
       // Use API data only - no localStorage fallback to prevent hardcoded values
       const savedGoal = apiGoal;
       const savedStartDate = apiData.reserve_fund_start_date || null;
@@ -735,8 +723,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         reserve_fund_goal: goalValue,
         reserve_fund_duration_months: installmentsValue,
         reserve_fund_start_date: newStartDate,
-        reserve_fund_target_date: newEndDate,
-        reserve_fund_priority: reserveFundPriority
+        reserve_fund_target_date: newEndDate
       });
       
       setFinancialSummary(prev => prev ? { 
@@ -1677,55 +1664,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     </div>
                   )}
                 </div>
-                
-                {/* Προτεραιότητα Συλλογής Αποθεματικού */}
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="text-sm font-semibold text-gray-800 mb-4">Προτεραιότητα Συλλογής Αποθεματικού</div>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-h-[60px]">
-                      <div className="text-sm font-medium text-gray-700 mb-2">
-                        {reserveFundPriority === 'after_obligations' 
-                          ? 'Μετά τις Εκκρεμότητες' 
-                          : 'Πάντα (Ανεξάρτητα)'
-                        }
-                      </div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {reserveFundPriority === 'after_obligations' 
-                          ? 'Το αποθεματικό συλλέγεται μόνο όταν δεν υπάρχουν εκκρεμότητες από προηγούμενους μήνες. Πρώτα καλύπτονται οι τρέχουσες οφειλές, μετά το αποθεματικό.'
-                          : 'Το αποθεματικό συλλέγεται πάντα, ανεξάρτητα από εκκρεμότητες. Μπορεί να οδηγήσει σε συσσώρευση οφειλών.'
-                        }
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-center gap-3 min-w-[120px]">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-medium text-gray-600">Μετά Εκκρεμότητες</span>
-                        <button
-                          type="button"
-                          onClick={() => setReserveFundPriority(
-                            reserveFundPriority === 'after_obligations' ? 'always' : 'after_obligations'
-                          )}
-                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
-                            reserveFundPriority === 'always' ? 'bg-orange-600' : 'bg-gray-300'
-                          }`}
-                        >
-                          <span
-                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${
-                              reserveFundPriority === 'always' ? 'translate-x-6' : 'translate-x-1'
-                            }`}
-                          />
-                        </button>
-                        <span className="text-xs font-medium text-gray-600">Πάντα</span>
-                      </div>
-                      <div className="text-xs text-center text-gray-500">
-                        {reserveFundPriority === 'after_obligations' 
-                          ? 'Συντηρητική προσέγγιση'
-                          : 'Ενεργητική προσέγγιση'
-                        }
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
+
                 {/* Λίστα Ενεργών Μηνών */}
                 {newGoal && newInstallments && parseFloat(newGoal) > 0 && parseInt(newInstallments) > 0 && (
                   <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">

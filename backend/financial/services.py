@@ -263,57 +263,9 @@ class CommonExpenseCalculator:
                 print(f"Error parsing month {self.month}: {e}")
                 return
         
-        # Έλεγχος προτεραιότητας συλλογής αποθεματικού
-        # Αν η προτεραιότητα είναι 'after_obligations', ελέγχουμε για εκκρεμότητες
-        if self.building.reserve_fund_priority == 'after_obligations':
-            # Έλεγχος αν υπάρχουν εκκρεμότητες (εξαιρώντας το αποθεματικό για αποφυγή κυκλικής παγίδας)
-            # Χρήση ιστορικών υπολοίπων για τον έλεγχο εκκρεμοτήτων
-            total_obligations = 0
-            
-            # Αν δεν υπάρχει period_end_date, χρησιμοποιούμε τον τρέχον μήνα
-            end_date = self.period_end_date
-            if end_date is None and self.month:
-                from datetime import date
-                try:
-                    year, mon = map(int, self.month.split('-'))
-                    end_date = date(year, mon, 1)
-                except Exception as e:
-                    print(f"Error parsing month {self.month}: {e}")
-                    end_date = None
-            
-            if end_date:
-                for apt in self.apartments:
-                    # ✅ MIGRATED: Use BalanceCalculationService
-                    from .balance_service import BalanceCalculationService
-                    historical_balance = BalanceCalculationService.calculate_historical_balance(apt, end_date)
-                    
-                    if historical_balance < 0:
-                        # Αφαίρεση τυχόν χρεώσεων αποθεματικού για αποφυγή κυκλικής παγίδας
-                        from django.utils import timezone
-                        from datetime import datetime
-                        end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
-                        
-                        from django.db.models import Sum
-                        reserve_charges = Transaction.objects.filter(
-                            apartment=apt,
-                            date__lt=end_datetime,
-                            description__icontains='αποθεματικ'
-                        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-                        
-                        # Προσαρμογή υπολοίπου αφαιρώντας χρεώσεις αποθεματικού
-                        adjusted_balance = historical_balance + reserve_charges
-                        
-                        if adjusted_balance < 0:
-                            total_obligations += abs(adjusted_balance)
-                
-                if total_obligations > 0:
-                    print(f"🚫 Αποθεματικό: Υπάρχουν εκκρεμότητες €{total_obligations}, δεν συλλέγεται (προτεραιότητα: after_obligations)")
-                    return
-            else:
-                print(f"⚠️ Αποθεματικό: Δεν μπορεί να ελεγχθεί για εκκρεμότητες (no end_date)")
-        else:
-            print(f"✅ Αποθεματικό: Συλλογή ανεξάρτητα από εκκρεμότητες (προτεραιότητα: always)")
-        
+        # Το αποθεματικό συλλέγεται πάντα (είναι απόφαση ΓΣ)
+        print(f"✅ Αποθεματικό: Συλλογή ανεξάρτητα από εκκρεμότητες (απόφαση ΓΣ)")
+
         # Υπολογισμός μηνιαίας εισφοράς αποθεματικού
         monthly_target = 0
         if self.building.reserve_fund_goal and self.building.reserve_fund_duration_months:
@@ -934,19 +886,10 @@ class FinancialDashboardService:
         else:
             management_cost = Decimal('0.00')
         
-        # Εκκρεμότητες = total_obligations - management_cost
-        actual_obligations = total_obligations - management_cost
-        
-        # Έλεγχος προτεραιότητας συλλογής αποθεματικού
-        if building.reserve_fund_priority == 'after_obligations':
-            # Αν υπάρχουν πραγματικές εκκρεμότητες (εκτός διαχείρισης), δεν υπολογίζουμε αποθεματικό
-            if actual_obligations > 0:
-                print(f"🚫 FinancialDashboard: Υπάρχουν εκκρεμότητες €{actual_obligations}, δεν συλλέγεται αποθεματικό (προτεραιότητα: after_obligations)")
-                return Decimal('0.00')
-        else:
-            print(f"✅ FinancialDashboard: Συλλογή αποθεματικού ανεξάρτητα από εκκρεμότητες €{actual_obligations} (προτεραιότητα: always)")
-        
-        # Αν δεν υπάρχουν πραγματικές εκκρεμότητες, υπολογίζουμε την κανονική εισφορά αποθεματικού
+        # Το αποθεματικό συλλέγεται πάντα (είναι απόφαση ΓΣ)
+        print(f"✅ FinancialDashboard: Συλλογή αποθεματικού (απόφαση ΓΣ)")
+
+        # Υπολογίζουμε την εισφορά αποθεματικού
         # Χρησιμοποιούμε τον ίδιο υπολογισμό με το CommonExpenseCalculator
         if building.reserve_fund_goal and building.reserve_fund_duration_months:
             monthly_target = building.reserve_fund_goal / building.reserve_fund_duration_months
@@ -1185,29 +1128,10 @@ class FinancialDashboardService:
                     if (not self.building.reserve_fund_target_date or 
                         month_start <= self.building.reserve_fund_target_date):
                         
-                        # ΔΙΟΡΘΩΣΗ: Έλεγχος προτεραιότητας αποθεματικού
-                        should_collect_reserve = False
-                        
-                        if self.building.reserve_fund_priority == 'always':
-                            # Πάντα συλλέγουμε αποθεματικό ανεξάρτητα από εκκρεμότητες
-                            should_collect_reserve = True
-                            print(f"✅ Αποθεματικό: Συλλογή ανεξάρτητα από εκκρεμότητες (προτεραιότητα: always)")
-                        elif self.building.reserve_fund_priority == 'after_obligations':
-                            # Συλλέγουμε μόνο αν δεν υπάρχουν εκκρεμότητες
-                            # Έλεγχος εκκρεμοτήτων (εξαιρώντας management fees)
-                            total_obligations = 0
-                            for apt in Apartment.objects.filter(building_id=apartment.building_id):
-                                apt_historical_balance = self._calculate_historical_balance(apt, month_start)
-                                if apt_historical_balance < 0:
-                                    total_obligations += abs(apt_historical_balance)
-                            
-                            if total_obligations == 0:
-                                should_collect_reserve = True
-                                print(f"✅ Αποθεματικό: Δεν υπάρχουν εκκρεμότητες - συλλέγεται (προτεραιότητα: after_obligations)")
-                            else:
-                                print(f"🚫 Αποθεματικό: Υπάρχουν εκκρεμότητες €{total_obligations} - δεν συλλέγεται (προτεραιότητα: after_obligations)")
-                        
-                        if should_collect_reserve:
+                        # Το αποθεματικό συλλέγεται πάντα (είναι απόφαση ΓΣ)
+                        print(f"✅ Αποθεματικό: Συλλογή (απόφαση ΓΣ)")
+
+                        if True:  # Always collect
                             monthly_reserve_target = self.building.reserve_fund_goal / self.building.reserve_fund_duration_months
 
                             # Κατανομή ανά χιλιοστά
