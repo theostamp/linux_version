@@ -57,6 +57,9 @@ interface ApartmentBalanceWithDetails {
   previous_balance: number;
   reserve_fund_share: number;  // ← ΝΕΟ FIELD - Αποθεματικό
   expense_share: number;
+  // ΝΕΑ FIELDS: Διαχωρισμός δαπανών
+  resident_expenses: number;  // Δαπάνες Ενοίκου
+  owner_expenses: number;     // Δαπάνες Ιδιοκτήτη
   total_obligations: number;
   total_payments: number;
   net_obligation: number;
@@ -443,9 +446,8 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                   <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Α/Δ</th>
                   <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Ιδιοκτήτης</th>
                   <th className="text-left py-2 px-2 text-xs font-semibold text-gray-700">Χιλιοστά</th>
-                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Παλαιές Οφειλές</th>
-                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Αποθεματικό</th>
-                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Τρέχουσα Οφειλή</th>
+                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Δαπάνες Ενοίκου</th>
+                  <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Δαπάνες Ιδιοκτήτη</th>
                   <th className="text-right py-2 px-2 text-xs font-semibold text-gray-700">Συνολική Οφειλή</th>
                   <th className="text-center py-2 px-2 text-xs font-semibold text-gray-700">Κατάσταση</th>
                   <th className="text-center py-2 px-2 text-xs font-semibold text-gray-700">Ενέργειες</th>
@@ -463,32 +465,24 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
                     <td className="py-2 px-2 text-xs font-medium">{apartment.apartment_number}</td>
                     <td className="py-2 px-2 text-xs">{apartment.owner_name}</td>
                     <td className="py-2 px-2 text-xs">{apartment.participation_mills}</td>
+                    {/* Δαπάνες Ενοίκου */}
                     <td className="py-2 px-2 text-xs text-right">
                       <span className={`font-medium ${
                         Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
-                        Math.abs(apartment.previous_balance) <= 0.30 ? 'text-gray-500' :
-                        apartment.previous_balance > 0.30 ? 'text-red-600' : 
-                        apartment.previous_balance < -0.30 ? 'text-green-600' : 'text-gray-500'
+                        Math.abs(apartment.resident_expenses || 0) <= 0.30 ? 'text-gray-500' :
+                        (apartment.resident_expenses || 0) > 0.30 ? 'text-blue-600' : 'text-gray-500'
                       }`}>
-                        {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(apartment.previous_balance) <= 0.30 ? '-' : formatCurrency(apartment.previous_balance)}
+                        {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(apartment.resident_expenses || 0) <= 0.30 ? '-' : formatCurrency(apartment.resident_expenses || 0)}
                       </span>
                     </td>
+                    {/* Δαπάνες Ιδιοκτήτη */}
                     <td className="py-2 px-2 text-xs text-right">
                       <span className={`font-medium ${
                         Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
-                        Math.abs(apartment.reserve_fund_share || 0) <= 0.30 ? 'text-gray-500' :
-                        (apartment.reserve_fund_share || 0) > 0.30 ? 'text-blue-600' : 'text-gray-500'
+                        Math.abs(apartment.owner_expenses || 0) <= 0.30 ? 'text-gray-500' :
+                        (apartment.owner_expenses || 0) > 0.30 ? 'text-purple-600' : 'text-gray-500'
                       }`}>
-                        {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(apartment.reserve_fund_share || 0) <= 0.30 ? '-' : formatCurrency(apartment.reserve_fund_share || 0)}
-                      </span>
-                    </td>
-                    <td className="py-2 px-2 text-xs text-right">
-                      <span className={`font-medium ${
-                        Math.abs(apartment.net_obligation) <= 0.30 ? 'text-gray-500' :
-                        Math.abs(currentExpenseWithManagement) <= 0.30 ? 'text-gray-500' :
-                        currentExpenseWithManagement > 0.30 ? 'text-orange-600' : 'text-gray-500'
-                      }`}>
-                        {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(currentExpenseWithManagement) <= 0.30 ? '-' : formatCurrency(currentExpenseWithManagement)}
+                        {Math.abs(apartment.net_obligation) <= 0.30 || Math.abs(apartment.owner_expenses || 0) <= 0.30 ? '-' : formatCurrency(apartment.owner_expenses || 0)}
                       </span>
                     </td>
                     <td className="py-2 px-2 text-xs text-right">

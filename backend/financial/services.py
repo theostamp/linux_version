@@ -1078,29 +1078,32 @@ class FinancialDashboardService:
             reserve_fund_share = Decimal('0.00')
             net_obligation = Decimal('0.00')
             expense_share = Decimal('0.00')
-            
+            # ΝΕΑ FIELDS: Διαχωρισμός δαπανών ιδιοκτήτη/ενοίκου
+            resident_expenses = Decimal('0.00')
+            owner_expenses = Decimal('0.00')
+
             if month and end_date:
                 # Για snapshot view, υπολογίζουμε previous balance και net obligation
-                
+
                 # ΔΙΟΡΘΩΣΗ: month_start πρέπει να είναι η αρχή του επιλεγμένου μήνα
                 year, mon = map(int, month.split('-'))
                 month_start = date(year, mon, 1)
-                
+
                 # 1. Previous Balance = οφειλές από προηγούμενους μήνες (πριν τον επιλεγμένο μήνα)
                 # ΔΙΟΡΘΩΣΗ: Χρησιμοποίησε το calculated_balance που ήδη υπολογίστηκε παραπάνω
                 previous_balance = calculated_balance
-                
+
                 # 2. Current month expense share (για net_obligation)
                 month_expenses = Expense.objects.filter(
                     building_id=apartment.building_id,
                     date__gte=month_start,
                     date__lt=end_date
                 )
-                
+
                 # Υπολογισμός μεριδίου διαμερίσματος από τις δαπάνες του μήνα
                 total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
                     total=Sum('participation_mills'))['total'] or 1000
-                    
+
                 for expense in month_expenses:
                     # ΔΙΟΡΘΩΣΗ: Management fees είναι ισόποσα, άλλες δαπάνες ανά χιλιοστά
                     if expense.category == 'management_fees':
@@ -1110,8 +1113,14 @@ class FinancialDashboardService:
                     else:
                         # Κατανομή ανά χιλιοστά για άλλες δαπάνες
                         apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
-                    
+
                     expense_share += apartment_share
+
+                    # ΝΕΟ: Διαχωρισμός ανά payer_responsibility
+                    if expense.payer_responsibility == 'owner':
+                        owner_expenses += apartment_share
+                    else:  # resident or shared
+                        resident_expenses += apartment_share
                 
                 # 🔧 ΝΕΟ: Προσθήκη δυναμικών management fees στο expense_share
                 # Τα management fees υπολογίζονται δυναμικά βάσει financial_system_start_date
@@ -1122,10 +1131,12 @@ class FinancialDashboardService:
                         # Υπολογίζουμε μόνο τον τρέχοντα μήνα (όχι cumulative)
                         # Το expense_share πρέπει να περιλαμβάνει μόνο τις δαπάνες του επιλεγμένου μήνα
                         months_to_charge = 1  # Μόνο ο επιλεγμένος μήνας
-                        
+
                         # Προσθέτουμε τα management fees στο expense_share
                         monthly_management_fee = management_fee_per_apartment * months_to_charge
                         expense_share += monthly_management_fee
+                        # ΝΕΟ: Management fees → resident_expenses
+                        resident_expenses += monthly_management_fee
                         print(f"💰 Apartment {apartment.number}: Added {months_to_charge} months × €{management_fee_per_apartment} = €{monthly_management_fee} to expense_share")
                 
                 # 3. Υπολογισμός αποθεματικού για τον μήνα
@@ -1162,13 +1173,15 @@ class FinancialDashboardService:
                         
                         if should_collect_reserve:
                             monthly_reserve_target = self.building.reserve_fund_goal / self.building.reserve_fund_duration_months
-                            
+
                             # Κατανομή ανά χιλιοστά
                             total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
                                 total=Sum('participation_mills'))['total'] or 1000
-                            
+
                             if total_mills > 0:
                                 reserve_fund_share = (monthly_reserve_target * apartment.participation_mills) / total_mills
+                                # ΝΕΟ: Reserve fund → owner_expenses
+                                owner_expenses += reserve_fund_share
                                 print(f"💰 Αποθεματικό για διαμέρισμα {apartment.number}: €{reserve_fund_share:.2f}")
                 
                 # 4. Net Obligation = Previous Balance + Current Month Expenses + Reserve Fund - Payments this month
@@ -1200,7 +1213,10 @@ class FinancialDashboardService:
                 'current_balance': calculated_balance,
                 'previous_balance': previous_balance,  # ← ΝΕΟ FIELD
                 'reserve_fund_share': reserve_fund_share,  # ← ΝΕΟ FIELD - Αποθεματικό
-                'expense_share': expense_share,        # ← ΝΕΟ FIELD  
+                'expense_share': expense_share,        # ← ΝΕΟ FIELD
+                # ΝΕΑ FIELDS: Διαχωρισμός δαπανών ιδιοκτήτη/ενοίκου
+                'resident_expenses': resident_expenses,  # Δαπάνες Ενοίκου
+                'owner_expenses': owner_expenses,        # Δαπάνες Ιδιοκτήτη
                 'net_obligation': net_obligation,      # ← ΝΕΟ FIELD
                 'total_payments': total_payments_apartment,  # ← ΝΕΟ FIELD - Διόρθωση!
                 'participation_mills': apartment.participation_mills or 0,
