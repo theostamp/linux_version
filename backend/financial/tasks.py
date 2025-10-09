@@ -62,8 +62,9 @@ def create_monthly_management_fees():
                 continue
 
             # Δημιουργία management fees expense
-            # Ημερομηνία: τελευταία μέρα του μήνα
-            last_day_of_month = (current_month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+            # ΔΙΟΡΘΩΣΗ: Ημερομηνία είναι η ΠΡΩΤΗ του μήνα (όχι τελευταία)
+            # Έτσι τα management fees εμφανίζονται ως προηγούμενες οφειλές τον ΕΠΟΜΕΝΟ μήνα
+            expense_date = current_month_start  # Πρώτη του μήνα
 
             # Υπολογισμός συνολικού ποσού
             apartments_count = Apartment.objects.filter(building=building).count()
@@ -71,11 +72,17 @@ def create_monthly_management_fees():
 
             expense = Expense.objects.create(
                 building=building,
+                title=f'Διαχειριστικά Έξοδα {today.strftime("%B %Y")}',
                 amount=total_amount,
-                date=last_day_of_month,
+                date=expense_date,  # ΔΙΟΡΘΩΣΗ: Πρώτη του μήνα
+                due_date=expense_date,
                 category='management_fees',
-                description=f'Διαχειριστικά Έξοδα {today.strftime("%B %Y")}',
-                distribution_type='equal',  # Ισόποση κατανομή
+                expense_type='management_fee',  # ΔΙΟΡΘΩΣΗ: Προσθήκη expense_type για αναγνώριση
+                description=f'Αυτόματη καταχώρηση διαχειριστικών εξόδων για {today.strftime("%B %Y")}\n'
+                           f'Ποσό ανά διαμέρισμα: {building.management_fee_per_apartment}€\n'
+                           f'Αριθμός διαμερισμάτων: {apartments_count}\n'
+                           f'Συνολικό ποσό: {total_amount}€',
+                distribution_type='equal_share',  # ΔΙΟΡΘΩΣΗ: equal_share (όχι equal)
                 payer_responsibility='resident',  # Τα management fees πληρώνονται από τον ενοίκο
                 approved=True
             )
@@ -173,20 +180,23 @@ def backfill_management_fees(building_id: int, start_month: str, end_month: str 
             logger.info(f"⏭️ Management fees already exist for {current_date.strftime('%B %Y')}")
             skipped_count += 1
         else:
-            # Τελευταία μέρα του μήνα
-            if current_date.month == 12:
-                last_day = date(current_date.year, 12, 31)
-            else:
-                next_month = date(current_date.year, current_date.month + 1, 1)
-                last_day = next_month - timedelta(days=1)
+            # ΔΙΟΡΘΩΣΗ: Ημερομηνία είναι η ΠΡΩΤΗ του μήνα (όχι τελευταία)
+            # current_date είναι ήδη η πρώτη του μήνα
+            expense_date = current_date
 
             Expense.objects.create(
                 building=building,
+                title=f'Διαχειριστικά Έξοδα {current_date.strftime("%B %Y")}',
                 amount=total_amount,
-                date=last_day,
+                date=expense_date,  # ΔΙΟΡΘΩΣΗ: Πρώτη του μήνα
+                due_date=expense_date,
                 category='management_fees',
-                description=f'Διαχειριστικά Έξοδα {current_date.strftime("%B %Y")}',
-                distribution_type='equal',
+                expense_type='management_fee',  # ΔΙΟΡΘΩΣΗ: Προσθήκη expense_type
+                description=f'Backfill διαχειριστικών εξόδων για {current_date.strftime("%B %Y")}\n'
+                           f'Ποσό ανά διαμέρισμα: {building.management_fee_per_apartment}€\n'
+                           f'Αριθμός διαμερισμάτων: {apartments_count}\n'
+                           f'Συνολικό ποσό: {total_amount}€',
+                distribution_type='equal_share',  # ΔΙΟΡΘΩΣΗ: equal_share (όχι equal)
                 payer_responsibility='resident',
                 approved=True
             )

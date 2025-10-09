@@ -76,10 +76,19 @@ class Command(BaseCommand):
                 
                 for building in buildings:
                     self.stdout.write(f'  🏠 Κτίριο: {building.name} (ID: {building.id})')
-                    
+
+                    # ΔΙΟΡΘΩΣΗ: Έλεγχος αν ο τρέχων μήνας είναι μετά το financial_system_start_date
+                    if building.financial_system_start_date and target_date < building.financial_system_start_date:
+                        self.stdout.write(self.style.WARNING(
+                            f'    ⏭️ Παράλειψη - ο μήνας {month_str} είναι πριν την '
+                            f'ημερομηνία έναρξης συστήματος {building.financial_system_start_date}'
+                        ))
+                        total_skipped += 1
+                        continue
+
                     # Έλεγχος αν έχει οριστεί management fee
                     if not building.management_fee_per_apartment or building.management_fee_per_apartment == 0:
-                        self.stdout.write(self.style.WARNING('    ⚠️  Δεν έχει οριστεί αμοιβή διαχείρισης'))
+                        self.stdout.write(self.style.WARNING('    ⚠️  Δεν έχει οριστεί αμοιβή διαχείρησης'))
                         total_skipped += 1
                         continue
                     
