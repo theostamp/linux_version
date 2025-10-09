@@ -147,19 +147,14 @@ class BalanceIntegrityService:
     def _calculate_balance_from_transactions(self, apartment: Apartment) -> Decimal:
         """
         Υπολογίζει το υπόλοιπο από το ιστορικό συναλλαγών
+
+        ΣΗΜΕΙΩΣΗ: Αυτή η μέθοδος χρησιμοποιεί το BalanceCalculationService
+        για να διασφαλίσει consistency.
         """
-        transactions = Transaction.objects.filter(apartment=apartment).order_by('date', 'created_at')
-        
-        balance = Decimal('0.00')
-        
-        for transaction in transactions:
-            if transaction.type in ['payment', 'common_expense_payment', 'payment_received', 'refund']:
-                balance += transaction.amount
-            elif transaction.type in ['common_expense_charge', 'expense_created', 'expense_issued', 
-                                    'interest_charge', 'penalty_charge']:
-                balance -= transaction.amount
-        
-        return balance
+        from financial.balance_service import BalanceCalculationService
+
+        # Χρήση του κεντρικού service για σωστό υπολογισμό
+        return BalanceCalculationService.calculate_current_balance(apartment)
     
     def _detect_suspicious_transactions(self, apartment: Apartment) -> List[Dict[str, Any]]:
         """
@@ -260,13 +255,13 @@ class BalanceIntegrityService:
                 difference = abs(current_balance - correct_balance)
                 
                 if difference > Decimal('0.01') or force_correction:
-                    # Ενημέρωση υπολοίπου
-                    apartment.current_balance = correct_balance
-                    apartment.save()
-                    
+                    # Ενημέρωση υπολοίπου using BalanceCalculationService
+                    from financial.balance_service import BalanceCalculationService
+                    correct_balance = BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
+
                     result['new_balance'] = float(correct_balance)
                     result['correction_made'] = True
-                    
+
                     print(f"✅ Διορθώθηκε υπόλοιπο διαμερίσματος {apartment.number}: {current_balance}€ → {correct_balance}€")
                 else:
                     result['new_balance'] = float(current_balance)

@@ -141,22 +141,15 @@ class PaymentService:
     def _update_apartment_balance(self, apartment: Apartment):
         """
         Ενημέρωση υπολοίπου διαμερίσματος από transactions
+
+        ΣΗΜΕΙΩΣΗ: Αυτή η μέθοδος χρησιμοποιεί το BalanceCalculationService
+        για να διασφαλίσει consistency σε όλο το σύστημα.
         """
-        # Υπολογισμός από transactions
-        total_charges = Transaction.objects.filter(
-            apartment_number=apartment.number,
-            type__in=['common_expense_charge', 'expense_created', 'expense_issued',
-                     'interest_charge', 'penalty_charge']
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        from .balance_service import BalanceCalculationService
 
-        total_payments = Transaction.objects.filter(
-            apartment_number=apartment.number,
-            type__in=['common_expense_payment', 'payment_received', 'reserve_fund_payment',
-                     'refund']
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-
-        apartment.current_balance = total_payments - total_charges
-        apartment.save(update_fields=['current_balance'])
+        # Χρήση του κεντρικού service για consistency
+        # use_locking=False γιατί ήδη είμαστε μέσα σε atomic transaction
+        BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
 
     def _get_previous_obligations(self, apartment: Apartment, reference_date: date) -> Decimal:
         """
@@ -319,37 +312,51 @@ class BalanceCalculator:
                                    reference_date: Optional[date] = None) -> Dict[str, Decimal]:
         """
         Υπολογισμός αναλυτικού υπολοίπου διαμερίσματος
+
+        ΣΗΜΕΙΩΣΗ: Αυτή η μέθοδος χρησιμοποιεί το BalanceCalculationService
+        για να διασφαλίσει consistency και σωστό sign convention.
         """
+        from .balance_service import BalanceCalculationService
+        from .transaction_types import TransactionType
+
         apartment = Apartment.objects.get(id=apartment_id)
 
         if not reference_date:
             reference_date = date.today()
 
-        # Υπολογισμός συνολικών χρεώσεων
+        # Χρήση BalanceCalculationService για σωστό υπολογισμό
+        if reference_date == date.today():
+            # Τρέχον balance
+            balance = BalanceCalculationService.calculate_current_balance(apartment)
+        else:
+            # Ιστορικό balance
+            balance = BalanceCalculationService.calculate_historical_balance(
+                apartment,
+                reference_date,
+                include_management_fees=True
+            )
+
+        # Υπολογισμός breakdown για αναλυτική αναφορά
         total_charges = Transaction.objects.filter(
-            apartment_number=apartment.number,
+            apartment=apartment,
             date__lte=timezone.make_aware(datetime.combine(reference_date, datetime.max.time())),
-            type__in=['common_expense_charge', 'expense_created', 'expense_issued',
-                     'interest_charge', 'penalty_charge']
+            type__in=TransactionType.get_charge_types()
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
-        # Υπολογισμός συνολικών πληρωμών
         total_payments = Transaction.objects.filter(
-            apartment_number=apartment.number,
+            apartment=apartment,
             date__lte=timezone.make_aware(datetime.combine(reference_date, datetime.max.time())),
-            type__in=['common_expense_payment', 'payment_received', 'reserve_fund_payment',
-                     'refund']
+            type__in=TransactionType.get_payment_types()
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
-        balance = total_payments - total_charges
-
+        # ΣΗΜΕΙΩΣΗ: balance = charges - payments (θετικό = χρέος)
         return {
             'total_charges': total_charges,
             'total_payments': total_payments,
             'balance': balance,
-            'has_debt': balance < 0,
-            'debt_amount': abs(balance) if balance < 0 else Decimal('0'),
-            'credit_amount': balance if balance > 0 else Decimal('0')
+            'has_debt': balance > 0,  # ✅ Σωστό: θετικό = χρέος
+            'debt_amount': balance if balance > 0 else Decimal('0'),
+            'credit_amount': abs(balance) if balance < 0 else Decimal('0')
         }
 
     def calculate_monthly_balance(self,

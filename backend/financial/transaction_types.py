@@ -38,6 +38,7 @@ class TransactionType(models.TextChoices):
     COMMON_EXPENSE_PAYMENT = 'common_expense_payment', 'Είσπραξη Κοινοχρήστων'
     EXPENSE_PAYMENT = 'expense_payment', 'Είσπραξη Δαπάνης'
     PAYMENT_RECEIVED = 'payment_received', 'Είσπραξη Ληφθείσα'
+    RESERVE_FUND_PAYMENT = 'reserve_fund_payment', 'Πληρωμή Αποθεματικού'
     REFUND = 'refund', 'Επιστροφή'
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -93,6 +94,7 @@ class TransactionType(models.TextChoices):
             cls.COMMON_EXPENSE_PAYMENT,
             cls.EXPENSE_PAYMENT,
             cls.PAYMENT_RECEIVED,
+            cls.RESERVE_FUND_PAYMENT,
             cls.REFUND,
         }
         return transaction_type in payment_types
@@ -157,6 +159,7 @@ class TransactionType(models.TextChoices):
             cls.COMMON_EXPENSE_PAYMENT,
             cls.EXPENSE_PAYMENT,
             cls.PAYMENT_RECEIVED,
+            cls.RESERVE_FUND_PAYMENT,
             cls.REFUND,
         ]
 

@@ -220,10 +220,10 @@ class Command(BaseCommand):
 
     def _fix_apartment_balances(self, invalid_balances):
         """Διόρθωση υπολοίπων διαμερισμάτων"""
+        from financial.balance_service import BalanceCalculationService
         for apartment, validation_data in invalid_balances:
             with db_transaction.atomic():
-                apartment.current_balance = validation_data['calculated_balance']
-                apartment.save(update_fields=['current_balance'])
+                BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
 
     def _check_duplicate_transactions(self, building):
         """Έλεγχος για διπλά transactions"""

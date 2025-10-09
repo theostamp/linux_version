@@ -340,25 +340,14 @@ class PaymentViewSet(viewsets.ModelViewSet):
             apartments = Apartment.objects.filter(building_id=building_id)
             updated_count = 0
 
+            # Use BalanceCalculationService for consistent balance calculation
+            from financial.balance_service import BalanceCalculationService
+
             for apartment in apartments:
-                # Υπολογισμός από transactions
-                total_charges = Transaction.objects.filter(
-                    apartment_number=apartment.number,
-                    type__in=['common_expense_charge', 'expense_created', 'expense_issued',
-                             'interest_charge', 'penalty_charge']
-                ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+                old_balance = apartment.current_balance or Decimal('0.00')
+                new_balance = BalanceCalculationService.update_apartment_balance(apartment, use_locking=True)
 
-                total_payments = Transaction.objects.filter(
-                    apartment_number=apartment.number,
-                    type__in=['common_expense_payment', 'payment_received', 'reserve_fund_payment',
-                             'refund']
-                ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-
-                new_balance = total_payments - total_charges
-
-                if apartment.current_balance != new_balance:
-                    apartment.current_balance = new_balance
-                    apartment.save(update_fields=['current_balance'])
+                if old_balance != new_balance:
                     updated_count += 1
 
             return Response({

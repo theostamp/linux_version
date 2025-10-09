@@ -16,10 +16,10 @@ class Command(BaseCommand):
             
             self.stdout.write(f"🏠 Διαμέρισμα: {apartment.number}")
             self.stdout.write(f"💰 Παλιό Υπόλοιπο: {apartment.current_balance}€")
-            
-            # Διόρθωση του υπολοίπου
-            apartment.current_balance = Decimal('0.00')
-            apartment.save()
-            
-            self.stdout.write(f"✅ Νέο Υπόλοιπο: {apartment.current_balance}€")
+
+            # Διόρθωση του υπολοίπου using BalanceCalculationService
+            from financial.balance_service import BalanceCalculationService
+            new_balance = BalanceCalculationService.update_apartment_balance(apartment, use_locking=True)
+
+            self.stdout.write(f"✅ Νέο Υπόλοιπο: {new_balance}€")
             self.stdout.write(self.style.SUCCESS("🎉 Το υπόλοιπο διορθώθηκε επιτυχώς!"))

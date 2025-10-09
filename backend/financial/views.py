@@ -224,10 +224,10 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                     expense_share = share_data.get('total_amount', 0)
                     
                     if expense_share > 0:
-                        # Ενημέρωση υπόλοιπου διαμερίσματος
-                        apartment.current_balance = (apartment.current_balance or Decimal('0.00')) - expense_share
-                        apartment.save()
-                        
+                        # Get current balance before creating transaction
+                        current_balance = apartment.current_balance or Decimal('0.00')
+                        new_balance = current_balance - expense_share
+
                         # Δημιουργία transaction
                         Transaction.objects.create(
                             building=expense.building,
@@ -237,12 +237,16 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                             apartment_number=apartment.number,
                             apartment=apartment,
                             amount=-expense_share,
-                            balance_before=(apartment.current_balance or Decimal('0.00')) + expense_share,
-                            balance_after=apartment.current_balance,
+                            balance_before=current_balance,
+                            balance_after=new_balance,
                             reference_id=str(expense.id),
                             reference_type='expense',
                             created_by=self.request.user.username if self.request.user else 'System'
                         )
+
+                        # Ενημέρωση υπόλοιπου διαμερίσματος using BalanceCalculationService
+                        from .balance_service import BalanceCalculationService
+                        BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
             except Exception as e:
                 # Αν αποτύχει η αυτόματη χρέωση, καταγράφουμε το σφάλμα αλλά δεν διακόπτουμε τη δημιουργία
                 print(f"Σφάλμα στην αυτόματη χρέωση διαμερισμάτων: {str(e)}")
@@ -352,29 +356,48 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                 from apartments.models import Apartment
                 try:
                     apartment = Apartment.objects.get(
-                        building=building, 
+                        building=building,
                         number=transaction_data['apartment_number']
                     )
                     old_balance = apartment.current_balance or Decimal('0.00')
-                    
+
                     # Αφαιρούμε την χρέωση (προσθέτουμε το ποσό γιατί οι χρεώσεις είναι αρνητικές)
+                    # Note: After transactions are deleted, we'll recalculate using BalanceCalculationService
                     new_balance = old_balance - transaction_data['amount']
-                    apartment.current_balance = new_balance
-                    apartment.save()
-                    
-                    print(f"   🏠 Διαμέρισμα {apartment.number}: {old_balance}€ → {new_balance}€")
+
+                    print(f"   🏠 Διαμέρισμα {apartment.number}: {old_balance}€ → {new_balance}€ (θα επανυπολογιστεί)")
                 except Apartment.DoesNotExist:
                     print(f"   ⚠️ Διαμέρισμα {transaction_data['apartment_number']} δεν βρέθηκε")
         
         # Διαγραφή των σχετικών συναλλαγών
         deleted_count = len(related_transactions_data)
+        affected_apartments = []
         if deleted_count > 0:
+            # Track affected apartments for balance recalculation
+            for transaction_data in related_transactions_data:
+                if transaction_data['apartment_number']:
+                    try:
+                        apartment = Apartment.objects.get(
+                            building=building,
+                            number=transaction_data['apartment_number']
+                        )
+                        affected_apartments.append(apartment)
+                    except Apartment.DoesNotExist:
+                        pass
+
             Transaction.objects.filter(
                 building_id=building.id,
                 reference_type='expense',
                 reference_id=str(expense_id)
             ).delete()
         print(f"   ✅ Διαγράφηκαν {deleted_count} συναλλαγές")
+
+        # Recalculate balances for affected apartments using BalanceCalculationService
+        if affected_apartments:
+            from .balance_service import BalanceCalculationService
+            for apartment in affected_apartments:
+                BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
+            print(f"   ✅ Επανυπολογίστηκαν τα υπόλοιπα για {len(affected_apartments)} διαμερίσματα")
         
         # ΔΕΥΤΕΡΑ: Επαναφορά του αποθεματικού του κτιρίου
         building.current_reserve += instance.amount
@@ -732,28 +755,27 @@ class PaymentViewSet(viewsets.ModelViewSet):
         building.current_reserve += payment.amount
         building.save()
         
-        # Ενημέρωση του υπολοίπου του διαμερίσματος
+        # Get previous balance for transaction record
         apartment = payment.apartment
         previous_balance = apartment.current_balance or 0
-        apartment.current_balance = previous_balance + payment.amount
-        apartment.save()
-        
+        new_balance = previous_balance + payment.amount
+
         # Δημιουργία αντίστοιχου Transaction record
         from .models import Transaction
-        
+
         # Προσθήκη πληροφοριών αποθεματικού στις σημειώσεις αν υπάρχει
         description = f"Είσπραξη κοινοχρήστων από {apartment.number} - {payment.get_method_display()}"
         if payment.reserve_fund_amount and float(payment.reserve_fund_amount) > 0:
             description += f" (Αποθεματικό: {payment.reserve_fund_amount}€)"
-        
+
         # Convert payment.date (DateField) to DateTimeField for Transaction
         from datetime import datetime
         from django.utils import timezone
-        
+
         payment_datetime = datetime.combine(payment.date, datetime.min.time())
         if timezone.is_naive(payment_datetime):
             payment_datetime = timezone.make_aware(payment_datetime)
-        
+
         Transaction.objects.create(
             building=building,
             apartment=apartment,
@@ -763,12 +785,16 @@ class PaymentViewSet(viewsets.ModelViewSet):
             description=description,
             amount=payment.amount,
             balance_before=previous_balance,
-            balance_after=apartment.current_balance,
+            balance_after=new_balance,
             reference_id=str(payment.id),
             reference_type='payment',
             notes=payment.notes,
             created_by=str(self.request.user) if self.request.user.is_authenticated else 'System'
         )
+
+        # Ενημέρωση υπολοίπου διαμερίσματος using BalanceCalculationService
+        from .balance_service import BalanceCalculationService
+        BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
         
         # Χειρισμός file upload αν υπάρχει
         if 'receipt' in self.request.FILES:
@@ -781,18 +807,18 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 # Αν αποτύχει το file upload, διαγράφουμε την payment και επαναφέρουμε τις αλλαγές
                 building.current_reserve -= payment.amount
                 building.save()
-                
-                # Επαναφορά υπολοίπου διαμερίσματος
-                apartment.current_balance = previous_balance
-                apartment.save()
-                
+
                 # Διαγραφή του transaction που δημιουργήθηκε
                 from .models import Transaction
                 Transaction.objects.filter(
                     reference_id=str(payment.id),
                     reference_type='payment'
                 ).delete()
-                
+
+                # Επαναφορά υπολοίπου διαμερίσματος using BalanceCalculationService
+                from .balance_service import BalanceCalculationService
+                BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
+
                 payment.delete()
                 raise ValidationError(f"Σφάλμα στο upload αρχείου: {str(e)}")
         
@@ -1934,10 +1960,10 @@ class CommonExpenseViewSet(viewsets.ViewSet):
                     reference_id=str(period.id),
                     reference_type='common_expense_period'
                 )
-                
-                # Ενημέρωση υπολοίπου διαμερίσματος
-                apartment.current_balance = total_due
-                apartment.save()
+
+                # Ενημέρωση υπολοίπου διαμερίσματος using BalanceCalculationService
+                from financial.balance_service import BalanceCalculationService
+                BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
             
             # Σημείωση: Οι δαπάνες θεωρούνται αυτόματα εκδοθείσες
             # Δεν χρειάζεται πλέον μαρκάρισμα ως εκδοθείσες

@@ -230,14 +230,15 @@ class BalanceCalculationService:
         return running_balance
 
     @staticmethod
-    def update_apartment_balance(apartment: Apartment) -> Decimal:
+    def update_apartment_balance(apartment: Apartment, use_locking: bool = True) -> Decimal:
         """
         Ενημέρωση του apartment.current_balance με το σωστό υπόλοιπο
 
         Αυτή η function:
-        1. Υπολογίζει το τρέχον υπόλοιπο
-        2. Αποθηκεύει το στο apartment.current_balance
-        3. Επιστρέφει το νέο υπόλοιπο
+        1. Κλειδώνει το apartment record (αν use_locking=True) για αποφυγή race conditions
+        2. Υπολογίζει το τρέχον υπόλοιπο
+        3. Αποθηκεύει το στο apartment.current_balance
+        4. Επιστρέφει το νέο υπόλοιπο
 
         Χρησιμοποιείται από:
         - Signals (post_save/post_delete) ✅
@@ -246,6 +247,7 @@ class BalanceCalculationService:
 
         Args:
             apartment: Το διαμέρισμα του οποίου θα ενημερωθεί το υπόλοιπο
+            use_locking: Αν True, χρησιμοποιεί select_for_update() για locking (default: True)
 
         Returns:
             Decimal: Το νέο υπόλοιπο
@@ -256,15 +258,34 @@ class BalanceCalculationService:
             >>> print(f"Updated balance: {new_balance}")
             Updated balance: 100.00
             >>> assert apartment.current_balance == new_balance
+
+        Warning:
+            Αν καλείται μέσα σε transaction που ήδη έχει lock, θέστε use_locking=False
         """
+        from django.db import transaction
+
         start_time = time.time()
-        old_balance = apartment.current_balance or Decimal('0.00')
 
-        new_balance = BalanceCalculationService.calculate_current_balance(apartment)
+        # Lock apartment για παράλληλες ενημερώσεις (race condition protection)
+        if use_locking:
+            with transaction.atomic():
+                apartment = Apartment.objects.select_for_update().get(id=apartment.id)
+                old_balance = apartment.current_balance or Decimal('0.00')
 
-        # Update the apartment's current_balance field
-        apartment.current_balance = new_balance
-        apartment.save(update_fields=['current_balance'])
+                new_balance = BalanceCalculationService.calculate_current_balance(apartment)
+
+                # Update the apartment's current_balance field
+                apartment.current_balance = new_balance
+                apartment.save(update_fields=['current_balance'])
+        else:
+            # Χωρίς locking (όταν καλείται μέσα σε transaction που ήδη έχει lock)
+            old_balance = apartment.current_balance or Decimal('0.00')
+
+            new_balance = BalanceCalculationService.calculate_current_balance(apartment)
+
+            # Update the apartment's current_balance field
+            apartment.current_balance = new_balance
+            apartment.save(update_fields=['current_balance'])
 
         # Performance logging
         elapsed_time = (time.time() - start_time) * 1000  # ms

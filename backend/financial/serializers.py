@@ -221,33 +221,18 @@ class PaymentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
     
     def get_current_balance(self, obj):
-        """Υπολογισμός τρέχοντος υπολοίπου διαμερίσματος βάσει συναλλαγών"""
+        """
+        Υπολογισμός τρέχοντος υπολοίπου διαμερίσματος βάσει συναλλαγών
+
+        ΣΗΜΕΙΩΣΗ: Αυτή η μέθοδος χρησιμοποιεί το BalanceCalculationService
+        για να διασφαλίσει consistency.
+        """
         try:
-            from decimal import Decimal
-            from .models import Transaction
-            
-            # Παίρνουμε όλες τις συναλλαγές του διαμερίσματος ταξινομημένες χρονολογικά
-            transactions = Transaction.objects.filter(
-                apartment=obj.apartment
-            ).order_by('date', 'id')
-            
-            # Αρχίζουμε από υπόλοιπο 0 και υπολογίζουμε προοδευτικά
-            running_balance = Decimal('0.00')
-            
-            for transaction in transactions:
-                # Τύποι που προσθέτουν στο υπόλοιπο (εισπράξεις)
-                if transaction.type in ['common_expense_payment', 'payment_received', 'refund']:
-                    running_balance += transaction.amount
-                # Τύποι που αφαιρούν από το υπόλοιπο (χρεώσεις)
-                elif transaction.type in ['common_expense_charge', 'expense_created', 'expense_issued', 
-                                        'interest_charge', 'penalty_charge']:
-                    running_balance -= transaction.amount
-                # Για balance_adjustment χρησιμοποιούμε το balance_after αν υπάρχει
-                elif transaction.type == 'balance_adjustment':
-                    if transaction.balance_after is not None:
-                        running_balance = transaction.balance_after
-            
-            return float(running_balance)
+            from .balance_service import BalanceCalculationService
+
+            # Χρήση του κεντρικού service για σωστό υπολογισμό
+            balance = BalanceCalculationService.calculate_current_balance(obj.apartment)
+            return float(balance)
         except Exception:
             # Fallback στο στατικό current_balance αν κάτι πάει στραβά
             try:

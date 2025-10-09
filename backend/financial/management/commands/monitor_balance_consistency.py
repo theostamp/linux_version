@@ -58,13 +58,13 @@ class Command(BaseCommand):
                     
                     # Αυτόματη διόρθωση αν ζητήθηκε
                     if options.get('fix'):
-                        apartment.current_balance = expected_balance
-                        apartment.save(update_fields=['current_balance'])
+                        from financial.balance_service import BalanceCalculationService
+                        new_balance = BalanceCalculationService.update_apartment_balance(apartment, use_locking=True)
                         total_fixed += 1
-                        
+
                         self.stdout.write(
                             self.style.SUCCESS(
-                                f"✅ Διορθώθηκε: {apartment.number} → {expected_balance:,.2f}€"
+                                f"✅ Διορθώθηκε: {apartment.number} → {new_balance:,.2f}€"
                             )
                         )
                 else:

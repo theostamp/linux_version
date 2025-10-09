@@ -354,10 +354,10 @@ class Expense(models.Model):
                     balance_before=current_balance,
                     balance_after=new_balance
                 )
-                
-                # Update apartment balance
-                apartment.current_balance = new_balance
-                apartment.save()
+
+                # Update apartment balance using BalanceCalculationService
+                from .balance_service import BalanceCalculationService
+                BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
     
     def _calculate_apartment_share(self, apartment):
         """Υπολογίζει το μερίδιο διαμερίσματος για τη δαπάνη"""
@@ -466,69 +466,6 @@ class Transaction(models.Model):
             self.payer_responsibility = 'resident'
 
         super().save(*args, **kwargs)
-    
-    def _create_apartment_transactions(self):
-        """Δημιουργεί συναλλαγές για όλα τα διαμερίσματα"""
-        from apartments.models import Apartment
-        from decimal import Decimal
-        
-        # Get all apartments in the building
-        apartments = Apartment.objects.filter(building=self.building)
-        
-        # Calculate share for each apartment based on allocation type
-        for apartment in apartments:
-            share_amount = self._calculate_apartment_share(apartment)
-            
-            if share_amount > 0:
-                # Calculate balances
-                current_balance = apartment.current_balance or Decimal('0.00')
-                new_balance = current_balance + share_amount  # Προσθήκη χρέους
-                
-                # Create transaction for this apartment
-                Transaction.objects.create(
-                    apartment=apartment,
-                    building=self.building,
-                    amount=share_amount,
-                    type='expense_created',
-                    description=f"Δαπάνη: {self.title}",
-                    date=self.date,
-                    reference_id=str(self.id),
-                    reference_type='expense',
-                    balance_before=current_balance,
-                    balance_after=new_balance
-                )
-                
-                # Update apartment balance
-                apartment.current_balance = new_balance
-                apartment.save()
-    
-    def _calculate_apartment_share(self, apartment):
-        """Υπολογίζει το μερίδιο διαμερίσματος για τη δαπάνη"""
-        from decimal import Decimal
-        
-        if self.allocation_type == 'equal_share':
-            # Ισόποσα κατανομή
-            total_apartments = Apartment.objects.filter(building=self.building).count()
-            return self.amount / total_apartments if total_apartments > 0 else Decimal('0.00')
-        
-        elif self.allocation_type == 'by_participation_mills':
-            # Κατανομή βάσει χιλιοστών
-            total_mills = sum(apt.participation_mills or 0 for apt in Apartment.objects.filter(building=self.building))
-            if total_mills > 0:
-                apartment_mills = apartment.participation_mills or 0
-                return (self.amount * apartment_mills) / total_mills
-            return Decimal('0.00')
-        
-        elif self.allocation_type == 'by_meters':
-            # Κατανομή βάσει τετραγωνικών μέτρων
-            total_meters = sum(apt.square_meters or 0 for apt in Apartment.objects.filter(building=self.building))
-            if total_meters > 0:
-                apartment_meters = apartment.square_meters or 0
-                return (self.amount * apartment_meters) / total_meters
-            return Decimal('0.00')
-        
-        else:
-            return Decimal('0.00')
 
 
 class Payment(models.Model):
@@ -608,10 +545,10 @@ class Payment(models.Model):
             balance_before=current_balance,
             balance_after=new_balance
         )
-        
-        # Update apartment balance
-        self.apartment.current_balance = new_balance
-        self.apartment.save()
+
+        # Update apartment balance using BalanceCalculationService
+        from .balance_service import BalanceCalculationService
+        BalanceCalculationService.update_apartment_balance(self.apartment, use_locking=False)
 
 
 class ExpenseApartment(models.Model):

@@ -2077,10 +2077,10 @@ class CommonExpenseAutomationService:
                 reference_id=str(period.id),
                 reference_type='common_expense_period'
             )
-            
-            # Ενημέρωση υπολοίπου διαμερίσματος
-            apartment.current_balance = total_due
-            apartment.save()
+
+            # Ενημέρωση υπολοίπου διαμερίσματος using BalanceCalculationService
+            from .balance_service import BalanceCalculationService
+            BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
         
         # Σημείωση: Οι δαπάνες θεωρούνται αυτόματα εκδομένες
         # Δεν χρειάζεται πλέον μαρκάρισμα ως εκδοθείσες
@@ -2802,16 +2802,15 @@ class DataIntegrityService:
                 })
                 transaction.delete()
             
-            # Recalculate apartment balances
+            # Recalculate apartment balances using BalanceCalculationService
+            from .balance_service import BalanceCalculationService
             apartments = Apartment.objects.filter(building_id=self.building_id)
             updated_balances = {}
-            
+
             for apartment in apartments:
                 old_balance = apartment.current_balance or 0
-                new_balance = self._calculate_apartment_balance(apartment)
-                apartment.current_balance = new_balance
-                apartment.save()
-                
+                new_balance = BalanceCalculationService.update_apartment_balance(apartment, use_locking=False)
+
                 if old_balance != new_balance:
                     updated_balances[apartment.number] = {
                         'old': float(old_balance),
