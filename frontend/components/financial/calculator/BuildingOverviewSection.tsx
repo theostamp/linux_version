@@ -1228,7 +1228,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                         </span>
                         <span className="text-gray-500 mx-1">/</span>
                         <span className="text-red-600">
-                          {formatCurrency(Math.abs((financialSummary.average_monthly_expenses || 0) + (financialSummary.total_management_cost || 0) + (isMonthWithinReserveFundPeriod() ? (financialSummary.reserve_fund_monthly_target || 0) : 0) + (financialSummary.previous_obligations || 0)))}
+                          {formatCurrency(Math.abs(financialSummary?.current_obligations || 0))}
                         </span>
                       </div>
                       <Button
