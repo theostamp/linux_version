@@ -51,7 +51,7 @@ def verify_ultra_clean_ui():
         
         print("🧮 ΥΠΟΛΟΓΙΣΜΟΙ:")
         print("-" * 25)
-        print(f"1️⃣ Οικονομικές Υποχρεώσεις Περιόδου: {monthly_obligations:,.2f}€")
+        print(f"1️⃣ Μηνιαίο: {monthly_obligations:,.2f}€")
         print(f"2️⃣ Παλαιότερες οφειλές: {previous_obligations:,.2f}€")
         print(f"3️⃣ Συνολικό ποσό: {total_amount:,.2f}€")
         print()
@@ -80,7 +80,7 @@ def verify_ultra_clean_ui():
         print("│                                                       │")
         print("│  Τι πρέπει να πληρωθεί αυτόν τον μήνα:               │")
         print("│                                                       │")
-        print(f"│  🔴 Οικονομικές Υποχρεώσεις Περιόδου: {monthly_obligations:>8,.2f}€  │")
+        print(f"│  🔴 Μηνιαίο: {monthly_obligations:>8,.2f}€  │")
         print("│                                                       │")
         if previous_obligations > 0:
             print(f"│  🟣 Παλαιότερες οφειλές: {previous_obligations:>8,.2f}€  │")

@@ -73,7 +73,7 @@ def test_obligations_consistency():
             
             print()
             print("📋 SUMMARY:")
-            print(f"   • Οικονομικές Υποχρεώσεις Περιόδου: {monthly_obligations:.2f}€")
+            print(f"   • Μηνιαίο: {monthly_obligations:.2f}€")
             print(f"   • Υπόλοιπο Περιόδου: {abs(monthly_balance):.2f}€")
             
             if abs(monthly_obligations - abs(monthly_balance)) < 0.01:

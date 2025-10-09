@@ -469,6 +469,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         total_balance: apiData.total_balance || 0,
         current_obligations: apiData.current_obligations || 0,
         previous_obligations: apiData.previous_obligations || 0, // ← ΝΕΟ FIELD
+        current_month_expenses: apiData.current_month_expenses || 0, // ← ΝΕΟ FIELD: Δαπάνες μόνο τρέχοντος μήνα
         reserve_fund_debt: -calculatedReserveFundDebt, // Χρέος από εισφορά αποθεματικού - DYNAMIC
         reserve_fund_goal: savedGoal,
         current_reserve: apiData.current_reserve || 0,
@@ -1246,10 +1247,16 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     {/* Τρέχουσες υποχρεώσεις - μόνο του μήνα */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-red-700 font-medium">Οικονομικές Υποχρεώσεις Περιόδου:</span>
+                        <span className="text-xs text-red-700 font-medium">Μηνιαίο:</span>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm text-red-800">
-                            {formatCurrency(Math.abs(financialSummary.current_month_expenses || financialSummary.current_obligations || 0))}
+                            {(() => {
+                              console.log('🔍 DEBUG current_month_expenses:', financialSummary.current_month_expenses);
+                              console.log('🔍 DEBUG current_obligations:', financialSummary.current_obligations);
+                              const value = financialSummary.current_month_expenses || financialSummary.current_obligations || 0;
+                              console.log('🔍 DEBUG final value:', value);
+                              return formatCurrency(Math.abs(value));
+                            })()}
                           </span>
                           <Button
                             variant="ghost"
