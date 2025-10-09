@@ -766,7 +766,7 @@ class FinancialDashboardService:
                     ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
 
                     payments_before_month = Payment.objects.filter(
-                        building_id=self.building_id,
+                        apartment__building_id=self.building_id,
                         date__lt=date(year, mon, 1)
                     ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
 
