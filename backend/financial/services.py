@@ -757,27 +757,55 @@ class FinancialDashboardService:
                 previous_obligations = Decimal('0.00')
 
                 try:
-                    # 🔧 ΔΙΟΡΘΩΣΗ 2025-10-09: Previous Obligations = Δαπάνες - Πληρωμές (πριν τον μήνα)
-                    # ΟΧΙ απλά το άθροισμα των δαπανών - πρέπει να αφαιρέσουμε τις πληρωμές!
+                    # 🔧 ΔΙΟΡΘΩΣΗ 2025-10-09: Previous Obligations = (Expenses + Management Fees + Reserve Fund) - Payments (πριν τον μήνα)
+                    # Δεν μπορούμε να κάνουμε recursive γιατί θα πάει μέχρι την αρχή των χρόνων
 
+                    # 1. Expenses πριν τον μήνα
                     expenses_before_month = Expense.objects.filter(
                         building_id=self.building_id,
                         date__lt=date(year, mon, 1)
                     ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
 
+                    # 2. Payments πριν τον μήνα
                     payments_before_month = Payment.objects.filter(
                         apartment__building_id=self.building_id,
                         date__lt=date(year, mon, 1)
                     ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
 
-                    previous_obligations = expenses_before_month - payments_before_month
+                    # 3. Management fees πριν τον μήνα (υπολογισμός)
+                    # Μετράμε πόσοι μήνες από financial_system_start_date μέχρι τον προηγούμενο μήνα
+                    management_fees_before = Decimal('0.00')
+                    if building.financial_system_start_date:
+                        start_date = building.financial_system_start_date
+                        target_date = date(year, mon, 1)
+
+                        # Υπολογισμός μηνών
+                        months_count = 0
+                        current_date = start_date
+                        while current_date < target_date:
+                            months_count += 1
+                            # Επόμενος μήνας
+                            if current_date.month == 12:
+                                current_date = date(current_date.year + 1, 1, 1)
+                            else:
+                                current_date = date(current_date.year, current_date.month + 1, 1)
+
+                        management_fees_before = management_fee_per_apartment * apartments_count * months_count
+
+                    # 4. Reserve fund ΗΔΗ περιλαμβάνεται στα expenses_before_month
+                    # Δεν το προσθέτουμε ξεχωριστά για να αποφύγουμε διπλό μέτρημα
+
+                    previous_obligations = expenses_before_month + management_fees_before - payments_before_month
 
                     print(f"🔍 Previous obligations for {year}-{mon:02d}: €{previous_obligations:.2f}")
-                    print(f"   Expenses before month: €{expenses_before_month:.2f}")
+                    print(f"   Expenses before month: €{expenses_before_month:.2f} (includes reserve fund)")
+                    print(f"   Management fees before: €{management_fees_before:.2f}")
                     print(f"   Payments before month: €{payments_before_month:.2f}")
 
                 except Exception as e:
                     print(f"⚠️ Error calculating previous obligations: {e}")
+                    import traceback
+                    traceback.print_exc()
                     previous_obligations = Decimal('0.00')
             except Exception as e:
                 print(f"⚠️ Error calculating previous obligations for {month}: {e}")
@@ -812,8 +840,10 @@ class FinancialDashboardService:
             management_cost_adjustment = total_management_cost - management_fees_in_expenses
 
             # 🔧 ΔΙΟΡΘΩΣΗ 2025-10-09: Προσθήκη previous_obligations στο current_obligations
-            # Οι συνολικές υποχρεώσεις του μήνα = Δαπάνες μήνα + Παλαιότερες οφειλές
-            current_obligations = total_expenses_this_month + management_cost_adjustment + reserve_fund_monthly_target + previous_obligations
+            # Οι συνολικές υποχρεώσεις του μήνα = Δαπάνες μήνα + Management adjustment + Παλαιότερες οφειλές
+            # ΣΗΜ: Το reserve_fund ΗΔΗ περιλαμβάνεται στα expenses (category='reserve_fund')
+            # ΔΕΝ το προσθέτουμε ξεχωριστά για να αποφύγουμε διπλό μέτρημα
+            current_obligations = total_expenses_this_month + management_cost_adjustment + previous_obligations
         else:
             # For current view, use total obligations
             current_obligations = total_obligations
