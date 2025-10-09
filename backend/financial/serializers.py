@@ -499,6 +499,7 @@ class FinancialSummarySerializer(serializers.Serializer):
     total_balance = serializers.FloatField()
     current_obligations = serializers.FloatField()
     previous_obligations = serializers.FloatField()  # ← ΝΕΟ FIELD
+    current_month_expenses = serializers.FloatField()  # ← ΝΕΟ FIELD
     reserve_fund_contribution = serializers.FloatField()
     current_reserve = serializers.FloatField()
     has_monthly_activity = serializers.BooleanField()  # ← ΝΕΟ FIELD

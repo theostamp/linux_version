@@ -1242,14 +1242,14 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   {/* Ανάλυση κάλυψης υποχρεώσεων */}
                   <div className="pt-2 border-t border-gray-200 space-y-3">
                     <div className="text-xs font-medium text-gray-700 mb-2">Τι πρέπει να πληρωθεί αυτόν τον μήνα:</div>
-                    
-                    {/* Τρέχουσες υποχρεώσεις */}
+
+                    {/* Τρέχουσες υποχρεώσεις - μόνο του μήνα */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-red-700 font-medium">Οικονομικές Υποχρεώσεις Περιόδου:</span>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm text-red-800">
-                            {formatCurrency(Math.abs(financialSummary.current_obligations || 0))}
+                            {formatCurrency(Math.abs(financialSummary.current_month_expenses || financialSummary.current_obligations || 0))}
                           </span>
                           <Button
                             variant="ghost"

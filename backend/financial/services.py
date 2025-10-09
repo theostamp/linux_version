@@ -803,12 +803,15 @@ class FinancialDashboardService:
         print(f"🔧 TOTAL BALANCE: current_reserve={current_reserve} - current_obligations={current_obligations} = {total_balance}")
 
         # 🔧 ΝΕΟΟ FIELD: Δαπάνες μόνο του τρέχοντος μήνα (χωρίς παλαιότερες οφειλές)
-        current_month_expenses = current_obligations - previous_obligations
+        # Διασφαλίζουμε ότι previous_obligations δεν είναι None
+        safe_previous_obligations = previous_obligations if previous_obligations is not None else Decimal('0.00')
+        current_month_expenses = current_obligations - safe_previous_obligations
+        print(f"🔧 CURRENT MONTH EXPENSES: {current_month_expenses} = {current_obligations} - {safe_previous_obligations}")
 
         return {
             'total_balance': float(total_balance.quantize(Decimal('0.01'))),
             'current_obligations': float(current_obligations.quantize(Decimal('0.01'))),
-            'previous_obligations': float(previous_obligations.quantize(Decimal('0.01'))),  # ← ΝΕΟ FIELD
+            'previous_obligations': float(safe_previous_obligations.quantize(Decimal('0.01'))),  # ← ΝΕΟ FIELD
             'current_month_expenses': float(current_month_expenses.quantize(Decimal('0.01'))),  # ← ΝΕΟ FIELD
             'reserve_fund_contribution': float(reserve_fund_contribution.quantize(Decimal('0.01'))),
             'current_reserve': float(current_reserve.quantize(Decimal('0.01'))),

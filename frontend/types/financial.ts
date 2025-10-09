@@ -146,6 +146,7 @@ export interface FinancialSummary {
   total_obligations: number;
   previous_obligations?: number;
   current_obligations?: number;
+  current_month_expenses?: number;  // Νέο πεδίο: Δαπάνες μόνο του τρέχοντος μήνα
   total_expenses_this_month: number;
   total_payments_this_month: number;
   recent_transactions: Transaction[];
