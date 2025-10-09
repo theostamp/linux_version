@@ -737,49 +737,7 @@ class FinancialDashboardService:
         print(f"🔍 FinancialDashboard ({calculation_context}): current_reserve={current_reserve}, total_obligations={total_obligations}")
         print(f"🔍 FinancialDashboard ({calculation_context}): total_balance={total_balance}")
         
-        # Calculate current obligations (should include management costs and reserve fund for consistency)
-        if month:
-            # For snapshot view, current obligations should include management costs and reserve fund
-            # ΔΙΟΡΘΩΣΗ: Μη διπλό μέτρημα - τα management fees περιλαμβάνονται ήδη στο total_expenses_this_month
-            # Αφαιρούμε τα management fees από το total_management_cost για να αποφύγουμε διπλό μέτρημα
-            from datetime import date
-            if month:
-                year, mon = map(int, month.split('-'))
-                month_start = date(year, mon, 1)
-                month_end = date(year, mon + 1, 1) if mon < 12 else date(year + 1, 1, 1)
-            else:
-                month_start = date.today().replace(day=1)
-                month_end = date.today()
-            
-            management_fees_in_expenses = Expense.objects.filter(
-                building_id=self.building_id,
-                category='management_fees',
-                date__gte=month_start,
-                date__lt=month_end
-            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-            
-            # Αφαιρούμε τα management fees που ήδη περιλαμβάνονται στο total_expenses_this_month
-            # 🔧 ΝΕΟ: Χρησιμοποιούμε το total_management_cost που έχει ήδη ελέγξει το financial_system_start_date
-            management_cost_adjustment = total_management_cost - management_fees_in_expenses
-            
-            current_obligations = total_expenses_this_month + management_cost_adjustment + reserve_fund_monthly_target
-        else:
-            # For current view, use total obligations
-            current_obligations = total_obligations
-        
-        # (apartments_count, building, management_fee_per_apartment, total_management_cost already calculated above)
-        
-        # Calculate pending payments (apartments with negative balance)
-        pending_payments = Apartment.objects.filter(
-            building_id=self.building_id,
-            current_balance__lt=0
-        ).count()
-        
-        # Calculate average monthly expenses (only actual expenses, NOT including management fees)
-        # Management fees are handled separately and should not be included in "actual expenses"
-        average_monthly_expenses = total_expenses_this_month
-        
-        # Calculate previous obligations (accumulated apartment debts)
+        # Calculate previous obligations FIRST (needed for current_obligations calculation)
         if month:
             # For month-specific view, calculate previous balance as of the end of the previous month
             try:
@@ -793,27 +751,31 @@ class FinancialDashboardService:
                     from calendar import monthrange
                     _, last_day = monthrange(year, mon - 1)
                     previous_month_end = date(year, mon - 1, last_day)
-                
+
                 # ΔΙΟΡΘΩΣΗ 2025-10-08: Υπολογισμός previous obligations από Apartment.current_balance
                 # Αυτό είναι πιο αξιόπιστο γιατί το current_balance ενημερώνεται αυτόματα από signals
                 previous_obligations = Decimal('0.00')
-                
+
                 try:
-                    # ΣΩΣΤΗ ΛΟΓΙΚΗ: Previous Obligations = Άθροισμα δαπανών ΠΡΙΝ από τον επιλεγμένο μήνα
-                    # Αυτό είναι απλό, σαφές και λειτουργεί σωστά
-                    
+                    # 🔧 ΔΙΟΡΘΩΣΗ 2025-10-09: Previous Obligations = Δαπάνες - Πληρωμές (πριν τον μήνα)
+                    # ΟΧΙ απλά το άθροισμα των δαπανών - πρέπει να αφαιρέσουμε τις πληρωμές!
+
                     expenses_before_month = Expense.objects.filter(
                         building_id=self.building_id,
                         date__lt=date(year, mon, 1)
-                    )
-                    
-                    previous_obligations = expenses_before_month.aggregate(
-                        total=Sum('amount')
-                    )['total'] or Decimal('0.00')
-                    
+                    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
+                    payments_before_month = Payment.objects.filter(
+                        building_id=self.building_id,
+                        date__lt=date(year, mon, 1)
+                    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
+                    previous_obligations = expenses_before_month - payments_before_month
+
                     print(f"🔍 Previous obligations for {year}-{mon:02d}: €{previous_obligations:.2f}")
-                    print(f"   Expenses before this month: {expenses_before_month.count()}")
-                        
+                    print(f"   Expenses before month: €{expenses_before_month:.2f}")
+                    print(f"   Payments before month: €{payments_before_month:.2f}")
+
                 except Exception as e:
                     print(f"⚠️ Error calculating previous obligations: {e}")
                     previous_obligations = Decimal('0.00')
@@ -823,6 +785,50 @@ class FinancialDashboardService:
         else:
             # For current view, use current apartment obligations
             previous_obligations = apartment_obligations
+
+        # Calculate current obligations (should include management costs and reserve fund for consistency)
+        if month:
+            # For snapshot view, current obligations should include management costs and reserve fund
+            # ΔΙΟΡΘΩΣΗ: Μη διπλό μέτρημα - τα management fees περιλαμβάνονται ήδη στο total_expenses_this_month
+            # Αφαιρούμε τα management fees από το total_management_cost για να αποφύγουμε διπλό μέτρημα
+            from datetime import date
+            if month:
+                year, mon = map(int, month.split('-'))
+                month_start = date(year, mon, 1)
+                month_end = date(year, mon + 1, 1) if mon < 12 else date(year + 1, 1, 1)
+            else:
+                month_start = date.today().replace(day=1)
+                month_end = date.today()
+
+            management_fees_in_expenses = Expense.objects.filter(
+                building_id=self.building_id,
+                category='management_fees',
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
+            # Αφαιρούμε τα management fees που ήδη περιλαμβάνονται στο total_expenses_this_month
+            # 🔧 ΝΕΟ: Χρησιμοποιούμε το total_management_cost που έχει ήδη ελέγξει το financial_system_start_date
+            management_cost_adjustment = total_management_cost - management_fees_in_expenses
+
+            # 🔧 ΔΙΟΡΘΩΣΗ 2025-10-09: Προσθήκη previous_obligations στο current_obligations
+            # Οι συνολικές υποχρεώσεις του μήνα = Δαπάνες μήνα + Παλαιότερες οφειλές
+            current_obligations = total_expenses_this_month + management_cost_adjustment + reserve_fund_monthly_target + previous_obligations
+        else:
+            # For current view, use total obligations
+            current_obligations = total_obligations
+
+        # (apartments_count, building, management_fee_per_apartment, total_management_cost already calculated above)
+
+        # Calculate pending payments (apartments with negative balance)
+        pending_payments = Apartment.objects.filter(
+            building_id=self.building_id,
+            current_balance__lt=0
+        ).count()
+
+        # Calculate average monthly expenses (only actual expenses, NOT including management fees)
+        # Management fees are handled separately and should not be included in "actual expenses"
+        average_monthly_expenses = total_expenses_this_month
         
         # ΔΙΟΡΘΩΣΗ: total_balance είναι το Αποθεματικό μείον τις Συνολικές Υποχρεώσεις
         # Δεν είναι πληρωμές μείον οφειλές - αυτό είναι το net cash flow
