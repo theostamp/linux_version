@@ -57,6 +57,10 @@ find . -name "*.sh" -type f | grep -v ".venv" | grep -v "node_modules" | xargs c
   - `owner_expenses`: Αυτόματος υπολογισμός δαπανών ιδιοκτήτη
 - **Dashboard Fix**: Διόρθωση ασυμφωνίας ποσών (2.076,67 € → 2.413,34 €)
   - Χρήση `current_obligations` από backend αντί για custom υπολογισμό
+- **Current Obligations Fix**: Διόρθωση υπολογισμού για snapshot view (9 Oct 2025)
+  - Το `current_obligations` τώρα περιλαμβάνει: Δαπάνες μήνα + Previous obligations
+  - Το `previous_obligations` υπολογίζεται σωστά: Δαπάνες - Πληρωμές (πριν τον μήνα)
+  - Διόρθωση: Νοέμβριος έδειχνε 1.913,34 € αντί για 3.910,01 € (1.913,34 + 1.996,67)
 
 #### 🔧 **Maintenance Application Improvements**
 - **Enhanced Error Messages**: Detailed field-specific validation με Greek field names
