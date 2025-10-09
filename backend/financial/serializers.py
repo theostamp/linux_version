@@ -24,6 +24,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
 
     category_display = serializers.CharField(source='get_category_display', read_only=True)
     distribution_type_display = serializers.CharField(source='get_distribution_type_display', read_only=True)
+    payer_responsibility_display = serializers.CharField(source='get_payer_responsibility_display', read_only=True)
     building_name = serializers.CharField(source='building.name', read_only=True)
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     supplier_details = SupplierSerializer(source='supplier', read_only=True)
@@ -48,6 +49,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'building', 'building_name', 'title', 'amount', 'date',
             'category', 'category_display', 'distribution_type', 'distribution_type_display',
+            'payer_responsibility', 'payer_responsibility_display',
             'supplier', 'supplier_name', 'supplier_details', 'attachment', 'attachment_url',
             'notes', 'due_date', 'add_to_calendar', 'expense_type', 'created_at', 'updated_at',
             'linked_service_receipt', 'linked_scheduled_maintenance', 'maintenance_payment_receipts',
@@ -55,7 +57,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
             # New project fields
             'project', 'project_title', 'project_status', 'project_url', 'audit_trail',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'payer_responsibility']
     
     def get_attachment_url(self, obj):
         if obj.attachment:

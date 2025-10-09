@@ -218,7 +218,14 @@ class Expense(models.Model):
         ('specific_apartments', 'Συγκεκριμένα'),
         ('by_meters', 'Μετρητές'),
     ]
-    
+
+    # Διαχωρισμός ευθύνης πληρωμής (Ιδιοκτήτης vs Ενοικιαστής)
+    PAYER_RESPONSIBILITY_CHOICES = [
+        ('owner', 'Ιδιοκτήτης'),
+        ('tenant', 'Ενοικιαστής'),
+        ('shared', 'Κοινή Ευθύνη'),
+    ]
+
     building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='expenses')
     title = models.CharField(max_length=255, verbose_name="Τίτλος Δαπάνης")
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Ποσό (€)")
@@ -232,6 +239,16 @@ class Expense(models.Model):
         help_text="Χρησιμοποιείται για αναγνώριση αυτόματων δαπανών"
     )
     distribution_type = models.CharField(max_length=50, choices=DISTRIBUTION_TYPES, verbose_name="Τρόπος Κατανομής")
+
+    # Πεδίο διαχωρισμού ευθύνης πληρωμής
+    payer_responsibility = models.CharField(
+        max_length=20,
+        choices=PAYER_RESPONSIBILITY_CHOICES,
+        default='tenant',
+        verbose_name="Ευθύνη Πληρωμής",
+        help_text="Καθορίζει ποιος πληρώνει: Ιδιοκτήτης (έργα, αποθεματικό) ή Ενοικιαστής (τακτικά κοινόχρηστα)"
+    )
+
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True, related_name='expenses', verbose_name="Προμηθευτής")
 
     # 🔗 Σύνδεση με Projects για ιχνηλασία προέλευσης
@@ -425,6 +442,28 @@ class Transaction(models.Model):
         from datetime import datetime
         if self.date and isinstance(self.date, datetime) and timezone.is_naive(self.date):
             self.date = timezone.make_aware(self.date)
+
+        # Αυτόματος καθορισμός payer_responsibility βάσει category και expense_type
+        # Έργα & Αποθεματικό → Ιδιοκτήτης
+        if self.category == 'maintenance_project' or self.expense_type == 'reserve_fund':
+            self.payer_responsibility = 'owner'
+        # Συνδεδεμένο με Project → Ιδιοκτήτης
+        elif self.project_id:
+            self.payer_responsibility = 'owner'
+        # Κατηγορίες που αφορούν Ιδιοκτήτη (έκτακτες επισκευές μεγάλης κλίμακας)
+        elif self.category in [
+            'elevator_modernization', 'heating_modernization', 'electrical_upgrade',
+            'roof_maintenance', 'roof_repair', 'facade_maintenance', 'facade_repair',
+            'painting_exterior', 'building_insurance', 'emergency_repair',
+            'storm_damage', 'flood_damage', 'fire_damage', 'earthquake_damage',
+            'energy_upgrade', 'insulation_work', 'solar_panel_installation',
+            'special_contribution', 'reserve_fund', 'emergency_fund', 'renovation_fund'
+        ]:
+            self.payer_responsibility = 'owner'
+        # Όλες οι άλλες (τακτικά κοινόχρηστα) → Ενοικιαστής
+        elif not self.payer_responsibility:
+            self.payer_responsibility = 'tenant'
+
         super().save(*args, **kwargs)
     
     def _create_apartment_transactions(self):
