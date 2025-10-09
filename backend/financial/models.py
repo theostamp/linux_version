@@ -219,10 +219,11 @@ class Expense(models.Model):
         ('by_meters', 'Μετρητές'),
     ]
 
-    # Διαχωρισμός ευθύνης πληρωμής (Ιδιοκτήτης vs Ενοικιαστής)
+    # Διαχωρισμός ευθύνης πληρωμής (Ιδιοκτήτης vs Ένοικος)
+    # Σημείωση: 'resident' αντί για 'tenant' για αποφυγή σύγκρουσης με Django multi-tenancy
     PAYER_RESPONSIBILITY_CHOICES = [
         ('owner', 'Ιδιοκτήτης'),
-        ('tenant', 'Ενοικιαστής'),
+        ('resident', 'Ένοικος'),  # Ένοικος διαμερίσματος (όχι Django tenant)
         ('shared', 'Κοινή Ευθύνη'),
     ]
 
@@ -244,9 +245,9 @@ class Expense(models.Model):
     payer_responsibility = models.CharField(
         max_length=20,
         choices=PAYER_RESPONSIBILITY_CHOICES,
-        default='tenant',
+        default='resident',
         verbose_name="Ευθύνη Πληρωμής",
-        help_text="Καθορίζει ποιος πληρώνει: Ιδιοκτήτης (έργα, αποθεματικό) ή Ενοικιαστής (τακτικά κοινόχρηστα)"
+        help_text="Καθορίζει ποιος πληρώνει: Ιδιοκτήτης (έργα, αποθεματικό) ή Ένοικος (τακτικά κοινόχρηστα)"
     )
 
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True, related_name='expenses', verbose_name="Προμηθευτής")
@@ -460,9 +461,9 @@ class Transaction(models.Model):
             'special_contribution', 'reserve_fund', 'emergency_fund', 'renovation_fund'
         ]:
             self.payer_responsibility = 'owner'
-        # Όλες οι άλλες (τακτικά κοινόχρηστα) → Ενοικιαστής
+        # Όλες οι άλλες (τακτικά κοινόχρηστα) → Ένοικος
         elif not self.payer_responsibility:
-            self.payer_responsibility = 'tenant'
+            self.payer_responsibility = 'resident'
 
         super().save(*args, **kwargs)
     
