@@ -255,6 +255,15 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
 // Request Interceptor (για προσθήκη Authorization & CSRF)
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // 🔧 FIX: Ensure baseURL is correct for client-side requests
+    // The module might be initialized server-side with wrong baseURL
+    if (typeof window !== 'undefined') {
+      const correctBaseURL = getApiBaseUrl();
+      if (config.baseURL !== correctBaseURL) {
+        config.baseURL = correctBaseURL;
+      }
+    }
+
     if (!config.headers) {
       config.headers = {} as AxiosRequestHeaders;
     }

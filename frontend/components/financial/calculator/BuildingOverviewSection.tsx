@@ -522,8 +522,8 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       
       setFinancialSummary(finalData);
       setNewGoal(financialData.reserve_fund_goal.toString());
-      setReserveFundPriority(apiPriority);
-      
+      // 🔧 Removed: setReserveFundPriority(apiPriority) - reserve fund priority feature removed
+
       // Αφαιρέθηκε το notification για auto-refresh
       // if (isRefresh) {
       //   toast.success('Οικονομικά στοιχεία ανανεώθηκαν');

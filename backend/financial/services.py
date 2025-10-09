@@ -724,34 +724,18 @@ class FinancialDashboardService:
                         date__lt=date(year, mon, 1)
                     ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
 
-                    # 3. Management fees πριν τον μήνα (υπολογισμός)
-                    # Μετράμε πόσοι μήνες από financial_system_start_date μέχρι τον προηγούμενο μήνα
-                    management_fees_before = Decimal('0.00')
-                    if building.financial_system_start_date:
-                        start_date = building.financial_system_start_date
-                        target_date = date(year, mon, 1)
-
-                        # Υπολογισμός μηνών
-                        months_count = 0
-                        current_date = start_date
-                        while current_date < target_date:
-                            months_count += 1
-                            # Επόμενος μήνας
-                            if current_date.month == 12:
-                                current_date = date(current_date.year + 1, 1, 1)
-                            else:
-                                current_date = date(current_date.year, current_date.month + 1, 1)
-
-                        management_fees_before = management_fee_per_apartment * apartments_count * months_count
+                    # 3. Management fees ΗΔΗ περιλαμβάνονται στα expenses_before_month
+                    # Τα management fees καταγράφονται ως Expense records (category='management_fees')
+                    # Δεν τα προσθέτουμε ξεχωριστά για να αποφύγουμε διπλό μέτρημα
 
                     # 4. Reserve fund ΗΔΗ περιλαμβάνεται στα expenses_before_month
                     # Δεν το προσθέτουμε ξεχωριστά για να αποφύγουμε διπλό μέτρημα
 
-                    previous_obligations = expenses_before_month + management_fees_before - payments_before_month
+                    # 🔧 ΔΙΟΡΘΩΣΗ 2025-10-09: Αφαίρεση management_fees_before - ήδη στα expenses
+                    previous_obligations = expenses_before_month - payments_before_month
 
                     print(f"🔍 Previous obligations for {year}-{mon:02d}: €{previous_obligations:.2f}")
-                    print(f"   Expenses before month: €{expenses_before_month:.2f} (includes reserve fund)")
-                    print(f"   Management fees before: €{management_fees_before:.2f}")
+                    print(f"   Expenses before month: €{expenses_before_month:.2f} (includes management fees & reserve fund)")
                     print(f"   Payments before month: €{payments_before_month:.2f}")
 
                 except Exception as e:
@@ -817,11 +801,15 @@ class FinancialDashboardService:
         # Το total_balance αντιπροσωπεύει την οικονομική θέση του κτιρίου
         total_balance = current_reserve - current_obligations
         print(f"🔧 TOTAL BALANCE: current_reserve={current_reserve} - current_obligations={current_obligations} = {total_balance}")
-        
+
+        # 🔧 ΝΕΟΟ FIELD: Δαπάνες μόνο του τρέχοντος μήνα (χωρίς παλαιότερες οφειλές)
+        current_month_expenses = current_obligations - previous_obligations
+
         return {
             'total_balance': float(total_balance.quantize(Decimal('0.01'))),
             'current_obligations': float(current_obligations.quantize(Decimal('0.01'))),
             'previous_obligations': float(previous_obligations.quantize(Decimal('0.01'))),  # ← ΝΕΟ FIELD
+            'current_month_expenses': float(current_month_expenses.quantize(Decimal('0.01'))),  # ← ΝΕΟ FIELD
             'reserve_fund_contribution': float(reserve_fund_contribution.quantize(Decimal('0.01'))),
             'current_reserve': float(current_reserve.quantize(Decimal('0.01'))),
             'has_monthly_activity': has_monthly_activity,
