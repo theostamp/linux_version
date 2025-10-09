@@ -29,7 +29,8 @@ import {
   ChevronUp,
   Info,
   PieChart,
-  Eye
+  Eye,
+  Trash2
 } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useBuilding } from '@/components/contexts/BuildingContext';
@@ -823,17 +824,17 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
 
       // Save to localStorage for persistence
       saveToLocalStorage('management_fee', feeValue);
-      
+
       // Recalculate total management cost
       const totalManagementCost = feeValue * (currentBuilding?.apartments_count || 0);
       saveToLocalStorage('total_management_cost', totalManagementCost);
 
       // Save to API - clear service_package when manually setting management fee
-      await api.patch(`/buildings/list/${buildingId}/`, { 
+      await api.patch(`/buildings/list/${buildingId}/`, {
         management_fee_per_apartment: feeValue,
         service_package: null  // Clear service package when manually setting fee
       });
-      
+
       setFinancialSummary(prev => prev ? {
         ...prev,
         management_fee_per_apartment: feeValue,
@@ -847,6 +848,40 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
       console.error('Error updating management fee:', error);
       // Αφαιρέθηκε το error notification
       // toast.error('Αποτυχία ενημέρωσης αμοιβής διαχείρισης');
+    }
+  };
+
+  const handleCleanupOrphanManagementFees = async () => {
+    try {
+      // Confirm before cleanup
+      if (!confirm('Θέλετε να διαγράψετε τα ορφανά management fees (αυτά που δεν έχουν transactions);\n\nΔΕΝ θα διαγραφούν management fees που έχουν ήδη καταχωρηθεί σωστά.')) {
+        return;
+      }
+
+      const response = await api.post(`/financial/expenses/cleanup_orphan_management_fees/`, {
+        building_id: buildingId
+      });
+
+      if (response.data.success) {
+        toast.success(
+          `✅ ${response.data.orphan_fees_deleted} ορφανά management fees διαγράφηκαν!\n` +
+          `Διατηρήθηκαν ${response.data.safe_fees_count} που έχουν transactions.`,
+          { duration: 5000 }
+        );
+
+        // Log details if any were deleted
+        if (response.data.deleted_details && response.data.deleted_details.length > 0) {
+          console.log('Deleted orphan management fees:', response.data.deleted_details);
+        }
+
+        // Refresh data
+        handleRefresh();
+      } else {
+        toast.error('Αποτυχία καθαρισμού management fees');
+      }
+    } catch (error: any) {
+      console.error('Error cleaning up orphan management fees:', error);
+      toast.error(error.response?.data?.error || 'Σφάλμα κατά τον καθαρισμό');
     }
   };
 
@@ -1376,6 +1411,19 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   <h3 className="text-sm font-semibold text-purple-900">Δαπάνες Διαχείρισης</h3>
                 </div>
                 <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCleanupOrphanManagementFees();
+                    }}
+                    className="h-8 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                    title="Καθαρισμός ορφανών management fees"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Cleanup
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"

@@ -639,6 +639,80 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             'end_month': end_month or 'current'
         })
 
+    @action(detail=False, methods=['post'])
+    def cleanup_orphan_management_fees(self, request):
+        """
+        Διαγράφει "ορφανά" management fees - δηλαδή αυτά που δεν έχουν transactions.
+
+        Ορφανά management fees δημιουργούνται όταν:
+        - Το expense δημιουργήθηκε αλλά το signal απέτυχε
+        - Το expense δημιουργήθηκε πριν την ενεργοποίηση των signals
+        - Υπάρχει bug στη δημιουργία transactions
+
+        ΣΗΜΕΙΩΣΗ: ΔΕΝ διαγράφει management fees που έχουν ήδη transactions!
+        """
+        building_id = request.data.get('building_id')
+
+        if not building_id:
+            return Response(
+                {'error': 'building_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            building = Building.objects.get(id=building_id)
+        except Building.DoesNotExist:
+            return Response(
+                {'error': 'Building not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Βρες όλα τα management fees για το κτίριο
+        all_mgmt_fees = Expense.objects.filter(
+            building=building,
+            category='management_fees'
+        )
+
+        orphan_fees = []
+        safe_fees = []
+
+        # Έλεγχος για κάθε management fee αν έχει transactions
+        for fee in all_mgmt_fees:
+            has_transactions = Transaction.objects.filter(
+                reference_type='expense',
+                reference_id=str(fee.id)
+            ).exists()
+
+            if has_transactions:
+                safe_fees.append(fee)
+            else:
+                orphan_fees.append(fee)
+
+        # Διαγραφή μόνο των ορφανών
+        deleted_count = 0
+        deleted_details = []
+
+        for fee in orphan_fees:
+            deleted_details.append({
+                'id': fee.id,
+                'date': str(fee.date),
+                'amount': float(fee.amount),
+                'title': fee.title
+            })
+            fee.delete()
+            deleted_count += 1
+
+        return Response({
+            'success': True,
+            'building': building.name,
+            'total_management_fees': all_mgmt_fees.count(),
+            'safe_fees_count': len(safe_fees),
+            'orphan_fees_deleted': deleted_count,
+            'deleted_details': deleted_details,
+            'message': f'Διαγράφηκαν {deleted_count} ορφανά management fees. '
+                      f'Διατηρήθηκαν {len(safe_fees)} management fees που έχουν transactions.'
+        })
+
 
 class TransactionViewSet(viewsets.ModelViewSet):
     """ViewSet για τη διαχείριση κινήσεων ταμείου"""
