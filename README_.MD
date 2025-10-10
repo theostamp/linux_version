@@ -561,7 +561,7 @@ git commit -m "διορθωσεις 31"
 
 ## Βασικές Εντολές Git
 git add .
-git commit -m "διορθωσεις οικονομικων υπολοιπων vol: 12000299 "
+git commit -m "διορθωσεις οικονομικων υπολοιπων vol: 1ψψ2000299 "
 
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
@@ -571,7 +571,7 @@ git push -u origin main
 git push --force
 ---
 
-git reset --hard 9906d23898987a5
+git reset --hard d4fbe9d668ac2e55a0f76f6a3731cbc41225bff
 ### Πλήρης Καθαρισμός Docker
 ```bash
 

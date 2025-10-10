@@ -413,7 +413,7 @@ class MonthlyBalanceSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'building', 'building_name', 'year', 'month', 'month_display',
             'total_expenses', 'total_payments', 'previous_obligations',
-            'reserve_fund_amount', 'management_fees', 'total_obligations',
+            'reserve_fund_amount', 'management_fees', 'scheduled_maintenance_amount', 'total_obligations',
             'carry_forward', 'annual_carry_forward', 'balance_year',
             'main_balance_carry_forward', 'reserve_balance_carry_forward', 'management_balance_carry_forward',
             'main_obligations', 'reserve_obligations', 'management_obligations',

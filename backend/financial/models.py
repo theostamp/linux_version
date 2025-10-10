@@ -420,7 +420,7 @@ class Transaction(models.Model):
     apartment = models.ForeignKey(Apartment, on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions', verbose_name="Διαμέρισμα")
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Ποσό")
     balance_before = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Υπόλοιπο Πριν")
-    balance_after = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Υπόλοιπο Μετά")
+    balance_after = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Υπόλοιπο Μετά")
     reference_id = models.CharField(max_length=100, null=True, blank=True, verbose_name="Αναφορά")
     reference_type = models.CharField(max_length=50, null=True, blank=True, verbose_name="Τύπος Αναφοράς")
     receipt = models.FileField(upload_to='receipts/', null=True, blank=True, verbose_name="Απόδειξη")
@@ -443,27 +443,6 @@ class Transaction(models.Model):
         from datetime import datetime
         if self.date and isinstance(self.date, datetime) and timezone.is_naive(self.date):
             self.date = timezone.make_aware(self.date)
-
-        # Αυτόματος καθορισμός payer_responsibility βάσει category και expense_type
-        # Έργα & Αποθεματικό → Ιδιοκτήτης
-        if self.category == 'maintenance_project' or self.expense_type == 'reserve_fund':
-            self.payer_responsibility = 'owner'
-        # Συνδεδεμένο με Project → Ιδιοκτήτης
-        elif self.project_id:
-            self.payer_responsibility = 'owner'
-        # Κατηγορίες που αφορούν Ιδιοκτήτη (έκτακτες επισκευές μεγάλης κλίμακας)
-        elif self.category in [
-            'elevator_modernization', 'heating_modernization', 'electrical_upgrade',
-            'roof_maintenance', 'roof_repair', 'facade_maintenance', 'facade_repair',
-            'painting_exterior', 'building_insurance', 'emergency_repair',
-            'storm_damage', 'flood_damage', 'fire_damage', 'earthquake_damage',
-            'energy_upgrade', 'insulation_work', 'solar_panel_installation',
-            'special_contribution', 'reserve_fund', 'emergency_fund', 'renovation_fund'
-        ]:
-            self.payer_responsibility = 'owner'
-        # Όλες οι άλλες (τακτικά κοινόχρηστα) → Ένοικος
-        elif not self.payer_responsibility:
-            self.payer_responsibility = 'resident'
 
         super().save(*args, **kwargs)
 
@@ -770,6 +749,15 @@ class MonthlyBalance(models.Model):
     reserve_fund_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Αποθεματικό")
     management_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Έξοδα Διαχείρισης")
     
+    # Προγραμματισμένα έργα (δόσεις)
+    scheduled_maintenance_amount = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0, 
+        verbose_name="Προγραμματισμένα Έργα",
+        help_text="Δόσεις προγραμματισμένων έργων για το μήνα"
+    )
+    
     # Ετήσια μεταφορά υπολοίπων
     annual_carry_forward = models.DecimalField(
         max_digits=10, 
@@ -836,8 +824,14 @@ class MonthlyBalance(models.Model):
     
     @property 
     def total_obligations(self):
-        """Συνολικές υποχρεώσεις = δαπάνες + παλιές οφειλές + αποθεματικό + διαχείριση"""
-        return self.total_expenses + self.previous_obligations + self.reserve_fund_amount + self.management_fees
+        """Συνολικές υποχρεώσεις = δαπάνες + παλιές οφειλές + αποθεματικό + διαχείριση + προγραμματισμένα έργα"""
+        return (
+            self.total_expenses + 
+            self.previous_obligations + 
+            self.reserve_fund_amount + 
+            self.management_fees + 
+            self.scheduled_maintenance_amount
+        )
     
     # Υβριδικό Σύστημα - Ξεχωριστά Υπολοιπα
     @property
@@ -939,6 +933,7 @@ class MonthlyBalance(models.Model):
                 'total_payments': Decimal('0.00'),
                 'reserve_fund_amount': Decimal('0.00'),
                 'management_fees': Decimal('0.00'),
+                'scheduled_maintenance_amount': Decimal('0.00'),
                 'carry_forward': previous_obligations,  # Συνεχής μεταφορά
                 'annual_carry_forward': Decimal('0.00'),
                 'main_balance_carry_forward': Decimal('0.00'),

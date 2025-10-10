@@ -276,3 +276,4 @@ if __name__ == '__main__':
         print("  python fix_previous_obligations_logic.py test [year] [month] [building_id]")
         print("  python fix_previous_obligations_logic.py populate [building_id] [start_year] [start_month]")
 
+
