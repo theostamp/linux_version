@@ -87,7 +87,7 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 <TableCell>{formatAmount(elevatorAmount)}</TableCell>
                 <TableCell>{formatAmount(heatingAmount)}</TableCell>
                 <TableCell>{formatAmount(managementFee)}</TableCell>
-                {showOwnerExpenses && (<> <TableCell>-</TableCell> <TableCell>-</TableCell> <TableCell>-</TableCell> </>)}
+                {showOwnerExpenses && (<><TableCell>-</TableCell><TableCell>-</TableCell><TableCell>-</TableCell></>)}
                 {reserveFundInfo.monthlyAmount > 0 && <TableCell>{formatAmount(apartmentReserveFund)}</TableCell>}
                 <TableCell>{formatAmount(finalTotalWithFees)}</TableCell>
               </TableRow>
