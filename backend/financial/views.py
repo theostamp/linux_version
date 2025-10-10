@@ -583,9 +583,8 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             today = date.today()
             end_date = date(today.year, today.month, 1)
 
-        # Check financial_system_start_date
-        if building.financial_system_start_date and start_date < building.financial_system_start_date:
-            start_date = building.financial_system_start_date
+        # ✅ ΔΙΟΡΘΩΣΗ: Αφαίρεση περιορισμού financial_system_start_date
+        # Το σύστημα πλέον λειτουργεί χωρίς αυτόν τον περιορισμό
 
         # Calculate total amount
         apartments_count = Apartment.objects.filter(building=building).count()
@@ -3307,20 +3306,87 @@ class MonthlyBalanceViewSet(viewsets.ModelViewSet):
         try:
             from buildings.models import Building
             from decimal import Decimal
+            from datetime import date
+            from django.db.models import Sum
             
             building = Building.objects.get(id=building_id)
             
-            # Δημιουργία νέου μηνιαίου υπολοίπου
+            # 🔧 ΔΙΟΡΘΩΣΗ 2025-10-10: Υπολογισμός πραγματικών τιμών αντί για 0.00
+            
+            # Υπολογισμός ημερομηνιών περιόδου
+            month_start = date(year, month, 1)
+            if month == 12:
+                month_end = date(year + 1, 1, 1)
+            else:
+                month_end = date(year, month + 1, 1)
+            
+            # 1. Total expenses του μήνα
+            total_expenses = Expense.objects.filter(
+                building=building,
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            # 2. Total payments του μήνα
+            total_payments = Payment.objects.filter(
+                apartment__building=building,
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            # 3. Management fees του μήνα (από Expense records)
+            management_fees = Expense.objects.filter(
+                building=building,
+                category='management_fees',
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            # 4. Previous obligations (από προηγούμενο μήνα)
+            prev_month = month - 1
+            prev_year = year
+            if prev_month == 0:
+                prev_month = 12
+                prev_year -= 1
+            
+            prev_balance = MonthlyBalance.objects.filter(
+                building=building,
+                year=prev_year,
+                month=prev_month
+            ).first()
+            
+            if prev_balance:
+                previous_obligations = prev_balance.carry_forward
+            else:
+                # Fallback: Raw calculation
+                expenses_before = Expense.objects.filter(
+                    building=building,
+                    date__lt=month_start
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                
+                payments_before = Payment.objects.filter(
+                    apartment__building=building,
+                    date__lt=month_start
+                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                
+                previous_obligations = expenses_before - payments_before
+            
+            # 5. Υπολογισμός carry_forward
+            total_obligations = total_expenses + previous_obligations
+            net_result = total_payments - total_obligations
+            carry_forward = -net_result if net_result < 0 else Decimal('0.00')
+            
+            # Δημιουργία νέου μηνιαίου υπολοίπου με υπολογισμένες τιμές
             balance = MonthlyBalance.objects.create(
                 building=building,
                 year=year,
                 month=month,
-                total_expenses=Decimal('0.00'),
-                total_payments=Decimal('0.00'),
-                previous_obligations=Decimal('0.00'),
-                reserve_fund_amount=Decimal('0.00'),
-                management_fees=Decimal('0.00'),
-                carry_forward=Decimal('0.00'),
+                total_expenses=total_expenses,
+                total_payments=total_payments,
+                previous_obligations=previous_obligations,
+                reserve_fund_amount=Decimal('0.00'),  # TODO: Calculate from reserve fund expenses
+                management_fees=management_fees,
+                carry_forward=carry_forward,
                 annual_carry_forward=Decimal('0.00'),
                 balance_year=year,
                 main_balance_carry_forward=Decimal('0.00'),
