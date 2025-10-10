@@ -607,16 +607,18 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             if existing:
                 skipped_count += 1
             else:
-                # Last day of month
-                _, last_day_num = monthrange(current_date.year, current_date.month)
-                last_day = date(current_date.year, current_date.month, last_day_num)
+                # ✅ ΔΙΟΡΘΩΣΗ: Χρήση ΠΡΩΤΗΣ μέρας του μήνα (όχι τελευταίας)
+                # Αυτό εξασφαλίζει σωστή μεταφορά στις previous obligations
+                expense_date = current_date  # Ήδη 1η του μήνα
 
                 Expense.objects.create(
                     building=building,
                     title=f'Διαχειριστικά Έξοδα {current_date.strftime("%B %Y")}',
                     amount=total_amount,
-                    date=last_day,
+                    date=expense_date,  # ✅ Πρώτη του μήνα
+                    due_date=expense_date,  # ✅ Πρώτη του μήνα
                     category='management_fees',
+                    expense_type='management_fee',  # ✅ Προστέθηκε
                     description=f'Διαχειριστικά Έξοδα {current_date.strftime("%B %Y")}',
                     distribution_type='equal_share',
                     payer_responsibility='resident',
