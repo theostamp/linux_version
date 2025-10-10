@@ -165,73 +165,105 @@ class BalanceCalculationService:
         management_fee_charges = Decimal('0.00')
 
         if include_management_fees:
-            # Συνεχής μεταφορά: Όλες οι δαπάνες από την ημερομηνία έναρξης συστήματος
-            management_expenses = Expense.objects.filter(
-                building_id=apartment.building_id,
-                category='management_fees',
-                date__gte=system_start_date,
-                date__lt=month_start
+            # ✅ CRITICAL FIX 2025-10-10: Management fees now come from TRANSACTIONS, not Expenses!
+            # The MonthlyChargeService creates Transaction records with type='management_fee_charge'
+            
+            # Υπολογισμός management fee charges από Transaction records
+            management_fee_transactions = Transaction.objects.filter(
+                apartment=apartment,
+                type='management_fee_charge',
+                date__gte=timezone.make_aware(timezone.datetime.combine(system_start_date, timezone.datetime.min.time())),
+                date__lt=timezone.make_aware(timezone.datetime.combine(month_start, timezone.datetime.min.time()))
             )
+            
+            management_fee_charges = management_fee_transactions.aggregate(
+                total=Sum('amount')
+            )['total'] or Decimal('0.00')
+            
+            # ⚠️ FALLBACK: For backwards compatibility, also check old Expense-based management fees
+            # This can be removed after all buildings migrate to the new Transaction-based system
+            if management_fee_charges == Decimal('0.00'):
+                management_expenses = Expense.objects.filter(
+                    building_id=apartment.building_id,
+                    category='management_fees',
+                    date__gte=system_start_date,
+                    date__lt=month_start
+                )
 
-            # Υπολογισμός management fee charges
-            # Κάθε management fee expense χρεώνεται με equal_share στα διαμερίσματα
-            total_apartments = apartment.building.apartments.count()
+                if management_expenses.exists():
+                    # Κάθε management fee expense χρεώνεται με equal_share στα διαμερίσματα
+                    total_apartments = apartment.building.apartments.count()
 
-            if total_apartments > 0:
-                total_management_expenses = management_expenses.aggregate(
-                    total=Sum('amount')
-                )['total'] or Decimal('0.00')
+                    if total_apartments > 0:
+                        total_management_expenses = management_expenses.aggregate(
+                            total=Sum('amount')
+                        )['total'] or Decimal('0.00')
 
-                # Equal share distribution
-                management_fee_charges = total_management_expenses / total_apartments
+                        # Equal share distribution
+                        management_fee_charges = total_management_expenses / total_apartments
 
         # Υπολογισμός reserve fund (αν include_reserve_fund=True)
         reserve_fund_charges = Decimal('0.00')
 
         if include_reserve_fund:
-            from .utils.date_helpers import is_date_in_reserve_fund_timeline
+            # ✅ CRITICAL FIX 2025-10-10: Reserve fund now comes from TRANSACTIONS, not calculated!
+            # The MonthlyChargeService creates Transaction records with type='reserve_fund_charge'
             
-            # Check if we should charge reserve fund for this period
-            # We need to count months from reserve fund start to month_start
-            if (building.reserve_fund_goal and 
-                building.reserve_fund_duration_months and
-                building.reserve_fund_start_date):
+            # Υπολογισμός reserve fund charges από Transaction records
+            reserve_fund_transactions = Transaction.objects.filter(
+                apartment=apartment,
+                type='reserve_fund_charge',
+                date__gte=timezone.make_aware(timezone.datetime.combine(system_start_date, timezone.datetime.min.time())),
+                date__lt=timezone.make_aware(timezone.datetime.combine(month_start, timezone.datetime.min.time()))
+            )
+            
+            reserve_fund_charges = reserve_fund_transactions.aggregate(
+                total=Sum('amount')
+            )['total'] or Decimal('0.00')
+            
+            # ⚠️ FALLBACK: For backwards compatibility, calculate dynamically if no transactions exist
+            # This can be removed after all buildings migrate to the new Transaction-based system
+            if reserve_fund_charges == Decimal('0.00'):
+                from .utils.date_helpers import is_date_in_reserve_fund_timeline, get_month_first_day
                 
-                # Calculate monthly reserve fund target
-                monthly_reserve_target = building.reserve_fund_goal / building.reserve_fund_duration_months
-                
-                # Count how many months from reserve fund start date to the end_date fall within the timeline
-                from .utils.date_helpers import get_month_first_day, months_between
-                
-                reserve_start = building.reserve_fund_start_date
-                
-                # Only calculate for months that are in the past (before end_date)
-                if reserve_start < end_date:
-                    # Count months from reserve_start to end_date that are in the reserve fund timeline
-                    months_to_charge = 0
-                    current_check_date = get_month_first_day(reserve_start.year, reserve_start.month)
+                # Check if we should charge reserve fund for this period
+                # We need to count months from reserve fund start to month_start
+                if (building.reserve_fund_goal and 
+                    building.reserve_fund_duration_months and
+                    building.reserve_fund_start_date):
                     
-                    while current_check_date < end_date:
-                        if is_date_in_reserve_fund_timeline(current_check_date, building):
-                            months_to_charge += 1
-                        
-                        # Move to next month
-                        if current_check_date.month == 12:
-                            current_check_date = get_month_first_day(current_check_date.year + 1, 1)
-                        else:
-                            current_check_date = get_month_first_day(current_check_date.year, current_check_date.month + 1)
+                    # Calculate monthly reserve fund target
+                    monthly_reserve_target = building.reserve_fund_goal / building.reserve_fund_duration_months
                     
-                    if months_to_charge > 0:
-                        # Calculate apartment's share based on participation mills
-                        total_mills = sum(
-                            apt.participation_mills or 0 
-                            for apt in building.apartments.all()
-                        )
+                    reserve_start = building.reserve_fund_start_date
+                    
+                    # Only calculate for months that are in the past (before end_date)
+                    if reserve_start < end_date:
+                        # Count months from reserve_start to end_date that are in the reserve fund timeline
+                        months_to_charge = 0
+                        current_check_date = get_month_first_day(reserve_start.year, reserve_start.month)
                         
-                        if total_mills > 0:
-                            apartment_mills = apartment.participation_mills or 0
-                            apartment_share = Decimal(str(apartment_mills)) / Decimal(str(total_mills))
-                            reserve_fund_charges = monthly_reserve_target * apartment_share * months_to_charge
+                        while current_check_date < end_date:
+                            if is_date_in_reserve_fund_timeline(current_check_date, building):
+                                months_to_charge += 1
+                            
+                            # Move to next month
+                            if current_check_date.month == 12:
+                                current_check_date = get_month_first_day(current_check_date.year + 1, 1)
+                            else:
+                                current_check_date = get_month_first_day(current_check_date.year, current_check_date.month + 1)
+                        
+                        if months_to_charge > 0:
+                            # Calculate apartment's share based on participation mills
+                            total_mills = sum(
+                                apt.participation_mills or 0 
+                                for apt in building.apartments.all()
+                            )
+                            
+                            if total_mills > 0:
+                                apartment_mills = apartment.participation_mills or 0
+                                apartment_share = Decimal(str(apartment_mills)) / Decimal(str(total_mills))
+                                reserve_fund_charges = monthly_reserve_target * apartment_share * months_to_charge
 
         # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         # ΤΕΛΙΚΟΣ ΥΠΟΛΟΓΙΣΜΟΣ
