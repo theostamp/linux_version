@@ -20,6 +20,9 @@ Usage:
     # Retroactive creation (from start to current month) ⭐ RECOMMENDED FOR SETUP
     python manage.py create_monthly_charges --schema demo --building 1 --retroactive
     
+    # Future months (create N months ahead) ⭐ NEW!
+    python manage.py create_monthly_charges --schema demo --building 1 --future-months 12
+    
     # Dry run (preview without creating)
     python manage.py create_monthly_charges --schema demo --dry-run
     
@@ -62,6 +65,13 @@ class Command(BaseCommand):
             '--retroactive',
             action='store_true',
             help='Create charges from financial_system_start_date to target month'
+        )
+        
+        parser.add_argument(
+            '--future-months',
+            type=int,
+            default=0,
+            help='Create charges for N months into the future (e.g., 12 for next year)'
         )
         
         parser.add_argument(
@@ -116,12 +126,14 @@ class Command(BaseCommand):
         if options['building']:
             try:
                 buildings = [Building.objects.get(id=options['building'])]
+                buildings_count = 1
             except Building.DoesNotExist:
                 raise CommandError(f"Building with ID {options['building']} does not exist")
         else:
             buildings = Building.objects.filter(is_active=True)
+            buildings_count = buildings.count()
         
-        self.stdout.write(f"Buildings: {buildings.count()}\n")
+        self.stdout.write(f"Buildings: {buildings_count}\n")
         
         # Process buildings
         total_results = []
@@ -136,6 +148,12 @@ class Command(BaseCommand):
                 # Create charges from start to target month
                 results = self._create_retroactive_charges(
                     building, target_month, dry_run, verbose
+                )
+                total_results.extend(results)
+            elif options['future_months'] > 0:
+                # ✨ NEW: Create charges for N months into the future
+                results = self._create_future_charges(
+                    building, target_month, options['future_months'], dry_run, verbose
                 )
                 total_results.extend(results)
             else:
@@ -220,6 +238,58 @@ class Command(BaseCommand):
                 start_month,
                 end_month
             )
+    
+    def _create_future_charges(
+        self,
+        building: Building,
+        start_month: date,
+        num_months: int,
+        dry_run: bool,
+        verbose: bool
+    ) -> list:
+        """✨ NEW: Create charges for N months into the future"""
+        
+        end_month = start_month
+        for _ in range(num_months - 1):
+            if end_month.month == 12:
+                end_month = date(end_month.year + 1, 1, 1)
+            else:
+                end_month = date(end_month.year, end_month.month + 1, 1)
+        
+        self.stdout.write(self.style.SUCCESS(
+            f"  🔮 Creating {num_months} months: "
+            f"{start_month.strftime('%Y-%m')} to {end_month.strftime('%Y-%m')}"
+        ))
+        
+        results = []
+        current = start_month
+        
+        for i in range(num_months):
+            if dry_run:
+                result = self._simulate_charges(building, current)
+            else:
+                result = MonthlyChargeService.create_monthly_charges(building, current)
+            
+            results.append(result)
+            
+            # Print progress
+            if verbose or dry_run:
+                self._print_month_result(result)
+            else:
+                mgmt = "✅" if result.get('management_fees_created') else "⏭️"
+                reserve = "✅" if result.get('reserve_fund_created') else "⏭️"
+                self.stdout.write(
+                    f"  {current.strftime('%Y-%m')}: "
+                    f"Management {mgmt} | Reserve {reserve}"
+                )
+            
+            # Next month
+            if current.month == 12:
+                current = date(current.year + 1, 1, 1)
+            else:
+                current = date(current.year, current.month + 1, 1)
+        
+        return results
     
     def _simulate_charges(self, building: Building, target_month: date) -> dict:
         """Simulate what would be created (dry run)"""
