@@ -337,11 +337,27 @@ class Building(models.Model):
     def save(self, *args, **kwargs):
         """
         Custom save method για αυτόματο ορισμό financial_system_start_date
+        και δημιουργία μελλοντικών μηνιαίων χρεώσεων
         
-        ΚΑΝΟΝΑΣ: Όταν ορίζεται management_fee_per_apartment (πακέτο διαχείρισης)
+        ΚΑΝΟΝΑΣ 1: Όταν ορίζεται management_fee_per_apartment (πακέτο διαχείρισης)
         και δεν υπάρχει financial_system_start_date, ορίζουμε αυτόματα στην 1η του τρέχοντος μήνα.
+        
+        ΚΑΝΟΝΑΣ 2: Όταν ορίζεται ή αλλάζει management_fee_per_apartment,
+        δημιουργούνται αυτόματα management fees για τους επόμενους 12 μήνες.
         """
         from datetime import date
+        
+        # Track αν το management fee άλλαξε
+        is_new = self.pk is None
+        management_fee_changed = False
+        
+        if not is_new:
+            try:
+                old_building = Building.objects.get(pk=self.pk)
+                if old_building.management_fee_per_apartment != self.management_fee_per_apartment:
+                    management_fee_changed = True
+            except Building.DoesNotExist:
+                pass
         
         # ✅ ΑΥΤΟΜΑΤΟΣ ΟΡΙΣΜΟΣ: financial_system_start_date
         # Όταν ορίζεται management fee και δεν υπάρχει start date
@@ -353,6 +369,48 @@ class Building(models.Model):
                 print(f"✅ Auto-set financial_system_start_date = {self.financial_system_start_date} for building {self.name}")
         
         super().save(*args, **kwargs)
+        
+        # ✨ ΝΕΟ: Αυτόματη δημιουργία μελλοντικών μηνιαίων χρεώσεων
+        # Μόνο αν το management fee ορίστηκε για πρώτη φορά ή άλλαξε
+        if (is_new or management_fee_changed) and self.management_fee_per_apartment > 0:
+            self._create_future_management_fees()
+    
+    def _create_future_management_fees(self, months_ahead: int = 12):
+        """
+        Δημιουργεί αυτόματα management fee expenses για τους επόμενους Ν μήνες
+        
+        Args:
+            months_ahead: Αριθμός μηνών μπροστά (default: 12)
+        """
+        from datetime import date
+        from financial.monthly_charge_service import MonthlyChargeService
+        
+        try:
+            print(f"🔮 Auto-creating management fees for next {months_ahead} months...")
+            
+            start_month = date.today().replace(day=1)
+            current = start_month
+            created_count = 0
+            
+            for i in range(months_ahead):
+                result = MonthlyChargeService.create_monthly_charges(self, current)
+                
+                if result.get('management_fees_created'):
+                    created_count += 1
+                
+                # Next month
+                if current.month == 12:
+                    current = date(current.year + 1, 1, 1)
+                else:
+                    current = date(current.year, current.month + 1, 1)
+            
+            print(f"✅ Auto-created {created_count} management fee expenses for {self.name}")
+            
+        except Exception as e:
+            # Δεν θέλουμε να σταματήσει το save αν αποτύχει η δημιουργία
+            print(f"⚠️ Error auto-creating management fees: {e}")
+            import traceback
+            traceback.print_exc()
 
 
 class BuildingMembership(models.Model):
