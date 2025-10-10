@@ -992,17 +992,22 @@ class FinancialDashboardService:
         for apartment in apartments:
             # ΔΙΟΡΘΩΣΗ: Πάντα υπολογίζω το balance από transactions για συνέπεια
             # ✅ REFACTORED: Using centralized BalanceCalculationService
+            # ✅ FIX 2025-10-10: Added include_reserve_fund=True for proper carryover
             if end_date:
                 # Για snapshot view, υπολογίζουμε το balance μέχρι την αρχή του μήνα (πριν τον επιλεγμένο μήνα)
                 if month:
                     year, mon = map(int, month.split('-'))
                     month_start = date(year, mon, 1)
                     calculated_balance = BalanceCalculationService.calculate_historical_balance(
-                        apartment, month_start, include_management_fees=True
+                        apartment, month_start, 
+                        include_management_fees=True,
+                        include_reserve_fund=True  # ✅ CRITICAL: Include reserve fund in previous balance!
                     )
                 else:
                     calculated_balance = BalanceCalculationService.calculate_historical_balance(
-                        apartment, end_date, include_management_fees=True
+                        apartment, end_date, 
+                        include_management_fees=True,
+                        include_reserve_fund=True  # ✅ CRITICAL: Include reserve fund in previous balance!
                     )
                 # Τελευταία πληρωμή μέχρι την ημερομηνία
                 last_payment = apartment.payments.filter(date__lt=end_date).order_by('-date').first()
@@ -1010,7 +1015,9 @@ class FinancialDashboardService:
                 # Για current view, χρησιμοποίησε current date
                 from datetime import date
                 calculated_balance = BalanceCalculationService.calculate_historical_balance(
-                    apartment, date.today(), include_management_fees=True
+                    apartment, date.today(), 
+                    include_management_fees=True,
+                    include_reserve_fund=True  # ✅ CRITICAL: Include reserve fund in previous balance!
                 )
                 # Τελευταία πληρωμή συνολικά
                 last_payment = apartment.payments.order_by('-date').first()

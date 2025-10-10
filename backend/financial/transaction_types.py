@@ -28,6 +28,8 @@ class TransactionType(models.TextChoices):
     COMMON_EXPENSE_CHARGE = 'common_expense_charge', 'Χρέωση Κοινοχρήστων'
     EXPENSE_CREATED = 'expense_created', 'Δαπάνη Δημιουργήθηκε'
     EXPENSE_ISSUED = 'expense_issued', 'Δαπάνη Εκδόθηκε'
+    MANAGEMENT_FEE_CHARGE = 'management_fee_charge', 'Χρέωση Δαπανών Διαχείρισης'
+    RESERVE_FUND_CHARGE = 'reserve_fund_charge', 'Χρέωση Αποθεματικού'
     INTEREST_CHARGE = 'interest_charge', 'Χρέωση Τόκων'
     PENALTY_CHARGE = 'penalty_charge', 'Χρέωση Προστίμου'
 
@@ -68,6 +70,8 @@ class TransactionType(models.TextChoices):
             cls.COMMON_EXPENSE_CHARGE,
             cls.EXPENSE_CREATED,
             cls.EXPENSE_ISSUED,
+            cls.MANAGEMENT_FEE_CHARGE,
+            cls.RESERVE_FUND_CHARGE,
             cls.INTEREST_CHARGE,
             cls.PENALTY_CHARGE,
         }
@@ -138,6 +142,8 @@ class TransactionType(models.TextChoices):
             cls.COMMON_EXPENSE_CHARGE,
             cls.EXPENSE_CREATED,
             cls.EXPENSE_ISSUED,
+            cls.MANAGEMENT_FEE_CHARGE,
+            cls.RESERVE_FUND_CHARGE,
             cls.INTEREST_CHARGE,
             cls.PENALTY_CHARGE,
         ]
