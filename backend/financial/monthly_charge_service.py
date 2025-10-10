@@ -255,6 +255,7 @@ class MonthlyChargeService:
             amount=monthly_target,
             category='reserve_fund',
             distribution_type='by_participation_mills',  # Κατανομή ανά χιλιοστά
+            payer_responsibility='owner',  # ✅ ΚΡΙΣΙΜΟ: Χρέωση ιδιοκτητών!
             date=target_month,
             due_date=target_month,
             notes=f"Μηνιαία εισφορά για το αποθεματικό ταμείο (στόχος: {building.reserve_fund_goal}€ σε {building.reserve_fund_duration_months} μήνες)"

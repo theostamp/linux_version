@@ -1058,6 +1058,34 @@ class FinancialDashboardService:
                 # 1. Previous Balance = οφειλές από προηγούμενους μήνες (πριν τον επιλεγμένο μήνα)
                 # ΔΙΟΡΘΩΣΗ: Χρησιμοποίησε το calculated_balance που ήδη υπολογίστηκε παραπάνω
                 previous_balance = calculated_balance
+                
+                # 1.1. Υπολογισμός previous balance διαχωρισμένο σε resident/owner
+                previous_resident_expenses = Decimal('0.00')
+                previous_owner_expenses = Decimal('0.00')
+                
+                # Βρες όλες τις δαπάνες πριν τον τρέχοντα μήνα
+                previous_expenses = Expense.objects.filter(
+                    building_id=apartment.building_id,
+                    date__gte=self.building.financial_system_start_date or month_start,
+                    date__lt=month_start
+                )
+                
+                total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
+                    total=Sum('participation_mills'))['total'] or 1000
+                apartment_count = Apartment.objects.filter(building_id=apartment.building_id).count()
+                
+                for expense in previous_expenses:
+                    # Υπολογισμός μεριδίου διαμερίσματος
+                    if expense.category == 'management_fees':
+                        apartment_share = expense.amount / apartment_count
+                    else:
+                        apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
+                    
+                    # Διαχωρισμός ανά payer_responsibility
+                    if expense.payer_responsibility == 'owner':
+                        previous_owner_expenses += apartment_share
+                    else:
+                        previous_resident_expenses += apartment_share
 
                 # 2. Current month expense share (για net_obligation)
                 month_expenses = Expense.objects.filter(
@@ -1065,28 +1093,29 @@ class FinancialDashboardService:
                     date__gte=month_start,
                     date__lt=end_date
                 )
-
+                
                 # Υπολογισμός μεριδίου διαμερίσματος από τις δαπάνες του μήνα
-                total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
-                    total=Sum('participation_mills'))['total'] or 1000
+                current_resident_expenses = Decimal('0.00')
+                current_owner_expenses = Decimal('0.00')
 
                 for expense in month_expenses:
                     # ΔΙΟΡΘΩΣΗ: Management fees είναι ισόποσα, άλλες δαπάνες ανά χιλιοστά
                     if expense.category == 'management_fees':
-                        # Ισόποση κατανομή για management fees
-                        apartment_count = Apartment.objects.filter(building_id=apartment.building_id).count()
                         apartment_share = expense.amount / apartment_count
                     else:
-                        # Κατανομή ανά χιλιοστά για άλλες δαπάνες
                         apartment_share = Decimal(apartment.participation_mills) / Decimal(total_mills) * expense.amount
 
                     expense_share += apartment_share
 
                     # ΝΕΟ: Διαχωρισμός ανά payer_responsibility
                     if expense.payer_responsibility == 'owner':
-                        owner_expenses += apartment_share
+                        current_owner_expenses += apartment_share
                     else:  # resident or shared
-                        resident_expenses += apartment_share
+                        current_resident_expenses += apartment_share
+                
+                # ✅ ΚΡΙΣΙΜΟ: Προσθήκη previous στα totals για UI display!
+                resident_expenses = previous_resident_expenses + current_resident_expenses
+                owner_expenses = previous_owner_expenses + current_owner_expenses
                 
                 # ✅ ΔΙΟΡΘΩΣΗ 2025-10-10: Management fees & Reserve fund είναι ΗΔΗ Expense records!
                 # Δεν χρειάζεται δυναμική προσθήκη - περιλαμβάνονται στο loop παραπάνω (γραμμές 1073-1089)

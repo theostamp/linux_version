@@ -130,25 +130,26 @@ class BalanceCalculationService:
         total_charges = Decimal('0.00')
 
         if expense_ids_before_month:
-            # Βρίσκουμε τα management_fees expense IDs για να τα αφαιρέσουμε
-            management_expense_ids = list(Expense.objects.filter(
+            # Βρίσκουμε τα management_fees και reserve_fund expense IDs για να τα αφαιρέσουμε
+            # γιατί θα τα υπολογίσουμε ξεχωριστά παρακάτω
+            special_category_expense_ids = list(Expense.objects.filter(
                 id__in=expense_ids_before_month,
-                category='management_fees'
+                category__in=['management_fees', 'reserve_fund']  # ✅ ΚΡΙΣΙΜΟ: Και τα δύο!
             ).values_list('id', flat=True))
 
-            # Αφαιρούμε τα management_fees από τα expense_ids
-            non_management_expense_ids = [
+            # Αφαιρούμε τα management_fees και reserve_fund από τα expense_ids
+            regular_expense_ids = [
                 exp_id for exp_id in expense_ids_before_month
-                if exp_id not in management_expense_ids
+                if exp_id not in special_category_expense_ids
             ]
 
-            if non_management_expense_ids:
+            if regular_expense_ids:
                 # ✅ ΔΙΟΡΘΩΣΗ: Χρήση apartment object (FK) αντί για apartment_number
                 # ✅ ΒΕΛΤΙΩΣΗ: Χρήση TransactionType.get_charge_types() για validation
                 total_charges = Transaction.objects.filter(
                     apartment=apartment,  # ✅ ΣΩΣΤΟ! (όχι apartment_number)
                     reference_type='expense',
-                    reference_id__in=[str(exp_id) for exp_id in non_management_expense_ids],
+                    reference_id__in=[str(exp_id) for exp_id in regular_expense_ids],  # ✅ ΔΙΟΡΘΩΣΗ: Όχι mgmt/reserve!
                     type__in=TransactionType.get_charge_types()  # ✅ VALIDATED!
                 ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
 
