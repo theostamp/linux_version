@@ -39,14 +39,8 @@ def create_monthly_management_fees():
 
     for building in buildings:
         try:
-            # Έλεγχος αν ο τρέχων μήνας είναι μετά το financial_system_start_date
-            if building.financial_system_start_date and current_month_start < building.financial_system_start_date:
-                logger.info(
-                    f"⏭️ Skipping building {building.name} - current month {current_month_start} "
-                    f"is before financial_system_start_date {building.financial_system_start_date}"
-                )
-                skipped_count += 1
-                continue
+            # ✅ ΔΙΟΡΘΩΣΗ: Αφαίρεση περιορισμού financial_system_start_date
+            # Το σύστημα δημιουργεί management fees χωρίς αυτόν τον περιορισμό
 
             # Έλεγχος αν ήδη υπάρχουν management fees για τον τρέχοντα μήνα
             existing = Expense.objects.filter(
@@ -153,10 +147,8 @@ def backfill_management_fees(building_id: int, start_month: str, end_month: str 
         today = date.today()
         end_date = date(today.year, today.month, 1)
 
-    # Έλεγχος financial_system_start_date
-    if building.financial_system_start_date and start_date < building.financial_system_start_date:
-        start_date = building.financial_system_start_date
-        logger.info(f"📅 Adjusted start_date to financial_system_start_date: {start_date}")
+    # ✅ ΔΙΟΡΘΩΣΗ: Αφαίρεση περιορισμού financial_system_start_date
+    # Το σύστημα δημιουργεί management fees χωρίς αυτόν τον περιορισμό
 
     logger.info(f"🔄 Starting management fees backfill for {building.name} from {start_date} to {end_date}")
 
