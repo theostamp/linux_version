@@ -247,3 +247,4 @@ python manage.py create_monthly_charges --building 1
 **Performance Gain:** 10x fewer DB writes  
 **Test Status:** ✅ 100% Success
 
+
