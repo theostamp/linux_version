@@ -333,6 +333,26 @@ class Building(models.Model):
         
         # Αν δεν υπάρχει ημερομηνία έναρξης, χρησιμοποιούμε την 1η Ιανουαρίου
         return date(year, 1, 1)
+    
+    def save(self, *args, **kwargs):
+        """
+        Custom save method για αυτόματο ορισμό financial_system_start_date
+        
+        ΚΑΝΟΝΑΣ: Όταν ορίζεται management_fee_per_apartment (πακέτο διαχείρισης)
+        και δεν υπάρχει financial_system_start_date, ορίζουμε αυτόματα στην 1η του τρέχοντος μήνα.
+        """
+        from datetime import date
+        
+        # ✅ ΑΥΤΟΜΑΤΟΣ ΟΡΙΣΜΟΣ: financial_system_start_date
+        # Όταν ορίζεται management fee και δεν υπάρχει start date
+        if self.management_fee_per_apartment and self.management_fee_per_apartment > 0:
+            if not self.financial_system_start_date:
+                # Ορίζουμε αυτόματα στην 1η του τρέχοντος μήνα
+                today = date.today()
+                self.financial_system_start_date = today.replace(day=1)
+                print(f"✅ Auto-set financial_system_start_date = {self.financial_system_start_date} for building {self.name}")
+        
+        super().save(*args, **kwargs)
 
 
 class BuildingMembership(models.Model):
