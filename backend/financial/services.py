@@ -3,7 +3,7 @@ from typing import Dict, Any, List, Optional
 from django.db.models import Sum
 from datetime import datetime
 from django.utils import timezone
-from .models import Expense, Transaction, Payment, CommonExpensePeriod, ApartmentShare
+from .models import Expense, Transaction, Payment, CommonExpensePeriod, ApartmentShare, MonthlyBalance
 from apartments.models import Apartment
 from buildings.models import Building
 

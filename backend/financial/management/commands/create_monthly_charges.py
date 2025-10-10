@@ -6,30 +6,36 @@ This command creates automatic monthly charges for all buildings:
 - Reserve Fund (Αποθεματικό)
 
 Usage:
-    # Create charges for current month (all buildings)
-    python manage.py create_monthly_charges
+    # ✅ IMPORTANT: Always specify --schema for multi-tenant systems!
+    
+    # Create charges for current month (all buildings in demo schema)
+    python manage.py create_monthly_charges --schema demo
     
     # Create charges for specific month
-    python manage.py create_monthly_charges --month 2025-10
+    python manage.py create_monthly_charges --schema demo --month 2025-10
     
     # Create charges for specific building
-    python manage.py create_monthly_charges --building 1
+    python manage.py create_monthly_charges --schema demo --building 1
     
-    # Retroactive creation (from start to current month)
-    python manage.py create_monthly_charges --building 1 --retroactive
+    # Retroactive creation (from start to current month) ⭐ RECOMMENDED FOR SETUP
+    python manage.py create_monthly_charges --schema demo --building 1 --retroactive
     
     # Dry run (preview without creating)
-    python manage.py create_monthly_charges --dry-run
+    python manage.py create_monthly_charges --schema demo --dry-run
+    
+    # Verbose output
+    python manage.py create_monthly_charges --schema demo --building 1 --retroactive --verbose
 
 Cron Job:
     Schedule this command to run on the 1st of each month:
-    0 0 1 * * python manage.py create_monthly_charges
+    0 0 1 * * python manage.py create_monthly_charges --schema demo
 """
 
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 from datetime import date, datetime
 from decimal import Decimal
+from django_tenants.utils import schema_context, get_tenant_model
 
 from buildings.models import Building
 from financial.monthly_charge_service import MonthlyChargeService
@@ -69,8 +75,23 @@ class Command(BaseCommand):
             action='store_true',
             help='Show detailed output'
         )
+        
+        parser.add_argument(
+            '--schema',
+            type=str,
+            default='demo',
+            help='Tenant schema to use (default: demo)'
+        )
     
     def handle(self, *args, **options):
+        schema_name = options['schema']
+        
+        # ✅ CRITICAL: Use tenant schema context for multi-tenant system
+        with schema_context(schema_name):
+            self._handle_with_schema(*args, **options)
+    
+    def _handle_with_schema(self, *args, **options):
+        """Handle command within schema context"""
         # Parse target month
         if options['month']:
             try:
@@ -83,10 +104,12 @@ class Command(BaseCommand):
         
         dry_run = options['dry_run']
         verbose = options['verbose']
+        schema_name = options['schema']
         
         self.stdout.write(self.style.SUCCESS(
             f"\n{'🔍 DRY RUN - ' if dry_run else ''}Creating Monthly Charges"
         ))
+        self.stdout.write(f"Schema: {schema_name}")
         self.stdout.write(f"Target Month: {target_month.strftime('%B %Y')}\n")
         
         # Get buildings
