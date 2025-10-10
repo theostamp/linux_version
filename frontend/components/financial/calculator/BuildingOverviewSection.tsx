@@ -885,6 +885,38 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
     }
   };
 
+  const handleResetManagementFees = async () => {
+    try {
+      // Strong warning before reset
+      if (!confirm('⚠️ ΠΡΟΣΟΧΗ: Αυτή η ενέργεια θα διαγράψει ΟΛΑ τα management fees και τα transactions τους!\n\n' +
+                   'Θα τα επαναδημιουργήσει με σωστή ημερομηνία (1η του μήνα).\n\n' +
+                   'Είστε ΣΙΓΟΥΡΟΙ ότι θέλετε να συνεχίσετε;')) {
+        return;
+      }
+
+      const response = await api.post(`/financial/expenses/reset_management_fees/`, {
+        building_id: buildingId
+      });
+
+      if (response.data.success) {
+        toast.success(
+          `✅ Επιτυχής επαναφορά!\n` +
+          `Διαγράφηκαν: ${response.data.deleted_fees} fees, ${response.data.deleted_transactions} transactions\n` +
+          `Επαναδημιουργήθηκαν: ${response.data.recreated_fees} management fees`,
+          { duration: 7000 }
+        );
+
+        // Refresh data
+        handleRefresh();
+      } else {
+        toast.error('Αποτυχία επαναφοράς management fees');
+      }
+    } catch (error: any) {
+      console.error('Error resetting management fees:', error);
+      toast.error(error.response?.data?.error || 'Σφάλμα κατά την επαναφορά');
+    }
+  };
+
   const formatCurrency = (amount: number | undefined | null) => {
     if (amount === undefined || amount === null || isNaN(amount)) {
       return '0,00 €';
@@ -1416,13 +1448,13 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleCleanupOrphanManagementFees();
+                      handleResetManagementFees();
                     }}
-                    className="h-8 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                    title="Καθαρισμός ορφανών management fees"
+                    className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    title="Επαναφορά management fees με σωστή ημερομηνία"
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Cleanup
+                    <RefreshCw className="h-4 w-4 mr-1" />
+                    Reset
                   </Button>
                   <Button
                     variant="ghost"
