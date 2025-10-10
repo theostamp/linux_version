@@ -86,8 +86,17 @@ class BalanceCalculationService:
         system_start_date = building.financial_system_start_date
 
         if system_start_date is None:
-            # Δεν υπάρχει ημερομηνία έναρξης συστήματος
-            return Decimal('0.00')
+            # ✅ ΔΙΟΡΘΩΣΗ: Αν δεν υπάρχει system start date, χρησιμοποιούμε την παλαιότερη δαπάνη
+            oldest_expense = Expense.objects.filter(
+                building_id=apartment.building_id
+            ).order_by('date').first()
+
+            if oldest_expense:
+                # Χρησιμοποιούμε την 1η του μήνα της παλαιότερης δαπάνης
+                system_start_date = oldest_expense.date.replace(day=1)
+            else:
+                # Καμία δαπάνη δεν υπάρχει, επιστρέφουμε 0
+                return Decimal('0.00')
 
         # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         # ⚠️ ΚΡΙΣΙΜΟ: BALANCE TRANSFER LOGIC - ΜΗΝ ΑΛΛΑΞΕΤΕ ΧΩΡΙΣ TESTING!

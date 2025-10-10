@@ -1299,7 +1299,7 @@ class FinancialDashboardService:
             # Υπολογισμός αριθμού μηνών από την ημερομηνία έναρξης μέχρι τον τρέχοντα μήνα
             from dateutil.relativedelta import relativedelta
 
-            # 🔧 ΝΕΟ: Χρήση financial_system_start_date αν υπάρχει, αλλιώς year_start
+            # ✅ ΔΙΟΡΘΩΣΗ: Χρήση financial_system_start_date αν υπάρχει, αλλιώς παλαιότερη δαπάνη
             if self.building.financial_system_start_date:
                 financial_start_year = self.building.financial_system_start_date.year
                 financial_start_month = self.building.financial_system_start_date.month
@@ -1307,9 +1307,20 @@ class FinancialDashboardService:
                 months_diff = (month_start.year - financial_start_year) * 12 + (month_start.month - financial_start_month)
                 print(f"🔧 Financial system start date used: {self.building.financial_system_start_date}")
             else:
-                # Fallback στο year_start αν δεν υπάρχει financial_system_start_date
-                months_diff = (month_start.year - year_start.year) * 12 + (month_start.month - year_start.month)
-                print(f"🔧 Year start used: {year_start}")
+                # ✅ ΔΙΟΡΘΩΣΗ: Χρήση παλαιότερης δαπάνης αντί για year_start
+                oldest_expense = Expense.objects.filter(
+                    building=self.building
+                ).order_by('date').first()
+
+                if oldest_expense:
+                    # Χρησιμοποιούμε την 1η του μήνα της παλαιότερης δαπάνης
+                    expense_start = oldest_expense.date.replace(day=1)
+                    months_diff = (month_start.year - expense_start.year) * 12 + (month_start.month - expense_start.month)
+                    print(f"🔧 Using oldest expense date: {expense_start}")
+                else:
+                    # Fallback στο year_start αν δεν υπάρχει καμία δαπάνη
+                    months_diff = (month_start.year - year_start.year) * 12 + (month_start.month - year_start.month)
+                    print(f"🔧 Year start used (no expenses found): {year_start}")
 
             # Συνολικά management fees = μηνιαία χρέωση × αριθμός μηνών (μόνο θετικοί μήνες)
             management_fees_share = management_fee_per_apartment * max(0, months_diff)
