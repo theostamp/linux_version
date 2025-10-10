@@ -130,16 +130,16 @@ class MonthlyChargeService:
             logger.debug(f"⏭️ Skipping management fees for {building.name} - {target_month}: before start date")
             return False
         
-        # Έλεγχος αν έχει ήδη δημιουργηθεί για αυτόν τον μήνα
-        existing_charges = Transaction.objects.filter(
+        # ✅ Έλεγχος αν έχει ήδη δημιουργηθεί Expense για αυτόν τον μήνα
+        existing_expense = Expense.objects.filter(
             building=building,
-            type='management_fee_charge',
+            category='management_fees',
             date__year=target_month.year,
             date__month=target_month.month
         ).exists()
         
-        if existing_charges:
-            logger.debug(f"⏭️ Management fees already exist for {building.name} - {target_month}")
+        if existing_expense:
+            logger.debug(f"⏭️ Management fees Expense already exists for {building.name} - {target_month}")
             return False
         
         return True
@@ -155,16 +155,16 @@ class MonthlyChargeService:
         if not is_date_in_reserve_fund_timeline(target_month, building):
             return False
         
-        # Έλεγχος αν έχει ήδη δημιουργηθεί για αυτόν τον μήνα
-        existing_charges = Transaction.objects.filter(
+        # ✅ Έλεγχος αν έχει ήδη δημιουργηθεί Expense για αυτόν τον μήνα
+        existing_expense = Expense.objects.filter(
             building=building,
-            type='reserve_fund_charge',
+            category='reserve_fund',
             date__year=target_month.year,
             date__month=target_month.month
         ).exists()
         
-        if existing_charges:
-            logger.debug(f"⏭️ Reserve fund already exists for {building.name} - {target_month}")
+        if existing_expense:
+            logger.debug(f"⏭️ Reserve fund Expense already exists for {building.name} - {target_month}")
             return False
         
         return True
@@ -175,7 +175,11 @@ class MonthlyChargeService:
         target_month: date
     ) -> Dict[str, Any]:
         """
-        Δημιουργία management fee charges για όλα τα διαμερίσματα
+        Δημιουργία management fee charges ως EXPENSE record
+        
+        ✅ ΑΠΛΟΠΟΙΗΣΗ: Δημιουργεί ΜΙΑ Expense (όχι πολλά Transaction records)
+        ✅ ΑΥΤΟΜΑΤΗ ΜΕΤΑΦΟΡΑ: Η Expense μεταφέρεται αυτόματα με τον υπάρχοντα μηχανισμό
+        ✅ ΟΡΑΤΟΤΗΤΑ: Εμφανίζεται στη Λίστα Δαπανών
         
         Returns:
             {
@@ -184,35 +188,31 @@ class MonthlyChargeService:
                 'transactions_created': int
             }
         """
-        apartments = building.apartments.all()
+        apartments_count = building.apartments.count()
         fee_per_apartment = building.management_fee_per_apartment
-        transactions_created = 0
+        total_amount = fee_per_apartment * apartments_count
         
-        for apartment in apartments:
-            # Δημιουργία Transaction record
-            Transaction.objects.create(
-                apartment=apartment,
-                building=building,
-                type='management_fee_charge',
-                amount=fee_per_apartment,
-                date=timezone.make_aware(timezone.datetime.combine(target_month, timezone.datetime.min.time())),
-                description=f"Δαπάνες Διαχείρισης {target_month.strftime('%B %Y')}",
-                balance_before=apartment.current_balance,
-                balance_after=apartment.current_balance + fee_per_apartment
-            )
-            
-            # Ενημέρωση apartment balance
-            apartment.current_balance += fee_per_apartment
-            apartment.save(update_fields=['current_balance'])
-            
-            transactions_created += 1
+        # ✅ Δημιουργία ΜΙΑ Expense για όλη την πολυκατοικία
+        Expense.objects.create(
+            building=building,
+            title=f"Δαπάνες Διαχείρισης {target_month.strftime('%B %Y')}",
+            amount=total_amount,
+            category='management_fees',
+            distribution_type='equal_share',  # Ισόποση κατανομή σε όλα τα διαμερίσματα
+            date=target_month,
+            due_date=target_month,
+            notes=f"Μηνιαία αμοιβή διαχείρισης ({fee_per_apartment}€/διαμέρισμα × {apartments_count} διαμερίσματα)"
+        )
         
-        total_amount = fee_per_apartment * apartments.count()
+        logger.info(
+            f"✅ Created management fee Expense for {building.name} - {target_month}: "
+            f"{total_amount}€ ({fee_per_apartment}€ × {apartments_count} apartments)"
+        )
         
         return {
             'created': True,
             'total_amount': total_amount,
-            'transactions_created': transactions_created
+            'transactions_created': 1  # Μία Expense (όχι πολλά Transactions)
         }
     
     @staticmethod
@@ -221,9 +221,11 @@ class MonthlyChargeService:
         target_month: date
     ) -> Dict[str, Any]:
         """
-        Δημιουργία reserve fund charges για όλα τα διαμερίσματα
+        Δημιουργία reserve fund charges ως EXPENSE record
         
-        Το ποσό κατανέμεται ανά participation_mills
+        ✅ ΑΠΛΟΠΟΙΗΣΗ: Δημιουργεί ΜΙΑ Expense (όχι πολλά Transaction records)
+        ✅ ΑΥΤΟΜΑΤΗ ΜΕΤΑΦΟΡΑ: Η Expense μεταφέρεται αυτόματα με τον υπάρχοντα μηχανισμό
+        ✅ ΟΡΑΤΟΤΗΤΑ: Εμφανίζεται στη Λίστα Δαπανών
         """
         if not building.reserve_fund_goal or not building.reserve_fund_duration_months:
             return {
@@ -246,38 +248,27 @@ class MonthlyChargeService:
                 'transactions_created': 0
             }
         
-        transactions_created = 0
-        total_charged = Decimal('0.00')
+        # ✅ Δημιουργία ΜΙΑ Expense για όλη την πολυκατοικία
+        Expense.objects.create(
+            building=building,
+            title=f"Εισφορά Αποθεματικού {target_month.strftime('%B %Y')}",
+            amount=monthly_target,
+            category='reserve_fund',
+            distribution_type='by_participation_mills',  # Κατανομή ανά χιλιοστά
+            date=target_month,
+            due_date=target_month,
+            notes=f"Μηνιαία εισφορά για το αποθεματικό ταμείο (στόχος: {building.reserve_fund_goal}€ σε {building.reserve_fund_duration_months} μήνες)"
+        )
         
-        for apartment in apartments:
-            # Υπολογισμός μεριδίου διαμερίσματος
-            apartment_mills = apartment.participation_mills or 0
-            apartment_share = (monthly_target * Decimal(str(apartment_mills))) / Decimal(str(total_mills))
-            apartment_share = apartment_share.quantize(Decimal('0.01'))
-            
-            # Δημιουργία Transaction record
-            Transaction.objects.create(
-                apartment=apartment,
-                building=building,
-                type='reserve_fund_charge',
-                amount=apartment_share,
-                date=timezone.make_aware(timezone.datetime.combine(target_month, timezone.datetime.min.time())),
-                description=f"Εισφορά Αποθεματικού {target_month.strftime('%B %Y')}",
-                balance_before=apartment.current_balance,
-                balance_after=apartment.current_balance + apartment_share
-            )
-            
-            # Ενημέρωση apartment balance
-            apartment.current_balance += apartment_share
-            apartment.save(update_fields=['current_balance'])
-            
-            transactions_created += 1
-            total_charged += apartment_share
+        logger.info(
+            f"✅ Created reserve fund Expense for {building.name} - {target_month}: "
+            f"{monthly_target}€"
+        )
         
         return {
             'created': True,
-            'total_amount': total_charged,
-            'transactions_created': transactions_created
+            'total_amount': monthly_target,
+            'transactions_created': 1  # Μία Expense (όχι πολλά Transactions)
         }
     
     @staticmethod
