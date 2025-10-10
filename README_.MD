@@ -561,7 +561,7 @@ git commit -m "διορθωσεις 31"
 
 ## Βασικές Εντολές Git
 git add .
-git commit -m "διορθωσεις οικονομικων υπολοιπων vol: 1ψψ2000299 "
+git commit -m "οκ με διαχειριστικα, αποθεματικο και κοινοχρηστα  "
 
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git

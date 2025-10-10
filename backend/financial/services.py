@@ -826,6 +826,9 @@ class FinancialDashboardService:
         current_month_expenses = current_obligations - safe_previous_obligations
         print(f"🔧 CURRENT MONTH EXPENSES: {current_month_expenses} = {current_obligations} - {safe_previous_obligations}")
 
+        # Παίρνουμε την αναλυτική κατανομή δαπανών
+        expense_breakdown = self.get_expense_breakdown(month)
+
         return {
             'total_balance': float(total_balance.quantize(Decimal('0.01'))),
             'current_obligations': float(current_obligations.quantize(Decimal('0.01'))),
@@ -854,7 +857,9 @@ class FinancialDashboardService:
             'reserve_fund_target_date': self.building.reserve_fund_target_date.strftime('%Y-%m-%d') if self.building.reserve_fund_target_date else None,
             # Management expenses
             'management_fee_per_apartment': float(effective_management_fee_per_apartment),  # 🔧 ΝΕΟ: Χρήση effective fee
-            'total_management_cost': float(total_management_cost)
+            'total_management_cost': float(total_management_cost),
+            # Αναλυτική κατανομή δαπανών ανά κατηγορία
+            'expense_breakdown': expense_breakdown  # ← ΝΕΟ FIELD
         }
     
 
@@ -1230,6 +1235,69 @@ class FinancialDashboardService:
             'average_payment': float(average_payment),
             'payment_methods': payment_methods_data
         }
+
+    def get_expense_breakdown(self, month: str | None = None) -> List[Dict[str, Any]]:
+        """Επιστρέφει αναλυτική κατανομή δαπανών ανά κατηγορία για τον συγκεκριμένο μήνα
+
+        Args:
+            month: Μήνας σε μορφή YYYY-MM
+
+        Returns:
+            List με dictionaries που περιέχουν category, category_display, amount
+        """
+        from datetime import date
+
+        if month:
+            try:
+                year, mon = map(int, month.split('-'))
+                start_date = date(year, mon, 1)
+                if mon == 12:
+                    end_date = date(year + 1, 1, 1)
+                else:
+                    end_date = date(year, mon + 1, 1)
+            except Exception:
+                # Fallback to current month
+                now = timezone.now()
+                start_date = date(now.year, now.month, 1)
+                if now.month == 12:
+                    end_date = date(now.year + 1, 1, 1)
+                else:
+                    end_date = date(now.year, now.month + 1, 1)
+        else:
+            # Current month
+            now = timezone.now()
+            start_date = date(now.year, now.month, 1)
+            if now.month == 12:
+                end_date = date(now.year + 1, 1, 1)
+            else:
+                end_date = date(now.year, now.month + 1, 1)
+
+        # Φιλτράρισμα δαπανών για τον συγκεκριμένο μήνα
+        # Εξαιρούμε management_fees και reserve_fund γιατί αυτές εμφανίζονται ξεχωριστά
+        expenses = Expense.objects.filter(
+            building_id=self.building_id,
+            date__gte=start_date,
+            date__lt=end_date
+        ).exclude(
+            category__in=['management_fees', 'reserve_fund']
+        ).values('category').annotate(
+            total_amount=Sum('amount')
+        ).order_by('-total_amount')
+
+        # Δημιουργία λίστας με αναλυτικές δαπάνες
+        breakdown = []
+        for expense in expenses:
+            category = expense['category']
+            # Παίρνουμε το display name από το model
+            category_display = dict(Expense.EXPENSE_CATEGORIES).get(category, category.upper())
+
+            breakdown.append({
+                'category': category,
+                'category_display': category_display,
+                'amount': float(expense['total_amount'])
+            })
+
+        return breakdown
 
 
 class PaymentProcessor:

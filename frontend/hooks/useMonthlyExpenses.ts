@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 
+export interface ExpenseBreakdownItem {
+  category: string;
+  category_display: string;
+  amount: number;
+}
+
 export interface MonthlyExpenses {
   total_expenses_month: number;
   management_fee_per_apartment: number;  // Changed from management_fees
@@ -25,6 +31,7 @@ export interface MonthlyExpenses {
   reserve_progress_percentage: number;
   apartment_count: number;
   has_monthly_activity: boolean;
+  expense_breakdown?: ExpenseBreakdownItem[];  // ← ΝΕΟ FIELD
 }
 
 export const useMonthlyExpenses = (buildingId?: number, month?: string) => {

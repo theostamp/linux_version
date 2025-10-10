@@ -52,7 +52,7 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛ/ΡΑΣ</TableHead>
             <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜ/ΣΗ</TableHead>
             <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΔΙΑΧΕΙΡΙΣΗ</TableHead>
-            {showOwnerExpenses && (<> <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>Κ/ΧΡΗΣΤΑ</TableHead> <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛ/ΡΑΣ</TableHead> <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜ/ΣΗ</TableHead> </>)}
+            {showOwnerExpenses && (<><TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>Κ/ΧΡΗΣΤΑ</TableHead><TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛ/ΡΑΣ</TableHead><TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜ/ΣΗ</TableHead></>)}
             <TableHead className="text-center border"></TableHead>
           </TableRow>
         </TableHeader>
@@ -99,13 +99,44 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             <TableCell>{Math.round(sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.participation_mills ?? 0), 0))}</TableCell>
             <TableCell>{Math.round(sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.participation_mills ?? 0), 0))}</TableCell>
             <TableCell>{Math.round(sharesArray.reduce((s, a) => s + (aptWithFinancial.find(apt => apt.id === a.apartment_id)?.heating_mills ?? 0), 0))}</TableCell>
-            <TableCell>{formatAmount(sharesArray.reduce((s, a) => s + toNumber(aptWithFinancial.find(apt => apt.id === a.apartment_id)?.expense_share || 0), 0) + reserveFundInfo.monthlyAmount)}</TableCell>
-            <TableCell>{formatAmount(expenseBreakdown.elevator)}</TableCell>
-            <TableCell>{formatAmount(expenseBreakdown.heating)}</TableCell>
+            <TableCell>{formatAmount(
+              sharesArray.reduce((sum, share) => {
+                const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
+                const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
+                const commonAmount = toNumber(apartmentData?.expense_share || 0);
+                const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0 && Object.values(expenseBreakdown).some(v => v > 0)) ? toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000) : 0;
+                return sum + commonAmount + apartmentReserveFund;
+              }, 0)
+            )}</TableCell>
+            <TableCell>{formatAmount(
+              sharesArray.reduce((sum, share) => {
+                const breakdown = share.breakdown || {};
+                return sum + toNumber(breakdown.elevator_expenses || 0);
+              }, 0)
+            )}</TableCell>
+            <TableCell>{formatAmount(
+              sharesArray.reduce((sum, share) => {
+                const breakdown = share.breakdown || {};
+                return sum + toNumber(breakdown.heating_expenses || 0);
+              }, 0)
+            )}</TableCell>
             <TableCell>{formatAmount(managementFeeInfo.totalFee)}</TableCell>
-            {showOwnerExpenses && (<> <TableCell>-</TableCell> <TableCell>-</TableCell> <TableCell>-</TableCell> </>)}
+            {showOwnerExpenses && (<><TableCell>-</TableCell><TableCell>-</TableCell><TableCell>-</TableCell></>)}
             {reserveFundInfo.monthlyAmount > 0 && <TableCell>{formatAmount(reserveFundInfo.monthlyAmount)}</TableCell>}
-            <TableCell>{formatAmount(totalExpenses + sharesArray.reduce((s, a) => s + Math.abs(aptWithFinancial.find(apt => apt.id === a.apartment_id)?.previous_balance ?? 0), 0))}€</TableCell>
+            <TableCell>{formatAmount(
+              sharesArray.reduce((sum, share) => {
+                const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
+                const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
+                const breakdown = share.breakdown || {};
+                const commonAmount = toNumber(apartmentData?.expense_share || 0);
+                const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
+                const heatingAmount = toNumber(breakdown.heating_expenses || 0);
+                const managementFee = toNumber((breakdown as any).management_fee ?? managementFeeInfo.feePerApartment);
+                const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0 && Object.values(expenseBreakdown).some(v => v > 0)) ? toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000) : 0;
+                const previousBalance = Math.abs(apartmentData?.previous_balance ?? 0);
+                return sum + commonAmount + elevatorAmount + heatingAmount + managementFee + apartmentReserveFund + previousBalance;
+              }, 0)
+            )}€</TableCell>
           </TableRow>
         </TableBody>
       </Table>

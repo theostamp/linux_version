@@ -63,6 +63,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     isOpen,
     onClose,
     state,
+    buildingId,
     buildingName = 'Άγνωστο Κτίριο',
     managementOfficeName,
     managementOfficePhone,
@@ -226,7 +227,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
             </TabsList>
 
             <TabsContent value="traditional">
-              <TraditionalViewTab {...props} {...{ state, aptWithFinancial, expenseBreakdown, managementFeeInfo, reserveFundInfo, totalExpenses, perApartmentAmounts, validateData, validationResult, getGroupedExpenses, getTotalPreviousBalance, getFinalTotalExpenses }} />
+              <TraditionalViewTab {...props} {...{ state, buildingId, selectedMonth: expenseSheetMonth, aptWithFinancial, expenseBreakdown, managementFeeInfo, reserveFundInfo, totalExpenses, perApartmentAmounts, validateData, validationResult, getGroupedExpenses, getTotalPreviousBalance, getFinalTotalExpenses }} />
             </TabsContent>
 
             <TabsContent value="analysis">

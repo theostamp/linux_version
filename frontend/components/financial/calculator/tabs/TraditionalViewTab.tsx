@@ -6,10 +6,13 @@ import { ApartmentExpenseTable } from '../components/ApartmentExpenseTable';
 import { ValidationResult, CommonExpenseModalProps, ExpenseBreakdown, ManagementFeeInfo, ReserveFundInfo, PerApartmentAmounts, GroupedExpenses } from '../types/financial';
 import { getPaymentDueDate, getPeriodInfo, getPeriodInfoWithBillingCycle } from '../utils/periodHelpers';
 import { formatAmount } from '../utils/formatters';
+import { useMonthlyExpenses, ExpenseBreakdownItem } from '@/hooks/useMonthlyExpenses';
 
 // This interface is now self-contained and doesn't extend CommonExpenseModalProps
 interface TraditionalViewTabProps {
   state: any; // Should be CalculatorState
+  buildingId?: number;
+  selectedMonth?: string;
   buildingName?: string;
   buildingAddress?: string;
   buildingCity?: string;
@@ -32,15 +35,17 @@ interface TraditionalViewTabProps {
 }
 
 export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => {
-  const { 
-    state, 
-    buildingName, 
-    buildingAddress, 
-    buildingCity, 
-    buildingPostalCode, 
-    managerName, 
-    managerApartment, 
-    managerPhone, 
+  const {
+    state,
+    buildingId,
+    selectedMonth,
+    buildingName,
+    buildingAddress,
+    buildingCity,
+    buildingPostalCode,
+    managerName,
+    managerApartment,
+    managerPhone,
     managerCollectionSchedule,
     aptWithFinancial,
     expenseBreakdown,
@@ -54,6 +59,30 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
     getTotalPreviousBalance,
     getFinalTotalExpenses
   } = props;
+
+  // Φέρνουμε τα μηνιαία έξοδα από το API
+  const { expenses: monthlyExpenses } = useMonthlyExpenses(buildingId, selectedMonth);
+
+  // Υπολογισμός συνόλου δαπανών που εμφανίζονται
+  const displayedExpensesTotal = React.useMemo(() => {
+    let total = 0;
+
+    // Αν υπάρχουν αναλυτικές δαπάνες από το API, χρησιμοποίησε αυτές
+    if (monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0) {
+      total = monthlyExpenses.expense_breakdown.reduce((sum, expense) => sum + expense.amount, 0);
+    }
+
+    // Πρόσθεσε κόστος διαχείρισης
+    total += managementFeeInfo.totalFee || 0;
+
+    // Πρόσθεσε αποθεματικό
+    total += reserveFundInfo.monthlyAmount || 0;
+
+    // Πρόσθεσε παλαιότερες οφειλές
+    total += getTotalPreviousBalance() || 0;
+
+    return total;
+  }, [monthlyExpenses, managementFeeInfo.totalFee, reserveFundInfo.monthlyAmount, getTotalPreviousBalance]);
 
   const showOwnerExpenses = (expenseBreakdown.other || 0) + (expenseBreakdown.coownership || 0) > 0;
 
@@ -94,21 +123,25 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
             
             {/* Expense Breakdown Summary */}
             <div className="space-y-3">
-                {/* 1. Λειτουργικές Δαπάνες */}
-                <div className="flex items-center justify-between p-2 bg-white rounded border">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-700">1</span>
+                {/* Αναλυτικές Δαπάνες - Φέρνουμε από το API */}
+                {monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0 && (
+                  monthlyExpenses.expense_breakdown.map((expense, index) => (
+                    <div key={expense.category} className="flex items-center justify-between p-2 bg-white rounded border">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700">{index + 1}</span>
                         <div>
-                            <p className="text-sm font-semibold text-gray-800">Λειτουργικές Δαπάνες</p>
+                          <p className="text-sm font-semibold text-gray-800">{expense.category_display}</p>
                         </div>
+                      </div>
+                      <span className="text-sm font-bold text-blue-600">{formatAmount(expense.amount)}€</span>
                     </div>
-                    <span className="text-sm font-bold text-blue-600">{formatAmount(expenseBreakdown.common || 0)}€</span>
-                </div>
+                  ))
+                )}
 
-                {/* 2. Κόστος διαχείρισης */}
+                {/* Κόστος διαχείρισης */}
                 <div className="flex items-center justify-between p-2 bg-white rounded border">
                     <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-700">2</span>
+                        <span className="text-sm font-medium text-gray-700">{(monthlyExpenses?.expense_breakdown?.length || 0) + 1}</span>
                         <div>
                             <p className="text-sm font-semibold text-gray-800">Κόστος διαχείρισης</p>
                         </div>
@@ -116,10 +149,10 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                     <span className="text-sm font-bold text-blue-600">{formatAmount(managementFeeInfo.totalFee || 0)}€</span>
                 </div>
 
-                {/* 3. Αποθεματικό Ταμείο */}
+                {/* Αποθεματικό Ταμείο */}
                 <div className="flex items-center justify-between p-2 bg-white rounded border">
                     <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-700">3</span>
+                        <span className="text-sm font-medium text-gray-700">{(monthlyExpenses?.expense_breakdown?.length || 0) + 2}</span>
                         <div>
                             <p className="text-sm font-semibold text-gray-800">Αποθεματικό Ταμείο</p>
                         </div>
@@ -127,10 +160,10 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                     <span className="text-sm font-bold text-blue-600">{formatAmount(reserveFundInfo.monthlyAmount || 0)}€</span>
                 </div>
 
-                {/* 4. Παλαιότερες οφειλές */}
+                {/* Παλαιότερες οφειλές */}
                 <div className="flex items-center justify-between p-2 bg-white rounded border">
                     <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-700">4</span>
+                        <span className="text-sm font-medium text-gray-700">{(monthlyExpenses?.expense_breakdown?.length || 0) + 3}</span>
                         <div>
                             <p className="text-sm font-semibold text-gray-800">Παλαιότερες οφειλές</p>
                         </div>
@@ -146,7 +179,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                             <p className="text-sm font-bold text-blue-800">ΣΥΝΟΛΟ</p>
                         </div>
                     </div>
-                    <span className="text-lg font-bold text-blue-700">{formatAmount(getFinalTotalExpenses() || 0)}€</span>
+                    <span className="text-lg font-bold text-blue-700">{formatAmount(displayedExpensesTotal)}€</span>
                 </div>
 
                 {/* Removed redundant expense items as requested */}
