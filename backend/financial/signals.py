@@ -302,18 +302,49 @@ def unlink_maintenance_receipts_on_expense_delete(sender, instance, **kwargs):
 @receiver(post_save, sender='buildings.Building')
 def update_financial_data_on_building_change(sender, instance, created, **kwargs):
     """
-    Αυτόματη ενημέρωση οικονομικών δεδομένων όταν αλλάζει το κτίριο (π.χ. management fee)
+    Αυτόματη ενημέρωση οικονομικών δεδομένων όταν αλλάζει το κτίριο
+    
+    UPDATED 2025-10-10: Αυτόματη δημιουργία monthly charges όταν ορίζεται το πακέτο
     """
     try:
-        with transaction.atomic():
-            # Έλεγχος αν άλλαξε το management_fee_per_apartment
-            if not created and hasattr(instance, '_state') and instance._state.fields_cache:
-                # Αν υπάρχει αλλαγή στο management fee, ενημερώνουμε όλες τις σχετικές οικονομικές καταστάσεις
-                print(f"✅ Building Signal: Ενημερώθηκε κτίριο {instance.name}")
-                print(f"📊 Νέα αμοιβή διαχείρισης: {instance.management_fee_per_apartment}€/διαμέρισμα")
-
-                # Εδώ μπορούμε να προσθέσουμε επιπλέον λογική για ενημέρωση
-                # π.χ. invalidate cache, notify frontend, etc.
+        # ✅ NEW 2025-10-10: Αυτόματη δημιουργία monthly charges
+        # Όταν ορίζεται το financial_system_start_date ή το management_fee_per_apartment
+        if instance.financial_system_start_date and instance.management_fee_per_apartment:
+            # Έλεγχος αν έχουν ήδη δημιουργηθεί charges
+            existing_charges = Transaction.objects.filter(
+                building=instance,
+                type='management_fee_charge'
+            ).exists()
+            
+            if not existing_charges:
+                # 🚀 Αυτόματη δημιουργία retroactive charges
+                print(f"🚀 Building Signal: Auto-creating monthly charges for {instance.name}")
+                print(f"   Start date: {instance.financial_system_start_date}")
+                print(f"   Management fee: {instance.management_fee_per_apartment}€/apartment")
+                
+                try:
+                    from datetime import date
+                    from .monthly_charge_service import MonthlyChargeService
+                    
+                    # Δημιουργία charges από την έναρξη μέχρι τώρα
+                    results = MonthlyChargeService.create_charges_for_building(
+                        building_id=instance.id,
+                        start_month=instance.financial_system_start_date,
+                        end_month=date.today().replace(day=1)
+                    )
+                    
+                    total_transactions = sum(r.get('transactions_created', 0) for r in results)
+                    print(f"✅ Auto-created {len(results)} months of charges ({total_transactions} transactions)")
+                    
+                except Exception as e:
+                    print(f"⚠️ Could not auto-create monthly charges: {e}")
+                    print(f"   Run manually: python manage.py create_monthly_charges --schema demo --building {instance.id} --retroactive")
+        
+        # Original signal logic
+        if not created:
+            print(f"✅ Building Signal: Ενημερώθηκε κτίριο {instance.name}")
+            if instance.management_fee_per_apartment:
+                print(f"📊 Αμοιβή διαχείρισης: {instance.management_fee_per_apartment}€/διαμέρισμα")
 
     except Exception as e:
         print(f"❌ Σφάλμα στην ενημέρωση οικονομικών δεδομένων από αλλαγή κτιρίου: {e}")
