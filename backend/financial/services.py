@@ -724,15 +724,21 @@ class FinancialDashboardService:
                         # Fallback: Raw calculation αν δεν υπάρχει MonthlyBalance
                         print(f"⚠️ MonthlyBalance not found for {prev_month:02d}/{prev_year}, using raw calculation")
                         
-                        # 1. Expenses πριν τον μήνα
+                        # ✅ ΚΡΙΣΙΜΗ ΔΙΟΡΘΩΣΗ 2025-10-10:
+                        # Έλεγχος financial_system_start_date για αποφυγή χρεώσεων από το -άπειρο
+                        start_filter_date = building.financial_system_start_date or date(year, mon, 1)
+                        
+                        # 1. Expenses πριν τον μήνα (ΑΠΟ την έναρξη του συστήματος)
                         expenses_before_month = Expense.objects.filter(
                             building_id=self.building_id,
+                            date__gte=start_filter_date,  # ✅ ΑΠΟ την έναρξη του συστήματος!
                             date__lt=date(year, mon, 1)
                         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
 
-                        # 2. Payments πριν τον μήνα
+                        # 2. Payments πριν τον μήνα (ΑΠΟ την έναρξη του συστήματος)
                         payments_before_month = Payment.objects.filter(
                             apartment__building_id=self.building_id,
+                            date__gte=start_filter_date,  # ✅ ΑΠΟ την έναρξη του συστήματος!
                             date__lt=date(year, mon, 1)
                         ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
 
@@ -746,8 +752,9 @@ class FinancialDashboardService:
                         previous_obligations = expenses_before_month - payments_before_month
 
                         print(f"   Previous obligations for {year}-{mon:02d}: €{previous_obligations:.2f}")
-                        print(f"   Expenses before month: €{expenses_before_month:.2f} (includes management fees & reserve fund)")
-                        print(f"   Payments before month: €{payments_before_month:.2f}")
+                        print(f"   System start date: {start_filter_date}")
+                        print(f"   Expenses before month (from {start_filter_date}): €{expenses_before_month:.2f}")
+                        print(f"   Payments before month (from {start_filter_date}): €{payments_before_month:.2f}")
 
                 except Exception as e:
                     print(f"⚠️ Error calculating previous obligations: {e}")
