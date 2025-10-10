@@ -46,7 +46,8 @@ class BalanceCalculationService:
     def calculate_historical_balance(
         apartment: Apartment,
         end_date: date,
-        include_management_fees: bool = True
+        include_management_fees: bool = True,
+        include_reserve_fund: bool = False
     ) -> Decimal:
         """
         Υπολογισμός ιστορικού υπολοίπου διαμερίσματος μέχρι συγκεκριμένη ημερομηνία
@@ -61,6 +62,7 @@ class BalanceCalculationService:
             apartment: Το διαμέρισμα για το οποίο υπολογίζουμε το υπόλοιπο
             end_date: Η ημερομηνία μέχρι την οποία υπολογίζουμε (exclusive)
             include_management_fees: Αν θα συμπεριλαμβάνονται τα management fees
+            include_reserve_fund: Αν θα συμπεριλαμβάνεται η εισφορά αποθεματικού
 
         Returns:
             Decimal: Το υπόλοιπο του διαμερίσματος μέχρι την δοθείσα ημερομηνία
@@ -183,6 +185,54 @@ class BalanceCalculationService:
                 # Equal share distribution
                 management_fee_charges = total_management_expenses / total_apartments
 
+        # Υπολογισμός reserve fund (αν include_reserve_fund=True)
+        reserve_fund_charges = Decimal('0.00')
+
+        if include_reserve_fund:
+            from .utils.date_helpers import is_date_in_reserve_fund_timeline
+            
+            # Check if we should charge reserve fund for this period
+            # We need to count months from reserve fund start to month_start
+            if (building.reserve_fund_goal and 
+                building.reserve_fund_duration_months and
+                building.reserve_fund_start_date):
+                
+                # Calculate monthly reserve fund target
+                monthly_reserve_target = building.reserve_fund_goal / building.reserve_fund_duration_months
+                
+                # Count how many months from reserve fund start date to the end_date fall within the timeline
+                from .utils.date_helpers import get_month_first_day, months_between
+                
+                reserve_start = building.reserve_fund_start_date
+                
+                # Only calculate for months that are in the past (before end_date)
+                if reserve_start < end_date:
+                    # Count months from reserve_start to end_date that are in the reserve fund timeline
+                    months_to_charge = 0
+                    current_check_date = get_month_first_day(reserve_start.year, reserve_start.month)
+                    
+                    while current_check_date < end_date:
+                        if is_date_in_reserve_fund_timeline(current_check_date, building):
+                            months_to_charge += 1
+                        
+                        # Move to next month
+                        if current_check_date.month == 12:
+                            current_check_date = get_month_first_day(current_check_date.year + 1, 1)
+                        else:
+                            current_check_date = get_month_first_day(current_check_date.year, current_check_date.month + 1)
+                    
+                    if months_to_charge > 0:
+                        # Calculate apartment's share based on participation mills
+                        total_mills = sum(
+                            apt.participation_mills or 0 
+                            for apt in building.apartments.all()
+                        )
+                        
+                        if total_mills > 0:
+                            apartment_mills = apartment.participation_mills or 0
+                            apartment_share = Decimal(str(apartment_mills)) / Decimal(str(total_mills))
+                            reserve_fund_charges = monthly_reserve_target * apartment_share * months_to_charge
+
         # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         # ΤΕΛΙΚΟΣ ΥΠΟΛΟΓΙΣΜΟΣ
         # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -190,7 +240,7 @@ class BalanceCalculationService:
         # Θετικό = Χρέος (apartment owes money)
         # Αρνητικό = Πίστωση (apartment has credit)
 
-        balance = (total_charges + management_fee_charges) - total_payments
+        balance = (total_charges + management_fee_charges + reserve_fund_charges) - total_payments
 
         return balance
 

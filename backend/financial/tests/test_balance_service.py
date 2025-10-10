@@ -398,6 +398,170 @@ class TestBalanceCalculationService(TestCase):
 
             self.assertEqual(balance, Decimal('50.00'))
 
+    def test_calculate_historical_balance_with_reserve_fund(self):
+        """Test historical balance with reserve fund included"""
+        with schema_context('demo'):
+            # Set up reserve fund for building
+            self.building.reserve_fund_goal = Decimal('1200.00')
+            self.building.reserve_fund_duration_months = 12
+            self.building.reserve_fund_start_date = date(2025, 10, 1)
+            self.building.save()
+            
+            # Create expense in October
+            expense = Expense.objects.create(
+                building=self.building,
+                title='Test Expense',
+                amount=Decimal('100.00'),
+                date=date(2025, 10, 15),
+                category='utilities',
+                distribution_method='equal_share'
+            )
+            
+            Transaction.objects.create(
+                apartment=self.apartment,
+                building=self.building,
+                type='expense_created',
+                amount=Decimal('100.00'),
+                date=timezone.make_aware(datetime(2025, 10, 15, 12, 0)),
+                reference_type='expense',
+                reference_id=str(expense.id),
+                description='Test Expense'
+            )
+            
+            # Calculate balance for November with reserve fund
+            balance = BalanceCalculationService.calculate_historical_balance(
+                apartment=self.apartment,
+                end_date=date(2025, 11, 1),
+                include_reserve_fund=True
+            )
+            
+            # Balance should be 100€ (expense) + reserve fund share
+            # With 1 apartment and 100 participation mills, it should get 100€ monthly reserve
+            self.assertGreater(balance, Decimal('100.00'))
+            
+    def test_calculate_historical_balance_outside_reserve_fund_period(self):
+        """Test that reserve fund is not charged outside its period"""
+        with schema_context('demo'):
+            # Set up reserve fund starting in November
+            self.building.reserve_fund_goal = Decimal('1200.00')
+            self.building.reserve_fund_duration_months = 12
+            self.building.reserve_fund_start_date = date(2025, 11, 1)
+            self.building.save()
+            
+            # Create expense in October
+            expense = Expense.objects.create(
+                building=self.building,
+                title='Test Expense',
+                amount=Decimal('100.00'),
+                date=date(2025, 10, 15),
+                category='utilities',
+                distribution_method='equal_share'
+            )
+            
+            Transaction.objects.create(
+                apartment=self.apartment,
+                building=self.building,
+                type='expense_created',
+                amount=Decimal('100.00'),
+                date=timezone.make_aware(datetime(2025, 10, 15, 12, 0)),
+                reference_type='expense',
+                reference_id=str(expense.id),
+                description='Test Expense'
+            )
+            
+            # Calculate balance for November (before reserve fund starts)
+            balance = BalanceCalculationService.calculate_historical_balance(
+                apartment=self.apartment,
+                end_date=date(2025, 11, 1),
+                include_reserve_fund=True
+            )
+            
+            # Balance should be exactly 100€ (no reserve fund yet)
+            self.assertEqual(balance, Decimal('100.00'))
+            
+    def test_calculate_historical_balance_with_management_and_reserve(self):
+        """Test historical balance with both management fees and reserve fund"""
+        with schema_context('demo'):
+            # Set up management fees
+            self.building.management_fee_per_apartment = Decimal('20.00')
+            # Set up reserve fund
+            self.building.reserve_fund_goal = Decimal('1200.00')
+            self.building.reserve_fund_duration_months = 12
+            self.building.reserve_fund_start_date = date(2025, 10, 1)
+            self.building.save()
+            
+            # Create expense in October
+            expense = Expense.objects.create(
+                building=self.building,
+                title='Test Expense',
+                amount=Decimal('100.00'),
+                date=date(2025, 10, 15),
+                category='utilities',
+                distribution_method='equal_share'
+            )
+            
+            Transaction.objects.create(
+                apartment=self.apartment,
+                building=self.building,
+                type='expense_created',
+                amount=Decimal('100.00'),
+                date=timezone.make_aware(datetime(2025, 10, 15, 12, 0)),
+                reference_type='expense',
+                reference_id=str(expense.id),
+                description='Test Expense'
+            )
+            
+            # Calculate balance for November
+            balance = BalanceCalculationService.calculate_historical_balance(
+                apartment=self.apartment,
+                end_date=date(2025, 11, 1),
+                include_management_fees=True,
+                include_reserve_fund=True
+            )
+            
+            # Balance should be 100€ (expense) + 20€ (management) + reserve fund share
+            self.assertGreater(balance, Decimal('120.00'))
+            
+    def test_calculate_historical_balance_no_reserve_fund_config(self):
+        """Test graceful handling when reserve fund is not configured"""
+        with schema_context('demo'):
+            # No reserve fund configuration
+            self.building.reserve_fund_goal = None
+            self.building.reserve_fund_duration_months = None
+            self.building.reserve_fund_start_date = None
+            self.building.save()
+            
+            # Create expense
+            expense = Expense.objects.create(
+                building=self.building,
+                title='Test Expense',
+                amount=Decimal('100.00'),
+                date=date(2025, 10, 15),
+                category='utilities',
+                distribution_method='equal_share'
+            )
+            
+            Transaction.objects.create(
+                apartment=self.apartment,
+                building=self.building,
+                type='expense_created',
+                amount=Decimal('100.00'),
+                date=timezone.make_aware(datetime(2025, 10, 15, 12, 0)),
+                reference_type='expense',
+                reference_id=str(expense.id),
+                description='Test Expense'
+            )
+            
+            # Calculate balance with reserve fund flag (should handle gracefully)
+            balance = BalanceCalculationService.calculate_historical_balance(
+                apartment=self.apartment,
+                end_date=date(2025, 11, 1),
+                include_reserve_fund=True
+            )
+            
+            # Balance should be exactly 100€ (no reserve fund)
+            self.assertEqual(balance, Decimal('100.00'))
+
     def tearDown(self):
         """Clean up test data"""
         with schema_context('demo'):

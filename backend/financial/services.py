@@ -324,7 +324,9 @@ class CommonExpenseCalculator:
             expense_date = date(year, month, 1)
             
             # Έλεγχος αν ο τρέχον μήνας ανήκει στο reserve fund timeline
-            if not self._is_month_in_reserve_fund_timeline(expense_date):
+            # ✅ REFACTORED: Using centralized date helper
+            from .utils.date_helpers import is_date_in_reserve_fund_timeline
+            if not is_date_in_reserve_fund_timeline(expense_date, self.building):
                 print(f"⏭️ Μήνας {self.month} δεν ανήκει στο reserve fund timeline - παρακάμπτεται")
                 return
             
@@ -359,21 +361,11 @@ class CommonExpenseCalculator:
         except Exception as e:
             print(f"❌ Σφάλμα δημιουργίας δαπάνης αποθεματικού: {e}")
     
-    def _is_month_in_reserve_fund_timeline(self, target_date) -> bool:
-        """Ελέγχει αν ένας μήνας ανήκει στο reserve fund timeline"""
-        if not self.building.reserve_fund_start_date or not self.building.reserve_fund_duration_months:
-            return False
-        
-        start_date = self.building.reserve_fund_start_date
-        end_date = start_date + timedelta(days=30 * self.building.reserve_fund_duration_months)
-        
-        # Συγκρίνουμε μήνες, όχι ημερομηνίες
-        target_year_month = (target_date.year, target_date.month)
-        start_year_month = (start_date.year, start_date.month)
-        end_year_month = (end_date.year, end_date.month)
-        
-        # Έλεγχος αν ο target μήνας είναι εντός του timeline
-        return start_year_month <= target_year_month < end_year_month
+    # ❌ DELETED: _is_month_in_reserve_fund_timeline() method
+    # This duplicate implementation has been replaced with centralized utility:
+    #   from financial.utils.date_helpers import is_date_in_reserve_fund_timeline
+    #   is_date_in_reserve_fund_timeline(target_date, building)
+    # See: financial-module-refactoring.plan.md (Phase 2.2)
 
     def get_total_expenses(self) -> Decimal:
         """Επιστρέφει το συνολικό ποσό ανέκδοτων δαπανών"""
@@ -911,51 +903,13 @@ class FinancialDashboardService:
         
         return total_monthly_contribution
     
-    def _is_month_within_reserve_fund_period(self, month: str) -> bool:
-        """
-        Ελέγχει αν ο συγκεκριμένος μήνας είναι μέσα στην περίοδο συλλογής αποθεματικού
-        
-        Args:
-            month: Μήνας σε μορφή YYYY-MM
-            
-        Returns:
-            bool: True αν ο μήνας είναι μέσα στην περίοδο συλλογής, False αλλιώς
-        """
-        from datetime import date
-        from dateutil.relativedelta import relativedelta
-        
-        # Αν δεν υπάρχουν ρυθμίσεις αποθεματικού, επιστρέφουμε False
-        if not self.building.reserve_fund_start_date or not self.building.reserve_fund_duration_months:
-            return False
-        
-        try:
-            # Parse τον επιλεγμένο μήνα
-            year, mon = map(int, month.split('-'))
-            selected_month_date = date(year, mon, 1)
-            
-            # Ημερομηνία έναρξης συλλογής αποθεματικού
-            start_date = self.building.reserve_fund_start_date
-            
-            # Υπολογισμός ημερομηνίας λήξης βάσει της διάρκειας
-            # Αν έχουμε target_date, το χρησιμοποιούμε, αλλιώς το υπολογίζουμε
-            if self.building.reserve_fund_target_date:
-                target_date = self.building.reserve_fund_target_date
-            else:
-                # Υπολογισμός: start_date + duration_months
-                target_date = start_date + relativedelta(months=self.building.reserve_fund_duration_months)
-            
-            print(f"🔍 Reserve Fund Period Check: month={month}, start={start_date}, target={target_date}, selected={selected_month_date}")
-            
-            # Ελέγχουμε αν ο επιλεγμένος μήνας είναι μέσα στην περίοδο
-            is_within = start_date <= selected_month_date <= target_date
-            print(f"🔍 Reserve Fund Period Check: is_within={is_within}")
-            
-            return is_within
-            
-        except Exception as e:
-            print(f"🔍 Reserve Fund Period Check: Error - {e}")
-            # Αν δεν μπορούμε να parse τον μήνα, επιστρέφουμε False για ασφάλεια
-            return False
+    # ❌ DELETED: _is_month_within_reserve_fund_period() method
+    # This duplicate implementation has been replaced with centralized utility:
+    #   from financial.utils.date_helpers import is_date_in_reserve_fund_timeline, parse_month_string, get_month_first_day
+    #   year, month = parse_month_string(month_str)
+    #   month_date = get_month_first_day(year, month)
+    #   is_date_in_reserve_fund_timeline(month_date, building)
+    # See: financial-module-refactoring.plan.md (Phase 2.2)
 
     def _has_monthly_activity(self, month: str) -> bool:
         """
@@ -1017,6 +971,8 @@ class FinancialDashboardService:
         Args:
             month: Προαιρετικός μήνας σε μορφή YYYY-MM για ιστορικό snapshot
         """
+        from .balance_service import BalanceCalculationService
+        
         apartments = Apartment.objects.filter(building_id=self.building_id)
         balances = []
         
@@ -1035,20 +991,27 @@ class FinancialDashboardService:
         
         for apartment in apartments:
             # ΔΙΟΡΘΩΣΗ: Πάντα υπολογίζω το balance από transactions για συνέπεια
+            # ✅ REFACTORED: Using centralized BalanceCalculationService
             if end_date:
                 # Για snapshot view, υπολογίζουμε το balance μέχρι την αρχή του μήνα (πριν τον επιλεγμένο μήνα)
                 if month:
                     year, mon = map(int, month.split('-'))
                     month_start = date(year, mon, 1)
-                    calculated_balance = self._calculate_historical_balance(apartment, month_start)
+                    calculated_balance = BalanceCalculationService.calculate_historical_balance(
+                        apartment, month_start, include_management_fees=True
+                    )
                 else:
-                    calculated_balance = self._calculate_historical_balance(apartment, end_date)
+                    calculated_balance = BalanceCalculationService.calculate_historical_balance(
+                        apartment, end_date, include_management_fees=True
+                    )
                 # Τελευταία πληρωμή μέχρι την ημερομηνία
                 last_payment = apartment.payments.filter(date__lt=end_date).order_by('-date').first()
             else:
                 # Για current view, χρησιμοποίησε current date
                 from datetime import date
-                calculated_balance = self._calculate_historical_balance(apartment, date.today())
+                calculated_balance = BalanceCalculationService.calculate_historical_balance(
+                    apartment, date.today(), include_management_fees=True
+                )
                 # Τελευταία πληρωμή συνολικά
                 last_payment = apartment.payments.order_by('-date').first()
             
@@ -1197,202 +1160,13 @@ class FinancialDashboardService:
         
         return balances
     
-    def _calculate_historical_balance(self, apartment, end_date) -> Decimal:
-        """
-        Υπολογισμός ιστορικού υπολοίπου διαμερίσματος μέχρι συγκεκριμένη ημερομηνία
-        
-        ΣΗΜΑΝΤΙΚΟ: Για "Previous Months' Obligations", πρέπει να υπολογίζουμε μόνο
-        τις οφειλές από δαπάνες που δημιουργήθηκαν ΠΡΙΝ από τον επιλεγμένο μήνα.
-        
-        Args:
-            apartment: Το διαμέρισμα για το οποίο υπολογίζουμε το υπόλοιπο
-            end_date: Η ημερομηνία μέχρι την οποία υπολογίζουμε
-            
-        Returns:
-            Decimal: Το υπόλοιπο του διαμερίσματος μέχρι την δοθείσα ημερομηνία
-        """
-        from decimal import Decimal
-        from .models import Transaction, Payment
-        from django.utils import timezone
-        
-        # Υπολογισμός πληρωμών μέχρι την ημερομηνία
-        total_payments = Payment.objects.filter(
-            apartment=apartment,
-            date__lt=end_date
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        # ΔΙΟΡΘΩΣΗ: Για τον υπολογισμό προηγούμενων οφειλών, πρέπει να συμπεριλάβουμε
-        # μόνο χρεώσεις από δαπάνες που δημιουργήθηκαν ΠΡΙΝ από τον επιλεγμένο μήνα
-        
-        # Βρίσκουμε την αρχή του μήνα για τον οποίο υπολογίζουμε
-        # Αν end_date είναι 2025-08-01, τότε θέλουμε δαπάνες πριν από 2025-07-01
-        if isinstance(end_date, datetime):
-            end_date = end_date.date()
-        
-        # Υπολογισμός αρχής του μήνα
-        month_start = end_date.replace(day=1)
-        
-        # Συνεχής μεταφορά ποσών: Όλες οι μεταφορές υπολοίπων είναι συνεχείς
-        # Για Ιανουάριο 2026: Παλαιότερες οφειλές = Ιούνιος-Δεκέμβριος 2025
-        
-        # Συνεχής μεταφορά ποσών - χωρίς ετήσια απομόνωση
-        # Κρατάμε μόνο την ημερομηνία έναρξης υπολογισμών (1-6-2025)
-        from datetime import date
-        system_start_date = self.building.financial_system_start_date
-        
-        # Αν δεν υπάρχει ημερομηνία έναρξης συστήματος, επιστρέφουμε 0
-        if system_start_date is None:
-            return Decimal('0.00')
-        
-        # Χρησιμοποιούμε την ημερομηνία έναρξης συστήματος ως αρχή υπολογισμών
-        year_start = system_start_date
-
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        # ⚠️ ΚΡΙΣΙΜΟ: BALANCE TRANSFER LOGIC - ΜΗΝ ΑΛΛΑΞΕΤΕ ΧΩΡΙΣ TESTING!
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        #
-        # Βρίσκουμε δαπάνες που δημιουργήθηκαν ΠΡΙΝ από τον επιλεγμένο μήνα
-        #
-        # ΠΑΡΑΔΕΙΓΜΑ:
-        # - Αν month_start = 2025-11-01 (Νοέμβριος)
-        # - Θα βρούμε δαπάνες με date < 2025-11-01
-        # - Δηλαδή: 2025-10-31 ✅, 2025-11-01 ❌
-        #
-        # ΠΡΟΣΟΧΗ: Το date__lt (όχι date__lte) είναι ΣΚΟΠΙΜΟ!
-        # Αν αλλάξει σε date__lte, θα υπάρχει διπλή χρέωση!
-        #
-        # Βλέπε: BALANCE_TRANSFER_ARCHITECTURE.md
-        # Tests: financial/tests/test_balance_transfer_logic.py
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        expenses_before_month = Expense.objects.filter(
-            building_id=apartment.building_id,
-            date__gte=year_start,  # Από την ημερομηνία έναρξης συστήματος
-            date__lt=month_start   # ⚠️ ΚΡΙΣΙΜΟ: < όχι <= !!!
-        )
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        
-        expense_ids_before_month = list(expenses_before_month.values_list('id', flat=True))
-        
-        # Υπολογισμός χρεώσεων μόνο από αυτές τις δαπάνες
-        # ΔΙΟΡΘΩΣΗ: Αφαιρούμε τα management_fees expenses από τα transactions
-        # γιατί θα τα υπολογίσουμε ξεχωριστά παρακάτω
-        if expense_ids_before_month:
-            # Βρίσκουμε τα management_fees expense IDs για να τα αφαιρέσουμε
-            management_expense_ids = list(Expense.objects.filter(
-                id__in=expense_ids_before_month,
-                category='management_fees'
-            ).values_list('id', flat=True))
-            
-            # Αφαιρούμε τα management_fees από τα expense_ids
-            non_management_expense_ids = [exp_id for exp_id in expense_ids_before_month 
-                                        if exp_id not in management_expense_ids]
-            
-            if non_management_expense_ids:
-                total_charges = Transaction.objects.filter(
-                    apartment=apartment,  # ΔΙΟΡΘΩΣΗ: Χρήση apartment object αντί για apartment_number
-                    reference_type='expense',
-                    reference_id__in=[str(exp_id) for exp_id in non_management_expense_ids],
-                    type__in=['common_expense_charge', 'expense_created', 'expense_issued',
-                             'interest_charge', 'penalty_charge']
-                ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-            else:
-                total_charges = Decimal('0.00')
-        else:
-            total_charges = Decimal('0.00')
-        
-        # ΔΙΟΡΘΩΣΗ: Μη διπλομέτρηση πληρωμών - χρησιμοποίησε μόνο Payment model
-        # Οι συναλλαγές τύπου 'common_expense_payment' δημιουργούνται αυτόματα όταν 
-        # καταχωρείται Payment, οπότε δεν πρέπει να προστίθενται ξανά
-        
-        # ΔΙΟΡΘΩΣΗ ΠΡΟΣΗΜΟΥ: Χρέος = θετικό υπόλοιπο, Πίστωση = αρνητικό υπόλοιπο  
-        # Υπόλοιπο = Χρεώσεις - Πληρωμές (θετικό = χρέος, αρνητικό = πίστωση)
-
-        # ΔΙΟΡΘΩΣΗ: Δυναμικός υπολογισμός management fees αντί για Expense lookup
-        # Τα management fees δεν αποθηκεύονται ως Expense objects αλλά υπολογίζονται δυναμικά
-
-        # Υπολογισμός management fees βάσει μηνιαίας χρέωσης × αριθμός μηνών
-        # 🔧 ΝΕΟ: Έλεγχος financial_system_start_date πριν υπολογισμό management fees
-        management_fee_per_apartment = self.building.management_fee_per_apartment or Decimal('0.00')
-
-        if management_fee_per_apartment > 0:
-            # Υπολογισμός αριθμού μηνών από την ημερομηνία έναρξης μέχρι τον τρέχοντα μήνα
-            from dateutil.relativedelta import relativedelta
-
-            # ✅ ΔΙΟΡΘΩΣΗ: Χρήση financial_system_start_date αν υπάρχει, αλλιώς παλαιότερη δαπάνη
-            if self.building.financial_system_start_date:
-                financial_start_year = self.building.financial_system_start_date.year
-                financial_start_month = self.building.financial_system_start_date.month
-                # Πόσοι μήνες έχουν περάσει από την ημερομηνία έναρξης οικονομικού συστήματος
-                months_diff = (month_start.year - financial_start_year) * 12 + (month_start.month - financial_start_month)
-                print(f"🔧 Financial system start date used: {self.building.financial_system_start_date}")
-            else:
-                # ✅ ΔΙΟΡΘΩΣΗ: Χρήση παλαιότερης δαπάνης αντί για year_start
-                oldest_expense = Expense.objects.filter(
-                    building=self.building
-                ).order_by('date').first()
-
-                if oldest_expense:
-                    # Χρησιμοποιούμε την 1η του μήνα της παλαιότερης δαπάνης
-                    expense_start = oldest_expense.date.replace(day=1)
-                    months_diff = (month_start.year - expense_start.year) * 12 + (month_start.month - expense_start.month)
-                    print(f"🔧 Using oldest expense date: {expense_start}")
-                else:
-                    # Fallback στο year_start αν δεν υπάρχει καμία δαπάνη
-                    months_diff = (month_start.year - year_start.year) * 12 + (month_start.month - year_start.month)
-                    print(f"🔧 Year start used (no expenses found): {year_start}")
-
-            # Συνολικά management fees = μηνιαία χρέωση × αριθμός μηνών (μόνο θετικοί μήνες)
-            management_fees_share = management_fee_per_apartment * max(0, months_diff)
-
-            total_charges += management_fees_share
-
-            # Debug output
-            if management_fees_share > 0:
-                print(f"💰 Management fees for apt {apartment.number}: {max(0, months_diff)} months × €{management_fee_per_apartment} = €{management_fees_share}")
-            else:
-                print(f"⏭️ No management fees for apt {apartment.number} - before financial system start date")
-        
-        # ΔΙΟΡΘΩΣΗ: Προσθήκη αποθεματικού από προηγούμενους μήνες
-        # Για τον υπολογισμό των "Παλαιότερων Οφειλών", πρέπει να συμπεριλάβουμε
-        # το αποθεματικό που συλλέχθηκε στους προηγούμενους μήνες
-        reserve_fund_from_previous_months = Decimal('0.00')
-        
-        if (self.building.reserve_fund_goal and 
-            self.building.reserve_fund_duration_months and
-            self.building.reserve_fund_start_date):
-            
-            monthly_reserve_target = self.building.reserve_fund_goal / self.building.reserve_fund_duration_months
-            
-            # Υπολογισμός αποθεματικού για κάθε μήνα πριν από τον επιλεγμένο μήνα
-            current_date = self.building.reserve_fund_start_date
-            
-            while current_date < month_start:
-                # Έλεγχος αν ο μήνας είναι εντός της περιόδου συλλογής αποθεματικού
-                if (current_date >= self.building.reserve_fund_start_date and
-                    (not self.building.reserve_fund_target_date or current_date <= self.building.reserve_fund_target_date)):
-                    
-                    # Υπολογισμός μεριδίου διαμερίσματος από το αποθεματικό αυτού του μήνα
-                    total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
-                        total=Sum('participation_mills'))['total'] or 1000
-                    
-                    if total_mills > 0:
-                        apartment_reserve_share = (monthly_reserve_target * apartment.participation_mills) / total_mills
-                        reserve_fund_from_previous_months += apartment_reserve_share
-                
-                # Μετακίνηση στον επόμενο μήνα
-                if current_date.month == 12:
-                    current_date = current_date.replace(year=current_date.year + 1, month=1)
-                else:
-                    current_date = current_date.replace(month=current_date.month + 1)
-        
-        # Συνολικό ιστορικό υπόλοιπο = χρεώσεις + αποθεματικό προηγούμενων μηνών - πληρωμές
-        historical_balance = total_charges + reserve_fund_from_previous_months - total_payments
-        
-        # Debug output
-        if reserve_fund_from_previous_months > 0:
-            print(f"💰 Reserve fund from previous months for apt {apartment.number}: €{reserve_fund_from_previous_months}")
-        
-        return historical_balance
+    # ❌ DELETED: _calculate_historical_balance() method (was ~197 lines, 1209-1404)
+    # This duplicate implementation has been removed as part of the Single Source of Truth refactoring.
+    # All historical balance calculations now use:
+    #   from financial.balance_service import BalanceCalculationService
+    #   BalanceCalculationService.calculate_historical_balance(apartment, end_date, include_management_fees=True)
+    # See: financial-module-refactoring.plan.md (Phase 2.1)
+    # Refactored: 2025-10-10
     
     def get_payment_statistics(self, month: str | None = None) -> Dict[str, Any]:
         """Υπολογισμός στατιστικών πληρωμών"""
