@@ -165,16 +165,14 @@ class BalanceCalculationService:
         if include_management_fees:
             # ✅ SIMPLIFIED 2025-10-10: Management fees come from EXPENSE records!
             # MonthlyChargeService creates Expense records with category='management_fees'
-            # These are automatically included in the expense_ids_before_month filter above
             
-            # Βρίσκουμε management fee expenses που ΔΕΝ περιλαμβάνονται ήδη στα expense_ids
+            # Βρίσκουμε ΟΛΑ τα management fee expenses (ΧΩΡΙΣ exclude!)
+            # Αφού τα αφαιρέσαμε από το transaction calculation παραπάνω, δεν υπάρχει διπλό μέτρημα
             management_expenses = Expense.objects.filter(
                 building_id=apartment.building_id,
                 category='management_fees',
                 date__gte=system_start_date,
                 date__lt=month_start
-            ).exclude(
-                id__in=expense_ids_before_month  # Αποφυγή διπλού μετρήματος
             )
 
             if management_expenses.exists():
@@ -195,16 +193,14 @@ class BalanceCalculationService:
         if include_reserve_fund:
             # ✅ SIMPLIFIED 2025-10-10: Reserve fund comes from EXPENSE records!
             # MonthlyChargeService creates Expense records with category='reserve_fund'
-            # These are automatically included in the expense_ids_before_month filter above
             
-            # Βρίσκουμε reserve fund expenses που ΔΕΝ περιλαμβάνονται ήδη στα expense_ids
+            # Βρίσκουμε ΟΛΑ τα reserve fund expenses (ΧΩΡΙΣ exclude!)
+            # Αφού τα αφαιρέσαμε από το transaction calculation παραπάνω, δεν υπάρχει διπλό μέτρημα
             reserve_expenses = Expense.objects.filter(
                 building_id=apartment.building_id,
                 category='reserve_fund',
                 date__gte=system_start_date,
                 date__lt=month_start
-            ).exclude(
-                id__in=expense_ids_before_month  # Αποφυγή διπλού μετρήματος
             )
 
             if reserve_expenses.exists():

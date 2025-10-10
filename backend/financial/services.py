@@ -1088,57 +1088,26 @@ class FinancialDashboardService:
                     else:  # resident or shared
                         resident_expenses += apartment_share
                 
-                # 🔧 ΝΕΟ: Προσθήκη δυναμικών management fees στο expense_share
-                # Τα management fees υπολογίζονται δυναμικά βάσει financial_system_start_date
-                management_fee_per_apartment = self.building.management_fee_per_apartment or Decimal('0.00')
-                if management_fee_per_apartment > 0:
-                    # Ελέγχουμε αν ο μήνας είναι μετά την έναρξη του οικονομικού συστήματος
-                    if not self.building.financial_system_start_date or month_start >= self.building.financial_system_start_date:
-                        # Υπολογίζουμε μόνο τον τρέχοντα μήνα (όχι cumulative)
-                        # Το expense_share πρέπει να περιλαμβάνει μόνο τις δαπάνες του επιλεγμένου μήνα
-                        months_to_charge = 1  # Μόνο ο επιλεγμένος μήνας
-
-                        # Προσθέτουμε τα management fees στο expense_share
-                        monthly_management_fee = management_fee_per_apartment * months_to_charge
-                        expense_share += monthly_management_fee
-                        # ΝΕΟ: Management fees → resident_expenses
-                        resident_expenses += monthly_management_fee
-                        print(f"💰 Apartment {apartment.number}: Added {months_to_charge} months × €{management_fee_per_apartment} = €{monthly_management_fee} to expense_share")
+                # ✅ ΔΙΟΡΘΩΣΗ 2025-10-10: Management fees & Reserve fund είναι ΗΔΗ Expense records!
+                # Δεν χρειάζεται δυναμική προσθήκη - περιλαμβάνονται στο loop παραπάνω (γραμμές 1073-1089)
+                # Αφαιρέθηκε η διπλή χρέωση management fees & reserve fund
                 
-                # 3. Υπολογισμός αποθεματικού για τον μήνα
-                if (self.building.reserve_fund_goal and 
-                    self.building.reserve_fund_duration_months and
-                    self.building.reserve_fund_start_date and
-                    month_start >= self.building.reserve_fund_start_date):
-                    
-                    # Έλεγχος αν ο μήνας είναι εντός της περιόδου συλλογής αποθεματικού
-                    if (not self.building.reserve_fund_target_date or 
-                        month_start <= self.building.reserve_fund_target_date):
-                        
-                        # Το αποθεματικό συλλέγεται πάντα (είναι απόφαση ΓΣ)
-                        print(f"✅ Αποθεματικό: Συλλογή (απόφαση ΓΣ)")
-
-                        if True:  # Always collect
-                            monthly_reserve_target = self.building.reserve_fund_goal / self.building.reserve_fund_duration_months
-
-                            # Κατανομή ανά χιλιοστά
-                            total_mills = Apartment.objects.filter(building_id=apartment.building_id).aggregate(
-                                total=Sum('participation_mills'))['total'] or 1000
-
-                            if total_mills > 0:
-                                reserve_fund_share = (monthly_reserve_target * apartment.participation_mills) / total_mills
-                                # ΝΕΟ: Reserve fund → owner_expenses
-                                owner_expenses += reserve_fund_share
-                                print(f"💰 Αποθεματικό για διαμέρισμα {apartment.number}: €{reserve_fund_share:.2f}")
-                
-                # 4. Net Obligation = Previous Balance + Current Month Expenses + Reserve Fund - Payments this month
+                # 3. Υπολογισμός πληρωμών του μήνα
                 month_payments = Payment.objects.filter(
                     apartment=apartment,
                     date__gte=month_start,
                     date__lt=end_date
                 ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
                 
-                net_obligation = previous_balance + expense_share + reserve_fund_share - month_payments
+                # 4. Net Obligation = Previous Balance + Current Month Expenses - Payments this month
+                # Το expense_share ΗΔΗ περιλαμβάνει ΟΛΑ (management fees + reserve fund + άλλες δαπάνες)
+                net_obligation = previous_balance + expense_share - month_payments
+                
+                print(f"📊 Apartment {apartment.number} - {month}:")
+                print(f"   Previous Balance: €{previous_balance:.2f}")
+                print(f"   Current Month Expenses: €{expense_share:.2f}")
+                print(f"   Payments This Month: €{month_payments:.2f}")
+                print(f"   Net Obligation: €{net_obligation:.2f}")
             
             # ΔΙΟΡΘΩΣΗ: Υπολογισμός total_payments για κάθε διαμέρισμα
             if end_date:
