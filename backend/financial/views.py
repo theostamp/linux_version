@@ -717,12 +717,22 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def reset_management_fees(self, request):
         """
-        Διαγράφει ΟΛΑ τα management fees (και τα transactions τους) και τα ξαναδημιουργεί με σωστή ημερομηνία.
-
-        ΠΡΟΣΟΧΗ: Αυτό διαγράφει ΚΑΙ τα management fees που έχουν transactions!
-        Χρησιμοποιήστε μόνο για διόρθωση λάθους ημερομηνίας.
+        Διαγράφει ΟΛΑ τα management fees και τα ξαναδημιουργεί με σωστή ημερομηνία.
+        
+        UPDATED 2025-10-10: Now uses MonthlyChargeService for Transaction-based system.
+        
+        Διαγράφει:
+        - OLD: Expense records με category='management_fees'
+        - NEW: Transaction records με type='management_fee_charge'
+        
+        Επαναδημιουργεί:
+        - Transaction-based management fees μέσω MonthlyChargeService
+        
+        ΠΡΟΣΟΧΗ: Αυτό είναι destructive operation! Χρησιμοποιήστε μόνο για διόρθωση.
         """
         from datetime import date
+        from .monthly_charge_service import MonthlyChargeService
+        from .utils.date_helpers import get_month_first_day
 
         building_id = request.data.get('building_id')
         start_month = request.data.get('start_month')  # Optional: YYYY-MM, default: system start
@@ -741,96 +751,115 @@ class ExpenseViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Βρες όλα τα management fees
+        deleted_expenses_count = 0
+        deleted_old_transactions_count = 0
+        deleted_new_transactions_count = 0
+
+        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        # STEP 1: Delete OLD Expense-based management fees
+        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         all_mgmt_fees = Expense.objects.filter(
             building=building,
             category='management_fees'
         )
 
-        deleted_fees_count = 0
-        deleted_transactions_count = 0
-
-        # Διαγραφή όλων των management fees ΚΑΙ των transactions τους
         for fee in all_mgmt_fees:
-            # Διαγραφή transactions
+            # Διαγραφή transactions linked to this expense
             txns = Transaction.objects.filter(
                 reference_type='expense',
                 reference_id=str(fee.id)
             )
-            txn_count = txns.count()
+            deleted_old_transactions_count += txns.count()
             txns.delete()
-            deleted_transactions_count += txn_count
 
             # Διαγραφή expense
             fee.delete()
-            deleted_fees_count += 1
+            deleted_expenses_count += 1
 
-        # Επαναδημιουργία με σωστές ημερομηνίες
+        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        # STEP 2: Delete NEW Transaction-based management fees
+        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        mgmt_fee_transactions = Transaction.objects.filter(
+            building=building,
+            type='management_fee_charge'
+        )
+        deleted_new_transactions_count = mgmt_fee_transactions.count()
+        mgmt_fee_transactions.delete()
+
+        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        # STEP 3: Recreate using NEW MonthlyChargeService system
+        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         if not building.management_fee_per_apartment or building.management_fee_per_apartment <= 0:
             return Response({
                 'success': True,
-                'deleted_fees': deleted_fees_count,
-                'deleted_transactions': deleted_transactions_count,
-                'recreated_fees': 0,
+                'deleted_expenses': deleted_expenses_count,
+                'deleted_old_transactions': deleted_old_transactions_count,
+                'deleted_new_transactions': deleted_new_transactions_count,
+                'recreated_months': 0,
+                'recreated_transactions': 0,
                 'message': 'Διαγράφηκαν management fees αλλά δεν επαναδημιουργήθηκαν (δεν υπάρχει ρυθμισμένη αμοιβή)'
             })
 
         # Προσδιορισμός ημερομηνίας έναρξης
         if start_month:
             try:
-                start_year, start_mon = map(int, start_month.split('-'))
-                start_date = date(start_year, start_mon, 1)
+                year, mon = map(int, start_month.split('-'))
+                start_date = get_month_first_day(year, mon)
             except (ValueError, AttributeError):
                 start_date = building.financial_system_start_date or date.today().replace(day=1)
         else:
             start_date = building.financial_system_start_date or date.today().replace(day=1)
 
+        # End date = current month (inclusive)
         today = date.today()
-        end_date = date(today.year, today.month, 1)
+        end_date = get_month_first_day(today.year, today.month)
 
-        # Υπολογισμός ποσού
-        apartments_count = Apartment.objects.filter(building=building).count()
-        total_amount = building.management_fee_per_apartment * apartments_count
-
-        # Δημιουργία νέων management fees με ΣΩΣΤΗ ημερομηνία (1η του μήνα)
-        created_count = 0
-        current_date = start_date
-
-        while current_date <= end_date:
-            Expense.objects.create(
-                building=building,
-                title=f'Διαχειριστικά Έξοδα {current_date.strftime("%B %Y")}',
-                amount=total_amount,
-                date=current_date,  # ✅ Πρώτη του μήνα
-                due_date=current_date,
-                category='management_fees',
-                expense_type='management_fee',
-                description=f'Διαχειριστικά Έξοδα {current_date.strftime("%B %Y")}',
-                distribution_type='equal_share',
-                payer_responsibility='resident',
-                approved=True
+        # ✅ Use MonthlyChargeService to recreate charges
+        try:
+            results = MonthlyChargeService.create_charges_for_building(
+                building.id,
+                start_date,
+                end_date
             )
-            created_count += 1
+            
+            # Count successful creations
+            recreated_months = len(results)
+            recreated_transactions = sum(r.get('transactions_created', 0) for r in results)
+            
+            # Επαναϋπολογισμός υπολοίπων
+            from .balance_service import BalanceCalculationService
+            for apartment in Apartment.objects.filter(building=building):
+                BalanceCalculationService.update_apartment_balance(apartment)
 
-            # Next month
-            if current_date.month == 12:
-                current_date = date(current_date.year + 1, 1, 1)
-            else:
-                current_date = date(current_date.year, current_date.month + 1, 1)
-
-        # Επαναϋπολογισμός υπολοίπων
-        from .balance_service import BalanceCalculationService
-        for apartment in Apartment.objects.filter(building=building):
-            BalanceCalculationService.update_apartment_balance(apartment)
-
-        return Response({
-            'success': True,
-            'deleted_fees': deleted_fees_count,
-            'deleted_transactions': deleted_transactions_count,
-            'recreated_fees': created_count,
-            'message': f'Διαγράφηκαν {deleted_fees_count} management fees και {deleted_transactions_count} transactions. '
-                      f'Επαναδημιουργήθηκαν {created_count} management fees με σωστή ημερομηνία (1η του μήνα).'
-        })
+            return Response({
+                'success': True,
+                'deleted_expenses': deleted_expenses_count,
+                'deleted_old_transactions': deleted_old_transactions_count,
+                'deleted_new_transactions': deleted_new_transactions_count,
+                'recreated_months': recreated_months,
+                'recreated_transactions': recreated_transactions,
+                'message': (
+                    f'✅ Διαγράφηκαν {deleted_expenses_count} expense-based management fees '
+                    f'και {deleted_old_transactions_count + deleted_new_transactions_count} transactions. '
+                    f'Επαναδημιουργήθηκαν {recreated_months} μήνες με {recreated_transactions} '
+                    f'transaction-based charges (νέο σύστημα).'
+                )
+            })
+            
+        except Exception as e:
+            # Log the error
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error recreating management fees: {e}", exc_info=True)
+            
+            return Response(
+                {
+                    'error': f'Σφάλμα κατά την επαναδημιουργία: {str(e)}',
+                    'deleted_expenses': deleted_expenses_count,
+                    'deleted_transactions': deleted_old_transactions_count + deleted_new_transactions_count
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
