@@ -287,3 +287,4 @@ python manage.py create_monthly_charges --month 2025-11 --building 1
 
 **Critical:** This fix MUST be applied before using the monthly charges system in production!
 
+
