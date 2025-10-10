@@ -1311,6 +1311,29 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                   <div className="pt-2 border-t border-gray-200 space-y-3">
                     <div className="text-xs font-medium text-gray-700 mb-2">Τι πρέπει να πληρωθεί αυτόν τον μήνα:</div>
 
+                    {/* Παλαιότερες οφειλές - ΠΑΝΤΑ ΕΜΦΑΝΙΖΕΤΑΙ */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-purple-700 font-medium">Παλαιότερες οφειλές:</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`font-semibold text-sm ${(financialSummary?.previous_obligations || 0) > 0 ? 'text-purple-800' : 'text-gray-500'}`}>
+                            {formatCurrency(financialSummary?.previous_obligations || 0)}
+                          </span>
+                          {(financialSummary?.previous_obligations || 0) > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleShowAmountDetails('previous_obligations', financialSummary?.previous_obligations || 0, 'Παλαιότερες Οφειλές')}
+                              className="h-6 px-2 text-xs text-purple-600 hover:text-purple-700"
+                              title="Δείτε λεπτομέρειες"
+                            >
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Τρέχουσες υποχρεώσεις - μόνο του μήνα */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
@@ -1320,6 +1343,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                             {(() => {
                               console.log('🔍 DEBUG current_month_expenses:', financialSummary.current_month_expenses);
                               console.log('🔍 DEBUG current_obligations:', financialSummary.current_obligations);
+                              console.log('🔍 DEBUG previous_obligations:', financialSummary.previous_obligations);
                               const value = financialSummary.current_month_expenses || financialSummary.current_obligations || 0;
                               console.log('🔍 DEBUG final value:', value);
                               return formatCurrency(Math.abs(value));
@@ -1340,27 +1364,15 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                       
 
 
-                    {/* Παλαιότερες οφειλές */}
+                    {/* Συνολικό ποσό προς πληρωμή */}
                     {(financialSummary?.previous_obligations || 0) > 0 && (
-                      <div className="space-y-1 pt-2 border-t border-gray-200">
+                      <div className="space-y-1 pt-2 border-t border-purple-200 bg-purple-50/50 -mx-3 px-3 py-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-purple-700 font-medium">Παλαιότερες οφειλές:</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm text-purple-800">
-                              {formatCurrency(financialSummary?.previous_obligations || 0)}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleShowAmountDetails('previous_obligations', financialSummary?.previous_obligations || 0, 'Παλαιότερες Οφειλές')}
-                              className="h-6 px-2 text-xs text-purple-600 hover:text-purple-700"
-                              title="Δείτε λεπτομέρειες"
-                            >
-                              <Eye className="h-3 w-3" />
-                            </Button>
-                          </div>
+                          <span className="text-xs text-purple-900 font-bold">ΣΥΝΟΛΟ προς πληρωμή:</span>
+                          <span className="font-bold text-sm text-purple-900">
+                            {formatCurrency((financialSummary?.previous_obligations || 0) + (financialSummary?.current_month_expenses || 0))}
+                          </span>
                         </div>
-
                       </div>
                     )}
 
