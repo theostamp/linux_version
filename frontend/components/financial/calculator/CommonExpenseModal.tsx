@@ -158,62 +158,78 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <style dangerouslySetInnerHTML={{ __html: printStyles }} />
       <div key={expenseSheetMonth} className="bg-white rounded-lg max-w-[95vw] w-full max-h-[85vh] overflow-y-auto print-content">
-        <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between no-print">
-            <div className="flex items-center gap-4">
-                {/* Office Logo */}
-                {managementOfficeLogo && (
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-white border">
-                    <img 
-                      src={managementOfficeLogo.startsWith('http') ? managementOfficeLogo : `${API_BASE_URL}${managementOfficeLogo.startsWith('/') ? managementOfficeLogo : `/${managementOfficeLogo}`}`}
-                      alt="Office Logo" 
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                )}
-                <div>
-                  <h2 className="text-lg font-bold text-blue-600">
-                    {managementOfficeName || 'Γραφείο Διαχείρισης'}
-                  </h2>
-                  {managementOfficePhone && (
-                    <p className="text-xs text-gray-600">📞 {managementOfficePhone}</p>
-                  )}
-                  {managementOfficeAddress && (
-                    <p className="text-xs text-gray-600">📍 {managementOfficeAddress}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                    <Building className="h-6 w-6 text-blue-600" />
+        {/* ✅ ΝΕΟ: Screen Header - Οριζόντια Διάταξη */}
+        <div className="sticky top-0 bg-gradient-to-r from-blue-50 to-blue-100 border-b-2 border-blue-300 p-4 no-print">
+            <div className="flex items-center justify-between mb-3">
+                {/* Αριστερά: Logo + Γραφείο */}
+                <div className="flex items-center gap-3">
+                    {managementOfficeLogo && (
+                      <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-white border-2 border-blue-200">
+                        <img 
+                          src={managementOfficeLogo.startsWith('http') ? managementOfficeLogo : `${API_BASE_URL}${managementOfficeLogo.startsWith('/') ? managementOfficeLogo : `/${managementOfficeLogo}`}`}
+                          alt="Office Logo" 
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
                     <div>
-                        <h2 className="text-xl font-bold text-gray-800">Φύλλο Κοινοχρήστων</h2>
-                        <div className="flex items-center gap-2 mt-1">
-                            <Calendar className="h-3 w-3 text-gray-500" />
-                            <Select value={expenseSheetMonth} onValueChange={setExpenseSheetMonth}>
-                                <SelectTrigger className="w-32 h-6 text-xs">
-                                    <SelectValue placeholder="Επιλέξτε μήνα" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {monthOptions.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                            {option.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <div className="text-xs text-gray-500">
-                                Πληρωτέο μέχρι 10/{(() => {
-                                    const date = new Date(expenseSheetMonth + '-01');
-                                    return String(date.getMonth() + 2).padStart(2, '0');
-                                })()}/{new Date(expenseSheetMonth + '-01').getFullYear()}
-                            </div>
-                        </div>
+                      <h2 className="text-base font-bold text-blue-900">
+                        {managementOfficeName || 'Γραφείο Διαχείρισης'}
+                      </h2>
+                      <div className="flex gap-3 text-xs text-blue-700">
+                        {managementOfficePhone && (
+                          <span>📞 {managementOfficePhone}</span>
+                        )}
+                        {managementOfficeAddress && (
+                          <span>📍 {managementOfficeAddress}</span>
+                        )}
+                      </div>
                     </div>
                 </div>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 text-lg">
-                  {expenseSheetMonth ? new Date(expenseSheetMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' }) : getPeriodInfo(state)}
-                </Badge>
+                
+                {/* Κέντρο: Τίτλος */}
+                <div className="text-center">
+                    <div className="flex items-center gap-2 justify-center">
+                        <Building className="h-6 w-6 text-blue-600" />
+                        <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wide">Φύλλο Κοινοχρήστων</h2>
+                    </div>
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 mt-1 text-sm">
+                      {expenseSheetMonth ? new Date(expenseSheetMonth + '-01').toLocaleDateString('el-GR', { month: 'long', year: 'numeric' }) : getPeriodInfo(state)}
+                    </Badge>
+                </div>
+                
+                {/* Δεξιά: Μήνας + Close */}
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-blue-600" />
+                        <Select value={expenseSheetMonth} onValueChange={setExpenseSheetMonth}>
+                            <SelectTrigger className="w-36 h-8 text-xs">
+                                <SelectValue placeholder="Επιλέξτε μήνα" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {monthOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <Button onClick={onClose} variant="ghost" size="sm" className="hover:bg-blue-200">
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
             </div>
-            <div className="flex items-center gap-2">
-                <Button onClick={onClose} variant="ghost" size="sm"><X className="h-4 w-4" /></Button>
+            
+            {/* Δεύτερη γραμμή: Ημερομηνία Λήξης */}
+            <div className="flex items-center justify-center gap-2 pt-2 border-t border-blue-200">
+                <span className="text-xs font-medium text-blue-700">Πληρωτέο έως:</span>
+                <span className="text-sm font-bold text-red-600">
+                    10/{(() => {
+                        const date = new Date(expenseSheetMonth + '-01');
+                        return String(date.getMonth() + 2).padStart(2, '0');
+                    })()}/{new Date(expenseSheetMonth + '-01').getFullYear()}
+                </span>
             </div>
         </div>
 
