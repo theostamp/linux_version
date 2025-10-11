@@ -203,6 +203,9 @@ class Expense(models.Model):
         ('emergency_fund', 'Ταμείο Έκτακτης Ανάγκης'),
         ('renovation_fund', 'Ταμείο Ανακαίνισης'),
         
+        # Έργα & Projects
+        ('project', 'Έργα Πολυκατοικίας'),
+        
         # Άλλες Δαπάνες
         ('miscellaneous', 'Διάφορες Δαπάνες'),
         ('consulting_fees', 'Εργασίες Συμβούλου'),
@@ -318,6 +321,9 @@ class Expense(models.Model):
         'reserve_fund': 'owner',
         'emergency_fund': 'owner',
         'renovation_fund': 'owner',
+        
+        # Έργα & Projects - ΙΔΙΟΚΤΗΤΗΣ (μεγάλα έργα)
+        'project': 'owner',                      # Έργα πολυκατοικίας (από Projects module)
         
         # Άλλες Δαπάνες - Εξαρτώμενες
         'miscellaneous': 'shared',

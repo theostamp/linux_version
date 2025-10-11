@@ -419,11 +419,13 @@ class ScheduledMaintenance(models.Model):
             expense.amount = total_amount
             expense.date = self.scheduled_date or timezone.now().date()
             expense.category = category
+            expense.payer_responsibility = 'owner'  # ✅ ΝΕΟ: Μεγάλα έργα → Ιδιοκτήτης
             expense.notes = f"Αυτόματα συνδεδεμένο με προγραμματισμένο έργο #{self.id}"
             expense.save()
             return expense
         else:
             # Create new expense
+            # 🏢 Maintenance/Projects = Μεγάλα έργα → Ιδιοκτήτης πληρώνει
             expense = Expense.objects.create(
                 building=self.building,
                 title=f"Συντήρηση: {self.title}",
@@ -432,6 +434,7 @@ class ScheduledMaintenance(models.Model):
                 category=category,
                 expense_type='regular',
                 distribution_type='by_participation_mills',
+                payer_responsibility='owner',  # ✅ ΝΕΟ: Μεγάλα έργα → Ιδιοκτήτης
                 notes=f"Αυτόματα συνδεδεμένο με προγραμματισμένο έργο #{self.id}"
             )
             # Link back to this maintenance
@@ -475,6 +478,7 @@ class ScheduledMaintenance(models.Model):
                     category=category,
                     expense_type='regular',
                     distribution_type='by_participation_mills',
+                    payer_responsibility='owner',  # ✅ ΝΕΟ: Μεγάλα έργα → Ιδιοκτήτης
                     notes=f"Προκαταβολή για προγραμματισμένο έργο #{self.id}"
                 )
                 created_expenses.append(advance_expense)
@@ -504,6 +508,7 @@ class ScheduledMaintenance(models.Model):
                         category=category,
                         expense_type='regular',
                         distribution_type='by_participation_mills',
+                        payer_responsibility='owner',  # ✅ ΝΕΟ: Μεγάλα έργα → Ιδιοκτήτης
                         notes=f"Δόση {i+1} από {installment_count} για προγραμματισμένο έργο #{self.id}"
                     )
                     created_expenses.append(installment_expense)
@@ -537,6 +542,7 @@ class ScheduledMaintenance(models.Model):
                     category=category,
                     expense_type='regular',
                     distribution_type='by_participation_mills',
+                    payer_responsibility='owner',  # ✅ ΝΕΟ: Μεγάλα έργα → Ιδιοκτήτης
                     notes=f"Περιοδική πληρωμή {i+1} από {total_periods} για προγραμματισμένο έργο #{self.id}"
                 )
                 created_expenses.append(periodic_expense)

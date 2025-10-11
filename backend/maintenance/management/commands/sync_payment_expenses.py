@@ -131,6 +131,7 @@ class Command(BaseCommand):
             return 'created'
 
         # Create the expense
+        # 🏢 Projects/Maintenance = Μεγάλα έργα → Ιδιοκτήτης πληρώνει
         expense = Expense.objects.create(
             building=building,
             title=expense_title,
@@ -139,6 +140,7 @@ class Command(BaseCommand):
             category=expense_category,
             distribution_type='by_participation_mills',
             expense_type='regular',
+            payer_responsibility='owner',  # ✅ ΝΕΟ: Μεγάλα έργα → Ιδιοκτήτης
             supplier=maintenance.contractor.supplier if maintenance.contractor else None,
             notes=f"Αυτόματη δημιουργία από πρόγραμμα πληρωμών: {installment.description}"
         )
