@@ -402,7 +402,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                   
                   // ✅ Σωστός υπολογισμός κοινών εξόδων - ίδιος με το modal
-                  const commonAmount = aptAmount.common || 0;
+                  const commonAmount = apt.expense_share || 0; // Ίδιος υπολογισμός με modal
                   const commonAmountWithoutReserve = commonAmount - apartmentReserveFund;
                   const ownerExpensesTotal = apt.owner_expenses || 0;
                   const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
@@ -443,7 +443,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                       const commonMills = apt.participation_mills || 0;
                       const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                       // ✅ Σωστός υπολογισμός: ίδιος με το modal
-                      const commonAmount = aptAmount.common || 0;
+                      const commonAmount = apt.expense_share || 0; // Ίδιος με modal
                       return sum + (commonAmount - apartmentReserveFund);
                     } catch (e) {
                       return sum;
@@ -467,7 +467,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                       const ownerExpensesTotal = apt.owner_expenses || 0;
                       const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                       // ✅ Σωστός υπολογισμός: ίδιος με το modal
-                      const commonAmount = aptAmount.common || 0;
+                      const commonAmount = apt.expense_share || 0; // Ίδιος με modal
                       const commonAmountWithoutReserve = commonAmount - apartmentReserveFund;
                       const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
                       const elevatorAmount = aptAmount.elevator || 0;
