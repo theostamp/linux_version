@@ -388,12 +388,12 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   const commonMills = apt.participation_mills || 0;
                   const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                   
-                  // ✅ Υπολογισμοί χωρίς διπλές εμφανίσεις
+                  // ✅ Υπολογισμοί χωρίς διπλές εμφανίσεις (με safety checks)
                   const commonAmount = apt.expense_share || 0;
-                  const commonAmountWithoutReserve = commonAmount - apartmentReserveFund;
+                  const commonAmountWithoutReserve = Math.max(0, commonAmount - apartmentReserveFund);
                   const ownerExpensesTotal = apt.owner_expenses || 0;
                   const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
-                  const totalAmount = commonAmountWithoutReserve + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund;
+                  const totalAmount = Math.max(0, commonAmountWithoutReserve + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund);
 
                   return `
                     <tr style="${index % 2 === 0 ? 'background: #f9fafb;' : 'background: white;'}">
@@ -415,8 +415,15 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   <td colspan="2" style="padding: 4px 3px; text-align: left; border: 1px solid #e5e7eb; font-weight: bold;">ΣΥΝΟΛΑ</td>
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => sum + Math.abs(apt.previous_balance || 0), 0))}€</td>
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => {
-                    const aptAmount = perApartmentAmounts[apt.id] || {};
-                    return sum + (aptAmount.common || 0);
+                    try {
+                      const commonMills = apt.participation_mills || 0;
+                      const commonAmount = apt.expense_share || 0;
+                      const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
+                      const commonAmountWithoutReserve = Math.max(0, commonAmount - apartmentReserveFund);
+                      return sum + commonAmountWithoutReserve;
+                    } catch (e) {
+                      return sum;
+                    }
                   }, 0))}€</td>
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(expenseBreakdown.elevator || 0)}€</td>
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(expenseBreakdown.heating || 0)}€</td>
@@ -424,11 +431,27 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                     const commonMills = apt.participation_mills || 0;
                     const ownerExpenses = apt.owner_expenses || 0;
                     const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
-                    const ownerExpensesOnlyProjects = ownerExpenses - apartmentReserveFund;
+                    const ownerExpensesOnlyProjects = Math.max(0, ownerExpenses - apartmentReserveFund);
                     return sum + ownerExpensesOnlyProjects;
                   }, 0))}€</td>
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(reserveFundInfo.monthlyAmount || 0)}€</td>
-                  <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(getFinalTotalExpenses())}€</td>
+                  <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => {
+                    try {
+                      const commonMills = apt.participation_mills || 0;
+                      const commonAmount = apt.expense_share || 0;
+                      const previousBalance = Math.abs(apt.previous_balance || 0);
+                      const ownerExpensesTotal = apt.owner_expenses || 0;
+                      const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
+                      const commonAmountWithoutReserve = Math.max(0, commonAmount - apartmentReserveFund);
+                      const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
+                      const aptAmount = perApartmentAmounts[apt.id] || {};
+                      const elevatorAmount = aptAmount.elevator || 0;
+                      const heatingAmount = aptAmount.heating || 0;
+                      return sum + commonAmountWithoutReserve + elevatorAmount + heatingAmount + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund;
+                    } catch (e) {
+                      return sum;
+                    }
+                  }, 0))}€</td>
                 </tr>
               </tbody>
             </table>
