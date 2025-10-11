@@ -401,8 +401,9 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   const commonMills = apt.participation_mills || 0;
                   const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                   
-                  // ✅ Σωστός υπολογισμός κοινών εξόδων - χωρίς διπλοχερώσεις
-                  const commonAmountWithoutReserve = aptAmount.common || 0;
+                  // ✅ Σωστός υπολογισμός κοινών εξόδων - ίδιος με το modal
+                  const commonAmount = aptAmount.common || 0;
+                  const commonAmountWithoutReserve = commonAmount - apartmentReserveFund;
                   const ownerExpensesTotal = apt.owner_expenses || 0;
                   const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
                   const totalAmount = Math.max(0, commonAmountWithoutReserve + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund);
@@ -439,8 +440,11 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => {
                     try {
                       const aptAmount = perApartmentAmounts[apt.id] || {};
-                      // ✅ Σωστός υπολογισμός: τα κοινά χωρίς διπλοχερώσεις
-                      return sum + (aptAmount.common || 0);
+                      const commonMills = apt.participation_mills || 0;
+                      const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
+                      // ✅ Σωστός υπολογισμός: ίδιος με το modal
+                      const commonAmount = aptAmount.common || 0;
+                      return sum + (commonAmount - apartmentReserveFund);
                     } catch (e) {
                       return sum;
                     }
@@ -462,8 +466,9 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                       const previousBalance = Math.abs(apt.previous_balance || 0);
                       const ownerExpensesTotal = apt.owner_expenses || 0;
                       const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
-                      // ✅ Σωστός υπολογισμός: κοινά χωρίς διπλοχερώσεις
-                      const commonAmountWithoutReserve = aptAmount.common || 0;
+                      // ✅ Σωστός υπολογισμός: ίδιος με το modal
+                      const commonAmount = aptAmount.common || 0;
+                      const commonAmountWithoutReserve = commonAmount - apartmentReserveFund;
                       const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
                       const elevatorAmount = aptAmount.elevator || 0;
                       const heatingAmount = aptAmount.heating || 0;
