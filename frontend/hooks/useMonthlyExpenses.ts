@@ -66,6 +66,9 @@ export const useMonthlyExpenses = (buildingId?: number, month?: string) => {
         data: response.data,
         hasData: !!response.data,
         keys: response.data ? Object.keys(response.data) : 'No data',
+        hasExpenseBreakdown: !!response.data?.expense_breakdown,
+        expenseBreakdownLength: response.data?.expense_breakdown?.length,
+        expenseBreakdownData: response.data?.expense_breakdown,
         managementFields: response.data ? {
           management_fee_per_apartment: response.data.management_fee_per_apartment,
           total_management_cost: response.data.total_management_cost,

@@ -534,6 +534,8 @@ class FinancialSummarySerializer(serializers.Serializer):
     # Management expenses
     management_fee_per_apartment = serializers.FloatField()
     total_management_cost = serializers.FloatField()
+    # Expense breakdown by category with payer responsibility
+    expense_breakdown = serializers.ListField(child=serializers.DictField(), required=False)
 
 
 class CommonExpenseShareSerializer(serializers.Serializer):
