@@ -37,9 +37,8 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΟΦΕΙΛΕΣ</TableHead>
             {/* ✅ ΑΦΑΙΡΕΘΗΚΑΝ: 3 στήλες ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ */}
             <TableHead className="text-center border font-bold text-xs text-white" colSpan={4} style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)"}}>ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ</TableHead>
-            {/* ✅ ΝΕΟ: Μία στήλη ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ */}
-            <TableHead className="text-center border font-bold text-xs text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)"}}>ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ</TableHead>
-            {reserveFundInfo.monthlyAmount > 0 && <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #7e22ce 0%, #6d28d9 100%)", color: "white"}}>ΑΠΟΘΕΜΑΤΙΚΟ</TableHead>}
+            {/* ✅ ΤΡΟΠΟΠΟΙΗΘΗΚΕ: ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ με 2 υποστήλες (Έργα + Αποθεματικό) */}
+            <TableHead className="text-center border font-bold text-xs text-white" colSpan={2} style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)"}}>ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ</TableHead>
             <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΠΛΗΡΩΤΕΟ ΠΟΣΟ</TableHead>
           </TableRow>
           <TableRow className="bg-gray-100">
@@ -51,9 +50,9 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΑΝΕΛ/ΡΑΣ</TableHead>
             <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜ/ΣΗ</TableHead>
             <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΔΙΑΧΕΙΡΙΣΗ</TableHead>
-            {/* ✅ ΝΕΟ: Μία υπο-στήλη για δαπάνες ιδιοκτητών */}
-            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "100px"}}>ΣΥΝΟΛΟ</TableHead>
-            {reserveFundInfo.monthlyAmount > 0 && <TableHead className="text-center border"></TableHead>}
+            {/* ✅ ΝΕΟ: 2 υπο-στήλες για δαπάνες ιδιοκτητών */}
+            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "100px"}}>ΕΡΓΑ</TableHead>
+            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #7e22ce 0%, #6d28d9 100%)", fontSize: "10px", width: "100px"}}>ΑΠΟΘΕΜΑΤΙΚΟ</TableHead>
             <TableHead className="text-center border"></TableHead>
           </TableRow>
         </TableHeader>
@@ -75,8 +74,8 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             // Παίρνουμε από το apartmentData.owner_expenses αν υπάρχει
             const ownerExpenses = toNumber(apartmentData?.owner_expenses || 0);
             
-            // Fix: Include previous balance in final total + owner expenses
-            const finalTotalWithFees = commonAmount + elevatorAmount + heatingAmount + managementFee + apartmentReserveFund + previousBalance + ownerExpenses;
+            // ✅ ΤΡΟΠΟΠΟΙΗΣΗ: ΠΛΗΡΩΤΕΟ ΠΟΣΟ χωρίς αποθεματικό (το αποθεματικό είναι στις δαπάνες ιδιοκτητών)
+            const finalTotalWithFees = commonAmount + elevatorAmount + heatingAmount + managementFee + previousBalance + ownerExpenses;
 
             return (
               <TableRow key={share.apartment_id}>
@@ -84,13 +83,15 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 <TableCell>{share.owner_name || 'Μη καταχωρημένος'}</TableCell>
                 <TableCell>{formatAmount(previousBalance)}€</TableCell>
                 {/* ✅ ΑΦΑΙΡΕΘΗΚΑΝ: 3 cells για χιλιοστά */}
-                <TableCell>{formatAmount(commonAmount + apartmentReserveFund)}</TableCell>
+                {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ: Κ/ΧΡΗΣΤΑ χωρίς αποθεματικό */}
+                <TableCell>{formatAmount(commonAmount)}</TableCell>
                 <TableCell>{formatAmount(elevatorAmount)}</TableCell>
                 <TableCell>{formatAmount(heatingAmount)}</TableCell>
                 <TableCell>{formatAmount(managementFee)}</TableCell>
-                {/* ✅ ΝΕΟ: Μία στήλη για δαπάνες ιδιοκτητών */}
+                {/* ✅ ΝΕΟ: ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ - 2 cells */}
                 <TableCell className="font-semibold">{ownerExpenses > 0 ? formatAmount(ownerExpenses) + '€' : '-'}</TableCell>
-                {reserveFundInfo.monthlyAmount > 0 && <TableCell>{formatAmount(apartmentReserveFund)}</TableCell>}
+                <TableCell>{apartmentReserveFund > 0 ? formatAmount(apartmentReserveFund) + '€' : '-'}</TableCell>
+                {/* ΠΛΗΡΩΤΕΟ ΠΟΣΟ: Χωρίς αποθεματικό */}
                 <TableCell>{formatAmount(finalTotalWithFees)}</TableCell>
               </TableRow>
             );
@@ -99,13 +100,12 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             <TableCell colSpan={2}>ΣΥΝΟΛΑ</TableCell>
             <TableCell>{formatAmount(sharesArray.reduce((s, a) => s + Math.abs(aptWithFinancial.find(apt => apt.id === a.apartment_id)?.previous_balance ?? 0), 0))}€</TableCell>
             {/* ✅ ΑΦΑΙΡΕΘΗΚΑΝ: 3 cells χιλιοστών */}
+            {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ - Κ/ΧΡΗΣΤΑ χωρίς αποθεματικό */}
             <TableCell>{formatAmount(
               sharesArray.reduce((sum, share) => {
                 const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
-                const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
                 const commonAmount = toNumber(apartmentData?.expense_share || 0);
-                const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0 && Object.values(expenseBreakdown).some(v => v > 0)) ? toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000) : 0;
-                return sum + commonAmount + apartmentReserveFund;
+                return sum + commonAmount;
               }, 0)
             )}</TableCell>
             <TableCell>{formatAmount(
@@ -121,7 +121,7 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
               }, 0)
             )}</TableCell>
             <TableCell>{formatAmount(managementFeeInfo.totalFee)}</TableCell>
-            {/* ✅ ΝΕΟ: Σύνολο δαπανών ιδιοκτητών */}
+            {/* ✅ ΝΕΟ: ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ - 2 cells */}
             <TableCell className="font-semibold">{formatAmount(
               sharesArray.reduce((sum, share) => {
                 const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
@@ -129,20 +129,20 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 return sum + ownerExpenses;
               }, 0)
             )}€</TableCell>
-            {reserveFundInfo.monthlyAmount > 0 && <TableCell>{formatAmount(reserveFundInfo.monthlyAmount)}</TableCell>}
+            <TableCell className="font-semibold">{formatAmount(reserveFundInfo.monthlyAmount)}€</TableCell>
+            {/* ΠΛΗΡΩΤΕΟ ΠΟΣΟ: Χωρίς αποθεματικό */}
             <TableCell>{formatAmount(
               sharesArray.reduce((sum, share) => {
                 const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
-                const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
                 const breakdown = share.breakdown || {};
                 const commonAmount = toNumber(apartmentData?.expense_share || 0);
                 const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
                 const heatingAmount = toNumber(breakdown.heating_expenses || 0);
                 const managementFee = toNumber((breakdown as any).management_fee ?? managementFeeInfo.feePerApartment);
-                const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0 && Object.values(expenseBreakdown).some(v => v > 0)) ? toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000) : 0;
                 const previousBalance = Math.abs(apartmentData?.previous_balance ?? 0);
                 const ownerExpenses = toNumber(apartmentData?.owner_expenses || 0);
-                return sum + commonAmount + elevatorAmount + heatingAmount + managementFee + apartmentReserveFund + previousBalance + ownerExpenses;
+                // ✅ Χωρίς apartmentReserveFund
+                return sum + commonAmount + elevatorAmount + heatingAmount + managementFee + previousBalance + ownerExpenses;
               }, 0)
             )}€</TableCell>
           </TableRow>
