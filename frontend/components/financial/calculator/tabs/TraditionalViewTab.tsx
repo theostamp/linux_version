@@ -102,10 +102,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                 <p className="text-xs text-purple-700">{managerPhone}</p>
                 <p className="text-xs text-purple-700">{managerCollectionSchedule}</p>
             </div>
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-2"><Calendar className="h-4 w-4 text-orange-700" /><h3 className="font-bold text-orange-800 text-sm">ΛΗΞΗ ΠΛΗΡΩΜΗΣ</h3></div>
-                <p className="text-sm font-semibold text-orange-900">{getPaymentDueDate(state)}</p>
-            </div>
+            {/* ✅ ΑΦΑΙΡΕΘΗΚΕ: Card "ΛΗΞΗ ΠΛΗΡΩΜΗΣ" για εξοικονόμηση χώρου */}
             {/* ✅ ΑΛΛΑΓΗ: Τραπεζικά Στοιχεία - Μόνο για Εκτύπωση */}
             <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200 shadow-sm hidden print:block">
                 <div className="flex items-center gap-2 mb-2"><CreditCard className="h-4 w-4 text-green-700" /><h3 className="font-bold text-green-800 text-sm">ΤΡΑΠΕΖΙΚΑ ΣΤΟΙΧΕΙΑ</h3></div>
@@ -202,11 +199,9 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
       </div>
 
       <div className="bg-white border rounded-lg overflow-hidden">
-        <div className="bg-gray-100 p-4 border-b flex items-center justify-between">
-            <div>
-                <h3 className="font-bold text-gray-800">ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ</h3>
-                <p className="text-xs text-gray-600 mt-1">Πληρωτέο ποσό για {getPeriodInfo(state)}</p>
-            </div>
+        {/* ✅ ΑΦΑΙΡΕΘΗΚΕ: Επικεφαλίδα "ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ" για εξοικονόμηση χώρου */}
+        {/* Κρατάμε μόνο το κουμπί Έλεγχος Δεδομένων */}
+        <div className="bg-gray-50 p-2 border-b flex items-center justify-end">
             <Button onClick={validateData} variant="outline" size="sm"><Calculator className="h-4 w-4 mr-2" />Έλεγχος Δεδομένων</Button>
         </div>
         <ApartmentExpenseTable shares={state.shares} aptWithFinancial={aptWithFinancial} perApartmentAmounts={perApartmentAmounts} expenseBreakdown={expenseBreakdown} managementFeeInfo={managementFeeInfo} reserveFundInfo={reserveFundInfo} totalExpenses={totalExpenses} showOwnerExpenses={showOwnerExpenses} />
