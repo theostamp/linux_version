@@ -1290,11 +1290,15 @@ class FinancialDashboardService:
             category = expense['category']
             # Παίρνουμε το display name από το model
             category_display = dict(Expense.EXPENSE_CATEGORIES).get(category, category.upper())
+            
+            # Προσθήκη του suggested payer για να δείξουμε Ⓔ/Ⓓ στο frontend
+            payer = Expense.get_default_payer_for_category(category)
 
             breakdown.append({
                 'category': category,
                 'category_display': category_display,
-                'amount': float(expense['total_amount'])
+                'amount': float(expense['total_amount']),
+                'payer_responsibility': payer  # 'resident', 'owner', ή 'shared'
             })
 
         return breakdown
