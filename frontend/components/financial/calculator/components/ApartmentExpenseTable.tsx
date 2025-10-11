@@ -60,25 +60,24 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
             const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
             const breakdown = share.breakdown || {};
-            const commonAmount = toNumber(apartmentData?.expense_share || 0);
             const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
             const heatingAmount = toNumber(breakdown.heating_expenses || 0);
-            const managementFee = toNumber((breakdown as any).management_fee ?? managementFeeInfo.feePerApartment);
             const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0 && Object.values(expenseBreakdown).some(v => v > 0)) ? toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000) : 0;
             
             // Fix: Show positive previous balance amounts
             const previousBalance = Math.abs(apartmentData?.previous_balance ?? 0);
             
-            // ✅ ΝΕΟ: Υπολογισμός δαπανών ιδιοκτήτη
-            // Παίρνουμε από το apartmentData.owner_expenses αν υπάρχει
+            // ✅ ΔΙΟΡΘΩΣΗ: Χρήση resident_expenses και owner_expenses από API (ήδη διαχωρισμένα)
+            // Αυτά ΗΔΗ εξαιρούν το αποθεματικό και τα management fees όπου χρειάζεται
+            const residentExpensesTotal = toNumber(apartmentData?.resident_expenses || 0);
             const ownerExpensesTotal = toNumber(apartmentData?.owner_expenses || 0);
             
-            // ✅ ΔΙΟΡΘΩΣΗ: Αφαιρούμε το αποθεματικό από τα έργα ιδιοκτητών (αν περιλαμβάνεται)
-            // Έτσι δεν το εμφανίζουμε διπλά
-            const ownerExpensesOnlyProjects = ownerExpensesTotal - apartmentReserveFund;
+            // Κ/ΧΡΗΣΤΑ = Δαπάνες ενοίκων (ΗΔΗ διαχωρισμένες από το API, ΔΕΝ περιλαμβάνουν owner expenses)
+            // Αφαιρούμε ΜΟΝΟ το αποθεματικό (που είναι owner expense)
+            const commonAmountWithoutReserve = residentExpensesTotal - apartmentReserveFund;
             
-            // ✅ ΔΙΟΡΘΩΣΗ: Αφαιρούμε το αποθεματικό και από τα Κ/ΧΡΗΣΤΑ
-            const commonAmountWithoutReserve = commonAmount - apartmentReserveFund;
+            // ΕΡΓΑ = Owner expenses χωρίς αποθεματικό
+            const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
             
             // ✅ ΤΕΛΙΚΟ ΠΛΗΡΩΤΕΟ ΠΟΣΟ: Περιλαμβάνει ΟΛΑ (ενοικιαστές + ιδιοκτήτες + αποθεματικό)
             // = Οφειλές + Κ/Χρήστα + Ανελκυστήρας + Θέρμανση + Έργα Ιδιοκτητών + Αποθεματικό
@@ -106,17 +105,17 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             <TableCell colSpan={2}>ΣΥΝΟΛΑ</TableCell>
             <TableCell>{formatAmount(sharesArray.reduce((s, a) => s + Math.abs(aptWithFinancial.find(apt => apt.id === a.apartment_id)?.previous_balance ?? 0), 0))}€</TableCell>
             {/* ✅ ΑΦΑΙΡΕΘΗΚΑΝ: 3 cells χιλιοστών */}
-            {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ - Κ/ΧΡΗΣΤΑ ΧΩΡΙΣ αποθεματικό */}
+            {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ - Κ/ΧΡΗΣΤΑ από resident_expenses (ΔΕΝ περιλαμβάνει owner expenses) */}
             <TableCell>{formatAmount(
               sharesArray.reduce((sum, share) => {
                 const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
                 const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
-                const commonAmount = toNumber(apartmentData?.expense_share || 0);
+                const residentExpensesTotal = toNumber(apartmentData?.resident_expenses || 0);
                 const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0 && Object.values(expenseBreakdown).some(v => v > 0)) ? toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000) : 0;
-                // ✅ ΔΙΟΡΘΩΣΗ: Αφαιρούμε το αποθεματικό από τα Κ/ΧΡΗΣΤΑ
-                return sum + (commonAmount - apartmentReserveFund);
+                // ✅ ΔΙΟΡΘΩΣΗ: Χρήση resident_expenses (ΗΔΗ εξαιρεί owner expenses)
+                return sum + (residentExpensesTotal - apartmentReserveFund);
               }, 0)
-            )}</TableCell>
+            )}€</TableCell>
             <TableCell>{formatAmount(
               sharesArray.reduce((sum, share) => {
                 const breakdown = share.breakdown || {};
@@ -149,15 +148,15 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
                 const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
                 const breakdown = share.breakdown || {};
-                const commonAmount = toNumber(apartmentData?.expense_share || 0);
+                const residentExpensesTotal = toNumber(apartmentData?.resident_expenses || 0);
+                const ownerExpensesTotal = toNumber(apartmentData?.owner_expenses || 0);
                 const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
                 const heatingAmount = toNumber(breakdown.heating_expenses || 0);
                 const previousBalance = Math.abs(apartmentData?.previous_balance ?? 0);
-                const ownerExpensesTotal = toNumber(apartmentData?.owner_expenses || 0);
                 const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0 && Object.values(expenseBreakdown).some(v => v > 0)) ? toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000) : 0;
-                // ✅ ΔΙΟΡΘΩΣΗ: Αφαιρούμε αποθεματικό από commonAmount ΚΑΙ ownerExpenses
-                const commonAmountWithoutReserve = commonAmount - apartmentReserveFund;
-                const ownerExpensesOnlyProjects = ownerExpensesTotal - apartmentReserveFund;
+                // ✅ ΔΙΟΡΘΩΣΗ: Χρήση resident_expenses και owner_expenses (ΗΔΗ διαχωρισμένα)
+                const commonAmountWithoutReserve = residentExpensesTotal - apartmentReserveFund;
+                const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
                 // ✅ ΤΕΛΙΚΟ: Προσθέτουμε και το apartmentReserveFund για συνολικό χρέος
                 return sum + commonAmountWithoutReserve + elevatorAmount + heatingAmount + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund;
               }, 0)
