@@ -120,80 +120,64 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
             </h3>
             
             {/* Expense Breakdown Summary */}
-            <div className="space-y-3">
+            <div className="space-y-2">
                 {/* Αναλυτικές Δαπάνες - Φέρνουμε από το API */}
                 {monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0 && (
                   monthlyExpenses.expense_breakdown.map((expense, index) => {
-                    // Διακριτικό badge: Ⓔ (Ένοικος) ή Ⓓ (Ιδιοκτήτης)
+                    // Διακριτικό κείμενο: Ε (Ένοικος) ή Δ (Ιδιοκτήτης)
                     const isOwner = expense.payer_responsibility === 'owner';
-                    const badgeColor = isOwner ? 'border-red-600 text-red-600' : 'border-emerald-600 text-emerald-600';
+                    const badgeColor = isOwner ? 'text-red-600' : 'text-emerald-600';
                     const badgeText = isOwner ? 'Δ' : 'Ε';
                     
                     return (
-                      <div key={expense.category} className="flex items-center justify-between p-2 bg-white rounded border">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-700">{index + 1}</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className={`inline-flex items-center justify-center w-[18px] h-[18px] border-[1.5px] ${badgeColor} rounded-full text-[11px] font-bold flex-shrink-0`}>
-                              {badgeText}
-                            </span>
-                            <p className="text-sm font-semibold text-gray-800">{expense.category_display}</p>
-                          </div>
+                      <div key={expense.category} className="flex items-center justify-between py-1.5 px-2 bg-white rounded border">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-medium text-gray-600">{index + 1}</span>
+                          <span className={`text-xs font-bold ${badgeColor} flex-shrink-0`}>{badgeText}</span>
+                          <p className="text-xs font-semibold text-gray-700">{expense.category_display}</p>
                         </div>
-                        <span className="text-sm font-bold text-blue-600">{formatAmount(expense.amount)}€</span>
+                        <span className="text-xs font-bold text-blue-600">{formatAmount(expense.amount)}€</span>
                       </div>
                     );
                   })
                 )}
 
                 {/* Κόστος διαχείρισης */}
-                <div className="flex items-center justify-between p-2 bg-white rounded border">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-700">{(monthlyExpenses?.expense_breakdown?.length || 0) + 1}</span>
-                        <div className="flex items-center gap-1.5">
-                            <span className="inline-flex items-center justify-center w-[18px] h-[18px] border-[1.5px] border-emerald-600 text-emerald-600 rounded-full text-[11px] font-bold flex-shrink-0">
-                              Ε
-                            </span>
-                            <p className="text-sm font-semibold text-gray-800">Κόστος διαχείρισης</p>
-                        </div>
+                <div className="flex items-center justify-between py-1.5 px-2 bg-white rounded border">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium text-gray-600">{(monthlyExpenses?.expense_breakdown?.length || 0) + 1}</span>
+                        <span className="text-xs font-bold text-emerald-600 flex-shrink-0">Ε</span>
+                        <p className="text-xs font-semibold text-gray-700">Κόστος διαχείρισης</p>
                     </div>
-                    <span className="text-sm font-bold text-blue-600">{formatAmount(managementFeeInfo.totalFee || 0)}€</span>
+                    <span className="text-xs font-bold text-blue-600">{formatAmount(managementFeeInfo.totalFee || 0)}€</span>
                 </div>
 
                 {/* Αποθεματικό Ταμείο */}
-                <div className="flex items-center justify-between p-2 bg-white rounded border">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-700">{(monthlyExpenses?.expense_breakdown?.length || 0) + 2}</span>
-                        <div className="flex items-center gap-1.5">
-                            <span className="inline-flex items-center justify-center w-[18px] h-[18px] border-[1.5px] border-red-600 text-red-600 rounded-full text-[11px] font-bold flex-shrink-0">
-                              Δ
-                            </span>
-                            <p className="text-sm font-semibold text-gray-800">Αποθεματικό Ταμείο</p>
-                        </div>
+                <div className="flex items-center justify-between py-1.5 px-2 bg-white rounded border">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium text-gray-600">{(monthlyExpenses?.expense_breakdown?.length || 0) + 2}</span>
+                        <span className="text-xs font-bold text-red-600 flex-shrink-0">Δ</span>
+                        <p className="text-xs font-semibold text-gray-700">Αποθεματικό Ταμείο</p>
                     </div>
-                    <span className="text-sm font-bold text-blue-600">{formatAmount(reserveFundInfo.monthlyAmount || 0)}€</span>
+                    <span className="text-xs font-bold text-blue-600">{formatAmount(reserveFundInfo.monthlyAmount || 0)}€</span>
                 </div>
 
                 {/* Παλαιότερες οφειλές */}
-                <div className="flex items-center justify-between p-2 bg-white rounded border">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-700">{(monthlyExpenses?.expense_breakdown?.length || 0) + 3}</span>
-                        <div>
-                            <p className="text-sm font-semibold text-gray-800">Παλαιότερες οφειλές</p>
-                        </div>
+                <div className="flex items-center justify-between py-1.5 px-2 bg-white rounded border">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium text-gray-600">{(monthlyExpenses?.expense_breakdown?.length || 0) + 3}</span>
+                        <p className="text-xs font-semibold text-gray-700">Παλαιότερες οφειλές</p>
                     </div>
-                    <span className="text-sm font-bold text-blue-600">{formatAmount(getTotalPreviousBalance() || 0)}€</span>
+                    <span className="text-xs font-bold text-blue-600">{formatAmount(getTotalPreviousBalance() || 0)}€</span>
                 </div>
 
                 {/* ΣΥΝΟΛΟ */}
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded border border-blue-200">
-                    <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between py-2 px-2 bg-blue-50 rounded border border-blue-200">
+                    <div className="flex items-center gap-1.5">
                         <span className="text-sm font-bold text-blue-700">Σ</span>
-                        <div>
-                            <p className="text-sm font-bold text-blue-800">ΣΥΝΟΛΟ</p>
-                        </div>
+                        <p className="text-sm font-bold text-blue-800">ΣΥΝΟΛΟ</p>
                     </div>
-                    <span className="text-lg font-bold text-blue-700">{formatAmount(displayedExpensesTotal)}€</span>
+                    <span className="text-sm font-bold text-blue-700">{formatAmount(displayedExpensesTotal)}€</span>
                 </div>
 
                 {/* Removed redundant expense items as requested */}

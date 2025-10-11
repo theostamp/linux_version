@@ -320,8 +320,14 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                 <span style="font-weight: bold; color: #1d4ed8; font-size: 11px;">Σ</span>
                 <span style="font-weight: bold; color: #1e40af; font-size: 11px; flex: 1; margin-left: 6px;">ΣΥΝΟΛΟ</span>
                 <span style="font-weight: bold; color: #1d4ed8; font-size: 13px;">${formatAmount(
+                  // Επιμέρους δαπάνες από expense_breakdown
+                  (monthlyExpenses?.expense_breakdown?.reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0) || 0) +
+                  // Κόστος διαχείρισης
                   (managementFeeInfo.totalFee || 0) +
-                  (reserveFundInfo.monthlyAmount || 0)
+                  // Αποθεματικό
+                  (reserveFundInfo.monthlyAmount || 0) +
+                  // Παλαιότερες οφειλές
+                  (getTotalPreviousBalance() || 0)
                 )}€</span>
               </div>
             </div>
