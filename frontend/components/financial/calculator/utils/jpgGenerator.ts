@@ -216,58 +216,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                 ${managerCollectionSchedule ? `<div style="font-size: 9px; margin: 2px 0; color: #7c3aed;">${managerCollectionSchedule}</div>` : ''}
               </div>
 
-              <div style="
-                padding: 12px;
-                border-radius: 6px;
-                border: 1px solid #f97316;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-                margin-bottom: 8px;
-                background: linear-gradient(135deg, #fff7ed, #fed7aa);
-              ">
-                <div style="
-                  font-size: 10px;
-                  font-weight: bold;
-                  margin-bottom: 6px;
-                  color: #ea580c;
-                ">
-                  📅 ΛΗΞΗ ΠΛΗΡΩΜΗΣ
-                </div>
-                <div style="
-                  font-size: 11px;
-                  font-weight: 600;
-                  margin: 2px 0;
-                  color: #9a3412;
-                ">${paymentDueDate}</div>
-              </div>
-
-              <div style="
-                padding: 12px;
-                border-radius: 6px;
-                border: 1px solid #22c55e;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-                margin-bottom: 8px;
-                background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-              ">
-                <div style="
-                  font-size: 10px;
-                  font-weight: bold;
-                  margin-bottom: 6px;
-                  color: #16a34a;
-                ">
-                  💳 ΤΡΑΠΕΖΙΚΑ ΣΤΟΙΧΕΙΑ
-                </div>
-                <div style="font-size: 9px; margin: 2px 0; color: #15803d;">Εθνική Τράπεζα</div>
-                <div style="
-                  font-size: 9px;
-                  margin: 2px 0;
-                  color: #15803d;
-                  font-family: monospace;
-                  background: #f0fdf4;
-                  padding: 8px;
-                  border-radius: 4px;
-                ">IBAN: GR16 0110 1250 0000 1234 5678 901</div>
-                <div style="font-size: 9px; margin: 2px 0; color: #15803d;">Δικαιούχος: Πολυκατοικία ${buildingName}</div>
-              </div>
+              <!-- ✅ ΑΦΑΙΡΕΘΗΚΑΝ: Cards ΛΗΞΗ ΠΛΗΡΩΜΗΣ και ΤΡΑΠΕΖΙΚΑ ΣΤΟΙΧΕΙΑ για WYSIWYG -->
             </div>
 
             <!-- Middle Column -->
