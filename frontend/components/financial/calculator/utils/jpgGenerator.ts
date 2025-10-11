@@ -389,9 +389,10 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                   
                   // ✅ Υπολογισμοί χωρίς διπλές εμφανίσεις
-                  const commonAmountWithoutReserve = (aptAmount.common || 0);
-                  const ownerExpenses = apt.owner_expenses || 0;
-                  const ownerExpensesOnlyProjects = ownerExpenses - apartmentReserveFund;
+                  const commonAmount = apt.expense_share || 0;
+                  const commonAmountWithoutReserve = commonAmount - apartmentReserveFund;
+                  const ownerExpensesTotal = apt.owner_expenses || 0;
+                  const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
                   const totalAmount = commonAmountWithoutReserve + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund;
 
                   return `
