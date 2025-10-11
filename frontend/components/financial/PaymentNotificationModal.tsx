@@ -40,6 +40,7 @@ interface ExpenseBreakdown {
   expense_amount: number;
   share_amount: number;
   distribution_type: string;
+  payer_responsibility: 'owner' | 'resident' | 'shared';  // ✅ ΝΕΟ ΠΕΔΙΟ
   date: string;
   month: string;
   month_display: string;
@@ -87,6 +88,38 @@ export default function PaymentNotificationModal({
         year: 'numeric'
       });
       setPaymentDeadline(deadline);
+    }
+  }, [apartment]);
+
+  // ✅ ΝΕΟ: Επαλήθευση Συνολικών Ποσών
+  useEffect(() => {
+    if (apartment && apartment.expense_breakdown) {
+      // Υπολογισμός συνόλου από breakdown
+      const breakdownTotal = apartment.expense_breakdown.reduce(
+        (sum, expense) => sum + expense.share_amount, 
+        0
+      );
+      
+      // Σύγκριση με το expense_share από API
+      const difference = Math.abs(breakdownTotal - apartment.expense_share);
+      
+      if (difference > 0.01) {  // Tolerance για floating point
+        console.error('⚠️ ΔΙΑΦΟΡΑ ΣΤΟΙΧΕΙΩΝ:', {
+          expense_share_api: apartment.expense_share,
+          breakdown_total: breakdownTotal,
+          difference: difference,
+          apartment_number: apartment.apartment_number
+        });
+        
+        // Προαιρετικά: Εμφάνιση warning στο UI (μόνο για screen, όχι print)
+        // Μπορεί να προστεθεί ένα διακριτικό badge στο μέλλον
+      } else {
+        console.log('✅ Επαλήθευση δεδομένων OK:', {
+          expense_share_api: apartment.expense_share,
+          breakdown_total: breakdownTotal,
+          apartment_number: apartment.apartment_number
+        });
+      }
     }
   }, [apartment]);
 
@@ -179,30 +212,46 @@ export default function PaymentNotificationModal({
 
           {/* Content */}
           <div className="p-6 space-y-6">
-            {/* Office Header - Print Only */}
-            <div className="hidden print:block border-b border-gray-300 pb-4 mb-6">
+            {/* Office Header - Print Only - ✅ ΑΝΑΒΑΘΜΙΣΜΕΝΟ */}
+            <div className="hidden print:block border-b-2 border-gray-400 pb-3 mb-6">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
+                {/* Αριστερά: Στοιχεία Γραφείου */}
+                <div className="flex items-center gap-3">
                   {user?.office_logo && (
                     <img
                       src={user.office_logo}
                       alt="Office Logo"
-                      className="w-16 h-16 object-contain"
+                      className="w-14 h-14 object-contain"
                     />
                   )}
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-900">
+                    <h1 className="text-lg font-bold text-gray-900">
                       {user?.office_name || 'Γραφείο Διαχείρισης'}
                     </h1>
-                    <p className="text-gray-600">{user?.office_address}</p>
-                    <p className="text-gray-600">Τηλ: {user?.office_phone}</p>
+                    <p className="text-xs text-gray-600">{user?.office_address}</p>
+                    <p className="text-xs text-gray-600">Τηλ: {user?.office_phone}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <h2 className="text-xl font-bold text-gray-900">
-                    ΕΙΔΟΠΟΙΗΤΗΡΙΟ ΠΛΗΡΩΜΗΣ ΚΟΙΝΟΧΡΗΣΤΩΝ
+                
+                {/* Κέντρο: Τίτλος & Περίοδος */}
+                <div className="text-center">
+                  <h2 className="text-xl font-bold text-gray-900 uppercase tracking-wide">
+                    ΕΙΔΟΠΟΙΗΤΗΡΙΟ ΚΟΙΝΟΧΡΗΣΤΩΝ
                   </h2>
-                  <p className="text-gray-600">Ημερομηνία: {new Date().toLocaleDateString('el-GR')}</p>
+                  <p className="text-sm text-gray-700 mt-1">
+                    {new Date().toLocaleDateString('el-GR', { 
+                      month: 'long', 
+                      year: 'numeric' 
+                    })}
+                  </p>
+                </div>
+                
+                {/* Δεξιά: Ημερομηνία Λήξης */}
+                <div className="text-right">
+                  <p className="text-xs text-gray-600 font-medium">Πληρωτέο έως:</p>
+                  <p className="text-lg font-bold text-red-600 mt-1">
+                    {paymentDeadline}
+                  </p>
                 </div>
               </div>
             </div>
@@ -245,22 +294,13 @@ export default function PaymentNotificationModal({
                 <Euro className="w-4 h-4" />
                 Πληροφορίες Πληρωμής
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <span className="text-sm text-gray-600">Ποσό Πληρωτέο:</span>
-                  <div className={`font-bold text-2xl ${
-                    apartment.net_obligation > 0 ? 'text-red-600' : 
-                    apartment.net_obligation < 0 ? 'text-green-600' : 'text-gray-900'
-                  }`}>
-                    {formatCurrency(Math.abs(apartment.net_obligation))}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-600">Ημερομηνία Λήξης Πληρωμής:</span>
-                  <div className="font-medium text-lg text-red-600 flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    {paymentDeadline}
-                  </div>
+              <div>
+                <span className="text-sm text-gray-600">Ποσό Πληρωτέο:</span>
+                <div className={`font-bold text-2xl ${
+                  apartment.net_obligation > 0 ? 'text-red-600' : 
+                  apartment.net_obligation < 0 ? 'text-green-600' : 'text-gray-900'
+                }`}>
+                  {formatCurrency(Math.abs(apartment.net_obligation))}
                 </div>
               </div>
             </div>
@@ -291,7 +331,7 @@ export default function PaymentNotificationModal({
               </div>
             </div>
 
-            {/* Expense Breakdown */}
+            {/* Expense Breakdown - ✅ ΑΝΑΔΙΑΡΘΡΩΜΕΝΟ με 3 στήλες */}
             {apartment.expense_breakdown && apartment.expense_breakdown.length > 0 && (
               <div>
                 <h3 className="font-semibold text-gray-900 mb-3">Ανάλυση Κοινοχρήστων</h3>
@@ -316,21 +356,68 @@ export default function PaymentNotificationModal({
                         <div className="bg-gray-100 px-3 py-2 border-b border-gray-200">
                           <h5 className="text-sm font-semibold text-gray-700">{group.month_display}</h5>
                         </div>
-                        <div className="space-y-1 p-2">
-                          {group.expenses.map((expense, index) => (
-                            <div key={index} className="flex justify-between text-sm py-1">
-                              <span className="text-gray-600">{expense.expense_title}</span>
-                              <span className="font-medium">{formatCurrency(expense.share_amount)}</span>
-                            </div>
-                          ))}
-                          <div className="border-t border-gray-200 pt-1 mt-1">
-                            <div className="flex justify-between text-sm font-semibold">
-                              <span className="text-gray-700">Σύνολο {group.month_display}:</span>
-                              <span className="text-blue-600">
-                                {formatCurrency(group.expenses.reduce((sum, exp) => sum + exp.share_amount, 0))}
-                              </span>
-                            </div>
-                          </div>
+                        
+                        {/* ΠΙΝΑΚΑΣ ΜΕ 3 ΣΤΗΛΕΣ */}
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-600">
+                                  Περιγραφή Δαπάνης
+                                </th>
+                                <th className="px-3 py-2 text-right text-xs font-medium text-gray-600">
+                                  Χρέωση Ενοίκου
+                                </th>
+                                <th className="px-3 py-2 text-right text-xs font-medium text-gray-600">
+                                  Χρέωση Ιδιοκτήτη
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {group.expenses.map((expense, index) => {
+                                // Λογική κατανομής ποσών
+                                const residentCharge = expense.payer_responsibility === 'owner' 
+                                  ? 0 
+                                  : expense.share_amount;
+                                const ownerCharge = expense.payer_responsibility === 'owner' 
+                                  ? expense.share_amount 
+                                  : 0;
+                                
+                                return (
+                                  <tr key={index} className="border-t border-gray-100">
+                                    <td className="px-3 py-2 text-gray-700">{expense.expense_title}</td>
+                                    <td className="px-3 py-2 text-right font-medium">
+                                      {residentCharge > 0 ? formatCurrency(residentCharge) : '-'}
+                                    </td>
+                                    <td className="px-3 py-2 text-right font-medium">
+                                      {ownerCharge > 0 ? formatCurrency(ownerCharge) : '-'}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                            <tfoot className="bg-gray-50 border-t-2 border-gray-300">
+                              <tr>
+                                <td className="px-3 py-2 text-sm font-semibold text-gray-700">
+                                  Σύνολο {group.month_display}:
+                                </td>
+                                <td className="px-3 py-2 text-right text-sm font-semibold text-blue-600">
+                                  {formatCurrency(
+                                    group.expenses.reduce((sum, exp) => 
+                                      sum + (exp.payer_responsibility === 'owner' ? 0 : exp.share_amount), 0
+                                    )
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 text-right text-sm font-semibold text-blue-600">
+                                  {formatCurrency(
+                                    group.expenses.reduce((sum, exp) => 
+                                      sum + (exp.payer_responsibility === 'owner' ? exp.share_amount : 0), 0
+                                    )
+                                  )}
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
                         </div>
                       </div>
                     ));
@@ -351,41 +438,6 @@ export default function PaymentNotificationModal({
                   <li>Στο γραφείο διαχείρισης</li>
                 </ul>
                 <p>• Για οποιαδήποτε απορία, επικοινωνήστε με το γραφείο διαχείρισης</p>
-              </div>
-            </div>
-
-            {/* Bank Account Details - Screen Only */}
-            <div className="print:hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-900 mb-3">Τραπεζικά Στοιχεία</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  {user?.office_bank_iban ? (
-                    <>
-                      <p className="text-sm text-gray-600">IBAN:</p>
-                      <p className="font-mono text-lg font-semibold text-blue-800">{user.office_bank_iban}</p>
-                      <p className="text-sm text-gray-600 mt-2">Τράπεζα:</p>
-                      <p className="font-medium">{user.office_bank_name}</p>
-                      <p className="text-sm text-gray-600 mt-2">Δικαιούχος:</p>
-                      <p className="font-medium">{user.office_bank_beneficiary || user.office_name}</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-sm text-gray-600">IBAN:</p>
-                      <p className="font-mono text-lg font-semibold text-blue-800">GR16 0110 1250 0000 1234 5678 901</p>
-                      <p className="text-sm text-gray-600 mt-2">Δικαιούχος:</p>
-                      <p className="font-medium">{user?.office_name || 'Γραφείο Διαχείρισης'}</p>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-sm text-gray-600 mb-2">Επικοινωνία</p>
-                    <div className="space-y-1">
-                      <p className="font-medium">{user?.office_phone}</p>
-                      <p className="text-sm text-gray-600">{user?.office_address}</p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
