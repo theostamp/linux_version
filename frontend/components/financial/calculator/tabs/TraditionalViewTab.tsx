@@ -199,11 +199,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
       </div>
 
       <div className="bg-white border rounded-lg overflow-hidden">
-        {/* ✅ ΑΦΑΙΡΕΘΗΚΕ: Επικεφαλίδα "ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ" για εξοικονόμηση χώρου */}
-        {/* Κρατάμε μόνο το κουμπί Έλεγχος Δεδομένων */}
-        <div className="bg-gray-50 p-2 border-b flex items-center justify-end">
-            <Button onClick={validateData} variant="outline" size="sm"><Calculator className="h-4 w-4 mr-2" />Έλεγχος Δεδομένων</Button>
-        </div>
+        {/* ✅ ΑΦΑΙΡΕΘΗΚΕ: Επικεφαλίδα "ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ" και κουμπί "Έλεγχος Δεδομένων" για μέγιστη εξοικονόμηση χώρου */}
         <ApartmentExpenseTable shares={state.shares} aptWithFinancial={aptWithFinancial} perApartmentAmounts={perApartmentAmounts} expenseBreakdown={expenseBreakdown} managementFeeInfo={managementFeeInfo} reserveFundInfo={reserveFundInfo} totalExpenses={totalExpenses} showOwnerExpenses={showOwnerExpenses} />
       </div>
 
