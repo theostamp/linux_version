@@ -289,14 +289,14 @@ class Expense(models.Model):
         'fire_alarm': 'owner',                   # Πυρασφάλεια
         'fire_extinguishers': 'resident',        # Πυροσβεστήρες (ανανέωση)
         
-        # Δαπάνες Διοικητικές & Νομικές - ΙΔΙΟΚΤΗΤΗΣ
-        'legal_fees': 'owner',
-        'notary_fees': 'owner',
-        'surveyor_fees': 'owner',
-        'architect_fees': 'owner',
-        'engineer_fees': 'owner',
-        'accounting_fees': 'owner',
-        'management_fees': 'owner',
+        # Δαπάνες Διοικητικές & Νομικές
+        'legal_fees': 'owner',                   # Δικαστικά (ιδιοκτήτης)
+        'notary_fees': 'owner',                  # Συμβολαιογραφικά (ιδιοκτήτης)
+        'surveyor_fees': 'owner',                # Εκτιμητής (ιδιοκτήτης)
+        'architect_fees': 'owner',               # Αρχιτέκτονας (ιδιοκτήτης)
+        'engineer_fees': 'owner',                # Μηχανικός (ιδιοκτήτης)
+        'accounting_fees': 'owner',              # Λογιστικά (ιδιοκτήτης)
+        'management_fees': 'resident',           # Διαχείριση πολυκατοικίας (ένοικος - τακτικά κοινόχρηστα)
         
         # Δαπάνες Ειδικών Εργασιών
         'asbestos_removal': 'owner',             # Ειδικές εργασίες
