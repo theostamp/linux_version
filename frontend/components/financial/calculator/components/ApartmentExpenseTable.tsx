@@ -78,8 +78,11 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             // Έτσι δεν το εμφανίζουμε διπλά
             const ownerExpensesOnlyProjects = ownerExpensesTotal - apartmentReserveFund;
             
+            // ✅ ΔΙΟΡΘΩΣΗ: Αφαιρούμε το αποθεματικό και από τα Κ/ΧΡΗΣΤΑ
+            const commonAmountWithoutReserve = commonAmount - apartmentReserveFund;
+            
             // ✅ ΤΡΟΠΟΠΟΙΗΣΗ: ΠΛΗΡΩΤΕΟ ΠΟΣΟ χωρίς αποθεματικό (το αποθεματικό είναι στις δαπάνες ιδιοκτητών)
-            const finalTotalWithFees = commonAmount + elevatorAmount + heatingAmount + managementFee + previousBalance + ownerExpensesOnlyProjects;
+            const finalTotalWithFees = commonAmountWithoutReserve + elevatorAmount + heatingAmount + managementFee + previousBalance + ownerExpensesOnlyProjects;
 
             return (
               <TableRow key={share.apartment_id}>
@@ -87,8 +90,8 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 <TableCell>{share.owner_name || 'Μη καταχωρημένος'}</TableCell>
                 <TableCell>{formatAmount(previousBalance)}€</TableCell>
                 {/* ✅ ΑΦΑΙΡΕΘΗΚΑΝ: 3 cells για χιλιοστά */}
-                {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ: Κ/ΧΡΗΣΤΑ χωρίς αποθεματικό */}
-                <TableCell>{formatAmount(commonAmount)}</TableCell>
+                {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ: Κ/ΧΡΗΣΤΑ ΧΩΡΙΣ αποθεματικό */}
+                <TableCell>{formatAmount(commonAmount - apartmentReserveFund)}</TableCell>
                 <TableCell>{formatAmount(elevatorAmount)}</TableCell>
                 <TableCell>{formatAmount(heatingAmount)}</TableCell>
                 <TableCell>{formatAmount(managementFee)}</TableCell>
@@ -104,12 +107,15 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             <TableCell colSpan={2}>ΣΥΝΟΛΑ</TableCell>
             <TableCell>{formatAmount(sharesArray.reduce((s, a) => s + Math.abs(aptWithFinancial.find(apt => apt.id === a.apartment_id)?.previous_balance ?? 0), 0))}€</TableCell>
             {/* ✅ ΑΦΑΙΡΕΘΗΚΑΝ: 3 cells χιλιοστών */}
-            {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ - Κ/ΧΡΗΣΤΑ χωρίς αποθεματικό */}
+            {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ - Κ/ΧΡΗΣΤΑ ΧΩΡΙΣ αποθεματικό */}
             <TableCell>{formatAmount(
               sharesArray.reduce((sum, share) => {
                 const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
+                const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
                 const commonAmount = toNumber(apartmentData?.expense_share || 0);
-                return sum + commonAmount;
+                const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0 && Object.values(expenseBreakdown).some(v => v > 0)) ? toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000) : 0;
+                // ✅ ΔΙΟΡΘΩΣΗ: Αφαιρούμε το αποθεματικό από τα Κ/ΧΡΗΣΤΑ
+                return sum + (commonAmount - apartmentReserveFund);
               }, 0)
             )}</TableCell>
             <TableCell>{formatAmount(
@@ -151,9 +157,10 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 const previousBalance = Math.abs(apartmentData?.previous_balance ?? 0);
                 const ownerExpensesTotal = toNumber(apartmentData?.owner_expenses || 0);
                 const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0 && Object.values(expenseBreakdown).some(v => v > 0)) ? toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000) : 0;
-                // ✅ ΔΙΟΡΘΩΣΗ: Χρησιμοποιούμε owner expenses χωρίς αποθεματικό
+                // ✅ ΔΙΟΡΘΩΣΗ: Αφαιρούμε αποθεματικό από commonAmount ΚΑΙ ownerExpenses
+                const commonAmountWithoutReserve = commonAmount - apartmentReserveFund;
                 const ownerExpensesOnlyProjects = ownerExpensesTotal - apartmentReserveFund;
-                return sum + commonAmount + elevatorAmount + heatingAmount + managementFee + previousBalance + ownerExpensesOnlyProjects;
+                return sum + commonAmountWithoutReserve + elevatorAmount + heatingAmount + managementFee + previousBalance + ownerExpensesOnlyProjects;
               }, 0)
             )}€</TableCell>
           </TableRow>
