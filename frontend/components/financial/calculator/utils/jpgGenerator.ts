@@ -410,19 +410,26 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
               font-size: 10px;
             ">
               <thead>
+                <!-- Κύρια Headers -->
                 <tr style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">
-                  <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb;">Α/Δ</th>
-                  <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb;">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</th>
-                  <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb;">ΟΦΕΙΛΕΣ</th>
-                  <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb;">Κ/ΧΡΗΣΤΑ</th>
-                  <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb;">ΑΝΕΛ/ΡΑΣ</th>
-                  <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb;">ΘΕΡΜ/ΣΗ</th>
-                  <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb;">Κ/ΧΡΗΣΤΑ</th>
-                  <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb;">ΑΝΕΛ/ΡΑΣ</th>
-                  <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb;">ΘΕΡΜ/ΣΗ</th>
-                  <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb;">ΔΙΑΧΕΙΡΙΣΗ</th>
-                  <th style="background: linear-gradient(135deg, #7e22ce 0%, #6d28d9 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb;">ΑΠΟΘΕΜΑΤΙΚΟ</th>
-                  <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb;">ΠΛΗΡΩΤΕΟ ΠΟΣΟ</th>
+                  <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb; font-size: 10px; font-weight: bold;">Α/Δ</th>
+                  <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb; font-size: 10px; font-weight: bold;">ΟΝΟΜΑΤΕΠΩΝΥΜΟ</th>
+                  <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb; font-size: 10px; font-weight: bold;">ΑΠΟ ΜΕΤΑΦΟΡΑ</th>
+                  <th colspan="3" style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb; font-size: 10px; font-weight: bold;">ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ</th>
+                  <th colspan="2" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb; font-size: 10px; font-weight: bold;">ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ</th>
+                  <th style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 6px 4px; text-align: center; border: 1px solid #e5e7eb; font-size: 10px; font-weight: bold;">ΠΛΗΡΩΤΕΟ ΠΟΣΟ</th>
+                </tr>
+                <!-- Υπο-Headers -->
+                <tr style="background: #f3f4f6;">
+                  <th style="padding: 4px 3px; border: 1px solid #e5e7eb;"></th>
+                  <th style="padding: 4px 3px; border: 1px solid #e5e7eb;"></th>
+                  <th style="padding: 4px 3px; border: 1px solid #e5e7eb;"></th>
+                  <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: white; padding: 4px 3px; text-align: center; border: 1px solid #e5e7eb; font-size: 9px;">Κ/ΧΡΗΣΤΑ</th>
+                  <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: white; padding: 4px 3px; text-align: center; border: 1px solid #e5e7eb; font-size: 9px;">ΑΝΕΛ/ΡΑΣ</th>
+                  <th style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: white; padding: 4px 3px; text-align: center; border: 1px solid #e5e7eb; font-size: 9px;">ΘΕΡΜ/ΣΗ</th>
+                  <th style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 4px 3px; text-align: center; border: 1px solid #e5e7eb; font-size: 9px;">ΕΡΓΑ</th>
+                  <th style="background: #048C63; color: white; padding: 4px 3px; text-align: center; border: 1px solid #e5e7eb; font-size: 9px;">ΑΠΟΘΕΜΑΤΙΚΟ</th>
+                  <th style="padding: 4px 3px; border: 1px solid #e5e7eb;"></th>
                 </tr>
               </thead>
               <tbody>
@@ -430,46 +437,48 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   const aptAmount = perApartmentAmounts[apt.id] || {};
                   const previousBalance = Math.abs(apt.previous_balance || 0);
                   const commonMills = apt.participation_mills || 0;
-                  const elevatorMills = apt.participation_mills || 0;
-                  const heatingMills = apt.heating_mills || apt.participation_mills || 0;
                   const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
-                  const totalAmount = (aptAmount.common || 0) + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + (managementFeeInfo.feePerApartment || 0) + apartmentReserveFund + previousBalance;
+                  
+                  // ✅ Υπολογισμοί χωρίς διπλές εμφανίσεις
+                  const commonAmountWithoutReserve = (aptAmount.common || 0);
+                  const ownerExpenses = apt.owner_expenses || 0;
+                  const ownerExpensesOnlyProjects = ownerExpenses - apartmentReserveFund;
+                  const totalAmount = commonAmountWithoutReserve + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund;
 
                   return `
                     <tr style="${index % 2 === 0 ? 'background: #f9fafb;' : 'background: white;'}">
                       <td style="padding: 4px 3px; text-align: left; border: 1px solid #e5e7eb; font-weight: bold;">${apt.apartment_number || apt.number || 'N/A'}</td>
                       <td style="padding: 4px 3px; text-align: left; border: 1px solid #e5e7eb;">${apt.owner_name || 'Άγνωστος'}</td>
                       <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${formatAmount(previousBalance)}€</td>
-                      <td style="padding: 4px 3px; text-align: center; border: 1px solid #e5e7eb;">${Math.round(commonMills)}</td>
-                      <td style="padding: 4px 3px; text-align: center; border: 1px solid #e5e7eb;">${Math.round(elevatorMills)}</td>
-                      <td style="padding: 4px 3px; text-align: center; border: 1px solid #e5e7eb;">${Math.round(heatingMills)}</td>
-                      <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${formatAmount((aptAmount.common || 0) + apartmentReserveFund)}€</td>
+                      <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${formatAmount(commonAmountWithoutReserve)}€</td>
                       <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${formatAmount(aptAmount.elevator || 0)}€</td>
                       <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${formatAmount(aptAmount.heating || 0)}€</td>
-                      <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${formatAmount(managementFeeInfo.feePerApartment || 0)}€</td>
-                      <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${formatAmount(apartmentReserveFund)}€</td>
-                      <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold; color: #2563eb;">${formatAmount(totalAmount)}€</td>
+                      <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: 600;">${ownerExpensesOnlyProjects > 0 ? formatAmount(ownerExpensesOnlyProjects) + '€' : '-'}</td>
+                      <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb;">${apartmentReserveFund > 0 ? formatAmount(apartmentReserveFund) + '€' : '-'}</td>
+                      <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(totalAmount)}€</td>
                     </tr>
                   `;
-                }).join('') : '<tr><td colspan="12" style="text-align: center; padding: 20px; color: #666;">Δεν υπάρχουν δεδομένα διαμερισμάτων</td></tr>'}
+                }).join('') : '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #666;">Δεν υπάρχουν δεδομένα διαμερισμάτων</td></tr>'}
 
                 <!-- Totals Row -->
                 <tr style="background: #f3f4f6; font-weight: bold;">
                   <td colspan="2" style="padding: 4px 3px; text-align: left; border: 1px solid #e5e7eb; font-weight: bold;">ΣΥΝΟΛΑ</td>
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => sum + Math.abs(apt.previous_balance || 0), 0))}€</td>
-                  <td style="padding: 4px 3px; text-align: center; border: 1px solid #e5e7eb; font-weight: bold;">${Math.round(aptWithFinancial.reduce((sum, apt) => sum + (apt.participation_mills || 0), 0))}</td>
-                  <td style="padding: 4px 3px; text-align: center; border: 1px solid #e5e7eb; font-weight: bold;">${Math.round(aptWithFinancial.reduce((sum, apt) => sum + (apt.participation_mills || 0), 0))}</td>
-                  <td style="padding: 4px 3px; text-align: center; border: 1px solid #e5e7eb; font-weight: bold;">${Math.round(aptWithFinancial.reduce((sum, apt) => sum + (apt.heating_mills || apt.participation_mills || 0), 0))}</td>
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => {
                     const aptAmount = perApartmentAmounts[apt.id] || {};
-                    const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * ((apt.participation_mills || 0) / 1000)) : 0;
-                    return sum + (aptAmount.common || 0) + apartmentReserveFund;
+                    return sum + (aptAmount.common || 0);
                   }, 0))}€</td>
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(expenseBreakdown.elevator || 0)}€</td>
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(expenseBreakdown.heating || 0)}€</td>
-                  <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(managementFeeInfo.totalFee || 0)}€</td>
+                  <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => {
+                    const commonMills = apt.participation_mills || 0;
+                    const ownerExpenses = apt.owner_expenses || 0;
+                    const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
+                    const ownerExpensesOnlyProjects = ownerExpenses - apartmentReserveFund;
+                    return sum + ownerExpensesOnlyProjects;
+                  }, 0))}€</td>
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(reserveFundInfo.monthlyAmount || 0)}€</td>
-                  <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold; color: #2563eb;">${formatAmount(getFinalTotalExpenses())}€</td>
+                  <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(getFinalTotalExpenses())}€</td>
                 </tr>
               </tbody>
             </table>
