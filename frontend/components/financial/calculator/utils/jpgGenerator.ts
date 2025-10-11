@@ -241,7 +241,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                 🧮 ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ
               </div>
 
-              <!-- ✅ Επιμέρους Δαπάνες από API - Σωστός υπολογισμός -->
+              <!-- ✅ Επιμέρους Δαπάνες από API - ΜΟΝΟ επιμέρους, όχι fallback -->
               ${monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0 
                 ? monthlyExpenses.expense_breakdown.map((expense: any, index: number) => `
                   <div style="
@@ -259,23 +259,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                     <span style="font-weight: bold; color: #2563eb; font-size: 11px;">${formatAmount(expense.amount)}€</span>
                   </div>
                 `).join('')
-                : `
-                  <!-- Fallback: Εμφάνιση συνολικών δαπανών αν δεν υπάρχουν επιμέρους -->
-                  <div style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 6px 8px;
-                    background: white;
-                    border: 1px solid #e5e7eb;
-                    border-radius: 3px;
-                    margin-bottom: 4px;
-                  ">
-                    <span style="font-weight: 500; color: #6b7280; font-size: 11px;">1</span>
-                    <span style="font-weight: 600; color: #374151; font-size: 11px; flex: 1; margin-left: 6px;">Λειτουργικές Δαπάνες</span>
-                    <span style="font-weight: bold; color: #2563eb; font-size: 11px;">${formatAmount(monthlyExpenses?.total_expenses_month || 0)}€</span>
-                  </div>
-                `
+                : ''
               }
 
               <div style="
@@ -336,10 +320,8 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                 <span style="font-weight: bold; color: #1d4ed8; font-size: 11px;">Σ</span>
                 <span style="font-weight: bold; color: #1e40af; font-size: 11px; flex: 1; margin-left: 6px;">ΣΥΝΟΛΟ</span>
                 <span style="font-weight: bold; color: #1d4ed8; font-size: 13px;">${formatAmount(
-                  (monthlyExpenses?.expense_breakdown?.reduce((sum: number, expense: any) => sum + expense.amount, 0) || monthlyExpenses?.total_expenses_month || 0) +
                   (managementFeeInfo.totalFee || 0) +
-                  (reserveFundInfo.monthlyAmount || 0) +
-                  (getTotalPreviousBalance() || 0)
+                  (reserveFundInfo.monthlyAmount || 0)
                 )}€</span>
               </div>
             </div>
@@ -419,8 +401,8 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   const commonMills = apt.participation_mills || 0;
                   const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                   
-                  // ✅ Σωστός υπολογισμός κοινών εξόδων (ίδιος με το modal)
-                  const commonAmountWithoutReserve = aptAmount.common || 0; // Μόνο τα κοινά χωρίς αποθεματικό
+                  // ✅ Σωστός υπολογισμός κοινών εξόδων - χωρίς διπλοχερώσεις
+                  const commonAmountWithoutReserve = aptAmount.common || 0;
                   const ownerExpensesTotal = apt.owner_expenses || 0;
                   const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
                   const totalAmount = Math.max(0, commonAmountWithoutReserve + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund);
@@ -457,9 +439,8 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => {
                     try {
                       const aptAmount = perApartmentAmounts[apt.id] || {};
-                      // ✅ Σωστός υπολογισμός: μόνο τα κοινά χωρίς αποθεματικό
-                      const commonAmountWithoutReserve = aptAmount.common || 0;
-                      return sum + commonAmountWithoutReserve;
+                      // ✅ Σωστός υπολογισμός: τα κοινά χωρίς διπλοχερώσεις
+                      return sum + (aptAmount.common || 0);
                     } catch (e) {
                       return sum;
                     }
@@ -481,7 +462,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                       const previousBalance = Math.abs(apt.previous_balance || 0);
                       const ownerExpensesTotal = apt.owner_expenses || 0;
                       const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
-                      // ✅ Σωστός υπολογισμός: κοινά χωρίς αποθεματικό
+                      // ✅ Σωστός υπολογισμός: κοινά χωρίς διπλοχερώσεις
                       const commonAmountWithoutReserve = aptAmount.common || 0;
                       const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
                       const elevatorAmount = aptAmount.elevator || 0;
