@@ -251,8 +251,12 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
   const totalExpenses = useMemo<number>(() => {
     const basic = Object.values(expenseBreakdown).reduce((s, v) => s + v, 0);
     const hasAnyExpenses = basic > 0;
-    return basic + managementFeeInfo.totalFee + (hasAnyExpenses ? reserveFundInfo.monthlyAmount : 0);
-  }, [expenseBreakdown, managementFeeInfo, reserveFundInfo]);
+    
+    // ✅ FIX: Μην προσθέσεις managementFeeInfo.totalFee αν περιλαμβάνεται ήδη στο expenseBreakdown.common
+    // Το κόστος διαχείρισης περιλαμβάνεται ήδη στο total_expenses_month από το API
+    // return basic + managementFeeInfo.totalFee + (hasAnyExpenses ? reserveFundInfo.monthlyAmount : 0);
+    return basic + (hasAnyExpenses ? reserveFundInfo.monthlyAmount : 0);
+  }, [expenseBreakdown, reserveFundInfo]);
 
   const getCategoryDisplayName = (category: string) => {
     const categoryMap: Record<string, string> = {

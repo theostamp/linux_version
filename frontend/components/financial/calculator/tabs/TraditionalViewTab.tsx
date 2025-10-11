@@ -72,8 +72,9 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
       total = monthlyExpenses.expense_breakdown.reduce((sum, expense) => sum + expense.amount, 0);
     }
 
-    // Πρόσθεσε κόστος διαχείρισης
-    total += managementFeeInfo.totalFee || 0;
+    // ✅ FIX: Μην προσθέσεις κόστος διαχείρισης εδώ - περιλαμβάνεται ήδη στα Κ/ΧΡΗΣΤΑ
+    // Το κόστος διαχείρισης υπολογίζεται στα Κ/ΧΡΗΣΤΑ μέσω του expense_share
+    // total += managementFeeInfo.totalFee || 0; // ΑΦΑΙΡΕΘΗΚΕ
 
     // Πρόσθεσε αποθεματικό
     total += reserveFundInfo.monthlyAmount || 0;
@@ -82,7 +83,7 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
     total += getTotalPreviousBalance() || 0;
 
     return total;
-  }, [monthlyExpenses, managementFeeInfo.totalFee, reserveFundInfo.monthlyAmount, getTotalPreviousBalance]);
+  }, [monthlyExpenses, reserveFundInfo.monthlyAmount, getTotalPreviousBalance]);
 
   const showOwnerExpenses = (expenseBreakdown.other || 0) + (expenseBreakdown.coownership || 0) > 0;
 
