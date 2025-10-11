@@ -128,9 +128,11 @@
 
 - [x] Backend: Επαλήθευση/Ενημέρωση endpoint για payer_responsibility (commit: 0a8f23b7)
 - [x] Frontend: Ενημέρωση types (ExpenseBreakdownItem) (commit: 0a8f23b7)
-- [ ] ApartmentExpenseTable: Υλοποίηση λογικής διαχωρισμού δαπανών (σε εξέλιξη)
-- [ ] PDF/JPG Generator: Νέο header layout
-- [ ] ResultsStep: Νέο header layout για screen view
+- [x] CommonExpenseModal: Νέο print header σε οριζόντια διάταξη (commit: 2dc3dd3a)
+- [x] TraditionalViewTab: Απόκρυψη Τραπεζικών Στοιχείων από screen (commit: 2dc3dd3a)
+- [ ] ApartmentExpenseTable: Υλοποίηση λογικής διαχωρισμού δαπανών (σύνθετο - απαιτεί ανάλυση)
+- [ ] PDF/JPG Generator: Νέο header layout (προαιρετικό)
+- [ ] ResultsStep: Νέο header layout (προαιρετικό)
 - [ ] Testing: Επαλήθευση υπολογισμών και εκτύπωσης
 
 ---
@@ -143,6 +145,15 @@
 
 2. **Frontend Types (useMonthlyExpenses.ts):**
    - ✅ Το `ExpenseBreakdownItem` interface περιλαμβάνει `payer_responsibility`
+
+3. **CommonExpenseModal UI (commit: 2dc3dd3a):**
+   - ✅ Νέο print-only header σε οριζόντια διάταξη
+   - ✅ 3 τμήματα: Γραφείο | Τίτλος/Περίοδος | Ημερομηνία Λήξης
+   - ✅ Uppercase styling με tracking-wide
+   - ✅ Tabs navigation κρυμμένα στην εκτύπωση
+
+4. **TraditionalViewTab (commit: 2dc3dd3a):**
+   - ✅ Τραπεζικά Στοιχεία εμφανίζονται μόνο στην εκτύπωση (hidden print:block)
 
 ## ⏳ Σε Εξέλιξη
 
