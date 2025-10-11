@@ -217,9 +217,60 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
             </div>
         </div>
 
+        {/* ✅ ΝΕΟ: Print-Only Header - Οριζόντια Διάταξη */}
+        <div className="hidden print:block border-b-2 border-gray-400 pb-3 mb-6 px-6 pt-6">
+          <div className="flex items-center justify-between">
+            {/* Αριστερά: Στοιχεία Γραφείου */}
+            <div className="flex items-center gap-3">
+              {managementOfficeLogo && (
+                <img
+                  src={managementOfficeLogo.startsWith('http') ? managementOfficeLogo : `${API_BASE_URL}${managementOfficeLogo.startsWith('/') ? managementOfficeLogo : `/${managementOfficeLogo}`}`}
+                  alt="Office Logo"
+                  className="w-14 h-14 object-contain"
+                />
+              )}
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">
+                  {managementOfficeName || 'Γραφείο Διαχείρισης'}
+                </h1>
+                {managementOfficeAddress && (
+                  <p className="text-xs text-gray-600">{managementOfficeAddress}</p>
+                )}
+                {managementOfficePhone && (
+                  <p className="text-xs text-gray-600">Τηλ: {managementOfficePhone}</p>
+                )}
+              </div>
+            </div>
+            
+            {/* Κέντρο: Τίτλος & Περίοδος */}
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-gray-900 uppercase tracking-wide">
+                ΦΥΛΛΟ ΚΟΙΝΟΧΡΗΣΤΩΝ
+              </h2>
+              <p className="text-sm text-gray-700 mt-1">
+                {expenseSheetMonth ? new Date(expenseSheetMonth + '-01').toLocaleDateString('el-GR', { 
+                  month: 'long', 
+                  year: 'numeric' 
+                }) : getPeriodInfo(state)}
+              </p>
+            </div>
+            
+            {/* Δεξιά: Ημερομηνία Λήξης */}
+            <div className="text-right">
+              <p className="text-xs text-gray-600 font-medium">Πληρωτέο έως:</p>
+              <p className="text-lg font-bold text-red-600 mt-1">
+                10/{(() => {
+                  const date = new Date(expenseSheetMonth + '-01');
+                  return String(date.getMonth() + 2).padStart(2, '0');
+                })()}/{new Date(expenseSheetMonth + '-01').getFullYear()}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="p-6">
           <Tabs defaultValue="traditional" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-4 print:hidden">
               <TabsTrigger value="traditional"><Receipt className="h-4 w-4 mr-2" />Παραδοσιακή Προβολή</TabsTrigger>
               <TabsTrigger value="analysis"><PieChart className="h-4 w-4 mr-2" />Ανάλυση Δαπανών</TabsTrigger>
               <TabsTrigger value="statistics"><BarChart className="h-4 w-4 mr-2" />Στατιστικά</TabsTrigger>

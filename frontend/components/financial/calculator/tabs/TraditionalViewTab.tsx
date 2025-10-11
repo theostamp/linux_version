@@ -106,7 +106,8 @@ export const TraditionalViewTab: React.FC<TraditionalViewTabProps> = (props) => 
                 <div className="flex items-center gap-2 mb-2"><Calendar className="h-4 w-4 text-orange-700" /><h3 className="font-bold text-orange-800 text-sm">ΛΗΞΗ ΠΛΗΡΩΜΗΣ</h3></div>
                 <p className="text-sm font-semibold text-orange-900">{getPaymentDueDate(state)}</p>
             </div>
-            <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200 shadow-sm">
+            {/* ✅ ΑΛΛΑΓΗ: Τραπεζικά Στοιχεία - Μόνο για Εκτύπωση */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200 shadow-sm hidden print:block">
                 <div className="flex items-center gap-2 mb-2"><CreditCard className="h-4 w-4 text-green-700" /><h3 className="font-bold text-green-800 text-sm">ΤΡΑΠΕΖΙΚΑ ΣΤΟΙΧΕΙΑ</h3></div>
                 <p className="text-xs text-green-700">Εθνική Τράπεζα</p>
                 <p className="text-xs text-green-700 font-mono bg-green-50 p-2 rounded border">IBAN: GR16 0110 1250 0000 1234 5678 901</p>
