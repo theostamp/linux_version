@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 /**
@@ -12,10 +12,16 @@ export default function NavigationLoader() {
   const [loading, setLoading] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Όταν αλλάζει το pathname ή τα search params, σταμάτα το loading
     setLoading(false);
+    // Καθάρισε οποιοδήποτε timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
   }, [pathname, searchParams]);
 
   useEffect(() => {
@@ -24,6 +30,14 @@ export default function NavigationLoader() {
       const target = e.target as HTMLElement;
       const link = target.closest('a');
       
+      // ✅ FIX: Αγνόησε clicks σε buttons ή elements μέσα σε modal/dialog
+      const isInsideModal = target.closest('[role="dialog"]') || target.closest('.modal');
+      const isButton = target.closest('button');
+      
+      if (isInsideModal || isButton) {
+        return; // Μην ενεργοποιήσεις το loading για modal/button clicks
+      }
+      
       if (link && link.href && link.target !== '_blank') {
         const url = new URL(link.href);
         const currentUrl = new URL(window.location.href);
@@ -31,6 +45,16 @@ export default function NavigationLoader() {
         // Μόνο αν πηγαίνουμε σε διαφορετική σελίδα
         if (url.pathname !== currentUrl.pathname || url.search !== currentUrl.search) {
           setLoading(true);
+          
+          // ✅ FIX: Auto-clear μετά από 10 δευτερόλεπτα για ασφάλεια
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
+          timeoutRef.current = setTimeout(() => {
+            console.warn('NavigationLoader: Auto-clearing loading state after timeout');
+            setLoading(false);
+            timeoutRef.current = null;
+          }, 10000); // 10 seconds timeout
         }
       }
     };
@@ -38,6 +62,16 @@ export default function NavigationLoader() {
     // Listen for browser back/forward
     const handlePopState = () => {
       setLoading(true);
+      
+      // ✅ FIX: Auto-clear για popstate επίσης
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        console.warn('NavigationLoader: Auto-clearing loading state after popstate timeout');
+        setLoading(false);
+        timeoutRef.current = null;
+      }, 10000);
     };
 
     document.addEventListener('click', handleLinkClick);
@@ -46,6 +80,10 @@ export default function NavigationLoader() {
     return () => {
       document.removeEventListener('click', handleLinkClick);
       window.removeEventListener('popstate', handlePopState);
+      // Καθάρισε το timeout όταν το component unmount
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, []);
 
