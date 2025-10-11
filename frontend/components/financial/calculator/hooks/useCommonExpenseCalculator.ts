@@ -393,6 +393,8 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
         totalExpenses,
         getFinalTotalExpenses,
         getTotalPreviousBalance,
+        monthlyExpenses, // ✅ ΝΕΟ: Περνάμε τα επιμέρους δεδομένα δαπανών
+        buildingId, // ✅ ΝΕΟ: Περνάμε το buildingId
     };
 
     if (format === 'pdf') {
@@ -402,7 +404,7 @@ export const useCommonExpenseCalculator = (props: CommonExpenseModalProps) => {
     } else if (format === 'jpg') {
       await exportToJPG(commonParams);
     }
-  }, [state, props, expenseBreakdown, reserveFundInfo, managementFeeInfo, perApartmentAmounts, aptWithFinancial, totalExpenses, getFinalTotalExpenses, getTotalPreviousBalance, getGroupedExpenses]);
+  }, [state, props, expenseBreakdown, reserveFundInfo, managementFeeInfo, perApartmentAmounts, aptWithFinancial, totalExpenses, getFinalTotalExpenses, getTotalPreviousBalance, getGroupedExpenses, monthlyExpenses, buildingId]);
 
   const validateData = useCallback(() => {
     const allTotalsMatch = true;

@@ -38,6 +38,8 @@ interface PdfGeneratorParams {
   totalExpenses: number;
   getFinalTotalExpenses: () => number;
   getTotalPreviousBalance: () => number;
+  monthlyExpenses?: any; // ✅ ΝΕΟ: Για τις επιμέρους δαπάνες
+  buildingId?: number; // ✅ ΝΕΟ: Για να φέρνουμε τα δεδομένα
 }
 
 export const exportToPDF = async (params: PdfGeneratorParams) => {
@@ -63,7 +65,9 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
     aptWithFinancial,
     totalExpenses,
     getFinalTotalExpenses,
-    getTotalPreviousBalance
+    getTotalPreviousBalance,
+    monthlyExpenses,
+    buildingId
   } = params;
 
   if (typeof window === 'undefined') {
@@ -397,16 +401,22 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                   🧮 ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ
                 </div>
 
-                <div class="expense-item">
-                  <span class="number">1</span>
-                  <div>
-                    <span class="label">Λειτουργικές Δαπάνες</span>
-                  </div>
-                  <span class="amount">${formatAmount(expenseBreakdown.common || 0)}€</span>
-                </div>
+                <!-- ✅ Επιμέρους Δαπάνες από API (αντί για συγκεντρωτικές "Λειτουργικές Δαπάνες") -->
+                ${monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0 
+                  ? monthlyExpenses.expense_breakdown.map((expense: any, index: number) => `
+                    <div class="expense-item">
+                      <span class="number">${index + 1}</span>
+                      <div>
+                        <span class="label">${expense.category_display}</span>
+                      </div>
+                      <span class="amount">${formatAmount(expense.amount)}€</span>
+                    </div>
+                  `).join('')
+                  : ''
+                }
 
                 <div class="expense-item">
-                  <span class="number">2</span>
+                  <span class="number">${(monthlyExpenses?.expense_breakdown?.length || 0) + 1}</span>
                   <div>
                     <span class="label">Κόστος διαχείρισης</span>
                   </div>
@@ -414,7 +424,7 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                 </div>
 
                 <div class="expense-item">
-                  <span class="number">3</span>
+                  <span class="number">${(monthlyExpenses?.expense_breakdown?.length || 0) + 2}</span>
                   <div>
                     <span class="label">Αποθεματικό Ταμείο</span>
                   </div>
@@ -422,7 +432,7 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                 </div>
 
                 <div class="expense-item">
-                  <span class="number">4</span>
+                  <span class="number">${(monthlyExpenses?.expense_breakdown?.length || 0) + 3}</span>
                   <div>
                     <span class="label">Παλαιότερες οφειλές</span>
                   </div>

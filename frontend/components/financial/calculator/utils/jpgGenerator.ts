@@ -38,6 +38,8 @@ interface JpgGeneratorParams {
   totalExpenses: number;
   getFinalTotalExpenses: () => number;
   getTotalPreviousBalance: () => number;
+  monthlyExpenses?: any; // ✅ ΝΕΟ: Για τις επιμέρους δαπάνες
+  buildingId?: number; // ✅ ΝΕΟ: Για να φέρνουμε τα δεδομένα
 }
 
 export const exportToJPG = async (params: JpgGeneratorParams) => {
@@ -64,7 +66,9 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
     aptWithFinancial,
     totalExpenses,
     getFinalTotalExpenses,
-    getTotalPreviousBalance
+    getTotalPreviousBalance,
+    monthlyExpenses,
+    buildingId
   } = params;
 
   if (typeof window === 'undefined') {
@@ -237,20 +241,26 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                 🧮 ΑΝΑΛΥΣΗ ΔΑΠΑΝΩΝ ΠΟΛΥΚΑΤΟΙΚΙΑΣ
               </div>
 
-              <div style="
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 6px 8px;
-                background: white;
-                border: 1px solid #e5e7eb;
-                border-radius: 3px;
-                margin-bottom: 4px;
-              ">
-                <span style="font-weight: 500; color: #6b7280; font-size: 11px;">1</span>
-                <span style="font-weight: 600; color: #374151; font-size: 11px; flex: 1; margin-left: 6px;">Λειτουργικές Δαπάνες</span>
-                <span style="font-weight: bold; color: #2563eb; font-size: 11px;">${formatAmount(expenseBreakdown.common || 0)}€</span>
-              </div>
+              <!-- ✅ Επιμέρους Δαπάνες από API (αντί για συγκεντρωτικές "Λειτουργικές Δαπάνες") -->
+              ${monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0 
+                ? monthlyExpenses.expense_breakdown.map((expense: any, index: number) => `
+                  <div style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 6px 8px;
+                    background: white;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 3px;
+                    margin-bottom: 4px;
+                  ">
+                    <span style="font-weight: 500; color: #6b7280; font-size: 11px;">${index + 1}</span>
+                    <span style="font-weight: 600; color: #374151; font-size: 11px; flex: 1; margin-left: 6px;">${expense.category_display}</span>
+                    <span style="font-weight: bold; color: #2563eb; font-size: 11px;">${formatAmount(expense.amount)}€</span>
+                  </div>
+                `).join('')
+                : ''
+              }
 
               <div style="
                 display: flex;
@@ -262,7 +272,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                 border-radius: 3px;
                 margin-bottom: 4px;
               ">
-                <span style="font-weight: 500; color: #6b7280; font-size: 11px;">2</span>
+                <span style="font-weight: 500; color: #6b7280; font-size: 11px;">${(monthlyExpenses?.expense_breakdown?.length || 0) + 1}</span>
                 <span style="font-weight: 600; color: #374151; font-size: 11px; flex: 1; margin-left: 6px;">Κόστος διαχείρισης</span>
                 <span style="font-weight: bold; color: #2563eb; font-size: 11px;">${formatAmount(managementFeeInfo.totalFee || 0)}€</span>
               </div>
@@ -277,7 +287,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                 border-radius: 3px;
                 margin-bottom: 4px;
               ">
-                <span style="font-weight: 500; color: #6b7280; font-size: 11px;">3</span>
+                <span style="font-weight: 500; color: #6b7280; font-size: 11px;">${(monthlyExpenses?.expense_breakdown?.length || 0) + 2}</span>
                 <span style="font-weight: 600; color: #374151; font-size: 11px; flex: 1; margin-left: 6px;">Αποθεματικό Ταμείο</span>
                 <span style="font-weight: bold; color: #2563eb; font-size: 11px;">${formatAmount(reserveFundInfo.monthlyAmount || 0)}€</span>
               </div>
@@ -292,7 +302,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                 border-radius: 3px;
                 margin-bottom: 4px;
               ">
-                <span style="font-weight: 500; color: #6b7280; font-size: 11px;">4</span>
+                <span style="font-weight: 500; color: #6b7280; font-size: 11px;">${(monthlyExpenses?.expense_breakdown?.length || 0) + 3}</span>
                 <span style="font-weight: 600; color: #374151; font-size: 11px; flex: 1; margin-left: 6px;">Παλαιότερες οφειλές</span>
                 <span style="font-weight: bold; color: #2563eb; font-size: 11px;">${formatAmount(getTotalPreviousBalance() || 0)}€</span>
               </div>
@@ -427,7 +437,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => sum + Math.abs(apt.previous_balance || 0), 0))}€</td>
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => {
                     try {
-                      const aptAmount = perApartmentAmounts[apt.id] || {};
+                    const aptAmount = perApartmentAmounts[apt.id] || {};
                       const commonMills = apt.participation_mills || 0;
                       const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                       const commonAmount = (aptAmount.common || 0) + apartmentReserveFund;

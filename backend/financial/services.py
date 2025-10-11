@@ -1154,66 +1154,6 @@ class FinancialDashboardService:
             total_payments_apartment = apartment_payments.aggregate(
                 total=Sum('amount'))['total'] or Decimal('0.00')
 
-            # ✅ ΝΕΟ: Συλλογή expense_breakdown και payment_breakdown για PaymentNotificationModal
-            expense_breakdown = []
-            payment_breakdown = []
-            
-            if month and end_date:
-                # Για snapshot view, δαπάνες μέχρι το τέλος του μήνα
-                expenses_query = Expense.objects.filter(
-                    building_id=apartment.building_id,
-                    date__lt=end_date
-                ).order_by('date')
-                
-                payments_query = apartment.payments.filter(
-                    date__lt=end_date
-                ).order_by('date')
-            else:
-                # Για current view, όλες οι δαπάνες
-                expenses_query = Expense.objects.filter(
-                    building_id=apartment.building_id
-                ).order_by('date')
-                
-                payments_query = apartment.payments.all().order_by('date')
-            
-            # Υπολογισμός expense_breakdown
-            for expense in expenses_query:
-                # Υπολογισμός share_amount ανά distribution type
-                if expense.category == 'management_fees':
-                    share_amount = expense.amount / apartment_count
-                else:
-                    share_amount = (Decimal(apartment.participation_mills) / 
-                                   Decimal(total_mills) * expense.amount)
-                
-                expense_breakdown.append({
-                    'expense_id': expense.id,
-                    'expense_title': expense.title,
-                    'expense_amount': float(expense.amount),
-                    'share_amount': float(share_amount),
-                    'distribution_type': expense.distribution_type,
-                    'payer_responsibility': expense.payer_responsibility,  # ✅ ΝΕΟ ΠΕΔΙΟ
-                    'date': expense.date.isoformat(),
-                    'month': expense.date.strftime('%Y-%m'),
-                    'month_display': expense.date.strftime('%B %Y'),
-                    'mills': apartment.participation_mills or 0,
-                    'total_mills': total_mills
-                })
-            
-            # Υπολογισμός payment_breakdown
-            for payment in payments_query:
-                payment_breakdown.append({
-                    'id': payment.id,
-                    'amount': float(payment.amount),
-                    'date': payment.date.isoformat(),
-                    'method': payment.method,
-                    'method_display': payment.get_method_display(),
-                    'payment_type': payment.payment_type,
-                    'payment_type_display': payment.get_payment_type_display(),
-                    'reference_number': payment.reference_number,
-                    'notes': payment.notes,
-                    'payer_name': payment.payer_name or 'Άγνωστος'
-                })
-
             balances.append({
                 'id': apartment.id,
                 'apartment_id': apartment.id,
@@ -1232,10 +1172,7 @@ class FinancialDashboardService:
                 'participation_mills': apartment.participation_mills or 0,
                 'status': status,
                 'last_payment_date': last_payment.date if last_payment else None,
-                'last_payment_amount': last_payment.amount if last_payment else None,
-                # ✅ ΝΕΑ FIELDS: Αναλυτικά breakdowns για PaymentNotificationModal
-                'expense_breakdown': expense_breakdown,
-                'payment_breakdown': payment_breakdown,
+                'last_payment_amount': last_payment.amount if last_payment else None
             })
         
         return balances
@@ -1337,14 +1274,13 @@ class FinancialDashboardService:
 
         # Φιλτράρισμα δαπανών για τον συγκεκριμένο μήνα
         # Εξαιρούμε management_fees και reserve_fund γιατί αυτές εμφανίζονται ξεχωριστά
-        # ✅ ΑΛΛΑΓΗ: Group by category ΚΑΙ payer_responsibility για να κρατήσουμε τη διάκριση
         expenses = Expense.objects.filter(
             building_id=self.building_id,
             date__gte=start_date,
             date__lt=end_date
         ).exclude(
             category__in=['management_fees', 'reserve_fund']
-        ).values('category', 'payer_responsibility').annotate(
+        ).values('category').annotate(
             total_amount=Sum('amount')
         ).order_by('-total_amount')
 
@@ -1358,8 +1294,7 @@ class FinancialDashboardService:
             breakdown.append({
                 'category': category,
                 'category_display': category_display,
-                'amount': float(expense['total_amount']),
-                'payer_responsibility': expense['payer_responsibility']  # ✅ ΝΕΟ ΠΕΔΙΟ
+                'amount': float(expense['total_amount'])
             })
 
         return breakdown

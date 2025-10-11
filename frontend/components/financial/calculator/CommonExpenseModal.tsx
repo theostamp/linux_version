@@ -163,24 +163,24 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
             <div className="flex items-center justify-between mb-3">
                 {/* Αριστερά: Logo + Γραφείο */}
                 <div className="flex items-center gap-3">
-                    {managementOfficeLogo && (
+                {managementOfficeLogo && (
                       <div className="w-12 h-12 rounded-lg flex items-center justify-center shadow-md overflow-hidden bg-white border-2 border-blue-200">
-                        <img 
-                          src={managementOfficeLogo.startsWith('http') ? managementOfficeLogo : `${API_BASE_URL}${managementOfficeLogo.startsWith('/') ? managementOfficeLogo : `/${managementOfficeLogo}`}`}
-                          alt="Office Logo" 
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    )}
-                    <div>
+                    <img 
+                      src={managementOfficeLogo.startsWith('http') ? managementOfficeLogo : `${API_BASE_URL}${managementOfficeLogo.startsWith('/') ? managementOfficeLogo : `/${managementOfficeLogo}`}`}
+                      alt="Office Logo" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                )}
+                <div>
                       <h2 className="text-base font-bold text-blue-900">
-                        {managementOfficeName || 'Γραφείο Διαχείρισης'}
-                      </h2>
+                    {managementOfficeName || 'Γραφείο Διαχείρισης'}
+                  </h2>
                       <div className="flex gap-3 text-xs text-blue-700">
-                        {managementOfficePhone && (
+                  {managementOfficePhone && (
                           <span>📞 {managementOfficePhone}</span>
-                        )}
-                        {managementOfficeAddress && (
+                  )}
+                  {managementOfficeAddress && (
                           <span>📍 {managementOfficeAddress}</span>
                         )}
                       </div>
@@ -200,20 +200,20 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                 
                 {/* Δεξιά: Μήνας + Εξαγωγή + Close */}
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-blue-600" />
-                        <Select value={expenseSheetMonth} onValueChange={setExpenseSheetMonth}>
+                            <Select value={expenseSheetMonth} onValueChange={setExpenseSheetMonth}>
                             <SelectTrigger className="w-36 h-8 text-xs">
-                                <SelectValue placeholder="Επιλέξτε μήνα" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {monthOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                                    <SelectValue placeholder="Επιλέξτε μήνα" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {monthOptions.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                     </div>
                     {/* ✅ ΝΕΟ: Κουμπί Εξαγωγής JPG */}
                     <Button 
@@ -236,12 +236,12 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                 <span className="text-xs font-medium text-blue-700">Πληρωτέο έως:</span>
                 <span className="text-sm font-bold text-red-600">
                     10/{(() => {
-                        const date = new Date(expenseSheetMonth + '-01');
-                        return String(date.getMonth() + 2).padStart(2, '0');
-                    })()}/{new Date(expenseSheetMonth + '-01').getFullYear()}
+                                    const date = new Date(expenseSheetMonth + '-01');
+                                    return String(date.getMonth() + 2).padStart(2, '0');
+                                })()}/{new Date(expenseSheetMonth + '-01').getFullYear()}
                 </span>
-            </div>
-        </div>
+                            </div>
+                        </div>
 
         {/* ✅ ΝΕΟ: Print-Only Header - Οριζόντια Διάταξη */}
         <div className="hidden print:block border-b-2 border-gray-400 pb-3 mb-6 px-6 pt-6">
@@ -265,8 +265,8 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                 {managementOfficePhone && (
                   <p className="text-xs text-gray-600">Τηλ: {managementOfficePhone}</p>
                 )}
-              </div>
-            </div>
+                    </div>
+                </div>
             
             {/* Κέντρο: Τίτλος & Περίοδος */}
             <div className="text-center">
@@ -291,7 +291,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                 })()}/{new Date(expenseSheetMonth + '-01').getFullYear()}
               </p>
             </div>
-          </div>
+            </div>
         </div>
 
         <div className="p-6">

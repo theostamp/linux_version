@@ -294,13 +294,13 @@ export default function PaymentNotificationModal({
                 <Euro className="w-4 h-4" />
                 Πληροφορίες Πληρωμής
               </h3>
-              <div>
-                <span className="text-sm text-gray-600">Ποσό Πληρωτέο:</span>
-                <div className={`font-bold text-2xl ${
-                  apartment.net_obligation > 0 ? 'text-red-600' : 
-                  apartment.net_obligation < 0 ? 'text-green-600' : 'text-gray-900'
-                }`}>
-                  {formatCurrency(Math.abs(apartment.net_obligation))}
+                <div>
+                  <span className="text-sm text-gray-600">Ποσό Πληρωτέο:</span>
+                  <div className={`font-bold text-2xl ${
+                    apartment.net_obligation > 0 ? 'text-red-600' : 
+                    apartment.net_obligation < 0 ? 'text-green-600' : 'text-gray-900'
+                  }`}>
+                    {formatCurrency(Math.abs(apartment.net_obligation))}
                 </div>
               </div>
             </div>
