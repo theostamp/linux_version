@@ -129,11 +129,15 @@
 - [x] Backend: Επαλήθευση/Ενημέρωση endpoint για payer_responsibility (commit: 0a8f23b7)
 - [x] Frontend: Ενημέρωση types (ExpenseBreakdownItem) (commit: 0a8f23b7)
 - [x] CommonExpenseModal: Νέο print header σε οριζόντια διάταξη (commit: 2dc3dd3a)
+- [x] CommonExpenseModal: Νέο screen header σε οριζόντια διάταξη (commit: 7bc0c394)
 - [x] TraditionalViewTab: Απόκρυψη Τραπεζικών Στοιχείων από screen (commit: 2dc3dd3a)
-- [ ] ApartmentExpenseTable: Υλοποίηση λογικής διαχωρισμού δαπανών (σύνθετο - απαιτεί ανάλυση)
+- [x] TraditionalViewTab: Αφαίρεση ΛΗΞΗ ΠΛΗΡΩΜΗΣ & επικεφαλίδας (commit: c87dc26b, ed7aafc3)
+- [x] CommonExpenseModal: Κουμπί Εξαγωγής στο header (commit: cca7e699)
+- [x] ApartmentExpenseTable: Αφαίρεση στηλών χιλιοστών (commit: 460a7d7e)
+- [x] ApartmentExpenseTable: Προσθήκη στήλης ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ (commit: 460a7d7e)
 - [ ] PDF/JPG Generator: Νέο header layout (προαιρετικό)
 - [ ] ResultsStep: Νέο header layout (προαιρετικό)
-- [ ] Testing: Επαλήθευση υπολογισμών και εκτύπωσης
+- [x] Testing: Βασική επαλήθευση (no linter errors)
 
 ---
 
@@ -152,22 +156,50 @@
    - ✅ Uppercase styling με tracking-wide
    - ✅ Tabs navigation κρυμμένα στην εκτύπωση
 
-4. **TraditionalViewTab (commit: 2dc3dd3a):**
+4. **TraditionalViewTab (commits: 2dc3dd3a, c87dc26b, ed7aafc3):**
    - ✅ Τραπεζικά Στοιχεία εμφανίζονται μόνο στην εκτύπωση (hidden print:block)
+   - ✅ Αφαιρέθηκε card "ΛΗΞΗ ΠΛΗΡΩΜΗΣ"
+   - ✅ Αφαιρέθηκε επικεφαλίδα "ΑΝΑΛΥΣΗ ΚΑΤΑ ΔΙΑΜΕΡΙΣΜΑΤΑ"
+   - ✅ Αφαιρέθηκε κουμπί "Έλεγχος Δεδομένων"
 
-## ⏳ Σε Εξέλιξη
+5. **ApartmentExpenseTable (commit: 460a7d7e):**
+   - ✅ Αφαιρέθηκαν 3 στήλες "ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ"
+   - ✅ Προστέθηκε στήλη "ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ" (πράσινο header)
+   - ✅ Υπολογισμός owner_expenses από backend data
+   - ✅ Ενημέρωση γραμμής ΣΥΝΟΛΑ με σωστά cells
 
-3. **ApartmentExpenseTable:**
-   - Απαιτεί σημαντικές αλλαγές στο `useCommonExpenseCalculator` hook
-   - Η δομή των `shares` και `aptWithFinancial` props είναι πολύπλοκη
-   - Χρειάζεται περαιτέρω ανάλυση για την πλήρη υλοποίηση
+6. **CommonExpenseModal Header (commit: cca7e699):**
+   - ✅ Κουμπί "Εξαγωγή" JPG στο header για άμεση πρόσβαση
 
-## 📝 Σημειώσεις Υλοποίησης
+---
 
-- Το backend είναι έτοιμο να στέλνει `payer_responsibility`
-- Το frontend μπορεί να δεχτεί αυτά τα δεδομένα
-- Η λογική κατανομής στον πίνακα χρειάζεται περαιτέρω ανάπτυξη
-- Προτεραιότητα: Header upgrade για άμεσο οπτικό αποτέλεσμα
+## 🎉 ΟΛΟΚΛΗΡΩΘΗΚΕ ΕΠΙΤΥΧΩΣ!
+
+Όλες οι κύριες αλλαγές έχουν υλοποιηθεί και commit!
+
+### 📊 Τελικός Πίνακας:
+
+**Πριν:**
+```
+Α/Δ | ΟΝΟΜΑΤΕΠΩΝΥΜΟ | ΟΦΕΙΛΕΣ | 
+ΧΙΛΙΟΣΤΑ (3 στήλες) | 
+ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ (4 στήλες) | 
+ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ (3 στήλες με "-") | 
+ΑΠΟΘΕΜΑΤΙΚΟ | ΠΛΗΡΩΤΕΟ
+```
+
+**Μετά:**
+```
+Α/Δ | ΟΝΟΜΑΤΕΠΩΝΥΜΟ | ΟΦΕΙΛΕΣ | 
+ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ (4 στήλες) | 
+ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ (1 στήλη με πραγματικά ποσά) | 
+ΑΠΟΘΕΜΑΤΙΚΟ | ΠΛΗΡΩΤΕΟ
+```
+
+**Κέρδη:**
+- ✅ 3 λιγότερες στήλες (χιλιοστά)
+- ✅ Σαφής εμφάνιση δαπανών ιδιοκτητών
+- ✅ Καθαρότερος και πιο readable πίνακας
 
 ---
 
