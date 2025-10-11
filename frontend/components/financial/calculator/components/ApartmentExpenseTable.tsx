@@ -34,7 +34,7 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
           <TableRow className="bg-gray-50">
             <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>Α/Δ</TableHead>
             <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΟΝΟΜΑΤΕΠΩΝΥΜΟ</TableHead>
-            <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΟΦΕΙΛΕΣ</TableHead>
+            <TableHead className="text-center border font-bold text-xs" style={{background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)", color: "white"}}>ΑΠΟ ΜΕΤΑΦΟΡΑ</TableHead>
             {/* ✅ ΑΦΑΙΡΕΘΗΚΑΝ: 3 στήλες ΧΙΛΙΟΣΤΑ ΣΥΜΜΕΤΟΧΗΣ + ΔΙΑΧΕΙΡΙΣΗ */}
             <TableHead className="text-center border font-bold text-xs text-white" colSpan={3} style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)"}}>ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ</TableHead>
             {/* ✅ ΤΡΟΠΟΠΟΙΗΘΗΚΕ: ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ με 2 υποστήλες (Έργα + Αποθεματικό) */}
@@ -51,7 +51,7 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)", fontSize: "10px", width: "80px"}}>ΘΕΡΜ/ΣΗ</TableHead>
             {/* ✅ ΝΕΟ: 2 υπο-στήλες για δαπάνες ιδιοκτητών */}
             <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #059669 0%, #047857 100%)", fontSize: "10px", width: "100px"}}>ΕΡΓΑ</TableHead>
-            <TableHead className="text-center border text-white" style={{background: "linear-gradient(135deg, #7e22ce 0%, #6d28d9 100%)", fontSize: "10px", width: "100px"}}>ΑΠΟΘΕΜΑΤΙΚΟ</TableHead>
+            <TableHead className="text-center border text-white" style={{background: "#048C63", fontSize: "10px", width: "100px"}}>ΑΠΟΘΕΜΑΤΙΚΟ</TableHead>
             <TableHead className="text-center border"></TableHead>
           </TableRow>
         </TableHeader>
@@ -97,8 +97,8 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 {/* ✅ ΝΕΟ: ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ - 2 cells (ΕΡΓΑ χωρίς αποθεματικό + ΑΠΟΘΕΜΑΤΙΚΟ) */}
                 <TableCell className="font-semibold">{ownerExpensesOnlyProjects > 0 ? formatAmount(ownerExpensesOnlyProjects) + '€' : '-'}</TableCell>
                 <TableCell>{apartmentReserveFund > 0 ? formatAmount(apartmentReserveFund) + '€' : '-'}</TableCell>
-                {/* ΠΛΗΡΩΤΕΟ ΠΟΣΟ: Χωρίς αποθεματικό */}
-                <TableCell>{formatAmount(finalTotalWithFees)}</TableCell>
+                {/* ΠΛΗΡΩΤΕΟ ΠΟΣΟ: Bold με € */}
+                <TableCell className="font-bold">{formatAmount(finalTotalWithFees)}€</TableCell>
               </TableRow>
             );
           })}
