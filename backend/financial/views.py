@@ -493,6 +493,20 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         distribution_types = [{'value': choice[0], 'label': choice[1]} for choice in Expense.DISTRIBUTION_TYPES]
         return Response(distribution_types)
     
+    @action(detail=False, methods=['get'])
+    def category_payer_defaults(self, request):
+        """
+        Λήψη προεπιλεγμένης ευθύνης πληρωμής για κάθε κατηγορία δαπάνης.
+        Βασισμένο στην ελληνική νομοθεσία για διαχωρισμό ενοίκων/ιδιοκτητών.
+        
+        Returns:
+            {
+                'category_key': 'owner'|'resident'|'shared',
+                ...
+            }
+        """
+        return Response(Expense.EXPENSE_CATEGORY_DEFAULTS)
+    
     @action(detail=False, methods=['post'])
     def upload_file(self, request):
         """Upload αρχείου για δαπάνη"""

@@ -107,13 +107,13 @@ class Expense(models.Model):
         ('water_common', 'Νερό Κοινοχρήστων'),
         ('garbage_collection', 'Συλλογή Απορριμμάτων'),
         ('security', 'Ασφάλεια Κτιρίου'),
-        ('concierge', 'Καθαριστής/Πυλωρός'),
+        ('concierge', 'Συνεργείο Καθαρισμού'),
         
         # Δαπάνες Ανελκυστήρα
         ('elevator_maintenance', 'Ετήσια Συντήρηση Ανελκυστήρα'),
         ('elevator_repair', 'Επισκευή Ανελκυστήρα'),
         ('elevator_inspection', 'Επιθεώρηση Ανελκυστήρα'),
-        ('elevator_modernization', 'Μοντέρνιση Ανελκυστήρα'),
+        ('elevator_modernization', 'Αναβάθμιση Ανελκυστήρα'),
         
         # Δαπάνες Θέρμανσης
         ('heating_fuel', 'Πετρέλαιο Θέρμανσης'),
@@ -121,7 +121,7 @@ class Expense(models.Model):
         ('heating_maintenance', 'Συντήρηση Καυστήρα'),
         ('heating_repair', 'Επισκευή Θερμαντικών'),
         ('heating_inspection', 'Επιθεώρηση Θερμαντικών'),
-        ('heating_modernization', 'Μοντέρνιση Θερμαντικών'),
+        ('heating_modernization', 'Αναβάθμιση Θερμαντικών'),
         
         # Δαπάνες Ηλεκτρικών Εγκαταστάσεων
         ('electrical_maintenance', 'Συντήρηση Ηλεκτρικών'),
@@ -211,6 +211,122 @@ class Expense(models.Model):
         ('utilities_other', 'Άλλες Κοινόχρηστες Υπηρεσίες'),
         ('other', 'Άλλο'),
     ]
+    
+    # 📋 Mapping κατηγοριών δαπανών με προεπιλεγμένη ευθύνη πληρωμής
+    # Βασισμένο στην ελληνική νομοθεσία:
+    # - Ένοικος: Τακτική συντήρηση, κατανάλωση, μικροεπισκευές, λειτουργικά έξοδα
+    # - Ιδιοκτήτης: Μεγάλες επισκευές, αντικαταστάσεις, αναβαθμίσεις, ασφάλιση, αποθεματικό
+    EXPENSE_CATEGORY_DEFAULTS = {
+        # Πάγιες Δαπάνες Κοινοχρήστων - ΕΝΟΙΚΟΣ (καθημερινή λειτουργία)
+        'cleaning': 'resident',
+        'electricity_common': 'resident',
+        'water_common': 'resident',
+        'garbage_collection': 'resident',
+        'security': 'resident',
+        'concierge': 'resident',
+        
+        # Δαπάνες Ανελκυστήρα
+        'elevator_maintenance': 'resident',      # Ετήσια συντήρηση (υποχρεωτική)
+        'elevator_repair': 'shared',             # Εξαρτάται: μικρή → ένοικος, μεγάλη → ιδιοκτήτης
+        'elevator_inspection': 'resident',       # Υποχρεωτική επιθεώρηση
+        'elevator_modernization': 'owner',       # Αναβάθμιση/αντικατάσταση
+        
+        # Δαπάνες Θέρμανσης
+        'heating_fuel': 'resident',              # Κατανάλωση πετρελαίου
+        'heating_gas': 'resident',               # Κατανάλωση αερίου
+        'heating_maintenance': 'resident',       # Ετήσια συντήρηση καυστήρα
+        'heating_repair': 'shared',              # Μικρή → ένοικος, αντικατάσταση → ιδιοκτήτης
+        'heating_inspection': 'resident',        # Επιθεώρηση
+        'heating_modernization': 'owner',        # Αντικατάσταση/αναβάθμιση
+        
+        # Δαπάνες Ηλεκτρικών Εγκαταστάσεων
+        'electrical_maintenance': 'resident',    # Τακτική συντήρηση
+        'electrical_repair': 'owner',            # Επισκευές εγκαταστάσεων
+        'electrical_upgrade': 'owner',           # Αναβάθμιση
+        'lighting_common': 'resident',           # Φωτισμός (λάμπες, κατανάλωση)
+        'intercom_system': 'resident',           # Συντήρηση συστήματος
+        
+        # Δαπάνες Υδραυλικών Εγκαταστάσεων
+        'plumbing_maintenance': 'resident',      # Τακτική συντήρηση
+        'plumbing_repair': 'owner',              # Επισκευές
+        'water_tank_cleaning': 'resident',       # Καθαρισμός δεξαμενής
+        'water_tank_maintenance': 'resident',    # Συντήρηση δεξαμενής
+        'sewage_system': 'owner',                # Σύστημα αποχέτευσης
+        
+        # Δαπάνες Κτιρίου & Εξωτερικών Χώρων - ΙΔΙΟΚΤΗΤΗΣ (δομή κτιρίου)
+        'building_insurance': 'owner',           # Ασφάλιση κτιρίου
+        'building_maintenance': 'owner',         # Συντήρηση κτιρίου
+        'roof_maintenance': 'owner',             # Στέγη
+        'roof_repair': 'owner',                  # Επισκευή στέγης
+        'facade_maintenance': 'owner',           # Πρόσοψη
+        'facade_repair': 'owner',                # Επισκευή πρόσοψης
+        'painting_exterior': 'owner',            # Βαψίματα εξωτερικών
+        'painting_interior': 'resident',         # Βαψίματα κοινοχρήστων εσωτερικών
+        'garden_maintenance': 'resident',        # Συντήρηση κήπου
+        'parking_maintenance': 'resident',       # Χώροι στάθμευσης
+        'entrance_maintenance': 'resident',      # Είσοδος
+        
+        # Έκτακτες Δαπάνες & Επισκευές - ΙΔΙΟΚΤΗΤΗΣ (μεγάλες ζημιές)
+        'emergency_repair': 'owner',
+        'storm_damage': 'owner',
+        'flood_damage': 'owner',
+        'fire_damage': 'owner',
+        'earthquake_damage': 'owner',
+        'vandalism_repair': 'owner',
+        
+        # Ειδικές Επισκευές - Εξαρτώμενες
+        'locksmith': 'shared',                   # Κοινόχρηστα → resident, θύρες → owner
+        'glass_repair': 'owner',                 # Επισκευή γυαλιών
+        'door_repair': 'owner',                  # Επισκευή πόρτας
+        'window_repair': 'owner',                # Επισκευή παραθύρων
+        'balcony_repair': 'owner',               # Επισκευή μπαλκονιού
+        'staircase_repair': 'owner',             # Επισκευή σκάλας
+        
+        # Δαπάνες Ασφάλειας & Πρόσβασης - ΙΔΙΟΚΤΗΤΗΣ (εγκαταστάσεις)
+        'security_system': 'owner',              # Εγκατάσταση συστήματος
+        'cctv_installation': 'owner',            # Εγκατάσταση CCTV
+        'access_control': 'owner',               # Σύστημα ελέγχου πρόσβασης
+        'fire_alarm': 'owner',                   # Πυρασφάλεια
+        'fire_extinguishers': 'resident',        # Πυροσβεστήρες (ανανέωση)
+        
+        # Δαπάνες Διοικητικές & Νομικές - ΙΔΙΟΚΤΗΤΗΣ
+        'legal_fees': 'owner',
+        'notary_fees': 'owner',
+        'surveyor_fees': 'owner',
+        'architect_fees': 'owner',
+        'engineer_fees': 'owner',
+        'accounting_fees': 'owner',
+        'management_fees': 'owner',
+        
+        # Δαπάνες Ειδικών Εργασιών
+        'asbestos_removal': 'owner',             # Ειδικές εργασίες
+        'lead_paint_removal': 'owner',
+        'mold_removal': 'owner',
+        'pest_control': 'resident',              # Εντομοκτονία (τακτική)
+        'tree_trimming': 'resident',             # Κλάδεμα
+        'snow_removal': 'resident',              # Χιόνι
+        
+        # Δαπάνες Ενεργειακής Απόδοσης - ΙΔΙΟΚΤΗΤΗΣ (αναβαθμίσεις)
+        'energy_upgrade': 'owner',
+        'insulation_work': 'owner',
+        'solar_panel_installation': 'owner',
+        'led_lighting': 'owner',
+        'smart_systems': 'owner',
+        
+        # Δαπάνες Ιδιοκτητών - ΙΔΙΟΚΤΗΤΗΣ (αποθεματικό)
+        'special_contribution': 'owner',
+        'reserve_fund': 'owner',
+        'emergency_fund': 'owner',
+        'renovation_fund': 'owner',
+        
+        # Άλλες Δαπάνες - Εξαρτώμενες
+        'miscellaneous': 'shared',
+        'consulting_fees': 'owner',
+        'permits_licenses': 'owner',
+        'taxes_fees': 'owner',
+        'utilities_other': 'resident',
+        'other': 'shared',
+    }
     
     DISTRIBUTION_TYPES = [
         ('by_participation_mills', 'Ανά Χιλιοστά'),
@@ -316,6 +432,25 @@ class Expense(models.Model):
     
     def __str__(self):
         return f"{self.title} - {self.amount}€ ({self.get_category_display()})"
+    
+    @classmethod
+    def get_default_payer_for_category(cls, category_key):
+        """
+        Επιστρέφει την προεπιλεγμένη ευθύνη πληρωμής για μια κατηγορία δαπάνης.
+        
+        Args:
+            category_key (str): Το key της κατηγορίας (π.χ. 'cleaning', 'elevator_maintenance')
+        
+        Returns:
+            str: 'owner', 'resident' ή 'shared' (default: 'resident')
+        
+        Example:
+            >>> Expense.get_default_payer_for_category('cleaning')
+            'resident'
+            >>> Expense.get_default_payer_for_category('building_insurance')
+            'owner'
+        """
+        return cls.EXPENSE_CATEGORY_DEFAULTS.get(category_key, 'resident')
     
     def _create_apartment_transactions(self):
         """Δημιουργεί συναλλαγές για όλα τα διαμερίσματα"""

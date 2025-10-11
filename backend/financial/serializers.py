@@ -43,13 +43,16 @@ class ExpenseSerializer(serializers.ModelSerializer):
     project_title = serializers.CharField(source='project.title', read_only=True)
     project_status = serializers.CharField(source='project.status', read_only=True)
     project_url = serializers.SerializerMethodField()
+    
+    # Suggested payer based on category (for frontend auto-suggestion)
+    suggested_payer = serializers.SerializerMethodField()
 
     class Meta:
         model = Expense
         fields = [
             'id', 'building', 'building_name', 'title', 'amount', 'date',
             'category', 'category_display', 'distribution_type', 'distribution_type_display',
-            'payer_responsibility', 'payer_responsibility_display',
+            'payer_responsibility', 'payer_responsibility_display', 'suggested_payer',
             'supplier', 'supplier_name', 'supplier_details', 'attachment', 'attachment_url',
             'notes', 'due_date', 'add_to_calendar', 'expense_type', 'created_at', 'updated_at',
             'linked_service_receipt', 'linked_scheduled_maintenance', 'maintenance_payment_receipts',
@@ -57,7 +60,20 @@ class ExpenseSerializer(serializers.ModelSerializer):
             # New project fields
             'project', 'project_title', 'project_status', 'project_url', 'audit_trail',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'payer_responsibility']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def create(self, validated_data):
+        """
+        Override create to auto-set payer_responsibility based on category if not provided.
+        Χρησιμοποιεί το EXPENSE_CATEGORY_DEFAULTS mapping για αυτόματη πρόταση.
+        """
+        # Αν δεν έχει οριστεί payer_responsibility, ορίζεται αυτόματα από την κατηγορία
+        if 'payer_responsibility' not in validated_data or not validated_data.get('payer_responsibility'):
+            category = validated_data.get('category')
+            if category:
+                validated_data['payer_responsibility'] = Expense.get_default_payer_for_category(category)
+        
+        return super().create(validated_data)
     
     def get_attachment_url(self, obj):
         if obj.attachment:
@@ -72,6 +88,15 @@ class ExpenseSerializer(serializers.ModelSerializer):
         if obj.project:
             return f"/projects/{obj.project.id}"
         return None
+    
+    def get_suggested_payer(self, obj):
+        """
+        Επιστρέφει την προτεινόμενη ευθύνη πληρωμής με βάση την κατηγορία.
+        Χρήσιμο για το frontend να προ-επιλέγει την τιμή όταν αλλάζει η κατηγορία.
+        """
+        if obj.category:
+            return Expense.get_default_payer_for_category(obj.category)
+        return 'resident'  # default fallback
     
     def validate_amount(self, value):
         """Επιβεβαίωση ότι το ποσό είναι θετικό"""
