@@ -126,12 +126,37 @@
 
 ### To-dos
 
-- [ ] Backend: Επαλήθευση/Ενημέρωση endpoint για payer_responsibility
-- [ ] Frontend: Ενημέρωση types (ExpenseBreakdownItem)
-- [ ] ApartmentExpenseTable: Υλοποίηση λογικής διαχωρισμού δαπανών
+- [x] Backend: Επαλήθευση/Ενημέρωση endpoint για payer_responsibility (commit: 0a8f23b7)
+- [x] Frontend: Ενημέρωση types (ExpenseBreakdownItem) (commit: 0a8f23b7)
+- [ ] ApartmentExpenseTable: Υλοποίηση λογικής διαχωρισμού δαπανών (σε εξέλιξη)
 - [ ] PDF/JPG Generator: Νέο header layout
 - [ ] ResultsStep: Νέο header layout για screen view
 - [ ] Testing: Επαλήθευση υπολογισμών και εκτύπωσης
+
+---
+
+## ✅ Ολοκληρωμένα (Μέχρι Τώρα)
+
+1. **Backend Service (services.py):**
+   - ✅ Η μέθοδος `get_expense_breakdown` τώρα επιστρέφει `payer_responsibility`
+   - ✅ Group by γίνεται σε category ΚΑΙ payer_responsibility
+
+2. **Frontend Types (useMonthlyExpenses.ts):**
+   - ✅ Το `ExpenseBreakdownItem` interface περιλαμβάνει `payer_responsibility`
+
+## ⏳ Σε Εξέλιξη
+
+3. **ApartmentExpenseTable:**
+   - Απαιτεί σημαντικές αλλαγές στο `useCommonExpenseCalculator` hook
+   - Η δομή των `shares` και `aptWithFinancial` props είναι πολύπλοκη
+   - Χρειάζεται περαιτέρω ανάλυση για την πλήρη υλοποίηση
+
+## 📝 Σημειώσεις Υλοποίησης
+
+- Το backend είναι έτοιμο να στέλνει `payer_responsibility`
+- Το frontend μπορεί να δεχτεί αυτά τα δεδομένα
+- Η λογική κατανομής στον πίνακα χρειάζεται περαιτέρω ανάπτυξη
+- Προτεραιότητα: Header upgrade για άμεσο οπτικό αποτέλεσμα
 
 ---
 
