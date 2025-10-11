@@ -395,6 +395,17 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
                   const totalAmount = Math.max(0, commonAmountWithoutReserve + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund);
 
+                  // ✅ Logging για debugging
+                  console.log('JPG Row ${index}:', {
+                    apt: apt.apartment_number,
+                    commonAmount,
+                    commonAmountWithoutReserve,
+                    ownerExpensesTotal,
+                    ownerExpensesOnlyProjects,
+                    apartmentReserveFund,
+                    totalAmount
+                  });
+
                   return `
                     <tr style="${index % 2 === 0 ? 'background: #f9fafb;' : 'background: white;'}">
                       <td style="padding: 4px 3px; text-align: left; border: 1px solid #e5e7eb; font-weight: bold;">${apt.apartment_number || apt.number || 'N/A'}</td>
