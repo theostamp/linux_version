@@ -5,6 +5,7 @@ export interface ExpenseBreakdownItem {
   category: string;
   category_display: string;
   amount: number;
+  payer_responsibility?: 'owner' | 'resident' | 'shared';  // ✅ ΝΕΟ ΠΕΔΙΟ
 }
 
 export interface MonthlyExpenses {

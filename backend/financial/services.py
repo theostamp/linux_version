@@ -1337,13 +1337,14 @@ class FinancialDashboardService:
 
         # Φιλτράρισμα δαπανών για τον συγκεκριμένο μήνα
         # Εξαιρούμε management_fees και reserve_fund γιατί αυτές εμφανίζονται ξεχωριστά
+        # ✅ ΑΛΛΑΓΗ: Group by category ΚΑΙ payer_responsibility για να κρατήσουμε τη διάκριση
         expenses = Expense.objects.filter(
             building_id=self.building_id,
             date__gte=start_date,
             date__lt=end_date
         ).exclude(
             category__in=['management_fees', 'reserve_fund']
-        ).values('category').annotate(
+        ).values('category', 'payer_responsibility').annotate(
             total_amount=Sum('amount')
         ).order_by('-total_amount')
 
@@ -1357,7 +1358,8 @@ class FinancialDashboardService:
             breakdown.append({
                 'category': category,
                 'category_display': category_display,
-                'amount': float(expense['total_amount'])
+                'amount': float(expense['total_amount']),
+                'payer_responsibility': expense['payer_responsibility']  # ✅ ΝΕΟ ΠΕΔΙΟ
             })
 
         return breakdown
