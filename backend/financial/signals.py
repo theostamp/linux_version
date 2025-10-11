@@ -235,6 +235,80 @@ def update_building_reserve_on_expense(sender, instance, created, **kwargs):
         print(f"❌ Σφάλμα στην ενημέρωση αποθεματικού κτιρίου: {e}")
 
 
+@receiver(post_save, sender=Expense)
+def update_monthly_balance_on_expense(sender, instance, created, **kwargs):
+    """
+    Αυτόματη ενημέρωση MonthlyBalance όταν προστίθεται δαπάνη.
+    
+    Αυτό διασφαλίζει ότι το MonthlyBalance είναι πάντα up-to-date και μπορεί
+    να χρησιμοποιηθεί ως single source of truth για τις παλαιότερες οφειλές.
+    """
+    try:
+        from .models import MonthlyBalance
+        
+        with transaction.atomic():
+            building = instance.building
+            expense_date = instance.date
+            year = expense_date.year
+            month = expense_date.month
+            
+            # Get or create MonthlyBalance για τον μήνα της δαπάνης
+            monthly_balance, mb_created = MonthlyBalance.objects.get_or_create(
+                building=building,
+                year=year,
+                month=month,
+                defaults={
+                    'total_expenses': Decimal('0.00'),
+                    'total_payments': Decimal('0.00'),
+                    'previous_obligations': Decimal('0.00'),
+                    'carry_forward': Decimal('0.00'),
+                    'reserve_fund_amount': Decimal('0.00'),
+                    'management_fees': Decimal('0.00'),
+                    'scheduled_maintenance_amount': Decimal('0.00'),
+                }
+            )
+            
+            # Υπολογισμός total_expenses για τον μήνα από όλες τις δαπάνες
+            from datetime import date as dt
+            month_start = dt(year, month, 1)
+            if month == 12:
+                month_end = dt(year + 1, 1, 1)
+            else:
+                month_end = dt(year, month + 1, 1)
+            
+            month_expenses = Expense.objects.filter(
+                building=building,
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            # Υπολογισμός total_payments για τον μήνα
+            from .models import Payment
+            month_payments = Payment.objects.filter(
+                apartment__building=building,
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            # Ενημέρωση MonthlyBalance
+            monthly_balance.total_expenses = month_expenses
+            monthly_balance.total_payments = month_payments
+            
+            # Υπολογισμός carry_forward (οφειλές που μεταφέρονται στον επόμενο μήνα)
+            # carry_forward = expenses - payments (θετικό αν υπάρχουν οφειλές)
+            monthly_balance.carry_forward = month_expenses - month_payments
+            
+            monthly_balance.save()
+            
+            if mb_created:
+                print(f"✅ Δημιουργήθηκε MonthlyBalance για {month:02d}/{year}: Expenses=€{month_expenses}, Carry=€{monthly_balance.carry_forward}")
+            else:
+                print(f"✅ Ενημερώθηκε MonthlyBalance για {month:02d}/{year}: Expenses=€{month_expenses}, Carry=€{monthly_balance.carry_forward}")
+    
+    except Exception as e:
+        print(f"❌ Σφάλμα στην ενημέρωση MonthlyBalance: {e}")
+
+
 @receiver(post_delete, sender=Expense)
 def recalculate_building_reserve_on_expense_delete(sender, instance, **kwargs):
     """
@@ -262,6 +336,180 @@ def recalculate_building_reserve_on_expense_delete(sender, instance, **kwargs):
     
     except Exception as e:
         print(f"❌ Σφάλμα στον επαναυπολογισμό αποθεματικού κτιρίου: {e}")
+
+
+@receiver(post_delete, sender=Expense)
+def update_monthly_balance_on_expense_delete(sender, instance, **kwargs):
+    """
+    Αυτόματη ενημέρωση MonthlyBalance όταν διαγράφεται δαπάνη.
+    """
+    try:
+        from .models import MonthlyBalance
+        
+        with transaction.atomic():
+            building = instance.building
+            expense_date = instance.date
+            year = expense_date.year
+            month = expense_date.month
+            
+            # Βρίσκουμε το MonthlyBalance
+            monthly_balance = MonthlyBalance.objects.filter(
+                building=building,
+                year=year,
+                month=month
+            ).first()
+            
+            if not monthly_balance:
+                return  # Δεν υπάρχει, τίποτα να κάνουμε
+            
+            # Επαναυπολογισμός
+            from datetime import date as dt
+            month_start = dt(year, month, 1)
+            if month == 12:
+                month_end = dt(year + 1, 1, 1)
+            else:
+                month_end = dt(year, month + 1, 1)
+            
+            month_expenses = Expense.objects.filter(
+                building=building,
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            from .models import Payment
+            month_payments = Payment.objects.filter(
+                apartment__building=building,
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            monthly_balance.total_expenses = month_expenses
+            monthly_balance.total_payments = month_payments
+            monthly_balance.carry_forward = month_expenses - month_payments
+            monthly_balance.save()
+            
+            print(f"✅ Επαναυπολογίστηκε MonthlyBalance για {month:02d}/{year}: Expenses=€{month_expenses}, Carry=€{monthly_balance.carry_forward}")
+    
+    except Exception as e:
+        print(f"❌ Σφάλμα στην επαναυπολόγηση MonthlyBalance: {e}")
+
+
+@receiver(post_save, sender=Payment)
+def update_monthly_balance_on_payment(sender, instance, created, **kwargs):
+    """
+    Αυτόματη ενημέρωση MonthlyBalance όταν προστίθεται πληρωμή.
+    """
+    try:
+        from .models import MonthlyBalance
+        
+        with transaction.atomic():
+            building = instance.apartment.building
+            payment_date = instance.date
+            year = payment_date.year
+            month = payment_date.month
+            
+            # Get or create MonthlyBalance
+            monthly_balance, mb_created = MonthlyBalance.objects.get_or_create(
+                building=building,
+                year=year,
+                month=month,
+                defaults={
+                    'total_expenses': Decimal('0.00'),
+                    'total_payments': Decimal('0.00'),
+                    'previous_obligations': Decimal('0.00'),
+                    'carry_forward': Decimal('0.00'),
+                    'reserve_fund_amount': Decimal('0.00'),
+                    'management_fees': Decimal('0.00'),
+                    'scheduled_maintenance_amount': Decimal('0.00'),
+                }
+            )
+            
+            # Υπολογισμός
+            from datetime import date as dt
+            month_start = dt(year, month, 1)
+            if month == 12:
+                month_end = dt(year + 1, 1, 1)
+            else:
+                month_end = dt(year, month + 1, 1)
+            
+            month_expenses = Expense.objects.filter(
+                building=building,
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            month_payments = Payment.objects.filter(
+                apartment__building=building,
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            monthly_balance.total_expenses = month_expenses
+            monthly_balance.total_payments = month_payments
+            monthly_balance.carry_forward = month_expenses - month_payments
+            monthly_balance.save()
+            
+            if mb_created:
+                print(f"✅ Δημιουργήθηκε MonthlyBalance για {month:02d}/{year} (Payment): Payments=€{month_payments}, Carry=€{monthly_balance.carry_forward}")
+            else:
+                print(f"✅ Ενημερώθηκε MonthlyBalance για {month:02d}/{year} (Payment): Payments=€{month_payments}, Carry=€{monthly_balance.carry_forward}")
+    
+    except Exception as e:
+        print(f"❌ Σφάλμα στην ενημέρωση MonthlyBalance από Payment: {e}")
+
+
+@receiver(post_delete, sender=Payment)
+def update_monthly_balance_on_payment_delete(sender, instance, **kwargs):
+    """
+    Αυτόματη ενημέρωση MonthlyBalance όταν διαγράφεται πληρωμή.
+    """
+    try:
+        from .models import MonthlyBalance
+        
+        with transaction.atomic():
+            building = instance.apartment.building
+            payment_date = instance.date
+            year = payment_date.year
+            month = payment_date.month
+            
+            monthly_balance = MonthlyBalance.objects.filter(
+                building=building,
+                year=year,
+                month=month
+            ).first()
+            
+            if not monthly_balance:
+                return
+            
+            # Επαναυπολογισμός
+            from datetime import date as dt
+            month_start = dt(year, month, 1)
+            if month == 12:
+                month_end = dt(year + 1, 1, 1)
+            else:
+                month_end = dt(year, month + 1, 1)
+            
+            month_expenses = Expense.objects.filter(
+                building=building,
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            month_payments = Payment.objects.filter(
+                apartment__building=building,
+                date__gte=month_start,
+                date__lt=month_end
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            
+            monthly_balance.total_expenses = month_expenses
+            monthly_balance.total_payments = month_payments
+            monthly_balance.carry_forward = month_expenses - month_payments
+            monthly_balance.save()
+            
+            print(f"✅ Επαναυπολογίστηκε MonthlyBalance για {month:02d}/{year} (Payment Delete): Payments=€{month_payments}, Carry=€{monthly_balance.carry_forward}")
+    
+    except Exception as e:
+        print(f"❌ Σφάλμα στην επαναυπολόγηση MonthlyBalance από Payment delete: {e}")
 
 
 # --- Maintenance integration: Unlink maintenance payment receipts on expense delete ---
