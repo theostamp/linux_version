@@ -198,7 +198,7 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                     </Badge>
                 </div>
                 
-                {/* Δεξιά: Μήνας + Close */}
+                {/* Δεξιά: Μήνας + Εξαγωγή + Close */}
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-blue-600" />
@@ -215,6 +215,16 @@ export const CommonExpenseModal: React.FC<CommonExpenseModalProps> = (props) => 
                             </SelectContent>
                         </Select>
                     </div>
+                    {/* ✅ ΝΕΟ: Κουμπί Εξαγωγής JPG */}
+                    <Button 
+                        onClick={() => handleExport('jpg')} 
+                        variant="default" 
+                        size="sm" 
+                        className="bg-teal-600 hover:bg-teal-700 text-white"
+                    >
+                        <FileText className="h-4 w-4 mr-1" />
+                        Εξαγωγή
+                    </Button>
                     <Button onClick={onClose} variant="ghost" size="sm" className="hover:bg-blue-200">
                         <X className="h-4 w-4" />
                     </Button>
