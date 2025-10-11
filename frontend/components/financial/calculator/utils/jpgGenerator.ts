@@ -428,7 +428,6 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   // ✅ Logging για debugging
                   console.log('JPG Row ${index}:', {
                     apt: apt.apartment_number,
-                    commonAmount,
                     commonAmountWithoutReserve,
                     ownerExpensesTotal,
                     ownerExpensesOnlyProjects,
