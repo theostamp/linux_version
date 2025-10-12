@@ -209,29 +209,37 @@ def create_transactions_for_expense(sender, instance, created, **kwargs):
 def update_building_reserve_on_expense(sender, instance, created, **kwargs):
     """
     Αυτόματη ενημέρωση αποθεματικού κτιρίου όταν δημιουργείται/ενημερώνεται δαπάνη
+
+    UPDATED 2025-10-12: Added protection against building deletion
     """
     try:
+        # Skip if building is being deleted (prevents foreign key violations during CASCADE delete)
+        building = instance.building
+        if not building or not building.pk:
+            return
+
         with transaction.atomic():
-            building = instance.building
-            
             # Υπολογισμός νέου αποθεματικού
             payments = Payment.objects.filter(
                 apartment__building=building
             )
             total_payments = payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-            
+
             expenses = Expense.objects.filter(building=building)
             total_expenses = expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-            
+
             new_reserve = total_payments - total_expenses
-            
+
             if building.current_reserve != new_reserve:
                 building.current_reserve = new_reserve
                 building.save(update_fields=['current_reserve'])
-                
+
                 print(f"✅ Ενημερώθηκε αποθεματικού κτιρίου {building.name}: {new_reserve:,.2f}€")
-    
+
     except Exception as e:
+        # Silently ignore errors during building deletion
+        if "does not exist" in str(e) or "foreign key" in str(e).lower():
+            return
         print(f"❌ Σφάλμα στην ενημέρωση αποθεματικού κτιρίου: {e}")
 
 
@@ -239,15 +247,21 @@ def update_building_reserve_on_expense(sender, instance, created, **kwargs):
 def update_monthly_balance_on_expense(sender, instance, created, **kwargs):
     """
     Αυτόματη ενημέρωση MonthlyBalance όταν προστίθεται δαπάνη.
-    
+
     Αυτό διασφαλίζει ότι το MonthlyBalance είναι πάντα up-to-date και μπορεί
     να χρησιμοποιηθεί ως single source of truth για τις παλαιότερες οφειλές.
+
+    UPDATED 2025-10-12: Added protection against building deletion
     """
     try:
         from .models import MonthlyBalance
-        
+
+        # Skip if building is being deleted
+        building = instance.building
+        if not building or not building.pk:
+            return
+
         with transaction.atomic():
-            building = instance.building
             expense_date = instance.date
             year = expense_date.year
             month = expense_date.month
@@ -304,8 +318,11 @@ def update_monthly_balance_on_expense(sender, instance, created, **kwargs):
                 print(f"✅ Δημιουργήθηκε MonthlyBalance για {month:02d}/{year}: Expenses=€{month_expenses}, Carry=€{monthly_balance.carry_forward}")
             else:
                 print(f"✅ Ενημερώθηκε MonthlyBalance για {month:02d}/{year}: Expenses=€{month_expenses}, Carry=€{monthly_balance.carry_forward}")
-    
+
     except Exception as e:
+        # Silently ignore errors during building deletion
+        if "does not exist" in str(e) or "foreign key" in str(e).lower():
+            return
         print(f"❌ Σφάλμα στην ενημέρωση MonthlyBalance: {e}")
 
 
@@ -313,28 +330,41 @@ def update_monthly_balance_on_expense(sender, instance, created, **kwargs):
 def recalculate_building_reserve_on_expense_delete(sender, instance, **kwargs):
     """
     Επαναυπολογισμός αποθεματικού κτιρίου όταν διαγράφεται δαπάνη
+
+    UPDATED 2025-10-12: Added protection against building deletion
     """
     try:
+        # Skip if building is being deleted or doesn't exist
+        building = instance.building
+        if not building or not building.pk:
+            return
+
+        # Check if building still exists in database
+        from buildings.models import Building
+        if not Building.objects.filter(pk=building.pk).exists():
+            return
+
         with transaction.atomic():
-            building = instance.building
-            
             # Επαναυπολογισμός
             payments = Payment.objects.filter(
                 apartment__building=building
             )
             total_payments = payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-            
+
             expenses = Expense.objects.filter(building=building)
             total_expenses = expenses.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-            
+
             new_reserve = total_payments - total_expenses
-            
+
             building.current_reserve = new_reserve
             building.save(update_fields=['current_reserve'])
-            
+
             print(f"✅ Επαναυπολογίστηκε αποθεματικό κτιρίου {building.name}: {new_reserve:,.2f}€")
-    
+
     except Exception as e:
+        # Silently ignore errors during building deletion
+        if "does not exist" in str(e) or "foreign key" in str(e).lower():
+            return
         print(f"❌ Σφάλμα στον επαναυπολογισμό αποθεματικού κτιρίου: {e}")
 
 
@@ -342,16 +372,27 @@ def recalculate_building_reserve_on_expense_delete(sender, instance, **kwargs):
 def update_monthly_balance_on_expense_delete(sender, instance, **kwargs):
     """
     Αυτόματη ενημέρωση MonthlyBalance όταν διαγράφεται δαπάνη.
+
+    UPDATED 2025-10-12: Added protection against building deletion
     """
     try:
         from .models import MonthlyBalance
-        
+
+        # Skip if building is being deleted or doesn't exist
+        building = instance.building
+        if not building or not building.pk:
+            return
+
+        # Check if building still exists in database
+        from buildings.models import Building
+        if not Building.objects.filter(pk=building.pk).exists():
+            return
+
         with transaction.atomic():
-            building = instance.building
             expense_date = instance.date
             year = expense_date.year
             month = expense_date.month
-            
+
             # Βρίσκουμε το MonthlyBalance
             monthly_balance = MonthlyBalance.objects.filter(
                 building=building,
@@ -387,10 +428,13 @@ def update_monthly_balance_on_expense_delete(sender, instance, **kwargs):
             monthly_balance.total_payments = month_payments
             monthly_balance.carry_forward = month_expenses - month_payments
             monthly_balance.save()
-            
+
             print(f"✅ Επαναυπολογίστηκε MonthlyBalance για {month:02d}/{year}: Expenses=€{month_expenses}, Carry=€{monthly_balance.carry_forward}")
-    
+
     except Exception as e:
+        # Silently ignore errors during building deletion
+        if "does not exist" in str(e) or "foreign key" in str(e).lower():
+            return
         print(f"❌ Σφάλμα στην επαναυπολόγηση MonthlyBalance: {e}")
 
 
@@ -551,10 +595,20 @@ def unlink_maintenance_receipts_on_expense_delete(sender, instance, **kwargs):
 def update_financial_data_on_building_change(sender, instance, created, **kwargs):
     """
     Αυτόματη ενημέρωση οικονομικών δεδομένων όταν αλλάζει το κτίριο
-    
+
     UPDATED 2025-10-10: Αυτόματη δημιουργία monthly charges όταν ορίζεται το πακέτο
+    UPDATED 2025-10-12: Skip when only updating specific fields (like current_reserve during deletion)
     """
     try:
+        # ⚠️ CRITICAL: Skip if this is a partial update (update_fields specified)
+        # This prevents infinite loops and creation of new records during cascading deletes
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None:
+            # This is a partial update (e.g., building.save(update_fields=['current_reserve']))
+            # Skip auto-creation of monthly charges
+            print(f"⏭️ Building Signal: Skipping auto-creation for {instance.name} - partial update ({update_fields})")
+            return
+
         # ✅ NEW 2025-10-10: Αυτόματη δημιουργία monthly charges
         # Όταν ορίζεται το financial_system_start_date ή το management_fee_per_apartment
         if instance.financial_system_start_date and instance.management_fee_per_apartment:
