@@ -19,11 +19,9 @@ interface KioskConfig {
   };
 }
 
-// Simple API get function for kiosk widgets (no auth required)
+// API function to fetch kiosk widgets via Next.js API routes to avoid CORS issues.
 async function fetchKioskWidgets(buildingId: number): Promise<KioskWidget[]> {
-  const backendUrl = 'http://localhost:18000';
-  const url = `${backendUrl}/api/kiosk/public/configs/?building_id=${buildingId}`;
-
+  const url = `/api/kiosk-widgets-public?building_id=${buildingId}`;
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',

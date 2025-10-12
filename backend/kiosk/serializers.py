@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import KioskWidget, KioskDisplaySettings
+from .models import KioskWidget, KioskDisplaySettings, KioskScene, WidgetPlacement
 
 
 class KioskWidgetSerializer(serializers.ModelSerializer):
@@ -66,4 +66,104 @@ class KioskDisplaySettingsSerializer(serializers.ModelSerializer):
             'theme': data['theme'],
             'updatedAt': data['updated_at'],
             'createdAt': data['created_at'],
+        }
+
+
+class WidgetPlacementSerializer(serializers.ModelSerializer):
+    """
+    Serializer for WidgetPlacement model with nested widget data
+    """
+    widget = KioskWidgetSerializer(read_only=True)
+    widget_id = serializers.CharField(write_only=True, source='widget.widget_id')
+    
+    class Meta:
+        model = WidgetPlacement
+        fields = [
+            'id', 'scene', 'widget', 'widget_id',
+            'grid_row_start', 'grid_col_start', 'grid_row_end', 'grid_col_end',
+            'z_index', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_at']
+    
+    def to_representation(self, instance):
+        """Convert to API-friendly format"""
+        return {
+            'id': instance.id,
+            'sceneId': instance.scene.id,
+            'widgetId': instance.widget.widget_id,
+            'gridRowStart': instance.grid_row_start,
+            'gridColStart': instance.grid_col_start,
+            'gridRowEnd': instance.grid_row_end,
+            'gridColEnd': instance.grid_col_end,
+            'zIndex': instance.z_index,
+            'widget': KioskWidgetSerializer(instance.widget).data,
+        }
+
+
+class KioskSceneSerializer(serializers.ModelSerializer):
+    """
+    Serializer for KioskScene model with nested placements
+    """
+    placements = WidgetPlacementSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = KioskScene
+        fields = [
+            'id', 'building', 'name', 'order', 'duration_seconds', 'transition',
+            'is_enabled', 'active_start_time', 'active_end_time',
+            'placements', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def to_representation(self, instance):
+        """Convert to API-friendly format"""
+        return {
+            'id': instance.id,
+            'buildingId': instance.building.id if instance.building else None,
+            'name': instance.name,
+            'order': instance.order,
+            'durationSeconds': instance.duration_seconds,
+            'transition': instance.transition,
+            'isEnabled': instance.is_enabled,
+            'activeStartTime': instance.active_start_time.isoformat() if instance.active_start_time else None,
+            'activeEndTime': instance.active_end_time.isoformat() if instance.active_end_time else None,
+            'placements': [WidgetPlacementSerializer(p).data for p in instance.placements.all()],
+            'createdAt': instance.created_at.isoformat(),
+            'updatedAt': instance.updated_at.isoformat(),
+        }
+
+
+class KioskSceneListSerializer(serializers.ModelSerializer):
+    """
+    Optimized serializer for listing scenes without full placement details
+    """
+    placement_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = KioskScene
+        fields = [
+            'id', 'building', 'name', 'order', 'duration_seconds', 'transition',
+            'is_enabled', 'active_start_time', 'active_end_time',
+            'placement_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_placement_count(self, obj):
+        return obj.placements.count()
+    
+    def to_representation(self, instance):
+        """Convert to API-friendly format"""
+        return {
+            'id': instance.id,
+            'buildingId': instance.building.id if instance.building else None,
+            'name': instance.name,
+            'order': instance.order,
+            'durationSeconds': instance.duration_seconds,
+            'transition': instance.transition,
+            'isEnabled': instance.is_enabled,
+            'activeStartTime': instance.active_start_time.isoformat() if instance.active_start_time else None,
+            'activeEndTime': instance.active_end_time.isoformat() if instance.active_end_time else None,
+            'placementCount': self.get_placement_count(instance),
+            'createdAt': instance.created_at.isoformat(),
+            'updatedAt': instance.updated_at.isoformat(),
         }

@@ -55,6 +55,21 @@ export const WIDGET_COMPONENTS: Record<string, React.ComponentType<any>> = {
   WeatherTopBarWidget: WeatherWidget,
   // Alias for special widgets
   NewsTickerWidget: AnnouncementsWidget,
+  
+  // Backend compatibility mappings
+  DashboardOverview: DashboardWidget,
+  BuildingStatistics: DashboardWidget,
+  Announcements: AnnouncementsWidget,
+  Votes: VotesWidget,
+  FinancialOverview: FinancialWidget,
+  MaintenanceOverview: MaintenanceWidget,
+  ProjectsOverview: MaintenanceWidget, // Use maintenance as fallback
+  EmergencyContacts: ManagerWidget, // Use manager widget as fallback
+  BuildingInfo: ManagerWidget,
+  QRCodeConnection: QRCodeWidget,
+  TimeDate: TimeWidget,
+  BuildingSelector: DashboardWidget,
+  NewsTicker: AnnouncementsWidget,
 };
 
 // Widget icon mapping

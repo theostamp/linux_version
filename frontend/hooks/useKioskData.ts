@@ -2,15 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-// Simple API get function for kiosk (no complex auth)
+// Simple API get function for kiosk (no complex auth).
+// It calls a relative Next.js API route, which then proxies the request to the backend.
 async function apiGet<T>(path: string): Promise<T> {
-  // Always use backend URL for API calls
-  const backendUrl = 'http://localhost:18000';
-
-  // Ensure path starts with /api/
-  const apiPath = path.startsWith('/api/') ? path : `/api${path}`;
-  const url = `${backendUrl}${apiPath}`;
-
+  // Call the relative Next.js API route, not the backend directly.
+  const url = path;
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',

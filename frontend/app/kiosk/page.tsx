@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { usePublicInfo } from '@/hooks/usePublicInfo';
 import { useBuildingChange } from '@/hooks/useBuildingChange';
+import KioskSceneRenderer from '@/components/KioskSceneRenderer';
 import KioskWidgetRenderer from '@/components/KioskWidgetRenderer';
 import KioskCanvasRenderer from '@/components/KioskCanvasRenderer';
 import FullPageSpinner from '@/components/FullPageSpinner';
@@ -21,6 +22,7 @@ export default function KioskPage() {
   const [buildings, setBuildings] = useState<any[]>(BUILDINGS_DATA);
   const [isLoadingBuildings, setIsLoadingBuildings] = useState(!BUILDINGS_LOADED);
   const [useCanvasMode, setUseCanvasMode] = useState(false);
+  const [useSceneMode, setUseSceneMode] = useState(true); // Default to scene mode
   const [maintenanceInfo, setMaintenanceInfo] = useState({
     active_contractors: 0,
     pending_receipts: 0,
@@ -52,11 +54,17 @@ export default function KioskPage() {
         setUseCanvasMode(!useCanvasMode);
         console.log('🎨 Canvas mode toggled:', !useCanvasMode);
       }
+      // Toggle scene mode with Ctrl+Alt+S
+      if (event.ctrlKey && event.altKey && event.key === 's') {
+        event.preventDefault();
+        setUseSceneMode(!useSceneMode);
+        console.log('🎬 Scene mode toggled:', !useSceneMode);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [useCanvasMode]);
+  }, [useCanvasMode, useSceneMode]);
 
   // Fetch maintenance info when building changes
   useEffect(() => {
@@ -181,6 +189,10 @@ export default function KioskPage() {
         <KioskCanvasRenderer
           selectedBuildingId={selectedBuildingId}
           onBuildingChange={changeBuilding}
+        />
+      ) : useSceneMode ? (
+        <KioskSceneRenderer
+          selectedBuildingId={selectedBuildingId}
         />
       ) : (
         <KioskWidgetRenderer

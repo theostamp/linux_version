@@ -116,3 +116,96 @@ class KioskDisplaySettings(models.Model):
             'theme': self.theme,
             'updatedAt': self.updated_at.isoformat(),
         }
+
+
+class KioskScene(models.Model):
+    """
+    Model for storing kiosk scenes - complete layouts with multiple widgets
+    """
+    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='kiosk_scenes')
+    name = models.CharField(max_length=100)
+    order = models.PositiveIntegerField(default=0)
+    duration_seconds = models.PositiveIntegerField(default=30, help_text="Duration in seconds")
+    transition = models.CharField(max_length=50, default='fade', help_text="Transition type (fade, slide, etc.)")
+    is_enabled = models.BooleanField(default=True)
+    
+    # Time-based activation (optional)
+    active_start_time = models.TimeField(null=True, blank=True, help_text="Scene active from this time")
+    active_end_time = models.TimeField(null=True, blank=True, help_text="Scene active until this time")
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    class Meta:
+        db_table = 'kiosk_scenes'
+        ordering = ['order', 'name']
+        indexes = [
+            models.Index(fields=['building', 'is_enabled']),
+            models.Index(fields=['order']),
+        ]
+    
+    def __str__(self):
+        return f"{self.name} - {self.building.name}"
+    
+    def to_dict(self):
+        """Convert model instance to dictionary for API responses"""
+        return {
+            'id': self.id,
+            'buildingId': self.building.id if self.building else None,
+            'name': self.name,
+            'order': self.order,
+            'durationSeconds': self.duration_seconds,
+            'transition': self.transition,
+            'isEnabled': self.is_enabled,
+            'activeStartTime': self.active_start_time.isoformat() if self.active_start_time else None,
+            'activeEndTime': self.active_end_time.isoformat() if self.active_end_time else None,
+            'createdAt': self.created_at.isoformat(),
+            'updatedAt': self.updated_at.isoformat(),
+        }
+
+
+class WidgetPlacement(models.Model):
+    """
+    Model for defining widget position and size within a scene
+    """
+    scene = models.ForeignKey(KioskScene, on_delete=models.CASCADE, related_name='placements')
+    widget = models.ForeignKey(KioskWidget, on_delete=models.CASCADE)
+    
+    # Grid properties from Canvas Editor
+    grid_row_start = models.PositiveIntegerField(help_text="Starting row in grid (1-indexed)")
+    grid_col_start = models.PositiveIntegerField(help_text="Starting column in grid (1-indexed)")
+    grid_row_end = models.PositiveIntegerField(help_text="Ending row in grid (1-indexed)")
+    grid_col_end = models.PositiveIntegerField(help_text="Ending column in grid (1-indexed)")
+    
+    # Additional placement settings
+    z_index = models.IntegerField(default=0, help_text="Layer order for overlapping widgets")
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'kiosk_widget_placements'
+        unique_together = ('scene', 'widget')
+        ordering = ['z_index', 'grid_row_start', 'grid_col_start']
+        indexes = [
+            models.Index(fields=['scene']),
+        ]
+    
+    def __str__(self):
+        return f"{self.widget.greek_name} in {self.scene.name}"
+    
+    def to_dict(self):
+        """Convert model instance to dictionary for API responses"""
+        return {
+            'id': self.id,
+            'sceneId': self.scene.id,
+            'widgetId': self.widget.widget_id,
+            'gridRowStart': self.grid_row_start,
+            'gridColStart': self.grid_col_start,
+            'gridRowEnd': self.grid_row_end,
+            'gridColEnd': self.grid_col_end,
+            'zIndex': self.z_index,
+            'widget': self.widget.to_dict(),
+        }

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import KioskWidget, KioskDisplaySettings
+from .models import KioskWidget, KioskDisplaySettings, KioskScene, WidgetPlacement
 
 
 @admin.register(KioskWidget)
@@ -74,3 +74,84 @@ class KioskDisplaySettingsAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.updated_by = request.user
         super().save_model(request, obj, form, change)
+
+
+class WidgetPlacementInline(admin.TabularInline):
+    """Inline admin for widget placements"""
+    model = WidgetPlacement
+    extra = 1
+    fields = ['widget', 'grid_row_start', 'grid_col_start', 'grid_row_end', 'grid_col_end', 'z_index']
+    autocomplete_fields = ['widget']
+
+
+@admin.register(KioskScene)
+class KioskSceneAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'building',
+        'order',
+        'duration_seconds',
+        'transition',
+        'is_enabled',
+        'placement_count',
+        'created_at'
+    ]
+    list_filter = ['is_enabled', 'transition', 'building', 'created_at']
+    search_fields = ['name', 'building__name']
+    readonly_fields = ['created_at', 'updated_at', 'created_by']
+    inlines = [WidgetPlacementInline]
+    
+    fieldsets = (
+        ('Scene Information', {
+            'fields': ('building', 'name', 'order')
+        }),
+        ('Display Settings', {
+            'fields': ('duration_seconds', 'transition', 'is_enabled')
+        }),
+        ('Time Constraints (Optional)', {
+            'fields': ('active_start_time', 'active_end_time'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def placement_count(self, obj):
+        return obj.placements.count()
+    placement_count.short_description = 'Widgets'
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # Creating new object
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(WidgetPlacement)
+class WidgetPlacementAdmin(admin.ModelAdmin):
+    list_display = [
+        'scene',
+        'widget',
+        'grid_row_start',
+        'grid_col_start',
+        'grid_row_end',
+        'grid_col_end',
+        'z_index'
+    ]
+    list_filter = ['scene__building', 'scene']
+    search_fields = ['scene__name', 'widget__name', 'widget__greek_name']
+    autocomplete_fields = ['scene', 'widget']
+    
+    fieldsets = (
+        ('Placement', {
+            'fields': ('scene', 'widget')
+        }),
+        ('Grid Position', {
+            'fields': (
+                ('grid_row_start', 'grid_row_end'),
+                ('grid_col_start', 'grid_col_end'),
+                'z_index'
+            )
+        }),
+    )
