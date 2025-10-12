@@ -95,7 +95,7 @@ const EXPENSE_CATEGORIES = {
   'water_common': 'Νερό Κοινοχρήστων',
   'garbage_collection': 'Συλλογή Απορριμμάτων',
   'security': 'Ασφάλεια Κτιρίου',
-  'concierge': 'Καθαριστής/Πυλωρός',
+  'concierge': 'Συνεργείο Καθαρισμού',
   'management_fees': 'Δαπάνες Διαχείρισης', // 🆕 Προσθήκη
   
   // Ανελκυστήρας

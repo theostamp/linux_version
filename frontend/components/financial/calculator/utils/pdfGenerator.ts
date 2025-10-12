@@ -404,16 +404,16 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                 <!-- ✅ Επιμέρους Δαπάνες από API (αντί για συγκεντρωτικές "Λειτουργικές Δαπάνες") -->
                 ${monthlyExpenses?.expense_breakdown && monthlyExpenses.expense_breakdown.length > 0 
                   ? monthlyExpenses.expense_breakdown.map((expense: any, index: number) => {
-                      // Διακριτικό Ⓔ (Ένοικος) ή Ⓓ (Ιδιοκτήτης)
-                      const payerBadge = expense.payer_responsibility === 'owner' 
-                        ? '<span style="display: inline-block; width: 18px; height: 18px; border: 1.5px solid #dc2626; border-radius: 50%; text-align: center; line-height: 16px; font-size: 11px; font-weight: bold; color: #dc2626; margin-right: 4px;">Δ</span>' 
-                        : '<span style="display: inline-block; width: 18px; height: 18px; border: 1.5px solid #059669; border-radius: 50%; text-align: center; line-height: 16px; font-size: 11px; font-weight: bold; color: #059669; margin-right: 4px;">Ε</span>';
+                      // Διακριτικό κείμενο: Ε (Ένοικος) ή Δ (Ιδιοκτήτης)
+                      const isOwner = expense.payer_responsibility === 'owner';
+                      const payerColor = isOwner ? '#dc2626' : '#059669';
+                      const payerText = isOwner ? 'Δ' : 'Ε';
                       
                       return `
                         <div class="expense-item">
                           <span class="number">${index + 1}</span>
                           <div>
-                            ${payerBadge}<span class="label">${expense.category_display}</span>
+                            <span style="font-weight: bold; font-size: 11px; color: ${payerColor}; margin-right: 4px;">${payerText}</span><span class="label">${expense.category_display}</span>
                           </div>
                           <span class="amount">${formatAmount(expense.amount)}€</span>
                         </div>
@@ -425,7 +425,7 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                 <div class="expense-item">
                   <span class="number">${(monthlyExpenses?.expense_breakdown?.length || 0) + 1}</span>
                   <div>
-                    <span style="display: inline-block; width: 18px; height: 18px; border: 1.5px solid #059669; border-radius: 50%; text-align: center; line-height: 16px; font-size: 11px; font-weight: bold; color: #059669; margin-right: 4px;">Ε</span>
+                    <span style="font-weight: bold; font-size: 11px; color: #059669; margin-right: 4px;">Ε</span>
                     <span class="label">Κόστος διαχείρισης</span>
                   </div>
                   <span class="amount">${formatAmount(managementFeeInfo.totalFee || 0)}€</span>
@@ -434,7 +434,7 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                 <div class="expense-item">
                   <span class="number">${(monthlyExpenses?.expense_breakdown?.length || 0) + 2}</span>
                   <div>
-                    <span style="display: inline-block; width: 18px; height: 18px; border: 1.5px solid #dc2626; border-radius: 50%; text-align: center; line-height: 16px; font-size: 11px; font-weight: bold; color: #dc2626; margin-right: 4px;">Δ</span>
+                    <span style="font-weight: bold; font-size: 11px; color: #dc2626; margin-right: 4px;">Δ</span>
                     <span class="label">Αποθεματικό Ταμείο</span>
                   </div>
                   <span class="amount">${formatAmount(reserveFundInfo.monthlyAmount || 0)}€</span>

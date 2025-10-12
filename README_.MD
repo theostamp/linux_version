@@ -537,6 +537,54 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## ###################################################################################
 ## 🧹 Καθαρισμός Docker
 
+
+Για ΜΙΚΡΕΣ αλλαγές (CSS, typos, minor fixes):
+git add .
+git commit -m "fix: Minor CSS adjustment"
+# ✅ Hook τρέχει αυτόματα, αλλά είναι γρήγορο
+
+
+
+
+Για ΜΕΣΑΙΕΣ αλλαγές (features, bug fixes):
+# Optional: Manual test run πριν commit
+cd linux_version
+./run_tests_before_commit.sh
+
+# Αν OK:
+git add .
+git commit -m "feat: New feature"
+
+
+
+
+Για ΜΕΓΑΛΕΣ αλλαγές (financial logic, critical features):
+
+# 1. Τρέξε critical tests
+cd linux_version
+./run_tests_before_commit.sh
+
+# 2. Restart containers & smoke test
+docker-compose restart backend frontend
+sleep 30
+# Δοκίμασε στο browser
+
+# 3. Έλεγξε logs για errors
+docker logs linux_version-backend-1 --tail 50
+
+# 4. Αν όλα OK:
+git add .
+git commit -m "feat: Major financial update"
+
+
+
+
+
+
+
+
+
+
 ### Πλήρης Καθαρισμός Docker
 ```bash
 
@@ -561,11 +609,12 @@ git commit -m "διορθωσεις 31"
 
 ## Βασικές Εντολές Git
 git add .
-git commit -m "οκ με διαχειριστικα, αποθεματικο και κοινοχρηστα  "
+git commit -m "scene 1"
 
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
+
 
 
 git push --force

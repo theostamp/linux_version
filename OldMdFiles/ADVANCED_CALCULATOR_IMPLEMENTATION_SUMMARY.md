@@ -29,7 +29,7 @@
 - water_common (Νερό Κοινοχρήστων)
 - garbage_collection (Συλλογή Απορριμμάτων)
 - security (Ασφάλεια)
-- concierge (Καθαριστής/Πυλωρός)
+- concierge (Συνεργείο Καθαρισμού)
 - building_maintenance (Συντήρηση Κτιρίου)
 - building_insurance (Ασφάλεια Κτιρίου)
 - και πολλές άλλες...
@@ -40,7 +40,7 @@
 - elevator_maintenance (Συντήρηση Ανελκυστήρα)
 - elevator_repair (Επισκευή Ανελκυστήρα)
 - elevator_inspection (Επιθεώρηση Ανελκυστήρα)
-- elevator_modernization (Μοντέρνιση Ανελκυστήρα)
+- elevator_modernization (Αναβάθμιση Ανελκυστήρα)
 ```
 
 #### Δαπάνες Θέρμανσης (Πάγιο 30% + Μεταβλητό 70%)
@@ -50,7 +50,7 @@
 - heating_maintenance (Συντήρηση Καυστήρα)
 - heating_repair (Επισκευή Θερμαντικών)
 - heating_inspection (Επιθεώρηση Θερμαντικών)
-- heating_modernization (Μοντέρνιση Θερμαντικών)
+- heating_modernization (Αναβάθμιση Θερμαντικών)
 ```
 
 #### Ισόποσες Δαπάνες (Ίσο μερίδιο ανά διαμέρισμα)

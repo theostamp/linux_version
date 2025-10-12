@@ -90,7 +90,7 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
                 <TableCell>{formatAmount(previousBalance)}€</TableCell>
                 {/* ✅ ΑΦΑΙΡΕΘΗΚΑΝ: 3 cells για χιλιοστά + ΔΙΑΧΕΙΡΙΣΗ */}
                 {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ: Κ/ΧΡΗΣΤΑ ΧΩΡΙΣ αποθεματικό */}
-                <TableCell>{formatAmount(commonAmount - apartmentReserveFund)}</TableCell>
+                <TableCell>{formatAmount(commonAmountWithoutReserve)}</TableCell>
                 <TableCell>{formatAmount(elevatorAmount)}</TableCell>
                 <TableCell>{formatAmount(heatingAmount)}</TableCell>
                 {/* ✅ ΝΕΟ: ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ - 2 cells (ΕΡΓΑ χωρίς αποθεματικό + ΑΠΟΘΕΜΑΤΙΚΟ) */}

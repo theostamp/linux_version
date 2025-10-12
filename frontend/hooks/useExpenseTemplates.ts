@@ -80,9 +80,9 @@ const EXPENSE_TEMPLATES = {
     isMonthly: true
   },
   
-  // Καθαριστής/Πυλωρός
+  // Συνεργείο Καθαρισμού
   'concierge': {
-    prefix: 'Καθαριστής/Πυλωρός',
+    prefix: 'Συνεργείο Καθαρισμού',
     suffix: 'YYYY',
     supplier: 'Καθαριστής',
     distribution: 'equal_share' as const,

@@ -52,13 +52,13 @@ enum ExpenseCategory {
   WATER_COMMON = "water_common",                   // Νερό Κοινοχρήστων
   GARBAGE_COLLECTION = "garbage_collection",       // Συλλογή Απορριμμάτων
   SECURITY = "security",                           // Ασφάλεια Κτιρίου
-  CONCIERGE = "concierge",                         // Καθαριστής/Πυλωρός
+  CONCIERGE = "concierge",                         // Συνεργείο Καθαρισμού
   
   // Δαπάνες Ανελκυστήρα
   ELEVATOR_MAINTENANCE = "elevator_maintenance",   // Ετήσια Συντήρηση Ανελκυστήρα
   ELEVATOR_REPAIR = "elevator_repair",             // Επισκευή Ανελκυστήρα
   ELEVATOR_INSPECTION = "elevator_inspection",     // Επιθεώρηση Ανελκυστήρα
-  ELEVATOR_MODERNIZATION = "elevator_modernization", // Μοντέρνιση Ανελκυστήρα
+  ELEVATOR_MODERNIZATION = "elevator_modernization", // Αναβάθμιση Ανελκυστήρα
   
   // Δαπάνες Θέρμανσης
   HEATING_FUEL = "heating_fuel",                   // Πετρέλαιο Θέρμανσης
@@ -66,7 +66,7 @@ enum ExpenseCategory {
   HEATING_MAINTENANCE = "heating_maintenance",     // Συντήρηση Καυστήρα
   HEATING_REPAIR = "heating_repair",               // Επισκευή Θερμαντικών
   HEATING_INSPECTION = "heating_inspection",       // Επιθεώρηση Θερμαντικών
-  HEATING_MODERNIZATION = "heating_modernization", // Μοντέρνιση Θερμαντικών
+  HEATING_MODERNIZATION = "heating_modernization", // Αναβάθμιση Θερμαντικών
   
   // Δαπάνες Ηλεκτρικών Εγκαταστάσεων
   ELECTRICAL_MAINTENANCE = "electrical_maintenance", // Συντήρηση Ηλεκτρικών

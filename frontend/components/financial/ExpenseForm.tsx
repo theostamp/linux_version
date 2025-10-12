@@ -31,13 +31,13 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'water_common', label: 'Νερό Κοινοχρήστων', group: 'Πάγιες Δαπάνες' },
   { value: 'garbage_collection', label: 'Συλλογή Απορριμμάτων', group: 'Πάγιες Δαπάνες' },
   { value: 'security', label: 'Ασφάλεια Κτιρίου', group: 'Πάγιες Δαπάνες' },
-  { value: 'concierge', label: 'Καθαριστής/Πυλωρός', group: 'Πάγιες Δαπάνες' },
+  { value: 'concierge', label: 'Συνεργείο Καθαρισμού', group: 'Πάγιες Δαπάνες' },
   
   // Δαπάνες Ανελκυστήρα
   { value: 'elevator_maintenance', label: 'Ετήσια Συντήρηση Ανελκυστήρα', group: 'Ανελκυστήρας' },
   { value: 'elevator_repair', label: 'Επισκευή Ανελκυστήρα', group: 'Ανελκυστήρας' },
   { value: 'elevator_inspection', label: 'Επιθεώρηση Ανελκυστήρα', group: 'Ανελκυστήρας' },
-  { value: 'elevator_modernization', label: 'Μοντέρνιση Ανελκυστήρα', group: 'Ανελκυστήρας' },
+  { value: 'elevator_modernization', label: 'Αναβάθμιση Ανελκυστήρα', group: 'Ανελκυστήρας' },
   
   // Δαπάνες Θέρμανσης
   { value: 'heating_fuel', label: 'Πετρέλαιο Θέρμανσης', group: 'Θέρμανση' },
@@ -45,7 +45,7 @@ const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; group: string
   { value: 'heating_maintenance', label: 'Συντήρηση Καυστήρα', group: 'Θέρμανση' },
   { value: 'heating_repair', label: 'Επισκευή Θερμαντικών', group: 'Θέρμανση' },
   { value: 'heating_inspection', label: 'Επιθεώρηση Θερμαντικών', group: 'Θέρμανση' },
-  { value: 'heating_modernization', label: 'Μοντέρνιση Θερμαντικών', group: 'Θέρμανση' },
+  { value: 'heating_modernization', label: 'Αναβάθμιση Θερμαντικών', group: 'Θέρμανση' },
   
   // Δαπάνες Ηλεκτρικών
   { value: 'electrical_maintenance', label: 'Συντήρηση Ηλεκτρικών', group: 'Ηλεκτρικά' },

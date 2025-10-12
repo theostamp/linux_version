@@ -24,13 +24,13 @@ class Expense(models.Model):
         ('water_common', 'Νερό Κοινοχρήστων'),
         ('garbage_collection', 'Συλλογή Απορριμμάτων'),
         ('security', 'Ασφάλεια Κτιρίου'),
-        ('concierge', 'Καθαριστής/Πυλωρός'),
+        ('concierge', 'Συνεργείο Καθαρισμού'),
         
         # Δαπάνες Ανελκυστήρα
         ('elevator_maintenance', 'Ετήσια Συντήρηση Ανελκυστήρα'),
         ('elevator_repair', 'Επισκευή Ανελκυστήρα'),
         ('elevator_inspection', 'Επιθεώρηση Ανελκυστήρα'),
-        ('elevator_modernization', 'Μοντέρνιση Ανελκυστήρα'),
+        ('elevator_modernization', 'Αναβάθμιση Ανελκυστήρα'),
         
         # Δαπάνες Θέρμανσης
         ('heating_fuel', 'Πετρέλαιο Θέρμανσης'),
@@ -38,7 +38,7 @@ class Expense(models.Model):
         ('heating_maintenance', 'Συντήρηση Καυστήρα'),
         ('heating_repair', 'Επισκευή Θερμαντικών'),
         ('heating_inspection', 'Επιθεώρηση Θερμαντικών'),
-        ('heating_modernization', 'Μοντέρνιση Θερμαντικών'),
+        ('heating_modernization', 'Αναβάθμιση Θερμαντικών'),
         
         # Δαπάνες Ηλεκτρικών Εγκαταστάσεων
         ('electrical_maintenance', 'Συντήρηση Ηλεκτρικών'),
@@ -482,14 +482,14 @@ export const ExpenseForm: React.FC = () => {
             <option value="water_common">Νερό Κοινοχρήστων</option>
             <option value="garbage_collection">Συλλογή Απορριμμάτων</option>
             <option value="security">Ασφάλεια Κτιρίου</option>
-            <option value="concierge">Καθαριστής/Πυλωρός</option>
+            <option value="concierge">Συνεργείο Καθαρισμού</option>
           </optgroup>
           
           <optgroup label="Δαπάνες Ανελκυστήρα">
             <option value="elevator_maintenance">Ετήσια Συντήρηση Ανελκυστήρα</option>
             <option value="elevator_repair">Επισκευή Ανελκυστήρα</option>
             <option value="elevator_inspection">Επιθεώρηση Ανελκυστήρα</option>
-            <option value="elevator_modernization">Μοντέρνιση Ανελκυστήρα</option>
+            <option value="elevator_modernization">Αναβάθμιση Ανελκυστήρα</option>
           </optgroup>
           
           <optgroup label="Δαπάνες Θέρμανσης">
@@ -498,7 +498,7 @@ export const ExpenseForm: React.FC = () => {
             <option value="heating_maintenance">Συντήρηση Καυστήρα</option>
             <option value="heating_repair">Επισκευή Θερμαντικών</option>
             <option value="heating_inspection">Επιθεώρηση Θερμαντικών</option>
-            <option value="heating_modernization">Μοντέρνιση Θερμαντικών</option>
+            <option value="heating_modernization">Αναβάθμιση Θερμαντικών</option>
           </optgroup>
           
           <optgroup label="Δαπάνες Ηλεκτρικών">
