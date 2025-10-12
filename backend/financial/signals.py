@@ -308,9 +308,19 @@ def update_monthly_balance_on_expense(sender, instance, created, **kwargs):
             monthly_balance.total_expenses = month_expenses
             monthly_balance.total_payments = month_payments
             
-            # Υπολογισμός carry_forward (οφειλές που μεταφέρονται στον επόμενο μήνα)
-            # carry_forward = expenses - payments (θετικό αν υπάρχουν οφειλές)
-            monthly_balance.carry_forward = month_expenses - month_payments
+            # ✅ ΚΡΙΣΙΜΗ ΔΙΟΡΘΩΣΗ: carry_forward = previous_carry_forward + current_month_debt
+            # Βρίσκουμε το carry_forward από τον προηγούμενο μήνα
+            from dateutil.relativedelta import relativedelta
+            prev_month_date = month_start - relativedelta(months=1)
+            previous_balance = MonthlyBalance.objects.filter(
+                building=building,
+                year=prev_month_date.year,
+                month=prev_month_date.month
+            ).first()
+            
+            previous_carry_forward = previous_balance.carry_forward if previous_balance else Decimal('0.00')
+            current_month_debt = month_expenses - month_payments
+            monthly_balance.carry_forward = previous_carry_forward + current_month_debt
             
             monthly_balance.save()
             
@@ -426,7 +436,19 @@ def update_monthly_balance_on_expense_delete(sender, instance, **kwargs):
             
             monthly_balance.total_expenses = month_expenses
             monthly_balance.total_payments = month_payments
-            monthly_balance.carry_forward = month_expenses - month_payments
+            
+            # ✅ ΚΡΙΣΙΜΗ ΔΙΟΡΘΩΣΗ: carry_forward = previous_carry_forward + current_month_debt
+            from dateutil.relativedelta import relativedelta
+            prev_month_date = month_start - relativedelta(months=1)
+            previous_balance = MonthlyBalance.objects.filter(
+                building=building,
+                year=prev_month_date.year,
+                month=prev_month_date.month
+            ).first()
+            
+            previous_carry_forward = previous_balance.carry_forward if previous_balance else Decimal('0.00')
+            current_month_debt = month_expenses - month_payments
+            monthly_balance.carry_forward = previous_carry_forward + current_month_debt
             monthly_balance.save()
 
             print(f"✅ Επαναυπολογίστηκε MonthlyBalance για {month:02d}/{year}: Expenses=€{month_expenses}, Carry=€{monthly_balance.carry_forward}")
@@ -490,7 +512,19 @@ def update_monthly_balance_on_payment(sender, instance, created, **kwargs):
             
             monthly_balance.total_expenses = month_expenses
             monthly_balance.total_payments = month_payments
-            monthly_balance.carry_forward = month_expenses - month_payments
+            
+            # ✅ ΚΡΙΣΙΜΗ ΔΙΟΡΘΩΣΗ: carry_forward = previous_carry_forward + current_month_debt
+            from dateutil.relativedelta import relativedelta
+            prev_month_date = month_start - relativedelta(months=1)
+            previous_balance = MonthlyBalance.objects.filter(
+                building=building,
+                year=prev_month_date.year,
+                month=prev_month_date.month
+            ).first()
+            
+            previous_carry_forward = previous_balance.carry_forward if previous_balance else Decimal('0.00')
+            current_month_debt = month_expenses - month_payments
+            monthly_balance.carry_forward = previous_carry_forward + current_month_debt
             monthly_balance.save()
             
             if mb_created:
@@ -547,7 +581,19 @@ def update_monthly_balance_on_payment_delete(sender, instance, **kwargs):
             
             monthly_balance.total_expenses = month_expenses
             monthly_balance.total_payments = month_payments
-            monthly_balance.carry_forward = month_expenses - month_payments
+            
+            # ✅ ΚΡΙΣΙΜΗ ΔΙΟΡΘΩΣΗ: carry_forward = previous_carry_forward + current_month_debt
+            from dateutil.relativedelta import relativedelta
+            prev_month_date = month_start - relativedelta(months=1)
+            previous_balance = MonthlyBalance.objects.filter(
+                building=building,
+                year=prev_month_date.year,
+                month=prev_month_date.month
+            ).first()
+            
+            previous_carry_forward = previous_balance.carry_forward if previous_balance else Decimal('0.00')
+            current_month_debt = month_expenses - month_payments
+            monthly_balance.carry_forward = previous_carry_forward + current_month_debt
             monthly_balance.save()
             
             print(f"✅ Επαναυπολογίστηκε MonthlyBalance για {month:02d}/{year} (Payment Delete): Payments=€{month_payments}, Carry=€{monthly_balance.carry_forward}")

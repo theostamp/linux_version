@@ -52,7 +52,9 @@ def sync_monthly_balances():
             for pay in all_payments:
                 months_with_activity.add((pay.date.year, pay.date.month))
             
-            # Συγχρονισμός κάθε μήνα
+            # Συγχρονισμός κάθε μήνα (ταξινομημένοι για σωστό αθροιστικό carry_forward)
+            cumulative_carry_forward = Decimal('0.00')  # Αθροιστικό υπόλοιπο
+            
             for year, month in sorted(months_with_activity):
                 month_start = date(year, month, 1)
                 if month == 12:
@@ -73,7 +75,10 @@ def sync_monthly_balances():
                     date__lt=month_end
                 ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
                 
-                carry_forward = month_expenses - month_payments
+                # ✅ ΚΡΙΣΙΜΟ: Αθροιστικός υπολογισμός carry_forward
+                current_month_debt = month_expenses - month_payments
+                cumulative_carry_forward += current_month_debt
+                carry_forward = cumulative_carry_forward
                 
                 # Get or Create MonthlyBalance
                 monthly_balance, created = MonthlyBalance.objects.get_or_create(
