@@ -141,7 +141,7 @@ def create_project_announcement(project: Project):
 {f'**Προθεσμία:** {project.deadline}' if project.deadline else ''}
 {f'**Ημερομηνία Γενικής Συνελεύσης:** {project.general_assembly_date}' if project.general_assembly_date else ''}
 
-Για περισσότερες πληροφορίες, επικοινωνήστε με τη διοίκηση.
+Για περισσότερες πληροφορίες, επικοινωνήστε με τη διαχείριση.
             """.strip(),
             published=True,
             is_active=True,
@@ -285,7 +285,7 @@ def create_vote_announcement(project: Project):
 
 Όλοι οι ιδιοκτήτες καλούνται να συμμετάσχουν στην ψηφοφορία για την έγκριση του έργου.
 
-Για περισσότερες πληροφορίες, επικοινωνήστε με τη διοίκηση.
+Για περισσότερες πληροφορίες, επικοινωνήστε με τη διαχείριση.
             """.strip(),
             published=True,
             is_active=True,
@@ -615,3 +615,80 @@ def cleanup_project_todos(sender, instance: Project, **kwargs):
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Failed to cleanup TODOs for project {instance.id}: {e}")
+
+
+@receiver(pre_delete, sender=Project)
+def cleanup_project_related_objects(sender, instance: Project, **kwargs):
+    """
+    Καθαρισμός ΟΛΩΝ των συνδεδεμένων objects όταν διαγράφεται ένα Project:
+    - Ανακοινώσεις (Notifications)
+    - Ψηφοφορίες (Votes) 
+    - Δαπάνες (Expenses) που δεν έχουν πληρωθεί
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # 1. Διαγραφή Ανακοινώσεων
+        try:
+            from notifications.models import NotificationEvent
+            project_notifications = NotificationEvent.objects.filter(
+                building=instance.building,
+                title__icontains=instance.title
+            )
+            notif_count = project_notifications.count()
+            if notif_count > 0:
+                project_notifications.delete()
+                logger.info(f"✅ Διαγράφηκαν {notif_count} ανακοινώσεις για project '{instance.title}'")
+        except Exception as e:
+            logger.error(f"❌ Σφάλμα διαγραφής ανακοινώσεων: {e}")
+        
+        # 2. Διαγραφή Ψηφοφοριών
+        try:
+            # Προσπάθεια import voting module (αν υπάρχει)
+            try:
+                from voting.models import Vote
+                project_votes = Vote.objects.filter(
+                    building=instance.building,
+                    title__icontains=instance.title
+                )
+                votes_count = project_votes.count()
+                if votes_count > 0:
+                    project_votes.delete()
+                    logger.info(f"✅ Διαγράφηκαν {votes_count} ψηφοφορίες για project '{instance.title}'")
+            except ImportError:
+                logger.info("ℹ️ Voting module δεν βρέθηκε - παράλειψη")
+        except Exception as e:
+            logger.error(f"❌ Σφάλμα διαγραφής ψηφοφοριών: {e}")
+        
+        # 3. Διαγραφή Δαπανών (ΜΟΝΟ αν δεν έχουν πληρωθεί)
+        try:
+            from financial.models import Expense
+            project_expenses = Expense.objects.filter(project=instance)
+            
+            # Έλεγχος για πληρωμένες δαπάνες
+            expenses_with_payments = []
+            for exp in project_expenses:
+                # Έλεγχος αν υπάρχουν receipts από maintenance
+                try:
+                    if exp.linked_service_receipts.exists():
+                        expenses_with_payments.append(exp)
+                except:
+                    pass
+            
+            if expenses_with_payments:
+                logger.warning(
+                    f"⚠️ ΠΡΟΣΤΑΣΙΑ: {len(expenses_with_payments)} δαπάνες με πληρωμές δεν διαγράφονται"
+                )
+            else:
+                expenses_count = project_expenses.count()
+                if expenses_count > 0:
+                    project_expenses.delete()
+                    logger.info(f"✅ Διαγράφηκαν {expenses_count} δαπάνες για project '{instance.title}'")
+        except Exception as e:
+            logger.error(f"❌ Σφάλμα διαγραφής δαπανών: {e}")
+        
+        logger.info(f"✅ Cleanup ολοκληρώθηκε για project '{instance.title}' (ID: {instance.id})")
+        
+    except Exception as e:
+        logger.error(f"❌ Σφάλμα γενικού cleanup για project {instance.id}: {e}")
