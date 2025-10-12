@@ -124,14 +124,14 @@ def test_previous_obligations_transfer():
         
         # Check November previous obligations
         nov_summary = service.get_summary(month='2025-11')
-        nov_previous = nov_summary.get('previous_obligations', 0)
+        nov_previous = Decimal(str(nov_summary.get('previous_obligations', 0)))  # Convert to Decimal
         expected_nov_previous = Decimal('1080.00')
         
         print(f"\n📊 November Results:")
         print(f"   Previous Obligations: €{nov_previous}")
         print(f"   Expected: €{expected_nov_previous}")
         
-        if abs(nov_previous - expected_nov_previous) < 0.01:
+        if abs(nov_previous - expected_nov_previous) < Decimal('0.01'):
             print(f"   ✅ PASS")
         else:
             print(f"   ❌ FAIL")
@@ -139,14 +139,14 @@ def test_previous_obligations_transfer():
         
         # Check December previous obligations
         dec_summary = service.get_summary(month='2025-12')
-        dec_previous = dec_summary.get('previous_obligations', 0)
+        dec_previous = Decimal(str(dec_summary.get('previous_obligations', 0)))  # Convert to Decimal
         expected_dec_previous = Decimal('2160.00')
         
         print(f"\n📊 December Results:")
         print(f"   Previous Obligations: €{dec_previous}")
         print(f"   Expected: €{expected_dec_previous}")
         
-        if abs(dec_previous - expected_dec_previous) < 0.01:
+        if abs(dec_previous - expected_dec_previous) < Decimal('0.01'):
             print(f"   ✅ PASS")
         else:
             print(f"   ❌ FAIL")
@@ -176,18 +176,19 @@ def test_apartment_balance_sum():
         dec_summary = service.get_summary(month='2025-12')
         dec_balances = service.get_apartment_balances(month='2025-12')
         
-        total_from_apartments = sum(
+        total_from_apartments = Decimal(str(sum(
             apt.get('net_obligation', 0) 
             for apt in dec_balances
-        )
+        )))
         
-        expected_total = dec_summary.get('previous_obligations', 0) + dec_summary.get('current_obligations', 0)
+        # current_obligations already includes previous + current month
+        expected_total = Decimal(str(dec_summary.get('current_obligations', 0)))
         
         print(f"\n📊 Results:")
         print(f"   Sum of Apartment Balances: €{total_from_apartments:.2f}")
-        print(f"   Expected Total: €{expected_total:.2f}")
+        print(f"   Expected Total (current_obligations): €{expected_total:.2f}")
         
-        if abs(total_from_apartments - expected_total) < 0.01:
+        if abs(total_from_apartments - expected_total) < Decimal('0.01'):
             print(f"   ✅ PASS")
             print(f"\n✅ TEST 3 PASSED!\n")
             return True
