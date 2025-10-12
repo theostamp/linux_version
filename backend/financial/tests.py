@@ -15,8 +15,10 @@ from .serializers import (
     FinancialSummarySerializer, ApartmentBalanceSerializer
 )
 from .services import CommonExpenseCalculator
-from buildings.models import Building, Apartment
-from tenants.models import Tenant
+from buildings.models import Building
+from apartments.models import Apartment
+from django_tenants.test.cases import TenantTestCase
+from tenants.models import Client as Tenant
 
 User = get_user_model()
 
@@ -35,7 +37,7 @@ class FinancialModelsTestCase(TestCase):
         # Create user
         self.user = User.objects.create_user(
             username='testuser',
-            email='test@example.com'  # TODO: Use test fixture,
+            email='test@example.com',
             password='testpass123'
         )
         
@@ -163,7 +165,7 @@ class FinancialSerializersTestCase(TestCase):
         
         self.user = User.objects.create_user(
             username='testuser',
-            email='test@example.com'  # TODO: Use test fixture,
+            email='test@example.com',
             password='testpass123'
         )
         
@@ -257,7 +259,7 @@ class CommonExpenseCalculatorTestCase(TestCase):
         
         self.user = User.objects.create_user(
             username='testuser',
-            email='test@example.com'  # TODO: Use test fixture,
+            email='test@example.com',
             password='testpass123'
         )
         
@@ -376,7 +378,7 @@ class FinancialAPITestCase(TestCase):
         
         self.user = User.objects.create_user(
             username='testuser',
-            email='test@example.com'  # TODO: Use test fixture,
+            email='test@example.com',
             password='testpass123'
         )
         
@@ -440,7 +442,7 @@ class FinancialValidationTestCase(TestCase):
         
         self.user = User.objects.create_user(
             username='testuser',
-            email='test@example.com'  # TODO: Use test fixture,
+            email='test@example.com',
             password='testpass123'
         )
         
