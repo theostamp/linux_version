@@ -1,0 +1,1 @@
+# Test automatic pre-commit hook
