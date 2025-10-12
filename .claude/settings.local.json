@@ -18,7 +18,10 @@
       "Bash(docker volume prune:*)",
       "Bash(docker network prune:*)",
       "Bash(docker builder prune:*)",
-      "Bash(docker system prune:*)"
+      "Bash(docker system prune:*)",
+      "Bash(npm i:*)",
+      "Bash(npm install:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

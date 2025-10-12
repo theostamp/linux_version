@@ -187,3 +187,5 @@ payer_responsibility: 'owner' | 'resident' | 'shared';  // ✅ ΝΕΟ ΠΕΔΙΟ
    - Export PDF functionality
    - Email sending capability
 
+
+
