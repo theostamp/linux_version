@@ -205,6 +205,7 @@ class Expense(models.Model):
         
         # Έργα & Projects
         ('project', 'Έργα Πολυκατοικίας'),
+        ('maintenance_project', 'Έργα Συντήρησης & Βελτίωσης'),
         
         # Άλλες Δαπάνες
         ('miscellaneous', 'Διάφορες Δαπάνες'),
@@ -324,6 +325,7 @@ class Expense(models.Model):
         
         # Έργα & Projects - ΙΔΙΟΚΤΗΤΗΣ (μεγάλα έργα)
         'project': 'owner',                      # Έργα πολυκατοικίας (από Projects module)
+        'maintenance_project': 'owner',          # Έργα συντήρησης & βελτίωσης (από Maintenance module)
         
         # Άλλες Δαπάνες - Εξαρτώμενες
         'miscellaneous': 'shared',
