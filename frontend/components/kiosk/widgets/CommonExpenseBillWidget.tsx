@@ -14,18 +14,15 @@ export default function CommonExpenseBillWidget({ data, isLoading, error }: Base
     const fetchLatestBill = async () => {
       try {
         setImageLoading(true);
-        console.log('Fetching latest common expense bill from kiosk API...');
+        console.log('[CommonExpenseBill] Fetching latest bill...');
         
-        // Get the correct API base URL
-        const apiBaseUrl = typeof window !== 'undefined' 
-          ? `http://${window.location.hostname}:18000/api`
-          : 'http://localhost:18000/api';
-        
-        const response = await fetch(`${apiBaseUrl}/kiosk/latest-bill/`, {
-          method: 'POST',
+        // Use Next.js API route proxy (better for CORS and Docker network)
+        const response = await fetch('/api/kiosk-latest-bill', {
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
+          cache: 'no-store',
         });
 
         if (response.ok) {
@@ -74,11 +71,7 @@ export default function CommonExpenseBillWidget({ data, isLoading, error }: Base
 
   return (
     <div className="h-full overflow-hidden">
-      <div className="flex items-center space-x-2 mb-4 pb-2 border-b border-emerald-500/20">
-        <FileText className="w-6 h-6 text-emerald-300" />
-        <h2 className="text-lg font-bold text-white">Φύλλο Κοινόχρηστων</h2>
-      </div>
-      
+      {/* NO HEADER - Direct display for scene mode */}
       <div className="h-full overflow-y-auto">
         {imageLoading ? (
           <div className="flex items-center justify-center h-full">
@@ -88,18 +81,27 @@ export default function CommonExpenseBillWidget({ data, isLoading, error }: Base
             </div>
           </div>
         ) : billImageUrl && !imageError ? (
-          // Display the actual common expense bill image
-          <div className="bg-white rounded-lg p-4 h-full flex items-center justify-center">
-            <div className="relative max-w-full max-h-full">
+          // Display the actual common expense bill image - FULL CONTAINER FIT
+          // Blue theme background matching the scene palette
+          <div className="bg-gradient-to-br from-slate-800 via-slate-750 to-blue-900 rounded-lg h-full w-full flex items-center justify-center p-3 overflow-hidden">
+            <div className="relative w-full h-full flex items-center justify-center">
               <img
                 src={billImageUrl}
                 alt="Φύλλο Κοινόχρηστων"
-                className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                className="w-full h-full object-contain drop-shadow-2xl"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  imageRendering: 'high-quality',
+                  filter: 'drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5))'
+                }}
                 onError={() => setImageError(true)}
               />
-              <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                <FileText className="w-3 h-3 inline mr-1" />
-                Κοινόχρηστα
+              {/* Minimal badge overlay - matching blue theme */}
+              <div className="absolute top-3 left-3 bg-blue-500/80 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-lg shadow-xl flex items-center space-x-1.5 border border-blue-400/30">
+                <FileText className="w-3.5 h-3.5" />
+                <span className="font-semibold tracking-wide">Φύλλο Κοινοχρήστων</span>
               </div>
             </div>
           </div>
@@ -131,37 +133,28 @@ export default function CommonExpenseBillWidget({ data, isLoading, error }: Base
                 
                     {/* Refresh button */}
                     <button 
-                      onClick={() => {
+                      onClick={async () => {
                         setImageLoading(true);
                         setImageError(false);
-                        // Get the correct API base URL
-                        const apiBaseUrl = typeof window !== 'undefined' 
-                          ? `http://${window.location.hostname}:18000/api`
-                          : 'http://localhost:18000/api';
                         
-                        // Re-fetch the latest bill
-                        fetch(`${apiBaseUrl}/kiosk/latest-bill/`, {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                          },
-                        })
-                        .then(response => response.json())
-                        .then(result => {
+                        try {
+                          const response = await fetch('/api/kiosk-latest-bill', {
+                            cache: 'no-store',
+                          });
+                          const result = await response.json();
+                          
                           if (result.success && result.image_data) {
                             setBillImageUrl(result.image_data);
                             setImageError(false);
                           } else {
                             setImageError(true);
                           }
-                        })
-                        .catch(err => {
+                        } catch (err) {
                           console.error('Error refreshing bill:', err);
                           setImageError(true);
-                        })
-                        .finally(() => {
+                        } finally {
                           setImageLoading(false);
-                        });
+                        }
                       }}
                       className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
                     >

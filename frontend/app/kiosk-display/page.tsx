@@ -159,21 +159,21 @@ export default function KioskDisplayPage() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-900 flex flex-col overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-slate-900 text-gray-100 flex flex-col overflow-hidden">
 
       {/* Loading State */}
       {(kioskLoading || weatherLoading || widgetsLoading) && (
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-50">
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 text-center shadow-lg border border-gray-200">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <div className="text-gray-800">Φόρτωση δεδομένων...</div>
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-gray-800/95 backdrop-blur-sm rounded-lg p-6 text-center shadow-lg border border-gray-700">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <div className="text-gray-100">Φόρτωση δεδομένων...</div>
           </div>
         </div>
       )}
 
       {/* Error State */}
       {(kioskError || weatherError || widgetsError) && (
-        <div className="absolute top-24 right-4 bg-red-100/90 border border-red-300 text-red-800 px-4 py-2 rounded-lg z-40 backdrop-blur-sm">
+        <div className="absolute top-24 right-4 bg-red-900/90 border border-red-700 text-red-200 px-4 py-2 rounded-lg z-40 backdrop-blur-sm">
           <div className="text-sm">
             ⚠️ {kioskError || weatherError || widgetsError}
           </div>
@@ -182,34 +182,34 @@ export default function KioskDisplayPage() {
 
       {/* Voice Status Indicator */}
       {voiceEnabled && (
-        <div className="absolute top-24 left-4 bg-white/90 border border-green-300 text-gray-800 px-4 py-2 rounded-lg z-40 backdrop-blur-sm shadow-lg">
+        <div className="absolute top-24 left-4 bg-gray-800/95 border border-green-600 text-gray-100 px-4 py-2 rounded-lg z-40 backdrop-blur-sm shadow-lg">
           <div className="flex items-center justify-between space-x-4">
             <div className="flex items-center space-x-3">
-              <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`}></div>
+              <div className={`w-2 h-2 rounded-full ${isListening ? 'bg-green-400 animate-pulse' : 'bg-gray-500'}`}></div>
               <div className="text-sm">
                 {isListening ? '🎤 Ακούω...' : '🎤 Φωνητική πλοήγηση ενεργή'}
               </div>
             </div>
             <button
               onClick={() => setUseOfflineVoice(prev => !prev)}
-              className="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
+              className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded transition-colors"
               title={useOfflineVoice ? 'Χρήση Online Voice' : 'Χρήση Offline Voice'}
             >
               {useOfflineVoice ? '🖥️ Offline' : '☁️ Online'}
             </button>
           </div>
           {lastCommand && (
-            <div className="text-xs text-gray-600 mt-1">
+            <div className="text-xs text-gray-400 mt-1">
               Τελευταία εντολή: "{lastCommand}"
             </div>
           )}
           {voiceError && (
-            <div className="text-xs text-red-600 mt-1">
+            <div className="text-xs text-red-400 mt-1">
               {voiceError}
             </div>
           )}
           {useOfflineVoice && (
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-400 mt-1">
               {offlineVoice.isConnected ? '✅ WebSocket connected' : '⏳ Connecting...'}
             </div>
           )}
@@ -221,14 +221,14 @@ export default function KioskDisplayPage() {
         {/* Top Row: Sidebar and Slides */}
         <div className="flex flex-1">
           {/* Sidebar */}
-          <div className="w-64 sm:w-80 bg-white/60 backdrop-blur-sm p-2 sm:p-4 space-y-2 sm:space-y-4 overflow-y-auto border-r border-gray-300/30 shadow-sm">
+          <div className="w-64 sm:w-80 bg-gray-800/60 backdrop-blur-sm p-2 sm:p-4 space-y-2 sm:space-y-4 overflow-y-auto border-r border-gray-700/30 shadow-sm">
             {/* Header Info Card */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg p-3 hover:bg-white/90 transition-all duration-300 shadow-sm">
+            <div className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-lg p-3 hover:bg-gray-800/90 transition-all duration-300 shadow-sm">
               <div className="space-y-2">
-                <div className="text-sm font-semibold text-gray-800">
+                <div className="text-sm font-semibold text-gray-100">
                   {kioskData?.building_info?.address || 'Αλκμάνος 22, Αθήνα'}
                 </div>
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-gray-400">
                   {new Date().toLocaleDateString('el-GR', {
                     weekday: 'long',
                     year: 'numeric',
@@ -237,7 +237,7 @@ export default function KioskDisplayPage() {
                   })}
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold text-gray-800">
+                  <div className="text-sm font-semibold text-gray-100">
                     {new Date().toLocaleTimeString('el-GR', {
                       hour: '2-digit',
                       minute: '2-digit'
@@ -249,7 +249,7 @@ export default function KioskDisplayPage() {
                       className={`p-1 rounded text-xs transition-all ${
                         voiceEnabled
                           ? 'bg-green-600/80 text-white animate-pulse'
-                          : 'hover:bg-gray-200/80 text-gray-700'
+                          : 'hover:bg-gray-700/80 text-gray-300'
                       }`}
                       title={voiceEnabled ? 'Απενεργοποίηση φωνητικής πλοήγησης' : 'Ενεργοποίηση φωνητικής πλοήγησης'}
                     >
@@ -257,7 +257,7 @@ export default function KioskDisplayPage() {
                     </button>
                     <button
                       onClick={toggleFullscreen}
-                      className="p-1 hover:bg-gray-200/80 text-gray-700 rounded transition-colors text-xs"
+                      className="p-1 hover:bg-gray-700/80 text-gray-300 rounded transition-colors text-xs"
                       title="Toggle Fullscreen (F11)"
                     >
                       ⛶
@@ -268,28 +268,28 @@ export default function KioskDisplayPage() {
             </div>
             {/* Weather Widget */}
             {weather && (
-              <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg p-4 hover:bg-white/90 transition-all duration-300 shadow-sm">
-                <h3 className="text-lg font-semibold text-blue-700 mb-4">🌤️ Καιρός</h3>
+              <div className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/90 transition-all duration-300 shadow-sm">
+                <h3 className="text-lg font-semibold text-blue-400 mb-4">🌤️ Καιρός</h3>
                 
                 {/* Current Weather */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-2xl font-bold text-gray-800">
+                    <div className="text-2xl font-bold text-gray-100">
                       {weather.current.temperature}°C
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-gray-400">
                       {weather.current.condition}
                     </div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
                     <div>Υγρασία: {weather.current.humidity}%</div>
                     <div>Άνεμος: {weather.current.wind_speed} km/h</div>
                     <div>Ορατότητα: {weather.current.visibility} km</div>
                     <div>Αίσθηση: {weather.current.feels_like}°C</div>
                   </div>
-                  
-                  <div className="flex justify-between text-xs text-gray-600 mt-2">
+
+                  <div className="flex justify-between text-xs text-gray-400 mt-2">
                     <div>Ανατολή: {weather.current.sunrise}</div>
                     <div>Δύση: {weather.current.sunset}</div>
                   </div>
@@ -297,16 +297,16 @@ export default function KioskDisplayPage() {
 
                 {/* Weather Forecast */}
                 <div>
-                  <h4 className="text-sm font-semibold text-blue-600 mb-2">Πρόγνωση</h4>
+                  <h4 className="text-sm font-semibold text-blue-400 mb-2">Πρόγνωση</h4>
                   <div className="space-y-2">
                     {weather.forecast.map((day: any, index: number) => (
                       <div key={index} className="flex items-center justify-between text-xs">
-                        <div className="text-gray-600">{day.day}</div>
+                        <div className="text-gray-400">{day.day}</div>
                         <div className="text-lg">{day.icon}</div>
-                        <div className="text-gray-800 font-semibold">
+                        <div className="text-gray-100 font-semibold">
                           {day.high}° / {day.low}°
                         </div>
-                        <div className="text-gray-500">{day.condition}</div>
+                        <div className="text-gray-400">{day.condition}</div>
                       </div>
                     ))}
                   </div>
@@ -315,42 +315,42 @@ export default function KioskDisplayPage() {
             )}
 
             {/* QR Code Widget */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg p-4 hover:bg-white/90 transition-all duration-300 shadow-sm">
-              <h3 className="text-lg font-semibold text-blue-700 mb-4">📱 Σύνδεση</h3>
+            <div className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/90 transition-all duration-300 shadow-sm">
+              <h3 className="text-lg font-semibold text-blue-400 mb-4">📱 Σύνδεση</h3>
               <div className="flex flex-col items-center space-y-3">
                 <div className="bg-white p-2 rounded-lg">
-                  <QRCodeGenerator 
+                  <QRCodeGenerator
                     url={`${window.location.origin}/dashboard`}
                     size={100}
                     className="rounded"
                   />
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-semibold text-gray-800">Συνδεθείτε</div>
-                  <div className="text-xs text-gray-600">Σαρώστε για πρόσβαση στο Dashboard</div>
+                  <div className="text-sm font-semibold text-gray-100">Συνδεθείτε</div>
+                  <div className="text-xs text-gray-400">Σαρώστε για πρόσβαση στο Dashboard</div>
                 </div>
               </div>
             </div>
 
             {/* Manager Widget */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg p-4 hover:bg-white/90 transition-all duration-300 shadow-sm">
-              <h3 className="text-lg font-semibold text-blue-700 mb-4">👨‍💼 Διαχειριστής</h3>
+            <div className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/90 transition-all duration-300 shadow-sm">
+              <h3 className="text-lg font-semibold text-blue-400 mb-4">👨‍💼 Διαχειριστής</h3>
               <div className="space-y-3">
                 <div>
-                  <div className="text-sm font-semibold text-gray-800">Εσωτερικός Διαχειριστής</div>
-                  <div className="text-sm text-gray-600">Γιάννης Παπαδόπουλος</div>
-                  <div className="text-sm text-blue-600">+30 210 123 4567</div>
+                  <div className="text-sm font-semibold text-gray-100">Εσωτερικός Διαχειριστής</div>
+                  <div className="text-sm text-gray-400">Γιάννης Παπαδόπουλος</div>
+                  <div className="text-sm text-blue-400">+30 210 123 4567</div>
                 </div>
-                
-                <div className="border-t border-gray-200/50 pt-3">
-                  <div className="text-xs text-gray-600 mb-1">Διαμερίσματα:</div>
-                  <div className="text-sm text-gray-800">Α1, Α2, Β1, Β2, Γ1, Γ2</div>
+
+                <div className="border-t border-gray-700/50 pt-3">
+                  <div className="text-xs text-gray-400 mb-1">Διαμερίσματα:</div>
+                  <div className="text-sm text-gray-100">Α1, Α2, Β1, Β2, Γ1, Γ2</div>
                 </div>
-                
-                <div className="border-t border-gray-200/50 pt-3">
-                  <div className="text-xs text-gray-600 mb-1">Πληρωμή Κοινόχρηστων:</div>
-                  <div className="text-sm text-gray-800">Δευτέρα - Παρασκευή</div>
-                  <div className="text-xs text-gray-600">09:00 - 17:00</div>
+
+                <div className="border-t border-gray-700/50 pt-3">
+                  <div className="text-xs text-gray-400 mb-1">Πληρωμή Κοινόχρηστων:</div>
+                  <div className="text-sm text-gray-100">Δευτέρα - Παρασκευή</div>
+                  <div className="text-xs text-gray-400">09:00 - 17:00</div>
                 </div>
               </div>
             </div>
@@ -372,7 +372,7 @@ export default function KioskDisplayPage() {
                         className={`p-3 rounded-lg transition-all duration-300 ${
                           index === currentSlide
                             ? 'text-white shadow-lg scale-105'
-                            : 'bg-white/80 text-gray-600 hover:bg-blue-100 hover:text-blue-700 hover:shadow-md hover:scale-105 border border-gray-200'
+                            : 'bg-gray-800/80 text-gray-300 hover:bg-gray-700/80 hover:text-blue-400 hover:shadow-md hover:scale-105 border border-gray-700'
                         }`}
                         style={index === currentSlide ? {
                           backgroundColor: widgetBgColor,
@@ -396,9 +396,9 @@ export default function KioskDisplayPage() {
                       const hasAssemblyData = combinedData?.announcements?.some((a: any) =>
                         a.title?.includes('Συνέλευση') || a.title?.includes('Σύγκληση')
                       );
-                      
+
                       return hasAssemblyData ? (
-                        <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg overflow-hidden shadow-sm flex items-center justify-center flex-1">
+                        <div className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-lg overflow-hidden shadow-sm flex items-center justify-center flex-1">
                           <div className="w-full h-full">
                             <WidgetWrapper
                               widget={{
@@ -423,17 +423,17 @@ export default function KioskDisplayPage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg overflow-hidden flex items-center justify-center shadow-sm flex-1">
-                          <div className="text-center text-gray-500">
+                        <div className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-lg overflow-hidden flex items-center justify-center shadow-sm flex-1">
+                          <div className="text-center text-gray-400">
                             <div className="text-4xl mb-2">📅</div>
                             <div className="text-sm font-semibold">Δεν υπάρχει προγραμματισμένη συνέλευση</div>
                           </div>
                         </div>
                       );
                     })()}
-                    
+
                     {/* Bottom Left - Next Main Slide */}
-                    <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg overflow-hidden shadow-sm flex-1">
+                    <div className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-lg overflow-hidden shadow-sm flex-1">
                       <WidgetWrapper
                         widget={mainSlides[(currentSlide + 1) % mainSlides.length]}
                         data={combinedData}
@@ -445,7 +445,7 @@ export default function KioskDisplayPage() {
                   {/* Right Column - 70% */}
                   <div className="w-[70%] flex flex-col gap-4">
                     {/* Top Right - Current Main Slide */}
-                    <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg overflow-hidden shadow-sm flex-1">
+                    <div className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-lg overflow-hidden shadow-sm flex-1">
                   <WidgetWrapper
                     widget={mainSlides[currentSlide]}
                     data={combinedData}
@@ -454,7 +454,7 @@ export default function KioskDisplayPage() {
                 </div>
 
                     {/* Bottom Right - Previous Main Slide */}
-                    <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg overflow-hidden shadow-sm flex-1">
+                    <div className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-lg overflow-hidden shadow-sm flex-1">
                       <WidgetWrapper
                         widget={mainSlides[(currentSlide - 1 + mainSlides.length) % mainSlides.length]}
                         data={combinedData}
@@ -464,8 +464,8 @@ export default function KioskDisplayPage() {
                   </div>
                 </div>
 
-                {/* Urgent Priorities Widget - Fixed Height: 128px (h-32) - Light theme */}
-                <div className="h-32 backdrop-blur-sm border-t border-gray-200/50 p-4 flex-shrink-0 bg-white/90 shadow-sm">
+                {/* Urgent Priorities Widget - Fixed Height: 128px (h-32) - Dark theme */}
+                <div className="h-32 backdrop-blur-sm border-t border-gray-700/50 p-4 flex-shrink-0 bg-gray-800/90 shadow-sm">
                   <UrgentPrioritiesWidget
                     data={combinedData}
                     settings={{
@@ -485,18 +485,18 @@ export default function KioskDisplayPage() {
 
 
       {/* Footer */}
-      <div className="h-20 flex-shrink-0 bg-white/80 backdrop-blur-sm border-t border-gray-200/50 shadow-sm">
+      <div className="h-20 flex-shrink-0 bg-gray-800/80 backdrop-blur-sm border-t border-gray-700/50 shadow-sm">
         <div className="grid grid-cols-12 h-full">
 
 
           {/* News Ticker Section */}
           <div className="col-span-12 flex items-center px-6 py-4 overflow-hidden">
             <div className="flex items-center space-x-2 sm:space-x-3 w-full">
-              <div className="text-xs sm:text-sm font-semibold text-gray-800 whitespace-nowrap">
+              <div className="text-xs sm:text-sm font-semibold text-gray-100 whitespace-nowrap">
                 📰 Ειδήσεις:
               </div>
               <div className="flex-1 overflow-hidden">
-                <div className="animate-scroll-left whitespace-nowrap text-xs sm:text-sm text-gray-600">
+                <div className="animate-scroll-left whitespace-nowrap text-xs sm:text-sm text-gray-400">
                   {news && news.map((title, index) => (
                     <span key={index}>
                       {title}
@@ -517,7 +517,7 @@ export default function KioskDisplayPage() {
           className={`px-3 py-1 rounded text-xs border ${
             isAutoPlay
               ? 'bg-blue-600/90 text-white border-blue-500'
-              : 'bg-white/90 text-gray-700 border-gray-300'
+              : 'bg-gray-800/90 text-gray-300 border-gray-700'
           }`}
           title="Toggle Auto-play (Ctrl+Alt+S)"
         >
@@ -526,20 +526,20 @@ export default function KioskDisplayPage() {
 
         {/* Priority Debug Info (Development Only) */}
         {process.env.NODE_ENV === 'development' && mainSlides.length > 0 && combinedData && (
-          <div className="bg-white/90 backdrop-blur-sm rounded p-2 text-xs border border-gray-300 max-w-xs">
-            <div className="font-semibold mb-1">Widget Priorities:</div>
+          <div className="bg-gray-800/95 backdrop-blur-sm rounded p-2 text-xs border border-gray-700 max-w-xs">
+            <div className="font-semibold mb-1 text-gray-100">Widget Priorities:</div>
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {mainSlides.map((widget, idx) => {
                 const priority = calculateWidgetPriority(widget, combinedData);
                 return (
                   <div
                     key={widget.id}
-                    className={`p-1 rounded ${idx === currentSlide ? 'bg-blue-100 border border-blue-300' : 'bg-gray-50'}`}
+                    className={`p-1 rounded ${idx === currentSlide ? 'bg-blue-900/50 border border-blue-600' : 'bg-gray-900/50'}`}
                   >
-                    <div className="font-semibold text-gray-800">
+                    <div className="font-semibold text-gray-100">
                       #{idx + 1}: {widget.name}
                     </div>
-                    <div className="text-gray-600">Score: {priority.score.toFixed(0)}</div>
+                    <div className="text-gray-400">Score: {priority.score.toFixed(0)}</div>
                     {priority.reasons.length > 0 && (
                       <div className="text-gray-500 text-xs">
                         {priority.reasons.join(', ')}

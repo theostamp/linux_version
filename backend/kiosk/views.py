@@ -89,18 +89,20 @@ class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         """Update widget configuration"""
         with schema_context('demo'):
-            widget = self.get_object()
-            widget_data = request.data.copy()
-            
-            # Update fields
-            for field, value in widget_data.items():
-                if hasattr(widget, field):
-                    setattr(widget, field, value)
-            
-            widget.updated_at = timezone.now()
-            widget.save()
-            
-            return Response(widget.to_dict())
+            partial = kwargs.pop('partial', False)
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+
+            # Refresh from DB to get updated data
+            instance.refresh_from_db()
+            return Response(instance.to_dict())
+
+    def partial_update(self, request, *args, **kwargs):
+        """Partial update widget configuration (PATCH)"""
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         """Delete widget configuration"""

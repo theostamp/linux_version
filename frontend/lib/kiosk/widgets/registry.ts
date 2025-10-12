@@ -69,6 +69,7 @@ export const WIDGET_COMPONENTS: Record<string, React.ComponentType<any>> = {
   QRCodeConnection: QRCodeWidget,
   TimeDate: TimeWidget,
   BuildingSelector: DashboardWidget,
+  CommonExpensesSheet: CommonExpenseBillWidget, // New widget for kiosk display
   NewsTicker: AnnouncementsWidget,
 };
 
