@@ -46,21 +46,18 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
 
         const result = await response.json();
         
-        // Φιλτράρουμε μόνο διαμερίσματα με οφειλές
-        // Χρησιμοποιούμε current_balance OR net_obligation ανάλογα με το τι είναι διαθέσιμο
-        const apartmentsWithDebts = (result.apartments || [])
-          .filter((apt: ApartmentDebt) => {
-            const debt = apt.current_balance || apt.net_obligation || 0;
-            return debt > 0;
-          })
+        // Εμφανίζουμε όλα τα διαμερίσματα με τα κοινόχρηστα του τρέχοντος μήνα
+        const apartmentExpenses = (result.apartments || [])
           .map((apt: ApartmentDebt) => ({
             ...apt,
-            // Use current_balance as the primary debt indicator if net_obligation is 0
-            displayDebt: apt.net_obligation > 0 ? apt.net_obligation : apt.current_balance
+            displayAmount: apt.net_obligation || apt.current_balance || 0
           }))
-          .sort((a: any, b: any) => b.displayDebt - a.displayDebt);
+          .sort((a: any, b: any) => 
+            // Ταξινόμηση: αριθμητικά (1, 2, 3, 10) όχι αλφαβητικά
+            parseInt(a.apartment_number) - parseInt(b.apartment_number)
+          );
         
-        setDebts(apartmentsWithDebts);
+        setDebts(apartmentExpenses);
         setApiError(null);
       } catch (err) {
         console.error('Error fetching apartment debts:', err);
@@ -96,7 +93,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
     );
   }
 
-  const totalDebt = debts.reduce((sum, apt: any) => sum + (apt.displayDebt || apt.net_obligation || apt.current_balance), 0);
+  const totalExpenses = debts.reduce((sum, apt: any) => sum + (apt.displayAmount || apt.net_obligation || apt.current_balance), 0);
 
   return (
     <div className="h-full overflow-hidden flex flex-col">
@@ -107,24 +104,24 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
           <h2 className="text-lg font-bold text-white">Τα Κοινόχρηστα Συνοπτικά</h2>
         </div>
         <div className="text-right">
-          <div className="text-xs text-purple-200">Σύνολο</div>
+          <div className="text-xs text-purple-200">Σύνολο Μήνα</div>
           <div className="text-lg font-bold text-purple-300">
-            €{totalDebt.toFixed(2)}
+            €{totalExpenses.toFixed(2)}
           </div>
         </div>
       </div>
       
-      {/* Debts List */}
+      {/* Expenses List */}
       <div className="flex-1 overflow-y-auto space-y-2">
         {debts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-emerald-300">
-            <TrendingUp className="w-12 h-12 mb-3 opacity-60" />
-            <p className="text-sm font-medium">Δεν υπάρχουν οφειλές!</p>
-            <p className="text-xs text-emerald-400 mt-1">Όλα τα διαμερίσματα είναι ενημερωμένα</p>
+          <div className="flex flex-col items-center justify-center h-full text-purple-300">
+            <Euro className="w-12 h-12 mb-3 opacity-60" />
+            <p className="text-sm font-medium">Δεν υπάρχουν δεδομένα</p>
+            <p className="text-xs text-purple-400 mt-1">Κανένα κοινόχρηστο για τον τρέχοντα μήνα</p>
           </div>
         ) : (
           debts.map((apt: any) => {
-            const amount = apt.displayDebt || apt.net_obligation || apt.current_balance;
+            const amount = apt.displayAmount || apt.net_obligation || apt.current_balance;
             
             // Ενιαίος χρωματισμός σύμφωνα με την παλέτα της σκηνής (purple/indigo)
             const bgColor = 'from-purple-900/30 to-indigo-900/30';
@@ -173,7 +170,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
             </div>
             <div className="bg-gradient-to-br from-indigo-900/30 to-purple-900/30 backdrop-blur-sm p-2 rounded-lg border border-indigo-500/20 text-center">
               <div className="text-lg font-bold text-indigo-300">
-                €{(totalDebt / debts.length).toFixed(0)}
+                €{(totalExpenses / debts.length).toFixed(0)}
               </div>
               <div className="text-xs text-indigo-200">Μέσος Όρος</div>
             </div>
