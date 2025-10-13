@@ -37,12 +37,14 @@ import ManagerWidget from '@/components/kiosk/widgets/ManagerWidget';
 import UrgentPrioritiesWidget from '@/components/kiosk/widgets/UrgentPrioritiesWidget';
 import AssemblyWidget from '@/components/kiosk/widgets/AssemblyWidget';
 import CommonExpenseBillWidget from '@/components/kiosk/widgets/CommonExpenseBillWidget';
+import ApartmentDebtsWidget from '@/components/kiosk/widgets/ApartmentDebtsWidget';
 
 export const WIDGET_COMPONENTS: Record<string, React.ComponentType<any>> = {
   DashboardWidget,
   AnnouncementsWidget,
   AssemblyWidget,
   CommonExpenseBillWidget,
+  ApartmentDebtsWidget,
   TimeWidget,
   VotesWidget,
   FinancialWidget,
@@ -80,6 +82,7 @@ export const WIDGET_ICONS: Record<string, LucideIcon> = {
   AnnouncementsWidget: Bell,
   AssemblyWidget: Calendar,
   CommonExpenseBillWidget: FileText,
+  ApartmentDebtsWidget: DollarSign,
   TimeWidget: Clock,
   VotesWidget: Vote,
   FinancialWidget: DollarSign,
@@ -223,6 +226,11 @@ export function hasWidgetData(widget: KioskWidget, data?: any): boolean {
       // Always show the common expense bill widget (it has fallback)
       return true;
 
+    case 'ApartmentDebtsWidget':
+      // Show if there are apartments with debts
+      return data?.apartments && Array.isArray(data.apartments) && 
+             data.apartments.some((apt: any) => apt.net_obligation > 0);
+
     case 'FinancialWidget':
       return data?.financial && (
         data.financial.collection_rate !== undefined ||
@@ -355,6 +363,24 @@ export const SYSTEM_WIDGETS: Omit<KioskWidget, 'id' | 'createdAt' | 'updatedAt' 
       backgroundColor: '#059669',
       dataSource: '/api/common-expense-bills',
       refreshInterval: 600,
+    },
+  },
+  {
+    name: 'Apartment Debts',
+    greekName: 'Οφειλές Διαμερισμάτων',
+    description: 'Summarized view of apartment debts',
+    greekDescription: 'Περιληπτική εμφάνιση οφειλών διαμερισμάτων',
+    category: 'main_slides',
+    component: 'ApartmentDebtsWidget',
+    enabled: true,
+    order: 3.6,
+    settings: {
+      title: 'Οφειλές Διαμερισμάτων',
+      showTitle: false,
+      gridSize: 'large',
+      backgroundColor: '#EA580C',
+      dataSource: '/api/financial/dashboard/apartment_balances',
+      refreshInterval: 300,
     },
   },
   {

@@ -126,6 +126,21 @@ def create_default_widgets():
                 'is_custom': False
             },
             {
+                'widget_id': 'apartment_debts',
+                'name': 'Apartment Debts',
+                'greek_name': 'Οφειλές Διαμερισμάτων',
+                'description': 'Summarized view of apartment debts with owner names and amounts',
+                'greek_description': 'Περιληπτική εμφάνιση οφειλών διαμερισμάτων με ονόματα και ποσά',
+                'category': 'main_slides',
+                'icon': 'Euro',
+                'enabled': True,
+                'order': 5.5,
+                'settings': {},
+                'component': 'ApartmentDebtsWidget',
+                'data_source': 'apartment_balances',
+                'is_custom': False
+            },
+            {
                 'widget_id': 'maintenance_overview',
                 'name': 'Maintenance Overview',
                 'greek_name': 'Υπηρεσίες & Συντήρηση',

@@ -4,6 +4,7 @@ export { default as DashboardWidget } from './DashboardWidget';
 export { default as AnnouncementsWidget } from './AnnouncementsWidget';
 export { default as VotesWidget } from './VotesWidget';
 export { default as FinancialWidget } from './FinancialWidget';
+export { default as ApartmentDebtsWidget } from './ApartmentDebtsWidget';
 export { default as EmergencyWidget } from './EmergencyWidget';
 export { default as BuildingStatisticsWidget } from './BuildingStatisticsWidget';
 export { default as MaintenanceWidget } from './MaintenanceWidget';
