@@ -121,9 +121,9 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
         </div>
       </div>
 
-      {/* Right Area - 45% - Apartment Debts Widget */}
+      {/* Right Area - 45% - Apartment Debts Widget (Common Expenses Summary) */}
       <div className="flex-1 p-3">
-        <div className="h-full w-full bg-gradient-to-br from-orange-900/40 to-red-900/40 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-orange-500/30">
+        <div className="h-full w-full bg-gradient-to-br from-purple-900/40 to-indigo-900/40 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/30">
           <div className="h-full w-full p-4">
             <ApartmentDebtsWidget data={data} isLoading={false} error={null} buildingId={buildingId} />
           </div>

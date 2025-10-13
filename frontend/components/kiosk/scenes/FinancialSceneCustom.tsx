@@ -25,18 +25,28 @@ export default function FinancialSceneCustom({ data, buildingId }: FinancialScen
 
   // Auto-scroll sidebar widgets every 10 seconds with smooth slide animation
   useEffect(() => {
+    console.log('[FinancialScene] Setting up auto-scroll animation...');
+    
     const interval = setInterval(() => {
       // Start smooth slide animation
       setIsSliding(true);
+      console.log('[FinancialScene] Starting slide animation...');
       
       // After animation completes, change widget
       setTimeout(() => {
-        setCurrentSidebarWidget((prev) => (prev + 1) % sidebarWidgets.length);
+        setCurrentSidebarWidget((prev) => {
+          const next = (prev + 1) % sidebarWidgets.length;
+          console.log(`[FinancialScene] Widget change: ${prev} → ${next} (${sidebarWidgets[next].name})`);
+          return next;
+        });
         setIsSliding(false);
       }, 1500); // 1.5s smooth animation for continuous feel
     }, 10000); // 10 seconds per widget
 
-    return () => clearInterval(interval);
+    return () => {
+      console.log('[FinancialScene] Cleaning up auto-scroll...');
+      clearInterval(interval);
+    };
   }, [sidebarWidgets.length]);
 
   const CurrentSidebarComponent = sidebarWidgets[currentSidebarWidget].Component;
@@ -70,21 +80,24 @@ export default function FinancialSceneCustom({ data, buildingId }: FinancialScen
 
           {/* Sliding Widget Container - Smooth Film Strip Animation */}
           <div className="h-full w-full relative overflow-hidden">
-            {sidebarWidgets.map((widget, index) => (
-              <div
-                key={widget.id}
-                className="absolute inset-0 transition-all ease-linear"
-                style={{
-                  transform: `translateY(${(index - currentSidebarWidget) * 100}%)`,
-                  transitionDuration: '1500ms', // Slower, smoother animation
-                  transitionTimingFunction: 'cubic-bezier(0.4, 0.0, 0.2, 1)', // Smooth easing
-                }}
-              >
-                <div className="h-full w-full p-4">
-                  <widget.Component data={data} isLoading={false} error={null} />
+            {sidebarWidgets.map((widget, index) => {
+              const WidgetComp = widget.Component;
+              return (
+                <div
+                  key={widget.id}
+                  className="absolute inset-0"
+                  style={{
+                    transform: `translateY(${(index - currentSidebarWidget) * 100}%)`,
+                    transition: 'transform 1500ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+                    willChange: 'transform', // Performance hint for browser
+                  }}
+                >
+                  <div className="h-full w-full p-4">
+                    <WidgetComp data={data} isLoading={false} error={null} />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
