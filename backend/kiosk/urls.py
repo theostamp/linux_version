@@ -7,6 +7,7 @@ from .views import (
     KioskSceneViewSet,
     PublicKioskSceneViewSet
 )
+from . import views_apartment_debts as views
 
 router = DefaultRouter()
 router.register(r'configs', KioskWidgetConfigViewSet, basename='kiosk-config')
@@ -24,4 +25,7 @@ urlpatterns = [
     
     # Additional public endpoints
     path('public/configs/get_by_building/', PublicKioskWidgetConfigViewSet.as_view({'get': 'list'}), name='public-kiosk-configs-by-building'),
+    
+    # Apartment debts endpoint for kiosk widget
+    path('apartment-debts/', views.apartment_debts, name='apartment-debts'),
 ]

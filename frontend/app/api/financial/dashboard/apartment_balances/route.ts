@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
     const host = request.headers.get('host') || 'demo.localhost';
     const subdomain = host.split('.')[0];
 
-    // Forward the request to the Django backend
-    const backendUrl = `${process.env.BACKEND_URL || 'http://backend:8000'}/api/financial/dashboard/apartment_balances/?building_id=${buildingId}${month ? `&month=${month}` : ''}`;
+    // Forward the request to the kiosk apartment-debts endpoint which returns current_balance
+    const backendUrl = `${process.env.BACKEND_URL || 'http://backend:8000'}/api/kiosk/apartment-debts/?building_id=${buildingId}`;
     
     console.log('[apartment_balances API] Fetching from:', backendUrl);
     console.log('[apartment_balances API] Subdomain:', subdomain);
