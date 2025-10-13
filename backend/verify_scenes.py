@@ -24,3 +24,4 @@ with schema_context('demo'):
             print(f"     • {p.widget.greek_name}: ({p.grid_row_start},{p.grid_col_start}) → ({p.grid_row_end},{p.grid_col_end})")
         print()
 
+

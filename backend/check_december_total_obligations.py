@@ -125,3 +125,4 @@ def check_december_total():
 if __name__ == '__main__':
     check_december_total()
 
+

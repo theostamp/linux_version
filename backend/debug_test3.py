@@ -29,3 +29,4 @@ with schema_context('demo'):
     print(f"   Sum of apartments: €{total_from_apartments}")
     print(f"   Should equal: current_obligations = €{dec_summary.get('current_obligations')}")
 
+

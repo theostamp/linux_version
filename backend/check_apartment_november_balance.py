@@ -97,3 +97,4 @@ def check_apartment_balance():
 if __name__ == '__main__':
     check_apartment_balance()
 
+
