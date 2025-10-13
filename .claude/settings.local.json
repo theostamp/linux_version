@@ -21,7 +21,8 @@
       "Bash(docker system prune:*)",
       "Bash(npm i:*)",
       "Bash(npm install:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []
