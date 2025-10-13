@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Bell } from 'lucide-react';
 import WeatherWidget from '@/components/kiosk/widgets/WeatherWidget';
 import QRCodeWidget from '@/components/kiosk/widgets/QRCodeWidget';
 import ManagerWidget from '@/components/kiosk/widgets/ManagerWidget';
@@ -53,12 +54,33 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
 
   const CurrentSidebarComponent = sidebarWidgets[currentSidebarWidget].Component;
 
+  // Filter announcements for General Assembly or Votes
+  const importantAnnouncements = (data?.announcements || []).filter((ann: any) => 
+    ann.title?.toLowerCase().includes('συνέλευση') || 
+    ann.title?.toLowerCase().includes('σύγκληση') ||
+    ann.title?.toLowerCase().includes('ψηφοφορ')
+  );
+
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 flex overflow-hidden">
-      {/* Left Sidebar - 15% with smooth scrolling widgets */}
-      <div className="w-[15%] flex flex-col p-3">
+      {/* Left Sidebar - 20% (same structure as Financial scene) */}
+      <div className="w-[20%] flex flex-col space-y-3 p-3">
+        {/* Sticky Top - Important Announcements (Assembly/Votes) */}
+        <div className="flex-shrink-0 h-[35%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
+          <div className="h-full overflow-y-auto p-3">
+            {importantAnnouncements.length > 0 ? (
+              <AnnouncementsWidget data={{ announcements: importantAnnouncements }} isLoading={false} error={null} />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-purple-300">
+                <Bell className="w-8 h-8 mb-2 opacity-60" />
+                <p className="text-xs text-center">Δεν υπάρχουν ενεργές<br/>Συνελεύσεις/Ψηφοφορίες</p>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Auto-Scrolling Widgets Area - Slide Animation */}
-        <div className="h-full bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden relative border border-purple-500/20">
+        <div className="flex-1 bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden relative border border-purple-500/20">
           {/* Widget Indicators - Film Strip Style */}
           <div className="absolute top-3 right-3 z-10 flex space-x-1.5">
             {sidebarWidgets.map((_, index) => (
@@ -97,8 +119,8 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
         </div>
       </div>
 
-      {/* Center Area - 40% with stacked widgets */}
-      <div className="w-[40%] flex flex-col space-y-3 p-3">
+      {/* Center Area - 35% with stacked widgets */}
+      <div className="w-[35%] flex flex-col space-y-3 p-3">
         {/* Building Statistics - Top */}
         <div className="h-[33%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
           <div className="h-full overflow-y-auto p-4">
@@ -121,8 +143,8 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
         </div>
       </div>
 
-      {/* Right Area - 45% - Apartment Debts Widget (Common Expenses Summary) */}
-      <div className="flex-1 p-3">
+      {/* Right Area - 45% - Common Expenses Summary Widget */}
+      <div className="w-[45%] p-3">
         <div className="h-full w-full bg-gradient-to-br from-purple-900/40 to-indigo-900/40 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/30">
           <div className="h-full w-full p-4">
             <ApartmentDebtsWidget data={data} isLoading={false} error={null} buildingId={buildingId} />
