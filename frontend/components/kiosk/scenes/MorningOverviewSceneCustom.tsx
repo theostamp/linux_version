@@ -6,6 +6,7 @@ import WeatherWidget from '@/components/kiosk/widgets/WeatherWidget';
 import QRCodeWidget from '@/components/kiosk/widgets/QRCodeWidget';
 import ManagerWidget from '@/components/kiosk/widgets/ManagerWidget';
 import AnnouncementsWidget from '@/components/kiosk/widgets/AnnouncementsWidget';
+import AssemblyAnnouncementWidget from '@/components/kiosk/widgets/AssemblyAnnouncementWidget';
 import BuildingStatisticsWidget from '@/components/kiosk/widgets/BuildingStatisticsWidget';
 import EmergencyWidget from '@/components/kiosk/widgets/EmergencyWidget';
 import ApartmentDebtsWidget from '@/components/kiosk/widgets/ApartmentDebtsWidget';
@@ -65,17 +66,10 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
     <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 flex overflow-hidden">
       {/* Left Sidebar - 20% (same structure as Financial scene) */}
       <div className="w-[20%] flex flex-col space-y-3 p-3">
-        {/* Sticky Top - Important Announcements (Assembly/Votes) */}
+        {/* Sticky Top - Important Announcements (Assembly/Votes) with Custom Format */}
         <div className="flex-shrink-0 h-[35%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
           <div className="h-full overflow-y-auto p-3">
-            {importantAnnouncements.length > 0 ? (
-              <AnnouncementsWidget data={{ announcements: importantAnnouncements }} isLoading={false} error={null} />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-purple-300">
-                <Bell className="w-8 h-8 mb-2 opacity-60" />
-                <p className="text-xs text-center">Δεν υπάρχουν ενεργές<br/>Συνελεύσεις/Ψηφοφορίες</p>
-              </div>
-            )}
+            <AssemblyAnnouncementWidget data={data} isLoading={false} error={null} />
           </div>
         </div>
 
