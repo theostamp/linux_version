@@ -11,26 +11,30 @@ interface ApartmentDebt {
   owner_name: string;
   net_obligation: number;
   current_balance: number;
+  previous_balance: number;
   status: string;
 }
 
-export default function ApartmentDebtsWidget({ data, isLoading, error, settings }: BaseWidgetProps) {
+export default function ApartmentDebtsWidget({ data, isLoading, error, settings, buildingId }: BaseWidgetProps & { buildingId?: number | null }) {
   const { currentBuilding, selectedBuilding } = useBuilding();
   const building = selectedBuilding || currentBuilding;
+  const effectiveBuildingId = buildingId || building?.id;
   const [debts, setDebts] = useState<ApartmentDebt[]>([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDebts = async () => {
-      if (!building?.id) {
+      if (!effectiveBuildingId) {
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/financial/dashboard/apartment_balances/?building_id=${building.id}`, {
+        // Use relative URL for kiosk context
+        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}`;
+        const response = await fetch(apiUrl, {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -42,10 +46,19 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
 
         const result = await response.json();
         
-        // Φιλτράρουμε μόνο διαμερίσματα με οφειλές (net_obligation > 0)
+        // Φιλτράρουμε μόνο διαμερίσματα με οφειλές
+        // Χρησιμοποιούμε current_balance OR net_obligation ανάλογα με το τι είναι διαθέσιμο
         const apartmentsWithDebts = (result.apartments || [])
-          .filter((apt: ApartmentDebt) => apt.net_obligation > 0)
-          .sort((a: ApartmentDebt, b: ApartmentDebt) => b.net_obligation - a.net_obligation);
+          .filter((apt: ApartmentDebt) => {
+            const debt = apt.current_balance || apt.net_obligation || 0;
+            return debt > 0;
+          })
+          .map((apt: ApartmentDebt) => ({
+            ...apt,
+            // Use current_balance as the primary debt indicator if net_obligation is 0
+            displayDebt: apt.net_obligation > 0 ? apt.net_obligation : apt.current_balance
+          }))
+          .sort((a: any, b: any) => b.displayDebt - a.displayDebt);
         
         setDebts(apartmentsWithDebts);
         setApiError(null);
@@ -62,7 +75,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
     // Refresh every 5 minutes
     const interval = setInterval(fetchDebts, 300000);
     return () => clearInterval(interval);
-  }, [building?.id]);
+  }, [effectiveBuildingId]);
 
   if (isLoading || loading) {
     return (
@@ -83,7 +96,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
     );
   }
 
-  const totalDebt = debts.reduce((sum, apt) => sum + apt.net_obligation, 0);
+  const totalDebt = debts.reduce((sum, apt: any) => sum + (apt.displayDebt || apt.net_obligation || apt.current_balance), 0);
 
   return (
     <div className="h-full overflow-hidden flex flex-col">
@@ -110,21 +123,23 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
             <p className="text-xs text-emerald-400 mt-1">Όλα τα διαμερίσματα είναι ενημερωμένα</p>
           </div>
         ) : (
-          debts.map((apt) => {
+          debts.map((apt: any) => {
             // Καθορισμός χρώματος ανάλογα με το ύψος της οφειλής
+            const debtAmount = apt.displayDebt || apt.net_obligation || apt.current_balance;
+            
             let bgColor = 'from-blue-900/40 to-indigo-900/40';
             let borderColor = 'border-blue-500/30';
             let statusColor = 'text-blue-300';
             
-            if (apt.net_obligation > 500) {
+            if (debtAmount > 500) {
               bgColor = 'from-red-900/40 to-rose-900/40';
               borderColor = 'border-red-500/30';
               statusColor = 'text-red-300';
-            } else if (apt.net_obligation > 200) {
+            } else if (debtAmount > 200) {
               bgColor = 'from-orange-900/40 to-amber-900/40';
               borderColor = 'border-orange-500/30';
               statusColor = 'text-orange-300';
-            } else if (apt.net_obligation > 100) {
+            } else if (debtAmount > 100) {
               bgColor = 'from-yellow-900/40 to-orange-900/40';
               borderColor = 'border-yellow-500/30';
               statusColor = 'text-yellow-300';
@@ -147,7 +162,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
                         <h3 className="font-bold text-white text-sm truncate">
                           {apt.apartment_number}
                         </h3>
-                        {apt.net_obligation > 300 && (
+                        {debtAmount > 300 && (
                           <AlertCircle className={`w-3.5 h-3.5 ${statusColor} flex-shrink-0`} />
                         )}
                       </div>
@@ -158,7 +173,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings 
                   </div>
                   <div className="text-right ml-3 flex-shrink-0">
                     <div className={`text-lg font-bold ${statusColor}`}>
-                      €{apt.net_obligation.toFixed(2)}
+                      €{debtAmount.toFixed(2)}
                     </div>
                     <div className="text-xs text-white/60">
                       {apt.status || 'Οφειλή'}
