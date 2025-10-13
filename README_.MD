@@ -601,6 +601,8 @@ docker system prune -a
 
 docker compose up --build -d
 
+./run_tests_before_commit.sh
+
 
 git add .
 git commit -m "διορθωσεις 31"
