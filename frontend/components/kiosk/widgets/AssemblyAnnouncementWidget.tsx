@@ -42,11 +42,29 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
   }
 
   // Filter for assembly/vote announcements
-  const importantAnnouncements = (data?.announcements || []).filter((ann: any) => 
-    ann.title?.toLowerCase().includes('συνέλευση') || 
-    ann.title?.toLowerCase().includes('σύγκληση') ||
-    ann.title?.toLowerCase().includes('ψηφοφορ')
-  );
+  // Filter announcements for General Assembly or Votes (future events only)
+  const importantAnnouncements = (data?.announcements || [])
+    .filter((ann: any) => {
+      const isAssemblyOrVote = ann.title?.toLowerCase().includes('συνέλευση') || 
+                               ann.title?.toLowerCase().includes('σύγκληση') ||
+                               ann.title?.toLowerCase().includes('ψηφοφορ');
+      
+      if (!isAssemblyOrVote) return false;
+      
+      // Only show future events
+      if (ann.start_date) {
+        const eventDate = parseISO(ann.start_date);
+        return !isPast(eventDate);
+      }
+      
+      return true; // If no date, show it
+    })
+    .sort((a: any, b: any) => {
+      // Sort by start_date ascending (nearest first)
+      const dateA = a.start_date ? parseISO(a.start_date) : new Date();
+      const dateB = b.start_date ? parseISO(b.start_date) : new Date();
+      return dateA.getTime() - dateB.getTime();
+    });
 
   if (importantAnnouncements.length === 0) {
     return (
