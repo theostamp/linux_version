@@ -63,8 +63,9 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
             ? parseISO(announcement.start_date) 
             : new Date(announcement.created_at);
           
-          // Extract location and topic from description if formatted correctly
-          // Expected format in description: "Τοποθεσία: [location]\nΘέμα: [topic]" or similar
+          // Extract time, location and topic from description if formatted correctly
+          // Expected format in description: "Ώρα: [time]\nΤοποθεσία: [location]\nΘέμα: [topic]"
+          const time = extractTime(announcement.description);
           const location = extractLocation(announcement.description);
           const topic = extractTopic(announcement.description);
           
@@ -95,12 +96,12 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
                     </div>
                     
                     {/* Ώρα */}
-                    <div className="flex items-center text-purple-200">
-                      <Clock className="w-3.5 h-3.5 mr-2 text-purple-300" />
-                      <span>
-                        {format(assemblyDate, 'HH:mm', { locale: el })}
-                      </span>
-                    </div>
+                    {time && (
+                      <div className="flex items-center text-purple-200">
+                        <Clock className="w-3.5 h-3.5 mr-2 text-purple-300" />
+                        <span>{time}</span>
+                      </div>
+                    )}
                     
                     {/* Τοποθεσία */}
                     {location && (
@@ -150,6 +151,26 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
 }
 
 // Helper functions to extract structured data from description
+function extractTime(description: string): string | null {
+  if (!description) return null;
+  
+  // Try to find time in various formats
+  const patterns = [
+    /[ώω]ρα[:\s]+(\d{1,2}:\d{2})/i,
+    /[ώω]ρα[:\s]+(\d{1,2}\.\d{2})/i,
+    /στις\s+(\d{1,2}:\d{2})/i,
+  ];
+  
+  for (const pattern of patterns) {
+    const match = description.match(pattern);
+    if (match) {
+      return match[1].trim().replace('.', ':');
+    }
+  }
+  
+  return null;
+}
+
 function extractLocation(description: string): string | null {
   if (!description) return null;
   
