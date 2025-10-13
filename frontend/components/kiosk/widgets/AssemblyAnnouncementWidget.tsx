@@ -1,8 +1,9 @@
 'use client';
 
-import { Calendar, MapPin, Clock, FileText } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { Calendar, MapPin, Clock, FileText, AlertCircle } from 'lucide-react';
+import { format, parseISO, differenceInDays, differenceInHours, isPast } from 'date-fns';
 import { el } from 'date-fns/locale';
+import { useState, useEffect } from 'react';
 
 interface AssemblyAnnouncementWidgetProps {
   data?: any;
@@ -11,6 +12,16 @@ interface AssemblyAnnouncementWidgetProps {
 }
 
 export default function AssemblyAnnouncementWidget({ data, isLoading, error }: AssemblyAnnouncementWidgetProps) {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every minute for countdown
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -59,7 +70,7 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
       <div className="flex-1 overflow-y-auto space-y-3">
         {importantAnnouncements.slice(0, 2).map((announcement: any) => {
           // Parse date if available
-          const assemblyDate = announcement.start_date 
+          let assemblyDate = announcement.start_date 
             ? parseISO(announcement.start_date) 
             : new Date(announcement.created_at);
           
@@ -68,6 +79,18 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
           const time = extractTime(announcement.description);
           const location = extractLocation(announcement.description);
           const topic = extractTopic(announcement.description);
+          
+          // If time is found, combine it with the date for accurate countdown
+          if (time) {
+            const [hours, minutes] = time.split(':').map(Number);
+            assemblyDate = new Date(assemblyDate);
+            assemblyDate.setHours(hours, minutes, 0, 0);
+          }
+          
+          // Calculate countdown
+          const daysRemaining = differenceInDays(assemblyDate, currentTime);
+          const hoursRemaining = differenceInHours(assemblyDate, currentTime) % 24;
+          const isPastEvent = isPast(assemblyDate);
           
           // Check if it's an assembly announcement
           const isAssembly = announcement.title?.toLowerCase().includes('συνέλευση') || 
@@ -79,53 +102,98 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
               className="bg-gradient-to-br from-purple-900/40 to-indigo-900/40 backdrop-blur-sm p-3 rounded-lg border border-purple-500/30"
             >
               {isAssembly ? (
-                // Assembly format: Γενική συνέλευση <ημέρα> <ημερομηνία> <ώρα> <τοποθεσία> <θέμα>
+                // Assembly format with countdown: "Σε X ημέρες και Y ώρες έχουμε γενική συνέλευση..."
                 <div className="space-y-2">
-                  <div className="font-bold text-white text-sm">
-                    Γενική Συνέλευση
-                  </div>
-                  
-                  <div className="space-y-1.5 text-xs">
-                    {/* Ημέρα και Ημερομηνία */}
-                    <div className="flex items-center text-purple-200">
-                      <Calendar className="w-3.5 h-3.5 mr-2 text-purple-300" />
-                      <span className="font-medium">
-                        {format(assemblyDate, 'EEEE', { locale: el })}{' '}
-                        {format(assemblyDate, 'dd/MM/yyyy', { locale: el })}
-                      </span>
+                  {!isPastEvent && daysRemaining >= 0 ? (
+                    <>
+                      {/* Countdown Header - Ζωντανό! */}
+                      <div className="bg-gradient-to-r from-purple-600/30 to-indigo-600/30 rounded-lg p-2 border border-purple-400/40">
+                        <div className="flex items-center justify-center space-x-2">
+                          <AlertCircle className="w-4 h-4 text-purple-300 animate-pulse" />
+                          <div className="text-center">
+                            <div className="text-white font-bold text-sm">
+                              Σε {daysRemaining > 0 && `${daysRemaining} ${daysRemaining === 1 ? 'ημέρα' : 'ημέρες'}`}
+                              {daysRemaining > 0 && hoursRemaining > 0 && ' και '}
+                              {(daysRemaining === 0 || hoursRemaining > 0) && `${hoursRemaining} ${hoursRemaining === 1 ? 'ώρα' : 'ώρες'}`}
+                            </div>
+                            <div className="text-purple-200 text-xs mt-0.5">
+                              έχουμε Γενική Συνέλευση
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Θέμα */}
+                      {topic && (
+                        <div className="text-xs">
+                          <span className="text-purple-300 font-medium">Θέμα: </span>
+                          <span className="text-white line-clamp-2">{topic}</span>
+                        </div>
+                      )}
+                      
+                      {/* Τοποθεσία */}
+                      {location && (
+                        <div className="flex items-center text-xs">
+                          <MapPin className="w-3.5 h-3.5 mr-1.5 text-purple-300 flex-shrink-0" />
+                          <span className="text-purple-200 line-clamp-1">{location}</span>
+                        </div>
+                      )}
+                      
+                      {/* Date and Time Details */}
+                      <div className="flex items-center justify-between text-xs pt-2 border-t border-purple-500/20">
+                        <div className="flex items-center text-purple-300">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          <span>{format(assemblyDate, 'dd/MM/yyyy', { locale: el })}</span>
+                        </div>
+                        {time && (
+                          <div className="flex items-center text-purple-300">
+                            <Clock className="w-3 h-3 mr-1" />
+                            <span>{time}</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    // Past event or detailed view
+                    <div className="space-y-1.5">
+                      <div className="font-bold text-white text-sm">
+                        {isPastEvent ? 'Πραγματοποιήθηκε' : 'Γενική Συνέλευση'}
+                      </div>
+                      
+                      {/* Ημέρα και Ημερομηνία */}
+                      <div className="flex items-center text-purple-200 text-xs">
+                        <Calendar className="w-3.5 h-3.5 mr-2 text-purple-300" />
+                        <span className="font-medium">
+                          {format(assemblyDate, 'EEEE', { locale: el })}{' '}
+                          {format(assemblyDate, 'dd/MM/yyyy', { locale: el })}
+                        </span>
+                      </div>
+                      
+                      {/* Ώρα */}
+                      {time && (
+                        <div className="flex items-center text-purple-200 text-xs">
+                          <Clock className="w-3.5 h-3.5 mr-2 text-purple-300" />
+                          <span>{time}</span>
+                        </div>
+                      )}
+                      
+                      {/* Τοποθεσία */}
+                      {location && (
+                        <div className="flex items-center text-purple-200 text-xs">
+                          <MapPin className="w-3.5 h-3.5 mr-2 text-purple-300" />
+                          <span className="line-clamp-1">{location}</span>
+                        </div>
+                      )}
+                      
+                      {/* Θέμα */}
+                      {topic && (
+                        <div className="flex items-start text-purple-200 text-xs">
+                          <FileText className="w-3.5 h-3.5 mr-2 mt-0.5 text-purple-300 flex-shrink-0" />
+                          <span className="line-clamp-2">{topic}</span>
+                        </div>
+                      )}
                     </div>
-                    
-                    {/* Ώρα */}
-                    {time && (
-                      <div className="flex items-center text-purple-200">
-                        <Clock className="w-3.5 h-3.5 mr-2 text-purple-300" />
-                        <span>{time}</span>
-                      </div>
-                    )}
-                    
-                    {/* Τοποθεσία */}
-                    {location && (
-                      <div className="flex items-center text-purple-200">
-                        <MapPin className="w-3.5 h-3.5 mr-2 text-purple-300" />
-                        <span className="line-clamp-1">{location}</span>
-                      </div>
-                    )}
-                    
-                    {/* Θέμα */}
-                    {topic && (
-                      <div className="flex items-start text-purple-200">
-                        <FileText className="w-3.5 h-3.5 mr-2 mt-0.5 text-purple-300 flex-shrink-0" />
-                        <span className="line-clamp-2">{topic}</span>
-                      </div>
-                    )}
-                    
-                    {/* Fallback: Show description if no structured data */}
-                    {!location && !topic && announcement.description && (
-                      <div className="text-purple-200/80 text-xs line-clamp-3 mt-2 pl-5">
-                        {announcement.description}
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               ) : (
                 // Regular announcement format
