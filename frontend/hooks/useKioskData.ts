@@ -37,6 +37,8 @@ export interface KioskAnnouncement {
   content: string;
   created_at: string;
   date?: string;
+  start_date?: string;  // For assembly countdown
+  end_date?: string;    // For filtering
   priority?: 'low' | 'medium' | 'high';
 }
 
@@ -116,9 +118,11 @@ export const useKioskData = (buildingId: number | null = 1) => {
         title: ann.title,
         description: ann.description,
         content: ann.description || '',
-        created_at: ann.start_date,
+        created_at: ann.created_at || ann.start_date,
         date: ann.start_date,
-        priority: 'medium' as const
+        start_date: ann.start_date,  // Keep for assembly countdown
+        end_date: ann.end_date,      // Keep for filtering
+        priority: ann.is_urgent ? 'high' : (ann.priority > 5 ? 'high' : 'medium') as const
       }));
 
       // Use real financial data from backend
