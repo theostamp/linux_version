@@ -41,6 +41,13 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
     );
   }
 
+  // Debug logging
+  console.log('[AssemblyWidget] Data received:', {
+    hasData: !!data,
+    announcementsCount: data?.announcements?.length || 0,
+    announcements: data?.announcements
+  });
+
   // Filter for assembly/vote announcements
   // Filter announcements for General Assembly or Votes (future events only)
   const importantAnnouncements = (data?.announcements || [])
@@ -65,6 +72,11 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
       const dateB = b.start_date ? parseISO(b.start_date) : new Date();
       return dateA.getTime() - dateB.getTime();
     });
+
+  console.log('[AssemblyWidget] Filtered announcements:', {
+    count: importantAnnouncements.length,
+    titles: importantAnnouncements.map((a: any) => ({ title: a.title, start: a.start_date }))
+  });
 
   if (importantAnnouncements.length === 0) {
     return (
