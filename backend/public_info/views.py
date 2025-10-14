@@ -37,12 +37,14 @@ def building_info(request, building_id: int):
         except Building.DoesNotExist:
             building_info = None
 
+        # Include future announcements for kiosk countdown (not just current)
         announcements = Announcement.objects.filter(
             building_id=building_id,
             is_active=True,
-            start_date__lte=today,
-            end_date__gte=today,
-        ).order_by('-start_date')
+            published=True
+        ).filter(
+            Q(end_date__gte=today) | Q(end_date__isnull=True)
+        ).order_by('-priority', '-start_date')
 
         votes = Vote.objects.filter(
             building_id=building_id,
