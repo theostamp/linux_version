@@ -95,18 +95,20 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
 
   const totalExpenses = debts.reduce((sum, apt: any) => sum + (apt.displayAmount || apt.net_obligation || apt.current_balance), 0);
 
+  // Calculate payment coverage percentage (mock for now)
+  const paymentCoveragePercentage = 75; // TODO: Get from API
+
   return (
     <div className="h-full overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3 pb-2 border-b border-purple-500/20">
-        <div className="flex items-center space-x-2">
-          <Euro className="w-6 h-6 text-purple-300" />
-          <h2 className="text-lg font-bold text-white">Τα Κοινόχρηστα Συνοπτικά</h2>
+      <div className="flex items-center justify-between mb-2 pb-2 border-b border-indigo-400/30">
+        <div className="flex items-center space-x-1.5">
+          <Euro className="w-5 h-5 text-indigo-300" />
+          <h2 className="text-base font-bold text-white">Κοινόχρηστα</h2>
         </div>
         <div className="text-right">
-          <div className="text-xs text-purple-200">Σύνολο Μήνα</div>
-          <div className="text-lg font-bold text-purple-300">
-            €{totalExpenses.toFixed(2)}
+          <div className="text-xs text-indigo-300">
+            €{totalExpenses.toFixed(0)}
           </div>
         </div>
       </div>
@@ -122,36 +124,20 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
         ) : (
           debts.map((apt: any) => {
             const amount = apt.displayAmount || apt.net_obligation || apt.current_balance;
-            
-            // Ενιαίος χρωματισμός σύμφωνα με την παλέτα της σκηνής (purple/indigo)
-            const bgColor = 'from-purple-900/30 to-indigo-900/30';
-            const borderColor = 'border-purple-500/20';
 
             return (
               <div
                 key={apt.apartment_id}
-                className={`bg-gradient-to-br ${bgColor} backdrop-blur-sm p-3 rounded-lg border ${borderColor} transition-all hover:scale-[1.01] hover:border-purple-400/30`}
+                className="flex items-center justify-between py-1.5 px-2 hover:bg-indigo-800/20 rounded transition-all"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3 flex-1 min-w-0">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-indigo-500/20 flex items-center justify-center border border-purple-400/30">
-                        <Home className="w-5 h-5 text-purple-300" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-white text-sm truncate">
-                        Διαμέρισμα {apt.apartment_number}
-                      </h3>
-                      <p className="text-xs text-purple-200/70 truncate">
-                        {apt.owner_name || 'Μη καταχωρημένος'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right ml-3 flex-shrink-0">
-                    <div className="text-lg font-bold text-white">
-                      €{amount.toFixed(2)}
-                    </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-white truncate font-medium">
+                    {apt.owner_name || 'Μη καταχωρημένος'}
+                  </p>
+                </div>
+                <div className="text-right ml-2 flex-shrink-0">
+                  <div className="text-sm font-semibold text-indigo-200">
+                    €{amount.toFixed(0)}
                   </div>
                 </div>
               </div>
@@ -160,19 +146,34 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
         )}
       </div>
 
-      {/* Footer Stats */}
+      {/* Footer - Payment Coverage Chart */}
       {debts.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-purple-500/20">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-gradient-to-br from-purple-900/30 to-indigo-900/30 backdrop-blur-sm p-2 rounded-lg border border-purple-500/20 text-center">
-              <div className="text-lg font-bold text-purple-300">{debts.length}</div>
-              <div className="text-xs text-purple-200">Διαμερίσματα</div>
+        <div className="mt-3 pt-3 border-t border-indigo-400/30">
+          <div className="mb-2">
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              <span className="text-indigo-300 font-medium">Κάλυψη Μήνα</span>
+              <span className="text-white font-bold">{paymentCoveragePercentage}%</span>
             </div>
-            <div className="bg-gradient-to-br from-indigo-900/30 to-purple-900/30 backdrop-blur-sm p-2 rounded-lg border border-indigo-500/20 text-center">
-              <div className="text-lg font-bold text-indigo-300">
+            {/* Progress Bar */}
+            <div className="w-full bg-indigo-950/50 rounded-full h-3 overflow-hidden border border-indigo-700/30">
+              <div 
+                className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full transition-all duration-1000 shadow-lg shadow-green-500/50"
+                style={{ width: `${paymentCoveragePercentage}%` }}
+              ></div>
+            </div>
+          </div>
+          
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-1.5 text-xs mt-2">
+            <div className="bg-indigo-900/30 p-1.5 rounded text-center">
+              <div className="text-indigo-300 font-bold">{debts.length}</div>
+              <div className="text-indigo-400 text-[10px]">Διαμερίσματα</div>
+            </div>
+            <div className="bg-indigo-900/30 p-1.5 rounded text-center">
+              <div className="text-indigo-300 font-bold">
                 €{(totalExpenses / debts.length).toFixed(0)}
               </div>
-              <div className="text-xs text-indigo-200">Μέσος Όρος</div>
+              <div className="text-indigo-400 text-[10px]">Μέσος Όρος</div>
             </div>
           </div>
         </div>

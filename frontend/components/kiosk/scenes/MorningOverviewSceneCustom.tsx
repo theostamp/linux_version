@@ -113,8 +113,8 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
         </div>
       </div>
 
-      {/* Center Area - 35% with stacked widgets */}
-      <div className="w-[35%] flex flex-col space-y-3 p-3">
+      {/* Center Area - 55% with stacked widgets (increased from 35%) */}
+      <div className="w-[55%] flex flex-col space-y-3 p-3">
         {/* Building Statistics - Top */}
         <div className="h-[33%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
           <div className="h-full overflow-y-auto p-4">
@@ -137,9 +137,9 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
         </div>
       </div>
 
-      {/* Right Area - 45% - Common Expenses Summary Widget */}
-      <div className="w-[45%] p-3">
-        <div className="h-full w-full bg-gradient-to-br from-purple-900/40 to-indigo-900/40 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/30">
+      {/* Right Area - 25% - Common Expenses Summary Widget (Compact) */}
+      <div className="w-[25%] p-3">
+        <div className="h-full w-full backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-indigo-500/30" style={{ backgroundColor: '#222D59' }}>
           <div className="h-full w-full p-4">
             <ApartmentDebtsWidget data={data} isLoading={false} error={null} buildingId={buildingId} />
           </div>
