@@ -25,9 +25,7 @@ from django.core.management import call_command, execute_from_command_line
 from django_tenants.utils import get_tenant_model, get_tenant_domain_model, schema_context, schema_exists
 from users.models import CustomUser
 from buildings.models import Building, BuildingMembership
-from announcements.models import Announcement
 from user_requests.models import UserRequest
-from votes.models import Vote
 from apartments.models import Apartment
 
 def wait_for_database():
@@ -340,16 +338,16 @@ def create_demo_data(tenant_schema):
             if building.name == 'Αλκμάνος 22':
                 # Ειδική δημιουργία για Αλκμάνος 22 - 10 διαμερίσματα (ΣΥΝΟΛΟ ΧΙΛΙΟΣΤΑ = 1000)
                 apartments_data = [
-                    {'number': '1', 'floor': 0, 'owner_name': 'Γεώργιος Παπαδόπουλος', 'owner_phone': '2101234567', 'owner_email': 'papadopoulos@email.com', 'tenant_name': 'Μαρία Κωνσταντίνου', 'tenant_phone': '2102345678', 'tenant_email': 'maria.k@email.com', 'is_rented': True, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 95, 'heating_mills': 100, 'elevator_mills': 95},
-                    {'number': '2', 'floor': 0, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2103456789', 'owner_email': 'eleni.d@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 2, 'participation_mills': 102, 'heating_mills': 105, 'elevator_mills': 102},
-                    {'number': '3', 'floor': 1, 'owner_name': 'Νικόλαος Αλεξίου', 'owner_phone': '2104567890', 'owner_email': 'nikos.alex@email.com', 'tenant_name': 'Ανδρέας Παπαγεωργίου', 'tenant_phone': '2105678901', 'tenant_email': 'andreas.p@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 88, 'heating_mills': 92, 'elevator_mills': 88},
-                    {'number': '4', 'floor': 1, 'owner_name': 'Αικατερίνη Σταματίου', 'owner_phone': '2106789012', 'owner_email': 'katerina.s@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 115, 'elevator_mills': 110},
-                    {'number': '5', 'floor': 2, 'owner_name': 'Δημήτριος Κωνσταντίνου', 'owner_phone': '2107890123', 'owner_email': 'dimitris.k@email.com', 'tenant_name': 'Σοφία Παπαδοπούλου', 'tenant_phone': '2108901234', 'tenant_email': 'sofia.pap@email.com', 'is_rented': True, 'square_meters': 92, 'bedrooms': 2, 'participation_mills': 105, 'heating_mills': 108, 'elevator_mills': 105},
-                    {'number': '6', 'floor': 2, 'owner_name': 'Ιωάννης Μιχαηλίδης', 'owner_phone': '2109012345', 'owner_email': 'giannis.m@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 88, 'bedrooms': 2, 'participation_mills': 98, 'heating_mills': 102, 'elevator_mills': 98},
-                    {'number': '7', 'floor': 3, 'owner_name': 'Αννα Παπαδοπούλου', 'owner_phone': '2100123456', 'owner_email': 'anna.pap@email.com', 'tenant_name': 'Χρήστος Γεωργίου', 'tenant_phone': '2101234567', 'tenant_email': 'christos.g@email.com', 'is_rented': True, 'square_meters': 82, 'bedrooms': 2, 'participation_mills': 92, 'heating_mills': 95, 'elevator_mills': 92},
-                    {'number': '8', 'floor': 3, 'owner_name': 'Παναγιώτης Αντωνίου', 'owner_phone': '2102345678', 'owner_email': 'panagiotis.a@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 100, 'bedrooms': 3, 'participation_mills': 115, 'heating_mills': 100, 'elevator_mills': 115},
-                    {'number': '9', 'floor': 4, 'owner_name': 'Ευαγγελία Κωνσταντίνου', 'owner_phone': '2103456789', 'owner_email': 'evangelia.k@email.com', 'tenant_name': 'Δημήτριος Παπαδόπουλος', 'tenant_phone': '2104567890', 'tenant_email': 'dimitris.pap@email.com', 'is_rented': True, 'square_meters': 96, 'bedrooms': 3, 'participation_mills': 108, 'heating_mills': 100, 'elevator_mills': 108},
-                    {'number': '10', 'floor': 4, 'owner_name': 'Μιχαήλ Γεωργίου', 'owner_phone': '2105678901', 'owner_email': 'michalis.g@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 78, 'bedrooms': 1, 'participation_mills': 87, 'heating_mills': 83, 'elevator_mills': 87}
+                    {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'theostam1966@gmail.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': 'Α2', 'floor': 0, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2103456789', 'owner_email': 'eleni.d@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 2, 'participation_mills': 97, 'heating_mills': 105, 'elevator_mills': 97},
+                    {'number': 'Α3', 'floor': 0, 'owner_name': 'Νικόλαος Αλεξίου', 'owner_phone': '2104567890', 'owner_email': 'nikos.alex@email.com', 'tenant_name': 'Ανδρέας Παπαγεωργίου', 'tenant_phone': '2105678901', 'tenant_email': 'andreas.p@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 88, 'heating_mills': 92, 'elevator_mills': 88},
+                    {'number': 'Β1', 'floor': 1, 'owner_name': 'Αικατερίνη Σταματίου', 'owner_phone': '2106789012', 'owner_email': 'katerina.s@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 115, 'elevator_mills': 110},
+                    {'number': 'Β2', 'floor': 1, 'owner_name': 'Δημήτριος Κωνσταντίνου', 'owner_phone': '2107890123', 'owner_email': 'dimitris.k@email.com', 'tenant_name': 'Σοφία Παπαδοπούλου', 'tenant_phone': '2108901234', 'tenant_email': 'sofia.pap@email.com', 'is_rented': True, 'square_meters': 92, 'bedrooms': 2, 'participation_mills': 105, 'heating_mills': 108, 'elevator_mills': 105},
+                    {'number': 'Β3', 'floor': 1, 'owner_name': 'Ιωάννης Μιχαηλίδης', 'owner_phone': '2109012345', 'owner_email': 'giannis.m@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 88, 'bedrooms': 2, 'participation_mills': 98, 'heating_mills': 102, 'elevator_mills': 98},
+                    {'number': 'Γ1', 'floor': 2, 'owner_name': 'Αννα Παπαδοπούλου', 'owner_phone': '2100123456', 'owner_email': 'anna.pap@email.com', 'tenant_name': 'Χρήστος Γεωργίου', 'tenant_phone': '2101234567', 'tenant_email': 'christos.g@email.com', 'is_rented': True, 'square_meters': 82, 'bedrooms': 2, 'participation_mills': 92, 'heating_mills': 95, 'elevator_mills': 92},
+                    {'number': 'Γ2', 'floor': 2, 'owner_name': 'Παναγιώτης Αντωνίου', 'owner_phone': '2102345678', 'owner_email': 'panagiotis.a@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 100, 'bedrooms': 3, 'participation_mills': 115, 'heating_mills': 100, 'elevator_mills': 115},
+                    {'number': 'Γ3', 'floor': 3, 'owner_name': 'Ευαγγελία Κωνσταντίνου', 'owner_phone': '2103456789', 'owner_email': 'evangelia.k@email.com', 'tenant_name': 'Δημήτριος Παπαδόπουλος', 'tenant_phone': '2104567890', 'tenant_email': 'dimitris.pap@email.com', 'is_rented': True, 'square_meters': 96, 'bedrooms': 3, 'participation_mills': 108, 'heating_mills': 100, 'elevator_mills': 108},
+                    {'number': 'Δ1', 'floor': 3, 'owner_name': 'Μιχαήλ Γεωργίου', 'owner_phone': '2105678901', 'owner_email': 'michalis.g@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 78, 'bedrooms': 1, 'participation_mills': 87, 'heating_mills': 83, 'elevator_mills': 87}
                 ]
                 
                 # Επικύρωση χιλιοστών πριν τη δημιουργία
@@ -361,7 +359,7 @@ def create_demo_data(tenant_schema):
                         building=building,
                         number=apt_data['number'],
                         defaults={
-                            'identifier': f"Αλκμάνος-{apt_data['number']}",
+                            'identifier': apt_data['number'],
                             'floor': apt_data['floor'],
                             'owner_name': apt_data['owner_name'],
                             'owner_phone': apt_data['owner_phone'],
@@ -381,34 +379,7 @@ def create_demo_data(tenant_schema):
                     if created:
                         print(f"✅ Δημιουργήθηκε διαμέρισμα: {apt_data['number']} (Αλκμάνος 22)")
         
-        # 5. Δημιουργία ανακοινώσεων
-        announcements_data = [
-            {
-                'title': 'Καλωσορίσατε στο Digital Concierge!',
-                'description': 'Αυτή είναι μια δοκιμαστική ανακοίνωση για το νέο σας σύστημα διαχείρισης κτιρίων.',
-                'is_active': True
-            },
-            {
-                'title': 'Συντήρηση ανελκυστήρα',
-                'description': 'Θα γίνει συντήρηση του ανελκυστήρα την επόμενη εβδομάδα.',
-                'is_active': True
-            }
-        ]
-        
-        for announcement_data in announcements_data:
-            announcement, created = Announcement.objects.get_or_create(
-                title=announcement_data['title'],
-                defaults={
-                    'description': announcement_data['description'],
-                    'building': created_buildings[0],
-                    'author': manager,
-                    'is_active': announcement_data['is_active']
-                }
-            )
-            if created:
-                print(f"✅ Δημιουργήθηκε ανακοίνωση: {announcement.title}")
-        
-        # 6. Δημιουργία αιτημάτων
+        # 5. Δημιουργία αιτημάτων
         requests_data = [
             {
                 'title': 'Βλάβη στον φωτισμό',
@@ -438,40 +409,12 @@ def create_demo_data(tenant_schema):
             if created:
                 print(f"✅ Δημιουργήθηκε αίτημα: {user_request.title}")
         
-        # 7. Δημιουργία ψηφοφοριών
-        votes_data = [
-            {
-                'title': 'Αλλαγή διαχειριστή',
-                'description': 'Ψηφίστε αν συμφωνείτε να αλλάξει ο διαχειριστής.',
-                'choices': ['Ναι', 'Όχι', 'Αποχή']
-            },
-            {
-                'title': 'Εγκατάσταση κλιματισμού',
-                'description': 'Ψηφίστε για την εγκατάσταση κλιματισμού στις κοινόχρηστες περιοχές.',
-                'choices': ['Υπέρ', 'Κατά', 'Αποχή']
-            }
-        ]
-        
-        for vote_data in votes_data:
-            vote, created = Vote.objects.get_or_create(
-                title=vote_data['title'],
-                defaults={
-                    'description': vote_data['description'],
-                    'building': created_buildings[0],
-                    'creator': manager,
-                    'start_date': timezone.now().date(),
-                    'end_date': timezone.now().date() + timedelta(days=7)
-                }
-            )
-            if created:
-                print(f"✅ Δημιουργήθηκε ψηφοφορία: {vote.title}")
-        
-        # 8. Δημιουργία υποχρεώσεων
+        # 6. Δημιουργία υποχρεώσεων
         print("\n📋 Δημιουργία υποχρεώσεων...")
         print("ℹ️ Δεν δημιουργούνται υποχρεώσεις με hardcoded ποσά")
         print("✅ Ολοκληρώθηκε η δημιουργία υποχρεώσεων")
         
-        # 9. Δημιουργία οικονομικών δεδομένων
+        # 7. Δημιουργία οικονομικών δεδομένων
         print("\n💰 Δημιουργία οικονομικών δεδομένων...")
         print("ℹ️ Δεν δημιουργούνται οικονομικά δεδομένα - μηδενικά demo ποσά")
         print("✅ Ολοκληρώθηκε η δημιουργία οικονομικών δεδομένων")
@@ -594,10 +537,8 @@ ADMIN: http://demo.localhost:8000/admin/
 - 1 κτίριο
 - 4 χρήστες
 - 10 διαμερίσματα συνολικά
-  * Αλκμάνος 22: 10 διαμερίσματα (5 όροφοι, μηδενικά οικονομικά στοιχεία)
-- 2 ανακοινώσεις
+  * Αλκμάνος 22: 10 διαμερίσματα (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)
 - 2 αιτήματα
-- 2 ψηφοφορίες
 - 0 υποχρεώσεις (μηδενικά demo ποσά)
 
 🌐 ΠΡΟΣΒΑΣΗ:
@@ -617,28 +558,27 @@ Demo Admin Panel: http://demo.localhost:8000/admin/
 📋 ΔΙΑΜΕΡΙΣΜΑΤΑ ΑΛΚΜΑΝΟΣ 22:
 -----------------------------
 Όροφος 0:
-- 1: Γεώργιος Παπαδόπουλος → Μαρία Κωνσταντίνου (ενοικιαστής)
-- 2: Ελένη Δημητρίου (ιδιοκτήτης)
-- 3: Νικόλαος Αλεξίου → Ανδρέας Παπαγεωργίου (ενοικιαστής)
+- Α1: Θεοδώρος Σταματιάδης (ιδιοκατοικούμενο) [100/100/100]
+- Α2: Ελένη Δημητρίου (ιδιοκτήτης) [97/105/97]
+- Α3: Νικόλαος Αλεξίου → Ανδρέας Παπαγεωργίου (ενοικιαστής) [88/92/88]
 
 Όροφος 1:
-- 4: Αικατερίνη Σταματίου (ιδιοκτήτης)
-- 5: Δημήτριος Κωνσταντίνου → Σοφία Παπαδοπούλου (ενοικιαστής)
+- Β1: Αικατερίνη Σταματίου (ιδιοκτήτης) [110/115/110]
+- Β2: Δημήτριος Κωνσταντίνου → Σοφία Παπαδοπούλου (ενοικιαστής) [105/108/105]
+- Β3: Ιωάννης Μιχαηλίδης (ιδιοκτήτης) [98/102/98]
 
 Όροφος 2:
-- 6: Ιωάννης Μιχαηλίδης (ιδιοκτήτης)
-- 7: Αννα Παπαδοπούλου → Χρήστος Γεωργίου (ενοικιαστής)
+- Γ1: Αννα Παπαδοπούλου → Χρήστος Γεωργίου (ενοικιαστής) [92/95/92]
+- Γ2: Παναγιώτης Αντωνίου (ιδιοκτήτης) [115/100/115]
 
 Όροφος 3:
-- 8: Παναγιώτης Αντωνίου (ιδιοκτήτης)
-- 9: Ευαγγελία Κωνσταντίνου → Δημήτριος Παπαδόπουλος (ενοικιαστής)
-
-Όροφος 4:
-- 10: Μιχαήλ Γεωργίου (ιδιοκτήτης)
+- Γ3: Ευαγγελία Κωνσταντίνου → Δημήτριος Παπαδόπουλος (ενοικιαστής) [108/100/108]
+- Δ1: Μιχαήλ Γεωργίου (ιδιοκτήτης) [87/83/87]
 
 📊 ΧΑΡΑΚΤΗΡΙΣΤΙΚΑ ΑΛΚΜΑΝΟΣ 22:
 -------------------------------------
-Χιλιοστά: Πλήρη κατανομή ανά διαμέρισμα (87-115 χιλιοστά)
+Χιλιοστά: Πλήρη κατανομή ανά διαμέρισμα [Συμμετοχή/Θέρμανση/Ανελκυστήρας]
+Συνολικά χιλιοστά: 1000/1000/1000 ✓
 Οικονομικά: Μηδενικά ποσά σε όλες τις κατηγορίες
 
 🔐 ΙΕΡΑΡΧΙΑ ΔΙΚΑΙΩΜΑΤΩΝ:
@@ -722,8 +662,9 @@ def main():
     print("   Admin: admin@demo.localhost / admin123456")
     print("   Manager: manager@demo.localhost / manager123456")
     print("   Resident: resident1@demo.localhost / resident123456")
-    print("\n🏢 Κτίριο: Αλκμάνος 22 (10 διαμερίσματα)")
+    print("\n🏢 Κτίριο: Αλκμάνος 22 (10 διαμερίσματα: Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)")
     print("   Διεύθυνση: Αλκμάνος 22, Αθήνα 115 28, Ελλάδα")
+    print("   Χιλιοστά: 1000/1000/1000 (Συμμετοχή/Θέρμανση/Ανελκυστήρας)")
     print("   Μηδενικά οικονομικά στοιχεία σε όλες τις κατηγορίες")
     print("\n🚀 Το σύστημα είναι έτοιμο!")
     print("\n💡 Ultra-Superuser μπορεί να:")
