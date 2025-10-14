@@ -95,8 +95,31 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
 
   const totalExpenses = debts.reduce((sum, apt: any) => sum + (apt.displayAmount || apt.net_obligation || apt.current_balance), 0);
 
-  // Calculate payment coverage percentage (mock for now)
-  const paymentCoveragePercentage = 75; // TODO: Get from API
+  // Get real payment coverage from API response
+  const [summary, setSummary] = useState<any>(null);
+  
+  useEffect(() => {
+    const fetchSummary = async () => {
+      if (!effectiveBuildingId) return;
+      
+      try {
+        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}`;
+        const response = await fetch(apiUrl);
+        if (response.ok) {
+          const result = await response.json();
+          setSummary(result.summary);
+        }
+      } catch (err) {
+        console.error('Error fetching summary:', err);
+      }
+    };
+    
+    fetchSummary();
+  }, [effectiveBuildingId]);
+  
+  const paymentCoveragePercentage = summary?.payment_coverage || 0;
+  const showWarning = summary?.show_warning || false;
+  const currentDay = summary?.current_day || new Date().getDate();
 
   return (
     <div className="h-full overflow-hidden flex flex-col">
@@ -128,16 +151,19 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
             return (
               <div
                 key={apt.apartment_id}
-                className="flex items-center justify-between py-1.5 px-2 hover:bg-indigo-800/20 rounded transition-all"
+                className="bg-indigo-900/20 backdrop-blur-sm p-2 rounded-lg border border-indigo-500/20 hover:border-indigo-400/40 transition-all"
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-white truncate font-medium">
-                    {apt.owner_name || 'Μη καταχωρημένος'}
-                  </p>
-                </div>
-                <div className="text-right ml-2 flex-shrink-0">
-                  <div className="text-sm font-semibold text-indigo-200">
-                    €{amount.toFixed(0)}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 flex-1 min-w-0">
+                    <span className="text-xs font-bold text-indigo-400">{apt.apartment_number}</span>
+                    <p className="text-xs text-white truncate font-medium">
+                      {apt.owner_name || 'Μη καταχωρημένος'}
+                    </p>
+                  </div>
+                  <div className="text-right ml-2 flex-shrink-0">
+                    <div className="text-sm font-semibold text-indigo-200">
+                      €{amount.toFixed(0)}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -149,15 +175,29 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
       {/* Footer - Payment Coverage Chart */}
       {debts.length > 0 && (
         <div className="mt-3 pt-3 border-t border-indigo-400/30">
+          {/* Warning if after 15th and coverage < 75% */}
+          {showWarning && (
+            <div className="mb-2 bg-orange-500/20 border border-orange-400/50 rounded-lg p-2 text-center animate-pulse">
+              <p className="text-orange-300 text-xs font-bold">⚠️ Χαμηλή Κάλυψη</p>
+              <p className="text-orange-200 text-[10px]">Μετά τις 15 του μήνα</p>
+            </div>
+          )}
+          
           <div className="mb-2">
             <div className="flex items-center justify-between text-xs mb-1.5">
               <span className="text-indigo-300 font-medium">Κάλυψη Μήνα</span>
-              <span className="text-white font-bold">{paymentCoveragePercentage}%</span>
+              <span className={`font-bold ${paymentCoveragePercentage < 75 ? 'text-orange-300' : 'text-white'}`}>
+                {paymentCoveragePercentage.toFixed(1)}%
+              </span>
             </div>
             {/* Progress Bar */}
             <div className="w-full bg-indigo-950/50 rounded-full h-3 overflow-hidden border border-indigo-700/30">
               <div 
-                className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full transition-all duration-1000 shadow-lg shadow-green-500/50"
+                className={`h-full rounded-full transition-all duration-1000 ${
+                  paymentCoveragePercentage >= 75 
+                    ? 'bg-gradient-to-r from-green-500 to-emerald-400 shadow-lg shadow-green-500/50'
+                    : 'bg-gradient-to-r from-orange-500 to-red-500 shadow-lg shadow-orange-500/50'
+                }`}
                 style={{ width: `${paymentCoveragePercentage}%` }}
               ></div>
             </div>

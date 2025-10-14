@@ -113,7 +113,7 @@ with schema_context('demo'):
 
     print(f"\n   Παλαιότερες οφειλές: €{old_obligations - old_payments}")
     print(f"   Υποχρεώσεις Οκτωβρίου: €{total_obligations}")
-    print(f"   ΣΥΝΟΛΟ προς πληρωμή: €{(old_obligations - old_payments) + total_obligations}")
+    print(f"   ΣΥΝΟΛΟ €{(old_obligations - old_payments) + total_obligations}")
     print(f"   Πληρωμές: €{total_payments}")
     print(f"   ΥΠΟΛΟΙΠΟ: €{(old_obligations - old_payments) + total_obligations - total_payments}")
 

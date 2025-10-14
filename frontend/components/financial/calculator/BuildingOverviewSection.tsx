@@ -1368,7 +1368,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
                     {(financialSummary?.previous_obligations || 0) > 0 && (
                       <div className="space-y-1 pt-2 border-t border-purple-200 bg-purple-50/50 -mx-3 px-3 py-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-purple-900 font-bold">ΣΥΝΟΛΟ προς πληρωμή:</span>
+                          <span className="text-xs text-purple-900 font-bold">ΣΥΝΟΛΟ</span>
                           <span className="font-bold text-sm text-purple-900">
                             {formatCurrency((financialSummary?.previous_obligations || 0) + (financialSummary?.current_month_expenses || 0))}
                           </span>

@@ -64,6 +64,25 @@ def apartment_debts(request):
                 debts.append(debt_data)
                 total_debt += share_amount
         
+        # Calculate payment coverage for the month
+        from financial.models import Payment
+        from datetime import datetime
+        
+        # Get payments for the current month
+        year, mon = map(int, month.split('-'))
+        payments = Payment.objects.filter(
+            apartment__building_id=building_id,
+            date__year=year,
+            date__month=mon
+        )
+        
+        total_paid = sum(float(p.amount) for p in payments)
+        payment_coverage = (total_paid / float(total_debt) * 100) if total_debt > 0 else 0
+        
+        # Check if warning needed (after 15th of month and coverage < 75%)
+        current_day = datetime.now().day
+        show_warning = current_day > 15 and payment_coverage < 75
+        
         return Response({
             'success': True,
             'apartments': debts,
@@ -72,7 +91,11 @@ def apartment_debts(request):
                 'apartments_count': len(debts),
                 'average_expense': float(total_debt / len(debts)) if debts else 0,
                 'month': month,
-                'calculation_source': 'CommonExpenseCalculator'
+                'calculation_source': 'CommonExpenseCalculator',
+                'total_paid': total_paid,
+                'payment_coverage': round(payment_coverage, 1),
+                'show_warning': show_warning,
+                'current_day': current_day
             }
         })
         
