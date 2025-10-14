@@ -3,6 +3,7 @@
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse
+from django.db.models import Q
 from announcements.models import Announcement
 from votes.models import Vote
 from buildings.models import Building
@@ -27,10 +28,17 @@ def public_info(request, building_id=None):
         except (ValueError, TypeError):
             building_id = None
     
-    # Get active announcements
+    # Get active announcements (include future announcements for kiosk countdown)
     qs_announcements = Announcement.objects.filter(is_active=True, published=True)
     if building_id and building_id != 0:  # 0 means "all buildings"
         qs_announcements = qs_announcements.filter(building_id=building_id)
+    
+    # Include announcements that haven't ended yet (current OR future)
+    # This allows kiosk to show countdown for upcoming assemblies
+    today = timezone.now().date()
+    qs_announcements = qs_announcements.filter(
+        Q(end_date__gte=today) | Q(end_date__isnull=True)
+    )
     
     announcements_data = list(
         qs_announcements.order_by('-priority', '-created_at')[:10].values(
