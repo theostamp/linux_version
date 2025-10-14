@@ -22,6 +22,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   const [debts, setDebts] = useState<ApartmentDebt[]>([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [summary, setSummary] = useState<any>(null);
 
   useEffect(() => {
     const fetchDebts = async () => {
@@ -74,6 +75,30 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
     return () => clearInterval(interval);
   }, [effectiveBuildingId]);
 
+  // Fetch summary data separately (includes payment coverage)
+  useEffect(() => {
+    const fetchSummary = async () => {
+      if (!effectiveBuildingId) return;
+      
+      try {
+        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}`;
+        const response = await fetch(apiUrl);
+        if (response.ok) {
+          const result = await response.json();
+          setSummary(result.summary);
+        }
+      } catch (err) {
+        console.error('Error fetching summary:', err);
+      }
+    };
+    
+    fetchSummary();
+    
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchSummary, 300000);
+    return () => clearInterval(interval);
+  }, [effectiveBuildingId]);
+
   if (isLoading || loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -94,29 +119,6 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   }
 
   const totalExpenses = debts.reduce((sum, apt: any) => sum + (apt.displayAmount || apt.net_obligation || apt.current_balance), 0);
-
-  // Get real payment coverage from API response
-  const [summary, setSummary] = useState<any>(null);
-  
-  useEffect(() => {
-    const fetchSummary = async () => {
-      if (!effectiveBuildingId) return;
-      
-      try {
-        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}`;
-        const response = await fetch(apiUrl);
-        if (response.ok) {
-          const result = await response.json();
-          setSummary(result.summary);
-        }
-      } catch (err) {
-        console.error('Error fetching summary:', err);
-      }
-    };
-    
-    fetchSummary();
-  }, [effectiveBuildingId]);
-  
   const paymentCoveragePercentage = summary?.payment_coverage || 0;
   const showWarning = summary?.show_warning || false;
   const currentDay = summary?.current_day || new Date().getDate();
