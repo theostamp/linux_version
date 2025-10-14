@@ -121,6 +121,7 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
           const daysRemaining = differenceInDays(assemblyDate, currentTime);
           const hoursRemaining = differenceInHours(assemblyDate, currentTime) % 24;
           const isPastEvent = isPast(assemblyDate);
+          const isToday = daysRemaining === 0 && hoursRemaining >= 0 && !isPastEvent;
           
           // Check if it's an assembly announcement
           const isAssembly = announcement.title?.toLowerCase().includes('συνέλευση') || 
@@ -136,22 +137,46 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
                 <div className="space-y-2">
                   {!isPastEvent && daysRemaining >= 0 ? (
                     <>
-                      {/* Countdown Header - Ζωντανό! */}
-                      <div className="bg-gradient-to-r from-purple-600/30 to-indigo-600/30 rounded-lg p-2 border border-purple-400/40">
-                        <div className="flex items-center justify-center space-x-2">
-                          <AlertCircle className="w-4 h-4 text-purple-300 animate-pulse" />
-                          <div className="text-center">
-                            <div className="text-white font-bold text-sm">
-                              Σε {daysRemaining > 0 && `${daysRemaining} ${daysRemaining === 1 ? 'ημέρα' : 'ημέρες'}`}
-                              {daysRemaining > 0 && hoursRemaining > 0 && ' και '}
-                              {(daysRemaining === 0 || hoursRemaining > 0) && `${hoursRemaining} ${hoursRemaining === 1 ? 'ώρα' : 'ώρες'}`}
-                            </div>
-                            <div className="text-purple-200 text-xs mt-0.5">
-                              έχουμε Γενική Συνέλευση
+                      {/* Countdown Header - Special styling for TODAY */}
+                      {isToday ? (
+                        /* ΣΗΜΕΡΑ - Έντονο πορτοκαλί πλαίσιο */
+                        <div className="bg-gradient-to-r from-orange-600/50 to-red-600/50 rounded-lg p-3 border-2 border-orange-400 shadow-lg shadow-orange-500/30 animate-pulse">
+                          <div className="flex items-center justify-center space-x-2">
+                            <AlertCircle className="w-5 h-5 text-orange-200 animate-bounce" />
+                            <div className="text-center">
+                              <div className="text-white font-extrabold text-base uppercase tracking-wide">
+                                ΣΗΜΕΡΑ
+                              </div>
+                              <div className="text-orange-100 text-sm font-bold mt-1">
+                                έχουμε Γενική Συνέλευση
+                              </div>
+                              {time && (
+                                <div className="text-orange-200 text-xs mt-1 flex items-center justify-center">
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  στις {time}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
-                      </div>
+                      ) : (
+                        /* Κανονικό countdown για άλλες ημέρες */
+                        <div className="bg-gradient-to-r from-purple-600/30 to-indigo-600/30 rounded-lg p-2 border border-purple-400/40">
+                          <div className="flex items-center justify-center space-x-2">
+                            <AlertCircle className="w-4 h-4 text-purple-300 animate-pulse" />
+                            <div className="text-center">
+                              <div className="text-white font-bold text-sm">
+                                Σε {daysRemaining > 0 && `${daysRemaining} ${daysRemaining === 1 ? 'ημέρα' : 'ημέρες'}`}
+                                {daysRemaining > 0 && hoursRemaining > 0 && ' και '}
+                                {(daysRemaining === 0 || hoursRemaining > 0) && `${hoursRemaining} ${hoursRemaining === 1 ? 'ώρα' : 'ώρες'}`}
+                              </div>
+                              <div className="text-purple-200 text-xs mt-0.5">
+                                έχουμε Γενική Συνέλευση
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       
                       {/* Θέμα */}
                       {topic && (
