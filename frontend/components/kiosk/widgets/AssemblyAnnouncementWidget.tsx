@@ -1,7 +1,7 @@
 'use client';
 
 import { Calendar, MapPin, Clock, FileText, AlertCircle } from 'lucide-react';
-import { format, parseISO, differenceInDays, differenceInHours, isPast } from 'date-fns';
+import { format, parseISO, differenceInDays, differenceInHours, isPast, isToday as isTodayDate, isBefore, startOfDay } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
 
@@ -58,10 +58,14 @@ export default function AssemblyAnnouncementWidget({ data, isLoading, error }: A
       
       if (!isAssemblyOrVote) return false;
       
-      // Only show future events
+      // Only show future events OR today (include events happening later today)
       if (ann.start_date) {
         const eventDate = parseISO(ann.start_date);
-        return !isPast(eventDate);
+        const today = startOfDay(new Date());
+        const eventDay = startOfDay(eventDate);
+        
+        // Show if event is today or in the future
+        return !isBefore(eventDay, today);
       }
       
       return true; // If no date, show it
