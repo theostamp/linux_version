@@ -112,8 +112,13 @@ export const useKioskData = (buildingId: number | null = 1) => {
         maintenance: any;
       }>(`/api/public-info/${buildingId}/`);
 
+      console.log('[useKioskData] API response:', {
+        announcementsCount: publicData.announcements?.length || 0,
+        announcements: publicData.announcements
+      });
+
       // Transform announcements to match KioskAnnouncement interface
-      const announcementsResult: KioskAnnouncement[] = publicData.announcements.map((ann: any) => ({
+      const announcementsResult: KioskAnnouncement[] = (publicData.announcements || []).map((ann: any) => ({
         id: ann.id,
         title: ann.title,
         description: ann.description,
