@@ -25,7 +25,9 @@ from django.core.management import call_command, execute_from_command_line
 from django_tenants.utils import get_tenant_model, get_tenant_domain_model, schema_context, schema_exists
 from users.models import CustomUser
 from buildings.models import Building, BuildingMembership
+from announcements.models import Announcement
 from user_requests.models import UserRequest
+from votes.models import Vote
 from apartments.models import Apartment
 
 def wait_for_database():
@@ -379,7 +381,34 @@ def create_demo_data(tenant_schema):
                     if created:
                         print(f"✅ Δημιουργήθηκε διαμέρισμα: {apt_data['number']} (Αλκμάνος 22)")
         
-        # 5. Δημιουργία αιτημάτων
+        # 5. Δημιουργία ανακοινώσεων
+        announcements_data = [
+            {
+                'title': 'Καλωσορίσατε στο Digital Concierge!',
+                'description': 'Αυτή είναι μια δοκιμαστική ανακοίνωση για το νέο σας σύστημα διαχείρισης κτιρίων.',
+                'is_active': True
+            },
+            {
+                'title': 'Συντήρηση ανελκυστήρα',
+                'description': 'Θα γίνει συντήρηση του ανελκυστήρα την επόμενη εβδομάδα.',
+                'is_active': True
+            }
+        ]
+        
+        for announcement_data in announcements_data:
+            announcement, created = Announcement.objects.get_or_create(
+                title=announcement_data['title'],
+                defaults={
+                    'description': announcement_data['description'],
+                    'building': created_buildings[0],
+                    'author': manager,
+                    'is_active': announcement_data['is_active']
+                }
+            )
+            if created:
+                print(f"✅ Δημιουργήθηκε ανακοίνωση: {announcement.title}")
+        
+        # 6. Δημιουργία αιτημάτων
         requests_data = [
             {
                 'title': 'Βλάβη στον φωτισμό',
@@ -409,12 +438,40 @@ def create_demo_data(tenant_schema):
             if created:
                 print(f"✅ Δημιουργήθηκε αίτημα: {user_request.title}")
         
-        # 6. Δημιουργία υποχρεώσεων
+        # 7. Δημιουργία ψηφοφοριών
+        votes_data = [
+            {
+                'title': 'Αλλαγή διαχειριστή',
+                'description': 'Ψηφίστε αν συμφωνείτε να αλλάξει ο διαχειριστής.',
+                'choices': ['Ναι', 'Όχι', 'Αποχή']
+            },
+            {
+                'title': 'Εγκατάσταση κλιματισμού',
+                'description': 'Ψηφίστε για την εγκατάσταση κλιματισμού στις κοινόχρηστες περιοχές.',
+                'choices': ['Υπέρ', 'Κατά', 'Αποχή']
+            }
+        ]
+        
+        for vote_data in votes_data:
+            vote, created = Vote.objects.get_or_create(
+                title=vote_data['title'],
+                defaults={
+                    'description': vote_data['description'],
+                    'building': created_buildings[0],
+                    'creator': manager,
+                    'start_date': timezone.now().date(),
+                    'end_date': timezone.now().date() + timedelta(days=7)
+                }
+            )
+            if created:
+                print(f"✅ Δημιουργήθηκε ψηφοφορία: {vote.title}")
+        
+        # 8. Δημιουργία υποχρεώσεων
         print("\n📋 Δημιουργία υποχρεώσεων...")
         print("ℹ️ Δεν δημιουργούνται υποχρεώσεις με hardcoded ποσά")
         print("✅ Ολοκληρώθηκε η δημιουργία υποχρεώσεων")
         
-        # 7. Δημιουργία οικονομικών δεδομένων
+        # 9. Δημιουργία οικονομικών δεδομένων
         print("\n💰 Δημιουργία οικονομικών δεδομένων...")
         print("ℹ️ Δεν δημιουργούνται οικονομικά δεδομένα - μηδενικά demo ποσά")
         print("✅ Ολοκληρώθηκε η δημιουργία οικονομικών δεδομένων")
@@ -538,7 +595,9 @@ ADMIN: http://demo.localhost:8000/admin/
 - 4 χρήστες
 - 10 διαμερίσματα συνολικά
   * Αλκμάνος 22: 10 διαμερίσματα (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)
+- 2 ανακοινώσεις
 - 2 αιτήματα
+- 2 ψηφοφορίες
 - 0 υποχρεώσεις (μηδενικά demo ποσά)
 
 🌐 ΠΡΟΣΒΑΣΗ:
