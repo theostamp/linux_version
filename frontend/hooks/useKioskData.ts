@@ -127,7 +127,7 @@ export const useKioskData = (buildingId: number | null = 1) => {
         date: ann.start_date,
         start_date: ann.start_date,  // Keep for assembly countdown
         end_date: ann.end_date,      // Keep for filtering
-        priority: ann.is_urgent ? 'high' : (ann.priority > 5 ? 'high' : 'medium') as const
+        priority: (ann.is_urgent ? 'high' : (ann.priority > 5 ? 'high' : 'medium')) as 'low' | 'medium' | 'high'
       }));
 
       // Use real financial data from backend
