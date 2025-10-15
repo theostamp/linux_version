@@ -28,6 +28,12 @@ export interface KioskBuildingInfo {
   city: string;
   total_apartments?: number;
   occupied?: number;
+  office_logo?: string | null;
+  management_office_name?: string;
+  management_office_phone?: string;
+  management_office_address?: string;
+  internal_manager_name?: string;
+  internal_manager_phone?: string;
 }
 
 export interface KioskAnnouncement {
@@ -204,7 +210,13 @@ export const useKioskData = (buildingId: number | null = 1) => {
           address: publicData.building_info.address,
           city: publicData.building_info.city,
           total_apartments: publicData.building_info.apartments_count,
-          occupied: publicData.building_info.apartments_count // Assume all occupied for now
+          occupied: publicData.building_info.apartments_count, // Assume all occupied for now
+          office_logo: publicData.building_info.office_logo,
+          management_office_name: publicData.building_info.management_office_name,
+          management_office_phone: publicData.building_info.management_office_phone,
+          management_office_address: publicData.building_info.management_office_address,
+          internal_manager_name: publicData.building_info.internal_manager_name,
+          internal_manager_phone: publicData.building_info.internal_manager_phone
         },
         announcements: announcementsResult.slice(0, 5), // Limit to 5 most recent
         financial: financialResult,
