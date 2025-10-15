@@ -64,7 +64,7 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
   );
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 flex overflow-hidden">
+    <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 flex overflow-hidden pb-16">
       {/* Left Sidebar - 25% (increased by 5%) */}
       <div className="w-[25%] flex flex-col space-y-3 p-3">
         {/* Sticky Top - Important Announcements (Assembly/Votes) with Custom Format */}
@@ -137,12 +137,6 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
           </div>
         </div>
 
-        {/* News Widget - Bottom (Minimal height) */}
-        <div className="h-[15%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-green-500/20">
-          <div className="h-full p-2">
-            <NewsWidget data={data} isLoading={false} error={null} />
-          </div>
-        </div>
       </div>
 
       {/* Right Area - 20% - Common Expenses Summary Widget (Compact) */}
@@ -151,6 +145,13 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
           <div className="h-full w-full p-4">
             <ApartmentDebtsWidget data={data} isLoading={false} error={null} buildingId={buildingId} />
           </div>
+        </div>
+      </div>
+
+      {/* News Widget - Fixed to bottom of screen with spacing */}
+      <div className="fixed bottom-0 left-0 right-0 h-12 bg-slate-800/95 backdrop-blur-md border-t border-green-500/20 z-50 mb-2">
+        <div className="h-full px-4">
+          <NewsWidget data={data} isLoading={false} error={null} />
         </div>
       </div>
     </div>

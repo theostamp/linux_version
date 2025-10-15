@@ -13,7 +13,7 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
   // Use the existing news hook
   const { news, loading: newsLoading, error: newsError } = useNews(180000); // 3 minutes refresh
 
-  // Auto-advance news every 12 seconds (same as KioskMode)
+  // Auto-advance news every 8 seconds (faster for ticker effect)
   useEffect(() => {
     if (!isAutoPlaying || news.length <= 1) return;
 
@@ -27,11 +27,11 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
         // Change text after fade out
         setTimeout(() => {
           setNewsOpacity(1);
-        }, 500); // Wait 500ms for fade out
+        }, 300); // Faster transition for ticker effect
         
         return nextIndex;
       });
-    }, 12000); // 12 seconds per news item
+    }, 8000); // 8 seconds per news item for ticker effect
 
     return () => clearInterval(interval);
   }, [isAutoPlaying, news.length]);
@@ -74,68 +74,34 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
 
   return (
     <div 
-      className="h-full flex flex-col"
+      className="h-full flex items-center"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Header - Compact */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center space-x-1">
-          <Globe className="w-3 h-3 text-green-300" />
-          <h3 className="text-xs font-semibold text-white">Ειδήσεις</h3>
-        </div>
+      {/* News ticker - Horizontal layout without dots */}
+      <div className="flex items-center space-x-3 w-full">
+        {/* News icon */}
+        <Globe className="w-3 h-3 text-green-300 flex-shrink-0" />
         
-        {/* Navigation indicators - Compact */}
-        {news.length > 1 && (
-          <div className="flex items-center space-x-1">
-            {/* Dots indicator only */}
-            <div className="flex space-x-1">
-              {news.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`w-1 h-1 rounded-full transition-colors ${
-                    index === currentIndex 
-                      ? 'bg-green-400' 
-                      : 'bg-green-600/50 hover:bg-green-500/70'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Content - Compact */}
-      <div className="flex-1 bg-gradient-to-br from-green-600/20 to-green-800/20 backdrop-blur-sm rounded-lg border border-green-500/30 p-2 overflow-hidden">
-        <div className="h-full flex flex-col justify-center">
-          {/* News text with fade animation - Compact */}
-          <div 
-            className="text-xs text-green-100 leading-tight text-center"
-            style={{ opacity: newsOpacity, transition: 'opacity 0.5s ease-in-out' }}
-          >
+        {/* News text with fade animation - Continuous ticker */}
+        <div 
+          className="flex-1 text-xs text-green-100 whitespace-nowrap overflow-hidden"
+          style={{ opacity: newsOpacity, transition: 'opacity 0.3s ease-in-out' }}
+        >
+          <div className="animate-scroll-left">
             {currentNews}
           </div>
         </div>
       </div>
 
-      {/* Progress bar - Compact */}
-      {news.length > 1 && (
-        <div className="mt-1 h-0.5 bg-green-900/30 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-green-400 transition-all duration-120 ease-linear"
-            style={{ 
-              width: isAutoPlaying ? '100%' : '0%',
-              animation: isAutoPlaying ? 'progress 12s linear infinite' : 'none'
-            }}
-          />
-        </div>
-      )}
-
       <style jsx>{`
-        @keyframes progress {
-          from { width: 100%; }
-          to { width: 0%; }
+        @keyframes scroll-left {
+          0% { transform: translateX(100%); }
+          100% { transform: translateX(-100%); }
+        }
+        
+        .animate-scroll-left {
+          animation: scroll-left 20s linear infinite;
         }
       `}</style>
     </div>
