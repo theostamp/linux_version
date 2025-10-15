@@ -62,16 +62,16 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
         {/* Management Office Details */}
         <div className="flex flex-col space-y-2">
           <div className="flex items-center space-x-3">
-            <Building2 className="w-5 h-5 text-blue-300" />
-            <h3 className="text-lg font-bold text-white">
+            <Building2 className="w-4 h-4 text-blue-300" />
+            <h3 className="text-base font-bold text-white">
               {building?.management_office_name || 'Γραφείο Διαχείρισης'}
             </h3>
           </div>
           
           {building?.management_office_address && (
             <div className="flex items-center space-x-3">
-              <MapPin className="w-4 h-4 text-blue-300" />
-              <span className="text-sm text-blue-200 truncate max-w-64">
+              <MapPin className="w-3 h-3 text-blue-300" />
+              <span className="text-xs text-blue-200 truncate max-w-64">
                 {building.management_office_address}
               </span>
             </div>
@@ -79,10 +79,10 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
           
           {building?.management_office_phone && (
             <div className="flex items-center space-x-3">
-              <Phone className="w-4 h-4 text-blue-300" />
+              <Phone className="w-3 h-3 text-blue-300" />
               <a 
                 href={`tel:${building.management_office_phone}`}
-                className="text-sm text-blue-200 hover:text-blue-100 transition-colors font-semibold"
+                className="text-xs text-blue-200 hover:text-blue-100 transition-colors font-semibold"
               >
                 {building.management_office_phone}
               </a>
@@ -94,20 +94,20 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
       {/* Right side - Current Date and Time */}
       <div className="text-right">
         <div className="flex items-center space-x-3 mb-2">
-          <div className="text-3xl font-bold text-white">
+          <div className="text-2xl font-bold text-white">
             {format(currentDate, 'dd')}
           </div>
-          <div className="text-lg text-blue-200">
+          <div className="text-base text-blue-200">
             {format(currentDate, 'MMMM yyyy', { locale: el })}
           </div>
         </div>
         <div className="flex items-center justify-end space-x-3">
-          <div className="text-base text-blue-300">
+          <div className="text-sm text-blue-300">
             {format(currentDate, 'EEEE', { locale: el })}
           </div>
           <div className="flex items-center space-x-2">
-            <Clock className="w-5 h-5 text-blue-300" />
-            <span className="text-lg text-blue-200 font-mono font-bold">
+            <Clock className="w-4 h-4 text-blue-300" />
+            <span className="text-base text-blue-200 font-mono font-bold">
               {format(currentDate, 'HH:mm', { locale: el })}
             </span>
           </div>
