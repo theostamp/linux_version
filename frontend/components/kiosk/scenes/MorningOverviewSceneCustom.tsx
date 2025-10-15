@@ -10,6 +10,7 @@ import EmergencyWidget from '@/components/kiosk/widgets/EmergencyWidget';
 import ApartmentDebtsWidget from '@/components/kiosk/widgets/ApartmentDebtsWidget';
 import AnnouncementsVotesCarousel from '@/components/kiosk/widgets/AnnouncementsVotesCarousel';
 import ManagementOfficeWidget from '@/components/kiosk/widgets/ManagementOfficeWidget';
+import NewsWidget from '@/components/kiosk/widgets/NewsWidget';
 
 interface MorningOverviewSceneCustomProps {
   data?: any;
@@ -122,17 +123,24 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
           </div>
         </div>
 
-        {/* Weather Widget - Middle (Reduced height) */}
-        <div className="h-[30%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
+        {/* Weather Widget - Middle (Restored height) */}
+        <div className="h-[40%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
           <div className="h-full p-4">
             <WeatherWidget data={data} isLoading={false} error={null} buildingId={buildingId} />
           </div>
         </div>
 
         {/* Announcements & Votes Carousel - Bottom */}
-        <div className="h-[27.5%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
+        <div className="h-[20%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
           <div className="h-full p-4">
             <AnnouncementsVotesCarousel data={data} isLoading={false} error={null} />
+          </div>
+        </div>
+
+        {/* News Widget - Bottom (Minimal height) */}
+        <div className="h-[15%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-green-500/20">
+          <div className="h-full p-2">
+            <NewsWidget data={data} isLoading={false} error={null} />
           </div>
         </div>
       </div>
