@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { API_BASE_URL } from '@/lib/api';
 import { 
   X, 
   Printer, 
@@ -219,7 +220,7 @@ export default function PaymentNotificationModal({
                 <div className="flex items-center gap-3">
                   {user?.office_logo && (
                     <img
-                      src={user.office_logo}
+                      src={user.office_logo.startsWith('http') ? user.office_logo : `${API_BASE_URL.replace('/api', '')}${user.office_logo.startsWith('/') ? user.office_logo : `/${user.office_logo}`}`}
                       alt="Office Logo"
                       className="w-14 h-14 object-contain"
                     />

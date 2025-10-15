@@ -82,4 +82,6 @@ if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 else:
-    urlpatterns += staticfiles_urlpatterns() 
+    urlpatterns += staticfiles_urlpatterns()
+    # Serve media files even in production for development/testing
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

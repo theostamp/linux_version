@@ -56,7 +56,7 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
         office_bank_beneficiary: user.office_bank_beneficiary || '',
       });
       const logoUrl = user.office_logo 
-        ? (user.office_logo.startsWith('http') ? user.office_logo : `${API_BASE_URL}${user.office_logo.startsWith('/') ? user.office_logo : `/${user.office_logo}`}`)
+        ? (user.office_logo.startsWith('http') ? user.office_logo : `${API_BASE_URL.replace('/api', '')}${user.office_logo.startsWith('/') ? user.office_logo : `/${user.office_logo}`}`)
         : null;
       setCurrentLogoUrl(logoUrl);
       setLogoPreview(null);

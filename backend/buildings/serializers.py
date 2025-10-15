@@ -94,8 +94,13 @@ class ServicePackageSerializer(serializers.ModelSerializer):
         return 0
 
 class BuildingSerializer(serializers.ModelSerializer):
-    # Ορίζουμε κρυφό πεδίο manager ως τον τρέχον χρήστη
-    manager = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    # Manager field - allow updates but default to current user
+    manager = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(),
+        required=False,
+        allow_null=True,
+        default=serializers.CurrentUserDefault()
+    )
     
     # Προσθήκη nested serializer για το service_package
     service_package = ServicePackageSerializer(read_only=True)

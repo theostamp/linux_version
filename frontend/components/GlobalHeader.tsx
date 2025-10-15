@@ -55,7 +55,7 @@ export default function GlobalHeader() {
                 {user?.office_logo && !logoError ? (
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-md overflow-hidden">
                     <img 
-                      src={user.office_logo.startsWith('http') ? user.office_logo : `${API_BASE_URL}${user.office_logo.startsWith('/') ? user.office_logo : `/${user.office_logo}`}`}
+                      src={user.office_logo.startsWith('http') ? user.office_logo : `${API_BASE_URL.replace('/api', '')}${user.office_logo.startsWith('/') ? user.office_logo : `/${user.office_logo}`}`}
                       alt="Office Logo" 
                       className={`w-full h-full object-contain transition-opacity duration-200 ${logoLoading ? 'opacity-50' : 'opacity-100'}`}
                       onLoad={() => setLogoLoading(false)}
