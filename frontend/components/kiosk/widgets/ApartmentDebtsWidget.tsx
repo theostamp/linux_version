@@ -192,9 +192,20 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
         ) : (
           debts.map((apt: any) => {
             const amount = apt.displayAmount || apt.net_obligation || apt.current_balance;
-            // Orange if has actual debt (current_balance includes all accumulated debt)
-            const hasDebt = (apt.current_balance || 0) > 0;
+            // Green if zero balance, orange if has debt - check the amount that's actually displayed
+            const hasDebt = (amount || 0) > 0;
+            const hasZeroBalance = (amount || 0) === 0;
             const maskedOwnerName = maskName(apt.owner_name);
+            
+            // Debug logging
+            console.log(`Apartment ${apt.apartment_number}:`, {
+              displayAmount: apt.displayAmount,
+              net_obligation: apt.net_obligation,
+              current_balance: apt.current_balance,
+              amount: amount,
+              hasDebt,
+              hasZeroBalance
+            });
 
             return (
               <div
@@ -210,7 +221,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
                   </div>
                   <div className="flex-shrink-0">
                     <span className={`text-sm font-semibold whitespace-nowrap ${
-                      hasDebt ? 'text-orange-400' : 'text-indigo-200'
+                      hasZeroBalance ? 'text-green-400' : hasDebt ? 'text-orange-400' : 'text-indigo-200'
                     }`}>
                       €{amount.toFixed(0)}
                     </span>
@@ -229,7 +240,6 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
           {showWarning && (
             <div className="mb-2 bg-orange-500/20 border border-orange-400/50 rounded-lg p-2 text-center animate-pulse">
               <p className="text-orange-300 text-xs font-bold">⚠️ Χαμηλή Κάλυψη</p>
-              <p className="text-orange-200 text-[10px]">Μετά τις 15 του μήνα</p>
             </div>
           )}
           

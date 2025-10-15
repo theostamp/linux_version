@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import WeatherWidget from '@/components/kiosk/widgets/WeatherWidget';
 import QRCodeWidget from '@/components/kiosk/widgets/QRCodeWidget';
-import ManagerWidget from '@/components/kiosk/widgets/ManagerWidget';
 import AnnouncementsWidget from '@/components/kiosk/widgets/AnnouncementsWidget';
 import AssemblyAnnouncementWidget from '@/components/kiosk/widgets/AssemblyAnnouncementWidget';
 import EmergencyWidget from '@/components/kiosk/widgets/EmergencyWidget';
@@ -24,7 +23,6 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
   // Sidebar widgets that will auto-scroll with slide animation
   const sidebarWidgets = [
     { id: 'qr', name: 'QR Code', Component: QRCodeWidget },
-    { id: 'emergency', name: 'Επικοινωνία', Component: ManagerWidget },
     { id: 'emergency-contacts', name: 'Τηλέφωνα Έκτακτης Ανάγκης', Component: EmergencyWidget },
   ];
 
