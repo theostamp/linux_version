@@ -70,8 +70,8 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
           
           {building?.management_office_address && (
             <div className="flex items-center space-x-3">
-              <MapPin className="w-5 h-5 text-blue-300" />
-              <span className="text-base text-blue-200 truncate max-w-64">
+              <MapPin className="w-4 h-4 text-blue-300" />
+              <span className="text-sm text-blue-200 truncate max-w-64">
                 {building.management_office_address}
               </span>
             </div>
@@ -79,10 +79,10 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
           
           {building?.management_office_phone && (
             <div className="flex items-center space-x-3">
-              <Phone className="w-5 h-5 text-blue-300" />
+              <Phone className="w-4 h-4 text-blue-300" />
               <a 
                 href={`tel:${building.management_office_phone}`}
-                className="text-base text-blue-200 hover:text-blue-100 transition-colors font-semibold"
+                className="text-sm text-blue-200 hover:text-blue-100 transition-colors font-semibold"
               >
                 {building.management_office_phone}
               </a>
