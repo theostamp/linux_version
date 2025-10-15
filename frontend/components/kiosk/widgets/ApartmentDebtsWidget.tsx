@@ -33,8 +33,8 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
 
       try {
         setLoading(true);
-        // Use relative URL for kiosk context
-        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}`;
+        // Use the dashboard API that shows correct net_obligation values
+        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}&month=2025-10`;
         const response = await fetch(apiUrl, {
           headers: {
             'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
       if (!effectiveBuildingId) return;
       
       try {
-        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}`;
+        const apiUrl = `/api/financial/dashboard/apartment_balances/?building_id=${effectiveBuildingId}&month=2025-10`;
         const response = await fetch(apiUrl);
         if (response.ok) {
           const result = await response.json();
@@ -191,21 +191,12 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
           </div>
         ) : (
           debts.map((apt: any) => {
-            const amount = apt.displayAmount || apt.net_obligation || apt.current_balance;
-            // Green if zero balance, orange if has debt - check the amount that's actually displayed
-            const hasDebt = (amount || 0) > 0;
-            const hasZeroBalance = (amount || 0) === 0;
+            const amount = apt.net_obligation || apt.displayAmount || apt.current_balance;
+            // Green if zero balance, orange if has debt - check the net_obligation from dashboard API
+            const hasDebt = (apt.net_obligation || 0) > 0;
+            const hasZeroBalance = (apt.net_obligation || 0) === 0;
             const maskedOwnerName = maskName(apt.owner_name);
             
-            // Debug logging
-            console.log(`Apartment ${apt.apartment_number}:`, {
-              displayAmount: apt.displayAmount,
-              net_obligation: apt.net_obligation,
-              current_balance: apt.current_balance,
-              amount: amount,
-              hasDebt,
-              hasZeroBalance
-            });
 
             return (
               <div
