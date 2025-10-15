@@ -1,7 +1,7 @@
 'use client';
 
 import { BaseWidgetProps } from '@/types/kiosk';
-import { Euro, Home, TrendingUp, QrCode } from 'lucide-react';
+import { Euro, Home, TrendingUp, QrCode, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 
@@ -210,7 +210,10 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
                       {maskedOwnerName}
                     </span>
                   </div>
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 flex items-center gap-1">
+                    {hasZeroBalance && (
+                      <Check className="w-4 h-4 text-green-400" />
+                    )}
                     <span className={`text-sm font-semibold whitespace-nowrap ${
                       hasZeroBalance ? 'text-green-400' : hasDebt ? 'text-orange-400' : 'text-indigo-200'
                     }`}>
