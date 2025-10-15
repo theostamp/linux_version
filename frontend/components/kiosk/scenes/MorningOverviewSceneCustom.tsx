@@ -65,8 +65,8 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
 
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 flex overflow-hidden pb-16">
-      {/* Left Sidebar - 25% (increased by 5%) */}
-      <div className="w-[25%] flex flex-col space-y-3 p-3">
+      {/* Left Sidebar - 23% */}
+      <div className="w-[23%] flex flex-col space-y-3 p-3">
         {/* Sticky Top - Important Announcements (Assembly/Votes) with Custom Format */}
         <div className="flex-shrink-0 h-[35%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
           <div className="h-full overflow-y-auto p-3">
@@ -114,8 +114,8 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
         </div>
       </div>
 
-      {/* Center Area - 55% with stacked widgets (increased from 35%) */}
-      <div className="w-[55%] flex flex-col space-y-3 p-3">
+      {/* Center Area - 54% with stacked widgets */}
+      <div className="w-[54%] flex flex-col space-y-3 p-3">
         {/* Management Office Widget - Top */}
         <div className="h-[15%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
           <div className="h-full">
@@ -123,15 +123,15 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
           </div>
         </div>
 
-        {/* Weather Widget - Middle (Restored height) */}
-        <div className="h-[40%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
+        {/* Weather Widget - Middle (Reduced height) */}
+        <div className="h-[35%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
           <div className="h-full p-4">
             <WeatherWidget data={data} isLoading={false} error={null} buildingId={buildingId} />
           </div>
         </div>
 
-        {/* Announcements & Votes Carousel - Bottom */}
-        <div className="h-[20%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
+        {/* Announcements & Votes Carousel - Bottom (Increased height for two items) */}
+        <div className="h-[30%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
           <div className="h-full p-4">
             <AnnouncementsVotesCarousel data={data} isLoading={false} error={null} />
           </div>
@@ -139,8 +139,8 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
 
       </div>
 
-      {/* Right Area - 20% - Common Expenses Summary Widget (Compact) */}
-      <div className="w-[20%] p-3">
+      {/* Right Area - 23% - Common Expenses Summary Widget (Compact) */}
+      <div className="w-[23%] p-3">
         <div className="h-full w-full backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-indigo-500/30" style={{ backgroundColor: '#222D59' }}>
           <div className="h-full w-full p-4">
             <ApartmentDebtsWidget data={data} isLoading={false} error={null} buildingId={buildingId} />

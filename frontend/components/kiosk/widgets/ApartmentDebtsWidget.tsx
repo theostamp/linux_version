@@ -241,7 +241,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
               </span>
             </div>
             {/* Progress Bar */}
-            <div className="w-full bg-indigo-950/50 rounded-full h-3 overflow-hidden border border-indigo-700/30">
+            <div className="w-full bg-indigo-950/50 rounded-full h-5 overflow-hidden border border-indigo-700/30">
               <div 
                 className={`h-full rounded-full transition-all duration-1000 ${
                   paymentCoveragePercentage >= 75 
@@ -253,19 +253,6 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
             </div>
           </div>
           
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-1.5 text-xs mt-2">
-            <div className="bg-indigo-900/30 p-1.5 rounded text-center">
-              <div className="text-indigo-300 font-bold">{debts.length}</div>
-              <div className="text-indigo-400 text-[10px]">Διαμερίσματα</div>
-            </div>
-            <div className="bg-indigo-900/30 p-1.5 rounded text-center">
-              <div className="text-indigo-300 font-bold">
-                €{(totalExpenses / debts.length).toFixed(0)}
-              </div>
-              <div className="text-indigo-400 text-[10px]">Μέσος Όρος</div>
-            </div>
-          </div>
         </div>
       )}
     </div>

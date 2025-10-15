@@ -143,26 +143,63 @@ export default function AnnouncementsVotesCarousel({ data, isLoading, error }: B
         )}
       </div>
 
-      {/* Content */}
-      <div className={`flex-1 bg-gradient-to-br ${currentItem.bgColor} backdrop-blur-sm rounded-lg border ${currentItem.borderColor} p-4 overflow-hidden`}>
-        <div className="h-full flex flex-col">
-          {/* Title */}
-          <h4 className="text-lg font-bold text-white mb-2 line-clamp-2">
-            {currentItem.title}
-          </h4>
-          
-          {/* Content */}
-          <div className="flex-1 overflow-hidden">
-            <p className="text-sm text-blue-100 leading-relaxed line-clamp-4">
-              {currentItem.content}
-            </p>
+      {/* Content - Two items side by side */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full flex gap-3">
+          {/* First Item */}
+          <div className={`flex-1 bg-gradient-to-br ${currentItem.bgColor} backdrop-blur-sm rounded-lg border ${currentItem.borderColor} p-3 overflow-hidden`}>
+            <div className="h-full flex flex-col">
+              {/* Title */}
+              <h4 className="text-sm font-bold text-white mb-2 line-clamp-2">
+                {currentItem.title}
+              </h4>
+              
+              {/* Content */}
+              <div className="flex-1 overflow-hidden">
+                <p className="text-xs text-blue-100 leading-relaxed line-clamp-3">
+                  {currentItem.content}
+                </p>
+              </div>
+              
+              {/* Date */}
+              <div className="mt-2 pt-2 border-t border-white/10">
+                <p className="text-[10px] text-blue-300">
+                  {format(new Date(currentItem.date), 'dd/MM', { locale: el })}
+                </p>
+              </div>
+            </div>
           </div>
-          
-          {/* Date */}
-          <div className="mt-3 pt-3 border-t border-white/10">
-            <p className="text-xs text-blue-300">
-              {format(new Date(currentItem.date), 'dd MMMM yyyy', { locale: el })}
-            </p>
+
+          {/* Second Item */}
+          <div className="flex-1 overflow-hidden">
+            {carouselItems.length > 1 ? (
+              <div className={`h-full bg-gradient-to-br ${carouselItems[(currentIndex + 1) % carouselItems.length].bgColor} backdrop-blur-sm rounded-lg border ${carouselItems[(currentIndex + 1) % carouselItems.length].borderColor} p-3 overflow-hidden`}>
+                <div className="h-full flex flex-col">
+                  {/* Title */}
+                  <h4 className="text-sm font-bold text-white mb-2 line-clamp-2">
+                    {carouselItems[(currentIndex + 1) % carouselItems.length].title}
+                  </h4>
+                  
+                  {/* Content */}
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-xs text-blue-100 leading-relaxed line-clamp-3">
+                      {carouselItems[(currentIndex + 1) % carouselItems.length].content}
+                    </p>
+                  </div>
+                  
+                  {/* Date */}
+                  <div className="mt-2 pt-2 border-t border-white/10">
+                    <p className="text-[10px] text-blue-300">
+                      {format(new Date(carouselItems[(currentIndex + 1) % carouselItems.length].date), 'dd/MM', { locale: el })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="h-full bg-gradient-to-br from-gray-800/20 to-gray-900/20 backdrop-blur-sm rounded-lg border border-gray-600/30 p-3 flex items-center justify-center">
+                <p className="text-xs text-gray-400 text-center">Δεν υπάρχει δεύτερη ανακοίνωση</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
