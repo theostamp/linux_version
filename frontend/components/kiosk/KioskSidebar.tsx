@@ -136,7 +136,7 @@ export default function KioskSidebar({ buildingInfo, buildingId }: KioskSidebarP
             <span>Καιρός</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-4 pt-0">
+        <CardContent className="p-4 pt-0 pb-6">
           {weather ? (
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -163,34 +163,6 @@ export default function KioskSidebar({ buildingInfo, buildingId }: KioskSidebarP
         </CardContent>
       </Card>
 
-      {/* Manager Info Widget */}
-      {buildingInfo?.internal_manager_name && (
-        <Card className="mx-3 mb-3 bg-slate-800/50 border-slate-600/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center space-x-2 text-white">
-              <Users className="w-4 h-4" />
-              <span>Εσωτερικός Διαχειριστής</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="space-y-2">
-              <div>
-                <p className="text-sm font-medium text-white">
-                  {buildingInfo.internal_manager_name}
-                </p>
-                {buildingInfo.internal_manager_phone && (
-                  <div className="flex items-center space-x-1 mt-1">
-                    <Phone className="w-3 h-3 text-gray-400" />
-                    <span className="text-xs text-gray-300">
-                      {buildingInfo.internal_manager_phone}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Community Message Widget */}
       <Card className="mx-3 mb-3 bg-slate-800/50 border-slate-600/30">
