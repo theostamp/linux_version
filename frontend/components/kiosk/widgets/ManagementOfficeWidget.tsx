@@ -41,7 +41,7 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
   const currentDate = currentTime;
 
   return (
-    <div className="h-full flex items-center justify-between px-6 py-3">
+    <div className="h-full flex items-center justify-between px-6 py-2">
       {/* Left side - Management Office Info */}
       <div className="flex items-center space-x-6">
         {/* Logo or placeholder */}
@@ -61,13 +61,6 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
         
         {/* Management Office Details */}
         <div className="flex flex-col space-y-2">
-          <div className="flex items-center space-x-3">
-            <Building2 className="w-4 h-4 text-blue-300" />
-            <h3 className="text-base font-bold text-white">
-              {building?.management_office_name || 'Γραφείο Διαχείρισης'}
-            </h3>
-          </div>
-          
           {building?.management_office_address && (
             <div className="flex items-center space-x-3">
               <MapPin className="w-3 h-3 text-blue-300" />
