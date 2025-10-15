@@ -41,7 +41,7 @@ export default function ManagementOfficeWidget({ data, isLoading, error }: BaseW
   const currentDate = currentTime;
 
   return (
-    <div className="h-full flex items-center justify-between p-6">
+    <div className="h-full flex items-center justify-between px-6 py-3">
       {/* Left side - Management Office Info */}
       <div className="flex items-center space-x-6">
         {/* Logo or placeholder */}
