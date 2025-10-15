@@ -605,13 +605,16 @@ docker compose up --build -d
 
 
 git add .
-git commit -m "διορθωσεις 31"
+git commit -m "διορθωσεις 44
+"
 
 ## 📤 Ενημέρωση GitHub Repository
 
 ## Βασικές Εντολές Git
 git add .
 git commit -m "scene 1"
+
+
 
 git branch -M main 
 git remote add origin https://github.com/theostamp/linux_version.git

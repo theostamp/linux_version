@@ -123,18 +123,42 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   const showWarning = summary?.show_warning || false;
   const currentDay = summary?.current_day || new Date().getDate();
 
+  // GDPR: Mask surnames after 2nd letter
+  const maskName = (fullName: string): string => {
+    if (!fullName) return 'Μη καταχωρημένος';
+    
+    const parts = fullName.trim().split(' ');
+    if (parts.length === 1) return fullName; // Only first name
+    
+    // Keep first name, mask surname(s)
+    const firstName = parts[0];
+    const maskedSurnames = parts.slice(1).map(surname => {
+      if (surname.length <= 2) return surname;
+      return surname.substring(0, 2) + '****';
+    });
+    
+    return [firstName, ...maskedSurnames].join(' ');
+  };
+
   return (
     <div className="h-full overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-2 pb-2 border-b border-indigo-400/30">
-        <div className="flex items-center space-x-1.5">
-          <Euro className="w-5 h-5 text-indigo-300" />
-          <h2 className="text-base font-bold text-white">Κοινόχρηστα</h2>
-        </div>
-        <div className="text-right">
-          <div className="text-xs text-indigo-300">
-            €{totalExpenses.toFixed(0)}
+      <div className="mb-2 pb-2 border-b border-indigo-400/30">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center space-x-1.5">
+            <Euro className="w-5 h-5 text-indigo-300" />
+            <h2 className="text-base font-bold text-white">Τα Κοινόχρηστα Συνοπτικά</h2>
           </div>
+          <div className="text-right">
+            <div className="text-xs text-indigo-300">
+              €{totalExpenses.toFixed(0)}
+            </div>
+          </div>
+        </div>
+        {/* Info Note */}
+        <div className="text-[10px] text-indigo-300/80 leading-tight mt-1.5 px-0.5">
+          <p>Μπορείτε να δείτε την αναλυτική κατάσταση στο email που σας έχει σταλεί.</p>
+          <p className="mt-0.5">Μπορείτε επίσης να χρησιμοποιήσετε το QR code στο κινητό σας.</p>
         </div>
       </div>
       
@@ -149,23 +173,28 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
         ) : (
           debts.map((apt: any) => {
             const amount = apt.displayAmount || apt.net_obligation || apt.current_balance;
+            // Orange if has actual debt (current_balance includes all accumulated debt)
+            const hasDebt = (apt.current_balance || 0) > 0;
+            const maskedOwnerName = maskName(apt.owner_name);
 
             return (
               <div
                 key={apt.apartment_id}
-                className="bg-indigo-900/20 backdrop-blur-sm p-2 rounded-lg border border-indigo-500/20 hover:border-indigo-400/40 transition-all"
+                className="bg-indigo-900/20 backdrop-blur-sm px-2 py-1.5 rounded-lg border border-indigo-500/20 hover:border-indigo-400/40 transition-all"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 flex-1 min-w-0">
-                    <span className="text-xs font-bold text-indigo-400">{apt.apartment_number}</span>
-                    <p className="text-xs text-white truncate font-medium">
-                      {apt.owner_name || 'Μη καταχωρημένος'}
-                    </p>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <span className="text-xs font-bold text-indigo-400 whitespace-nowrap">{apt.apartment_number}</span>
+                    <span className="text-xs text-white truncate font-medium leading-tight">
+                      {maskedOwnerName}
+                    </span>
                   </div>
-                  <div className="text-right ml-2 flex-shrink-0">
-                    <div className="text-sm font-semibold text-indigo-200">
+                  <div className="flex-shrink-0">
+                    <span className={`text-sm font-semibold whitespace-nowrap ${
+                      hasDebt ? 'text-orange-400' : 'text-indigo-200'
+                    }`}>
                       €{amount.toFixed(0)}
-                    </div>
+                    </span>
                   </div>
                 </div>
               </div>

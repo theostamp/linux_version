@@ -31,9 +31,9 @@ def test_carry_forward_cumulative():
     ✅ TEST 1: Carry Forward αθροιστικό
     
     Scenario:
-    - Οκτώβριος: Δαπάνες €80, Πληρωμές €0 → Carry: €80
-    - Νοέμβριος: Δαπάνες €80, Πληρωμές €0 → Carry: €160
-    - Δεκέμβριος: Δαπάνες €80, Πληρωμές €0 → Carry: €240
+    - Οκτώβριος: Δαπάνες €1080, Πληρωμές €0 → Carry: €1080
+    - Νοέμβριος: Δαπάνες €1080, Πληρωμές €0 → Carry: €2160
+    - Δεκέμβριος: Δαπάνες €1080, Πληρωμές €0 → Carry: €3240
     """
     print("\n" + "="*80)
     print("TEST 1: Carry Forward Cumulative Logic")
@@ -74,9 +74,9 @@ def test_carry_forward_cumulative():
             return False
         
         # Verify values
-        expected_oct = Decimal('80.00')
-        expected_nov = Decimal('160.00')
-        expected_dec = Decimal('240.00')
+        expected_oct = Decimal('1080.00')
+        expected_nov = Decimal('2160.00')
+        expected_dec = Decimal('3240.00')
         
         print(f"\n📊 Results:")
         print(f"   October carry_forward: €{mb_oct.carry_forward}")
@@ -125,7 +125,7 @@ def test_previous_obligations_transfer():
         # Check November previous obligations
         nov_summary = service.get_summary(month='2025-11')
         nov_previous = Decimal(str(nov_summary.get('previous_obligations', 0)))  # Convert to Decimal
-        expected_nov_previous = Decimal('80.00')
+        expected_nov_previous = Decimal('1080.00')
         
         print(f"\n📊 November Results:")
         print(f"   Previous Obligations: €{nov_previous}")
@@ -140,7 +140,7 @@ def test_previous_obligations_transfer():
         # Check December previous obligations
         dec_summary = service.get_summary(month='2025-12')
         dec_previous = Decimal(str(dec_summary.get('previous_obligations', 0)))  # Convert to Decimal
-        expected_dec_previous = Decimal('160.00')
+        expected_dec_previous = Decimal('2160.00')
         
         print(f"\n📊 December Results:")
         print(f"   Previous Obligations: €{dec_previous}")
