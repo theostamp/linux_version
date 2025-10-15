@@ -197,6 +197,16 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
             const hasZeroBalance = (apt.net_obligation || 0) === 0;
             const maskedOwnerName = maskName(apt.owner_name);
             
+            // Debug logging for Α1
+            if (apt.apartment_number === 'Α1') {
+              console.log('Α1 Debug:', {
+                net_obligation: apt.net_obligation,
+                amount: amount,
+                hasDebt,
+                hasZeroBalance
+              });
+            }
+            
 
             return (
               <div
