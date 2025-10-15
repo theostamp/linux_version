@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
 import WeatherWidget from '@/components/kiosk/widgets/WeatherWidget';
 import QRCodeWidget from '@/components/kiosk/widgets/QRCodeWidget';
 import ManagerWidget from '@/components/kiosk/widgets/ManagerWidget';
 import AnnouncementsWidget from '@/components/kiosk/widgets/AnnouncementsWidget';
 import AssemblyAnnouncementWidget from '@/components/kiosk/widgets/AssemblyAnnouncementWidget';
-import BuildingStatisticsWidget from '@/components/kiosk/widgets/BuildingStatisticsWidget';
 import EmergencyWidget from '@/components/kiosk/widgets/EmergencyWidget';
 import ApartmentDebtsWidget from '@/components/kiosk/widgets/ApartmentDebtsWidget';
+import AnnouncementsVotesCarousel from '@/components/kiosk/widgets/AnnouncementsVotesCarousel';
+import ManagementOfficeWidget from '@/components/kiosk/widgets/ManagementOfficeWidget';
 
 interface MorningOverviewSceneCustomProps {
   data?: any;
@@ -22,9 +22,9 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
   
   // Sidebar widgets that will auto-scroll with slide animation
   const sidebarWidgets = [
-    { id: 'weather', name: 'Καιρός', Component: WeatherWidget },
     { id: 'qr', name: 'QR Code', Component: QRCodeWidget },
     { id: 'emergency', name: 'Επικοινωνία', Component: ManagerWidget },
+    { id: 'emergency-contacts', name: 'Τηλέφωνα Έκτακτης Ανάγκης', Component: EmergencyWidget },
   ];
 
   // Auto-scroll sidebar widgets every 10 seconds with smooth slide animation
@@ -64,8 +64,8 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
 
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 flex overflow-hidden">
-      {/* Left Sidebar - 20% (same structure as Financial scene) */}
-      <div className="w-[20%] flex flex-col space-y-3 p-3">
+      {/* Left Sidebar - 25% (increased by 5%) */}
+      <div className="w-[25%] flex flex-col space-y-3 p-3">
         {/* Sticky Top - Important Announcements (Assembly/Votes) with Custom Format */}
         <div className="flex-shrink-0 h-[35%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
           <div className="h-full overflow-y-auto p-3">
@@ -115,30 +115,30 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
 
       {/* Center Area - 55% with stacked widgets (increased from 35%) */}
       <div className="w-[55%] flex flex-col space-y-3 p-3">
-        {/* Building Statistics - Top */}
-        <div className="h-[33%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
-          <div className="h-full overflow-y-auto p-4">
-            <BuildingStatisticsWidget data={data} isLoading={false} error={null} />
+        {/* Management Office Widget - Top */}
+        <div className="h-[15%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
+          <div className="h-full">
+            <ManagementOfficeWidget data={data} isLoading={false} error={null} />
           </div>
         </div>
 
-        {/* Announcements - Middle */}
-        <div className="h-[33%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
-          <div className="h-full overflow-y-auto p-4">
-            <AnnouncementsWidget data={data} isLoading={false} error={null} />
+        {/* Weather Widget - Middle (Reduced height) */}
+        <div className="h-[30%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
+          <div className="h-full p-4">
+            <WeatherWidget data={data} isLoading={false} error={null} buildingId={buildingId} />
           </div>
         </div>
 
-        {/* Emergency Contacts - Bottom */}
-        <div className="h-[33%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-red-500/20">
-          <div className="h-full overflow-y-auto p-4">
-            <EmergencyWidget data={data} isLoading={false} error={null} />
+        {/* Announcements & Votes Carousel - Bottom */}
+        <div className="h-[27.5%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
+          <div className="h-full p-4">
+            <AnnouncementsVotesCarousel data={data} isLoading={false} error={null} />
           </div>
         </div>
       </div>
 
-      {/* Right Area - 25% - Common Expenses Summary Widget (Compact) */}
-      <div className="w-[25%] p-3">
+      {/* Right Area - 20% - Common Expenses Summary Widget (Compact) */}
+      <div className="w-[20%] p-3">
         <div className="h-full w-full backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-indigo-500/30" style={{ backgroundColor: '#222D59' }}>
           <div className="h-full w-full p-4">
             <ApartmentDebtsWidget data={data} isLoading={false} error={null} buildingId={buildingId} />

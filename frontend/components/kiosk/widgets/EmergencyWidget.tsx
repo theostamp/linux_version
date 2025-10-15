@@ -43,24 +43,6 @@ export default function EmergencyWidget({ data, isLoading, error }: BaseWidgetPr
       borderColor: 'border-red-500/30'
     },
     {
-      id: 'police',
-      name: 'Αστυνομία',
-      number: '100',
-      icon: Shield,
-      color: 'text-blue-400',
-      bgColor: 'from-blue-900/40 to-blue-800/40',
-      borderColor: 'border-blue-500/30'
-    },
-    {
-      id: 'ambulance',
-      name: 'Ασθενοφόρο',
-      number: '166',
-      icon: Heart,
-      color: 'text-green-400',
-      bgColor: 'from-green-900/40 to-green-800/40',
-      borderColor: 'border-green-500/30'
-    },
-    {
       id: 'electricity',
       name: 'ΔΕΔΔΗΕ',
       number: '10500',
@@ -77,15 +59,6 @@ export default function EmergencyWidget({ data, isLoading, error }: BaseWidgetPr
       color: 'text-cyan-400',
       bgColor: 'from-cyan-900/40 to-cyan-800/40',
       borderColor: 'border-cyan-500/30'
-    },
-    {
-      id: 'gas',
-      name: 'ΑΔΜΗΕ',
-      number: '210-6960000',
-      icon: Home,
-      color: 'text-orange-400',
-      bgColor: 'from-orange-900/40 to-orange-800/40',
-      borderColor: 'border-orange-500/30'
     }
   ];
 
@@ -96,7 +69,7 @@ export default function EmergencyWidget({ data, isLoading, error }: BaseWidgetPr
         <h2 className="text-lg font-bold text-white">Τηλέφωνα Έκτακτης Ανάγκης</h2>
       </div>
       
-      <div className="grid grid-cols-2 gap-3 h-full overflow-y-auto">
+      <div className="space-y-3 h-full">
         {emergencyContacts.map((contact) => {
           const IconComponent = contact.icon;
           
@@ -106,26 +79,16 @@ export default function EmergencyWidget({ data, isLoading, error }: BaseWidgetPr
               className={`bg-gradient-to-br ${contact.bgColor} backdrop-blur-sm p-4 rounded-xl border ${contact.borderColor} hover:scale-105 transition-all cursor-pointer`}
               onClick={() => window.open(`tel:${contact.number}`, '_self')}
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-3">
                 <IconComponent className={`w-6 h-6 ${contact.color}`} />
-                <div className="text-xs bg-black/20 px-2 py-1 rounded-full text-white">
-                  Κλικ για κλήση
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-white mb-1">
+                    {contact.name}
+                  </h3>
+                  <div className={`text-xl font-bold ${contact.color}`}>
+                    {contact.number}
+                  </div>
                 </div>
-              </div>
-              
-              <h3 className="text-sm font-semibold text-white mb-1">
-                {contact.name}
-              </h3>
-              
-              <div className={`text-xl font-bold ${contact.color}`}>
-                {contact.number}
-              </div>
-              
-              <div className="mt-2 flex items-center space-x-1">
-                <Phone className="w-3 h-3 text-gray-400" />
-                <span className="text-xs text-gray-300">
-                  Δωρεάν κλήση
-                </span>
               </div>
             </div>
           );
