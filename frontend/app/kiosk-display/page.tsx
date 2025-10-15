@@ -332,28 +332,6 @@ export default function KioskDisplayPage() {
               </div>
             </div>
 
-            {/* Manager Widget */}
-            <div className="bg-gray-800/80 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/90 transition-all duration-300 shadow-sm">
-              <h3 className="text-lg font-semibold text-blue-400 mb-4">👨‍💼 Διαχειριστής</h3>
-              <div className="space-y-3">
-                <div>
-                  <div className="text-sm font-semibold text-gray-100">Εσωτερικός Διαχειριστής</div>
-                  <div className="text-sm text-gray-400">Γιάννης Παπαδόπουλος</div>
-                  <div className="text-sm text-blue-400">+30 210 123 4567</div>
-                </div>
-
-                <div className="border-t border-gray-700/50 pt-3">
-                  <div className="text-xs text-gray-400 mb-1">Διαμερίσματα:</div>
-                  <div className="text-sm text-gray-100">Α1, Α2, Β1, Β2, Γ1, Γ2</div>
-                </div>
-
-                <div className="border-t border-gray-700/50 pt-3">
-                  <div className="text-xs text-gray-400 mb-1">Πληρωμή Κοινόχρηστων:</div>
-                  <div className="text-sm text-gray-100">Δευτέρα - Παρασκευή</div>
-                  <div className="text-xs text-gray-400">09:00 - 17:00</div>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Main Content Area - 2x2 Grid Layout */}
