@@ -327,3 +327,4 @@ class StripeService:
         except KeyError:
             logger.error(f"No price found for plan {plan_type} with interval {billing_interval}")
             return None
+

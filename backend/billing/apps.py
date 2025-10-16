@@ -14,3 +14,4 @@ class BillingConfig(AppConfig):
             import billing.signals
         except ImportError:
             pass
+

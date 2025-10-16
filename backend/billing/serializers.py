@@ -285,3 +285,4 @@ class SubscriptionSummarySerializer(serializers.Serializer):
                 'storage_gb': subscription.plan.max_storage_gb,
             }
         }
+

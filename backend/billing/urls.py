@@ -7,7 +7,9 @@ from .views import (
     SubscriptionPlanViewSet, UserSubscriptionViewSet,
     PaymentMethodViewSet, UsageTrackingViewSet,
     BillingCycleViewSet, StripeWebhookView,
-    CreatePaymentIntentView
+    CreatePaymentIntentView, UsageAnalyticsView,
+    UsageTrendsView, PlanComparisonView,
+    BillingHistoryView, AdminUsageStatsView
 )
 
 app_name = 'billing'
@@ -29,4 +31,14 @@ urlpatterns = [
     
     # Payment intent
     path('api/payment-intent/', CreatePaymentIntentView.as_view(), name='create-payment-intent'),
+    
+    # Usage Analytics
+    path('api/analytics/usage/', UsageAnalyticsView.as_view(), name='usage-analytics'),
+    path('api/analytics/trends/', UsageTrendsView.as_view(), name='usage-trends'),
+    path('api/analytics/plan-comparison/', PlanComparisonView.as_view(), name='plan-comparison'),
+    path('api/analytics/billing-history/', BillingHistoryView.as_view(), name='billing-history'),
+    
+    # Admin Analytics
+    path('api/admin/usage-stats/', AdminUsageStatsView.as_view(), name='admin-usage-stats'),
 ]
+

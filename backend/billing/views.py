@@ -24,6 +24,7 @@ from .serializers import (
 )
 from .services import BillingService, PaymentService, WebhookService
 from .integrations.stripe import StripeService
+from .analytics import UsageAnalyticsService
 from rest_framework.permissions import IsAuthenticated
 
 logger = logging.getLogger(__name__)
@@ -404,3 +405,150 @@ class CreatePaymentIntentView(APIView):
             return Response({
                 'error': 'Failed to create payment intent'
             }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UsageAnalyticsView(APIView):
+    """
+    View για usage analytics και reporting
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get comprehensive usage summary για user
+        """
+        try:
+            summary = UsageAnalyticsService.get_user_usage_summary(request.user)
+            
+            if 'error' in summary:
+                return Response(summary, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response(summary)
+            
+        except Exception as e:
+            logger.error(f"Error getting usage summary: {e}")
+            return Response({
+                'error': 'Failed to get usage summary'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UsageTrendsView(APIView):
+    """
+    View για usage trends και historical data
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get usage trends για τις τελευταίες N μέρες
+        """
+        try:
+            days = request.query_params.get('days', 30)
+            try:
+                days = int(days)
+                if days < 1 or days > 365:
+                    days = 30
+            except ValueError:
+                days = 30
+            
+            trends = UsageAnalyticsService.get_usage_trends(request.user, days)
+            
+            if 'error' in trends:
+                return Response(trends, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response(trends)
+            
+        except Exception as e:
+            logger.error(f"Error getting usage trends: {e}")
+            return Response({
+                'error': 'Failed to get usage trends'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PlanComparisonView(APIView):
+    """
+    View για plan comparison και upgrade recommendations
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Compare current plan με άλλα available plans
+        """
+        try:
+            comparison = UsageAnalyticsService.get_plan_comparison(request.user)
+            
+            if 'error' in comparison:
+                return Response(comparison, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response(comparison)
+            
+        except Exception as e:
+            logger.error(f"Error getting plan comparison: {e}")
+            return Response({
+                'error': 'Failed to get plan comparison'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class BillingHistoryView(APIView):
+    """
+    View για billing history και payment records
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get billing history για user
+        """
+        try:
+            months = request.query_params.get('months', 6)
+            try:
+                months = int(months)
+                if months < 1 or months > 24:
+                    months = 6
+            except ValueError:
+                months = 6
+            
+            history = UsageAnalyticsService.get_billing_history(request.user, months)
+            
+            if 'error' in history:
+                return Response(history, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response(history)
+            
+        except Exception as e:
+            logger.error(f"Error getting billing history: {e}")
+            return Response({
+                'error': 'Failed to get billing history'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AdminUsageStatsView(APIView):
+    """
+    View για admin usage statistics
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get usage statistics για admin users
+        """
+        try:
+            # Only superusers can access admin stats
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            stats = UsageAnalyticsService.get_admin_usage_stats(request.user)
+            
+            if 'error' in stats:
+                return Response(stats, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response(stats)
+            
+        except Exception as e:
+            logger.error(f"Error getting admin usage stats: {e}")
+            return Response({
+                'error': 'Failed to get admin usage stats'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

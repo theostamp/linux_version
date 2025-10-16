@@ -183,3 +183,4 @@ class PaymentMethodAdmin(admin.ModelAdmin):
             return f"{obj.card_brand} •••• {obj.card_last4}"
         return obj.get_payment_type_display()
     card_display.short_description = 'Payment Method'
+

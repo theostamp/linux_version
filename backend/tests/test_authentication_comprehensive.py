@@ -429,3 +429,4 @@ class SecurityTestCase(APITestCase):
         
         self.assertEqual(self.user.failed_login_attempts, 0)
         self.assertIsNone(self.user.last_failed_login)
+

@@ -174,3 +174,4 @@ class SecurityAuditLogger:
                 'timestamp': timezone.now().isoformat()
             }
         )
+

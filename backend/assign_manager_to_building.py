@@ -58,3 +58,4 @@ def assign_manager_to_building():
 if __name__ == "__main__":
     assign_manager_to_building()
 
+

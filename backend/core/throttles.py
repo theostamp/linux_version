@@ -57,3 +57,4 @@ class EmailVerificationThrottle(AnonRateThrottle):
     """
     scope = 'email_verification'
     rate = '5/min'  # 5 verification requests per minute
+

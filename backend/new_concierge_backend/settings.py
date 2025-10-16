@@ -131,6 +131,10 @@ if DEBUG:
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
         'financial.audit.AuditMiddleware',  # Audit logging για οικονομικές κινήσεις
+        # Billing & Usage Tracking Middleware
+        'billing.middleware.BillingStatusMiddleware',  # Check subscription status
+        'billing.middleware.PlanFeatureMiddleware',    # Check feature access
+        'billing.middleware.UsageTrackingMiddleware',  # Track usage and enforce limits
     ]
     
     if 'debug_toolbar' in INSTALLED_APPS:
@@ -148,6 +152,10 @@ else:
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
         'financial.audit.AuditMiddleware',  # Audit logging για οικονομικές κινήσεις
+        # Billing & Usage Tracking Middleware
+        'billing.middleware.BillingStatusMiddleware',  # Check subscription status
+        'billing.middleware.PlanFeatureMiddleware',    # Check feature access
+        'billing.middleware.UsageTrackingMiddleware',  # Track usage and enforce limits
     ]
 
 # Debug Toolbar Configuration
