@@ -36,42 +36,14 @@ export default function QRCodeWidget({ data, isLoading, error }: BaseWidgetProps
         <div className="w-24 h-24 bg-white rounded-lg flex items-center justify-center mb-3">
           <QrCode className="w-16 h-16 text-gray-800" />
         </div>
-        <div className="text-xs text-gray-300">
-          QR Code για σύνδεση
-        </div>
       </div>
 
-      {/* Connection Info */}
-      <div className="space-y-2">
-        <div className="flex items-center space-x-2 text-sm text-white">
-          <Smartphone className="w-4 h-4 text-blue-300" />
-          <span>Συνδέστε το κινητό σας</span>
-        </div>
-        
-        <div className="flex items-center space-x-2 text-xs text-gray-300">
-          <Wifi className="w-3 h-3 text-green-300" />
-          <span>Δωρεάν WiFi διαθέσιμο</span>
+      {/* Info Text */}
+      <div className="bg-blue-500/20 border border-blue-400/40 rounded-lg p-3">
+        <div className="text-xs text-blue-200 leading-relaxed">
+          <p className="font-medium">Μπορείτε να δείτε την αναλυτική κατάσταση στο email που σας έχει σταλεί ή σαρώνωντας το QR code με το κινητό σας.</p>
         </div>
       </div>
-
-      {/* Instructions */}
-      <div className="mt-4 text-xs text-gray-400 leading-relaxed">
-        <p>1. Σκανάρετε τον QR κώδικα</p>
-        <p>2. Ανοίξτε το link στο κινητό</p>
-        <p>3. Αποκτήστε πρόσβαση στο σύστημα</p>
-      </div>
-
-      {/* Building Info */}
-      {data?.building_info && (
-        <div className="mt-4 p-2 bg-blue-900/30 rounded-lg">
-          <div className="text-xs text-blue-200">
-            Κτίριο: {data.building_info.name || 'Αλκμάνος 22'}
-          </div>
-          <div className="text-xs text-gray-400">
-            ID: {data.building_info.id}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
