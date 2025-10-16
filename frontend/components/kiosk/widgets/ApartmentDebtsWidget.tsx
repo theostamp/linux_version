@@ -23,6 +23,8 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
   const [summary, setSummary] = useState<any>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
     const fetchDebts = async () => {
@@ -62,7 +64,17 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
         setApiError(null);
       } catch (err) {
         console.error('Error fetching apartment debts:', err);
-        setApiError(err instanceof Error ? err.message : 'Unknown error');
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setApiError(errorMessage);
+        
+        // Auto-retry mechanism
+        if (retryCount < 3) {
+          console.log(`Retrying fetch... (${retryCount + 1}/3)`);
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+            fetchDebts();
+          }, 2000 * (retryCount + 1)); // Exponential backoff: 2s, 4s, 6s
+        }
       } finally {
         setLoading(false);
       }
@@ -73,7 +85,7 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
     // Refresh every 5 minutes
     const interval = setInterval(fetchDebts, 300000);
     return () => clearInterval(interval);
-  }, [effectiveBuildingId]);
+  }, [effectiveBuildingId, retryCount]);
 
   // Fetch summary data separately (includes payment coverage)
   useEffect(() => {
@@ -108,11 +120,31 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   }
 
   if (error || apiError) {
+    const handleRetry = () => {
+      setRetryCount(0);
+      setApiError(null);
+      setLoading(true);
+      // Trigger re-fetch by updating a dependency
+      setDebts([]);
+    };
+
     return (
       <div className="flex items-center justify-center h-full text-red-300">
         <div className="text-center">
           <div className="text-2xl mb-2">⚠️</div>
-          <p className="text-sm">{error || apiError}</p>
+          <p className="text-sm mb-3">{error || apiError}</p>
+          {retryCount > 0 && (
+            <p className="text-xs text-red-400 mb-3">
+              Προσπάθεια επαναφόρτωσης: {retryCount}/3
+            </p>
+          )}
+          <button
+            onClick={handleRetry}
+            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors"
+            disabled={loading}
+          >
+            {loading ? 'Φόρτωση...' : 'Επαναφόρτωση'}
+          </button>
         </div>
       </div>
     );
