@@ -11,7 +11,9 @@ from .views import (
     UsageTrendsView, PlanComparisonView,
     BillingHistoryView, AdminUsageStatsView,
     InvoiceManagementView, PaymentProcessingView,
-    AdminBillingManagementView
+    AdminBillingManagementView, AdminDashboardView,
+    AdminUserManagementView, AdminSubscriptionManagementView,
+    AdminSystemHealthView
 )
 
 app_name = 'billing'
@@ -49,5 +51,11 @@ urlpatterns = [
     
     # Admin Billing Management
     path('api/admin/billing/', AdminBillingManagementView.as_view(), name='admin-billing-management'),
+    
+    # Admin Dashboard
+    path('api/admin/dashboard/', AdminDashboardView.as_view(), name='admin-dashboard'),
+    path('api/admin/users/', AdminUserManagementView.as_view(), name='admin-user-management'),
+    path('api/admin/subscriptions/', AdminSubscriptionManagementView.as_view(), name='admin-subscription-management'),
+    path('api/admin/system-health/', AdminSystemHealthView.as_view(), name='admin-system-health'),
 ]
 

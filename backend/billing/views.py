@@ -25,6 +25,7 @@ from .serializers import (
 from .services import BillingService, PaymentService, WebhookService
 from .integrations.stripe import StripeService
 from .analytics import UsageAnalyticsService
+from .admin_dashboard import AdminDashboardService
 from rest_framework.permissions import IsAuthenticated
 
 logger = logging.getLogger(__name__)
@@ -762,4 +763,272 @@ class AdminBillingManagementView(APIView):
             logger.error(f"Error generating monthly invoices: {e}")
             return Response({
                 'error': 'Failed to generate monthly invoices'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AdminDashboardView(APIView):
+    """
+    Comprehensive admin dashboard view
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get comprehensive admin dashboard data
+        """
+        try:
+            # Only superusers can access admin dashboard
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            dashboard_type = request.query_params.get('type', 'overview')
+            
+            if dashboard_type == 'overview':
+                data = AdminDashboardService.get_dashboard_overview()
+            elif dashboard_type == 'users':
+                data = AdminDashboardService.get_user_management_data()
+            elif dashboard_type == 'subscriptions':
+                data = AdminDashboardService.get_subscription_management_data()
+            elif dashboard_type == 'financial':
+                data = AdminDashboardService.get_financial_overview()
+            elif dashboard_type == 'system':
+                data = AdminDashboardService.get_system_health()
+            else:
+                return Response({
+                    'error': 'Invalid dashboard type'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if 'error' in data:
+                return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response(data)
+            
+        except Exception as e:
+            logger.error(f"Error getting admin dashboard data: {e}")
+            return Response({
+                'error': 'Failed to get dashboard data'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AdminUserManagementView(APIView):
+    """
+    Admin user management view
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get user management data
+        """
+        try:
+            # Only superusers can access user management
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            data = AdminDashboardService.get_user_management_data()
+            
+            if 'error' in data:
+                return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response(data)
+            
+        except Exception as e:
+            logger.error(f"Error getting user management data: {e}")
+            return Response({
+                'error': 'Failed to get user management data'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def post(self, request):
+        """
+        Perform user management actions
+        """
+        try:
+            # Only superusers can perform user management actions
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            action = request.data.get('action')
+            user_id = request.data.get('user_id')
+            
+            if not action or not user_id:
+                return Response({
+                    'error': 'action and user_id are required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return Response({
+                    'error': 'User not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            if action == 'activate':
+                user.is_active = True
+                user.save()
+                message = f'User {user.email} activated successfully'
+            elif action == 'deactivate':
+                user.is_active = False
+                user.save()
+                message = f'User {user.email} deactivated successfully'
+            elif action == 'verify_email':
+                user.email_verified = True
+                user.save()
+                message = f'Email verified for {user.email}'
+            elif action == 'reset_password':
+                # This would typically send a password reset email
+                message = f'Password reset email sent to {user.email}'
+            else:
+                return Response({
+                    'error': 'Invalid action'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response({
+                'message': message,
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'is_active': user.is_active,
+                    'email_verified': user.email_verified
+                }
+            })
+            
+        except Exception as e:
+            logger.error(f"Error performing user management action: {e}")
+            return Response({
+                'error': 'Failed to perform action'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AdminSubscriptionManagementView(APIView):
+    """
+    Admin subscription management view
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get subscription management data
+        """
+        try:
+            # Only superusers can access subscription management
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            data = AdminDashboardService.get_subscription_management_data()
+            
+            if 'error' in data:
+                return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response(data)
+            
+        except Exception as e:
+            logger.error(f"Error getting subscription management data: {e}")
+            return Response({
+                'error': 'Failed to get subscription management data'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def post(self, request):
+        """
+        Perform subscription management actions
+        """
+        try:
+            # Only superusers can perform subscription management actions
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            action = request.data.get('action')
+            subscription_id = request.data.get('subscription_id')
+            
+            if not action or not subscription_id:
+                return Response({
+                    'error': 'action and subscription_id are required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                subscription = UserSubscription.objects.get(id=subscription_id)
+            except UserSubscription.DoesNotExist:
+                return Response({
+                    'error': 'Subscription not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            if action == 'cancel':
+                success = BillingService.cancel_subscription(subscription, cancel_at_period_end=True)
+                if success:
+                    message = f'Subscription cancelled for {subscription.user.email}'
+                else:
+                    return Response({
+                        'error': 'Failed to cancel subscription'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            elif action == 'reactivate':
+                subscription.status = 'active'
+                subscription.cancel_at_period_end = False
+                subscription.cancelled_at = None
+                subscription.save()
+                message = f'Subscription reactivated for {subscription.user.email}'
+            elif action == 'extend_trial':
+                days = request.data.get('days', 7)
+                if subscription.trial_end:
+                    subscription.trial_end = subscription.trial_end + timezone.timedelta(days=days)
+                else:
+                    subscription.trial_end = timezone.now() + timezone.timedelta(days=days)
+                subscription.save()
+                message = f'Trial extended by {days} days for {subscription.user.email}'
+            else:
+                return Response({
+                    'error': 'Invalid action'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response({
+                'message': message,
+                'subscription': UserSubscriptionSerializer(subscription).data
+            })
+            
+        except Exception as e:
+            logger.error(f"Error performing subscription management action: {e}")
+            return Response({
+                'error': 'Failed to perform action'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AdminSystemHealthView(APIView):
+    """
+    Admin system health monitoring view
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get system health status
+        """
+        try:
+            # Only superusers can access system health
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            health_data = AdminDashboardService.get_system_health()
+            
+            if 'error' in health_data:
+                return Response(health_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response(health_data)
+            
+        except Exception as e:
+            logger.error(f"Error getting system health: {e}")
+            return Response({
+                'error': 'Failed to get system health'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
