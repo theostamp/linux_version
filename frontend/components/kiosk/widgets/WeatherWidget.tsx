@@ -152,7 +152,7 @@ export default function WeatherWidget({ data, isLoading, error }: BaseWidgetProp
   };
 
   return (
-    <div className="h-full overflow-hidden flex flex-col">
+    <div className="h-full overflow-y-auto flex flex-col">
       {/* Current Weather */}
       <div className="text-center mb-4 flex-shrink-0">
         <div className="text-4xl mb-2">

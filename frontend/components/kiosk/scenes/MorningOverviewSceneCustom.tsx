@@ -121,15 +121,15 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
           </div>
         </div>
 
-        {/* Weather Widget - Middle (Reduced height) */}
-        <div className="h-[35%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
+        {/* Weather Widget - Middle (Increased height to show all content) */}
+        <div className="h-[50%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
           <div className="h-full p-4">
             <WeatherWidget data={data} isLoading={false} error={null} buildingId={buildingId} />
           </div>
         </div>
 
-        {/* Announcements & Votes Carousel - Bottom (Increased height for two items) */}
-        <div className="h-[30%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
+        {/* Announcements & Votes Carousel - Bottom (Reduced height to accommodate weather) */}
+        <div className="h-[20%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
           <div className="h-full p-4">
             <AnnouncementsVotesCarousel data={data} isLoading={false} error={null} />
           </div>
