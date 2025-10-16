@@ -65,6 +65,7 @@ TENANT_APPS = [
     'public_info',
     'core',
     'chat',
+    'billing',  # Subscription & Billing System
     
     # 🔧 Νέα apps για επέκταση λειτουργιών
     'maintenance',
