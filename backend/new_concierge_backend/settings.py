@@ -372,15 +372,24 @@ else:
 # ----------------------------------------
 # Use console backend for testing (emails printed to console)
 # Change to 'django.core.mail.backends.smtp.EmailBackend' for real email sending
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Email Backend Configuration
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 
-# SMTP settings (used when EMAIL_BACKEND = smtp.EmailBackend)
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+# SMTP settings (used when EMAIL_BACKEND = django.core.mail.backends.smtp.EmailBackend)
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@example.com')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@newconcierge.gr')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# Email timeout settings
+EMAIL_TIMEOUT = 30
+
+# Email subject prefix
+EMAIL_SUBJECT_PREFIX = '[New Concierge] '
 
 # ----------------------------------------
 # Django REST framework simple JWT settings

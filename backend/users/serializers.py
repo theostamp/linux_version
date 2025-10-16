@@ -310,7 +310,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'id', 'email', 'first_name', 'last_name', 'full_name',
             'is_active', 'email_verified', 'date_joined', 'groups',
             'role', 'office_name', 'office_address', 'office_phone',
-            'office_logo', 'office_bank_account'
+            'office_logo', 'office_bank_account',
+            'email_notifications_enabled', 'sms_notifications_enabled',
+            'notify_financial_updates', 'notify_maintenance_updates',
+            'notify_announcements', 'notify_votes'
         )
         read_only_fields = ('id', 'email', 'is_active', 'email_verified', 'date_joined')
     

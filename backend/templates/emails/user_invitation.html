@@ -1,0 +1,61 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Πρόσκληση στο New Concierge{% endblock %}
+
+{% block content %}
+<div class="success">
+    <h2>🎉 Έχετε λάβει πρόσκληση!</h2>
+    <p>Γεια σας <strong>{{ invitation.first_name }} {{ invitation.last_name }}</strong>,</p>
+    <p>Ο/Η <strong>{{ invitation.invited_by.first_name }} {{ invitation.invited_by.last_name }}</strong> σας προσκαλεί να συμμετάσχετε στο σύστημα διαχείρισης κτιρίων New Concierge.</p>
+</div>
+
+{% if invitation.building_name %}
+<div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <h4>🏢 Κτίριο:</h4>
+    <p><strong>{{ invitation.building_name }}</strong></p>
+</div>
+{% endif %}
+
+{% if invitation.assigned_role %}
+<div style="background-color: #e7f3ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <h4>👤 Ρόλος:</h4>
+    <p><strong>{{ invitation.assigned_role|title }}</strong></p>
+</div>
+{% endif %}
+
+<h3>🚀 Αποδοχή Πρόσκλησης</h3>
+<p>Για να αποδεχτείτε την πρόσκληση και να δημιουργήσετε τον λογαριασμό σας, κάντε κλικ στον παρακάτω σύνδεσμο:</p>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ invitation_url }}" class="button">Αποδοχή Πρόσκλησης</a>
+</div>
+
+<div class="warning">
+    <p><strong>⏰ Προθεσμία:</strong></p>
+    <ul>
+        <li>Αυτή η πρόσκληση θα λήξει στις <strong>{{ invitation.expires_at|date:"d/m/Y H:i" }}</strong></li>
+        <li>Μετά την αποδοχή, θα σας ζητηθεί να δημιουργήσετε κωδικό πρόσβασης</li>
+        <li>Θα αποκτήσετε αμέσως πρόσβαση στις λειτουργίες του συστήματος</li>
+    </ul>
+</div>
+
+<h4>🎯 Τι θα μπορείτε να κάνετε:</h4>
+<ul>
+    <li>Προβολή στοιχείων κτιρίου και διαμερίσματος</li>
+    <li>Διαχείριση οικονομικών υποχρεώσεων</li>
+    <li>Υποβολή αιτημάτων συντήρησης</li>
+    <li>Συμμετοχή σε ψηφοφορίες και ανακοινώσεις</li>
+    <li>Επικοινωνία με άλλους ενοικιαστές</li>
+</ul>
+
+<p>Εάν δεν αναμένετε αυτή την πρόσκληση ή έχετε ερωτήσεις, παρακαλούμε επικοινωνήστε με τον/την {{ invitation.invited_by.first_name }} {{ invitation.invited_by.last_name }}.</p>
+
+<p>Με εκτίμηση,<br>
+<strong>Η ομάδα του New Concierge</strong></p>
+
+<hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+<p style="font-size: 12px; color: #666;">
+    Εάν δεν μπορείτε να κάνετε κλικ στον σύνδεσμο, αντιγράψτε και επικολλήστε αυτή τη διεύθυνση στο πρόγραμμα περιήγησής σας:<br>
+    <a href="{{ invitation_url }}">{{ invitation_url }}</a>
+</p>
+{% endblock %}

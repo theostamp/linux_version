@@ -106,6 +106,44 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         blank=True,
         help_text=_("Όνομα δικαιούχου του λογαριασμού")
     )
+    
+    # Notification preferences
+    email_notifications_enabled = models.BooleanField(
+        _('Email Notifications Enabled'),
+        default=True,
+        help_text=_('Ενεργοποίηση email ειδοποιήσεων')
+    )
+    
+    sms_notifications_enabled = models.BooleanField(
+        _('SMS Notifications Enabled'),
+        default=False,
+        help_text=_('Ενεργοποίηση SMS ειδοποιήσεων')
+    )
+    
+    # Specific notification types
+    notify_financial_updates = models.BooleanField(
+        _('Financial Updates'),
+        default=True,
+        help_text=_('Ειδοποιήσεις για οικονομικές ενημερώσεις')
+    )
+    
+    notify_maintenance_updates = models.BooleanField(
+        _('Maintenance Updates'),
+        default=True,
+        help_text=_('Ειδοποιήσεις για αιτήματα συντήρησης')
+    )
+    
+    notify_announcements = models.BooleanField(
+        _('Announcements'),
+        default=True,
+        help_text=_('Ειδοποιήσεις για ανακοινώσεις')
+    )
+    
+    notify_votes = models.BooleanField(
+        _('Votes'),
+        default=True,
+        help_text=_('Ειδοποιήσεις για ψηφοφορίες')
+    )
 
     objects = CustomUserManager()
 
@@ -117,6 +155,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+    class Meta:
+        verbose_name = _('User')
+        verbose_name_plural = _('Users')
+        ordering = ['email']
 
     # ------- Helper ιδιότητες για ρόλους συστήματος --------
 

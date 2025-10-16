@@ -31,7 +31,15 @@ class EmailService:
         verification_url = f"{settings.FRONTEND_URL}/verify-email?token={verification_token}"
         
         # Email content
-        subject = "Επιβεβαίωση Email - New Concierge"
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Επιβεβαίωση Email"
+        
+        # Render HTML template
+        html_content = render_to_string('emails/email_verification.html', {
+            'user': user,
+            'verification_url': verification_url,
+        })
+        
+        # Plain text version
         message = f"""
         Γεια σας {user.first_name},
 
@@ -49,13 +57,19 @@ class EmailService:
         """
         
         try:
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
+            # Import EmailMultiAlternatives here to avoid circular imports
+            from django.core.mail import EmailMultiAlternatives
+            
+            # Create email with both HTML and text content
+            msg = EmailMultiAlternatives(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email]
             )
+            msg.attach_alternative(html_content, "text/html")
+            msg.send()
+            
             return True
         except Exception as e:
             print(f"Error sending verification email: {e}")
@@ -68,20 +82,28 @@ class EmailService:
         """
         invitation_url = f"{settings.FRONTEND_URL}/accept-invitation?token={invitation.token}"
         
-        subject = f"Πρόσκληση στο New Concierge από {invitation.invited_by.first_name} {invitation.invited_by.last_name}"
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Πρόσκληση στο New Concierge"
         
-        building_info = ""
+        # Get building name if exists
+        building_name = None
         if invitation.building_id:
             try:
                 from buildings.models import Building
                 building = Building.objects.get(id=invitation.building_id)
-                building_info = f"\nΚτίριο: {building.name}"
+                building_name = building.name
             except:
                 pass
         
-        role_info = ""
-        if invitation.assigned_role:
-            role_info = f"\nΡόλος: {invitation.assigned_role}"
+        # Render HTML template
+        html_content = render_to_string('emails/user_invitation.html', {
+            'invitation': invitation,
+            'invitation_url': invitation_url,
+            'building_name': building_name,
+        })
+        
+        # Plain text version
+        building_info = f"\nΚτίριο: {building_name}" if building_name else ""
+        role_info = f"\nΡόλος: {invitation.assigned_role}" if invitation.assigned_role else ""
         
         message = f"""
         Γεια σας {invitation.first_name},
@@ -100,13 +122,19 @@ class EmailService:
         """
         
         try:
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[invitation.email],
-                fail_silently=False,
+            # Import EmailMultiAlternatives here to avoid circular imports
+            from django.core.mail import EmailMultiAlternatives
+            
+            # Create email with both HTML and text content
+            msg = EmailMultiAlternatives(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [invitation.email]
             )
+            msg.attach_alternative(html_content, "text/html")
+            msg.send()
+            
             return True
         except Exception as e:
             print(f"Error sending invitation email: {e}")
@@ -119,7 +147,15 @@ class EmailService:
         """
         reset_url = f"{settings.FRONTEND_URL}/reset-password?token={reset_token.token}"
         
-        subject = "Επαναφορά Κωδικού - New Concierge"
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Επαναφορά Κωδικού"
+        
+        # Render HTML template
+        html_content = render_to_string('emails/password_reset.html', {
+            'user': user,
+            'reset_url': reset_url,
+        })
+        
+        # Plain text version
         message = f"""
         Γεια σας {user.first_name},
 
@@ -137,16 +173,73 @@ class EmailService:
         """
         
         try:
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
+            # Import EmailMultiAlternatives here to avoid circular imports
+            from django.core.mail import EmailMultiAlternatives
+            
+            # Create email with both HTML and text content
+            msg = EmailMultiAlternatives(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email]
             )
+            msg.attach_alternative(html_content, "text/html")
+            msg.send()
+            
             return True
         except Exception as e:
             print(f"Error sending password reset email: {e}")
+            return False
+    
+    @staticmethod
+    def send_welcome_email(user):
+        """
+        Αποστολή welcome email στον χρήστη
+        """
+        login_url = f"{settings.FRONTEND_URL}/login"
+        
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Καλώς ήρθατε!"
+        
+        # Render HTML template
+        html_content = render_to_string('emails/welcome.html', {
+            'user': user,
+            'login_url': login_url,
+            'frontend_url': settings.FRONTEND_URL,
+        })
+        
+        # Plain text version
+        message = f"""
+        Γεια σας {user.first_name} {user.last_name},
+
+        Καλώς ήρθατε στο New Concierge!
+
+        Ο λογαριασμός σας είναι πλέον ενεργός και έχετε πρόσβαση σε όλες τις λειτουργίες του συστήματος.
+
+        Μπορείτε να συνδεθείτε στο: {login_url}
+
+        Εάν έχετε οποιεσδήποτε ερωτήσεις, μη διστάσετε να επικοινωνήσετε μαζί μας.
+
+        Με εκτίμηση,
+        Η ομάδα του New Concierge
+        """
+        
+        try:
+            # Import EmailMultiAlternatives here to avoid circular imports
+            from django.core.mail import EmailMultiAlternatives
+            
+            # Create email with both HTML and text content
+            msg = EmailMultiAlternatives(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email]
+            )
+            msg.attach_alternative(html_content, "text/html")
+            msg.send()
+            
+            return True
+        except Exception as e:
+            print(f"Error sending welcome email: {e}")
             return False
 
 
@@ -235,6 +328,9 @@ class InvitationService:
         
         # Ενημέρωση invitation
         invitation.accept(user)
+        
+        # Αποστολή welcome email
+        EmailService.send_welcome_email(user)
         
         return user
 
