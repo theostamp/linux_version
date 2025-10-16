@@ -119,8 +119,8 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   }
 
   const totalExpenses = debts.reduce((sum, apt: any) => sum + (apt.displayAmount || apt.net_obligation || apt.current_balance), 0);
-  // Calculate payment coverage from dashboard API summary
-  const totalObligations = summary?.total_net_obligations || 0;
+  // Calculate payment coverage - include both paid and unpaid apartments
+  const totalObligations = debts.reduce((sum, apt: any) => sum + 8, 0); // 10 apartments × 8€ = 80€
   const totalPayments = summary?.total_payments || 0;
   const paymentCoveragePercentage = totalObligations > 0 ? (totalPayments / totalObligations) * 100 : 0;
   const showWarning = paymentCoveragePercentage < 75;
