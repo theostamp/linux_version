@@ -295,6 +295,14 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '1000/hour',  # 1000 requests per hour for anonymous users
         'user': '10000/hour',  # 10000 requests per hour for authenticated users
+        # Authentication-specific throttles
+        'auth_endpoints': '10/min',  # 10 auth requests per minute for authenticated users
+        'auth_endpoints_anon': '5/min',  # 5 auth requests per minute for anonymous users
+        'login': '5/min',  # 5 login attempts per minute
+        'registration': '3/min',  # 3 registration attempts per minute
+        'password_reset': '3/min',  # 3 password reset requests per minute
+        'invitations': '10/hour',  # 10 invitations per hour
+        'email_verification': '5/min',  # 5 email verification requests per minute
     },
 }
 
@@ -441,9 +449,36 @@ CHANNEL_LAYERS = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "security": {
+            "format": "{levelname} {asctime} {message}",
+            "style": "{",
+        },
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "security_file": {
+            "class": "logging.FileHandler",
+            "filename": "/app/logs/security_audit.log",
+            "formatter": "security",
+        },
+        "security_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "security",
+        },
+    },
+    "loggers": {
+        "security_audit": {
+            "handlers": ["security_file", "security_console"],
+            "level": "INFO",
+            "propagate": False,
         },
     },
     "root": {

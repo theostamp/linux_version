@@ -6,7 +6,9 @@ from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from .models import CustomUser, UserInvitation, PasswordResetToken
+from django.utils import timezone
+from .models import CustomUser, UserInvitation, PasswordResetToken, UserLoginAttempt
+from .audit import SecurityAuditLogger
 
 User = get_user_model()
 
@@ -33,14 +35,99 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         print(f"DEBUG: Current users in database: {list(User.objects.values('email'))}")
         
         if email and password:
-            # Use the custom email backend for authentication
-            user = authenticate(self.context['request'], email=email, password=password)
-            print(f"DEBUG: Authentication result: {user}")
+            request = self.context['request']
             
-            if not user:
+            # Get IP address and user agent
+            ip_address = self.get_client_ip(request)
+            user_agent = request.META.get('HTTP_USER_AGENT', '')
+            
+            try:
+                user = User.objects.get(email=email)
+                
+                # Check if account is locked
+                if user.is_locked:
+                    remaining_time = user.locked_until - timezone.now()
+                    minutes_left = int(remaining_time.total_seconds() / 60)
+                    
+                    # Log failed attempt
+                    UserLoginAttempt.objects.create(
+                        user=user,
+                        email=email,
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                        success=False,
+                        failure_reason='Account locked'
+                    )
+                    
+                    raise serializers.ValidationError(f'Account locked. Try again in {minutes_left} minutes.')
+                
+                # Use the custom email backend for authentication
+                authenticated_user = authenticate(request, email=email, password=password)
+                print(f"DEBUG: Authentication result: {authenticated_user}")
+                
+                if not authenticated_user:
+                    # Increment failed login attempts
+                    user.increment_failed_login()
+                    
+                    # Log failed attempt
+                    UserLoginAttempt.objects.create(
+                        user=user,
+                        email=email,
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                        success=False,
+                        failure_reason='Invalid credentials'
+                    )
+                    
+                    # Security audit logging
+                    SecurityAuditLogger.log_login_failure(email, ip_address, user_agent, 'Invalid credentials')
+                    
+                    raise serializers.ValidationError('No active account found with the given credentials')
+                
+                if not authenticated_user.is_active:
+                    # Log failed attempt
+                    UserLoginAttempt.objects.create(
+                        user=authenticated_user,
+                        email=email,
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                        success=False,
+                        failure_reason='Account disabled'
+                    )
+                    
+                    raise serializers.ValidationError('User account is disabled')
+                
+                # Reset failed login attempts on successful login
+                authenticated_user.reset_failed_login()
+                
+                # Log successful attempt
+                UserLoginAttempt.objects.create(
+                    user=authenticated_user,
+                    email=email,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    success=True
+                )
+                
+                # Security audit logging
+                SecurityAuditLogger.log_login_success(authenticated_user, ip_address, user_agent)
+                
+                user = authenticated_user
+                
+            except User.DoesNotExist:
+                # Log failed attempt for non-existent user
+                UserLoginAttempt.objects.create(
+                    email=email,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    success=False,
+                    failure_reason='User not found'
+                )
+                
+                # Security audit logging
+                SecurityAuditLogger.log_login_failure(email, ip_address, user_agent, 'User not found')
+                
                 raise serializers.ValidationError('No active account found with the given credentials')
-            if not user.is_active:
-                raise serializers.ValidationError('User account is disabled')
             
             refresh = self.get_token(user)
             
@@ -72,6 +159,15 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             return data
         else:
             raise serializers.ValidationError('Must include "email" and "password"')
+    
+    def get_client_ip(self, request):
+        """Επιστρέφει το IP address του client"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

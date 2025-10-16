@@ -144,6 +144,27 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         default=True,
         help_text=_('Ειδοποιήσεις για ψηφοφορίες')
     )
+    
+    # Account security fields
+    failed_login_attempts = models.PositiveIntegerField(
+        _('Failed Login Attempts'),
+        default=0,
+        help_text=_('Αριθμός αποτυχημένων προσπαθειών σύνδεσης')
+    )
+    
+    locked_until = models.DateTimeField(
+        _('Locked Until'),
+        null=True,
+        blank=True,
+        help_text=_('Λογαριασμός κλειδωμένος μέχρι αυτή την ημερομηνία')
+    )
+    
+    last_failed_login = models.DateTimeField(
+        _('Last Failed Login'),
+        null=True,
+        blank=True,
+        help_text=_('Τελευταία αποτυχημένη προσπάθεια σύνδεσης')
+    )
 
     objects = CustomUserManager()
 
@@ -155,6 +176,55 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+    # Account security methods
+    @property
+    def is_locked(self):
+        """Ελέγχει αν ο λογαριασμός είναι κλειδωμένος"""
+        if not self.locked_until:
+            return False
+        return timezone.now() < self.locked_until
+    
+    def lock_account(self, duration_minutes=30):
+        """Κλειδώνει τον λογαριασμό για συγκεκριμένη διάρκεια"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        self.locked_until = timezone.now() + timedelta(minutes=duration_minutes)
+        self.save(update_fields=['locked_until'])
+    
+    def unlock_account(self):
+        """Ξεκλειδώνει τον λογαριασμό"""
+        self.locked_until = None
+        self.failed_login_attempts = 0
+        self.last_failed_login = None
+        self.save(update_fields=['locked_until', 'failed_login_attempts', 'last_failed_login'])
+    
+    def increment_failed_login(self):
+        """Αυξάνει τον αριθμό αποτυχημένων προσπαθειών"""
+        from django.utils import timezone
+        
+        self.failed_login_attempts += 1
+        self.last_failed_login = timezone.now()
+        
+        # Κλείδωμα αν υπερβούν τα 5 attempts
+        if self.failed_login_attempts >= 5:
+            self.lock_account(duration_minutes=30)
+            
+            # Security audit logging for account lockout
+            try:
+                from .audit import SecurityAuditLogger
+                SecurityAuditLogger.log_account_locked(self, 'Unknown IP', 30)
+            except ImportError:
+                pass  # Skip if audit module not available
+        
+        self.save(update_fields=['failed_login_attempts', 'last_failed_login', 'locked_until'])
+    
+    def reset_failed_login(self):
+        """Επαναφέρει τον αριθμό αποτυχημένων προσπαθειών"""
+        self.failed_login_attempts = 0
+        self.last_failed_login = None
+        self.save(update_fields=['failed_login_attempts', 'last_failed_login'])
     
     class Meta:
         verbose_name = _('User')
@@ -351,3 +421,66 @@ class PasswordResetToken(models.Model):
     @property
     def is_valid(self):
         return not self.used and not self.is_expired
+
+
+class UserLoginAttempt(models.Model):
+    """
+    Model για την παρακολούθηση των προσπαθειών σύνδεσης
+    """
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='login_attempts',
+        verbose_name=_('User'),
+        null=True,
+        blank=True
+    )
+    
+    email = models.EmailField(
+        _('Email'),
+        help_text=_('Email που χρησιμοποιήθηκε για την προσπάθεια σύνδεσης')
+    )
+    
+    ip_address = models.GenericIPAddressField(
+        _('IP Address'),
+        help_text=_('IP διεύθυνση από την οποία έγινε η προσπάθεια')
+    )
+    
+    user_agent = models.TextField(
+        _('User Agent'),
+        blank=True,
+        help_text=_('User agent string του browser/client')
+    )
+    
+    success = models.BooleanField(
+        _('Success'),
+        default=False,
+        help_text=_('Αν η προσπάθεια σύνδεσης ήταν επιτυχής')
+    )
+    
+    failure_reason = models.CharField(
+        _('Failure Reason'),
+        max_length=100,
+        blank=True,
+        help_text=_('Λόγος αποτυχίας (αν υπάρχει)')
+    )
+    
+    attempted_at = models.DateTimeField(
+        _('Attempted At'),
+        auto_now_add=True,
+        help_text=_('Ώρα που έγινε η προσπάθεια')
+    )
+    
+    class Meta:
+        verbose_name = _('User Login Attempt')
+        verbose_name_plural = _('User Login Attempts')
+        ordering = ['-attempted_at']
+        indexes = [
+            models.Index(fields=['email', 'attempted_at']),
+            models.Index(fields=['ip_address', 'attempted_at']),
+            models.Index(fields=['success', 'attempted_at']),
+        ]
+    
+    def __str__(self):
+        status = "Success" if self.success else "Failed"
+        return f"{self.email} - {status} - {self.attempted_at}"

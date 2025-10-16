@@ -4,9 +4,10 @@ from django.contrib.auth import authenticate, get_user_model
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from rest_framework import status, viewsets
-from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -19,6 +20,10 @@ from .serializers import (
     PasswordChangeSerializer, EmailVerificationSerializer, UserProfileSerializer
 )
 from .services import EmailService, InvitationService, PasswordResetService, UserVerificationService
+from core.throttles import (
+    LoginThrottle, RegistrationThrottle, PasswordResetThrottle,
+    InvitationThrottle, EmailVerificationThrottle, AuthEndpointThrottle
+)
 
 User = get_user_model()
 
@@ -27,6 +32,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     Custom JWT token view that uses email instead of username
     """
     serializer_class = CustomTokenObtainPairSerializer
+    throttle_classes = [LoginThrottle]
 
 @ensure_csrf_cookie
 def get_csrf_token(request):
@@ -197,6 +203,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([RegistrationThrottle])
 def register_view(request):
     """
     POST /api/users/register/
@@ -222,6 +229,7 @@ def register_view(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([EmailVerificationThrottle])
 def verify_email_view(request):
     """
     POST /api/users/verify-email/
@@ -278,6 +286,7 @@ def resend_verification_view(request):
 @api_view(['POST'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
+@throttle_classes([InvitationThrottle])
 def create_invitation_view(request):
     """
     POST /api/users/invite/
@@ -366,6 +375,7 @@ def accept_invitation_view(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([PasswordResetThrottle])
 def request_password_reset_view(request):
     """
     POST /api/users/password-reset/
@@ -388,6 +398,7 @@ def request_password_reset_view(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([PasswordResetThrottle])
 def confirm_password_reset_view(request):
     """
     POST /api/users/password-reset-confirm/
