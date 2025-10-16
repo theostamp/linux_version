@@ -552,3 +552,214 @@ class AdminUsageStatsView(APIView):
             return Response({
                 'error': 'Failed to get admin usage stats'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class InvoiceManagementView(APIView):
+    """
+    View για invoice management
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get invoices για user
+        """
+        try:
+            subscription = BillingService.get_user_subscription(request.user)
+            if not subscription:
+                return Response({
+                    'error': 'No active subscription found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Get billing cycles
+            billing_cycles = BillingCycle.objects.filter(
+                subscription=subscription
+            ).order_by('-period_start')
+            
+            serializer = BillingCycleSerializer(billing_cycles, many=True)
+            return Response({
+                'invoices': serializer.data
+            })
+            
+        except Exception as e:
+            logger.error(f"Error getting invoices: {e}")
+            return Response({
+                'error': 'Failed to get invoices'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def post(self, request):
+        """
+        Generate new invoice manually (admin only)
+        """
+        try:
+            # Only superusers can generate invoices manually
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            subscription_id = request.data.get('subscription_id')
+            if not subscription_id:
+                return Response({
+                    'error': 'subscription_id is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                subscription = UserSubscription.objects.get(id=subscription_id)
+            except UserSubscription.DoesNotExist:
+                return Response({
+                    'error': 'Subscription not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            invoice = BillingService.generate_invoice(subscription)
+            if invoice:
+                serializer = BillingCycleSerializer(invoice)
+                return Response({
+                    'message': 'Invoice generated successfully',
+                    'invoice': serializer.data
+                }, status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    'error': 'Failed to generate invoice'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            logger.error(f"Error generating invoice: {e}")
+            return Response({
+                'error': 'Failed to generate invoice'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PaymentProcessingView(APIView):
+    """
+    View για payment processing
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """
+        Process payment για invoice
+        """
+        try:
+            invoice_id = request.data.get('invoice_id')
+            payment_intent_id = request.data.get('payment_intent_id')
+            
+            if not invoice_id or not payment_intent_id:
+                return Response({
+                    'error': 'invoice_id and payment_intent_id are required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                billing_cycle = BillingCycle.objects.get(id=invoice_id)
+            except BillingCycle.DoesNotExist:
+                return Response({
+                    'error': 'Invoice not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check if user owns this invoice
+            if billing_cycle.subscription.user != request.user:
+                return Response({
+                    'error': 'Access denied'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Process payment
+            success = BillingService.process_payment(billing_cycle, payment_intent_id)
+            
+            if success:
+                serializer = BillingCycleSerializer(billing_cycle)
+                return Response({
+                    'message': 'Payment processed successfully',
+                    'invoice': serializer.data
+                })
+            else:
+                return Response({
+                    'error': 'Failed to process payment'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            logger.error(f"Error processing payment: {e}")
+            return Response({
+                'error': 'Failed to process payment'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AdminBillingManagementView(APIView):
+    """
+    View για admin billing management
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get billing overview για admin
+        """
+        try:
+            # Only superusers can access admin billing
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Get billing statistics
+            total_subscriptions = UserSubscription.objects.count()
+            active_subscriptions = UserSubscription.objects.filter(
+                status__in=['trial', 'active']
+            ).count()
+            
+            pending_invoices = BillingCycle.objects.filter(status='pending').count()
+            paid_invoices = BillingCycle.objects.filter(status='paid').count()
+            failed_invoices = BillingCycle.objects.filter(status='failed').count()
+            
+            # Calculate revenue
+            total_revenue = sum(
+                float(cycle.amount_paid) for cycle in 
+                BillingCycle.objects.filter(status='paid')
+                if cycle.amount_paid
+            )
+            
+            pending_revenue = sum(
+                float(cycle.amount_due) for cycle in 
+                BillingCycle.objects.filter(status='pending')
+            )
+            
+            return Response({
+                'overview': {
+                    'total_subscriptions': total_subscriptions,
+                    'active_subscriptions': active_subscriptions,
+                    'pending_invoices': pending_invoices,
+                    'paid_invoices': paid_invoices,
+                    'failed_invoices': failed_invoices,
+                    'total_revenue': round(total_revenue, 2),
+                    'pending_revenue': round(pending_revenue, 2),
+                }
+            })
+            
+        except Exception as e:
+            logger.error(f"Error getting admin billing overview: {e}")
+            return Response({
+                'error': 'Failed to get billing overview'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def post(self, request):
+        """
+        Generate monthly invoices (admin only)
+        """
+        try:
+            # Only superusers can generate monthly invoices
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            generated_count = BillingService.generate_monthly_invoices()
+            
+            return Response({
+                'message': f'Generated {generated_count} monthly invoices',
+                'generated_count': generated_count
+            })
+            
+        except Exception as e:
+            logger.error(f"Error generating monthly invoices: {e}")
+            return Response({
+                'error': 'Failed to generate monthly invoices'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -9,7 +9,9 @@ from .views import (
     BillingCycleViewSet, StripeWebhookView,
     CreatePaymentIntentView, UsageAnalyticsView,
     UsageTrendsView, PlanComparisonView,
-    BillingHistoryView, AdminUsageStatsView
+    BillingHistoryView, AdminUsageStatsView,
+    InvoiceManagementView, PaymentProcessingView,
+    AdminBillingManagementView
 )
 
 app_name = 'billing'
@@ -40,5 +42,12 @@ urlpatterns = [
     
     # Admin Analytics
     path('api/admin/usage-stats/', AdminUsageStatsView.as_view(), name='admin-usage-stats'),
+    
+    # Invoice Management
+    path('api/invoices/', InvoiceManagementView.as_view(), name='invoice-management'),
+    path('api/payments/process/', PaymentProcessingView.as_view(), name='payment-processing'),
+    
+    # Admin Billing Management
+    path('api/admin/billing/', AdminBillingManagementView.as_view(), name='admin-billing-management'),
 ]
 

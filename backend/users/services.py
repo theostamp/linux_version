@@ -241,6 +241,174 @@ class EmailService:
         except Exception as e:
             print(f"Error sending welcome email: {e}")
             return False
+    
+    @staticmethod
+    def send_invoice_notification(user, billing_cycle):
+        """
+        Send invoice notification email
+        """
+        try:
+            subject = f"{settings.EMAIL_SUBJECT_PREFIX}Invoice #{billing_cycle.id:06d} Ready for Payment"
+            
+            # Render HTML template
+            html_content = render_to_string('emails/invoice_notification.html', {
+                'user': user,
+                'billing_cycle': billing_cycle,
+                'frontend_url': settings.FRONTEND_URL,
+            })
+            
+            # Plain text version
+            message = f"""
+            Hello {user.first_name or user.email},
+
+            Your invoice #{billing_cycle.id:06d} is ready for payment.
+
+            Amount Due: €{billing_cycle.amount_due}
+            Due Date: {billing_cycle.due_date.strftime('%B %d, %Y')}
+            Billing Period: {billing_cycle.period_start.strftime('%B %d, %Y')} - {billing_cycle.period_end.strftime('%B %d, %Y')}
+
+            Please complete your payment to avoid service interruption.
+
+            Payment Link: {settings.FRONTEND_URL}/billing/invoice/{billing_cycle.id}/pay
+
+            If you have any questions, please contact our support team.
+
+            Best regards,
+            New Concierge Team
+            """
+            
+            # Import EmailMultiAlternatives here to avoid circular imports
+            from django.core.mail import EmailMultiAlternatives
+            
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user.email]
+            )
+            email.attach_alternative(html_content, "text/html")
+            email.send()
+            
+            logger.info(f"Sent invoice notification email to {user.email}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to send invoice notification to {user.email}: {e}")
+            return False
+    
+    @staticmethod
+    def send_payment_confirmation(user, billing_cycle):
+        """
+        Send payment confirmation email
+        """
+        try:
+            subject = f"{settings.EMAIL_SUBJECT_PREFIX}Payment Confirmation - Invoice #{billing_cycle.id:06d}"
+            
+            # Render HTML template
+            html_content = render_to_string('emails/payment_confirmation.html', {
+                'user': user,
+                'billing_cycle': billing_cycle,
+                'frontend_url': settings.FRONTEND_URL,
+            })
+            
+            # Plain text version
+            message = f"""
+            Hello {user.first_name or user.email},
+
+            Thank you! Your payment has been processed successfully.
+
+            Payment Details:
+            - Amount Paid: €{billing_cycle.amount_paid}
+            - Payment Date: {billing_cycle.paid_at.strftime('%B %d, %Y %H:%M')}
+            - Invoice: #{billing_cycle.id:06d}
+            - Transaction ID: {billing_cycle.stripe_payment_intent_id}
+
+            Your subscription is now active and up to date.
+
+            Dashboard: {settings.FRONTEND_URL}/dashboard
+
+            If you have any questions, please contact our support team.
+
+            Best regards,
+            New Concierge Team
+            """
+            
+            # Import EmailMultiAlternatives here to avoid circular imports
+            from django.core.mail import EmailMultiAlternatives
+            
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user.email]
+            )
+            email.attach_alternative(html_content, "text/html")
+            email.send()
+            
+            logger.info(f"Sent payment confirmation email to {user.email}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to send payment confirmation to {user.email}: {e}")
+            return False
+    
+    @staticmethod
+    def send_payment_failure_notification(user, billing_cycle, failure_reason):
+        """
+        Send payment failure notification email
+        """
+        try:
+            subject = f"{settings.EMAIL_SUBJECT_PREFIX}Payment Failed - Invoice #{billing_cycle.id:06d}"
+            
+            # Render HTML template
+            html_content = render_to_string('emails/payment_failure.html', {
+                'user': user,
+                'billing_cycle': billing_cycle,
+                'failure_reason': failure_reason,
+                'frontend_url': settings.FRONTEND_URL,
+            })
+            
+            # Plain text version
+            message = f"""
+            Hello {user.first_name or user.email},
+
+            We were unable to process your payment for invoice #{billing_cycle.id:06d}.
+
+            Payment Details:
+            - Amount Due: €{billing_cycle.amount_due}
+            - Due Date: {billing_cycle.due_date.strftime('%B %d, %Y')}
+            - Failure Reason: {failure_reason}
+
+            Please update your payment information and retry the payment as soon as possible.
+            Your subscription may be suspended if payment is not completed within 7 days.
+
+            Retry Payment: {settings.FRONTEND_URL}/billing/invoice/{billing_cycle.id}/retry
+            Update Payment Method: {settings.FRONTEND_URL}/billing/payment-methods
+
+            If you need assistance, please contact our support team.
+
+            Best regards,
+            New Concierge Team
+            """
+            
+            # Import EmailMultiAlternatives here to avoid circular imports
+            from django.core.mail import EmailMultiAlternatives
+            
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user.email]
+            )
+            email.attach_alternative(html_content, "text/html")
+            email.send()
+            
+            logger.info(f"Sent payment failure notification to {user.email}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to send payment failure notification to {user.email}: {e}")
+            return False
 
 
 class InvitationService:

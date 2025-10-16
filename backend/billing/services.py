@@ -13,6 +13,7 @@ from .models import (
 )
 from .integrations.stripe import StripeService
 from users.models import CustomUser
+from users.services import EmailService
 
 logger = logging.getLogger(__name__)
 
@@ -296,6 +297,222 @@ class BillingService:
         }
         
         return limits.get(metric, -1)
+    
+    @staticmethod
+    @transaction.atomic
+    def generate_invoice(subscription: UserSubscription) -> Optional[BillingCycle]:
+        """
+        Generate new invoice για subscription
+        """
+        try:
+            # Calculate next billing period
+            if subscription.current_period_end:
+                period_start = subscription.current_period_end
+                if subscription.billing_interval == 'month':
+                    period_end = period_start + timezone.timedelta(days=30)
+                else:  # yearly
+                    period_end = period_start + timezone.timedelta(days=365)
+            else:
+                period_start = timezone.now()
+                period_end = period_start + timezone.timedelta(days=30)
+            
+            # Check for overages
+            overage_amount = BillingService._calculate_overage_charges(subscription)
+            base_amount = subscription.price
+            total_amount = base_amount + overage_amount
+            
+            # Create billing cycle
+            billing_cycle = BillingCycle.objects.create(
+                subscription=subscription,
+                period_start=period_start,
+                period_end=period_end,
+                amount_due=total_amount,
+                currency=subscription.currency,
+                status='pending',
+                due_date=period_end + timezone.timedelta(days=7),  # 7 days grace period
+                stripe_invoice_id=''  # Will be filled when Stripe invoice is created
+            )
+            
+            # Update subscription period
+            subscription.current_period_start = period_start
+            subscription.current_period_end = period_end
+            subscription.save()
+            
+            # Send invoice notification
+            BillingService._send_invoice_notification(subscription, billing_cycle)
+            
+            logger.info(f"Generated invoice {billing_cycle.id} for subscription {subscription.id}")
+            return billing_cycle
+            
+        except Exception as e:
+            logger.error(f"Failed to generate invoice for subscription {subscription.id}: {e}")
+            return None
+    
+    @staticmethod
+    def _calculate_overage_charges(subscription: UserSubscription) -> Decimal:
+        """
+        Calculate overage charges για usage που ξεπερνά τα limits
+        """
+        try:
+            total_overage = Decimal('0.00')
+            
+            # Get current month usage
+            current_month = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            next_month = (current_month + timezone.timedelta(days=32)).replace(day=1)
+            
+            usage_data = UsageTracking.objects.filter(
+                subscription=subscription,
+                period_start__gte=current_month,
+                period_end__lt=next_month
+            )
+            
+            # Overage rates (per unit)
+            overage_rates = {
+                'api_calls': Decimal('0.001'),  # €0.001 per API call
+                'buildings': Decimal('5.00'),   # €5.00 per building
+                'apartments': Decimal('0.50'),  # €0.50 per apartment
+                'users': Decimal('2.00'),       # €2.00 per user
+                'storage_gb': Decimal('0.10'),  # €0.10 per GB
+            }
+            
+            for usage in usage_data:
+                if usage.limit_value > 0 and usage.current_value > usage.limit_value:
+                    overage_units = usage.current_value - usage.limit_value
+                    rate = overage_rates.get(usage.metric_type, Decimal('0.00'))
+                    overage_amount = overage_units * rate
+                    total_overage += overage_amount
+            
+            return total_overage
+            
+        except Exception as e:
+            logger.error(f"Error calculating overage charges: {e}")
+            return Decimal('0.00')
+    
+    @staticmethod
+    def _send_invoice_notification(subscription: UserSubscription, billing_cycle: BillingCycle):
+        """
+        Send invoice notification email
+        """
+        try:
+            user = subscription.user
+            EmailService.send_invoice_notification(user, billing_cycle)
+            logger.info(f"Sent invoice notification to {user.email}")
+        except Exception as e:
+            logger.error(f"Failed to send invoice notification: {e}")
+    
+    @staticmethod
+    def process_payment(billing_cycle: BillingCycle, payment_intent_id: str) -> bool:
+        """
+        Process payment για billing cycle
+        """
+        try:
+            # Update billing cycle with payment info
+            billing_cycle.status = 'paid'
+            billing_cycle.amount_paid = billing_cycle.amount_due
+            billing_cycle.paid_at = timezone.now()
+            billing_cycle.stripe_payment_intent_id = payment_intent_id
+            billing_cycle.save()
+            
+            # Send payment confirmation
+            BillingService._send_payment_confirmation(billing_cycle)
+            
+            logger.info(f"Processed payment for billing cycle {billing_cycle.id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to process payment for billing cycle {billing_cycle.id}: {e}")
+            return False
+    
+    @staticmethod
+    def _send_payment_confirmation(billing_cycle: BillingCycle):
+        """
+        Send payment confirmation email
+        """
+        try:
+            user = billing_cycle.subscription.user
+            EmailService.send_payment_confirmation(user, billing_cycle)
+            logger.info(f"Sent payment confirmation to {user.email}")
+        except Exception as e:
+            logger.error(f"Failed to send payment confirmation: {e}")
+    
+    @staticmethod
+    def handle_failed_payment(billing_cycle: BillingCycle, failure_reason: str) -> bool:
+        """
+        Handle failed payment
+        """
+        try:
+            # Update billing cycle status
+            billing_cycle.status = 'failed'
+            billing_cycle.save()
+            
+            # Send failure notification
+            BillingService._send_payment_failure_notification(billing_cycle, failure_reason)
+            
+            # Start dunning process if needed
+            BillingService._start_dunning_process(billing_cycle)
+            
+            logger.info(f"Handled failed payment for billing cycle {billing_cycle.id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to handle payment failure for billing cycle {billing_cycle.id}: {e}")
+            return False
+    
+    @staticmethod
+    def _send_payment_failure_notification(billing_cycle: BillingCycle, failure_reason: str):
+        """
+        Send payment failure notification
+        """
+        try:
+            user = billing_cycle.subscription.user
+            EmailService.send_payment_failure_notification(user, billing_cycle, failure_reason)
+            logger.info(f"Sent payment failure notification to {user.email}")
+        except Exception as e:
+            logger.error(f"Failed to send payment failure notification: {e}")
+    
+    @staticmethod
+    def _start_dunning_process(billing_cycle: BillingCycle):
+        """
+        Start dunning process για failed payments
+        """
+        try:
+            # Schedule dunning emails
+            # This would typically use Celery for delayed tasks
+            # For now, we'll just log it
+            logger.info(f"Starting dunning process for billing cycle {billing_cycle.id}")
+            
+            # In a production environment, you would:
+            # 1. Schedule a reminder email for 3 days
+            # 2. Schedule a final notice for 7 days
+            # 3. Suspend the subscription after 14 days
+            
+        except Exception as e:
+            logger.error(f"Failed to start dunning process: {e}")
+    
+    @staticmethod
+    def generate_monthly_invoices():
+        """
+        Generate invoices για όλες τις active subscriptions
+        """
+        try:
+            # Get all active subscriptions that need invoicing
+            subscriptions = UserSubscription.objects.filter(
+                status__in=['active', 'trial'],
+                current_period_end__lte=timezone.now()
+            )
+            
+            generated_count = 0
+            for subscription in subscriptions:
+                invoice = BillingService.generate_invoice(subscription)
+                if invoice:
+                    generated_count += 1
+            
+            logger.info(f"Generated {generated_count} monthly invoices")
+            return generated_count
+            
+        except Exception as e:
+            logger.error(f"Failed to generate monthly invoices: {e}")
+            return 0
 
 
 class PaymentService:
