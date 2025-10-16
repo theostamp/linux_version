@@ -119,9 +119,12 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
   }
 
   const totalExpenses = debts.reduce((sum, apt: any) => sum + (apt.displayAmount || apt.net_obligation || apt.current_balance), 0);
-  const paymentCoveragePercentage = summary?.payment_coverage || 0;
-  const showWarning = summary?.show_warning || false;
-  const currentDay = summary?.current_day || new Date().getDate();
+  // Calculate payment coverage from dashboard API summary
+  const totalObligations = summary?.total_net_obligations || 0;
+  const totalPayments = summary?.total_payments || 0;
+  const paymentCoveragePercentage = totalObligations > 0 ? (totalPayments / totalObligations) * 100 : 0;
+  const showWarning = paymentCoveragePercentage < 75;
+  const currentDay = new Date().getDate();
 
   // GDPR: Mask surnames after 2nd letter
   const maskName = (fullName: string): string => {
@@ -197,15 +200,6 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
             const hasZeroBalance = (apt.net_obligation || 0) === 0;
             const maskedOwnerName = maskName(apt.owner_name);
             
-            // Debug logging for Α1
-            if (apt.apartment_number === 'Α1') {
-              console.log('Α1 Debug:', {
-                net_obligation: apt.net_obligation,
-                amount: amount,
-                hasDebt,
-                hasZeroBalance
-              });
-            }
             
 
             return (
