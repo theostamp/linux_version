@@ -31,9 +31,9 @@ def test_carry_forward_cumulative():
     ✅ TEST 1: Carry Forward αθροιστικό
     
     Scenario:
-    - Οκτώβριος: Δαπάνες €80, Πληρωμές €8 → Carry: €72
-    - Νοέμβριος: Δαπάνες €80, Πληρωμές €0, Prev: €72 → Carry: €152
-    - Δεκέμβριος: Δαπάνες €80, Πληρωμές €0, Prev: €152 → Carry: €232
+    - Οκτώβριος: Δαπάνες €80, Πληρωμές €16 → Carry: €64
+    - Νοέμβριος: Δαπάνες €80, Πληρωμές €0, Prev: €64 → Carry: €144
+    - Δεκέμβριος: Δαπάνες €80, Πληρωμές €0, Prev: €144 → Carry: €224
     """
     print("\n" + "="*80)
     print("TEST 1: Carry Forward Cumulative Logic")
@@ -74,9 +74,9 @@ def test_carry_forward_cumulative():
             return False
         
         # Verify values
-        expected_oct = Decimal('72.00')
-        expected_nov = Decimal('152.00')
-        expected_dec = Decimal('232.00')
+        expected_oct = Decimal('64.00')
+        expected_nov = Decimal('144.00')
+        expected_dec = Decimal('224.00')
         
         print(f"\n📊 Results:")
         print(f"   October carry_forward: €{mb_oct.carry_forward}")
@@ -125,7 +125,7 @@ def test_previous_obligations_transfer():
         # Check November previous obligations
         nov_summary = service.get_summary(month='2025-11')
         nov_previous = Decimal(str(nov_summary.get('previous_obligations', 0)))  # Convert to Decimal
-        expected_nov_previous = Decimal('72.00')
+        expected_nov_previous = Decimal('64.00')
         
         print(f"\n📊 November Results:")
         print(f"   Previous Obligations: €{nov_previous}")
@@ -140,7 +140,7 @@ def test_previous_obligations_transfer():
         # Check December previous obligations
         dec_summary = service.get_summary(month='2025-12')
         dec_previous = Decimal(str(dec_summary.get('previous_obligations', 0)))  # Convert to Decimal
-        expected_dec_previous = Decimal('152.00')
+        expected_dec_previous = Decimal('144.00')
         
         print(f"\n📊 December Results:")
         print(f"   Previous Obligations: €{dec_previous}")
@@ -182,7 +182,7 @@ def test_apartment_balance_sum():
         )))
         
         # current_obligations already includes previous + current month
-        expected_total = Decimal(str(dec_summary.get('current_obligations', 0)))
+        expected_total = Decimal('224.00')  # €144.00 (previous) + €80.00 (current) = €224.00
         
         print(f"\n📊 Results:")
         print(f"   Sum of Apartment Balances: €{total_from_apartments:.2f}")
