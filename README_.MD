@@ -605,13 +605,13 @@ docker compose up --build -d
 
 
 git add .
-git commit -m "διορθωσεις 45"
+git commit -m "auth"
 
 ## 📤 Ενημέρωση GitHub Repository
 
 ## Βασικές Εντολές Git
 git add .
-git commit -m "scene 3"
+git commit -m "auth"
 
 
 
