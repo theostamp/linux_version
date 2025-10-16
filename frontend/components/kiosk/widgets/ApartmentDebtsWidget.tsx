@@ -190,30 +190,6 @@ export default function ApartmentDebtsWidget({ data, isLoading, error, settings,
             </div>
           </div>
         </div>
-        {/* Info Note with QR Code */}
-        <div className="flex items-center gap-2 mt-1">
-          {/* Info Text in Highlighted Box */}
-          <div className="flex-1 bg-yellow-500/20 border border-yellow-400/40 rounded-lg p-1">
-            <div className="text-[9px] text-yellow-200 leading-[1.1]">
-              <p className="font-medium">Μπορείτε να δείτε την αναλυτική κατάσταση στο email που σας έχει σταλεί ή σαρώνωντας το QR code στο κινητό σας.</p>
-            </div>
-          </div>
-          
-          {/* QR Code Placeholder with Link */}
-          <div className="flex-shrink-0">
-            <a 
-              href="http://demo.localhost:8080/kiosk-display" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="block bg-white p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-              title="Σάρωσε με το κινητό σας"
-            >
-              <div className="w-12 h-12 bg-black rounded flex items-center justify-center">
-                <QrCode className="w-7 h-7 text-white" />
-              </div>
-            </a>
-          </div>
-        </div>
       </div>
       
       {/* Expenses List */}
