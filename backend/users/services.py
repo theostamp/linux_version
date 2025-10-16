@@ -176,7 +176,7 @@ class InvitationService:
             last_name=last_name,
             invitation_type=invitation_type,
             invited_by=invited_by,
-            building=building,
+            building_id=building.id if building else None,
             assigned_role=assigned_role
         )
         
