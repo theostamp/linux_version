@@ -2,6 +2,83 @@
 
 from rest_framework import permissions 
 
+# ===== RBAC PERMISSION CLASSES =====
+
+class IsManager(permissions.BasePermission):
+    """
+    Επιτρέπει πρόσβαση σε χρήστες που ανήκουν στο 'Manager' group.
+    Επίσης επιτρέπει σε superusers και staff users.
+    """
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Superusers και staff έχουν πάντα πρόσβαση
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        
+        # Έλεγχος αν ο χρήστης ανήκει στο Manager group
+        return request.user.groups.filter(name='Manager').exists()
+
+
+class IsResident(permissions.BasePermission):
+    """
+    Επιτρέπει πρόσβαση σε χρήστες που ανήκουν στο 'Resident' group.
+    Επίσης επιτρέπει σε superusers και staff users.
+    """
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Superusers και staff έχουν πάντα πρόσβαση
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        
+        # Έλεγχος αν ο χρήστης ανήκει στο Resident group
+        return request.user.groups.filter(name='Resident').exists()
+
+
+class IsRelatedToBuilding(permissions.BasePermission):
+    """
+    Object-level permission για να επιτρέπει σε χρήστες να βλέπουν μόνο αντικείμενα
+    που σχετίζονται με κτίρια στα οποία έχουν membership.
+    Χρησιμοποιεί το BuildingMembership model για να καθορίσει τη σχέση.
+    """
+    def has_object_permission(self, request, view, obj):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Superusers και staff έχουν πρόσβαση σε όλα
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        
+        # Λήψη των building IDs που σχετίζονται με τον χρήστη
+        user_building_ids = request.user.memberships.values_list('building_id', flat=True)
+        
+        if not user_building_ids:
+            return False
+        
+        # Έλεγχος άμεσης σχέσης με building
+        if hasattr(obj, 'building') and obj.building:
+            return obj.building.id in user_building_ids
+        
+        # Έλεγχος έμμεσης σχέσης (π.χ. μέσω apartment)
+        if hasattr(obj, 'apartment') and hasattr(obj.apartment, 'building') and obj.apartment.building:
+            return obj.apartment.building.id in user_building_ids
+        
+        # Αν το αντικείμενο είναι το ίδιο το building
+        if hasattr(obj, 'id') and obj.id in user_building_ids:
+            return True
+        
+        # Αν το αντικείμενο είναι apartment
+        if hasattr(obj, 'building') and hasattr(obj.building, 'id'):
+            return obj.building.id in user_building_ids
+        
+        return False
+
+
+# ===== LEGACY PERMISSION CLASSES (Κρατώνται για backward compatibility) =====
+
 class IsBuildingAdmin(permissions.BasePermission):
     """
     Επιτρέπει πρόσβαση σε:

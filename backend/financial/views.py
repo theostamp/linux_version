@@ -31,6 +31,7 @@ from .permissions import (
     ExpensePermission, PaymentPermission, TransactionPermission,
     FinancialReadPermission, FinancialWritePermission, ReportPermission
 )
+from core.permissions import IsManager, IsRelatedToBuilding
 from .audit import FinancialAuditLog
 from .services import CommonExpenseAutomationService
 from django.db import models
@@ -129,13 +130,23 @@ class SupplierViewSet(viewsets.ModelViewSet):
 
 
 class ExpenseViewSet(viewsets.ModelViewSet):
-    """ViewSet για τη διαχείριση δαπανών"""
+    """ViewSet για τη διαχείριση δαπανών με RBAC permissions"""
     
     queryset = Expense.objects.select_related('building', 'supplier').all()
     serializer_class = ExpenseSerializer
-    permission_classes = []  # Temporarily disabled for development
+    permission_classes = [IsAuthenticated, ExpensePermission]
     filter_backends = [filters.DjangoFilterBackend]
     filterset_class = ExpenseFilter
+    
+    def get_permissions(self):
+        """
+        Εφαρμογή διαφορετικών permissions ανά action:
+        - Create/Update/Delete: Μόνο Managers
+        - Read: Managers και Residents (με building-level filtering)
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticated(), IsManager()]
+        return [IsAuthenticated(), IsRelatedToBuilding()]
     
     def perform_create(self, serializer):
         """Καταγραφή δημιουργίας δαπάνης με αυτόματη έκδοση και χρέωση διαμερισμάτων"""

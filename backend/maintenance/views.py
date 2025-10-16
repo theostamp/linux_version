@@ -10,6 +10,7 @@ from django.db import models
 from .models import Contractor, ServiceReceipt, ScheduledMaintenance, MaintenanceTicket, WorkOrder, PaymentSchedule, PaymentInstallment, PaymentReceipt
 from financial.models import Expense
 from .permissions import MaintenancePermission
+from core.permissions import IsManager, IsResident, IsRelatedToBuilding
 from .serializers import (
     ContractorSerializer, ServiceReceiptSerializer, ScheduledMaintenanceSerializer,
     MaintenanceTicketSerializer, WorkOrderSerializer, PublicScheduledMaintenanceSerializer,
@@ -526,6 +527,7 @@ class ScheduledMaintenanceViewSet(viewsets.ModelViewSet):
 
 
 class MaintenanceTicketViewSet(viewsets.ModelViewSet):
+    """ViewSet για τη διαχείριση maintenance tickets με RBAC permissions"""
     queryset = MaintenanceTicket.objects.select_related('building', 'apartment', 'contractor').all()
     serializer_class = MaintenanceTicketSerializer
     permission_classes = [IsAuthenticated, MaintenancePermission]
@@ -534,6 +536,16 @@ class MaintenanceTicketViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'description', 'location']
     ordering_fields = ['created_at', 'sla_due_at', 'priority']
     ordering = ['-created_at']
+    
+    def get_permissions(self):
+        """
+        Εφαρμογή διαφορετικών permissions ανά action:
+        - Create/Read: Managers και Residents (με building-level filtering)
+        - Update/Delete: Μόνο Managers
+        """
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [IsAuthenticated(), IsManager()]
+        return [IsAuthenticated(), IsRelatedToBuilding()]
 
     @action(detail=True, methods=['post'])
     def close(self, request, pk=None):
