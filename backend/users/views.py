@@ -10,8 +10,15 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .models import CustomUser
-from .serializers import UserSerializer, OfficeDetailsSerializer, CustomTokenObtainPairSerializer
+from django.utils import timezone
+from .models import CustomUser, UserInvitation, PasswordResetToken
+from .serializers import (
+    UserSerializer, OfficeDetailsSerializer, CustomTokenObtainPairSerializer,
+    UserRegistrationSerializer, UserInvitationSerializer, UserInvitationCreateSerializer,
+    InvitationAcceptanceSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
+    PasswordChangeSerializer, EmailVerificationSerializer, UserProfileSerializer
+)
+from .services import EmailService, InvitationService, PasswordResetService, UserVerificationService
 
 User = get_user_model()
 
@@ -184,3 +191,268 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
+
+
+# ===== AUTHENTICATION ENDPOINTS =====
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_view(request):
+    """
+    POST /api/users/register/
+    Εγγραφή νέου χρήστη
+    """
+    serializer = UserRegistrationSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        
+        # Αποστολή email verification
+        if EmailService.send_verification_email(user):
+            return Response({
+                'message': 'Εγγραφή επιτυχής. Παρακαλούμε ελέγξτε το email σας για επιβεβαίωση.',
+                'user_id': user.id
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response({
+                'error': 'Εγγραφή επιτυχής αλλά αποτυχία αποστολής email επιβεβαίωσης.'
+            }, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_email_view(request):
+    """
+    POST /api/users/verify-email/
+    Επιβεβαίωση email με token
+    """
+    serializer = EmailVerificationSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            user = UserVerificationService.verify_email(serializer.validated_data['token'])
+            return Response({
+                'message': 'Email επιβεβαιώθηκε επιτυχώς.',
+                'user_id': user.id,
+                'email': user.email
+            }, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def resend_verification_view(request):
+    """
+    POST /api/users/resend-verification/
+    Επανάληψη αποστολής email επιβεβαίωσης
+    """
+    email = request.data.get('email')
+    if not email:
+        return Response({
+            'error': 'Email είναι υποχρεωτικό.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        user = CustomUser.objects.get(email=email, email_verified=False)
+        if EmailService.send_verification_email(user):
+            return Response({
+                'message': 'Email επιβεβαίωσης στάλθηκε ξανά.'
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'error': 'Αποτυχία αποστολής email.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except CustomUser.DoesNotExist:
+        return Response({
+            'error': 'Δεν βρέθηκε χρήστης με αυτό το email ή το email είναι ήδη επιβεβαιωμένο.'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
+# ===== INVITATION ENDPOINTS =====
+
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def create_invitation_view(request):
+    """
+    POST /api/users/invite/
+    Δημιουργία πρόσκλησης χρήστη (μόνο για Managers)
+    """
+    from core.permissions import IsManager
+    
+    # Έλεγχος δικαιωμάτων
+    if not IsManager().has_permission(request, None):
+        return Response({
+            'error': 'Μόνο οι διαχειριστές μπορούν να δημιουργούν προσκλήσεις.'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    serializer = UserInvitationCreateSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            invitation = InvitationService.create_invitation(
+                invited_by=request.user,
+                **serializer.validated_data
+            )
+            return Response(UserInvitationSerializer(invitation).data, status=status.HTTP_201_CREATED)
+        except ValueError as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def list_invitations_view(request):
+    """
+    GET /api/users/invitations/
+    Λίστα προσκλήσεων που έχει στείλει ο χρήστης
+    """
+    invitations = UserInvitation.objects.filter(invited_by=request.user).order_by('-created_at')
+    serializer = UserInvitationSerializer(invitations, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def accept_invitation_view(request):
+    """
+    POST /api/users/accept-invitation/
+    Αποδοχή πρόσκλησης και δημιουργία λογαριασμού
+    """
+    serializer = InvitationAcceptanceSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            user = InvitationService.accept_invitation(
+                token=serializer.validated_data['token'],
+                password=serializer.validated_data['password']
+            )
+            
+            # Δημιουργία JWT tokens
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+            
+            return Response({
+                'message': 'Πρόσκληση αποδεχτή επιτυχώς.',
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                },
+                'tokens': {
+                    'access': access_token,
+                    'refresh': refresh_token,
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except ValueError as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ===== PASSWORD MANAGEMENT ENDPOINTS =====
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def request_password_reset_view(request):
+    """
+    POST /api/users/password-reset/
+    Αίτηση επαναφοράς κωδικού
+    """
+    serializer = PasswordResetRequestSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            PasswordResetService.request_password_reset(serializer.validated_data['email'])
+            return Response({
+                'message': 'Οδηγίες επαναφοράς κωδικού στάλθηκαν στο email σας.'
+            }, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def confirm_password_reset_view(request):
+    """
+    POST /api/users/password-reset-confirm/
+    Επιβεβαίωση επαναφοράς κωδικού
+    """
+    serializer = PasswordResetConfirmSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            user = PasswordResetService.confirm_password_reset(
+                token=serializer.validated_data['token'],
+                new_password=serializer.validated_data['password']
+            )
+            return Response({
+                'message': 'Κωδικός επαναφοράς επιτυχώς.'
+            }, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def change_password_view(request):
+    """
+    POST /api/users/change-password/
+    Αλλαγή κωδικού από ενεργό χρήστη
+    """
+    serializer = PasswordChangeSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+        user = request.user
+        user.set_password(serializer.validated_data['new_password'])
+        user.save()
+        
+        return Response({
+            'message': 'Κωδικός αλλάχθηκε επιτυχώς.'
+        }, status=status.HTTP_200_OK)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ===== USER PROFILE ENDPOINTS =====
+
+@api_view(['GET', 'PUT', 'PATCH'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def user_profile_view(request):
+    """
+    GET/PUT/PATCH /api/users/profile/
+    Λήψη και ενημέρωση προφίλ χρήστη
+    """
+    if request.method == 'GET':
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data)
+    
+    elif request.method in ['PUT', 'PATCH']:
+        serializer = UserProfileSerializer(
+            request.user, 
+            data=request.data, 
+            partial=request.method == 'PATCH'
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

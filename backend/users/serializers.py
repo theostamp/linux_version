@@ -4,7 +4,9 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
-from .models import CustomUser
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from .models import CustomUser, UserInvitation, PasswordResetToken
 
 User = get_user_model()
 
@@ -130,3 +132,187 @@ class OfficeDetailsSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Επιτρέπονται μόνο αρχεία τύπου JPEG, PNG ή SVG.")
         
         return value
+
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    """
+    Serializer για την εγγραφή νέων χρηστών
+    """
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+    password_confirm = serializers.CharField(write_only=True)
+    
+    class Meta:
+        model = CustomUser
+        fields = ('email', 'first_name', 'last_name', 'password', 'password_confirm')
+        extra_kwargs = {
+            'email': {'required': True},
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+        }
+    
+    def validate_email(self, value):
+        """Έλεγχος αν το email υπάρχει ήδη"""
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Χρήστης με αυτό το email υπάρχει ήδη.")
+        return value
+    
+    def validate(self, attrs):
+        """Έλεγχος ότι οι κωδικοί ταιριάζουν"""
+        if attrs['password'] != attrs['password_confirm']:
+            raise serializers.ValidationError({"password_confirm": "Οι κωδικοί δεν ταιριάζουν."})
+        return attrs
+    
+    def create(self, validated_data):
+        """Δημιουργία νέου χρήστη"""
+        validated_data.pop('password_confirm')
+        password = validated_data.pop('password')
+        
+        user = CustomUser.objects.create_user(
+            password=password,
+            is_active=False,  # Απαιτείται email verification
+            email_verified=False,
+            **validated_data
+        )
+        
+        return user
+
+
+class UserInvitationSerializer(serializers.ModelSerializer):
+    """
+    Serializer για τις προσκλήσεις χρηστών
+    """
+    invited_by_name = serializers.SerializerMethodField()
+    building_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = UserInvitation
+        fields = (
+            'id', 'email', 'first_name', 'last_name', 'invitation_type',
+            'status', 'expires_at', 'invited_by', 'invited_by_name',
+            'building_id', 'building_name', 'assigned_role', 'created_at'
+        )
+        read_only_fields = ('id', 'token', 'invited_by', 'status', 'created_at')
+    
+    def get_invited_by_name(self, obj):
+        return f"{obj.invited_by.first_name} {obj.invited_by.last_name}".strip()
+    
+    def get_building_name(self, obj):
+        if obj.building_id:
+            try:
+                from buildings.models import Building
+                building = Building.objects.get(id=obj.building_id)
+                return building.name
+            except:
+                return None
+        return None
+
+
+class UserInvitationCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer για τη δημιουργία νέων προσκλήσεων
+    """
+    class Meta:
+        model = UserInvitation
+        fields = ('email', 'first_name', 'last_name', 'invitation_type', 'building_id', 'assigned_role')
+    
+    def validate_email(self, value):
+        """Έλεγχος αν το email υπάρχει ήδη"""
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Χρήστης με αυτό το email υπάρχει ήδη.")
+        
+        # Έλεγχος για pending invitations
+        if UserInvitation.objects.filter(email=value, status='pending').exists():
+            raise serializers.ValidationError("Υπάρχει ήδη ενεργή πρόσκληση για αυτό το email.")
+        
+        return value
+
+
+class InvitationAcceptanceSerializer(serializers.Serializer):
+    """
+    Serializer για την αποδοχή προσκλήσεων
+    """
+    token = serializers.UUIDField()
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+    password_confirm = serializers.CharField(write_only=True)
+    
+    def validate_password_confirm(self, value):
+        password = self.initial_data.get('password')
+        if password and value != password:
+            raise serializers.ValidationError("Οι κωδικοί δεν ταιριάζουν.")
+        return value
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """
+    Serializer για την αίτηση επαναφοράς κωδικού
+    """
+    email = serializers.EmailField()
+    
+    def validate_email(self, value):
+        if not CustomUser.objects.filter(email=value, is_active=True).exists():
+            raise serializers.ValidationError("Δεν βρέθηκε ενεργός χρήστης με αυτό το email.")
+        return value
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """
+    Serializer για την επιβεβαίωση επαναφοράς κωδικού
+    """
+    token = serializers.UUIDField()
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+    password_confirm = serializers.CharField(write_only=True)
+    
+    def validate_password_confirm(self, value):
+        password = self.initial_data.get('password')
+        if password and value != password:
+            raise serializers.ValidationError("Οι κωδικοί δεν ταιριάζουν.")
+        return value
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """
+    Serializer για την αλλαγή κωδικού από ενεργό χρήστη
+    """
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, validators=[validate_password])
+    new_password_confirm = serializers.CharField(write_only=True)
+    
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Ο τρέχων κωδικός δεν είναι σωστός.")
+        return value
+    
+    def validate_new_password_confirm(self, value):
+        new_password = self.initial_data.get('new_password')
+        if new_password and value != new_password:
+            raise serializers.ValidationError("Οι νέοι κωδικοί δεν ταιριάζουν.")
+        return value
+
+
+class EmailVerificationSerializer(serializers.Serializer):
+    """
+    Serializer για την επιβεβαίωση email
+    """
+    token = serializers.CharField(max_length=100)
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer για το user profile
+    """
+    full_name = serializers.SerializerMethodField()
+    groups = serializers.StringRelatedField(many=True, read_only=True)
+    
+    class Meta:
+        model = CustomUser
+        fields = (
+            'id', 'email', 'first_name', 'last_name', 'full_name',
+            'is_active', 'email_verified', 'date_joined', 'groups',
+            'role', 'office_name', 'office_address', 'office_phone',
+            'office_email', 'office_logo', 'office_bank_account'
+        )
+        read_only_fields = ('id', 'email', 'is_active', 'email_verified', 'date_joined')
+    
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()

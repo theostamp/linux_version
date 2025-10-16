@@ -3,6 +3,8 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+import uuid
 
 
 class CustomUserManager(BaseUserManager):
@@ -35,9 +37,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)  # Changed to False - requires email verification
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
+    
+    # Email verification fields
+    email_verified = models.BooleanField(default=False)
+    email_verification_token = models.CharField(max_length=100, blank=True, null=True)
+    email_verification_sent_at = models.DateTimeField(blank=True, null=True)
 
     role = models.CharField(
         max_length=20,
@@ -145,3 +152,159 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def get_apartment_in(self, building):
         membership = self.memberships.filter(building=building).first()
         return membership.apartment if membership else None
+
+
+class UserInvitation(models.Model):
+    """
+    Model για την διαχείριση των προσκλήσεων χρηστών
+    """
+    class InvitationStatus(models.TextChoices):
+        PENDING = 'pending', _('Pending')
+        ACCEPTED = 'accepted', _('Accepted')
+        EXPIRED = 'expired', _('Expired')
+        CANCELLED = 'cancelled', _('Cancelled')
+
+    class InvitationType(models.TextChoices):
+        REGISTRATION = 'registration', _('Registration')
+        BUILDING_ACCESS = 'building_access', _('Building Access')
+        ROLE_ASSIGNMENT = 'role_assignment', _('Role Assignment')
+
+    # Βασικά στοιχεία
+    email = models.EmailField(_('Email'), help_text=_('Email διεύθυνση του προσκεκλημένου'))
+    first_name = models.CharField(_('First Name'), max_length=50, blank=True)
+    last_name = models.CharField(_('Last Name'), max_length=50, blank=True)
+    
+    # Invitation details
+    invitation_type = models.CharField(
+        _('Invitation Type'),
+        max_length=20,
+        choices=InvitationType.choices,
+        default=InvitationType.REGISTRATION
+    )
+    status = models.CharField(
+        _('Status'),
+        max_length=20,
+        choices=InvitationStatus.choices,
+        default=InvitationStatus.PENDING
+    )
+    
+    # Security
+    token = models.UUIDField(_('Token'), default=uuid.uuid4, unique=True)
+    expires_at = models.DateTimeField(_('Expires At'))
+    
+    # Sender information
+    invited_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='sent_invitations',
+        verbose_name=_('Invited By')
+    )
+    
+    # Building association (if applicable) - using string reference for tenant compatibility
+    building_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_('Building ID'),
+        help_text=_('ID του κτιρίου στο οποίο προσκλήθηκε ο χρήστης')
+    )
+    
+    # Role assignment (if applicable)
+    assigned_role = models.CharField(
+        _('Assigned Role'),
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text=_('Ρόλος που θα ανατεθεί στον χρήστη')
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
+    accepted_at = models.DateTimeField(_('Accepted At'), null=True, blank=True)
+    
+    # User creation after acceptance
+    created_user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='invitation_origin',
+        verbose_name=_('Created User')
+    )
+
+    class Meta:
+        verbose_name = _('User Invitation')
+        verbose_name_plural = _('User Invitations')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Invitation for {self.email} ({self.status})'
+
+    def save(self, *args, **kwargs):
+        # Set default expiration (7 days from now)
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timezone.timedelta(days=7)
+        super().save(*args, **kwargs)
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    @property
+    def is_valid(self):
+        return self.status == self.InvitationStatus.PENDING and not self.is_expired
+
+    def accept(self, user=None):
+        """Accept the invitation and optionally create a user"""
+        if not self.is_valid:
+            return False
+        
+        self.status = self.InvitationStatus.ACCEPTED
+        self.accepted_at = timezone.now()
+        
+        if user:
+            self.created_user = user
+        
+        self.save()
+        return True
+
+    def expire(self):
+        """Mark invitation as expired"""
+        self.status = self.InvitationStatus.EXPIRED
+        self.save()
+
+    def cancel(self):
+        """Cancel the invitation"""
+        self.status = self.InvitationStatus.CANCELLED
+        self.save()
+
+
+class PasswordResetToken(models.Model):
+    """
+    Model για την διαχείριση των tokens επαναφοράς κωδικού
+    """
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='password_reset_tokens')
+    token = models.UUIDField(default=uuid.uuid4, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Password reset for {self.user.email}'
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timezone.timedelta(hours=24)
+        super().save(*args, **kwargs)
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    @property
+    def is_valid(self):
+        return not self.used and not self.is_expired
