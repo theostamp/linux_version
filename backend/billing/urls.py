@@ -13,7 +13,10 @@ from .views import (
     InvoiceManagementView, PaymentProcessingView,
     AdminBillingManagementView, AdminDashboardView,
     AdminUserManagementView, AdminSubscriptionManagementView,
-    AdminSystemHealthView
+    AdminSystemHealthView, AdvancedAnalyticsView,
+    RevenueAnalyticsView, CustomerAnalyticsView,
+    SubscriptionAnalyticsView, UsageAnalyticsView as AdvancedUsageAnalyticsView,
+    PaymentAnalyticsView, PredictiveAnalyticsView
 )
 
 app_name = 'billing'
@@ -57,5 +60,14 @@ urlpatterns = [
     path('api/admin/users/', AdminUserManagementView.as_view(), name='admin-user-management'),
     path('api/admin/subscriptions/', AdminSubscriptionManagementView.as_view(), name='admin-subscription-management'),
     path('api/admin/system-health/', AdminSystemHealthView.as_view(), name='admin-system-health'),
+    
+    # Advanced Analytics
+    path('api/analytics/advanced/', AdvancedAnalyticsView.as_view(), name='advanced-analytics'),
+    path('api/analytics/revenue/', RevenueAnalyticsView.as_view(), name='revenue-analytics'),
+    path('api/analytics/customers/', CustomerAnalyticsView.as_view(), name='customer-analytics'),
+    path('api/analytics/subscriptions/', SubscriptionAnalyticsView.as_view(), name='subscription-analytics'),
+    path('api/analytics/usage-advanced/', AdvancedUsageAnalyticsView.as_view(), name='usage-analytics-advanced'),
+    path('api/analytics/payments/', PaymentAnalyticsView.as_view(), name='payment-analytics'),
+    path('api/analytics/predictive/', PredictiveAnalyticsView.as_view(), name='predictive-analytics'),
 ]
 

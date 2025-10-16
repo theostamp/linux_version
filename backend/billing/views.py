@@ -26,6 +26,7 @@ from .services import BillingService, PaymentService, WebhookService
 from .integrations.stripe import StripeService
 from .analytics import UsageAnalyticsService
 from .admin_dashboard import AdminDashboardService
+from .advanced_analytics import AdvancedAnalyticsService
 from rest_framework.permissions import IsAuthenticated
 
 logger = logging.getLogger(__name__)
@@ -1031,4 +1032,249 @@ class AdminSystemHealthView(APIView):
             logger.error(f"Error getting system health: {e}")
             return Response({
                 'error': 'Failed to get system health'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AdvancedAnalyticsView(APIView):
+    """
+    Advanced analytics view για detailed reporting και insights
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get advanced analytics data
+        """
+        try:
+            # Only superusers can access advanced analytics
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            analytics_type = request.query_params.get('type', 'overview')
+            period_days = int(request.query_params.get('period_days', 30))
+            
+            if analytics_type == 'revenue':
+                data = AdvancedAnalyticsService.get_revenue_analytics(period_days)
+            elif analytics_type == 'customers':
+                data = AdvancedAnalyticsService.get_customer_analytics(period_days)
+            elif analytics_type == 'subscriptions':
+                data = AdvancedAnalyticsService.get_subscription_analytics(period_days)
+            elif analytics_type == 'usage':
+                data = AdvancedAnalyticsService.get_usage_analytics(period_days)
+            elif analytics_type == 'payments':
+                data = AdvancedAnalyticsService.get_payment_analytics(period_days)
+            elif analytics_type == 'predictive':
+                data = AdvancedAnalyticsService.get_predictive_analytics()
+            else:
+                return Response({
+                    'error': 'Invalid analytics type. Available: revenue, customers, subscriptions, usage, payments, predictive'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if 'error' in data:
+                return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response(data)
+            
+        except Exception as e:
+            logger.error(f"Error getting advanced analytics: {e}")
+            return Response({
+                'error': 'Failed to get advanced analytics'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class RevenueAnalyticsView(APIView):
+    """
+    Dedicated revenue analytics view
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get detailed revenue analytics
+        """
+        try:
+            # Only superusers can access revenue analytics
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            period_days = int(request.query_params.get('period_days', 30))
+            
+            data = AdvancedAnalyticsService.get_revenue_analytics(period_days)
+            
+            if 'error' in data:
+                return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response(data)
+            
+        except Exception as e:
+            logger.error(f"Error getting revenue analytics: {e}")
+            return Response({
+                'error': 'Failed to get revenue analytics'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CustomerAnalyticsView(APIView):
+    """
+    Dedicated customer analytics view
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get detailed customer analytics
+        """
+        try:
+            # Only superusers can access customer analytics
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            period_days = int(request.query_params.get('period_days', 30))
+            
+            data = AdvancedAnalyticsService.get_customer_analytics(period_days)
+            
+            if 'error' in data:
+                return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response(data)
+            
+        except Exception as e:
+            logger.error(f"Error getting customer analytics: {e}")
+            return Response({
+                'error': 'Failed to get customer analytics'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SubscriptionAnalyticsView(APIView):
+    """
+    Dedicated subscription analytics view
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get detailed subscription analytics
+        """
+        try:
+            # Only superusers can access subscription analytics
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            period_days = int(request.query_params.get('period_days', 30))
+            
+            data = AdvancedAnalyticsService.get_subscription_analytics(period_days)
+            
+            if 'error' in data:
+                return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response(data)
+            
+        except Exception as e:
+            logger.error(f"Error getting subscription analytics: {e}")
+            return Response({
+                'error': 'Failed to get subscription analytics'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UsageAnalyticsView(APIView):
+    """
+    Dedicated usage analytics view
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get detailed usage analytics
+        """
+        try:
+            # Only superusers can access usage analytics
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            period_days = int(request.query_params.get('period_days', 30))
+            
+            data = AdvancedAnalyticsService.get_usage_analytics(period_days)
+            
+            if 'error' in data:
+                return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response(data)
+            
+        except Exception as e:
+            logger.error(f"Error getting usage analytics: {e}")
+            return Response({
+                'error': 'Failed to get usage analytics'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PaymentAnalyticsView(APIView):
+    """
+    Dedicated payment analytics view
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get detailed payment analytics
+        """
+        try:
+            # Only superusers can access payment analytics
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            period_days = int(request.query_params.get('period_days', 30))
+            
+            data = AdvancedAnalyticsService.get_payment_analytics(period_days)
+            
+            if 'error' in data:
+                return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response(data)
+            
+        except Exception as e:
+            logger.error(f"Error getting payment analytics: {e}")
+            return Response({
+                'error': 'Failed to get payment analytics'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PredictiveAnalyticsView(APIView):
+    """
+    Predictive analytics view για forecasting
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        Get predictive analytics και forecasting data
+        """
+        try:
+            # Only superusers can access predictive analytics
+            if not request.user.is_superuser:
+                return Response({
+                    'error': 'Admin access required'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            data = AdvancedAnalyticsService.get_predictive_analytics()
+            
+            if 'error' in data:
+                return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response(data)
+            
+        except Exception as e:
+            logger.error(f"Error getting predictive analytics: {e}")
+            return Response({
+                'error': 'Failed to get predictive analytics'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

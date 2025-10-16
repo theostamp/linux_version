@@ -414,11 +414,11 @@ class AdminDashboardService:
                 month_start = current_date.replace(day=1) - timedelta(days=30*i)
                 month_end = (month_start + timedelta(days=32)).replace(day=1)
                 
-            revenue = BillingCycle.objects.filter(
-                status='paid',
-                paid_at__gte=month_start,
-                paid_at__lt=month_end
-            ).aggregate(total=Sum('total_amount'))['total'] or 0
+                revenue = BillingCycle.objects.filter(
+                    status='paid',
+                    paid_at__gte=month_start,
+                    paid_at__lt=month_end
+                ).aggregate(total=Sum('total_amount'))['total'] or 0
                 
                 trends.append({
                     'month': month_start.strftime('%Y-%m'),
