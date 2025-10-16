@@ -54,19 +54,19 @@ class SubscriptionPlan(models.Model):
     )
     
     # Features and limits
-    max_buildings = models.PositiveIntegerField(
+    max_buildings = models.IntegerField(
         default=1,
-        help_text='Maximum number of buildings allowed'
+        help_text='Maximum number of buildings allowed (-1 for unlimited)'
     )
     
-    max_apartments = models.PositiveIntegerField(
+    max_apartments = models.IntegerField(
         default=10,
-        help_text='Maximum number of apartments allowed'
+        help_text='Maximum number of apartments allowed (-1 for unlimited)'
     )
     
-    max_users = models.PositiveIntegerField(
+    max_users = models.IntegerField(
         default=5,
-        help_text='Maximum number of users allowed'
+        help_text='Maximum number of users allowed (-1 for unlimited)'
     )
     
     max_api_calls = models.PositiveIntegerField(
