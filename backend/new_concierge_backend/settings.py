@@ -401,6 +401,20 @@ EMAIL_TIMEOUT = 30
 EMAIL_SUBJECT_PREFIX = '[New Concierge] '
 
 # ----------------------------------------
+# 💳 Stripe Payment Processing
+# ----------------------------------------
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
+
+# Stripe settings
+STRIPE_CURRENCY = 'eur'  # Euro currency
+STRIPE_WEBHOOK_TOLERANCE = 300  # 5 minutes tolerance for webhook timestamps
+
+# Frontend URL for redirects
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+
+# ----------------------------------------
 # Django REST framework simple JWT settings
 # ----------------------------------------
 SIMPLE_JWT = {

@@ -111,6 +111,25 @@ class SubscriptionPlan(models.Model):
         help_text='Free trial period in days'
     )
     
+    # Stripe integration
+    stripe_price_id_monthly = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text='Stripe price ID for monthly billing'
+    )
+    
+    stripe_price_id_yearly = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text='Stripe price ID for yearly billing'
+    )
+    
+    stripe_product_id = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text='Stripe product ID'
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

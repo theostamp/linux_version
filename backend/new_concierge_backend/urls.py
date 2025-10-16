@@ -90,6 +90,9 @@ urlpatterns = [
     # Notifications (Email/SMS)
     path('api/notifications/', include('notifications.urls')),
 
+    # Billing & Subscriptions
+    path('api/billing/', include('billing.urls')),
+
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]
