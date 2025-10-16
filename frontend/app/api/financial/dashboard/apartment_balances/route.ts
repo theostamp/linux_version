@@ -17,8 +17,12 @@ export async function GET(request: NextRequest) {
     const host = request.headers.get('host') || 'demo.localhost';
     const subdomain = host.split('.')[0];
 
-    // Forward the request to the kiosk apartment-debts endpoint which returns current_balance
-    const backendUrl = `${process.env.BACKEND_URL || 'http://backend:8000'}/api/kiosk/apartment-debts/?building_id=${buildingId}`;
+    // Forward the request to the financial dashboard endpoint which returns net_obligation
+    let backendUrl = `${process.env.BACKEND_URL || 'http://backend:8000'}/api/financial/dashboard/apartment_balances/?building_id=${buildingId}`;
+    
+    if (month) {
+      backendUrl += `&month=${month}`;
+    }
     
     console.log('[apartment_balances API] Fetching from:', backendUrl);
     console.log('[apartment_balances API] Subdomain:', subdomain);
