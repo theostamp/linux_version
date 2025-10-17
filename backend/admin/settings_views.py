@@ -10,7 +10,7 @@ import logging
 import json
 import os
 
-from core.permissions import IsSuperUser
+from core.permissions import IsSuperuser
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class AdminSystemSettingsView(APIView):
     """
     Admin system settings management
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def get(self, request):
         """
@@ -168,7 +168,7 @@ class AdminSystemStatusView(APIView):
     """
     System health και status monitoring
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def get(self, request):
         """
@@ -373,7 +373,7 @@ class AdminSystemBackupView(APIView):
     """
     System backup management
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def get(self, request):
         """
@@ -428,7 +428,7 @@ class AdminSystemLogsView(APIView):
     """
     System logs viewing
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def get(self, request):
         """

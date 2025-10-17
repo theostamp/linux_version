@@ -13,7 +13,7 @@ from datetime import timedelta
 import logging
 
 from billing.models import UserSubscription, SubscriptionPlan, BillingCycle, UsageTracking
-from core.permissions import IsSuperUser
+from core.permissions import IsSuperuser
 from billing.services import BillingService
 
 User = get_user_model()
@@ -24,7 +24,7 @@ class AdminSubscriptionsViewSet(ModelViewSet):
     """
     Admin ViewSet για διαχείριση συνδρομών
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def get_queryset(self):
         """
@@ -302,7 +302,7 @@ class AdminSubscriptionsStatsView(APIView):
     """
     Admin subscriptions statistics
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def get(self, request):
         """
@@ -432,7 +432,7 @@ class AdminSubscriptionsExportView(APIView):
     """
     Export subscriptions data
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def get(self, request):
         """

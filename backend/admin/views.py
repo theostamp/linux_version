@@ -14,7 +14,7 @@ import logging
 
 from users.models import CustomUser
 from billing.models import UserSubscription
-from core.permissions import IsSuperUser
+from core.permissions import IsSuperuser
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class AdminUsersViewSet(ModelViewSet):
     """
     Admin ViewSet για διαχείριση χρηστών
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def get_queryset(self):
         """
@@ -216,7 +216,7 @@ class AdminUsersStatsView(APIView):
     """
     Admin users statistics
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def get(self, request):
         """
@@ -284,7 +284,7 @@ class AdminUsersExportView(APIView):
     """
     Export users data
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def get(self, request):
         """

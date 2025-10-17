@@ -11,7 +11,7 @@ from datetime import timedelta, datetime
 import logging
 
 from billing.models import UserSubscription, BillingCycle, PaymentMethod, UsageTracking
-from core.permissions import IsSuperUser
+from core.permissions import IsSuperuser
 from billing.services import BillingService
 
 User = get_user_model()
@@ -22,7 +22,7 @@ class AdminBillingStatsView(APIView):
     """
     Admin billing statistics και analytics
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def get(self, request):
         """
@@ -295,7 +295,7 @@ class AdminRecentPaymentsView(APIView):
     """
     Recent payments για admin dashboard
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def get(self, request):
         """
@@ -336,7 +336,7 @@ class AdminGenerateMonthlyInvoicesView(APIView):
     """
     Generate monthly invoices για όλες τις ενεργές συνδρομές
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def post(self, request):
         """
@@ -363,7 +363,7 @@ class AdminBillingExportView(APIView):
     """
     Export billing data
     """
-    permission_classes = [IsSuperUser]
+    permission_classes = [IsSuperuser]
     
     def get(self, request):
         """
