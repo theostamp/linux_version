@@ -680,42 +680,74 @@ def create_demo_data(tenant_schema):
         print("\n📺 Δημιουργία kiosk widgets και scenes...")
         try:
             # First seed default widgets
-            from kiosk.models import KioskWidget
+            from kiosk.models import KioskWidget, KioskScene, WidgetPlacement
             from buildings.models import Building
             
             building = Building.objects.first()
             if building:
-                # Check if widgets already exist
-                existing_widgets = KioskWidget.objects.filter(building=building).count()
-                if existing_widgets == 0:
-                    # Create a basic morning overview widget
-                    morning_widget = KioskWidget.objects.create(
-                        widget_id='morning_overview_default',
-                        name='Morning Overview',
-                        greek_name='Πρωινή Επισκόπηση',
-                        description='Default morning overview widget',
-                        greek_description='Προεπιλεγμένο widget πρωινής επισκόπησης',
-                        category='main_slides',
-                        icon='sunrise',
-                        enabled=True,
-                        order=0,
-                        settings={'title': 'Πρωινή Επισκόπηση', 'showTitle': True},
-                        component='MorningOverviewSceneCustom',
-                        data_source='/api/public/kiosk-data',
-                        is_custom=False,
+                # Check if scenes already exist
+                existing_scenes = KioskScene.objects.filter(building=building).count()
+                if existing_scenes == 0:
+                    print("ℹ️ Δεν υπάρχουν σκηνές - δημιουργία Πρωινής Επισκόπησης...")
+                    
+                    # Βρίσκουμε το Dashboard Overview widget (αν υπάρχει)
+                    dashboard_widget = KioskWidget.objects.filter(
                         building=building,
+                        widget_id='dashboard_overview'
+                    ).first()
+                    
+                    if not dashboard_widget:
+                        # Δημιουργούμε το widget αν δεν υπάρχει
+                        dashboard_widget = KioskWidget.objects.create(
+                            widget_id='dashboard_overview',
+                            name='Dashboard Overview',
+                            greek_name='Επισκόπηση Κτιρίου',
+                            description='Building overview with key statistics',
+                            greek_description='Επισκόπηση κτιρίου με βασικά στατιστικά',
+                            category='main_slides',
+                            icon='Home',
+                            enabled=True,
+                            order=1,
+                            settings={'title': 'Επισκόπηση Κτιρίου', 'showTitle': True},
+                            component='DashboardOverview',
+                            data_source='/api/public-info',
+                            is_custom=False,
+                            building=building,
+                            created_by=created_users[0] if created_users else None
+                        )
+                        print(f"✅ Δημιουργήθηκε widget: {dashboard_widget.greek_name}")
+                    
+                    # Δημιουργούμε την Πρωινή Επισκόπηση σκηνή
+                    morning_scene = KioskScene.objects.create(
+                        building=building,
+                        name='Πρωινή Επισκόπηση',
+                        order=0,
+                        duration_seconds=30,
+                        transition='fade',
+                        is_enabled=True,
                         created_by=created_users[0] if created_users else None
                     )
-                    print(f"✅ Δημιουργήθηκε βασικό widget: {morning_widget.greek_name}")
-                
-                # Try to run migrate_to_scenes command for the demo building
-                call_command("migrate_to_scenes", building_id=building.id, interactive=False)
-                print("✅ Δημιουργήθηκαν kiosk scenes")
+                    
+                    # Δημιουργούμε placement για το widget (full screen)
+                    WidgetPlacement.objects.create(
+                        scene=morning_scene,
+                        widget=dashboard_widget,
+                        grid_row_start=1,
+                        grid_col_start=1,
+                        grid_row_end=9,  # Full height
+                        grid_col_end=13,  # Full width
+                        z_index=0
+                    )
+                    
+                    print(f"✅ Δημιουργήθηκε σκηνή: {morning_scene.name}")
+                    print(f"✅ Συνδέθηκε με widget: {dashboard_widget.greek_name}")
+                else:
+                    print(f"ℹ️ Υπάρχουν ήδη {existing_scenes} σκηνές - παρακάμπτουμε δημιουργία")
             else:
                 print("⚠️ Δεν βρέθηκε κτίριο για τη δημιουργία widgets/scenes")
         except Exception as e:
             print(f"⚠️ Σφάλμα δημιουργίας kiosk widgets/scenes: {e}")
-            print("ℹ️ Οι widgets/scenes μπορούν να δημιουργηθούν μετά με το migrate_to_scenes command")
+            print("ℹ️ Οι widgets/scenes μπορούν να δημιουργηθούν μετά με το κουμπί 'Δημιουργία Βασικής Σκηνής'")
 
 def warm_up_frontend():
     """

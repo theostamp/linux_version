@@ -484,26 +484,35 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
             # Create a default widget for the scene if none exist
             default_widget = None
             try:
+                # Try to find the Dashboard Overview widget first
                 default_widget = KioskWidget.objects.filter(
                     building=building,
-                    enabled=True
+                    widget_id='dashboard_overview'
                 ).first()
+                
+                if not default_widget:
+                    # Try to find any enabled main_slides widget
+                    default_widget = KioskWidget.objects.filter(
+                        building=building,
+                        enabled=True,
+                        category='main_slides'
+                    ).first()
                 
                 if not default_widget:
                     # Create a default morning overview widget
                     default_widget = KioskWidget.objects.create(
-                        widget_id='morning_overview_default',
-                        name='Morning Overview',
-                        greek_name='Πρωινή Επισκόπηση',
-                        description='Default morning overview widget',
-                        greek_description='Προεπιλεγμένο widget πρωινής επισκόπησης',
+                        widget_id='dashboard_overview',
+                        name='Dashboard Overview',
+                        greek_name='Επισκόπηση Κτιρίου',
+                        description='Building overview with key statistics',
+                        greek_description='Επισκόπηση κτιρίου με βασικά στατιστικά',
                         category='main_slides',
-                        icon='sunrise',
+                        icon='Home',
                         enabled=True,
-                        order=0,
-                        settings={'title': 'Πρωινή Επισκόπηση', 'showTitle': True},
-                        component='MorningOverviewSceneCustom',
-                        data_source='/api/public/kiosk-data',
+                        order=1,
+                        settings={'title': 'Επισκόπηση Κτιρίου', 'showTitle': True},
+                        component='DashboardOverview',
+                        data_source='/api/public-info',
                         is_custom=False,
                         building=building,
                         created_by=request.user
@@ -676,26 +685,35 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
             # Create a default widget for the scene if none exist
             default_widget = None
             try:
+                # Try to find the Dashboard Overview widget first
                 default_widget = KioskWidget.objects.filter(
                     building=building,
-                    enabled=True
+                    widget_id='dashboard_overview'
                 ).first()
+                
+                if not default_widget:
+                    # Try to find any enabled main_slides widget
+                    default_widget = KioskWidget.objects.filter(
+                        building=building,
+                        enabled=True,
+                        category='main_slides'
+                    ).first()
                 
                 if not default_widget:
                     # Create a default morning overview widget
                     default_widget = KioskWidget.objects.create(
-                        widget_id='morning_overview_default',
-                        name='Morning Overview',
-                        greek_name='Πρωινή Επισκόπηση',
-                        description='Default morning overview widget',
-                        greek_description='Προεπιλεγμένο widget πρωινής επισκόπησης',
+                        widget_id='dashboard_overview',
+                        name='Dashboard Overview',
+                        greek_name='Επισκόπηση Κτιρίου',
+                        description='Building overview with key statistics',
+                        greek_description='Επισκόπηση κτιρίου με βασικά στατιστικά',
                         category='main_slides',
-                        icon='sunrise',
+                        icon='Home',
                         enabled=True,
-                        order=0,
-                        settings={'title': 'Πρωινή Επισκόπηση', 'showTitle': True},
-                        component='MorningOverviewSceneCustom',
-                        data_source='/api/public/kiosk-data',
+                        order=1,
+                        settings={'title': 'Επισκόπηση Κτιρίου', 'showTitle': True},
+                        component='DashboardOverview',
+                        data_source='/api/public-info',
                         is_custom=False,
                         building=building,
                         created_by=request.user
