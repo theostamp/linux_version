@@ -99,12 +99,28 @@ class IsBuildingAdmin(permissions.BasePermission):
 class IsSuperuser(permissions.BasePermission):
     """Allows access only to superusers."""
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.is_superuser
+        if not (request.user and request.user.is_authenticated and request.user.is_superuser):
+            return False
+        
+        # Επιπλέον έλεγχος email verification για superusers
+        if not request.user.email_verified:
+            print(f"SECURITY WARNING: Unverified superuser {request.user.email} attempted access")
+            return False
+        
+        return True
 
 class IsStaffUser(permissions.BasePermission): # Αυτή η κλάση επιτρέπει σε όλους τους staff
     """Allows access only to staff users (managers)."""
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.is_staff
+        if not (request.user and request.user.is_authenticated and request.user.is_staff):
+            return False
+        
+        # Επιπλέον έλεγχος email verification για staff users
+        if not request.user.email_verified:
+            print(f"SECURITY WARNING: Unverified staff user {request.user.email} attempted access")
+            return False
+        
+        return True
 
 class IsResidentUser(permissions.BasePermission):
     """Allows access only to non-staff authenticated users (residents)."""

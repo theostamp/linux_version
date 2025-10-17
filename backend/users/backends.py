@@ -23,3 +23,19 @@ class EmailBackend(ModelBackend):
         if user.check_password(password) and self.user_can_authenticate(user):
             return user
         return None
+    
+    def user_can_authenticate(self, user):
+        """
+        Custom implementation που ελέγχει email_verified για admin users.
+        """
+        # Βασικός έλεγχος από το Django
+        if not super().user_can_authenticate(user):
+            return False
+        
+        # Έλεγχος email verification για admin users
+        if user.is_superuser or user.is_staff:
+            if not user.email_verified:
+                print(f"SECURITY WARNING: Unverified admin user {user.email} attempted login")
+                return False
+        
+        return True
