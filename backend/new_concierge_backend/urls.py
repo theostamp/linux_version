@@ -93,6 +93,9 @@ urlpatterns = [
     # Billing & Subscriptions
     path('api/billing/', include('billing.urls')),
 
+    # Admin endpoints
+    path('api/admin/', include('admin.urls')),
+
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]

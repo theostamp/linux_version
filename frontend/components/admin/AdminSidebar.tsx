@@ -10,7 +10,9 @@ import {
   Users, 
   BarChart3,
   Shield,
-  Monitor
+  Monitor,
+  CreditCard,
+  Euro
 } from 'lucide-react';
 
 const navigation = [
@@ -18,6 +20,21 @@ const navigation = [
     name: 'Dashboard',
     href: '/admin',
     icon: BarChart3,
+  },
+  {
+    name: 'User Management',
+    href: '/admin/users',
+    icon: Users,
+  },
+  {
+    name: 'Subscription Management',
+    href: '/admin/subscriptions',
+    icon: CreditCard,
+  },
+  {
+    name: 'Billing Dashboard',
+    href: '/admin/billing',
+    icon: Euro,
   },
   {
     name: 'Kiosk Management',
@@ -28,11 +45,6 @@ const navigation = [
     name: 'Building Management',
     href: '/admin/buildings',
     icon: Building2,
-  },
-  {
-    name: 'User Management',
-    href: '/admin/users',
-    icon: Users,
   },
   {
     name: 'System Settings',

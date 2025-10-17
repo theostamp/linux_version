@@ -35,6 +35,10 @@ import {
   Monitor,
   Settings,
   Send,
+  User,
+  CreditCard,
+  Bell,
+  Shield,
 } from 'lucide-react';
 
 // Navigation link interface
@@ -134,6 +138,27 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Ειδοποιήσεις',
         icon: <Send className="w-4 h-4" />,
         roles: ['manager', 'staff', 'superuser'],
+      },
+    ]
+  },
+  {
+    id: 'personal',
+    title: 'Προσωπικά',
+    color: 'indigo',
+    bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
+    borderColor: 'border-indigo-200 dark:border-indigo-800',
+    links: [
+      {
+        href: '/my-profile',
+        label: 'Το Προφίλ μου',
+        icon: <User className="w-4 h-4" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
+      },
+      {
+        href: '/my-subscription',
+        label: 'Η Συνδρομή μου',
+        icon: <CreditCard className="w-4 h-4" />,
+        roles: ['manager', 'resident', 'staff', 'superuser'],
       },
     ]
   },

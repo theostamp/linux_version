@@ -1,46 +1,42 @@
-from django.urls import path, include 
- 
+# users/urls.py
+
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-
-from rest_framework_simplejwt.views import (
-    TokenRefreshView
+from . import views
+from .profile_views import (
+    UserProfileView, 
+    UserChangePasswordView, 
+    UserNotificationSettingsView,
+    UserActiveSessionsView,
+    UserAccountDeletionView
 )
-from .views import (
-    UserViewSet, me_view, logout_view, update_office_details, CustomTokenObtainPairView,
-    register_view, verify_email_view, resend_verification_view,
-    create_invitation_view, list_invitations_view, accept_invitation_view,
-    request_password_reset_view, confirm_password_reset_view, change_password_view,
-    user_profile_view
+from .subscription_views import (
+    UserCurrentSubscriptionView,
+    UserSubscriptionPlansView,
+    UserSubscriptionBillingHistoryView,
+    UserSubscriptionActionsView,
+    UserCreateSubscriptionView
 )
 
+# Create router for ViewSets
 router = DefaultRouter()
-router.register(r'', UserViewSet)
+router.register(r'', views.UserViewSet, basename='users')
 
 urlpatterns = [
-    # Authentication endpoints
-    path('register/', register_view, name='register'),
-    path('verify-email/', verify_email_view, name='verify-email'),
-    path('resend-verification/', resend_verification_view, name='resend-verification'),
-    path('login/', CustomTokenObtainPairView.as_view(), name='login'),
-    path('login', CustomTokenObtainPairView.as_view(), name='login-no-slash'),
-    path('logout/', logout_view, name='logout'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    
-    # Invitation endpoints
-    path('invite/', create_invitation_view, name='create-invitation'),
-    path('invitations/', list_invitations_view, name='list-invitations'),
-    path('accept-invitation/', accept_invitation_view, name='accept-invitation'),
-    
-    # Password management endpoints
-    path('password-reset/', request_password_reset_view, name='password-reset'),
-    path('password-reset-confirm/', confirm_password_reset_view, name='password-reset-confirm'),
-    path('change-password/', change_password_view, name='change-password'),
-    
-    # User profile endpoints
-    path('profile/', user_profile_view, name='user-profile'),
-    path('me/', me_view, name='me'),
-    path('office-details/', update_office_details, name='office-details'),
-    
-    # Default router
+    # Include router URLs
     path('', include(router.urls)),
+    
+    # Profile endpoints
+    path('profile/', UserProfileView.as_view(), name='user-profile'),
+    path('profile/change-password/', UserChangePasswordView.as_view(), name='user-change-password'),
+    path('profile/notifications/', UserNotificationSettingsView.as_view(), name='user-notifications'),
+    path('profile/sessions/', UserActiveSessionsView.as_view(), name='user-sessions'),
+    path('profile/delete-account/', UserAccountDeletionView.as_view(), name='user-delete-account'),
+    
+    # Subscription endpoints
+    path('subscription/', UserCurrentSubscriptionView.as_view(), name='user-subscription'),
+    path('subscription/plans/', UserSubscriptionPlansView.as_view(), name='user-subscription-plans'),
+    path('subscription/billing-history/', UserSubscriptionBillingHistoryView.as_view(), name='user-billing-history'),
+    path('subscription/actions/', UserSubscriptionActionsView.as_view(), name='user-subscription-actions'),
+    path('subscription/create/', UserCreateSubscriptionView.as_view(), name='user-create-subscription'),
 ]
