@@ -81,7 +81,7 @@ class KioskWidgetConfigViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             widget = serializer.save(
                 building=building,
-                created_by=request.user
+                created_by=None  # Public endpoint - no authenticated user
             )
             
             return Response(widget.to_dict(), status=status.HTTP_201_CREATED)
@@ -355,7 +355,7 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                 is_enabled=request.data.get('isEnabled', True),
                 active_start_time=request.data.get('activeStartTime'),
                 active_end_time=request.data.get('activeEndTime'),
-                created_by=request.user
+                created_by=None  # Public endpoint - no authenticated user
             )
             
             # Create placements if provided
@@ -478,7 +478,7 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                 duration_seconds=30,
                 transition='fade',
                 is_enabled=True,
-                created_by=request.user
+                created_by=None  # Public endpoint - no authenticated user
             )
             
             # Create a default widget for the scene if none exist
@@ -515,7 +515,7 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                         data_source='/api/public-info',
                         is_custom=False,
                         building=building,
-                        created_by=request.user
+                        created_by=None  # Public endpoint - no authenticated user
                     )
                 
                 # Create placement for the widget (full screen)
@@ -679,7 +679,7 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
                 duration_seconds=30,
                 transition='fade',
                 is_enabled=True,
-                created_by=request.user
+                created_by=None  # Public endpoint - no authenticated user
             )
             
             # Create a default widget for the scene if none exist
@@ -716,7 +716,7 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
                         data_source='/api/public-info',
                         is_custom=False,
                         building=building,
-                        created_by=request.user
+                        created_by=None  # Public endpoint - no authenticated user
                     )
                 
                 # Create placement for the widget (full screen)
