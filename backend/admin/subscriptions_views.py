@@ -12,9 +12,9 @@ from django.utils import timezone
 from datetime import timedelta
 import logging
 
-from ..billing.models import UserSubscription, SubscriptionPlan, BillingCycle, UsageTracking
-from ..core.permissions import IsSuperUser
-from ..billing.services import BillingService
+from billing.models import UserSubscription, SubscriptionPlan, BillingCycle, UsageTracking
+from core.permissions import IsSuperUser
+from billing.services import BillingService
 
 User = get_user_model()
 logger = logging.getLogger(__name__)

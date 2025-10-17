@@ -10,7 +10,7 @@ import logging
 import json
 import os
 
-from ..core.permissions import IsSuperUser
+from core.permissions import IsSuperUser
 
 logger = logging.getLogger(__name__)
 

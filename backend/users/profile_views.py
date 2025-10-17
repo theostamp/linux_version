@@ -9,9 +9,9 @@ from django.utils import timezone
 from django.contrib.auth.hashers import check_password, make_password
 import logging
 
-from .models import CustomUser
-from ..core.permissions import IsAuthenticated
-from .serializers import UserProfileSerializer
+from users.models import CustomUser
+from core.permissions import IsAuthenticated
+from users.serializers import UserProfileSerializer
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
