@@ -675,6 +675,21 @@ class WebhookService:
                 event_data['current_period_end'], tz=timezone.utc
             )
             
+            # --- 🚀 ΝΕΑ ΠΡΟΣΘΗΚΗ: Συγχρονισμός με τον Tenant ---
+            try:
+                from django_tenants.utils import tenant_context
+                from tenants.models import Client
+                
+                tenant = Client.objects.get(users__id=subscription.user.id)
+                tenant.is_active = (subscription.status in ['active', 'trial'])
+                tenant.paid_until = subscription.current_period_end.date()
+                tenant.on_trial = subscription.is_trial
+                tenant.save()
+                logger.info(f"Synced tenant '{tenant.schema_name}' status from subscription {subscription.id}")
+            except Exception as e:
+                logger.error(f"Failed to sync tenant status for subscription {subscription.id}: {e}")
+            # --- ΤΕΛΟΣ ΠΡΟΣΘΗΚΗΣ ---
+            
             subscription.save()
             
             logger.info(f"Updated subscription {subscription.id} from webhook")
@@ -699,6 +714,19 @@ class WebhookService:
             subscription.status = 'cancelled'
             subscription.cancelled_at = timezone.now()
             subscription.save()
+            
+            # --- 🚀 ΝΕΑ ΠΡΟΣΘΗΚΗ: Συγχρονισμός με τον Tenant ---
+            try:
+                from django_tenants.utils import tenant_context
+                from tenants.models import Client
+                
+                tenant = Client.objects.get(users__id=subscription.user.id)
+                tenant.is_active = False
+                tenant.save()
+                logger.info(f"Deactivated tenant '{tenant.schema_name}' due to cancelled subscription {subscription.id}")
+            except Exception as e:
+                logger.error(f"Failed to deactivate tenant for subscription {subscription.id}: {e}")
+            # --- ΤΕΛΟΣ ΠΡΟΣΘΗΚΗΣ ---
             
             logger.info(f"Cancelled subscription {subscription.id} from webhook")
             return True
@@ -772,4 +800,3 @@ class WebhookService:
                 return True
         
         return True
-

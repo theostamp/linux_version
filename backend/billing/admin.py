@@ -184,3 +184,4 @@ class PaymentMethodAdmin(admin.ModelAdmin):
         return obj.get_payment_type_display()
     card_display.short_description = 'Payment Method'
 
+

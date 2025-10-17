@@ -692,3 +692,4 @@ docker compose exec backend pip audit
 ---
 
 **This System Administration Guide provides comprehensive instructions for managing the New Concierge platform. Regular review and updates of this guide ensure effective system management and maintenance.** ⚙️🔧
+

@@ -69,3 +69,4 @@ class AuthenticationURLTestCase(TestCase):
         self.assertEqual(url, '/api/users/profile/')
         self.assertEqual(resolve(url).func, user_profile_view)
 
+

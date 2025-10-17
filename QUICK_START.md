@@ -130,3 +130,4 @@ docker compose exec backend python manage.py collectstatic
 - **🚀 Full Deployment**: `DEPLOYMENT_GUIDE.md`
 
 **Welcome to New Concierge!** 🎉
+

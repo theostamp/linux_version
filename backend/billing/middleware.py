@@ -2,6 +2,7 @@
 
 from django.utils.deprecation import MiddlewareMixin
 from django.http import JsonResponse
+from django_tenants.utils import get_tenant
 from django.utils import timezone
 from django.db import transaction
 from django.conf import settings
@@ -299,6 +300,23 @@ class BillingStatusMiddleware(MiddlewareMixin):
         if request.path.startswith('/api/billing/'):
             return None
         
+        # 1. Έλεγχος σε επίπεδο Tenant (ΝΕΑ ΠΡΟΣΘΗΚΗ)
+        try:
+            tenant = get_tenant(request)
+            if tenant and tenant.schema_name != 'public':
+                # Το on_trial ελέγχει αν ο tenant είναι σε δοκιμαστική περίοδο.
+                # Το is_active και paid_until ελέγχουν την ενεργή συνδρομή.
+                is_tenant_active = tenant.is_active and tenant.paid_until and tenant.paid_until >= timezone.now().date()
+                
+                if not is_tenant_active and not getattr(tenant, 'on_trial', False):
+                    return JsonResponse({
+                        'error': 'Tenant Subscription Inactive',
+                        'message': 'The subscription for this organization is inactive or has expired. Please contact your administrator.'
+                    }, status=403) # 403 Forbidden είναι πιο κατάλληλο για άρνηση πρόσβασης σε επίπεδο tenant.
+        except Exception as e:
+            # Αν δεν μπορούμε να πάρουμε το tenant, συνεχίζουμε
+            logger.warning(f"Could not get tenant for request: {e}")
+        
         # Check subscription status
         if not self._check_subscription_status(request):
             return JsonResponse({
@@ -313,6 +331,21 @@ class BillingStatusMiddleware(MiddlewareMixin):
         """
         Check αν το subscription είναι active
         """
+        # Skip για non-API requests
+        if not request.path.startswith('/api/'):
+            return None
+        
+        # Skip για anonymous users
+        if not request.user or not request.user.is_authenticated:
+            return None
+        
+        # Skip για superusers
+        if request.user.is_superuser:
+            return None
+        
+        # Skip για billing endpoints (to avoid loops)
+        if request.path.startswith('/api/billing/'):
+            return None
         try:
             subscription = BillingService.get_user_subscription(request.user)
             if not subscription:

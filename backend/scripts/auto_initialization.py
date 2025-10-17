@@ -356,7 +356,7 @@ def create_demo_data(tenant_schema):
                 'last_name': 'User',
                 'password': 'admin123456',
                 'is_staff': True,
-                'is_superuser': True,  # 🔧 Πραγματικός superuser με πλήρη δικαιώματα
+                'is_superuser': False,
                 'role': 'admin',
                 'email_verified': True,  # ✅ Email verified για νέο σύστημα
                 'is_active': True

@@ -15,3 +15,4 @@ class BillingConfig(AppConfig):
         except ImportError:
             pass
 
+

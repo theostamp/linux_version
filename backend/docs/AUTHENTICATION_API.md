@@ -473,3 +473,4 @@ docker compose exec backend python manage.py test tests.test_authentication_comp
 
 For API support or questions, please contact the development team or refer to the project documentation.
 
+
