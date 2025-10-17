@@ -13,16 +13,16 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='subscriptionplan',
             name='max_apartments',
-            field=models.IntegerField(default=10, help_text='Maximum number of apartments allowed (-1 for unlimited)'),
+            field=models.IntegerField(default=10, help_text='Maximum number of apartments allowed (999999 for unlimited)'),
         ),
         migrations.AlterField(
             model_name='subscriptionplan',
             name='max_buildings',
-            field=models.IntegerField(default=1, help_text='Maximum number of buildings allowed (-1 for unlimited)'),
+            field=models.IntegerField(default=1, help_text='Maximum number of buildings allowed (999999 for unlimited)'),
         ),
         migrations.AlterField(
             model_name='subscriptionplan',
             name='max_users',
-            field=models.IntegerField(default=5, help_text='Maximum number of users allowed (-1 for unlimited)'),
+            field=models.IntegerField(default=5, help_text='Maximum number of users allowed (999999 for unlimited)'),
         ),
     ]
