@@ -10,7 +10,7 @@ from datetime import timedelta
 import logging
 
 from billing.models import UserSubscription, SubscriptionPlan, BillingCycle, UsageTracking
-from core.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from billing.services import BillingService
 
 User = get_user_model()

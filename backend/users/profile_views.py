@@ -10,7 +10,7 @@ from django.contrib.auth.hashers import check_password, make_password
 import logging
 
 from users.models import CustomUser
-from core.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from users.serializers import UserProfileSerializer
 
 User = get_user_model()
