@@ -45,12 +45,15 @@ def get_csrf_token(request):
 
 @api_view(["POST", "OPTIONS"])
 @permission_classes([AllowAny])
-@csrf_exempt  # Χρειάζεται αν δεν χρησιμοποιείτε CSRF token
 def login_view(request):
     """
     POST /api/users/login/
     Δέχεται JSON { email, password }, επιστρέφει JWT tokens + user data.
     """
+    print(">>> LOGIN_VIEW CALLED - Method:", request.method)
+    print(">>> LOGIN_VIEW - Request data:", request.data)
+    print(">>> LOGIN_VIEW - Request headers:", dict(request.headers))
+    
     # Debug πριν την αυθεντικοποίηση
     user_model = get_user_model()
     print(">>> Όλοι οι χρήστες:", list(user_model.objects.values('id', 'email')))

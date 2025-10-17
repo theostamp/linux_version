@@ -4,6 +4,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 from .views import login_view, CustomTokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .profile_views import (
     UserProfileView, 
     UserChangePasswordView, 
@@ -30,6 +31,7 @@ urlpatterns = [
     # Authentication endpoints
     path('login/', login_view, name='user-login'),
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/simple/', TokenObtainPairView.as_view(), name='token_obtain_pair_simple'),
     
     # Profile endpoints
     path('profile/', UserProfileView.as_view(), name='user-profile'),
