@@ -79,7 +79,7 @@ services:
       - media_dev:/vol/media
     env_file: .env
     environment:
-      - AUTO_MAKEMIGRATIONS=true
+      - AUTO_MAKEMIGRATIONS=false
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_CALENDAR_ENABLED=${GOOGLE_CALENDAR_ENABLED:-True}
