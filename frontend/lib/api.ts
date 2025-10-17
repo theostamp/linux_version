@@ -435,21 +435,25 @@ export async function loginUser(
   password: string,
 ): Promise<{ access: string; refresh: string; user: User }> {
   console.log(`[API CALL] Attempting login for user: ${email}`);
-  const { data } = await api.post('/users/login/', { email, password });
+  const { data } = await api.post('/users/token/simple/', { email, password });
 
   if (typeof window !== 'undefined') {
     localStorage.setItem('access', data.access);
     localStorage.setItem('refresh', data.refresh);
-    if (data.user) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        console.log('[loginUser] User data saved to localStorage:', data.user);
-    }
     console.log('[loginUser] Tokens saved to localStorage:', {
       access: data.access ? `...${data.access.slice(-10)}` : 'NO ACCESS TOKEN RETURNED',
       refresh: data.refresh ? `...${data.refresh.slice(-10)}` : 'NO REFRESH TOKEN RETURNED',
     });
   }
-  return data;
+
+  // Get user data using the access token
+  const userData = await getCurrentUser();
+  
+  return {
+    access: data.access,
+    refresh: data.refresh,
+    user: userData
+  };
 }
 
 
