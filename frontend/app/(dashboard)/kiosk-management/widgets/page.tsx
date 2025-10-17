@@ -32,6 +32,7 @@ export default function WidgetManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [isCreatingScene, setIsCreatingScene] = useState(false);
 
   // Filter and search widgets
   const filteredWidgets = useMemo(() => {
@@ -62,6 +63,38 @@ export default function WidgetManagementPage() {
       } catch (err) {
         toast.error('Σφάλμα κατά τη διαγραφή widget');
       }
+    }
+  };
+
+  const handleCreateDefaultScene = async () => {
+    if (!building?.id || isCreatingScene) return;
+    
+    setIsCreatingScene(true);
+    try {
+      const response = await fetch('/api/kiosk/scenes/create_default_scene/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          buildingId: building.id,
+        }),
+      });
+      
+      if (response.ok) {
+        toast.success('Βασική σκηνή δημιουργήθηκε επιτυχώς!');
+        // Refresh the widgets to show the new scene
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to create default scene:', errorData);
+        toast.error('Αποτυχία δημιουργίας σκηνής: ' + (errorData.error || 'Άγνωστο σφάλμα'));
+      }
+    } catch (error) {
+      console.error('Error creating default scene:', error);
+      toast.error('Αποτυχία δημιουργίας σκηνής: ' + error.message);
+    } finally {
+      setIsCreatingScene(false);
     }
   };
 
@@ -224,12 +257,31 @@ export default function WidgetManagementPage() {
             <p className="text-gray-600 mb-4">
               Δοκιμάστε να αλλάξετε τα φίλτρα αναζήτησης ή δημιουργήστε ένα νέο widget.
             </p>
-            <Link href="/kiosk-management/widgets/create">
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Δημιουργία Widget
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={handleCreateDefaultScene}
+                disabled={isCreatingScene}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50"
+              >
+                {isCreatingScene ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Δημιουργία...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Δημιουργία Βασικής Σκηνής
+                  </>
+                )}
               </Button>
-            </Link>
+              <Link href="/kiosk-management/widgets/create">
+                <Button variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Δημιουργία Widget
+                </Button>
+              </Link>
+            </div>
           </Card>
         ) : (
           filteredWidgets.map((widget) => (

@@ -20,6 +20,7 @@ export default function KioskSceneRenderer({
   
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isCreatingScene, setIsCreatingScene] = useState(false);
 
   // Get current active scene
   const currentScene = useMemo(() => {
@@ -59,6 +60,38 @@ export default function KioskSceneRenderer({
       setCurrentSceneIndex(0);
     }
   }, [scenes]);
+
+  // Handle creating default scene
+  const handleCreateDefaultScene = async () => {
+    if (!selectedBuildingId || isCreatingScene) return;
+    
+    setIsCreatingScene(true);
+    try {
+      const response = await fetch('/api/kiosk/scenes/create_default_scene/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          buildingId: selectedBuildingId,
+        }),
+      });
+      
+      if (response.ok) {
+        // Refresh the page to load the new scene
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to create default scene:', errorData);
+        alert('Αποτυχία δημιουργίας σκηνής: ' + (errorData.error || 'Άγνωστο σφάλμα'));
+      }
+    } catch (error) {
+      console.error('Error creating default scene:', error);
+      alert('Αποτυχία δημιουργίας σκηνής: ' + error.message);
+    } finally {
+      setIsCreatingScene(false);
+    }
+  };
 
   // Render a widget based on its component name
   const renderWidget = useCallback((placement: any) => {
@@ -130,8 +163,22 @@ export default function KioskSceneRenderer({
         <div className="text-center p-8 bg-gray-800/50 rounded-lg border border-blue-500">
           <p className="text-blue-400 text-xl mb-2">Δεν υπάρχουν σκηνές</p>
           <p className="text-gray-400 mb-4">Δημιουργήστε σκηνές για να εμφανίσετε περιεχόμενο</p>
+          <button
+            onClick={handleCreateDefaultScene}
+            disabled={isCreatingScene}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 mb-4"
+          >
+            {isCreatingScene ? (
+              <>
+                <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Δημιουργία...
+              </>
+            ) : (
+              'Δημιουργία Βασικής Σκηνής'
+            )}
+          </button>
           <p className="text-gray-500 text-sm">
-            Χρησιμοποιήστε την εντολή: <code className="bg-gray-700 px-2 py-1 rounded">python manage.py migrate_to_scenes</code>
+            Ή χρησιμοποιήστε την εντολή: <code className="bg-gray-700 px-2 py-1 rounded">python manage.py migrate_to_scenes</code>
           </p>
         </div>
       </div>

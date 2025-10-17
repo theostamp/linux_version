@@ -60,9 +60,9 @@ def create_default_plans(apps, schema_editor):
             'description': 'Complete solution for large property portfolios with custom integrations, white-label options, and premium support.',
             'monthly_price': Decimal('99.00'),
             'yearly_price': Decimal('990.00'),  # 2 months free
-            'max_buildings': -1,  # Unlimited
-            'max_apartments': -1,  # Unlimited
-            'max_users': -1,  # Unlimited
+            'max_buildings': 999999,  # Unlimited (large number)
+            'max_apartments': 999999,  # Unlimited (large number)
+            'max_users': 999999,  # Unlimited (large number)
             'max_api_calls': 200000,
             'max_storage_gb': 100,
             'has_analytics': True,

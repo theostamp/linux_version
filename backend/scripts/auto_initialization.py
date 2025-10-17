@@ -109,6 +109,21 @@ def setup_billing_system():
     print("\n💳 Ρύθμιση Billing System...")
     
     try:
+        # Έλεγχος αν υπάρχει το billing_subscriptionplan table
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'billing_subscriptionplan'
+                );
+            """)
+            table_exists = cursor.fetchone()[0]
+            
+        if not table_exists:
+            print("⚠️ billing_subscriptionplan table δεν υπάρχει - παρακάμπτουμε billing setup")
+            print("💡 Σημείωση: Το billing system θα είναι διαθέσιμο μετά την εφαρμογή migrations")
+            return True
+            
         # Έλεγχος αν υπάρχουν ήδη subscription plans
         if SubscriptionPlan.objects.exists():
             print("ℹ️ Subscription plans υπάρχουν ήδη")
@@ -151,9 +166,9 @@ def setup_billing_system():
                 'price': 99.99,
                 'billing_interval': 'month',
                 'features': {
-                    'max_buildings': -1,  # Unlimited
-                    'max_apartments': -1,  # Unlimited
-                    'max_users': -1,  # Unlimited
+                    'max_buildings': 999999,  # Unlimited (large number)
+                    'max_apartments': 999999,  # Unlimited (large number)
+                    'max_users': 999999,  # Unlimited (large number)
                     'api_calls_per_month': 100000,
                     'storage_gb': 100
                 }
@@ -172,7 +187,8 @@ def setup_billing_system():
         return True
     except Exception as e:
         print(f"❌ Σφάλμα Billing setup: {e}")
-        return False
+        print("⚠️ Συνεχίζουμε χωρίς billing system...")
+        return True  # Don't fail the entire setup
 
 def create_public_tenant():
     """Δημιουργία public tenant"""
@@ -642,6 +658,47 @@ def create_demo_data(tenant_schema):
         print("\n💰 Δημιουργία οικονομικών δεδομένων...")
         print("ℹ️ Δεν δημιουργούνται οικονομικά δεδομένα - μηδενικά demo ποσά")
         print("✅ Ολοκληρώθηκε η δημιουργία οικονομικών δεδομένων")
+        
+        # 11. Δημιουργία kiosk widgets και scenes
+        print("\n📺 Δημιουργία kiosk widgets και scenes...")
+        try:
+            # First seed default widgets
+            from kiosk.models import KioskWidget
+            from buildings.models import Building
+            
+            building = Building.objects.first()
+            if building:
+                # Check if widgets already exist
+                existing_widgets = KioskWidget.objects.filter(building=building).count()
+                if existing_widgets == 0:
+                    # Create a basic morning overview widget
+                    morning_widget = KioskWidget.objects.create(
+                        widget_id='morning_overview_default',
+                        name='Morning Overview',
+                        greek_name='Πρωινή Επισκόπηση',
+                        description='Default morning overview widget',
+                        greek_description='Προεπιλεγμένο widget πρωινής επισκόπησης',
+                        category='main_slides',
+                        icon='sunrise',
+                        enabled=True,
+                        order=0,
+                        settings={'title': 'Πρωινή Επισκόπηση', 'showTitle': True},
+                        component='MorningOverviewSceneCustom',
+                        data_source='/api/public/kiosk-data',
+                        is_custom=False,
+                        building=building,
+                        created_by=created_users[0] if created_users else None
+                    )
+                    print(f"✅ Δημιουργήθηκε βασικό widget: {morning_widget.greek_name}")
+                
+                # Try to run migrate_to_scenes command for the demo building
+                call_command("migrate_to_scenes", building_id=building.id, interactive=False)
+                print("✅ Δημιουργήθηκαν kiosk scenes")
+            else:
+                print("⚠️ Δεν βρέθηκε κτίριο για τη δημιουργία widgets/scenes")
+        except Exception as e:
+            print(f"⚠️ Σφάλμα δημιουργίας kiosk widgets/scenes: {e}")
+            print("ℹ️ Οι widgets/scenes μπορούν να δημιουργηθούν μετά με το migrate_to_scenes command")
 
 def warm_up_frontend():
     """

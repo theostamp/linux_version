@@ -442,6 +442,120 @@ class KioskSceneViewSet(viewsets.ModelViewSet):
                     pass
             
             return Response({'success': True})
+    
+    @action(detail=False, methods=['post'])
+    def create_default_scene(self, request):
+        """Create default morning overview scene"""
+        with schema_context('demo'):
+            building_id = request.data.get('buildingId')
+            if not building_id:
+                return Response(
+                    {'error': 'buildingId is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            try:
+                building = Building.objects.get(id=building_id)
+            except Building.DoesNotExist:
+                return Response(
+                    {'error': 'Building not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Check if scenes already exist
+            existing_scenes = KioskScene.objects.filter(building=building).count()
+            if existing_scenes > 0:
+                return Response(
+                    {'error': 'Scenes already exist for this building'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create the default "Πρωινή Επισκόπηση" scene
+            scene = KioskScene.objects.create(
+                building=building,
+                name='Πρωινή Επισκόπηση',
+                order=0,
+                duration_seconds=30,
+                transition='fade',
+                is_enabled=True,
+                created_by=request.user
+            )
+            
+            # Create a default widget for the scene if none exist
+            default_widget = None
+            try:
+                default_widget = KioskWidget.objects.filter(
+                    building=building,
+                    enabled=True
+                ).first()
+                
+                if not default_widget:
+                    # Create a default morning overview widget
+                    default_widget = KioskWidget.objects.create(
+                        widget_id='morning_overview_default',
+                        name='Morning Overview',
+                        greek_name='Πρωινή Επισκόπηση',
+                        description='Default morning overview widget',
+                        greek_description='Προεπιλεγμένο widget πρωινής επισκόπησης',
+                        category='main_slides',
+                        icon='sunrise',
+                        enabled=True,
+                        order=0,
+                        settings={'title': 'Πρωινή Επισκόπηση', 'showTitle': True},
+                        component='MorningOverviewSceneCustom',
+                        data_source='/api/public/kiosk-data',
+                        is_custom=False,
+                        building=building,
+                        created_by=request.user
+                    )
+                
+                # Create placement for the widget (full screen)
+                WidgetPlacement.objects.create(
+                    scene=scene,
+                    widget=default_widget,
+                    grid_row_start=1,
+                    grid_col_start=1,
+                    grid_row_end=9,  # Full height
+                    grid_col_end=13,  # Full width
+                    z_index=0
+                )
+                
+            except Exception as e:
+                # If widget creation fails, still create the scene
+                pass
+            
+            serializer = KioskSceneSerializer(scene)
+            return Response({
+                'scene': serializer.data,
+                'message': 'Default scene created successfully'
+            }, status=status.HTTP_201_CREATED)
+    
+    @action(detail=False, methods=['get'])
+    def check_scenes_exist(self, request):
+        """Check if scenes exist for a building"""
+        with schema_context('demo'):
+            building_id = request.query_params.get('building_id')
+            if not building_id:
+                return Response(
+                    {'error': 'building_id parameter is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            try:
+                building = Building.objects.get(id=building_id)
+                scenes_count = KioskScene.objects.filter(building=building).count()
+                
+                return Response({
+                    'buildingId': building.id,
+                    'buildingName': building.name,
+                    'scenesExist': scenes_count > 0,
+                    'scenesCount': scenes_count
+                })
+            except Building.DoesNotExist:
+                return Response(
+                    {'error': 'Building not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
 
 class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
@@ -493,3 +607,117 @@ class PublicKioskSceneViewSet(viewsets.ReadOnlyModelViewSet):
                 'count': queryset.count(),
                 'timestamp': timezone.now().isoformat()
             })
+    
+    @action(detail=False, methods=['get'])
+    def check_scenes_exist(self, request):
+        """Check if scenes exist for a building"""
+        with schema_context('demo'):
+            building_id = request.query_params.get('building_id')
+            if not building_id:
+                return Response(
+                    {'error': 'building_id parameter is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            try:
+                building = Building.objects.get(id=building_id)
+                scenes_count = KioskScene.objects.filter(building=building).count()
+                
+                return Response({
+                    'buildingId': building.id,
+                    'buildingName': building.name,
+                    'scenesExist': scenes_count > 0,
+                    'scenesCount': scenes_count
+                })
+            except Building.DoesNotExist:
+                return Response(
+                    {'error': 'Building not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+    
+    @action(detail=False, methods=['post'])
+    def create_default_scene(self, request):
+        """Create default morning overview scene"""
+        with schema_context('demo'):
+            building_id = request.data.get('buildingId')
+            if not building_id:
+                return Response(
+                    {'error': 'buildingId is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            try:
+                building = Building.objects.get(id=building_id)
+            except Building.DoesNotExist:
+                return Response(
+                    {'error': 'Building not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Check if scenes already exist
+            existing_scenes = KioskScene.objects.filter(building=building).count()
+            if existing_scenes > 0:
+                return Response(
+                    {'error': 'Scenes already exist for this building'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create the default "Πρωινή Επισκόπηση" scene
+            scene = KioskScene.objects.create(
+                building=building,
+                name='Πρωινή Επισκόπηση',
+                order=0,
+                duration_seconds=30,
+                transition='fade',
+                is_enabled=True,
+                created_by=request.user
+            )
+            
+            # Create a default widget for the scene if none exist
+            default_widget = None
+            try:
+                default_widget = KioskWidget.objects.filter(
+                    building=building,
+                    enabled=True
+                ).first()
+                
+                if not default_widget:
+                    # Create a default morning overview widget
+                    default_widget = KioskWidget.objects.create(
+                        widget_id='morning_overview_default',
+                        name='Morning Overview',
+                        greek_name='Πρωινή Επισκόπηση',
+                        description='Default morning overview widget',
+                        greek_description='Προεπιλεγμένο widget πρωινής επισκόπησης',
+                        category='main_slides',
+                        icon='sunrise',
+                        enabled=True,
+                        order=0,
+                        settings={'title': 'Πρωινή Επισκόπηση', 'showTitle': True},
+                        component='MorningOverviewSceneCustom',
+                        data_source='/api/public/kiosk-data',
+                        is_custom=False,
+                        building=building,
+                        created_by=request.user
+                    )
+                
+                # Create placement for the widget (full screen)
+                WidgetPlacement.objects.create(
+                    scene=scene,
+                    widget=default_widget,
+                    grid_row_start=1,
+                    grid_col_start=1,
+                    grid_row_end=9,  # Full height
+                    grid_col_end=13,  # Full width
+                    z_index=0
+                )
+                
+            except Exception as e:
+                # If widget creation fails, still create the scene
+                pass
+            
+            serializer = KioskSceneSerializer(scene)
+            return Response({
+                'scene': serializer.data,
+                'message': 'Default scene created successfully'
+            }, status=status.HTTP_201_CREATED)
