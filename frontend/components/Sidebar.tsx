@@ -38,7 +38,6 @@ import {
   User,
   CreditCard,
   Bell,
-  Shield,
 } from 'lucide-react';
 
 // Navigation link interface
