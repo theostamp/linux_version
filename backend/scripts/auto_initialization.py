@@ -69,6 +69,13 @@ def run_migrations():
     print("\n🔄 Εκτέλεση migrations...")
     
     try:
+        # Check if there are unmigrated changes
+        print("🔍 Έλεγχος για unmigrated changes...")
+        try:
+            call_command("makemigrations", interactive=False, dry_run=True)
+        except Exception as e:
+            print(f"⚠️ Σφάλμα κατά τον έλεγχο makemigrations: {e}")
+        
         # Shared migrations (public schema)
         print("📦 Shared migrations...")
         call_command("migrate_schemas", shared=True, interactive=False)
@@ -124,9 +131,13 @@ def setup_billing_system():
             print("💡 Σημείωση: Το billing system θα είναι διαθέσιμο μετά την εφαρμογή migrations")
             return True
             
-        # Έλεγχος αν υπάρχουν ήδη subscription plans
-        if SubscriptionPlan.objects.exists():
-            print("ℹ️ Subscription plans υπάρχουν ήδη")
+        # Έλεγχος αν υπάρχουν ήδη subscription plans (με try-except για ασφάλεια)
+        try:
+            if SubscriptionPlan.objects.exists():
+                print("ℹ️ Subscription plans υπάρχουν ήδη")
+                return True
+        except Exception as e:
+            print(f"⚠️ Σφάλμα κατά τον έλεγχο subscription plans: {e}")
             return True
         
         # Δημιουργία default subscription plans
@@ -331,6 +342,12 @@ def create_demo_data(tenant_schema):
     print(f"\n🎨 Δημιουργία demo δεδομένων για {tenant_schema}...")
     
     with schema_context(tenant_schema):
+        # Re-import models to ensure they're available in the schema context
+        from buildings.models import Building, BuildingMembership
+        from apartments.models import Apartment
+        from announcements.models import Announcement
+        from user_requests.models import UserRequest
+        from votes.models import Vote
         # 1. Δημιουργία χρηστών με νέα RBAC system
         users_data = [
             {
