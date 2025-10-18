@@ -185,5 +185,449 @@ class EmailNotificationService:
             logger.error(f"Failed to send usage limit warning: {e}")
             return False
 
+class NotificationEventService:
+    """Service for managing notification events"""
+    
+    @staticmethod
+    def create_event(event_type, building, title, description, url='', 
+                    is_urgent=False, icon='', event_date=None, related_announcement_id=None,
+                    related_vote_id=None, related_maintenance_id=None,
+                    related_project_id=None):
+        """
+        Create a new notification event.
+        
+        Args:
+            event_type: Type of event (announcement, vote, maintenance, etc.)
+            building: Building instance
+            title: Event title
+            description: Event description
+            url: Optional URL to event detail page
+            is_urgent: Whether this is an urgent event
+            icon: Optional icon/emoji
+            event_date: Optional datetime when the actual event occurs
+            related_*_id: Optional related object IDs for reference
+            
+        Returns:
+            NotificationEvent instance
+        """
+        from .models import NotificationEvent
+        
+        event = NotificationEvent.objects.create(
+            event_type=event_type,
+            building=building,
+            title=title,
+            description=description,
+            url=url,
+            is_urgent=is_urgent,
+            icon=icon,
+            event_date=event_date,
+            related_announcement_id=related_announcement_id,
+            related_vote_id=related_vote_id,
+            related_maintenance_id=related_maintenance_id,
+            related_project_id=related_project_id
+        )
+        
+        logger.info(f"Created notification event: {event_type} - {title}")
+        return event
+    
+    @staticmethod
+    def get_pending_events(building, since_datetime=None):
+        """
+        Get pending notification events for a building.
+        
+        Args:
+            building: Building instance
+            since_datetime: Optional datetime to filter events since
+            
+        Returns:
+            QuerySet of pending NotificationEvent instances
+        """
+        from .models import NotificationEvent
+        
+        queryset = NotificationEvent.objects.filter(
+            building=building,
+            included_in_digest=False,
+            sent_immediately=False
+        )
+        
+        if since_datetime:
+            queryset = queryset.filter(created_at__gte=since_datetime)
+            
+        return queryset.order_by('-created_at')
+    
+    @staticmethod
+    def group_events_by_type(events):
+        """
+        Group events by their type for digest organization.
+        
+        Args:
+            events: QuerySet or list of NotificationEvent instances
+            
+        Returns:
+            Dict with event_type as key and list of events as value
+        """
+        grouped = {}
+        for event in events:
+            event_type = event.event_type
+            if event_type not in grouped:
+                grouped[event_type] = []
+            grouped[event_type].append(event)
+        
+        return grouped
+    
+    @staticmethod
+    def mark_events_as_sent_in_digest(events):
+        """
+        Mark multiple events as sent in digest.
+        
+        Args:
+            events: QuerySet or list of NotificationEvent instances
+        """
+        from django.utils import timezone
+        
+        for event in events:
+            event.mark_as_sent_in_digest()
+        
+        logger.info(f"Marked {len(events)} events as sent in digest")
+    
+    @staticmethod
+    def get_urgent_events(building, since_datetime=None):
+        """
+        Get urgent events that should be sent immediately.
+        
+        Args:
+            building: Building instance
+            since_datetime: Optional datetime to filter events since
+            
+        Returns:
+            QuerySet of urgent NotificationEvent instances
+        """
+        from .models import NotificationEvent
+        
+        queryset = NotificationEvent.objects.filter(
+            building=building,
+            is_urgent=True,
+            sent_immediately=False
+        )
+        
+        if since_datetime:
+            queryset = queryset.filter(created_at__gte=since_datetime)
+            
+        return queryset.order_by('-created_at')
+
+
+class NotificationService:
+    """Service for managing notifications"""
+    
+    @staticmethod
+    def create_notification(building, created_by, subject, body, sms_body='', 
+                          notification_type='email', priority='normal', 
+                          scheduled_at=None, template=None):
+        """
+        Create a new notification.
+        
+        Args:
+            building: Building instance
+            created_by: User who created the notification
+            subject: Notification subject
+            body: Notification body
+            sms_body: Optional SMS body
+            notification_type: Type of notification (email, sms, both)
+            priority: Priority level (low, normal, high, urgent)
+            scheduled_at: Optional scheduled send time
+            template: Optional template used
+            
+        Returns:
+            Notification instance
+        """
+        from .models import Notification
+        
+        notification = Notification.objects.create(
+            building=building,
+            created_by=created_by,
+            subject=subject,
+            body=body,
+            sms_body=sms_body,
+            notification_type=notification_type,
+            priority=priority,
+            scheduled_at=scheduled_at,
+            template=template,
+            status='draft' if scheduled_at else 'scheduled'
+        )
+        
+        logger.info(f"Created notification: {subject}")
+        return notification
+    
+    @staticmethod
+    def add_recipients(notification, apartment_ids=None, send_to_all=False):
+        """
+        Add recipients to a notification.
+        
+        Args:
+            notification: Notification instance
+            apartment_ids: List of apartment IDs to send to
+            send_to_all: If True, send to all apartments in building
+        """
+        from .models import NotificationRecipient
+        from apartments.models import Apartment
+        
+        if send_to_all:
+            apartments = Apartment.objects.filter(building=notification.building)
+        elif apartment_ids:
+            apartments = Apartment.objects.filter(
+                id__in=apartment_ids,
+                building=notification.building
+            )
+        else:
+            return
+        
+        recipients = []
+        for apartment in apartments:
+            recipient = NotificationRecipient.objects.create(
+                notification=notification,
+                apartment=apartment,
+                recipient_name=apartment.primary_contact_name or '',
+                email=apartment.primary_contact_email or '',
+                phone=apartment.primary_contact_phone or ''
+            )
+            recipients.append(recipient)
+        
+        # Update notification statistics
+        notification.total_recipients = len(recipients)
+        notification.save(update_fields=['total_recipients'])
+        
+        logger.info(f"Added {len(recipients)} recipients to notification")
+        return recipients
+    
+    @staticmethod
+    def send_notification(notification):
+        """
+        Send a notification to all its recipients.
+        
+        Args:
+            notification: Notification instance
+            
+        Returns:
+            Dict with send results
+        """
+        from .models import NotificationRecipient
+        
+        notification.mark_as_sending()
+        
+        successful = 0
+        failed = 0
+        
+        for recipient in notification.recipients.all():
+            try:
+                # Send email if notification type includes email
+                if notification.notification_type in ['email', 'both'] and recipient.email:
+                    email_service.send_bulk_notification(
+                        [recipient],  # Single recipient for now
+                        notification.subject,
+                        notification.body
+                    )
+                
+                # Send SMS if notification type includes SMS
+                if notification.notification_type in ['sms', 'both'] and recipient.phone:
+                    # SMS sending would be implemented here
+                    pass
+                
+                recipient.mark_as_sent()
+                successful += 1
+                
+            except Exception as e:
+                recipient.mark_as_failed(str(e))
+                failed += 1
+                logger.error(f"Failed to send to {recipient.email}: {e}")
+        
+        # Update notification statistics
+        notification.successful_sends = successful
+        notification.failed_sends = failed
+        notification.save(update_fields=['successful_sends', 'failed_sends'])
+        
+        if failed == 0:
+            notification.mark_as_sent()
+        else:
+            notification.mark_as_failed(f"{failed} recipients failed")
+        
+        return {
+            'successful': successful,
+            'failed': failed,
+            'total': successful + failed
+        }
+
+
+class TemplateService:
+    """Service for managing notification templates"""
+    
+    @staticmethod
+    def get_templates(building, category=None):
+        """
+        Get notification templates for a building.
+        
+        Args:
+            building: Building instance
+            category: Optional category filter
+            
+        Returns:
+            QuerySet of NotificationTemplate instances
+        """
+        from .models import NotificationTemplate
+        
+        queryset = NotificationTemplate.objects.filter(
+            building=building,
+            is_active=True
+        )
+        
+        if category:
+            queryset = queryset.filter(category=category)
+            
+        return queryset.order_by('category', 'name')
+    
+    @staticmethod
+    def create_template(building, name, category, subject, body_template, 
+                       sms_template='', description=''):
+        """
+        Create a new notification template.
+        
+        Args:
+            building: Building instance
+            name: Template name
+            category: Template category
+            subject: Email subject template
+            body_template: Email body template
+            sms_template: Optional SMS template
+            description: Optional description
+            
+        Returns:
+            NotificationTemplate instance
+        """
+        from .models import NotificationTemplate
+        
+        template = NotificationTemplate.objects.create(
+            building=building,
+            name=name,
+            category=category,
+            subject=subject,
+            body_template=body_template,
+            sms_template=sms_template,
+            description=description
+        )
+        
+        logger.info(f"Created template: {name}")
+        return template
+    
+    @staticmethod
+    def render_template(template, context):
+        """
+        Render a template with provided context.
+        
+        Args:
+            template: NotificationTemplate instance
+            context: Dict of context variables
+            
+        Returns:
+            Dict with rendered subject, body, and sms
+        """
+        return template.render(context)
+
+
+class DigestService:
+    """Service for managing digest notifications"""
+    
+    @staticmethod
+    def get_digest_preview(building, since_date=None):
+        """
+        Get a preview of events that would be included in a digest.
+        
+        Args:
+            building: Building instance
+            since_date: Optional date to filter events since
+            
+        Returns:
+            Dict with digest preview data
+        """
+        from .models import NotificationEvent
+        from django.utils import timezone
+        
+        if not since_date:
+            # Default to last 7 days
+            since_date = timezone.now() - timezone.timedelta(days=7)
+        
+        events = NotificationEventService.get_pending_events(building, since_date)
+        grouped_events = NotificationEventService.group_events_by_type(events)
+        
+        return {
+            'total_events': events.count(),
+            'events_by_type': grouped_events,
+            'since_date': since_date,
+            'building_name': building.name
+        }
+    
+    @staticmethod
+    def send_digest(building, created_by, since_date=None):
+        """
+        Send a digest notification with pending events.
+        
+        Args:
+            building: Building instance
+            created_by: User who triggered the digest
+            since_date: Optional date to filter events since
+            
+        Returns:
+            Notification instance
+        """
+        from .models import Notification
+        from django.utils import timezone
+        
+        if not since_date:
+            # Default to last 7 days
+            since_date = timezone.now() - timezone.timedelta(days=7)
+        
+        # Get pending events
+        events = NotificationEventService.get_pending_events(building, since_date)
+        
+        if not events.exists():
+            return None
+        
+        # Create digest notification
+        subject = f"Εβδομαδιαίο Δελτίο - {building.name}"
+        body = f"Δελτίο ενημερώσεων για την περίοδο από {since_date.strftime('%d/%m/%Y')}:\n\n"
+        
+        grouped_events = NotificationEventService.group_events_by_type(events)
+        
+        for event_type, type_events in grouped_events.items():
+            body += f"\n{type_events[0].get_icon()} {type_events[0].get_event_type_display()}:\n"
+            for event in type_events:
+                body += f"  • {event.title}\n"
+                if event.description:
+                    body += f"    {event.description[:100]}...\n"
+                if event.url:
+                    body += f"    Δείτε περισσότερα: {event.url}\n"
+            body += "\n"
+        
+        # Create notification
+        notification = NotificationService.create_notification(
+            building=building,
+            created_by=created_by,
+            subject=subject,
+            body=body,
+            notification_type='email',
+            priority='normal'
+        )
+        
+        # Add all apartments as recipients
+        NotificationService.add_recipients(notification, send_to_all=True)
+        
+        # Send the notification
+        result = NotificationService.send_notification(notification)
+        
+        # Mark events as sent in digest
+        NotificationEventService.mark_events_as_sent_in_digest(events)
+        
+        logger.info(f"Sent digest notification with {events.count()} events")
+        return notification
+
+
 # Global email service instance
 email_service = EmailNotificationService()

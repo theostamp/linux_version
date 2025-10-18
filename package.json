@@ -1,4 +1,14 @@
 {
+  "name": "digital-concierge-root",
+  "version": "1.0.0",
+  "description": "Digital Concierge - Building Management SaaS",
+  "scripts": {
+    "start": "cd frontend && npm start",
+    "build": "cd frontend && npm run build",
+    "test": "cd frontend && npm test",
+    "install-frontend": "cd frontend && npm install",
+    "dev": "cd frontend && npm start"
+  },
   "dependencies": {
     "@radix-ui/react-progress": "^1.1.7",
     "@radix-ui/react-toast": "^1.2.1",

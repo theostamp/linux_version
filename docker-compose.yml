@@ -94,7 +94,7 @@ services:
   frontend:
     build:
       context: ./frontend         # ✅ μόνο τον φάκελο frontend
-    command: npm run dev
+    command: npm start
     volumes:
       - ./frontend/:/app/
       - /app/node_modules         # κρατά τα container-node_modules μέσα
