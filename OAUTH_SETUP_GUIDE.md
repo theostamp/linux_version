@@ -46,9 +46,15 @@
 4. Name: `Digital Concierge Web Client`
 5. Authorized redirect URIs:
    ```
-   http://localhost:18000/api/auth/callback/
-   http://demo.localhost:18000/api/auth/callback/
+   http://localhost:3000/auth/callback
+   http://127.0.0.1:3000/auth/callback
    ```
+   
+   **Σημείωση**: Για development, χρησιμοποίησε `localhost:3000` (frontend port) αντί για `localhost:18000` (backend port).
+   
+   **⚠️ Google OAuth Development Issue**: Αν το Google Cloud Console δεν δέχεται τα localhost URLs, δοκίμασε:
+   - `http://127.0.0.1:3000/auth/callback`
+   - Ή χρησιμοποίησε ένα development domain όπως `http://dev.localhost:3000/auth/callback`
 
 ### 2. Microsoft OAuth Setup
 
@@ -60,7 +66,7 @@
 #### 2.2 App Registration
 1. Name: `Digital Concierge`
 2. Supported account types: `Accounts in any organizational directory and personal Microsoft accounts`
-3. Redirect URI: `Web` → `http://localhost:18000/api/auth/callback/`
+3. Redirect URI: `Web` → `http://localhost:3000/auth/callback`
 
 #### 2.3 API Permissions
 1. Πήγαινε στο `API permissions`
@@ -155,7 +161,12 @@ docker-compose exec backend python manage.py migrate
 
 ### Common Issues
 
-1. **"Invalid redirect URI"**
+1. **"Invalid redirect URI" ή "must end with a public top-level domain"**
+   - **Google OAuth Issue**: Το Google Cloud Console δεν δέχεται localhost URLs σε κάποιες περιπτώσεις
+   - **Λύσεις**:
+     - Χρησιμοποίησε `http://127.0.0.1:3000/auth/callback` αντί για `localhost`
+     - Ή χρησιμοποίησε ένα development domain όπως `http://dev.localhost:3000/auth/callback`
+     - Ή χρησιμοποίησε ngrok για public URL: `https://your-ngrok-url.ngrok.io/auth/callback`
    - Ελέγξε τα Authorized redirect URIs στο OAuth provider
    - Βεβαιώσου ότι τα URLs ταιριάζουν ακριβώς
 
