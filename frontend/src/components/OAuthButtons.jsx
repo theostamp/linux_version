@@ -6,7 +6,10 @@ const OAuthButtons = ({ mode = 'register' }) => {
   const handleGoogleAuth = async () => {
     setLoading('google');
     try {
-      const redirectUri = encodeURIComponent(`${window.location.origin}/auth/callback`);
+      // Google OAuth requires localhost (not demo.localhost) for development
+      // Replace demo.localhost with localhost for OAuth compliance
+      const origin = window.location.origin.replace('demo.localhost', 'localhost');
+      const redirectUri = encodeURIComponent(`${origin}/auth/callback`);
       const state = encodeURIComponent(JSON.stringify({
         mode,
         redirectTo: '/dashboard',
@@ -25,7 +28,9 @@ const OAuthButtons = ({ mode = 'register' }) => {
   const handleMicrosoftAuth = async () => {
     setLoading('microsoft');
     try {
-      const redirectUri = encodeURIComponent(`${window.location.origin}/auth/callback`);
+      // Replace demo.localhost with localhost for OAuth compliance
+      const origin = window.location.origin.replace('demo.localhost', 'localhost');
+      const redirectUri = encodeURIComponent(`${origin}/auth/callback`);
       const state = encodeURIComponent(JSON.stringify({
         mode,
         redirectTo: '/dashboard',
