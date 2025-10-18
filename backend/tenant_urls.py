@@ -74,6 +74,9 @@ urlpatterns = [
     # Document parser
     path('api/parser/', include('document_parser.urls')),
 
+    # Billing & Subscriptions
+    path('api/billing/', include('billing.urls')),
+
     # Core endpoints (π.χ. CSRF token)
     path('api/', include('core.urls')),
 ]

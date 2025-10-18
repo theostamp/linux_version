@@ -185,3 +185,4 @@ class PaymentMethodAdmin(admin.ModelAdmin):
     card_display.short_description = 'Payment Method'
 
 
+

@@ -9,7 +9,7 @@ const SuccessPage = () => {
   const [countdown, setCountdown] = useState(5);
   const [isEmailSent, setIsEmailSent] = useState(false);
 
-  const { userData, plan, paymentMethod } = location.state || {};
+  const { userData, plan } = location.state || {};
 
   useEffect(() => {
     if (!userData || !plan) {

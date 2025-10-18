@@ -365,3 +365,4 @@ class UsageAnalyticsService:
             logger.error(f"Error getting admin usage stats: {e}")
             return {'error': 'Failed to get admin stats', 'message': str(e)}
 
+

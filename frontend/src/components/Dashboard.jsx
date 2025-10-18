@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Building, Users, BarChart3, Settings, Bell, Search, Plus, TrendingUp, Calendar, FileText } from 'lucide-react';
+import React, { useState } from 'react';
+import { Building, Users, BarChart3, Settings, Bell, Search, Plus, TrendingUp, FileText } from 'lucide-react';
 
 const Dashboard = () => {
-  const [user, setUser] = useState({
+  const [user] = useState({
     name: 'John Building Manager',
     email: 'newuser@building.com',
     building: 'Central Plaza',
@@ -10,14 +10,14 @@ const Dashboard = () => {
     status: 'Active'
   });
 
-  const [stats, setStats] = useState({
+  const [stats] = useState({
     apartments: 0,
     users: 0,
     maintenance: 0,
     documents: 0
   });
 
-  const [recentActivity, setRecentActivity] = useState([
+  const [recentActivity] = useState([
     {
       id: 1,
       type: 'account',

@@ -639,7 +639,8 @@ class WebhookService:
         Επεξεργασία subscription created event
         """
         # Usually handled by our create_subscription method
-        logger.info(f"Subscription created: {event_data['id']}")
+        subscription_id = event_data.get('id', 'unknown')
+        logger.info(f"Subscription created: {subscription_id}")
         return True
     
     @staticmethod
@@ -660,19 +661,19 @@ class WebhookService:
             # Update trial dates if present
             if event_data.get('trial_start'):
                 subscription.trial_start = timezone.datetime.fromtimestamp(
-                    event_data['trial_start'], tz=timezone.utc
+                    event_data['trial_start'], tz=timezone.timezone.utc
                 )
             if event_data.get('trial_end'):
                 subscription.trial_end = timezone.datetime.fromtimestamp(
-                    event_data['trial_end'], tz=timezone.utc
+                    event_data['trial_end'], tz=timezone.timezone.utc
                 )
             
             # Update current period
             subscription.current_period_start = timezone.datetime.fromtimestamp(
-                event_data['current_period_start'], tz=timezone.utc
+                event_data['current_period_start'], tz=timezone.timezone.utc
             )
             subscription.current_period_end = timezone.datetime.fromtimestamp(
-                event_data['current_period_end'], tz=timezone.utc
+                event_data['current_period_end'], tz=timezone.timezone.utc
             )
             
             # --- 🚀 ΝΕΑ ΠΡΟΣΘΗΚΗ: Συγχρονισμός με τον Tenant ---
@@ -704,7 +705,7 @@ class WebhookService:
         """
         Επεξεργασία subscription deleted event
         """
-        subscription_id = event_data['id']
+        subscription_id = event_data.get('id', 'unknown')
         
         try:
             subscription = UserSubscription.objects.get(

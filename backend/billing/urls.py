@@ -31,7 +31,7 @@ router.register(r'billing-cycles', BillingCycleViewSet, basename='billing-cycle'
 
 urlpatterns = [
     # API routes
-    path('api/', include(router.urls)),
+    path('', include(router.urls)),
     
     # Stripe webhook
     path('webhooks/stripe/', StripeWebhookView.as_view(), name='stripe-webhook'),

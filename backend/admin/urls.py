@@ -37,3 +37,4 @@ urlpatterns = [
     path('system/logs/', AdminSystemLogsView.as_view(), name='admin-system-logs'),
 ]
 
+

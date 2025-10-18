@@ -70,3 +70,4 @@ class AuthenticationURLTestCase(TestCase):
         self.assertEqual(resolve(url).func, user_profile_view)
 
 
+
