@@ -41,7 +41,7 @@ export default function AuthCallbackPage() {
           body: JSON.stringify({
             code,
             state: stateData,
-            redirect_uri: `http://127.0.0.1:3000/auth/callback`
+            redirect_uri: `http://localhost:8080/auth/callback`
           })
         })
 

@@ -45,9 +45,9 @@
 3. Application type: `Web application`
 4. Name: `Digital Concierge Web Client`
 5. Authorized redirect URIs:
-   ```
-   http://127.0.0.1:3000/auth/callback
-   ```
+          ```
+          http://localhost:8080/auth/callback
+          ```
    
    **Σημείωση**: Για development, χρησιμοποίησε `localhost:3000` (frontend port) αντί για `localhost:18000` (backend port).
    

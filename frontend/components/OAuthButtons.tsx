@@ -20,7 +20,7 @@ export default function OAuthButtons({ mode, onSuccess }: OAuthButtonsProps) {
     setLoading('google')
     try {
       // Redirect to backend OAuth endpoint
-      const redirectUri = encodeURIComponent(`http://127.0.0.1:3000/auth/callback`)
+      const redirectUri = encodeURIComponent(`http://localhost:8080/auth/callback`)
       const state = encodeURIComponent(JSON.stringify({ 
         mode, 
         redirectTo: '/dashboard',
