@@ -14,7 +14,9 @@ import {
   ArrowRight,
   AlertCircle,
   Settings,
-  Download
+  Download,
+  ArrowLeft,
+  Home
 } from 'lucide-react';
 
 const SubscriptionManagement = () => {
@@ -234,6 +236,15 @@ const SubscriptionManagement = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Επιστροφή στο Dashboard</span>
+            </button>
+          </div>
           <h1 className="text-3xl font-bold text-gray-900">Διαχείριση Συνδρομής</h1>
           <p className="mt-2 text-gray-600">Διαχειριστείτε τη συνδρομή και τα χαρακτηριστικά του λογαριασμού σας</p>
         </div>
@@ -395,6 +406,58 @@ const SubscriptionManagement = () => {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Sidebar with Quick Actions */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Γρήγορες Ενέργειες</h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="w-full flex items-center justify-between p-3 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Home className="w-5 h-5 text-blue-500" />
+                  <span>Main Dashboard</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-400" />
+              </button>
+              
+              <button
+                onClick={() => navigate('/billing-history')}
+                className="w-full flex items-center justify-between p-3 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Download className="w-5 h-5 text-gray-500" />
+                  <span>Ιστορικό Χρέωσης</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-400" />
+              </button>
+              
+              <button
+                onClick={() => navigate('/payment-methods')}
+                className="w-full flex items-center justify-between p-3 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <CreditCard className="w-5 h-5 text-gray-500" />
+                  <span>Μέθοδοι Πληρωμής</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-400" />
+              </button>
+              
+              <button
+                onClick={() => navigate('/account-settings')}
+                className="w-full flex items-center justify-between p-3 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Settings className="w-5 h-5 text-gray-500" />
+                  <span>Ρυθμίσεις Λογαριασμού</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-400" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
