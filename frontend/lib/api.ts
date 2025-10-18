@@ -79,7 +79,10 @@ export async function apiGet<T>(path: string, params?: Record<string, string | n
   }
   const res = await fetch(url.toString(), { headers, credentials: 'include' });
   if (!res.ok) {
-    throw new Error(`GET ${url} failed: ${res.status}`);
+    const error: any = new Error(`GET ${url} failed: ${res.status}`);
+    error.status = res.status;
+    error.response = { status: res.status };
+    throw error;
   }
   return res.json();
 }
@@ -121,7 +124,10 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`POST ${url} failed: ${res.status} ${text}`);
+    const error: any = new Error(`POST ${url} failed: ${res.status} ${text}`);
+    error.status = res.status;
+    error.response = { status: res.status };
+    throw error;
   }
   return res.json();
 }

@@ -90,7 +90,10 @@ function DashboardContent() {
     maintenance_tickets: number;
   } | null>(null);
   const [loadingData, setLoadingData] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<{
+    type: 'permission' | 'network' | 'general';
+    message: string;
+  } | null>(null);
   
   // Weather state
   const [weather, setWeather] = useState<{
@@ -249,7 +252,7 @@ function DashboardContent() {
         // Χρησιμοποιούμε την ίδια λογική με το requests page
         // Αν είναι null, σημαίνει "όλα τα κτίρια" και περνάμε null στο API
         const buildingId = selectedBuilding?.id ?? currentBuilding?.id ?? null;
-        
+
         const [ann, vt, req] = await Promise.all([
           fetchAnnouncements(buildingId),
           fetchVotes(buildingId),
@@ -262,10 +265,27 @@ function DashboardContent() {
         const top = await fetchTopRequests(buildingId);
         setTopRequests(top);
 
-        setError(false);
-      } catch (err) {
+        setError(null);
+      } catch (err: any) {
         console.error('Dashboard load failed:', err);
-        setError(true);
+
+        // Check if it's a 403 permission error
+        if (err?.response?.status === 403 || err?.status === 403 || err?.message?.includes('403')) {
+          setError({
+            type: 'permission',
+            message: 'Δεν έχετε δικαιώματα πρόσβασης σε αυτά τα δεδομένα. Παρακαλώ επικοινωνήστε με τον διαχειριστή για να σας παραχωρήσει τα απαραίτητα δικαιώματα.'
+          });
+        } else if (err?.message?.includes('fetch') || err?.message?.includes('network')) {
+          setError({
+            type: 'network',
+            message: 'Αδυναμία σύνδεσης με τον διακομιστή. Παρακαλώ ελέγξτε τη σύνδεσή σας στο διαδίκτυο.'
+          });
+        } else {
+          setError({
+            type: 'general',
+            message: 'Παρουσιάστηκε ένα σφάλμα κατά τη φόρτωση των δεδομένων. Παρακαλώ δοκιμάστε ξανά.'
+          });
+        }
       } finally {
         setLoadingData(false);
       }
@@ -321,7 +341,88 @@ function DashboardContent() {
   }
 
   if (error) {
-    return <ErrorMessage message="Σφάλμα φόρτωσης dashboard" />;
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+          <div className="text-center">
+            {/* Icon based on error type */}
+            {error.type === 'permission' && (
+              <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="w-8 h-8 text-red-600" />
+              </div>
+            )}
+            {error.type === 'network' && (
+              <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="w-8 h-8 text-yellow-600" />
+              </div>
+            )}
+            {error.type === 'general' && (
+              <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="w-8 h-8 text-gray-600" />
+              </div>
+            )}
+
+            {/* Error Title */}
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {error.type === 'permission' && 'Δεν Έχετε Πρόσβαση'}
+              {error.type === 'network' && 'Πρόβλημα Σύνδεσης'}
+              {error.type === 'general' && 'Κάτι Πήγε Στραβά'}
+            </h2>
+
+            {/* Error Message */}
+            <p className="text-gray-600 mb-6">
+              {error.message}
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-3">
+              {error.type === 'permission' && (
+                <>
+                  <button
+                    onClick={() => router.push('/my-profile')}
+                    className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Δες το Προφίλ Μου
+                  </button>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                  >
+                    Δοκιμή Ξανά
+                  </button>
+                </>
+              )}
+              {error.type === 'network' && (
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Δοκιμή Ξανά
+                </button>
+              )}
+              {error.type === 'general' && (
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Επαναφόρτωση Σελίδας
+                </button>
+              )}
+            </div>
+
+            {/* Support Link */}
+            {error.type === 'permission' && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <p className="text-sm text-gray-500">
+                  Χρειάζεστε βοήθεια; Επικοινωνήστε με τον διαχειριστή του συστήματος.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const activeVotes = votes.filter((v) => {
