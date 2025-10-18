@@ -43,6 +43,7 @@ SHARED_APPS = [
     'django.contrib.admin', # ✅ μεταφέρθηκε εδώ
     'django.contrib.auth',
     'users',
+    'billing',              # Subscription & Billing System (shared across tenants)
 
     'corsheaders',
     'django.contrib.contenttypes',
@@ -65,7 +66,6 @@ TENANT_APPS = [
     'public_info',
     'core',
     'chat',
-    'billing',  # Subscription & Billing System
     
     # 🔧 Νέα apps για επέκταση λειτουργιών
     'maintenance',
