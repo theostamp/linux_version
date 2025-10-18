@@ -9,6 +9,7 @@ import RegistrationForm from './components/RegistrationForm';
 import PaymentForm from './components/PaymentForm';
 import SuccessPage from './components/SuccessPage';
 import Dashboard from './components/Dashboard';
+import AuthCallback from './components/AuthCallback';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -31,6 +32,7 @@ function App() {
             <Route path="/payment" element={<PaymentForm />} />
             <Route path="/success" element={<SuccessPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
           </Routes>
           
           {/* Toast Notifications */}
