@@ -11,7 +11,8 @@ RUN npm config set fetch-retry-maxtimeout 120000
 COPY package*.json ./
 
 # Use npm install instead of npm ci for better compatibility
-RUN npm install --no-optional
+# Use --legacy-peer-deps to handle React 19 compatibility issues
+RUN npm install --no-optional --legacy-peer-deps
 
 COPY . ./
 
