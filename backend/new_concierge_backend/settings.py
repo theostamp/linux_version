@@ -566,3 +566,11 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://demo.localhost:3001')
 # Calendar sync settings
 GOOGLE_CALENDAR_SYNC_ENABLED = os.getenv('GOOGLE_CALENDAR_SYNC_ENABLED', 'True') == 'True'
 GOOGLE_CALENDAR_AUTO_SHARE = os.getenv('GOOGLE_CALENDAR_AUTO_SHARE', 'True') == 'True'
+
+# ----------------------------------------
+# 🔐 OAuth Authentication Settings
+# ----------------------------------------
+# Microsoft OAuth settings
+MICROSOFT_CLIENT_ID = os.getenv('MICROSOFT_CLIENT_ID', '')
+MICROSOFT_CLIENT_SECRET = os.getenv('MICROSOFT_CLIENT_SECRET', '')
+MICROSOFT_REDIRECT_URI = os.getenv('MICROSOFT_REDIRECT_URI', 'http://localhost:18000/api/auth/callback/')

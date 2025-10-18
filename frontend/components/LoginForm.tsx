@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
+import OAuthButtons from './OAuthButtons';
 import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redirectTo?: string }) {
@@ -104,6 +105,21 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
             <p className="text-center text-sm text-gray-600 mt-2">{status}</p>
           )}
         </form>
+        
+        <OAuthButtons mode="login" />
+        
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Δεν έχεις λογαριασμό;{' '}
+            <button
+              type="button"
+              onClick={() => router.push('/register')}
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Εγγραφή
+            </button>
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

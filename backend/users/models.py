@@ -166,6 +166,20 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         help_text=_('Τελευταία αποτυχημένη προσπάθεια σύνδεσης')
     )
 
+    # OAuth fields
+    oauth_provider = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text=_('OAuth provider (google, microsoft, etc.)')
+    )
+    oauth_provider_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text=_('User ID from OAuth provider')
+    )
+
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'

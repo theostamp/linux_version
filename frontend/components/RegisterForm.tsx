@@ -5,18 +5,25 @@ import { useForm } from "react-hook-form"
 import { api } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { Eye, EyeOff } from "lucide-react"
+import OAuthButtons from "./OAuthButtons"
 
 type RegisterFormInputs = {
   email: string;
   first_name: string;
   last_name: string;
   password: string;
+  confirmPassword: string;
 }
 
 export default function RegisterForm() {
-  const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormInputs>()
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterFormInputs>()
   const [error, setError] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
+  
+  const password = watch("password")
 
   const onSubmit = async (data: RegisterFormInputs) => {
     try {
@@ -56,19 +63,63 @@ export default function RegisterForm() {
         />
         {errors.last_name && <p className="text-red-500 text-sm">Το επώνυμο είναι απαραίτητο</p>}
 
-        <input
-          {...register("password", { required: true, minLength: 6 })}
-          type="password"
-          placeholder="Κωδικός (τουλάχιστον 6 χαρακτήρες)"
-          className="w-full border p-2 rounded"
-        />
+        <div className="relative">
+          <input
+            {...register("password", { required: true, minLength: 6 })}
+            type={showPassword ? "text" : "password"}
+            placeholder="Κωδικός (τουλάχιστον 6 χαρακτήρες)"
+            className="w-full border p-2 pr-10 rounded"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
         {errors.password && <p className="text-red-500 text-sm">Απαιτείται κωδικός τουλάχιστον 6 χαρακτήρων</p>}
+
+        <div className="relative">
+          <input
+            {...register("confirmPassword", { 
+              required: true, 
+              validate: (value) => value === password || "Οι κωδικοί δεν ταιριάζουν"
+            })}
+            type={showConfirmPassword ? "text" : "password"}
+            placeholder="Επιβεβαίωση κωδικού"
+            className="w-full border p-2 pr-10 rounded"
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+          >
+            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+        {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>}
 
         {error && <p className="text-red-500">{error}</p>}
         <button type="submit" className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700">
           Εγγραφή
         </button>
       </form>
+
+      <OAuthButtons mode="register" />
+      
+      <div className="mt-6 text-center">
+        <p className="text-sm text-gray-600">
+          Έχεις ήδη λογαριασμό;{' '}
+          <button
+            type="button"
+            onClick={() => router.push('/login')}
+            className="text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Σύνδεση
+          </button>
+        </p>
+      </div>
     </div>
   )
 }

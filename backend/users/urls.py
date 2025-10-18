@@ -4,6 +4,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 from .views import login_view, CustomTokenObtainPairView
+from .oauth_views import google_oauth_initiate, microsoft_oauth_initiate, oauth_callback
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .profile_views import (
     UserProfileView, 
@@ -46,4 +47,9 @@ urlpatterns = [
     path('subscription/billing-history/', UserSubscriptionBillingHistoryView.as_view(), name='user-billing-history'),
     path('subscription/actions/', UserSubscriptionActionsView.as_view(), name='user-subscription-actions'),
     path('subscription/create/', UserCreateSubscriptionView.as_view(), name='user-create-subscription'),
+    
+    # OAuth endpoints
+    path('auth/google/', google_oauth_initiate, name='google-oauth-initiate'),
+    path('auth/microsoft/', microsoft_oauth_initiate, name='microsoft-oauth-initiate'),
+    path('auth/callback/', oauth_callback, name='oauth-callback'),
 ]
