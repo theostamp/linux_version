@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OAuth Buttons Test</title>
+</head>
+<body>
+    <h1>OAuth Buttons Test</h1>
+    <p>Testing if OAuth buttons are visible on the register page...</p>
+    
+    <script>
+        fetch('http://localhost:8080/register')
+            .then(response => response.text())
+            .then(html => {
+                console.log('Register page HTML loaded');
+                
+                // Check for OAuth buttons
+                if (html.includes('Google') || html.includes('Microsoft')) {
+                    console.log('✅ OAuth buttons found in HTML');
+                    document.body.innerHTML += '<p style="color: green;">✅ OAuth buttons found in HTML</p>';
+                } else {
+                    console.log('❌ OAuth buttons NOT found in HTML');
+                    document.body.innerHTML += '<p style="color: red;">❌ OAuth buttons NOT found in HTML</p>';
+                }
+                
+                // Check for OAuthButtons component
+                if (html.includes('OAuthButtons')) {
+                    console.log('✅ OAuthButtons component found');
+                    document.body.innerHTML += '<p style="color: green;">✅ OAuthButtons component found</p>';
+                } else {
+                    console.log('❌ OAuthButtons component NOT found');
+                    document.body.innerHTML += '<p style="color: red;">❌ OAuthButtons component NOT found</p>';
+                }
+                
+                // Show first 1000 characters of HTML
+                document.body.innerHTML += '<h2>HTML Preview (first 1000 chars):</h2>';
+                document.body.innerHTML += '<pre>' + html.substring(0, 1000) + '</pre>';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.body.innerHTML += '<p style="color: red;">Error: ' + error + '</p>';
+            });
+    </script>
+</body>
+</html>

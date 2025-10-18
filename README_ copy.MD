@@ -32,7 +32,7 @@ git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
 ---
 
-git reset --hard 6fb119f
+git reset --hard :::6fb119f
 
 ### Πλήρης Καθαρισμός Docker
 ```bash

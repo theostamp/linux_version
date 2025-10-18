@@ -27,7 +27,7 @@ export default function OAuthButtons({ mode, onSuccess }: OAuthButtonsProps) {
         provider: 'google'
       }))
       
-      window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:18000'}/api/users/auth/google/?redirect_uri=${redirectUri}&state=${state}`
+      window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:18000'}/users/auth/google/?redirect_uri=${redirectUri}&state=${state}`
     } catch (error) {
       console.error('Google OAuth error:', error)
       toast.error('Σφάλμα κατά την σύνδεση με Google')
@@ -46,7 +46,7 @@ export default function OAuthButtons({ mode, onSuccess }: OAuthButtonsProps) {
         provider: 'microsoft'
       }))
       
-      window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:18000'}/api/users/auth/microsoft/?redirect_uri=${redirectUri}&state=${state}`
+      window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:18000'}/users/auth/microsoft/?redirect_uri=${redirectUri}&state=${state}`
     } catch (error) {
       console.error('Microsoft OAuth error:', error)
       toast.error('Σφάλμα κατά την σύνδεση με Microsoft')
