@@ -34,6 +34,9 @@ urlpatterns = [
     
     # Core endpoints (CSRF token) - διαθέσιμο στο public tenant
     path('api/', include('core.urls')),
+    
+    # Billing endpoints (shared across all tenants)
+    path('api/billing/', include('billing.urls')),
 ]
 
 if settings.DEBUG:
