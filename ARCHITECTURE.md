@@ -2,68 +2,41 @@
 
 ## 📋 Περιγραφή
 
-Το Digital Concierge είναι μια πλατφόρμα διαχείρισης κτιρίων και πολυκατοικιών που χρησιμοποιεί **δύο ξεχωριστές frontend εφαρμογές** για διαφορετικούς σκοπούς.
+Το Digital Concierge είναι μια **ενοποιημένη** πλατφόρμα διαχείρισης κτιρίων και πολυκατοικιών που τρέχει πλήρως σε **Next.js 15**.
+
+## 🎉 ΕΝΗΜΕΡΩΣΗ (2025-10-19)
+
+**Η αρχιτεκτονική ενοποιήθηκε!** Όλη η λειτουργικότητα (auth, payments, subscriptions, main app) είναι τώρα στο Next.js app.
 
 ---
 
-## 🏗️ Αρχιτεκτονική Εφαρμογών
+## 🏗️ Unified Next.js Architecture
 
-### 1️⃣ React App (Create React App) - **Authentication & Subscriptions**
-
-**Τοποθεσία:** `/frontend/src/`
-**Port:** `8080`
-**Τεχνολογία:** React 18 + React Router + react-scripts
-
-#### Σκοπός
-Η React εφαρμογή είναι το **"front door"** του συστήματος. Διαχειρίζεται:
-- Αυθεντικοποίηση χρηστών (Authentication)
-- OAuth Google Login
-- Εγγραφή νέων χρηστών
-- Διαχείριση συνδρομών (Subscriptions)
-- Πληρωμές μέσω Stripe
-
-#### Κύρια Components
-```
-/frontend/src/components/
-├── LandingPage.jsx          # Landing page
-├── RegistrationForm.jsx     # User registration
-├── PaymentForm.jsx          # Stripe payments
-├── SubscriptionManagement.jsx  # Subscription management
-├── Dashboard.jsx            # Basic dashboard (redirects to Next.js)
-├── AuthCallback.jsx         # OAuth callback handler
-└── OAuthButtons.jsx         # Google OAuth buttons
-```
-
-#### Routes
-```
-/                  → Landing page
-/register          → Registration form
-/payment           → Payment form
-/success           → Payment success page
-/dashboard         → Basic dashboard (redirects to Next.js app)
-/my-subscription   → Subscription management
-/auth/callback     → OAuth callback
-```
-
-#### Scripts
-```bash
-npm start          # Start dev server on port 8080
-npm run build      # Build for production
-npm test           # Run tests
-```
-
----
-
-### 2️⃣ Next.js App - **Main Application**
+### ✅ **Next.js App (Ενοποιημένη Εφαρμογή)**
 
 **Τοποθεσία:** `/frontend/app/` & `/frontend/components/`
 **Port:** `3000`
 **Τεχνολογία:** Next.js 15.5.6 + TypeScript + Tailwind CSS
 
 #### Σκοπός
-Η Next.js εφαρμογή είναι η **κύρια εφαρμογή** μετά την αυθεντικοποίηση. Περιλαμβάνει όλα τα features διαχείρισης:
+Η Next.js εφαρμογή είναι η **ενοποιημένη εφαρμογή** που περιλαμβάνει:
+- 🔐 **Authentication & Authorization** (Login, Register, OAuth)
+- 💳 **Payments & Subscriptions** (Stripe integration)
+- 🏢 **Main Dashboard** με όλα τα features διαχείρισης
 
-#### Features
+#### Public Pages (No Auth Required)
+```
+/frontend/app/
+├── page.tsx                # 🏠 Landing Page (Marketing)
+├── login/page.tsx          # 🔑 Login Page
+├── register/page.tsx       # ✍️ Registration Page
+├── payment/
+│   ├── page.tsx           # 💳 Stripe Payment Page
+│   └── success/page.tsx   # ✅ Payment Success Page
+└── auth/callback/page.tsx # 🔄 OAuth Callback Handler
+```
+
+#### Protected Pages (Dashboard - Auth Required)
 ```
 /frontend/app/(dashboard)/
 ├── financial/           # Οικονομική διαχείριση
@@ -126,24 +99,34 @@ npm run lint       # Lint code
 
 ---
 
-## 🔄 User Flow
+## 🔄 Unified User Flow (Updated!)
 
 ```
 1. Χρήστης επισκέπτεται το site
    ↓
-2. React App (port 8080)
-   - Landing page
-   - Registration/Login
-   - OAuth Google
-   - Payment/Subscription
+2. Next.js App - Landing Page (/)
+   ├─ Βλέπει features & pricing
+   └─ Επιλέγει "Ξεκινήστε Τώρα"
    ↓
-3. Μετά την αυθεντικοποίηση → Redirect στο Next.js App
+3. Next.js App - Registration (/register?plan=2)
+   ├─ Εγγραφή με email/password
+   └─ Ή OAuth με Google
    ↓
-4. Next.js App (port 3000)
-   - Full dashboard
-   - Όλα τα features διαχείρισης
-   - Financial, Buildings, Maintenance, κτλ.
+4. Next.js App - Payment (/payment)
+   ├─ Stripe payment form
+   └─ Επιλογή πλάνου & πληρωμή
+   ↓
+5. Next.js App - Success (/payment/success)
+   ├─ Επιβεβαίωση πληρωμής
+   └─ Auto-redirect σε 5 δευτερόλεπτα
+   ↓
+6. Next.js App - Dashboard (/dashboard)
+   ├─ Full authenticated experience
+   ├─ Financial, Buildings, Maintenance
+   └─ Όλα τα features διαχείρισης
 ```
+
+**Όλα σε ένα Next.js app!** 🎉
 
 ---
 
@@ -232,10 +215,10 @@ docker-compose -f docker-compose.prod.yml up
 
 | Component | Status | Port | Notes |
 |-----------|--------|------|-------|
-| React App | ✅ Working | 8080 | Authentication & Subscriptions |
-| Next.js App | ✅ Working | 3000 | Main application |
+| **Next.js App** | ✅ Working | 3000 | **Unified App** - Auth, Payments, Dashboard |
 | Django Backend | ✅ Working | 18000 | API server |
 | PostgreSQL | ✅ Working | 5432 | Database |
+| ~~React App~~ | ⚠️ Deprecated | ~~8080~~ | **Migrated to Next.js** |
 
 ---
 
@@ -257,10 +240,22 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 
 ## 📝 Notes
 
-1. **Δύο ξεχωριστές εφαρμογές**: Η React app διαχειρίζεται την αυθεντικοποίηση, η Next.js την κύρια εφαρμογή
-2. **Tailwind CSS**: Ενημερώθηκε για να χρησιμοποιεί CSS variables από το globals.css
-3. **Dependencies**: Όλα τα απαραίτητα packages έχουν εγκατασταθεί με `--legacy-peer-deps`
-4. **Warnings**: Υπάρχουν μερικά warnings για lockfiles και icons, αλλά δεν επηρεάζουν τη λειτουργία
+1. **✅ ΕΝΟΠΟΙΗΜΕΝΗ ΑΡΧΙΤΕΚΤΟΝΙΚΗ** (2025-10-19): Όλη η λειτουργικότητα μεταφέρθηκε στο Next.js!
+   - Landing Page με marketing content & pricing
+   - Login & Registration pages
+   - Stripe Payment integration
+   - Success page με auto-redirect
+   - Full dashboard με όλα τα features
+
+2. **Tailwind CSS**: Χρησιμοποιεί CSS variables από το globals.css για dynamic theming
+
+3. **Dependencies**: Όλα τα packages εγκατεστημένα με `--legacy-peer-deps`
+   - Stripe: `@stripe/stripe-js`, `@stripe/react-stripe-js`
+   - UI: `@radix-ui/*`, `lucide-react`, `framer-motion`
+   - State: `@tanstack/react-query`
+   - Utils: `date-fns`, `recharts`, `sonner`
+
+4. **React App Status**: Η `/frontend/src/` React app είναι **deprecated** - όλη η λειτουργικότητα μεταφέρθηκε στο Next.js
 
 ---
 
