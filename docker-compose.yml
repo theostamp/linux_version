@@ -103,6 +103,7 @@ services:
       - NEXT_PUBLIC_FEATURE_PROJECTS_UNIFIED=true
       - NEXT_PUBLIC_API_URL=http://backend:8000/api
       - NEXT_PUBLIC_API_BASE_URL=http://backend:8000
+      - REACT_APP_API_URL=http://localhost:18000
     ports: ["8080:3000"]
 
   nginx:

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Building, User, Mail, MapPin, Lock, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import OAuthButtons from './OAuthButtons';
 
 const RegistrationForm = () => {
   const navigate = useNavigate();
@@ -222,7 +223,7 @@ const RegistrationForm = () => {
                   </label>
                   <input
                     type="password"
-                    {...register('password', { 
+                    {...register('password', {
                       required: 'Password is required',
                       minLength: {
                         value: 8,
@@ -236,6 +237,9 @@ const RegistrationForm = () => {
                     <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
                   )}
                 </div>
+
+                {/* OAuth Buttons */}
+                <OAuthButtons mode="register" />
               </div>
             )}
 
