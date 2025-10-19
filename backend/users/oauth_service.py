@@ -81,6 +81,9 @@ class OAuthService:
             
         except Exception as e:
             logger.error(f"Google OAuth error: {e}")
+            # Check if it's an invalid_grant error (code already used or expired)
+            if "invalid_grant" in str(e):
+                raise Exception("OAuth code has expired or already been used. Please try logging in again.")
             raise Exception("Failed to authenticate with Google")
     
     @staticmethod

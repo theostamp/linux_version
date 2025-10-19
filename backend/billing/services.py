@@ -32,18 +32,16 @@ class BillingService:
         Δημιουργία νέας subscription για user
         """
         try:
-            # Create or get Stripe customer
-            if not user.stripe_customer_id:
-                customer_id = StripeService.create_customer(user)
-                if not customer_id:
-                    raise Exception("Failed to create Stripe customer")
-                user.stripe_customer_id = customer_id
-                user.save()
+            # Create Stripe customer
+            customer_id = StripeService.create_customer(user)
+            if not customer_id:
+                raise Exception("Failed to create Stripe customer")
+            stripe_customer_id = customer_id
             
             # Attach payment method if provided
             if payment_method_id:
                 payment_method_data = StripeService.create_payment_method(
-                    payment_method_id, user.stripe_customer_id
+                    payment_method_id, stripe_customer_id
                 )
                 if not payment_method_data:
                     raise Exception("Failed to attach payment method")
@@ -61,7 +59,7 @@ class BillingService:
             # Create Stripe subscription
             trial_days = plan.trial_days if plan.trial_days > 0 else None
             stripe_subscription = StripeService.create_subscription(
-                user.stripe_customer_id, price_id, trial_days
+                stripe_customer_id, price_id, trial_days
             )
             
             if not stripe_subscription:
@@ -94,7 +92,7 @@ class BillingService:
                 current_period_start=current_period_start,
                 current_period_end=current_period_end,
                 stripe_subscription_id=stripe_subscription['id'],
-                stripe_customer_id=user.stripe_customer_id,
+                stripe_customer_id=stripe_customer_id,
                 price=price,
                 currency=settings.STRIPE_CURRENCY.upper(),
                 auto_renew=True,
