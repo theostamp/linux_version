@@ -36,7 +36,7 @@ function PaymentFormInner() {
     const checkExistingSubscription = async () => {
       if (user) {
         try {
-          const { data } = await api.get('/users/subscription/current/');
+          const { data } = await api.get('/users/subscription/');
           if (data.subscription && data.subscription.status !== 'canceled') {
             toast.success('You already have an active subscription!');
             router.push('/dashboard');

@@ -1,11 +1,12 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { Loader2, CreditCard, CheckCircle, ArrowRight, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api';
 
 interface SubscriptionGateProps {
   children: ReactNode;
@@ -20,9 +21,35 @@ export default function SubscriptionGate({
 }: SubscriptionGateProps) {
   const { user, isAuthReady, isLoading } = useAuth();
   const router = useRouter();
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
 
-  // Show loading state while checking auth
-  if (isLoading || !isAuthReady) {
+  // Fetch subscription status when user is authenticated
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      if (user) {
+        try {
+          const { data } = await api.get('/users/subscription/');
+          if (data.subscription) {
+            setSubscriptionStatus(data.subscription.status);
+          } else {
+            setSubscriptionStatus(null);
+          }
+        } catch (error) {
+          setSubscriptionStatus(null);
+        } finally {
+          setIsCheckingSubscription(false);
+        }
+      } else {
+        setIsCheckingSubscription(false);
+      }
+    };
+
+    fetchSubscription();
+  }, [user]);
+
+  // Show loading state while checking auth or subscription
+  if (isLoading || !isAuthReady || isCheckingSubscription) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -50,12 +77,12 @@ export default function SubscriptionGate({
   }
 
   // Check subscription status
-  const hasSubscription = user.subscription_status &&
-    (user.subscription_status === 'active' || user.subscription_status === 'trial');
+  const hasSubscription = subscriptionStatus &&
+    (subscriptionStatus === 'active' || subscriptionStatus === 'trial');
 
   // If requiredStatus is 'active', check specifically for active (not trial)
   const meetsRequirement = requiredStatus === 'active'
-    ? user.subscription_status === 'active'
+    ? subscriptionStatus === 'active'
     : hasSubscription;
 
   // If user doesn't have required subscription, show fallback or default upgrade page
