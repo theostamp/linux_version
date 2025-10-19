@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, Building, Phone, MapPin, Loader2, Upload, Trash2, Image } from 'lucide-react';
+import { X, Save, Building, Phone, MapPin, Loader2, Upload, Trash2, Image, Lock, CreditCard } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { api, API_BASE_URL } from '@/lib/api';
+import Link from 'next/link';
 
 interface OfficeSettingsModalProps {
   isOpen: boolean;
@@ -160,12 +161,15 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
 
   if (!isOpen) return null;
 
+  // Check if user has active subscription
+  const hasSubscription = user?.subscription_status === 'active' || user?.subscription_status === 'trial';
+
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
@@ -179,7 +183,7 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
               Ρυθμίσεις Γραφείου Διαχείρισης
             </h2>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
@@ -188,217 +192,268 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800 text-sm">{error}</p>
-            </div>
-          )}
+        {!hasSubscription ? (
+          /* Subscription Required Message */
+          <div className="p-6">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto">
+                <Lock className="w-8 h-8 text-yellow-600" />
+              </div>
 
-          <div className="space-y-4">
-            {/* Logo Upload Section */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Logo Γραφείου Διαχείρισης
-              </label>
-              
-              {/* Current Logo or Preview */}
-              {(logoPreview || currentLogoUrl) && (
-                <div className="mb-3">
-                  <div className="relative inline-block">
-                    <img
-                      src={logoPreview || currentLogoUrl || ''}
-                      alt="Office Logo"
-                      className="w-20 h-20 object-contain border border-gray-300 rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={removeLogo}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              )}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Απαιτείται Ενεργή Συνδρομή
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Για να διαχειριστείτε τις ρυθμίσεις του γραφείου διαχείρισης,
+                  χρειάζεστε ενεργή συνδρομή στην πλατφόρμα.
+                </p>
+              </div>
 
-              {/* File Input */}
-              <div className="flex items-center space-x-3">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/svg+xml"
-                  onChange={handleLogoChange}
-                  className="hidden"
-                  id="office_logo"
-                />
-                <label
-                  htmlFor="office_logo"
-                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                <p className="text-sm text-blue-900 font-medium mb-2">
+                  Με τη συνδρομή μπορείτε:
+                </p>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>✓ Να ορίσετε το λογότυπο του γραφείου σας</li>
+                  <li>✓ Να διαχειριστείτε τα τραπεζικά στοιχεία</li>
+                  <li>✓ Να αυτοματοποιήσετε τα στοιχεία σε νέα κτίρια</li>
+                  <li>✓ Πλήρη πρόσβαση σε όλες τις λειτουργίες</li>
+                </ul>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-4">
+                <Link
+                  href="/payment"
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  onClick={onClose}
                 >
-                  <Upload className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm text-gray-700">
-                    {logoPreview || currentLogoUrl ? 'Αλλαγή Logo' : 'Επιλογή Logo'}
-                  </span>
-                </label>
-                {!logoPreview && !currentLogoUrl && (
-                  <span className="text-xs text-gray-500">
-                    PNG, JPG, SVG (max 2MB)
-                  </span>
-                )}
+                  <CreditCard className="w-4 h-4" />
+                  Επιλογή Πλάνου & Αγορά
+                </Link>
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+                >
+                  Επιστροφή
+                </button>
               </div>
             </div>
+          </div>
+        ) : (
+          /* Normal Form Content */
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800 text-sm">{error}</p>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {/* Logo Upload Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Logo Γραφείου Διαχείρησης
+                </label>
+              
+                {/* Current Logo or Preview */}
+                {(logoPreview || currentLogoUrl) && (
+                  <div className="mb-3">
+                    <div className="relative inline-block">
+                      <img
+                        src={logoPreview || currentLogoUrl || ''}
+                        alt="Office Logo"
+                        className="w-20 h-20 object-contain border border-gray-300 rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeLogo}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* File Input */}
+                <div className="flex items-center space-x-3">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/svg+xml"
+                    onChange={handleLogoChange}
+                    className="hidden"
+                    id="office_logo"
+                  />
+                  <label
+                    htmlFor="office_logo"
+                    className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <Upload className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">
+                      {logoPreview || currentLogoUrl ? 'Αλλαγή Logo' : 'Επιλογή Logo'}
+                    </span>
+                  </label>
+                  {!logoPreview && !currentLogoUrl && (
+                    <span className="text-xs text-gray-500">
+                      PNG, JPG, SVG (max 2MB)
+                    </span>
+                  )}
+                </div>
+            </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_name">
-                Όνομα Γραφείου Διαχείρισης
-              </label>
-              <input
-                id="office_name"
-                name="office_name"
-                value={form.office_name}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="π.χ. Γραφείο Διαχείρισης Παπαδόπουλος"
-              />
+                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_name">
+                  Όνομα Γραφείου Διαχείρισης
+                </label>
+                <input
+                  id="office_name"
+                  name="office_name"
+                  value={form.office_name}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="π.χ. Γραφείο Διαχείρισης Παπαδόπουλος"
+                />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_phone">
-                Τηλέφωνο Γραφείου Διαχείρισης
-              </label>
-              <input
-                id="office_phone"
-                name="office_phone"
-                value={form.office_phone}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="π.χ. 210-1234567"
-                type="tel"
-              />
+                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_phone">
+                  Τηλέφωνο Γραφείου Διαχείρισης
+                </label>
+                <input
+                  id="office_phone"
+                  name="office_phone"
+                  value={form.office_phone}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="π.χ. 210-1234567"
+                  type="tel"
+                />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_address">
-                Διεύθυνση Γραφείου Διαχείρισης
-              </label>
-              <input
-                id="office_address"
-                name="office_address"
-                value={form.office_address}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="π.χ. Λεωφ. Συγγρού 123, Αθήνα"
-              />
+                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_address">
+                  Διεύθυνση Γραφείου Διαχείρισης
+                </label>
+                <input
+                  id="office_address"
+                  name="office_address"
+                  value={form.office_address}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="π.χ. Λεωφ. Συγγρού 123, Αθήνα"
+                />
             </div>
 
             {/* Bank Account Details Section */}
             <div className="border-t border-gray-200 pt-4">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Τραπεζικά Στοιχεία</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_bank_name">
-                    Όνομα Τράπεζας
-                  </label>
-                  <input
-                    id="office_bank_name"
-                    name="office_bank_name"
-                    value={form.office_bank_name}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="π.χ. Εθνική Τράπεζα της Ελλάδος"
-                  />
-                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Τραπεζικά Στοιχεία</h3>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_bank_account">
-                    Αριθμός Λογαριασμού
-                  </label>
-                  <input
-                    id="office_bank_account"
-                    name="office_bank_account"
-                    value={form.office_bank_account}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="π.χ. 1234567890"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_bank_iban">
-                    IBAN
-                  </label>
-                  <input
-                    id="office_bank_iban"
-                    name="office_bank_iban"
-                    value={form.office_bank_iban}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="π.χ. GR16 0110 1250 0000 1234 5678 901"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_bank_beneficiary">
-                    Δικαιούχος
-                  </label>
-                  <input
-                    id="office_bank_beneficiary"
-                    name="office_bank_beneficiary"
-                    value={form.office_bank_beneficiary}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="π.χ. Γραφείο Διαχείρισης Παπαδόπουλου"
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_bank_name">
+                      Όνομα Τράπεζας
+                    </label>
+                    <input
+                      id="office_bank_name"
+                      name="office_bank_name"
+                      value={form.office_bank_name}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="π.χ. Εθνική Τράπεζα της Ελλάδος"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_bank_account">
+                      Αριθμός Λογαριασμού
+                    </label>
+                    <input
+                      id="office_bank_account"
+                      name="office_bank_account"
+                      value={form.office_bank_account}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="π.χ. 1234567890"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_bank_iban">
+                      IBAN
+                    </label>
+                    <input
+                      id="office_bank_iban"
+                      name="office_bank_iban"
+                      value={form.office_bank_iban}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="π.χ. GR16 0110 1250 0000 1234 5678 901"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="office_bank_beneficiary">
+                      Δικαιούχος
+                    </label>
+                    <input
+                      id="office_bank_beneficiary"
+                      name="office_bank_beneficiary"
+                      value={form.office_bank_beneficiary}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="π.χ. Γραφείο Διαχείρισης Παπαδόπουλου"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Info Box */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start space-x-2">
-              <Building className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm text-blue-800 font-medium">ℹ️ Πληροφορίες</p>
-                <p className="text-xs text-blue-700 mt-1">
-                  Αυτά τα στοιχεία θα χρησιμοποιηθούν αυτόματα κατά τη δημιουργία νέων κτιρίων, 
-                  ώστε να μην χρειάζεται να τα εισάγετε κάθε φορά. Το logo και τα τραπεζικά στοιχεία 
-                  θα εμφανίζονται στα ειδοποιητήρια πληρωμής.
-                </p>
+            {/* Info Box */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start space-x-2">
+                <Building className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-blue-800 font-medium">ℹ️ Πληροφορίες</p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Αυτά τα στοιχεία θα χρησιμοποιηθούν αυτόματα κατά τη δημιουργία νέων κτιρίων,
+                    ώστε να μην χρειάζεται να τα εισάγετε κάθε φορά. Το logo και τα τραπεζικά στοιχεία
+                    θα εμφανίζονται στα ειδοποιητήρια πληρωμής.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-4 border-t">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              Ακύρωση
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Αποθήκευση...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Αποθήκευση
-                </>
-              )}
-            </button>
-          </div>
-        </form>
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Ακύρωση
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Αποθήκευση...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Αποθήκευση
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
