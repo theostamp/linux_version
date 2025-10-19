@@ -39,7 +39,7 @@ class TodoItemViewSet(viewsets.ModelViewSet):
     ordering = ["-priority", "due_date", "-created_at"]
 
     def get_permissions(self):
-        if self.action in ["list", "retrieve"]:
+        if self.action in ["list", "retrieve", "pending_count"]:
             return [permissions.IsAuthenticated()]
         return [permissions.IsAuthenticated(), IsManagerOrSuperuser()]
 

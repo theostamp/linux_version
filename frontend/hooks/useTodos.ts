@@ -33,6 +33,20 @@ export function useTodoPendingCount(buildingId?: number | null) {
     queryFn: () => fetchPendingTodosCount(buildingId),
     refetchInterval: 60_000,
     staleTime: 30_000,
+    retry: (failureCount, error: any) => {
+      // Don't retry on 403 errors (permission denied)
+      if (error?.response?.status === 403) {
+        return false;
+      }
+      // Retry up to 2 times for other errors
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    // Add timeout to prevent hanging
+    networkMode: 'online' as const,
+    onError: (error) => {
+      console.error('[useTodoPendingCount] Query error:', error);
+    },
   });
 }
 

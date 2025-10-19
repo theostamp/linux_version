@@ -237,7 +237,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   // Εμφάνιση του spinner μόνο κατά το αρχικό φόρτωμα για πολύ σύντομο διάστημα
   // Αν το isAuthReady δεν έχει γίνει true μετά από λίγο, προχωράμε κανονικά
   // για να αποφύγουμε το infinite loading
-  if (isLoading && !isAuthReady && !hasInitialized) {
+  if (isLoading && !isAuthReady) {
     return <FullPageSpinner message="Συνδέουμε τον λογαριασμό..." />;
   }
 

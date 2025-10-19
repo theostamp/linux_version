@@ -11,6 +11,8 @@ import {
 } from '@stripe/react-stripe-js';
 import { CreditCard, Lock, CheckCircle, ArrowLeft, Building } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/components/contexts/AuthContext';
+import { api } from '@/lib/api';
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
@@ -27,6 +29,7 @@ function PaymentFormInner() {
 
   const stripe = useStripe();
   const elements = useElements();
+  const { user } = useAuth();
 
   useEffect(() => {
     // Try to get data from URL params first
@@ -52,13 +55,26 @@ function PaymentFormInner() {
       const storedUserData = localStorage.getItem('registration_data');
       if (storedUserData) {
         setUserData(JSON.parse(storedUserData));
+      } else if (user?.email) {
+        // Fallback to authenticated user
+        setUserData({ email: user.email, name: (user as any)?.full_name || user.email.split('@')[0] });
       }
     }
 
-    // If no data, redirect to register
+    // If no plan and no user email in URL, redirect to register
     if (!planId && !userEmail) {
       router.push('/register');
+      return;
     }
+
+    // Safety: if plan exists but we still have no userData after short delay, redirect
+    const timeout = setTimeout(() => {
+      if (planId && !userEmail && !userData && !user) {
+        router.push('/register');
+      }
+    }, 1500);
+
+    return () => clearTimeout(timeout);
   }, [searchParams, router]);
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -93,27 +109,13 @@ function PaymentFormInner() {
         return;
       }
 
-      // Send payment method to backend to create subscription
-      const response = await fetch('/api/billing/create-subscription/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          payment_method_id: paymentMethod.id,
-          plan_id: plan.id,
-          user_email: userData.email,
-          user_name: userData.name,
-        }),
+      // Send payment method to backend to create subscription (use axios api with auth interceptor)
+      const { data } = await api.post('/users/subscription/create/', {
+        payment_method_id: paymentMethod.id,
+        plan_id: plan.id,
+        user_email: userData.email,
+        user_name: userData.name,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create subscription');
-      }
-
-      const data = await response.json();
 
       toast.success('Payment successful! Your account is being activated...');
 

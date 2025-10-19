@@ -14,13 +14,17 @@ export default function TodoNotificationBell({ className }: Props) {
   const { toggle, pendingCount, setPendingCount } = useTodoSidebar();
   const { selectedBuilding } = useBuilding();
 
-  const { data: serverCount } = useTodoPendingCount(selectedBuilding?.id);
+  const { data: serverCount, error, isLoading } = useTodoPendingCount(selectedBuilding?.id);
 
   useEffect(() => {
     if (typeof serverCount === 'number') {
       setPendingCount(serverCount);
+    } else if (error) {
+      // If there's an error (like 403), set count to 0 to avoid hanging
+      console.warn('[TodoNotificationBell] Error fetching pending count:', error);
+      setPendingCount(0);
     }
-  }, [serverCount, setPendingCount]);
+  }, [serverCount, error, setPendingCount]);
 
   const count = pendingCount;
   const hasUnread = count > 0;
