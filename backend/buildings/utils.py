@@ -46,14 +46,13 @@ def create_demo_building_for_manager(user):
 
         logger.info(f"Created demo building '{demo_building.name}' for user {user.email}")
 
-        # Create building membership for the manager
-        BuildingMembership.objects.create(
-            building=demo_building,
-            resident=user,
-            role='manager'
-        )
+        # Note: We don't create BuildingMembership for the manager because:
+        # 1. BuildingMembership.resident is a ForeignKey to CustomUser (public schema)
+        # 2. In multi-tenant architecture, tenant schema can't have FK to public schema
+        # 3. The manager relationship is handled via Building.manager_id (integer field)
+        # 4. BuildingMembership is primarily for residents/owners within the tenant
 
-        logger.info(f"Created manager membership for {user.email} in demo building")
+        logger.info(f"Manager {user.email} owns demo building via manager_id={user.id}")
 
         # Create sample apartments with realistic Greek data (TOTAL MILLS = 1000)
         apartments_data = [

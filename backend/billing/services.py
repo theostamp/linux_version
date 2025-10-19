@@ -177,9 +177,11 @@ class BillingService:
                 except Exception as e:
                     logger.error(f"Failed to run migrations for tenant '{schema_name}': {e}")
 
+                # Import before entering tenant schema context to avoid import issues
+                from buildings.utils import create_demo_building_for_manager
+
                 # Create demo building for new manager inside the tenant schema
                 with schema_context(schema_name):
-                    from buildings.utils import create_demo_building_for_manager
                     demo_building = create_demo_building_for_manager(user)
                     if demo_building:
                         logger.info(f"Created demo building '{demo_building.name}' in tenant '{schema_name}' for user {user.email}")
