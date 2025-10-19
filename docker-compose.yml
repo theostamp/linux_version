@@ -94,22 +94,24 @@ services:
   frontend:
     build:
       context: ./frontend         # ✅ μόνο τον φάκελο frontend
-    command: npm start
+    command: npm run dev
     volumes:
       - ./frontend/:/app/
       - /app/node_modules         # κρατά τα container-node_modules μέσα
     env_file: .env
     environment:
       - NEXT_PUBLIC_FEATURE_PROJECTS_UNIFIED=true
-      - NEXT_PUBLIC_API_URL=http://backend:8000/api
-      - NEXT_PUBLIC_API_BASE_URL=http://backend:8000
+      # API URLs for browser (client-side) - use nginx reverse proxy
+      - NEXT_PUBLIC_API_URL=http://localhost:8081
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8081
+      # For old React app compatibility
       - REACT_APP_API_URL=http://localhost:18000
     ports: ["8080:3000"]
 
   nginx:
     image: nginx:alpine
     ports:
-      - "127.0.0.1:8081:80"
+      - "0.0.0.0:8081:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:

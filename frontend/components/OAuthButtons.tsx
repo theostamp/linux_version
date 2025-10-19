@@ -50,7 +50,8 @@ export default function OAuthButtons({ mode, onSuccess }: OAuthButtonsProps) {
         provider: 'google'
       }))
 
-      window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:18000'}/api/users/auth/google/?redirect_uri=${redirectUri}&state=${state}`
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8081';
+      window.location.href = `${apiBaseUrl}/api/users/auth/google/?redirect_uri=${redirectUri}&state=${state}`
     } catch (error) {
       console.error('Google OAuth error:', error)
       toast.error('Σφάλμα κατά την σύνδεση με Google')

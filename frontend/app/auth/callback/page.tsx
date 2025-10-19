@@ -38,7 +38,8 @@ export default function AuthCallbackPage() {
         const { redirectTo = '/dashboard' } = stateData
 
         // Exchange code for tokens
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:18000'}/api/users/auth/callback/`, {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8081';
+        const response = await fetch(`${apiBaseUrl}/api/users/auth/callback/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
