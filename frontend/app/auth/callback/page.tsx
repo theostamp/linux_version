@@ -7,11 +7,16 @@ import { useAuth } from "@/components/contexts/AuthContext"
 
 export default function AuthCallbackPage() {
   const [status, setStatus] = useState("Επεξεργασία...")
+  const [isProcessing, setIsProcessing] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const { setUser } = useAuth()
 
   useEffect(() => {
+    // Prevent duplicate requests in React Strict Mode
+    if (isProcessing) return
+    setIsProcessing(true)
+
     const handleCallback = async () => {
       try {
         const code = searchParams.get('code')
