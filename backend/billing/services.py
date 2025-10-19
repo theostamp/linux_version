@@ -75,11 +75,32 @@ class BillingService:
                 trial_start = timezone.now()
                 trial_end = trial_start + timezone.timedelta(days=trial_days)
             
-            # Calculate current period dates
-            current_period_start = trial_end if trial_end else timezone.now()
-            current_period_end = current_period_start + timezone.timedelta(
-                days=30 if billing_interval == 'month' else 365
-            )
+            # Calculate current period dates from Stripe response
+            if stripe_subscription:
+                # Get current_period_start and current_period_end from subscription items
+                items = stripe_subscription.get('items', {}).get('data', [])
+                if items:
+                    # Get from first subscription item
+                    first_item = items[0]
+                    current_period_start = timezone.datetime.fromtimestamp(
+                        first_item.get('current_period_start', timezone.now().timestamp()),
+                        tz=timezone.get_current_timezone()
+                    )
+                    current_period_end = timezone.datetime.fromtimestamp(
+                        first_item.get('current_period_end', (timezone.now() + timezone.timedelta(days=30)).timestamp()),
+                        tz=timezone.get_current_timezone()
+                    )
+                else:
+                    # Fallback to trial dates or current time
+                    current_period_start = trial_end if trial_end else timezone.now()
+                    current_period_end = current_period_start + timezone.timedelta(
+                        days=30 if billing_interval == 'month' else 365
+                    )
+            else:
+                current_period_start = trial_end if trial_end else timezone.now()
+                current_period_end = current_period_start + timezone.timedelta(
+                    days=30 if billing_interval == 'month' else 365
+                )
             
             # Create UserSubscription
             subscription = UserSubscription.objects.create(

@@ -36,7 +36,7 @@ class StripeService:
             logger.info(f"Created Stripe customer {customer.id} for user {user.email}")
             return customer.id
             
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
             logger.error(f"Failed to create Stripe customer for user {user.email}: {e}")
             return None
     
@@ -66,7 +66,7 @@ class StripeService:
                 'card': payment_method.card if payment_method.type == 'card' else None
             }
             
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
             logger.error(f"Failed to attach payment method {payment_method_id}: {e}")
             return None
     
@@ -103,7 +103,7 @@ class StripeService:
                 'latest_invoice': subscription.latest_invoice
             }
             
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
             logger.error(f"Failed to create subscription for customer {customer_id}: {e}")
             return None
     
@@ -135,7 +135,7 @@ class StripeService:
                 'current_period_end': subscription.current_period_end
             }
             
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
             logger.error(f"Failed to update subscription {subscription_id}: {e}")
             return None
     
@@ -161,7 +161,7 @@ class StripeService:
                 'canceled_at': subscription.canceled_at
             }
             
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
             logger.error(f"Failed to cancel subscription {subscription_id}: {e}")
             return None
     
@@ -186,7 +186,7 @@ class StripeService:
                 'items': subscription.items.data
             }
             
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
             logger.error(f"Failed to retrieve subscription {subscription_id}: {e}")
             return None
     
@@ -220,7 +220,7 @@ class StripeService:
                 'amount': payment_intent.amount
             }
             
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
             logger.error(f"Failed to create payment intent for amount {amount}: {e}")
             return None
     
@@ -240,7 +240,7 @@ class StripeService:
                 'invoice_settings': customer.invoice_settings
             }
             
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
             logger.error(f"Failed to retrieve customer {customer_id}: {e}")
             return None
     
@@ -265,7 +265,7 @@ class StripeService:
                 for pm in payment_methods.data
             ]
             
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
             logger.error(f"Failed to list payment methods for customer {customer_id}: {e}")
             return None
     
@@ -279,7 +279,7 @@ class StripeService:
             logger.info(f"Detached payment method {payment_method_id}")
             return True
             
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
             logger.error(f"Failed to detach payment method {payment_method_id}: {e}")
             return False
     
