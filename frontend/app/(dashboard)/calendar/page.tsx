@@ -5,7 +5,8 @@ import { Calendar, Plus, Filter, Users, Clock, AlertCircle, Settings } from 'luc
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { withAuth } from '@/lib/auth';
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import EventCalendarView from '@/components/events/EventCalendarView';
 import EventSidebar from '@/components/events/EventSidebar';
@@ -14,7 +15,7 @@ import { useCalendarEvents } from '@/hooks/useEvents';
 import CalendarWidget from '@/components/dashboard/CalendarWidget';
 import GoogleCalendarSettings from '@/components/admin/GoogleCalendarSettings';
 
-function CalendarPage() {
+function CalendarPageContent() {
   const { selectedBuilding } = useBuilding();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showEventForm, setShowEventForm] = useState(false);
@@ -300,4 +301,12 @@ function CalendarPage() {
   );
 }
 
-export default withAuth(CalendarPage, ['admin', 'manager']);
+export default function CalendarPage() {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <CalendarPageContent />
+      </SubscriptionGate>
+    </AuthGate>
+  );
+}
