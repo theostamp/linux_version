@@ -65,42 +65,29 @@ export default function MyProfilePage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    fetchProfile();
-    fetchNotificationSettings();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/user/profile/', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setProfile(data);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
+    // Use authUser directly from context instead of fetching
+    if (authUser) {
+      setProfile(authUser as any);
       setLoading(false);
     }
+    fetchNotificationSettings();
+  }, [authUser]);
+
+  const fetchProfile = async () => {
+    // Profile is loaded from AuthContext
+    // This function is kept for compatibility but not used
   };
 
   const fetchNotificationSettings = async () => {
     try {
-      const response = await fetch('/api/user/notifications/', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
+      // Set default notification settings since we don't have this endpoint yet
+      setNotifications({
+        email_notifications: true,
+        payment_reminders: true,
+        maintenance_notices: true,
+        community_updates: true,
+        emergency_alerts: true
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data);
-      }
     } catch (error) {
       console.error('Error fetching notification settings:', error);
     }
