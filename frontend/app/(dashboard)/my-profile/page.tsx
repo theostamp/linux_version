@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
   Calendar,
   Edit3,
   Save,
@@ -25,7 +25,8 @@ import {
   CheckCircle,
   AlertTriangle,
   Building2,
-  Home
+  Home,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import AuthGate from '@/components/AuthGate';
@@ -55,6 +56,13 @@ export default function MyProfilePage() {
     new_password: '',
     confirm_password: ''
   });
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    password: '',
+    confirmText: '',
+    understood: false
+  });
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -179,6 +187,57 @@ export default function MyProfilePage() {
       alert('Error changing password');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (!deleteConfirmation.understood) {
+      alert('Παρακαλώ επιβεβαιώστε ότι καταλαβαίνετε τις συνέπειες');
+      return;
+    }
+
+    if (deleteConfirmation.confirmText !== 'ΔΙΑΓΡΑΦΗ') {
+      alert('Παρακαλώ πληκτρολογήστε "ΔΙΑΓΡΑΦΗ" για επιβεβαίωση');
+      return;
+    }
+
+    if (!deleteConfirmation.password) {
+      alert('Παρακαλώ εισάγετε τον κωδικό σας');
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:18000'}/api/users/delete-account/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          password: deleteConfirmation.password
+        }),
+      });
+
+      if (response.ok) {
+        // Clear all user data
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
+        localStorage.removeItem('user');
+
+        alert('Ο λογαριασμός σας διαγράφηκε επιτυχώς');
+
+        // Redirect to home page
+        window.location.href = '/';
+      } else {
+        const error = await response.json();
+        alert(error.message || error.detail || 'Σφάλμα κατά τη διαγραφή λογαριασμού');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('Σφάλμα κατά τη διαγραφή λογαριασμού');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -676,7 +735,123 @@ export default function MyProfilePage() {
                       Προβολή
                     </Button>
                   </div>
+
+                  {/* Danger Zone - Delete Account */}
+                  <div className="mt-8 pt-6 border-t border-red-200">
+                    <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
+                      <div className="flex items-start gap-3 mb-4">
+                        <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
+                        <div>
+                          <h4 className="font-semibold text-red-900 mb-2">Ζώνη Κινδύνου</h4>
+                          <p className="text-sm text-red-700 mb-4">
+                            Η διαγραφή του λογαριασμού σας είναι <strong>μόνιμη και μη αναστρέψιμη</strong>.
+                            Όλα τα δεδομένα σας, συμπεριλαμβανομένων των ρυθμίσεων, προφίλ και ιστορικού, θα διαγραφούν οριστικά.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="destructive"
+                        onClick={() => setShowDeleteDialog(true)}
+                        className="flex items-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Διαγραφή Λογαριασμού
+                      </Button>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Delete Account Confirmation Dialog */}
+                {showDeleteDialog && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                          <AlertTriangle className="w-6 h-6 text-red-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">Διαγραφή Λογαριασμού</h3>
+                          <p className="text-sm text-gray-600">Αυτή η ενέργεια είναι μόνιμη</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <p className="text-sm text-red-800 font-medium mb-2">Τι θα διαγραφεί:</p>
+                          <ul className="text-sm text-red-700 space-y-1 list-disc list-inside">
+                            <li>Όλα τα προσωπικά σας δεδομένα</li>
+                            <li>Ιστορικό δραστηριότητας</li>
+                            <li>Ρυθμίσεις και προτιμήσεις</li>
+                            <li>Συνδεδεμένα διαμερίσματα και κτίρια</li>
+                          </ul>
+                        </div>
+
+                        <div className="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            id="delete-understood"
+                            checked={deleteConfirmation.understood}
+                            onChange={(e) => setDeleteConfirmation({...deleteConfirmation, understood: e.target.checked})}
+                            className="mt-1 w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                          />
+                          <label htmlFor="delete-understood" className="text-sm text-gray-700">
+                            Καταλαβαίνω ότι αυτή η ενέργεια είναι μόνιμη και δεν μπορεί να αναιρεθεί
+                          </label>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="confirm-text" className="text-sm font-medium">
+                            Πληκτρολογήστε <span className="font-bold text-red-600">ΔΙΑΓΡΑΦΗ</span> για επιβεβαίωση
+                          </Label>
+                          <Input
+                            id="confirm-text"
+                            value={deleteConfirmation.confirmText}
+                            onChange={(e) => setDeleteConfirmation({...deleteConfirmation, confirmText: e.target.value})}
+                            placeholder="ΔΙΑΓΡΑΦΗ"
+                            className="mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="delete-password" className="text-sm font-medium">
+                            Εισάγετε τον κωδικό σας για επιβεβαίωση
+                          </Label>
+                          <Input
+                            id="delete-password"
+                            type="password"
+                            value={deleteConfirmation.password}
+                            onChange={(e) => setDeleteConfirmation({...deleteConfirmation, password: e.target.value})}
+                            placeholder="Κωδικός πρόσβασης"
+                            className="mt-1"
+                          />
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setShowDeleteDialog(false);
+                              setDeleteConfirmation({ password: '', confirmText: '', understood: false });
+                            }}
+                            className="flex-1"
+                            disabled={deleting}
+                          >
+                            Ακύρωση
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={deleteAccount}
+                            className="flex-1"
+                            disabled={deleting || !deleteConfirmation.understood || deleteConfirmation.confirmText !== 'ΔΙΑΓΡΑΦΗ'}
+                          >
+                            {deleting ? 'Διαγραφή...' : 'Οριστική Διαγραφή'}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </Card>
             )}
           </div>
