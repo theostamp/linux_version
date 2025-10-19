@@ -260,7 +260,15 @@ class UserSubscription(models.Model):
         default='EUR',
         help_text='Currency code'
     )
-    
+
+    # Tenant Information
+    tenant_domain = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text='Tenant domain for this subscription (e.g., etherm2021.localhost)'
+    )
+
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

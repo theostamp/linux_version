@@ -44,12 +44,14 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
             'trial_start', 'trial_end', 'current_period_start', 'current_period_end',
             'price', 'currency', 'auto_renew', 'is_trial',
             'cancel_at_period_end', 'cancelled_at',
+            'tenant_domain',  # Added for frontend redirect
             'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'plan', 'status', 'trial_start', 'trial_end',
             'current_period_start', 'current_period_end',
             'price', 'currency', 'is_trial', 'cancelled_at',
+            'tenant_domain',  # Read-only field set by backend
             'created_at', 'updated_at'
         ]
 

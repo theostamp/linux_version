@@ -45,7 +45,7 @@ class UserRequestViewSet(viewsets.ModelViewSet):
                 return qs
             # Για manager: μόνο requests από κτήρια που διαχειρίζεται
             elif self.request.user.is_staff:
-                managed_building_ids = Building.objects.filter(manager=self.request.user).values_list("id", flat=True)
+                managed_building_ids = Building.objects.filter(manager_id=self.request.user.id).values_list("id", flat=True)
                 return qs.filter(building_id__in=managed_building_ids)
             # Για resident: μόνο τα δικά του requests ή requests από το κτήριό του
             else:
@@ -116,7 +116,7 @@ class UserRequestViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="top")
     def top_requests(self, request):
         building_id = request.query_params.get("building")
-        
+
         # Χειρισμός για "όλα τα κτίρια" (building=null)
         if building_id == 'null':
             # Για superuser: όλα τα κτίρια
@@ -124,8 +124,12 @@ class UserRequestViewSet(viewsets.ModelViewSet):
                 qs = UserRequest.objects.all()
             # Για manager: μόνο τα κτίρια που διαχειρίζεται
             elif request.user.is_staff:
-                managed_ids = Building.objects.filter(manager=request.user).values_list("id", flat=True)
-                qs = UserRequest.objects.filter(building_id__in=managed_ids)
+                managed_ids = Building.objects.filter(manager_id=request.user.id).values_list("id", flat=True)
+                # If manager has no buildings yet, return empty queryset (not an error)
+                if not managed_ids:
+                    qs = UserRequest.objects.none()
+                else:
+                    qs = UserRequest.objects.filter(building_id__in=managed_ids)
             # Για resident: μόνο το κτίριο του
             else:
                 try:

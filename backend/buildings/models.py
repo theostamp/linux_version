@@ -55,14 +55,34 @@ class Building(models.Model):
     address = models.CharField(_("Διεύθυνση"), max_length=255)
     city = models.CharField(_("Πόλη"), max_length=100)
     postal_code = models.CharField(_("Τ.Κ."), max_length=10)
-    manager = models.ForeignKey(
-        "users.CustomUser",
-        on_delete=models.SET_NULL,
+    # Store manager_id as integer to support cross-schema reference
+    # The manager user exists in the public schema, but buildings are in tenant schema
+    manager_id = models.IntegerField(
         null=True,
         blank=True,
-        related_name="managed_buildings",
-        verbose_name=_("Διαχειριστής")
+        verbose_name=_("Διαχειριστής (User ID από Public Schema)"),
+        help_text=_("ID του χρήστη-διαχειριστή από το public schema")
     )
+
+    @property
+    def manager(self):
+        """Get the manager user from public schema"""
+        if not self.manager_id:
+            return None
+        from users.models import CustomUser
+        from django.db import connection
+        # Query public schema for user
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id, email, first_name, last_name FROM public.users_customuser WHERE id = %s",
+                [self.manager_id]
+            )
+            row = cursor.fetchone()
+            if row:
+                # Create a pseudo-user object (not saved to DB)
+                user = CustomUser(id=row[0], email=row[1], first_name=row[2], last_name=row[3])
+                return user
+        return None
     apartments_count = models.PositiveIntegerField(
         _("Σύνολο Διαμερισμάτων"),
         default=0

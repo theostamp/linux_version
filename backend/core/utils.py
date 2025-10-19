@@ -26,7 +26,7 @@ def _filter_for_superuser(base_queryset, building_param, building_field):
     return base_queryset
 
 def _filter_for_manager(base_queryset, user, building_param, building_field):
-    managed_ids = list(Building.objects.filter(manager=user).values_list("id", flat=True))
+    managed_ids = list(Building.objects.filter(manager_id=user.id).values_list("id", flat=True))
     print(f"Managed buildings: {managed_ids}")
     if building_param and building_param != 'null':
         building_id = _validate_building_param(building_param)

@@ -116,7 +116,89 @@ class BillingService:
                 user.role = 'manager'  # SystemRole.OFFICE_MANAGER
                 user.save(update_fields=['role'])
                 logger.info(f"Granted manager role to user {user.email}")
-            
+
+            # Create personal tenant for the user if they don't have one
+            from django_tenants.utils import get_tenant_model, get_tenant_domain_model, schema_context
+            from django.core.management import call_command
+            import re
+
+            TenantModel = get_tenant_model()
+            DomainModel = get_tenant_domain_model()
+
+            # Generate tenant schema name from email (clean and simple)
+            # Use only the email prefix (before @), sanitized for database safety
+            email_prefix = user.email.split('@')[0]
+            safe_schema = re.sub(r'[^a-z0-9]', '', email_prefix.lower())[:30]
+
+            # Handle duplicate schema names by adding incrementing suffix
+            schema_name = safe_schema
+            counter = 1
+            while TenantModel.objects.filter(schema_name=schema_name).exists():
+                schema_name = f"{safe_schema}{counter}"
+                counter += 1
+                if counter > 100:  # Safety limit
+                    logger.error(f"Could not find unique schema name for {user.email} after 100 attempts")
+                    raise ValueError(f"Unable to generate unique tenant schema for {user.email}")
+
+            # Check if user already has a tenant (search by domain pattern)
+            # This prevents creating multiple tenants for the same user
+            user_domain_pattern = f"{safe_schema}"
+            existing_domain = DomainModel.objects.filter(domain__istartswith=user_domain_pattern).first()
+            if existing_domain:
+                existing_tenant = existing_domain.tenant
+                logger.info(f"User {user.email} already has tenant '{existing_tenant.schema_name}'")
+            else:
+                existing_tenant = None
+
+            if not existing_tenant:
+                # Create new tenant for the user
+                tenant = TenantModel(
+                    schema_name=schema_name,
+                    name=f"{user.first_name or user.email}'s Organization",
+                    paid_until=current_period_end,
+                    on_trial=bool(trial_days),
+                    is_active=True
+                )
+                tenant.save()
+                logger.info(f"Created tenant '{schema_name}' for user {user.email}")
+
+                # Create domain for the tenant
+                domain = DomainModel()
+                domain.domain = f"{schema_name}.localhost"
+                domain.tenant = tenant
+                domain.is_primary = True
+                domain.save()
+                logger.info(f"Created domain '{domain.domain}' for tenant '{schema_name}'")
+
+                # Run migrations for the new tenant
+                try:
+                    call_command("migrate_schemas", schema_name=tenant.schema_name, interactive=False)
+                    logger.info(f"Ran migrations for tenant '{schema_name}'")
+                except Exception as e:
+                    logger.error(f"Failed to run migrations for tenant '{schema_name}': {e}")
+
+                # Create demo building for new manager inside the tenant schema
+                with schema_context(schema_name):
+                    from buildings.utils import create_demo_building_for_manager
+                    demo_building = create_demo_building_for_manager(user)
+                    if demo_building:
+                        logger.info(f"Created demo building '{demo_building.name}' in tenant '{schema_name}' for user {user.email}")
+                    else:
+                        logger.warning(f"Failed to create demo building for user {user.email}")
+
+                # Store tenant domain in subscription for easy access
+                subscription.tenant_domain = f"{schema_name}.localhost"
+                subscription.save(update_fields=['tenant_domain'])
+                logger.info(f"Stored tenant domain '{subscription.tenant_domain}' in subscription")
+            else:
+                logger.info(f"Tenant '{existing_tenant.schema_name}' already exists for user {user.email}")
+                # Get domain for existing tenant
+                existing_domain = DomainModel.objects.filter(tenant=existing_tenant, is_primary=True).first()
+                if existing_domain:
+                    subscription.tenant_domain = existing_domain.domain
+                    subscription.save(update_fields=['tenant_domain'])
+                    logger.info(f"Stored existing tenant domain '{subscription.tenant_domain}' in subscription")
+
             # Create initial billing cycle
             BillingCycle.objects.create(
                 subscription=subscription,

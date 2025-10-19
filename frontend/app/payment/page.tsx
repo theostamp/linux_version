@@ -140,8 +140,25 @@ function PaymentFormInner() {
       // Clear registration data
       localStorage.removeItem('registration_data');
 
-      // Redirect to success page
-      router.push(`/payment/success?subscription_id=${data.subscription_id}`);
+      // Check if we received a tenant_domain for redirect
+      if (data.tenant_domain) {
+        // Redirect to the user's personal tenant subdomain
+        toast.success('Redirecting to your personal dashboard...');
+
+        // Build the full URL with the tenant domain
+        const protocol = window.location.protocol; // http: or https:
+        const port = window.location.port ? `:${window.location.port}` : '';
+        const tenantUrl = `${protocol}//${data.tenant_domain}${port}/dashboard`;
+
+        console.log(`[Payment] Redirecting to tenant domain: ${tenantUrl}`);
+
+        // Use window.location.href for full page redirect to different subdomain
+        window.location.href = tenantUrl;
+      } else {
+        // Fallback to success page if no tenant_domain provided
+        console.warn('[Payment] No tenant_domain in response, falling back to success page');
+        router.push(`/payment/success?subscription_id=${data.subscription_id}`);
+      }
 
     } catch (error: any) {
       console.error('Payment error:', error);

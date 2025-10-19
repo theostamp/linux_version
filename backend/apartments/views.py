@@ -54,7 +54,7 @@ class ApartmentViewSet(viewsets.ModelViewSet):
             return queryset
         elif user.is_staff:
             # Managers μπορούν να βλέπουν διαμερίσματα από κτίρια που διαχειρίζονται
-            managed_buildings = Building.objects.filter(manager=user)
+            managed_buildings = Building.objects.filter(manager_id=user.id)
             return queryset.filter(building__in=managed_buildings)
         else:
             # Κανονικοί χρήστες βλέπουν μόνο τα διαμερίσματά τους

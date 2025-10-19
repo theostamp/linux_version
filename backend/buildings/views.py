@@ -167,7 +167,7 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
 
         # Managers -> μόνο τα κτίρια που διαχειρίζονται
         if hasattr(user, "is_manager") and user.is_manager:
-            return Building.objects.filter(manager=user)
+            return Building.objects.filter(manager_id=user.id)
 
         # Residents -> μόνο τα κτίρια στα οποία ανήκουν
         if BuildingMembership.objects.filter(resident=user).exists():

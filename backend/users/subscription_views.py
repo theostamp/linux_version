@@ -417,11 +417,13 @@ class UserCreateSubscriptionView(APIView):
                     'currency': subscription.currency,
                     'trial_end': subscription.trial_end,
                     'current_period_end': subscription.current_period_end,
+                    'tenant_domain': subscription.tenant_domain,  # For frontend redirect to tenant
                 }
-                
+
                 return Response({
                     'message': 'Subscription created successfully',
-                    'subscription': subscription_data
+                    'subscription': subscription_data,
+                    'tenant_domain': subscription.tenant_domain  # Also at top level for easier access
                 }, status=status.HTTP_201_CREATED)
             else:
                 return Response({
