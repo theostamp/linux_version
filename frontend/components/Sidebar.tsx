@@ -26,7 +26,7 @@ import {
   Euro,
   FileText,
   Users,
-  Handshake,
+  UserCheck,
   Truck,
   RefreshCw,
   Activity,
@@ -231,7 +231,7 @@ const navigationGroups: NavigationGroup[] = [
       {
         href: '/collaborators',
         label: 'Συνεργάτες',
-        icon: <Handshake className="w-4 h-4" />,
+        icon: <UserCheck className="w-4 h-4" />,
         roles: ['manager', 'staff', 'superuser'],
       },
       {
