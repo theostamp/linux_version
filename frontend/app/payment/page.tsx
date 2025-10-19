@@ -32,6 +32,24 @@ function PaymentFormInner() {
   const { user } = useAuth();
 
   useEffect(() => {
+    // Check if user already has a subscription
+    const checkExistingSubscription = async () => {
+      if (user) {
+        try {
+          const { data } = await api.get('/users/subscription/current/');
+          if (data.subscription && data.subscription.status !== 'canceled') {
+            toast.success('You already have an active subscription!');
+            router.push('/dashboard');
+            return;
+          }
+        } catch (error) {
+          // No subscription found, continue to payment
+        }
+      }
+    };
+
+    checkExistingSubscription();
+
     // Try to get data from URL params first
     const planId = searchParams.get('plan');
     const userEmail = searchParams.get('email');
@@ -127,8 +145,17 @@ function PaymentFormInner() {
 
     } catch (error: any) {
       console.error('Payment error:', error);
-      setPaymentError(error.message || 'Payment failed. Please try again.');
-      toast.error(error.message || 'Payment failed. Please try again.');
+
+      // Check if user already has a subscription
+      if (error.response?.data?.error === 'You already have an active subscription') {
+        toast.success('You already have an active subscription!');
+        // Redirect to dashboard
+        router.push('/dashboard');
+        return;
+      }
+
+      setPaymentError(error.response?.data?.error || error.message || 'Payment failed. Please try again.');
+      toast.error(error.response?.data?.error || error.message || 'Payment failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
