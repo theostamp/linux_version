@@ -77,26 +77,18 @@ class BillingService:
             
             # Calculate current period dates from Stripe response
             if stripe_subscription:
-                # Get current_period_start and current_period_end from subscription items
-                items = stripe_subscription.get('items', {}).get('data', [])
-                if items:
-                    # Get from first subscription item
-                    first_item = items[0]
-                    current_period_start = timezone.datetime.fromtimestamp(
-                        first_item.get('current_period_start', timezone.now().timestamp()),
-                        tz=timezone.get_current_timezone()
-                    )
-                    current_period_end = timezone.datetime.fromtimestamp(
-                        first_item.get('current_period_end', (timezone.now() + timezone.timedelta(days=30)).timestamp()),
-                        tz=timezone.get_current_timezone()
-                    )
-                else:
-                    # Fallback to trial dates or current time
-                    current_period_start = trial_end if trial_end else timezone.now()
-                    current_period_end = current_period_start + timezone.timedelta(
-                        days=30 if billing_interval == 'month' else 365
-                    )
+                # Get current_period_start and current_period_end from the subscription object
+                # NOTE: These fields are at the subscription level, not in the items
+                current_period_start = timezone.datetime.fromtimestamp(
+                    stripe_subscription.get('current_period_start', timezone.now().timestamp()),
+                    tz=timezone.get_current_timezone()
+                )
+                current_period_end = timezone.datetime.fromtimestamp(
+                    stripe_subscription.get('current_period_end', (timezone.now() + timezone.timedelta(days=30)).timestamp()),
+                    tz=timezone.get_current_timezone()
+                )
             else:
+                # Fallback to trial dates or current time
                 current_period_start = trial_end if trial_end else timezone.now()
                 current_period_end = current_period_start + timezone.timedelta(
                     days=30 if billing_interval == 'month' else 365
@@ -115,9 +107,7 @@ class BillingService:
                 stripe_subscription_id=stripe_subscription['id'],
                 stripe_customer_id=stripe_customer_id,
                 price=price,
-                currency=settings.STRIPE_CURRENCY.upper(),
-                auto_renew=True,
-                is_trial=bool(trial_days)
+                currency=settings.STRIPE_CURRENCY.upper()
             )
             
             # Create initial billing cycle
