@@ -12,8 +12,10 @@ import { motion } from 'framer-motion';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 
-export default function AnnouncementsPage() {
+function AnnouncementsPageContent() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
 
   // Χρησιμοποιούμε το selectedBuilding για φιλτράρισμα
@@ -153,5 +155,15 @@ export default function AnnouncementsPage() {
           ))}
       </motion.div>
     </div>
+  );
+}
+
+export default function AnnouncementsPage() {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <AnnouncementsPageContent />
+      </SubscriptionGate>
+    </AuthGate>
   );
 }

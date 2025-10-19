@@ -18,8 +18,10 @@ import RequestSkeleton from '@/components/RequestSkeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MAINTENANCE_CATEGORIES, PRIORITY_LEVELS, REQUEST_STATUSES } from '@/types/userRequests';
 import BuildingContextHelp from '@/components/BuildingContextHelp';
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 
-export default function RequestsPage() {
+function RequestsPageContent() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
   const { isAuthReady, user } = useAuth();
   const queryClient = useQueryClient();
@@ -550,5 +552,15 @@ export default function RequestsPage() {
         </Link>
       )}
     </div>
+  );
+}
+
+export default function RequestsPage() {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <RequestsPageContent />
+      </SubscriptionGate>
+    </AuthGate>
   );
 }

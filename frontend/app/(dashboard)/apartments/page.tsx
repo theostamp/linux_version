@@ -12,8 +12,10 @@ import Link from 'next/link';
 import ApartmentCard from '@/components/ApartmentCard';
 import ApartmentTable from '@/components/ApartmentTable';
 import ErrorMessage from '@/components/ErrorMessage';
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 
-export default function ApartmentsPage() {
+function ApartmentsPageContent() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
   const { isAuthReady, user } = useAuth();
   const [data, setData] = useState<BuildingApartmentsResponse | null>(null);
@@ -628,5 +630,15 @@ export default function ApartmentsPage() {
          )
        )}
     </div>
+  );
+}
+
+export default function ApartmentsPage() {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <ApartmentsPageContent />
+      </SubscriptionGate>
+    </AuthGate>
   );
 } 

@@ -14,13 +14,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { useState } from 'react';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 
 function isActive(start: string, end: string) {
   const today = new Date().toISOString().split('T')[0];
   return start <= today && today <= end;
 }
 
-export default function VotesPage() {
+function VotesPageContent() {
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading } = useBuilding();
   const { isAuthReady, user } = useAuth();
   const queryClient = useQueryClient();
@@ -162,5 +164,15 @@ export default function VotesPage() {
         </Link>
       )}
     </div>
+  );
+}
+
+export default function VotesPage() {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <VotesPageContent />
+      </SubscriptionGate>
+    </AuthGate>
   );
 }

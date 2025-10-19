@@ -11,8 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Plus, Search, Filter, Building as BuildingIcon, Users, Home, TrendingUp, Grid, List } from 'lucide-react';
 import Link from 'next/link';
 import ErrorMessage from '@/components/ErrorMessage';
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 
-const BuildingsPage = () => {
+const BuildingsPageContent = () => {
   const {
     buildings,
     error,
@@ -381,6 +383,16 @@ const BuildingsPage = () => {
         </div>
       )}
     </div>
+  );
+};
+
+const BuildingsPage = () => {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <BuildingsPageContent />
+      </SubscriptionGate>
+    </AuthGate>
   );
 };
 

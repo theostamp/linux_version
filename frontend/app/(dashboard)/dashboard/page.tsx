@@ -36,6 +36,7 @@ import type { UserRequest } from '@/types/userRequests';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 import LoginForm from '@/components/LoginForm';
 import { useRouter } from 'next/navigation';
 import { 
@@ -70,7 +71,9 @@ export default function DashboardPage() {
         </div>
       }
     >
-      <DashboardContent />
+      <SubscriptionGate requiredStatus="any">
+        <DashboardContent />
+      </SubscriptionGate>
     </AuthGate>
   );
 }

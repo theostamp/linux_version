@@ -4,11 +4,12 @@ import React from 'react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useAuth } from '@/components/contexts/AuthContext';
 import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 import LoginForm from '@/components/LoginForm';
 import ErrorMessage from '@/components/ErrorMessage';
 import { FinancialPage } from '@/components/financial/FinancialPage';
 
-export default function Financial() {
+function FinancialContent() {
   const { isLoading: authLoading, user } = useAuth();
   const { currentBuilding, selectedBuilding, isLoading: buildingLoading, error } = useBuilding();
 
@@ -26,15 +27,25 @@ export default function Financial() {
     return <ErrorMessage message={`Σφάλμα φόρτωσης δεδομένων κτιρίου: ${error}`} />;
   }
 
-  // Use AuthGate to ensure user is authenticated
+  // Already wrapped with AuthGate and SubscriptionGate outside
   return (
-    <AuthGate fallback={<LoginForm />}>
+    <>
       {/* Use selectedBuilding if available, otherwise currentBuilding */}
       {(selectedBuilding || currentBuilding) ? (
         <FinancialPage buildingId={(selectedBuilding || currentBuilding)!.id} />
       ) : (
         <ErrorMessage message="Δεν βρέθηκε κτίριο. Παρακαλώ επιλέξτε ένα κτίριο από τις ρυθμίσεις." />
       )}
+    </>
+  );
+}
+
+export default function Financial() {
+  return (
+    <AuthGate fallback={<LoginForm />}>
+      <SubscriptionGate requiredStatus="any">
+        <FinancialContent />
+      </SubscriptionGate>
     </AuthGate>
   );
 }
