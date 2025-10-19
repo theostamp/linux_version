@@ -18,6 +18,18 @@ export default function AppProviders({ children }: { readonly children: ReactNod
 
   const isInfoScreen = pathname?.startsWith('/info-screen');
   const isKioskMode = (pathname?.startsWith('/kiosk') || pathname?.startsWith('/kiosk-display')) && !pathname?.startsWith('/kiosk-widgets') && !pathname?.startsWith('/kiosk-management');
+
+  // Routes that should NOT have sidebar (landing pages, auth pages, payment pages)
+  const noSidebarRoutes = [
+    '/',
+    '/login',
+    '/register',
+    '/payment',
+    '/auth/callback',
+    '/logout',
+    '/verify-payment'
+  ];
+
   // All routes from the (dashboard) directory should use auth
   // Check if the pathname starts with any of the dashboard routes
   const dashboardRoutes = [
@@ -29,6 +41,9 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   ];
 
   const isDashboard = dashboardRoutes.some(route => pathname?.startsWith(route));
+  const isNoSidebarRoute = noSidebarRoutes.some(route =>
+    pathname === route || (route !== '/' && pathname?.startsWith(route))
+  );
 
   // Debug logging
   useEffect(() => {
@@ -36,7 +51,8 @@ export default function AppProviders({ children }: { readonly children: ReactNod
     console.log('[AppProviders] Is Dashboard:', isDashboard);
     console.log('[AppProviders] Is Kiosk Mode:', isKioskMode);
     console.log('[AppProviders] Is Info Screen:', isInfoScreen);
-  }, [pathname, isDashboard, isKioskMode, isInfoScreen]);
+    console.log('[AppProviders] Is No Sidebar Route:', isNoSidebarRoute);
+  }, [pathname, isDashboard, isKioskMode, isInfoScreen, isNoSidebarRoute]);
 
   // Kiosk mode routes - no auth needed, no LayoutWrapper (they have their own layout)
   // IMPORTANT: Only /kiosk and /test-kiosk routes, NOT /kiosk-widgets or /kiosk-management
@@ -62,7 +78,11 @@ export default function AppProviders({ children }: { readonly children: ReactNod
   }
 
   // All other routes including /kiosk-widgets get AuthProvider
-  const shouldUseLayoutWrapper = pathname && !isDashboard && !isKioskMode && !isInfoScreen;
+  // LayoutWrapper should NOT be used for:
+  // - Dashboard routes (they have their own layout with sidebar in (dashboard)/layout.tsx)
+  // - No sidebar routes (landing, auth, payment pages)
+  // - Kiosk and info screen routes (handled above)
+  const shouldUseLayoutWrapper = pathname && !isDashboard && !isKioskMode && !isInfoScreen && !isNoSidebarRoute;
 
   return (
     <ReactQueryProvider>
