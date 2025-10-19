@@ -109,6 +109,13 @@ class BillingService:
                 price=price,
                 currency=settings.STRIPE_CURRENCY.upper()
             )
+
+            # Grant manager role to user with subscription
+            # User who pays for subscription is a manager (not a resident)
+            if not user.role:
+                user.role = 'manager'  # SystemRole.OFFICE_MANAGER
+                user.save(update_fields=['role'])
+                logger.info(f"Granted manager role to user {user.email}")
             
             # Create initial billing cycle
             BillingCycle.objects.create(
