@@ -121,7 +121,7 @@ export default function TodoCategories() {
       <div className="border-t border-gray-200 dark:border-gray-800 pt-3">
         <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2">Κατηγορίες</h4>
         <ul className="space-y-2">
-          {categories.map((cat) => (
+          {Array.isArray(categories) && categories.map((cat) => (
             <li key={cat.id} className="flex items-center justify-between p-2 rounded border border-gray-200 dark:border-gray-800">
               <div className="text-sm">
                 <span className="font-medium text-gray-800 dark:text-gray-100">{cat.name}</span>
