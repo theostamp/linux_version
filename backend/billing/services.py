@@ -115,7 +115,9 @@ class BillingService:
                 subscription=subscription,
                 period_start=current_period_start,
                 period_end=current_period_end,
-                amount_due=price,
+                subtotal=price,
+                tax_amount=0,
+                total_amount=price,
                 currency=settings.STRIPE_CURRENCY.upper(),
                 status='pending' if trial_days else 'paid',
                 due_date=current_period_end
@@ -128,7 +130,9 @@ class BillingService:
             return subscription
             
         except Exception as e:
+            import traceback
             logger.error(f"Failed to create subscription for user {user.email}: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return None
     
     @staticmethod

@@ -91,17 +91,11 @@ class StripeService:
                 subscription_data['trial_period_days'] = trial_period_days
             
             subscription = stripe.Subscription.create(**subscription_data)
-            
+
             logger.info(f"Created Stripe subscription {subscription.id} for customer {customer_id}")
-            return {
-                'id': subscription.id,
-                'status': subscription.status,
-                'current_period_start': subscription.current_period_start,
-                'current_period_end': subscription.current_period_end,
-                'trial_start': subscription.trial_start,
-                'trial_end': subscription.trial_end,
-                'latest_invoice': subscription.latest_invoice
-            }
+            # Return the full subscription object as a dict
+            # Stripe objects can be converted to dict, which preserves all fields
+            return dict(subscription)
             
         except stripe.StripeError as e:
             logger.error(f"Failed to create subscription for customer {customer_id}: {e}")
