@@ -11,6 +11,48 @@ import TodoNotificationBell from '@/components/todos/TodoNotificationBell';
 import { User, Building as BuildingIcon, Settings, Menu, Calendar } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/api';
 
+// Helper function to get user role label
+const getUserRoleLabel = (user: any): string => {
+  if (!user) return 'Χρήστης';
+
+  // Check for superuser first (highest priority)
+  if (user.is_superuser) return 'Ultra Admin';
+
+  // Check for staff/admin
+  if (user.is_staff) return 'Διαχειριστής';
+
+  // Check for role property
+  if (user.role) {
+    switch (user.role.toLowerCase()) {
+      case 'admin':
+      case 'manager':
+        return 'Διαχειριστής';
+      case 'owner':
+        return 'Ιδιοκτήτης';
+      case 'tenant':
+        return 'Ένοικος';
+      default:
+        return user.role;
+    }
+  }
+
+  // Check profile.role
+  if (user.profile?.role) {
+    switch (user.profile.role) {
+      case 'superuser':
+        return 'Ultra Admin';
+      case 'manager':
+        return 'Διαχειριστής';
+      case 'resident':
+        return 'Κάτοικος';
+      default:
+        return user.profile.role;
+    }
+  }
+
+  return 'Χρήστης';
+};
+
 export default function GlobalHeader() {
   console.log('[GlobalHeader] Rendering');
   
@@ -158,7 +200,7 @@ export default function GlobalHeader() {
                         : user.email}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight">
-                      {user.is_staff ? 'Διαχειριστής' : 'Χρήστης'}
+                      {getUserRoleLabel(user)}
                     </p>
                   </div>
                   <div className="sm:hidden">
