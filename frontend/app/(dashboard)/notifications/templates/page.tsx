@@ -94,7 +94,7 @@ export default function NotificationTemplatesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
+        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-gray-200/50">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">Σύνολο Templates</p>
@@ -106,7 +106,7 @@ export default function NotificationTemplatesPage() {
           </div>
         </Card>
 
-        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
+        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-gray-200/50">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">Πληρωμές</p>
@@ -120,7 +120,7 @@ export default function NotificationTemplatesPage() {
           </div>
         </Card>
 
-        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
+        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-gray-200/50">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">Συντήρηση</p>
@@ -134,7 +134,7 @@ export default function NotificationTemplatesPage() {
           </div>
         </Card>
 
-        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
+        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-gray-200/50">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">Συναντήσεις</p>
@@ -150,14 +150,14 @@ export default function NotificationTemplatesPage() {
       </div>
 
       {/* Filters */}
-      <Card className="p-6 bg-gradient-to-br from-card to-surface border-border/50">
+      <Card className="p-6 bg-gradient-to-br from-card to-surface border-gray-200/50">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <label className="text-sm font-medium text-foreground mb-2 block">
               Κατηγορία
             </label>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="bg-background/50 border-border/50">
+              <SelectTrigger className="bg-background/50 border-gray-200/50">
                 <SelectValue placeholder="Όλες οι κατηγορίες" />
               </SelectTrigger>
               <SelectContent>
@@ -177,7 +177,7 @@ export default function NotificationTemplatesPage() {
               <Button 
                 variant="outline" 
                 onClick={() => setCategoryFilter('all')}
-                className="bg-background/50 border-border/50 hover:bg-muted/50"
+                className="bg-background/50 border-gray-200/50 hover:bg-muted/50"
               >
                 Καθαρισμός
               </Button>
@@ -189,7 +189,7 @@ export default function NotificationTemplatesPage() {
       {/* Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading && (
-          <Card className="p-12 col-span-full text-center bg-gradient-to-br from-card to-surface border-border/50">
+          <Card className="p-12 col-span-full text-center bg-gradient-to-br from-card to-surface border-gray-200/50">
             <div className="animate-pulse">
               <div className="w-12 h-12 mx-auto mb-4 bg-muted rounded-full"></div>
               <p className="text-lg font-medium text-muted-foreground">Φόρτωση...</p>
@@ -198,7 +198,7 @@ export default function NotificationTemplatesPage() {
         )}
 
         {!isLoading && templates && templates.length === 0 && (
-          <Card className="p-12 col-span-full text-center bg-gradient-to-br from-card to-surface border-border/50">
+          <Card className="p-12 col-span-full text-center bg-gradient-to-br from-card to-surface border-gray-200/50">
             <div className="space-y-4">
               <div className="p-4 rounded-full bg-muted/50 w-fit mx-auto">
                 <FileText className="w-12 h-12 text-muted-foreground" />
@@ -216,7 +216,7 @@ export default function NotificationTemplatesPage() {
         )}
 
         {Array.isArray(templates) && templates.map((template) => (
-          <Card key={template.id} className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50 transition-all duration-300 group">
+          <Card key={template.id} className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-gray-200/50 transition-all duration-300 group">
             <div className="space-y-6">
               {/* Header */}
               <div className="space-y-3">
@@ -246,7 +246,7 @@ export default function NotificationTemplatesPage() {
               </div>
 
               {/* Content Preview */}
-              <div className="bg-muted/50 p-4 rounded-lg space-y-3 border border-border/30">
+              <div className="bg-muted/50 p-4 rounded-lg space-y-3 border border-gray-200/30">
                 <p className="text-sm font-semibold text-foreground line-clamp-1">
                   {template.subject}
                 </p>
@@ -277,21 +277,21 @@ export default function NotificationTemplatesPage() {
                     Χρήση
                   </Button>
                 </Link>
-                <Button variant="outline" size="sm" disabled className="border-border/50">
+                <Button variant="outline" size="sm" disabled className="border-gray-200/50">
                   <Eye className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   disabled={template.is_system}
-                  className="border-border/50"
+                  className="border-gray-200/50"
                 >
                   <Edit className="w-4 h-4" />
                 </Button>
               </div>
 
               {/* Metadata */}
-              <div className="text-xs text-muted-foreground border-t border-border/30 pt-3">
+              <div className="text-xs text-muted-foreground border-t border-gray-200/30 pt-3">
                 <p className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground"></span>
                   Δημιουργήθηκε: {new Date(template.created_at).toLocaleDateString('el-GR')}

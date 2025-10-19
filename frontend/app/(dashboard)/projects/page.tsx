@@ -23,6 +23,8 @@ import {
 import Link from 'next/link';
 import { useBuildingEvents } from '@/lib/useBuildingEvents';
 import { useRole } from '@/lib/auth';
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 
 interface ProjectStats {
   total_projects: number;
@@ -35,7 +37,7 @@ interface ProjectStats {
   average_completion_rate: number;
 }
 
-export default function ProjectsDashboard() {
+function ProjectsDashboardContent() {
   useBuildingEvents();
   const { isAdmin, isManager } = useRole();
   const buildingId = getActiveBuildingId();
@@ -412,5 +414,15 @@ export default function ProjectsDashboard() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function ProjectsDashboard() {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <ProjectsDashboardContent />
+      </SubscriptionGate>
+    </AuthGate>
   );
 } 

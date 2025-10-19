@@ -33,6 +33,8 @@ import {
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 
 const statusConfig = {
     pending: {
@@ -67,7 +69,7 @@ const statusConfig = {
     },
 };
 
-export default function DocumentsPage() {
+function DocumentsPageContent() {
     const [page, setPage] = useState(1);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [isLogModalOpen, setIsLogModalOpen] = useState(false);
@@ -388,5 +390,15 @@ export default function DocumentsPage() {
             />
             </div>
         </DocumentLogProvider>
+    );
+}
+
+export default function DocumentsPage() {
+    return (
+        <AuthGate role="any">
+            <SubscriptionGate requiredStatus="any">
+                <DocumentsPageContent />
+            </SubscriptionGate>
+        </AuthGate>
     );
 }

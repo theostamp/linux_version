@@ -16,10 +16,10 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import { fetchTeams, fetchTeamMembers, fetchTeamTasks, type Team, type TeamMember, type TeamTask } from '@/lib/api';
 import CreateTeamForm from '@/components/teams/CreateTeamForm';
 import EditTeamForm from '@/components/teams/EditTeamForm';
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 
-
-
-export default function TeamsPage() {
+function TeamsPageContent() {
   const { selectedBuilding } = useBuilding();
   const [teams, setTeams] = useState<Team[]>([]);
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -370,5 +370,15 @@ export default function TeamsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function TeamsPage() {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <TeamsPageContent />
+      </SubscriptionGate>
+    </AuthGate>
   );
 } 

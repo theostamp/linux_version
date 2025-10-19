@@ -139,7 +139,7 @@ export default function NotificationDetailPage({
 
       {/* Notification Info */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
+        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-gray-200/50">
           <div className="space-y-3">
             <p className="text-sm font-medium text-muted-foreground">Τύπος</p>
             <div className="flex items-center gap-3">
@@ -172,7 +172,7 @@ export default function NotificationDetailPage({
           </div>
         </Card>
 
-        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
+        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-gray-200/50">
           <div className="space-y-3">
             <p className="text-sm font-medium text-muted-foreground">Κατάσταση</p>
             <div className="flex items-center gap-3">
@@ -196,7 +196,7 @@ export default function NotificationDetailPage({
           </div>
         </Card>
 
-        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
+        <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-gray-200/50">
           <div className="space-y-3">
             <p className="text-sm font-medium text-muted-foreground">Προτεραιότητα</p>
             <Badge
@@ -210,10 +210,10 @@ export default function NotificationDetailPage({
       </div>
 
       {/* Delivery Statistics */}
-      <Card className="p-8 bg-gradient-to-br from-card to-surface border-border/50">
+      <Card className="p-8 bg-gradient-to-br from-card to-surface border-gray-200/50">
         <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Στατιστικά Παράδοσης</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="p-6 rounded-lg bg-muted/30 border border-border/30">
+          <div className="p-6 rounded-lg bg-muted/30 border border-gray-200/30">
             <p className="text-sm font-medium text-muted-foreground mb-2">Σύνολο Παραληπτών</p>
             <p className="text-3xl font-heading font-bold text-foreground">{notification.total_recipients}</p>
           </div>
@@ -239,7 +239,7 @@ export default function NotificationDetailPage({
       </Card>
 
       {/* Message Content */}
-      <Card className="p-8 bg-gradient-to-br from-card to-surface border-border/50">
+      <Card className="p-8 bg-gradient-to-br from-card to-surface border-gray-200/50">
         <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Περιεχόμενο Μηνύματος</h2>
 
         {notification.notification_type !== 'sms' && (
@@ -248,7 +248,7 @@ export default function NotificationDetailPage({
               <Mail className="w-5 h-5 mr-3 text-primary" />
               Email
             </h3>
-            <div className="bg-muted/50 p-6 rounded-lg border border-border/30 space-y-4">
+            <div className="bg-muted/50 p-6 rounded-lg border border-gray-200/30 space-y-4">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Θέμα:</p>
                 <p className="text-lg font-semibold text-foreground">{notification.subject}</p>
@@ -269,7 +269,7 @@ export default function NotificationDetailPage({
               <MessageSquare className="w-5 h-5 mr-3 text-accent" />
               SMS
             </h3>
-            <div className="bg-muted/50 p-6 rounded-lg border border-border/30 space-y-4">
+            <div className="bg-muted/50 p-6 rounded-lg border border-gray-200/30 space-y-4">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Κείμενο:</p>
                 <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground bg-background/50 p-4 rounded-md border border-border/20">
@@ -286,14 +286,14 @@ export default function NotificationDetailPage({
 
       {/* Recipients Table */}
       {notification.recipients && notification.recipients.length > 0 && (
-        <Card className="p-8 bg-gradient-to-br from-card to-surface border-border/50">
+        <Card className="p-8 bg-gradient-to-br from-card to-surface border-gray-200/50">
           <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">
             Παραλήπτες ({notification.recipients.length})
           </h2>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-border/30">
+                <TableRow className="border-gray-200/30">
                   <TableHead className="text-sm font-medium text-foreground">Διαμέρισμα</TableHead>
                   <TableHead className="text-sm font-medium text-foreground">Όνομα</TableHead>
                   <TableHead className="text-sm font-medium text-foreground">Email</TableHead>

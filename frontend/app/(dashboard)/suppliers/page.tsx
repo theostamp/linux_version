@@ -14,10 +14,10 @@ import { Progress } from '@/components/ui/progress';
 import { Plus, Building2, Phone, Mail, Star, AlertCircle, CheckCircle } from 'lucide-react';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { fetchSuppliers, fetchContractors, type Supplier, type Contractor } from '@/lib/api';
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 
-
-
-export default function SuppliersPage() {
+function SuppliersPageContent() {
   const { selectedBuilding } = useBuilding();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [contractors, setContractors] = useState<Contractor[]>([]);
@@ -406,5 +406,15 @@ export default function SuppliersPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function SuppliersPage() {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <SuppliersPageContent />
+      </SubscriptionGate>
+    </AuthGate>
   );
 } 

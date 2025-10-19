@@ -11,6 +11,7 @@ import SuccessPage from './components/SuccessPage';
 import Dashboard from './components/Dashboard';
 import AuthCallback from './components/AuthCallback';
 import SubscriptionManagement from './components/SubscriptionManagement';
+import Financial from './components/Financial';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -33,6 +34,7 @@ function App() {
             <Route path="/payment" element={<PaymentForm />} />
             <Route path="/success" element={<SuccessPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/financial" element={<Financial />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/my-subscription" element={<SubscriptionManagement />} />
           </Routes>

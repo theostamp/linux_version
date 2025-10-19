@@ -6,8 +6,10 @@ import BuildingFilterIndicator from "@/components/BuildingFilterIndicator";
 import Link from "next/link";
 import { Resident } from "@/lib/api";
 import { useState, useMemo } from "react";
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 
-export default function ResidentsListPage() {
+function ResidentsListPageContent() {
   const { currentBuilding, selectedBuilding } = useBuilding();
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -207,5 +209,15 @@ export default function ResidentsListPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ResidentsListPage() {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <ResidentsListPageContent />
+      </SubscriptionGate>
+    </AuthGate>
   );
 }

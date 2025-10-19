@@ -110,7 +110,7 @@ export default function NotificationsPage() {
       {/* Statistics Cards */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
+          <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-gray-200/50">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Σύνολο</p>
@@ -122,7 +122,7 @@ export default function NotificationsPage() {
             </div>
           </Card>
 
-          <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
+          <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-gray-200/50">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Επιτυχείς</p>
@@ -134,7 +134,7 @@ export default function NotificationsPage() {
             </div>
           </Card>
 
-          <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
+          <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-gray-200/50">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Αποτυχίες</p>
@@ -146,7 +146,7 @@ export default function NotificationsPage() {
             </div>
           </Card>
 
-          <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50">
+          <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-gray-200/50">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">Μέσος Όρος Παράδοσης</p>
@@ -163,14 +163,14 @@ export default function NotificationsPage() {
       )}
 
       {/* Filters */}
-      <Card className="p-6 bg-gradient-to-br from-card to-surface border-border/50">
+      <Card className="p-6 bg-gradient-to-br from-card to-surface border-gray-200/50">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <label className="text-sm font-medium text-foreground mb-2 block">
               Κατάσταση
             </label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="bg-background/50 border-border/50">
+              <SelectTrigger className="bg-background/50 border-gray-200/50">
                 <SelectValue placeholder="Όλες οι καταστάσεις" />
               </SelectTrigger>
               <SelectContent>
@@ -188,7 +188,7 @@ export default function NotificationsPage() {
               Τύπος
             </label>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="bg-background/50 border-border/50">
+              <SelectTrigger className="bg-background/50 border-gray-200/50">
                 <SelectValue placeholder="Όλοι οι τύποι" />
               </SelectTrigger>
               <SelectContent>
@@ -208,7 +208,7 @@ export default function NotificationsPage() {
                   setStatusFilter('all');
                   setTypeFilter('all');
                 }}
-                className="bg-background/50 border-border/50 hover:bg-muted/50"
+                className="bg-background/50 border-gray-200/50 hover:bg-muted/50"
               >
                 Καθαρισμός
               </Button>
@@ -220,7 +220,7 @@ export default function NotificationsPage() {
       {/* Notifications List */}
       <div className="space-y-6">
         {isLoading && (
-          <Card className="p-12 text-center bg-gradient-to-br from-card to-surface border-border/50">
+          <Card className="p-12 text-center bg-gradient-to-br from-card to-surface border-gray-200/50">
             <div className="animate-pulse">
               <div className="w-12 h-12 mx-auto mb-4 bg-muted rounded-full"></div>
               <p className="text-lg font-medium text-muted-foreground">Φόρτωση...</p>
@@ -229,7 +229,7 @@ export default function NotificationsPage() {
         )}
 
         {!isLoading && notifications && notifications.length === 0 && (
-          <Card className="p-12 text-center bg-gradient-to-br from-card to-surface border-border/50">
+          <Card className="p-12 text-center bg-gradient-to-br from-card to-surface border-gray-200/50">
             <div className="space-y-4">
               <div className="p-4 rounded-full bg-muted/50 w-fit mx-auto">
                 <Send className="w-12 h-12 text-muted-foreground" />
@@ -253,7 +253,7 @@ export default function NotificationsPage() {
 
         {Array.isArray(notifications) && notifications.map((notification, index) => (
           <Link key={notification.id} href={`/notifications/${notification.id}`}>
-            <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-border/50 cursor-pointer transition-all duration-300 group">
+            <Card className="p-6 hover-lift bg-gradient-to-br from-card to-surface border-gray-200/50 cursor-pointer transition-all duration-300 group">
               <div className="flex items-start justify-between gap-6">
                 <div className="flex-1 space-y-4">
                   <div className="flex items-center gap-3 flex-wrap">

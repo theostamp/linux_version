@@ -314,14 +314,14 @@ export default function SendNotificationPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         {/* Template Selection */}
-        <Card className="p-8 bg-gradient-to-br from-card to-surface border-border/50">
+        <Card className="p-8 bg-gradient-to-br from-card to-surface border-gray-200/50">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-heading font-semibold text-foreground">Επιλογή Περιεχομένου</h2>
             <div className="flex items-center gap-3">
               <Checkbox
                 checked={useTemplate}
                 onCheckedChange={(checked) => setUseTemplate(checked as boolean)}
-                className="border-border/50"
+                className="border-gray-200/50"
               />
               <Label className="text-sm font-medium text-foreground">Χρήση Template</Label>
             </div>
@@ -332,7 +332,7 @@ export default function SendNotificationPage() {
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">Επιλογή Template</Label>
                 <Select onValueChange={handleTemplateChange}>
-                  <SelectTrigger className="bg-background/50 border-border/50">
+                  <SelectTrigger className="bg-background/50 border-gray-200/50">
                     <SelectValue placeholder="Επιλέξτε Ειδοποίηση" />
                   </SelectTrigger>
                   <SelectContent>
@@ -353,7 +353,7 @@ export default function SendNotificationPage() {
 
               {/* Template Context Variables */}
               {selectedTemplateId && Object.keys(context).length > 0 && (
-                <div className="space-y-4 border-t border-border/30 pt-6">
+                <div className="space-y-4 border-t border-gray-200/30 pt-6">
                   <div className="space-y-1">
                     <Label className="text-lg font-heading font-semibold text-foreground">Παράμετροι Template</Label>
                     <p className="text-sm text-muted-foreground">
@@ -382,7 +382,7 @@ export default function SendNotificationPage() {
                       return (
                         <div key={key} className="space-y-2">
                           <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-                            <code className="bg-muted/50 px-2 py-1 rounded-md text-xs font-mono border border-border/30">
+                            <code className="bg-muted/50 px-2 py-1 rounded-md text-xs font-mono border border-gray-200/30">
                               {`{{${key}}}`}
                             </code>
                             {isAutoPopulated && (
@@ -402,7 +402,7 @@ export default function SendNotificationPage() {
                                 }
                               }}
                             >
-                              <SelectTrigger className="bg-background/50 border-border/50">
+                              <SelectTrigger className="bg-background/50 border-gray-200/50">
                                 <SelectValue placeholder={`Επιλέξτε ${key.replace(/_/g, ' ')}`} />
                               </SelectTrigger>
                               <SelectContent>
@@ -423,7 +423,7 @@ export default function SendNotificationPage() {
                                 }))
                               }
                               placeholder={isAutoPopulated ? value : `Εισάγετε ${key.replace(/_/g, ' ')}`}
-                              className={`font-mono text-sm border-border/50 ${
+                              className={`font-mono text-sm border-gray-200/50 ${
                                 isAutoPopulated
                                   ? 'bg-green-50/50 border-green-200'
                                   : 'bg-background/50'
@@ -457,7 +457,7 @@ export default function SendNotificationPage() {
                   <Input
                     {...register('subject')}
                     placeholder="π.χ. Υπενθύμιση Οφειλών"
-                    className="bg-background/50 border-border/50"
+                    className="bg-background/50 border-gray-200/50"
                   />
                   {errors.subject && (
                     <p className="text-sm text-destructive mt-1">{errors.subject.message}</p>
@@ -470,7 +470,7 @@ export default function SendNotificationPage() {
                     {...register('body')}
                     rows={10}
                     placeholder="Γράψτε το περιεχόμενο της ειδοποίησης..."
-                    className="bg-background/50 border-border/50 resize-none"
+                    className="bg-background/50 border-gray-200/50 resize-none"
                   />
                   {errors.body && (
                     <p className="text-sm text-destructive mt-1">{errors.body.message}</p>
@@ -486,7 +486,7 @@ export default function SendNotificationPage() {
                     rows={4}
                     maxLength={160}
                     placeholder="Γράψτε το SMS (μέχρι 160 χαρακτήρες)..."
-                    className="bg-background/50 border-border/50 resize-none"
+                    className="bg-background/50 border-gray-200/50 resize-none"
                   />
                   <div className="flex justify-between items-center">
                     <p className="text-xs text-muted-foreground">
@@ -506,7 +506,7 @@ export default function SendNotificationPage() {
         </Card>
 
         {/* Notification Settings */}
-        <Card className="p-8 bg-gradient-to-br from-card to-surface border-border/50">
+        <Card className="p-8 bg-gradient-to-br from-card to-surface border-gray-200/50">
           <h2 className="text-2xl font-heading font-semibold text-foreground mb-6">Ρυθμίσεις Ειδοποίησης</h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -519,22 +519,22 @@ export default function SendNotificationPage() {
                 }
                 className="space-y-3"
               >
-                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border/30 hover:bg-muted/30 transition-colors">
-                  <RadioGroupItem value="email" id="email" className="border-border/50" />
+                <div className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200/30 hover:bg-muted/30 transition-colors">
+                  <RadioGroupItem value="email" id="email" className="border-gray-200/50" />
                   <Label htmlFor="email" className="flex items-center cursor-pointer flex-1">
                     <Mail className="w-4 h-4 mr-2 text-primary" />
                     <span className="text-sm font-medium">Μόνο Email</span>
                   </Label>
                 </div>
-                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border/30 hover:bg-muted/30 transition-colors">
-                  <RadioGroupItem value="sms" id="sms" className="border-border/50" />
+                <div className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200/30 hover:bg-muted/30 transition-colors">
+                  <RadioGroupItem value="sms" id="sms" className="border-gray-200/50" />
                   <Label htmlFor="sms" className="flex items-center cursor-pointer flex-1">
                     <MessageSquare className="w-4 h-4 mr-2 text-accent" />
                     <span className="text-sm font-medium">Μόνο SMS</span>
                   </Label>
                 </div>
-                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border/30 hover:bg-muted/30 transition-colors">
-                  <RadioGroupItem value="both" id="both" className="border-border/50" />
+                <div className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200/30 hover:bg-muted/30 transition-colors">
+                  <RadioGroupItem value="both" id="both" className="border-gray-200/50" />
                   <Label htmlFor="both" className="flex items-center cursor-pointer flex-1">
                     <div className="flex items-center mr-2">
                       <Mail className="w-4 h-4 text-primary" />
@@ -554,7 +554,7 @@ export default function SendNotificationPage() {
                   setValue('priority', value as 'low' | 'normal' | 'high' | 'urgent')
                 }
               >
-                <SelectTrigger className="bg-background/50 border-border/50">
+                <SelectTrigger className="bg-background/50 border-gray-200/50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -569,7 +569,7 @@ export default function SendNotificationPage() {
         </Card>
 
         {/* Building Scope Selection */}
-        <Card className="p-8 bg-gradient-to-br from-card to-surface border-border/50">
+        <Card className="p-8 bg-gradient-to-br from-card to-surface border-gray-200/50">
           <h2 className="text-2xl font-heading font-semibold text-foreground mb-6 flex items-center">
             <Users className="w-6 h-6 mr-3 text-primary" />
             Επιλογή Κτιρίων
@@ -577,8 +577,8 @@ export default function SendNotificationPage() {
 
           <div className="space-y-6">
             <RadioGroup value={buildingScope} onValueChange={(value: any) => setBuildingScope(value)} className="space-y-4">
-              <div className="flex items-start space-x-3 p-4 rounded-lg border border-border/30 hover:bg-muted/30 transition-colors">
-                <RadioGroupItem value="current" id="current" className="mt-1 border-border/50" />
+              <div className="flex items-start space-x-3 p-4 rounded-lg border border-gray-200/30 hover:bg-muted/30 transition-colors">
+                <RadioGroupItem value="current" id="current" className="mt-1 border-gray-200/50" />
                 <Label htmlFor="current" className="cursor-pointer flex-1">
                   <div className="space-y-1">
                     <span className="text-sm font-medium text-foreground">Τρέχον κτίριο μόνο</span>
@@ -588,8 +588,8 @@ export default function SendNotificationPage() {
                   </div>
                 </Label>
               </div>
-              <div className="flex items-start space-x-3 p-4 rounded-lg border border-border/30 hover:bg-muted/30 transition-colors">
-                <RadioGroupItem value="specific" id="specific" className="mt-1 border-border/50" />
+              <div className="flex items-start space-x-3 p-4 rounded-lg border border-gray-200/30 hover:bg-muted/30 transition-colors">
+                <RadioGroupItem value="specific" id="specific" className="mt-1 border-gray-200/50" />
                 <Label htmlFor="specific" className="cursor-pointer flex-1">
                   <div className="space-y-1">
                     <span className="text-sm font-medium text-foreground">Συγκεκριμένα κτίρια</span>
@@ -599,8 +599,8 @@ export default function SendNotificationPage() {
                   </div>
                 </Label>
               </div>
-              <div className="flex items-start space-x-3 p-4 rounded-lg border border-border/30 hover:bg-muted/30 transition-colors">
-                <RadioGroupItem value="all" id="all" className="mt-1 border-border/50" />
+              <div className="flex items-start space-x-3 p-4 rounded-lg border border-gray-200/30 hover:bg-muted/30 transition-colors">
+                <RadioGroupItem value="all" id="all" className="mt-1 border-gray-200/50" />
                 <Label htmlFor="all" className="cursor-pointer flex-1">
                   <div className="space-y-1">
                     <span className="text-sm font-medium text-foreground">Όλα τα κτίρια</span>
@@ -613,7 +613,7 @@ export default function SendNotificationPage() {
             </RadioGroup>
 
             {buildingScope === 'specific' && (
-              <div className="mt-6 p-6 bg-muted/30 rounded-lg border border-border/30 space-y-4">
+              <div className="mt-6 p-6 bg-muted/30 rounded-lg border border-gray-200/30 space-y-4">
                 <Label className="text-sm font-medium text-foreground">Επιλέξτε Κτίρια:</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {buildings.map((building) => (
@@ -628,7 +628,7 @@ export default function SendNotificationPage() {
                             setSelectedBuildings(selectedBuildings.filter((id) => id !== building.id));
                           }
                         }}
-                        className="border-border/50"
+                        className="border-gray-200/50"
                       />
                       <Label htmlFor={`building-${building.id}`} className="cursor-pointer flex-1">
                         <div className="space-y-1">
@@ -667,18 +667,18 @@ export default function SendNotificationPage() {
         </Card>
 
         {/* Recipients Selection */}
-        <Card className="p-8 bg-gradient-to-br from-card to-surface border-border/50">
+        <Card className="p-8 bg-gradient-to-br from-card to-surface border-gray-200/50">
           <h2 className="text-2xl font-heading font-semibold text-foreground mb-6 flex items-center">
             <Users className="w-6 h-6 mr-3 text-primary" />
             Παραλήπτες
           </h2>
 
           <div className="space-y-6">
-            <div className="flex items-start gap-3 p-4 rounded-lg border border-border/30 hover:bg-muted/30 transition-colors">
+            <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-200/30 hover:bg-muted/30 transition-colors">
               <Checkbox
                 checked={sendToAll}
                 onCheckedChange={(checked) => setValue('send_to_all', checked as boolean)}
-                className="mt-1 border-border/50"
+                className="mt-1 border-gray-200/50"
               />
               <Label className="cursor-pointer flex-1">
                 <div className="space-y-1">
@@ -693,7 +693,7 @@ export default function SendNotificationPage() {
             </div>
 
             {!sendToAll && (
-              <div className="p-6 bg-muted/30 rounded-lg border border-border/30">
+              <div className="p-6 bg-muted/30 rounded-lg border border-gray-200/30">
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-full bg-info/20">
                     <span className="text-info text-lg">ℹ️</span>
@@ -714,13 +714,13 @@ export default function SendNotificationPage() {
         </Card>
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-gradient-to-br from-card to-surface border border-border/50 rounded-lg">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-gradient-to-br from-card to-surface border border-gray-200/50 rounded-lg">
           <Button
             type="button"
             variant="outline"
             onClick={handlePreview}
             disabled={!watch('subject') || !watch('body')}
-            className="bg-background/50 border-border/50 hover:bg-muted/50"
+            className="bg-background/50 border-gray-200/50 hover:bg-muted/50"
           >
             <Eye className="w-4 h-4 mr-2" />
             Προεπισκόπηση
@@ -728,7 +728,7 @@ export default function SendNotificationPage() {
 
           <div className="flex gap-3">
             <Link href="/notifications">
-              <Button type="button" variant="outline" className="bg-background/50 border-border/50 hover:bg-muted/50">
+              <Button type="button" variant="outline" className="bg-background/50 border-gray-200/50 hover:bg-muted/50">
                 Ακύρωση
               </Button>
             </Link>
@@ -752,7 +752,7 @@ export default function SendNotificationPage() {
           onClick={() => setShowPreview(false)}
         >
           <Card
-            className="max-w-3xl w-full max-h-[85vh] overflow-y-auto bg-gradient-to-br from-card to-surface border-border/50 shadow-2xl"
+            className="max-w-3xl w-full max-h-[85vh] overflow-y-auto bg-gradient-to-br from-card to-surface border-gray-200/50 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-8 space-y-6">
@@ -761,7 +761,7 @@ export default function SendNotificationPage() {
                 <Button 
                   variant="outline" 
                   onClick={() => setShowPreview(false)}
-                  className="bg-background/50 border-border/50 hover:bg-muted/50"
+                  className="bg-background/50 border-gray-200/50 hover:bg-muted/50"
                 >
                   Κλείσιμο
                 </Button>
@@ -773,7 +773,7 @@ export default function SendNotificationPage() {
                     <Mail className="w-5 h-5 mr-3 text-primary" />
                     Email
                   </h3>
-                  <div className="bg-muted/50 p-6 rounded-lg border border-border/30 space-y-4">
+                  <div className="bg-muted/50 p-6 rounded-lg border border-gray-200/30 space-y-4">
                     <div className="space-y-2">
                       <p className="text-sm font-medium text-muted-foreground">Θέμα:</p>
                       <p className="text-lg font-semibold text-foreground">{previewContent.subject}</p>
@@ -794,7 +794,7 @@ export default function SendNotificationPage() {
                     <MessageSquare className="w-5 h-5 mr-3 text-accent" />
                     SMS
                   </h3>
-                  <div className="bg-muted/50 p-6 rounded-lg border border-border/30">
+                  <div className="bg-muted/50 p-6 rounded-lg border border-gray-200/30">
                     <div className="space-y-2">
                       <p className="text-sm font-medium text-muted-foreground">Κείμενο:</p>
                       <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground bg-background/50 p-4 rounded-md border border-border/20">

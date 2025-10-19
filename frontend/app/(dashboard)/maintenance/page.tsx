@@ -39,6 +39,8 @@ import { ExpenseForm } from '@/components/financial/ExpenseForm';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2 } from 'lucide-react';
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 
 interface MaintenanceStats {
   total_contractors: number;
@@ -330,7 +332,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
   );
 }
 
-export default function MaintenanceDashboard() {
+function MaintenanceDashboardContent() {
   useBuildingEvents();
   const { isAdmin, isManager } = useRole();
   const buildingId = getActiveBuildingId();
@@ -864,5 +866,15 @@ export default function MaintenanceDashboard() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function MaintenanceDashboard() {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <MaintenanceDashboardContent />
+      </SubscriptionGate>
+    </AuthGate>
   );
 } 

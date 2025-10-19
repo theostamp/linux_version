@@ -24,10 +24,10 @@ import {
   type CollaborationInvoice 
 } from '@/lib/api';
 import CreateCollaboratorForm from '@/components/collaborators/CreateCollaboratorForm';
+import AuthGate from '@/components/AuthGate';
+import SubscriptionGate from '@/components/SubscriptionGate';
 
-
-
-export default function CollaboratorsPage() {
+function CollaboratorsPageContent() {
   const { selectedBuilding } = useBuilding();
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [projects, setProjects] = useState<CollaborationProject[]>([]);
@@ -520,5 +520,15 @@ export default function CollaboratorsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function CollaboratorsPage() {
+  return (
+    <AuthGate role="any">
+      <SubscriptionGate requiredStatus="any">
+        <CollaboratorsPageContent />
+      </SubscriptionGate>
+    </AuthGate>
   );
 } 
