@@ -40,8 +40,7 @@ def create_demo_building_for_manager(user):
             internal_manager_phone='2101234567',
             heating_fixed_percentage=30.0,
             latitude=37.9838,
-            longitude=23.7275,
-            description='Αυτό είναι ένα δοκιμαστικό κτίριο με δείγματα δεδομένων για να εξοικειωθείτε με το σύστημα. Μπορείτε να το διαγράψετε ή να το τροποποιήσετε ανά πάσα στιγμή.'
+            longitude=23.7275
         )
 
         logger.info(f"Created demo building '{demo_building.name}' for user {user.email}")

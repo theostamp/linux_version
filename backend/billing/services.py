@@ -324,12 +324,12 @@ class BillingService:
             return True  # No tracking means no limit
         
         # Check if unlimited (-1)
-        if usage_tracking.limit_value == -1:
+        if usage_tracking.usage_limit == -1:
             return True
         
         # Check if within limit
-        new_value = usage_tracking.current_value + increment
-        return new_value <= usage_tracking.limit_value
+        new_value = usage_tracking.usage_count + increment
+        return new_value <= usage_tracking.usage_limit
     
     @staticmethod
     @transaction.atomic
@@ -344,13 +344,13 @@ class BillingService:
             period_start=timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0),
             period_end=timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) + timezone.timedelta(days=32),
             defaults={
-                'current_value': 0,
-                'limit_value': BillingService._get_limit_for_metric(subscription.plan, metric_type)
+                'usage_count': 0,
+                'usage_limit': BillingService._get_limit_for_metric(subscription.plan, metric_type)
             }
         )
         
         if not created:
-            usage_tracking.current_value += increment
+            usage_tracking.usage_count += increment
             usage_tracking.save()
         
         return True
@@ -366,8 +366,8 @@ class BillingService:
             UsageTracking.objects.create(
                 subscription=subscription,
                 metric_type=metric,
-                current_value=0,
-                limit_value=BillingService._get_limit_for_metric(subscription.plan, metric),
+                usage_count=0,
+                usage_limit=BillingService._get_limit_for_metric(subscription.plan, metric),
                 period_start=timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0),
                 period_end=timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) + timezone.timedelta(days=32)
             )
@@ -384,7 +384,7 @@ class BillingService:
                 subscription=subscription,
                 metric_type=metric
             ).update(
-                limit_value=BillingService._get_limit_for_metric(subscription.plan, metric)
+                usage_limit=BillingService._get_limit_for_metric(subscription.plan, metric)
             )
     
     @staticmethod
@@ -480,8 +480,8 @@ class BillingService:
             }
             
             for usage in usage_data:
-                if usage.limit_value > 0 and usage.current_value > usage.limit_value:
-                    overage_units = usage.current_value - usage.limit_value
+                if usage.usage_limit > 0 and usage.usage_count > usage.usage_limit:
+                    overage_units = usage.usage_count - usage.usage_limit
                     rate = overage_rates.get(usage.metric_type, Decimal('0.00'))
                     overage_amount = overage_units * rate
                     total_overage += overage_amount

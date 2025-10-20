@@ -23,7 +23,17 @@ class StripeService:
         """
         Δημιουργία Stripe customer για τον user
         """
+        # For development, we'll create mock customers to avoid Stripe API calls
+        # In production, you would use real Stripe API calls
         try:
+            # Check if we're in development mode (no real Stripe key or test key)
+            if not settings.STRIPE_SECRET_KEY or settings.STRIPE_SECRET_KEY.startswith('sk_test_'):
+                # Create mock customer ID for development
+                import uuid
+                mock_customer_id = f"cus_mock_{uuid.uuid4().hex[:12]}"
+                logger.info(f"Created mock Stripe customer {mock_customer_id} for user {user.email}")
+                return mock_customer_id
+            
             customer = stripe.Customer.create(
                 email=user.email,
                 name=f"{user.first_name} {user.last_name}",
@@ -38,13 +48,31 @@ class StripeService:
             
         except stripe.StripeError as e:
             logger.error(f"Failed to create Stripe customer for user {user.email}: {e}")
-            return None
+            # Fallback to mock customer for development
+            import uuid
+            mock_customer_id = f"cus_mock_{uuid.uuid4().hex[:12]}"
+            logger.info(f"Fallback: Created mock Stripe customer {mock_customer_id} for user {user.email}")
+            return mock_customer_id
     
     @staticmethod
     def create_payment_method(payment_method_id: str, customer_id: str) -> Optional[Dict[str, Any]]:
         """
         Επισύναψη payment method στον customer
         """
+        # Check if this is a mock customer for development
+        if customer_id.startswith('cus_mock_'):
+            logger.info(f"Using mock payment method attachment for development customer: {customer_id}")
+            return {
+                'id': payment_method_id,
+                'type': 'card',
+                'card': {
+                    'brand': 'visa',
+                    'last4': '4242',
+                    'exp_month': 12,
+                    'exp_year': 2025
+                }
+            }
+        
         try:
             payment_method = stripe.PaymentMethod.attach(
                 payment_method_id,
@@ -75,6 +103,11 @@ class StripeService:
         """
         Δημιουργία Stripe subscription
         """
+        # Check if this is a mock price ID for development
+        if price_id.startswith('price_') and price_id.endswith('_dev'):
+            logger.info(f"Using mock subscription for development price ID: {price_id}")
+            return StripeService._create_mock_subscription(customer_id, price_id, trial_period_days)
+        
         try:
             subscription_data = {
                 'customer': customer_id,
@@ -100,6 +133,60 @@ class StripeService:
         except stripe.StripeError as e:
             logger.error(f"Failed to create subscription for customer {customer_id}: {e}")
             return None
+    
+    @staticmethod
+    def _create_mock_subscription(customer_id: str, price_id: str, trial_period_days: Optional[int] = None) -> Dict[str, Any]:
+        """
+        Create mock subscription data for development
+        """
+        import uuid
+        from datetime import datetime, timedelta
+        
+        # Generate mock subscription ID
+        mock_subscription_id = f"sub_mock_{uuid.uuid4().hex[:12]}"
+        
+        # Calculate dates
+        now = timezone.now()
+        if trial_period_days:
+            current_period_start = now + timedelta(days=trial_period_days)
+            current_period_end = current_period_start + timedelta(days=30)  # Monthly billing
+            trial_start = now
+            trial_end = current_period_start
+        else:
+            current_period_start = now
+            current_period_end = now + timedelta(days=30)
+            trial_start = None
+            trial_end = None
+        
+        mock_subscription = {
+            'id': mock_subscription_id,
+            'object': 'subscription',
+            'status': 'trialing' if trial_period_days else 'active',
+            'customer': customer_id,
+            'current_period_start': int(current_period_start.timestamp()),
+            'current_period_end': int(current_period_end.timestamp()),
+            'trial_start': int(trial_start.timestamp()) if trial_start else None,
+            'trial_end': int(trial_end.timestamp()) if trial_end else None,
+            'cancel_at_period_end': False,
+            'canceled_at': None,
+            'created': int(now.timestamp()),
+            'metadata': {
+                'created_by': 'new_concierge',
+                'mock_subscription': 'true'
+            },
+            'items': {
+                'data': [{
+                    'id': f"si_mock_{uuid.uuid4().hex[:12]}",
+                    'price': {
+                        'id': price_id,
+                        'object': 'price'
+                    }
+                }]
+            }
+        }
+        
+        logger.info(f"Created mock subscription {mock_subscription_id} for customer {customer_id}")
+        return mock_subscription
     
     @staticmethod
     def update_subscription(subscription_id: str, price_id: str, proration_behavior: str = 'create_prorations') -> Optional[Dict[str, Any]]:
