@@ -38,6 +38,7 @@ import { useBuilding } from '@/components/contexts/BuildingContext';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import LoginForm from '@/components/LoginForm';
+import PublicTenantLanding from '@/components/PublicTenantLanding';
 import { useRouter } from 'next/navigation';
 import { 
   Bell, 
@@ -71,7 +72,10 @@ export default function DashboardPage() {
         </div>
       }
     >
-      <SubscriptionGate requiredStatus="any">
+      <SubscriptionGate 
+        requiredStatus="any"
+        fallback={<PublicTenantLanding />}
+      >
         <DashboardContent />
       </SubscriptionGate>
     </AuthGate>
