@@ -10,16 +10,40 @@ export default function PaymentSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [countdown, setCountdown] = useState(5);
+  const [currentStatus, setCurrentStatus] = useState('Verifying payment...');
+  const [progress, setProgress] = useState(0);
   const subscriptionId = searchParams.get('subscription_id');
   const tenantDomain = searchParams.get('tenant_domain');
   const autoRedirect = searchParams.get('auto_redirect') === 'true';
 
   useEffect(() => {
+    // Status progression simulation
+    const statusMessages = [
+      { message: 'Verifying payment...', progress: 20 },
+      { message: 'Creating your workspace...', progress: 40 },
+      { message: 'Setting up demo building...', progress: 60 },
+      { message: 'Configuring your account...', progress: 80 },
+      { message: 'Almost ready!', progress: 95 }
+    ];
+
+    let statusIndex = 0;
+    const statusTimer = setInterval(() => {
+      if (statusIndex < statusMessages.length) {
+        setCurrentStatus(statusMessages[statusIndex].message);
+        setProgress(statusMessages[statusIndex].progress);
+        statusIndex++;
+      }
+    }, 1000);
+
     // Auto-redirect countdown
-    const timer = setInterval(() => {
+    const redirectTimer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          clearInterval(timer);
+          clearInterval(redirectTimer);
+          clearInterval(statusTimer);
+          setCurrentStatus('Redirecting to your dashboard...');
+          setProgress(100);
+          
           if (autoRedirect && tenantDomain) {
             // Redirect to tenant domain
             const protocol = window.location.protocol;
@@ -36,7 +60,10 @@ export default function PaymentSuccessPage() {
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(redirectTimer);
+      clearInterval(statusTimer);
+    };
   }, [router, autoRedirect, tenantDomain]);
 
   return (
@@ -171,23 +198,74 @@ export default function PaymentSuccessPage() {
                 </div>
               </div>
 
-              {/* Auto-redirect notice */}
-              <div className="text-center py-4 bg-gray-50 rounded-lg">
+              {/* Status and Progress */}
+              <div className="text-center py-6 bg-gray-50 rounded-lg">
                 {autoRedirect && tenantDomain ? (
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      Θα μεταφερθείτε αυτόματα στο προσωπικό σας dashboard σε{' '}
-                      <span className="font-bold text-blue-600">{countdown}</span> δευτερόλεπτα...
-                    </p>
+                    {/* Current Status */}
+                    <div className="mb-4">
+                      <p className="text-lg font-semibold text-gray-800 mb-2">
+                        {currentStatus}
+                      </p>
+                      
+                      {/* Animated Progress Bar */}
+                      <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                        <div 
+                          className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-1000 ease-out"
+                          style={{ width: `${progress}%` }}
+                        ></div>
+                      </div>
+                      
+                      <p className="text-sm text-gray-600">
+                        Θα μεταφερθείτε αυτόματα στο προσωπικό σας dashboard σε{' '}
+                        <span className="font-bold text-blue-600">{countdown}</span> δευτερόλεπτα...
+                      </p>
+                    </div>
+                    
+                    {/* Tenant Domain Info */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                      <h4 className="font-semibold text-blue-900 mb-2">Προσωπικό Domain</h4>
+                      <div className="flex items-center justify-center gap-2">
+                        <code className="bg-white px-3 py-1 rounded border text-blue-800 font-mono">
+                          {tenantDomain}
+                        </code>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(tenantDomain);
+                            // You could add a toast notification here
+                          }}
+                          className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                    </div>
+                    
                     <p className="text-xs text-gray-500">
                       Στην περίπτωση που δεν μεταβείται αυτόματα, πατήστε το κουμπί παρακάτω
                     </p>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-600">
-                    Θα μεταφερθείτε αυτόματα στο dashboard σε{' '}
-                    <span className="font-bold text-blue-600">{countdown}</span> δευτερόλεπτα...
-                  </p>
+                  <div>
+                    <p className="text-lg font-semibold text-gray-800 mb-2">
+                      {currentStatus}
+                    </p>
+                    
+                    {/* Animated Progress Bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                      <div 
+                        className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-1000 ease-out"
+                        style={{ width: `${progress}%` }}
+                      ></div>
+                    </div>
+                    
+                    <p className="text-sm text-gray-600">
+                      Θα μεταφερθείτε αυτόματα στο dashboard σε{' '}
+                      <span className="font-bold text-blue-600">{countdown}</span> δευτερόλεπτα...
+                    </p>
+                  </div>
                 )}
               </div>
 

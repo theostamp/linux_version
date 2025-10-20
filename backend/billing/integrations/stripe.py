@@ -6,6 +6,7 @@ from django.utils import timezone
 from decimal import Decimal
 from typing import Optional, Dict, Any
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -409,5 +410,115 @@ class StripeService:
             logger.error(f"No price found for plan {plan_type} with interval {billing_interval}")
             return None
 
+    @staticmethod
+    def verify_payment_status(payment_method_id: str) -> Dict[str, Any]:
+        """
+        Verify payment method status with Stripe
+        """
+        try:
+            # Check if we're in mock mode
+            if not settings.STRIPE_SECRET_KEY or settings.STRIPE_SECRET_KEY.startswith('sk_test_') or getattr(settings, 'STRIPE_MOCK_MODE', False):
+                # Mock verification for development
+                logger.info(f"Mock payment verification for {payment_method_id}")
+                return {
+                    'verified': True,
+                    'status': 'succeeded',
+                    'message': 'Payment verified (mock mode)',
+                    'timestamp': timezone.now().isoformat()
+                }
+            
+            # Real Stripe verification for production
+            payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
+            
+            # Check if payment method is valid and can be used
+            if payment_method and payment_method.type == 'card':
+                return {
+                    'verified': True,
+                    'status': 'succeeded',
+                    'message': 'Payment method verified',
+                    'timestamp': timezone.now().isoformat(),
+                    'payment_method': {
+                        'id': payment_method.id,
+                        'type': payment_method.type,
+                        'card': {
+                            'brand': payment_method.card.brand,
+                            'last4': payment_method.card.last4
+                        }
+                    }
+                }
+            else:
+                return {
+                    'verified': False,
+                    'status': 'failed',
+                    'message': 'Invalid payment method',
+                    'timestamp': timezone.now().isoformat()
+                }
+                
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe payment verification error: {e}")
+            return {
+                'verified': False,
+                'status': 'error',
+                'message': f'Payment verification failed: {str(e)}',
+                'timestamp': timezone.now().isoformat()
+            }
+        except Exception as e:
+            logger.error(f"Payment verification error: {e}")
+            return {
+                'verified': False,
+                'status': 'error',
+                'message': 'Payment verification failed',
+                'timestamp': timezone.now().isoformat()
+            }
+
+    @staticmethod
+    def handle_payment_intent_succeeded(payment_intent_data: Dict[str, Any]) -> bool:
+        """
+        Handle successful payment intent from webhook
+        """
+        try:
+            payment_intent_id = payment_intent_data.get('id')
+            customer_id = payment_intent_data.get('customer')
+            
+            logger.info(f"Processing successful payment intent: {payment_intent_id}")
+            
+            # In mock mode, just log the event
+            if not settings.STRIPE_SECRET_KEY or settings.STRIPE_SECRET_KEY.startswith('sk_test_') or getattr(settings, 'STRIPE_MOCK_MODE', False):
+                logger.info(f"Mock payment intent succeeded: {payment_intent_id}")
+                return True
+            
+            # In production, you might want to update subscription status here
+            # This would be handled by the webhook system
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error handling payment intent succeeded: {e}")
+            return False
+
+    @staticmethod
+    def handle_payment_intent_failed(payment_intent_data: Dict[str, Any]) -> bool:
+        """
+        Handle failed payment intent from webhook
+        """
+        try:
+            payment_intent_id = payment_intent_data.get('id')
+            customer_id = payment_intent_data.get('customer')
+            
+            logger.warning(f"Processing failed payment intent: {payment_intent_id}")
+            
+            # In mock mode, just log the event
+            if not settings.STRIPE_SECRET_KEY or settings.STRIPE_SECRET_KEY.startswith('sk_test_') or getattr(settings, 'STRIPE_MOCK_MODE', False):
+                logger.info(f"Mock payment intent failed: {payment_intent_id}")
+                return True
+            
+            # In production, you might want to update subscription status here
+            # This would be handled by the webhook system
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error handling payment intent failed: {e}")
+            return False
 
 

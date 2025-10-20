@@ -158,11 +158,6 @@ function PaymentFormInner() {
 
         // Redirect to success page with tenant info for manual redirect option
         router.push(`/payment/success?subscription_id=${data.subscription_id}&tenant_domain=${data.tenant_domain}&auto_redirect=true`);
-        
-        // Also attempt automatic redirect after a short delay
-        setTimeout(() => {
-          window.location.href = tenantUrl;
-        }, 2000);
       } else {
         // Fallback to success page if no tenant_domain provided
         console.warn('[Payment] No tenant_domain in response, falling back to success page');

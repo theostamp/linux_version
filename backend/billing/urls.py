@@ -6,7 +6,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     SubscriptionPlanViewSet, UserSubscriptionViewSet,
     PaymentMethodViewSet, UsageTrackingViewSet,
-    BillingCycleViewSet, StripeWebhookView,
+    BillingCycleViewSet,
     CreatePaymentIntentView, UsageAnalyticsView,
     UsageTrendsView, PlanComparisonView,
     BillingHistoryView, AdminUsageStatsView,
@@ -18,6 +18,7 @@ from .views import (
     SubscriptionAnalyticsView, UsageAnalyticsView as AdvancedUsageAnalyticsView,
     PaymentAnalyticsView, PredictiveAnalyticsView
 )
+from .webhooks import StripeWebhookView, PaymentVerificationView
 
 app_name = 'billing'
 
@@ -34,7 +35,10 @@ urlpatterns = [
     path('', include(router.urls)),
     
     # Stripe webhook
-    path('webhooks/stripe/', StripeWebhookView.as_view(), name='stripe-webhook'),
+    path('webhook/stripe/', StripeWebhookView.as_view(), name='stripe-webhook'),
+    
+    # Payment verification
+    path('api/verify-payment/', PaymentVerificationView.as_view(), name='verify-payment'),
     
     # Payment intent
     path('api/payment-intent/', CreatePaymentIntentView.as_view(), name='create-payment-intent'),

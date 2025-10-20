@@ -397,6 +397,15 @@ class UserCreateSubscriptionView(APIView):
             # Get plan
             plan = get_object_or_404(SubscriptionPlan, id=plan_id, is_active=True)
             
+            # Verify payment method with Stripe
+            from billing.integrations.stripe import StripeService
+            payment_verification = StripeService.verify_payment_status(payment_method_id)
+            
+            if not payment_verification['verified']:
+                return Response({
+                    'error': f'Payment verification failed: {payment_verification["message"]}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
             # Create subscription
             subscription = BillingService.create_subscription(
                 user=user,
@@ -423,7 +432,12 @@ class UserCreateSubscriptionView(APIView):
                 return Response({
                     'message': 'Subscription created successfully',
                     'subscription': subscription_data,
-                    'tenant_domain': subscription.tenant_domain  # Also at top level for easier access
+                    'tenant_domain': subscription.tenant_domain,  # Also at top level for easier access
+                    'payment_verification': {
+                        'verified': payment_verification['verified'],
+                        'status': payment_verification['status'],
+                        'timestamp': payment_verification['timestamp']
+                    }
                 }, status=status.HTTP_201_CREATED)
             else:
                 return Response({
