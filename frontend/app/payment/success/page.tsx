@@ -26,7 +26,7 @@ export default function SubscriptionSuccessPage() {
       attempts++;
       try {
         // New API endpoint that checks the tenant creation status
-        const response = await api.get(`/billing/subscription-status/${sessionId}/`);
+        const response = await api.get(`/api/billing/subscription-status/${sessionId}/`);
         const data = response.data;
 
         if (data.status === 'completed') {
