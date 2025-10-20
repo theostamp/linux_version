@@ -137,10 +137,10 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
     setStoredSelectedBuildingId(building?.id || null);
   };
 
-  // Load buildings on mount - only once when auth is ready and user is available
+  // Load buildings on mount - only once when auth is ready and user is authenticated AND has a tenant
   useEffect(() => {
-    // Only load buildings when auth is not loading and user is authenticated
-    if (!authLoading && user) {
+    // Only load buildings when auth is not loading, user is authenticated, and has a tenant
+    if (!authLoading && user && user.tenant) {
       loadBuildings();
     }
   }, [authLoading, user, loadBuildings]);

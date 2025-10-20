@@ -90,7 +90,7 @@ export default function PaymentPage() {
 
     try {
       // Create Stripe Checkout Session
-      const { data } = await api.post('/billing/create-checkout-session/', {
+      const { data } = await api.post('/api/billing/create-checkout-session/', {
         plan_id: plan.id,
         building_name: userData.buildingName || ''
       });

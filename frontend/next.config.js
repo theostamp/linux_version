@@ -137,8 +137,8 @@ const nextConfig = {
   // Output configuration
   output: 'standalone',
   
-  // Trailing slash
-  trailingSlash: false,
+  // Trailing slash - keep trailing slashes for API compatibility
+  trailingSlash: true,
 };
 
 module.exports = withPWA(nextConfig);

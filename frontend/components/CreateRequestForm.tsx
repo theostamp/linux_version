@@ -6,7 +6,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorMessage from '@/components/ErrorMessage';
 import type { Building } from '@/lib/api';
-import { createUserRequest, fetchBuildings } from '@/lib/api';
+import { createUserRequest } from '@/lib/api';
+import { useBuildings } from '@/hooks/useBuildings';
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading';
 
 // Προκαθορισμένες επιλογές για τον τύπο αίτησης
@@ -39,17 +40,13 @@ export default function CreateRequestForm() {
   const { navigateWithLoading } = useNavigationWithLoading();
 
   // φορτώνουμε κτίρια
+  const { data: buildingsData, isLoading: buildingsLoading } = useBuildings();
+  
   useEffect(() => {
-    async function load() {
-      try {
-        const data = await fetchBuildings();
-        setBuildingOptions(data);
-      } catch (e) {
-        console.error('Failed to load buildings', e);
-      }
+    if (buildingsData) {
+      setBuildingOptions(buildingsData);
     }
-    load();
-  }, []);
+  }, [buildingsData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

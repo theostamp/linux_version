@@ -28,4 +28,11 @@ export type User = {
     role?: 'resident' | 'manager' | 'superuser';
     [key: string]: any;
   };
+
+  // Tenant information
+  tenant?: {
+    id: number;
+    name: string;
+    schema_name: string;
+  } | null;
 };

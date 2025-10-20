@@ -168,7 +168,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         return;
       }
 
-      if (cachedUser) {
+      if (cachedUser && token) {
         try {
           const parsedUser = JSON.parse(cachedUser) as User;
           
@@ -180,8 +180,12 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
             setUser(freshUser);
             console.log('AuthContext: Refreshed user data:', freshUser?.email);
           } catch (apiError) {
-            console.error('AuthContext: Failed to refresh user, using cached:', apiError);
-            setUser(parsedUser);
+            console.error('AuthContext: Failed to refresh user, clearing auth state:', apiError);
+            // Clear invalid auth state
+            localStorage.removeItem('access');
+            localStorage.removeItem('refresh');
+            localStorage.removeItem('user');
+            setUser(null);
           }
 
           clearTimeout(timeoutId);

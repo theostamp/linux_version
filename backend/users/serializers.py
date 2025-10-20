@@ -188,7 +188,8 @@ class UserSerializer(serializers.ModelSerializer):
             'office_bank_name',
             'office_bank_account',
             'office_bank_iban',
-            'office_bank_beneficiary'
+            'office_bank_beneficiary',
+            'tenant'
         ]
         read_only_fields = ['id', 'is_staff', 'is_superuser']
 

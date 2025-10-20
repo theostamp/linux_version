@@ -18,19 +18,26 @@ import {
   triggerSyncFinancialOverdues,
   triggerSyncMaintenanceSchedule,
 } from '@/lib/todos';
+import { useAuth } from '@/components/contexts/AuthContext';
 
 export function useTodos(params: FetchTodosParams = {}) {
+  const { user } = useAuth();
+  
   return useQuery<TodoItem[]>({
     queryKey: ['todos', params],
     queryFn: () => fetchTodos(params),
     staleTime: 30_000,
+    enabled: !!user?.tenant, // Only fetch if user has a tenant
   });
 }
 
 export function useTodoPendingCount(buildingId?: number | null) {
+  const { user } = useAuth();
+  
   return useQuery<number>({
     queryKey: ['todos', 'pending-count', buildingId],
     queryFn: () => fetchPendingTodosCount(buildingId),
+    enabled: !!user?.tenant, // Only fetch if user has a tenant
     refetchInterval: 60_000,
     staleTime: 30_000,
     retry: (failureCount, error: any) => {
@@ -51,17 +58,23 @@ export function useTodoPendingCount(buildingId?: number | null) {
 }
 
 export function useTodoCategories(buildingId?: number | null) {
+  const { user } = useAuth();
+  
   return useQuery<TodoCategory[]>({
     queryKey: ['todos', 'categories', buildingId],
     queryFn: () => fetchTodoCategories(buildingId),
+    enabled: !!user?.tenant, // Only fetch if user has a tenant
     staleTime: 5 * 60_000,
   });
 }
 
 export function useTodoNotifications(buildingId?: number | null, isRead?: boolean) {
+  const { user } = useAuth();
+  
   return useQuery<TodoNotification[]>({
     queryKey: ['todos', 'notifications', { buildingId, isRead }],
     queryFn: () => fetchTodoNotifications({ buildingId, is_read: isRead }),
+    enabled: !!user?.tenant, // Only fetch if user has a tenant
     staleTime: 30_000,
   });
 }

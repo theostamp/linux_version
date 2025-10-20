@@ -55,17 +55,19 @@ export function getApiBase(): string {
     if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
       return `http://${hostname}:18000`;
     }
+    // For localhost, use nginx port (8081) for client-side requests
+    if (hostname === 'localhost') {
+      return 'http://localhost:8081';
+    }
   }
   if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_BASE_URL) {
     return process.env.NEXT_PUBLIC_API_BASE_URL as string;
   }
-  return 'http://localhost:18000';
+  return 'http://localhost:8081';
 }
 
 export async function apiGet<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
-  const base = (typeof window !== 'undefined' && path.startsWith('/api/'))
-    ? window.location.origin
-    : getApiBase();
+  const base = getApiBase();
   const url = new URL(path, base);
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
@@ -148,11 +150,17 @@ const getApiBaseUrl = () => {
     // Client-side (browser) - use nginx reverse proxy
     (window as any).debugApiCalls = true;
     const hostname = window.location.hostname;
-    const origin = window.location.origin;
-    console.log(`[API] Current hostname: ${hostname}, origin: ${origin}`);
+    console.log(`[API] Current hostname: ${hostname}`);
 
-    // Use the same origin as the frontend (nginx reverse proxy handles /api routing)
-    const apiUrl = `${origin}/api`;
+    // Use nginx port (8081) for client-side requests
+    if (hostname === 'localhost') {
+      const apiUrl = 'http://localhost:8081';
+      console.log(`[API] Using browser API URL (via nginx): ${apiUrl}`);
+      return apiUrl;
+    }
+    
+    // For tenant-specific hosts, use the same hostname with nginx port
+    const apiUrl = `http://${hostname}:8081`;
     console.log(`[API] Using browser API URL (via nginx): ${apiUrl}`);
     return apiUrl;
   }
@@ -173,6 +181,7 @@ export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   timeout: 60000, // Increased timeout for financial operations
+  maxRedirects: 5, // Follow redirects (e.g., /api/users/me -> /api/users/me/)
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -483,8 +492,8 @@ export async function logoutUser(): Promise<void> {
 }
 
 export async function getCurrentUser(): Promise<User> {
-  console.log('[API CALL] Attempting to fetch /users/me/');
-  const { data } = await api.get<User>('/users/me/');
+  console.log('[API CALL] Attempting to fetch /api/users/me/');
+  const { data } = await api.get<User>('/api/users/me/');
   if (typeof window !== 'undefined' && data) {
     localStorage.setItem('user', JSON.stringify(data));
   }

@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Building, Filter, Search, Download, RefreshCw } from 'lucide-react';
 import GoogleMapsVisualization from '@/components/GoogleMapsVisualization';
-import { fetchAllBuildings, Building as BuildingType } from '@/lib/api';
+import { Building as BuildingType } from '@/lib/api';
+import { useBuildings } from '@/hooks/useBuildings';
 import { Button } from '@/components/ui/button';
 
 export default function MapVisualizationPage() {
@@ -15,24 +16,24 @@ export default function MapVisualizationPage() {
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [showOnlyWithCoordinates, setShowOnlyWithCoordinates] = useState(true);
 
-  // Fetch buildings on component mount
+  // Fetch buildings using the hook
+  const { data: buildingsData, isLoading: buildingsLoading, error: buildingsError } = useBuildings();
+  
   useEffect(() => {
-    fetchBuildings();
-  }, []);
+    if (buildingsData) {
+      setBuildings(buildingsData);
+      setFilteredBuildings(buildingsData);
+    }
+    if (buildingsError) {
+      setError('Σφάλμα φόρτωσης κτιρίων');
+    }
+    setLoading(buildingsLoading);
+  }, [buildingsData, buildingsError, buildingsLoading]);
 
   const fetchBuildings = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const fetchedBuildings = await fetchAllBuildings();
-      setBuildings(fetchedBuildings);
-      setFilteredBuildings(fetchedBuildings);
-    } catch (err) {
-      console.error('Error fetching buildings:', err);
-      setError('Σφάλμα φόρτωσης κτιρίων');
-    } finally {
-      setLoading(false);
-    }
+    // This function is kept for the refresh button, but now it just triggers a refetch
+    // The actual data fetching is handled by the useBuildings hook
+    window.location.reload(); // Simple refresh for now
   };
 
   // Filter buildings based on search term and filters
