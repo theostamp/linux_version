@@ -50,20 +50,13 @@ function getCachedOrInFlight(cacheKey: string): any {
 
 export function getApiBase(): string {
   if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    // Use tenant-specific host if available (e.g., demo.localhost)
-    if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
-      return `http://${hostname}:18000`;
-    }
-    // For localhost, use nginx port (8081) for client-side requests
-    if (hostname === 'localhost') {
-      return 'http://localhost:8081';
-    }
+    // Client-side - use same origin (no CORS)
+    return window.location.origin;
   }
   if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_BASE_URL) {
     return process.env.NEXT_PUBLIC_API_BASE_URL as string;
   }
-  return 'http://localhost:8081';
+  return 'http://backend:8000';
 }
 
 export async function apiGet<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
@@ -147,22 +140,11 @@ import { toast } from '@/hooks/use-toast';
 // Βασικό URL του API. Χρησιμοποιούμε την ίδια λογική με το apiPublic για tenant-specific URLs
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    // Client-side (browser) - use nginx reverse proxy
+    // Client-side (browser) - use same origin (no CORS)
     (window as any).debugApiCalls = true;
-    const hostname = window.location.hostname;
-    console.log(`[API] Current hostname: ${hostname}`);
-
-    // Use nginx port (8081) for client-side requests
-    if (hostname === 'localhost') {
-      const apiUrl = 'http://localhost:8081';
-      console.log(`[API] Using browser API URL (via nginx): ${apiUrl}`);
-      return apiUrl;
-    }
-    
-    // For tenant-specific hosts, use the same hostname with nginx port
-    const apiUrl = `http://${hostname}:8081`;
-    console.log(`[API] Using browser API URL (via nginx): ${apiUrl}`);
-    return apiUrl;
+    const origin = window.location.origin;
+    console.log(`[API] Using same origin for API calls: ${origin}`);
+    return origin;
   }
 
   // Server-side - use backend container or env variable

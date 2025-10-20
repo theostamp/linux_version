@@ -521,4 +521,44 @@ class StripeService:
             logger.error(f"Error handling payment intent failed: {e}")
             return False
 
+    @staticmethod
+    def create_checkout_session(session_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Create a Stripe Checkout Session for subscription payment
+        """
+        try:
+            # Check if we're in mock mode
+            if not settings.STRIPE_SECRET_KEY or settings.STRIPE_SECRET_KEY.startswith('sk_test_') or getattr(settings, 'STRIPE_MOCK_MODE', False):
+                # Create mock checkout session for development
+                import uuid
+                mock_session_id = f"cs_test_{uuid.uuid4().hex[:24]}"
+                logger.info(f"Created mock checkout session {mock_session_id}")
+                
+                # Return mock checkout session data
+                return {
+                    'id': mock_session_id,
+                    'url': f"{session_data.get('success_url', '')}?session_id={mock_session_id}",
+                    'status': 'open',
+                    'mode': session_data.get('mode', 'subscription'),
+                    'customer_email': session_data.get('customer_email'),
+                    'client_reference_id': session_data.get('client_reference_id'),
+                    'metadata': session_data.get('metadata', {}),
+                    'created': int(timezone.now().timestamp())
+                }
+            
+            # Create real Stripe checkout session
+            checkout_session = stripe.checkout.Session.create(**session_data)
+            
+            logger.info(f"Created Stripe checkout session {checkout_session.id}")
+            
+            # Return the session as a dict
+            return dict(checkout_session)
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Failed to create Stripe checkout session: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error creating checkout session: {e}")
+            raise
+
 
