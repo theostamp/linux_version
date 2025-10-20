@@ -81,3 +81,4 @@ if __name__ == "__main__":
     session_id = sys.argv[1]
     success = simulate_webhook(session_id)
     sys.exit(0 if success else 1)
+

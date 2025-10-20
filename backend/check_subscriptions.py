@@ -141,3 +141,4 @@ if __name__ == "__main__":
     if not any([args.check_duplicates, args.cleanup]):
         print("\nUse --check-duplicates to check for duplicates")
         print("Use --cleanup to clean up orphaned sessions")
+

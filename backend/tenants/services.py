@@ -221,3 +221,4 @@ class TenantService:
     def is_schema_available(self, schema_name):
         """Check if a schema name is available."""
         return not Client.objects.filter(schema_name=schema_name).exists()
+
