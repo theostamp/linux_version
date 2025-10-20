@@ -96,6 +96,27 @@ class StripeWebhookView(APIView):
                 if user.tenant:
                     logger.info(f"User {user.email} already has a tenant. Skipping webhook processing.")
                     return
+                
+                # Additional check: Prevent duplicate subscriptions for the same user
+                from billing.models import UserSubscription
+                existing_subscription = UserSubscription.objects.filter(
+                    user=user,
+                    stripe_subscription_id=stripe_subscription_id
+                ).first()
+                
+                if existing_subscription:
+                    logger.warning(f"User {user.email} already has subscription {stripe_subscription_id}. Preventing duplicate.")
+                    return
+                
+                # Check if user has any active subscription
+                active_subscription = UserSubscription.objects.filter(
+                    user=user,
+                    status__in=['active', 'trialing']
+                ).first()
+                
+                if active_subscription:
+                    logger.warning(f"User {user.email} already has an active subscription. Preventing duplicate.")
+                    return
 
                 # STEP 2: Create the Tenant, Domain, and UserSubscription
                 # We assume a service layer handles the complexity.

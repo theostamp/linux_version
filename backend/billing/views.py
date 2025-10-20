@@ -1308,6 +1308,29 @@ class CreateCheckoutSessionView(APIView):
                     'error': 'plan_id is required'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            # Check if user already has an active subscription
+            from billing.models import UserSubscription
+            existing_subscription = UserSubscription.objects.filter(
+                user=user,
+                status__in=['active', 'trialing']
+            ).first()
+            
+            if existing_subscription:
+                logger.warning(f"User {user.email} already has an active subscription. Preventing duplicate checkout.")
+                return Response({
+                    'error': 'You already have an active subscription',
+                    'subscription_id': existing_subscription.id,
+                    'status': existing_subscription.status
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if user already has a tenant (another safety check)
+            if user.tenant:
+                logger.warning(f"User {user.email} already has a tenant. Preventing duplicate checkout.")
+                return Response({
+                    'error': 'You already have a workspace',
+                    'tenant': user.tenant.schema_name
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
             # Get the subscription plan
             try:
                 plan = SubscriptionPlan.objects.get(id=plan_id, is_active=True)
@@ -1413,6 +1436,20 @@ class SubscriptionStatusView(APIView):
                 }, status=status.HTTP_404_NOT_FOUND)
             
             if user.tenant:
+                # Additional security check: Verify user has valid subscription
+                from billing.models import UserSubscription
+                active_subscription = UserSubscription.objects.filter(
+                    user=user,
+                    status__in=['active', 'trialing']
+                ).first()
+                
+                if not active_subscription:
+                    logger.warning(f"User {user.email} has tenant but no active subscription. This might indicate a security issue.")
+                    return Response({
+                        'status': 'failed',
+                        'message': 'Invalid subscription state'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
                 # Tenant created! Generate one-time token for cross-domain auth
                 from rest_framework_simplejwt.tokens import RefreshToken
                 
