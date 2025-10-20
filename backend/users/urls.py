@@ -27,6 +27,7 @@ router.register(r'', views.UserViewSet, basename='users')
 
 urlpatterns = [
     # Authentication endpoints
+    path('register/', views.register_view, name='register'),
     path('login/', login_view, name='user-login'),
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/simple/', TokenObtainPairView.as_view(), name='token_obtain_pair_simple'),

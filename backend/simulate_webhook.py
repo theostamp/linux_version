@@ -52,13 +52,18 @@ def simulate_webhook(session_id):
     }
     
     # Send webhook to our endpoint
-    webhook_url = "http://localhost:8080/api/billing/webhook/stripe/"
+    # When running inside docker, use the service name
+    # The webhook should be accessible from the public tenant
+    webhook_url = "http://backend:8000/api/billing/webhook/stripe/"
     
     try:
         response = requests.post(
             webhook_url,
             json=webhook_payload,
-            headers={'Content-Type': 'application/json'},
+            headers={
+                'Content-Type': 'application/json',
+                'Host': 'localhost:8080'  # Set the correct host for tenant resolution
+            },
             timeout=30
         )
         

@@ -1431,8 +1431,10 @@ class SubscriptionStatusView(APIView):
             try:
                 user = CustomUser.objects.get(stripe_checkout_session_id=session_id)
             except CustomUser.DoesNotExist:
+                # Session not found - could be expired, already processed, or invalid
                 return Response({
-                    'status': 'pending'
+                    'status': 'not_found',
+                    'message': 'Session not found or expired'
                 }, status=status.HTTP_404_NOT_FOUND)
             
             if user.tenant:
@@ -1440,7 +1442,7 @@ class SubscriptionStatusView(APIView):
                 from billing.models import UserSubscription
                 active_subscription = UserSubscription.objects.filter(
                     user=user,
-                    status__in=['active', 'trialing']
+                    status__in=['active', 'trialing', 'trial']
                 ).first()
                 
                 if not active_subscription:
