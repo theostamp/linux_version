@@ -142,9 +142,6 @@ function PaymentFormInner() {
 
       // Check if we received a tenant_domain for redirect
       if (data.tenant_domain) {
-        // Redirect to the user's personal tenant subdomain
-        toast.success('Redirecting to your personal dashboard...');
-
         // Build the full URL with the tenant domain
         const protocol = window.location.protocol; // http: or https:
         const port = window.location.port ? `:${window.location.port}` : '';
@@ -152,8 +149,20 @@ function PaymentFormInner() {
 
         console.log(`[Payment] Redirecting to tenant domain: ${tenantUrl}`);
 
-        // Use window.location.href for full page redirect to different subdomain
-        window.location.href = tenantUrl;
+        // Show success message with manual redirect option
+        toast.success('Subscription created successfully! Redirecting to your personal dashboard...');
+
+        // Store tenant URL for manual redirect option
+        localStorage.setItem('tenant_redirect_url', tenantUrl);
+        localStorage.setItem('tenant_domain', data.tenant_domain);
+
+        // Redirect to success page with tenant info for manual redirect option
+        router.push(`/payment/success?subscription_id=${data.subscription_id}&tenant_domain=${data.tenant_domain}&auto_redirect=true`);
+        
+        // Also attempt automatic redirect after a short delay
+        setTimeout(() => {
+          window.location.href = tenantUrl;
+        }, 2000);
       } else {
         // Fallback to success page if no tenant_domain provided
         console.warn('[Payment] No tenant_domain in response, falling back to success page');

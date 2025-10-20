@@ -11,6 +11,8 @@ export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const [countdown, setCountdown] = useState(5);
   const subscriptionId = searchParams.get('subscription_id');
+  const tenantDomain = searchParams.get('tenant_domain');
+  const autoRedirect = searchParams.get('auto_redirect') === 'true';
 
   useEffect(() => {
     // Auto-redirect countdown
@@ -18,7 +20,16 @@ export default function PaymentSuccessPage() {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          router.push('/dashboard');
+          if (autoRedirect && tenantDomain) {
+            // Redirect to tenant domain
+            const protocol = window.location.protocol;
+            const port = window.location.port ? `:${window.location.port}` : '';
+            const tenantUrl = `${protocol}//${tenantDomain}${port}/dashboard`;
+            window.location.href = tenantUrl;
+          } else {
+            // Fallback to regular dashboard
+            router.push('/dashboard');
+          }
           return 0;
         }
         return prev - 1;
@@ -26,7 +37,7 @@ export default function PaymentSuccessPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [router]);
+  }, [router, autoRedirect, tenantDomain]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -74,6 +85,12 @@ export default function PaymentSuccessPage() {
                       <span className="text-gray-600">Κατάσταση:</span>
                       <span className="text-green-600 font-semibold">Ενεργή</span>
                     </div>
+                    {tenantDomain && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Προσωπικό Domain:</span>
+                        <span className="font-mono text-blue-600">{tenantDomain}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -156,22 +173,61 @@ export default function PaymentSuccessPage() {
 
               {/* Auto-redirect notice */}
               <div className="text-center py-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">
-                  Θα μεταφερθείτε αυτόματα στο dashboard σε{' '}
-                  <span className="font-bold text-blue-600">{countdown}</span> δευτερόλεπτα...
-                </p>
+                {autoRedirect && tenantDomain ? (
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Θα μεταφερθείτε αυτόματα στο προσωπικό σας dashboard σε{' '}
+                      <span className="font-bold text-blue-600">{countdown}</span> δευτερόλεπτα...
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Στην περίπτωση που δεν μεταβείται αυτόματα, πατήστε το κουμπί παρακάτω
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-600">
+                    Θα μεταφερθείτε αυτόματα στο dashboard σε{' '}
+                    <span className="font-bold text-blue-600">{countdown}</span> δευτερόλεπτα...
+                  </p>
+                )}
               </div>
 
-              {/* Action Button */}
-              <div className="flex justify-center">
-                <Button
-                  onClick={() => router.push('/dashboard')}
-                  size="lg"
-                  className="flex items-center gap-2"
-                >
-                  Μετάβαση στο Dashboard
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                {autoRedirect && tenantDomain ? (
+                  <>
+                    <Button
+                      onClick={() => {
+                        const protocol = window.location.protocol;
+                        const port = window.location.port ? `:${window.location.port}` : '';
+                        const tenantUrl = `${protocol}//${tenantDomain}${port}/dashboard`;
+                        window.location.href = tenantUrl;
+                      }}
+                      size="lg"
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                    >
+                      Μετάβαση στο Προσωπικό Dashboard
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      onClick={() => router.push('/dashboard')}
+                      size="lg"
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      Μετάβαση στο Γενικό Dashboard
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    onClick={() => router.push('/dashboard')}
+                    size="lg"
+                    className="flex items-center gap-2"
+                  >
+                    Μετάβαση στο Dashboard
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
