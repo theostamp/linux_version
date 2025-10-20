@@ -563,7 +563,7 @@ GOOGLE_CALENDAR_SCOPES = [
 ]
 
 # Frontend URL για links στα Google Calendar events
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://demo.localhost:3001')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:8080')
 
 # Calendar sync settings
 GOOGLE_CALENDAR_SYNC_ENABLED = os.getenv('GOOGLE_CALENDAR_SYNC_ENABLED', 'True') == 'True'
