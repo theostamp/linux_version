@@ -50,7 +50,7 @@ export default function OAuthButtons({ mode, onSuccess }: OAuthButtonsProps) {
         provider: 'google'
       }))
 
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8081';
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
       window.location.href = `${apiBaseUrl}/api/users/auth/google/?redirect_uri=${redirectUri}&state=${state}`
     } catch (error) {
       console.error('Google OAuth error:', error)

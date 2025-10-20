@@ -107,8 +107,8 @@ services:
     environment:
       - NEXT_PUBLIC_FEATURE_PROJECTS_UNIFIED=true
       # API URLs for browser (client-side) - use nginx reverse proxy
-      - NEXT_PUBLIC_API_URL=http://localhost:8081
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8081
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
       # For old React app compatibility
       - REACT_APP_API_URL=http://localhost:18000
     # Remove external port mapping - only accessible through nginx
