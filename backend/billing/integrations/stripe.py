@@ -535,9 +535,16 @@ class StripeService:
                 logger.info(f"Created mock checkout session {mock_session_id}")
                 
                 # Return mock checkout session data
+                success_url = session_data.get('success_url', '')
+                # Replace {CHECKOUT_SESSION_ID} placeholder with actual session ID
+                if '{CHECKOUT_SESSION_ID}' in success_url:
+                    success_url = success_url.replace('{CHECKOUT_SESSION_ID}', mock_session_id)
+                else:
+                    success_url = f"{success_url}?session_id={mock_session_id}"
+                
                 return {
                     'id': mock_session_id,
-                    'url': f"{session_data.get('success_url', '')}?session_id={mock_session_id}",
+                    'url': success_url,
                     'status': 'open',
                     'mode': session_data.get('mode', 'subscription'),
                     'customer_email': session_data.get('customer_email'),
