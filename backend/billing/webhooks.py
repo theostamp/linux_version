@@ -9,8 +9,13 @@ from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.db import transaction
+from django_tenants.utils import schema_context
+
 from .models import UserSubscription
 from .integrations.stripe import StripeService
+from users.models import CustomUser
+from tenants.services import TenantService
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +43,9 @@ class StripeWebhookView(APIView):
                 event = json.loads(payload)
             
             # Handle the event
-            if event['type'] == 'payment_intent.succeeded':
+            if event['type'] == 'checkout.session.completed':
+                self.handle_checkout_session_completed(event['data']['object'])
+            elif event['type'] == 'payment_intent.succeeded':
                 self.handle_payment_intent_succeeded(event['data']['object'])
             elif event['type'] == 'payment_intent.payment_failed':
                 self.handle_payment_intent_failed(event['data']['object'])
@@ -62,6 +69,58 @@ class StripeWebhookView(APIView):
         except Exception as e:
             logger.error(f'Webhook error: {e}')
             return HttpResponse(status=500)
+
+    def handle_checkout_session_completed(self, session):
+        """
+        Handles the logic for a completed Stripe checkout session.
+        This is the main entry point for creating a tenant and subscription.
+        """
+        client_reference_id = session.get('client_reference_id')
+        stripe_customer_id = session.get('customer')
+        stripe_subscription_id = session.get('subscription')
+        metadata = session.get('metadata', {})
+        tenant_subdomain = metadata.get('tenant_subdomain')
+        plan_id = metadata.get('plan_id')
+
+        if not all([client_reference_id, stripe_customer_id, stripe_subscription_id, tenant_subdomain, plan_id]):
+            logger.error(f"Webhook Error: Missing critical data from session {session.get('id')}.")
+            return
+
+        try:
+            # Use a transaction to ensure all or nothing
+            with transaction.atomic():
+                # STEP 1: Find the user in the 'public' schema
+                user = CustomUser.objects.get(id=client_reference_id)
+
+                # Prevent re-processing if tenant already exists (Idempotency)
+                if user.tenant:
+                    logger.info(f"User {user.email} already has a tenant. Skipping webhook processing.")
+                    return
+
+                # STEP 2: Create the Tenant, Domain, and UserSubscription
+                # We assume a service layer handles the complexity.
+                tenant_service = TenantService()
+                tenant, subscription = tenant_service.create_tenant_and_subscription(
+                    schema_name=tenant_subdomain,
+                    user=user,
+                    plan_id=plan_id,
+                    stripe_customer_id=stripe_customer_id,
+                    stripe_subscription_id=stripe_subscription_id
+                )
+
+                # STEP 3: Update user's status in the public schema
+                user.tenant = tenant
+                user.is_active = True
+                user.save(update_fields=['tenant', 'is_active'])
+
+                logger.info(f"Successfully created tenant '{tenant.schema_name}' and subscription for user {user.email}")
+
+        except CustomUser.DoesNotExist:
+            logger.error(f"Webhook Error: User with ID {client_reference_id} not found.")
+        except Exception as e:
+            logger.critical(f"CRITICAL: Tenant creation failed for user {client_reference_id}. Error: {e}")
+            # Here you could trigger an alert for manual intervention.
+            raise
     
     def handle_payment_intent_succeeded(self, payment_intent):
         """

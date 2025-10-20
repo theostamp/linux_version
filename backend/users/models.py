@@ -180,6 +180,24 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         help_text=_('User ID from OAuth provider')
     )
 
+    # Stripe subscription fields
+    stripe_checkout_session_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_('Temporary Stripe checkout session ID for polling')
+    )
+    
+    # Tenant relationship
+    tenant = models.ForeignKey(
+        'tenants.Client',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='users',
+        help_text=_('Tenant that this user belongs to')
+    )
+
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'

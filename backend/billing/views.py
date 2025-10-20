@@ -15,6 +15,7 @@ from .models import (
     SubscriptionPlan, UserSubscription, BillingCycle, 
     UsageTracking, PaymentMethod
 )
+from users.models import CustomUser
 from .serializers import (
     SubscriptionPlanSerializer, UserSubscriptionSerializer,
     BillingCycleSerializer, UsageTrackingSerializer,
@@ -1277,4 +1278,167 @@ class PredictiveAnalyticsView(APIView):
             logger.error(f"Error getting predictive analytics: {e}")
             return Response({
                 'error': 'Failed to get predictive analytics'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CreateCheckoutSessionView(APIView):
+    """
+    Creates a Stripe Checkout Session for subscription payment.
+    This replaces the frontend card collection with Stripe's hosted checkout.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """
+        Create a Stripe Checkout Session.
+        
+        Expected payload:
+        {
+            "plan_id": 1,
+            "building_name": "My Building"
+        }
+        """
+        try:
+            user = request.user
+            plan_id = request.data.get('plan_id')
+            building_name = request.data.get('building_name', '')
+            
+            if not plan_id:
+                return Response({
+                    'error': 'plan_id is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get the subscription plan
+            try:
+                plan = SubscriptionPlan.objects.get(id=plan_id, is_active=True)
+            except SubscriptionPlan.DoesNotExist:
+                return Response({
+                    'error': 'Invalid subscription plan'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Generate unique tenant subdomain
+            from tenants.services import TenantService
+            tenant_service = TenantService()
+            
+            if building_name:
+                base_name = building_name
+            else:
+                base_name = user.get_full_name() or user.email.split('@')[0]
+            
+            tenant_subdomain = tenant_service.generate_unique_schema_name(base_name)
+            
+            # Create Stripe Checkout Session
+            stripe_service = StripeService()
+            
+            # Determine the price ID based on plan
+            price_id = plan.stripe_price_id_monthly  # Default to monthly
+            
+            # Build success and cancel URLs
+            from django.conf import settings
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+            success_url = f"{frontend_url}/payment/success?session_id={{CHECKOUT_SESSION_ID}}"
+            cancel_url = f"{frontend_url}/payment/cancel"
+            
+            # Create the checkout session
+            session_data = {
+                'client_reference_id': str(user.id),
+                'customer_email': user.email,
+                'line_items': [{
+                    'price': price_id,
+                    'quantity': 1,
+                }],
+                'mode': 'subscription',
+                'success_url': success_url,
+                'cancel_url': cancel_url,
+                'metadata': {
+                    'user_id': str(user.id),
+                    'plan_id': str(plan_id),
+                    'tenant_subdomain': tenant_subdomain,
+                    'building_name': building_name
+                },
+                'subscription_data': {
+                    'metadata': {
+                        'user_id': str(user.id),
+                        'plan_id': str(plan_id),
+                        'tenant_subdomain': tenant_subdomain
+                    }
+                }
+            }
+            
+            checkout_session = stripe_service.create_checkout_session(session_data)
+            
+            # Save the checkout session ID to the user for polling
+            user.stripe_checkout_session_id = checkout_session['id']
+            user.save(update_fields=['stripe_checkout_session_id'])
+            
+            logger.info(f"Created checkout session {checkout_session['id']} for user {user.email}")
+            
+            return Response({
+                'checkout_url': checkout_session['url'],
+                'session_id': checkout_session['id'],
+                'tenant_subdomain': tenant_subdomain
+            })
+            
+        except Exception as e:
+            logger.error(f"Error creating checkout session: {e}")
+            return Response({
+                'error': 'Failed to create checkout session'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SubscriptionStatusView(APIView):
+    """
+    Checks the status of a subscription setup process based on a Stripe session ID.
+    Used by the frontend for polling to know when tenant creation is complete.
+    """
+    permission_classes = [permissions.AllowAny]  # No auth required since user hasn't logged into tenant yet
+    
+    def get(self, request, session_id):
+        """
+        Check subscription status by session ID.
+        
+        Returns:
+        - status: 'pending' (404) - session not found or processing not started
+        - status: 'processing' (200) - webhook processing in progress
+        - status: 'completed' (200) - tenant created, returns subdomain and token
+        - status: 'failed' (200) - processing failed
+        """
+        try:
+            # Find user by checkout session ID
+            try:
+                user = CustomUser.objects.get(stripe_checkout_session_id=session_id)
+            except CustomUser.DoesNotExist:
+                return Response({
+                    'status': 'pending'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            if user.tenant:
+                # Tenant created! Generate one-time token for cross-domain auth
+                from rest_framework_simplejwt.tokens import RefreshToken
+                
+                refresh = RefreshToken.for_user(user)
+                access_token = str(refresh.access_token)
+                
+                # Clear the session ID since we're done with it
+                user.stripe_checkout_session_id = None
+                user.save(update_fields=['stripe_checkout_session_id'])
+                
+                logger.info(f"Subscription completed for user {user.email}, tenant: {user.tenant.schema_name}")
+                
+                return Response({
+                    'status': 'completed',
+                    'subdomain': user.tenant.schema_name,
+                    'token': access_token
+                })
+            else:
+                # Processing in progress
+                return Response({
+                    'status': 'processing'
+                })
+                
+        except Exception as e:
+            logger.error(f"Error checking subscription status: {e}")
+            return Response({
+                'status': 'failed',
+                'message': 'An error occurred during setup'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

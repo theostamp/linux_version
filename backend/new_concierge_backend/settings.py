@@ -206,6 +206,7 @@ DATABASES = {
 
 DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter',)
 TENANT_MODEL = 'tenants.Client'
+TENANT_URLCONF = 'new_concierge_backend.urls'  # URLs for tenant-specific requests
 TENANT_DOMAIN_MODEL = 'tenants.Domain'
 PUBLIC_SCHEMA_NAME = 'public'
 

@@ -16,7 +16,8 @@ from .views import (
     AdminSystemHealthView, AdvancedAnalyticsView,
     RevenueAnalyticsView, CustomerAnalyticsView,
     SubscriptionAnalyticsView, UsageAnalyticsView as AdvancedUsageAnalyticsView,
-    PaymentAnalyticsView, PredictiveAnalyticsView
+    PaymentAnalyticsView, PredictiveAnalyticsView,
+    CreateCheckoutSessionView, SubscriptionStatusView
 )
 from .webhooks import StripeWebhookView, PaymentVerificationView
 
@@ -42,6 +43,10 @@ urlpatterns = [
     
     # Payment intent
     path('api/payment-intent/', CreatePaymentIntentView.as_view(), name='create-payment-intent'),
+    
+    # Stripe Checkout Session
+    path('api/create-checkout-session/', CreateCheckoutSessionView.as_view(), name='create-checkout-session'),
+    path('api/subscription-status/<str:session_id>/', SubscriptionStatusView.as_view(), name='subscription-status'),
     
     # Usage Analytics
     path('api/analytics/usage/', UsageAnalyticsView.as_view(), name='usage-analytics'),

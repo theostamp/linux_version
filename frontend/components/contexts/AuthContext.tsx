@@ -19,6 +19,7 @@ import FullPageSpinner from '@/components/FullPageSpinner';
 interface AuthCtx {
   user: User | null;
   login: (email: string, password: string) => Promise<User>;
+  loginWithToken: (token: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
   isAuthReady: boolean;
@@ -68,6 +69,31 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     } catch (error) {
       setIsLoading(false);
       console.error('AuthContext: Login failed:', error);
+      throw error;
+    }
+  }, [setUser]);
+
+  const loginWithToken = useCallback(async (token: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+      
+      // Store the token
+      localStorage.setItem('access', token);
+      
+      // Fetch user data with this token
+      const user = await getCurrentUser();
+      setUser(user);
+      
+      // Update auth state
+      setIsLoading(false);
+      setIsAuthReady(true);
+      
+      console.log('AuthContext: Token login successful for user:', user?.email);
+    } catch (error) {
+      console.error('AuthContext: Token login failed:', error);
+      // Clean up on failure
+      localStorage.removeItem('access');
+      setIsLoading(false);
       throw error;
     }
   }, [setUser]);
@@ -224,6 +250,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     () => ({ 
       user: userState, 
       login, 
+      loginWithToken,
       logout, 
       isLoading, 
       isAuthReady, 
@@ -231,7 +258,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       refreshUser,
       setUser 
     }),
-    [userState, login, logout, isLoading, isAuthReady, isAuthenticated, refreshUser, setUser]
+    [userState, login, loginWithToken, logout, isLoading, isAuthReady, isAuthenticated, refreshUser, setUser]
   );
 
   // Εμφάνιση του spinner μόνο κατά το αρχικό φόρτωμα για πολύ σύντομο διάστημα

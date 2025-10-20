@@ -2,33 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { loadStripe } from '@stripe/stripe-js';
-import {
-  Elements,
-  CardElement,
-  useStripe,
-  useElements
-} from '@stripe/react-stripe-js';
-import { CreditCard, Lock, CheckCircle, ArrowLeft, Building } from 'lucide-react';
+import { CreditCard, Lock, CheckCircle, ArrowLeft, Building, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { api } from '@/lib/api';
 
-// Initialize Stripe
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
-
-function PaymentFormInner() {
+export default function PaymentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
-
-  // Get plan and user data from URL params or localStorage
   const [plan, setPlan] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null);
 
-  const stripe = useStripe();
-  const elements = useElements();
   const { user } = useAuth();
 
   useEffect(() => {
@@ -50,13 +35,13 @@ function PaymentFormInner() {
 
     checkExistingSubscription();
 
-    // Try to get data from URL params first
     const planId = searchParams.get('plan');
     const userEmail = searchParams.get('email');
     const userName = searchParams.get('name');
+    const buildingName = searchParams.get('buildingName');
 
     if (planId) {
-      // Fetch plan details
+      // TODO: Fetch plan details from API instead of mocking
       // For now, use mock data
       setPlan({
         id: planId,
@@ -67,10 +52,10 @@ function PaymentFormInner() {
     }
 
     if (userEmail && userName) {
-      setUserData({ email: userEmail, name: userName });
+      setUserData({ email: userEmail, name: userName, buildingName });
     } else {
       // Try to get from localStorage
-      const storedUserData = localStorage.getItem('registration_data');
+      const storedUserData = typeof window !== 'undefined' ? localStorage.getItem('registration_data') : null;
       if (storedUserData) {
         setUserData(JSON.parse(storedUserData));
       } else if (user?.email) {
@@ -93,306 +78,171 @@ function PaymentFormInner() {
     }, 1500);
 
     return () => clearTimeout(timeout);
-  }, [searchParams, router]);
+  }, [searchParams, router, user]);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!stripe || !elements) {
+  const handleCreateCheckoutSession = async () => {
+    if (!plan || !userData) {
+      toast.error('Missing plan or user information');
       return;
     }
 
     setIsLoading(true);
-    setPaymentError(null);
 
     try {
-      const cardElement = elements.getElement(CardElement);
-      if (!cardElement) {
-        throw new Error('Card element not found');
-      }
-
-      // Create payment method
-      const { error, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardElement,
-        billing_details: {
-          name: userData?.name || '',
-          email: userData?.email || '',
-        },
-      });
-
-      if (error) {
-        setPaymentError(error.message || 'Payment failed');
-        setIsLoading(false);
-        return;
-      }
-
-      // Send payment method to backend to create subscription (use axios api with auth interceptor)
-      const { data } = await api.post('/users/subscription/create/', {
-        payment_method_id: paymentMethod.id,
+      // Create Stripe Checkout Session
+      const { data } = await api.post('/billing/create-checkout-session/', {
         plan_id: plan.id,
-        user_email: userData.email,
-        user_name: userData.name,
+        building_name: userData.buildingName || ''
       });
 
-      toast.success('Payment successful! Your account is being activated...');
-
-      // Clear registration data
-      localStorage.removeItem('registration_data');
-
-      // Check if we received a tenant_domain for redirect
-      if (data.tenant_domain) {
-        // Build the full URL with the tenant domain
-        const protocol = window.location.protocol; // http: or https:
-        const port = window.location.port ? `:${window.location.port}` : '';
-        const tenantUrl = `${protocol}//${data.tenant_domain}${port}/dashboard`;
-
-        console.log(`[Payment] Redirecting to tenant domain: ${tenantUrl}`);
-
-        // Show success message with manual redirect option
-        toast.success('Subscription created successfully! Redirecting to your personal dashboard...');
-
-        // Store tenant URL for manual redirect option
-        localStorage.setItem('tenant_redirect_url', tenantUrl);
-        localStorage.setItem('tenant_domain', data.tenant_domain);
-
-        // Redirect to success page with tenant info for manual redirect option
-        router.push(`/payment/success?subscription_id=${data.subscription_id}&tenant_domain=${data.tenant_domain}&auto_redirect=true`);
-      } else {
-        // Fallback to success page if no tenant_domain provided
-        console.warn('[Payment] No tenant_domain in response, falling back to success page');
-        router.push(`/payment/success?subscription_id=${data.subscription_id}`);
-      }
+      // Redirect to Stripe Checkout
+      window.location.href = data.checkout_url;
 
     } catch (error: any) {
-      console.error('Payment error:', error);
-
-      // Check if user already has a subscription
-      if (error.response?.data?.error === 'You already have an active subscription') {
-        toast.success('You already have an active subscription!');
-        // Redirect to dashboard
-        router.push('/dashboard');
-        return;
-      }
-
-      setPaymentError(error.response?.data?.error || error.message || 'Payment failed. Please try again.');
-      toast.error(error.response?.data?.error || error.message || 'Payment failed. Please try again.');
-    } finally {
+      console.error('Error creating checkout session:', error);
+      toast.error(error.response?.data?.error || 'Failed to create checkout session');
       setIsLoading(false);
     }
   };
 
-  const cardElementOptions = {
-    style: {
-      base: {
-        fontSize: '16px',
-        color: '#424770',
-        '::placeholder': {
-          color: '#aab7c4',
-        },
-      },
-      invalid: {
-        color: '#9e2146',
-      },
-    },
-  };
-
-  if (!userData || !plan) {
+  if (!plan || !userData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Φόρτωση...</p>
+          <p className="text-gray-600">Loading payment information...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl w-full">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          {/* Header */}
-          <div className="bg-primary px-8 py-6">
-            <div className="flex items-center">
-              <Building className="w-8 h-8 text-white" />
-              <span className="ml-2 text-2xl font-bold text-white">Digital Concierge</span>
-            </div>
-            <h1 className="text-2xl font-bold text-white mt-4">
-              Ολοκλήρωση Συνδρομής
-            </h1>
-            <p className="text-primary-foreground/80 mt-2">
-              Ασφαλής πληρωμή μέσω Stripe
-            </p>
-          </div>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </button>
+          <h1 className="text-3xl font-bold text-gray-900">Complete Your Subscription</h1>
+          <p className="mt-2 text-gray-600">Secure payment powered by Stripe</p>
+        </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Plan Summary */}
-          <div className="px-8 py-6 bg-gray-50 border-b">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  {plan.name} Plan
-                </h2>
-                <p className="text-gray-600">
-                  {plan.description}
-                </p>
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Plan Summary</h2>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-gray-900">{plan.name} Plan</h3>
+                  <p className="text-sm text-gray-500">{plan.description}</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-900">€{plan.price}</div>
+                  <div className="text-sm text-gray-500">per month</div>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold text-gray-900">
-                  €{plan.price}
-                </p>
-                <p className="text-gray-600">ανά μήνα</p>
+
+              <div className="border-t pt-4">
+                <h4 className="font-medium text-gray-900 mb-2">What's included:</h4>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Digital Concierge Platform
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Building Management Tools
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Resident Communication
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Financial Management
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    24/7 Support
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
 
           {/* Payment Form */}
-          <form onSubmit={handleSubmit} className="px-8 py-8">
-            <div className="space-y-6">
-              {/* Billing Information */}
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Information</h2>
+            
+            <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Στοιχεία Χρέωσης
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Όνομα
-                    </label>
-                    <input
-                      type="text"
-                      value={userData.name}
-                      readOnly
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={userData.email}
-                      readOnly
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                    />
-                  </div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Building Name
+                </label>
+                <div className="flex items-center p-3 border border-gray-300 rounded-md bg-gray-50">
+                  <Building className="h-5 w-5 text-gray-400 mr-2" />
+                  <span className="text-gray-900">{userData.buildingName || 'Not specified'}</span>
                 </div>
               </div>
 
-              {/* Payment Method */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Τρόπος Πληρωμής
-                </h3>
-                <div className="border border-gray-300 rounded-lg p-4">
-                  <div className="flex items-center mb-4">
-                    <CreditCard className="w-5 h-5 text-gray-600 mr-2" />
-                    <span className="text-sm font-semibold text-gray-700">
-                      Πιστωτική ή Χρεωστική Κάρτα
-                    </span>
-                  </div>
-                  <CardElement options={cardElementOptions} />
-                  {paymentError && (
-                    <p className="text-red-500 text-sm mt-2">{paymentError}</p>
-                  )}
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <div className="flex items-center p-3 border border-gray-300 rounded-md bg-gray-50">
+                  <span className="text-gray-900">{userData.email}</span>
                 </div>
               </div>
 
-              {/* Security Notice */}
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-start">
-                  <Lock className="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-green-900 mb-1">
-                      Ασφαλής Πληρωμή
-                    </h4>
-                    <p className="text-green-700 text-sm">
-                      Οι πληροφορίες πληρωμής σας κρυπτογραφούνται και επεξεργάζονται με ασφάλεια από το Stripe.
-                      Δεν αποθηκεύουμε ποτέ τα στοιχεία της κάρτας σας.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Money Back Guarantee */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-blue-900 mb-1">
-                      Εγγύηση επιστροφής χρημάτων 30 ημερών
-                    </h4>
-                    <p className="text-blue-700 text-sm">
-                      Αν δεν είστε ικανοποιημένοι με την υπηρεσία μας, θα επιστρέψουμε την πληρωμή του πρώτου μήνα.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Total */}
-              <div className="border-t pt-6">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-lg font-semibold text-gray-900">
-                      Σύνολο
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Χρέωση κάθε μήνα, ακύρωση ανά πάσα στιγμή
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-bold text-gray-900">
-                      €{plan.price}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      ανά μήνα
-                    </p>
-                  </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                </label>
+                <div className="flex items-center p-3 border border-gray-300 rounded-md bg-gray-50">
+                  <span className="text-gray-900">{userData.name}</span>
                 </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex justify-between mt-8">
+            <div className="mt-6">
               <button
-                type="button"
-                onClick={() => router.push('/register')}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Πίσω στην Εγγραφή
-              </button>
-
-              <button
-                type="submit"
-                disabled={!stripe || isLoading}
-                className="bg-primary text-primary-foreground px-8 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleCreateCheckoutSession}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Επεξεργασία Πληρωμής...
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Processing...
                   </>
                 ) : (
                   <>
-                    Συνδρομή - €{plan.price}
-                    <CreditCard className="w-4 h-4 ml-2" />
+                    <CreditCard className="h-5 w-5 mr-2" />
+                    Continue to Payment
                   </>
                 )}
               </button>
             </div>
-          </form>
+
+            <div className="mt-4 flex items-center justify-center text-sm text-gray-500">
+              <Lock className="h-4 w-4 mr-1" />
+              Secured by Stripe
+            </div>
+
+            <div className="mt-4 text-xs text-gray-500 text-center">
+              By continuing, you agree to our Terms of Service and Privacy Policy.
+              You will be redirected to Stripe's secure checkout page to complete your payment.
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  );
-}
-
-export default function PaymentPage() {
-  return (
-    <Elements stripe={stripePromise}>
-      <PaymentFormInner />
-    </Elements>
   );
 }

@@ -16,12 +16,19 @@ def create_tenant_for_user(sender, instance, created, **kwargs):
     """
     Αυτόματη δημιουργία tenant όταν δημιουργείται ένας νέος user.
     Το tenant θα έχει το ίδιο όνομα με τον user (slugified).
+    
+    SKIP for subscription users - they will get tenants via webhook.
     """
     if not created:  # Μόνο όταν δημιουργείται νέος user
         return
     
     # Παράλειψη για superusers (δεν χρειάζονται tenant)
     if instance.is_superuser:
+        return
+    
+    # SKIP for users with stripe_checkout_session_id (subscription flow)
+    if instance.stripe_checkout_session_id:
+        print(f"ℹ️ Παράλειψη δημιουργίας tenant για '{instance.email}' - subscription flow (webhook will handle)")
         return
     
     # Έλεγχος αν είμαστε σε tenant context - αν ναι, μην δημιουργήσεις tenant
