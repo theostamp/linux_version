@@ -8,23 +8,24 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.http import HttpResponse
 
 
-def home(request):
-    return HttpResponse("""
-    <h1>Django Tenants Project</h1>
-    <p>Welcome to the public tenant!</p>
-    <ul>
-        <li><a href="/admin/">Admin Panel</a></li>
-        <li><a href="/api/">API</a></li>
-    </ul>
-    """)
+# Public home view removed - now handled by Public App (Next.js)
+# def home(request):
+#     return HttpResponse("""
+#     <h1>Django Tenants Project</h1>
+#     <p>Welcome to the public tenant!</p>
+#     <ul>
+#         <li><a href="/admin/">Admin Panel</a></li>
+#         <li><a href="/api/">API</a></li>
+#     </ul>
+#     """)
 
 # Public tenant URL configuration (shared across all tenants)
 urlpatterns = [
     # Admin panel (μόνο για public tenant)
     path('admin/', admin.site.urls),
     
-    # Root URL for public tenant
-    path('', home, name='home'),
+    # Root URL removed - now handled by Public App (Next.js)
+    # path('', home, name='home'),
     
     # Authentication & User endpoints (διαθέσιμο και στο public tenant)
     path('api/users/', include('users.urls')),
