@@ -158,9 +158,12 @@ const getApiBaseUrl = () => {
     return origin;
   }
 
-  // Server-side - use backend container or env variable
-  let base = process.env.NEXT_PUBLIC_API_URL ?? 'http://backend:8000';
+  // Server-side - use backend container directly
+  let base = 'http://backend:8000';
   base = base.replace(/\/$/, '');
+  if (!/\/api$/.test(base)) {
+    base = `${base}/api`; // Added /api prefix
+  }
   console.log(`[API] Using server-side API URL: ${base}`);
   return base;
 };
