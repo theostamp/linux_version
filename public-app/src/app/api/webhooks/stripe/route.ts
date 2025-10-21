@@ -122,7 +122,8 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         },
         plan_id: getPlanId(plan),
         stripe_customer_id: session.customer as string,
-        stripe_subscription_id: session.subscription as string
+        stripe_subscription_id: session.subscription as string,
+        stripe_checkout_session_id: session.id
       })
     });
 
