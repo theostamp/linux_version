@@ -264,10 +264,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         validated_data.pop('password_confirm')
         password = validated_data.pop('password')
         
+        # In development, activate users immediately to bypass email verification
+        from django.conf import settings
+        is_active = settings.DEBUG  # True in development (auto-activate), False in production (requires email verification)
+        
         user = CustomUser.objects.create_user(
             password=password,
-            is_active=False,  # Απαιτείται email verification
-            email_verified=False,
+            is_active=is_active,  # Auto-activate in development, require email verification in production
+            email_verified=is_active,  # Set email_verified based on activation
             **validated_data
         )
         

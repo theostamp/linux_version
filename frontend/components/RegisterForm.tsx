@@ -27,7 +27,16 @@ export default function RegisterForm() {
 
   const onSubmit = async (data: RegisterFormInputs) => {
     try {
-      await api.post("/api/users/register/", data)
+      // Transform the data to match backend expectations
+      const registrationData = {
+        email: data.email,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        password: data.password,
+        password_confirm: data.confirmPassword
+      };
+      
+      await api.post("/api/users/register/", registrationData)
       router.push("/dashboard")
     } catch (err: any) {
       console.error("Registration error:", err);

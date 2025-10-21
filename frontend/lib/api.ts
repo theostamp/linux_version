@@ -140,19 +140,8 @@ import { toast } from '@/hooks/use-toast';
 // Βασικό URL του API. Χρησιμοποιούμε την ίδια λογική με το apiPublic για tenant-specific URLs
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    // Client-side (browser) - use tenant-specific API URL
+    // Client-side (browser) - use same origin for API calls (nginx will proxy to backend)
     (window as any).debugApiCalls = true;
-    const hostname = window.location.hostname;
-    const port = window.location.port;
-    
-    // For tenant workspaces, use the backend API port (18000)
-    if (hostname.includes('localhost') && port === '8080') {
-      const apiUrl = `http://${hostname}:18000`;
-      console.log(`[API] Using tenant-specific API URL: ${apiUrl}`);
-      return apiUrl;
-    }
-    
-    // Fallback to same origin
     const origin = window.location.origin;
     console.log(`[API] Using same origin for API calls: ${origin}`);
     return origin;
