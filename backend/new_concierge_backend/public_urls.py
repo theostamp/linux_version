@@ -38,6 +38,9 @@ urlpatterns = [
     
     # Billing endpoints (shared across all tenants)
     path('api/billing/', include('billing.urls')),
+    
+    # Internal API endpoints (accessible from public schema only)
+    path('api/internal/tenants/create/', include('tenants.internal_urls')),
 ]
 
 if settings.DEBUG:
