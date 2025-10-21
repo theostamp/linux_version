@@ -105,11 +105,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     });
 
     // Call the Core API to create the tenant
-    const coreApiResponse = await fetch(`${process.env.CORE_API_URL}/api/internal/tenants/create/`, {
+    const coreApiResponse = await fetch(process.env.CORE_API_URL!, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Internal-API-Key': process.env.INTERNAL_API_SECRET_KEY!
+        'X-Internal-API-Key': process.env.INTERNAL_API_SECRET_KEY!,
+        'Host': 'localhost'
       },
       body: JSON.stringify({
         schema_name: tenant_subdomain,

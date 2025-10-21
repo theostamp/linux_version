@@ -25,19 +25,19 @@ export async function POST(request: NextRequest) {
     // Plan configuration
     const plans = {
       basic: {
-        priceId: 'price_basic_monthly', // Replace with actual Stripe price ID
+        priceId: 'price_basic_monthly', // TODO: Replace with actual Stripe price ID
         amount: 2900, // €29.00 in cents
         name: 'Basic Plan',
         description: 'Perfect for small buildings - Up to 20 apartments'
       },
       professional: {
-        priceId: 'price_professional_monthly', // Replace with actual Stripe price ID
+        priceId: 'price_professional_monthly', // TODO: Replace with actual Stripe price ID
         amount: 5900, // €59.00 in cents
         name: 'Professional Plan',
         description: 'Ideal for medium buildings - Up to 50 apartments'
       },
       enterprise: {
-        priceId: 'price_enterprise_monthly', // Replace with actual Stripe price ID
+        priceId: 'price_enterprise_monthly', // TODO: Replace with actual Stripe price ID
         amount: 9900, // €99.00 in cents
         name: 'Enterprise Plan',
         description: 'For large complexes - Unlimited apartments'
