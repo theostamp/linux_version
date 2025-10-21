@@ -80,10 +80,18 @@ def run_migrations():
         print("📦 Shared migrations...")
         call_command("migrate_schemas", shared=True, interactive=False)
         
-        # Tenant migrations
+        # Tenant migrations - only if tenants exist
         print("🏢 Tenant migrations...")
-        call_command("migrate_schemas", tenant=True, interactive=False)
-        
+        try:
+            from tenants.models import Tenant
+            if Tenant.objects.exists():
+                call_command("migrate_schemas", tenant=True, interactive=False)
+                print("✅ Tenant migrations ολοκληρώθηκαν")
+            else:
+                print("ℹ️ Δεν υπάρχουν tenants - παράκαμψη tenant migrations")
+        except Exception as tenant_err:
+            print(f"⚠️ Tenant migrations error (can be ignored if no tenants exist): {tenant_err}")
+
         print("✅ Migrations ολοκληρώθηκαν")
         return True
     except Exception as e:

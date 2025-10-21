@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 class InternalTenantCreateView(APIView):
     """
     Internal API endpoint for creating tenants.
-    
+
     This endpoint is only accessible by internal services (like the Public App)
     and requires a valid X-Internal-API-Key header.
-    
+
     Expected payload:
     {
         "schema_name": "tenant-subdomain",
@@ -34,7 +34,8 @@ class InternalTenantCreateView(APIView):
         },
         "plan_id": 1,
         "stripe_customer_id": "cus_...",
-        "stripe_subscription_id": "sub_..."
+        "stripe_subscription_id": "sub_...",
+        "stripe_checkout_session_id": "cs_test_..."
     }
     """
     
@@ -51,12 +52,13 @@ class InternalTenantCreateView(APIView):
             plan_id = request.data.get('plan_id')
             stripe_customer_id = request.data.get('stripe_customer_id')
             stripe_subscription_id = request.data.get('stripe_subscription_id')
-            
+            stripe_checkout_session_id = request.data.get('stripe_checkout_session_id')
+
             # Validate required fields
-            if not all([schema_name, user_data, plan_id, stripe_customer_id, stripe_subscription_id]):
+            if not all([schema_name, user_data, plan_id, stripe_customer_id, stripe_subscription_id, stripe_checkout_session_id]):
                 return Response({
                     'error': 'Missing required fields',
-                    'required': ['schema_name', 'user_data', 'plan_id', 'stripe_customer_id', 'stripe_subscription_id']
+                    'required': ['schema_name', 'user_data', 'plan_id', 'stripe_customer_id', 'stripe_subscription_id', 'stripe_checkout_session_id']
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Validate user_data
@@ -73,6 +75,9 @@ class InternalTenantCreateView(APIView):
                 try:
                     user = CustomUser.objects.get(email=user_email)
                     logger.info(f"User {user_email} already exists, using existing user")
+                    # Update the session ID even for existing users
+                    user.stripe_checkout_session_id = stripe_checkout_session_id
+                    user.save(update_fields=['stripe_checkout_session_id'])
                 except CustomUser.DoesNotExist:
                     # Create new user
                     user = CustomUser.objects.create_user(
@@ -80,7 +85,8 @@ class InternalTenantCreateView(APIView):
                         password=user_data.get('password', 'temp_password_123'),
                         first_name=user_data['first_name'],
                         last_name=user_data['last_name'],
-                        is_active=True
+                        is_active=True,
+                        stripe_checkout_session_id=stripe_checkout_session_id
                     )
                     logger.info(f"Created new user: {user_email}")
                 

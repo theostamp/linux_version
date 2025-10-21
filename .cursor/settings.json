@@ -1,0 +1,44 @@
+{
+    "python.languageServer": "None",
+    "python.analysis.disabled": true,
+    "python.analysis.autoImportCompletions": false,
+    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.autoSearchPaths": false,
+    "python.analysis.diagnosticMode": "off",
+    "python.analysis.indexing": false,
+    "jedi.enabled": false,
+    "python.linting.enabled": false,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": false,
+    "python.linting.mypyEnabled": false,
+    "python.formatting.provider": "none",
+    "python.analysis.logLevel": "Error",
+    "python.defaultInterpreterPath": "/usr/bin/python3",
+    "python.terminal.activateEnvironment": false,
+    "python.analysis.completeFunctionParens": false,
+    "python.suggest.autoImports": false,
+    "python.analysis.packageIndexDepths": [],
+    "python.analysis.extraPaths": [],
+    "python.analysis.stubPath": "",
+    "python.analysis.userFileIndexingLimit": 0,
+    "python.analysis.include": [],
+    "python.analysis.exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        "**/.git",
+        "**/.*"
+    ],
+    "python.analysis.ignore": [
+        "**/node_modules",
+        "**/__pycache__",
+        "**/.git",
+        "**/.*"
+    ],
+    "python.analysis.autoFormatStrings": false,
+    "python.analysis.fixAll": [],
+    "python.analysis.importFormat": "absolute",
+    "python.analysis.logLevel": "Error",
+    "python.analysis.autoImportCompletions": false,
+    "python.analysis.typeCheckingMode": "off"
+}
+
