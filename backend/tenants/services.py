@@ -64,6 +64,9 @@ class TenantService:
                 # Step 6: Create initial user in tenant schema
                 self._create_tenant_user(user, schema_name)
                 
+                # Step 7: Create demo data (Αλκμάνος 22 building)
+                self._create_demo_data(schema_name)
+                
                 logger.info(f"Successfully created tenant '{schema_name}' and subscription for user {user.email}")
                 return tenant, subscription
                 
@@ -73,13 +76,13 @@ class TenantService:
     
     def _create_tenant(self, schema_name, user):
         """Create the tenant (Client) object."""
-        # Ensure schema name is unique
+        # Ensure schema name is unique and RFC compliant (use hyphens, not underscores)
         original_schema_name = schema_name
         counter = 1
         while Client.objects.filter(schema_name=schema_name).exists():
-            schema_name = f"{original_schema_name}_{counter}"
+            schema_name = f"{original_schema_name}-{counter}"
             counter += 1
-        
+
         tenant = Client.objects.create(
             name=user.get_full_name() or user.email.split('@')[0],
             schema_name=schema_name,
@@ -87,7 +90,7 @@ class TenantService:
             on_trial=True,
             is_active=True
         )
-        
+
         logger.info(f"Created tenant: {tenant.name} (schema: {tenant.schema_name})")
         return tenant
     
@@ -188,27 +191,27 @@ class TenantService:
     def generate_unique_schema_name(self, base_name):
         """
         Generate a unique schema name from a base name.
-        
+
         Args:
             base_name (str): The base name to slugify
-            
+
         Returns:
-            str: A unique schema name
+            str: A unique schema name (RFC 1034/1035 compliant - uses hyphens, not underscores)
         """
-        # Slugify the base name
+        # Slugify the base name (this already converts underscores to hyphens)
         schema_name = slugify(base_name)
-        
+
         # Ensure it's not empty
         if not schema_name:
-            schema_name = f"tenant_{int(timezone.now().timestamp())}"
-        
-        # Ensure it's unique
+            schema_name = f"tenant-{int(timezone.now().timestamp())}"
+
+        # Ensure it's unique (use hyphens for RFC compliance)
         original_schema_name = schema_name
         counter = 1
         while Client.objects.filter(schema_name=schema_name).exists():
-            schema_name = f"{original_schema_name}_{counter}"
+            schema_name = f"{original_schema_name}-{counter}"
             counter += 1
-        
+
         return schema_name
     
     def get_tenant_by_schema(self, schema_name):
@@ -221,4 +224,68 @@ class TenantService:
     def is_schema_available(self, schema_name):
         """Check if a schema name is available."""
         return not Client.objects.filter(schema_name=schema_name).exists()
+    
+    def _create_demo_data(self, schema_name):
+        """Create demo data (Αλκμάνος 22 building) for the new tenant."""
+        try:
+            with schema_context(schema_name):
+                from buildings.models import Building
+                from apartments.models import Apartment
+                from django.contrib.auth import get_user_model
+                
+                User = get_user_model()
+                
+                # Check if demo data already exists
+                if Building.objects.filter(name__icontains='Αλκμάνος').exists():
+                    logger.info(f"Demo data already exists in schema {schema_name}")
+                    return
+                
+                # Get the tenant user (manager)
+                tenant_user = User.objects.filter(is_staff=True).first()
+                if not tenant_user:
+                    logger.warning(f"No tenant user found in schema {schema_name} for demo data creation")
+                    return
+                
+                # Create Αλκμάνος 22 building
+                building = Building.objects.create(
+                    name='🎓 Demo Building - Αλκμάνος 22',
+                    address='Αλκμάνος 22, Αθήνα 115 28, Ελλάδα',
+                    city='Αθήνα',
+                    postal_code='115 28',
+                    apartments_count=10,
+                    latitude=37.9838,
+                    longitude=23.7275,
+                    internal_manager_name='Γραμματεία'
+                )
+                
+                # Create apartments (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)
+                apartments_data = [
+                    {'number': 'Α1', 'floor': 1, 'area': 85.5, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': 'Α2', 'floor': 1, 'area': 75.0, 'participation_mills': 88, 'heating_mills': 88, 'elevator_mills': 88},
+                    {'number': 'Α3', 'floor': 1, 'area': 90.0, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105},
+                    {'number': 'Β1', 'floor': 2, 'area': 85.5, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': 'Β2', 'floor': 2, 'area': 75.0, 'participation_mills': 88, 'heating_mills': 88, 'elevator_mills': 88},
+                    {'number': 'Β3', 'floor': 2, 'area': 90.0, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105},
+                    {'number': 'Γ1', 'floor': 3, 'area': 85.5, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': 'Γ2', 'floor': 3, 'area': 75.0, 'participation_mills': 88, 'heating_mills': 88, 'elevator_mills': 88},
+                    {'number': 'Γ3', 'floor': 3, 'area': 90.0, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105},
+                    {'number': 'Δ1', 'floor': 4, 'area': 120.0, 'participation_mills': 140, 'heating_mills': 140, 'elevator_mills': 140},
+                ]
+                
+                for apt_data in apartments_data:
+                    Apartment.objects.create(
+                        building=building,
+                        number=apt_data['number'],
+                        floor=apt_data['floor'],
+                        area=apt_data['area'],
+                        participation_mills=apt_data['participation_mills'],
+                        heating_mills=apt_data['heating_mills'],
+                        elevator_mills=apt_data['elevator_mills']
+                    )
+                
+                logger.info(f"Created demo building 'Αλκμάνος 22' with 10 apartments in schema {schema_name}")
+                
+        except Exception as e:
+            logger.error(f"Failed to create demo data in schema {schema_name}: {e}")
+            # Don't raise here - tenant creation can still succeed without demo data
 

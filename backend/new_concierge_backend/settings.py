@@ -104,11 +104,12 @@ if DEBUG:
     # Only add debug tools if they're available
     debug_apps = []
     
-    try:
-        import debug_toolbar
-        debug_apps.append('debug_toolbar')
-    except ImportError:
-        pass
+    # Temporarily disable debug_toolbar to fix subscription endpoint
+    # try:
+    #     import debug_toolbar
+    #     debug_apps.append('debug_toolbar')
+    # except ImportError:
+    #     pass
     
     try:
         import django_extensions
@@ -128,6 +129,7 @@ if DEBUG:
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'core.cross_schema_auth.TenantAccessMiddleware',  # Cross-schema tenant access control
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
         'financial.audit.AuditMiddleware',  # Audit logging για οικονομικές κινήσεις
@@ -137,8 +139,9 @@ if DEBUG:
         'billing.middleware.UsageTrackingMiddleware',  # Track usage and enforce limits
     ]
     
-    if 'debug_toolbar' in INSTALLED_APPS:
-        MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+    # Temporarily disable debug_toolbar middleware
+    # if 'debug_toolbar' in INSTALLED_APPS:
+    #     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
     
 else:
     MIDDLEWARE = [
@@ -149,6 +152,7 @@ else:
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'core.cross_schema_auth.TenantAccessMiddleware',  # Cross-schema tenant access control
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
         'financial.audit.AuditMiddleware',  # Audit logging για οικονομικές κινήσεις
@@ -214,12 +218,13 @@ PUBLIC_SCHEMA_NAME = 'public'
 # 🔑 Custom auth
 # ----------------------------------------
 
-AUTH_USER_MODEL = 'users.CustomUser'  # Προσαρμοσμένο μοντέλο χρήστη
+AUTH_USER_MODEL = 'users.CustomUser'
 
-# ----------------------------------------
+# Custom authentication backends
 AUTHENTICATION_BACKENDS = [
-    'users.backends.EmailBackend',
-    'django.contrib.auth.backends.ModelBackend',
+    'core.cross_schema_auth.CrossSchemaAuthBackend',  # Cross-schema authentication
+    'users.backends.EmailBackend',  # Email-based authentication
+    'django.contrib.auth.backends.ModelBackend',  # Default Django backend
 ]
 
 AUTH_PASSWORD_VALIDATORS = [

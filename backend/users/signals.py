@@ -43,17 +43,17 @@ def create_tenant_for_user(sender, instance, created, **kwargs):
             # Δημιουργία slug από το email του user
             email_prefix = instance.email.split('@')[0]
             tenant_name = slugify(email_prefix)
-            
+
             # Έλεγχος αν το tenant_name είναι έγκυρο schema name
             if not tenant_name or len(tenant_name) < 1:
-                tenant_name = f"tenant_{int(time.time())}"
-            
+                tenant_name = f"tenant-{int(time.time())}"
+
             # Έλεγχος αν υπάρχει ήδη tenant με αυτό το όνομα
+            # RFC 1034/1035 compliance: Use hyphens instead of underscores
             if Client.objects.filter(schema_name=tenant_name).exists():
-                # Αν υπάρχει, προσθέτουμε timestamp
-                import time
-                tenant_name = f"{tenant_name}_{int(time.time())}"
-            
+                # Αν υπάρχει, προσθέτουμε timestamp με hyphen (όχι underscore)
+                tenant_name = f"{tenant_name}-{int(time.time())}"
+
             # Δημιουργία tenant με συγκεκριμένο schema_name
             tenant = Client.objects.create(
                 name=instance.get_full_name() or email_prefix,
@@ -62,15 +62,15 @@ def create_tenant_for_user(sender, instance, created, **kwargs):
                 on_trial=True,
                 is_active=True
             )
-            
-            # Δημιουργία domain
+
+            # Δημιουργία domain (RFC compliant - uses hyphens)
             domain_name = f"{tenant_name}.localhost"
             Domain.objects.create(
                 domain=domain_name,
                 tenant=tenant,
                 is_primary=True
             )
-            
+
             print(f"✅ Δημιουργήθηκε αυτόματα tenant '{tenant.name}' με domain '{domain_name}' για τον user '{instance.email}'")
             
     except ValidationError as e:

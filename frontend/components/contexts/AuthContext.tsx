@@ -24,11 +24,14 @@ interface AuthCtx {
   isLoading: boolean;
   isAuthReady: boolean;
   isAuthenticated: boolean;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<User | undefined>;
   setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthCtx | undefined>(undefined);
+
+// Global flag to prevent multiple AuthProvider instances from initializing simultaneously
+let globalAuthInitializing = false;
 
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [userState, setUserState] = useState<User | null>(null);
@@ -138,12 +141,13 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
 
   useEffect(() => {
     const loadUserOnMount = async () => {
-      if (hasInitialized) {
-        console.log('[AuthContext] Already initialized, skipping...');
+      if (hasInitialized || globalAuthInitializing) {
+        console.log('[AuthContext] Already initialized or global initialization in progress, skipping...');
         return;
       }
 
       console.log('[AuthContext] loadUserOnMount starting...');
+      globalAuthInitializing = true;
       setHasInitialized(true);
       setIsLoading(true);
 
@@ -217,12 +221,13 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
         clearTimeout(timeoutId);
         setIsLoading(false);
         setIsAuthReady(true);
+        globalAuthInitializing = false;
       }
     };
 
     loadUserOnMount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasInitialized]);
+  }, []); // Remove hasInitialized dependency to prevent re-runs
 
   // Compute isAuthenticated based on user state and token existence
   const isAuthenticated = !!userState && !!localStorage.getItem('access');

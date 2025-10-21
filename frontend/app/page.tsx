@@ -33,6 +33,11 @@ export default function Home() {
       console.log('Home: User authenticated, redirecting to dashboard');
       setHasRedirected(true);
       router.push('/dashboard');
+    } else if (isAuthReady && !user && !hasRedirected) {
+      // If we're in a tenant workspace but not authenticated, redirect to login
+      console.log('Home: No user found, redirecting to login');
+      setHasRedirected(true);
+      router.push('/login');
     }
   }, [user, isAuthReady, router, hasRedirected]);
 
