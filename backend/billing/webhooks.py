@@ -73,7 +73,10 @@ class StripeWebhookView(APIView):
     def handle_checkout_session_completed(self, session):
         """
         Handles the logic for a completed Stripe checkout session.
-        This is the main entry point for creating a tenant and subscription.
+        
+        NOTE: Tenant creation has been moved to the Public App (Next.js).
+        This webhook now only logs the event and does not create tenants.
+        The Public App will handle tenant creation via the internal API.
         """
         client_reference_id = session.get('client_reference_id')
         stripe_customer_id = session.get('customer')
@@ -82,66 +85,20 @@ class StripeWebhookView(APIView):
         tenant_subdomain = metadata.get('tenant_subdomain')
         plan_id = metadata.get('plan_id')
 
-        if not all([client_reference_id, stripe_customer_id, stripe_subscription_id, tenant_subdomain, plan_id]):
-            logger.error(f"Webhook Error: Missing critical data from session {session.get('id')}.")
-            return
-
-        try:
-            # Use a transaction to ensure all or nothing
-            with transaction.atomic():
-                # STEP 1: Find the user in the 'public' schema
-                user = CustomUser.objects.get(id=client_reference_id)
-
-                # Prevent re-processing if tenant already exists (Idempotency)
-                if user.tenant:
-                    logger.info(f"User {user.email} already has a tenant. Skipping webhook processing.")
-                    return
-                
-                # Additional check: Prevent duplicate subscriptions for the same user
-                from billing.models import UserSubscription
-                existing_subscription = UserSubscription.objects.filter(
-                    user=user,
-                    stripe_subscription_id=stripe_subscription_id
-                ).first()
-                
-                if existing_subscription:
-                    logger.warning(f"User {user.email} already has subscription {stripe_subscription_id}. Preventing duplicate.")
-                    return
-                
-                # Check if user has any active subscription
-                active_subscription = UserSubscription.objects.filter(
-                    user=user,
-                    status__in=['active', 'trialing']
-                ).first()
-                
-                if active_subscription:
-                    logger.warning(f"User {user.email} already has an active subscription. Preventing duplicate.")
-                    return
-
-                # STEP 2: Create the Tenant, Domain, and UserSubscription
-                # We assume a service layer handles the complexity.
-                tenant_service = TenantService()
-                tenant, subscription = tenant_service.create_tenant_and_subscription(
-                    schema_name=tenant_subdomain,
-                    user=user,
-                    plan_id=plan_id,
-                    stripe_customer_id=stripe_customer_id,
-                    stripe_subscription_id=stripe_subscription_id
-                )
-
-                # STEP 3: Update user's status in the public schema
-                user.tenant = tenant
-                user.is_active = True
-                user.save(update_fields=['tenant', 'is_active'])
-
-                logger.info(f"Successfully created tenant '{tenant.schema_name}' and subscription for user {user.email}")
-
-        except CustomUser.DoesNotExist:
-            logger.error(f"Webhook Error: User with ID {client_reference_id} not found.")
-        except Exception as e:
-            logger.critical(f"CRITICAL: Tenant creation failed for user {client_reference_id}. Error: {e}")
-            # Here you could trigger an alert for manual intervention.
-            raise
+        logger.info(f"Stripe checkout session completed: {session.get('id')}")
+        logger.info(f"Session data - User ID: {client_reference_id}, Customer: {stripe_customer_id}, Subscription: {stripe_subscription_id}")
+        logger.info(f"Metadata - Tenant: {tenant_subdomain}, Plan: {plan_id}")
+        
+        # Log that tenant creation is now handled by Public App
+        logger.info("Tenant creation disabled in Core App - handled by Public App via internal API")
+        
+        # TODO: In the future, we might want to:
+        # 1. Update existing subscription status if needed
+        # 2. Send notifications
+        # 3. Update analytics
+        # But for now, we just log the event
+        
+        return
     
     def handle_payment_intent_succeeded(self, payment_intent):
         """
