@@ -606,9 +606,10 @@ export async function fetchBuildings(page: number = 1, pageSize: number = 50): P
   console.log(`[API CALL] Attempting to fetch /api/buildings/ with page=${page}, pageSize=${pageSize}`);
   console.log('[API CALL] Current API base URL:', API_BASE_URL);
   try {
+    // Use public endpoint for listing buildings since tenant may not have data
     const resp = await makeRequestWithRetry({
       method: 'get',
-      url: '/api/buildings/list/',
+      url: '/api/buildings/public/',
       params: {
         page,
         page_size: pageSize
@@ -633,7 +634,7 @@ let buildingsCache: { data: Building[], timestamp: number } | null = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export async function fetchAllBuildings(): Promise<Building[]> {
-  const cacheKey = getCacheKey('/api/buildings/list/', { page_size: 1000, page: 1 });
+  const cacheKey = getCacheKey('/api/buildings/public/', { page_size: 1000, page: 1 });
   
   // Check global throttling cache first
   const cached = getCachedOrInFlight(cacheKey);
@@ -662,7 +663,7 @@ export async function fetchAllBuildings(): Promise<Building[]> {
     // Try to disable pagination by requesting a very large page size
     const resp = await makeRequestWithRetry({
       method: 'get',
-      url: '/api/buildings/list/',
+      url: '/api/buildings/public/',
       params: {
         page_size: 1000, // Request a very large page size to get all buildings
         page: 1
