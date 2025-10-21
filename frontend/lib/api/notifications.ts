@@ -19,7 +19,7 @@ import type {
   SendDigestResponse,
 } from '@/types/notifications';
 
-const BASE_URL = '/notifications';
+const BASE_URL = '/api/notifications';
 
 /**
  * Notification Templates

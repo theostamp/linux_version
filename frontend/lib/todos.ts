@@ -63,7 +63,7 @@ export async function fetchTodos(params: FetchTodosParams = {}): Promise<TodoIte
   }
 
   const query = searchParams.toString();
-  const { data } = await api.get(`/todos/items/${query ? `?${query}` : ''}`);
+  const { data } = await api.get(`/api/todos/items/${query ? `?${query}` : ''}`);
   // Normalize paginated/non-paginated responses to array
   if (Array.isArray(data)) return data;
   if (data && Array.isArray(data.results)) return data.results;
@@ -80,7 +80,7 @@ export async function fetchPendingTodosCount(buildingId?: number | null): Promis
     }
   }
   const query = searchParams.toString();
-  const { data } = await api.get(`/todos/items/pending-count/${query ? `?${query}` : ''}`);
+  const { data } = await api.get(`/api/todos/items/pending-count/${query ? `?${query}` : ''}`);
   return data.count ?? 0;
 }
 
@@ -101,7 +101,7 @@ export async function fetchTodoCategories(buildingId?: number | null): Promise<T
     else searchParams.set('building', String(buildingId));
   }
   const query = searchParams.toString();
-  const { data } = await api.get(`/todos/categories/${query ? `?${query}` : ''}`);
+  const { data } = await api.get(`/api/todos/categories/${query ? `?${query}` : ''}`);
   return data;
 }
 
@@ -117,17 +117,17 @@ export interface TodoCategoryPayload {
 }
 
 export async function createTodoCategory(payload: TodoCategoryPayload): Promise<TodoCategory> {
-  const { data } = await api.post('/todos/categories/', payload);
+  const { data } = await api.post('/api/todos/categories/', payload);
   return data;
 }
 
 export async function updateTodoCategory(id: number, payload: Partial<TodoCategoryPayload>): Promise<TodoCategory> {
-  const { data } = await api.patch(`/todos/categories/${id}/`, payload);
+  const { data } = await api.patch(`/api/todos/categories/${id}/`, payload);
   return data;
 }
 
 export async function deleteTodoCategory(id: number): Promise<void> {
-  await api.delete(`/todos/categories/${id}/`);
+  await api.delete(`/api/todos/categories/${id}/`);
 }
 
 export interface TodoNotification {
@@ -151,12 +151,12 @@ export async function fetchTodoNotifications(params: { buildingId?: number | nul
     searchParams.set('is_read', params.is_read ? '1' : '0');
   }
   const query = searchParams.toString();
-  const { data } = await api.get(`/todos/notifications/${query ? `?${query}` : ''}`);
+  const { data } = await api.get(`/api/todos/notifications/${query ? `?${query}` : ''}`);
   return data;
 }
 
 export async function markNotificationAsRead(id: number): Promise<TodoNotification> {
-  const { data } = await api.post(`/todos/notifications/${id}/mark-read/`);
+  const { data } = await api.post(`/api/todos/notifications/${id}/mark-read/`);
   return data;
 }
 
@@ -167,7 +167,7 @@ export async function triggerTodoReminders(buildingId?: number | null): Promise<
     else searchParams.set('building', String(buildingId));
   }
   const query = searchParams.toString();
-  const { data } = await api.post(`/todos/items/generate-reminders/${query ? `?${query}` : ''}`);
+  const { data } = await api.post(`/api/todos/items/generate-reminders/${query ? `?${query}` : ''}`);
   return data;
 }
 
@@ -178,7 +178,7 @@ export async function triggerTemplateAutoCreate(buildingId?: number | null): Pro
     else searchParams.set('building', String(buildingId));
   }
   const query = searchParams.toString();
-  const { data } = await api.post(`/todos/templates/auto-create/${query ? `?${query}` : ''}`);
+  const { data } = await api.post(`/api/todos/templates/auto-create/${query ? `?${query}` : ''}`);
   return data;
 }
 
@@ -189,7 +189,7 @@ export async function triggerSyncFinancialOverdues(buildingId?: number | null): 
     else searchParams.set('building', String(buildingId));
   }
   const query = searchParams.toString();
-  const { data } = await api.post(`/todos/items/sync-financial-overdues/${query ? `?${query}` : ''}`);
+  const { data } = await api.post(`/api/todos/items/sync-financial-overdues/${query ? `?${query}` : ''}`);
   return data;
 }
 
@@ -200,7 +200,7 @@ export async function triggerSyncMaintenanceSchedule(buildingId?: number | null)
     else searchParams.set('building', String(buildingId));
   }
   const query = searchParams.toString();
-  const { data } = await api.post(`/todos/items/sync-maintenance-schedule/${query ? `?${query}` : ''}`);
+  const { data } = await api.post(`/api/todos/items/sync-maintenance-schedule/${query ? `?${query}` : ''}`);
   return data;
 }
 
