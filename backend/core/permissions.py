@@ -61,3 +61,115 @@ class IsInternalService(BasePermission):
         as the general permission check.
         """
         return self.has_permission(request, view)
+
+
+class IsManagerOrSuperuser(BasePermission):
+    """
+    Custom permission class for manager and superuser access.
+    
+    Allows access only to managers and superusers.
+    """
+    
+    def has_permission(self, request, view):
+        """
+        Check if the user is a manager or superuser.
+        
+        Returns:
+            bool: True if user is manager or superuser, False otherwise
+        """
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            (request.user.role == 'manager' or request.user.is_superuser)
+        )
+    
+    def has_object_permission(self, request, view, obj):
+        """
+        Object-level permission check.
+        
+        For managers and superusers, we use the same permission logic
+        as the general permission check.
+        """
+        return self.has_permission(request, view)
+
+
+class IsBuildingAdmin(BasePermission):
+    """
+    Custom permission class for building admin access.
+    
+    Allows access only to building administrators.
+    """
+    
+    def has_permission(self, request, view):
+        """
+        Check if the user is a building admin.
+        
+        Returns:
+            bool: True if user is building admin, False otherwise
+        """
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            (request.user.role == 'building_admin' or request.user.is_superuser)
+        )
+    
+    def has_object_permission(self, request, view, obj):
+        """
+        Object-level permission check.
+        
+        For building admins, we use the same permission logic
+        as the general permission check.
+        """
+        return self.has_permission(request, view)
+
+
+class IsManager(BasePermission):
+    """
+    Custom permission class for manager access.
+    """
+    
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            request.user.role == 'manager'
+        )
+
+
+class IsResident(BasePermission):
+    """
+    Custom permission class for resident access.
+    """
+    
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            request.user.role == 'resident'
+        )
+
+
+class IsRelatedToBuilding(BasePermission):
+    """
+    Custom permission class for users related to a building.
+    """
+    
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            (request.user.role in ['manager', 'resident', 'building_admin'] or request.user.is_superuser)
+        )
+
+
+class IsSuperuser(BasePermission):
+    """
+    Custom permission class for superuser access.
+    """
+    
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            request.user.is_superuser
+        )

@@ -135,3 +135,4 @@ if __name__ == "__main__":
             print(f"   python manual_webhook_trigger.py <email>")
             print(f"\n   Example:")
             print(f"   python manual_webhook_trigger.py etherm2021@gmail.com")
+

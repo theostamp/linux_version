@@ -212,3 +212,4 @@ class TenantAccessMiddleware:
         except Exception as e:
             logger.error(f"Error checking tenant access: {e}")
             return False
+

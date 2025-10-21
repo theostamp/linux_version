@@ -11,5 +11,5 @@ urlpatterns = [
     path("", include(router.urls)),
     
     # Internal API endpoints (secured with IsInternalService permission)
-    path("api/internal/tenants/create/", InternalTenantCreateView.as_view(), name="internal-tenant-create"),
+    path("internal/create/", InternalTenantCreateView.as_view(), name="internal-tenant-create"),
 ]

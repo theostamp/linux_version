@@ -48,6 +48,9 @@ urlpatterns = [
     # Public info
     path('api/public-info/', include('public_info.urls')),
     
+    # Tenants
+    path('api/tenants/', include('tenants.urls')),
+    
     # Residents
     path('api/residents/', include('residents.urls')),
 
