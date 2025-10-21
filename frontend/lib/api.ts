@@ -140,19 +140,27 @@ import { toast } from '@/hooks/use-toast';
 // Βασικό URL του API. Χρησιμοποιούμε την ίδια λογική με το apiPublic για tenant-specific URLs
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    // Client-side (browser) - use same origin (no CORS)
+    // Client-side (browser) - use tenant-specific API URL
     (window as any).debugApiCalls = true;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    
+    // For tenant workspaces, use the backend API port (18000)
+    if (hostname.includes('localhost') && port === '8080') {
+      const apiUrl = `http://${hostname}:18000`;
+      console.log(`[API] Using tenant-specific API URL: ${apiUrl}`);
+      return apiUrl;
+    }
+    
+    // Fallback to same origin
     const origin = window.location.origin;
     console.log(`[API] Using same origin for API calls: ${origin}`);
     return origin;
   }
 
   // Server-side - use backend container or env variable
-  let base = process.env.NEXT_PUBLIC_API_URL ?? 'http://backend:8000/api';
+  let base = process.env.NEXT_PUBLIC_API_URL ?? 'http://backend:8000';
   base = base.replace(/\/$/, '');
-  if (!/\/api$/.test(base)) {
-    base = `${base}/api`;
-  }
   console.log(`[API] Using server-side API URL: ${base}`);
   return base;
 };
@@ -288,7 +296,7 @@ api.interceptors.request.use(
   }
 );
 
-import { handleApiError, shouldRetry, getRetryDelay } from './apiUtils';
+import { handleApiError, shouldRetry } from './apiUtils';
 
 // Response Interceptor (για χειρισμό ληγμένων tokens και retry logic)
 function shouldAttemptTokenRefresh(
@@ -426,7 +434,7 @@ export async function loginUser(
   password: string,
 ): Promise<{ access: string; refresh: string; user: User }> {
   console.log(`[API CALL] Attempting login for user: ${email}`);
-  const { data } = await api.post('/users/token/simple/', { email, password });
+  const { data } = await api.post('/api/users/token/simple/', { email, password });
 
   if (typeof window !== 'undefined') {
     localStorage.setItem('access', data.access);
@@ -454,7 +462,7 @@ export async function logoutUser(): Promise<void> {
   
   if (refresh) {
     try {
-      await axios.post(`${API_BASE_URL}/users/logout/`, { refresh }, {
+      await axios.post(`${API_BASE_URL}/api/users/logout/`, { refresh }, {
         headers: { 'Content-Type': 'application/json' }
       });
       console.log('[logoutUser] Logout request sent to backend.');
@@ -473,13 +481,32 @@ export async function logoutUser(): Promise<void> {
   }
 }
 
+// Request deduplication for getCurrentUser
+let getCurrentUserPromise: Promise<User> | null = null;
+
 export async function getCurrentUser(): Promise<User> {
-  console.log('[API CALL] Attempting to fetch /api/users/me/');
-  const { data } = await api.get<User>('/api/users/me/');
-  if (typeof window !== 'undefined' && data) {
-    localStorage.setItem('user', JSON.stringify(data));
+  // If there's already a request in flight, return that promise
+  if (getCurrentUserPromise) {
+    console.log('[API CALL] getCurrentUser already in progress, returning existing promise');
+    return getCurrentUserPromise;
   }
-  return data;
+
+  console.log('[API CALL] Attempting to fetch /api/users/me/');
+  
+  getCurrentUserPromise = (async () => {
+    try {
+      const { data } = await api.get<User>('/api/users/me/');
+      if (typeof window !== 'undefined' && data) {
+        localStorage.setItem('user', JSON.stringify(data));
+      }
+      return data;
+    } finally {
+      // Clear the promise when done (success or failure)
+      getCurrentUserPromise = null;
+    }
+  })();
+
+  return getCurrentUserPromise;
 }
 
 export type Announcement = { 
@@ -584,12 +611,12 @@ export interface BuildingsResponse {
 }
 
 export async function fetchBuildings(page: number = 1, pageSize: number = 50): Promise<BuildingsResponse> {
-  console.log(`[API CALL] Attempting to fetch /buildings/ with page=${page}, pageSize=${pageSize}`);
+  console.log(`[API CALL] Attempting to fetch /api/buildings/ with page=${page}, pageSize=${pageSize}`);
   console.log('[API CALL] Current API base URL:', API_BASE_URL);
   try {
     const resp = await makeRequestWithRetry({
       method: 'get',
-      url: '/buildings/list/',
+      url: '/api/buildings/list/',
       params: {
         page,
         page_size: pageSize
@@ -614,7 +641,7 @@ let buildingsCache: { data: Building[], timestamp: number } | null = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export async function fetchAllBuildings(): Promise<Building[]> {
-  const cacheKey = getCacheKey('/buildings/list/', { page_size: 1000, page: 1 });
+  const cacheKey = getCacheKey('/api/buildings/list/', { page_size: 1000, page: 1 });
   
   // Check global throttling cache first
   const cached = getCachedOrInFlight(cacheKey);
@@ -643,7 +670,7 @@ export async function fetchAllBuildings(): Promise<Building[]> {
     // Try to disable pagination by requesting a very large page size
     const resp = await makeRequestWithRetry({
       method: 'get',
-      url: '/buildings/list/',
+      url: '/api/buildings/list/',
       params: {
         page_size: 1000, // Request a very large page size to get all buildings
         page: 1
@@ -789,10 +816,10 @@ export async function fetchAllBuildingsPublic(): Promise<Building[]> {
 }
 
 export async function fetchBuilding(id: number): Promise<Building> {
-  console.log(`[API CALL] Attempting to fetch /buildings/list/${id}/`);
+  console.log(`[API CALL] Attempting to fetch /api/buildings/list/${id}/`);
   const { data } = await makeRequestWithRetry({
     method: 'get',
-    url: `/buildings/list/${id}/`
+    url: `/api/buildings/list/${id}/`
   });
   return data;
 }
@@ -825,7 +852,7 @@ export async function createBuilding(payload: BuildingPayload): Promise<Building
     console.log('[API CALL] Request config:', config);
     console.log('[API CALL] Request data stringified:', JSON.stringify(payload));
     
-    const { data } = await api.post<Building>('/buildings/list/', payload);
+    const { data } = await api.post<Building>('/api/buildings/list/', payload);
     console.log('[API CALL] Created building successfully:', data);
     return data;
   } catch (error) {
@@ -840,7 +867,7 @@ export async function createBuilding(payload: BuildingPayload): Promise<Building
 
 export async function updateBuilding(id: number, payload: BuildingPayload): Promise<Building> {
   console.log(`[API CALL] Attempting to update building ${id}:`, payload);
-  const { data } = await api.put<Building>(`/buildings/list/${id}/`, payload, {
+  const { data } = await api.put<Building>(`/api/buildings/list/${id}/`, payload, {
     headers: {
       'Content-Type': 'application/json',
     }
@@ -851,7 +878,7 @@ export async function updateBuilding(id: number, payload: BuildingPayload): Prom
 export async function deleteBuilding(id: number): Promise<void> {
   console.log(`[API CALL] Attempting to delete building ${id}`);
   try {
-    await api.delete(`/buildings/list/${id}/`);
+    await api.delete(`/api/buildings/list/${id}/`);
     console.log(`[API] Successfully deleted building ${id}`);
   } catch (error) {
     console.error(`[API] Error deleting building ${id}:`, error);
@@ -861,7 +888,7 @@ export async function deleteBuilding(id: number): Promise<void> {
 
 export async function fetchAnnouncements(buildingId?: number | null): Promise<Announcement[]> {
   // When buildingId is null, fetch from all buildings (no filter)
-  const relativeUrl = buildingId ? `/announcements/?building=${buildingId}` : '/announcements/';
+  const relativeUrl = buildingId ? `/api/announcements/?building=${buildingId}` : '/api/announcements/';
   
   // --- ΠΡΟΣΘΕΣΕ ΑΥΤΑ ΤΑ DEBUG LOGS ---
   console.log(`%c[DEBUG fetchAnnouncements] Called for announcements page with buildingId: ${buildingId}`, "color: blue; font-weight: bold;");
@@ -909,7 +936,7 @@ export async function fetchAnnouncement(id: string | number): Promise<Announceme
   console.log(`[API CALL] Attempting to fetch announcement with ID: ${id}`);
   
   try {
-    const { data } = await api.get(`/announcements/${id}/`);
+    const { data } = await api.get(`/api/announcements/${id}/`);
     return {
       id: data.id,
       title: data.title,
@@ -933,7 +960,7 @@ export async function fetchAnnouncement(id: string | number): Promise<Announceme
 
 export async function deleteAnnouncement(announcementId: number): Promise<string> {
   try {
-    const { data } = await api.delete<{ message: string }>(`/announcements/${announcementId}/`);
+    const { data } = await api.delete<{ message: string }>(`/api/announcements/${announcementId}/`);
     console.log(`[API] Successfully deleted announcement ${announcementId}`);
     return data.message || 'Η ανακοίνωση διαγράφηκε επιτυχώς';
   } catch (error) {
@@ -963,7 +990,7 @@ export async function createAnnouncement(payload: CreateAnnouncementPayload): Pr
     }
     if (payload.is_active !== undefined) formData.append('is_active', String(payload.is_active));
     formData.append('file', payload.file, payload.file.name);
-    const { data } = await api.post<Announcement>('/announcements/', formData, {
+    const { data } = await api.post<Announcement>('/api/announcements/', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return data;
@@ -972,13 +999,13 @@ export async function createAnnouncement(payload: CreateAnnouncementPayload): Pr
     if (payload.file === null || payload.file === undefined) delete jsonData.file;
     // Set building to null for global announcements
     jsonData.building = buildingValue;
-    const { data } = await api.post<Announcement>('/announcements/', jsonData);
+    const { data } = await api.post<Announcement>('/api/announcements/', jsonData);
     return data;
   }
 }
 
 export async function fetchVotes(buildingId?: number | null): Promise<Vote[]> {
-  const url = buildingId ? `/votes/?building=${buildingId}` : '/votes/';
+  const url = buildingId ? `/api/votes/?building=${buildingId}` : '/api/votes/';
   console.log(`[API CALL] Attempting to fetch ${url}`);
   const resp: AxiosResponse<{ results?: Vote[] } | Vote[]> = await api.get(url);
   const data = resp.data;
@@ -988,7 +1015,7 @@ export async function fetchVotes(buildingId?: number | null): Promise<Vote[]> {
 export async function fetchMyVote(voteId: number): Promise<VoteSubmission | null> {
   console.log(`[API CALL] Attempting to fetch my submission for vote ${voteId}`);
   try {
-    const { data } = await api.get<VoteSubmission>(`/votes/${voteId}/my-submission/`);
+    const { data } = await api.get<VoteSubmission>(`/api/votes/${voteId}/my-submission/`);
     return data;
   } catch (error: any) {
     if (error.response && error.response.status === 404) {
@@ -1002,19 +1029,19 @@ export async function fetchMyVote(voteId: number): Promise<VoteSubmission | null
 
 export async function submitVote(voteId: number, choice: string): Promise<VoteSubmission> {
   console.log(`[API CALL] Attempting to submit vote ${voteId} with choice: ${choice}`);
-  const { data } = await api.post<VoteSubmission>(`/votes/${voteId}/vote/`, { choice });
+  const { data } = await api.post<VoteSubmission>(`/api/votes/${voteId}/vote/`, { choice });
   return data;
 }
 
 export async function fetchVoteResults(voteId: number): Promise<VoteResultsData> {
   console.log(`[API CALL] Attempting to fetch results for vote ${voteId}`);
-  const { data } = await api.get<VoteResultsData>(`/votes/${voteId}/results/`);
+  const { data } = await api.get<VoteResultsData>(`/api/votes/${voteId}/results/`);
   return data;
 }
 
 export async function deleteVote(voteId: number): Promise<string> {
   try {
-    const { data } = await api.delete<{ message: string }>(`/votes/${voteId}/`);
+    const { data } = await api.delete<{ message: string }>(`/api/votes/${voteId}/`);
     console.log(`[API] Successfully deleted vote ${voteId}`);
     return data.message || 'Η ψηφοφορία διαγράφηκε επιτυχώς';
   } catch (error) {
@@ -1034,7 +1061,7 @@ export async function createVote(payload: CreateVotePayload): Promise<Vote> {
   // Handle building=0 as null for global votes
   const buildingValue = payload.building === 0 ? null : payload.building;
   
-  const { data } = await api.post<Vote>('/votes/', { 
+  const { data } = await api.post<Vote>('/api/votes/', { 
     ...payload, 
     building: buildingValue,
     is_active: payload.is_active ?? true 
@@ -1082,7 +1109,7 @@ export interface PublicInfoData {
 }
 
 export async function fetchPublicInfo(buildingId: number): Promise<PublicInfoData> {
-  const { data } = await apiPublic.get(`/public-info/${buildingId}/`);
+  const { data } = await apiPublic.get(`/api/public-info/${buildingId}/`);
   return data;
 }
 export async function fetchRequests(filters: { status?: string; buildingId?: number | null } = {}): Promise<UserRequest[]> {
@@ -1100,7 +1127,7 @@ export async function fetchRequests(filters: { status?: string; buildingId?: num
     }
   }
   const queryString = params.toString();
-  const url = `/user-requests/${queryString ? '?' + queryString : ''}`;
+  const url = `/api/user-requests/${queryString ? '?' + queryString : ''}`;
   
   console.log(`[API CALL] Attempting to fetch ${url}`);
   const resp: AxiosResponse<{ results?: any[] } | any[]> = await api.get(url);
@@ -1139,7 +1166,7 @@ export async function fetchRequests(filters: { status?: string; buildingId?: num
 }
 
 export async function fetchTopRequests(buildingId: number | null): Promise<UserRequest[]> {
-  const url = buildingId ? `/user-requests/top/?building=${buildingId}` : '/user-requests/top/?building=null';
+  const url = buildingId ? `/api/user-requests/top/?building=${buildingId}` : '/api/user-requests/top/?building=null';
   const resp: AxiosResponse<{ results?: any[] } | any[]> = await api.get(url);
   const data = resp.data;
   const rows: any[] = Array.isArray(data) ? data : data.results ?? [];
@@ -1177,7 +1204,7 @@ export async function fetchTopRequests(buildingId: number | null): Promise<UserR
 }
 
 export async function fetchUserRequestsForBuilding(buildingId: number): Promise<UserRequest[]> {
-  const url = `/user-requests/?building=${buildingId}`;
+  const url = `/api/user-requests/?building=${buildingId}`;
   const resp: AxiosResponse<{ results?: any[] } | any[]> = await api.get(url);
   const data = resp.data;
   const rows: any[] = Array.isArray(data) ? data : data.results ?? [];
@@ -1220,7 +1247,7 @@ export async function fetchUserRequestsForBuilding(buildingId: number): Promise<
     id: number
   ): Promise<{ status: string; supporter_count: number; supported: boolean }> {
     console.log(`[API CALL] Attempting to toggle support for request ${id}`);
-    const { data } = await api.post(`/user-requests/${id}/support/`);
+    const { data } = await api.post(`/api/user-requests/${id}/support/`);
     return data;
   }
 
@@ -1271,7 +1298,7 @@ export async function createUserRequest(payload: CreateUserRequestPayload): Prom
     console.log(`[API CALL] ${key}:`, value);
   }
   
-  const { data } = await api.post<UserRequest>('/user-requests/', formData, {
+  const { data } = await api.post<UserRequest>('/api/user-requests/', formData, {
     headers: {
       // Remove Content-Type for FormData - let the browser set it with boundary
       'Content-Type': undefined,
@@ -1288,13 +1315,13 @@ export interface UpdateUserRequestPayload {
 }
 export async function updateUserRequest(id: number, payload: UpdateUserRequestPayload): Promise<UserRequest> {
   console.log(`[API CALL] Attempting to update user request ${id}:`, payload);
-  const { data } = await api.patch<UserRequest>(`/user-requests/${id}/`, payload);
+  const { data } = await api.patch<UserRequest>(`/api/user-requests/${id}/`, payload);
   return data;
 }
 
 export async function deleteUserRequest(requestId: number): Promise<void> {
   try {
-    await api.delete(`/user-requests/${requestId}/`);
+    await api.delete(`/api/user-requests/${requestId}/`);
     console.log(`[API] Successfully deleted user request ${requestId}`);
   } catch (error) {
     console.error(`[API] Error deleting user request ${requestId}:`, error);
@@ -1303,8 +1330,8 @@ export async function deleteUserRequest(requestId: number): Promise<void> {
 }
 
 export async function fetchObligationsSummary(): Promise<ObligationSummary> {
-  console.log('[API CALL] Attempting to fetch /obligations/summary/');
-  const { data } = await api.get<ObligationSummary>('/obligations/summary/');
+  console.log('[API CALL] Attempting to fetch /api/obligations/summary/');
+  const { data } = await api.get<ObligationSummary>('/api/obligations/summary/');
   return data;
 }
 
@@ -1313,7 +1340,7 @@ export async function fetchObligations(filters: { buildingId?: number, status?: 
   if (filters.buildingId) params.append('building', String(filters.buildingId));
   if (filters.status) params.append('status', filters.status);
   const queryString = params.toString();
-  const url = `/obligations/${queryString ? '?' + queryString : ''}`;
+  const url = `/api/obligations/${queryString ? '?' + queryString : ''}`;
   console.log(`[API CALL] Attempting to fetch ${url}`);
   const resp: AxiosResponse<{ results?: Obligation[] } | Obligation[]> = await api.get(url);
   const data = resp.data;
@@ -1321,31 +1348,31 @@ export async function fetchObligations(filters: { buildingId?: number, status?: 
 }
 
 export async function fetchObligation(id: number): Promise<Obligation> {
-  console.log(`[API CALL] Attempting to fetch /obligations/${id}/`);
-  const { data } = await api.get<Obligation>(`/obligations/${id}/`);
+  console.log(`[API CALL] Attempting to fetch /api/obligations/${id}/`);
+  const { data } = await api.get<Obligation>(`/api/obligations/${id}/`);
   return data;
 }
 
 export async function createObligation(payload: Omit<Obligation, 'id' | 'created_at' | 'updated_at'>): Promise<Obligation> {
   console.log('[API CALL] Attempting to create obligation:', payload);
-  const { data } = await api.post<Obligation>('/obligations/', payload);
+  const { data } = await api.post<Obligation>('/api/obligations/', payload);
   return data;
 }
 
 export async function updateObligation(id: number, payload: Partial<Omit<Obligation, 'id' | 'created_at' | 'updated_at'>>): Promise<Obligation> {
   console.log(`[API CALL] Attempting to update obligation ${id}:`, payload);
-  const { data } = await api.put<Obligation>(`/obligations/${id}/`, payload);
+  const { data } = await api.put<Obligation>(`/api/obligations/${id}/`, payload);
   return data;
 }
 
 export async function deleteObligation(id: number): Promise<void> {
   console.log(`[API CALL] Attempting to delete obligation ${id}`);
-  await api.delete(`/obligations/${id}/`);
+  await api.delete(`/api/obligations/${id}/`);
 }
 
 // Νέα συνάρτηση για την ανάκτηση των κατοίκων ενός κτιρίου
 export async function fetchResidents(buildingId: number | null) {
-  const url = buildingId ? `/residents/?building=${buildingId}` : '/residents/';
+  const url = buildingId ? `/api/residents/?building=${buildingId}` : '/api/residents/';
   console.log('[fetchResidents] Making request to:', url);
   const response = await api.get(url);
   console.log('[fetchResidents] Response:', response.data);
@@ -1380,13 +1407,13 @@ export interface CreateResidentPayload {
 
 export async function createResident(payload: CreateResidentPayload): Promise<Resident> {
   console.log('[createResident] Sending payload:', payload);
-  const response = await api.post('/residents/create-with-user/', payload);
+  const response = await api.post('/api/residents/create-with-user/', payload);
   console.log('[createResident] Response:', response.data);
   return response.data.resident;
 }
 
 export async function deleteResident(id: number): Promise<void> {
-  await api.delete(`/residents/${id}/remove/`);
+  await api.delete(`/api/residents/${id}/remove/`);
 }
 
 // ==================== APARTMENTS API ====================
@@ -1534,7 +1561,7 @@ export async function fetchApartments(buildingId?: number, status?: string, orde
   
   const { data } = await makeRequestWithRetry({
     method: 'get',
-    url: `/apartments/?${params.toString()}`
+    url: `/api/apartments/?${params.toString()}`
   });
   return data;
 }
@@ -1542,14 +1569,14 @@ export async function fetchApartments(buildingId?: number, status?: string, orde
 // Λήψη συγκεκριμένου διαμερίσματος
 export async function fetchApartment(id: number): Promise<Apartment> {
   console.log('[API CALL] Attempting to fetch apartment:', id);
-  const { data } = await api.get<Apartment>(`/apartments/${id}/`);
+  const { data } = await api.get<Apartment>(`/api/apartments/${id}/`);
   return data;
 }
 
 // Λήψη όλων των διαμερισμάτων ενός κτιρίου
 export async function fetchBuildingApartments(buildingId: number): Promise<BuildingApartmentsResponse> {
   console.log('[API CALL] Attempting to fetch building apartments:', buildingId);
-  const { data } = await api.get<BuildingApartmentsResponse>(`/apartments/by-building/${buildingId}/`);
+  const { data } = await api.get<BuildingApartmentsResponse>(`/api/apartments/by-building/${buildingId}/`);
   return data;
 }
 
@@ -1565,7 +1592,7 @@ export async function fetchApartmentsWithFinancialData(buildingId: number, month
       params.append('month', month);
     }
     const queryString = params.toString();
-    const url = `/financial/dashboard/apartment_balances/?${queryString}`;
+    const url = `/api/financial/dashboard/apartment_balances/?${queryString}`;
     
     const { data } = await makeRequestWithRetry({
       method: 'get',
@@ -1601,8 +1628,8 @@ async function fetchApartmentsWithFinancialDataFallback(buildingId: number): Pro
   
   // First get building data and apartments
   const [buildingResponse, apartmentsResponse] = await Promise.all([
-    makeRequestWithRetry({ method: 'get', url: `/buildings/list/${buildingId}/` }),
-    makeRequestWithRetry({ method: 'get', url: `/apartments/?building=${buildingId}` })
+    makeRequestWithRetry({ method: 'get', url: `/api/buildings/list/${buildingId}/` }),
+    makeRequestWithRetry({ method: 'get', url: `/api/apartments/?building=${buildingId}` })
   ]);
   
   const allApartments = apartmentsResponse.data.results || apartmentsResponse.data;
@@ -1619,7 +1646,7 @@ async function fetchApartmentsWithFinancialDataFallback(buildingId: number): Pro
       try {
         const paymentsResponse = await makeRequestWithRetry({
           method: 'get',
-          url: `/financial/payments/?building_id=${buildingId}&apartment=${apartment.id}`
+          url: `/api/financial/payments/?building_id=${buildingId}&apartment=${apartment.id}`
         });
         
         const payments = paymentsResponse.data.results || paymentsResponse.data || [];
@@ -1682,7 +1709,7 @@ async function fetchApartmentsWithFinancialDataFallback(buildingId: number): Pro
 // Δημιουργία διαμερίσματος
 export async function createApartment(payload: CreateApartmentPayload): Promise<Apartment> {
   console.log('[API CALL] Attempting to create apartment:', payload);
-  const { data } = await api.post<Apartment>('/apartments/', payload);
+  const { data } = await api.post<Apartment>('/api/apartments/', payload);
   return data;
 }
 
@@ -1703,7 +1730,7 @@ export async function fetchResidentsForQR(buildingId: number): Promise<{
   total_residents: number;
 }> {
   console.log('[API CALL] Attempting to fetch residents for QR code:', buildingId);
-  const { data } = await api.get(`/apartments/residents/${buildingId}/`);
+  const { data } = await api.get(`/api/apartments/residents/${buildingId}/`);
   return data;
 }
 
@@ -1722,7 +1749,7 @@ export async function fetchBuildingResidents(buildingId: number): Promise<{
   total_residents: number;
 }> {
   console.log('[API CALL] Attempting to fetch building residents for manager selection:', buildingId);
-  const { data } = await api.get(`/apartments/building-residents/${buildingId}/`);
+  const { data } = await api.get(`/api/apartments/building-residents/${buildingId}/`);
   return data;
 }
 
@@ -1733,7 +1760,7 @@ export async function updateResidentEmail(
   email: string
 ): Promise<{ message: string; apartment_id: number; email: string }> {
   console.log('[API CALL] Attempting to update resident email:', { apartmentId, type, email });
-  const { data } = await api.post(`/apartments/${apartmentId}/update-email/`, {
+  const { data } = await api.post(`/api/apartments/${apartmentId}/update-email/`, {
     type,
     email
   });
@@ -1743,35 +1770,35 @@ export async function updateResidentEmail(
 // Μαζική δημιουργία διαμερισμάτων
 export async function bulkCreateApartments(payload: BulkCreateApartmentsPayload): Promise<{ message: string; created_count: number; apartments: ApartmentList[] }> {
   console.log('[API CALL] Attempting to bulk create apartments:', payload);
-  const { data } = await api.post('/apartments/bulk-create/', payload);
+  const { data } = await api.post('/api/apartments/bulk-create/', payload);
   return data;
 }
 
 // Ενημέρωση διαμερίσματος
 export async function updateApartment(id: number, payload: Partial<CreateApartmentPayload>): Promise<Apartment> {
   console.log('[API CALL] Attempting to update apartment:', id, payload);
-  const { data } = await api.patch<Apartment>(`/apartments/${id}/`, payload);
+  const { data } = await api.patch<Apartment>(`/api/apartments/${id}/`, payload);
   return data;
 }
 
 // Ενημέρωση στοιχείων ιδιοκτήτη
 export async function updateApartmentOwner(id: number, payload: UpdateOwnerPayload): Promise<{ message: string; apartment: Apartment }> {
   console.log('[API CALL] Attempting to update apartment owner:', id, payload);
-  const { data } = await api.post(`/apartments/${id}/update-owner/`, payload);
+  const { data } = await api.post(`/api/apartments/${id}/update-owner/`, payload);
   return data;
 }
 
 // Ενημέρωση στοιχείων ενοίκου
 export async function updateApartmentTenant(id: number, payload: UpdateTenantPayload): Promise<{ message: string; apartment: Apartment }> {
   console.log('[API CALL] Attempting to update apartment tenant:', id, payload);
-  const { data } = await api.post(`/apartments/${id}/update-tenant/`, payload);
+  const { data } = await api.post(`/api/apartments/${id}/update-tenant/`, payload);
   return data;
 }
 
 // Διαγραφή διαμερίσματος
 export async function deleteApartment(id: number): Promise<{ message: string }> {
   console.log('[API CALL] Attempting to delete apartment:', id);
-  const { data } = await api.delete(`/apartments/${id}/`);
+  const { data } = await api.delete(`/api/apartments/${id}/`);
   return data;
 }
 
@@ -1780,7 +1807,7 @@ export async function fetchApartmentStatistics(buildingId?: number): Promise<Apa
   console.log('[API CALL] Attempting to fetch apartment statistics:', buildingId);
   
   const params = buildingId ? `?building=${buildingId}` : '';
-  const { data } = await api.get<ApartmentStatistics>(`/apartments/statistics/${params}`);
+  const { data } = await api.get<ApartmentStatistics>(`/api/apartments/statistics/${params}`);
   return data;
 }
 
@@ -1793,7 +1820,7 @@ export async function fetchServicePackages(buildingId?: number): Promise<Service
       params.append('building_id', buildingId.toString());
     }
     
-    const resp = await api.get<ServicePackagesResponse>(`/buildings/service-packages/?${params}`);
+    const resp = await api.get<ServicePackagesResponse>(`/api/buildings/service-packages/?${params}`);
     console.log('[API CALL] Service packages response:', resp.data);
     
     // Επιστρέφει το results array από το paginated response
@@ -1807,7 +1834,7 @@ export async function fetchServicePackages(buildingId?: number): Promise<Service
 export async function createServicePackage(packageData: Partial<ServicePackage>): Promise<ServicePackage> {
   console.log('[API CALL] Creating service package:', packageData);
   try {
-    const resp = await api.post<ServicePackage>('/buildings/service-packages/', packageData);
+    const resp = await api.post<ServicePackage>('/api/buildings/service-packages/', packageData);
     console.log('[API CALL] Create service package response:', resp.data);
     return resp.data;
   } catch (error) {
@@ -1819,7 +1846,7 @@ export async function createServicePackage(packageData: Partial<ServicePackage>)
 export async function updateServicePackage(packageId: number, packageData: Partial<ServicePackage>): Promise<ServicePackage> {
   console.log(`[API CALL] Updating service package ${packageId}:`, packageData);
   try {
-    const resp = await api.patch<ServicePackage>(`/buildings/service-packages/${packageId}/`, packageData);
+    const resp = await api.patch<ServicePackage>(`/api/buildings/service-packages/${packageId}/`, packageData);
     console.log('[API CALL] Update service package response:', resp.data);
     return resp.data;
   } catch (error) {
@@ -1831,7 +1858,7 @@ export async function updateServicePackage(packageId: number, packageData: Parti
 export async function deleteServicePackage(packageId: number): Promise<void> {
   console.log(`[API CALL] Deleting service package ${packageId}`);
   try {
-    await api.delete(`/buildings/service-packages/${packageId}/`);
+    await api.delete(`/api/buildings/service-packages/${packageId}/`);
     console.log('[API CALL] Service package deleted successfully');
   } catch (error) {
     console.error('[API CALL] Error deleting service package:', error);
@@ -1842,7 +1869,7 @@ export async function deleteServicePackage(packageId: number): Promise<void> {
 export async function applyServicePackageToBuilding(packageId: number, buildingId: number): Promise<any> {
   console.log(`[API CALL] Applying service package ${packageId} to building ${buildingId}`);
   try {
-    const resp = await api.post(`/buildings/service-packages/${packageId}/apply_to_building/`, {
+    const resp = await api.post(`/api/buildings/service-packages/${packageId}/apply_to_building/`, {
       building_id: buildingId
     });
     console.log('[API CALL] Apply service package response:', resp.data);
@@ -1899,7 +1926,7 @@ export async function fetchTeams(buildingId?: number): Promise<Team[]> {
   const params = new URLSearchParams();
   if (buildingId) params.append('building', buildingId.toString());
   
-  const response = await api.get(`/teams/teams/?${params.toString()}`);
+  const response = await api.get(`/api/teams/teams/?${params.toString()}`);
   return response.data.results || response.data;
 }
 
@@ -1907,7 +1934,7 @@ export async function fetchTeamMembers(buildingId?: number): Promise<TeamMember[
   const params = new URLSearchParams();
   if (buildingId) params.append('building', buildingId.toString());
   
-  const response = await api.get(`/teams/members/?${params.toString()}`);
+  const response = await api.get(`/api/teams/members/?${params.toString()}`);
   return response.data.results || response.data;
 }
 
@@ -1915,7 +1942,7 @@ export async function fetchTeamTasks(buildingId?: number): Promise<TeamTask[]> {
   const params = new URLSearchParams();
   if (buildingId) params.append('building', buildingId.toString());
   
-  const response = await api.get(`/teams/tasks/?${params.toString()}`);
+  const response = await api.get(`/api/teams/tasks/?${params.toString()}`);
   return response.data.results || response.data;
 }
 
@@ -1987,7 +2014,7 @@ export type CollaborationInvoice = {
 };
 
 export async function fetchCollaborators(): Promise<Collaborator[]> {
-  const response = await api.get('/collaborators/collaborators/');
+  const response = await api.get('/api/collaborators/collaborators/');
   return response.data.results || response.data;
 }
 
@@ -1995,7 +2022,7 @@ export async function fetchCollaborationProjects(buildingId?: number): Promise<C
   const params = new URLSearchParams();
   if (buildingId) params.append('building', buildingId.toString());
   
-  const response = await api.get(`/collaborators/projects/?${params.toString()}`);
+  const response = await api.get(`/api/collaborators/projects/?${params.toString()}`);
   return response.data.results || response.data;
 }
 
@@ -2003,12 +2030,12 @@ export async function fetchCollaborationContracts(buildingId?: number): Promise<
   const params = new URLSearchParams();
   if (buildingId) params.append('building', buildingId.toString());
   
-  const response = await api.get(`/collaborators/contracts/?${params.toString()}`);
+  const response = await api.get(`/api/collaborators/contracts/?${params.toString()}`);
   return response.data.results || response.data;
 }
 
 export async function fetchCollaborationInvoices(): Promise<CollaborationInvoice[]> {
-  const response = await api.get('/collaborators/invoices/');
+  const response = await api.get('/api/collaborators/invoices/');
   return response.data.results || response.data;
 }
 
@@ -2057,19 +2084,19 @@ export async function fetchSuppliers(buildingId?: number): Promise<Supplier[]> {
   const params = new URLSearchParams();
   if (buildingId) params.append('building', buildingId.toString());
   
-  const response = await api.get(`/financial/suppliers/?${params.toString()}`);
+  const response = await api.get(`/api/financial/suppliers/?${params.toString()}`);
   return response.data.results || response.data;
 }
 
 export async function fetchContractors(): Promise<Contractor[]> {
-  const response = await api.get('/maintenance/contractors/');
+  const response = await api.get('/api/maintenance/contractors/');
   return response.data.results || response.data;
 }
 
 export async function createContractor(
   payload: Partial<Omit<Contractor, 'id' | 'created_at'>>
 ): Promise<Contractor> {
-  const { data } = await api.post<Contractor>('/maintenance/contractors/', payload);
+  const { data } = await api.post<Contractor>('/api/maintenance/contractors/', payload);
   return data;
 }
 
@@ -2077,16 +2104,16 @@ export async function updateContractor(
   id: number,
   payload: Partial<Omit<Contractor, 'id' | 'created_at'>>
 ): Promise<Contractor> {
-  const { data } = await api.patch<Contractor>(`/maintenance/contractors/${id}/`, payload);
+  const { data } = await api.patch<Contractor>(`/api/maintenance/contractors/${id}/`, payload);
   return data;
 }
 
 export async function deleteContractor(id: number): Promise<void> {
-  await api.delete(`/maintenance/contractors/${id}/`);
+  await api.delete(`/api/maintenance/contractors/${id}/`);
 }
 
 export async function fetchContractor(id: number): Promise<Contractor> {
-  const { data } = await api.get<Contractor>(`/maintenance/contractors/${id}/`);
+  const { data } = await api.get<Contractor>(`/api/maintenance/contractors/${id}/`);
   return data;
 }
 
@@ -2131,14 +2158,14 @@ export async function fetchMaintenanceTickets(filters: { building?: number; sear
   if (filters.search) params.append('search', filters.search);
   if (filters.status) params.append('status', filters.status);
   if (filters.ordering) params.append('ordering', filters.ordering);
-  const url = `/maintenance/tickets/${params.toString() ? `?${params.toString()}` : ''}`;
+  const url = `/api/maintenance/tickets/${params.toString() ? `?${params.toString()}` : ''}`;
   const resp = await api.get(url);
   const data = resp.data;
   return Array.isArray(data) ? data : data.results ?? [];
 }
 
 export async function fetchMaintenanceTicket(id: number): Promise<MaintenanceTicket> {
-  const { data } = await api.get(`/maintenance/tickets/${id}/`);
+  const { data } = await api.get(`/api/maintenance/tickets/${id}/`);
   return data;
 }
 
@@ -2148,14 +2175,14 @@ export async function fetchWorkOrders(filters: { ticket?: number; building?: num
   if (filters.building) params.append('building', String(filters.building));
   if (filters.status) params.append('status', filters.status);
   if (filters.ordering) params.append('ordering', filters.ordering);
-  const url = `/maintenance/work-orders/${params.toString() ? `?${params.toString()}` : ''}`;
+  const url = `/api/maintenance/work-orders/${params.toString() ? `?${params.toString()}` : ''}`;
   const resp = await api.get(url);
   const data = resp.data;
   return Array.isArray(data) ? data : data.results ?? [];
 }
 
 export async function fetchWorkOrder(id: number): Promise<WorkOrder> {
-  const { data } = await api.get(`/maintenance/work-orders/${id}/`);
+  const { data } = await api.get(`/api/maintenance/work-orders/${id}/`);
   return data;
 }
 
@@ -2183,7 +2210,7 @@ export type ServiceReceipt = {
 export async function fetchServiceReceipts(params: { buildingId?: number } = {}): Promise<ServiceReceipt[]> {
   const search = new URLSearchParams();
   if (params.buildingId) search.append('building', String(params.buildingId));
-  const url = `/maintenance/receipts/${search.toString() ? `?${search.toString()}` : ''}`;
+  const url = `/api/maintenance/receipts/${search.toString() ? `?${search.toString()}` : ''}`;
   const resp = await api.get(url);
   const data = resp.data;
   return Array.isArray(data) ? data : data.results ?? [];
@@ -2193,16 +2220,16 @@ export async function updateServiceReceipt(
   id: number,
   payload: Partial<Omit<ServiceReceipt, 'id' | 'created_at'>>
 ): Promise<ServiceReceipt> {
-  const { data } = await api.patch<ServiceReceipt>(`/maintenance/receipts/${id}/`, payload);
+  const { data } = await api.patch<ServiceReceipt>(`/api/maintenance/receipts/${id}/`, payload);
   return data;
 }
 
 export async function deleteServiceReceipt(id: number): Promise<void> {
-  await api.delete(`/maintenance/receipts/${id}/`, { xToastSuppress: true } as any);
+  await api.delete(`/api/maintenance/receipts/${id}/`, { xToastSuppress: true } as any);
 }
 
 export async function fetchServiceReceipt(id: number): Promise<ServiceReceipt> {
-  const { data } = await api.get<ServiceReceipt>(`/maintenance/receipts/${id}/`);
+  const { data } = await api.get<ServiceReceipt>(`/api/maintenance/receipts/${id}/`);
   return data;
 }
 
@@ -2230,7 +2257,7 @@ export async function createServiceReceipt(payload: {
   if (payload.receipt_file) form.append('receipt_file', payload.receipt_file);
   if (typeof payload.expense === 'number') form.append('expense', String(payload.expense));
   if (typeof payload.scheduled_maintenance === 'number') form.append('scheduled_maintenance', String(payload.scheduled_maintenance));
-  const { data } = await api.post<ServiceReceipt>('/maintenance/receipts/', form, {
+  const { data } = await api.post<ServiceReceipt>('/api/maintenance/receipts/', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data;
@@ -2280,19 +2307,19 @@ export async function fetchScheduledMaintenances(params: { buildingId?: number; 
   if (params.buildingId) search.append('building', String(params.buildingId));
   if (params.priority) search.append('priority', params.priority);
   if (params.ordering) search.append('ordering', params.ordering);
-  const url = `/maintenance/scheduled/${search.toString() ? `?${search.toString()}` : ''}`;
+  const url = `/api/maintenance/scheduled/${search.toString() ? `?${search.toString()}` : ''}`;
   const resp = await api.get(url);
   const data = resp.data;
   return Array.isArray(data) ? data : data.results ?? [];
 }
 
 export async function fetchScheduledMaintenance(id: number): Promise<ScheduledMaintenance> {
-  const { data } = await api.get(`/maintenance/scheduled/${id}/`);
+  const { data } = await api.get(`/api/maintenance/scheduled/${id}/`);
   return data;
 }
 
 export async function createScheduledMaintenance(payload: Omit<ScheduledMaintenance, 'id'>): Promise<ScheduledMaintenance> {
-  const { data } = await api.post<ScheduledMaintenance>('/maintenance/scheduled/', payload);
+  const { data } = await api.post<ScheduledMaintenance>('/api/maintenance/scheduled/', payload);
   return data;
 }
 
@@ -2300,16 +2327,16 @@ export async function updateScheduledMaintenance(
   id: number,
   payload: Partial<Omit<ScheduledMaintenance, 'id'>>
 ): Promise<ScheduledMaintenance> {
-  const { data } = await api.patch<ScheduledMaintenance>(`/maintenance/scheduled/${id}/`, payload, { xToastSuppress: true } as any);
+  const { data } = await api.patch<ScheduledMaintenance>(`/api/maintenance/scheduled/${id}/`, payload, { xToastSuppress: true } as any);
   return data;
 }
 
 export async function deleteScheduledMaintenance(id: number): Promise<void> {
-  await api.delete(`/maintenance/scheduled/${id}/`, { xToastSuppress: true } as any);
+  await api.delete(`/api/maintenance/scheduled/${id}/`, { xToastSuppress: true } as any);
 }
 
 export async function deleteProject(id: string): Promise<void> {
-  await api.delete(`/projects/projects/${id}/`, { xToastSuppress: true } as any);
+  await api.delete(`/api/projects/projects/${id}/`, { xToastSuppress: true } as any);
 }
 
 // Handles refreshing the access token and retrying the original request.
@@ -2329,7 +2356,7 @@ async function handleTokenRefresh(originalRequest: InternalAxiosRequestConfig & 
     console.log('[handleTokenRefresh] Attempting to refresh token with:', API_BASE_URL);
     
     // Χρησιμοποιούμε απευθείας axios αντί για το api instance για να αποφύγουμε κυκλικές κλήσεις
-    const response = await axios.post(`${API_BASE_URL}/users/token/refresh/`, { refresh }, {
+    const response = await axios.post(`${API_BASE_URL}/api/users/token/refresh/`, { refresh }, {
       baseURL: API_BASE_URL,
       headers: { 'Content-Type': 'application/json' },
       withCredentials: true,
