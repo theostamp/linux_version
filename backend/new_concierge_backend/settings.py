@@ -429,6 +429,9 @@ STRIPE_WEBHOOK_TOLERANCE = 300  # 5 minutes tolerance for webhook timestamps
 # Frontend URL for redirects
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 
+# Internal API security
+INTERNAL_API_SECRET_KEY = os.getenv('INTERNAL_API_SECRET_KEY', '')
+
 # ----------------------------------------
 # Django REST framework simple JWT settings
 # ----------------------------------------
