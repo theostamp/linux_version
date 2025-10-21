@@ -1,6 +1,9 @@
 // Stripe Setup Script
 // Run with: node setup-stripe.js
 
+// Load environment variables
+require('dotenv').config({ path: '.env.local' });
+
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 async function createStripeProducts() {
