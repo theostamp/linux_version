@@ -85,19 +85,42 @@ export default function SignupPage() {
     setIsLoading(true);
     
     try {
-      // TODO: Implement actual signup logic
-      console.log('Signup data:', formData);
-      
-      // For now, just simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Redirect to payment or success page
-      alert('Signup successful! (This is a demo)');
+      // Create checkout session
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan: formData.plan,
+          userData: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            password: formData.password
+          },
+          tenantSubdomain: formData.tenantSubdomain
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
       
     } catch (error) {
       console.error('Signup error:', error);
-      setErrors({ general: 'An error occurred during signup. Please try again.' });
-    } finally {
+      setErrors({ 
+        general: error instanceof Error ? error.message : 'An error occurred during signup. Please try again.' 
+      });
       setIsLoading(false);
     }
   };
