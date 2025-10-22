@@ -5,8 +5,8 @@ import { usePathname, useSearchParams } from 'next/navigation';
 
 /**
  * NavigationLoader Component
- * Εμφανίζει ένα loading indicator όταν ο χρήστης πλοηγείται μεταξύ σελίδων
- * Χρήσιμο για αργές σελίδες όπως το Financial
+ * Shows a loading indicator when the user navigates between pages
+ * Useful for slow pages like Financial
  */
 export default function NavigationLoader() {
   const [loading, setLoading] = useState(false);
@@ -15,9 +15,9 @@ export default function NavigationLoader() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Όταν αλλάζει το pathname ή τα search params, σταμάτα το loading
+    // When pathname or search params change, stop loading
     setLoading(false);
-    // Καθάρισε οποιοδήποτε timeout
+    // Clear any timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -30,23 +30,23 @@ export default function NavigationLoader() {
       const target = e.target as HTMLElement;
       const link = target.closest('a');
       
-      // ✅ FIX: Αγνόησε clicks σε buttons ή elements μέσα σε modal/dialog
+      // FIX: Ignore clicks on buttons or elements inside modal/dialog
       const isInsideModal = target.closest('[role="dialog"]') || target.closest('.modal');
       const isButton = target.closest('button');
-      
+
       if (isInsideModal || isButton) {
-        return; // Μην ενεργοποιήσεις το loading για modal/button clicks
+        return; // Don't trigger loading for modal/button clicks
       }
-      
+
       if (link && link.href && link.target !== '_blank') {
         const url = new URL(link.href);
         const currentUrl = new URL(window.location.href);
-        
-        // Μόνο αν πηγαίνουμε σε διαφορετική σελίδα
+
+        // Only if navigating to a different page
         if (url.pathname !== currentUrl.pathname || url.search !== currentUrl.search) {
           setLoading(true);
-          
-          // ✅ FIX: Auto-clear μετά από 10 δευτερόλεπτα για ασφάλεια
+
+          // FIX: Auto-clear after 10 seconds for safety
           if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
           }
@@ -62,8 +62,8 @@ export default function NavigationLoader() {
     // Listen for browser back/forward
     const handlePopState = () => {
       setLoading(true);
-      
-      // ✅ FIX: Auto-clear για popstate επίσης
+
+      // FIX: Auto-clear for popstate as well
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -80,7 +80,7 @@ export default function NavigationLoader() {
     return () => {
       document.removeEventListener('click', handleLinkClick);
       window.removeEventListener('popstate', handlePopState);
-      // Καθάρισε το timeout όταν το component unmount
+      // Clear timeout when component unmounts
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -119,10 +119,10 @@ export default function NavigationLoader() {
           {/* Loading Title */}
           <div className="text-center">
             <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-              Φόρτωση σελίδας
+              Loading Page
             </h3>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Παρακαλώ περιμένετε...
+              Please wait...
             </p>
           </div>
           
@@ -142,7 +142,7 @@ export default function NavigationLoader() {
           
           {/* Helper Text */}
           <p className="text-xs text-gray-500 dark:text-gray-500 text-center max-w-xs">
-            Η σελίδα φορτώνει... Αν η αναμονή διαρκεί πολύ, ελέγξτε τη σύνδεσή σας.
+            Page is loading... If this takes too long, check your connection.
           </p>
         </div>
       </div>
