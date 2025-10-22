@@ -22,15 +22,23 @@ export default function SubscriptionGate({
   const { user, isAuthReady, isLoading } = useAuth();
   const router = useRouter();
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
-  const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
+  // FIX: Start with false, only set to true when we actually start checking
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState(false);
 
   console.log('[SubscriptionGate] Render - user:', user?.email, 'isAuthReady:', isAuthReady, 'isLoading:', isLoading, 'isCheckingSubscription:', isCheckingSubscription);
 
   // Fetch subscription status when user is authenticated
   useEffect(() => {
     const fetchSubscription = async () => {
+      // IMPORTANT: Only fetch if we have a user AND auth is ready
+      if (!isAuthReady) {
+        console.log('[SubscriptionGate] Auth not ready, waiting...');
+        return;
+      }
+
       if (user) {
         console.log('[SubscriptionGate] Fetching subscription for user:', user.email);
+        setIsCheckingSubscription(true);
         try {
           const { data } = await api.get('/api/users/subscription/');
           console.log('[SubscriptionGate] Subscription data:', data);
@@ -55,7 +63,7 @@ export default function SubscriptionGate({
     };
 
     fetchSubscription();
-  }, [user]);
+  }, [user, isAuthReady]);
 
   // Show loading state while checking auth or subscription
   if (isLoading || !isAuthReady || isCheckingSubscription) {
