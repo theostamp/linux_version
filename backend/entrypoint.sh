@@ -3,6 +3,7 @@ set -e
 
 echo "🚀 DIGITAL CONCIERGE - CONTAINER STARTUP"
 echo "========================================"
+echo "📅 Deployment: $(date '+%Y-%m-%d %H:%M:%S')"
 
 # 0. Create logs directory if it doesn't exist
 mkdir -p /app/logs
