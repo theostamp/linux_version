@@ -29,23 +29,56 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
     e.preventDefault();
     setLoading(true);
     setStatus('Παρακαλώ περιμένετε...');
-    
+
     try {
       const loggedInUser = await login(email, password);
       console.log('LoginForm: Login successful, user:', loggedInUser.email);
-      
+
       toast.success('Επιτυχής σύνδεση!');
-      setStatus('Επιτυχής σύνδεση! Μεταφέρεστε...');
-      
+      setStatus('Επιτυχής σύνδεση! Έλεγχος συνδρομής...');
+
       // Clear queries and wait a bit for state to settle
       queryClient.clear();
-      
-      // Small delay to ensure state has updated
-      setTimeout(() => {
-        console.log('LoginForm: Navigating to:', finalRedirect);
-        router.push(finalRedirect);
-      }, 100);
-      
+
+      // Check subscription status before redirecting
+      try {
+        const token = localStorage.getItem('access');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users/subscription/`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const hasActiveSubscription = data.subscription &&
+            (data.subscription.status === 'active' || data.subscription.status === 'trial');
+
+          console.log('LoginForm: Subscription status:', data.subscription?.status);
+
+          // Redirect based on subscription status
+          const redirectPath = hasActiveSubscription ? finalRedirect : '/payment';
+          console.log('LoginForm: Redirecting to:', redirectPath);
+
+          setTimeout(() => {
+            router.push(redirectPath);
+          }, 100);
+        } else {
+          // If subscription check fails, redirect to payment to be safe
+          console.log('LoginForm: Subscription check failed, redirecting to payment');
+          setTimeout(() => {
+            router.push('/payment');
+          }, 100);
+        }
+      } catch (subError) {
+        console.error('LoginForm: Subscription check error:', subError);
+        // If subscription check fails, redirect to payment to be safe
+        setTimeout(() => {
+          router.push('/payment');
+        }, 100);
+      }
+
     } catch (err: any) {
       console.error('LoginForm: Login error:', err);
       toast.error(err.message ?? 'Κάτι πήγε στραβά!');
