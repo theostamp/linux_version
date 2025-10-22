@@ -243,6 +243,58 @@ class EmailService:
             return False
     
     @staticmethod
+    def send_workspace_welcome_email(user, tenant_domain):
+        """
+        Send workspace welcome email after successful subscription and tenant creation.
+
+        Args:
+            user: The user who subscribed
+            tenant_domain: The tenant subdomain (e.g., 'demo.localhost')
+        """
+        workspace_url = f"http://{tenant_domain}:8080"  # Adjust protocol/port as needed
+
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Ο χώρος εργασίας σας είναι έτοιμος!"
+
+        # Plain text version
+        message = f"""
+        Γεια σας {user.first_name} {user.last_name},
+
+        Καλώς ήρθατε στο New Concierge! 🎉
+
+        Ο χώρος εργασίας σας έχει δημιουργηθεί επιτυχώς και είναι έτοιμος για χρήση.
+
+        📍 Ο χώρος εργασίας σας: {workspace_url}
+
+        🔐 Τα στοιχεία σύνδεσής σας:
+           Email: {user.email}
+           Κωδικός: Ο ίδιος που χρησιμοποιήσατε κατά την εγγραφή
+
+        💡 Επόμενα βήματα:
+           1. Συνδεθείτε στο χώρο εργασίας σας
+           2. Εξερευνήστε το demo κτίριο "Αλκμάνος 22"
+           3. Προσκαλέστε τους ενοίκους σας
+           4. Ξεκινήστε να διαχειρίζεστε την πολυκατοικία σας
+
+        Εάν έχετε οποιεσδήποτε ερωτήσεις, μη διστάσετε να επικοινωνήσετε μαζί μας.
+
+        Καλή αρχή!
+        Η ομάδα του New Concierge
+        """
+
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+            return True
+        except Exception as e:
+            print(f"Error sending workspace welcome email: {e}")
+            return False
+
+    @staticmethod
     def send_invoice_notification(user, billing_cycle):
         """
         Send invoice notification email

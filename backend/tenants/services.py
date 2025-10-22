@@ -159,18 +159,24 @@ class TenantService:
         return subscription
     
     def _create_tenant_user(self, user, schema_name):
-        """Create the user account inside the tenant schema."""
+        """
+        Create the user account inside the tenant schema with SAME credentials as public schema.
+
+        CRITICAL: The password in user.password is ALREADY HASHED in the public schema.
+        We need to copy the hashed password directly to avoid double-hashing.
+        """
         try:
             with schema_context(schema_name):
                 # Check if user already exists in this schema
                 if CustomUser.objects.filter(email=user.email).exists():
                     logger.info(f"User {user.email} already exists in schema {schema_name}")
                     return
-                
-                # Create user in tenant schema
-                tenant_user = CustomUser.objects.create_user(
+
+                # Create user in tenant schema with SAME hashed password
+                # Use create() instead of create_user() to avoid re-hashing the password
+                tenant_user = CustomUser.objects.create(
                     email=user.email,
-                    password=user.password,  # This will be hashed
+                    password=user.password,  # Already hashed - copy directly
                     first_name=user.first_name,
                     last_name=user.last_name,
                     is_staff=True,
@@ -181,9 +187,9 @@ class TenantService:
                     office_address=user.office_address,
                     email_verified=True  # Auto-verify since they paid
                 )
-                
-                logger.info(f"Created tenant user: {tenant_user.email} in schema {schema_name}")
-                
+
+                logger.info(f"Created tenant user: {tenant_user.email} in schema {schema_name} with synced credentials")
+
         except Exception as e:
             logger.error(f"Failed to create tenant user in schema {schema_name}: {e}")
             # Don't raise here - tenant creation can still succeed without this
@@ -265,6 +271,15 @@ class TenantService:
 
                 # Step 5: Create demo data (Αλκμάνος 22 building)
                 self._create_demo_data(schema_name)
+
+                # Step 6: Send welcome email with workspace link
+                try:
+                    from users.services import EmailService
+                    EmailService.send_workspace_welcome_email(user, domain.domain)
+                    logger.info(f"Sent workspace welcome email to {user.email}")
+                except Exception as email_error:
+                    # Don't fail tenant creation if email fails
+                    logger.error(f"Failed to send welcome email: {email_error}")
 
                 logger.info(f"Successfully created tenant infrastructure '{schema_name}' for user {user.email}")
                 return tenant, domain
