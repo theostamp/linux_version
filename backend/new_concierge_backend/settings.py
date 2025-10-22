@@ -73,6 +73,13 @@ if os.getenv('RAILWAY_PUBLIC_DOMAIN') or not DEBUG:
     # Also disable host header validation for Railway
     ALLOWED_HOSTS = ['*']  # Temporary for debugging CSRF
 
+    # Session and Cookie settings for Railway HTTPS
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_SAMESITE = 'Lax'  # Changed from 'None' to 'Lax'
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = 'Lax'  # Changed from 'None' to 'Lax'
+
 # ----------------------------------------
 # 🏘️ django-tenants split apps
 # backend/new_concierge_backend/settings.py
@@ -445,10 +452,15 @@ CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in _raw_csrf] + [f"https://{h}" for 
 
 CSRF_COOKIE_NAME = 'csrftoken'
 CSRF_COOKIE_HTTPONLY = False
-if IS_PRODUCTION:
+
+# NOTE: Session and CSRF cookie settings are now configured in Railway proxy settings section above
+# The settings below are only for explicit IS_PRODUCTION=true environments
+if IS_PRODUCTION and not os.getenv('RAILWAY_PUBLIC_DOMAIN'):
+    # Only use these if explicitly in production but NOT on Railway
     CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = SESSION_COOKIE_SAMESITE = 'None'
-else:
+elif not os.getenv('RAILWAY_PUBLIC_DOMAIN') and DEBUG:
+    # Development settings (not Railway, DEBUG=True)
     CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SAMESITE = SESSION_COOKIE_SAMESITE = os.getenv('CSRF_COOKIE_SAMESITE', 'Lax')
 
