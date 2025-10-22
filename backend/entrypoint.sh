@@ -4,6 +4,10 @@ set -e
 echo "🚀 DIGITAL CONCIERGE - CONTAINER STARTUP"
 echo "========================================"
 
+# 0. Create logs directory if it doesn't exist
+mkdir -p /app/logs
+echo "📁 Logs directory ready"
+
 # 1. Wait for Postgres
 # Parse DATABASE_URL to get host and port
 if [ -n "$DATABASE_URL" ]; then
