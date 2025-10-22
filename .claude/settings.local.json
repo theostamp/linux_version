@@ -16,7 +16,13 @@
       "Bash(curl -s http://demo-test-1760987245.localhost:8080/api/users/login/ -X POST -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"test@example.com\"\",\"\"password\"\":\"\"test123\"\"}')",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/api/users/login/ -X POST -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"test\"\",\"\"password\"\":\"\"test\"\"}')",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://demo.localhost:8080/api/users/login/ -X POST -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"test\"\",\"\"password\"\":\"\"test\"\"}')",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://demo-test-1760987245.localhost:8080/api/users/login/ -X POST -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"test\"\",\"\"password\"\":\"\"test\"\"}')"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://demo-test-1760987245.localhost:8080/api/users/login/ -X POST -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"test\"\",\"\"password\"\":\"\"test\"\"}')",
+      "Bash(docker compose:*)",
+      "Bash(pkill:*)",
+      "Bash(docker inspect:*)",
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

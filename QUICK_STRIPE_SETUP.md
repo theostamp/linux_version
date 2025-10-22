@@ -51,3 +51,12 @@ After successful payment:
 ---
 
 **Ready to proceed?** Let me know when you have your Stripe test keys!
+
+
+
+
+
+
+
+
+

@@ -42,3 +42,12 @@ For testing with live keys:
 
 For production, update webhook URL to:
 `https://yourdomain.com/api/webhooks/stripe`
+
+
+
+
+
+
+
+
+

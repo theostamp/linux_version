@@ -1,28 +1,5 @@
 #!/bin/bash
 
-# 🚀 Core App Production Deployment Script
-# Usage: ./deploy-core-app.sh [server-ip] [domain]
-
-set -e
-
-SERVER_IP=${1:-"your-server-ip"}
-DOMAIN=${2:-"app.yourdomain.com"}
-REPO_URL="https://github.com/yourusername/your-repo.git"
-
-echo "🚀 Deploying Core App to production server..."
-echo "Server: $SERVER_IP"
-echo "Domain: $DOMAIN"
-
-# Check if server IP is provided
-if [ "$SERVER_IP" = "your-server-ip" ]; then
-    echo "❌ Please provide server IP: ./deploy-core-app.sh YOUR_SERVER_IP yourdomain.com"
-    exit 1
-fi
-
-# Create deployment script for remote server
-cat > remote-deploy.sh << 'EOF'
-#!/bin/bash
-
 # Update system
 sudo apt update && sudo apt upgrade -y
 
@@ -119,32 +96,3 @@ docker compose exec -T backend python manage.py collectstatic --noinput
 echo "✅ Core App deployment completed!"
 echo "🌐 Access your app at: https://app.yourdomain.com"
 echo "👤 Admin panel: https://app.yourdomain.com/admin/ (admin/admin123)"
-EOF
-
-# Copy deployment script to server
-echo "📤 Uploading deployment script to server..."
-scp remote-deploy.sh root@$SERVER_IP:/tmp/
-
-# Execute deployment on remote server
-echo "🚀 Executing deployment on remote server..."
-ssh root@$SERVER_IP "chmod +x /tmp/remote-deploy.sh && /tmp/remote-deploy.sh"
-
-# Clean up
-rm remote-deploy.sh
-
-echo "✅ Deployment completed!"
-echo ""
-echo "📋 Next steps:"
-echo "1. Update DNS records to point to $SERVER_IP"
-echo "2. Configure SSL certificate: ssh root@$SERVER_IP 'sudo certbot --nginx -d $DOMAIN'"
-echo "3. Update Public App environment variables with the generated INTERNAL_API_SECRET_KEY"
-echo "4. Test the complete signup flow"
-
-
-
-
-
-
-
-
-

@@ -92,3 +92,12 @@ echo "1. Configure custom domain in Vercel Dashboard"
 echo "2. Update Stripe webhook URL to: https://$DEPLOYMENT_URL/api/webhooks/stripe"
 echo "3. Test the complete signup flow"
 echo "4. Update DNS records for your custom domain"
+
+
+
+
+
+
+
+
+

@@ -99,3 +99,12 @@ echo "4. Configure email settings if needed"
 echo "5. Copy .env.production to .env on your production server"
 echo ""
 echo "🔐 IMPORTANT: Keep these keys secure and never commit them to Git!"
+
+
+
+
+
+
+
+
+

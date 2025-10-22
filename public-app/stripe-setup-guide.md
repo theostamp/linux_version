@@ -68,3 +68,12 @@ For production:
 2. Update webhook URL to your production domain
 3. Update `CORE_API_URL` to your production Core App URL
 4. Set `INTERNAL_API_SECRET_KEY` to a secure random key
+
+
+
+
+
+
+
+
+

@@ -73,3 +73,12 @@ echo ""
 
 echo "✅ Domain setup instructions completed!"
 echo "   Next: Wait for DNS propagation, then deploy Core App"
+
+
+
+
+
+
+
+
+

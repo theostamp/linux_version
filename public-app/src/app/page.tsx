@@ -167,11 +167,11 @@ export default function Home() {
                   <li className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
                     <span>Maintenance management</span>
-                  </li>
+          </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
                     <span>Priority support</span>
-                  </li>
+          </li>
                 </ul>
                 <Link 
                   href="/signup?plan=professional" 
@@ -234,7 +234,7 @@ export default function Home() {
               Start Your Free Trial
               <Zap className="ml-2 h-5 w-5" />
             </Link>
-          </div>
+        </div>
         </section>
       </main>
 
