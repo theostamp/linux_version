@@ -32,14 +32,31 @@ if DEBUG:
     ALLOWED_HOSTS += ["backend"]         # Docker container hostname
 
 # CSRF Trusted Origins for Railway
-CSRF_TRUSTED_ORIGINS = [
-    'https://*.railway.app',
-    'https://linuxversion-production.up.railway.app',
-]
+CSRF_TRUSTED_ORIGINS = []
+
+# Add Railway domain if in production
+railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+if railway_domain:
+    CSRF_TRUSTED_ORIGINS.extend([
+        f'https://{railway_domain}',
+        'https://*.railway.app',
+    ])
+
+# Add localhost origins in development
 if DEBUG:
-    CSRF_TRUSTED_ORIGINS += ['http://localhost:8080', 'http://demo.localhost:8080']
+    CSRF_TRUSTED_ORIGINS.extend([
+        'http://localhost:8080',
+        'http://demo.localhost:8080',
+        'http://localhost:8000',
+        'http://demo.localhost:8000',
+    ])
 
 IS_PRODUCTION = os.getenv("ENV", "development") == "production"
+
+# Railway proxy settings
+if os.getenv('RAILWAY_PUBLIC_DOMAIN'):
+    USE_X_FORWARDED_HOST = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # ----------------------------------------
 # 🏘️ django-tenants split apps
