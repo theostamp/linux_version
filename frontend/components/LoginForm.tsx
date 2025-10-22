@@ -107,8 +107,16 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
         </form>
         
         <OAuthButtons mode="login" />
-        
-        <div className="mt-6 text-center">
+
+        <div className="mt-6 space-y-3 text-center">
+          <button
+            type="button"
+            onClick={() => router.push('/forgot-password')}
+            className="text-sm text-gray-500 hover:text-gray-700 underline"
+          >
+            Ξεχάσατε τον κωδικό σας;
+          </button>
+
           <p className="text-sm text-gray-600">
             Δεν έχεις λογαριασμό;{' '}
             <button

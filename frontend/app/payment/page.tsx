@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CreditCard, Lock, CheckCircle, ArrowLeft, Building, Loader2 } from 'lucide-react';
+import { CreditCard, Lock, CheckCircle, ArrowLeft, Building, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { api } from '@/lib/api';
@@ -11,6 +11,7 @@ export default function PaymentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [plan, setPlan] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null);
 
@@ -86,6 +87,7 @@ export default function PaymentPage() {
       return;
     }
 
+    setError(null);
     setIsLoading(true);
 
     try {
@@ -100,7 +102,30 @@ export default function PaymentPage() {
 
     } catch (error: any) {
       console.error('Error creating checkout session:', error);
-      toast.error(error.response?.data?.error || 'Failed to create checkout session');
+
+      // Extract detailed error message
+      const errorData = error.response?.data;
+      let errorMessage = 'Αποτυχία δημιουργίας συνεδρίας πληρωμής. Παρακαλώ προσπαθήστε ξανά.';
+
+      if (errorData) {
+        if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (errorData.detail) {
+          errorMessage = errorData.detail;
+        }
+
+        // Check for specific error types
+        if (errorData.error?.includes('already has an active subscription')) {
+          errorMessage = 'Έχετε ήδη ενεργή συνδρομή. Δεν μπορείτε να δημιουργήσετε νέα.';
+          setTimeout(() => router.push('/dashboard'), 2000);
+        } else if (errorData.error?.includes('already has a workspace')) {
+          errorMessage = 'Έχετε ήδη χώρο εργασίας. Δεν μπορείτε να δημιουργήσετε νέο.';
+          setTimeout(() => router.push('/dashboard'), 2000);
+        }
+      }
+
+      setError(errorMessage);
+      toast.error(errorMessage);
       setIsLoading(false);
     }
   };
@@ -211,6 +236,25 @@ export default function PaymentPage() {
               </div>
             </div>
 
+            {error && (
+              <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm text-red-800">{error}</p>
+                    <button
+                      type="button"
+                      onClick={() => setError(null)}
+                      className="text-xs text-red-600 hover:text-red-800 underline mt-2 flex items-center"
+                    >
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      Προσπάθεια ξανά
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="mt-6">
               <button
                 onClick={handleCreateCheckoutSession}
@@ -220,12 +264,12 @@ export default function PaymentPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Processing...
+                    Επεξεργασία...
                   </>
                 ) : (
                   <>
                     <CreditCard className="h-5 w-5 mr-2" />
-                    Continue to Payment
+                    Συνέχεια στην Πληρωμή
                   </>
                 )}
               </button>

@@ -5,8 +5,9 @@ import { useForm } from "react-hook-form"
 import { api } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react"
 import OAuthButtons from "./OAuthButtons"
+import { toast } from "sonner"
 
 type RegisterFormInputs = {
   email: string;
@@ -19,13 +20,17 @@ type RegisterFormInputs = {
 export default function RegisterForm() {
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterFormInputs>()
   const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
-  
+
   const password = watch("password")
 
   const onSubmit = async (data: RegisterFormInputs) => {
+    setError("");
+    setIsLoading(true);
+
     try {
       // Transform the data to match backend expectations
       const registrationData = {
@@ -35,12 +40,42 @@ export default function RegisterForm() {
         password: data.password,
         password_confirm: data.confirmPassword
       };
-      
-      await api.post("/api/users/register/", registrationData)
-      router.push("/dashboard")
+
+      await api.post("/api/users/register/", registrationData);
+
+      // Show success message
+      toast.success("Επιτυχής εγγραφή! Ανακατεύθυνση...");
+
+      // Redirect after short delay
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1000);
+
     } catch (err: any) {
       console.error("Registration error:", err);
-      setError("Αποτυχία εγγραφής. Ίσως το email υπάρχει ήδη.");
+
+      // Extract specific error messages from backend response
+      const responseData = err.response?.data;
+      let errorMessage = "Αποτυχία εγγραφής. Παρακαλώ προσπαθήστε ξανά.";
+
+      if (responseData) {
+        // Check for specific field errors
+        if (responseData.email) {
+          errorMessage = Array.isArray(responseData.email)
+            ? responseData.email[0]
+            : "Το email υπάρχει ήδη ή δεν είναι έγκυρο.";
+          toast.error("Το email υπάρχει ήδη στο σύστημα.");
+        } else if (responseData.password) {
+          errorMessage = Array.isArray(responseData.password)
+            ? responseData.password[0]
+            : "Ο κωδικός δεν πληροί τις απαιτήσεις ασφαλείας.";
+        } else if (responseData.error || responseData.detail) {
+          errorMessage = responseData.error || responseData.detail;
+        }
+      }
+
+      setError(errorMessage);
+      setIsLoading(false);
     }
   }
 
@@ -109,9 +144,35 @@ export default function RegisterForm() {
         </div>
         {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>}
 
-        {error && <p className="text-red-500">{error}</p>}
-        <button type="submit" className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700">
-          Εγγραφή
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4 flex items-start space-x-3">
+            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-red-800">{error}</p>
+              <button
+                type="button"
+                onClick={() => setError("")}
+                className="text-xs text-red-600 hover:text-red-800 underline mt-1"
+              >
+                Απόκρυψη
+              </button>
+            </div>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              Εγγραφή...
+            </>
+          ) : (
+            'Εγγραφή'
+          )}
         </button>
       </form>
 
