@@ -65,20 +65,15 @@ export default function PaymentPage() {
       }
     }
 
-    // If no plan and no user email in URL, redirect to register
-    if (!planId && !userEmail) {
+    // If no plan and no user, but user is authenticated, stay on payment page to show plans
+    // Only redirect to register if user is NOT authenticated
+    if (!planId && !userEmail && !user) {
       router.push('/register');
       return;
     }
 
-    // Safety: if plan exists but we still have no userData after short delay, redirect
-    const timeout = setTimeout(() => {
-      if (planId && !userEmail && !userData && !user) {
-        router.push('/register');
-      }
-    }, 1500);
-
-    return () => clearTimeout(timeout);
+    // No timeout-based redirect if user is authenticated
+    // User can select a plan from the payment page
   }, [searchParams, router, user]);
 
   const handleCreateCheckoutSession = async () => {
