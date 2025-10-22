@@ -232,7 +232,7 @@ def create_public_tenant():
     else:
         print("ℹ️ Υπάρχει ήδη public tenant")
     
-    # Δημιουργία domain για public
+    # Δημιουργία domain για public - localhost
     domain, created = DomainModel.objects.get_or_create(
         domain='localhost',
         defaults={
@@ -240,11 +240,26 @@ def create_public_tenant():
             'is_primary': True
         }
     )
-    
+
     if created:
         print("✅ Δημιουργήθηκε domain: localhost")
     else:
         print("ℹ️ Υπάρχει ήδη domain: localhost")
+
+    # Δημιουργία domain για Railway production (if RAILWAY_PUBLIC_DOMAIN is set)
+    railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+    if railway_domain:
+        railway_domain_obj, created = DomainModel.objects.get_or_create(
+            domain=railway_domain,
+            defaults={
+                'tenant': public_tenant,
+                'is_primary': False
+            }
+        )
+        if created:
+            print(f"✅ Δημιουργήθηκε Railway domain: {railway_domain}")
+        else:
+            print(f"ℹ️ Υπάρχει ήδη Railway domain: {railway_domain}")
     
     # Δημιουργία Ultra-Superuser στο public schema
     print("\n👑 Δημιουργία Ultra-Superuser...")
