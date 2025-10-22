@@ -38,7 +38,9 @@ class InternalTenantCreateView(APIView):
         "stripe_checkout_session_id": "cs_test_..."
     }
     """
-    
+
+    # Disable authentication - only use permission class (IsInternalService)
+    authentication_classes = []
     permission_classes = [IsInternalService]
     
     def post(self, request):
@@ -69,26 +71,27 @@ class InternalTenantCreateView(APIView):
                     'required': required_user_fields
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            # IMPORTANT: Get or create user OUTSIDE transaction to avoid ALTER TABLE conflicts
+            user_email = user_data['email']
+            try:
+                user = CustomUser.objects.get(email=user_email)
+                logger.info(f"User {user_email} already exists, using existing user")
+                # Update the session ID even for existing users
+                user.stripe_checkout_session_id = stripe_checkout_session_id
+                user.save(update_fields=['stripe_checkout_session_id'])
+            except CustomUser.DoesNotExist:
+                # Create new user OUTSIDE the transaction
+                user = CustomUser.objects.create_user(
+                    email=user_email,
+                    password=user_data.get('password', 'temp_password_123'),
+                    first_name=user_data['first_name'],
+                    last_name=user_data['last_name'],
+                    is_active=True,
+                    stripe_checkout_session_id=stripe_checkout_session_id
+                )
+                logger.info(f"Created new user: {user_email}")
+
             with transaction.atomic():
-                # Check if user already exists
-                user_email = user_data['email']
-                try:
-                    user = CustomUser.objects.get(email=user_email)
-                    logger.info(f"User {user_email} already exists, using existing user")
-                    # Update the session ID even for existing users
-                    user.stripe_checkout_session_id = stripe_checkout_session_id
-                    user.save(update_fields=['stripe_checkout_session_id'])
-                except CustomUser.DoesNotExist:
-                    # Create new user
-                    user = CustomUser.objects.create_user(
-                        email=user_email,
-                        password=user_data.get('password', 'temp_password_123'),
-                        first_name=user_data['first_name'],
-                        last_name=user_data['last_name'],
-                        is_active=True,
-                        stripe_checkout_session_id=stripe_checkout_session_id
-                    )
-                    logger.info(f"Created new user: {user_email}")
                 
                 # Check if user already has a tenant
                 if hasattr(user, 'tenant') and user.tenant:
