@@ -8,6 +8,7 @@ import { useState } from "react"
 import { Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react"
 import OAuthButtons from "./OAuthButtons"
 import { toast } from "sonner"
+import Link from "next/link"
 
 type RegisterFormInputs = {
   email: string;
@@ -23,12 +24,14 @@ export default function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [emailExists, setEmailExists] = useState(false)
   const router = useRouter()
 
   const password = watch("password")
 
   const onSubmit = async (data: RegisterFormInputs) => {
     setError("");
+    setEmailExists(false);
     setIsLoading(true);
 
     try {
@@ -64,7 +67,8 @@ export default function RegisterForm() {
           errorMessage = Array.isArray(responseData.email)
             ? responseData.email[0]
             : "Το email υπάρχει ήδη ή δεν είναι έγκυρο.";
-          toast.error("Το email υπάρχει ήδη στο σύστημα.");
+          setEmailExists(true);
+          toast.error("Το email υπάρχει ήδη στο σύστημα. Παρακαλώ συνδεθείτε.");
         } else if (responseData.password) {
           errorMessage = Array.isArray(responseData.password)
             ? responseData.password[0]
@@ -177,7 +181,29 @@ export default function RegisterForm() {
       </form>
 
       <OAuthButtons mode="register" />
-      
+
+      {emailExists && (
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-blue-800 font-medium mb-2">
+                Το email υπάρχει ήδη στο σύστημα
+              </p>
+              <p className="text-sm text-blue-700 mb-3">
+                Αν έχετε ήδη λογαριασμό, παρακαλώ συνδεθείτε.
+              </p>
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Σύνδεση
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
           Έχεις ήδη λογαριασμό;{' '}
