@@ -73,31 +73,79 @@ class StripeWebhookView(APIView):
     def handle_checkout_session_completed(self, session):
         """
         Handles the logic for a completed Stripe checkout session.
-        
-        NOTE: Tenant creation has been moved to the Public App (Next.js).
-        This webhook now only logs the event and does not create tenants.
-        The Public App will handle tenant creation via the internal API.
+
+        This webhook calls the internal API to create the tenant after successful payment.
         """
+        import requests
+        from django.conf import settings
+
         client_reference_id = session.get('client_reference_id')
         stripe_customer_id = session.get('customer')
         stripe_subscription_id = session.get('subscription')
+        stripe_checkout_session_id = session.get('id')
         metadata = session.get('metadata', {})
         tenant_subdomain = metadata.get('tenant_subdomain')
         plan_id = metadata.get('plan_id')
 
-        logger.info(f"Stripe checkout session completed: {session.get('id')}")
-        logger.info(f"Session data - User ID: {client_reference_id}, Customer: {stripe_customer_id}, Subscription: {stripe_subscription_id}")
+        logger.info(f"Stripe checkout session completed: {stripe_checkout_session_id}")
+        logger.info(f"Session data - Customer: {stripe_customer_id}, Subscription: {stripe_subscription_id}")
         logger.info(f"Metadata - Tenant: {tenant_subdomain}, Plan: {plan_id}")
-        
-        # Log that tenant creation is now handled by Public App
-        logger.info("Tenant creation disabled in Core App - handled by Public App via internal API")
-        
-        # TODO: In the future, we might want to:
-        # 1. Update existing subscription status if needed
-        # 2. Send notifications
-        # 3. Update analytics
-        # But for now, we just log the event
-        
+
+        # Find the user by checkout session ID
+        try:
+            user = CustomUser.objects.get(stripe_checkout_session_id=stripe_checkout_session_id)
+        except CustomUser.DoesNotExist:
+            logger.error(f"User not found for checkout session: {stripe_checkout_session_id}")
+            return
+
+        # Check if tenant already exists
+        if user.tenant:
+            logger.info(f"Tenant already exists for user {user.email}: {user.tenant.schema_name}")
+            return
+
+        # Generate schema name from email
+        schema_name = user.email.split('@')[0].replace('.', '-').replace('_', '-')
+
+        # Call internal API to create tenant
+        try:
+            internal_api_url = 'http://localhost:8000/api/internal/tenants/create/'
+            internal_api_key = settings.INTERNAL_API_SECRET_KEY
+
+            payload = {
+                'schema_name': schema_name,
+                'user_data': {
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                },
+                'plan_id': int(plan_id) if plan_id else 1,
+                'stripe_customer_id': stripe_customer_id,
+                'stripe_subscription_id': stripe_subscription_id,
+                'stripe_checkout_session_id': stripe_checkout_session_id
+            }
+
+            response = requests.post(
+                internal_api_url,
+                json=payload,
+                headers={
+                    'Content-Type': 'application/json',
+                    'X-Internal-API-Key': internal_api_key
+                },
+                timeout=120  # 2 minutes timeout for tenant creation
+            )
+
+            if response.status_code == 201:
+                data = response.json()
+                logger.info(f"Tenant created successfully: {data['tenant']['schema_name']}")
+                logger.info(f"User can now login at: {data['tenant']['domain']}")
+            else:
+                logger.error(f"Failed to create tenant. Status: {response.status_code}, Response: {response.text}")
+
+        except requests.exceptions.Timeout:
+            logger.error(f"Tenant creation timeout for user {user.email}")
+        except Exception as e:
+            logger.error(f"Error calling internal API: {e}")
+
         return
     
     def handle_payment_intent_succeeded(self, payment_intent):
