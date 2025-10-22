@@ -60,14 +60,28 @@ fi
 
 # 6. Start Django server
 echo ""
-echo "🚀 Launching Django runserver..."
-echo "   Frontend: http://demo.localhost:8080"
-echo "   Backend: http://demo.localhost:8000"
-echo "   Admin: http://demo.localhost:8000/admin/"
-echo ""
-echo "👥 Demo Login Credentials:"
-echo "   Admin: admin@demo.localhost / admin123456"
-echo "   Manager: manager@demo.localhost / manager123456"
-echo "   Resident: resident1@demo.localhost / resident123456"
-echo ""
-exec python manage.py runserver 0.0.0.0:8000
+echo "🚀 Launching Django server..."
+
+# Check if we're in production (Railway sets PORT variable)
+if [ -n "$PORT" ]; then
+  echo "   🌐 Production mode detected"
+  echo "   Starting gunicorn on port $PORT"
+  exec gunicorn new_concierge_backend.wsgi:application \
+    --bind 0.0.0.0:$PORT \
+    --workers 2 \
+    --timeout 120 \
+    --access-logfile - \
+    --error-logfile -
+else
+  echo "   🔧 Development mode"
+  echo "   Frontend: http://demo.localhost:8080"
+  echo "   Backend: http://demo.localhost:8000"
+  echo "   Admin: http://demo.localhost:8000/admin/"
+  echo ""
+  echo "👥 Demo Login Credentials:"
+  echo "   Admin: admin@demo.localhost / admin123456"
+  echo "   Manager: manager@demo.localhost / manager123456"
+  echo "   Resident: resident1@demo.localhost / resident123456"
+  echo ""
+  exec python manage.py runserver 0.0.0.0:8000
+fi
