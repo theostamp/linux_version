@@ -39,8 +39,14 @@ railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
 if railway_domain:
     CSRF_TRUSTED_ORIGINS.extend([
         f'https://{railway_domain}',
+        'https://linuxversion-production.up.railway.app',  # Hardcoded as fallback
         'https://*.railway.app',
     ])
+    # Debug logging
+    import logging
+    logger = logging.getLogger('django')
+    logger.info(f"CSRF_TRUSTED_ORIGINS configured: {CSRF_TRUSTED_ORIGINS}")
+    logger.info(f"RAILWAY_PUBLIC_DOMAIN: {railway_domain}")
 
 # Add localhost origins in development
 if DEBUG:
@@ -51,12 +57,21 @@ if DEBUG:
         'http://demo.localhost:8000',
     ])
 
+# Force add Railway domain even without env var (temporary fix)
+if not DEBUG:
+    CSRF_TRUSTED_ORIGINS.extend([
+        'https://linuxversion-production.up.railway.app',
+        'https://*.railway.app',
+    ])
+
 IS_PRODUCTION = os.getenv("ENV", "development") == "production"
 
 # Railway proxy settings
-if os.getenv('RAILWAY_PUBLIC_DOMAIN'):
+if os.getenv('RAILWAY_PUBLIC_DOMAIN') or not DEBUG:
     USE_X_FORWARDED_HOST = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Also disable host header validation for Railway
+    ALLOWED_HOSTS = ['*']  # Temporary for debugging CSRF
 
 # ----------------------------------------
 # 🏘️ django-tenants split apps
