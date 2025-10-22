@@ -5,7 +5,7 @@ Management command to fix admin authentication issues on Railway
 from django.core.management.base import BaseCommand
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import check_password, make_password
-from users.models import User
+from users.models import CustomUser
 import sys
 
 
@@ -22,7 +22,7 @@ class Command(BaseCommand):
 
         # Step 1: Check if user exists
         try:
-            user = User.objects.get(email=email)
+            user = CustomUser.objects.get(email=email)
             self.stdout.write(self.style.SUCCESS(f"✅ User found: {email}"))
 
             # Display user details
@@ -101,12 +101,12 @@ class Command(BaseCommand):
                     if auth_user:
                         self.stdout.write(self.style.SUCCESS("✅ Authentication works now!"))
 
-        except User.DoesNotExist:
+        except CustomUser.DoesNotExist:
             self.stdout.write(self.style.ERROR(f"❌ User NOT found: {email}"))
 
             # Create new superuser
             self.stdout.write("\nCreating new superuser...")
-            user = User.objects.create_superuser(
+            user = CustomUser.objects.create_superuser(
                 email=email,
                 password=password,
                 first_name="Theo",
