@@ -1,21 +1,19 @@
 # tenants/admin_views.py
 
-from django.contrib import admin    
-from django.http import HttpResponseRedirect    
-from django.urls import path    
-from django.shortcuts import render    
-from django.contrib import messages    
-from django.utils import timezone    
+from django.contrib import admin
+from django.http import HttpResponseRedirect
+from django.urls import path
+from django.shortcuts import render
+from django.contrib import messages
+from django.utils import timezone
 from datetime import timedelta
-from django_tenants.utils import schema_context    
-from buildings.models import Building, BuildingMembership
-from announcements.models import Announcement
-from user_requests.models import UserRequest
-from votes.models import Vote
-from obligations.models import Obligation
+from django_tenants.utils import schema_context
 from tenants.models import Client, Domain
 from users.models import CustomUser
-from django.core.management import call_command    
+from django.core.management import call_command
+
+# NOTE: TENANT app imports (buildings, announcements, etc.) are moved inside
+# schema_context to maintain proper SHARED/TENANT app separation    
 
 TENANT_CREATE_TEMPLATE = "admin/tenant_create.html"
 
@@ -57,6 +55,13 @@ class TenantCreatorAdminView(admin.ModelAdmin):
             call_command("migrate_schemas", schema_name=tenant.schema_name, interactive=False)
 
             with schema_context(tenant.schema_name):
+                # Import TENANT models inside schema_context to avoid architectural violations
+                from buildings.models import Building, BuildingMembership
+                from announcements.models import Announcement
+                from user_requests.models import UserRequest
+                from votes.models import Vote
+                from obligations.models import Obligation
+
                 manager = CustomUser.objects.create_user(
                     email=manager_email,
                     password=manager_password,

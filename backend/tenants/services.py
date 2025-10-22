@@ -224,7 +224,75 @@ class TenantService:
     def is_schema_available(self, schema_name):
         """Check if a schema name is available."""
         return not Client.objects.filter(schema_name=schema_name).exists()
-    
+
+    def create_tenant_infrastructure(self, schema_name, user, paid_until=None, on_trial=True):
+        """
+        Creates tenant infrastructure ONLY (tenant, domain, migrations, demo data).
+        Does NOT create UserSubscription - that's handled by BillingService.
+
+        This method maintains proper separation of concerns:
+        - TenantService: Manages tenant infrastructure (this method)
+        - BillingService: Manages Stripe + subscriptions
+
+        Args:
+            schema_name (str): The schema name for the tenant
+            user (CustomUser): The user who will own the tenant
+            paid_until (datetime.date): Date until which tenant is paid (default: 30 days)
+            on_trial (bool): Whether tenant is on trial (default: True)
+
+        Returns:
+            tuple: (tenant, domain) objects
+
+        Raises:
+            Exception: If tenant infrastructure creation fails
+        """
+        try:
+            with transaction.atomic():
+                # Step 1: Create the tenant
+                if paid_until is None:
+                    paid_until = timezone.now().date() + timezone.timedelta(days=30)
+
+                tenant = self._create_tenant_with_params(schema_name, user, paid_until, on_trial)
+
+                # Step 2: Create the domain
+                domain = self._create_domain(tenant, schema_name)
+
+                # Step 3: Run tenant migrations
+                self._run_tenant_migrations(schema_name)
+
+                # Step 4: Create initial user in tenant schema
+                self._create_tenant_user(user, schema_name)
+
+                # Step 5: Create demo data (Αλκμάνος 22 building)
+                self._create_demo_data(schema_name)
+
+                logger.info(f"Successfully created tenant infrastructure '{schema_name}' for user {user.email}")
+                return tenant, domain
+
+        except Exception as e:
+            logger.error(f"Failed to create tenant infrastructure: {e}")
+            raise
+
+    def _create_tenant_with_params(self, schema_name, user, paid_until, on_trial):
+        """Create the tenant (Client) object with specific parameters."""
+        # Ensure schema name is unique and RFC compliant (use hyphens, not underscores)
+        original_schema_name = schema_name
+        counter = 1
+        while Client.objects.filter(schema_name=schema_name).exists():
+            schema_name = f"{original_schema_name}-{counter}"
+            counter += 1
+
+        tenant = Client.objects.create(
+            name=user.get_full_name() or user.email.split('@')[0],
+            schema_name=schema_name,
+            paid_until=paid_until,
+            on_trial=on_trial,
+            is_active=True
+        )
+
+        logger.info(f"Created tenant: {tenant.name} (schema: {tenant.schema_name})")
+        return tenant
+
     def _create_demo_data(self, schema_name):
         """Create demo data (Αλκμάνος 22 building) for the new tenant."""
         try:
