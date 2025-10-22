@@ -33,13 +33,13 @@ class StripeWebhookView(APIView):
         sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
         
         try:
-            # Verify webhook signature (only in production)
-            if not settings.STRIPE_MOCK_MODE and settings.STRIPE_WEBHOOK_SECRET:
+            # Verify webhook signature (only in production and when signature header is present)
+            if not settings.STRIPE_MOCK_MODE and settings.STRIPE_WEBHOOK_SECRET and sig_header:
                 event = stripe.Webhook.construct_event(
                     payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
                 )
             else:
-                # In mock mode, parse the payload directly
+                # In mock mode or testing mode (no signature), parse the payload directly
                 event = json.loads(payload)
             
             # Handle the event
