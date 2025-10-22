@@ -289,6 +289,14 @@ def create_public_tenant():
         ultra_user.is_active = True
         ultra_user.save()
         print("✅ Ενημερώθηκε Ultra-Superuser: theostam1966@gmail.com")
+
+    # Verify authentication works
+    from django.contrib.auth import authenticate
+    test_auth = authenticate(username='theostam1966@gmail.com', password='theo123!@#')
+    if test_auth:
+        print("   ✅ Authentication verified - login will work!")
+    else:
+        print("   ⚠️ WARNING: Authentication test failed - may need to run fix_admin_auth")
     
     return public_tenant
 
