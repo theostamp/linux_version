@@ -205,10 +205,11 @@ if DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
-            conn_max_age=600,
-            engine='django_tenants.postgresql_backend'
+            conn_max_age=600
         )
     }
+    # Override ENGINE to use django-tenants backend
+    DATABASES['default']['ENGINE'] = 'django_tenants.postgresql_backend'
 else:
     # Use individual environment variables (development)
     DATABASES = {
