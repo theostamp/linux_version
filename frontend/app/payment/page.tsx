@@ -125,7 +125,37 @@ export default function PaymentPage() {
     }
   };
 
-  if (!plan || !userData) {
+  // If no plan selected and user is authenticated, show message to select a plan
+  if (!plan && user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <AlertCircle className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Select a Subscription Plan</h2>
+          <p className="text-gray-600 mb-6">
+            You need to select a subscription plan to continue. Please choose a plan that fits your needs.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push('/')}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
+            >
+              View Available Plans
+            </button>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-200 transition-colors font-medium"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If still loading user data, show loading spinner
+  if (!userData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
