@@ -29,7 +29,7 @@ export default function SubscriptionGate({
     const fetchSubscription = async () => {
       if (user) {
         try {
-          const { data } = await api.get('/users/subscription/');
+          const { data } = await api.get('/api/users/subscription/');
           if (data.subscription) {
             setSubscriptionStatus(data.subscription.status);
           } else {

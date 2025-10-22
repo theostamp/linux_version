@@ -22,7 +22,7 @@ export default function PaymentPage() {
     const checkExistingSubscription = async () => {
       if (user) {
         try {
-          const { data } = await api.get('/users/subscription/');
+          const { data } = await api.get('/api/users/subscription/');
           if (data.subscription && data.subscription.status !== 'canceled') {
             toast.success('You already have an active subscription!');
             router.push('/dashboard');

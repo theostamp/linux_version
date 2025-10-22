@@ -174,13 +174,13 @@ export const userProfileApi = {
 export const userSubscriptionApi = {
   // Get current subscription
   getCurrentSubscription: async (): Promise<{ subscription: UserSubscription | null }> => {
-    const response = await apiClient.get('/users/subscription/');
+    const response = await apiClient.get('/api/users/subscription/');
     return response.data;
   },
 
   // Get available subscription plans
   getSubscriptionPlans: async (): Promise<{ plans: SubscriptionPlan[] }> => {
-    const response = await apiClient.get('/users/subscription/plans/');
+    const response = await apiClient.get('/api/users/subscription/plans/');
     return response.data;
   },
 
@@ -189,7 +189,7 @@ export const userSubscriptionApi = {
     billing_cycles: BillingCycle[];
     total: number;
   }> => {
-    const response = await apiClient.get('/users/subscription/billing-history/', {
+    const response = await apiClient.get('/api/users/subscription/billing-history/', {
       params: { limit }
     });
     return response.data;
@@ -197,7 +197,7 @@ export const userSubscriptionApi = {
 
   // Perform subscription action
   performAction: async (action: string, data?: any) => {
-    const response = await apiClient.post('/users/subscription/actions/', {
+    const response = await apiClient.post('/api/users/subscription/actions/', {
       action,
       ...data
     });
@@ -225,7 +225,7 @@ export const userSubscriptionApi = {
     billing_interval: 'month' | 'year';
     payment_method_id?: string;
   }) => {
-    const response = await apiClient.post('/users/subscription/create/', subscriptionData);
+    const response = await apiClient.post('/api/users/subscription/create/', subscriptionData);
     return response.data;
   }
 };
