@@ -5,8 +5,20 @@ echo "🚀 DIGITAL CONCIERGE - CONTAINER STARTUP"
 echo "========================================"
 
 # 1. Wait for Postgres
-echo "⏳ Waiting for Postgres ($POSTGRES_HOST:$POSTGRES_PORT)..."
-until pg_isready -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" >/dev/null 2>&1; do
+# Parse DATABASE_URL to get host and port
+if [ -n "$DATABASE_URL" ]; then
+  # Extract host and port from DATABASE_URL
+  # Format: postgresql://user:pass@host:port/db
+  DB_HOST=$(echo $DATABASE_URL | sed -E 's|.*@([^:]+):.*|\1|')
+  DB_PORT=$(echo $DATABASE_URL | sed -E 's|.*:([0-9]+)/.*|\1|')
+else
+  # Fallback to environment variables
+  DB_HOST=${POSTGRES_HOST:-localhost}
+  DB_PORT=${POSTGRES_PORT:-5432}
+fi
+
+echo "⏳ Waiting for Postgres ($DB_HOST:$DB_PORT)..."
+until pg_isready -h "$DB_HOST" -p "$DB_PORT" >/dev/null 2>&1; do
   echo "   Still waiting..."
   sleep 1
 done
