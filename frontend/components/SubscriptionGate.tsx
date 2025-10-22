@@ -24,6 +24,8 @@ export default function SubscriptionGate({
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
 
+  console.log('[SubscriptionGate] Render - user:', user?.email, 'isAuthReady:', isAuthReady, 'isLoading:', isLoading, 'isCheckingSubscription:', isCheckingSubscription);
+
   // Fetch subscription status when user is authenticated
   useEffect(() => {
     const fetchSubscription = async () => {
@@ -57,11 +59,15 @@ export default function SubscriptionGate({
 
   // Show loading state while checking auth or subscription
   if (isLoading || !isAuthReady || isCheckingSubscription) {
+    console.log('[SubscriptionGate] Showing loading - isLoading:', isLoading, 'isAuthReady:', isAuthReady, 'isCheckingSubscription:', isCheckingSubscription);
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">Έλεγχος συνδρομής...</p>
+          <p className="text-xs text-gray-400 mt-2">
+            Loading: {isLoading ? 'yes' : 'no'} | Auth Ready: {isAuthReady ? 'yes' : 'no'} | Checking Sub: {isCheckingSubscription ? 'yes' : 'no'}
+          </p>
         </div>
       </div>
     );
