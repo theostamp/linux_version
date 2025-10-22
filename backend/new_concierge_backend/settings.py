@@ -31,6 +31,14 @@ if DEBUG:
     ALLOWED_HOSTS += [".localhost"]      # οποιοδήποτε sub-domain *.localhost
     ALLOWED_HOSTS += ["backend"]         # Docker container hostname
 
+# CSRF Trusted Origins for Railway
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.railway.app',
+    'https://linuxversion-production.up.railway.app',
+]
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS += ['http://localhost:8080', 'http://demo.localhost:8080']
+
 IS_PRODUCTION = os.getenv("ENV", "development") == "production"
 
 # ----------------------------------------
