@@ -28,20 +28,27 @@ export default function SubscriptionGate({
   useEffect(() => {
     const fetchSubscription = async () => {
       if (user) {
+        console.log('[SubscriptionGate] Fetching subscription for user:', user.email);
         try {
           const { data } = await api.get('/api/users/subscription/');
+          console.log('[SubscriptionGate] Subscription data:', data);
           if (data.subscription) {
             setSubscriptionStatus(data.subscription.status);
+            console.log('[SubscriptionGate] Subscription status:', data.subscription.status);
           } else {
             setSubscriptionStatus(null);
+            console.log('[SubscriptionGate] No subscription found');
           }
         } catch (error) {
+          console.error('[SubscriptionGate] Error fetching subscription:', error);
           setSubscriptionStatus(null);
         } finally {
           setIsCheckingSubscription(false);
+          console.log('[SubscriptionGate] Finished checking subscription');
         }
       } else {
         setIsCheckingSubscription(false);
+        console.log('[SubscriptionGate] No user, skipping subscription check');
       }
     };
 
