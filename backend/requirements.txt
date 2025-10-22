@@ -18,6 +18,7 @@ psycopg2-binary==2.9.10
 # Environment utilities
 python-dotenv==1.1.0
 sqlparse==0.5.3
+dj-database-url==2.1.0
 
 # Billing & Payments
 stripe>=7.0.0

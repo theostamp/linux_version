@@ -196,17 +196,32 @@ CACHES = {
  
 
 # Database Connection Pooling
-DATABASES = {
-    'default': {
-        'ENGINE': 'django_tenants.postgresql_backend',
-        'NAME': os.getenv('DB_NAME', os.getenv('POSTGRES_DB', 'postgres')),
-        'USER': os.getenv('DB_USER', os.getenv('POSTGRES_USER', 'postgres')),
-        'PASSWORD': os.getenv('DB_PASSWORD', os.getenv('POSTGRES_PASSWORD', 'postgres')),
-        'HOST': os.getenv('DB_HOST', os.getenv('POSTGRES_HOST', 'localhost')),
-        'PORT': os.getenv('DB_PORT', os.getenv('POSTGRES_PORT', '5432')),
-        'CONN_MAX_AGE': 600,  # 10 minutes
+# Parse DATABASE_URL if provided (for Railway, Heroku, etc.)
+import dj_database_url
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL:
+    # Use DATABASE_URL if provided (production)
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            engine='django_tenants.postgresql_backend'
+        )
     }
-}
+else:
+    # Use individual environment variables (development)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django_tenants.postgresql_backend',
+            'NAME': os.getenv('DB_NAME', os.getenv('POSTGRES_DB', 'postgres')),
+            'USER': os.getenv('DB_USER', os.getenv('POSTGRES_USER', 'postgres')),
+            'PASSWORD': os.getenv('DB_PASSWORD', os.getenv('POSTGRES_PASSWORD', 'postgres')),
+            'HOST': os.getenv('DB_HOST', os.getenv('POSTGRES_HOST', 'localhost')),
+            'PORT': os.getenv('DB_PORT', os.getenv('POSTGRES_PORT', '5432')),
+            'CONN_MAX_AGE': 600,  # 10 minutes
+        }
+    }
 
 DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter',)
 TENANT_MODEL = 'tenants.Client'
