@@ -12,6 +12,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import OAuthButtons from './OAuthButtons';
 import { Eye, EyeOff } from 'lucide-react';
+import { api } from '@/lib/api';
 
 export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redirectTo?: string }) {
   const router = useRouter();
@@ -42,35 +43,19 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
 
       // Check subscription status before redirecting
       try {
-        const token = localStorage.getItem('access');
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users/subscription/`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        const { data } = await api.get('/api/users/subscription/');
+        const hasActiveSubscription = data.subscription &&
+          (data.subscription.status === 'active' || data.subscription.status === 'trial');
 
-        if (response.ok) {
-          const data = await response.json();
-          const hasActiveSubscription = data.subscription &&
-            (data.subscription.status === 'active' || data.subscription.status === 'trial');
+        console.log('LoginForm: Subscription status:', data.subscription?.status);
 
-          console.log('LoginForm: Subscription status:', data.subscription?.status);
+        // Redirect based on subscription status
+        const redirectPath = hasActiveSubscription ? finalRedirect : '/payment';
+        console.log('LoginForm: Redirecting to:', redirectPath);
 
-          // Redirect based on subscription status
-          const redirectPath = hasActiveSubscription ? finalRedirect : '/payment';
-          console.log('LoginForm: Redirecting to:', redirectPath);
-
-          setTimeout(() => {
-            router.push(redirectPath);
-          }, 100);
-        } else {
-          // If subscription check fails, redirect to payment to be safe
-          console.log('LoginForm: Subscription check failed, redirecting to payment');
-          setTimeout(() => {
-            router.push('/payment');
-          }, 100);
-        }
+        setTimeout(() => {
+          router.push(redirectPath);
+        }, 100);
       } catch (subError) {
         console.error('LoginForm: Subscription check error:', subError);
         // If subscription check fails, redirect to payment to be safe
