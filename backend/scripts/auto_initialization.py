@@ -273,7 +273,8 @@ def create_public_tenant():
             'is_staff': True,
             'is_superuser': True,
             'is_active': True,
-            'role': 'admin'
+            'role': 'admin',
+            'email_verified': True
         }
     )
     
@@ -287,6 +288,7 @@ def create_public_tenant():
         ultra_user.is_superuser = True
         ultra_user.is_staff = True
         ultra_user.is_active = True
+        ultra_user.email_verified = True
         ultra_user.save()
         print("✅ Ενημερώθηκε Ultra-Superuser: theostam1966@gmail.com")
 
