@@ -287,8 +287,8 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 # Custom authentication backends
 AUTHENTICATION_BACKENDS = [
+    'users.backends.EmailBackend',  # Email-based authentication (FIRST for Django admin)
     'core.cross_schema_auth.CrossSchemaAuthBackend',  # Cross-schema authentication
-    'users.backends.EmailBackend',  # Email-based authentication
     'django.contrib.auth.backends.ModelBackend',  # Default Django backend
 ]
 
