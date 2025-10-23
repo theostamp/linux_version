@@ -6,7 +6,7 @@ User = get_user_model()
 class EmailBackend(ModelBackend):
     """
     Επιτρέπει authenticate(request, email=…, password=…)
-    αντί για username.
+    αντί για username. Λειτουργεί και με Django admin.
     """
     def authenticate(self, request, username=None, password=None, **kwargs):
         # Παίρνουμε email από kwargs ή από username
@@ -23,6 +23,13 @@ class EmailBackend(ModelBackend):
         if user.check_password(password) and self.user_can_authenticate(user):
             return user
         return None
+    
+    def get_user(self, user_id):
+        """Required for Django admin compatibility"""
+        try:
+            return User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return None
     
     def user_can_authenticate(self, user):
         """
