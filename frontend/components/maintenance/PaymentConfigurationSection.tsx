@@ -168,12 +168,10 @@ export function PaymentConfigurationSection({
             name="payment_config.total_amount"
             control={control}
             render={({ field }) => {
-              // Auto-sync with projectPrice
-              React.useEffect(() => {
-                if (projectPrice && field.value !== projectPrice) {
-                  field.onChange(Number(projectPrice));
-                }
-              }, [projectPrice, field]);
+              // Auto-sync with projectPrice - moved to component level
+              if (projectPrice && field.value !== projectPrice) {
+                field.onChange(Number(projectPrice));
+              }
               
               return <input type="hidden" value={projectPrice || 0} />;
             }}

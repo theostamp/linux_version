@@ -39,11 +39,15 @@ export function withLazyLoading<P extends object>(
 ) {
   const LazyComponent = lazy(() => Promise.resolve({ default: Component }));
   
-  return (props: P) => (
+  const WrappedComponent = (props: P) => (
     <LazyLoadWrapper fallback={fallback}>
       <LazyComponent {...props} />
     </LazyLoadWrapper>
   );
+  
+  WrappedComponent.displayName = `LazyLoadWrapper(${Component.displayName || Component.name || 'Component'})`;
+  
+  return WrappedComponent;
 }
 
 /**
