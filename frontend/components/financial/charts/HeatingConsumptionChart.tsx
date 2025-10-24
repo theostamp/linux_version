@@ -79,11 +79,11 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
       // Find heating expenses for this month
       const heatingExpenses = expenses.filter(e => {
         const titleLower = e.title?.toLowerCase() || '';
-        const descLower = e.description?.toLowerCase() || '';
+        const descLower = (e as any).description?.toLowerCase() || '';
         const categoryLower = e.category?.toLowerCase() || '';
 
-        const isHeating = e.expense_type === 'heating' ||
-                          e.expense_type === 'Μετρητές' ||
+        const isHeating = (e as any).expense_type === 'heating' ||
+                          (e as any).expense_type === 'Μετρητές' ||
                           categoryLower === 'heating' ||
                           categoryLower === 'utilities' ||
                           categoryLower === 'meters' ||
@@ -108,7 +108,7 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
       });
 
       const totalExpense = heatingExpenses.reduce((sum, expense) =>
-        sum + parseFloat(expense.amount || '0'), 0
+        sum + (typeof expense.amount === 'string' ? parseFloat(expense.amount) || 0 : expense.amount || 0), 0
       );
 
       // Add comparison data if available
@@ -119,11 +119,11 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
         if (compareMonth) {
           const compareHeatingExpenses = compareExpenses.filter(e => {
             const titleLower = e.title?.toLowerCase() || '';
-            const descLower = e.description?.toLowerCase() || '';
+            const descLower = (e as any).description?.toLowerCase() || '';
             const categoryLower = e.category?.toLowerCase() || '';
 
-            const isHeating = e.expense_type === 'heating' ||
-                              e.expense_type === 'Μετρητές' ||
+            const isHeating = (e as any).expense_type === 'heating' ||
+                              (e as any).expense_type === 'Μετρητές' ||
                               categoryLower === 'heating' ||
                               categoryLower === 'utilities' ||
                               categoryLower === 'meters' ||
@@ -146,7 +146,7 @@ export const HeatingConsumptionChart: React.FC<HeatingConsumptionChartProps> = (
           });
 
           compareExpense = compareHeatingExpenses.reduce((sum, expense) =>
-            sum + parseFloat(expense.amount || '0'), 0
+            sum + (typeof expense.amount === 'string' ? parseFloat(expense.amount) || 0 : expense.amount || 0), 0
           );
         }
       }

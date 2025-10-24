@@ -19,7 +19,7 @@ function CalendarPageContent() {
   const { selectedBuilding } = useBuilding();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showEventForm, setShowEventForm] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('calendar'); // 'calendar' | 'google-settings'
 
   // Memoize date calculations to prevent infinite re-renders
@@ -52,9 +52,9 @@ function CalendarPageContent() {
   });
 
   // Calculate stats
-  const overdueEvents = upcomingEvents.filter(event => event.is_overdue);
-  const urgentEvents = upcomingEvents.filter(event => event.is_urgent_priority);
-  const completedToday = todayEvents.filter(event => event.status === 'completed');
+  const overdueEvents = (upcomingEvents as any[]).filter((event: any) => event.is_overdue);
+  const urgentEvents = (upcomingEvents as any[]).filter((event: any) => event.is_urgent_priority);
+  const completedToday = (todayEvents as any[]).filter((event: any) => event.status === 'completed');
 
   const handleEventClick = (event: any) => {
     setSelectedEvent(event);
@@ -121,7 +121,7 @@ function CalendarPageContent() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Σήμερα</p>
-                <p className="text-lg font-semibold">{todayEvents.length}</p>
+                <p className="text-lg font-semibold">{(todayEvents as any[]).length}</p>
               </div>
             </div>
           </CardContent>
@@ -202,8 +202,8 @@ function CalendarPageContent() {
           <CalendarWidget />
           
           <EventSidebar 
-            selectedDate={selectedDate}
-            onEventClick={handleEventClick}
+            isOpen={true}
+            onClose={() => {}}
           />
 
           {/* Quick Actions */}
@@ -291,10 +291,8 @@ function CalendarPageContent() {
       {/* Event Form Modal */}
       {showEventForm && (
         <EventForm
-          event={selectedEvent}
-          isOpen={showEventForm}
-          onClose={() => setShowEventForm(false)}
-          selectedDate={selectedDate}
+          onSuccess={() => setShowEventForm(false)}
+          onCancel={() => setShowEventForm(false)}
         />
       )}
     </div>

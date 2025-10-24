@@ -51,17 +51,17 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
 
     // Filter for electricity expenses
     const electricityExpenses = expenses.filter(e => {
-      const isElectricity = e.expense_type === 'electricity' ||
-                            e.expense_type === 'elevator_electricity' ||
+      const isElectricity = (e as any).expense_type === 'electricity' ||
+                            (e as any).expense_type === 'elevator_electricity' ||
                             e.category === 'electricity' ||
                             e.category === 'utilities' ||
                             (e.title && e.title.toLowerCase().includes('ρεύμα')) ||
                             (e.title && e.title.toLowerCase().includes('δεη')) ||
                             (e.title && e.title.toLowerCase().includes('ηλεκτρ')) ||
                             (e.title && e.title.toLowerCase().includes('ρευμα')) ||
-                            (e.description && e.description.toLowerCase().includes('ρεύμα')) ||
-                            (e.description && e.description.toLowerCase().includes('δεη')) ||
-                            (e.description && e.description.toLowerCase().includes('ηλεκτρ'));
+                            ((e as any).description && (e as any).description.toLowerCase().includes('ρεύμα')) ||
+                            ((e as any).description && (e as any).description.toLowerCase().includes('δεη')) ||
+                            ((e as any).description && (e as any).description.toLowerCase().includes('ηλεκτρ'));
 
       // Exclude heating expenses
       const isHeating = (e.title && e.title.toLowerCase().includes('θέρμανσ')) ||
@@ -75,17 +75,17 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
     const monthlyData = monthsInGreek.map((monthName, index) => {
       const monthNumber = (index + 1).toString().padStart(2, '0');
       const monthExpenses = electricityExpenses.filter(e =>
-        e.expense_date && e.expense_date.startsWith(`${year}-${monthNumber}`)
+        (e as any).expense_date && (e as any).expense_date.startsWith(`${year}-${monthNumber}`)
       );
 
       const commonAreas = monthExpenses
-        .filter(e => !e.description || !e.description.toLowerCase().includes('ανελκυστ'))
-        .reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0);
+        .filter(e => !(e as any).description || !(e as any).description.toLowerCase().includes('ανελκυστ'))
+        .reduce((sum, e) => sum + (typeof e.amount === 'string' ? parseFloat(e.amount) || 0 : e.amount || 0), 0);
 
       const elevator = monthExpenses
-        .filter(e => e.expense_type === 'elevator_electricity' ||
-                    (e.description && e.description.toLowerCase().includes('ανελκυστ')))
-        .reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0);
+        .filter(e => (e as any).expense_type === 'elevator_electricity' ||
+                    ((e as any).description && (e as any).description.toLowerCase().includes('ανελκυστ')))
+        .reduce((sum, e) => sum + (typeof e.amount === 'string' ? parseFloat(e.amount) || 0 : e.amount || 0), 0);
 
       // Add comparison data if available
       let compareCommonAreas = 0;
@@ -94,17 +94,17 @@ export const ElectricityExpensesChart: React.FC<ElectricityExpensesChartProps> =
       if (showComparison && compareExpenses && compareYear) {
         const compareMonthNumber = (index + 1).toString().padStart(2, '0');
         const compareMonthExpenses = compareExpenses.filter(e =>
-          e.expense_date && e.expense_date.startsWith(`${compareYear}-${compareMonthNumber}`)
+          (e as any).expense_date && (e as any).expense_date.startsWith(`${compareYear}-${compareMonthNumber}`)
         );
 
         compareCommonAreas = compareMonthExpenses
-          .filter(e => !e.description || !e.description.toLowerCase().includes('ανελκυστ'))
-          .reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0);
+          .filter(e => !(e as any).description || !(e as any).description.toLowerCase().includes('ανελκυστ'))
+          .reduce((sum, e) => sum + (typeof e.amount === 'string' ? parseFloat(e.amount) || 0 : e.amount || 0), 0);
 
         compareElevator = compareMonthExpenses
-          .filter(e => e.expense_type === 'elevator_electricity' ||
-                      (e.description && e.description.toLowerCase().includes('ανελκυστ')))
-          .reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0);
+          .filter(e => (e as any).expense_type === 'elevator_electricity' ||
+                      ((e as any).description && (e as any).description.toLowerCase().includes('ανελκυστ')))
+          .reduce((sum, e) => sum + (typeof e.amount === 'string' ? parseFloat(e.amount) || 0 : e.amount || 0), 0);
       }
 
       return {

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makeRequestWithRetry } from '@/lib/api';
 
-export async function GET(_request: NextRequest, context: { params: { id: string } }) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const resp = await makeRequestWithRetry({ method: 'get', url: `/projects/offers/${id}/` });
     return NextResponse.json({ success: true, data: resp.data }, { status: 200 });
   } catch (error) {
@@ -12,9 +12,9 @@ export async function GET(_request: NextRequest, context: { params: { id: string
   }
 }
 
-export async function PATCH(request: NextRequest, context: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const payload = await request.json();
     const resp = await makeRequestWithRetry({ method: 'patch', url: `/projects/offers/${id}/`, data: payload });
     return NextResponse.json({ success: true, data: resp.data }, { status: 200 });

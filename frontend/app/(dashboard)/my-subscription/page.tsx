@@ -27,46 +27,6 @@ import { userSubscriptionApi, type UserSubscription, type SubscriptionPlan } fro
 import { getStatusBadgeVariant, formatCurrency, formatDate } from '@/lib/api/user';
 import { toast } from '@/hooks/use-toast';
 
-interface SubscriptionPlan {
-  id: number;
-  name: string;
-  plan_type: 'starter' | 'professional' | 'enterprise';
-  description: string;
-  monthly_price: number;
-  yearly_price: number;
-  max_buildings: number;
-  max_apartments: number;
-  max_users: number;
-  features: string[];
-  is_popular?: boolean;
-  stripe_price_id_monthly?: string;
-  stripe_price_id_yearly?: string;
-}
-
-interface UserSubscription {
-  id: string;
-  plan: SubscriptionPlan;
-  status: 'trial' | 'active' | 'past_due' | 'canceled' | 'unpaid' | 'paused';
-  billing_interval: 'month' | 'year';
-  trial_start?: string;
-  trial_end?: string;
-  current_period_start: string;
-  current_period_end: string;
-  price: number;
-  currency: string;
-  days_until_renewal: number;
-  usage: {
-    buildings: number;
-    apartments: number;
-    users: number;
-  };
-  usage_limits: {
-    buildings: number;
-    apartments: number;
-    users: number;
-  };
-}
-
 interface BillingCycle {
   id: string;
   period_start: string;
@@ -164,8 +124,8 @@ export default function MySubscriptionPage() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      'trial': { variant: 'warning' as const, label: 'Trial', icon: Clock },
-      'active': { variant: 'success' as const, label: 'Ενεργή', icon: CheckCircle },
+      'trial': { variant: 'secondary' as const, label: 'Trial', icon: Clock },
+      'active': { variant: 'default' as const, label: 'Ενεργή', icon: CheckCircle },
       'past_due': { variant: 'destructive' as const, label: 'Καθυστέρηση', icon: AlertTriangle },
       'canceled': { variant: 'secondary' as const, label: 'Ακυρωμένη', icon: XCircle },
       'unpaid': { variant: 'destructive' as const, label: 'Μη Πληρωμένη', icon: XCircle },
@@ -401,7 +361,7 @@ export default function MySubscriptionPage() {
                         <p className="font-semibold">
                           {formatCurrency(cycle.total_amount)}
                         </p>
-                        <Badge variant={cycle.status === 'paid' ? 'success' : 'warning'}>
+                        <Badge variant={cycle.status === 'paid' ? 'default' : 'secondary'}>
                           {cycle.status === 'paid' ? 'Πληρωμένο' : 'Εκκρεμές'}
                         </Badge>
                       </div>
@@ -435,12 +395,7 @@ export default function MySubscriptionPage() {
             {/* Available Plans */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {availablePlans.map((plan) => (
-                <Card key={plan.id} className={`p-6 relative ${plan.is_popular ? 'border-blue-500 ring-2 ring-blue-200' : ''}`}>
-                  {plan.is_popular && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <Badge className="bg-blue-600 text-white">Πιο Δημοφιλές</Badge>
-                    </div>
-                  )}
+                <Card key={plan.id} className="p-6 relative">
                   
                   <div className="text-center mb-6">
                     <div className="flex justify-center mb-4">
@@ -460,17 +415,35 @@ export default function MySubscriptionPage() {
                   </div>
                   
                   <div className="space-y-3 mb-6">
-                    {plan.features.map((feature, index) => (
-                      <div key={index} className="flex items-center gap-2">
+                    {plan.features.has_analytics && (
+                      <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-600" />
-                        <span className="text-sm">{feature}</span>
+                        <span className="text-sm">Analytics</span>
                       </div>
-                    ))}
+                    )}
+                    {plan.features.has_custom_integrations && (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm">Custom Integrations</span>
+                      </div>
+                    )}
+                    {plan.features.has_priority_support && (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm">Priority Support</span>
+                      </div>
+                    )}
+                    {plan.features.has_white_label && (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm">White Label</span>
+                      </div>
+                    )}
                   </div>
                   
                   <Button 
                     className="w-full flex items-center justify-center gap-2"
-                    variant={plan.is_popular ? 'default' : 'outline'}
+                    variant="outline"
                   >
                     Επιλογή Plan
                     <ArrowRight className="w-4 h-4" />

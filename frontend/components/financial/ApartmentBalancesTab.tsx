@@ -600,7 +600,7 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       <PaymentNotificationModal
         isOpen={showPaymentNotificationModal}
         onClose={handlePaymentNotificationClose}
-        apartment={selectedApartment}
+        apartment={selectedApartment as any}
         onPaymentClick={() => {
           if (selectedApartment) {
             handlePayment(selectedApartment);

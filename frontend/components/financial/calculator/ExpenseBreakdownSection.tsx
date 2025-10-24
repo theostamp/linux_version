@@ -30,7 +30,7 @@ import {
   Eye,
   Calculator
 } from 'lucide-react';
-import { CalculatorState } from './CalculatorWizard';
+import { CalculatorState } from './types/financial';
 
 interface ExpenseBreakdownSectionProps {
   state: CalculatorState;

@@ -87,7 +87,7 @@ export default function KioskSceneRenderer({
       }
     } catch (error) {
       console.error('Error creating default scene:', error);
-      alert('Αποτυχία δημιουργίας σκηνής: ' + error.message);
+      alert('Αποτυχία δημιουργίας σκηνής: ' + (error as Error).message);
     } finally {
       setIsCreatingScene(false);
     }

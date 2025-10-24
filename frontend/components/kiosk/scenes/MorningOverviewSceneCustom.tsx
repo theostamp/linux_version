@@ -103,7 +103,7 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
                   }}
                 >
                   <div className="h-full w-full p-4">
-                    <WidgetComp data={data} isLoading={false} error={null} buildingId={buildingId} />
+                    <WidgetComp data={data} isLoading={false} error={undefined} />
                   </div>
                 </div>
               );
@@ -117,21 +117,21 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
         {/* Management Office Widget - Top */}
         <div className="h-[15%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
           <div className="h-full">
-            <ManagementOfficeWidget data={data} isLoading={false} error={null} />
+            <ManagementOfficeWidget data={data} isLoading={false} error={undefined} />
           </div>
         </div>
 
         {/* Weather Widget - Middle (Increased height to show all content) */}
         <div className="h-[50%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-purple-500/20">
           <div className="h-full p-4">
-            <WeatherWidget data={data} isLoading={false} error={null} buildingId={buildingId} />
+            <WeatherWidget data={data} isLoading={false} error={undefined} />
           </div>
         </div>
 
         {/* Announcements & Votes Carousel - Bottom (Reduced height to accommodate weather) */}
         <div className="h-[20%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
           <div className="h-full p-4">
-            <AnnouncementsVotesCarousel data={data} isLoading={false} error={null} />
+            <AnnouncementsVotesCarousel data={data} isLoading={false} error={undefined} />
           </div>
         </div>
 
@@ -141,7 +141,7 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
       <div className="w-[23%] p-3">
         <div className="h-full w-full backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-indigo-500/30" style={{ backgroundColor: '#222D59' }}>
           <div className="h-full w-full p-4">
-            <ApartmentDebtsWidget data={data} isLoading={false} error={null} buildingId={buildingId} />
+            <ApartmentDebtsWidget data={data} isLoading={false} error={undefined} />
           </div>
         </div>
       </div>
@@ -149,7 +149,7 @@ export default function MorningOverviewSceneCustom({ data, buildingId }: Morning
       {/* News Widget - Fixed to bottom of screen with spacing */}
       <div className="fixed bottom-0 left-0 right-0 h-12 bg-slate-800/95 backdrop-blur-md border-t border-green-500/20 z-50 mb-2">
         <div className="h-full px-4">
-          <NewsWidget data={data} isLoading={false} error={null} />
+          <NewsWidget data={data} isLoading={false} error={undefined} />
         </div>
       </div>
     </div>

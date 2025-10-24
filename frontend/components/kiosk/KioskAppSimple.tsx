@@ -173,8 +173,8 @@ export default function KioskAppSimple({
         isOpen={showBuildingSelector}
         onClose={() => setShowBuildingSelector(false)}
         onBuildingSelect={(building) => handleBuildingChange(building?.id || null)}
-        selectedBuilding={selectedBuildingId ? { id: selectedBuildingId, name: `Building ${selectedBuildingId}`, address: '', city: '' } : null}
-        currentBuilding={selectedBuildingId ? { id: selectedBuildingId, name: `Building ${selectedBuildingId}`, address: '', city: '' } : null}
+        selectedBuilding={selectedBuildingId ? { id: selectedBuildingId, name: `Building ${selectedBuildingId}`, address: '', city: '', created_at: new Date().toISOString() } : null}
+        currentBuilding={selectedBuildingId ? { id: selectedBuildingId, name: `Building ${selectedBuildingId}`, address: '', city: '', created_at: new Date().toISOString() } : null}
       />
     </div>
   );

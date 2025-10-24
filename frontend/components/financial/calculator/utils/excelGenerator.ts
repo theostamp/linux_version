@@ -11,12 +11,13 @@ import {
   GroupedExpenses,
   Share
 } from '../types/financial';
+import { ApartmentWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
 import { formatAmount, toNumber } from './formatters';
 import { getPeriodInfo } from './periodHelpers';
 
 interface ExcelGeneratorParams {
   state: CalculatorState;
-  aptWithFinancial: any[];
+  aptWithFinancial: ApartmentWithFinancialData[];
   perApartmentAmounts: PerApartmentAmounts;
   managementFeeInfo: ManagementFeeInfo;
   expenseBreakdown: ExpenseBreakdown;

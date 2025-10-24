@@ -149,9 +149,9 @@ export default function AdminUsersPage() {
       return <Badge variant="destructive">Ανενεργός</Badge>;
     }
     if (!user.email_verified) {
-      return <Badge variant="warning">Μη Επιβεβαιωμένος</Badge>;
+      return <Badge variant="secondary">Μη Επιβεβαιωμένος</Badge>;
     }
-    return <Badge variant="success">Ενεργός</Badge>;
+    return <Badge variant="default">Ενεργός</Badge>;
   };
 
   const getRoleBadge = (user: User) => {

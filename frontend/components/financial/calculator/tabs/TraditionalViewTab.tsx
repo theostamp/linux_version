@@ -7,6 +7,7 @@ import { ValidationResult, CommonExpenseModalProps, ExpenseBreakdown, Management
 import { getPaymentDueDate, getPeriodInfo, getPeriodInfoWithBillingCycle } from '../utils/periodHelpers';
 import { formatAmount } from '../utils/formatters';
 import { useMonthlyExpenses, ExpenseBreakdownItem } from '@/hooks/useMonthlyExpenses';
+import { ApartmentWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
 
 // This interface is now self-contained and doesn't extend CommonExpenseModalProps
 interface TraditionalViewTabProps {
@@ -21,7 +22,7 @@ interface TraditionalViewTabProps {
   managerApartment?: string;
   managerPhone?: string;
   managerCollectionSchedule?: string;
-  aptWithFinancial: any[];
+  aptWithFinancial: ApartmentWithFinancialData[];
   expenseBreakdown: ExpenseBreakdown;
   managementFeeInfo: ManagementFeeInfo;
   reserveFundInfo: ReserveFundInfo;

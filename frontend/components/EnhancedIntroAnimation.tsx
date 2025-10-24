@@ -118,8 +118,7 @@ export default function EnhancedIntroAnimation({
       opacity: 0,
       scale: 0.95,
       transition: {
-        duration: 0.5,
-        ease: "easeInOut"
+        duration: 0.5
       }
     }
   };
@@ -130,8 +129,7 @@ export default function EnhancedIntroAnimation({
       y: 0, 
       opacity: 1,
       transition: {
-        duration: 0.5,
-        ease: "easeOut"
+        duration: 0.5
       }
     }
   };
@@ -142,8 +140,7 @@ export default function EnhancedIntroAnimation({
       x: 0, 
       opacity: 1,
       transition: {
-        duration: 0.3,
-        ease: "easeOut"
+        duration: 0.3
       }
     },
     exit: { 
@@ -161,16 +158,14 @@ export default function EnhancedIntroAnimation({
       scale: 1, 
       rotate: 0,
       transition: {
-        duration: 0.5,
-        ease: "backOut"
+        duration: 0.5
       }
     },
     pulse: {
       scale: [1, 1.1, 1],
       transition: {
         duration: 1,
-        repeat: Infinity,
-        ease: "easeInOut"
+        repeat: Infinity
       }
     }
   };

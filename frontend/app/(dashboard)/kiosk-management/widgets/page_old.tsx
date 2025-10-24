@@ -294,7 +294,7 @@ export default function WidgetManagementPage() {
                         <span>Refresh: {widget.refreshInterval}s</span>
                       )}
                       <span>
-                        Updated: {widget.updatedAt.toLocaleDateString('el-GR')}
+                        Updated: {widget.updatedAt?.toLocaleDateString('el-GR') || 'Άγνωστο'}
                       </span>
                     </div>
                   </div>

@@ -1,15 +1,16 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
-import { 
-  CalculatorState, 
-  ExpenseBreakdown, 
-  ReserveFundInfo, 
-  ManagementFeeInfo, 
-  GroupedExpenses, 
+import {
+  CalculatorState,
+  ExpenseBreakdown,
+  ReserveFundInfo,
+  ManagementFeeInfo,
+  GroupedExpenses,
   PerApartmentAmounts,
   Share
 } from '../types/financial';
+import { ApartmentWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
 import { formatAmount, toNumber } from './formatters';
 import { getPeriodInfo, getPeriodInfoWithBillingCycle, getPaymentDueDate } from './periodHelpers';
 
@@ -34,7 +35,7 @@ interface PdfGeneratorParams {
   managementFeeInfo: ManagementFeeInfo;
   groupedExpenses: GroupedExpenses;
   perApartmentAmounts: PerApartmentAmounts;
-  aptWithFinancial: any[];
+  aptWithFinancial: ApartmentWithFinancialData[];
   totalExpenses: number;
   getFinalTotalExpenses: () => number;
   getTotalPreviousBalance: () => number;
@@ -512,7 +513,7 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                     const elevatorMills = apt.participation_mills || 0;
                     const heatingMills = apt.heating_mills || apt.participation_mills || 0;
                     const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
-                    const totalAmount = (aptAmount.common || 0) + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + (managementFeeInfo.perApartment || 0) + apartmentReserveFund + previousBalance;
+                    const totalAmount = (aptAmount.common || 0) + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + (managementFeeInfo.feePerApartment || 0) + apartmentReserveFund + previousBalance;
 
                     return `
                       <tr>
@@ -525,7 +526,7 @@ export const exportToPDF = async (params: PdfGeneratorParams) => {
                         <td class="text-right">${formatAmount((aptAmount.common || 0) + apartmentReserveFund)}€</td>
                         <td class="text-right">${formatAmount(aptAmount.elevator || 0)}€</td>
                         <td class="text-right">${formatAmount(aptAmount.heating || 0)}€</td>
-                        <td class="text-right">${formatAmount(managementFeeInfo.perApartment || 0)}€</td>
+                        <td class="text-right">${formatAmount(managementFeeInfo.feePerApartment || 0)}€</td>
                         <td class="text-right">${formatAmount(apartmentReserveFund)}€</td>
                         <td class="text-right font-bold text-blue-600">${formatAmount(totalAmount)}€</td>
                       </tr>

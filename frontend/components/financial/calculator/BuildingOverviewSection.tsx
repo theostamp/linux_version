@@ -56,6 +56,7 @@ interface FinancialSummary {
   total_balance: number;
   current_obligations: number; // Τρέχουσες υποχρεώσεις (κύριο χρέος)
   previous_obligations: number; // ← ΝΕΟ FIELD - Οφειλές προηγούμενων μηνών
+  current_month_expenses: number; // ← ΝΕΟ FIELD - Δαπάνες μόνο τρέχοντος μήνα
   reserve_fund_debt: number; // Χρέος από εισφορά αποθεματικού
   reserve_fund_goal: number;
   current_reserve: number;
@@ -470,7 +471,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         total_balance: apiData.total_balance || 0,
         current_obligations: apiData.current_obligations || 0,
         previous_obligations: apiData.previous_obligations || 0, // ← ΝΕΟ FIELD
-        current_month_expenses: apiData.current_month_expenses || 0, // ← ΝΕΟ FIELD: Δαπάνες μόνο τρέχοντος μήνα
+        current_month_expenses: (apiData as any).current_month_expenses || 0, // ← ΝΕΟ FIELD: Δαπάνες μόνο τρέχοντος μήνα
         reserve_fund_debt: -calculatedReserveFundDebt, // Χρέος από εισφορά αποθεματικού - DYNAMIC
         reserve_fund_goal: savedGoal,
         current_reserve: apiData.current_reserve || 0,
@@ -546,6 +547,7 @@ export const BuildingOverviewSection = forwardRef<BuildingOverviewSectionRef, Bu
         total_balance: 0,
         current_obligations: 0,
         previous_obligations: 0, // Add missing property
+        current_month_expenses: 0, // Add missing property
         reserve_fund_debt: 0,
         reserve_fund_goal: 0, // No hardcoded value - will be set by user
         current_reserve: 0,

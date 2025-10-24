@@ -14,7 +14,7 @@ function TicketDetailInner() {
   const params = useParams();
   const id = Number(params?.id);
   const buildingId = getActiveBuildingId();
-  useBuildingEvents(buildingId, { events: ['ticket.updated', 'workorder.updated'] });
+  useBuildingEvents(buildingId);
 
   const ticketQuery = useQuery({
     queryKey: ['maintenanceTicket', id],

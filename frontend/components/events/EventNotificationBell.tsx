@@ -19,7 +19,7 @@ const EventNotificationBell = React.memo(({ className, onClick }: EventNotificat
 
   console.log('[EventNotificationBell] Rendering with pendingCount:', pendingCount, 'buildingId:', buildingId);
 
-  const hasUnread = useMemo(() => pendingCount > 0, [pendingCount]);
+  const hasUnread = useMemo(() => (pendingCount as number) > 0, [pendingCount]);
 
   // Only refresh when page becomes visible (the hook already handles auto-refresh)
   const handleVisibilityChange = useCallback(() => {
@@ -49,7 +49,7 @@ const EventNotificationBell = React.memo(({ className, onClick }: EventNotificat
       <Bell className="w-5 h-5" />
       {hasUnread && (
         <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center text-[10px] font-bold text-white bg-red-600 rounded-full min-w-[16px] h-[16px] px-1 shadow">
-          {pendingCount > 99 ? '99+' : pendingCount}
+          {(pendingCount as number) > 99 ? '99+' : String(pendingCount)}
         </span>
       )}
     </button>

@@ -514,7 +514,7 @@ export default function ScheduledMaintenanceForm({
 
   const onSubmit = async (values: FormValues, options?: { skipReceipt?: boolean }) => {
     console.log('🔥 Submit handler called with values:', values);
-    const buildingId = getActiveBuildingId();
+    const buildingId: number = getActiveBuildingId();
     const isEditing = Boolean(initialData?.id);
     
     try {
@@ -668,10 +668,11 @@ export default function ScheduledMaintenanceForm({
       console.log('💾 Save completed, processing payment configuration...');
       
       // Process payment configuration in background (non-blocking)
-      if (savedId && paymentConfig?.payment_type === 'advance_installments') {
+      if (paymentConfig?.payment_type === 'advance_installments' && typeof savedId === 'number') {
+        const savedIdForProcessing = savedId;
         // Use setTimeout to move this to next tick, making UI response immediate
         setTimeout(() => {
-          processPaymentConfigurationBackground(savedId, paymentConfig, values, buildingId, watchedPrice);
+          processPaymentConfigurationBackground(savedIdForProcessing, paymentConfig, values, buildingId as number, watchedPrice);
         }, 0);
       }
     } catch (e: any) {
@@ -1227,5 +1228,4 @@ function formatForDateInput(iso: string): string {
     return '';
   }
 }
-
 

@@ -31,7 +31,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { toast } from 'sonner';
-import api from '@/lib/api';
+import { api } from '@/lib/api';
 import ExportWithOpen from '@/components/financial/ExportWithOpen';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';

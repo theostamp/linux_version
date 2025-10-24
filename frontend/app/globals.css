@@ -107,6 +107,11 @@
   }
 
   :root {
+    --font-open-sans: 'Open Sans', 'Helvetica Neue', Arial, system-ui, sans-serif;
+    --font-roboto-condensed: 'Roboto Condensed', 'Open Sans', system-ui, sans-serif;
+    --font-inter-tight: 'Inter Tight', 'Inter', system-ui, sans-serif;
+    --font-ubuntu-condensed: 'Ubuntu Condensed', 'Ubuntu', system-ui, sans-serif;
+
     /* 🎨 Kiosk Color Palette - Based on #0284C5 */
 
     /* Primary Colors - Based on #0284C5 */

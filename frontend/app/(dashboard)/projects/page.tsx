@@ -170,26 +170,29 @@ function ProjectsDashboardContent() {
       danger: "bg-red-50 text-red-600",
     };
 
-    const CardWrapper = href ? Link : 'div';
-    const cardProps = href ? { href } : {};
+    const cardContent = (
+      <Card className="h-full">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+          <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
+            {icon}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{value}</div>
+          {description && (
+            <p className="text-xs text-muted-foreground">{description}</p>
+          )}
+        </CardContent>
+      </Card>
+    );
 
-    return (
-      <CardWrapper {...cardProps} className={href ? "block hover:shadow-md transition-shadow" : ""}>
-        <Card className="h-full">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{title}</CardTitle>
-            <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-              {icon}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
-            {description && (
-              <p className="text-xs text-muted-foreground">{description}</p>
-            )}
-          </CardContent>
-        </Card>
-      </CardWrapper>
+    return href ? (
+      <Link href={href} className="block hover:shadow-md transition-shadow">
+        {cardContent}
+      </Link>
+    ) : (
+      cardContent
     );
   };
 

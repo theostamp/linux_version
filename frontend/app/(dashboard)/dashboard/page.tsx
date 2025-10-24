@@ -970,7 +970,7 @@ function DashboardContent() {
                   cx="50%" 
                   cy="50%" 
                   outerRadius={70} 
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={(props: any) => `${props.name} ${(props.percent * 100).toFixed(0)}%`}
                 >
                   <Cell fill="#ef4444" />
                   <Cell fill="#f59e0b" />

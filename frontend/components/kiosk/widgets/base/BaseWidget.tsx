@@ -43,7 +43,7 @@ export function BaseWidget({
     <div
       className={cn(
         'relative overflow-hidden transition-all duration-200 hover:shadow-lg',
-        sizeClasses[gridSize],
+        sizeClasses[gridSize as keyof typeof sizeClasses],
         className
       )}
       style={{

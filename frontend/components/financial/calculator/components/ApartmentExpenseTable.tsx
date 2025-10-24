@@ -3,10 +3,11 @@ import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PerApartmentAmounts, ExpenseBreakdown, ManagementFeeInfo, ReserveFundInfo, Share } from '../types/financial';
 import { formatAmount, toNumber } from '../utils/formatters';
+import { ApartmentWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
 
 interface ApartmentExpenseTableProps {
   shares: { [key: string]: Share };
-  aptWithFinancial: any[];
+  aptWithFinancial: ApartmentWithFinancialData[];
   perApartmentAmounts: PerApartmentAmounts;
   expenseBreakdown: ExpenseBreakdown;
   managementFeeInfo: ManagementFeeInfo;
@@ -57,7 +58,7 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
         </TableHeader>
         <TableBody>
           {sharesArray.map((share) => {
-            const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
+            const apartmentData = aptWithFinancial.find(apt => (apt as any).apartment_id === share.apartment_id);
             const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
             const breakdown = share.breakdown || {};
             const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
@@ -69,8 +70,8 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             
             // ✅ ΔΙΟΡΘΩΣΗ: Χρήση resident_expenses και owner_expenses από API (ήδη διαχωρισμένα)
             // Αυτά ΗΔΗ εξαιρούν το αποθεματικό και τα management fees όπου χρειάζεται
-            const residentExpensesTotal = toNumber(apartmentData?.resident_expenses || 0);
-            const ownerExpensesTotal = toNumber(apartmentData?.owner_expenses || 0);
+            const residentExpensesTotal = toNumber((apartmentData as any)?.resident_expenses || 0);
+            const ownerExpensesTotal = toNumber((apartmentData as any)?.owner_expenses || 0);
             
             // Κ/ΧΡΗΣΤΑ = Δαπάνες ενοίκων (ΗΔΗ διαχωρισμένες από το API, ΔΕΝ περιλαμβάνουν owner expenses)
             // Αφαιρούμε ΜΟΝΟ το αποθεματικό (που είναι owner expense)
@@ -108,9 +109,9 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             {/* ΔΑΠΑΝΕΣ ΕΝΟΙΚΙΑΣΤΩΝ - Κ/ΧΡΗΣΤΑ από resident_expenses (ΔΕΝ περιλαμβάνει owner expenses) */}
             <TableCell>{formatAmount(
               sharesArray.reduce((sum, share) => {
-                const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
+                const apartmentData = aptWithFinancial.find(apt => (apt as any).apartment_id === share.apartment_id);
                 const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
-                const residentExpensesTotal = toNumber(apartmentData?.resident_expenses || 0);
+                const residentExpensesTotal = toNumber((apartmentData as any)?.resident_expenses || 0);
                 const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0 && Object.values(expenseBreakdown).some(v => v > 0)) ? toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000) : 0;
                 // ✅ ΔΙΟΡΘΩΣΗ: Χρήση resident_expenses (ΗΔΗ εξαιρεί owner expenses)
                 return sum + (residentExpensesTotal - apartmentReserveFund);
@@ -132,9 +133,9 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             {/* ✅ ΝΕΟ: ΔΑΠΑΝΕΣ ΙΔΙΟΚΤΗΤΩΝ - 2 cells (ΕΡΓΑ χωρίς αποθεματικό + ΑΠΟΘΕΜΑΤΙΚΟ) */}
             <TableCell className="font-semibold">{formatAmount(
               sharesArray.reduce((sum, share) => {
-                const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
+                const apartmentData = aptWithFinancial.find(apt => (apt as any).apartment_id === share.apartment_id);
                 const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
-                const ownerExpensesTotal = toNumber(apartmentData?.owner_expenses || 0);
+                const ownerExpensesTotal = toNumber((apartmentData as any)?.owner_expenses || 0);
                 const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0 && Object.values(expenseBreakdown).some(v => v > 0)) ? toNumber(reserveFundInfo.monthlyAmount) * (commonMills / 1000) : 0;
                 // ✅ ΔΙΟΡΘΩΣΗ: Αφαιρούμε το αποθεματικό από τα έργα
                 const ownerExpensesOnlyProjects = ownerExpensesTotal - apartmentReserveFund;
@@ -145,11 +146,11 @@ export const ApartmentExpenseTable: React.FC<ApartmentExpenseTableProps> = ({
             {/* ΠΛΗΡΩΤΕΟ ΠΟΣΟ: Περιλαμβάνει ΟΛΑ (+ αποθεματικό για συνολικό χρέος) */}
             <TableCell>{formatAmount(
               sharesArray.reduce((sum, share) => {
-                const apartmentData = aptWithFinancial.find(apt => apt.apartment_id === share.apartment_id);
+                const apartmentData = aptWithFinancial.find(apt => (apt as any).apartment_id === share.apartment_id);
                 const commonMills = apartmentData?.participation_mills ?? toNumber(share.participation_mills);
                 const breakdown = share.breakdown || {};
-                const residentExpensesTotal = toNumber(apartmentData?.resident_expenses || 0);
-                const ownerExpensesTotal = toNumber(apartmentData?.owner_expenses || 0);
+                const residentExpensesTotal = toNumber((apartmentData as any)?.resident_expenses || 0);
+                const ownerExpensesTotal = toNumber((apartmentData as any)?.owner_expenses || 0);
                 const elevatorAmount = toNumber(breakdown.elevator_expenses || 0);
                 const heatingAmount = toNumber(breakdown.heating_expenses || 0);
                 const previousBalance = Math.abs(apartmentData?.previous_balance ?? 0);

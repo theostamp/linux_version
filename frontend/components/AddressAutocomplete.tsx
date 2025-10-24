@@ -30,7 +30,7 @@ interface Prediction {
 const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     // Check if already loaded
-    if (window.google?.maps?.places?.AutocompleteService) {
+    if ((window as any).google?.maps?.places?.AutocompleteService) {
       console.log('✅ Google Maps already loaded with Places API');
       resolve();
       return;
@@ -44,7 +44,7 @@ const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
       // If script is already loaded, wait for Places API
       if (existingScript.getAttribute('data-loaded') === 'true') {
         const checkPlacesAPI = () => {
-          if (window.google?.maps?.places?.AutocompleteService) {
+          if ((window as any).google?.maps?.places?.AutocompleteService) {
             console.log('✅ Places API loaded from existing script');
             resolve();
           } else {
@@ -60,7 +60,7 @@ const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
       existingScript.addEventListener('load', () => {
         existingScript.setAttribute('data-loaded', 'true');
         const checkPlacesAPI = () => {
-          if (window.google?.maps?.places?.AutocompleteService) {
+          if ((window as any).google?.maps?.places?.AutocompleteService) {
             console.log('✅ Places API loaded from existing script');
             resolve();
           } else {
@@ -89,7 +89,7 @@ const loadGoogleMapsScript = (apiKey: string): Promise<void> => {
       script.setAttribute('data-loaded', 'true');
       
       const checkPlacesAPI = () => {
-        if (window.google?.maps?.places?.AutocompleteService) {
+        if ((window as any).google?.maps?.places?.AutocompleteService) {
           console.log('✅ Places API initialized successfully');
           resolve();
         } else {
@@ -144,11 +144,11 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
         if (window.google?.maps?.places) {
           try {
             // Initialize AutocompleteService for getting predictions
-            autocompleteService.current = new window.google.maps.places.AutocompleteService();
+            autocompleteService.current = new (window as any).google.maps.places.AutocompleteService();
             
             // Create a dummy div for PlacesService (required by Google Maps API)
             const dummyDiv = document.createElement('div');
-            placesService.current = new window.google.maps.places.PlacesService(dummyDiv);
+            placesService.current = new (window as any).google.maps.places.PlacesService(dummyDiv);
             
             console.log('✅ Places services initialized successfully');
             setError(null); // Clear any previous errors
@@ -202,7 +202,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
     autocompleteService.current.getPlacePredictions(request, (predictions: any, status: any) => {
       setIsLoading(false);
       
-      if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+      if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && predictions) {
         console.log('🔮 Got predictions:', predictions.length);
         setPredictions(predictions);
         setShowSuggestions(true);
@@ -305,7 +305,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
     };
 
     placesService.current.getDetails(request, (place: any, status: any) => {
-      if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
+      if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && place) {
         console.log('✅ Place details received:', place);
         processPlaceDetails(place, isConfirmed);
       } else {
@@ -502,9 +502,9 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ onAddressSele
                 loadGoogleMapsScript(apiKey)
                   .then(() => {
                     if (window.google?.maps?.places) {
-                      autocompleteService.current = new window.google.maps.places.AutocompleteService();
+                      autocompleteService.current = new (window as any).google.maps.places.AutocompleteService();
                       const dummyDiv = document.createElement('div');
-                      placesService.current = new window.google.maps.places.PlacesService(dummyDiv);
+                      placesService.current = new (window as any).google.maps.places.PlacesService(dummyDiv);
                       setError(null);
                     }
                   })

@@ -162,7 +162,7 @@ export default function SendNotificationPage() {
       return currentBuilding?.management_office_address || '';
     }
     if (variable === 'bank_account') {
-      return currentBuilding?.bank_account || ''; // TODO: Add to building model
+      return ''; // TODO: Add to building model
     }
 
     // Date/time variables

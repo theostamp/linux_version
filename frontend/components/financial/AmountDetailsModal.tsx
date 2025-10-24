@@ -107,7 +107,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
       setSummary(summaryResponse.data);
 
       // Load transaction history - try different endpoints
-      let transactions = [];
+      let transactions: any[] = [];
       let transactionsLoadedSuccessfully = false;
 
       // Always use expenses/payments fallback since transactions endpoint requires auth

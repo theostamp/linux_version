@@ -18,11 +18,11 @@ export default function FinancialTestsPage() {
         id: user.id 
       } : null,
       allowedRoles: ['manager', 'staff', 'superuser', 'admin'],
-      hasAccess: user && ['manager', 'staff', 'superuser', 'admin'].includes(user.role),
+      hasAccess: user && user.role && ['manager', 'staff', 'superuser', 'admin'].includes(user.role),
       timestamp: new Date().toISOString()
     });
     
-    if (isAuthReady && (!user || !['manager', 'staff', 'superuser', 'admin'].includes(user.role))) {
+    if (isAuthReady && (!user || !user.role || !['manager', 'staff', 'superuser', 'admin'].includes(user.role))) {
       console.log('[FinancialTests] ACCESS DENIED - Redirecting to unauthorized');
       console.log('[FinancialTests] User role:', user?.role);
       router.push('/unauthorized');
@@ -35,7 +35,7 @@ export default function FinancialTestsPage() {
     return null;
   }
 
-  if (!['manager', 'staff', 'superuser', 'admin'].includes(user.role)) {
+  if (!user.role || !['manager', 'staff', 'superuser', 'admin'].includes(user.role)) {
     console.log('[FinancialTests] Invalid role:', user.role, '- returning null');
     return null; // Will redirect via useEffect
   }

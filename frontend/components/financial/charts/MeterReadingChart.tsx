@@ -41,7 +41,7 @@ export const MeterReadingChart: React.FC<MeterReadingChartProps> = ({
   chartType = 'line',
   height = 400,
 }) => {
-  const { meterReadings, loading, error } = useMeterReadings();
+  const { readings: meterReadings, loading, error } = useMeterReadings();
   const [chartData, setChartData] = useState<any[]>([]);
   const [consumptionData, setConsumptionData] = useState<any[]>([]);
 
@@ -71,10 +71,10 @@ export const MeterReadingChart: React.FC<MeterReadingChartProps> = ({
         acc[dateKey] = {};
       }
       
-      if (!acc[dateKey][reading.apartment_name]) {
-        acc[dateKey][reading.apartment_name] = {
-          value: reading.current_value,
-          consumption: reading.consumption || 0,
+      if (!acc[dateKey][reading.apartment_number || 'Unknown']) {
+        acc[dateKey][reading.apartment_number || 'Unknown'] = {
+          value: (reading as any).current_value,
+          consumption: typeof reading.consumption === 'string' ? parseFloat(reading.consumption) || 0 : reading.consumption || 0,
         };
       }
       
@@ -119,7 +119,7 @@ export const MeterReadingChart: React.FC<MeterReadingChartProps> = ({
 
   const getApartmentNames = (): string[] => {
     if (!meterReadings) return [];
-    const names = new Set(meterReadings.map(reading => reading.apartment_name));
+    const names = new Set(meterReadings.map(reading => reading.apartment_number || 'Unknown'));
     return Array.from(names);
   };
 

@@ -11,7 +11,7 @@ import { typography } from '@/lib/typography';
 
 function WorkOrdersListInner() {
   const buildingId = getActiveBuildingId();
-  useBuildingEvents(buildingId, { events: ['workorder.updated'] });
+  useBuildingEvents(buildingId);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['workOrders', buildingId],

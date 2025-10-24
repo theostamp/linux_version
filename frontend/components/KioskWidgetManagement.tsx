@@ -106,7 +106,7 @@ export default function KioskWidgetManagement({ buildingId, compact = false }: K
       
       // Save to backend
       await saveKioskConfig(currentBuildingId, {
-        widgets: widgetsData,
+        widgets: widgetsData as any,
         settings: {
           slideDuration: 10,
           autoRefresh: true,

@@ -159,7 +159,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
                     types.includes('administrative_area_level_2') ||
                     types.includes('sublocality_level_1')) {
                   city = component.long_name;
-                  console.log('🏙️ City found:', city, 'from type:', types.find(t => t.includes('locality') || t.includes('administrative') || t.includes('sublocality')));
+                  console.log('🏙️ City found:', city, 'from type:', types.find((t: string) => t.includes('locality') || t.includes('administrative') || t.includes('sublocality')));
                 }
                 if (types.includes('postal_code')) {
                   postalCode = component.long_name;

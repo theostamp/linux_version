@@ -13,7 +13,7 @@ function WorkOrderDetailInner() {
   const params = useParams();
   const id = Number(params?.id);
   const buildingId = getActiveBuildingId();
-  useBuildingEvents(buildingId, { events: ['workorder.updated'] });
+  useBuildingEvents(buildingId);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['workOrder', id],
@@ -42,12 +42,10 @@ function WorkOrderDetailInner() {
         <h2 className="text-2xl font-semibold tracking-tight text-gray-800 mb-4">Work Order Details</h2>
         <div className="space-y-2">
           <p><strong>Status:</strong> {w.status}</p>
-          <p><strong>Priority:</strong> {w.priority}</p>
-          <p><strong>Description:</strong> {w.description}</p>
           <p><strong>Assigned To:</strong> {w.assigned_to || 'Unassigned'}</p>
           <p><strong>Created:</strong> {new Date(w.created_at).toLocaleDateString()}</p>
-          {w.completed_at && (
-            <p><strong>Completed:</strong> {new Date(w.completed_at).toLocaleDateString()}</p>
+          {w.finished_at && (
+            <p><strong>Completed:</strong> {new Date(w.finished_at).toLocaleDateString()}</p>
           )}
         </div>
       </div>

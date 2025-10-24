@@ -5,7 +5,7 @@ import { usePublicInfo } from '@/hooks/usePublicInfo';
 import { useBuildingChange } from '@/hooks/useBuildingChange';
 import KioskSceneRenderer from '@/components/KioskSceneRenderer';
 import KioskWidgetRenderer from '@/components/KioskWidgetRenderer';
-import KioskCanvasRenderer from '@/components/KioskCanvasRenderer';
+// import KioskCanvasRenderer from '@/components/KioskCanvasRenderer';
 import FullPageSpinner from '@/components/FullPageSpinner';
 import { fetchAllBuildingsPublic } from '@/lib/api';
 import { fetchPublicMaintenanceCounters, fetchPublicScheduledMaintenance } from '@/lib/apiPublic';
@@ -186,9 +186,8 @@ export default function KioskPage() {
   return (
     <div className="h-screen w-screen overflow-hidden">
       {useCanvasMode ? (
-        <KioskCanvasRenderer
+        <KioskSceneRenderer
           selectedBuildingId={selectedBuildingId}
-          onBuildingChange={changeBuilding}
         />
       ) : useSceneMode ? (
         <KioskSceneRenderer
@@ -207,7 +206,7 @@ export default function KioskPage() {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchPublicProjects, type PublicProject } from '@/lib/apiPublic';
 
-export function PublicProjectsCard({ buildingId = 1 }: { buildingId?: number }) {
+function PublicProjectsCard({ buildingId = 1 }: { buildingId?: number }) {
   const [projects, setProjects] = useState<PublicProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

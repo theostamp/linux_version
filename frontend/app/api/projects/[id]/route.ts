@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { makeRequestWithRetry } from '@/lib/api';
 
-export async function GET(_request: NextRequest, context: { params: { id: string } }) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const response = await makeRequestWithRetry({ method: 'get', url: `/projects/projects/${id}/` });
     return NextResponse.json({ success: true, data: response.data }, { status: 200 });
   } catch (error) {

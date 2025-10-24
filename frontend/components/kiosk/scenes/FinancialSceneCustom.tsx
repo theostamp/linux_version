@@ -58,7 +58,7 @@ export default function FinancialSceneCustom({ data, buildingId }: FinancialScen
         {/* Sticky Top - Announcements */}
         <div className="flex-shrink-0 h-[35%] bg-slate-800/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/20">
           <div className="h-full overflow-y-auto p-3">
-            <AnnouncementsWidget data={data} isLoading={false} error={null} />
+            <AnnouncementsWidget data={data} isLoading={false} error={undefined} />
           </div>
         </div>
 
@@ -93,7 +93,7 @@ export default function FinancialSceneCustom({ data, buildingId }: FinancialScen
                   }}
                 >
                   <div className="h-full w-full p-4">
-                    <WidgetComp data={data} isLoading={false} error={null} />
+                    <WidgetComp data={data} isLoading={false} error={undefined} />
                   </div>
                 </div>
               );
@@ -108,7 +108,7 @@ export default function FinancialSceneCustom({ data, buildingId }: FinancialScen
         <div className="h-full w-full bg-slate-800/80 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-blue-500/30">
           {/* Bill Image - FULL Container, No Header */}
           <div className="h-full w-full">
-            <CommonExpenseBillWidget data={data} isLoading={false} error={null} />
+            <CommonExpenseBillWidget data={data} isLoading={false} error={undefined} />
           </div>
         </div>
       </div>

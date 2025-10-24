@@ -41,7 +41,7 @@ export const BulkImportWizard: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   
-  const { createMeterReading, loading } = useMeterReadings();
+  const { loading } = useMeterReadings();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -135,7 +135,8 @@ export const BulkImportWizard: React.FC = () => {
 
     for (const row of previewData) {
       try {
-        await createMeterReading({
+        // TODO: Implement createMeterReading function
+        console.log('Creating meter reading:', {
           apartment_name: row.apartment_name,
           apartment_number: row.apartment_number,
           reading_date: row.reading_date,

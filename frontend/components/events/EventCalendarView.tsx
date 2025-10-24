@@ -38,7 +38,7 @@ export default function EventCalendarView({ selectedDate, onDateSelect }: EventC
   const eventsByDate = useMemo(() => {
     const grouped: { [key: string]: any[] } = {};
     
-    events.forEach((event: any) => {
+    (events as any[]).forEach((event: any) => {
       const eventDate = new Date(event.scheduled_date || event.due_date);
       const dateKey = `${eventDate.getFullYear()}-${eventDate.getMonth()}-${eventDate.getDate()}`;
       

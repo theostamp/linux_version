@@ -24,7 +24,7 @@ export default function DebugStreetViewPage() {
   }, isConfirmed?: boolean) => {
     console.log('📍 Debug page: handleAddressSelect called with:', addressData);
     
-    setFormData(prev => ({
+    setFormData((prev: any) => ({
       ...prev,
       address: addressData.address,
       city: addressData.city,
@@ -42,7 +42,7 @@ export default function DebugStreetViewPage() {
   const handleStreetViewImageSelect = (imageUrl: string) => {
     console.log('📸 Debug page: Received street view image URL:', imageUrl);
     setSelectedImageUrl(imageUrl);
-    setFormData(prev => ({
+    setFormData((prev: any) => ({
       ...prev,
       street_view_image: imageUrl
     }));
@@ -104,7 +104,7 @@ export default function DebugStreetViewPage() {
               onImageSelect={(imageUrl) => {
                 console.log('🔧 Debugger: Received image:', imageUrl);
                 setSelectedImageUrl(imageUrl);
-                setFormData(prev => ({
+                setFormData((prev: any) => ({
                   ...prev,
                   street_view_image: imageUrl
                 }));
@@ -127,7 +127,7 @@ export default function DebugStreetViewPage() {
                 onImageSelect={(imageUrl) => {
                   console.log('🔗 Debug page: Connected test received image:', imageUrl);
                   setSelectedImageUrl(imageUrl);
-                  setFormData(prev => ({
+                  setFormData((prev: any) => ({
                     ...prev,
                     street_view_image: imageUrl
                   }));

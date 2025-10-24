@@ -62,8 +62,8 @@ export default function AnnouncementsCarousel({ announcements }: Readonly<Props>
         className="flex overflow-hidden relative w-full h-[200px] rounded-lg" // Reduced height
       >
         {announcements.slice(0, 3).map((a) => {
-          const start = isValidDate(a.start_date) ? new Date(a.start_date) : null;
-          const end = isValidDate(a.end_date) ? new Date(a.end_date) : null;
+          const start = isValidDate(a.start_date) ? new Date(a.start_date!) : null;
+          const end = isValidDate(a.end_date) ? new Date(a.end_date!) : null;
           const now = new Date();
 
           let status = 'Ενεργή';

@@ -11,12 +11,7 @@ import { typography } from '@/lib/typography';
 
 function TicketsListInner() {
   const buildingId = getActiveBuildingId();
-  useBuildingEvents(buildingId, {
-    events: ['ticket.updated', 'workorder.updated'],
-    onEvent: () => {
-      // React Query will refetch due to query key invalidation implemented inside the hook
-    },
-  });
+  useBuildingEvents(buildingId);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['maintenanceTickets', buildingId],

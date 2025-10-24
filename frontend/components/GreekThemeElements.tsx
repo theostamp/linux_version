@@ -233,7 +233,7 @@ export const GreekButton = ({
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       whileHover={{ scale: 1.05, y: -2 }}
       whileTap={{ scale: 0.95 }}
-      {...props}
+      {...(props as any)}
     >
       {/* Decorative pattern overlay */}
       <div className="absolute inset-0 opacity-10">

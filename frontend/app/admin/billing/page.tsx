@@ -137,8 +137,8 @@ export default function AdminBillingPage() {
 
   const getPaymentStatusBadge = (status: string) => {
     const statusConfig = {
-      'paid': { variant: 'success' as const, label: 'Πληρωμένο', icon: CheckCircle },
-      'pending': { variant: 'warning' as const, label: 'Εκκρεμές', icon: Calendar },
+      'paid': { variant: 'default' as const, label: 'Πληρωμένο', icon: CheckCircle },
+      'pending': { variant: 'secondary' as const, label: 'Εκκρεμές', icon: Calendar },
       'failed': { variant: 'destructive' as const, label: 'Αποτυχία', icon: AlertTriangle },
     };
 

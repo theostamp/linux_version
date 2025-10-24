@@ -1,7 +1,6 @@
 {
   "extends": [
-    "react-app",
-    "react-app/jest"
+    "next/core-web-vitals"
   ],
   "rules": {
     "no-unused-vars": "warn",

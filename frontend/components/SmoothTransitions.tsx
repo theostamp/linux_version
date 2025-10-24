@@ -20,8 +20,7 @@ export const pageVariants = {
     y: 0,
     scale: 1,
     transition: {
-      duration: 0.4,
-      ease: "easeOut"
+      duration: 0.4
     }
   },
   out: {
@@ -29,8 +28,7 @@ export const pageVariants = {
     y: -20,
     scale: 0.98,
     transition: {
-      duration: 0.3,
-      ease: "easeIn"
+      duration: 0.3
     }
   }
 };
@@ -58,8 +56,7 @@ export const staggerItem = {
     y: 0,
     scale: 1,
     transition: {
-      duration: 0.4,
-      ease: "easeOut"
+      duration: 0.4
     }
   }
 };
@@ -92,8 +89,7 @@ export const buttonVariants = {
     scale: 1.02,
     boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
     transition: {
-      duration: 0.2,
-      ease: "easeOut"
+      duration: 0.2
     }
   },
   tap: { 
@@ -115,8 +111,7 @@ export const cardVariants = {
     boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
     y: -5,
     transition: {
-      duration: 0.3,
-      ease: "easeOut"
+      duration: 0.3
     }
   }
 };
@@ -132,8 +127,7 @@ export const skeletonVariants = {
     scale: [1, 1.02, 1],
     transition: {
       duration: 1.5,
-      repeat: Infinity,
-      ease: "easeInOut"
+      repeat: Infinity
     }
   }
 };
@@ -148,8 +142,7 @@ export const fadeInUp = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.5,
-      ease: "easeOut"
+      duration: 0.5
     }
   }
 };
@@ -164,8 +157,7 @@ export const slideInLeft = {
     opacity: 1,
     x: 0,
     transition: {
-      duration: 0.4,
-      ease: "easeOut"
+      duration: 0.4
     }
   }
 };
@@ -180,8 +172,7 @@ export const slideInRight = {
     opacity: 1,
     x: 0,
     transition: {
-      duration: 0.4,
-      ease: "easeOut"
+      duration: 0.4
     }
   }
 };
@@ -196,8 +187,7 @@ export const scaleIn = {
     opacity: 1,
     scale: 1,
     transition: {
-      duration: 0.4,
-      ease: "backOut"
+      duration: 0.4
     }
   }
 };
@@ -214,8 +204,7 @@ export const rotateIn = {
     rotate: 0,
     scale: 1,
     transition: {
-      duration: 0.6,
-      ease: "backOut"
+      duration: 0.6
     }
   }
 };
@@ -284,7 +273,7 @@ export function AnimatedButton({
       initial="rest"
       whileHover="hover"
       whileTap="tap"
-      {...props}
+      {...(props as any)}
     >
       {children}
     </motion.button>

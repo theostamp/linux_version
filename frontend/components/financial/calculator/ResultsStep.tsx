@@ -707,7 +707,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({
     try {
       // Dynamic import of xlsx and file-saver to avoid SSR issues
       const XLSX = await import('xlsx');
-      const fileSaver = await import('file-saver');
+      const fileSaver = await import('file-saver') as any;
       const { saveAs } = fileSaver;
       
       // Προετοιμασία δεδομένων

@@ -103,7 +103,7 @@ export default function TransactionHistory({ buildingId, limit, selectedMonth }:
   const exportToPDF = async () => {
     try {
       const params = new URLSearchParams({
-        building_id: buildingId,
+        building_id: buildingId.toString(),
         report_type: 'transaction_history',
         ...filters,
       });
@@ -218,7 +218,7 @@ export default function TransactionHistory({ buildingId, limit, selectedMonth }:
             <h3 className="text-sm font-medium text-gray-700">Φιλτράρισμα ανά διαμέρισμα</h3>
           </div>
           <ApartmentFilter
-            buildingId={parseInt(buildingId)}
+            buildingId={buildingId}
             selectedApartmentId={filters.apartmentId}
             onApartmentChange={(apartmentId) => setFilters({ ...filters, apartmentId })}
             searchTerm={apartmentSearchTerm}
@@ -323,9 +323,9 @@ export default function TransactionHistory({ buildingId, limit, selectedMonth }:
                       <Badge className={getTypeColor(transaction.type)}>
                         {transaction.type_display}
                       </Badge>
-                      {transaction.status && (
-                        <Badge className={getStatusColor(transaction.status)}>
-                          {transaction.status_display}
+                      {(transaction as any).status && (
+                        <Badge className={getStatusColor((transaction as any).status)}>
+                          {(transaction as any).status_display}
                         </Badge>
                       )}
                       {transaction.apartment_number && (
@@ -340,8 +340,8 @@ export default function TransactionHistory({ buildingId, limit, selectedMonth }:
                         <Calendar className="h-4 w-4" />
                         {format(new Date(transaction.date), 'dd/MM/yyyy HH:mm')}
                       </span>
-                      {transaction.created_by && (
-                        <span>Δημιουργήθηκε από: {transaction.created_by}</span>
+                      {(transaction as any).created_by && (
+                        <span>Δημιουργήθηκε από: {(transaction as any).created_by}</span>
                       )}
                     </div>
                   </div>
@@ -354,9 +354,9 @@ export default function TransactionHistory({ buildingId, limit, selectedMonth }:
                     </div>
                   </div>
                 </div>
-                {transaction.notes && (
+                {(transaction as any).notes && (
                   <div className="mt-2 p-2 bg-gray-100 rounded text-sm">
-                    {transaction.notes}
+                    {(transaction as any).notes}
                   </div>
                 )}
               </div>
@@ -376,13 +376,13 @@ export default function TransactionHistory({ buildingId, limit, selectedMonth }:
               <div>
                 <span className="text-gray-600">Συνολικό ποσό:</span>
                 <div className="font-medium">
-                  {formatCurrency(filteredTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0))}
+                  {formatCurrency(filteredTransactions.reduce((sum, t) => sum + (typeof t.amount === 'string' ? parseFloat(t.amount) : t.amount), 0))}
                 </div>
               </div>
               <div>
                 <span className="text-gray-600">Μέσο ποσό:</span>
                 <div className="font-medium">
-                  {formatCurrency((filteredTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0) / filteredTransactions.length))}
+                  {formatCurrency((filteredTransactions.reduce((sum, t) => sum + (typeof t.amount === 'string' ? parseFloat(t.amount) : t.amount), 0) / filteredTransactions.length))}
                 </div>
               </div>
               <div>

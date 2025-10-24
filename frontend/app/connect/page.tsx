@@ -58,7 +58,7 @@ export default function ConnectPage() {
   const loadResidents = async () => {
     try {
       setIsLoading(true);
-      const data = await fetchResidentsForQR(parseInt(buildingId));
+      const data = await fetchResidentsForQR(parseInt(buildingId || '0'));
       setBuilding(data.building);
       setResidents(data.residents);
     } catch (error) {

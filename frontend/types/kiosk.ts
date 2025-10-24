@@ -21,7 +21,19 @@ export interface KioskWidget {
   updatedAt?: Date;
   lastModified?: Date;
   buildingId?: number;
+  createdBy?: number;
   // NO gridPosition - removed complexity
+}
+
+export interface WidgetTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  component: string;
+  defaultSettings: Record<string, any>;
+  icon?: string;
+  tags?: string[];
 }
 
 export interface KioskSettings {

@@ -29,7 +29,7 @@ export default function KioskTopBar({ buildingId }: KioskTopBarProps = {}) {
   const [loading, setLoading] = useState(true);
 
   // Get enabled widgets from configuration
-  const { getEnabledWidgets } = useKioskWidgets(buildingId);
+  const { getEnabledWidgets } = useKioskWidgets(buildingId || null);
   const enabledTopBarWidgets = getEnabledWidgets('top_bar_widgets');
 
   // Mock advertising banners - you can replace these with real data from your API

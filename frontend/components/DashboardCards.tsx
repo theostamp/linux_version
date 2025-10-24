@@ -64,14 +64,14 @@ export default function DashboardCards({ data, cards }: Props) {
                 card.textColor || 'text-gray-400'
               }`} />
             </div>
-            <div className={`${typography.dashboardCardValue} mb-1 ${card.textColor || ''}`}>
+            <div className={`text-2xl font-bold mb-1 ${card.textColor || ''}`}>
               {count}
             </div>
-            <div className={`${typography.dashboardCardLabel} ${card.textColor || ''}`}>
+            <div className={`text-sm font-medium ${card.textColor || ''}`}>
               {card.label}
             </div>
             {card.description && (
-              <div className={`${typography.caption} mt-1 ${card.textColor ? 'opacity-80' : ''}`}>
+              <div className={`text-xs text-gray-500 mt-1 ${card.textColor ? 'opacity-80' : ''}`}>
                 {card.description}
               </div>
             )}

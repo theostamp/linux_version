@@ -67,7 +67,7 @@ export default function KioskWidgetRenderer({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use the widget system
-  const { config, getEnabledWidgets } = useKioskWidgets(selectedBuildingId ?? undefined);
+  const { config, getEnabledWidgets } = useKioskWidgets(selectedBuildingId ?? null);
 
   // Use the selected building ID for data fetching
   const { data, isLoading, error, isFetching } = usePublicInfo(selectedBuildingId ?? null);
@@ -96,7 +96,7 @@ export default function KioskWidgetRenderer({
               active_contractors: counters.active_contractors || 0,
               pending_receipts: counters.pending_receipts || 0,
               scheduled_maintenance: scheduled.length || 0,
-              urgent_maintenance: counters.urgent_maintenance || 0,
+              urgent_maintenance: counters.urgent_total || 0,
             });
           }
         } catch (error) {
@@ -121,7 +121,6 @@ export default function KioskWidgetRenderer({
       spacing: 0,
     },
     renderMode: 'performance',
-    duration: 1000,
     created(s) {
       s.container.addEventListener('mouseenter', () => {
         if (intervalRef.current) clearInterval(intervalRef.current);

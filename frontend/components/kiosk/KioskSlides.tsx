@@ -263,7 +263,7 @@ function SlideContent({ slide }: SlideContentProps) {
           </div>
           
           <div className="p-3 h-full overflow-hidden">
-            {renderWidget(widget.id, {
+            {renderWidget(widget.id as any, {
               data: {}, // Will be populated by parent component
               isLoading: false,
               error: null,

@@ -61,7 +61,7 @@ function StatusBadge({ status }: { status: Status }) {
   );
 }
 
-export default function ScheduledMaintenancePage({ searchParams }: { searchParams?: Promise<{ priority?: string; highlight?: string }> | { priority?: string; highlight?: string } }) {
+export default function ScheduledMaintenancePage({ searchParams }: { searchParams?: Promise<{ priority?: string; highlight?: string }> }) {
   // Next.js 15: searchParams may be a Promise; unwrap with React.use when needed
   const sp = (typeof (searchParams as any)?.then === 'function' ? React.use(searchParams as Promise<{ priority?: string; highlight?: string }>) : (searchParams as { priority?: string; highlight?: string } | undefined));
   const priorityFilter = (sp?.priority || '').toLowerCase() as Priority | '';

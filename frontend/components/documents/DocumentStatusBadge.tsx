@@ -34,7 +34,7 @@ export const DocumentStatusBadge = ({ status }: DocumentStatusBadgeProps) => {
   const config = statusConfig[status] || statusConfig.pending;
 
   return (
-    <Badge variant={config.variant as any} className={config.className}>
+      <Badge variant={config.variant as any} className={(config as any).className || ''}>
       {config.icon}
       {config.label}
     </Badge>

@@ -93,7 +93,7 @@ export default function CommonExpenseBillWidget({ data, isLoading, error }: Base
                   maxWidth: '100%',
                   maxHeight: '100%',
                   objectFit: 'contain',
-                  imageRendering: 'high-quality',
+                  imageRendering: 'auto' as any,
                   filter: 'drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5))'
                 }}
                 onError={() => setImageError(true)}

@@ -176,7 +176,7 @@ export const ExpenseList = React.forwardRef<{ refresh: () => void }, ExpenseList
         <div style="padding: 20px; text-align: center;">
           <h3 style="color: #dc2626; margin-bottom: 10px;">🔒 Προστατευμένη Δαπάνη</h3>
           <p style="margin-bottom: 15px;">
-            Η δαπάνη <strong>"${expense.title}"</strong> ${projectInfo ? `συνδέεται με το έργο <strong>"${project.title}"</strong> και` : `προέρχεται από ${sourceType} και`}
+            Η δαπάνη <strong>"${expense.title}"</strong> ${projectInfo ? `συνδέεται με το έργο <strong>"${project?.title || 'Άγνωστο'}"</strong> και` : `προέρχεται από ${sourceType} και`}
             <strong style="color: #dc2626;">ΔΕΝ μπορεί να διαγραφεί απευθείας</strong>.
           </p>
           <p style="margin-bottom: 20px; color: #666;">

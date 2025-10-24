@@ -20,7 +20,7 @@ import {
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale';
 import { toast } from 'sonner';
-import api from '@/lib/api';
+import { api } from '@/lib/api';
 import ExportWithOpen from '@/components/financial/ExportWithOpen';
 
 interface ReportConfig {

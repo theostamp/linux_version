@@ -277,9 +277,13 @@ export const ExpenseViewModal: React.FC<ExpenseViewModalProps> = ({
                 </h4>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <FilePreview 
-                    fileUrl={expense.attachment}
-                    fileName={expense.attachment.split('/').pop() || 'attachment'}
-                    showDownload={true}
+                    file={{
+                      name: expense.attachment.split('/').pop() || 'attachment',
+                      size: 0,
+                      type: 'application/octet-stream',
+                      url: expense.attachment
+                    }}
+                    showPreview={true}
                   />
                 </div>
               </div>

@@ -108,7 +108,7 @@ export const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
         startDateObj.setHours(0, 0, 0, 0);
         endDateObj.setHours(23, 59, 59, 999);
         
-        filteredTransactions = response.data.filter(transaction => {
+        filteredTransactions = response.data.filter((transaction: any) => {
           const transactionDate = new Date(transaction.date);
           return transactionDate >= startDateObj && transactionDate <= endDateObj;
         });

@@ -95,7 +95,7 @@ export const ComprehensiveExpenseList = React.forwardRef<{ refresh: () => void }
         <div style="padding: 20px; text-align: center;">
           <h3 style="color: #dc2626; margin-bottom: 10px;">⚠️ Προσοχή</h3>
           <p style="margin-bottom: 15px;">
-            Η δαπάνη <strong>"${expense.title}"</strong> ${projectInfo ? `συνδέεται με το έργο <strong>"${project.title}"</strong> και` : 'προέρχεται από προγραμματισμένο έργο και'}
+            Η δαπάνη <strong>"${expense.title}"</strong> ${projectInfo ? `συνδέεται με το έργο <strong>"${project?.title || 'Άγνωστο'}"</strong> και` : 'προέρχεται από προγραμματισμένο έργο και'}
             η διαγραφή της μπορεί να γίνει μόνο από τη σελίδα <strong>"Προγραμματισμένα Έργα"</strong>.
           </p>
           <p style="margin-bottom: 20px; color: #666;">
@@ -233,17 +233,17 @@ export const ComprehensiveExpenseList = React.forwardRef<{ refresh: () => void }
         category: expense.category,
         category_display: expense.category_display || expense.category,
         type: 'expense',
-        description: expense.description,
+        description: (expense as any).description || '',
         isVirtual: false
       });
     });
 
     // Add previous obligations if available
-    if (financialData?.previous_obligations && financialData.previous_obligations > 0) {
+    if ((financialData as any)?.previous_obligations && (financialData as any).previous_obligations > 0) {
       items.push({
         id: 'previous-obligations',
         title: 'Παλαιότερες Οφειλές',
-        amount: financialData.previous_obligations,
+        amount: (financialData as any).previous_obligations,
         date: selectedMonth || new Date().toISOString().slice(0, 7),
         category: 'previous_obligations',
         category_display: 'Παλαιότερες Οφειλές',
@@ -263,7 +263,7 @@ export const ComprehensiveExpenseList = React.forwardRef<{ refresh: () => void }
         date: selectedMonth || new Date().toISOString().slice(0, 7),
         category: 'management_fees',
         category_display: 'Διαχειριστικά Έξοδα',
-        type: 'management_fees',
+        type: 'expense' as any,
         description: 'Μηνιαία αμοιβή διαχείρισης κτιρίου',
         isVirtual: true
       });
@@ -286,9 +286,9 @@ export const ComprehensiveExpenseList = React.forwardRef<{ refresh: () => void }
     }
 
     // Add scheduled maintenance installments if available
-    if (financialData?.scheduled_maintenance_installments && 
-        financialData.scheduled_maintenance_installments.count > 0) {
-      financialData.scheduled_maintenance_installments.installments.forEach((installment, index) => {
+    if ((financialData as any)?.scheduled_maintenance_installments && 
+        (financialData as any).scheduled_maintenance_installments.count > 0) {
+      (financialData as any).scheduled_maintenance_installments.installments.forEach((installment: any, index: number) => {
         items.push({
           id: `scheduled-${installment.id}`,
           title: `${installment.title} - Δόση ${installment.installment_number}`,

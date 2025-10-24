@@ -188,7 +188,7 @@ export default function CommonExpensesSheetWidget({
             fitMode === 'contain' ? 'object-contain' : 'object-cover'
           }`}
           style={{
-            imageRendering: 'high-quality',
+            imageRendering: 'auto' as any,
           }}
         />
         

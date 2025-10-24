@@ -57,7 +57,7 @@ export default function PerformanceMonitor({
     return () => {
       observer.disconnect();
       if (renderStartTime.current > 0) {
-        performance.measure('kiosk-render', renderStartTime.current);
+        performance.measure('kiosk-render', renderStartTime.current.toString());
       }
     };
   }, [enabled]);

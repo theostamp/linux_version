@@ -122,10 +122,10 @@ export default function GoogleMapsVisualization({
         const mapCenter = center || calculateMapCenter(buildings);
         console.log('🗺️ [GMAPS DEBUG] Map center calculated:', mapCenter);
         
-        const googleMap = new google.maps.Map(mapRef.current, {
+        const googleMap = new (window as any).google.maps.Map(mapRef.current, {
           center: mapCenter,
           zoom: zoom,
-          mapTypeId: google.maps.MapTypeId.ROADMAP,
+          mapTypeId: (window as any).google.maps.MapTypeId.ROADMAP,
           mapTypeControl: true,
           streetViewControl: true,
           fullscreenControl: true,
@@ -208,7 +208,7 @@ export default function GoogleMapsVisualization({
     if (!map) return;
 
     const newMarkers: MapMarker[] = [];
-    const bounds = new google.maps.LatLngBounds();
+    const bounds = new (window as any).google.maps.LatLngBounds();
 
     buildings.forEach((building) => {
       // Handle both number and string coordinates from backend
@@ -225,7 +225,7 @@ export default function GoogleMapsVisualization({
 
       console.log('🗺️ [GMAPS DEBUG] Creating marker for building:', { name: building.name, lat, lng });
 
-      const position = new google.maps.LatLng(lat, lng);
+      const position = new (window as any).google.maps.LatLng(lat, lng);
 
       // Create building icon SVG function
       const createBuildingIcon = (baseColor: string, roofColor: string) => `
@@ -258,25 +258,25 @@ export default function GoogleMapsVisualization({
       // Create normal and hover icons
       const normalIcon = {
         url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(createBuildingIcon('#3B82F6', '#1E40AF'))}`,
-        scaledSize: new google.maps.Size(40, 40),
-        anchor: new google.maps.Point(20, 37)
+        scaledSize: new (window as any).google.maps.Size(40, 40),
+        anchor: new (window as any).google.maps.Point(20, 37)
       };
 
       const hoverIcon = {
         url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(createBuildingIcon('#F97316', '#EA580C'))}`,
-        scaledSize: new google.maps.Size(40, 40),
-        anchor: new google.maps.Point(20, 37)
+        scaledSize: new (window as any).google.maps.Size(40, 40),
+        anchor: new (window as any).google.maps.Point(20, 37)
       };
 
-      const marker = new google.maps.Marker({
+      const marker = new (window as any).google.maps.Marker({
         position,
         map,
         title: building.name,
         icon: normalIcon,
-        animation: google.maps.Animation.DROP
+        animation: (window as any).google.maps.Animation.DROP
       });
 
-      let infoWindow: google.maps.InfoWindow | undefined;
+      let infoWindow: any;
 
       if (showInfoWindows) {
         const infoContent = `
@@ -299,7 +299,7 @@ export default function GoogleMapsVisualization({
           </div>
         `;
 
-        infoWindow = new google.maps.InfoWindow({
+        infoWindow = new (window as any).google.maps.InfoWindow({
           content: infoContent
         });
 
@@ -319,7 +319,7 @@ export default function GoogleMapsVisualization({
 
       marker.addListener('mouseover', () => {
         marker.setIcon(hoverIcon);
-        marker.setAnimation(google.maps.Animation.BOUNCE);
+        marker.setAnimation((window as any).google.maps.Animation.BOUNCE);
       });
 
       marker.addListener('mouseout', () => {
@@ -355,7 +355,7 @@ export default function GoogleMapsVisualization({
   useEffect(() => {
     return () => {
       markers.forEach(({ marker, infoWindow }) => {
-        google.maps.event.clearInstanceListeners(marker);
+        (window as any).google.maps.event.clearInstanceListeners(marker);
         marker.setMap(null);
         infoWindow?.close();
       });

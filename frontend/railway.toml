@@ -12,3 +12,5 @@ restartPolicyType = "on_failure"
 NODE_ENV = "production"
 NEXT_TELEMETRY_DISABLED = "1"
 NEXT_PUBLIC_API_URL = "https://linuxversion-production.up.railway.app/api"
+
+

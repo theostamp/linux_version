@@ -107,7 +107,6 @@ export default function KioskMode({
       spacing: 0,
     },
     renderMode: 'performance',
-    duration: 1000, // Smooth transition duration
     created(s) {
       s.container.addEventListener('mouseenter', () => {
         if (intervalRef.current) clearInterval(intervalRef.current);

@@ -157,8 +157,8 @@ export default function AdminSubscriptionsPage() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      'trial': { variant: 'warning' as const, label: 'Trial', icon: Clock },
-      'active': { variant: 'success' as const, label: 'Ενεργή', icon: CheckCircle },
+      'trial': { variant: 'secondary' as const, label: 'Trial', icon: Clock },
+      'active': { variant: 'default' as const, label: 'Ενεργή', icon: CheckCircle },
       'past_due': { variant: 'destructive' as const, label: 'Καθυστέρηση', icon: AlertTriangle },
       'canceled': { variant: 'secondary' as const, label: 'Ακυρωμένη', icon: XCircle },
       'unpaid': { variant: 'destructive' as const, label: 'Μη Πληρωμένη', icon: XCircle },

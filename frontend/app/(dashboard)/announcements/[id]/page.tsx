@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { fetchAnnouncement, fetchAnnouncements } from '@/lib/api';
 import type { Announcement } from '@/components/AnnouncementCard';
 import ErrorMessage from '@/components/ErrorMessage';
@@ -17,80 +18,37 @@ export default function AnnouncementDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  
-  const [announcement, setAnnouncement] = useState<Announcement | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [hasShownAuthError, setHasShownAuthError] = useState(false);
-  
-  // Check authentication
+  const { isAuthenticated, isLoading: authLoading, isAuthReady } = useAuth();
+
+  const { 
+    data: announcement, 
+    isLoading, 
+    error 
+  } = useQuery<Announcement, Error>({
+    queryKey: ['announcement', id],
+    queryFn: () => fetchAnnouncement(id),
+    enabled: isAuthReady && isAuthenticated, // Run query only when user is authenticated
+    retry: 1, // Retry once on failure
+  });
+
   useEffect(() => {
-    if (!authLoading && !isAuthenticated && !hasShownAuthError) {
-      console.log('[AnnouncementDetailPage] User not authenticated, redirecting to login');
-      toast.error('Παρακαλώ συνδεθείτε για να δείτε την ανακοίνωση');
-      setHasShownAuthError(true);
-      
-      // Μικρή καθυστέρηση για να προλάβει να εμφανιστεί το toast
+    if (isAuthReady && !isAuthenticated) {
+      toast.error('Παρακαλώ συνδεθείτε για να δείτε αυτή τη σελίδα.');
       setTimeout(() => {
         router.push('/login');
       }, 1000);
     }
-  }, [isAuthenticated, authLoading, router, hasShownAuthError]);
-  
-  useEffect(() => {
-    const fetchAnnouncementData = async () => {
-      if (!isAuthenticated || authLoading) return;
-      
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const data = await fetchAnnouncement(id);
-        setAnnouncement(data);
-      } catch (err: any) {
-        console.error('[AnnouncementDetail] Error fetching announcement:', err);
-        
-        // Handle authentication errors
-        if (err?.response?.status === 401 && !hasShownAuthError) {
-          toast.error('Η συνεδρία σας έληξε. Παρακαλώ συνδεθείτε ξανά.');
-          setHasShownAuthError(true);
-          
-          setTimeout(() => {
-            router.push('/login');
-          }, 1000);
-          return;
-        }
-        
-        // Enhanced 404 handling
-        if (err?.response?.status === 404) {
-          setError('Η ανακοίνωση δεν βρέθηκε. Πιθανώς διαγράφηκε ή μετακινήθηκε.');
-          
-                     // Try to fetch available announcements to suggest alternatives
-           try {
-             const availableAnnouncements = await fetchAnnouncements();
-             if (availableAnnouncements.length > 0) {
-               const firstAnnouncement = availableAnnouncements[0];
-               toast.error(
-                 `Η ανακοίνωση δεν βρέθηκε. Δοκιμάστε την: "${firstAnnouncement.title}"`,
-                 { duration: 5000 }
-               );
-             }
-           } catch (fallbackError) {
-             console.error('[AnnouncementDetail] Error fetching fallback announcements:', fallbackError);
-           }
-        } else {
-          setError(err?.response?.data?.detail || 'Αδυναμία φόρτωσης ανακοίνωσης');
-        }
-      } finally {
-        setIsLoading(false);
+
+    // Handle specific API errors from useQuery
+    if (error) {
+      const err = error as any;
+      if (err?.response?.status === 404) {
+        toast.error('Η ανακοίνωση δεν βρέθηκε. Πιθανώς διαγράφηκε.');
       }
-    };
-    
-    fetchAnnouncementData();
-  }, [id, isAuthenticated, authLoading, router, hasShownAuthError]);
-  
-  if (authLoading || (!isAuthenticated && !error)) {
+    }
+  }, [isAuthReady, isAuthenticated, router, error]);
+
+  if (authLoading || (!isAuthReady && !error)) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">Έλεγχος πρόσβασης...</h1>
@@ -122,7 +80,7 @@ export default function AnnouncementDetailPage() {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">Σφάλμα</h1>
-        <ErrorMessage message={error || 'Η ανακοίνωση δεν βρέθηκε'} />
+        <ErrorMessage message={error?.message || 'Η ανακοίνωση δεν βρέθηκε'} />
         <div className="mt-4">
           <Button asChild>
             <Link href="/announcements">
@@ -152,8 +110,8 @@ export default function AnnouncementDetailPage() {
         <AnnouncementContent
           title={announcement.title}
           description={announcement.description}
-          startDate={announcement.start_date}
-          endDate={announcement.end_date}
+          startDate={announcement.start_date || undefined}
+          endDate={announcement.end_date || undefined}
         />
         
         {announcement.file && (

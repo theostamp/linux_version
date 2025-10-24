@@ -215,7 +215,7 @@ export default function WeatherWidget({ data, isLoading, error }: BaseWidgetProp
             {/* Real forecast data - No scroll for kiosk */}
             <div className="space-y-2 h-full">
               {weatherData?.forecast && weatherData.forecast.length > 0 ? (
-                weatherData.forecast.slice(0, 3).map((day, index) => (
+                weatherData.forecast.slice(0, 3).map((day: any, index: number) => (
                   <div key={index} className="bg-blue-800/20 p-3 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">

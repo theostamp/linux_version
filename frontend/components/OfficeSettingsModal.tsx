@@ -48,18 +48,18 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
     
     if (user) {
       setForm({
-        office_name: user.office_name || '',
-        office_phone: user.office_phone || '',
-        office_address: user.office_address || '',
-        office_bank_name: user.office_bank_name || '',
-        office_bank_account: user.office_bank_account || '',
-        office_bank_iban: user.office_bank_iban || '',
-        office_bank_beneficiary: user.office_bank_beneficiary || '',
+        office_name: user?.office_name || '',
+        office_phone: user?.office_phone || '',
+        office_address: user?.office_address || '',
+        office_bank_name: user?.office_bank_name || '',
+        office_bank_account: user?.office_bank_account || '',
+        office_bank_iban: user?.office_bank_iban || '',
+        office_bank_beneficiary: user?.office_bank_beneficiary || '',
       });
-      const logoUrl = user.office_logo 
-        ? (user.office_logo.startsWith('http') ? user.office_logo : `${API_BASE_URL.replace('/api', '')}${user.office_logo.startsWith('/') ? user.office_logo : `/${user.office_logo}`}`)
+      const logoUrl = user?.office_logo 
+        ? (user?.office_logo?.startsWith('http') ? user?.office_logo : `${API_BASE_URL.replace('/api', '')}${user?.office_logo?.startsWith('/') ? user?.office_logo : `/${user?.office_logo}`}`)
         : null;
-      setCurrentLogoUrl(logoUrl);
+      setCurrentLogoUrl(logoUrl || null);
       setLogoPreview(null);
       console.log('OfficeSettingsModal: Updated logo URL:', logoUrl);
     }
@@ -162,7 +162,7 @@ export default function OfficeSettingsModal({ isOpen, onClose }: OfficeSettingsM
   if (!isOpen) return null;
 
   // Check if user has active subscription
-  const hasSubscription = user?.subscription_status === 'active' || user?.subscription_status === 'trial';
+  const hasSubscription = false; // TODO: Add subscription_status to User type
 
   return (
     <div

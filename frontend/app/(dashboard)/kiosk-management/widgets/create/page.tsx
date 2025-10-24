@@ -61,7 +61,7 @@ export default function WidgetCreatePage() {
     if (selectedTemplate) {
       setFormData(prev => ({
         ...prev,
-        category: selectedTemplate.category,
+        category: selectedTemplate.category as "main_slides",
       }));
       setSettings({
         ...settings,
@@ -243,7 +243,7 @@ export default function WidgetCreatePage() {
                         </div>
                         <p className="text-sm text-gray-600 mb-2">{template.description}</p>
                         <div className="flex flex-wrap gap-1">
-                          {template.tags.map((tag) => (
+                          {template.tags.map((tag: string) => (
                             <Badge key={tag} variant="outline" className="text-xs">
                               {tag}
                             </Badge>
@@ -421,7 +421,7 @@ export default function WidgetCreatePage() {
                 />
               </div>
 
-              {selectedTemplate?.tags.includes('data') && (
+              {selectedTemplate?.tags?.includes('data') && (
                 <div>
                   <Label htmlFor="displayLimit">Όριο Εμφάνισης</Label>
                   <Input

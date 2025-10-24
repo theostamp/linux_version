@@ -10,6 +10,7 @@ import {
   PerApartmentAmounts,
   Share
 } from '../types/financial';
+import { ApartmentWithFinancialData } from '@/hooks/useApartmentsWithFinancialData';
 import { formatAmount } from './formatters';
 import { getPeriodInfo, getPaymentDueDate } from './periodHelpers';
 
@@ -34,7 +35,7 @@ interface JpgGeneratorParams {
   managementFeeInfo: ManagementFeeInfo;
   groupedExpenses: GroupedExpenses;
   perApartmentAmounts: PerApartmentAmounts;
-  aptWithFinancial: any[];
+  aptWithFinancial: ApartmentWithFinancialData[];
   totalExpenses: number;
   getFinalTotalExpenses: () => number;
   getTotalPreviousBalance: () => number;
@@ -408,9 +409,9 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                   
                   // ✅ ΔΙΟΡΘΩΣΗ: Χρήση resident_expenses (ΔΕΝ περιλαμβάνει owner expenses)
-                  const residentExpensesTotal = apt.resident_expenses || 0;
+                  const residentExpensesTotal = (apt as any).resident_expenses || 0;
                   const commonAmountWithoutReserve = residentExpensesTotal - apartmentReserveFund;
-                  const ownerExpensesTotal = apt.owner_expenses || 0;
+                  const ownerExpensesTotal = (apt as any).owner_expenses || 0;
                   const ownerExpensesOnlyProjects = Math.max(0, ownerExpensesTotal - apartmentReserveFund);
                   const totalAmount = Math.max(0, commonAmountWithoutReserve + (aptAmount.elevator || 0) + (aptAmount.heating || 0) + previousBalance + ownerExpensesOnlyProjects + apartmentReserveFund);
 
@@ -449,7 +450,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                       const commonMills = apt.participation_mills || 0;
                       const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                       // ✅ ΔΙΟΡΘΩΣΗ: Χρήση resident_expenses (ΔΕΝ περιλαμβάνει owner expenses)
-                      const residentExpensesTotal = apt.resident_expenses || 0;
+                      const residentExpensesTotal = (apt as any).resident_expenses || 0;
                       return sum + (residentExpensesTotal - apartmentReserveFund);
                     } catch (e) {
                       return sum;
@@ -459,7 +460,7 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(expenseBreakdown.heating || 0)}€</td>
                   <td style="padding: 4px 3px; text-align: right; border: 1px solid #e5e7eb; font-weight: bold;">${formatAmount(aptWithFinancial.reduce((sum, apt) => {
                     const commonMills = apt.participation_mills || 0;
-                    const ownerExpenses = apt.owner_expenses || 0;
+                    const ownerExpenses = (apt as any).owner_expenses || 0;
                     const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                     const ownerExpensesOnlyProjects = Math.max(0, ownerExpenses - apartmentReserveFund);
                     return sum + ownerExpensesOnlyProjects;
@@ -470,8 +471,8 @@ export const exportToJPG = async (params: JpgGeneratorParams) => {
                       const aptAmount = perApartmentAmounts[apt.id] || {};
                       const commonMills = apt.participation_mills || 0;
                       const previousBalance = Math.abs(apt.previous_balance || 0);
-                      const residentExpensesTotal = apt.resident_expenses || 0;
-                      const ownerExpensesTotal = apt.owner_expenses || 0;
+                      const residentExpensesTotal = (apt as any).resident_expenses || 0;
+                      const ownerExpensesTotal = (apt as any).owner_expenses || 0;
                       const apartmentReserveFund = (reserveFundInfo.monthlyAmount > 0) ? (reserveFundInfo.monthlyAmount * (commonMills / 1000)) : 0;
                       // ✅ ΔΙΟΡΘΩΣΗ: Χρήση resident_expenses (ΔΕΝ περιλαμβάνει owner expenses)
                       const commonAmountWithoutReserve = residentExpensesTotal - apartmentReserveFund;

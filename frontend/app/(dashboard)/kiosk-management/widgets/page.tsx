@@ -92,7 +92,7 @@ export default function WidgetManagementPage() {
       }
     } catch (error) {
       console.error('Error creating default scene:', error);
-      toast.error('Αποτυχία δημιουργίας σκηνής: ' + error.message);
+      toast.error('Αποτυχία δημιουργίας σκηνής: ' + (error as Error).message);
     } finally {
       setIsCreatingScene(false);
     }
@@ -334,7 +334,7 @@ export default function WidgetManagementPage() {
                         <span>Ανανέωση: {widget.refreshInterval}δ</span>
                       )}
                       <span>
-                        Ενημέρωση: {widget.updatedAt.toLocaleDateString('el-GR')}
+                        Ενημέρωση: {widget.updatedAt?.toLocaleDateString('el-GR') || 'Άγνωστο'}
                       </span>
                     </div>
                   </div>

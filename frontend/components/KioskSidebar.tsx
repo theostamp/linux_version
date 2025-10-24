@@ -52,7 +52,7 @@ export default function KioskSidebar({ buildingInfo }: KioskSidebarProps) {
   const [communityMessage, setCommunityMessage] = useState<string>('');
 
   // Get enabled widgets from configuration
-  const { getEnabledWidgets } = useKioskWidgets(buildingInfo?.id);
+  const { getEnabledWidgets } = useKioskWidgets(buildingInfo?.id || null);
   const enabledSidebarWidgets = getEnabledWidgets('sidebar_widgets');
 
   // Enhanced advertising banners

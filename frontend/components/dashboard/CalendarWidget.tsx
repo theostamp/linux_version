@@ -152,7 +152,7 @@ export default function CalendarWidget({ className }: CalendarWidgetProps) {
   });
 
   // Map and sort events by start time and get upcoming ones
-  const upcomingEvents = events
+  const upcomingEvents = (events as any[])
     .map(mapEventToCalendarEvent)
     .filter(event => event.start && new Date(event.start) >= new Date())
     .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
@@ -372,13 +372,13 @@ export default function CalendarWidget({ className }: CalendarWidgetProps) {
       <CalendarPreviewModal
         isOpen={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}
-        building={selectedBuilding}
+        building={selectedBuilding || undefined}
       />
 
       <CalendarSetupModal
         isOpen={showSetupModal}
         onClose={() => setShowSetupModal(false)}
-        building={selectedBuilding}
+        building={selectedBuilding || undefined}
       />
     </>
   );

@@ -209,8 +209,8 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
         paymentCount: sortedPayments.length, // Πλήθος πληρωμών για την καρτέλα
         // Διασφαλίζουμε ότι έχουμε τα σωστά δεδομένα διαμερίσματος
         apartment_number: latestPayment.apartment_number || `Διαμέρισμα ${latestPayment.apartment}`,
-        owner_name: latestPayment.owner_name && latestPayment.owner_name.trim() !== '' ? latestPayment.owner_name : null,
-        tenant_name: latestPayment.tenant_name && latestPayment.tenant_name.trim() !== '' ? latestPayment.tenant_name : null
+        owner_name: latestPayment.owner_name && latestPayment.owner_name.trim() !== '' ? latestPayment.owner_name : undefined,
+        tenant_name: latestPayment.tenant_name && latestPayment.tenant_name.trim() !== '' ? latestPayment.tenant_name : undefined
       });
     });
 
@@ -235,13 +235,13 @@ export const PaymentList = forwardRef<{ refresh: () => void }, PaymentListProps>
       if (payerFilter !== 'all') {
         switch (payerFilter) {
           case 'tenant':
-            matchesPayer = summary.tenant_name && summary.tenant_name.trim() !== '';
+            matchesPayer = !!(summary.tenant_name && summary.tenant_name.trim() !== '');
             break;
           case 'owner':
-            matchesPayer = summary.owner_name && summary.owner_name.trim() !== '' && (!summary.tenant_name || summary.tenant_name.trim() === '');
+            matchesPayer = !!(summary.owner_name && summary.owner_name.trim() !== '' && (!summary.tenant_name || summary.tenant_name.trim() === ''));
             break;
           case 'unregistered':
-            matchesPayer = (!summary.tenant_name || summary.tenant_name.trim() === '') && (!summary.owner_name || summary.owner_name.trim() === '');
+            matchesPayer = !!((!summary.tenant_name || summary.tenant_name.trim() === '') && (!summary.owner_name || summary.owner_name.trim() === ''));
             break;
         }
       }

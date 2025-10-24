@@ -40,7 +40,7 @@ export const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
   height = 400,
   showTrends = false,
 }) => {
-  const { meterReadings, loading, error } = useMeterReadings();
+  const { readings: meterReadings, loading, error } = useMeterReadings();
   const [consumptionData, setConsumptionData] = useState<any[]>([]);
   const [pieData, setPieData] = useState<any[]>([]);
   const [trendData, setTrendData] = useState<any[]>([]);
@@ -56,10 +56,10 @@ export const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
 
     // Ομαδοποίηση ανά διαμέρισμα και περίοδο
     const apartmentConsumption = meterReadings.reduce((acc, reading) => {
-      const apartmentName = reading.apartment_name;
+      const apartmentName = reading.apartment_number || 'Unknown';
       const date = new Date(reading.reading_date);
       const periodKey = formatDate(date, period);
-      const consumption = reading.consumption || 0;
+      const consumption = typeof reading.consumption === 'string' ? parseFloat(reading.consumption) || 0 : reading.consumption || 0;
 
       if (!acc[apartmentName]) {
         acc[apartmentName] = {};
@@ -127,12 +127,12 @@ export const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
 
   const getApartmentNames = (): string[] => {
     if (!meterReadings) return [];
-    const names = new Set(meterReadings.map(reading => reading.apartment_name));
+    const names = new Set(meterReadings.map(reading => reading.apartment_number || 'Unknown'));
     return Array.from(names);
   };
 
   const calculateTotalConsumption = (): number => {
-    return meterReadings?.reduce((total, reading) => total + (reading.consumption || 0), 0) || 0;
+    return meterReadings?.reduce((total, reading) => total + (typeof reading.consumption === 'string' ? parseFloat(reading.consumption) || 0 : reading.consumption || 0), 0) || 0;
   };
 
   const renderBarChart = () => (
@@ -174,7 +174,7 @@ export const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
           cx="50%"
           cy="50%"
           labelLine={false}
-          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+          label={({ name, percent }: any) => `${name} ${((percent as number) * 100).toFixed(0)}%`}
           outerRadius={80}
           fill="#8884d8"
           dataKey="value"

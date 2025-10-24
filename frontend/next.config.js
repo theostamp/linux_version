@@ -137,6 +137,9 @@ const nextConfig = {
   // Output configuration
   output: 'standalone',
   
+  // Fix workspace root detection
+  outputFileTracingRoot: __dirname,
+  
   // Trailing slash - keep trailing slashes for API compatibility
   trailingSlash: true,
 };

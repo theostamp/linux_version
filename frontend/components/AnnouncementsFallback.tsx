@@ -12,8 +12,8 @@ export default function AnnouncementsFallback({ announcements }: Props) {
   const latest = announcements[0];
   if (!latest) return null;
 
-  const start = isValidDate(latest.start_date) ? new Date(latest.start_date) : null;
-  const end = isValidDate(latest.end_date) ? new Date(latest.end_date) : null;
+  const start = isValidDate(latest.start_date) ? new Date(latest.start_date!) : null;
+  const end = isValidDate(latest.end_date) ? new Date(latest.end_date!) : null;
   const now = new Date();
 
   let statusLabel = '';

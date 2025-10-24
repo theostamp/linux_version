@@ -77,7 +77,7 @@ export const MonthlyTransactionsModal: React.FC<MonthlyTransactionsModalProps> =
       console.log('💰 Expenses response:', expensesResponse.data);
       console.log('💰 Expenses count:', expensesResponse.data.results?.length || expensesResponse.data?.length || 0);
       const expenses = expensesResponse.data.results || expensesResponse.data || [];
-      console.log('💰 First few expenses:', expenses.slice(0, 3).map(exp => ({ id: exp.id, title: exp.title, amount: exp.amount, date: exp.date })));
+      console.log('💰 First few expenses:', expenses.slice(0, 3).map((exp: any) => ({ id: exp.id, title: exp.title, amount: exp.amount, date: exp.date })));
       setExpenses(expenses);
 
       // Load payments for the specific month
@@ -97,13 +97,13 @@ export const MonthlyTransactionsModal: React.FC<MonthlyTransactionsModalProps> =
       setPayments(payments);
 
       // Calculate summary with improved amount parsing
-      const totalExpenses = expenses.reduce((sum, exp) => {
+      const totalExpenses = expenses.reduce((sum: number, exp: any) => {
         const amount = typeof exp.amount === 'string' ? parseFloat(exp.amount) : Number(exp.amount || 0);
         console.log('💰 Expense amount parsing:', { original: exp.amount, parsed: amount, type: typeof exp.amount });
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
       
-      const totalPayments = payments.reduce((sum, pay) => {
+      const totalPayments = payments.reduce((sum: number, pay: any) => {
         const amount = typeof pay.amount === 'string' ? parseFloat(pay.amount) : Number(pay.amount || 0);
         console.log('💳 Payment amount parsing:', { original: pay.amount, parsed: amount, type: typeof pay.amount });
         return sum + (isNaN(amount) ? 0 : amount);

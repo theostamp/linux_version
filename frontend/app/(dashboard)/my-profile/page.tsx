@@ -240,8 +240,8 @@ export default function MyProfilePage() {
 
   const getSubscriptionStatusBadge = (status: string) => {
     const statusConfig = {
-      'active': { variant: 'success' as const, label: 'Ενεργή', icon: CheckCircle },
-      'trial': { variant: 'warning' as const, label: 'Trial', icon: Calendar },
+      'active': { variant: 'default' as const, label: 'Ενεργή', icon: CheckCircle },
+      'trial': { variant: 'secondary' as const, label: 'Trial', icon: Calendar },
       'past_due': { variant: 'destructive' as const, label: 'Καθυστέρηση', icon: AlertTriangle },
       'canceled': { variant: 'secondary' as const, label: 'Ακυρωμένη', icon: X },
     };
@@ -348,12 +348,12 @@ export default function MyProfilePage() {
                 </h3>
                 <p className="text-gray-500">{profile?.email}</p>
                 {profile?.email_verified ? (
-                  <Badge variant="success" className="mt-2">
+                  <Badge variant="default" className="mt-2">
                     <CheckCircle className="w-3 h-3 mr-1" />
                     Επιβεβαιωμένος
                   </Badge>
                 ) : (
-                  <Badge variant="warning" className="mt-2">
+                  <Badge variant="secondary" className="mt-2">
                     <AlertTriangle className="w-3 h-3 mr-1" />
                     Μη Επιβεβαιωμένος
                   </Badge>

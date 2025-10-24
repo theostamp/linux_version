@@ -40,8 +40,6 @@ export default function NewContractorPage() {
     service_type: 'repair',
     contact_person: '',
     phone: '',
-    // Map Δεύτερο Τηλέφωνο στο emergency_phone του backend
-    emergency_phone: '',
     email: '',
     status: 'active',
     is_active: true,

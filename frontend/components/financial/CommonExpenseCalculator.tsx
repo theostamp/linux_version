@@ -121,7 +121,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
         start_date: quickStart,
         end_date: quickEnd,
         period_name: quickPeriod
-      });
+      } as any);
       
       setShares(result.shares || {});
       setTotalExpenses(result.total_expenses || 0);
@@ -149,7 +149,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
         start_date: prevStart,
         end_date: prevEnd,
         period_name: prevPeriod
-      });
+      } as any);
       
       setShares(result.shares || {});
       setTotalExpenses(result.total_expenses || 0);
@@ -178,7 +178,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
           end_date: endDate,
           period_name: periodName,
           advanced_shares: advancedShares
-        });
+        } as any);
         
         setShares(result.shares || {});
         setTotalExpenses(result.total_expenses || 0);
@@ -188,7 +188,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
           start_date: startDate,
           end_date: endDate,
           period_name: periodName
-        });
+        } as any);
         
         setShares(result.shares || {});
         setTotalExpenses(result.total_expenses || 0);
@@ -217,7 +217,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
         period_name: periodName,
         shares: shares,
         total_expenses: totalExpenses
-      });
+      } as any);
       
       alert('Οι κοινοχρήστες εκδόθηκαν επιτυχώς!');
       setShares({});
@@ -389,7 +389,7 @@ export const CommonExpenseCalculator: React.FC<CommonExpenseCalculatorProps> = (
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {Object.values(shares).map((share) => (
+              {Object.values(shares).map((share: any) => (
                 <div key={share.apartment_id} className="border rounded-lg p-4">
                   <h4 className="font-semibold mb-2">
                     Διαμέρισμα {share.apartment_number} - {share.owner_name}

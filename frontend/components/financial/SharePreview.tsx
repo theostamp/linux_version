@@ -32,23 +32,23 @@ export const SharePreview: React.FC<SharePreviewProps> = ({
   };
 
   const getShareColor = (share: CommonExpenseShare) => {
-    if (share.amount > 0) return 'text-green-600';
-    if (share.amount < 0) return 'text-red-600';
+    if ((share.amount || 0) > 0) return 'text-green-600';
+    if ((share.amount || 0) < 0) return 'text-red-600';
     return 'text-gray-600';
   };
 
   const getShareBadge = (share: CommonExpenseShare) => {
-    if (share.amount > 0.30) {
+    if ((share.amount || 0) > 0.30) {
       return <Badge className="bg-green-100 text-green-800">Πιστωτικό</Badge>;
     }
-    if (share.amount < -0.30) {
+    if ((share.amount || 0) < -0.30) {
       return <Badge className="bg-red-100 text-red-800">Οφειλή</Badge>;
     }
     return <Badge className="bg-gray-100 text-gray-800">Ουδέτερο</Badge>;
   };
 
-  const totalShares = shares.reduce((sum, share) => sum + share.amount, 0);
-  const maxShare = Math.max(...shares.map(share => Math.abs(share.amount)), 0);
+  const totalShares = shares.reduce((sum, share) => sum + (share.amount || 0), 0);
+  const maxShare = Math.max(...shares.map(share => Math.abs(share.amount || 0)), 0);
 
   if (isLoading) {
     return (
@@ -126,11 +126,11 @@ export const SharePreview: React.FC<SharePreviewProps> = ({
                     </div>
                     <div className="text-right">
                       <p className={`text-lg font-bold ${getShareColor(share)}`}>
-                        {formatCurrency(share.amount)}
+                        {formatCurrency(share.amount || 0)}
                       </p>
-                      {share.percentage > 0 && (
+                      {(share.percentage || 0) > 0 && (
                         <p className="text-sm text-gray-500">
-                          {share.percentage.toFixed(1)}%
+                          {(share.percentage || 0).toFixed(1)}%
                         </p>
                       )}
                     </div>
@@ -141,10 +141,10 @@ export const SharePreview: React.FC<SharePreviewProps> = ({
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>Μέρος του συνόλου</span>
-                        <span>{((Math.abs(share.amount) / maxShare) * 100).toFixed(1)}%</span>
+                        <span>{((Math.abs(share.amount || 0) / maxShare) * 100).toFixed(1)}%</span>
                       </div>
                       <Progress
-                        value={(Math.abs(share.amount) / maxShare) * 100}
+                        value={(Math.abs(share.amount || 0) / maxShare) * 100}
                         className="h-2"
                       />
                     </div>

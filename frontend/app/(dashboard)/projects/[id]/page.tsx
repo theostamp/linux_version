@@ -252,11 +252,11 @@ export default function ProjectDetailsPage() {
         </TabsContent>
 
         <TabsContent value="procurement">
-          <ProjectProcurementTab projectId={project.id} />
+          <ProjectProcurementTab projectId={String(project.id)} />
         </TabsContent>
 
         <TabsContent value="offers">
-          <ProjectOffersTab projectId={project.id} onApproved={async () => {
+          <ProjectOffersTab projectId={String(project.id)} onApproved={async () => {
             try {
               const { data } = await api.get(`/projects/projects/${project.id}/`);
               setProject(data);
@@ -265,23 +265,23 @@ export default function ProjectDetailsPage() {
         </TabsContent>
 
         <TabsContent value="decisions">
-          <ProjectRFQsTab projectId={project.id} />
+          <ProjectRFQsTab projectId={String(project.id)} />
         </TabsContent>
 
         <TabsContent value="tasks">
-          <ProjectMilestonesTab projectId={project.id} />
+          <ProjectMilestonesTab projectId={String(project.id)} />
         </TabsContent>
 
         <TabsContent value="contracts">
-          <ProjectContractsTab projectId={project.id} />
+          <ProjectContractsTab projectId={String(project.id)} />
         </TabsContent>
 
         <TabsContent value="files">
-          <ProjectFilesTab projectId={project.id} />
+          <ProjectFilesTab projectId={String(project.id)} />
         </TabsContent>
 
         <TabsContent value="activity">
-          <ProjectActivityTab projectId={project.id} />
+          <ProjectActivityTab projectId={String(project.id)} />
         </TabsContent>
       </Tabs>
 

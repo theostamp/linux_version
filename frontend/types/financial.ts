@@ -203,6 +203,10 @@ export interface CommonExpenseShare {
   previous_balance: number;
   total_due: number;
   breakdown: ExpenseBreakdown[];
+  // Additional fields for calculator
+  amount?: number;
+  percentage?: number;
+  details?: string;
 }
 
 export interface CommonExpenseCalculation {
