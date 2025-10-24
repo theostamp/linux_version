@@ -120,6 +120,31 @@ CACHE_MIDDLEWARE_ALIAS = 'default'
 # 📊 Monitoring & Logging
 # ----------------------------------------
 
+# Ensure logs directory exists
+from pathlib import Path
+import logging
+
+# Create logs directory if it doesn't exist
+try:
+    logs_dir = Path("/app/logs")
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    LOGS_DIR_EXISTS = True
+except (PermissionError, OSError) as e:
+    # If we can't create the directory, fall back to console-only logging
+    LOGS_DIR_EXISTS = False
+    print(f"Warning: Could not create logs directory: {e}")
+
+# Create a custom handler that gracefully handles missing directories
+class SafeFileHandler(logging.handlers.RotatingFileHandler):
+    def __init__(self, filename, *args, **kwargs):
+        try:
+            # Ensure directory exists before creating the handler
+            Path(filename).parent.mkdir(parents=True, exist_ok=True)
+            super().__init__(filename, *args, **kwargs)
+        except (PermissionError, OSError):
+            # If we can't create the file handler, use a null handler
+            super().__init__('/dev/null', *args, **kwargs)
+
 # Advanced logging configuration
 LOGGING = {
     'version': 1,
@@ -153,7 +178,7 @@ LOGGING = {
         },
         'file': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            '()': SafeFileHandler,
             'filename': '/app/logs/django.log',
             'maxBytes': 1024 * 1024 * 10,  # 10MB
             'backupCount': 5,
@@ -161,7 +186,7 @@ LOGGING = {
         },
         'financial_file': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            '()': SafeFileHandler,
             'filename': '/app/logs/financial.log',
             'maxBytes': 1024 * 1024 * 10,  # 10MB
             'backupCount': 10,
@@ -169,7 +194,7 @@ LOGGING = {
         },
         'error_file': {
             'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
+            '()': SafeFileHandler,
             'filename': '/app/logs/error.log',
             'maxBytes': 1024 * 1024 * 10,  # 10MB
             'backupCount': 5,
