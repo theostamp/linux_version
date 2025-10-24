@@ -120,32 +120,8 @@ CACHE_MIDDLEWARE_ALIAS = 'default'
 # 📊 Monitoring & Logging
 # ----------------------------------------
 
-# Ensure logs directory exists
-from pathlib import Path
-import logging
-
-# Create logs directory if it doesn't exist
-try:
-    logs_dir = Path("/app/logs")
-    logs_dir.mkdir(parents=True, exist_ok=True)
-    LOGS_DIR_EXISTS = True
-except (PermissionError, OSError) as e:
-    # If we can't create the directory, fall back to console-only logging
-    LOGS_DIR_EXISTS = False
-    print(f"Warning: Could not create logs directory: {e}")
-
-# Create a custom handler that gracefully handles missing directories
-class SafeFileHandler(logging.handlers.RotatingFileHandler):
-    def __init__(self, filename, *args, **kwargs):
-        try:
-            # Ensure directory exists before creating the handler
-            Path(filename).parent.mkdir(parents=True, exist_ok=True)
-            super().__init__(filename, *args, **kwargs)
-        except (PermissionError, OSError):
-            # If we can't create the file handler, use a null handler
-            super().__init__('/dev/null', *args, **kwargs)
-
-# Advanced logging configuration
+# Simplified logging configuration - console only for Railway deployment
+# This avoids file system issues in containerized environments
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -176,30 +152,6 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
-        'file': {
-            'level': 'INFO',
-            '()': SafeFileHandler,
-            'filename': '/app/logs/django.log',
-            'maxBytes': 1024 * 1024 * 10,  # 10MB
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
-        'financial_file': {
-            'level': 'INFO',
-            '()': SafeFileHandler,
-            'filename': '/app/logs/financial.log',
-            'maxBytes': 1024 * 1024 * 10,  # 10MB
-            'backupCount': 10,
-            'formatter': 'json',
-        },
-        'error_file': {
-            'level': 'ERROR',
-            '()': SafeFileHandler,
-            'filename': '/app/logs/error.log',
-            'maxBytes': 1024 * 1024 * 10,  # 10MB
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
@@ -209,33 +161,33 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file', 'error_file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
         'django.request': {
-            'handlers': ['error_file', 'mail_admins'],
+            'handlers': ['console', 'mail_admins'],
             'level': 'ERROR',
             'propagate': False,
         },
         'django.security': {
-            'handlers': ['error_file', 'mail_admins'],
+            'handlers': ['console', 'mail_admins'],
             'level': 'ERROR',
             'propagate': False,
         },
         'financial': {
-            'handlers': ['console', 'financial_file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
         'audit': {
-            'handlers': ['financial_file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': ['console'],
         'level': 'INFO',
     },
 }
