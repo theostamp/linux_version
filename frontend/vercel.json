@@ -8,7 +8,10 @@
       "NEXT_PUBLIC_APP_NAME": "New Concierge",
       "NEXT_PUBLIC_APP_URL": "https://linux-version.vercel.app",
       "NODE_ENV": "production",
-      "NEXT_PUBLIC_ENV": "production"
+      "NEXT_PUBLIC_ENV": "production",
+      "API_URL": "https://linuxversion-production.up.railway.app/api",
+      "CORE_API_URL": "https://linuxversion-production.up.railway.app/api/tenants/internal/create/",
+      "INTERNAL_API_SECRET_KEY": "Pf2irUXpdvZcAZ//DD8noS76BnSCLtwtINL8yqJM62Y="
     }
   },
   "functions": {
