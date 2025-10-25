@@ -141,41 +141,35 @@ import { apiPublic } from './apiPublic';
 export { apiPublic };
 import { toast } from '@/hooks/use-toast';
 
-// Βασικό URL του API. Χρησιμοποιούμε την ίδια λογική με το apiPublic για tenant-specific URLs
+// Βασικό URL του API. Σε production/preview ΠΑΝΤΑ χρησιμοποιούμε το απομακρυσμένο backend (Railway)
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
     (window as any).debugApiCalls = true;
-    const hostname = window.location.hostname;
     const envApiUrl = ensureApiUrl(process.env.NEXT_PUBLIC_API_URL);
 
+    // 1) Αν έχει οριστεί ρητά, χρησιμοποίησέ το
     if (envApiUrl) {
       console.log(`[API] Using backend URL from env: ${envApiUrl}`);
       return envApiUrl;
     }
 
-    if (!isLocalHostname(hostname)) {
-      console.warn(
-        `[API] NEXT_PUBLIC_API_URL not set for ${hostname}. Falling back to ${FALLBACK_REMOTE_API_URL}`
-      );
-      return FALLBACK_REMOTE_API_URL;
-    }
-
-    const origin = window.location.origin;
-    console.log(`[API] Using same origin for API calls: ${origin}`);
-    return origin;
+    // 2) Σε οποιοδήποτε μη-τοπικό hostname, χρησιμοποίησε το remote default
+    //    ώστε να ΜΗΝ βασιζόμαστε σε rewrites/same-origin
+    const remote = FALLBACK_REMOTE_API_URL;
+    console.warn(`[API] NEXT_PUBLIC_API_URL missing. Falling back to remote: ${remote}`);
+    return remote;
   }
 
+  // Server-side: προτίμησε ρητό API_URL (ή NEXT_PUBLIC_API_URL) αλλιώς remote default
   const serverEnvUrl = ensureApiUrl(process.env.API_URL) || ensureApiUrl(process.env.NEXT_PUBLIC_API_URL);
   if (serverEnvUrl) {
     console.log(`[API] Using server-side API URL: ${serverEnvUrl}`);
     return serverEnvUrl;
   }
-
   if (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production') {
     console.warn('[API] API_URL not configured on server. Using fallback remote API URL.');
     return FALLBACK_REMOTE_API_URL;
   }
-
   const localDefault = 'http://backend:8000/api';
   console.log(`[API] Using server-side API URL: ${localDefault}`);
   return localDefault;
