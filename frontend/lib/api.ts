@@ -140,16 +140,26 @@ import { toast } from '@/hooks/use-toast';
 // Βασικό URL του API. Χρησιμοποιούμε την ίδια λογική με το apiPublic για tenant-specific URLs
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    // Client-side (browser) - use same origin for API calls (nginx will proxy to backend)
+    // Client-side (browser) - use environment variable for backend URL
     (window as any).debugApiCalls = true;
+    const hostname = window.location.hostname;
+    
+    // For Vercel deployments, use environment variable for backend URL
+    if (hostname.includes('vercel.app')) {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://your-backend-url.railway.app';
+      console.log(`[API] Using backend URL from env: ${backendUrl}`);
+      return backendUrl;
+    }
+    
+    // For localhost development, use same origin
     const origin = window.location.origin;
     console.log(`[API] Using same origin for API calls: ${origin}`);
     return origin;
   }
 
-  // Server-side - use backend container directly
-  let base = 'http://backend:8000';
-  base = base.replace(/\/$/, '');
+  // Server-side - use environment variable or default
+  const backendUrl = process.env.API_URL || 'http://backend:8000';
+  let base = backendUrl.replace(/\/$/, '');
   if (!/\/api$/.test(base)) {
     base = `${base}/api`; // Added /api prefix
   }
@@ -426,7 +436,7 @@ export async function loginUser(
   password: string,
 ): Promise<{ access: string; refresh: string; user: User }> {
   console.log(`[API CALL] Attempting login for user: ${email}`);
-  const { data } = await api.post('/api/users/token/simple/', { email, password });
+  const { data } = await api.post('/api/users/login/', { email, password });
 
   if (typeof window !== 'undefined') {
     localStorage.setItem('access', data.access);

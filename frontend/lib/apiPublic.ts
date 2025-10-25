@@ -7,12 +7,24 @@ const getApiBaseUrl = () => {
     const hostname = window.location.hostname;
     console.log(`[API PUBLIC] Current hostname: ${hostname}`);
     
+    // For Vercel deployments, use environment variable for backend URL
+    if (hostname.includes('vercel.app')) {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://your-backend-url.railway.app';
+      console.log(`[API PUBLIC] Using backend URL from env: ${backendUrl}`);
+      return backendUrl;
+    }
+    
     // Αν είναι tenant subdomain (π.χ. demo.localhost), χρησιμοποιούμε το ίδιο subdomain για το API
     if (hostname.includes('.localhost') && !hostname.startsWith('localhost')) {
       const apiUrl = `http://${hostname}:18000/api`;
       console.log(`[API PUBLIC] Using tenant-specific API URL: ${apiUrl}`);
       return apiUrl;
     }
+    
+    // For localhost development
+    const origin = window.location.origin;
+    console.log(`[API PUBLIC] Using same origin for API calls: ${origin}`);
+    return origin;
   }
   // Χρησιμοποιούμε το backend container name για το kiosk mode
   const defaultUrl = 'http://backend:8000/api';
