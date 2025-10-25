@@ -273,6 +273,18 @@ api.interceptors.request.use(
       }
     }
 
+    // Normalize duplicated /api segments when baseURL already includes /api
+    if (typeof config.url === 'string') {
+      const baseSource = (config.baseURL ?? api.defaults.baseURL ?? '') as string;
+      const normalizedBase = baseSource.replace(/\/+$/, '');
+      const hasApiSuffix = normalizedBase.endsWith('/api');
+      const isRelativeApiCall = config.url.startsWith('/api/');
+
+      if (hasApiSuffix && isRelativeApiCall) {
+        config.url = config.url.replace(/^\/api\/?/, '/');
+      }
+    }
+
     if (!config.headers) {
       config.headers = {} as AxiosRequestHeaders;
     }

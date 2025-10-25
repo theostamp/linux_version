@@ -92,6 +92,7 @@ export default function RegisterForm() {
           type="email"
           placeholder="Email"
           className="w-full border p-2 rounded"
+          autoComplete="email"
         />
         {errors.email && <p className="text-red-500 text-sm">Το email είναι απαραίτητο</p>}
 
@@ -100,6 +101,7 @@ export default function RegisterForm() {
           type="text"
           placeholder="Όνομα"
           className="w-full border p-2 rounded"
+          autoComplete="given-name"
         />
         {errors.first_name && <p className="text-red-500 text-sm">Το όνομα είναι απαραίτητο</p>}
 
@@ -108,6 +110,7 @@ export default function RegisterForm() {
           type="text"
           placeholder="Επώνυμο"
           className="w-full border p-2 rounded"
+          autoComplete="family-name"
         />
         {errors.last_name && <p className="text-red-500 text-sm">Το επώνυμο είναι απαραίτητο</p>}
 
@@ -117,6 +120,7 @@ export default function RegisterForm() {
             type={showPassword ? "text" : "password"}
             placeholder="Κωδικός (τουλάχιστον 6 χαρακτήρες)"
             className="w-full border p-2 pr-10 rounded"
+            autoComplete="new-password"
           />
           <button
             type="button"
@@ -137,6 +141,7 @@ export default function RegisterForm() {
             type={showConfirmPassword ? "text" : "password"}
             placeholder="Επιβεβαίωση κωδικού"
             className="w-full border p-2 pr-10 rounded"
+            autoComplete="new-password"
           />
           <button
             type="button"
