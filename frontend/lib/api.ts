@@ -1,4 +1,6 @@
-'use client';
+"use client";
+
+import { ensureApiUrl, getDefaultRemoteApiUrl, isLocalHostname } from "@/lib/apiBase";
 
 // Global API call throttling
 const API_CALL_CACHE = new Map<string, { data: any, timestamp: number, promise?: Promise<any> }>();
@@ -58,6 +60,8 @@ export function getApiBase(): string {
   }
   return 'http://backend:8000';
 }
+
+const FALLBACK_REMOTE_API_URL = getDefaultRemoteApiUrl();
 
 export async function apiGet<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
   const base = getApiBase();
@@ -140,39 +144,41 @@ import { toast } from '@/hooks/use-toast';
 // Βασικό URL του API. Χρησιμοποιούμε την ίδια λογική με το apiPublic για tenant-specific URLs
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    // Client-side (browser) - use environment variable for backend URL
     (window as any).debugApiCalls = true;
     const hostname = window.location.hostname;
-    
-    // For Vercel deployments or if NEXT_PUBLIC_API_URL is set, use it
-    const publicApiUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (publicApiUrl && (hostname.includes('vercel.app') || publicApiUrl !== 'localhost')) {
-      // Ensure the URL ends with /api if it doesn't already
-      let url = publicApiUrl.trim();
-      // Remove trailing slash
-      url = url.replace(/\/$/, '');
-      // Add /api if not present
-      if (!url.endsWith('/api')) {
-        url = `${url}/api`;
-      }
-      console.log(`[API] Using backend URL from env: ${url}`);
-      return url;
+    const envApiUrl = ensureApiUrl(process.env.NEXT_PUBLIC_API_URL);
+
+    if (envApiUrl) {
+      console.log(`[API] Using backend URL from env: ${envApiUrl}`);
+      return envApiUrl;
     }
-    
-    // For localhost development, use same origin
+
+    if (!isLocalHostname(hostname)) {
+      console.warn(
+        `[API] NEXT_PUBLIC_API_URL not set for ${hostname}. Falling back to ${FALLBACK_REMOTE_API_URL}`
+      );
+      return FALLBACK_REMOTE_API_URL;
+    }
+
     const origin = window.location.origin;
     console.log(`[API] Using same origin for API calls: ${origin}`);
     return origin;
   }
 
-  // Server-side - use environment variable or default
-  const backendUrl = process.env.API_URL || 'http://backend:8000';
-  let base = backendUrl.replace(/\/$/, '');
-  if (!/\/api$/.test(base)) {
-    base = `${base}/api`; // Added /api prefix
+  const serverEnvUrl = ensureApiUrl(process.env.API_URL) || ensureApiUrl(process.env.NEXT_PUBLIC_API_URL);
+  if (serverEnvUrl) {
+    console.log(`[API] Using server-side API URL: ${serverEnvUrl}`);
+    return serverEnvUrl;
   }
-  console.log(`[API] Using server-side API URL: ${base}`);
-  return base;
+
+  if (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production') {
+    console.warn('[API] API_URL not configured on server. Using fallback remote API URL.');
+    return FALLBACK_REMOTE_API_URL;
+  }
+
+  const localDefault = 'http://backend:8000/api';
+  console.log(`[API] Using server-side API URL: ${localDefault}`);
+  return localDefault;
 };
 
 export const API_BASE_URL = getApiBaseUrl();

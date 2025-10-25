@@ -1,5 +1,8 @@
 // frontend/lib/apiPublic.ts
 import axios from 'axios';
+import { ensureApiUrl, getDefaultRemoteApiUrl, isLocalHostname } from '@/lib/apiBase';
+
+const FALLBACK_PUBLIC_API_URL = getDefaultRemoteApiUrl();
 
 // Helper function to get the correct API base URL based on hostname
 const getApiBaseUrl = () => {
@@ -9,8 +12,14 @@ const getApiBaseUrl = () => {
     
     // For Vercel deployments, use environment variable for backend URL
     if (hostname.includes('vercel.app')) {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://your-backend-url.railway.app';
-      console.log(`[API PUBLIC] Using backend URL from env: ${backendUrl}`);
+      const backendUrl = ensureApiUrl(process.env.NEXT_PUBLIC_API_URL) || FALLBACK_PUBLIC_API_URL;
+      if (!process.env.NEXT_PUBLIC_API_URL) {
+        console.warn(
+          `[API PUBLIC] NEXT_PUBLIC_API_URL missing on Vercel host ${hostname}. Falling back to ${backendUrl}`
+        );
+      } else {
+        console.log(`[API PUBLIC] Using backend URL from env: ${backendUrl}`);
+      }
       return backendUrl;
     }
     
@@ -22,10 +31,29 @@ const getApiBaseUrl = () => {
     }
     
     // For localhost development
-    const origin = window.location.origin;
-    console.log(`[API PUBLIC] Using same origin for API calls: ${origin}`);
-    return origin;
+    if (isLocalHostname(hostname)) {
+      const origin = window.location.origin;
+      console.log(`[API PUBLIC] Using same origin for API calls: ${origin}`);
+      return origin;
+    }
+
+    console.warn(
+      `[API PUBLIC] NEXT_PUBLIC_API_URL missing for ${hostname}. Using fallback: ${FALLBACK_PUBLIC_API_URL}`
+    );
+    return FALLBACK_PUBLIC_API_URL;
   }
+  // Server-side fallback logic
+  const serverEnvUrl = ensureApiUrl(process.env.API_URL) || ensureApiUrl(process.env.NEXT_PUBLIC_API_URL);
+  if (serverEnvUrl) {
+    console.log(`[API PUBLIC] Using server-side API URL: ${serverEnvUrl}`);
+    return serverEnvUrl;
+  }
+
+  if (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production') {
+    console.warn('[API PUBLIC] API_URL not configured on server. Using fallback remote API URL.');
+    return FALLBACK_PUBLIC_API_URL;
+  }
+
   // Χρησιμοποιούμε το backend container name για το kiosk mode
   const defaultUrl = 'http://backend:8000/api';
   console.log(`[API PUBLIC] Using backend container API URL: ${defaultUrl}`);
