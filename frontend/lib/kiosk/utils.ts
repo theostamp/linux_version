@@ -48,7 +48,7 @@ export function getDefaultKioskConfig(buildingId: number) {
       autoRefresh: true,
       showSidebar: true,
       showTopBar: true,
-      theme: 'default'
+      theme: 'default' as const
     },
     enabled_widgets_count: DEFAULT_WIDGETS.filter(w => w.enabled).length,
     total_widgets_count: DEFAULT_WIDGETS.length

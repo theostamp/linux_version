@@ -55,7 +55,6 @@ export function withAuth<TProps = any>(Component: (props: TProps) => any, allowe
       if (typeof window !== 'undefined') window.location.replace('/');
       return null;
     }
-    // @ts-expect-error allow passing through props
     return React.createElement(Component as any, props as any);
   };
 }

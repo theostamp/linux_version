@@ -19,6 +19,7 @@ export const DEFAULT_WIDGETS: KioskWidget[] = [
     name: 'Dashboard Overview',
     description: 'Συνολική επισκόπηση του κτιρίου',
     category: 'main_slides',
+    component: 'DashboardWidget',
     enabled: true,
     order: 0,
     settings: {}

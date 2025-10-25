@@ -259,7 +259,7 @@ export function useOptimizedCallback<T extends (...args: any[]) => any>(
 ): T {
   const { debounce, throttle, memoize } = usePerformance({ enabled: true });
 
-  return React.useCallback(() => {
+  return useCallback(() => {
     switch (optimization) {
       case 'debounce':
         return debounce(callback, delay || 300);

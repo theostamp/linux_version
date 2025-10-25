@@ -51,9 +51,6 @@ export function useTodoPendingCount(buildingId?: number | null) {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     // Add timeout to prevent hanging
     networkMode: 'online' as const,
-    onError: (error) => {
-      console.error('[useTodoPendingCount] Query error:', error);
-    },
   });
 }
 

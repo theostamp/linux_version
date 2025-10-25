@@ -243,7 +243,7 @@ export default function WidgetCreatePage() {
                         </div>
                         <p className="text-sm text-gray-600 mb-2">{template.description}</p>
                         <div className="flex flex-wrap gap-1">
-                          {template.tags.map((tag: string) => (
+                          {template.tags?.map((tag: string) => (
                             <Badge key={tag} variant="outline" className="text-xs">
                               {tag}
                             </Badge>

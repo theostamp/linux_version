@@ -6,7 +6,7 @@
  */
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMonthlyTasks } from '@/hooks/useNotifications';
+import { useMonthlyTasksReminder } from '@/hooks/useMonthlyTasksReminder';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import {
   Dialog,
@@ -25,9 +25,7 @@ import { el } from 'date-fns/locale';
 export function MonthlyReminderModal() {
   const router = useRouter();
   const { buildings, currentBuilding } = useBuilding();
-  const { data: tasks } = useMonthlyTasks({
-    status: 'pending_confirmation',
-  });
+  const { data: tasks } = useMonthlyTasksReminder();
 
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);

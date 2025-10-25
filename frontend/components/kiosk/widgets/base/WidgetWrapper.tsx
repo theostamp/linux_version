@@ -25,7 +25,7 @@ export function WidgetWrapper({
   className,
   onError,
 }: WidgetWrapperProps) {
-  const WidgetComponent = getWidgetComponent(widget.component);
+  const WidgetComponent = getWidgetComponent(widget.component || '');
 
   if (!WidgetComponent) {
     return (

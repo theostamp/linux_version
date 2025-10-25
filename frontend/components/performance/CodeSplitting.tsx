@@ -117,7 +117,7 @@ export function withLazyLoading<T extends Record<string, any>>(
   return function LazyWrapper(props: T) {
     return (
       <Suspense fallback={<FallbackComponent />}>
-        <LazyComponent {...props} />
+        <LazyComponent {...(props as any)} />
       </Suspense>
     );
   };
@@ -279,7 +279,7 @@ export function createAsyncComponent<T extends Record<string, any>>(
     const FallbackComponent = fallback;
     return (
       <Suspense fallback={<FallbackComponent />}>
-        <Component {...props} />
+        <Component {...(props as any)} />
       </Suspense>
     );
   };

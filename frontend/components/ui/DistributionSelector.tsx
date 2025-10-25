@@ -27,37 +27,41 @@ export const DistributionSelector: React.FC<DistributionSelectorProps> = ({
   showDescription = true,
 }) => {
   const getDistributionLabel = (distribution: DistributionType) => {
-    const labels: Record<DistributionType, string> = {
+    const labels: Partial<Record<DistributionType, string>> = {
       [DistributionType.EQUAL]: 'Ισόποσα',
       [DistributionType.MILLS]: 'Χιλιοστά',
       [DistributionType.METERS]: 'Μετρητές',
+      [DistributionType.SPECIFIC]: 'Συγκεκριμένα διαμερίσματα',
     };
     return labels[distribution] || distribution;
   };
 
   const getDistributionDescription = (distribution: DistributionType) => {
-    const descriptions: Record<DistributionType, string> = {
+    const descriptions: Partial<Record<DistributionType, string>> = {
       [DistributionType.EQUAL]: 'Η δαπάνη κατανέμεται ισόποσα σε όλα τα διαμερίσματα',
       [DistributionType.MILLS]: 'Η δαπάνη κατανέμεται ανάλογα με τα χιλιοστά συμμετοχής κάθε διαμερίσματος',
       [DistributionType.METERS]: 'Η δαπάνη κατανέμεται ανάλογα με τις μετρήσεις των μετρητών',
+      [DistributionType.SPECIFIC]: 'Η δαπάνη κατανέμεται μόνο σε συγκεκριμένα διαμερίσματα',
     };
     return descriptions[distribution] || '';
   };
 
   const getDistributionIcon = (distribution: DistributionType) => {
-    const icons: Record<DistributionType, string> = {
+    const icons: Partial<Record<DistributionType, string>> = {
       [DistributionType.EQUAL]: '⚖️',
       [DistributionType.MILLS]: '📊',
       [DistributionType.METERS]: '📈',
+      [DistributionType.SPECIFIC]: '🏠',
     };
     return icons[distribution] || '📊';
   };
 
   const getDistributionColor = (distribution: DistributionType) => {
-    const colors: Record<DistributionType, string> = {
+    const colors: Partial<Record<DistributionType, string>> = {
       [DistributionType.EQUAL]: 'text-blue-600',
       [DistributionType.MILLS]: 'text-purple-600',
       [DistributionType.METERS]: 'text-green-600',
+      [DistributionType.SPECIFIC]: 'text-orange-600',
     };
     return colors[distribution] || 'text-gray-600';
   };

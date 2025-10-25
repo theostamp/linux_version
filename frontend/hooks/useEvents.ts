@@ -202,12 +202,6 @@ export const useEventsPendingCount = (buildingId?: number) => {
     },
     // Add timeout to prevent hanging
     networkMode: 'online' as const,
-    onSuccess: (data) => {
-      console.log('[useEventsPendingCount] Query successful:', data);
-    },
-    onError: (error) => {
-      console.error('[useEventsPendingCount] Query error:', error);
-    },
     // Prevent refetching when buildingId is undefined
     enabled: buildingId !== undefined,
   });

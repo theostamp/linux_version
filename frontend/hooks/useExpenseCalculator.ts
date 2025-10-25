@@ -46,10 +46,16 @@ export const useExpenseCalculator = () => {
     return apartments.map(apartment => ({
       apartment_id: apartment.id,
       apartment_number: apartment.number,
-      owner_name: apartment.owner_name,
+      identifier: `APT-${apartment.number}`,
+      owner_name: apartment.owner_name || '',
+      participation_mills: apartment.participation_mills || 0,
+      current_balance: 0,
+      total_amount: sharePerApartment,
+      previous_balance: 0,
+      total_due: sharePerApartment,
+      breakdown: [],
       amount: sharePerApartment,
       percentage: (1 / apartments.length) * 100,
-      participation_mills: apartment.participation_mills || 0,
       details: `Ισόποσα κατανομή: ${amount.toFixed(2)}€ ÷ ${apartments.length} διαμερίσματα = ${sharePerApartment.toFixed(2)}€`,
     }));
   }, []);
@@ -75,10 +81,16 @@ export const useExpenseCalculator = () => {
       return {
         apartment_id: apartment.id,
         apartment_number: apartment.number,
-        owner_name: apartment.owner_name,
+        identifier: `APT-${apartment.number}`,
+        owner_name: apartment.owner_name || '',
+        participation_mills: mills,
+        current_balance: 0,
+        total_amount: shareAmount,
+        previous_balance: 0,
+        total_due: shareAmount,
+        breakdown: [],
         amount: shareAmount,
         percentage,
-        participation_mills: mills,
         details: `Κατανομή ανά χιλιοστά: ${amount.toFixed(2)}€ × ${mills}χλ. ÷ ${totalMills}χλ. = ${shareAmount.toFixed(2)}€`,
       };
     });
@@ -94,13 +106,13 @@ export const useExpenseCalculator = () => {
     // Determine which meter type to use based on category
     let meterType: 'heating' | 'water' | 'electricity' | undefined;
     switch (category) {
-      case ExpenseCategory.HEATING:
+      case ExpenseCategory.HEATING_FUEL:
         meterType = 'heating';
         break;
-      case ExpenseCategory.WATER:
+      case ExpenseCategory.WATER_COMMON:
         meterType = 'water';
         break;
-      case ExpenseCategory.ELECTRICITY:
+      case ExpenseCategory.ELECTRICITY_COMMON:
         meterType = 'electricity';
         break;
       default:
@@ -128,10 +140,16 @@ export const useExpenseCalculator = () => {
       return {
         apartment_id: apartment.id,
         apartment_number: apartment.number,
-        owner_name: apartment.owner_name,
+        identifier: `APT-${apartment.number}`,
+        owner_name: apartment.owner_name || '',
+        participation_mills: apartment.participation_mills || 0,
+        current_balance: 0,
+        total_amount: shareAmount,
+        previous_balance: 0,
+        total_due: shareAmount,
+        breakdown: [],
         amount: shareAmount,
         percentage,
-        participation_mills: apartment.participation_mills || 0,
         details: `Κατανομή ανά μετρητές: ${amount.toFixed(2)}€ × ${meterReading}μ. ÷ ${totalMeterReading}μ. = ${shareAmount.toFixed(2)}€`,
       };
     });
@@ -163,11 +181,11 @@ export const useExpenseCalculator = () => {
       } else {
         const hasMeters = params.apartments.some(apt => {
           switch (params.category) {
-            case ExpenseCategory.HEATING:
+            case ExpenseCategory.HEATING_FUEL:
               return apt.meters?.heating !== undefined;
-            case ExpenseCategory.WATER:
+            case ExpenseCategory.WATER_COMMON:
               return apt.meters?.water !== undefined;
-            case ExpenseCategory.ELECTRICITY:
+            case ExpenseCategory.ELECTRICITY_COMMON:
               return apt.meters?.electricity !== undefined;
             default:
               return false;
@@ -219,14 +237,14 @@ export const useExpenseCalculator = () => {
       }
       
       // Validate calculation result
-      const totalCalculated = shares.reduce((sum, share) => sum + share.amount, 0);
+      const totalCalculated = shares.reduce((sum, share) => sum + (share.amount || 0), 0);
       const difference = Math.abs(totalCalculated - params.amount);
       
       if (difference > 0.01) {
         // Rounding adjustment - distribute the difference
         const adjustment = params.amount - totalCalculated;
         if (shares.length > 0) {
-          shares[0].amount += adjustment;
+          shares[0].amount = (shares[0].amount || 0) + adjustment;
           shares[0].details += ` (προσαρμογή στρογγυλοποίησης: +${adjustment.toFixed(2)}€)`;
         }
       }

@@ -84,7 +84,7 @@ export default function CalendarPreviewModal({
               </div>
               <div>
                 <DialogTitle className="text-xl">
-                  Google Calendar - {building.name}
+                  Google Calendar - {building?.name || 'Κτίριο'}
                 </DialogTitle>
                 <DialogDescription>
                   Προβολή και διαχείριση events του κτιρίου

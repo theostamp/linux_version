@@ -134,7 +134,7 @@ export function ManualSyncExpensesButton({
                 </DialogDescription>
               </DialogHeader>
 
-              <Alert variant="warning">
+              <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
                   <strong>Προσοχή:</strong> Οι υπάρχουσες δαπάνες που δημιουργήθηκαν από αυτό το έργο θα διαγραφούν και θα δημιουργηθούν νέες.

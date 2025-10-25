@@ -34,7 +34,7 @@ export function ConfirmDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        {description && <p className={typography.modalDescription}>{description}</p>}
+        {description && <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isConfirmLoading}>
             {cancelText}

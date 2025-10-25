@@ -41,7 +41,7 @@ export function withLazyLoading<P extends object>(
   
   const WrappedComponent = (props: P) => (
     <LazyLoadWrapper fallback={fallback}>
-      <LazyComponent {...props} />
+      <LazyComponent {...(props as any)} />
     </LazyLoadWrapper>
   );
   

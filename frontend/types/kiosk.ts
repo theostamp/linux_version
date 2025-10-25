@@ -9,7 +9,7 @@ export interface KioskWidget {
   description: string;
   greekDescription?: string;
   category: 'main_slides' | 'sidebar_widgets' | 'top_bar_widgets' | 'special_widgets';
-  component: string;
+  component?: string;
   icon?: string;
   enabled: boolean;
   order: number;
@@ -30,7 +30,7 @@ export interface WidgetTemplate {
   name: string;
   description: string;
   category: string;
-  component: string;
+  component?: string;
   defaultSettings: Record<string, any>;
   icon?: string;
   tags?: string[];

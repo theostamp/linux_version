@@ -25,42 +25,42 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   error,
 }) => {
   const getCategoryLabel = (category: ExpenseCategory) => {
-    const labels: Record<ExpenseCategory, string> = {
-      [ExpenseCategory.ELECTRICITY]: 'Ηλεκτρισμός',
-      [ExpenseCategory.WATER]: 'Νερό',
-      [ExpenseCategory.HEATING]: 'Θέρμανση',
+    const labels: Partial<Record<ExpenseCategory, string>> = {
+      [ExpenseCategory.ELECTRICITY_COMMON]: 'Ηλεκτρισμός',
+      [ExpenseCategory.WATER_COMMON]: 'Νερό',
+      [ExpenseCategory.HEATING_FUEL]: 'Θέρμανση',
       [ExpenseCategory.CLEANING]: 'Καθαριότητα',
-      [ExpenseCategory.MAINTENANCE]: 'Συντήρηση',
-      [ExpenseCategory.INSURANCE]: 'Ασφάλεια',
-      [ExpenseCategory.ADMINISTRATION]: 'Διοίκηση',
+      [ExpenseCategory.BUILDING_MAINTENANCE]: 'Συντήρηση',
+      [ExpenseCategory.BUILDING_INSURANCE]: 'Ασφάλεια',
+      [ExpenseCategory.MANAGEMENT_FEES]: 'Διοίκηση',
       [ExpenseCategory.OTHER]: 'Άλλο',
     };
     return labels[category] || category;
   };
 
   const getCategoryIcon = (category: ExpenseCategory) => {
-    const icons: Record<ExpenseCategory, string> = {
-      [ExpenseCategory.ELECTRICITY]: '⚡',
-      [ExpenseCategory.WATER]: '💧',
-      [ExpenseCategory.HEATING]: '🔥',
+    const icons: Partial<Record<ExpenseCategory, string>> = {
+      [ExpenseCategory.ELECTRICITY_COMMON]: '⚡',
+      [ExpenseCategory.WATER_COMMON]: '💧',
+      [ExpenseCategory.HEATING_FUEL]: '🔥',
       [ExpenseCategory.CLEANING]: '🧹',
-      [ExpenseCategory.MAINTENANCE]: '🔧',
-      [ExpenseCategory.INSURANCE]: '🛡️',
-      [ExpenseCategory.ADMINISTRATION]: '📋',
+      [ExpenseCategory.BUILDING_MAINTENANCE]: '🔧',
+      [ExpenseCategory.BUILDING_INSURANCE]: '🛡️',
+      [ExpenseCategory.MANAGEMENT_FEES]: '📋',
       [ExpenseCategory.OTHER]: '📦',
     };
     return icons[category] || '📦';
   };
 
   const getCategoryColor = (category: ExpenseCategory) => {
-    const colors: Record<ExpenseCategory, string> = {
-      [ExpenseCategory.ELECTRICITY]: 'text-blue-600',
-      [ExpenseCategory.WATER]: 'text-cyan-600',
-      [ExpenseCategory.HEATING]: 'text-orange-600',
+    const colors: Partial<Record<ExpenseCategory, string>> = {
+      [ExpenseCategory.ELECTRICITY_COMMON]: 'text-blue-600',
+      [ExpenseCategory.WATER_COMMON]: 'text-cyan-600',
+      [ExpenseCategory.HEATING_FUEL]: 'text-orange-600',
       [ExpenseCategory.CLEANING]: 'text-green-600',
-      [ExpenseCategory.MAINTENANCE]: 'text-purple-600',
-      [ExpenseCategory.INSURANCE]: 'text-red-600',
-      [ExpenseCategory.ADMINISTRATION]: 'text-gray-600',
+      [ExpenseCategory.BUILDING_MAINTENANCE]: 'text-purple-600',
+      [ExpenseCategory.BUILDING_INSURANCE]: 'text-red-600',
+      [ExpenseCategory.MANAGEMENT_FEES]: 'text-gray-600',
       [ExpenseCategory.OTHER]: 'text-yellow-600',
     };
     return colors[category] || 'text-gray-600';

@@ -25,7 +25,6 @@ export default function TodoSidebar() {
     buildingId: selectedBuilding?.id,
     status: filter === 'pending' ? 'pending' : undefined,
     overdue: filter === 'overdue' ? true : undefined,
-    // @ts-expect-error allow passing extra param
     due_soon: filter === 'due_soon' ? true : undefined,
     tag: filter === 'maintenance' ? 'maintenance' : filter === 'financial' ? 'financial_overdue' : undefined,
   } as any);

@@ -1,6 +1,7 @@
 // frontend/lib/kiosk/widgets/registry.ts
 
-import { KioskWidget } from '@/types/kiosk';
+import { KioskWidget, WidgetTemplate } from '@/types/kiosk';
+import { WidgetSettings } from '@/types/kiosk/index';
 import {
   Home,
   Bell,
@@ -117,7 +118,7 @@ export const getWidgetIcon = (widget: KioskWidget | string): LucideIcon => {
   }
   
   // For widget objects, try component first, then name
-  const componentIcon = WIDGET_ICONS[widget.component];
+  const componentIcon = widget.component ? WIDGET_ICONS[widget.component] : undefined;
   if (componentIcon) {
     return componentIcon;
   }
@@ -204,7 +205,7 @@ export function hasWidgetData(widget: KioskWidget, data?: any): boolean {
     'WeatherTopBarWidget',
   ];
 
-  if (alwaysShowWidgets.includes(widget.component)) {
+  if (widget.component && alwaysShowWidgets.includes(widget.component)) {
     return true;
   }
 
@@ -632,6 +633,7 @@ export const WIDGET_TEMPLATES: WidgetTemplate[] = [
     name: 'Data Display Widget',
     description: 'Display data from API endpoint',
     category: 'main_slides',
+    component: 'DataDisplayWidget',
     defaultSettings: {
       title: 'New Data Widget',
       showTitle: true,

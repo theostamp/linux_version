@@ -71,13 +71,14 @@ export async function saveKioskConfig(
       id: buildingId,
       building: buildingId,
       widgets: response.data.widgets || [],
-      settings: config.settings || {
+      settings: {
         slideDuration: 10,
         refreshInterval: 30,
         autoRefresh: true,
         showSidebar: true,
         showTopBar: true,
-        theme: 'default'
+        theme: 'default' as const,
+        ...config.settings
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()

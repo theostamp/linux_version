@@ -22,7 +22,7 @@ export function PaymentFieldsLockAlert({
   }
 
   return (
-    <Alert variant="warning" className={className}>
+    <Alert variant="destructive" className={className}>
       <Lock className="h-4 w-4" />
       <AlertTitle className="flex items-center gap-2">
         Τα πεδία πληρωμής είναι κλειδωμένα

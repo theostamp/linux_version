@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchPublicInfo } from '@/lib/api';
-import { fetchKioskConfig, saveKioskConfig, updateWidgetSettings, toggleWidget } from '@/lib/kiosk-api';
+import { fetchKioskConfig, saveKioskConfig, updateWidgetSettings as updateWidgetSettingsApi, toggleWidget as toggleWidgetApi } from '@/lib/kiosk-api';
 import { 
   KioskConfig, 
   KioskSettings, 
@@ -14,9 +14,7 @@ import {
 } from '@/lib/kiosk/config';
 import { 
   createSlidesFromWidgets, 
-  getDefaultKioskConfig,
-  toggleWidget as toggleWidgetUtil,
-  updateWidgetSettings as updateWidgetSettingsUtil
+  getDefaultKioskConfig
 } from '@/lib/kiosk/utils';
 
 interface UseKioskReturn {
@@ -66,7 +64,7 @@ export function useKiosk(buildingId?: number): UseKioskReturn {
     enabled: !!buildingId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
-    refetchInterval: settings.refreshInterval * 1000, // Auto-refresh based on settings
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
   // Fetch kiosk configuration
@@ -91,8 +89,8 @@ export function useKiosk(buildingId?: number): UseKioskReturn {
           return {
             id: kioskConfig.id,
             building: kioskConfig.building,
-            widgets: kioskConfig.widgets || kioskConfig.config?.widgets || [],
-            settings: kioskConfig.settings || kioskConfig.config?.settings || DEFAULT_KIOSK_SETTINGS,
+            widgets: kioskConfig.widgets || [],
+            settings: kioskConfig.settings || DEFAULT_KIOSK_SETTINGS,
             created_at: kioskConfig.created_at,
             updated_at: kioskConfig.updated_at
           };
@@ -138,13 +136,7 @@ export function useKiosk(buildingId?: number): UseKioskReturn {
     mutationFn: async ({ widgetId, enabled }: { widgetId: string; enabled: boolean }) => {
       if (!buildingId) throw new Error('Building ID is required');
       
-      return toggleWidget(buildingId, widgetId, enabled);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kiosk-config', buildingId] });
-    },
-    onError: (error: any) => {
-      console.error('Failed to toggle widget:', error);
+      return toggleWidgetApi(buildingId, widgetId, enabled);
     }
   });
 
@@ -153,7 +145,7 @@ export function useKiosk(buildingId?: number): UseKioskReturn {
     mutationFn: async ({ widgetId, settings }: { widgetId: string; settings: Record<string, any> }) => {
       if (!buildingId) throw new Error('Building ID is required');
       
-      return updateWidgetSettings(buildingId, widgetId, settings);
+      return updateWidgetSettingsApi(buildingId, widgetId, settings);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kiosk-config', buildingId] });
@@ -239,10 +231,14 @@ export function useKiosk(buildingId?: number): UseKioskReturn {
     // Data
     data,
     isLoading: isDataLoading || isConfigLoading,
-    error: dataError || configError?.message || null,
+    error: (dataError instanceof Error ? dataError.message : dataError) || configError?.message || null,
     
     // Configuration
-    config: config || getDefaultKioskConfig(buildingId || 0),
+    config: config ? {
+      ...config,
+      enabled_widgets_count: config.widgets?.filter(w => w.enabled).length || 0,
+      total_widgets_count: config.widgets?.length || 0
+    } : getDefaultKioskConfig(buildingId || 0),
     settings,
     
     // Slides

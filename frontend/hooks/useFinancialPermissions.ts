@@ -30,27 +30,27 @@ export function useFinancialPermissions() {
 
       case 'financial_write':
         // Managers και admins μπορούν να γράφουν
-        return role === 'manager' || role === 'admin';
+        return role === 'manager' || role === 'superuser';
 
       case 'financial_admin':
         // Μόνο admins μπορούν να κάνουν διαχειριστικές λειτουργίες
-        return role === 'admin';
+        return role === 'superuser';
 
       case 'expense_manage':
         // Managers και admins μπορούν να διαχειρίζονται δαπάνες
-        return role === 'manager' || role === 'admin';
+        return role === 'manager' || role === 'superuser';
 
       case 'payment_manage':
         // Managers και admins μπορούν να διαχειρίζονται πληρωμές
-        return role === 'manager' || role === 'admin';
+        return role === 'manager' || role === 'superuser';
 
       case 'transaction_manage':
         // Μόνο admins μπορούν να διαχειρίζονται κινήσεις
-        return role === 'admin';
+        return role === 'superuser';
 
       case 'report_access':
         // Managers και admins μπορούν να δουν αναφορές
-        return role === 'manager' || role === 'admin';
+        return role === 'manager' || role === 'superuser';
 
       default:
         return false;
@@ -105,7 +105,7 @@ export function useFinancialPermissions() {
     
     // Χρήσιμες συναρτήσεις
     isManager: () => user?.is_staff || user?.profile?.role === 'manager',
-    isAdmin: () => user?.is_superuser || user?.profile?.role === 'admin',
+     isAdmin: () => user?.is_superuser || user?.profile?.role === 'superuser',
     isSuperUser: () => user?.is_superuser || user?.is_staff,
   };
 } 

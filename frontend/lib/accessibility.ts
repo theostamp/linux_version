@@ -99,7 +99,7 @@ export function generateAriaLabels(widgetType: string, data?: any): Record<strin
     }
   };
 
-  return baseLabels[widgetType] || {
+  return baseLabels[widgetType as keyof typeof baseLabels] || {
     label: 'Kiosk Widget',
     description: 'Building information widget'
   };
