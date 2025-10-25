@@ -3,7 +3,7 @@
 export default function DebugEnvPage() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Environment Variables Debug</h1>
+      <h1 className="text-2xl font-bold mb-6">Environment Variables Debug - Updated</h1>
       
       <div className="space-y-4">
         <div className="bg-gray-100 p-4 rounded">
