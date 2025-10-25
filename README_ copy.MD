@@ -34,8 +34,8 @@ git remote add origin https://github.com/theostamp/linux_version.git
 git push -u origin main
 
 git branch -M main 
-git remote add origin https://github.com/theostamp/Public-App
-git push -u origin main.git
+git remote add origin https://github.com/theostamp/Public-App.git
+git push -u origin main
 
 
 ---

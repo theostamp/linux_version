@@ -49,10 +49,13 @@ echo ""
 echo "📦 Collecting static files..."
 python manage.py collectstatic --no-input
 
-# 5. Start frontend warm-up in background
+# 5. Start frontend warm-up in background (skip in Railway)
 echo ""
 echo "🔥 Initiating frontend warm-up process..."
-if [ -f "/app/entrypoint_warm_up.sh" ]; then
+if [ -n "$RAILWAY_ENVIRONMENT" ]; then
+  echo "🚂 Railway deployment detected - skipping frontend warm-up"
+  echo "   Frontend is deployed separately on Vercel"
+elif [ -f "/app/entrypoint_warm_up.sh" ]; then
   /app/entrypoint_warm_up.sh &
   echo "   Warm-up running in background..."
 else

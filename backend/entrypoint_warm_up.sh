@@ -19,5 +19,15 @@ if curl -s http://frontend:3000 > /dev/null 2>&1; then
 
     echo "🔥 Frontend warm-up running in background..."
 else
-    echo "⚠️ Frontend not reachable yet, skipping warm-up"
+    echo "⚠️ Frontend not reachable yet, skipping warm-up..."
+    echo "   Trying alternative warm-up method..."
+    
+    # Try to warm-up through nginx proxy
+    if curl -s http://localhost:8080 > /dev/null 2>&1; then
+        echo "✅ Nginx proxy is reachable, starting warm-up through proxy..."
+        python /app/scripts/warm_up_frontend.py localhost 8080 &
+        echo "🔥 Frontend warm-up running in background through nginx..."
+    else
+        echo "⚠️ Neither frontend nor nginx proxy is reachable, skipping warm-up"
+    fi
 fi

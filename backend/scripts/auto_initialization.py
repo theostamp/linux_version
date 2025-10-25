@@ -793,6 +793,12 @@ def warm_up_frontend():
     # Περιμένουμε λίγο για να ξεκινήσει το frontend
     time.sleep(5)
 
+    # Check if we're in Railway deployment (no frontend service)
+    if os.environ.get('RAILWAY_ENVIRONMENT'):
+        print("🚂 Railway deployment detected - skipping frontend warm-up")
+        print("   Frontend is deployed separately on Vercel")
+        return
+
     # URLs που θα κάνουμε warm-up
     base_url = "http://frontend:3000"  # Internal Docker network
     pages = [

@@ -3,9 +3,9 @@ builder = "NIXPACKS"
 buildCommand = "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput"
 
 [deploy]
-startCommand = "gunicorn new_concierge_backend.wsgi:application --bind 0.0.0.0:$PORT --workers 2"
+startCommand = "./entrypoint.sh"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
 [service]
-rootDirectory = "/backend"
+rootDirectory = "backend"
