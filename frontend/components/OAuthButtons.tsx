@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useAuth } from "@/components/contexts/AuthContext"
+import { ensureApiUrl, getDefaultRemoteApiUrl } from "@/lib/apiBase"
 
 interface OAuthButtonsProps {
   mode: 'login' | 'register'
@@ -50,8 +51,10 @@ export default function OAuthButtons({ mode, onSuccess }: OAuthButtonsProps) {
         provider: 'google'
       }))
 
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-      window.location.href = `${apiBaseUrl}/api/users/auth/google/?redirect_uri=${redirectUri}&state=${state}`
+      // Resolve API base (includes /api suffix)
+      const apiBaseUrl = ensureApiUrl(process.env.NEXT_PUBLIC_API_URL) || getDefaultRemoteApiUrl()
+      // Backend route lives under /api/users/auth/google/ so we append to apiBase already ending with /api
+      window.location.href = `${apiBaseUrl}/users/auth/google/?redirect_uri=${redirectUri}&state=${state}`
     } catch (error) {
       console.error('Google OAuth error:', error)
       toast.error('Σφάλμα κατά την σύνδεση με Google')

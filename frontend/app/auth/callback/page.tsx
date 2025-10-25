@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { useAuth } from "@/components/contexts/AuthContext"
+import { ensureApiUrl, getDefaultRemoteApiUrl } from "@/lib/apiBase"
 
 export default function AuthCallbackPage() {
   const [status, setStatus] = useState("Επεξεργασία...")
@@ -38,8 +39,8 @@ export default function AuthCallbackPage() {
         const { redirectTo = '/dashboard' } = stateData
 
         // Exchange code for tokens
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-        const response = await fetch(`${apiBaseUrl}/api/users/auth/callback/`, {
+        const apiBaseUrl = ensureApiUrl(process.env.NEXT_PUBLIC_API_URL) || getDefaultRemoteApiUrl();
+        const response = await fetch(`${apiBaseUrl}/users/auth/callback/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
