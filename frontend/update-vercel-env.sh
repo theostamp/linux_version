@@ -50,3 +50,4 @@ echo "🔄 Redeploying Vercel app..."
 vercel --prod
 
 echo "✅ Done! Check your Vercel dashboard for the new deployment."
+
