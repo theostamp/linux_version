@@ -7,6 +7,6 @@ export $(cat env.production | grep -v '^#' | xargs)
 
 # Force deploy with --prod flag
 echo "📦 Building and deploying..."
-vercel --prod --force
+npx vercel --prod --force
 
 echo "✅ Deployment initiated!"
