@@ -39,6 +39,7 @@ export const viewport = {
   themeColor: '#4f46e5',
 };
 
+// Force new deployment - 2025-10-25
 export default function RootLayout({ children }: { readonly children: React.ReactNode }) {
   return (
     <html lang="el">
