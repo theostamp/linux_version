@@ -394,25 +394,17 @@ REST_FRAMEWORK = {
 # 🌐 CORS
 # ----------------------------------------
 CORS_ALLOW_CREDENTIALS = True     # για cookies / JWT
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "http://demo.localhost:8080",
-    "http://top.localhost:8080",  # Προσθήκη του συγκεκριμένου subdomain
-    "http://tap.localhost:8080",  # Προσθήκη του tap subdomain
-    # ✅ Next.js default dev port
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://demo.localhost:3000",
-    "http://top.localhost:3000",
-    "http://tap.localhost:3000",
-    # ✅ Port 3001 για το frontend
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-    "http://demo.localhost:3001",
-    "http://top.localhost:3001",
-    "http://tap.localhost:3001",
-]  # τα «σκέτα» origins
+# Get CORS origins from environment variable
+CORS_ALLOWED_ORIGINS = get_list_env(
+    "CORS_ALLOWED_ORIGINS",
+    # Default development origins
+    "http://localhost:8080,http://127.0.0.1:8080,http://demo.localhost:8080,"
+    "http://top.localhost:8080,http://tap.localhost:8080,"
+    "http://localhost:3000,http://127.0.0.1:3000,http://demo.localhost:3000,"
+    "http://top.localhost:3000,http://tap.localhost:3000,"
+    "http://localhost:3001,http://127.0.0.1:3001,http://demo.localhost:3001,"
+    "http://top.localhost:3001,http://tap.localhost:3001"
+)
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://[\w\-]+\.localhost:8080$",
