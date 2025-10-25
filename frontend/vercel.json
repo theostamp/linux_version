@@ -1,0 +1,10 @@
+{
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_URL": "https://linuxversion-production.up.railway.app/api",
+      "NEXT_PUBLIC_DEFAULT_API_URL": "https://linuxversion-production.up.railway.app/api",
+      "NEXT_PUBLIC_DJANGO_API_URL": "https://linuxversion-production.up.railway.app",
+      "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "590666847148-a2e037ah9q9f1vogsl6b34mk944bug5g.apps.googleusercontent.com"
+    }
+  }
+}
