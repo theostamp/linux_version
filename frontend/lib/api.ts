@@ -144,11 +144,19 @@ const getApiBaseUrl = () => {
     (window as any).debugApiCalls = true;
     const hostname = window.location.hostname;
     
-    // For Vercel deployments, use environment variable for backend URL
-    if (hostname.includes('vercel.app')) {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://your-backend-url.railway.app';
-      console.log(`[API] Using backend URL from env: ${backendUrl}`);
-      return backendUrl;
+    // For Vercel deployments or if NEXT_PUBLIC_API_URL is set, use it
+    const publicApiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (publicApiUrl && (hostname.includes('vercel.app') || publicApiUrl !== 'localhost')) {
+      // Ensure the URL ends with /api if it doesn't already
+      let url = publicApiUrl.trim();
+      // Remove trailing slash
+      url = url.replace(/\/$/, '');
+      // Add /api if not present
+      if (!url.endsWith('/api')) {
+        url = `${url}/api`;
+      }
+      console.log(`[API] Using backend URL from env: ${url}`);
+      return url;
     }
     
     // For localhost development, use same origin

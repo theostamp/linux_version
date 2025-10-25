@@ -46,6 +46,26 @@ const nextConfig = {
   // Performance optimizations
   poweredByHeader: false,
   generateEtags: false,
+
+  // Rewrites to proxy API calls to backend (for Vercel deployment)
+  async rewrites() {
+    // Get backend URL from environment
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || '';
+    
+    // Only configure rewrites if we have a backend URL
+    if (backendUrl && !backendUrl.includes('localhost')) {
+      console.log('Configuring API rewrites to:', backendUrl);
+      return [
+        {
+          source: '/api/:path*',
+          destination: `${backendUrl}/:path*`,
+        },
+      ];
+    }
+    
+    // No rewrites for localhost (direct connection)
+    return [];
+  },
   
   // Bundle analyzer (enable with ANALYZE=true)
   webpack: (config, { dev, isServer }) => {
