@@ -165,6 +165,14 @@ def oauth_callback(request):
         # Generate tokens
         tokens = OAuthService.generate_tokens(user)
         
+        # Determine redirect path based on tenant existence (same logic as login)
+        redirect_path = '/dashboard'  # Default
+        if not hasattr(user, 'tenant') or user.tenant is None:
+            redirect_path = '/plans'
+            logger.info(f"[OAUTH] User has no tenant, redirecting to /plans")
+        else:
+            logger.info(f"[OAUTH] User has tenant: {user.tenant.schema_name}, redirecting to /dashboard")
+
         return Response({
             'access': tokens['access'],
             'refresh': tokens['refresh'],
@@ -173,8 +181,10 @@ def oauth_callback(request):
                 'email': user.email,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
-                'is_active': user.is_active
-            }
+                'is_active': user.is_active,
+                'role': getattr(user, 'role', None)
+            },
+            'redirect_path': redirect_path
         })
         
     except Exception as e:

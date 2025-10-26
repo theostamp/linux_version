@@ -143,7 +143,7 @@ class OAuthService:
             user = User.objects.get(email__iexact=email)
             
             # Update provider info if needed
-            if not hasattr(user, 'oauth_provider'):
+            if not user.oauth_provider:
                 user.oauth_provider = oauth_data.get('provider')
                 user.oauth_provider_id = oauth_data.get('provider_id')
                 user.save()

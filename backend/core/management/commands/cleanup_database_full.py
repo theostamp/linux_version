@@ -80,9 +80,15 @@ class Command(BaseCommand):
                     Domain.objects.all().delete()
                     self.stdout.write(f'   ✓ Domains deleted ({domain_count_before} domains)')
                     
-                    # 4. Users
-                    CustomUser.objects.all().delete()
-                    self.stdout.write('   ✓ Users deleted')
+                    # 4. Users (preserve system admin)
+                    system_admin_email = 'theostam1966@gmail.com'
+                    system_admin = CustomUser.objects.filter(email=system_admin_email).first()
+                    if system_admin:
+                        CustomUser.objects.exclude(email=system_admin_email).delete()
+                        self.stdout.write(f'   ✓ Users deleted (preserved system admin: {system_admin_email})')
+                    else:
+                        CustomUser.objects.all().delete()
+                        self.stdout.write('   ✓ Users deleted (no system admin found)')
                     
                     self.stdout.write(self.style.SUCCESS('\n✅ Full database cleanup completed!'))
                     self.stdout.write(self.style.SUCCESS('   Plans and system data preserved'))

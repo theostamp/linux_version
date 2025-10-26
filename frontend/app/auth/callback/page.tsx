@@ -48,7 +48,7 @@ export default function AuthCallbackPage() {
           body: JSON.stringify({
             code,
             state: stateData,
-            redirect_uri: `${window.location.origin}/auth/google/callback`
+            redirect_uri: `${window.location.origin}/auth/callback`
           })
         })
 
@@ -70,9 +70,13 @@ export default function AuthCallbackPage() {
         setStatus("Επιτυχής σύνδεση!")
         toast.success("Επιτυχής σύνδεση!")
 
+        // Use backend's suggested redirect path if available, otherwise use state redirectTo
+        const finalRedirect = data.redirect_path || redirectTo
+        console.log('OAuth callback: Backend suggested redirect:', data.redirect_path, 'Using:', finalRedirect)
+
         // Redirect to intended destination
         setTimeout(() => {
-          router.push(redirectTo)
+          router.push(finalRedirect)
         }, 1000)
 
       } catch (error: any) {

@@ -6,57 +6,46 @@ import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 
-export default function AcceptTenantPage() {
+export default function VerifyEmailPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const token = searchParams.get('token')
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
-  const [tenantInfo, setTenantInfo] = useState<any>(null)
 
   useEffect(() => {
     if (!token) {
       setStatus('error')
-      setMessage('Λείπει το token πρόσβασης.')
+      setMessage('Λείπει το token επιβεβαίωσης.')
       return
     }
 
-    const acceptTenantInvite = async () => {
+    const verifyEmail = async () => {
       try {
-        const response = await api.post('/api/tenants/accept-invite/', {
+        const response = await api.post('/api/users/verify-email/', {
           token: token
         })
 
         setStatus('success')
-        setMessage('Καλώς ήρθατε στο workspace σας!')
-        setTenantInfo(response.data.tenant)
-        
-        // Store tokens for immediate access
-        if (response.data.access) {
-          localStorage.setItem('access_token', response.data.access)
-        }
-        if (response.data.refresh) {
-          localStorage.setItem('refresh_token', response.data.refresh)
-        }
+        setMessage('Το email σας επιβεβαιώθηκε επιτυχώς!')
+        toast.success('Email επιβεβαιώθηκε!')
 
-        toast.success('Πρόσβαση στο workspace επιτυχής!')
-
-        // Redirect to dashboard after 2 seconds
+        // Redirect to login after 2 seconds
         setTimeout(() => {
-          router.push('/dashboard')
+          router.push('/login?verified=true')
         }, 2000)
 
       } catch (error: any) {
-        console.error('Tenant accept error:', error)
+        console.error('Email verification error:', error)
         
-        const errorMessage = error.response?.data?.error || 'Αποτυχία πρόσβασης στο workspace.'
+        const errorMessage = error.response?.data?.error || 'Αποτυχία επιβεβαίωσης email.'
         setStatus('error')
         setMessage(errorMessage)
         toast.error(errorMessage)
       }
     }
 
-    acceptTenantInvite()
+    verifyEmail()
   }, [token, router])
 
   return (
@@ -67,7 +56,7 @@ export default function AcceptTenantPage() {
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-6">
               <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">Πρόσβαση στο Workspace</h1>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Επιβεβαίωση Email</h1>
             <p className="text-gray-600">Παρακαλώ περιμένετε...</p>
           </div>
         )}
@@ -79,18 +68,7 @@ export default function AcceptTenantPage() {
             </div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Επιτυχία!</h1>
             <p className="text-gray-600 mb-4">{message}</p>
-            {tenantInfo && (
-              <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <h3 className="font-semibold text-gray-800 mb-2">Workspace Στοιχεία:</h3>
-                <p className="text-sm text-gray-600">
-                  <strong>Όνομα:</strong> {tenantInfo.name}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Domain:</strong> {tenantInfo.domain}
-                </p>
-              </div>
-            )}
-            <p className="text-sm text-gray-500">Ανακατεύθυνση στο dashboard...</p>
+            <p className="text-sm text-gray-500">Ανακατεύθυνση στη σελίδα σύνδεσης...</p>
           </div>
         )}
 
@@ -109,10 +87,10 @@ export default function AcceptTenantPage() {
                 Μετάβαση στη Σύνδεση
               </button>
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/register')}
                 className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
               >
-                Επιστροφή στην Αρχική
+                Νέα Εγγραφή
               </button>
             </div>
           </div>

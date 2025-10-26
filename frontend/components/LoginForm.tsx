@@ -41,28 +41,13 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
       // Clear queries and wait a bit for state to settle
       queryClient.clear();
 
-      // Check subscription status before redirecting
-      try {
-        const { data } = await api.get('/api/users/subscription/');
-        const hasActiveSubscription = data.subscription &&
-          (data.subscription.status === 'active' || data.subscription.status === 'trial');
+      // Use redirect path from backend response (clean propagation)
+      const redirectPath = (loggedInUser as any).redirectPath || finalRedirect;
+      console.log('LoginForm: Backend suggested redirect:', redirectPath);
 
-        console.log('LoginForm: Subscription status:', data.subscription?.status);
-
-        // Redirect based on subscription status
-        const redirectPath = hasActiveSubscription ? finalRedirect : '/plans';
-        console.log('LoginForm: Redirecting to:', redirectPath);
-
-        setTimeout(() => {
-          router.push(redirectPath);
-        }, 100);
-      } catch (subError) {
-        console.error('LoginForm: Subscription check error:', subError);
-        // If subscription check fails, redirect to plans to be safe
-        setTimeout(() => {
-          router.push('/plans');
-        }, 100);
-      }
+      setTimeout(() => {
+        router.push(redirectPath);
+      }, 100);
 
     } catch (err: any) {
       console.error('LoginForm: Login error:', err);

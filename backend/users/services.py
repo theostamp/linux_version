@@ -32,7 +32,7 @@ class EmailService:
         user.save(update_fields=['email_verification_token', 'email_verification_sent_at'])
         
         # Δημιουργία verification URL
-        verification_url = f"{settings.FRONTEND_URL}/verify-email?token={verification_token}"
+        verification_url = f"{settings.FRONTEND_URL}/auth/verify-email?token={verification_token}"
         
         # Email content
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}Επιβεβαίωση Email"
@@ -692,6 +692,8 @@ class UserVerificationService:
         Επιβεβαίωση email με token
         """
         try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
             user = User.objects.get(email_verification_token=token)
         except User.DoesNotExist:
             raise ValueError("Μη έγκυρο token επιβεβαίωσης.")

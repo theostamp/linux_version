@@ -57,10 +57,10 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     console.log('AuthContext: Client-side logout performed.');
   }, [setUser]);
 
-  const login = useCallback(async (email: string, password: string): Promise<User> => {
+  const login = useCallback(async (email: string, password: string): Promise<User & { redirectPath?: string }> => {
     try {
       setIsLoading(true);
-      const { user: loggedInUser } = await loginUser(email, password);
+      const { user: loggedInUser, redirectPath } = await loginUser(email, password);
       setUser(loggedInUser);
       console.log('AuthContext: Login successful for user:', loggedInUser?.email);
       
@@ -68,7 +68,8 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       setIsLoading(false);
       setIsAuthReady(true);
       
-      return loggedInUser;
+      // Return user plus backend-suggested redirect path
+      return { ...loggedInUser, redirectPath } as User & { redirectPath?: string };
     } catch (error) {
       setIsLoading(false);
       console.error('AuthContext: Login failed:', error);

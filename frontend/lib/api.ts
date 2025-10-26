@@ -478,7 +478,7 @@ function getCookie(name: string): string | null {
 export async function loginUser(
   email: string,
   password: string,
-): Promise<{ access: string; refresh: string; user: User }> {
+): Promise<{ access: string; refresh: string; user: User; redirectPath?: string }> {
   console.log(`[API CALL] Attempting login for user: ${email}`);
   const { data } = await api.post('/api/users/login/', { email, password });
 
@@ -493,11 +493,13 @@ export async function loginUser(
 
   // Get user data using the access token
   const userData = await getCurrentUser();
+  const redirectPath = (data && (data.redirect_path as string | undefined)) || undefined;
   
   return {
     access: data.access,
     refresh: data.refresh,
-    user: userData
+    user: userData,
+    redirectPath,
   };
 }
 

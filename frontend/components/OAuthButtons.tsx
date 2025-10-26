@@ -44,7 +44,7 @@ export default function OAuthButtons({ mode, onSuccess }: OAuthButtonsProps) {
       // Redirect to backend OAuth endpoint
       // Use window.location.origin to get the correct port dynamically
       const origin = window.location.origin; // e.g., http://localhost:3001
-      const redirectUri = encodeURIComponent(`${origin}/auth/google/callback`)
+      const redirectUri = encodeURIComponent(`${origin}/auth/callback`)
       const state = encodeURIComponent(JSON.stringify({
         mode,
         redirectTo: '/plans',

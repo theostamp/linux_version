@@ -1085,11 +1085,11 @@ def main():
     # 5. Δημιουργία public tenant
     create_public_tenant()
 
-    # 6. Δημιουργία demo tenant
-    tenant = create_demo_tenant()
+    # 6. Δημιουργία demo tenant - DISABLED FOR PRODUCTION
+    # tenant = create_demo_tenant()
 
-    # 7. Δημιουργία demo δεδομένων
-    create_demo_data('demo')
+    # 7. Δημιουργία demo δεδομένων - DISABLED FOR PRODUCTION
+    # create_demo_data('demo')
 
     # 8. Αποθήκευση credentials
     credentials_file = save_credentials()

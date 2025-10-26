@@ -119,10 +119,19 @@ def login_view(request):
     print(f">>> DEBUG: user_data keys = {list(user_data.keys())}")
     print(f">>> DEBUG: user_data['role'] = {repr(user_data.get('role'))}")
 
+    # Determine redirect path based on tenant existence
+    redirect_path = '/dashboard'  # Default
+    if not hasattr(user, 'tenant') or user.tenant is None:
+        redirect_path = '/plans'
+        print(f">>> DEBUG: User has no tenant, redirecting to /plans")
+    else:
+        print(f">>> DEBUG: User has tenant: {user.tenant.schema_name}, redirecting to /dashboard")
+
     return Response({
         'access': access,
         'refresh': str(refresh),
         'user': user_data,
+        'redirect_path': redirect_path,
     }, status=status.HTTP_200_OK)
 
 

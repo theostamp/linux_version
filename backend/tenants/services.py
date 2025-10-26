@@ -354,7 +354,7 @@ class TenantService:
                     internal_manager_name='Γραμματεία'
                 )
                 
-                # Create apartments (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)
+                # Create apartments (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1) - Total mills: 1000
                 apartments_data = [
                     {'number': 'Α1', 'floor': 1, 'area': 85.5, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
                     {'number': 'Α2', 'floor': 1, 'area': 75.0, 'participation_mills': 88, 'heating_mills': 88, 'elevator_mills': 88},
@@ -365,7 +365,7 @@ class TenantService:
                     {'number': 'Γ1', 'floor': 3, 'area': 85.5, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
                     {'number': 'Γ2', 'floor': 3, 'area': 75.0, 'participation_mills': 88, 'heating_mills': 88, 'elevator_mills': 88},
                     {'number': 'Γ3', 'floor': 3, 'area': 90.0, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105},
-                    {'number': 'Δ1', 'floor': 4, 'area': 120.0, 'participation_mills': 140, 'heating_mills': 140, 'elevator_mills': 140},
+                    {'number': 'Δ1', 'floor': 4, 'area': 120.0, 'participation_mills': 121, 'heating_mills': 121, 'elevator_mills': 121},  # Fixed: 140→121 to total 1000
                 ]
                 
                 for apt_data in apartments_data:
