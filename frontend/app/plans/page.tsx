@@ -38,10 +38,15 @@ export default function PlansPage() {
       const response = await api.get('/api/billing/plans/')
       console.log('Plans API response:', response.data)
       
-      // Ensure response.data is an array
+      // Handle different response formats
       if (Array.isArray(response.data)) {
+        // Direct array
         setPlans(response.data)
+      } else if (response.data?.results && Array.isArray(response.data.results)) {
+        // Django REST Framework pagination format
+        setPlans(response.data.results)
       } else if (response.data?.plans && Array.isArray(response.data.plans)) {
+        // Nested plans array
         setPlans(response.data.plans)
       } else {
         console.error('Invalid plans data format:', response.data)
