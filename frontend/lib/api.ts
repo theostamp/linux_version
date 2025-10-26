@@ -141,20 +141,35 @@ import { apiPublic } from './apiPublic';
 export { apiPublic };
 import { toast } from '@/hooks/use-toast';
 
-// Βασικό URL του API. Σε production/preview ΠΑΝΤΑ χρησιμοποιούμε το απομακρυσμένο backend (Railway)
+// Βασικό URL του API.
+// - Σε Vercel/preview/prod: χρησιμοποιούμε same-origin '/api' για να δουλεύουν τα rewrites χωρίς CORS
+// - Αν υπάρχει ρητό env, το τιμάμε
+// - Server-side: προτιμάμε ρητό API_URL, αλλιώς fallback
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
     (window as any).debugApiCalls = true;
-    const envApiUrl = ensureApiUrl(process.env.NEXT_PUBLIC_API_URL);
+    const hostname = window.location.hostname;
 
-    // 1) Αν έχει οριστεί ρητά, χρησιμοποίησέ το
+    // Χρησιμοποίησε same-origin '/api' σε Vercel για να αποφύγουμε CORS
+    if (hostname.includes('vercel.app')) {
+      console.log('[API] Using same-origin /api via Vercel rewrites');
+      return '/api';
+    }
+
+    // Local dev: same-origin '/api' (reverse proxy)
+    if (isLocalHostname(hostname)) {
+      console.log('[API] Using same-origin /api for local development');
+      return '/api';
+    }
+
+    // Αν έχει οριστεί ρητά env, χρησιμοποίησέ το
+    const envApiUrl = ensureApiUrl(process.env.NEXT_PUBLIC_API_URL);
     if (envApiUrl) {
       console.log(`[API] Using backend URL from env: ${envApiUrl}`);
       return envApiUrl;
     }
 
-    // 2) Σε οποιοδήποτε μη-τοπικό hostname, χρησιμοποίησε το remote default
-    //    ώστε να ΜΗΝ βασιζόμαστε σε rewrites/same-origin
+    // Fallback σε remote
     const remote = FALLBACK_REMOTE_API_URL;
     console.warn(`[API] NEXT_PUBLIC_API_URL missing. Falling back to remote: ${remote}`);
     return remote;

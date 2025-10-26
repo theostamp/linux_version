@@ -410,7 +410,8 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://[\w\-]+\.localhost:8080$",
     r"^http://[\w\-]+\.localhost:3000$",
     r"^http://[\w\-]+\.localhost:3001$",
-]  # ✅ Ο *οποιοσδήποτε* sub-domain *.localhost:8080
+    r"^https://[\w\.-]+\.vercel\.app$",
+]  # ✅ Επιτρέπει *.localhost:* και *.vercel.app
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8080",
@@ -438,7 +439,8 @@ _raw_csrf = get_list_env(
     # ✅ Cover common dev hosts and ports by default
     "localhost:8080,localhost:3000,127.0.0.1:8080,127.0.0.1:3000,"
     "demo.localhost:8080,demo.localhost:3000,"
-    "top.localhost:8080,tap.localhost:8080,top.localhost:3000,tap.localhost:3000"
+    "top.localhost:8080,tap.localhost:8080,top.localhost:3000,tap.localhost:3000,"
+    "*.vercel.app"
 )
 CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in _raw_csrf] + [f"https://{h}" for h in _raw_csrf]
 
