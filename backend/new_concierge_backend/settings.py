@@ -372,10 +372,11 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
     'NON_FIELD_ERRORS_KEY': 'error',
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
-    ],
+    # 'DEFAULT_THROTTLE_CLASSES': [
+    #     'rest_framework.throttling.AnonRateThrottle',
+    #     'rest_framework.throttling.UserRateThrottle',
+    # ],  # Temporarily disabled due to Redis auth issue
+    'DEFAULT_THROTTLE_CLASSES': [],  # Temporarily disabled
     'DEFAULT_THROTTLE_RATES': {
         'anon': '1000/hour',  # 1000 requests per hour for anonymous users
         'user': '10000/hour',  # 10000 requests per hour for authenticated users
