@@ -17,7 +17,8 @@ from .views import (
     RevenueAnalyticsView, CustomerAnalyticsView,
     SubscriptionAnalyticsView, UsageAnalyticsView as AdvancedUsageAnalyticsView,
     PaymentAnalyticsView, PredictiveAnalyticsView,
-    CreateCheckoutSessionView, SubscriptionStatusView
+    CreateCheckoutSessionView, SubscriptionStatusView,
+    InitializeStripePricesView
 )
 from .webhooks import StripeWebhookView, PaymentVerificationView
 
@@ -49,6 +50,10 @@ urlpatterns = [
     path('create-checkout-session', CreateCheckoutSessionView.as_view(), name='create-checkout-session-no-slash'),
     path('subscription-status/<str:session_id>/', SubscriptionStatusView.as_view(), name='subscription-status'),
     path('subscription-status/<str:session_id>', SubscriptionStatusView.as_view(), name='subscription-status-no-slash'),
+    
+    # Initialize Stripe Prices (admin only)
+    path('initialize-stripe-prices/', InitializeStripePricesView.as_view(), name='initialize-stripe-prices'),
+    path('initialize-stripe-prices', InitializeStripePricesView.as_view(), name='initialize-stripe-prices-no-slash'),
     
     # Usage Analytics
     path('analytics/usage/', UsageAnalyticsView.as_view(), name='usage-analytics'),

@@ -1481,3 +1481,44 @@ class SubscriptionStatusView(APIView):
                 'status': 'failed',
                 'message': 'An error occurred during setup'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class InitializeStripePricesView(APIView):
+    """
+    Initialize Stripe Products and Prices for all subscription plans.
+    This is a one-time setup endpoint that can be called manually.
+    """
+    permission_classes = [permissions.IsAdminUser]
+    
+    def post(self, request):
+        """Create Stripe prices for all plans"""
+        try:
+            from django.core.management import call_command
+            from io import StringIO
+            
+            # Capture command output
+            output = StringIO()
+            call_command('create_stripe_prices', stdout=output)
+            
+            output_text = output.getvalue()
+            
+            # Check if successful
+            if '✅ STRIPE PRICES CREATED SUCCESSFULLY!' in output_text:
+                return Response({
+                    'status': 'success',
+                    'message': 'Stripe prices created successfully',
+                    'output': output_text
+                })
+            else:
+                return Response({
+                    'status': 'partial',
+                    'message': 'Some prices may have failed',
+                    'output': output_text
+                }, status=status.HTTP_207_MULTI_STATUS)
+                
+        except Exception as e:
+            logger.error(f"Error initializing Stripe prices: {e}")
+            return Response({
+                'status': 'error',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
