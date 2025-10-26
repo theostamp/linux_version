@@ -215,28 +215,60 @@ def register_view(request):
     POST /api/users/register/
     Εγγραφή νέου χρήστη
     """
+    import logging
+    logger = logging.getLogger('django')
+    
+    # Έλεγχος αρχικού schema
+    initial_schema = getattr(connection, 'schema_name', 'unknown')
+    logger.info(f"[REGISTER] Request received - Initial schema: {initial_schema}")
+    logger.info(f"[REGISTER] Request host: {request.get_host()}")
+    logger.info(f"[REGISTER] Request data: email={request.data.get('email')}")
+    
+    # Schema Guard: Απόρριψη αν δεν είμαστε στο public schema πριν την επεξεργασία
+    public_schema = get_public_schema_name()
+    if initial_schema != public_schema and initial_schema != 'unknown':
+        logger.error(f"[REGISTER] Registration attempt on non-public schema: {initial_schema}")
+        return Response({
+            'error': f'Η εγγραφή πρέπει να γίνεται από το public domain. Τρέχον schema: {initial_schema}'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
     serializer = UserRegistrationSerializer(data=request.data)
     if serializer.is_valid():
         # Force user creation in the public schema to avoid accidental tenant isolation
-        public_schema = get_public_schema_name()
-        current_schema = getattr(connection, 'schema_name', 'unknown')
-        print(f">>> REGISTER start - current schema: {current_schema}, switching to: {public_schema}")
+        logger.info(f"[REGISTER] Validation successful - Forcing schema to: {public_schema}")
+        
         with schema_context(public_schema):
             created_in_schema = getattr(connection, 'schema_name', 'unknown')
-            print(f">>> REGISTER within schema_context - active schema: {created_in_schema}")
+            logger.info(f"[REGISTER] Inside schema_context - Active schema: {created_in_schema}")
+            
+            # Διπλός έλεγχος: Επιβεβαίωση ότι είμαστε στο public schema
+            if created_in_schema != public_schema:
+                logger.error(f"[REGISTER] CRITICAL: Schema context failed! Expected '{public_schema}', got '{created_in_schema}'")
+                return Response({
+                    'error': 'Σφάλμα συστήματος: Αποτυχία εξασφάλισης public schema'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
             user = serializer.save()
+            logger.info(f"[REGISTER] User created successfully - ID: {user.id}, Email: {user.email}, Schema: {created_in_schema}")
+        
+        # Επιβεβαίωση μετά το schema_context
+        final_schema = getattr(connection, 'schema_name', 'unknown')
+        logger.info(f"[REGISTER] After schema_context - Schema restored to: {final_schema}")
         
         # Αποστολή email verification
         if EmailService.send_verification_email(user):
+            logger.info(f"[REGISTER] Verification email sent successfully to: {user.email}")
             return Response({
                 'message': 'Εγγραφή επιτυχής. Παρακαλούμε ελέγξτε το email σας για επιβεβαίωση.',
                 'user_id': user.id
             }, status=status.HTTP_201_CREATED)
         else:
+            logger.warning(f"[REGISTER] Failed to send verification email to: {user.email}")
             return Response({
                 'error': 'Εγγραφή επιτυχής αλλά αποτυχία αποστολής email επιβεβαίωσης.'
             }, status=status.HTTP_201_CREATED)
     
+    logger.warning(f"[REGISTER] Validation failed - Errors: {serializer.errors}")
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

@@ -393,6 +393,9 @@ REST_FRAMEWORK = {
 # ----------------------------------------
 # 🌐 CORS
 # ----------------------------------------
+import logging
+logger = logging.getLogger('django')
+
 CORS_ALLOW_CREDENTIALS = True     # για cookies / JWT
 # Get CORS origins from environment variable
 CORS_ALLOWED_ORIGINS = get_list_env(
@@ -410,8 +413,11 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://[\w\-]+\.localhost:8080$",
     r"^http://[\w\-]+\.localhost:3000$",
     r"^http://[\w\-]+\.localhost:3001$",
-    r"^https://[\w\.-]+\.vercel\.app$",
+    r"^https://[\w\.-]+\.vercel\.app$",  # Vercel preview deployments
 ]  # ✅ Επιτρέπει *.localhost:* και *.vercel.app
+
+logger.info(f"[SETTINGS] CORS_ALLOWED_ORIGINS: {CORS_ALLOWED_ORIGINS}")
+logger.info(f"[SETTINGS] CORS_ALLOWED_ORIGIN_REGEXES count: {len(CORS_ALLOWED_ORIGIN_REGEXES)}")
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8080",
@@ -443,6 +449,9 @@ _raw_csrf = get_list_env(
     "*.vercel.app"
 )
 CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in _raw_csrf] + [f"https://{h}" for h in _raw_csrf]
+
+logger.info(f"[SETTINGS] CSRF_TRUSTED_ORIGINS (first 5): {CSRF_TRUSTED_ORIGINS[:5]}...")
+logger.info(f"[SETTINGS] CSRF_TRUSTED_ORIGINS count: {len(CSRF_TRUSTED_ORIGINS)}")
 
 CSRF_COOKIE_NAME = 'csrftoken'
 CSRF_COOKIE_HTTPONLY = False
