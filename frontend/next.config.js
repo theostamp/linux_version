@@ -50,7 +50,7 @@ const nextConfig = {
   // Rewrites to proxy API calls to backend (for Vercel deployment)
   async rewrites() {
     // Get backend URL from environment
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'https://linuxversion-production.up.railway.app';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'https://linux-version-production.up.railway.app';
     
     // Only configure rewrites if we have a backend URL
     if (backendUrl && !backendUrl.includes('localhost')) {
