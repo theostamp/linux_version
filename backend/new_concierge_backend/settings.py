@@ -328,6 +328,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ROOT_URLCONF = 'new_concierge_backend.urls'
 PUBLIC_SCHEMA_URLCONF = 'new_concierge_backend.public_urls'
 
+# Disable APPEND_SLASH to prevent redirect loops with Vercel rewrites
+APPEND_SLASH = False
+
 # ----------------------------------------
 # ⚙️ Templates
 # ----------------------------------------
