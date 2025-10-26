@@ -48,7 +48,7 @@ export default function AuthCallbackPage() {
           body: JSON.stringify({
             code,
             state: stateData,
-            redirect_uri: `${window.location.origin}/auth/callback`
+            redirect_uri: `${window.location.origin}/auth/google/callback`
           })
         })
 
