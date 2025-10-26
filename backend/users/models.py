@@ -6,6 +6,9 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 import uuid
 
+# Import invitation model
+from .models_invitation import TenantInvitation
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
