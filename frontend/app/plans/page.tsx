@@ -35,7 +35,7 @@ export default function PlansPage() {
 
   const fetchPlans = async () => {
     try {
-      const response = await api.get('/api/billing/plans/')
+      const response = await api.get('/billing/plans/')
       console.log('Plans API response:', response.data)
       
       // Handle different response formats
@@ -66,7 +66,7 @@ export default function PlansPage() {
     
     try {
       // Create checkout session
-      const response = await api.post('/api/billing/create-checkout-session/', {
+      const response = await api.post('/billing/create-checkout-session/', {
         plan_id: planId,
         building_name: '' // Optional
       })
