@@ -162,8 +162,8 @@ const nextConfig = {
   // Fix workspace root detection
   outputFileTracingRoot: __dirname,
   
-  // Trailing slash - keep trailing slashes for API compatibility
-  trailingSlash: true,
+  // Trailing slash - disabled to prevent redirect loops with API rewrites
+  trailingSlash: false,
 };
 
 module.exports = withPWA(nextConfig);
