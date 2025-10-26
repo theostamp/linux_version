@@ -248,7 +248,7 @@ export default function SubscriptionGate({
 
               {/* CTA Buttons */}
               <div className="space-y-3">
-                <Link href="/payment?plan=1" className="block">
+                <Link href="/plans" className="block">
                   <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg">
                     <CreditCard className="w-5 h-5 mr-2" />
                     Επιλογή Πλάνου & Αγορά

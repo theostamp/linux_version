@@ -53,7 +53,7 @@ export default function PublicTenantLanding() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/payment?plan=1">
+              <Link href="/plans">
                 <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg">
                   <CreditCard className="w-5 h-5 mr-2" />
                   Ξεκινήστε Δωρεάν Δοκιμή
@@ -214,7 +214,7 @@ export default function PublicTenantLanding() {
                   ))}
                 </ul>
 
-                <Link href={`/payment?plan=${index + 1}`} className="block">
+                <Link href="/plans" className="block">
                   <Button 
                     className={`w-full py-3 ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
                     variant={plan.popular ? 'default' : 'outline'}
@@ -240,7 +240,7 @@ export default function PublicTenantLanding() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/payment?plan=1">
+            <Link href="/plans">
               <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg">
                 <CreditCard className="w-5 h-5 mr-2" />
                 Ξεκινήστε Δωρεάν Δοκιμή
