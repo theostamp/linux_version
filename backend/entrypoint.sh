@@ -48,6 +48,11 @@ echo ""
 echo "🎯 Running auto-initialization..."
 python scripts/auto_initialization.py
 
+# 3.5. Create Stripe Prices for plans
+echo ""
+echo "💳 Creating Stripe Prices..."
+python scripts/create_stripe_prices.py || echo "⚠️ Stripe prices creation failed or already exist"
+
 # 4. Additional migrations if needed
 echo ""
 echo "🔄 Running additional migrations..."
