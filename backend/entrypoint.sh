@@ -29,12 +29,20 @@ until pg_isready -h "$DB_HOST" -p "$DB_PORT" >/dev/null 2>&1; do
 done
 echo "✅ Postgres is up!"
 
-# 2. Auto-initialization (creates tenants, users, demo data)
+# 2. Cleanup database if requested
+if [ "${CLEANUP_DATABASE:-false}" = "true" ]; then
+  echo ""
+  echo "🧹 CLEANUP DATABASE REQUESTED"
+  echo "=============================="
+  python manage.py cleanup_all_data --force || echo "⚠️ Cleanup failed or already clean"
+fi
+
+# 3. Auto-initialization (creates tenants, users, demo data)
 echo ""
 echo "🎯 Running auto-initialization..."
 python scripts/auto_initialization.py
 
-# 3. Additional migrations if needed
+# 4. Additional migrations if needed
 echo ""
 echo "🔄 Running additional migrations..."
 echo "   AUTO_MAKEMIGRATIONS=${AUTO_MAKEMIGRATIONS:-unset}"
@@ -44,12 +52,12 @@ if [ "${AUTO_MAKEMIGRATIONS:-false}" = "true" ]; then
   python manage.py migrate --run-syncdb || true
 fi
 
-# 4. Collect static files
+# 5. Collect static files
 echo ""
 echo "📦 Collecting static files..."
 python manage.py collectstatic --no-input
 
-# 5. Start frontend warm-up in background (skip in Railway)
+# 6. Start frontend warm-up in background (skip in Railway)
 echo ""
 echo "🔥 Initiating frontend warm-up process..."
 if [ -n "$RAILWAY_ENVIRONMENT" ]; then
@@ -62,7 +70,7 @@ else
   echo "   Warm-up script not found, skipping..."
 fi
 
-# 6. Start Django server
+# 7. Start Django server
 echo ""
 echo "🚀 Launching Django server..."
 

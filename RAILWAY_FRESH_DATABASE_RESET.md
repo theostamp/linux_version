@@ -9,33 +9,37 @@
 linux_version/backend/scripts/cleanup_all_data.py
 ```
 
-### Βήμα 2: Εκτέλεση Script στο Railway
+### Βήμα 2: Εκτέλεση Cleanup στο Railway (3 Εύκολοι Τρόποι)
 
-**Μέθοδος 1: Μετο Railway Dashboard Shell (Προτείνεται)**
+**🔥 Μέθοδος 1: Environment Variable (ΠΙΟ ΕΥΚΟΛΗ!)**
 
-1. Πηγαίνετε στο **Railway Dashboard** → Project σας
-2. Κάντε κλικ στο **Backend Service**
-3. Κάντε κλικ στο tab **"Shell"**
-4. Εκτελέστε:
+1. Πηγαίνετε στο **Railway Dashboard** → Backend Service → Variables
+2. Προσθέστε νέα variable:
+   - **Name:** `CLEANUP_DATABASE`
+   - **Value:** `true`
+3. Πατήστε **Redeploy** ή κάντε **Save** (θα redeploy αυτόματα)
+4. Το cleanup θα τρέξει αυτόματα με το next deployment!
+
+**Για να κάνετε clean start μία φορά:**
+- Προσθέστε `CLEANUP_DATABASE=true`
+- Redeploy
+- Αφαιρέστε το variable
+- Redeploy ξανά
+
+---
+
+**Μέθοδος 3: Railway CLI Shell (Alternative)**
 ```bash
-python manage.py cleanup_all_data --force
-```
-
-**Μέθοδος 2: Με Railway CLI**
-```bash
-# Connect to Railway
+# Με το Railway CLI
 cd linux_version
-railway link
-
-# Open shell στο Railway
 railway shell
 
-# Στο Railway shell, τρέξτε:
+# Στο Railway shell:
 cd /app
 python manage.py cleanup_all_data --force
 ```
 
-**⚠️ ΣΗΜΕΙΩΣΗ:** Το `railway run` εργάζεται στο local environment σας, όχι στο Railway! Για να εκτελέσετε στο Railway, χρησιμοποιήστε το **Shell** από το Railway Dashboard.
+**⚠️ ΣΗΜΕΙΩΣΗ:** Προτείνεται η **Μέθοδος 1** (Environment Variable) γιατί είναι η πιο απλή!
 
 ### Βήμα 3: Επαναφορά Demo Data
 
