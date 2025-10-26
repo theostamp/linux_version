@@ -208,12 +208,11 @@ def cleanup_data(schema_name='demo', force=False):
                 # 7. Reset superuser password if exists
                 print("\n🔑 Επαναφορά superuser...")
                 try:
-                    admin = CustomUser.objects.get(username='admin')
+                    admin = CustomUser.objects.get(email='admin@demo.localhost')
                     admin.set_password('admin123456')
-                    admin.email = 'admin@demo.localhost'
                     admin.save()
                     deleted_counts['superuser_reset'] = True
-                    print(f"   ✅ Superuser password επαναφέρθηκε (admin / admin123456)")
+                    print(f"   ✅ Superuser password επαναφέρθηκε (admin@demo.localhost / admin123456)")
                 except CustomUser.DoesNotExist:
                     deleted_counts['superuser_reset'] = False
                     print(f"   ℹ️ Δεν υπάρχει superuser για επαναφορά")

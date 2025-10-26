@@ -109,11 +109,10 @@ class Command(BaseCommand):
                 # Reset superuser
                 self.stdout.write('🔑 Επαναφορά superuser...')
                 try:
-                    admin = CustomUser.objects.get(username='admin')
+                    admin = CustomUser.objects.get(email='admin@demo.localhost')
                     admin.set_password('admin123456')
-                    admin.email = 'admin@demo.localhost'
                     admin.save()
-                    self.stdout.write('✅ Superuser επαναφέρθηκε (admin / admin123456)')
+                    self.stdout.write('✅ Superuser επαναφέρθηκε (admin@demo.localhost / admin123456)')
                 except CustomUser.DoesNotExist:
                     self.stdout.write('ℹ️ Δεν υπάρχει superuser')
             
