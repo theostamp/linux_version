@@ -50,7 +50,7 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
         console.log('LoginForm: Subscription status:', data.subscription?.status);
 
         // Redirect based on subscription status
-        const redirectPath = hasActiveSubscription ? finalRedirect : '/payment';
+        const redirectPath = hasActiveSubscription ? finalRedirect : '/plans';
         console.log('LoginForm: Redirecting to:', redirectPath);
 
         setTimeout(() => {
@@ -58,9 +58,9 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
         }, 100);
       } catch (subError) {
         console.error('LoginForm: Subscription check error:', subError);
-        // If subscription check fails, redirect to payment to be safe
+        // If subscription check fails, redirect to plans to be safe
         setTimeout(() => {
-          router.push('/payment');
+          router.push('/plans');
         }, 100);
       }
 
