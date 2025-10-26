@@ -32,9 +32,10 @@ echo "✅ Postgres is up!"
 # 2. Cleanup database if requested
 if [ "${CLEANUP_DATABASE:-false}" = "true" ]; then
   echo ""
-  echo "🧹 CLEANUP DATABASE REQUESTED"
-  echo "=============================="
-  python manage.py cleanup_all_data --force || echo "⚠️ Cleanup failed or already clean"
+  echo "🧹 FULL DATABASE CLEANUP REQUESTED"
+  echo "===================================="
+  echo "⚠️  This will delete ALL users, tenants, and subscriptions!"
+  python manage.py cleanup_database_full --force || echo "⚠️ Cleanup failed or already clean"
 fi
 
 # 3. Auto-initialization (creates tenants, users, demo data)
