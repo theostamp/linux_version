@@ -44,9 +44,11 @@ urlpatterns = [
     # Payment intent
     path('payment-intent/', CreatePaymentIntentView.as_view(), name='create-payment-intent'),
     
-    # Stripe Checkout Session
+    # Stripe Checkout Session (with and without trailing slash for compatibility)
     path('create-checkout-session/', CreateCheckoutSessionView.as_view(), name='create-checkout-session'),
+    path('create-checkout-session', CreateCheckoutSessionView.as_view(), name='create-checkout-session-no-slash'),
     path('subscription-status/<str:session_id>/', SubscriptionStatusView.as_view(), name='subscription-status'),
+    path('subscription-status/<str:session_id>', SubscriptionStatusView.as_view(), name='subscription-status-no-slash'),
     
     # Usage Analytics
     path('analytics/usage/', UsageAnalyticsView.as_view(), name='usage-analytics'),
