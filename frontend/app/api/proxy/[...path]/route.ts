@@ -83,6 +83,14 @@ async function handleRequest(
 
     const response = await fetch(targetUrl, requestOptions);
 
+    // Handle redirects (3xx status codes)
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get('location');
+      if (location) {
+        return NextResponse.redirect(location, response.status);
+      }
+    }
+
     if (!response.ok) {
       return NextResponse.json(
         { error: `Backend request failed: ${response.statusText}` },
@@ -90,8 +98,18 @@ async function handleRequest(
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    // Try to parse as JSON, fallback to text
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const data = await response.json();
+      return NextResponse.json(data);
+    } else {
+      const text = await response.text();
+      return new NextResponse(text, {
+        status: response.status,
+        headers: { 'Content-Type': contentType || 'text/plain' }
+      });
+    }
   } catch (error) {
     console.error('Proxy error:', error);
     return NextResponse.json(
