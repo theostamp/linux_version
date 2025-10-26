@@ -6,6 +6,14 @@
   },
   "rewrites": [
     {
+      "source": "/api/billing/(.*)",
+      "destination": "https://linuxversion-production.up.railway.app/api/billing/$1"
+    },
+    {
+      "source": "/api/users/(.*)",
+      "destination": "https://linuxversion-production.up.railway.app/api/users/$1"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "https://linuxversion-production.up.railway.app/api/$1"
     }
