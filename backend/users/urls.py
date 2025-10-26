@@ -3,7 +3,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import login_view, CustomTokenObtainPairView
+from .views import login_view, CustomTokenObtainPairView, me_view
 from .oauth_views import google_oauth_initiate, microsoft_oauth_initiate, oauth_callback, oauth_health
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .profile_views import (
@@ -31,6 +31,8 @@ urlpatterns = [
     path('register', views.register_view, name='register-no-slash'),  # Without trailing slash
     path('login/', login_view, name='user-login'),  # With trailing slash
     path('login', login_view, name='user-login-no-slash'),  # Without trailing slash
+    path('me/', me_view, name='user-me'),  # With trailing slash
+    path('me', me_view, name='user-me-no-slash'),  # Without trailing slash
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/simple/', TokenObtainPairView.as_view(), name='token_obtain_pair_simple'),
 
