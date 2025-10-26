@@ -47,12 +47,12 @@ export default function RegisterForm() {
       await api.post("/api/users/register", registrationData);
 
       // Show success message
-      toast.success("Επιτυχής εγγραφή! Ανακατεύθυνση...");
+      toast.success("Επιτυχής εγγραφή! Παρακαλώ συνδεθείτε...");
 
-      // Redirect after short delay
+      // Redirect to login page after registration
       setTimeout(() => {
-        router.push("/plans");
-      }, 1000);
+        router.push("/login");
+      }, 1500);
 
     } catch (err: any) {
       console.error("Registration error:", err);
