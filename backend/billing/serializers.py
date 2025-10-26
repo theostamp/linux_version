@@ -25,9 +25,11 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'max_api_calls', 'max_storage_gb',
             'has_analytics', 'has_custom_integrations',
             'has_priority_support', 'has_white_label',
-            'trial_days', 'is_active'
+            'trial_days', 'is_active',
+            # Stripe integration fields
+            'stripe_product_id', 'stripe_price_id_monthly', 'stripe_price_id_yearly'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'stripe_product_id', 'stripe_price_id_monthly', 'stripe_price_id_yearly']
 
 
 class UserSubscriptionSerializer(serializers.ModelSerializer):
