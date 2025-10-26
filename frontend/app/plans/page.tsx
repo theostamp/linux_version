@@ -37,6 +37,7 @@ export default function PlansPage() {
     try {
       const response = await api.get('/billing/plans/')
       console.log('Plans API response:', response.data)
+      console.log('Plans loaded successfully')
       
       // Handle different response formats
       if (Array.isArray(response.data)) {
