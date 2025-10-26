@@ -106,6 +106,8 @@ export default function SubscriptionGate({
     ? subscriptionStatus === 'active'
     : hasSubscription;
 
+  console.log('[SubscriptionGate] Logic check - subscriptionStatus:', subscriptionStatus, 'hasSubscription:', hasSubscription, 'requiredStatus:', requiredStatus, 'meetsRequirement:', meetsRequirement);
+
   // If user has subscription, show subscription management page instead of children
   if (hasSubscription) {
     return (
@@ -189,7 +191,9 @@ export default function SubscriptionGate({
 
   // If user doesn't have required subscription, show fallback or default upgrade page
   if (!meetsRequirement) {
+    console.log('[SubscriptionGate] User does not meet requirement, showing fallback or upgrade page');
     if (fallback) {
+      console.log('[SubscriptionGate] Using provided fallback component');
       return <>{fallback}</>;
     }
 
@@ -279,5 +283,6 @@ export default function SubscriptionGate({
   }
 
   // User has valid subscription, render children
+  console.log('[SubscriptionGate] User meets requirement, rendering children');
   return <>{children}</>;
 }
