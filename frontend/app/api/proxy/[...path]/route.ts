@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const RAILWAY_BACKEND_URL = 'https://linux-version-production.up.railway.app';
+const RAILWAY_BACKEND_URL = 'https://linuxversion-production.up.railway.app';
 
 export async function GET(
   request: NextRequest,
