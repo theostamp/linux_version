@@ -31,6 +31,14 @@ def google_oauth_initiate(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Validate required Google OAuth configuration
+        if not getattr(settings, 'GOOGLE_CLIENT_ID', None) or not getattr(settings, 'GOOGLE_CLIENT_SECRET', None):
+            logger.error("Google OAuth not configured: missing GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET")
+            return Response(
+                {'error': 'Google OAuth is not configured on the server'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+
         # Create OAuth flow
         flow = OAuthService.get_google_flow(redirect_uri)
         

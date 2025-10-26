@@ -59,3 +59,5 @@ frontend/.next.backup/
 raspberry-pi-kiosk/raspios-lite.img
 backend/celerybeat-schedule
 kiosk_images/
+
+.vercel

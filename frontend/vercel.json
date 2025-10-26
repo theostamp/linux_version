@@ -1,47 +1,7 @@
 {
-  "build": {
-    "env": {
-      "NEXT_PUBLIC_API_URL": "https://linuxversion-production.up.railway.app/api",
-      "NEXT_PUBLIC_DEFAULT_API_URL": "https://linuxversion-production.up.railway.app/api",
-      "NEXT_PUBLIC_DJANGO_API_URL": "https://linuxversion-production.up.railway.app",
-      "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "590666847148-a2e037ah9q9f1vogsl6b34mk944bug5g.apps.googleusercontent.com",
-      "NEXT_PUBLIC_APP_NAME": "New Concierge",
-      "NEXT_PUBLIC_APP_URL": "https://linux-version.vercel.app",
-      "NODE_ENV": "production",
-      "NEXT_PUBLIC_ENV": "production",
-      "API_URL": "https://linuxversion-production.up.railway.app/api",
-      "CORE_API_URL": "https://linuxversion-production.up.railway.app/api/tenants/internal/create/",
-      "INTERNAL_API_SECRET_KEY": "Pf2irUXpdvZcAZ//DD8noS76BnSCLtwtINL8yqJM62Y="
-    }
-  },
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 30
     }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "https://linuxversion-production.up.railway.app/api/$1"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization"
-        }
-      ]
-    }
-  ]
+  }
 }

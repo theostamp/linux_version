@@ -10,17 +10,10 @@ const getApiBaseUrl = () => {
     const hostname = window.location.hostname;
     console.log(`[API PUBLIC] Current hostname: ${hostname}`);
     
-    // For Vercel deployments, use environment variable for backend URL
+    // On Vercel, prefer same-origin '/api' to leverage rewrites and avoid CORS
     if (hostname.includes('vercel.app')) {
-      const backendUrl = ensureApiUrl(process.env.NEXT_PUBLIC_API_URL) || FALLBACK_PUBLIC_API_URL;
-      if (!process.env.NEXT_PUBLIC_API_URL) {
-        console.warn(
-          `[API PUBLIC] NEXT_PUBLIC_API_URL missing on Vercel host ${hostname}. Falling back to ${backendUrl}`
-        );
-      } else {
-        console.log(`[API PUBLIC] Using backend URL from env: ${backendUrl}`);
-      }
-      return backendUrl;
+      console.log('[API PUBLIC] Using same-origin /api via Vercel rewrites');
+      return '/api';
     }
     
     // Αν είναι tenant subdomain (π.χ. demo.localhost), χρησιμοποιούμε το ίδιο subdomain για το API
@@ -30,11 +23,10 @@ const getApiBaseUrl = () => {
       return apiUrl;
     }
     
-    // For localhost development
+    // For localhost development, also use same-origin '/api' to match local reverse proxies
     if (isLocalHostname(hostname)) {
-      const origin = window.location.origin;
-      console.log(`[API PUBLIC] Using same origin for API calls: ${origin}`);
-      return origin;
+      console.log('[API PUBLIC] Using same-origin /api for local development');
+      return '/api';
     }
 
     console.warn(
