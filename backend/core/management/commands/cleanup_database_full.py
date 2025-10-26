@@ -85,18 +85,36 @@ class Command(BaseCommand):
                     except Exception as e:
                         self.stdout.write(f'   ⚠️  Failed to delete domains: {e}')
                     
-                    # 4. Users (preserve system admin)
+                    # 4. Users (preserve system admin) - use raw SQL to avoid migration issues
                     try:
+                        from django.db import connection
                         system_admin_email = 'theostam1966@gmail.com'
-                        system_admin = CustomUser.objects.filter(email=system_admin_email).first()
-                        if system_admin:
-                            CustomUser.objects.exclude(email=system_admin_email).delete()
-                            self.stdout.write(f'   ✓ Users deleted (preserved system admin: {system_admin_email})')
-                        else:
-                            CustomUser.objects.all().delete()
-                            self.stdout.write('   ✓ Users deleted (no system admin found)')
+                        
+                        with connection.cursor() as cursor:
+                            # Count users before deletion
+                            cursor.execute("SELECT COUNT(*) FROM users_customuser")
+                            user_count_before = cursor.fetchone()[0]
+                            
+                            # Delete all users except system admin
+                            cursor.execute("DELETE FROM users_customuser WHERE email != %s", [system_admin_email])
+                            deleted_count = cursor.rowcount
+                            
+                            # Count users after deletion
+                            cursor.execute("SELECT COUNT(*) FROM users_customuser")
+                            user_count_after = cursor.fetchone()[0]
+                            
+                            self.stdout.write(f'   ✓ Users deleted: {deleted_count} users (preserved system admin: {system_admin_email})')
+                            self.stdout.write(f'   ✓ Users remaining: {user_count_after}')
+                            
                     except Exception as e:
                         self.stdout.write(f'   ⚠️  Failed to delete users: {e}')
+                        # Try Django ORM as fallback
+                        try:
+                            system_admin_email = 'theostam1966@gmail.com'
+                            CustomUser.objects.exclude(email=system_admin_email).delete()
+                            self.stdout.write(f'   ✓ Users deleted via ORM fallback (preserved system admin: {system_admin_email})')
+                        except Exception as e2:
+                            self.stdout.write(f'   ❌ Both raw SQL and ORM failed: {e2}')
                     
                     self.stdout.write(self.style.SUCCESS('\n✅ Full database cleanup completed!'))
                     self.stdout.write(self.style.SUCCESS('   Plans and system data preserved'))
