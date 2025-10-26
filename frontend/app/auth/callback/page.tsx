@@ -36,7 +36,7 @@ export default function AuthCallbackPage() {
 
         // Parse state to get redirect info
         const stateData = JSON.parse(decodeURIComponent(state))
-        const { redirectTo = '/dashboard' } = stateData
+        const { redirectTo = '/plans' } = stateData
 
         // Exchange code for tokens
         const apiBaseUrl = ensureApiUrl(process.env.NEXT_PUBLIC_API_URL) || getDefaultRemoteApiUrl();

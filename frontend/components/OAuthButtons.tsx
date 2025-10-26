@@ -47,7 +47,7 @@ export default function OAuthButtons({ mode, onSuccess }: OAuthButtonsProps) {
       const redirectUri = encodeURIComponent(`${origin}/auth/callback`)
       const state = encodeURIComponent(JSON.stringify({
         mode,
-        redirectTo: '/dashboard',
+        redirectTo: '/plans',
         provider: 'google'
       }))
 
