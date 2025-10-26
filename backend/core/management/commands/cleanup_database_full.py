@@ -65,15 +65,20 @@ class Command(BaseCommand):
                     UserSubscription.objects.all().delete()
                     self.stdout.write('   ✓ Billing data deleted')
                     
-                    # 2. Domains
-                    Domain.objects.all().delete()
-                    self.stdout.write('   ✓ Domains deleted')
-                    
-                    # 3. Tenants (this will also drop their schemas)
+                    # 2. Tenants (delete first, before domains)
+                    tenant_count_before = Client.objects.count()
                     for tenant in Client.objects.all():
                         self.stdout.write(f'   🗑️  Dropping schema: {tenant.schema_name}')
-                        tenant.delete()
-                    self.stdout.write('   ✓ Tenants deleted')
+                        try:
+                            tenant.delete()
+                        except Exception as e:
+                            self.stdout.write(f'   ⚠️  Failed to delete tenant {tenant.schema_name}: {e}')
+                    self.stdout.write(f'   ✓ Tenants deleted ({tenant_count_before} tenants)')
+                    
+                    # 3. Domains (delete after tenants)
+                    domain_count_before = Domain.objects.count()
+                    Domain.objects.all().delete()
+                    self.stdout.write(f'   ✓ Domains deleted ({domain_count_before} domains)')
                     
                     # 4. Users
                     CustomUser.objects.all().delete()

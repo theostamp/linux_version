@@ -101,7 +101,7 @@ export default function PlansPage() {
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Επιλέξτε το Πακέτο σας</h1>
         <p className="text-xl text-gray-600">
-          Ξεκινήστε με {plans[0]?.trial_days || 14} ημέρες δωρεάν δοκιμή
+          Ξεκινήστε με {plans[0]?.trial_days || 14} ημέρες δωρεάν δοκιμή!
         </p>
       </div>
 

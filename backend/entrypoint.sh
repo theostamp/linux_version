@@ -29,6 +29,11 @@ until pg_isready -h "$DB_HOST" -p "$DB_PORT" >/dev/null 2>&1; do
 done
 echo "✅ Postgres is up!"
 
+# Give Postgres extra time to fully initialize
+echo "⏳ Waiting 5 seconds for Postgres to fully initialize..."
+sleep 5
+echo "✅ Postgres ready!"
+
 # 2. Cleanup database if requested
 if [ "${CLEANUP_DATABASE:-false}" = "true" ]; then
   echo ""
