@@ -21,6 +21,8 @@ from .serializers import (
     PasswordChangeSerializer, EmailVerificationSerializer, UserProfileSerializer
 )
 from .services import EmailService, InvitationService, PasswordResetService, UserVerificationService
+from django.db import connection
+from django_tenants.utils import schema_context, get_public_schema_name
 from core.throttles import (
     LoginThrottle, RegistrationThrottle, PasswordResetThrottle,
     InvitationThrottle, EmailVerificationThrottle, AuthEndpointThrottle
@@ -215,7 +217,14 @@ def register_view(request):
     """
     serializer = UserRegistrationSerializer(data=request.data)
     if serializer.is_valid():
-        user = serializer.save()
+        # Force user creation in the public schema to avoid accidental tenant isolation
+        public_schema = get_public_schema_name()
+        current_schema = getattr(connection, 'schema_name', 'unknown')
+        print(f">>> REGISTER start - current schema: {current_schema}, switching to: {public_schema}")
+        with schema_context(public_schema):
+            created_in_schema = getattr(connection, 'schema_name', 'unknown')
+            print(f">>> REGISTER within schema_context - active schema: {created_in_schema}")
+            user = serializer.save()
         
         # Αποστολή email verification
         if EmailService.send_verification_email(user):

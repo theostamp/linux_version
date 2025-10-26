@@ -4,7 +4,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 from .views import login_view, CustomTokenObtainPairView
-from .oauth_views import google_oauth_initiate, microsoft_oauth_initiate, oauth_callback
+from .oauth_views import google_oauth_initiate, microsoft_oauth_initiate, oauth_callback, oauth_health
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .profile_views import (
     UserProfileView, 
@@ -53,4 +53,5 @@ urlpatterns = [
     path('auth/google/', google_oauth_initiate, name='google-oauth-initiate'),
     path('auth/microsoft/', microsoft_oauth_initiate, name='microsoft-oauth-initiate'),
     path('auth/callback/', oauth_callback, name='oauth-callback'),
+    path('auth/health/', oauth_health, name='oauth-health'),
 ]

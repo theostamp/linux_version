@@ -62,6 +62,23 @@ def google_oauth_initiate(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+def oauth_health(request):
+    """
+    Lightweight health endpoint to validate OAuth server configuration.
+    Returns 200 if Google OAuth env vars are present; otherwise 503.
+    GET /api/users/auth/health/
+    """
+    has_client = bool(getattr(settings, 'GOOGLE_CLIENT_ID', None))
+    has_secret = bool(getattr(settings, 'GOOGLE_CLIENT_SECRET', None))
+    status_code = status.HTTP_200_OK if (has_client and has_secret) else status.HTTP_503_SERVICE_UNAVAILABLE
+    return Response({
+        'google_client_id_set': has_client,
+        'google_client_secret_set': has_secret,
+    }, status=status_code)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def microsoft_oauth_initiate(request):
     """
     Initiate Microsoft OAuth flow
