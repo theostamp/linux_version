@@ -12,6 +12,6 @@ restartPolicyType = "on_failure"
 NODE_ENV = "production"
 NEXT_TELEMETRY_DISABLED = "1"
 NEXT_PUBLIC_API_URL = "https://linuxversion-production.up.railway.app/api"
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "pk_test_51SKvgDALGEaGtPDYQjJzEQJilEg23btupuoQHNWPtuGazZOAdnQ7mHwYDFg5aTAbASJPfvrsqSZHZ6DyHiLF1AOx0077mYI0Bn"
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "pk_test_51SKvcFRpRJxSaTlvMhLj0vC2j37lnAusNRTzA9fAPEABTEGQmv9AgWu0gKcyi6a30QWvGe9S7sK1omr66ENs1YY7006C9TYSn9"
 
 
