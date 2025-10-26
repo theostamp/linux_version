@@ -52,7 +52,13 @@ function getCachedOrInFlight(cacheKey: string): any {
 
 export function getApiBase(): string {
   if (typeof window !== 'undefined') {
-    // Client-side - use same origin (no CORS)
+    // Client-side - check if we're on Vercel and use Railway backend
+    const hostname = window.location.hostname;
+    if (hostname.includes('vercel.app') || hostname.includes('railway.app')) {
+      // Use Railway backend directly for production deployments
+      return 'https://linuxversion-production.up.railway.app';
+    }
+    // For localhost, use same origin
     return window.location.origin;
   }
   if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_BASE_URL) {
