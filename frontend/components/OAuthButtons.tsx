@@ -62,8 +62,8 @@ export default function OAuthButtons({ mode, onSuccess }: OAuthButtonsProps) {
         }
       }
       
-      // Backend route lives under /api/users/auth/google/ so we append to apiBase already ending with /api
-      window.location.href = `${apiBaseUrl}/users/auth/google/?redirect_uri=${redirectUri}&state=${state}`
+      // Backend route lives under /api/users/auth/google (no trailing slash for consistency with APPEND_SLASH=False)
+      window.location.href = `${apiBaseUrl}/users/auth/google?redirect_uri=${redirectUri}&state=${state}`
     } catch (error) {
       console.error('Google OAuth error:', error)
       toast.error('Σφάλμα κατά την σύνδεση με Google')

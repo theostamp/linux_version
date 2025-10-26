@@ -53,7 +53,8 @@ urlpatterns = [
     path('', include(router.urls)),
     
     # OAuth endpoints
-    path('auth/google/', google_oauth_initiate, name='google-oauth-initiate'),
+    path('auth/google/', google_oauth_initiate, name='google-oauth-initiate'),  # With trailing slash
+    path('auth/google', google_oauth_initiate, name='google-oauth-initiate-no-slash'),  # Without trailing slash
     path('auth/microsoft/', microsoft_oauth_initiate, name='microsoft-oauth-initiate'),
     path('auth/callback/', oauth_callback, name='oauth-callback'),
     path('auth/health/', oauth_health, name='oauth-health'),
