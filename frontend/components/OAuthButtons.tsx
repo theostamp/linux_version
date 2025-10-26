@@ -63,6 +63,7 @@ export default function OAuthButtons({ mode, onSuccess }: OAuthButtonsProps) {
       }
       
       // Backend route lives under /api/users/auth/google (no trailing slash for consistency with APPEND_SLASH=False)
+      // Fixed redirect URI to match Railway environment: /auth/google/callback
       window.location.href = `${apiBaseUrl}/users/auth/google?redirect_uri=${redirectUri}&state=${state}`
     } catch (error) {
       console.error('Google OAuth error:', error)
