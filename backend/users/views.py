@@ -77,10 +77,18 @@ def login_view(request):
     print(">>> Χρήστης από authenticate():", user)
 
     if user is None:
-        return Response(
-            {'error': 'Μη έγκυρα στοιχεία σύνδεσης'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
+        # Ελέγχουμε αν υπάρχει ο χρήστης για πιο χρήσιμο error message
+        try:
+            existing_user = user_model.objects.get(email=email)
+            return Response(
+                {'error': 'Ο κωδικός που εισάγατε δεν είναι σωστός. Παρακαλώ δοκιμάστε ξανά.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        except user_model.DoesNotExist:
+            return Response(
+                {'error': 'Δεν υπάρχει χρήστης με αυτό το email. Παρακαλώ ελέγξτε το email σας.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
     # Δημιουργία JWT tokens
     refresh = RefreshToken.for_user(user)
