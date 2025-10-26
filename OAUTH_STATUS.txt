@@ -1,0 +1,18 @@
+
+## Quick Check
+
+Current setup:
+- Frontend sends: https://linux-version.vercel.app/auth/google/callback
+- Backend uses: (from frontend request)
+- Railway env: GOOGLE_REDIRECT_URI=https://linux-version.vercel.app/auth/google/callback
+
+✅ Frontend and Backend are correctly configured.
+
+❌ Google Cloud Console is NOT configured with this redirect URI.
+
+## Action Required:
+Go to Google Cloud Console and add this redirect URI:
+https://linux-version.vercel.app/auth/google/callback
+
+See GOOGLE_OAUTH_SETUP.md for detailed instructions.
+

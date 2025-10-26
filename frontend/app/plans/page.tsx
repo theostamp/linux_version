@@ -36,7 +36,18 @@ export default function PlansPage() {
   const fetchPlans = async () => {
     try {
       const response = await api.get('/api/billing/plans/')
-      setPlans(response.data)
+      console.log('Plans API response:', response.data)
+      
+      // Ensure response.data is an array
+      if (Array.isArray(response.data)) {
+        setPlans(response.data)
+      } else if (response.data?.plans && Array.isArray(response.data.plans)) {
+        setPlans(response.data.plans)
+      } else {
+        console.error('Invalid plans data format:', response.data)
+        toast.error('Μη έγκυρη μορφή δεδομένων πακέτων')
+        setPlans([])
+      }
     } catch (error) {
       console.error('Failed to fetch plans:', error)
       toast.error('Αποτυχία φόρτωσης πακέτων')
