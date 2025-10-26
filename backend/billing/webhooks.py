@@ -133,11 +133,12 @@ class StripeWebhookView(APIView):
                     stripe_checkout_session_id=stripe_checkout_session_id
                 )
 
-                # Link user to tenant
+                # Link user to tenant and make them tenant admin
                 user.tenant = tenant
                 user.is_staff = True
-                user.role = 'manager'
-                user.save(update_fields=['tenant', 'is_staff', 'role'])
+                user.is_superuser = True  # Full admin rights for their tenant
+                user.role = 'manager'  # Tenant owner/admin role
+                user.save(update_fields=['tenant', 'is_staff', 'is_superuser', 'role'])
 
                 logger.info(f"[WEBHOOK] Provisioning complete for {user.email} → {tenant.schema_name}")
 

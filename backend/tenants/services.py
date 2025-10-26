@@ -185,14 +185,16 @@ class TenantService:
 
                 # Create user in tenant schema with SAME hashed password
                 # Use create() instead of create_user() to avoid re-hashing the password
+                # User is created as TENANT ADMIN (superuser within their tenant)
                 tenant_user = CustomUser.objects.create(
                     email=user.email,
                     password=user.password,  # Already hashed - copy directly
                     first_name=user.first_name,
                     last_name=user.last_name,
                     is_staff=True,
+                    is_superuser=True,  # Full admin rights within this tenant
                     is_active=True,
-                    role='manager',
+                    role='manager',  # Tenant owner/admin role
                     office_name=user.office_name or f"{user.get_full_name()}'s Office",
                     office_phone=user.office_phone,
                     office_address=user.office_address,
