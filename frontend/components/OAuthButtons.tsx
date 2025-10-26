@@ -51,8 +51,17 @@ export default function OAuthButtons({ mode, onSuccess }: OAuthButtonsProps) {
         provider: 'google'
       }))
 
-      // Resolve API base (includes /api suffix)
-      const apiBaseUrl = ensureApiUrl(process.env.NEXT_PUBLIC_API_URL) || getDefaultRemoteApiUrl()
+      // Use same-origin /api for Vercel rewrites (same as in api.ts)
+      let apiBaseUrl = '/api'
+      
+      // Fallback to remote URL if not in Vercel
+      if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname
+        if (!hostname.includes('vercel.app') && !hostname.includes('localhost')) {
+          apiBaseUrl = ensureApiUrl(process.env.NEXT_PUBLIC_API_URL) || getDefaultRemoteApiUrl()
+        }
+      }
+      
       // Backend route lives under /api/users/auth/google/ so we append to apiBase already ending with /api
       window.location.href = `${apiBaseUrl}/users/auth/google/?redirect_uri=${redirectUri}&state=${state}`
     } catch (error) {
