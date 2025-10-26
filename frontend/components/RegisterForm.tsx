@@ -44,7 +44,7 @@ export default function RegisterForm() {
         password_confirm: data.confirmPassword
       };
 
-      await api.post("/api/users/register/", registrationData);
+      await api.post("/api/users/register", registrationData);
 
       // Show success message
       toast.success("Επιτυχής εγγραφή! Ανακατεύθυνση...");
