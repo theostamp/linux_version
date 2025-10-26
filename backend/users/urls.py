@@ -42,7 +42,8 @@ urlpatterns = [
     path('profile/delete-account/', UserAccountDeletionView.as_view(), name='user-delete-account'),
 
     # Subscription endpoints (IMPORTANT: Must be before router.urls to avoid conflicts)
-    path('subscription/', UserCurrentSubscriptionView.as_view(), name='user-subscription'),
+    path('subscription/', UserCurrentSubscriptionView.as_view(), name='user-subscription'),  # With trailing slash
+    path('subscription', UserCurrentSubscriptionView.as_view(), name='user-subscription-no-slash'),  # Without trailing slash
     path('subscription/plans/', UserSubscriptionPlansView.as_view(), name='user-subscription-plans'),
     path('subscription/billing-history/', UserSubscriptionBillingHistoryView.as_view(), name='user-billing-history'),
     path('subscription/actions/', UserSubscriptionActionsView.as_view(), name='user-subscription-actions'),
