@@ -269,6 +269,14 @@ class UserSubscription(models.Model):
         help_text='Tenant domain for this subscription (e.g., etherm2021.localhost)'
     )
 
+    # Stripe checkout session ID for idempotency
+    stripe_checkout_session_id = models.CharField(
+        max_length=255,
+        blank=True,
+        unique=True,
+        help_text='Stripe checkout session ID for idempotency'
+    )
+
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

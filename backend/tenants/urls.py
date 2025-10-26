@@ -1,15 +1,10 @@
-from django.urls import path, include  
-    # type: ignore
-from rest_framework.routers import DefaultRouter
-from .views import TenantViewSet
-from .internal_views import InternalTenantCreateView
+# backend/tenants/urls.py
 
-router = DefaultRouter()
-router.register("", TenantViewSet)   # /api/tenants/
+from django.urls import path
+from .views import AcceptTenantInviteView
+
+app_name = 'tenants'
 
 urlpatterns = [
-    path("", include(router.urls)),
-    
-    # Internal API endpoints (secured with IsInternalService permission)
-    path("internal/create/", InternalTenantCreateView.as_view(), name="internal-tenant-create"),
+    path('accept-invite/', AcceptTenantInviteView.as_view(), name='accept-tenant-invite'),
 ]

@@ -51,7 +51,7 @@ export default function RegisterForm() {
 
       // Redirect after short delay
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/plans");
       }, 1000);
 
     } catch (err: any) {

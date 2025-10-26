@@ -46,17 +46,15 @@ export default function SubscriptionSuccessPage() {
           setStatus('completed');
           toast.success('Ο χώρος εργασίας σας είναι έτοιμος! Ανακατεύθυνση...');
 
-          // We received the subdomain and the one-time token
-          const { subdomain, token } = data;
-
-          // Construct the new URL. Handles localhost with ports and production domains.
-          const protocol = window.location.protocol;
-          const host = window.location.host.split('.').slice(-2).join('.'); // e.g., 'localhost:8080' or 'example.com'
-
-          // Redirect to the new subdomain with the one-time token
+          // Store token for immediate access
+          if (data.token) {
+            localStorage.setItem('access_token', data.token)
+          }
+          
+          // Redirect to dashboard after 2 seconds
           setTimeout(() => {
-            window.location.href = `${protocol}//${subdomain}.${host}/auth/verify?token=${token}`;
-          }, 1500);
+            router.push('/dashboard')
+          }, 2000)
 
         } else if (data.status === 'failed') {
           clearInterval(intervalId);

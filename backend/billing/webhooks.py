@@ -72,81 +72,78 @@ class StripeWebhookView(APIView):
 
     def handle_checkout_session_completed(self, session):
         """
-        Handles the logic for a completed Stripe checkout session.
-
-        This webhook calls the internal API to create the tenant after successful payment.
+        Idempotent webhook handler - uses stripe_checkout_session_id as idempotency key.
         """
-        import requests
-        from django.conf import settings
-
-        client_reference_id = session.get('client_reference_id')
+        from tenants.services import TenantService
+        from billing.models import UserSubscription, SubscriptionPlan
+        
+        stripe_checkout_session_id = session.get('id')
         stripe_customer_id = session.get('customer')
         stripe_subscription_id = session.get('subscription')
-        stripe_checkout_session_id = session.get('id')
         metadata = session.get('metadata', {})
         tenant_subdomain = metadata.get('tenant_subdomain')
         plan_id = metadata.get('plan_id')
 
-        logger.info(f"Stripe checkout session completed: {stripe_checkout_session_id}")
-        logger.info(f"Session data - Customer: {stripe_customer_id}, Subscription: {stripe_subscription_id}")
-        logger.info(f"Metadata - Tenant: {tenant_subdomain}, Plan: {plan_id}")
+        logger.info(f"[WEBHOOK] checkout.session.completed: {stripe_checkout_session_id}")
 
-        # Find the user by checkout session ID
+        # Idempotency check #1: Find user by session ID
         try:
             user = CustomUser.objects.get(stripe_checkout_session_id=stripe_checkout_session_id)
         except CustomUser.DoesNotExist:
-            logger.error(f"User not found for checkout session: {stripe_checkout_session_id}")
+            logger.error(f"[WEBHOOK] User not found for session: {stripe_checkout_session_id}")
             return
 
-        # Check if tenant already exists
+        # Idempotency check #2: If tenant already exists, skip
         if user.tenant:
-            logger.info(f"Tenant already exists for user {user.email}: {user.tenant.schema_name}")
+            logger.info(f"[WEBHOOK] Tenant already exists for {user.email}: {user.tenant.schema_name}")
             return
 
-        # Generate schema name from email
-        schema_name = user.email.split('@')[0].replace('.', '-').replace('_', '-')
+        # Idempotency check #3: If subscription already exists, skip provisioning
+        existing_subscription = UserSubscription.objects.filter(
+            stripe_checkout_session_id=stripe_checkout_session_id
+        ).first()
+        
+        if existing_subscription and existing_subscription.status in ['active', 'trial']:
+            logger.info(f"[WEBHOOK] Subscription already processed for session: {stripe_checkout_session_id}")
+            return
 
-        # Call internal API to create tenant
+        # Provisioning με transaction
         try:
-            internal_api_url = 'http://localhost:8000/api/internal/tenants/create/'
-            internal_api_key = settings.INTERNAL_API_SECRET_KEY
+            with transaction.atomic():
+                # Δημιουργία tenant infrastructure
+                tenant_service = TenantService()
+                schema_name = tenant_subdomain or tenant_service.generate_unique_schema_name(
+                    user.email.split('@')[0]
+                )
+                
+                # Get plan
+                try:
+                    plan = SubscriptionPlan.objects.get(id=plan_id)
+                except SubscriptionPlan.DoesNotExist:
+                    logger.error(f"[WEBHOOK] Plan {plan_id} not found")
+                    return
 
-            payload = {
-                'schema_name': schema_name,
-                'user_data': {
-                    'email': user.email,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                },
-                'plan_id': int(plan_id) if plan_id else 1,
-                'stripe_customer_id': stripe_customer_id,
-                'stripe_subscription_id': stripe_subscription_id,
-                'stripe_checkout_session_id': stripe_checkout_session_id
-            }
+                # Create tenant + subscription
+                tenant, subscription = tenant_service.create_tenant_and_subscription(
+                    schema_name=schema_name,
+                    user=user,
+                    plan_id=plan_id,
+                    stripe_customer_id=stripe_customer_id,
+                    stripe_subscription_id=stripe_subscription_id,
+                    stripe_checkout_session_id=stripe_checkout_session_id
+                )
 
-            response = requests.post(
-                internal_api_url,
-                json=payload,
-                headers={
-                    'Content-Type': 'application/json',
-                    'X-Internal-API-Key': internal_api_key
-                },
-                timeout=120  # 2 minutes timeout for tenant creation
-            )
+                # Link user to tenant
+                user.tenant = tenant
+                user.is_staff = True
+                user.role = 'manager'
+                user.save(update_fields=['tenant', 'is_staff', 'role'])
 
-            if response.status_code == 201:
-                data = response.json()
-                logger.info(f"Tenant created successfully: {data['tenant']['schema_name']}")
-                logger.info(f"User can now login at: {data['tenant']['domain']}")
-            else:
-                logger.error(f"Failed to create tenant. Status: {response.status_code}, Response: {response.text}")
+                logger.info(f"[WEBHOOK] Provisioning complete for {user.email} → {tenant.schema_name}")
 
-        except requests.exceptions.Timeout:
-            logger.error(f"Tenant creation timeout for user {user.email}")
         except Exception as e:
-            logger.error(f"Error calling internal API: {e}")
-
-        return
+            logger.error(f"[WEBHOOK] Provisioning failed: {e}", exc_info=True)
+            # Webhook θα retry αυτόματα από Stripe
     
     def handle_payment_intent_succeeded(self, payment_intent):
         """

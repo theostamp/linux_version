@@ -21,7 +21,7 @@ class TenantService:
     Consolidates logic from signals.py, forms.py, and admin_views.py.
     """
     
-    def create_tenant_and_subscription(self, schema_name, user, plan_id, stripe_customer_id, stripe_subscription_id):
+    def create_tenant_and_subscription(self, schema_name, user, plan_id, stripe_customer_id, stripe_subscription_id, stripe_checkout_session_id=None):
         """
         Creates a tenant, domain, and subscription for a user.
         
@@ -31,6 +31,7 @@ class TenantService:
             plan_id (int): The ID of the subscription plan
             stripe_customer_id (str): Stripe customer ID
             stripe_subscription_id (str): Stripe subscription ID
+            stripe_checkout_session_id (str): Stripe checkout session ID for idempotency
             
         Returns:
             tuple: (tenant, subscription) objects
@@ -58,7 +59,7 @@ class TenantService:
                 
                 # Step 5: Create the user subscription
                 subscription = self._create_user_subscription(
-                    user, plan, stripe_customer_id, stripe_subscription_id, tenant
+                    user, plan, stripe_customer_id, stripe_subscription_id, tenant, stripe_checkout_session_id
                 )
                 
                 # Step 6: Create initial user in tenant schema
@@ -66,6 +67,15 @@ class TenantService:
                 
                 # Step 7: Create demo data (Αλκμάνος 22 building)
                 self._create_demo_data(schema_name)
+                
+                # Step 8: Send welcome email with secure access link
+                try:
+                    from users.services import EmailService
+                    EmailService.send_tenant_welcome_email(user, tenant, domain)
+                    logger.info(f"Sent tenant welcome email to {user.email}")
+                except Exception as email_error:
+                    logger.error(f"Failed to send welcome email: {email_error}")
+                    # Don't fail provisioning if email fails
                 
                 logger.info(f"Successfully created tenant '{schema_name}' and subscription for user {user.email}")
                 return tenant, subscription
@@ -125,7 +135,7 @@ class TenantService:
             logger.error(f"Failed to run migrations for schema {schema_name}: {e}")
             raise
     
-    def _create_user_subscription(self, user, plan, stripe_customer_id, stripe_subscription_id, tenant):
+    def _create_user_subscription(self, user, plan, stripe_customer_id, stripe_subscription_id, tenant, stripe_checkout_session_id=None):
         """Create the UserSubscription object."""
         # Calculate pricing based on plan
         price = plan.monthly_price  # Default to monthly
@@ -150,6 +160,7 @@ class TenantService:
             current_period_end=current_period_end,
             stripe_subscription_id=stripe_subscription_id,
             stripe_customer_id=stripe_customer_id,
+            stripe_checkout_session_id=stripe_checkout_session_id,
             price=price,
             currency=currency,
             tenant_domain=f"{tenant.schema_name}.localhost"
