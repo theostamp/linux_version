@@ -344,7 +344,7 @@ class UserInvitation(models.Model):
     invited_by = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='sent_invitations',
+        related_name='sent_user_invitations',
         verbose_name=_('Invited By')
     )
     

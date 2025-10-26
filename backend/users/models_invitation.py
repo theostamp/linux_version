@@ -44,21 +44,21 @@ class TenantInvitation(models.Model):
         help_text='Role the user will have when they accept'
     )
     
-    # Optional: Link to specific apartment
-    apartment = models.ForeignKey(
-        'buildings.Apartment',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='invitations',
-        help_text='Optional: Assign user to specific apartment'
-    )
+    # Optional: Link to specific apartment (commented out until buildings app is properly installed)
+    # apartment = models.ForeignKey(
+    #     'buildings.Apartment',
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     related_name='invitations',
+    #     help_text='Optional: Assign user to specific apartment'
+    # )
     
     # Invitation metadata
     invited_by = models.ForeignKey(
         'users.CustomUser',
         on_delete=models.CASCADE,
-        related_name='sent_invitations',
+        related_name='sent_tenant_invitations',
         help_text='User who sent the invitation'
     )
     invited_at = models.DateTimeField(auto_now_add=True)
