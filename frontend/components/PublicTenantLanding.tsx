@@ -23,12 +23,18 @@ export default function PublicTenantLanding() {
   const [isPublicTenant, setIsPublicTenant] = useState(false);
 
   useEffect(() => {
-    // Check if we're on localhost (public tenant)
+    // Check if we're on public domain (not tenant-specific)
     const hostname = window.location.hostname;
-    setIsPublicTenant(hostname === 'localhost' || hostname === '127.0.0.1');
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isVercelApp = hostname.includes('vercel.app');
+    const isPublicDomain = isLocalhost || isVercelApp;
+    
+    console.log('[PublicTenantLanding] Hostname:', hostname, 'isPublicDomain:', isPublicDomain);
+    setIsPublicTenant(isPublicDomain);
   }, []);
 
   if (!isPublicTenant) {
+    console.log('[PublicTenantLanding] Not public tenant, returning null');
     return null; // Don't show on tenant-specific domains
   }
 
