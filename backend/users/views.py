@@ -209,7 +209,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@throttle_classes([RegistrationThrottle])
+# @throttle_classes([RegistrationThrottle])  # Temporarily disabled due to Redis auth issue
 def register_view(request):
     """
     POST /api/users/register/
@@ -274,7 +274,7 @@ def register_view(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@throttle_classes([EmailVerificationThrottle])
+# @throttle_classes([EmailVerificationThrottle])  # Temporarily disabled due to Redis auth issue
 def verify_email_view(request):
     """
     POST /api/users/verify-email/
@@ -331,7 +331,7 @@ def resend_verification_view(request):
 @api_view(['POST'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
-@throttle_classes([InvitationThrottle])
+# @throttle_classes([InvitationThrottle])  # Temporarily disabled due to Redis auth issue
 def create_invitation_view(request):
     """
     POST /api/users/invite/
@@ -420,7 +420,7 @@ def accept_invitation_view(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@throttle_classes([PasswordResetThrottle])
+# @throttle_classes([PasswordResetThrottle])  # Temporarily disabled due to Redis auth issue
 def request_password_reset_view(request):
     """
     POST /api/users/password-reset/
@@ -443,7 +443,7 @@ def request_password_reset_view(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@throttle_classes([PasswordResetThrottle])
+# @throttle_classes([PasswordResetThrottle])  # Temporarily disabled due to Redis auth issue
 def confirm_password_reset_view(request):
     """
     POST /api/users/password-reset-confirm/
