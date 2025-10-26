@@ -57,10 +57,16 @@ const nextConfig = {
       // Remove trailing slash from backendUrl if present
       const cleanBackendUrl = backendUrl.replace(/\/+$/, '');
       console.log('Configuring API rewrites to:', cleanBackendUrl);
+      
+      // Determine if backendUrl already includes /api
+      const baseBackendUrl = cleanBackendUrl.includes('/api') 
+        ? cleanBackendUrl.substring(0, cleanBackendUrl.lastIndexOf('/api'))
+        : cleanBackendUrl;
+      
       return [
         {
           source: '/api/:path*',
-          destination: `${cleanBackendUrl}/:path*`,
+          destination: `${baseBackendUrl}/api/:path*`,
         },
       ];
     }

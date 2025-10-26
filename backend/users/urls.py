@@ -29,7 +29,8 @@ urlpatterns = [
     # Authentication endpoints
     path('register/', views.register_view, name='register'),  # With trailing slash
     path('register', views.register_view, name='register-no-slash'),  # Without trailing slash
-    path('login/', login_view, name='user-login'),
+    path('login/', login_view, name='user-login'),  # With trailing slash
+    path('login', login_view, name='user-login-no-slash'),  # Without trailing slash
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/simple/', TokenObtainPairView.as_view(), name='token_obtain_pair_simple'),
 
