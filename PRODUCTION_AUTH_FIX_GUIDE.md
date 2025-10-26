@@ -93,6 +93,7 @@ NEXT_PUBLIC_APP_NAME=New Concierge
 NEXT_PUBLIC_APP_URL=https://linux-version-m7tbbfn9d-theo-stams-projects.vercel.app
 NEXT_PUBLIC_APP_URL_CUSTOM=https://linux-version.vercel.app
 NEXT_PUBLIC_API_URL=https://linuxversion-production.up.railway.app/api
+NEXT_PUBLIC_DEFAULT_API_URL=https://linuxversion-production.up.railway.app/api
 
 # Google OAuth (if needed for frontend)
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=590666847148-a2e037ah9q9f1vogsl6b34mk944bug5g.apps.googleusercontent.com
