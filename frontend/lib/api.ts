@@ -54,11 +54,14 @@ export function getApiBase(): string {
   if (typeof window !== 'undefined') {
     // Client-side - check if we're on Vercel and use Railway backend
     const hostname = window.location.hostname;
+    console.log('[API BASE] Current hostname:', hostname);
     if (hostname.includes('vercel.app') || hostname.includes('railway.app')) {
       // Use Railway backend directly for production deployments
+      console.log('[API BASE] Using Railway backend for production');
       return 'https://linuxversion-production.up.railway.app';
     }
     // For localhost, use same origin
+    console.log('[API BASE] Using same origin for localhost');
     return window.location.origin;
   }
   if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_BASE_URL) {
