@@ -54,11 +54,13 @@ const nextConfig = {
     
     // Only configure rewrites if we have a backend URL
     if (backendUrl && !backendUrl.includes('localhost')) {
-      console.log('Configuring API rewrites to:', backendUrl);
+      // Remove trailing slash from backendUrl if present
+      const cleanBackendUrl = backendUrl.replace(/\/+$/, '');
+      console.log('Configuring API rewrites to:', cleanBackendUrl);
       return [
         {
           source: '/api/:path*',
-          destination: `${backendUrl}/:path*`,
+          destination: `${cleanBackendUrl}/:path*`,
         },
       ];
     }
