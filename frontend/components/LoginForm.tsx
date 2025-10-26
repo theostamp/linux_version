@@ -66,8 +66,19 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
 
     } catch (err: any) {
       console.error('LoginForm: Login error:', err);
-      toast.error(err.message ?? 'Κάτι πήγε στραβά!');
-      setStatus(err.message ?? 'Σφάλμα σύνδεσης');
+      
+      // Extract error message from different possible locations
+      let errorMessage = 'Σφάλμα σύνδεσης';
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      toast.error(errorMessage);
+      setStatus(errorMessage);
       setLoading(false);
     }
   };
