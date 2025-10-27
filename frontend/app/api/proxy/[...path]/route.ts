@@ -44,7 +44,12 @@ async function handleRequest(
     const url = new URL(request.url);
     const queryString = url.search;
     
-    const targetUrl = `${RAILWAY_BACKEND_URL}/api/${path}${queryString}`;
+    // Preserve trailing slash from original request
+    const originalPath = request.nextUrl.pathname;
+    const hasTrailingSlash = originalPath.endsWith('/');
+    const targetPath = hasTrailingSlash ? `${path}/` : path;
+    
+    const targetUrl = `${RAILWAY_BACKEND_URL}/api/${targetPath}${queryString}`;
     
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
