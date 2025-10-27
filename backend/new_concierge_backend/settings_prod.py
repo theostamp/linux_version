@@ -214,7 +214,7 @@ DEFAULT_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@newconcierge.gr')
 
 # MailerSend API Configuration
 MAILERSEND_API_KEY = os.getenv('MAILERSEND_API_KEY', '')
-MAILERSEND_FROM_EMAIL = os.getenv('MAILERSEND_FROM_EMAIL', 'noreply@newconcierge.gr')
+MAILERSEND_FROM_EMAIL = os.getenv('MAILERSEND_FROM_EMAIL', 'noreply@test-nrw7gymxqprg2k8e.mlsender.net')
 
 # SendGrid API Configuration (backup)
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
