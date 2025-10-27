@@ -44,30 +44,15 @@ export default function RegisterForm() {
         password_confirm: data.confirmPassword
       };
 
-      const response = await api.post("/api/users/register", registrationData);
+      await api.post("/api/users/register", registrationData);
 
-      // Show detailed success message with status
-      toast.success("🎉 Εγγραφή επιτυχής!", {
-        description: "Ο λογαριασμός σας δημιουργήθηκε επιτυχώς!",
-        duration: 5000,
-      });
-
-      // Show email verification notification
-      toast.info("📧 Επιβεβαίωση Email", {
-        description: "Σας στάλθηκε email επιβεβαίωσης. Παρακαλώ ελέγξτε το inbox σας και κάντε κλικ στον σύνδεσμο για να ενεργοποιήσετε τον λογαριασμό σας.",
-        duration: 8000,
-      });
-
-      // Show next steps
-      toast.info("ℹ️ Επόμενα Βήματα", {
-        description: "1. Ελέγξτε το email σας (και το spam folder) 2. Κάντε κλικ στον σύνδεσμο επιβεβαίωσης 3. Επιστρέψτε εδώ για να συνδεθείτε",
-        duration: 10000,
-      });
+      // Show success message
+      toast.success("Επιτυχής εγγραφή! Παρακαλώ ελέγξτε το email σας για επιβεβαίωση.");
 
       // Redirect to login page after registration
       setTimeout(() => {
-        router.push("/login?registered=true&email=" + encodeURIComponent(data.email));
-      }, 3000);
+        router.push("/login?registered=true");
+      }, 2000);
 
     } catch (err: any) {
       console.error("Registration error:", err);
