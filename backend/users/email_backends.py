@@ -21,6 +21,7 @@ class ResendEmailBackend(BaseEmailBackend):
         super().__init__(fail_silently=fail_silently, **kwargs)
         self.api_key = os.getenv('RESEND_API_KEY')
         self.api_url = 'https://api.resend.com/emails'
+        self.from_email = os.getenv('RESEND_FROM_EMAIL', 'noreply@newconcierge.gr')
         
     def send_messages(self, email_messages):
         """
@@ -44,7 +45,7 @@ class ResendEmailBackend(BaseEmailBackend):
         try:
             # Prepare the email data
             email_data = {
-                "from": message.from_email,
+                "from": message.from_email or self.from_email,
                 "to": message.to,
                 "subject": message.subject,
                 "html": message.body if hasattr(message, 'body') else str(message),
