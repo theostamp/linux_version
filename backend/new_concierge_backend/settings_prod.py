@@ -209,10 +209,14 @@ CSP_CONNECT_SRC = ("'self'", "https://m.stripe.network")
 # ----------------------------------------
 # 📧 Email Configuration
 # ----------------------------------------
-EMAIL_BACKEND = 'users.sendgrid_backend.SendGridEmailBackend'
+EMAIL_BACKEND = 'users.mailersend_backend.MailerSendEmailBackend'
 DEFAULT_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@newconcierge.gr')
 
-# SendGrid API Configuration
+# MailerSend API Configuration
+MAILERSEND_API_KEY = os.getenv('MAILERSEND_API_KEY', '')
+MAILERSEND_FROM_EMAIL = os.getenv('MAILERSEND_FROM_EMAIL', 'noreply@newconcierge.gr')
+
+# SendGrid API Configuration (backup)
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
 SENDGRID_FROM_EMAIL = os.getenv('SENDGRID_FROM_EMAIL', 'noreply@newconcierge.gr')
 
