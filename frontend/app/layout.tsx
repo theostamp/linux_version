@@ -20,6 +20,7 @@ import StartupWrapper from '@/components/StartupWrapper';
 import IntroWrapper from '@/components/IntroWrapper';
 import NavigationLoader from '@/components/NavigationLoader';
 import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from 'sonner';
 
 export const metadata = {
   title: 'New Concierge - Building Management',
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: { readonly children: React.Reac
           <StartupWrapper>
             <AppProviders>{children}</AppProviders>
             <Toaster />
+            <SonnerToaster />
           </StartupWrapper>
         </IntroWrapper>
       </body>

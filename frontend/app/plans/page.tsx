@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Check } from 'lucide-react'
+import { Check, Mail, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Plan {
@@ -27,11 +27,19 @@ export default function PlansPage() {
   const [plans, setPlans] = useState<Plan[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null)
+  const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     fetchPlans()
-  }, [])
+    
+    // Check if user just registered
+    if (searchParams.get('registered') === 'true') {
+      setShowRegistrationSuccess(true)
+      toast.success('Εγγραφή επιτυχής! Παρακαλώ ελέγξτε το email σας για επιβεβαίωση.')
+    }
+  }, [searchParams])
 
   const fetchPlans = async () => {
     try {
@@ -98,6 +106,34 @@ export default function PlansPage() {
 
   return (
     <div className="container mx-auto px-4 py-16">
+      {/* Registration Success Banner */}
+      {showRegistrationSuccess && (
+        <div className="mb-8 max-w-4xl mx-auto">
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+                <div>
+                  <h3 className="font-semibold text-green-800">Εγγραφή Επιτυχής!</h3>
+                  <p className="text-green-700 flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Παρακαλώ ελέγξτε το email σας για επιβεβαίωση του λογαριασμού σας.
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowRegistrationSuccess(false)}
+                  className="ml-auto text-green-600 hover:text-green-700"
+                >
+                  ✕
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Επιλέξτε το Πακέτο σας</h1>
         <p className="text-xl text-gray-600">
