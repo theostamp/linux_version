@@ -1,7 +1,7 @@
 // frontend/components/LoginForm.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,27 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Check for registration success message
+  const registered = searchParams.get('registered');
+  const registeredEmail = searchParams.get('email');
+
+  // Show registration success message
+  useEffect(() => {
+    if (registered === 'true') {
+      toast.success("🎉 Εγγραφή ολοκληρώθηκε!", {
+        description: "Ο λογαριασμός σας δημιουργήθηκε επιτυχώς!",
+        duration: 5000,
+      });
+      
+      if (registeredEmail) {
+        toast.info("📧 Επιβεβαίωση Email", {
+          description: `Σας στάλθηκε email επιβεβαίωσης στο ${registeredEmail}. Παρακαλώ ελέγξτε το inbox σας και κάντε κλικ στον σύνδεσμο για να ενεργοποιήσετε τον λογαριασμό σας.`,
+          duration: 8000,
+        });
+      }
+    }
+  }, [registered, registeredEmail]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +75,8 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
       
       // Extract error message from different possible locations
       let errorMessage = 'Σφάλμα σύνδεσης';
+      let errorDescription = '';
+      
       if (err.response?.data?.error) {
         errorMessage = err.response.data.error;
       } else if (err.response?.data?.detail) {
@@ -61,8 +84,23 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
       } else if (err.message) {
         errorMessage = err.message;
       }
+
+      // Add helpful descriptions for common errors
+      if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+        errorMessage = '🔐 Σφάλμα πιστοποίησης';
+        errorDescription = 'Το email ή ο κωδικός είναι λάθος. Ελέγξτε τα στοιχεία σας και δοκιμάστε ξανά.';
+      } else if (errorMessage.includes('timeout')) {
+        errorMessage = '⏱️ Timeout σύνδεσης';
+        errorDescription = 'Η σύνδεση χρειάζεται πολύ χρόνο. Παρακαλώ δοκιμάστε ξανά.';
+      } else if (errorMessage.includes('Network')) {
+        errorMessage = '🌐 Σφάλμα δικτύου';
+        errorDescription = 'Δεν μπορούμε να συνδεθούμε με τον server. Ελέγξτε την σύνδεσή σας.';
+      }
       
-      toast.error(errorMessage);
+      toast.error(errorMessage, {
+        description: errorDescription,
+        duration: 6000,
+      });
       setStatus(errorMessage);
       setLoading(false);
     }
