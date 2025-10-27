@@ -37,6 +37,24 @@ class MailerSendEmailBackend(BaseEmailBackend):
         Send a single email message using MailerSend API
         """
         try:
+            # Extract HTML and text content from EmailMultiAlternatives
+            html_content = None
+            text_content = None
+            
+            if hasattr(message, 'alternatives') and message.alternatives:
+                # Check if there's HTML content in alternatives
+                for content, mimetype in message.alternatives:
+                    if mimetype == 'text/html':
+                        html_content = content
+                        text_content = message.body
+                        break
+                else:
+                    # No HTML found in alternatives, use body
+                    text_content = message.body
+            else:
+                # No alternatives, use body as text
+                text_content = message.body
+            
             # Prepare email data for MailerSend API
             email_data = {
                 "from": {
@@ -47,9 +65,13 @@ class MailerSendEmailBackend(BaseEmailBackend):
                     {"email": email, "name": ""} for email in message.to
                 ],
                 "subject": message.subject,
-                "text": message.body if hasattr(message, 'body') else str(message),
-                "html": message.body if hasattr(message, 'body') else str(message)
             }
+            
+            # Add text or HTML content
+            if html_content:
+                email_data["html"] = html_content
+            if text_content:
+                email_data["text"] = text_content
             
             # Add CC and BCC if present
             if message.cc:
