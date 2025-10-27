@@ -95,7 +95,23 @@ class Command(BaseCommand):
                             cursor.execute("SELECT COUNT(*) FROM users_customuser")
                             user_count_before = cursor.fetchone()[0]
                             
-                            # Delete all users except system admin
+                            # First, delete related records in users_customuser_groups
+                            cursor.execute("""
+                                DELETE FROM users_customuser_groups 
+                                WHERE customuser_id IN (
+                                    SELECT id FROM users_customuser WHERE email != %s
+                                )
+                            """, [system_admin_email])
+                            
+                            # Then delete related records in users_customuser_user_permissions
+                            cursor.execute("""
+                                DELETE FROM users_customuser_user_permissions 
+                                WHERE customuser_id IN (
+                                    SELECT id FROM users_customuser WHERE email != %s
+                                )
+                            """, [system_admin_email])
+                            
+                            # Finally, delete all users except system admin
                             cursor.execute("DELETE FROM users_customuser WHERE email != %s", [system_admin_email])
                             deleted_count = cursor.rowcount
                             
