@@ -477,7 +477,7 @@ elif not os.getenv('RAILWAY_PUBLIC_DOMAIN') and DEBUG:
 # Use console backend for testing (emails printed to console)
 # Change to 'django.core.mail.backends.smtp.EmailBackend' for real email sending
 # Email Backend Configuration
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'users.mailersend_backend.MailerSendEmailBackend')
 
 # SMTP settings (used when EMAIL_BACKEND = django.core.mail.backends.smtp.EmailBackend)
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
@@ -497,7 +497,7 @@ EMAIL_SUBJECT_PREFIX = '[New Concierge] '
 
 # MailerSend API Configuration
 MAILERSEND_API_KEY = os.getenv('MAILERSEND_API_KEY', '')
-MAILERSEND_FROM_EMAIL = os.getenv('MAILERSEND_FROM_EMAIL', 'noreply@test-nrw7gymxqprg2k8e.mlsender.net')
+MAILERSEND_FROM_EMAIL = os.getenv('MAILERSEND_FROM_EMAIL', 'noreply@newconcierge.app')
 
 # SendGrid API Configuration (backup)
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
