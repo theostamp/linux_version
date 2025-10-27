@@ -12,7 +12,7 @@ def test_mailersend_email_sending():
         subject = "Test Email from MailerSend Backend"
         message = "This is a test email sent using the MailerSend Django email backend."
         from_email = "noreply@test-nrw7gymxqprg2k8e.mlsender.net"  # Use MailerSend test domain
-        recipient_list = ["theostam1966@gmail.com"]  # Use your email for testing
+        recipient_list = ["theostam1966@gmail.com"]  # Use administrator email for trial account
 
         if not from_email:
             print("Error: MAILERSEND_FROM_EMAIL is not set in settings.")

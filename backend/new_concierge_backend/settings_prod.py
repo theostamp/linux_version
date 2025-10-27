@@ -209,7 +209,7 @@ CSP_CONNECT_SRC = ("'self'", "https://m.stripe.network")
 # ----------------------------------------
 # 📧 Email Configuration
 # ----------------------------------------
-EMAIL_BACKEND = 'users.mailersend_backend.MailerSendEmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@newconcierge.gr')
 
 # MailerSend API Configuration
