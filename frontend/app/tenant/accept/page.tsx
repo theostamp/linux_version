@@ -31,12 +31,12 @@ export default function AcceptTenantPage() {
         setMessage('Καλώς ήρθατε στο workspace σας!')
         setTenantInfo(response.data.tenant)
         
-        // Store tokens for immediate access
+        // Store tokens with correct keys
         if (response.data.access) {
-          localStorage.setItem('access_token', response.data.access)
+          localStorage.setItem('access', response.data.access)
         }
         if (response.data.refresh) {
-          localStorage.setItem('refresh_token', response.data.refresh)
+          localStorage.setItem('refresh', response.data.refresh)
         }
 
         toast.success('Πρόσβαση στο workspace επιτυχής!')

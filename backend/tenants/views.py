@@ -52,14 +52,12 @@ class AcceptTenantInviteView(APIView):
             
             return Response({
                 'status': 'success',
+                'access': access_token,
+                'refresh': str(refresh),
                 'tenant': {
                     'schema_name': tenant.schema_name,
                     'name': tenant.name,
                     'domain': domain
-                },
-                'tokens': {
-                    'access': access_token,
-                    'refresh': str(refresh)
                 },
                 'user': {
                     'email': user.email,

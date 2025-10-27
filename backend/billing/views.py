@@ -1467,7 +1467,8 @@ class SubscriptionStatusView(APIView):
                 return Response({
                     'status': 'completed',
                     'subdomain': user.tenant.schema_name,
-                    'token': access_token
+                    'access': access_token,
+                    'refresh': str(refresh)
                 })
             else:
                 # Processing in progress

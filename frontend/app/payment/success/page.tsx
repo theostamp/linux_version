@@ -46,15 +46,19 @@ export default function SubscriptionSuccessPage() {
           setStatus('completed');
           toast.success('Ο χώρος εργασίας σας είναι έτοιμος! Ανακατεύθυνση...');
 
-          // Store token for immediate access
-          if (data.token) {
-            localStorage.setItem('access_token', data.token)
+          // Store tokens with correct keys
+          if (data.access) {
+            localStorage.setItem('access', data.access);
+          }
+          if (data.refresh) {
+            localStorage.setItem('refresh', data.refresh);
           }
           
-          // Redirect to dashboard after 2 seconds
+          // Redirect to tenant subdomain
+          const tenantUrl = `http://${data.subdomain}.localhost:3000/dashboard`;
           setTimeout(() => {
-            router.push('/dashboard')
-          }, 2000)
+            window.location.href = tenantUrl;
+          }, 2000);
 
         } else if (data.status === 'failed') {
           clearInterval(intervalId);
