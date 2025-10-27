@@ -11,8 +11,8 @@ def test_sendgrid_email_sending():
     try:
         subject = "Test Email from SendGrid Backend"
         message = "This is a test email sent using the SendGrid Django email backend."
-        from_email = settings.SENDGRID_FROM_EMAIL
-        recipient_list = ["test@example.com"]  # Replace with a real email for testing
+        from_email = "noreply@example.com"  # Use a simple from email for testing
+        recipient_list = ["theostam1966@gmail.com"]  # Use your email for testing
 
         if not from_email:
             print("Error: SENDGRID_FROM_EMAIL is not set in settings.")
