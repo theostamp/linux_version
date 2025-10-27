@@ -21,7 +21,7 @@ class ResendEmailBackend(BaseEmailBackend):
         super().__init__(fail_silently=fail_silently, **kwargs)
         self.api_key = os.getenv('RESEND_API_KEY')
         self.api_url = 'https://api.resend.com/emails'
-        self.from_email = os.getenv('RESEND_FROM_EMAIL', 'onboarding@resend.dev')
+        self.from_email = os.getenv('RESEND_FROM_EMAIL', 'noreply@vercel.app')
         
     def send_messages(self, email_messages):
         """

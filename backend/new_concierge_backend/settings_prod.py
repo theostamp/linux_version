@@ -209,12 +209,12 @@ CSP_CONNECT_SRC = ("'self'", "https://m.stripe.network")
 # ----------------------------------------
 # 📧 Email Configuration
 # ----------------------------------------
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'users.email_backends.ResendEmailBackend'
 DEFAULT_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@newconcierge.gr')
 
 # Resend API Configuration
 RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
-RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'onboarding@resend.dev')
+RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@vercel.app')
 
 # Email logging
 ADMINS = [

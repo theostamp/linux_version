@@ -477,7 +477,7 @@ elif not os.getenv('RAILWAY_PUBLIC_DOMAIN') and DEBUG:
 # Use console backend for testing (emails printed to console)
 # Change to 'django.core.mail.backends.smtp.EmailBackend' for real email sending
 # Email Backend Configuration
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'users.email_backends.ResendEmailBackend')
 
 # SMTP settings (used when EMAIL_BACKEND = django.core.mail.backends.smtp.EmailBackend)
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
@@ -497,7 +497,7 @@ EMAIL_SUBJECT_PREFIX = '[New Concierge] '
 
 # Resend API Configuration
 RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
-RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'onboarding@resend.dev')
+RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@vercel.app')
 
 # ----------------------------------------
 # 💳 Stripe Payment Processing
