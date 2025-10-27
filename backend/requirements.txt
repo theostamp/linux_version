@@ -6,6 +6,9 @@ django-filter>=23.5
 djangorestframework-simplejwt
 django-tenants
 
+# Email services
+django-resend>=0.1.0
+
 # WebSocket & Real-time Communication
 channels==4.0.0
 channels-redis==4.1.0
