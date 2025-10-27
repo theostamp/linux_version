@@ -214,7 +214,7 @@ DEFAULT_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@newconcierge.gr')
 
 # Resend API Configuration
 RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
-RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@newconcierge.gr')
+RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'onboarding@resend.dev')
 
 # Email logging
 ADMINS = [

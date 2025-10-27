@@ -8,11 +8,13 @@ Add these environment variables to your Railway project:
 ```bash
 # Resend API Configuration
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-RESEND_FROM_EMAIL=noreply@yourdomain.com
+RESEND_FROM_EMAIL=onboarding@resend.dev
 
 # Email Backend (optional - defaults to ResendEmailBackend)
 EMAIL_BACKEND=users.email_backends.ResendEmailBackend
 ```
+
+**Note**: `onboarding@resend.dev` is Resend's test domain that works immediately without domain verification. For production, replace with your verified domain.
 
 ### How to Get Resend API Key
 
@@ -21,7 +23,11 @@ EMAIL_BACKEND=users.email_backends.ResendEmailBackend
 3. Create a new API key
 4. Copy the API key (starts with `re_`)
 
-### Domain Setup
+### Domain Setup (For Production)
+
+**For testing/development**: The default `onboarding@resend.dev` works without verification.
+
+**For production**, you should use your own verified domain:
 
 1. Go to [Resend Domains](https://resend.com/domains)
 2. Add your domain (e.g., `newconcierge.gr`)
@@ -29,6 +35,7 @@ EMAIL_BACKEND=users.email_backends.ResendEmailBackend
    - TXT record for domain verification
    - CNAME record for DKIM
 4. Wait for verification (usually 5-10 minutes)
+5. Update `RESEND_FROM_EMAIL` to use your domain: `noreply@newconcierge.gr`
 
 ### Testing
 

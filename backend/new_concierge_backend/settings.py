@@ -497,7 +497,7 @@ EMAIL_SUBJECT_PREFIX = '[New Concierge] '
 
 # Resend API Configuration
 RESEND_API_KEY = os.getenv('RESEND_API_KEY', '')
-RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'noreply@newconcierge.gr')
+RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', 'onboarding@resend.dev')
 
 # ----------------------------------------
 # 💳 Stripe Payment Processing
