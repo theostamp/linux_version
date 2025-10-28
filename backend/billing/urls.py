@@ -36,8 +36,9 @@ urlpatterns = [
     # API routes
     path('', include(router.urls)),
     
-    # Stripe webhook
+    # Stripe webhook (with and without trailing slash for compatibility)
     path('webhook/stripe/', StripeWebhookView.as_view(), name='stripe-webhook'),
+    path('webhook/stripe', StripeWebhookView.as_view(), name='stripe-webhook-no-slash'),
     
     # Payment verification
     path('verify-payment/', PaymentVerificationView.as_view(), name='verify-payment'),
