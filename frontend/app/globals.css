@@ -184,7 +184,7 @@
     --chart-4: 45 93% 58%;          /* Warning amber */
     --chart-5: 199 89% 48%;         /* Accent sky */
 
-    --radius: 0.75rem               /* Slightly more rounded */
+    --radius: 0.75rem;              /* Slightly more rounded */
   }
   
   .dark {
