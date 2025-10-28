@@ -33,12 +33,13 @@ export default function Home() {
       console.log('Home: User authenticated, redirecting to dashboard');
       setHasRedirected(true);
       router.push('/dashboard');
-    } else if (isAuthReady && !user && !hasRedirected) {
-      // If we're in a tenant workspace but not authenticated, redirect to login
-      console.log('Home: No user found, redirecting to login');
-      setHasRedirected(true);
-      router.push('/login');
     }
+    // Remove automatic redirect to login - let users see the landing page
+    // else if (isAuthReady && !user && !hasRedirected) {
+    //   console.log('Home: No user found, redirecting to login');
+    //   setHasRedirected(true);
+    //   router.push('/login');
+    // }
   }, [user, isAuthReady, router, hasRedirected]);
 
   useEffect(() => {
@@ -50,8 +51,8 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Show loading while redirecting
-  if (user || hasRedirected) {
+  // Show loading while redirecting (only for authenticated users)
+  if (user && hasRedirected) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
