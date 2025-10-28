@@ -43,27 +43,56 @@ def generate_schema_name_from_email(email: str) -> str:
     return schema_name
 
 
-def generate_unique_schema_name(base_name: str) -> str:
+def generate_unique_schema_name(base_name: str, max_attempts: int = 9999) -> str:
     """
     Generate a unique schema name by appending a counter if needed.
     
+    Handles edge cases:
+    - Very common names (john, test, admin) by adding incremental suffixes
+    - Maximum attempts to prevent infinite loops
+    - Random suffix as fallback if max attempts reached
+    
+    Examples:
+        etherm2021 (available)     → etherm2021
+        john (taken)               → john-1
+        john (both taken)          → john-2
+        test (9999 taken!)         → test-a7b3c2 (random)
+    
     Args:
         base_name: Base schema name (e.g., from email prefix)
+        max_attempts: Maximum counter attempts before using random suffix (default: 9999)
         
     Returns:
-        Unique schema name
+        Unique schema name (guaranteed to be unique)
     """
     from tenants.models import Client
+    import secrets
     
-    schema_name = base_name
+    # First, try the base name as-is
+    if not Client.objects.filter(schema_name=base_name).exists():
+        return base_name
+    
+    # Try with incrementing counter (john-1, john-2, john-3, etc.)
     counter = 1
-    
-    # Keep incrementing until we find a unique name
-    while Client.objects.filter(schema_name=schema_name).exists():
+    while counter <= max_attempts:
         schema_name = f"{base_name}-{counter}"
+        
+        if not Client.objects.filter(schema_name=schema_name).exists():
+            return schema_name
+        
         counter += 1
     
-    return schema_name
+    # If we've exhausted max_attempts (extremely rare), use random suffix
+    # This ensures we ALWAYS return a unique name
+    while True:
+        # Generate 6-character random hex suffix
+        random_suffix = secrets.token_hex(3)  # 3 bytes = 6 hex chars
+        schema_name = f"{base_name}-{random_suffix}"
+        
+        if not Client.objects.filter(schema_name=schema_name).exists():
+            return schema_name
+        
+        # This loop should virtually never repeat, but it's here for safety
 
 
 def get_tenant_subdomain(schema_name: str, is_production: bool = False) -> str:
