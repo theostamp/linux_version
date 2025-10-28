@@ -15,8 +15,8 @@ class MailerSendEmailBackend(BaseEmailBackend):
         super().__init__(fail_silently=fail_silently, **kwargs)
         self.api_key = os.getenv('MAILERSEND_API_KEY')
         self.api_url = 'https://api.mailersend.com/v1/email'
-        # Use test domain if main domain is not verified
-        self.from_email = os.getenv('MAILERSEND_FROM_EMAIL', 'noreply@test-nrw7gymxqprg2k8e.mlsender.net')
+        # Use verified newconcierge.app domain
+        self.from_email = os.getenv('MAILERSEND_FROM_EMAIL', 'noreply@newconcierge.app')
         
     def send_messages(self, email_messages):
         """
