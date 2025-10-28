@@ -33,13 +33,19 @@ class StripeWebhookView(APIView):
         sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
         
         try:
-            # Verify webhook signature (only in production and when signature header is present)
-            if not settings.STRIPE_MOCK_MODE and settings.STRIPE_WEBHOOK_SECRET and sig_header:
-                event = stripe.Webhook.construct_event(
-                    payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
-                )
+            # Verify webhook signature (only when signature header is present and webhook secret is configured)
+            if settings.STRIPE_WEBHOOK_SECRET and sig_header:
+                try:
+                    event = stripe.Webhook.construct_event(
+                        payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+                    )
+                    logger.info(f"Webhook signature verified for event: {event.get('type', 'unknown')}")
+                except stripe.error.SignatureVerificationError as e:
+                    logger.error(f"Webhook signature verification failed: {e}")
+                    return HttpResponse(status=400)
             else:
                 # In mock mode or testing mode (no signature), parse the payload directly
+                logger.info("Processing webhook in mock mode (no signature verification)")
                 event = json.loads(payload)
             
             # Handle the event
@@ -61,13 +67,13 @@ class StripeWebhookView(APIView):
             return HttpResponse(status=200)
             
         except ValueError as e:
-            logger.error(f'Invalid payload: {e}')
+            logger.error(f'Invalid JSON payload: {e}')
             return HttpResponse(status=400)
-        except stripe.error.SignatureVerificationError as e:
-            logger.error(f'Invalid signature: {e}')
+        except json.JSONDecodeError as e:
+            logger.error(f'JSON decode error: {e}')
             return HttpResponse(status=400)
         except Exception as e:
-            logger.error(f'Webhook error: {e}')
+            logger.error(f'Webhook processing error: {e}', exc_info=True)
             return HttpResponse(status=500)
 
     def handle_checkout_session_completed(self, session):
