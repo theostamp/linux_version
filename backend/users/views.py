@@ -274,19 +274,27 @@ def register_view(request):
         
         # Αποστολή email verification
         if EmailService.send_verification_email(user):
-            logger.info(f"[REGISTER] Verification email sent successfully to: {user.email}")
+            logger.info(f"[REGISTER] ✅ Verification email sent successfully to: {user.email}")
             return Response({
                 'message': 'Εγγραφή επιτυχής. Παρακαλούμε ελέγξτε το email σας για επιβεβαίωση.',
-                'user_id': user.id
+                'user_id': user.id,
+                'email': user.email
             }, status=status.HTTP_201_CREATED)
         else:
-            logger.warning(f"[REGISTER] Failed to send verification email to: {user.email}")
+            logger.warning(f"[REGISTER] ⚠️  Failed to send verification email to: {user.email}")
             return Response({
-                'error': 'Εγγραφή επιτυχής αλλά αποτυχία αποστολής email επιβεβαίωσης.'
+                'message': 'Εγγραφή επιτυχής αλλά αποτυχία αποστολής email επιβεβαίωσης.',
+                'user_id': user.id,
+                'email': user.email,
+                'warning': 'EMAIL_NOT_SENT'
             }, status=status.HTTP_201_CREATED)
     
-    logger.warning(f"[REGISTER] Validation failed - Errors: {serializer.errors}")
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    logger.warning(f"[REGISTER] ❌ Validation failed - Errors: {serializer.errors}")
+    return Response({
+        'error': 'Μη έγκυρα δεδομένα εγγραφής.',
+        'details': serializer.errors,
+        'error_code': 'VALIDATION_FAILED'
+    }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -297,21 +305,39 @@ def verify_email_view(request):
     POST /api/users/verify-email/
     Επιβεβαίωση email με token
     """
+    import logging
+    logger = logging.getLogger('django')
+    
+    logger.info(f"[VERIFY_EMAIL] Request received - Data: {request.data}")
+    
     serializer = EmailVerificationSerializer(data=request.data)
     if serializer.is_valid():
         try:
-            user = UserVerificationService.verify_email(serializer.validated_data['token'])
+            token = serializer.validated_data['token']
+            logger.info(f"[VERIFY_EMAIL] Attempting to verify token: {token[:20]}...")
+            
+            user = UserVerificationService.verify_email(token)
+            
+            logger.info(f"[VERIFY_EMAIL] ✅ Email verified successfully for user: {user.email}")
             return Response({
                 'message': 'Email επιβεβαιώθηκε επιτυχώς.',
                 'user_id': user.id,
                 'email': user.email
             }, status=status.HTTP_200_OK)
         except ValueError as e:
+            error_msg = str(e)
+            logger.error(f"[VERIFY_EMAIL] ❌ Verification failed - Error: {error_msg}")
             return Response({
-                'error': str(e)
+                'error': error_msg,
+                'error_code': 'VERIFICATION_FAILED'
             }, status=status.HTTP_400_BAD_REQUEST)
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    logger.warning(f"[VERIFY_EMAIL] ❌ Invalid request data - Errors: {serializer.errors}")
+    return Response({
+        'error': 'Μη έγκυρα δεδομένα. Παρακαλώ ελέγξτε το token επιβεβαίωσης.',
+        'details': serializer.errors,
+        'error_code': 'INVALID_DATA'
+    }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
