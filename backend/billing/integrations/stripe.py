@@ -27,8 +27,8 @@ class StripeService:
         # For development, we'll create mock customers to avoid Stripe API calls
         # In production, you would use real Stripe API calls
         try:
-            # Check if we're in development mode (no real Stripe key or test key)
-            if not settings.STRIPE_SECRET_KEY or settings.STRIPE_SECRET_KEY.startswith('sk_test_'):
+            # Check if we're in development mode (no real Stripe key)
+            if not settings.STRIPE_SECRET_KEY:
                 # Create mock customer ID for development
                 import uuid
                 mock_customer_id = f"cus_mock_{uuid.uuid4().hex[:12]}"
@@ -528,7 +528,7 @@ class StripeService:
         """
         try:
             # Check if we're in mock mode
-            if not settings.STRIPE_SECRET_KEY or settings.STRIPE_SECRET_KEY.startswith('sk_test_') or getattr(settings, 'STRIPE_MOCK_MODE', False):
+            if not settings.STRIPE_SECRET_KEY or getattr(settings, 'STRIPE_MOCK_MODE', False):
                 # Create mock checkout session for development
                 import uuid
                 mock_session_id = f"cs_test_{uuid.uuid4().hex[:24]}"
