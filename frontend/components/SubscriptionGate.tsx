@@ -108,85 +108,10 @@ export default function SubscriptionGate({
 
   console.log('[SubscriptionGate] Logic check - subscriptionStatus:', subscriptionStatus, 'hasSubscription:', hasSubscription, 'requiredStatus:', requiredStatus, 'meetsRequirement:', meetsRequirement);
 
-  // If user has subscription, show subscription management page instead of children
-  if (hasSubscription) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-        <div className="max-w-4xl w-full">
-          {/* Main Card */}
-          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-            {/* Header with gradient */}
-            <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-8 text-white text-center">
-              <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8" />
-              </div>
-              <h1 className="text-3xl font-bold mb-2">Ενεργή Συνδρομή</h1>
-              <p className="text-green-100">
-                Καλώς ήρθατε! Έχετε ενεργή συνδρομή και μπορείτε να διαχειριστείτε τα κτίριά σας
-              </p>
-            </div>
-
-            {/* Content */}
-            <div className="p-8">
-              <div className="grid md:grid-cols-2 gap-8">
-                {/* Subscription Info */}
-                <div className="space-y-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                    Στοιχεία Συνδρομής
-                  </h2>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                      <span className="text-gray-600">Κατάσταση:</span>
-                      <span className="font-semibold text-green-600 capitalize">{subscriptionStatus}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                      <span className="text-gray-600">Tenant:</span>
-                      <span className="font-semibold text-gray-900">etherm2021</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                      <span className="text-gray-600">Demo Κτίριο:</span>
-                      <span className="font-semibold text-gray-900">Αλκμάνος 22</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="space-y-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                    Ενέργειες
-                  </h2>
-                  <div className="space-y-3">
-                    <Link href="http://etherm2021.localhost:8080/dashboard" className="block">
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg">
-                        <ArrowRight className="w-5 h-5 mr-2" />
-                        Πήγαινε στην Εφαρμογή
-                        <ArrowRight className="w-5 h-5 ml-2" />
-                      </Button>
-                    </Link>
-                    <Link href="/my-subscription" className="block">
-                      <Button variant="outline" className="w-full py-6 text-lg">
-                        <CreditCard className="w-5 h-5 mr-2" />
-                        Διαχείριση Συνδρομής
-                      </Button>
-                    </Link>
-                    <Link href="/dashboard" className="block">
-                      <Button variant="ghost" className="w-full">
-                        Επιστροφή στο Dashboard
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Help Text */}
-          <p className="text-center text-gray-600 mt-6 text-sm">
-            Χρειάζεστε βοήθεια; <a href="mailto:support@example.com" className="text-blue-600 hover:underline">Επικοινωνήστε μαζί μας</a>
-          </p>
-        </div>
-      </div>
-    );
+  // If user has valid subscription, render children (allow access)
+  if (meetsRequirement || hasSubscription) {
+    console.log('[SubscriptionGate] User has subscription, rendering children (dashboard content)');
+    return <>{children}</>;
   }
 
   // If user doesn't have required subscription, show fallback or default upgrade page
@@ -282,7 +207,7 @@ export default function SubscriptionGate({
     );
   }
 
-  // User has valid subscription, render children
-  console.log('[SubscriptionGate] User meets requirement, rendering children');
+  // Fallback: Should never reach here, but return children as safe default
+  console.log('[SubscriptionGate] Fallback: rendering children');
   return <>{children}</>;
 }
