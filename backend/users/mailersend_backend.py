@@ -17,6 +17,7 @@ class MailerSendEmailBackend(BaseEmailBackend):
         self.api_url = 'https://api.mailersend.com/v1/email'
         # Use verified newconcierge.app domain
         self.from_email = os.getenv('MAILERSEND_FROM_EMAIL', 'noreply@newconcierge.app')
+        logger.info(f"MailerSend backend initialized with from_email: {self.from_email}")
         
     def send_messages(self, email_messages):
         """
@@ -57,9 +58,13 @@ class MailerSendEmailBackend(BaseEmailBackend):
                 text_content = message.body
             
             # Prepare email data for MailerSend API
+            # Always use self.from_email to ensure verified domain
+            from_email = self.from_email
+            logger.info(f"Sending email from: {from_email}")
+            
             email_data = {
                 "from": {
-                    "email": message.from_email or self.from_email,
+                    "email": from_email,
                     "name": "New Concierge"
                 },
                 "to": [
