@@ -54,10 +54,9 @@ export default function SubscriptionSuccessPage() {
             localStorage.setItem('refresh', data.refresh);
           }
           
-          // Redirect to tenant subdomain
-          const tenantUrl = `http://${data.subdomain}.localhost:3000/dashboard`;
+          // Redirect to dashboard (production uses main domain, not subdomains)
           setTimeout(() => {
-            window.location.href = tenantUrl;
+            window.location.href = '/dashboard';
           }, 2000);
 
         } else if (data.status === 'failed') {

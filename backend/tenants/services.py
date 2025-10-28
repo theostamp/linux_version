@@ -106,11 +106,19 @@ class TenantService:
     
     def _create_domain(self, tenant, schema_name):
         """Create the domain for the tenant."""
-        # Determine the base domain
-        base_domain = "localhost"  # Default for development
-        # In production, this would be your actual domain
+        # Determine the base domain based on environment
+        from django.conf import settings
+        import os
         
-        domain_name = f"{schema_name}.{base_domain}"
+        # Use production domain if available, otherwise localhost
+        if os.getenv('RAILWAY_PUBLIC_DOMAIN') or not settings.DEBUG:
+            # Production: use the main domain (no subdomains in Railway)
+            base_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN', 'linuxversion-production.up.railway.app')
+            domain_name = base_domain  # Railway doesn't support wildcard subdomains
+        else:
+            # Development: use localhost with subdomain
+            base_domain = "localhost"
+            domain_name = f"{schema_name}.{base_domain}"
         
         domain = Domain.objects.create(
             domain=domain_name,
