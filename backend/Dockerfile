@@ -28,9 +28,9 @@ RUN apt-get update && \
 # Install Python deps
 COPY requirements*.txt ./
 RUN pip install --upgrade pip && \
-    pip install -r requirements.txt && \
-    pip install -r requirements-ai.txt && \
-    pip install -r requirements_pdf.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-ai.txt && \
+    pip install --no-cache-dir -r requirements_pdf.txt
 
 # Copy source code
 COPY . .
