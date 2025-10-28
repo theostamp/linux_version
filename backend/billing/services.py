@@ -126,10 +126,11 @@ class BillingService:
             TenantModel = get_tenant_model()
             DomainModel = get_tenant_domain_model()
 
-            # Generate tenant schema name from email (clean and simple)
-            # Use only the email prefix (before @), sanitized for database safety
-            email_prefix = user.email.split('@')[0]
-            safe_schema = re.sub(r'[^a-z0-9]', '', email_prefix.lower())[:30]
+            # Generate tenant schema name using improved utility functions
+            from tenants.utils import generate_schema_name_from_email, generate_unique_schema_name
+            
+            base_name = generate_schema_name_from_email(user.email)
+            safe_schema = generate_unique_schema_name(base_name)
 
             # Check if user already has a tenant (search by domain pattern)
             # This prevents creating multiple tenants for the same user

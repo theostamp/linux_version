@@ -1339,16 +1339,20 @@ class CreateCheckoutSessionView(APIView):
                     'error': 'Invalid subscription plan'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Generate unique tenant subdomain
+            # Generate unique tenant subdomain using improved naming logic
             from tenants.services import TenantService
+            from tenants.utils import generate_schema_name_from_email, generate_unique_schema_name
+            
             tenant_service = TenantService()
             
             if building_name:
+                # Use building name if provided
                 base_name = building_name
             else:
-                base_name = user.get_full_name() or user.email.split('@')[0]
+                # Use improved email-based naming (extract only prefix before @)
+                base_name = generate_schema_name_from_email(user.email)
             
-            tenant_subdomain = tenant_service.generate_unique_schema_name(base_name)
+            tenant_subdomain = generate_unique_schema_name(base_name)
             
             # Create Stripe Checkout Session
             stripe_service = StripeService()

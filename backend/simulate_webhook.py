@@ -15,6 +15,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings'
 django.setup()
 
 from users.models import CustomUser
+from tenants.utils import generate_schema_name_from_email
 
 def simulate_webhook(session_id):
     """Simulate a Stripe webhook for checkout.session.completed"""
@@ -44,7 +45,7 @@ def simulate_webhook(session_id):
                 "metadata": {
                     "user_id": str(user.id),
                     "plan_id": "3",  # Default to plan 3
-                    "tenant_subdomain": user.email.split('@')[0],  # Use email prefix as subdomain
+                    "tenant_subdomain": generate_schema_name_from_email(user.email),  # Use improved email naming
                     "building_name": ""
                 }
             }

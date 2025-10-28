@@ -95,7 +95,7 @@ class TenantService:
             counter += 1
 
         tenant = Client.objects.create(
-            name=user.get_full_name() or user.email.split('@')[0],
+            name=user.get_full_name() or generate_schema_name_from_email(user.email),
             schema_name=schema_name,
             paid_until=timezone.now().date() + timezone.timedelta(days=30),  # 30-day trial
             on_trial=True,
@@ -371,7 +371,7 @@ class TenantService:
             counter += 1
 
         tenant = Client.objects.create(
-            name=user.get_full_name() or user.email.split('@')[0],
+            name=user.get_full_name() or generate_schema_name_from_email(user.email),
             schema_name=schema_name,
             paid_until=paid_until,
             on_trial=on_trial,

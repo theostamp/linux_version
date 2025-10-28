@@ -116,11 +116,16 @@ class StripeWebhookView(APIView):
         # Provisioning με transaction
         try:
             with transaction.atomic():
-                # Δημιουργία tenant infrastructure
+                # Δημιουργία tenant infrastructure using improved naming
+                from tenants.utils import generate_schema_name_from_email, generate_unique_schema_name
+                
                 tenant_service = TenantService()
-                schema_name = tenant_subdomain or tenant_service.generate_unique_schema_name(
-                    user.email.split('@')[0]
-                )
+                if tenant_subdomain:
+                    schema_name = tenant_subdomain
+                else:
+                    # Use improved email-based naming (extract only prefix before @)
+                    base_name = generate_schema_name_from_email(user.email)
+                    schema_name = generate_unique_schema_name(base_name)
                 
                 # Get plan
                 try:
