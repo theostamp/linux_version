@@ -1,5 +1,6 @@
 FROM python:3.12-slim
 
+# Force rebuild - 2025-10-28
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
