@@ -3,10 +3,8 @@ const withPWA = (config) => config;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable experimental features for better performance
-  experimental: {
-    optimizePackageImports: ['lucide-react', '@tanstack/react-query'],
-  },
+  // Experimental features disabled to avoid CSS loading issues
+  experimental: {},
 
   // Turbopack configuration (moved from experimental.turbo)
   turbopack: {
