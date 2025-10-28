@@ -128,26 +128,23 @@ class TenantService:
                 logger.info(f"Domain already assigned to tenant: {base_domain}")
                 return existing_domain
             
-            # Check if ANY tenant has this domain
-            any_tenant_with_domain = Domain.objects.filter(domain=base_domain).exists()
+            # Check if this domain already exists
+            existing_domain = Domain.objects.filter(domain=base_domain).first()
             
-            if any_tenant_with_domain:
-                # Domain exists but for another tenant - this is OK in shared domain mode
-                # Create a non-primary domain entry for this tenant
-                domain = Domain.objects.create(
-                    domain=base_domain,
-                    tenant=tenant,
-                    is_primary=False  # Not primary since domain is shared
-                )
-                logger.info(f"Assigned shared domain to tenant {tenant.schema_name}: {base_domain}")
+            if existing_domain:
+                # Domain exists - just return it (all tenants share the same domain in production)
+                # We'll use session-based routing instead of domain-based routing
+                logger.info(f"Reusing existing shared domain for tenant {tenant.schema_name}: {base_domain}")
+                domain = existing_domain
             else:
-                # First tenant - create the primary domain
+                # First tenant - create the primary domain  
+                # This domain will be shared by all future tenants
                 domain = Domain.objects.create(
                     domain=base_domain,
                     tenant=tenant,
                     is_primary=True
                 )
-                logger.info(f"Created primary production domain: {base_domain}")
+                logger.info(f"Created primary production domain (will be shared): {base_domain}")
         else:
             # Development: each tenant gets a unique subdomain
             domain_name = f"{schema_name}.localhost"
