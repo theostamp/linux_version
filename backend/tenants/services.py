@@ -9,6 +9,7 @@ from django_tenants.utils import schema_context
 from django.core.exceptions import ValidationError
 
 from .models import Client, Domain
+from .utils import generate_schema_name_from_email, generate_unique_schema_name, get_tenant_subdomain
 from users.models import CustomUser
 from billing.models import SubscriptionPlan, UserSubscription
 
@@ -105,28 +106,68 @@ class TenantService:
         return tenant
     
     def _create_domain(self, tenant, schema_name):
-        """Create the domain for the tenant."""
-        # Determine the base domain based on environment
+        """
+        Create or assign a domain for the tenant.
+        
+        Production: All tenants share the main domain (Railway doesn't support wildcard DNS)
+        Development: Each tenant gets a subdomain (e.g., etherm2021.localhost)
+        """
         from django.conf import settings
         import os
         
         # Use production domain if available, otherwise localhost
-        if os.getenv('RAILWAY_PUBLIC_DOMAIN') or not settings.DEBUG:
-            # Production: use the main domain (no subdomains in Railway)
+        is_production = bool(os.getenv('RAILWAY_PUBLIC_DOMAIN')) or not settings.DEBUG
+        
+        if is_production:
+            # Production: use the main shared domain
             base_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN', 'linuxversion-production.up.railway.app')
-            domain_name = base_domain  # Railway doesn't support wildcard subdomains
+            
+            # Check if this domain already exists for another tenant
+            existing_domain = Domain.objects.filter(domain=base_domain, tenant=tenant).first()
+            if existing_domain:
+                logger.info(f"Domain already assigned to tenant: {base_domain}")
+                return existing_domain
+            
+            # Check if ANY tenant has this domain
+            any_tenant_with_domain = Domain.objects.filter(domain=base_domain).exists()
+            
+            if any_tenant_with_domain:
+                # Domain exists but for another tenant - this is OK in shared domain mode
+                # Create a non-primary domain entry for this tenant
+                domain = Domain.objects.create(
+                    domain=base_domain,
+                    tenant=tenant,
+                    is_primary=False  # Not primary since domain is shared
+                )
+                logger.info(f"Assigned shared domain to tenant {tenant.schema_name}: {base_domain}")
+            else:
+                # First tenant - create the primary domain
+                domain = Domain.objects.create(
+                    domain=base_domain,
+                    tenant=tenant,
+                    is_primary=True
+                )
+                logger.info(f"Created primary production domain: {base_domain}")
         else:
-            # Development: use localhost with subdomain
-            base_domain = "localhost"
-            domain_name = f"{schema_name}.{base_domain}"
+            # Development: each tenant gets a unique subdomain
+            domain_name = f"{schema_name}.localhost"
+            
+            # Check if domain already exists
+            existing_domain = Domain.objects.filter(domain=domain_name).first()
+            if existing_domain:
+                logger.warning(f"Domain {domain_name} already exists for tenant {existing_domain.tenant.schema_name}")
+                # Update to point to new tenant (shouldn't happen, but handle it)
+                existing_domain.tenant = tenant
+                existing_domain.save()
+                return existing_domain
+            
+            domain = Domain.objects.create(
+                domain=domain_name,
+                tenant=tenant,
+                is_primary=True
+            )
+            logger.info(f"Created development subdomain: {domain_name}")
         
-        domain = Domain.objects.create(
-            domain=domain_name,
-            tenant=tenant,
-            is_primary=True
-        )
-        
-        logger.info(f"Created domain: {domain_name}")
         return domain
     
     def _run_tenant_migrations(self, schema_name):
@@ -218,27 +259,38 @@ class TenantService:
     def generate_unique_schema_name(self, base_name):
         """
         Generate a unique schema name from a base name.
+        
+        If base_name looks like an email, extracts only the prefix (before @).
+        Otherwise, uses the full base_name.
 
         Args:
-            base_name (str): The base name to slugify
+            base_name (str): The base name (can be email or any string)
 
         Returns:
             str: A unique schema name (RFC 1034/1035 compliant - uses hyphens, not underscores)
+            
+        Examples:
+            etherm2021@gmail.com     → etherm2021 (or etherm2021-1 if taken)
+            john.doe@company.com     → john-doe
+            MyCompany Building       → mycompany-building
         """
-        # Slugify the base name (this already converts underscores to hyphens)
-        schema_name = slugify(base_name)
-
-        # Ensure it's not empty
-        if not schema_name:
-            schema_name = f"tenant-{int(timezone.now().timestamp())}"
-
-        # Ensure it's unique (use hyphens for RFC compliance)
-        original_schema_name = schema_name
+        # If it looks like an email, extract only the prefix
+        if '@' in base_name:
+            base_schema = generate_schema_name_from_email(base_name)
+        else:
+            # Not an email, just slugify it
+            base_schema = slugify(base_name)
+            if not base_schema:
+                base_schema = f"tenant-{int(timezone.now().timestamp())}"
+        
+        # Ensure uniqueness by checking database
+        schema_name = base_schema
         counter = 1
         while Client.objects.filter(schema_name=schema_name).exists():
-            schema_name = f"{original_schema_name}-{counter}"
+            schema_name = f"{base_schema}-{counter}"
             counter += 1
-
+        
+        logger.info(f"Generated unique schema name: {schema_name} (from: {base_name})")
         return schema_name
     
     def get_tenant_by_schema(self, schema_name):
