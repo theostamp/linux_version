@@ -136,10 +136,19 @@ export interface KioskPermissions {
   canManageUsers: boolean;
 }
 
-export type UserRole = 'superuser' | 'manager' | 'staff' | 'resident';
+export type UserRole = 'superuser' | 'admin' | 'manager' | 'staff' | 'resident' | 'guest';
 
 export const ROLE_PERMISSIONS: Record<UserRole, KioskPermissions> = {
   superuser: {
+    canView: true,
+    canEdit: true,
+    canCreate: true,
+    canDelete: true,
+    canManageLayouts: true,
+    canAccessAnalytics: true,
+    canManageUsers: true,
+  },
+  admin: {
     canView: true,
     canEdit: true,
     canCreate: true,
@@ -168,6 +177,15 @@ export const ROLE_PERMISSIONS: Record<UserRole, KioskPermissions> = {
   },
   resident: {
     canView: true,
+    canEdit: false,
+    canCreate: false,
+    canDelete: false,
+    canManageLayouts: false,
+    canAccessAnalytics: false,
+    canManageUsers: false,
+  },
+  guest: {
+    canView: false,
     canEdit: false,
     canCreate: false,
     canDelete: false,
