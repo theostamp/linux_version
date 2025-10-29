@@ -12,8 +12,6 @@ const nextConfig = {
     cssChunking: 'strict',
     // Disable CSS optimization completely
     cssMinify: false,
-    // Disable CSS script loading completely
-    cssChunking: 'strict',
   },
 
   // Turbopack configuration (moved from experimental.turbo)
