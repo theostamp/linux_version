@@ -81,65 +81,36 @@ const nextConfig = {
       );
     }
 
-    // Disable CSS optimization that causes CSS to be loaded as scripts
-    if (!isServer) {
-      // Disable CSS chunking completely
-      config.optimization.splitChunks.cacheGroups = {
-        ...config.optimization.splitChunks.cacheGroups,
-        styles: {
-          name: 'styles',
-          test: /\.(css|scss|sass)$/,
-          chunks: 'all',
-          enforce: true,
-        },
-      };
-      
-      // Disable CSS script loading
-      config.optimization.splitChunks.chunks = 'all';
-      config.optimization.splitChunks.cacheGroups.default = {
-        minChunks: 2,
-        priority: -20,
-        reuseExistingChunk: true,
-      };
-      
-      // Disable CSS script loading completely
-      config.optimization.splitChunks.cacheGroups.styles = {
-        name: 'styles',
-        test: /\.(css|scss|sass)$/,
-        chunks: 'all',
-        enforce: true,
-        priority: 20,
-      };
-      
-      // Disable CSS script loading completely
-      config.optimization.splitChunks.cacheGroups.styles = {
-        name: 'styles',
-        test: /\.(css|scss|sass)$/,
-        chunks: 'all',
-        enforce: true,
-        priority: 20,
-      };
-    }
-
-    // Optimize imports
+    // Optimize imports and CSS handling
     if (!dev && !isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',
         cacheGroups: {
+          // CSS chunks should be loaded as link tags, not scripts
+          styles: {
+            name: 'styles',
+            test: /\.(css|scss|sass)$/,
+            chunks: 'all',
+            enforce: true,
+            priority: 30, // Higher priority than vendor
+          },
           vendor: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
             chunks: 'all',
+            priority: 10,
           },
           kiosk: {
             test: /[\\/]components[\\/]kiosk[\\/]/,
             name: 'kiosk',
             chunks: 'all',
+            priority: 5,
           },
           widgets: {
             test: /[\\/]components[\\/]kiosk[\\/]widgets[\\/]/,
             name: 'widgets',
             chunks: 'all',
+            priority: 5,
           },
         },
       };
