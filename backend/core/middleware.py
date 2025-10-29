@@ -124,7 +124,15 @@ class SessionTenantMiddleware:
         try:
             connection.set_tenant(tenant)
             request.tenant = tenant
-            request.urlconf = tenant.get_urlconf()
+            tenant_urlconf = getattr(tenant, "get_urlconf", None)
+            fallback_urlconf = getattr(settings, "TENANT_URLCONF", None)
+
+            if callable(tenant_urlconf):
+                request.urlconf = tenant_urlconf()
+            elif fallback_urlconf:
+                request.urlconf = fallback_urlconf
+            else:
+                request.urlconf = None
             return self.get_response(request)
         finally:
             # Restore original tenant state to avoid leaking schema between requests
