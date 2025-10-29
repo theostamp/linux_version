@@ -79,7 +79,10 @@ def login_view(request):
     try:
         user = authenticate(request, username=email, password=password)
         print(">>> Χρήστης από authenticate():", user)
-        print(">>> Authentication backend used:", getattr(user, '_state', {}).get('db', 'unknown') if user else 'No user')
+        if user:
+            print(">>> Authentication successful - User ID:", user.id)
+        else:
+            print(">>> Authentication failed - No user returned")
     except Exception as e:
         print(f">>> Authentication error: {e}")
         user = None
