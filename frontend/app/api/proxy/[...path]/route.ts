@@ -43,12 +43,15 @@ async function handleRequest(
     const path = params.path.join('/');
     const url = new URL(request.url);
     const queryString = url.search;
-    
-    // Preserve trailing slash from original request
+
     const originalPath = request.nextUrl.pathname;
-    const hasTrailingSlash = originalPath.endsWith('/');
-    const targetPath = hasTrailingSlash ? `${path}/` : path;
-    
+    const originalHasTrailingSlash = originalPath.endsWith('/');
+
+    const needsTrailingSlash = shouldForceTrailingSlash(path);
+    const targetPath = originalHasTrailingSlash || needsTrailingSlash
+      ? ensureTrailingSlash(path)
+      : path;
+
     const targetUrl = `${RAILWAY_BACKEND_URL}/api/${targetPath}${queryString}`;
     
     const headers: Record<string, string> = {
@@ -122,4 +125,27 @@ async function handleRequest(
       { status: 500 }
     );
   }
+}
+
+function shouldForceTrailingSlash(path: string): boolean {
+  if (!path) {
+    return false;
+  }
+
+  const lastSegment = path.split('/').pop() ?? '';
+
+  // Do not force trailing slash for paths that look like files (contain a dot)
+  if (lastSegment.includes('.')) {
+    return false;
+  }
+
+  return !path.endsWith('/');
+}
+
+function ensureTrailingSlash(path: string): string {
+  if (!path) {
+    return path;
+  }
+
+  return path.endsWith('/') ? path : `${path}/`;
 }
