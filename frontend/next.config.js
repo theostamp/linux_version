@@ -10,6 +10,8 @@ const nextConfig = {
     optimizeCss: false,
     // Disable CSS chunking that causes CSS to be loaded as scripts
     cssChunking: 'strict',
+    // Disable CSS optimization completely
+    cssMinify: false,
   },
 
   // Turbopack configuration (moved from experimental.turbo)
@@ -84,6 +86,7 @@ const nextConfig = {
 
     // Disable CSS optimization that causes CSS to be loaded as scripts
     if (!isServer) {
+      // Disable CSS chunking completely
       config.optimization.splitChunks.cacheGroups = {
         ...config.optimization.splitChunks.cacheGroups,
         styles: {
@@ -92,6 +95,14 @@ const nextConfig = {
           chunks: 'all',
           enforce: true,
         },
+      };
+      
+      // Disable CSS script loading
+      config.optimization.splitChunks.chunks = 'all';
+      config.optimization.splitChunks.cacheGroups.default = {
+        minChunks: 2,
+        priority: -20,
+        reuseExistingChunk: true,
       };
     }
 
