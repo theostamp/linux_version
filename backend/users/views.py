@@ -56,6 +56,9 @@ def login_view(request):
     print(">>> LOGIN_VIEW CALLED - Method:", request.method)
     print(">>> LOGIN_VIEW - Request data:", request.data)
     print(">>> LOGIN_VIEW - Request headers:", dict(request.headers))
+    print(">>> LOGIN_VIEW - Request META:", {k: v for k, v in request.META.items() if k.startswith('HTTP_')})
+    print(">>> LOGIN_VIEW - Request host:", request.get_host())
+    print(">>> LOGIN_VIEW - Request origin:", request.META.get('HTTP_ORIGIN', 'No Origin header'))
     
     # Debug πριν την αυθεντικοποίηση
     user_model = get_user_model()
@@ -73,8 +76,13 @@ def login_view(request):
         )
 
     # Χρήση του custom EmailBackend για authentication με email
-    user = authenticate(request, username=email, password=password)
-    print(">>> Χρήστης από authenticate():", user)
+    try:
+        user = authenticate(request, username=email, password=password)
+        print(">>> Χρήστης από authenticate():", user)
+        print(">>> Authentication backend used:", getattr(user, '_state', {}).get('db', 'unknown') if user else 'No user')
+    except Exception as e:
+        print(f">>> Authentication error: {e}")
+        user = None
 
     if user is None:
         # Ελέγχουμε αν υπάρχει ο χρήστης για πιο χρήσιμο error message

@@ -149,3 +149,4 @@ class TenantNamingIntegrationTestCase(TestCase):
         # Should get testcase-1 because testcase exists
         self.assertEqual(unique_name, 'testcase-1')
 
+

@@ -138,3 +138,4 @@ class Command(BaseCommand):
                 self.style.ERROR(f'     ⚠️  Names over 63 chars:   {over_limit} (PostgreSQL limit!)')
             )
 
+

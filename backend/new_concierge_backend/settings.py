@@ -412,7 +412,8 @@ CORS_ALLOWED_ORIGINS = get_list_env(
     "http://localhost:3000,http://127.0.0.1:3000,http://demo.localhost:3000,"
     "http://top.localhost:3000,http://tap.localhost:3000,"
     "http://localhost:3001,http://127.0.0.1:3001,http://demo.localhost:3001,"
-    "http://top.localhost:3001,http://tap.localhost:3001"
+    "http://top.localhost:3001,http://tap.localhost:3001,"
+    "https://linux-version.vercel.app"  # Vercel production domain
 )
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
@@ -420,18 +421,11 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://[\w\-]+\.localhost:3000$",
     r"^http://[\w\-]+\.localhost:3001$",
     r"^https://[\w\.-]+\.vercel\.app$",  # Vercel preview deployments
+    r"^https://linux-version\.vercel\.app$",  # Specific Vercel production domain
 ]  # ✅ Επιτρέπει *.localhost:* και *.vercel.app
 
 logger.info(f"[SETTINGS] CORS_ALLOWED_ORIGINS: {CORS_ALLOWED_ORIGINS}")
 logger.info(f"[SETTINGS] CORS_ALLOWED_ORIGIN_REGEXES count: {len(CORS_ALLOWED_ORIGIN_REGEXES)}")
-
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "http://*.localhost:8080",
-    "http://top.localhost:8080",  # Προσθήκη του συγκεκριμένου subdomain
-    "http://tap.localhost:8080",  # Προσθήκη του tap subdomain
-]
 
 CORS_EXPOSE_HEADERS  = ["Content-Type", "X-CSRFToken"]
 CORS_ALLOW_HEADERS = get_list_env(
@@ -452,7 +446,7 @@ _raw_csrf = get_list_env(
     "localhost:8080,localhost:3000,127.0.0.1:8080,127.0.0.1:3000,"
     "demo.localhost:8080,demo.localhost:3000,"
     "top.localhost:8080,tap.localhost:8080,top.localhost:3000,tap.localhost:3000,"
-    "*.vercel.app"
+    "linux-version.vercel.app,*.vercel.app"
 )
 CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in _raw_csrf] + [f"https://{h}" for h in _raw_csrf]
 

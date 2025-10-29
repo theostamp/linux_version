@@ -12,16 +12,28 @@ class EmailBackend(ModelBackend):
         # Παίρνουμε email από kwargs ή από username
         email = kwargs.get('email') or username
         if email is None or password is None:
+            print(f"[EmailBackend] Missing email or password: email={email}, password={'****' if password else None}")
             return None
 
+        print(f"[EmailBackend] Attempting authentication for email: {email}")
+        
         try:
             user = User.objects.get(email__iexact=email)
+            print(f"[EmailBackend] User found: {user.email}, is_active: {user.is_active}")
         except User.DoesNotExist:
+            print(f"[EmailBackend] User not found for email: {email}")
             return None
 
         # Ελέγχουμε password
-        if user.check_password(password) and self.user_can_authenticate(user):
+        password_valid = user.check_password(password)
+        can_authenticate = self.user_can_authenticate(user)
+        print(f"[EmailBackend] Password valid: {password_valid}, can_authenticate: {can_authenticate}")
+        
+        if password_valid and can_authenticate:
+            print(f"[EmailBackend] Authentication successful for user: {user.email}")
             return user
+        
+        print(f"[EmailBackend] Authentication failed for user: {user.email}")
         return None
     
     def get_user(self, user_id):

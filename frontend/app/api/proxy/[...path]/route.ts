@@ -62,8 +62,12 @@ async function handleRequest(
     };
 
     // Forward authorization header if present
-    if (request.headers.get('authorization')) {
-      headers['Authorization'] = request.headers.get('authorization')!;
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+      console.log(`[Proxy] Forwarding Authorization header: ${authHeader.substring(0, 20)}...`);
+    } else {
+      console.log('[Proxy] No Authorization header found in request');
     }
 
     // Forward other important headers
@@ -103,8 +107,29 @@ async function handleRequest(
     }
 
     if (!response.ok) {
+      console.error(`[Proxy] Backend request failed: ${response.status} ${response.statusText}`);
+      console.error(`[Proxy] Target URL: ${targetUrl}`);
+      
+      // Try to get error details from response
+      let errorDetails;
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          errorDetails = await response.json();
+        } else {
+          errorDetails = await response.text();
+        }
+      } catch (e) {
+        errorDetails = response.statusText;
+      }
+      
       return NextResponse.json(
-        { error: `Backend request failed: ${response.statusText}` },
+        { 
+          error: `Backend request failed: ${response.statusText}`,
+          details: errorDetails,
+          status: response.status,
+          url: targetUrl
+        },
         { status: response.status }
       );
     }
