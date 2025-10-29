@@ -8,6 +8,8 @@ const nextConfig = {
     optimizePackageImports: false,
     // Disable CSS optimization that causes CSS to be loaded as scripts
     optimizeCss: false,
+    // Disable CSS chunking that causes CSS to be loaded as scripts
+    cssChunking: 'strict',
   },
 
   // Turbopack configuration (moved from experimental.turbo)
