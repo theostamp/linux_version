@@ -382,9 +382,15 @@ class TenantService:
         """Create demo data (Αλκμάνος 22 building) for the new tenant."""
         try:
             with schema_context(schema_name):
+                from datetime import timedelta
+
                 from buildings.models import Building
                 from apartments.models import Apartment
+                from announcements.models import Announcement
+                from votes.models import Vote, VoteSubmission
+                from user_requests.models import UserRequest
                 from django.contrib.auth import get_user_model
+                from django.utils import timezone
                 
                 User = get_user_model()
                 
@@ -437,6 +443,58 @@ class TenantService:
                     )
                 
                 logger.info(f"Created demo building 'Αλκμάνος 22' with 10 apartments in schema {schema_name}")
+
+                today = timezone.now().date()
+
+                # Create a welcome announcement
+                Announcement.objects.create(
+                    building=building,
+                    author=tenant_user,
+                    title='Καλωσορίσατε στην πλατφόρμα!',
+                    description='Η ομάδα του Concierge έχει ήδη δημιουργήσει το κτίριο Αλκμάνος 22 με 10 διαμερίσματα. Εξερευνήστε το dashboard για να δείτε όλα τα διαθέσιμα modules.',
+                    start_date=today,
+                    end_date=today + timedelta(days=30),
+                    published=True,
+                    is_active=True,
+                    is_urgent=False,
+                    priority=10
+                )
+
+                # Create a sample vote
+                vote = Vote.objects.create(
+                    building=building,
+                    creator=tenant_user,
+                    title='Εγκατάσταση Φωτοβολταϊκών',
+                    description='Προτείνουμε την εγκατάσταση φωτοβολταϊκών στο δώμα του κτιρίου. Η ψήφος θα παραμείνει ανοιχτή για 14 ημέρες.',
+                    start_date=today - timedelta(days=1),
+                    end_date=today + timedelta(days=14),
+                    is_active=True,
+                    is_urgent=False,
+                    min_participation=40
+                )
+
+                VoteSubmission.objects.create(
+                    vote=vote,
+                    user=tenant_user,
+                    choice="ΝΑΙ"
+                )
+
+                # Create a sample user request
+                UserRequest.objects.create(
+                    building=building,
+                    title='Έλεγχος συστήματος θέρμανσης',
+                    description='Παρακαλώ προγραμματίστε έναν έλεγχο στο λεβητοστάσιο πριν την έναρξη της χειμερινής περιόδου.',
+                    status='in_progress',
+                    type='maintenance',
+                    priority='high',
+                    estimated_completion=today + timedelta(days=7),
+                    created_by=tenant_user,
+                    assigned_to=tenant_user,
+                    location='Λεβητοστάσιο',
+                    apartment_number='Υπόγειο'
+                )
+
+                logger.info(f"Created demo announcement, vote, and user request in schema {schema_name}")
                 
         except Exception as e:
             logger.error(f"Failed to create demo data in schema {schema_name}: {e}")

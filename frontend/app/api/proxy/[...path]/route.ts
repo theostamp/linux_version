@@ -40,7 +40,8 @@ async function handleRequest(
   method: string
 ) {
   try {
-    const path = params.path.join('/');
+    const pathSegments = params.path;
+    const path = pathSegments.join('/');
     const url = new URL(request.url);
     const queryString = url.search;
 
@@ -53,6 +54,8 @@ async function handleRequest(
       : path;
 
     const targetUrl = `${RAILWAY_BACKEND_URL}/api/${targetPath}${queryString}`;
+
+    console.log(`[Proxy] ${method} ${targetUrl} (segments: ${JSON.stringify(pathSegments)})`);
     
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
