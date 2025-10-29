@@ -34,28 +34,41 @@ def public_buildings_list(request):
         
         # Try to get authenticated user's tenant
         target_schema = 'demo'  # Default to demo
+        user = None
         
         # Check if user is authenticated
         try:
-            jwt_auth = JWTAuthentication()
-            validated_token = jwt_auth.get_validated_token(
-                jwt_auth.get_raw_token(jwt_auth.get_header(request))
-            )
-            user = jwt_auth.get_user(validated_token)
+            # Try to authenticate using JWT
+            auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+            print(f"🔍 [PUBLIC BUILDINGS] Authorization header: {auth_header[:50]}...")
             
-            # If user has a tenant, use their schema
-            if hasattr(user, 'tenant') and user.tenant:
-                target_schema = user.tenant
-                print(f"🔍 [PUBLIC BUILDINGS] Authenticated user: {user.email}, using schema: {target_schema}")
+            if auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+                jwt_auth = JWTAuthentication()
+                validated_token = jwt_auth.get_validated_token(token)
+                user = jwt_auth.get_user(validated_token)
+                
+                print(f"🔍 [PUBLIC BUILDINGS] Authenticated user: {user.email}")
+                print(f"🔍 [PUBLIC BUILDINGS] User tenant: {user.tenant if hasattr(user, 'tenant') else 'None'}")
+                
+                # If user has a tenant, use their schema
+                if hasattr(user, 'tenant') and user.tenant:
+                    target_schema = user.tenant
+                    print(f"🔍 [PUBLIC BUILDINGS] Using user's tenant schema: {target_schema}")
+                else:
+                    print(f"🔍 [PUBLIC BUILDINGS] User has no tenant, using demo schema")
             else:
-                print(f"🔍 [PUBLIC BUILDINGS] Authenticated user: {user.email}, no tenant - using demo schema")
+                print(f"🔍 [PUBLIC BUILDINGS] No Bearer token found, using demo schema")
         except Exception as auth_error:
-            print(f"🔍 [PUBLIC BUILDINGS] No authentication or auth error: {auth_error}")
+            print(f"🔍 [PUBLIC BUILDINGS] Authentication error: {auth_error}")
             print(f"🔍 [PUBLIC BUILDINGS] Using demo schema")
+        
+        print(f"🔍 [PUBLIC BUILDINGS] Final target schema: {target_schema}")
         
         with schema_context(target_schema):
             # Get all buildings from database
             buildings = Building.objects.all().order_by('name')
+            print(f"🔍 [PUBLIC BUILDINGS] Found {buildings.count()} buildings in schema {target_schema}")
             
             buildings_data = []
             for building in buildings:
