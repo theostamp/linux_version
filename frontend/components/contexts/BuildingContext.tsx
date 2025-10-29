@@ -68,7 +68,9 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
 
   // Load buildings function - wrapped with useCallback to prevent unnecessary re-renders
   const loadBuildings = useCallback(async () => {
-    if (authLoading || !user || isLoadingBuildings || buildings.length > 0 || hasInitialized) return;
+    if (authLoading || !user || isLoadingBuildings || buildings.length > 0 || hasInitialized) {
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -102,7 +104,6 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       }
       
       setError(null);
-      setHasInitialized(true);
     } catch (err: any) {
       console.error('[BuildingContext] Failed to load buildings:', err);
 
@@ -122,6 +123,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
       setIsLoadingBuildings(false);
+      setHasInitialized(true);
     }
   }, [authLoading, user, isLoadingBuildings, buildings.length, hasInitialized]);
 
@@ -139,9 +141,13 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
 
   // Load buildings on mount - only once when auth is ready and user is authenticated AND has a tenant
   useEffect(() => {
-    // Only load buildings when auth is not loading, user is authenticated, and has a tenant
-    if (!authLoading && user && user.tenant) {
+    if (!authLoading && user) {
       loadBuildings();
+    }
+
+    if (!authLoading && !user) {
+      setIsLoading(false);
+      setHasInitialized(true);
     }
   }, [authLoading, user, loadBuildings]);
 
