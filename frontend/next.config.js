@@ -3,16 +3,11 @@ const withPWA = (config) => config;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Explicitly disable optimizePackageImports to prevent CSS chunks injected as scripts
+  // Disable experimental features that cause CSS to be loaded as scripts
   experimental: {
-    optimizePackageImports: false,
     // Disable CSS optimization that causes CSS to be loaded as scripts
     optimizeCss: false,
     // Disable CSS chunking that causes CSS to be loaded as scripts
-    cssChunking: 'strict',
-    // Disable CSS optimization completely
-    cssMinify: false,
-    // Disable CSS script loading completely
     cssChunking: 'strict',
   },
 
