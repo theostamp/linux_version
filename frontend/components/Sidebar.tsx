@@ -401,13 +401,22 @@ export default function Sidebar() {
     );
   }
 
-  let userRole: 'superuser' | 'staff' | 'manager' | 'resident' | undefined;
+  type AllowedRole = 'superuser' | 'staff' | 'manager' | 'resident' | 'building_admin';
+  let userRole: AllowedRole | undefined;
+
+  const backendRole = (user as any)?.role ?? (user as any)?.profile?.role;
+
   if (user?.is_superuser) {
     userRole = 'superuser';
+  } else if (backendRole && ['manager', 'resident', 'staff', 'building_admin'].includes(backendRole)) {
+    userRole = backendRole as AllowedRole;
   } else if (user?.is_staff) {
     userRole = 'staff';
-  } else {
-    userRole = user?.profile?.role;
+  } else if (backendRole) {
+    userRole = backendRole as AllowedRole;
+  } else if (user) {
+    // Default tenant owner role when backend has not yet populated the role field
+    userRole = 'manager';
   }
 
   // Show no buildings message only after loading is complete and no buildings found
@@ -466,9 +475,11 @@ export default function Sidebar() {
   }
 
   // Filter available groups and links based on user role
+  const normalizedRole = userRole === 'building_admin' ? 'staff' : userRole;
+
   const availableGroups = navigationGroups.map(group => ({
     ...group,
-    links: group.links.filter(link => userRole && link.roles.includes(userRole))
+    links: group.links.filter(link => normalizedRole && link.roles.includes(normalizedRole))
   })).filter(group => group.links.length > 0);
 
   return (
