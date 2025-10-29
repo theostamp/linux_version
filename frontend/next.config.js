@@ -3,8 +3,10 @@ const withPWA = (config) => config;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Experimental features disabled to avoid CSS loading issues
-  experimental: {},
+  // Explicitly disable optimizePackageImports to prevent CSS chunks injected as scripts
+  experimental: {
+    optimizePackageImports: false,
+  },
 
   // Turbopack configuration (moved from experimental.turbo)
   turbopack: {
