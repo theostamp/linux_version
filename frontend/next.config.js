@@ -12,6 +12,8 @@ const nextConfig = {
     cssChunking: 'strict',
     // Disable CSS optimization completely
     cssMinify: false,
+    // Disable CSS script loading completely
+    cssChunking: 'strict',
   },
 
   // Turbopack configuration (moved from experimental.turbo)
@@ -103,6 +105,15 @@ const nextConfig = {
         minChunks: 2,
         priority: -20,
         reuseExistingChunk: true,
+      };
+      
+      // Disable CSS script loading completely
+      config.optimization.splitChunks.cacheGroups.styles = {
+        name: 'styles',
+        test: /\.(css|scss|sass)$/,
+        chunks: 'all',
+        enforce: true,
+        priority: 20,
       };
     }
 
