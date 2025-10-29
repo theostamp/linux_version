@@ -23,15 +23,37 @@ def get_csrf_token(request):
 @csrf_exempt
 def public_buildings_list(request):
     """
-    Public endpoint for listing buildings (no authentication required)
-    Used by kiosk mode - Simple Django view without DRF
-    Always uses demo tenant since that's where the building data is
+    Public endpoint for listing buildings
+    - For authenticated users: Returns buildings from their tenant schema
+    - For unauthenticated users: Returns buildings from demo tenant
+    Used by kiosk mode and authenticated dashboard
     """
     try:
-        # Always use demo tenant context since that's where the data is
-        from django_tenants.utils import schema_context
+        from django_tenants.utils import schema_context, get_tenant_model
+        from rest_framework_simplejwt.authentication import JWTAuthentication
         
-        with schema_context('demo'):
+        # Try to get authenticated user's tenant
+        target_schema = 'demo'  # Default to demo
+        
+        # Check if user is authenticated
+        try:
+            jwt_auth = JWTAuthentication()
+            validated_token = jwt_auth.get_validated_token(
+                jwt_auth.get_raw_token(jwt_auth.get_header(request))
+            )
+            user = jwt_auth.get_user(validated_token)
+            
+            # If user has a tenant, use their schema
+            if hasattr(user, 'tenant') and user.tenant:
+                target_schema = user.tenant
+                print(f"🔍 [PUBLIC BUILDINGS] Authenticated user: {user.email}, using schema: {target_schema}")
+            else:
+                print(f"🔍 [PUBLIC BUILDINGS] Authenticated user: {user.email}, no tenant - using demo schema")
+        except Exception as auth_error:
+            print(f"🔍 [PUBLIC BUILDINGS] No authentication or auth error: {auth_error}")
+            print(f"🔍 [PUBLIC BUILDINGS] Using demo schema")
+        
+        with schema_context(target_schema):
             # Get all buildings from database
             buildings = Building.objects.all().order_by('name')
             
@@ -57,33 +79,15 @@ def public_buildings_list(request):
                 }
                 buildings_data.append(building_data)
             
-            print(f"🔍 [PUBLIC BUILDINGS] Returning {len(buildings_data)} buildings from demo tenant")
+            print(f"🔍 [PUBLIC BUILDINGS] Returning {len(buildings_data)} buildings from schema: {target_schema}")
             return JsonResponse(buildings_data, safe=False)
         
     except Exception as e:
         print(f"❌ [PUBLIC BUILDINGS] Error: {e}")
-        # Fallback to static data if database error
-        fallback_data = [
-            {
-                'id': 3,
-                'name': "Σόλωνος 8, Αθήνα 106 73",
-                'address': "Σόλωνος 8, Αθήνα 106 73, Ελλάδα",
-                'city': "Αθήνα",
-                'postal_code': "10673",
-                'apartments_count': 12,
-                'internal_manager_name': "Νίκος Δημητρίου",
-                'internal_manager_phone': "2103456789",
-                'management_office_name': "Compuyterme",
-                'management_office_phone': "21055566368",
-                'management_office_address': "Αθήνα, Ελλάδα",
-                'street_view_image': None,
-                'latitude': "37.9838",
-                'longitude': "23.7275",
-                'created_at': "2024-01-01T00:00:00Z",
-                'updated_at': "2024-01-01T00:00:00Z"
-            }
-        ]
-        return JsonResponse(fallback_data, safe=False)
+        import traceback
+        traceback.print_exc()
+        # Return empty array on error
+        return JsonResponse([], safe=False)
 
 
 class ServicePackageViewSet(viewsets.ModelViewSet):
