@@ -53,7 +53,15 @@ def public_buildings_list(request):
                 
                 # If user has a tenant, use their schema
                 if hasattr(user, 'tenant') and user.tenant:
-                    target_schema = user.tenant
+                    tenant_obj = user.tenant
+                    if hasattr(tenant_obj, 'schema_name') and tenant_obj.schema_name:
+                        target_schema = tenant_obj.schema_name
+                    elif isinstance(tenant_obj, str):
+                        target_schema = tenant_obj
+                    else:
+                        print("🔍 [PUBLIC BUILDINGS] Could not derive tenant schema, falling back to demo")
+                        # Fallback to demo if schema name cannot be determined safely
+                        target_schema = 'demo'
                     print(f"🔍 [PUBLIC BUILDINGS] Using user's tenant schema: {target_schema}")
                 else:
                     print(f"🔍 [PUBLIC BUILDINGS] User has no tenant, using demo schema")
