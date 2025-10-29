@@ -1,5 +1,17 @@
+from django.conf import settings
+from django.db import connection
 from django_tenants.middleware.main import TenantMainMiddleware
-from django_tenants.utils import get_tenant_model
+from django_tenants.utils import (
+    get_public_schema_name,
+    get_tenant_model,
+)
+
+try:
+    from rest_framework_simplejwt.authentication import JWTAuthentication
+    from rest_framework_simplejwt.exceptions import InvalidToken
+except ImportError:  # pragma: no cover - DRF/JWT not installed in minimal environments
+    JWTAuthentication = None
+    InvalidToken = Exception
 
 
 class CustomTenantMiddleware(TenantMainMiddleware):
@@ -79,3 +91,123 @@ class CustomTenantMiddleware(TenantMainMiddleware):
             request.META['HTTP_HOST'] = original_host
 
         return response 
+
+
+class SessionTenantMiddleware:
+    """Switch database schema based on the authenticated user's tenant.
+
+    When we serve all tenants from a shared production domain (Railway), the
+    default django-tenants routing cannot rely on the hostname. This middleware
+    inspects the authenticated user (session or JWT) and temporarily switches
+    the active connection to the user's tenant schema so that standard DRF
+    viewsets (e.g. announcements, votes, user requests) operate on the correct
+    database.
+
+    The middleware falls back to the public schema for unauthenticated requests
+    or when the tenant cannot be resolved.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # By default keep whatever schema the tenant middleware selected
+        tenant = self._resolve_tenant_from_request(request)
+
+        if not tenant:
+            return self.get_response(request)
+
+        previous_tenant = getattr(connection, "tenant", None)
+        previous_schema = connection.schema_name
+        previous_urlconf = getattr(request, "urlconf", None)
+
+        try:
+            connection.set_tenant(tenant)
+            request.tenant = tenant
+            request.urlconf = tenant.get_urlconf()
+            return self.get_response(request)
+        finally:
+            # Restore original tenant state to avoid leaking schema between requests
+            if previous_tenant is not None:
+                connection.set_tenant(previous_tenant)
+            else:
+                connection.set_schema_to_public()
+
+            if previous_urlconf is not None:
+                request.urlconf = previous_urlconf
+            elif hasattr(request, "urlconf"):
+                delattr(request, "urlconf")
+
+            # Also restore request.tenant if we set it
+            if previous_tenant is not None:
+                request.tenant = previous_tenant
+            elif hasattr(request, "tenant"):
+                delattr(request, "tenant")
+
+    def _resolve_tenant_from_request(self, request):
+        """Return the tenant associated with the current request, if any."""
+
+        # Skip tenant switching for explicitly public endpoints (auth, billing webhooks, etc.)
+        if self._should_skip_path(request.path):
+            return None
+
+        tenant = None
+
+        # 1) Session-based authentication (request.user populated by Django auth)
+        user = getattr(request, "user", None)
+        if user and getattr(user, "is_authenticated", False):
+            tenant = getattr(user, "tenant", None)
+
+        # 2) JWT-based authentication (API requests from the frontend)
+        if not tenant and JWTAuthentication is not None:
+            tenant = self._tenant_from_jwt(request)
+
+        if not tenant:
+            return None
+
+        schema_name = getattr(tenant, "schema_name", None)
+        if not schema_name or schema_name == get_public_schema_name():
+            return None
+
+        return tenant
+
+    def _tenant_from_jwt(self, request):
+        """Resolve tenant via JWT Authorization header."""
+
+        try:
+            jwt_auth = JWTAuthentication()
+            header = jwt_auth.get_header(request)
+            if header is None:
+                return None
+
+            raw_token = jwt_auth.get_raw_token(header)
+            if raw_token is None:
+                return None
+
+            validated_token = jwt_auth.get_validated_token(raw_token)
+            user = jwt_auth.get_user(validated_token)
+            if not user:
+                return None
+
+            return getattr(user, "tenant", None)
+        except InvalidToken:
+            return None
+        except Exception:
+            return None
+
+    def _should_skip_path(self, path: str) -> bool:
+        """Determine if the current path should remain in the public schema."""
+
+        public_prefixes = (
+            "/admin",
+            "/api/users/register",
+            "/api/users/login",
+            "/api/users/verify-email",
+            "/api/users/token",
+            "/api/users/password",
+            "/api/billing/webhook",
+            "/api/buildings/public/",
+            "/api/internal/",
+        )
+
+        return any(path.startswith(prefix) for prefix in public_prefixes)

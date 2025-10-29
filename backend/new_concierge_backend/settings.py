@@ -177,6 +177,7 @@ if DEBUG:
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'core.middleware.SessionTenantMiddleware',
         'core.cross_schema_auth.TenantAccessMiddleware',  # Cross-schema tenant access control
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -201,6 +202,7 @@ else:
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'core.middleware.SessionTenantMiddleware',
         'core.cross_schema_auth.TenantAccessMiddleware',  # Cross-schema tenant access control
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
