@@ -6,6 +6,8 @@ const nextConfig = {
   // Explicitly disable optimizePackageImports to prevent CSS chunks injected as scripts
   experimental: {
     optimizePackageImports: false,
+    // Disable CSS optimization that causes CSS to be loaded as scripts
+    optimizeCss: false,
   },
 
   // Turbopack configuration (moved from experimental.turbo)
@@ -76,6 +78,19 @@ const nextConfig = {
           openAnalyzer: true,
         })
       );
+    }
+
+    // Disable CSS optimization that causes CSS to be loaded as scripts
+    if (!isServer) {
+      config.optimization.splitChunks.cacheGroups = {
+        ...config.optimization.splitChunks.cacheGroups,
+        styles: {
+          name: 'styles',
+          test: /\.(css|scss|sass)$/,
+          chunks: 'all',
+          enforce: true,
+        },
+      };
     }
 
     // Optimize imports
