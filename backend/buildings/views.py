@@ -73,18 +73,19 @@ def public_buildings_list(request):
         
         print(f"🔍 [PUBLIC BUILDINGS] Final target schema: {target_schema}")
         
-        with schema_context(target_schema):
-            # Get all buildings from database
-            buildings = Building.objects.all().order_by('name')
-            print(f"🔍 [PUBLIC BUILDINGS] Found {buildings.count()} buildings in schema {target_schema}")
-            
-            buildings_data = []
-            for building in buildings:
-                building_data = {
-                    'id': building.id,
-                    'name': building.name,
-                    'address': building.address,
-                    'city': building.city,
+        try:
+            with schema_context(target_schema):
+                # Get all buildings from database
+                buildings = Building.objects.all().order_by('name')
+                print(f"🔍 [PUBLIC BUILDINGS] Found {buildings.count()} buildings in schema {target_schema}")
+                
+                buildings_data = []
+                for building in buildings:
+                    building_data = {
+                        'id': building.id,
+                        'name': building.name,
+                        'address': building.address,
+                        'city': building.city,
                     'postal_code': building.postal_code,
                     'apartments_count': building.apartments_count,
                     'internal_manager_name': building.internal_manager_name,
@@ -98,14 +99,14 @@ def public_buildings_list(request):
                     'created_at': building.created_at.isoformat() if building.created_at else None,
                     'updated_at': building.updated_at.isoformat() if building.updated_at else None
                 }
-                buildings_data.append(building_data)
-            
-            print(f"🔍 [PUBLIC BUILDINGS] Returning {len(buildings_data)} buildings from schema: {target_schema}")
-            return JsonResponse(buildings_data, safe=False)
+                    buildings_data.append(building_data)
+                
+                print(f"🔍 [PUBLIC BUILDINGS] Returning {len(buildings_data)} buildings from schema: {target_schema}")
+                return JsonResponse(buildings_data, safe=False)
         
-    except Exception as e:
-        print(f"❌ [PUBLIC BUILDINGS] Error: {e}")
-        import traceback
+        except Exception as e:
+            print(f"❌ [PUBLIC BUILDINGS] Error: {e}")
+            import traceback
         traceback.print_exc()
         # Return empty array on error
         return JsonResponse([], safe=False)

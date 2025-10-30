@@ -156,8 +156,14 @@ class StripeWebhookView(APIView):
                 # Send workspace welcome email AFTER successful payment confirmation
                 try:
                     from users.services import EmailService
-                    EmailService.send_workspace_welcome_email(user, domain.domain)
-                    logger.info(f"[WEBHOOK] Sent workspace welcome email to {user.email}")
+                    # Get the domain from the tenant
+                    from tenants.models import Domain
+                    domain = Domain.objects.filter(tenant=tenant).first()
+                    if domain:
+                        EmailService.send_workspace_welcome_email(user, domain.domain)
+                        logger.info(f"[WEBHOOK] Sent workspace welcome email to {user.email}")
+                    else:
+                        logger.warning(f"[WEBHOOK] No domain found for tenant {tenant.schema_name}")
                 except Exception as email_error:
                     logger.error(f"[WEBHOOK] Failed to send workspace welcome email: {email_error}")
 
