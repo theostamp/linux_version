@@ -23,6 +23,27 @@ def send_subscription_created_email(sender, instance, created, **kwargs):
     if created and instance.status == 'active':
         try:
             user = instance.user
+            
+            # Ensure user has correct role and permissions
+            if user.role != 'manager':
+                user.role = 'manager'
+                user.is_staff = True
+                user.save(update_fields=['role', 'is_staff'])
+                logger.info(f"Updated {user.email} role to manager")
+            
+            # Add to Manager group
+            from django.contrib.auth.models import Group
+            manager_group, _ = Group.objects.get_or_create(name='Manager')
+            if not user.groups.filter(name='Manager').exists():
+                user.groups.add(manager_group)
+                logger.info(f"Added {user.email} to Manager group")
+            
+            # Remove from Resident group if present
+            if user.groups.filter(name='Resident').exists():
+                resident_group = Group.objects.get(name='Resident')
+                user.groups.remove(resident_group)
+                logger.info(f"Removed {user.email} from Resident group")
+            
             building_name = getattr(user, 'building_name', 'Your Building')
             
             # Send welcome email only after payment confirmation
@@ -42,6 +63,27 @@ def send_payment_confirmation_email(sender, instance, **kwargs):
     if instance.status == 'active' and hasattr(instance, '_payment_processed'):
         try:
             user = instance.user
+            
+            # Ensure user has correct role and permissions when payment is confirmed
+            if user.role != 'manager':
+                user.role = 'manager'
+                user.is_staff = True
+                user.save(update_fields=['role', 'is_staff'])
+                logger.info(f"Updated {user.email} role to manager on payment confirmation")
+            
+            # Add to Manager group
+            from django.contrib.auth.models import Group
+            manager_group, _ = Group.objects.get_or_create(name='Manager')
+            if not user.groups.filter(name='Manager').exists():
+                user.groups.add(manager_group)
+                logger.info(f"Added {user.email} to Manager group on payment confirmation")
+            
+            # Remove from Resident group if present
+            if user.groups.filter(name='Resident').exists():
+                resident_group = Group.objects.get(name='Resident')
+                user.groups.remove(resident_group)
+                logger.info(f"Removed {user.email} from Resident group on payment confirmation")
+            
             amount = instance.plan.monthly_price
             
             # Send payment confirmation

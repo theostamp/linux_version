@@ -150,6 +150,19 @@ class StripeWebhookView(APIView):
                 user.is_superuser = True  # Full admin rights for their tenant
                 user.role = 'manager'  # Tenant owner/admin role
                 user.save(update_fields=['tenant', 'is_staff', 'is_superuser', 'role'])
+                
+                # Add user to Manager group for proper permissions
+                from django.contrib.auth.models import Group
+                manager_group, created = Group.objects.get_or_create(name='Manager')
+                if not user.groups.filter(name='Manager').exists():
+                    user.groups.add(manager_group)
+                    logger.info(f"[WEBHOOK] Added {user.email} to Manager group")
+                
+                # Remove from Resident group if present
+                if user.groups.filter(name='Resident').exists():
+                    resident_group = Group.objects.get(name='Resident')
+                    user.groups.remove(resident_group)
+                    logger.info(f"[WEBHOOK] Removed {user.email} from Resident group")
 
                 logger.info(f"[WEBHOOK] Provisioning complete for {user.email} → {tenant.schema_name}")
                 
