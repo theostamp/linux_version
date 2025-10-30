@@ -174,13 +174,13 @@ export const userProfileApi = {
 export const userSubscriptionApi = {
   // Get current subscription
   getCurrentSubscription: async (): Promise<{ subscription: UserSubscription | null }> => {
-    const response = await apiClient.get('/api/users/subscription/');
+    const response = await apiClient.get('/api/billing/subscriptions/current/');
     return response.data;
   },
 
   // Get available subscription plans
   getSubscriptionPlans: async (): Promise<{ plans: SubscriptionPlan[] }> => {
-    const response = await apiClient.get('/api/users/subscription/plans/');
+    const response = await apiClient.get('/api/billing/plans/');
     return response.data;
   },
 
@@ -189,7 +189,7 @@ export const userSubscriptionApi = {
     billing_cycles: BillingCycle[];
     total: number;
   }> => {
-    const response = await apiClient.get('/api/users/subscription/billing-history/', {
+    const response = await apiClient.get('/api/billing/analytics/billing-history/', {
       params: { limit }
     });
     return response.data;

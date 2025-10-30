@@ -56,19 +56,19 @@ export default function MySubscriptionPage() {
       setLoading(true);
       
       const [subscriptionResponse, plansResponse, billingResponse] = await Promise.all([
-        fetch('/api/user/subscription/current/', {
+        fetch('/api/billing/subscriptions/current/', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('access') || localStorage.getItem('access_token')}`,
           },
         }),
-        fetch('/api/subscription-plans/', {
+        fetch('/api/billing/plans/', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('access') || localStorage.getItem('access_token')}`,
           },
         }),
-        fetch('/api/user/subscription/billing-history/', {
+        fetch('/api/billing/analytics/billing-history/', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('access') || localStorage.getItem('access_token')}`,
           },
         })
       ]);
@@ -98,10 +98,10 @@ export default function MySubscriptionPage() {
     try {
       setActionLoading(true);
       
-      const response = await fetch(`/api/user/subscription/${action}/`, {
+      const response = await fetch(`/api/billing/subscriptions/${action}/`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('access') || localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
         },
         body: data ? JSON.stringify(data) : undefined,
