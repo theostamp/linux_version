@@ -304,45 +304,6 @@ def create_public_tenant():
         print("   ✅ Authentication verified - login will work!")
     else:
         print("   ⚠️ WARNING: Authentication test failed - may need to run fix_admin_auth")
-        from users.models import CustomUser
-        
-        ultra_user, created = CustomUser.objects.get_or_create(
-            email=ultra_admin_email,
-            defaults={
-                'first_name': ultra_admin_first_name,
-                'last_name': ultra_admin_last_name,
-                'is_staff': True,
-                'is_superuser': True,
-                'is_active': True,
-                'role': 'admin',
-                'email_verified': True
-            }
-        )
-        
-        if created:
-            ultra_user.set_password(ultra_admin_password)
-            ultra_user.save()
-            print(f"✅ Δημιουργήθηκε Ultra-Superuser: {ultra_admin_email}")
-        else:
-            # Ενημέρωση password αν υπάρχει ήδη (μόνο αν ορίζεται το password)
-            ultra_user.set_password(ultra_admin_password)
-            ultra_user.is_superuser = True
-            ultra_user.is_staff = True
-            ultra_user.is_active = True
-            ultra_user.email_verified = True
-            ultra_user.save()
-            print(f"✅ Ενημερώθηκε Ultra-Superuser: {ultra_admin_email}")
-
-        # Verify authentication works (μόνο αν υπάρχουν credentials)
-        from django.contrib.auth import authenticate
-        test_auth = authenticate(username=ultra_admin_email, password=ultra_admin_password)
-        if test_auth:
-            print("   ✅ Authentication verified - login will work!")
-        else:
-            print("   ⚠️ WARNING: Authentication test failed - may need to run fix_admin_auth")
-    else:
-        print("\n⚠️  Ultra-Superuser creation skipped (ULTRA_ADMIN_EMAIL/ULTRA_ADMIN_PASSWORD not set)")
-        print("   ℹ️  Set ULTRA_ADMIN_EMAIL and ULTRA_ADMIN_PASSWORD env vars to create superuser")
     
     return public_tenant
 
