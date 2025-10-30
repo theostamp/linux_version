@@ -261,13 +261,11 @@ def create_public_tenant():
         else:
             print(f"ℹ️ Υπάρχει ήδη Railway domain: {railway_domain}")
     
-    # Δημιουργία Ultra-Superuser στο public schema (μόνο αν υπάρχει config)
-    ultra_admin_email = os.getenv('ULTRA_ADMIN_EMAIL')
-    ultra_admin_password = os.getenv('ULTRA_ADMIN_PASSWORD')
-    ultra_admin_first_name = os.getenv('ULTRA_ADMIN_FIRST_NAME', 'Ultra')
-    ultra_admin_last_name = os.getenv('ULTRA_ADMIN_LAST_NAME', 'Admin')
-    
-    if ultra_admin_email and ultra_admin_password:
+    # Δημιουργία Ultra-Superuser στο public schema (με default values για backward compatibility)
+    ultra_admin_email = os.getenv('ULTRA_ADMIN_EMAIL', 'theostam1966@gmail.com')
+    ultra_admin_password = os.getenv('ULTRA_ADMIN_PASSWORD', 'theo123!@#')
+    ultra_admin_first_name = os.getenv('ULTRA_ADMIN_FIRST_NAME', 'Theo')
+    ultra_admin_last_name = os.getenv('ULTRA_ADMIN_LAST_NAME', 'Ultra Admin')
         print("\n👑 Δημιουργία Ultra-Superuser...")
         from users.models import CustomUser
         
