@@ -110,6 +110,13 @@ def public_buildings_list(request):
             traceback.print_exc()
             # Return empty array on error
             return JsonResponse([], safe=False)
+    
+    except Exception as e:
+        print(f"❌ [PUBLIC BUILDINGS] Fatal error: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return empty array on fatal error
+        return JsonResponse([], safe=False)
 
 
 class ServicePackageViewSet(viewsets.ModelViewSet):
