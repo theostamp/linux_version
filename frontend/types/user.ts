@@ -9,6 +9,8 @@ export type User = {
   groups?: { id: number; name: string }[];
   is_staff?: boolean;
   is_superuser?: boolean;
+  is_active?: boolean;
+  email_verified?: boolean;
   role?: string;
 
   // Office Management Details

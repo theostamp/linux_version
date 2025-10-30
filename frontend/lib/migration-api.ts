@@ -86,7 +86,7 @@ export async function analyzeFormImages(files: File[]): Promise<{
 }> {
   const formData = new FormData();
   
-  files.forEach((file, index) => {
+  files.forEach((file) => {
     formData.append('images', file);
   });
 
