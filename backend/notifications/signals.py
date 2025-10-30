@@ -18,19 +18,23 @@ logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=UserSubscription)
 def send_subscription_created_email(sender, instance, created, **kwargs):
-    """Send welcome email when subscription is created"""
+    """Send welcome email when subscription is created and payment is confirmed"""
+    # Only send email if subscription is created AND status is active (payment confirmed)
     if created and instance.status == 'active':
         try:
             user = instance.user
             building_name = getattr(user, 'building_name', 'Your Building')
             
-            # Send welcome email
+            # Send welcome email only after payment confirmation
             email_service.send_welcome_email(user, building_name)
             
-            logger.info(f"Welcome email triggered for user {user.email}")
+            logger.info(f"Welcome email triggered for user {user.email} after payment confirmation")
             
         except Exception as e:
             logger.error(f"Failed to send welcome email for subscription {instance.id}: {e}")
+    elif created and instance.status == 'pending':
+        # Don't send email for pending subscriptions (before payment)
+        logger.info(f"Subscription {instance.id} created with pending status - no email sent yet")
 
 @receiver(post_save, sender=UserSubscription)
 def send_payment_confirmation_email(sender, instance, **kwargs):

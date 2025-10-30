@@ -152,6 +152,14 @@ class StripeWebhookView(APIView):
                 user.save(update_fields=['tenant', 'is_staff', 'is_superuser', 'role'])
 
                 logger.info(f"[WEBHOOK] Provisioning complete for {user.email} → {tenant.schema_name}")
+                
+                # Send workspace welcome email AFTER successful payment confirmation
+                try:
+                    from users.services import EmailService
+                    EmailService.send_workspace_welcome_email(user, domain.domain)
+                    logger.info(f"[WEBHOOK] Sent workspace welcome email to {user.email}")
+                except Exception as email_error:
+                    logger.error(f"[WEBHOOK] Failed to send workspace welcome email: {email_error}")
 
         except Exception as e:
             logger.error(f"[WEBHOOK] Provisioning failed: {e}", exc_info=True)

@@ -249,7 +249,8 @@ class EmailService:
     @staticmethod
     def send_workspace_welcome_email(user, tenant_domain):
         """
-        Send workspace welcome email after successful subscription and tenant creation.
+        Send workspace welcome email AFTER successful payment confirmation and tenant creation.
+        This should only be called after payment is confirmed, not during tenant creation.
 
         Args:
             user: The user who subscribed
@@ -257,7 +258,7 @@ class EmailService:
         """
         workspace_url = f"http://{tenant_domain}:8080"  # Adjust protocol/port as needed
 
-        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Ο χώρος εργασίας σας είναι έτοιμος!"
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}🎉 Το Workspace σας είναι έτοιμο - {user.email}"
 
         # Plain text version
         message = f"""
@@ -265,7 +266,8 @@ class EmailService:
 
         Καλώς ήρθατε στο New Concierge! 🎉
 
-        Ο χώρος εργασίας σας έχει δημιουργηθεί επιτυχώς και είναι έτοιμος για χρήση.
+        ✅ Η πληρωμή σας επιβεβαιώθηκε επιτυχώς!
+        ✅ Ο χώρος εργασίας σας έχει δημιουργηθεί και είναι έτοιμος για χρήση.
 
         📍 Ο χώρος εργασίας σας: {workspace_url}
 
@@ -639,7 +641,11 @@ class PasswordResetService:
         <body style="font-family: Arial, sans-serif; line-height: 1.6;">
             <h2>Καλώς ήρθατε στο New Concierge!</h2>
             <p>Γεια σας {user.first_name},</p>
-            <p>Το workspace σας <strong>{tenant.name}</strong> δημιουργήθηκε επιτυχώς!</p>
+            
+            <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; margin: 20px 0; border-radius: 8px;">
+                <h3 style="color: #155724; margin: 0;">✅ Η πληρωμή σας επιβεβαιώθηκε επιτυχώς!</h3>
+                <p style="color: #155724; margin: 5px 0 0 0;">Το workspace σας <strong>{tenant.name}</strong> είναι έτοιμο για χρήση.</p>
+            </div>
             
             <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px;">
                 <h3>Στοιχεία Πρόσβασης:</h3>

@@ -1,1 +1,1 @@
-# Management commands για το users app 
+# Management package

@@ -342,14 +342,8 @@ class TenantService:
                 # Step 5: Create demo data (Αλκμάνος 22 building)
                 self._create_demo_data(schema_name)
 
-                # Step 6: Send welcome email with workspace link
-                try:
-                    from users.services import EmailService
-                    EmailService.send_workspace_welcome_email(user, domain.domain)
-                    logger.info(f"Sent workspace welcome email to {user.email}")
-                except Exception as email_error:
-                    # Don't fail tenant creation if email fails
-                    logger.error(f"Failed to send welcome email: {email_error}")
+                # Step 6: Tenant infrastructure ready (email will be sent after payment confirmation)
+                logger.info(f"Tenant infrastructure ready for {user.email} - email will be sent after payment confirmation")
 
                 logger.info(f"Successfully created tenant infrastructure '{schema_name}' for user {user.email}")
                 return tenant, domain
