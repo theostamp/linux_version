@@ -1011,9 +1011,9 @@ def save_credentials():
     os.makedirs(log_dir, exist_ok=True)
     log_path = os.path.join(log_dir, "demo_credentials.log")
     
-    ultra_admin_email = os.getenv('ULTRA_ADMIN_EMAIL', 'NOT SET - Set ULTRA_ADMIN_EMAIL env var')
-    ultra_admin_password_set = '*** SET IN ENV VAR ***' if os.getenv('ULTRA_ADMIN_PASSWORD') else 'NOT SET - Set ULTRA_ADMIN_PASSWORD env var'
-    enable_demo_data = os.getenv('ENABLE_DEMO_DATA', 'false').lower() == 'true'
+    ultra_admin_email = os.getenv('ULTRA_ADMIN_EMAIL', 'theostam1966@gmail.com')
+    ultra_admin_password_set = '*** SET IN ENV VAR ***' if os.getenv('ULTRA_ADMIN_PASSWORD') else 'theo123!@# (default)'
+    enable_demo_data = os.getenv('ENABLE_DEMO_DATA', 'true').lower() == 'true'
     if enable_demo_data:
         demo_section = """
 
@@ -1170,7 +1170,7 @@ API Documentation: http://demo.localhost:8000/api/docs/
 
 🔐 PERMISSION HIERARCHY:
 ------------------------
-👑 Ultra-Superuser ({ultra_admin_email if ultra_admin_email != 'NOT SET - Set ULTRA_ADMIN_EMAIL env var' else 'NOT CONFIGURED'}):
+👑 Ultra-Superuser ({ultra_admin_email}):
    - Complete system administration
    - Manage all tenants and users
    - Full access to all schemas and analytics
@@ -1257,8 +1257,8 @@ def main():
         print("\n⚠️  Production user fixes disabled (ENABLE_PRODUCTION_USER_FIXES=false)")
         print("   ℹ️  Set ENABLE_PRODUCTION_USER_FIXES=true to enable automatic user fixes")
 
-    # 6. Δημιουργία demo tenant (μόνο αν ενεργοποιηθεί)
-    enable_demo_data = os.getenv('ENABLE_DEMO_DATA', 'false').lower() == 'true'
+    # 6. Δημιουργία demo tenant (enabled by default για demo κτίριο)
+    enable_demo_data = os.getenv('ENABLE_DEMO_DATA', 'true').lower() == 'true'
     if enable_demo_data:
         tenant = create_demo_tenant()
         # 7. Δημιουργία demo δεδομένων
@@ -1285,16 +1285,14 @@ def main():
     
     print("\n👑 Ultra-Superuser (System Administrator):")
     print("   URL: http://localhost:8000/admin/")
-    ultra_admin_email = os.getenv('ULTRA_ADMIN_EMAIL')
+    ultra_admin_email = os.getenv('ULTRA_ADMIN_EMAIL', 'theostam1966@gmail.com')
+    ultra_admin_password = os.getenv('ULTRA_ADMIN_PASSWORD', 'theo123!@#')
     if ultra_admin_email:
         print(f"   Email: {ultra_admin_email}")
-        print("   Password: *** SET IN ENV VAR ***")
-    else:
-        print("   Email: NOT SET - Set ULTRA_ADMIN_EMAIL env var")
-        print("   Password: NOT SET - Set ULTRA_ADMIN_PASSWORD env var")
+        print(f"   Password: {'*** SET IN ENV VAR ***' if os.getenv('ULTRA_ADMIN_PASSWORD') else ultra_admin_password}")
     print("   Permissions: Complete system management")
     
-    enable_demo_data = os.getenv('ENABLE_DEMO_DATA', 'false').lower() == 'true'
+    enable_demo_data = os.getenv('ENABLE_DEMO_DATA', 'true').lower() == 'true'
     if enable_demo_data:
         print("\n🌐 Demo Tenant Access:")
         print("   Frontend: http://demo.localhost:8080")

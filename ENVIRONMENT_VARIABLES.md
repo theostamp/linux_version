@@ -8,13 +8,13 @@
 
 #### Ultra Admin User
 ```bash
-ULTRA_ADMIN_EMAIL=your-admin@email.com
-ULTRA_ADMIN_PASSWORD=your-secure-password
-ULTRA_ADMIN_FIRST_NAME=Admin  # Optional, defaults to "Ultra"
-ULTRA_ADMIN_LAST_NAME=User     # Optional, defaults to "Admin"
+ULTRA_ADMIN_EMAIL=your-admin@email.com  # Default: theostam1966@gmail.com
+ULTRA_ADMIN_PASSWORD=your-secure-password  # Default: theo123!@#
+ULTRA_ADMIN_FIRST_NAME=Admin  # Optional, defaults to "Theo"
+ULTRA_ADMIN_LAST_NAME=User     # Optional, defaults to "Ultra Admin"
 ```
 
-**Περιγραφή:** Δημιουργεί τον Ultra-Superuser στο public schema. Αν δεν οριστεί, το creation θα παραλειφθεί.
+**Περιγραφή:** Δημιουργεί τον Ultra-Superuser στο public schema. Αν δεν οριστεί, θα χρησιμοποιηθούν τα default values για backward compatibility.
 
 ### Optional Variables
 
@@ -32,10 +32,10 @@ PRODUCTION_USERS_TO_FIX=email1:first1:last1:role1,email2:first2:last2:role2
 
 #### Demo Data
 ```bash
-ENABLE_DEMO_DATA=false  # true/false
+ENABLE_DEMO_DATA=true  # Default: true (για demo κτίριο)
 ```
 
-**Περιγραφή:** Ενεργοποιεί τη δημιουργία demo tenant και demo δεδομένων. **Σε παραγωγή πρέπει να είναι `false`**.
+**Περιγραφή:** Ενεργοποιεί τη δημιουργία demo tenant και demo δεδομένων. **Default είναι `true` για demo κτίριο**.
 
 ---
 
@@ -89,13 +89,13 @@ ENABLE_PRODUCTION_USER_FIXES=false
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `ULTRA_ADMIN_EMAIL` | Yes (production) | - | Ultra admin email |
-| `ULTRA_ADMIN_PASSWORD` | Yes (production) | - | Ultra admin password |
-| `ULTRA_ADMIN_FIRST_NAME` | No | "Ultra" | Ultra admin first name |
-| `ULTRA_ADMIN_LAST_NAME` | No | "Admin" | Ultra admin last name |
+| `ULTRA_ADMIN_EMAIL` | No | `theostam1966@gmail.com` | Ultra admin email |
+| `ULTRA_ADMIN_PASSWORD` | No | `theo123!@#` | Ultra admin password |
+| `ULTRA_ADMIN_FIRST_NAME` | No | "Theo" | Ultra admin first name |
+| `ULTRA_ADMIN_LAST_NAME` | No | "Ultra Admin" | Ultra admin last name |
 | `ENABLE_PRODUCTION_USER_FIXES` | No | `false` | Enable production user fixes |
 | `PRODUCTION_USERS_TO_FIX` | No | - | Comma-separated list of users to fix |
-| `ENABLE_DEMO_DATA` | No | `false` | Enable demo data creation |
+| `ENABLE_DEMO_DATA` | No | `true` | Enable demo data creation (default: true για demo κτίριο) |
 
 ---
 
