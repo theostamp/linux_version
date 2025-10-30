@@ -252,3 +252,4 @@ export function FinancialAccessDebug({ onRefresh }: FinancialAccessDebugProps) {
     </div>
   );
 }
+

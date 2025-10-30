@@ -291,3 +291,4 @@ logger.error(f"Verification failed - Error: {error_msg}")
 
 **Ο χρήστης ΔΕΝ θα μείνει "κολλημένος" αν δεν λάβει το email!**
 
+
