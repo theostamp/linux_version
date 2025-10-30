@@ -371,3 +371,5 @@ localStorage.clear(); sessionStorage.clear(); location.reload();
 - `FORCE_LOGOUT_INSTRUCTIONS.md` - JWT token refresh guide
 - `RESIDENT_PERMISSIONS_GUIDE.md` - Resident permissions reference
 
+
+

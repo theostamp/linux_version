@@ -363,3 +363,5 @@ railway run python backend/fix_theo_user.py
 3. Backend logs από Railway
 4. Output από `check_theo_role.py`
 
+
+

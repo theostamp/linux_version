@@ -50,3 +50,5 @@ print(f"✅ theo is now Manager (NOT superuser)")
 print(f"   User must LOGOUT and LOGIN again!")
 print(f"{'='*60}\n")
 
+
+

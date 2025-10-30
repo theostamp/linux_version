@@ -633,3 +633,5 @@ print(f"User {user.email} linked to building {building.name}")
 - 💰 **Monetization:** Μόνο οι Managers (που πληρώνουν) έχουν πλήρη πρόσβαση
 
 
+
+
