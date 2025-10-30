@@ -261,44 +261,53 @@ def create_public_tenant():
         else:
             print(f"ℹ️ Υπάρχει ήδη Railway domain: {railway_domain}")
     
-    # Δημιουργία Ultra-Superuser στο public schema
-    print("\n👑 Δημιουργία Ultra-Superuser...")
-    from users.models import CustomUser
+    # Δημιουργία Ultra-Superuser στο public schema (μόνο αν υπάρχει config)
+    ultra_admin_email = os.getenv('ULTRA_ADMIN_EMAIL')
+    ultra_admin_password = os.getenv('ULTRA_ADMIN_PASSWORD')
+    ultra_admin_first_name = os.getenv('ULTRA_ADMIN_FIRST_NAME', 'Ultra')
+    ultra_admin_last_name = os.getenv('ULTRA_ADMIN_LAST_NAME', 'Admin')
     
-    ultra_user, created = CustomUser.objects.get_or_create(
-        email='theostam1966@gmail.com',
-        defaults={
-            'first_name': 'Theo',
-            'last_name': 'Ultra Admin',
-            'is_staff': True,
-            'is_superuser': True,
-            'is_active': True,
-            'role': 'admin',
-            'email_verified': True
-        }
-    )
-    
-    if created:
-        ultra_user.set_password('theo123!@#')
-        ultra_user.save()
-        print("✅ Δημιουργήθηκε Ultra-Superuser: theostam1966@gmail.com")
-    else:
-        # Ενημέρωση password αν υπάρχει ήδη
-        ultra_user.set_password('theo123!@#')
-        ultra_user.is_superuser = True
-        ultra_user.is_staff = True
-        ultra_user.is_active = True
-        ultra_user.email_verified = True
-        ultra_user.save()
-        print("✅ Ενημερώθηκε Ultra-Superuser: theostam1966@gmail.com")
+    if ultra_admin_email and ultra_admin_password:
+        print("\n👑 Δημιουργία Ultra-Superuser...")
+        from users.models import CustomUser
+        
+        ultra_user, created = CustomUser.objects.get_or_create(
+            email=ultra_admin_email,
+            defaults={
+                'first_name': ultra_admin_first_name,
+                'last_name': ultra_admin_last_name,
+                'is_staff': True,
+                'is_superuser': True,
+                'is_active': True,
+                'role': 'admin',
+                'email_verified': True
+            }
+        )
+        
+        if created:
+            ultra_user.set_password(ultra_admin_password)
+            ultra_user.save()
+            print(f"✅ Δημιουργήθηκε Ultra-Superuser: {ultra_admin_email}")
+        else:
+            # Ενημέρωση password αν υπάρχει ήδη (μόνο αν ορίζεται το password)
+            ultra_user.set_password(ultra_admin_password)
+            ultra_user.is_superuser = True
+            ultra_user.is_staff = True
+            ultra_user.is_active = True
+            ultra_user.email_verified = True
+            ultra_user.save()
+            print(f"✅ Ενημερώθηκε Ultra-Superuser: {ultra_admin_email}")
 
-    # Verify authentication works
-    from django.contrib.auth import authenticate
-    test_auth = authenticate(username='theostam1966@gmail.com', password='theo123!@#')
-    if test_auth:
-        print("   ✅ Authentication verified - login will work!")
+        # Verify authentication works (μόνο αν υπάρχουν credentials)
+        from django.contrib.auth import authenticate
+        test_auth = authenticate(username=ultra_admin_email, password=ultra_admin_password)
+        if test_auth:
+            print("   ✅ Authentication verified - login will work!")
+        else:
+            print("   ⚠️ WARNING: Authentication test failed - may need to run fix_admin_auth")
     else:
-        print("   ⚠️ WARNING: Authentication test failed - may need to run fix_admin_auth")
+        print("\n⚠️  Ultra-Superuser creation skipped (ULTRA_ADMIN_EMAIL/ULTRA_ADMIN_PASSWORD not set)")
+        print("   ℹ️  Set ULTRA_ADMIN_EMAIL and ULTRA_ADMIN_PASSWORD env vars to create superuser")
     
     return public_tenant
 
@@ -676,7 +685,7 @@ def create_demo_data(tenant_schema):
             if building.name == 'Αλκμάνος 22':
                 # Ειδική δημιουργία για Αλκμάνος 22 - 10 διαμερίσματα (ΣΥΝΟΛΟ ΧΙΛΙΟΣΤΑ = 1000)
                 apartments_data = [
-                    {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'theostam1966@gmail.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'demo.owner1@demo.localhost', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
                     {'number': 'Α2', 'floor': 0, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2103456789', 'owner_email': 'eleni.d@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 2, 'participation_mills': 97, 'heating_mills': 105, 'elevator_mills': 97},
                     {'number': 'Α3', 'floor': 0, 'owner_name': 'Νικόλαος Αλεξίου', 'owner_phone': '2104567890', 'owner_email': 'nikos.alex@email.com', 'tenant_name': 'Ανδρέας Παπαγεωργίου', 'tenant_phone': '2105678901', 'tenant_email': 'andreas.p@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 88, 'heating_mills': 92, 'elevator_mills': 88},
                     {'number': 'Β1', 'floor': 1, 'owner_name': 'Αικατερίνη Σταματίου', 'owner_phone': '2106789012', 'owner_email': 'katerina.s@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 115, 'elevator_mills': 110},
@@ -1002,19 +1011,11 @@ def save_credentials():
     os.makedirs(log_dir, exist_ok=True)
     log_path = os.path.join(log_dir, "demo_credentials.log")
     
-    credentials = """
-🎯 NEW CONCIERGE PLATFORM - AUTO INITIALIZATION
-==============================================
-🚀 Complete Production-Ready System with Authentication, Authorization, Billing & Analytics
-
-🏢 PUBLIC SCHEMA (localhost):
------------------------------
-👑 Ultra-Superuser (System Administrator):
-   Email: theostam1966@gmail.com
-   Password: theo123!@#
-   Permissions: Complete system management, all tenants and users
-   Admin URL: http://localhost:8000/admin/
-   Features: Full access to all system functions and analytics
+    ultra_admin_email = os.getenv('ULTRA_ADMIN_EMAIL', 'NOT SET - Set ULTRA_ADMIN_EMAIL env var')
+    ultra_admin_password_set = '*** SET IN ENV VAR ***' if os.getenv('ULTRA_ADMIN_PASSWORD') else 'NOT SET - Set ULTRA_ADMIN_PASSWORD env var'
+    enable_demo_data = os.getenv('ENABLE_DEMO_DATA', 'false').lower() == 'true'
+    if enable_demo_data:
+        demo_section = """
 
 🏢 DEMO TENANT (demo.localhost):
 -------------------------------
@@ -1088,6 +1089,24 @@ Demo Frontend: http://demo.localhost:8080
 Demo Backend API: http://demo.localhost:8000/api/
 Demo Admin Panel: http://demo.localhost:8000/admin/
 API Documentation: http://demo.localhost:8000/api/docs/
+"""
+    else:
+        demo_section = "\n⚠️  Demo data disabled (ENABLE_DEMO_DATA=false)\n"
+    
+    credentials = f"""
+🎯 NEW CONCIERGE PLATFORM - AUTO INITIALIZATION
+==============================================
+🚀 Complete Production-Ready System with Authentication, Authorization, Billing & Analytics
+
+🏢 PUBLIC SCHEMA (localhost):
+-----------------------------
+👑 Ultra-Superuser (System Administrator):
+   Email: {ultra_admin_email}
+   Password: {ultra_admin_password_set}
+   Permissions: Complete system management, all tenants and users
+   Admin URL: http://localhost:8000/admin/
+   Features: Full access to all system functions and analytics
+{demo_section}
 
 🔐 SECURITY FEATURES:
 ---------------------
@@ -1151,7 +1170,7 @@ API Documentation: http://demo.localhost:8000/api/docs/
 
 🔐 PERMISSION HIERARCHY:
 ------------------------
-👑 Ultra-Superuser (theostam1966@gmail.com):
+👑 Ultra-Superuser ({ultra_admin_email if ultra_admin_email != 'NOT SET - Set ULTRA_ADMIN_EMAIL env var' else 'NOT CONFIGURED'}):
    - Complete system administration
    - Manage all tenants and users
    - Full access to all schemas and analytics
@@ -1230,14 +1249,23 @@ def main():
     # 5. Δημιουργία public tenant
     create_public_tenant()
 
-    # 5.5. Διόρθωση χρηστών παραγωγής
-    fix_production_users()
+    # 5.5. Διόρθωση χρηστών παραγωγής (μόνο αν ενεργοποιηθεί)
+    enable_user_fixes = os.getenv('ENABLE_PRODUCTION_USER_FIXES', 'false').lower() == 'true'
+    if enable_user_fixes:
+        fix_production_users()
+    else:
+        print("\n⚠️  Production user fixes disabled (ENABLE_PRODUCTION_USER_FIXES=false)")
+        print("   ℹ️  Set ENABLE_PRODUCTION_USER_FIXES=true to enable automatic user fixes")
 
-    # 6. Δημιουργία demo tenant - DISABLED FOR PRODUCTION
-    # tenant = create_demo_tenant()
-
-    # 7. Δημιουργία demo δεδομένων - DISABLED FOR PRODUCTION
-    # create_demo_data('demo')
+    # 6. Δημιουργία demo tenant (μόνο αν ενεργοποιηθεί)
+    enable_demo_data = os.getenv('ENABLE_DEMO_DATA', 'false').lower() == 'true'
+    if enable_demo_data:
+        tenant = create_demo_tenant()
+        # 7. Δημιουργία demo δεδομένων
+        create_demo_data('demo')
+    else:
+        print("\n⚠️  Demo data creation disabled (ENABLE_DEMO_DATA=false)")
+        print("   ℹ️  Set ENABLE_DEMO_DATA=true to create demo tenant and data")
 
     # 8. Αποθήκευση credentials
     credentials_file = save_credentials()
@@ -1257,27 +1285,36 @@ def main():
     
     print("\n👑 Ultra-Superuser (System Administrator):")
     print("   URL: http://localhost:8000/admin/")
-    print("   Email: theostam1966@gmail.com")
-    print("   Password: theo123!@#")
+    ultra_admin_email = os.getenv('ULTRA_ADMIN_EMAIL')
+    if ultra_admin_email:
+        print(f"   Email: {ultra_admin_email}")
+        print("   Password: *** SET IN ENV VAR ***")
+    else:
+        print("   Email: NOT SET - Set ULTRA_ADMIN_EMAIL env var")
+        print("   Password: NOT SET - Set ULTRA_ADMIN_PASSWORD env var")
     print("   Permissions: Complete system management")
     
-    print("\n🌐 Demo Tenant Access:")
-    print("   Frontend: http://demo.localhost:8080")
-    print("   Backend API: http://demo.localhost:8000/api/")
-    print("   Admin Panel: http://demo.localhost:8000/admin/")
-    print("   API Documentation: http://demo.localhost:8000/api/docs/")
-    
-    print("\n👥 Demo Users (RBAC Enabled):")
-    print("   🔧 Admin: admin@demo.localhost / admin123456")
-    print("   👨‍💼 Manager: manager@demo.localhost / manager123456")
-    print("   👤 Resident 1: resident1@demo.localhost / resident123456")
-    print("   👤 Resident 2: resident2@demo.localhost / resident123456")
-    
-    print("\n🏢 Demo Building: Αλκμάνος 22")
-    print("   Address: Αλκμάνος 22, Αθήνα 115 28, Ελλάδα")
-    print("   Apartments: 10 (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)")
-    print("   Mills: 1000/1000/1000 (Participation/Heating/Elevator)")
-    print("   Financial Data: Zero demo amounts")
+    enable_demo_data = os.getenv('ENABLE_DEMO_DATA', 'false').lower() == 'true'
+    if enable_demo_data:
+        print("\n🌐 Demo Tenant Access:")
+        print("   Frontend: http://demo.localhost:8080")
+        print("   Backend API: http://demo.localhost:8000/api/")
+        print("   Admin Panel: http://demo.localhost:8000/admin/")
+        print("   API Documentation: http://demo.localhost:8000/api/docs/")
+        
+        print("\n👥 Demo Users (RBAC Enabled):")
+        print("   🔧 Admin: admin@demo.localhost / admin123456")
+        print("   👨‍💼 Manager: manager@demo.localhost / manager123456")
+        print("   👤 Resident 1: resident1@demo.localhost / resident123456")
+        print("   👤 Resident 2: resident2@demo.localhost / resident123456")
+        
+        print("\n🏢 Demo Building: Αλκμάνος 22")
+        print("   Address: Αλκμάνος 22, Αθήνα 115 28, Ελλάδα")
+        print("   Apartments: 10 (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)")
+        print("   Mills: 1000/1000/1000 (Participation/Heating/Elevator)")
+        print("   Financial Data: Zero demo amounts")
+    else:
+        print("\n⚠️  Demo data disabled (ENABLE_DEMO_DATA=false)")
     
     print("\n💳 Billing System Features:")
     print("   ✅ Subscription Plans: Starter, Professional, Enterprise")
