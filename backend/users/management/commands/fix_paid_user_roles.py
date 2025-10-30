@@ -61,7 +61,8 @@ class Command(BaseCommand):
                 self.stdout.write(f'\n🔧 Updating user role to manager...')
                 user.role = 'manager'
                 user.is_staff = True
-                user.save(update_fields=['role', 'is_staff'])
+                user.is_superuser = False  # Manager should NOT be superuser
+                user.save(update_fields=['role', 'is_staff', 'is_superuser'])
                 
                 # Ensure Manager group
                 manager_group, _ = Group.objects.get_or_create(name='Manager')
@@ -100,12 +101,13 @@ class Command(BaseCommand):
             user = sub.user
             
             # Check if user needs fixing
-            if user.role != 'manager' or not user.is_staff or not user.groups.filter(name='Manager').exists():
+            if user.role != 'manager' or not user.is_staff or user.is_superuser or not user.groups.filter(name='Manager').exists():
                 self.stdout.write(f'\n🔧 Fixing {user.email}...')
                 
                 user.role = 'manager'
                 user.is_staff = True
-                user.save(update_fields=['role', 'is_staff'])
+                user.is_superuser = False  # Manager should NOT be superuser
+                user.save(update_fields=['role', 'is_staff', 'is_superuser'])
                 
                 manager_group, _ = Group.objects.get_or_create(name='Manager')
                 if not user.groups.filter(name='Manager').exists():
@@ -119,6 +121,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f'   ✅ Fixed {user.email}'))
         
         self.stdout.write(self.style.SUCCESS(f'\n✅ Fixed {fixed_count} users'))
+
 
 
 

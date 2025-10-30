@@ -15,13 +15,8 @@ import { API_BASE_URL } from '@/lib/api';
 const getUserRoleLabel = (user: any): string => {
   if (!user) return 'Χρήστης';
 
-  // Check for superuser first (highest priority)
-  if (user.is_superuser) return 'Ultra Admin';
-
-  // Check for staff/admin
-  if (user.is_staff) return 'Διαχειριστής';
-
-  // Check for role property
+  // Check for role property FIRST (most specific)
+  // This allows role='manager' to show as "Διαχειριστής" even if is_superuser=true
   if (user.role) {
     switch (user.role.toLowerCase()) {
       case 'admin':
@@ -35,6 +30,12 @@ const getUserRoleLabel = (user: any): string => {
         return user.role;
     }
   }
+
+  // Check for superuser (only if no specific role is set)
+  if (user.is_superuser) return 'Ultra Admin';
+
+  // Check for staff/admin
+  if (user.is_staff) return 'Διαχειριστής';
 
   // Check profile.role
   if (user.profile?.role) {
