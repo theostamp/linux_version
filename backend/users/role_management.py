@@ -310,3 +310,4 @@ def create_demo_users():
         created_users.append(user)
     
     return created_users
+

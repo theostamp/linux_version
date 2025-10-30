@@ -121,3 +121,4 @@ The email should now include:
 
 **Email Subject**: `[New Concierge] 🎉 Το Workspace σας είναι έτοιμο - user@example.com`
 **Timing**: Μόνο μετά την επιβεβαιωση πληρωμής via Stripe webhook
+

@@ -312,3 +312,4 @@ def get_user_permissions_summary(user):
         'groups': list(user.groups.values_list('name', flat=True)),
         'permissions': permissions,
     }
+

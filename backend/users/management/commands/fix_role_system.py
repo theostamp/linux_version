@@ -174,3 +174,4 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.ERROR('\n❌ Ultra user not found!')
             )
+

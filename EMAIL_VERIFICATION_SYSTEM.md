@@ -290,3 +290,4 @@ logger.error(f"Verification failed - Error: {error_msg}")
 5. **✅ Graceful Handling**: System continues to work αν email fails
 
 **Ο χρήστης ΔΕΝ θα μείνει "κολλημένος" αν δεν λάβει το email!**
+
