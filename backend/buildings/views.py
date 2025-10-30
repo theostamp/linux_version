@@ -77,10 +77,17 @@ def public_buildings_list(request):
             with schema_context(target_schema):
                 # Get all buildings from database
                 buildings = Building.objects.all().order_by('name')
-                print(f"🔍 [PUBLIC BUILDINGS] Found {buildings.count()} buildings in schema {target_schema}")
+                
+                # Check if buildings exist (use list() to avoid .count() error on non-existent schema)
+                try:
+                    buildings_list = list(buildings)
+                    print(f"🔍 [PUBLIC BUILDINGS] Found {len(buildings_list)} buildings in schema {target_schema}")
+                except Exception as e:
+                    print(f"❌ [PUBLIC BUILDINGS] Schema {target_schema} has no buildings table: {e}")
+                    return JsonResponse([], safe=False)
                 
                 buildings_data = []
-                for building in buildings:
+                for building in buildings_list:
                     building_data = {
                         'id': building.id,
                         'name': building.name,
