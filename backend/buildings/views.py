@@ -86,19 +86,19 @@ def public_buildings_list(request):
                         'name': building.name,
                         'address': building.address,
                         'city': building.city,
-                    'postal_code': building.postal_code,
-                    'apartments_count': building.apartments_count,
-                    'internal_manager_name': building.internal_manager_name,
-                    'internal_manager_phone': building.internal_manager_phone,
-                    'management_office_name': building.management_office_name,
-                    'management_office_phone': building.management_office_phone,
-                    'management_office_address': building.management_office_address,
-                    'street_view_image': building.street_view_image,
-                    'latitude': str(building.latitude) if building.latitude else None,
-                    'longitude': str(building.longitude) if building.longitude else None,
-                    'created_at': building.created_at.isoformat() if building.created_at else None,
-                    'updated_at': building.updated_at.isoformat() if building.updated_at else None
-                }
+                        'postal_code': building.postal_code,
+                        'apartments_count': building.apartments_count,
+                        'internal_manager_name': building.internal_manager_name,
+                        'internal_manager_phone': building.internal_manager_phone,
+                        'management_office_name': building.management_office_name,
+                        'management_office_phone': building.management_office_phone,
+                        'management_office_address': building.management_office_address,
+                        'street_view_image': building.street_view_image,
+                        'latitude': str(building.latitude) if building.latitude else None,
+                        'longitude': str(building.longitude) if building.longitude else None,
+                        'created_at': building.created_at.isoformat() if building.created_at else None,
+                        'updated_at': building.updated_at.isoformat() if building.updated_at else None
+                    }
                     buildings_data.append(building_data)
                 
                 print(f"🔍 [PUBLIC BUILDINGS] Returning {len(buildings_data)} buildings from schema: {target_schema}")
