@@ -302,6 +302,135 @@ def create_public_tenant():
     
     return public_tenant
 
+def fix_production_users():
+    """
+    Αυτόματη διόρθωση χρηστών παραγωγής
+    Διορθώνει role, email verification, names, και subscriptions
+    """
+    print("\n🔧 Διόρθωση χρηστών παραγωγής...")
+    
+    try:
+        with schema_context(get_public_schema_name()):
+            # List of production users that need fixing
+            users_to_fix = [
+                {
+                    'email': 'etherm2021@gmail.com',
+                    'first_name': 'Theo',
+                    'last_name': 'Stamatiou',
+                    'role': 'manager',
+                    'is_superuser': False,
+                    'is_staff': True,
+                }
+            ]
+            
+            fixed_count = 0
+            for user_data in users_to_fix:
+                email = user_data.pop('email')
+                
+                try:
+                    user = CustomUser.objects.get(email=email)
+                    
+                    # Check if user needs fixing
+                    needs_fix = (
+                        user.role != user_data['role'] or
+                        user.is_superuser != user_data['is_superuser'] or
+                        user.is_staff != user_data['is_staff'] or
+                        not user.is_active or
+                        not user.email_verified or
+                        user.first_name != user_data['first_name'] or
+                        (user.last_name == email or '@' in user.last_name) or
+                        user.last_name != user_data['last_name']
+                    )
+                    
+                    if not needs_fix:
+                        print(f"   ℹ️  User {email} is already correct")
+                        continue
+                    
+                    # Fix user
+                    print(f"   🔧 Fixing user: {email}")
+                    
+                    # Update fields
+                    user.role = user_data['role']
+                    user.is_superuser = user_data['is_superuser']
+                    user.is_staff = user_data['is_staff']
+                    user.is_active = True
+                    user.email_verified = True
+                    user.first_name = user_data['first_name']
+                    
+                    # Fix last name if it's email
+                    if user.last_name == email or '@' in user.last_name:
+                        user.last_name = user_data['last_name']
+                    
+                    user.save()
+                    
+                    # Fix groups
+                    manager_group, _ = Group.objects.get_or_create(name='Manager')
+                    if not user.groups.filter(name='Manager').exists():
+                        user.groups.add(manager_group)
+                    
+                    if user.groups.filter(name='Resident').exists():
+                        resident_group = Group.objects.get(name='Resident')
+                        user.groups.remove(resident_group)
+                    
+                    # Create subscription if missing
+                    subscription = UserSubscription.objects.filter(
+                        user=user,
+                        status__in=['active', 'trial']
+                    ).first()
+                    
+                    if not subscription:
+                        # Get professional plan (or first available)
+                        plan = SubscriptionPlan.objects.filter(
+                            plan_type='professional',
+                            is_active=True
+                        ).first()
+                        
+                        if not plan:
+                            plan = SubscriptionPlan.objects.filter(is_active=True).first()
+                        
+                        if plan:
+                            # Calculate price based on billing interval
+                            subscription_price = plan.monthly_price
+                            period_end = timezone.now() + timedelta(days=30)
+                            
+                            subscription = UserSubscription.objects.create(
+                                user=user,
+                                plan=plan,
+                                status='active',
+                                billing_interval='month',
+                                current_period_start=timezone.now(),
+                                current_period_end=period_end,
+                                price=subscription_price,
+                                currency='EUR',
+                                stripe_customer_id=f'cust_prod_{user.id}',
+                                stripe_subscription_id=f'sub_prod_{user.id}'
+                            )
+                            print(f"      ✅ Created subscription: {plan.name} (€{subscription_price}/month)")
+                        else:
+                            print(f"      ⚠️  No active plans found - subscription not created")
+                    
+                    fixed_count += 1
+                    print(f"   ✅ Fixed user: {email}")
+                    
+                except CustomUser.DoesNotExist:
+                    print(f"   ℹ️  User {email} not found - skipping")
+                    continue
+                except Exception as e:
+                    print(f"   ⚠️  Error fixing user {email}: {e}")
+                    continue
+            
+            if fixed_count > 0:
+                print(f"✅ Fixed {fixed_count} production user(s)")
+            else:
+                print("ℹ️  No users needed fixing")
+            
+            return True
+            
+    except Exception as e:
+        print(f"⚠️  Error in production user fixes: {e}")
+        print("   Continuing with initialization...")
+        return True  # Don't fail the entire setup
+
 def create_demo_tenant():
     """Δημιουργία demo tenant με πλήρη αρχικοποίηση"""
     tenant_name = "demo"
@@ -1084,6 +1213,9 @@ def main():
 
     # 5. Δημιουργία public tenant
     create_public_tenant()
+
+    # 5.5. Διόρθωση χρηστών παραγωγής
+    fix_production_users()
 
     # 6. Δημιουργία demo tenant - DISABLED FOR PRODUCTION
     # tenant = create_demo_tenant()
