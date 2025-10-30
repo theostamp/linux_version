@@ -246,66 +246,89 @@ def register_view(request):
     import logging
     logger = logging.getLogger('django')
     
-    # Έλεγχος αρχικού schema
-    initial_schema = getattr(connection, 'schema_name', 'unknown')
-    logger.info(f"[REGISTER] Request received - Initial schema: {initial_schema}")
-    logger.info(f"[REGISTER] Request host: {request.get_host()}")
-    logger.info(f"[REGISTER] Request data: email={request.data.get('email')}")
-    
-    # Schema Guard: Απόρριψη αν δεν είμαστε στο public schema πριν την επεξεργασία
-    public_schema = get_public_schema_name()
-    if initial_schema != public_schema and initial_schema != 'unknown':
-        logger.error(f"[REGISTER] Registration attempt on non-public schema: {initial_schema}")
+    try:
+        # Έλεγχος αρχικού schema
+        initial_schema = getattr(connection, 'schema_name', 'unknown')
+        logger.info(f"[REGISTER] Request received - Initial schema: {initial_schema}")
+        logger.info(f"[REGISTER] Request host: {request.get_host()}")
+        logger.info(f"[REGISTER] Request data: email={request.data.get('email')}")
+        
+        # Schema Guard: Απόρριψη αν δεν είμαστε στο public schema πριν την επεξεργασία
+        public_schema = get_public_schema_name()
+        if initial_schema != public_schema and initial_schema != 'unknown':
+            logger.error(f"[REGISTER] Registration attempt on non-public schema: {initial_schema}")
+            return Response({
+                'error': f'Η εγγραφή πρέπει να γίνεται από το public domain. Τρέχον schema: {initial_schema}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            # Force user creation in the public schema to avoid accidental tenant isolation
+            logger.info(f"[REGISTER] Validation successful - Forcing schema to: {public_schema}")
+            
+            with schema_context(public_schema):
+                created_in_schema = getattr(connection, 'schema_name', 'unknown')
+                logger.info(f"[REGISTER] Inside schema_context - Active schema: {created_in_schema}")
+                
+                # Διπλός έλεγχος: Επιβεβαίωση ότι είμαστε στο public schema
+                if created_in_schema != public_schema:
+                    logger.error(f"[REGISTER] CRITICAL: Schema context failed! Expected '{public_schema}', got '{created_in_schema}'")
+                    return Response({
+                        'error': 'Σφάλμα συστήματος: Αποτυχία εξασφάλισης public schema'
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+                user = serializer.save()
+                logger.info(f"[REGISTER] User created successfully - ID: {user.id}, Email: {user.email}, Schema: {created_in_schema}")
+            
+            # Επιβεβαίωση μετά το schema_context
+            final_schema = getattr(connection, 'schema_name', 'unknown')
+            logger.info(f"[REGISTER] After schema_context - Schema restored to: {final_schema}")
+            
+            # Αποστολή email verification
+            try:
+                if EmailService.send_verification_email(user):
+                    logger.info(f"[REGISTER] ✅ Verification email sent successfully to: {user.email}")
+                    return Response({
+                        'message': 'Εγγραφή επιτυχής. Παρακαλούμε ελέγξτε το email σας για επιβεβαίωση.',
+                        'user_id': user.id,
+                        'email': user.email
+                    }, status=status.HTTP_201_CREATED)
+                else:
+                    logger.warning(f"[REGISTER] ⚠️  Failed to send verification email to: {user.email}")
+                    return Response({
+                        'message': 'Εγγραφή επιτυχής αλλά αποτυχία αποστολής email επιβεβαίωσης.',
+                        'user_id': user.id,
+                        'email': user.email,
+                        'warning': 'EMAIL_NOT_SENT'
+                    }, status=status.HTTP_201_CREATED)
+            except Exception as email_error:
+                logger.error(f"[REGISTER] ❌ Email sending error: {email_error}")
+                import traceback
+                logger.error(f"[REGISTER] Traceback: {traceback.format_exc()}")
+                return Response({
+                    'message': 'Εγγραφή επιτυχής αλλά αποτυχία αποστολής email επιβεβαίωσης.',
+                    'user_id': user.id,
+                    'email': user.email,
+                    'warning': 'EMAIL_NOT_SENT',
+                    'error': str(email_error)
+                }, status=status.HTTP_201_CREATED)
+        
+        logger.warning(f"[REGISTER] ❌ Validation failed - Errors: {serializer.errors}")
         return Response({
-            'error': f'Η εγγραφή πρέπει να γίνεται από το public domain. Τρέχον schema: {initial_schema}'
+            'error': 'Μη έγκυρα δεδομένα εγγραφής.',
+            'details': serializer.errors,
+            'error_code': 'VALIDATION_FAILED'
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    serializer = UserRegistrationSerializer(data=request.data)
-    if serializer.is_valid():
-        # Force user creation in the public schema to avoid accidental tenant isolation
-        logger.info(f"[REGISTER] Validation successful - Forcing schema to: {public_schema}")
-        
-        with schema_context(public_schema):
-            created_in_schema = getattr(connection, 'schema_name', 'unknown')
-            logger.info(f"[REGISTER] Inside schema_context - Active schema: {created_in_schema}")
-            
-            # Διπλός έλεγχος: Επιβεβαίωση ότι είμαστε στο public schema
-            if created_in_schema != public_schema:
-                logger.error(f"[REGISTER] CRITICAL: Schema context failed! Expected '{public_schema}', got '{created_in_schema}'")
-                return Response({
-                    'error': 'Σφάλμα συστήματος: Αποτυχία εξασφάλισης public schema'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-            user = serializer.save()
-            logger.info(f"[REGISTER] User created successfully - ID: {user.id}, Email: {user.email}, Schema: {created_in_schema}")
-        
-        # Επιβεβαίωση μετά το schema_context
-        final_schema = getattr(connection, 'schema_name', 'unknown')
-        logger.info(f"[REGISTER] After schema_context - Schema restored to: {final_schema}")
-        
-        # Αποστολή email verification
-        if EmailService.send_verification_email(user):
-            logger.info(f"[REGISTER] ✅ Verification email sent successfully to: {user.email}")
-            return Response({
-                'message': 'Εγγραφή επιτυχής. Παρακαλούμε ελέγξτε το email σας για επιβεβαίωση.',
-                'user_id': user.id,
-                'email': user.email
-            }, status=status.HTTP_201_CREATED)
-        else:
-            logger.warning(f"[REGISTER] ⚠️  Failed to send verification email to: {user.email}")
-            return Response({
-                'message': 'Εγγραφή επιτυχής αλλά αποτυχία αποστολής email επιβεβαίωσης.',
-                'user_id': user.id,
-                'email': user.email,
-                'warning': 'EMAIL_NOT_SENT'
-            }, status=status.HTTP_201_CREATED)
-    
-    logger.warning(f"[REGISTER] ❌ Validation failed - Errors: {serializer.errors}")
-    return Response({
-        'error': 'Μη έγκυρα δεδομένα εγγραφής.',
-        'details': serializer.errors,
-        'error_code': 'VALIDATION_FAILED'
-    }, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"[REGISTER] ❌ Unexpected error during registration: {e}")
+        import traceback
+        logger.error(f"[REGISTER] Traceback: {traceback.format_exc()}")
+        return Response({
+            'error': 'Σφάλμα συστήματος κατά την εγγραφή.',
+            'details': str(e),
+            'error_code': 'INTERNAL_ERROR'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])

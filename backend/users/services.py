@@ -74,9 +74,12 @@ class EmailService:
             msg.attach_alternative(html_content, "text/html")
             msg.send()
             
+            logger.info(f"Verification email sent successfully to {user.email}")
             return True
         except Exception as e:
-            print(f"Error sending verification email: {e}")
+            logger.error(f"Error sending verification email to {user.email}: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return False
     
     @staticmethod
