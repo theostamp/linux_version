@@ -199,18 +199,35 @@ class UserSubscriptionViewSet(ModelViewSet):
         """
         Τρέχουσα subscription του user
         """
-        subscription = BillingService.get_user_subscription(request.user)
-        
-        if not subscription:
+        try:
+            subscription = BillingService.get_user_subscription(request.user)
+            
+            if not subscription:
+                return Response({
+                    'message': 'No active subscription found',
+                    'subscription': None
+                }, status=status.HTTP_200_OK)
+            
+            # Check if subscription has plan
+            if not subscription.plan:
+                logger.warning(f"Subscription {subscription.id} has no plan assigned")
+                return Response({
+                    'message': 'Subscription found but plan is missing',
+                    'subscription': None
+                }, status=status.HTTP_200_OK)
+            
+            serializer = UserSubscriptionSerializer(subscription)
             return Response({
-                'message': 'No active subscription found',
+                'subscription': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error getting current subscription for user {request.user.email}: {e}", exc_info=True)
+            return Response({
+                'message': 'Error retrieving subscription',
+                'error': str(e),
                 'subscription': None
-            })
-        
-        serializer = UserSubscriptionSerializer(subscription)
-        return Response({
-            'subscription': serializer.data
-        })
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class PaymentMethodViewSet(ModelViewSet):
