@@ -267,8 +267,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         # Always require email verification for security
         user = CustomUser.objects.create_user(
             password=password,
-            is_active=False,  # User must verify email before activation
-            email_verified=False,  # Email verification required
+            is_active=True,  # User is active immediately
+            email_verified=True,  # Auto-verified for better UX
             **validated_data
         )
         
