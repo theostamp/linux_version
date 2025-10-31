@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +28,9 @@ import {
   AlertTriangle,
   Building2,
   Home,
-  Trash2
+  Trash2,
+  ArrowRight,
+  ExternalLink
 } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import AuthGate from '@/components/AuthGate';
@@ -96,6 +100,7 @@ interface NotificationSettings {
 
 export default function MyProfilePage() {
   const { user: authUser, refreshUser } = useAuth();
+  const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [notifications, setNotifications] = useState<NotificationSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -628,20 +633,53 @@ export default function MyProfilePage() {
                       </div>
                     </div>
                     
-                    <div className="flex gap-2">
-                      <Button variant="outline">Αλλαγή Plan</Button>
-                      <Button variant="outline">Ιστορικό Πληρωμών</Button>
-                      <Button variant="outline">Διαχείριση Πληρωμών</Button>
+                    <div className="flex gap-2 flex-wrap">
+                      <Link href="/plans">
+                        <Button variant="outline" className="flex items-center gap-2">
+                          Αλλαγή Plan
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                      <Link href="/my-subscription">
+                        <Button variant="outline" className="flex items-center gap-2">
+                          Ιστορικό Πληρωμών
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                      <Link href="/my-subscription">
+                        <Button variant="outline" className="flex items-center gap-2">
+                          Διαχείριση Πληρωμών
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h4 className="text-lg font-semibold mb-2">Δεν έχετε συνδρομή</h4>
-                    <p className="text-gray-500 mb-4">
-                      Δημιουργήστε μια συνδρομή για να αποκτήσετε πρόσβαση σε όλες τις δυνατότητες.
-                    </p>
-                    <Button>Επιλογή Plan</Button>
+                  <div className="text-center py-12">
+                    <div className="max-w-md mx-auto">
+                      <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                        <CreditCard className="w-10 h-10 text-gray-400" />
+                      </div>
+                      <h4 className="text-xl font-semibold mb-2 text-gray-900">Δεν έχετε συνδρομή</h4>
+                      <p className="text-gray-600 mb-6 max-w-sm mx-auto">
+                        Δημιουργήστε μια συνδρομή για να αποκτήσετε πρόσβαση σε όλες τις δυνατότητες του συστήματος.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <Link href="/plans">
+                          <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+                            <CreditCard className="w-4 h-4" />
+                            Επιλογή Plan
+                            <ArrowRight className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                        <Link href="/my-subscription">
+                          <Button variant="outline" className="flex items-center gap-2">
+                            Δες τις Επιλογές
+                            <ExternalLink className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
                   </div>
                 )}
               </Card>
