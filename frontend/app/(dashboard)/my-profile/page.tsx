@@ -134,8 +134,8 @@ export default function MyProfilePage() {
       // Fetch fresh profile from API to ensure we have all fields
       const profileData = await userProfileApi.getProfile();
       
-      // If profile doesn't have subscription but user is manager, try to fetch subscription directly
-      if (!profileData.subscription && (profileData.role === 'manager' || profileData.system_role === 'manager')) {
+      // If profile doesn't have subscription, try to fetch subscription directly as fallback
+      if (!profileData.subscription) {
         try {
           const subscriptionResponse = await userSubscriptionApi.getCurrentSubscription();
           if (subscriptionResponse.subscription) {
@@ -707,29 +707,72 @@ export default function MyProfilePage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-12">
-                    <div className="max-w-md mx-auto">
-                      <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                        <CreditCard className="w-10 h-10 text-gray-400" />
+                  <div className="space-y-6">
+                    {/* No Subscription Message */}
+                    <div className="text-center py-12">
+                      <div className="max-w-md mx-auto">
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                          <CreditCard className="w-12 h-12 text-blue-500" />
+                        </div>
+                        <h4 className="text-2xl font-bold mb-3 text-gray-900">Δεν έχετε συνδρομή</h4>
+                        <p className="text-gray-600 mb-2 max-w-sm mx-auto text-base">
+                          Δημιουργήστε μια συνδρομή για να αποκτήσετε πρόσβαση σε όλες τις δυνατότητες του συστήματος.
+                        </p>
+                        <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto">
+                          Επιλέξτε ένα πλάνο που ταιριάζει στις ανάγκες σας και ξεκινήστε να απολαμβάνετε όλα τα features.
+                        </p>
+                        
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                          <Link href="/plans" className="w-full sm:w-auto">
+                            <Button className="w-full sm:w-auto flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-base">
+                              <CreditCard className="w-5 h-5" />
+                              Επιλογή Plan
+                              <ArrowRight className="w-5 h-5" />
+                            </Button>
+                          </Link>
+                          <Link href="/my-subscription" className="w-full sm:w-auto">
+                            <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2 px-6 py-3 text-base border-gray-300 hover:bg-gray-50">
+                              Δες τις Επιλογές
+                              <ExternalLink className="w-5 h-5" />
+                            </Button>
+                          </Link>
+                        </div>
                       </div>
-                      <h4 className="text-xl font-semibold mb-2 text-gray-900">Δεν έχετε συνδρομή</h4>
-                      <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                        Δημιουργήστε μια συνδρομή για να αποκτήσετε πρόσβαση σε όλες τις δυνατότητες του συστήματος.
-                      </p>
-                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                        <Link href="/plans">
-                          <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                            <CreditCard className="w-4 h-4" />
-                            Επιλογή Plan
-                            <ArrowRight className="w-4 h-4" />
-                          </Button>
-                        </Link>
-                        <Link href="/my-subscription">
-                          <Button variant="outline" className="flex items-center gap-2">
-                            Δες τις Επιλογές
-                            <ExternalLink className="w-4 h-4" />
-                          </Button>
-                        </Link>
+                    </div>
+
+                    {/* Additional Help Section */}
+                    <div className="border-t pt-6 mt-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                        <div className="p-4 rounded-lg bg-gray-50">
+                          <div className="text-2xl font-bold text-blue-600 mb-2">29€</div>
+                          <p className="text-sm text-gray-600">Ξεκινά από /μήνα</p>
+                        </div>
+                        <div className="p-4 rounded-lg bg-gray-50">
+                          <div className="text-2xl font-bold text-green-600 mb-2">Δωρεάν</div>
+                          <p className="text-sm text-gray-600">Δοκιμαστική περίοδος</p>
+                        </div>
+                        <div className="p-4 rounded-lg bg-gray-50">
+                          <div className="text-2xl font-bold text-purple-600 mb-2">Άμεσα</div>
+                          <p className="text-sm text-gray-600">Ενεργοποίηση</p>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-6 text-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            fetchProfile();
+                            toast({
+                              title: 'Ανανέωση...',
+                              description: 'Ελέγχοντας συνδρομή...',
+                            });
+                          }}
+                          className="text-gray-600 hover:text-gray-900"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Ανανέωση Συνδρομής
+                        </Button>
                       </div>
                     </div>
                   </div>
