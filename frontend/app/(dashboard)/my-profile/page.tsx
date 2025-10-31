@@ -642,7 +642,10 @@ export default function MyProfilePage() {
                           size="sm"
                           onClick={() => {
                             fetchProfile();
-                            toast.info('Ανανέωση δεδομένων συνδρομής...');
+                            toast({
+                              title: 'Ανανέωση...',
+                              description: 'Ανανέωση δεδομένων συνδρομής...',
+                            });
                           }}
                           className="text-yellow-700 border-yellow-300 hover:bg-yellow-100"
                         >
