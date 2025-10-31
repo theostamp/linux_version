@@ -195,7 +195,9 @@ class TenantService:
         current_period_start = timezone.now()
         current_period_end = current_period_start + timezone.timedelta(days=30)  # Monthly
         
-        subscription = UserSubscription.objects.create(
+        # Create subscription without is_first_month_free (field doesn't exist in DB yet)
+        # Note: is_first_month_free has default=False, so Django will use the default
+        subscription = UserSubscription(
             user=user,
             plan=plan,
             status='trial',
@@ -211,6 +213,13 @@ class TenantService:
             currency=currency,
             tenant_domain=f"{tenant.schema_name}.localhost"
         )
+        # Use update_fields to exclude is_first_month_free from INSERT
+        subscription.save(update_fields=[
+            'user', 'plan', 'status', 'billing_interval',
+            'trial_start', 'trial_end', 'current_period_start', 'current_period_end',
+            'stripe_subscription_id', 'stripe_customer_id', 'stripe_checkout_session_id',
+            'price', 'currency', 'tenant_domain'
+        ])
         
         logger.info(f"Created subscription for user {user.email}: {subscription.id}")
         return subscription
