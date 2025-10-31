@@ -324,40 +324,30 @@ def fix_production_users():
         with schema_context(get_public_schema_name()):
             fixed_count = 0
             
-            # 1. Fix all users with active subscriptions
-            print("   📋 Checking users with active subscriptions...")
-            active_subscriptions = UserSubscription.objects.filter(
-                status__in=['active', 'trial']
-            ).select_related('user', 'plan')
+            # 1. Fix ALL managers (not just with subscriptions)
+            print("   📋 Checking all managers...")
+            managers_to_fix = CustomUser.objects.filter(
+                Q(role='manager') | Q(is_staff=True)
+            ).exclude(
+                email__contains='@demo.localhost'  # Exclude demo users
+            )
             
-            for subscription in active_subscriptions:
-                user = subscription.user
-                
+            for user in managers_to_fix:
                 # Check if user needs fixing
                 needs_fix = (
-                    user.role != 'manager' or
-                    user.is_superuser or
-                    not user.is_staff or
-                    not user.is_active or
-                    not user.email_verified or
-                    (user.last_name == user.email or '@' in user.last_name)
+                    user.is_superuser or  # Managers should not be superusers
+                    not user.is_staff or  # Managers should be staff
+                    not user.is_active or  # Should be active
+                    not user.email_verified  # Should be verified
                 )
                 
                 if needs_fix:
-                    print(f"   🔧 Fixing subscription user: {user.email}")
+                    print(f"   🔧 Fixing manager: {user.email}")
                     
-                    user.role = 'manager'
-                    user.is_superuser = False
+                    user.is_superuser = False  # Manager, not superuser
                     user.is_staff = True
                     user.is_active = True
-                    user.email_verified = True
-                    
-                    # Fix last name if it's email
-                    if user.last_name == user.email or '@' in user.last_name:
-                        # Try to extract name from email or use first part
-                        if not user.first_name:
-                            user.first_name = user.email.split('@')[0].title()
-                        user.last_name = ''  # Clear invalid last name
+                    user.email_verified = True  # Auto-verify all managers
                     
                     user.save()
                     
@@ -371,7 +361,25 @@ def fix_production_users():
                         user.groups.remove(resident_group)
                     
                     fixed_count += 1
-                    print(f"      ✅ Fixed user: {user.email}")
+                    print(f"      ✅ Fixed manager: {user.email}")
+                
+            # 2. Also check users with active subscriptions (they should be managers)
+            print("   📋 Checking users with active subscriptions...")
+            active_subscriptions = UserSubscription.objects.filter(
+                status__in=['active', 'trial']
+            ).select_related('user', 'plan')
+            
+            for subscription in active_subscriptions:
+                user = subscription.user
+                if user.role != 'manager' or not user.email_verified:
+                    print(f"   🔧 Fixing subscription user: {user.email}")
+                    user.role = 'manager'
+                    user.is_superuser = False
+                    user.is_staff = True
+                    user.is_active = True
+                    user.email_verified = True
+                    user.save()
+                    fixed_count += 1
             
             # 2. Fix users from environment variable (optional, for specific cases)
             prod_users_env = os.getenv('PRODUCTION_USERS_TO_FIX', '')
