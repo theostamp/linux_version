@@ -53,7 +53,8 @@ class UserSubscriptionViewSet(ModelViewSet):
         """
         Μόνο οι subscriptions του authenticated user
         """
-        return UserSubscription.objects.filter(user=self.request.user)
+        # Note: defer is_first_month_free until migration runs
+        return UserSubscription.objects.filter(user=self.request.user).defer('is_first_month_free')
     
     def list(self, request, *args, **kwargs):
         """
@@ -312,7 +313,8 @@ class UsageTrackingViewSet(ReadOnlyModelViewSet):
         """
         Usage tracking για τις subscriptions του user
         """
-        user_subscriptions = UserSubscription.objects.filter(user=self.request.user)
+        # Note: defer is_first_month_free until migration runs
+        user_subscriptions = UserSubscription.objects.filter(user=self.request.user).defer('is_first_month_free')
         return UsageTracking.objects.filter(subscription__in=user_subscriptions)
 
 
@@ -327,7 +329,8 @@ class BillingCycleViewSet(ReadOnlyModelViewSet):
         """
         Billing cycles για τις subscriptions του user
         """
-        user_subscriptions = UserSubscription.objects.filter(user=self.request.user)
+        # Note: defer is_first_month_free until migration runs
+        user_subscriptions = UserSubscription.objects.filter(user=self.request.user).defer('is_first_month_free')
         return BillingCycle.objects.filter(subscription__in=user_subscriptions)
 
 
@@ -625,7 +628,8 @@ class InvoiceManagementView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             try:
-                subscription = UserSubscription.objects.get(id=subscription_id)
+                # Note: defer is_first_month_free until migration runs
+                subscription = UserSubscription.objects.defer('is_first_month_free').get(id=subscription_id)
             except UserSubscription.DoesNotExist:
                 return Response({
                     'error': 'Subscription not found'
@@ -722,9 +726,10 @@ class AdminBillingManagementView(APIView):
             
             # Get billing statistics
             total_subscriptions = UserSubscription.objects.count()
+            # Note: defer is_first_month_free until migration runs
             active_subscriptions = UserSubscription.objects.filter(
                 status__in=['trial', 'active']
-            ).count()
+            ).defer('is_first_month_free').count()
             
             pending_invoices = BillingCycle.objects.filter(status='pending').count()
             paid_invoices = BillingCycle.objects.filter(status='paid').count()
@@ -977,7 +982,8 @@ class AdminSubscriptionManagementView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             try:
-                subscription = UserSubscription.objects.get(id=subscription_id)
+                # Note: defer is_first_month_free until migration runs
+                subscription = UserSubscription.objects.defer('is_first_month_free').get(id=subscription_id)
             except UserSubscription.DoesNotExist:
                 return Response({
                     'error': 'Subscription not found'
@@ -1327,10 +1333,11 @@ class CreateCheckoutSessionView(APIView):
             
             # Check if user already has an active subscription
             from billing.models import UserSubscription
+            # Note: defer is_first_month_free until migration runs
             existing_subscription = UserSubscription.objects.filter(
                 user=user,
                 status__in=['active', 'trial']
-            ).first()
+            ).defer('is_first_month_free').first()
             
             if existing_subscription:
                 logger.warning(f"User {user.email} already has an active subscription. Preventing duplicate checkout.")

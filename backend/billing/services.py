@@ -287,10 +287,11 @@ class BillingService:
         """
         Ανάκτηση active subscription για user
         """
+        # Note: defer is_first_month_free until migration runs
         return UserSubscription.objects.filter(
             user=user,
             status__in=['trial', 'active']
-        ).first()
+        ).defer('is_first_month_free').first()
     
     @staticmethod
     def check_usage_limits(subscription: UserSubscription, 
