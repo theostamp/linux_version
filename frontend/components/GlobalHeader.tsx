@@ -13,7 +13,9 @@ import { API_BASE_URL } from '@/lib/api';
 
 // Helper function to get user role label
 // Note: user.role is CustomUser.role (SystemRole) which can only be: 'admin' or 'manager'
-// CustomUser.role = Django Tenant Owner level (Office Manager)
+// CustomUser.role values:
+//   - 'admin' = Ultra-superuser (π.χ. theostam1966@gmail.com) - πρόσβαση σε όλο το project
+//   - 'manager' = Django Tenant Owner - έχει δημιουργήσει tenant μετά από πληρωμή, πρόσβαση μόνο στο tenant schema του
 // Resident.role (apartment level) is different: 'manager', 'owner', 'tenant'
 const getUserRoleLabel = (user: any): string => {
   if (!user) return 'Χρήστης';
@@ -23,9 +25,9 @@ const getUserRoleLabel = (user: any): string => {
   if (user.role) {
     switch (user.role.toLowerCase()) {
       case 'admin':
-        return 'Admin';
+        return 'Ultra Admin'; // Ultra-superuser με πρόσβαση σε όλο το project
       case 'manager':
-        return 'Διαχειριστής'; // Office Manager = Django Tenant Owner
+        return 'Διαχειριστής'; // Django Tenant Owner - πρόσβαση μόνο στο tenant schema του
       // Note: 'owner' and 'tenant' are NOT CustomUser.role values
       // They are Resident.role values (apartment level) and should not appear here
       default:
