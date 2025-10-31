@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const RAILWAY_BACKEND_URL = 'https://linuxversion-production.up.railway.app';
+// Get Railway backend URL from environment or use default
+const RAILWAY_BACKEND_URL = process.env.RAILWAY_BACKEND_URL || 
+                            process.env.BACKEND_URL || 
+                            'https://linuxversion-production.up.railway.app';
 
 export async function GET(
   request: NextRequest,
@@ -56,6 +59,7 @@ async function handleRequest(
     const targetUrl = `${RAILWAY_BACKEND_URL}/api/${targetPath}${queryString}`;
 
     console.log(`[Proxy] ${method} ${targetUrl} (segments: ${JSON.stringify(pathSegments)})`);
+    console.log(`[Proxy] Backend URL: ${RAILWAY_BACKEND_URL}`);
     
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -82,6 +86,8 @@ async function handleRequest(
     const requestOptions: RequestInit = {
       method,
       headers,
+      // Add timeout for Railway backend
+      signal: AbortSignal.timeout(30000), // 30 second timeout
     };
 
     // Add body for POST, PUT, PATCH requests
@@ -96,7 +102,36 @@ async function handleRequest(
       }
     }
 
-    const response = await fetch(targetUrl, requestOptions);
+    let response: Response;
+    try {
+      response = await fetch(targetUrl, requestOptions);
+    } catch (error: any) {
+      console.error(`[Proxy] Network error connecting to ${targetUrl}:`, error);
+      
+      // Handle timeout or network errors
+      if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+        return NextResponse.json(
+          { 
+            error: 'Backend request timed out',
+            details: 'The backend server took too long to respond. Please try again later.',
+            status: 504,
+            url: targetUrl
+          },
+          { status: 504 }
+        );
+      }
+      
+      // Handle connection refused or other network errors
+      return NextResponse.json(
+        { 
+          error: 'Backend connection failed',
+          details: error.message || 'Unable to connect to backend server',
+          status: 502,
+          url: targetUrl
+        },
+        { status: 502 }
+      );
+    }
 
     // Handle redirects (3xx status codes)
     if (response.status >= 300 && response.status < 400) {
