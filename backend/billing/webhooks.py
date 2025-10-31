@@ -161,8 +161,8 @@ class StripeWebhookView(APIView):
                 # Link user to tenant and make them tenant admin
                 user.tenant = tenant
                 user.is_staff = True
-                user.is_superuser = True  # Full admin rights for their tenant
-                user.role = 'manager'  # Tenant owner/admin role
+                user.is_superuser = False  # Manager, NOT superuser (only Ultra Admin is superuser)
+                user.role = 'manager'  # Tenant owner/admin role (Django Tenant Owner)
                 user.save(update_fields=['tenant', 'is_staff', 'is_superuser', 'role'])
                 
                 # Add user to Manager group for proper permissions
