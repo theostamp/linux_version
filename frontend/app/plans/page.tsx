@@ -420,7 +420,7 @@ export default function PlansPage() {
                 onClick={() => handleSelectPlan(plan.id)}
                 disabled={
                   selectedPlan === plan.id || 
-                  (isAuthReady && user && user.email_verified !== true)
+                  Boolean(isAuthReady && user && user.email_verified !== true)
                 }
                 className="w-full"
               >
