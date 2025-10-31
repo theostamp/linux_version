@@ -177,7 +177,19 @@ class BillingService:
             # Initialize usage tracking
             BillingService._initialize_usage_tracking(subscription)
             
-            logger.info(f"Created subscription {subscription.id} for user {user.email}")
+            # Update user role to manager when subscription is created
+            user.role = 'manager'
+            user.is_staff = True
+            user.is_superuser = False
+            user.email_verified = True  # Auto-verify on payment
+            user.save(update_fields=['role', 'is_staff', 'is_superuser', 'email_verified'])
+            
+            # Add to Manager group
+            from django.contrib.auth.models import Group
+            manager_group, _ = Group.objects.get_or_create(name='Manager')
+            user.groups.add(manager_group)
+            
+            logger.info(f"Created subscription {subscription.id} for user {user.email} - upgraded to manager role")
             return subscription
             
         except Exception as e:
