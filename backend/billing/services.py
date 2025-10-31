@@ -83,16 +83,29 @@ class BillingService:
                     stripe_subscription.get('current_period_start', timezone.now().timestamp()),
                     tz=timezone.get_current_timezone()
                 )
-                current_period_end = timezone.datetime.fromtimestamp(
+                stripe_period_end = timezone.datetime.fromtimestamp(
                     stripe_subscription.get('current_period_end', (timezone.now() + timezone.timedelta(days=30)).timestamp()),
                     tz=timezone.get_current_timezone()
                 )
+                
+                # During trial, current_period_end should match trial_end for clarity
+                # After trial ends, Stripe will automatically set it to the next billing date
+                if trial_days and trial_end:
+                    # During trial, use trial_end as the current_period_end
+                    current_period_end = trial_end
+                else:
+                    current_period_end = stripe_period_end
             else:
-                # Fallback to trial dates or current time
-                current_period_start = trial_end if trial_end else timezone.now()
-                current_period_end = current_period_start + timezone.timedelta(
-                    days=30 if billing_interval == 'month' else 365
-                )
+                # Fallback: During trial, current_period_end = trial_end
+                # After trial, calculate normal billing period
+                if trial_days and trial_end:
+                    current_period_start = trial_start if trial_start else timezone.now()
+                    current_period_end = trial_end
+                else:
+                    current_period_start = timezone.now()
+                    current_period_end = current_period_start + timezone.timedelta(
+                        days=30 if billing_interval == 'month' else 365
+                    )
             
             # Create UserSubscription
             subscription = UserSubscription.objects.create(
