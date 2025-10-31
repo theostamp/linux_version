@@ -230,10 +230,11 @@ class UserSubscription(models.Model):
     )
     
     # First month free flag (only for first-time subscriptions, not upgrades)
-    is_first_month_free = models.BooleanField(
-        default=False,
-        help_text='First month is free (only true for initial subscriptions, not upgrades)'
-    )
+    # NOTE: Temporarily commented out until migration 0008 runs in production
+    # is_first_month_free = models.BooleanField(
+    #     default=False,
+    #     help_text='First month is free (only true for initial subscriptions, not upgrades)'
+    # )
     
     # Payment
     stripe_subscription_id = models.CharField(

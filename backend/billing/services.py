@@ -107,9 +107,8 @@ class BillingService:
                         days=30 if billing_interval == 'month' else 365
                     )
             
-            # Create UserSubscription without is_first_month_free (field doesn't exist in DB yet)
-            # Note: is_first_month_free has default=False, so Django will use the default
-            subscription = UserSubscription(
+            # Create UserSubscription
+            subscription = UserSubscription.objects.create(
                 user=user,
                 plan=plan,
                 status='trial' if trial_days else 'active',
@@ -123,12 +122,6 @@ class BillingService:
                 price=price,
                 currency=settings.STRIPE_CURRENCY.upper()
             )
-            # Use update_fields to exclude is_first_month_free from INSERT
-            subscription.save(update_fields=[
-                'user', 'plan', 'status', 'billing_interval',
-                'trial_start', 'trial_end', 'current_period_start', 'current_period_end',
-                'stripe_subscription_id', 'stripe_customer_id', 'price', 'currency'
-            ])
 
             # Grant manager role to user with subscription
             # User who pays for subscription is a manager (not a resident)
