@@ -34,8 +34,8 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     class SystemRole(models.TextChoices):
-        ADMIN = 'admin', _('Admin')  # Ultra-superuser: πρόσβαση σε όλο το project (public schema + όλα τα tenant schemas)
-        OFFICE_MANAGER = 'manager', _('Office Manager')  # Django Tenant Owner: έχει δημιουργήσει tenant μετά από πληρωμή, πρόσβαση μόνο στο tenant schema του
+        ADMIN = 'admin', _('Admin')  # Ultra Admin: πρόσβαση σε όλο το project (public + όλα τα tenant schemas)
+        OFFICE_MANAGER = 'manager', _('Office Manager')  # Django Tenant Owner: πρόσβαση μόνο στο tenant schema του
 
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=50, blank=True)
@@ -54,7 +54,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         choices=SystemRole.choices,
         blank=True,
         null=True,
-        help_text=_("SystemRole: 'admin' = Ultra-superuser (πρόσβαση σε όλο το project), 'manager' = Django Tenant Owner (πρόσβαση μόνο στο tenant schema του)")
+        help_text=_("SystemRole: 'admin'=Ultra Admin (πρόσβαση σε όλο το project), 'manager'=Django Tenant Owner (πρόσβαση μόνο στο tenant schema του)")
     )
 
     # Office Management Details - Auto-filled when creating buildings

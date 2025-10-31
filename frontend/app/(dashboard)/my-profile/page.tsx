@@ -36,17 +36,17 @@ import { toast } from '@/hooks/use-toast';
 // Helper function to get user role label in Greek
 // Note: This is for CustomUser.role (SystemRole), not Resident.role
 // CustomUser.role values:
-//   - 'admin' = Ultra-superuser (π.χ. theostam1966@gmail.com) - πρόσβαση σε όλο το project (public schema + όλα τα tenant schemas)
-//   - 'manager' = Django Tenant Owner - έχει δημιουργήσει tenant μετά από πληρωμή, έχει συνδρομή, πρόσβαση μόνο στο tenant schema του
+//   - 'admin' = Ultra Admin (π.χ. theostam1966@gmail.com) - πρόσβαση σε όλο το project
+//   - 'manager' = Django Tenant Owner - έχει δημιουργήσει tenant μετά από πληρωμή, πρόσβαση μόνο στο tenant schema του
 // Resident.role (for apartments) can be: 'manager', 'owner', 'tenant' - but that's different!
 const getUserRoleLabel = (role?: string): string => {
   if (!role) return 'Χρήστης';
   
   switch (role.toLowerCase()) {
     case 'admin':
-      return 'Ultra Admin'; // Ultra-superuser με πρόσβαση σε όλο το project
+      return 'Ultra Admin'; // Ultra Admin με πρόσβαση σε όλο το project
     case 'manager':
-      return 'Διαχειριστής'; // Django Tenant Owner - πρόσβαση μόνο στο tenant schema του
+      return 'Διαχειριστής'; // Office Manager = Django Tenant Owner
     // Note: 'owner' and 'tenant' are Resident.role values, not CustomUser.role
     // These are handled separately in apartment listings
     default:
