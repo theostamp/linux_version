@@ -1,4 +1,5 @@
 // lib/api/user.ts
+// Updated: 2025-10-31 - Added resident_role and resident_profile to UserProfile interface
 
 import { apiClient } from './client';
 
