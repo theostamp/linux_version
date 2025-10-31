@@ -1481,6 +1481,7 @@ class SubscriptionStatusView(APIView):
             if user.tenant:
                 # Additional security check: Verify user has valid subscription
                 from billing.models import UserSubscription
+                # Note: defer is_first_month_free until migration runs
                 active_subscription = UserSubscription.objects.filter(
                     user=user,
                     status__in=['active', 'trialing', 'trial']
