@@ -5,8 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Check, Mail, CheckCircle } from 'lucide-react'
+import { Check, Mail, CheckCircle, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 interface Plan {
   id: number
@@ -28,6 +30,9 @@ export default function PlansPage() {
   const [loading, setLoading] = useState(true)
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null)
   const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false)
+  const [resendEmail, setResendEmail] = useState('')
+  const [resending, setResending] = useState(false)
+  const [showResendInput, setShowResendInput] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -37,6 +42,11 @@ export default function PlansPage() {
     // Check if user just registered
     if (searchParams.get('registered') === 'true') {
       setShowRegistrationSuccess(true)
+      // Get email from URL params if available
+      const emailParam = searchParams.get('email')
+      if (emailParam) {
+        setResendEmail(emailParam)
+      }
       toast.success('Εγγραφή επιτυχής! Παρακαλώ ελέγξτε το email σας για επιβεβαίωση.')
     }
   }, [searchParams])
@@ -96,6 +106,37 @@ export default function PlansPage() {
     }
   }
 
+  const handleResendVerification = async () => {
+    if (!resendEmail) {
+      toast.error('Παρακαλώ εισάγετε το email σας')
+      return
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(resendEmail)) {
+      toast.error('Παρακαλώ εισάγετε έγκυρο email')
+      return
+    }
+
+    setResending(true)
+    try {
+      const response = await api.post('/api/users/resend-verification/', {
+        email: resendEmail
+      })
+
+      toast.success('Email επιβεβαίωσης στάλθηκε ξανά! Παρακαλώ ελέγξτε το inbox σας.')
+      setShowResendInput(false)
+    } catch (error: any) {
+      console.error('Resend verification error:', error)
+      
+      const errorMessage = error.response?.data?.error || 'Αποτυχία επαναποστολής email'
+      toast.error(errorMessage)
+    } finally {
+      setResending(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -111,23 +152,93 @@ export default function PlansPage() {
         <div className="mb-8 max-w-4xl mx-auto">
           <Card className="border-green-200 bg-green-50">
             <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-                <div>
-                  <h3 className="font-semibold text-green-800">Εγγραφή Επιτυχής!</h3>
-                  <p className="text-green-700 flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    Παρακαλώ ελέγξτε το email σας για επιβεβαίωση του λογαριασμού σας.
-                  </p>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-green-800">Εγγραφή Επιτυχής!</h3>
+                    <p className="text-green-700 flex items-center gap-2 mt-1">
+                      <Mail className="w-4 h-4" />
+                      Παρακαλώ ελέγξτε το email σας για επιβεβαίωση του λογαριασμού σας.
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowRegistrationSuccess(false)}
+                    className="text-green-600 hover:text-green-700"
+                  >
+                    ✕
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowRegistrationSuccess(false)}
-                  className="ml-auto text-green-600 hover:text-green-700"
-                >
-                  ✕
-                </Button>
+                
+                {/* Resend Email Section */}
+                {!showResendInput ? (
+                  <div className="pt-2 border-t border-green-200">
+                    <p className="text-sm text-green-700 mb-2">
+                      Δεν λάβατε το email;
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowResendInput(true)}
+                      className="text-green-700 border-green-300 hover:bg-green-100"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Επαναποστολή Email Επιβεβαίωσης
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="pt-2 border-t border-green-200 space-y-3">
+                    <div>
+                      <Label htmlFor="resend-email" className="text-green-800 text-sm font-medium">
+                        Email για επαναποστολή
+                      </Label>
+                      <Input
+                        id="resend-email"
+                        type="email"
+                        value={resendEmail}
+                        onChange={(e) => setResendEmail(e.target.value)}
+                        placeholder="email@example.com"
+                        className="mt-1 border-green-300"
+                        disabled={resending}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handleResendVerification}
+                        disabled={resending || !resendEmail}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {resending ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                            Αποστολή...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Στείλε Email
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setShowResendInput(false)
+                          setResendEmail('')
+                        }}
+                        disabled={resending}
+                        className="text-green-700 hover:text-green-800"
+                      >
+                        Ακύρωση
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

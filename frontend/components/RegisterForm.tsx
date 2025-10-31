@@ -49,9 +49,9 @@ export default function RegisterForm() {
       // Show success message
       toast.success("Επιτυχής εγγραφή! Παρακαλώ ελέγξτε το email σας για επιβεβαίωση.");
 
-      // Redirect to plans page after registration
+      // Redirect to plans page after registration with email in URL
       setTimeout(() => {
-        router.push("/plans?registered=true");
+        router.push(`/plans?registered=true&email=${encodeURIComponent(data.email)}`);
       }, 2000);
 
     } catch (err: any) {
