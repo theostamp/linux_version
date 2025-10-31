@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-# Force rebuild - 2025-10-28
+# Force rebuild - 2025-10-31 - Fix django-resend dependency issue
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
@@ -26,6 +26,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python deps
+# Add cache-busting comment to force rebuild after fixing django-resend -> resend
 COPY requirements*.txt ./
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
