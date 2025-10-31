@@ -55,7 +55,7 @@ export default function PlansPage() {
 
   // Check email verification status when user is authenticated
   useEffect(() => {
-    if (isAuthReady && user && !user.email_verified) {
+    if (isAuthReady && user && user.email_verified !== true) {
       // User is logged in but email is not verified
       // Redirect to register page after showing warning
       toast.error('Παρακαλώ επιβεβαιώστε το email σας πριν επιλέξετε πακέτο.')
@@ -97,7 +97,7 @@ export default function PlansPage() {
   const handleSelectPlan = async (planId: number) => {
     // Check if user is authenticated and email is verified
     if (isAuthReady && user) {
-      if (!user.email_verified) {
+      if (user.email_verified !== true) {
         toast.error('Παρακαλώ επιβεβαιώστε το email σας πριν επιλέξετε πακέτο.')
         router.push('/register?unverified=true')
         return
@@ -280,7 +280,7 @@ export default function PlansPage() {
         </p>
 
         {/* Warning for unverified users */}
-        {isAuthReady && user && !user.email_verified && (
+        {isAuthReady && user && user.email_verified !== true && (
           <div className="max-w-3xl mx-auto mb-8">
             <Card className="border-orange-200 bg-orange-50">
               <CardContent className="pt-6">
@@ -420,13 +420,13 @@ export default function PlansPage() {
                 onClick={() => handleSelectPlan(plan.id)}
                 disabled={
                   selectedPlan === plan.id || 
-                  (isAuthReady && user && !user.email_verified)
+                  (isAuthReady && user && user.email_verified !== true)
                 }
                 className="w-full"
               >
                 {selectedPlan === plan.id 
                   ? 'Φόρτωση...' 
-                  : (isAuthReady && user && !user.email_verified)
+                  : (isAuthReady && user && user.email_verified !== true)
                   ? 'Απαιτείται Επιβεβαίωση Email'
                   : 'Επιλογή Πακέτου'
                 }
