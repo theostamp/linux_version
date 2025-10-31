@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
+import { useAuth } from '@/components/contexts/AuthContext'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Check, Mail, CheckCircle, RefreshCw } from 'lucide-react'
+import { Check, Mail, CheckCircle, RefreshCw, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -35,6 +36,7 @@ export default function PlansPage() {
   const [showResendInput, setShowResendInput] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user, isAuthReady } = useAuth()
 
   useEffect(() => {
     fetchPlans()
@@ -50,6 +52,18 @@ export default function PlansPage() {
       toast.success('Εγγραφή επιτυχής! Παρακαλώ ελέγξτε το email σας για επιβεβαίωση.')
     }
   }, [searchParams])
+
+  // Check email verification status when user is authenticated
+  useEffect(() => {
+    if (isAuthReady && user && !user.email_verified) {
+      // User is logged in but email is not verified
+      // Redirect to register page after showing warning
+      toast.error('Παρακαλώ επιβεβαιώστε το email σας πριν επιλέξετε πακέτο.')
+      setTimeout(() => {
+        router.push('/register?unverified=true')
+      }, 2000)
+    }
+  }, [user, isAuthReady, router])
 
   const fetchPlans = async () => {
     try {
@@ -81,6 +95,20 @@ export default function PlansPage() {
   }
 
   const handleSelectPlan = async (planId: number) => {
+    // Check if user is authenticated and email is verified
+    if (isAuthReady && user) {
+      if (!user.email_verified) {
+        toast.error('Παρακαλώ επιβεβαιώστε το email σας πριν επιλέξετε πακέτο.')
+        router.push('/register?unverified=true')
+        return
+      }
+    } else if (isAuthReady && !user) {
+      // User is not authenticated, redirect to register
+      toast.info('Παρακαλώ εγγραφείτε ή συνδεθείτε για να επιλέξετε πακέτο.')
+      router.push('/register')
+      return
+    }
+
     setSelectedPlan(planId)
     
     try {
@@ -250,6 +278,48 @@ export default function PlansPage() {
         <p className="text-xl text-gray-600 mb-4">
           Ξεκινήστε με 14 ημέρες δωρεάν δοκιμή!
         </p>
+
+        {/* Warning for unverified users */}
+        {isAuthReady && user && !user.email_verified && (
+          <div className="max-w-3xl mx-auto mb-8">
+            <Card className="border-orange-200 bg-orange-50">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-6 h-6 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 text-left">
+                    <h3 className="font-semibold text-orange-900 mb-2">Επιβεβαιώστε το Email σας</h3>
+                    <p className="text-sm text-orange-800 mb-3">
+                      Για να επιλέξετε πακέτο, πρέπει πρώτα να επιβεβαιώσετε το email σας. 
+                      Παρακαλώ ελέγξτε το inbox σας και κάντε κλικ στο link επιβεβαίωσης.
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push('/register?unverified=true')}
+                        className="text-orange-700 border-orange-300 hover:bg-orange-100"
+                      >
+                        Μετάβαση στην Εγγραφή
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowResendInput(true)
+                          setResendEmail(user.email || '')
+                        }}
+                        className="text-orange-700 border-orange-300 hover:bg-orange-100"
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Επαναποστολή Email
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
         
         {/* Important Notice */}
         <div className="max-w-3xl mx-auto mb-8">
@@ -348,10 +418,18 @@ export default function PlansPage() {
             <CardFooter>
               <Button
                 onClick={() => handleSelectPlan(plan.id)}
-                disabled={selectedPlan === plan.id}
+                disabled={
+                  selectedPlan === plan.id || 
+                  (isAuthReady && user && !user.email_verified)
+                }
                 className="w-full"
               >
-                {selectedPlan === plan.id ? 'Φόρτωση...' : 'Επιλογή Πακέτου'}
+                {selectedPlan === plan.id 
+                  ? 'Φόρτωση...' 
+                  : (isAuthReady && user && !user.email_verified)
+                  ? 'Απαιτείται Επιβεβαίωση Email'
+                  : 'Επιλογή Πακέτου'
+                }
               </Button>
             </CardFooter>
           </Card>
