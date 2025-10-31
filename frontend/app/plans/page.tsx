@@ -248,7 +248,7 @@ export default function PlansPage() {
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Επιλέξτε το Πακέτο σας</h1>
         <p className="text-xl text-gray-600 mb-4">
-          Ξεκινήστε με πρώτο μήνα δωρεάν!
+          Ξεκινήστε με 14 ημέρες δωρεάν δοκιμή!
         </p>
         
         {/* Important Notice */}
@@ -262,19 +262,19 @@ export default function PlansPage() {
                   </div>
                 </div>
                 <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-blue-900 mb-2">Σημαντικές Πληροφορίες</h3>
+                  <h3 className="font-semibold text-blue-900 mb-2">Σημαντικές Πληροφορίες - Δωρεάν Trial</h3>
                   <ul className="space-y-2 text-sm text-blue-800">
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
-                      <span><strong>Πρώτος μήνας δωρεάν:</strong> Όταν ολοκληρώσετε την εγγραφή, θα έχετε πλήρη πρόσβαση για 30 ημέρες χωρίς χρέωση.</span>
+                      <span><strong>14 ημέρες δωρεάν trial:</strong> Όταν ολοκληρώσετε την εγγραφή, θα έχετε <strong>πλήρη πρόσβαση για 14 ημέρες</strong> <strong className="text-green-700">χωρίς χρέωση</strong>. <strong>Δεν πληρώνετε τίποτα</strong> κατά τη διάρκεια του trial.</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
-                      <span><strong>Αυτόματη χρέωση:</strong> Μετά το τέλος του πρώτου μήνα, η συνδρομή θα ανανεώνεται αυτόματα κάθε μήνα με χρέωση <strong>€{plans[0]?.monthly_price || '29'}</strong>.</span>
+                      <span><strong>Αυτόματη χρέωση μετά το trial:</strong> Μετά το τέλος των 14 ημερών, η συνδρομή θα ανανεώνεται <strong>αυτόματα</strong> κάθε μήνα με χρέωση <strong>€{plans[0]?.monthly_price || '29'}/μήνα</strong>.</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
-                      <span><strong>Ακύρωση ανά πάσα στιγμή:</strong> Μπορείτε να ακυρώσετε τη συνδρομή σας οποιαδήποτε στιγμή χωρίς πρόσθετη χρέωση.</span>
+                      <span><strong>Ακύρωση ανά πάσα στιγμή:</strong> Μπορείτε να ακυρώσετε τη συνδρομή σας <strong>οποιαδήποτε στιγμή</strong>, ακόμα και πριν το τέλος του trial, χωρίς πρόσθετη χρέωση.</span>
                     </li>
                   </ul>
                 </div>
@@ -298,11 +298,16 @@ export default function PlansPage() {
                   <span className="text-4xl font-bold">€{plan.monthly_price}</span>
                   <span className="text-gray-600">/μήνα</span>
                 </div>
-                <div className="text-sm text-green-600 font-semibold mb-2">
-                  ✓ Πρώτος μήνας δωρεάν
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-2">
+                  <div className="text-sm text-green-700 font-semibold mb-1">
+                    ✓ 14 ημέρες δωρεάν trial
+                  </div>
+                  <div className="text-xs text-green-600">
+                    Δεν πληρώνετε τίποτα για 14 ημέρες
+                  </div>
                 </div>
                 <div className="text-xs text-gray-500">
-                  Από τον 2ο μήνα: €{plan.monthly_price}/μήνα
+                  Μετά το trial: €{plan.monthly_price}/μήνα (αυτόματη χρέωση)
                 </div>
               </div>
 

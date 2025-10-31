@@ -210,12 +210,26 @@ export default function MySubscriptionPage() {
                 </div>
                 <div className="text-right">
                   {getStatusBadge(currentSubscription.status)}
-                  <p className="text-2xl font-bold mt-2">
-                    {formatCurrency(currentSubscription.price, currentSubscription.currency)}
-                    <span className="text-sm font-normal text-gray-500">
-                      /{currentSubscription.billing_interval === 'month' ? 'μήνας' : 'έτος'}
-                    </span>
-                  </p>
+                  {currentSubscription.status === 'trial' ? (
+                    <div className="mt-2">
+                      <p className="text-2xl font-bold text-green-600">
+                        Δωρεάν
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Κατά τη διάρκεια του trial
+                      </p>
+                      <p className="text-sm font-medium text-gray-700 mt-2">
+                        Μετά το trial: {formatCurrency(currentSubscription.price, currentSubscription.currency)}/μήνα
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-2xl font-bold mt-2">
+                      {formatCurrency(currentSubscription.price, currentSubscription.currency)}
+                      <span className="text-sm font-normal text-gray-500">
+                        /{currentSubscription.billing_interval === 'month' ? 'μήνας' : 'έτος'}
+                      </span>
+                    </p>
+                  )}
                 </div>
               </div>
 
