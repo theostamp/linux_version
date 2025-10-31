@@ -825,7 +825,20 @@ class WebhookService:
                     billing_cycle.paid_at = timezone.now()
                     billing_cycle.save()
                 
-                logger.info(f"Payment succeeded for subscription {subscription.id}")
+                # Update user role to manager on payment success
+                user = subscription.user
+                user.role = 'manager'
+                user.is_staff = True
+                user.is_superuser = False
+                user.email_verified = True  # Auto-verify on payment
+                user.save(update_fields=['role', 'is_staff', 'is_superuser', 'email_verified'])
+                
+                # Add to Manager group
+                from django.contrib.auth.models import Group
+                manager_group, _ = Group.objects.get_or_create(name='Manager')
+                user.groups.add(manager_group)
+                
+                logger.info(f"Payment succeeded for subscription {subscription.id} - user {user.email} upgraded to manager")
                 return True
                 
             except UserSubscription.DoesNotExist:

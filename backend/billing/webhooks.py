@@ -113,6 +113,20 @@ class StripeWebhookView(APIView):
             logger.info(f"[WEBHOOK] Subscription already processed for session: {stripe_checkout_session_id}")
             return
 
+        # Update user role to manager on checkout completion
+        user.role = 'manager'
+        user.is_staff = True
+        user.is_superuser = False
+        user.email_verified = True  # Auto-verify on payment
+        user.save(update_fields=['role', 'is_staff', 'is_superuser', 'email_verified'])
+        
+        # Add to Manager group
+        from django.contrib.auth.models import Group
+        manager_group, _ = Group.objects.get_or_create(name='Manager')
+        user.groups.add(manager_group)
+        
+        logger.info(f"[WEBHOOK] User {user.email} upgraded to manager role")
+
         # Provisioning με transaction
         try:
             with transaction.atomic():
