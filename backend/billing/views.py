@@ -1485,7 +1485,7 @@ class SubscriptionStatusView(APIView):
                 active_subscription = UserSubscription.objects.filter(
                     user=user,
                     status__in=['active', 'trialing', 'trial']
-                ).first()
+                ).defer('is_first_month_free').first()
                 
                 if not active_subscription:
                     logger.warning(f"User {user.email} has tenant but no active subscription. This might indicate a security issue.")
