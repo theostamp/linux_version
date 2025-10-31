@@ -740,6 +740,7 @@ def create_demo_data(tenant_schema):
         # 4.5. Δημιουργία Resident entries (after apartments are created)
         # Get users that will become residents (those without SystemRole)
         resident_users = [u for u in created_users if u.role is None]
+        created_residents = []  # Store created Resident objects
         
         for i, building in enumerate(created_buildings):
             # Create Resident entries for resident users
@@ -766,6 +767,9 @@ def create_demo_data(tenant_schema):
                         )
                         if created:
                             print(f"✅ Resident entry: {resident_user.email} ({resident_role}) -> {building.name}, Apartment {apartment.number}")
+                        
+                        # Store created resident for later use
+                        created_residents.append(resident)
                         
                         # Also create BuildingMembership for backward compatibility
                         membership, created = BuildingMembership.objects.get_or_create(
@@ -820,12 +824,15 @@ def create_demo_data(tenant_schema):
         ]
         
         for request_data in requests_data:
+            # Use first resident user if available, otherwise use first user
+            created_by_user = created_residents[0].user if created_residents else (resident_users[0] if resident_users else created_users[0])
+            
             user_request, created = UserRequest.objects.get_or_create(
                 title=request_data['title'],
                 defaults={
                     'description': request_data['description'],
                     'building': created_buildings[0],
-                    'created_by': residents[0],
+                    'created_by': created_by_user,
                     'type': request_data['type'],
                     'priority': 'urgent' if request_data['is_urgent'] else 'medium'
                 }
