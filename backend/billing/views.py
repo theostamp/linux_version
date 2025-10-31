@@ -1329,7 +1329,7 @@ class CreateCheckoutSessionView(APIView):
             from billing.models import UserSubscription
             existing_subscription = UserSubscription.objects.filter(
                 user=user,
-                status__in=['active', 'trialing']
+                status__in=['active', 'trial']
             ).first()
             
             if existing_subscription:
@@ -1377,6 +1377,13 @@ class CreateCheckoutSessionView(APIView):
             # Determine the price ID based on plan
             price_id = plan.stripe_price_id_monthly  # Default to monthly
             
+            # Validate that price ID exists
+            if not price_id:
+                logger.error(f"Plan {plan.id} ({plan.name}) does not have a stripe_price_id_monthly set")
+                return Response({
+                    'error': 'Subscription plan is not properly configured. Please contact support.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
             # Build success and cancel URLs
             from django.conf import settings
             frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
@@ -1409,7 +1416,13 @@ class CreateCheckoutSessionView(APIView):
                 }
             }
             
-            checkout_session = stripe_service.create_checkout_session(session_data)
+            try:
+                checkout_session = stripe_service.create_checkout_session(session_data)
+            except Exception as e:
+                logger.error(f"Stripe checkout session creation failed: {e}", exc_info=True)
+                return Response({
+                    'error': f'Failed to create checkout session: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             # Save the checkout session ID to the user for polling
             user.stripe_checkout_session_id = checkout_session['id']
