@@ -65,6 +65,7 @@ function TicketsListInner() {
   );
 }
 
-export default withAuth(TicketsListInner, ['admin', 'manager', 'tenant']);
+// Note: 'tenant' is NOT a CustomUser.role - only 'admin' and 'manager' are valid
+export default withAuth(TicketsListInner, ['admin', 'manager']);
 
 
