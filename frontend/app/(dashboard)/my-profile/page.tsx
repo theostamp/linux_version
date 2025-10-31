@@ -33,6 +33,24 @@ import AuthGate from '@/components/AuthGate';
 import { userProfileApi, type UserProfile } from '@/lib/api/user';
 import { toast } from '@/hooks/use-toast';
 
+// Helper function to get user role label in Greek
+// Note: This is for CustomUser.role (SystemRole), not Resident.role
+// CustomUser.role can only be: 'admin' or 'manager' (Office Manager = Django Tenant Owner)
+// Resident.role (for apartments) can be: 'manager', 'owner', 'tenant' - but that's different!
+const getUserRoleLabel = (role?: string): string => {
+  if (!role) return 'Χρήστης';
+  
+  switch (role.toLowerCase()) {
+    case 'admin':
+      return 'Admin';
+    case 'manager':
+      return 'Διαχειριστής'; // Office Manager = Django Tenant Owner
+    // Note: 'owner' and 'tenant' are Resident.role values, not CustomUser.role
+    // These are handled separately in apartment listings
+    default:
+      return role;
+  }
+};
 
 interface NotificationSettings {
   email_notifications: boolean;
@@ -43,7 +61,7 @@ interface NotificationSettings {
 }
 
 export default function MyProfilePage() {
-  const { user: authUser } = useAuth();
+  const { user: authUser, refreshUser } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [notifications, setNotifications] = useState<NotificationSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -98,27 +116,33 @@ export default function MyProfilePage() {
     
     try {
       setSaving(true);
-      const response = await fetch('/api/user/profile/', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          phone: profile.phone,
-          address: profile.address,
-        }),
+      const updatedProfile = await userProfileApi.updateProfile({
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        phone: profile.phone,
+        address: profile.address,
       });
-
-      if (response.ok) {
-        setEditing(false);
-        alert('Profile updated successfully!');
+      
+      // Refresh user data in AuthContext
+      await refreshUser();
+      
+      // Update local profile state with the response
+      if (updatedProfile?.user) {
+        setProfile({ ...profile, ...updatedProfile.user });
       }
-    } catch (error) {
+      
+      setEditing(false);
+      toast({
+        title: 'Επιτυχία',
+        description: 'Το προφίλ ενημερώθηκε επιτυχώς',
+      });
+    } catch (error: any) {
       console.error('Error saving profile:', error);
-      alert('Error updating profile');
+      toast({
+        title: 'Σφάλμα',
+        description: error?.response?.data?.error || 'Σφάλμα κατά την ενημέρωση του προφίλ',
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }
@@ -442,7 +466,7 @@ export default function MyProfilePage() {
                     <Label htmlFor="role">Ρόλος</Label>
                     <Input
                       id="role"
-                      value={profile?.role === 'manager' ? 'Manager' : 'Resident'}
+                      value={getUserRoleLabel(profile?.role)}
                       disabled
                       className="bg-gray-50"
                     />

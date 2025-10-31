@@ -13,6 +13,7 @@ from datetime import timedelta
 import logging
 
 from users.models import CustomUser
+from users.serializers import UserSerializer
 from billing.models import UserSubscription
 from core.permissions import IsSuperuser
 
@@ -25,10 +26,11 @@ class AdminUsersViewSet(ModelViewSet):
     Admin ViewSet για διαχείριση χρηστών
     """
     permission_classes = [IsSuperuser]
+    serializer_class = UserSerializer
     
     def get_queryset(self):
         """
-        Όλοι οι χρήστες για admin
+        Όλοι οι χρήστες για admin (συμπεριλαμβανομένων των superusers)
         """
         return User.objects.all().order_by('-date_joined')
     

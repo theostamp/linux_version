@@ -265,11 +265,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
         
         # Always require email verification for security
+        # Note: CustomUser.role (SystemRole) can only be 'admin' or 'manager' (Django Tenant Owner)
+        # 'tenant' is NOT a valid CustomUser.role - it's a Resident.role (apartment level)
+        # New users start with role=None and get 'manager' role when they create a subscription/tenant
         user = CustomUser.objects.create_user(
             password=password,
             is_active=True,  # User is active immediately
             email_verified=True,  # Auto-verified for better UX
-            role='tenant',  # Default role for new users
+            role=None,  # Role will be set to 'manager' when they create subscription/tenant
             **validated_data
         )
         

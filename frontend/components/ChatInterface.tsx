@@ -111,7 +111,7 @@ export default function ChatInterface({ currentUser }: ChatInterfaceProps) {
             sender_id: 1,
             sender_name: 'Γραφείο Διαχείρισης',
             sender_role: 'admin',
-            content: `Καλώς ήρθατε στο chat room του ${currentBuilding.name}! Είστε συνδεδεμένοι ως ${getRoleLabel(currentUser.role)}.`,
+            content: `Καλώς ήρθατε στο chat room του ${currentBuilding.name}! Είστε συνδεδεμένοι ως ${currentUser.role === 'manager' ? 'Διαχειριστής' : currentUser.role === 'admin' ? 'Admin' : 'Χρήστης'}.`,
             message_type: 'text',
             is_edited: false,
             created_at: new Date(Date.now() - 3600000).toISOString()
@@ -197,27 +197,34 @@ export default function ChatInterface({ currentUser }: ChatInterfaceProps) {
     setEditContent('');
   };
 
+  // Note: sender_role in chat messages is building-level role (not CustomUser.role)
+  // It can be: 'manager' (building manager), 'resident' (building resident), 'admin', 'other'
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'bg-purple-500'; // Γραφείο Διαχείρισης - μωβ
+        return 'bg-purple-500'; // Admin/Superuser - μωβ
       case 'manager':
-        return 'bg-blue-500';   // Εσωτερικός Διαχειριστής - μπλε
+        return 'bg-blue-500';   // Building Manager/Διαχειριστής - μπλε
       case 'resident':
-        return 'bg-green-500';  // Ενοικιαστής - πράσινο
+        return 'bg-green-500';  // Building Resident/Κάτοικος - πράσινο
       default:
-        return 'bg-gray-500';   // Χρήστης - γκρι
+        return 'bg-gray-500';   // Other/Χρήστης - γκρι
     }
   };
 
+  // Note: For chat messages, sender_role is building-level role, not CustomUser.role
+  // CustomUser.role can only be 'admin' or 'manager' (Django Tenant Owner)
+  // But in chat context, sender_role is determined by building membership
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'Γραφείο Διαχείρισης';
+        return 'Admin';
       case 'manager':
-        return 'Εσωτερικός Διαχειριστής';
+        return 'Διαχειριστής'; // Building Manager
       case 'resident':
-        return 'Ενοικιαστής';
+        return 'Κάτοικος'; // Building Resident
+      case 'other':
+        return 'Χρήστης';
       default:
         return 'Χρήστης';
     }

@@ -156,31 +156,35 @@ export default function AdminUsersPage() {
 
   const getRoleBadge = (user: User) => {
     if (user.is_superuser) {
-      return <Badge variant="default" className="bg-purple-600">Superuser</Badge>;
+      return <Badge variant="default" className="bg-purple-600">Ultra Admin</Badge>;
     }
-    if (user.is_staff) {
+    if (user.is_staff && !user.is_superuser) {
       return <Badge variant="default" className="bg-blue-600">Staff</Badge>;
     }
-    if (user.role === 'manager') {
+    if (user.role === 'manager' && !user.is_superuser) {
       return <Badge variant="default" className="bg-green-600">Manager</Badge>;
     }
     return <Badge variant="outline">Resident</Badge>;
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.last_name.toLowerCase().includes(searchTerm.toLowerCase());
+    // Search filter - handle null/undefined values
+    const matchesSearch = !searchTerm || 
+                         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.last_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
+    // Status filter
     const matchesStatus = statusFilter === 'all' || 
                          (statusFilter === 'active' && user.is_active && user.email_verified) ||
                          (statusFilter === 'inactive' && !user.is_active) ||
                          (statusFilter === 'unverified' && !user.email_verified);
     
+    // Role filter - ensure superusers are always visible when roleFilter is 'all' or 'superuser'
     const matchesRole = roleFilter === 'all' ||
                        (roleFilter === 'superuser' && user.is_superuser) ||
                        (roleFilter === 'staff' && user.is_staff && !user.is_superuser) ||
-                       (roleFilter === 'manager' && user.role === 'manager') ||
+                       (roleFilter === 'manager' && user.role === 'manager' && !user.is_superuser) ||
                        (roleFilter === 'resident' && !user.is_staff && !user.is_superuser && user.role !== 'manager');
 
     return matchesSearch && matchesStatus && matchesRole;

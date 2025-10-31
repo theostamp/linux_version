@@ -42,14 +42,15 @@ export function useRole() {
   return { role, isAdmin, isManager, isLoading };
 }
 
-export function withAuth<TProps = any>(Component: (props: TProps) => any, allowedRoles: Array<'admin' | 'manager' | 'tenant'> = ['admin', 'manager', 'tenant']) {
+// Note: CustomUser.role can only be 'admin' or 'manager' (SystemRole)
+// 'tenant' is NOT a CustomUser.role - it's a Resident.role (apartment level)
+export function withAuth<TProps = any>(Component: (props: TProps) => any, allowedRoles: Array<'admin' | 'manager'> = ['admin', 'manager']) {
   return function Protected(props: TProps) {
     const { role, isAdmin, isManager, isLoading } = useRole();
     if (isLoading) return null;
     const ok = (
       (allowedRoles && allowedRoles.includes('admin') && isAdmin) ||
-      (allowedRoles && allowedRoles.includes('manager') && isManager) ||
-      (allowedRoles && allowedRoles.includes('tenant') && role === 'tenant')
+      (allowedRoles && allowedRoles.includes('manager') && isManager)
     );
     if (!ok) {
       if (typeof window !== 'undefined') window.location.replace('/');

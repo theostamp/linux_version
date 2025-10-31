@@ -12,20 +12,22 @@ import { User, Building as BuildingIcon, Settings, Menu, Calendar } from 'lucide
 import { API_BASE_URL } from '@/lib/api';
 
 // Helper function to get user role label
+// Note: user.role is CustomUser.role (SystemRole) which can only be: 'admin' or 'manager'
+// CustomUser.role = Django Tenant Owner level (Office Manager)
+// Resident.role (apartment level) is different: 'manager', 'owner', 'tenant'
 const getUserRoleLabel = (user: any): string => {
   if (!user) return 'Χρήστης';
 
   // Check for role property FIRST (most specific)
-  // This allows role='manager' to show as "Διαχειριστής" even if is_superuser=true
+  // CustomUser.role can only be 'admin' or 'manager' (SystemRole)
   if (user.role) {
     switch (user.role.toLowerCase()) {
       case 'admin':
+        return 'Admin';
       case 'manager':
-        return 'Διαχειριστής';
-      case 'owner':
-        return 'Ιδιοκτήτης';
-      case 'tenant':
-        return 'Ένοικος';
+        return 'Διαχειριστής'; // Office Manager = Django Tenant Owner
+      // Note: 'owner' and 'tenant' are NOT CustomUser.role values
+      // They are Resident.role values (apartment level) and should not appear here
       default:
         return user.role;
     }
@@ -37,15 +39,16 @@ const getUserRoleLabel = (user: any): string => {
   // Check for staff/admin
   if (user.is_staff) return 'Διαχειριστής';
 
-  // Check profile.role
+  // Check profile.role (if it exists, though it shouldn't differ from user.role)
   if (user.profile?.role) {
     switch (user.profile.role) {
       case 'superuser':
         return 'Ultra Admin';
+      case 'admin':
+        return 'Admin';
       case 'manager':
         return 'Διαχειριστής';
-      case 'resident':
-        return 'Κάτοικος';
+      // Note: 'resident' is not a CustomUser.role value
       default:
         return user.profile.role;
     }
