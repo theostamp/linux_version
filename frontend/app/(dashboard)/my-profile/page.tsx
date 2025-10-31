@@ -117,17 +117,26 @@ export default function MyProfilePage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    // Use authUser directly from context instead of fetching
-    if (authUser) {
-      setProfile(authUser as any);
-      setLoading(false);
-    }
+    // Fetch fresh profile data from API to get all fields including email_verified and date_joined
+    fetchProfile();
     fetchNotificationSettings();
   }, [authUser]);
 
   const fetchProfile = async () => {
-    // Profile is loaded from AuthContext
-    // This function is kept for compatibility but not used
+    try {
+      setLoading(true);
+      // Fetch fresh profile from API to ensure we have all fields
+      const profileData = await userProfileApi.getProfile();
+      setProfile(profileData);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      // Fallback to authUser if API fails
+      if (authUser) {
+        setProfile(authUser as any);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchNotificationSettings = async () => {

@@ -7,11 +7,13 @@ from rest_framework.viewsets import ModelViewSet
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.contrib.auth.hashers import check_password, make_password
+from django.core.exceptions import ObjectDoesNotExist
 import logging
 
 from users.models import CustomUser
 from rest_framework.permissions import IsAuthenticated
 from users.serializers import UserProfileSerializer
+from users.utils import resident_table_exists
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -26,9 +28,38 @@ class UserProfileView(APIView):
     def get(self, request):
         """
         Get current user profile
+        Includes all fields from /api/users/me/ endpoint for consistency
         """
         try:
             user = request.user
+            
+            # Try to get resident profile with building (optimized query)
+            resident_role = None
+            resident_profile_data = None
+
+            if resident_table_exists():
+                try:
+                    resident_profile = user.resident_profile  # May trigger DB lookup
+                except ObjectDoesNotExist:
+                    resident_profile = None
+                except Exception as exc:
+                    # If the resident table exists but isn't migrated correctly, avoid crashing the endpoint
+                    logger.debug(
+                        "Skipping resident profile for user %s due to error: %s",
+                        user.id,
+                        exc,
+                    )
+                    resident_profile = None
+
+                if resident_profile:
+                    building = getattr(resident_profile, 'building', None)
+                    resident_role = resident_profile.role
+                    resident_profile_data = {
+                        'apartment': resident_profile.apartment,
+                        'building_id': building.id if building else None,
+                        'building_name': building.name if building else None,
+                        'phone': resident_profile.phone or None,
+                    }
             
             # Get user's apartments/buildings
             apartments = []
@@ -54,7 +85,7 @@ class UserProfileView(APIView):
                     subscription_data = {
                         'plan_name': active_subscription.plan.name,
                         'status': active_subscription.status,
-                        'current_period_end': active_subscription.current_period_end,
+                        'current_period_end': active_subscription.current_period_end.isoformat() if active_subscription.current_period_end else None,
                         'price': float(active_subscription.price),
                         'currency': active_subscription.currency,
                     }
@@ -66,13 +97,17 @@ class UserProfileView(APIView):
                 'last_name': user.last_name,
                 'phone': getattr(user, 'phone', ''),
                 'address': getattr(user, 'address', ''),
-                'date_joined': user.date_joined,
-                'last_login': user.last_login,
-                'email_verified': user.email_verified,
-                'role': user.role,
+                'date_joined': user.date_joined.isoformat() if user.date_joined else None,
+                'last_login': user.last_login.isoformat() if user.last_login else None,
+                'email_verified': getattr(user, 'email_verified', False),
+                'role': user.role,  # SystemRole (backward compat)
+                'system_role': user.role,  # Explicit system_role field
+                'resident_role': resident_role,  # Resident.Role if exists
+                'resident_profile': resident_profile_data,  # Full Resident profile if exists
                 'office_name': user.office_name,
                 'office_phone': user.office_phone,
                 'office_address': user.office_address,
+                'office_logo': user.office_logo.url if user.office_logo else None,
                 'apartments': apartments,
                 'subscription': subscription_data,
             }

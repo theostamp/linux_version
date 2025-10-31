@@ -201,6 +201,9 @@ def me_view(request):
         'last_name': user.last_name,
         'is_staff': user.is_staff,
         'is_superuser': user.is_superuser,
+        'email_verified': getattr(user, 'email_verified', False),
+        'date_joined': user.date_joined.isoformat() if user.date_joined else None,
+        'last_login': user.last_login.isoformat() if user.last_login else None,
         'role': user.role,  # SystemRole (backward compat)
         'system_role': user.role,  # Explicit system_role field
         'resident_role': resident_role,  # Resident.Role if exists
