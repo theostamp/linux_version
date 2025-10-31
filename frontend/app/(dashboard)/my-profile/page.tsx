@@ -30,7 +30,8 @@ import {
   Home,
   Trash2,
   ArrowRight,
-  ExternalLink
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import AuthGate from '@/components/AuthGate';
@@ -604,6 +605,33 @@ export default function MyProfilePage() {
             {activeTab === 'subscription' && (
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-6">Συνδρομή</h3>
+                
+                {/* Warning for managers without subscription */}
+                {!profile?.subscription && (profile?.role === 'manager' || profile?.system_role === 'manager') && (
+                  <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-yellow-800 mb-1">Προσοχή: Λείπει η Συνδρομή</h4>
+                        <p className="text-sm text-yellow-700 mb-3">
+                          Ως διαχειριστής κτιρίου, θα πρέπει να έχετε ενεργή συνδρομή. Εάν δεν εμφανίζεται η συνδρομή σας, παρακαλώ επικοινωνήστε με την υποστήριξη ή ανανεώστε τη σελίδα.
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            fetchProfile();
+                            toast.info('Ανανέωση δεδομένων συνδρομής...');
+                          }}
+                          className="text-yellow-700 border-yellow-300 hover:bg-yellow-100"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Ανανέωση Συνδρομής
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 {profile?.subscription ? (
                   <div className="space-y-6">
