@@ -1,3 +1,5 @@
+import logging
+
 # users/serializers.py
 
 from rest_framework import serializers
@@ -5,12 +7,14 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils import timezone
 from .models import CustomUser, UserInvitation, PasswordResetToken, UserLoginAttempt
 from .audit import SecurityAuditLogger
+from .utils import resident_table_exists
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
@@ -207,32 +211,59 @@ class UserSerializer(serializers.ModelSerializer):
         """
         Get Resident.Role from resident_profile if exists.
         """
+        if getattr(self, '_resident_table_exists', None) is None:
+            self._resident_table_exists = resident_table_exists()
+
+        if not self._resident_table_exists:
+            return None
+
         try:
-            resident_profile = getattr(obj, 'resident_profile', None)
-            if resident_profile:
-                return resident_profile.role
-        except AttributeError:
-            pass
-        return None
+            resident_profile = obj.resident_profile
+        except ObjectDoesNotExist:
+            return None
+        except Exception as exc:
+            logger.debug(
+                "Skipping resident_role for user %s due to error: %s",
+                getattr(obj, 'id', 'unknown'),
+                exc,
+            )
+            return None
+
+        return getattr(resident_profile, 'role', None)
     
     def get_resident_profile(self, obj):
         """
         Get full Resident profile object if exists.
         Returns dict with apartment, building_id, building_name, phone.
         """
+        if getattr(self, '_resident_table_exists', None) is None:
+            self._resident_table_exists = resident_table_exists()
+
+        if not self._resident_table_exists:
+            return None
+
         try:
-            resident_profile = getattr(obj, 'resident_profile', None)
-            if resident_profile:
-                building = getattr(resident_profile, 'building', None)
-                return {
-                    'apartment': resident_profile.apartment,
-                    'building_id': building.id if building else None,
-                    'building_name': building.name if building else None,
-                    'phone': resident_profile.phone or None,
-                }
-        except AttributeError:
-            pass
-        return None
+            resident_profile = obj.resident_profile
+        except ObjectDoesNotExist:
+            return None
+        except Exception as exc:
+            logger.debug(
+                "Skipping resident_profile for user %s due to error: %s",
+                getattr(obj, 'id', 'unknown'),
+                exc,
+            )
+            return None
+
+        if not resident_profile:
+            return None
+
+        building = getattr(resident_profile, 'building', None)
+        return {
+            'apartment': resident_profile.apartment,
+            'building_id': building.id if building else None,
+            'building_name': building.name if building else None,
+            'phone': resident_profile.phone or None,
+        }
 
 class OfficeDetailsSerializer(serializers.ModelSerializer):
     """

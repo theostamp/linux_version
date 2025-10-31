@@ -14,6 +14,7 @@ import logging
 
 from users.models import CustomUser
 from users.serializers import UserSerializer
+from users.utils import resident_table_exists
 from billing.models import UserSubscription
 from core.permissions import IsSuperuser
 
@@ -33,7 +34,15 @@ class AdminUsersViewSet(ModelViewSet):
         Όλοι οι χρήστες για admin (συμπεριλαμβανομένων των superusers)
         Optimize queries with select_related for resident_profile
         """
-        return User.objects.select_related('resident_profile__building').all().order_by('-date_joined')
+        queryset = User.objects.all().order_by('-date_joined')
+
+        if resident_table_exists():
+            try:
+                queryset = queryset.select_related('resident_profile__building')
+            except Exception as exc:  # pragma: no cover - defensive guard
+                logger.debug("Skipping resident_profile select_related: %s", exc)
+
+        return queryset
     
     def list(self, request, *args, **kwargs):
         """

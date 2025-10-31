@@ -1,5 +1,7 @@
 # backend/users/views.py
 
+import logging
+
 from django.contrib.auth import authenticate, get_user_model
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
@@ -13,6 +15,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 from .models import CustomUser, UserInvitation, PasswordResetToken
 from .serializers import (
     UserSerializer, OfficeDetailsSerializer, CustomTokenObtainPairSerializer,
@@ -27,8 +30,10 @@ from core.throttles import (
     LoginThrottle, RegistrationThrottle, PasswordResetThrottle,
     InvitationThrottle, EmailVerificationThrottle, AuthEndpointThrottle
 )
+from .utils import resident_table_exists
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
@@ -162,26 +167,32 @@ def me_view(request):
     user = request.user
     
     # Try to get resident profile with building (optimized query)
-    resident_profile = None
     resident_role = None
-    try:
-        # Use select_related to avoid N+1 queries
-        resident_profile = getattr(user, 'resident_profile', None)
+    resident_profile_data = None
+
+    if resident_table_exists():
+        try:
+            resident_profile = user.resident_profile  # May trigger DB lookup
+        except ObjectDoesNotExist:
+            resident_profile = None
+        except Exception as exc:
+            # If the resident table exists but isn't migrated correctly, avoid crashing the endpoint
+            logger.debug(
+                "Skipping resident profile for user %s due to error: %s",
+                user.id,
+                exc,
+            )
+            resident_profile = None
+
         if resident_profile:
-            # Access building safely
             building = getattr(resident_profile, 'building', None)
             resident_role = resident_profile.role
-            
             resident_profile_data = {
                 'apartment': resident_profile.apartment,
                 'building_id': building.id if building else None,
                 'building_name': building.name if building else None,
                 'phone': resident_profile.phone or None,
             }
-        else:
-            resident_profile_data = None
-    except AttributeError:
-        resident_profile_data = None
     
     return Response({
         'id': user.id,
