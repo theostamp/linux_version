@@ -105,10 +105,9 @@ class StripeWebhookView(APIView):
             return
 
         # Idempotency check #3: If subscription already exists, skip provisioning
-        # Note: defer is_first_month_free until migration runs
         existing_subscription = UserSubscription.objects.filter(
             stripe_checkout_session_id=stripe_checkout_session_id
-        ).defer('is_first_month_free').first()
+        ).first()
         
         if existing_subscription and existing_subscription.status in ['active', 'trial']:
             logger.info(f"[WEBHOOK] Subscription already processed for session: {stripe_checkout_session_id}")
@@ -210,11 +209,10 @@ class StripeWebhookView(APIView):
             # Find subscription by payment intent ID or customer ID
             customer_id = payment_intent.get('customer')
             if customer_id:
-                # Note: defer is_first_month_free until migration runs
                 subscription = UserSubscription.objects.filter(
                     stripe_customer_id=customer_id,
                     status='pending'
-                ).defer('is_first_month_free').first()
+                ).first()
                 
                 if subscription:
                     subscription.status = 'active'
@@ -233,11 +231,10 @@ class StripeWebhookView(APIView):
         try:
             customer_id = payment_intent.get('customer')
             if customer_id:
-                # Note: defer is_first_month_free until migration runs
                 subscription = UserSubscription.objects.filter(
                     stripe_customer_id=customer_id,
                     status='pending'
-                ).defer('is_first_month_free').first()
+                ).first()
                 
                 if subscription:
                     subscription.status = 'failed'
@@ -260,10 +257,9 @@ class StripeWebhookView(APIView):
         logger.info(f'Subscription updated: {subscription_data["id"]}')
         
         try:
-            # Note: defer is_first_month_free until migration runs
             subscription = UserSubscription.objects.filter(
                 stripe_subscription_id=subscription_data['id']
-            ).defer('is_first_month_free').first()
+            ).first()
             
             if subscription:
                 # Update subscription status based on Stripe status
@@ -287,10 +283,9 @@ class StripeWebhookView(APIView):
         logger.info(f'Subscription deleted: {subscription_data["id"]}')
         
         try:
-            # Note: defer is_first_month_free until migration runs
             subscription = UserSubscription.objects.filter(
                 stripe_subscription_id=subscription_data['id']
-            ).defer('is_first_month_free').first()
+            ).first()
             
             if subscription:
                 subscription.status = 'canceled'

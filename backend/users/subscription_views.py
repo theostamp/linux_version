@@ -31,11 +31,10 @@ class UserCurrentSubscriptionView(APIView):
             user = request.user
             
             # Get current active subscription
-            # Note: defer is_first_month_free until migration runs
             subscription = UserSubscription.objects.filter(
                 user=user,
                 status__in=['trial', 'active']
-            ).select_related('plan').defer('is_first_month_free').first()
+            ).select_related('plan').first()
             
             if not subscription:
                 return Response({
@@ -186,8 +185,7 @@ class UserSubscriptionBillingHistoryView(APIView):
             user = request.user
             
             # Get user's subscriptions
-            # Note: defer is_first_month_free until migration runs
-            subscriptions = UserSubscription.objects.filter(user=user).defer('is_first_month_free')
+            subscriptions = UserSubscription.objects.filter(user=user)
             
             if not subscriptions.exists():
                 return Response({
@@ -253,11 +251,10 @@ class UserSubscriptionActionsView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Get user's current subscription
-            # Note: defer is_first_month_free until migration runs
             subscription = UserSubscription.objects.filter(
                 user=user,
                 status__in=['trial', 'active']
-            ).defer('is_first_month_free').first()
+            ).first()
             
             if not subscription:
                 return Response({
@@ -387,11 +384,10 @@ class UserCreateSubscriptionView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Check if user already has an active subscription
-            # Note: defer is_first_month_free until migration runs
             existing_subscription = UserSubscription.objects.filter(
                 user=user,
                 status__in=['trial', 'active']
-            ).defer('is_first_month_free').first()
+            ).first()
             
             if existing_subscription:
                 return Response({
