@@ -78,6 +78,15 @@ class UserProfileView(APIView):
             # Get user's subscription using BillingService
             subscription_data = None
             try:
+                logger.info(f"[PROFILE] Fetching subscription for user {user.email} (ID: {user.id}, role: {user.role})")
+                
+                # Debug: Check all subscriptions for this user
+                from billing.models import UserSubscription
+                all_user_subs = UserSubscription.objects.filter(user=user)
+                logger.info(f"[PROFILE] All subscriptions for user {user.email}: {all_user_subs.count()}")
+                for sub in all_user_subs:
+                    logger.info(f"[PROFILE]   - Subscription {sub.id}: status={sub.status}, plan={sub.plan.name}")
+                
                 active_subscription = BillingService.get_user_subscription(user)
                 
                 if active_subscription and active_subscription.plan:
@@ -88,12 +97,13 @@ class UserProfileView(APIView):
                         'price': float(active_subscription.price),
                         'currency': active_subscription.currency,
                     }
-                    logger.debug(f"Found subscription for user {user.email}: {subscription_data['plan_name']}")
-                elif user.role == 'manager':
-                    # Managers should have subscriptions - log warning if missing
-                    logger.warning(f"Manager {user.email} (role={user.role}) has no active subscription!")
+                    logger.info(f"[PROFILE] ✅ Found subscription for user {user.email}: {subscription_data['plan_name']} (status: {subscription_data['status']})")
+                else:
+                    logger.warning(f"[PROFILE] ❌ No subscription found for user {user.email} (role={user.role})")
+                    if user.role == 'manager':
+                        logger.warning(f"[PROFILE] ⚠️  Manager {user.email} should have subscription!")
             except Exception as exc:
-                logger.error(f"Error fetching subscription for user {user.id}: {exc}", exc_info=True)
+                logger.error(f"[PROFILE] Error fetching subscription for user {user.id}: {exc}", exc_info=True)
             
             profile_data = {
                 'id': user.id,
