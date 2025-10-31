@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import AuthGate from '@/components/AuthGate';
-import { userProfileApi, type UserProfile } from '@/lib/api/user';
+import { userProfileApi, userSubscriptionApi, type UserProfile } from '@/lib/api/user';
 import { toast } from '@/hooks/use-toast';
 
 // Helper function to get user role label in Greek
@@ -133,6 +133,27 @@ export default function MyProfilePage() {
       setLoading(true);
       // Fetch fresh profile from API to ensure we have all fields
       const profileData = await userProfileApi.getProfile();
+      
+      // If profile doesn't have subscription but user is manager, try to fetch subscription directly
+      if (!profileData.subscription && (profileData.role === 'manager' || profileData.system_role === 'manager')) {
+        try {
+          const subscriptionResponse = await userSubscriptionApi.getCurrentSubscription();
+          if (subscriptionResponse.subscription) {
+            // Merge subscription data into profile
+            profileData.subscription = {
+              plan_name: subscriptionResponse.subscription.plan?.name || 'Unknown Plan',
+              status: subscriptionResponse.subscription.status,
+              current_period_end: subscriptionResponse.subscription.current_period_end,
+              price: subscriptionResponse.subscription.price,
+              currency: subscriptionResponse.subscription.currency,
+            };
+            console.log('[MyProfile] Found subscription via direct fetch:', profileData.subscription);
+          }
+        } catch (subError) {
+          console.warn('[MyProfile] Could not fetch subscription directly:', subError);
+        }
+      }
+      
       setProfile(profileData);
     } catch (error) {
       console.error('Error fetching profile:', error);
