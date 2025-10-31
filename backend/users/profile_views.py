@@ -14,6 +14,7 @@ from users.models import CustomUser
 from rest_framework.permissions import IsAuthenticated
 from users.serializers import UserProfileSerializer
 from users.utils import resident_table_exists
+from billing.services import BillingService
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -74,14 +75,12 @@ class UserProfileView(APIView):
                     for apt in user.apartments.all()
                 ]
             
-            # Get user's subscription
+            # Get user's subscription using BillingService
             subscription_data = None
-            if hasattr(user, 'subscriptions'):
-                active_subscription = user.subscriptions.filter(
-                    status__in=['trial', 'active']
-                ).first()
+            try:
+                active_subscription = BillingService.get_user_subscription(user)
                 
-                if active_subscription:
+                if active_subscription and active_subscription.plan:
                     subscription_data = {
                         'plan_name': active_subscription.plan.name,
                         'status': active_subscription.status,
@@ -89,6 +88,12 @@ class UserProfileView(APIView):
                         'price': float(active_subscription.price),
                         'currency': active_subscription.currency,
                     }
+                    logger.debug(f"Found subscription for user {user.email}: {subscription_data['plan_name']}")
+                elif user.role == 'manager':
+                    # Managers should have subscriptions - log warning if missing
+                    logger.warning(f"Manager {user.email} (role={user.role}) has no active subscription!")
+            except Exception as exc:
+                logger.error(f"Error fetching subscription for user {user.id}: {exc}", exc_info=True)
             
             profile_data = {
                 'id': user.id,
