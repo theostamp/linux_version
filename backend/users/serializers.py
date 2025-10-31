@@ -170,6 +170,13 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return ip
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for CustomUser with system_role and resident_profile support.
+    """
+    system_role = serializers.CharField(source='role', read_only=True, help_text="SystemRole: 'superuser', 'admin', or 'manager'")
+    resident_role = serializers.SerializerMethodField(help_text="Resident.Role: 'manager', 'owner', or 'tenant' (if user has Resident profile)")
+    resident_profile = serializers.SerializerMethodField(help_text="Full Resident profile object if exists")
+    
     class Meta:
         model = CustomUser
         fields = [
@@ -177,7 +184,10 @@ class UserSerializer(serializers.ModelSerializer):
             'email', 
             'first_name', 
             'last_name', 
-            'role',
+            'role',  # Backward compat (same as system_role)
+            'system_role',
+            'resident_role',
+            'resident_profile',
             'is_active', 
             'is_staff',
             'is_superuser',
@@ -191,7 +201,38 @@ class UserSerializer(serializers.ModelSerializer):
             'office_bank_beneficiary',
             'tenant'
         ]
-        read_only_fields = ['id', 'is_staff', 'is_superuser']
+        read_only_fields = ['id', 'is_staff', 'is_superuser', 'system_role']
+    
+    def get_resident_role(self, obj):
+        """
+        Get Resident.Role from resident_profile if exists.
+        """
+        try:
+            resident_profile = getattr(obj, 'resident_profile', None)
+            if resident_profile:
+                return resident_profile.role
+        except AttributeError:
+            pass
+        return None
+    
+    def get_resident_profile(self, obj):
+        """
+        Get full Resident profile object if exists.
+        Returns dict with apartment, building_id, building_name, phone.
+        """
+        try:
+            resident_profile = getattr(obj, 'resident_profile', None)
+            if resident_profile:
+                building = getattr(resident_profile, 'building', None)
+                return {
+                    'apartment': resident_profile.apartment,
+                    'building_id': building.id if building else None,
+                    'building_name': building.name if building else None,
+                    'phone': resident_profile.phone or None,
+                }
+        except AttributeError:
+            pass
+        return None
 
 class OfficeDetailsSerializer(serializers.ModelSerializer):
     """

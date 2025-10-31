@@ -14,7 +14,7 @@ There are **different role systems** at different levels of the application:
 Located in: `users.models.CustomUser.SystemRole`
 
 **Valid values:**
-- `'admin'` = **Ultra Admin / System Administrator**
+- `'superuser'` = **Ultra Admin / System Administrator** (preferred)
   - Example: `theostam1966@gmail.com`
   - `is_superuser=True`
   - Lives in **public schema**
@@ -22,6 +22,12 @@ Located in: `users.models.CustomUser.SystemRole`
   - Manages **SaaS platform** (billing, subscriptions, tenants)
   - Can view all users, all tenants
   - Access to `/admin/users/`, `/admin/billing/`, etc.
+
+- `'admin'` = **Ultra Admin / System Administrator** (backward compat)
+  - Same as `'superuser'` - used for backward compatibility
+  - `is_superuser=True`
+  - Same permissions as `'superuser'`
+  - **Note:** New Ultra Admin users should use `'superuser'`
 
 - `'manager'` = **Office Manager / Django Tenant Owner**
   - Example: user created after successful subscription payment
@@ -32,7 +38,7 @@ Located in: `users.models.CustomUser.SystemRole`
   - Manages buildings, apartments, finances **within their tenant**
   - Cannot see other tenants or admin panel
 
-**Important:** CustomUser.role can ONLY be `'admin'` or `'manager'`. It CANNOT be `'owner'`, `'tenant'`, or `'resident'` - these are Resident.role values (different system).
+**Important:** CustomUser.role (SystemRole) can ONLY be `'superuser'`, `'admin'`, or `'manager'`. It CANNOT be `'owner'`, `'tenant'`, `'staff'`, or `'resident'` - these are Resident.role values or invalid values.
 
 #### 2. **Resident.role** - Apartment Level (within tenant schema)
 Located in: `residents.models.Resident.Role`

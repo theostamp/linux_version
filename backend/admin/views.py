@@ -31,8 +31,9 @@ class AdminUsersViewSet(ModelViewSet):
     def get_queryset(self):
         """
         Όλοι οι χρήστες για admin (συμπεριλαμβανομένων των superusers)
+        Optimize queries with select_related for resident_profile
         """
-        return User.objects.all().order_by('-date_joined')
+        return User.objects.select_related('resident_profile__building').all().order_by('-date_joined')
     
     def list(self, request, *args, **kwargs):
         """
@@ -67,6 +68,7 @@ class AdminUsersViewSet(ModelViewSet):
             elif role_filter == 'manager':
                 queryset = queryset.filter(role='manager')
             elif role_filter == 'resident':
+                # Filter for users without SystemRole (they have Resident.Role instead)
                 queryset = queryset.filter(
                     is_staff=False, 
                     is_superuser=False, 
@@ -110,26 +112,13 @@ class AdminUsersViewSet(ModelViewSet):
         if hasattr(user, 'buildings'):
             buildings_count = user.buildings.count()
         
-        user_data = {
-            'id': user.id,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'phone': getattr(user, 'phone', ''),
-            'address': getattr(user, 'address', ''),
-            'is_active': user.is_active,
-            'email_verified': user.email_verified,
-            'is_staff': user.is_staff,
-            'is_superuser': user.is_superuser,
-            'role': user.role,
-            'office_name': user.office_name,
-            'office_phone': user.office_phone,
-            'office_address': user.office_address,
-            'date_joined': user.date_joined,
-            'last_login': user.last_login,
-            'buildings_count': buildings_count,
-            'subscription': subscription_data,
-        }
+        # Use serializer to get standard fields including system_role and resident_profile
+        serializer = self.get_serializer(user)
+        user_data = serializer.data
+        
+        # Add additional data
+        user_data['buildings_count'] = buildings_count
+        user_data['subscription'] = subscription_data
         
         return Response(user_data)
     

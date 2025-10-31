@@ -31,6 +31,7 @@ from django_tenants.utils import get_tenant_model, get_tenant_domain_model, sche
 from django.contrib.auth.models import Group
 from users.models import CustomUser
 from buildings.models import Building, BuildingMembership
+from residents.models import Resident
 from announcements.models import Announcement
 from user_requests.models import UserRequest
 from votes.models import Vote
@@ -572,7 +573,8 @@ def create_demo_data(tenant_schema):
                 'password': 'resident123456',
                 'is_staff': False,
                 'is_superuser': False,  # 👤 Resident χωρίς admin δικαιώματα
-                'role': 'resident',
+                'role': None,  # No SystemRole - will have Resident.role instead
+                'resident_role': 'tenant',  # Resident.Role: Ένοικος
                 'email_verified': True,
                 'is_active': True
             },
@@ -583,24 +585,35 @@ def create_demo_data(tenant_schema):
                 'password': 'resident123456',
                 'is_staff': False,
                 'is_superuser': False,  # 👤 Owner χωρίς admin δικαιώματα
-                'role': 'resident',  # 🔄 Owner και Resident είναι το ίδιο role
+                'role': None,  # No SystemRole - will have Resident.role instead
+                'resident_role': 'owner',  # Resident.Role: Ιδιοκτήτης
                 'email_verified': True,
                 'is_active': True
             }
         ]
         
         created_users = []
+        resident_role_map = {}  # Store resident_role mapping before processing
+        
         for user_data in users_data:
+            # Store resident_role mapping before creating user
+            if 'resident_role' in user_data:
+                resident_role_map[user_data['email']] = user_data['resident_role']
+            
+            # Extract resident_role from user_data for CustomUser creation (don't include in CustomUser.role)
+            user_data_copy = user_data.copy()
+            user_data_copy.pop('resident_role', None)  # Remove resident_role - it's for Resident model only
+            
             user, created = CustomUser.objects.get_or_create(
-                email=user_data['email'],
+                email=user_data_copy['email'],
                 defaults={
-                    'first_name': user_data['first_name'],
-                    'last_name': user_data['last_name'],
-                    'is_staff': user_data['is_staff'],
-                    'is_superuser': user_data['is_superuser'],
-                    'role': user_data['role'],
-                    'is_active': user_data.get('is_active', True),
-                    'email_verified': user_data.get('email_verified', True),
+                    'first_name': user_data_copy['first_name'],
+                    'last_name': user_data_copy['last_name'],
+                    'is_staff': user_data_copy['is_staff'],
+                    'is_superuser': user_data_copy['is_superuser'],
+                    'role': user_data_copy['role'],  # SystemRole: 'superuser', 'admin', 'manager', or None
+                    'is_active': user_data_copy.get('is_active', True),
+                    'email_verified': user_data_copy.get('email_verified', True),
                     'email_notifications_enabled': True,
                     'notify_financial_updates': True,
                     'notify_maintenance_updates': True,
@@ -610,24 +623,28 @@ def create_demo_data(tenant_schema):
             )
             
             if created:
-                user.set_password(user_data['password'])
+                user.set_password(user_data_copy['password'])
                 user.save()
                 print(f"✅ Δημιουργήθηκε χρήστης: {user.email}")
             else:
                 # Ενημέρωση password αν υπάρχει ήδη
-                user.set_password(user_data['password'])
-                user.is_active = user_data.get('is_active', True)
-                user.email_verified = user_data.get('email_verified', True)
+                user.set_password(user_data_copy['password'])
+                user.is_active = user_data_copy.get('is_active', True)
+                user.email_verified = user_data_copy.get('email_verified', True)
+                # Don't overwrite existing role - only set if it was explicitly None
+                if user_data_copy.get('role') is not None:
+                    user.role = user_data_copy['role']
                 user.save()
                 print(f"ℹ️ Ενημερώθηκε χρήστης: {user.email}")
             
-            # Ανάθεση σε Groups για RBAC
+            # Ανάθεση σε Groups για RBAC (only for SystemRole, not Resident.Role)
             if user.role == 'manager':
                 manager_group = Group.objects.get(name='Manager')
                 user.groups.add(manager_group)
-            elif user.role == 'resident':
-                resident_group = Group.objects.get(name='Resident')
-                user.groups.add(resident_group)
+            elif user.role in ['superuser', 'admin']:
+                # Ultra Admins don't need specific groups
+                pass
+            # Note: Resident.Role users don't get groups via CustomUser.role
             
             created_users.append(user)
         
@@ -661,12 +678,11 @@ def create_demo_data(tenant_schema):
             
             created_buildings.append(building)
         
-        # 3. Δημιουργία building memberships
+        # 3. Δημιουργία building memberships (Manager only - residents created after apartments)
         manager = next((u for u in created_users if u.role == 'manager'), created_users[0])
-        residents = [u for u in created_users if u.role in ['resident', 'owner']]
         
         for i, building in enumerate(created_buildings):
-            # Manager membership
+            # Manager membership (BuildingMembership for backward compat)
             membership, created = BuildingMembership.objects.get_or_create(
                 building=building,
                 resident=manager,
@@ -674,17 +690,6 @@ def create_demo_data(tenant_schema):
             )
             if created:
                 print(f"✅ Manager membership: {manager.email} -> {building.name}")
-            
-            # Resident memberships
-            if i < len(residents):
-                resident = residents[i]
-                membership, created = BuildingMembership.objects.get_or_create(
-                    building=building,
-                    resident=resident,
-                    defaults={'role': resident.role}
-                )
-                if created:
-                    print(f"✅ Resident membership: {resident.email} -> {building.name}")
         
         # 4. Δημιουργία διαμερισμάτων
         for building in created_buildings:
@@ -731,6 +736,45 @@ def create_demo_data(tenant_schema):
                     )
                     if created:
                         print(f"✅ Δημιουργήθηκε διαμέρισμα: {apt_data['number']} (Αλκμάνος 22)")
+        
+        # 4.5. Δημιουργία Resident entries (after apartments are created)
+        # Get users that will become residents (those without SystemRole)
+        resident_users = [u for u in created_users if u.role is None]
+        
+        for i, building in enumerate(created_buildings):
+            # Create Resident entries for resident users
+            # Match users with apartments (using index for demo)
+            for j, resident_user in enumerate(resident_users):
+                if j < len(resident_users):
+                    # Get the resident_role for this user
+                    resident_role = resident_role_map.get(resident_user.email, 'tenant')  # Default to 'tenant'
+                    
+                    # Find an apartment for this resident (assign to available apartments)
+                    apartments = Apartment.objects.filter(building=building).order_by('number')
+                    if apartments.exists():
+                        apartment = apartments[j % apartments.count()] if j < apartments.count() else apartments.first()
+                        
+                        # Create Resident entry
+                        resident, created = Resident.objects.get_or_create(
+                            user=resident_user,
+                            building=building,
+                            defaults={
+                                'apartment': apartment.number,
+                                'role': resident_role,
+                                'phone': ''
+                            }
+                        )
+                        if created:
+                            print(f"✅ Resident entry: {resident_user.email} ({resident_role}) -> {building.name}, Apartment {apartment.number}")
+                        
+                        # Also create BuildingMembership for backward compatibility
+                        membership, created = BuildingMembership.objects.get_or_create(
+                            building=building,
+                            resident=resident_user,
+                            defaults={'role': 'resident'}
+                        )
+                        if created:
+                            print(f"✅ BuildingMembership: {resident_user.email} -> {building.name}")
         
         # 5. Δημιουργία ανακοινώσεων
         announcements_data = [

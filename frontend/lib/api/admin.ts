@@ -14,7 +14,15 @@ export interface User {
   email_verified: boolean;
   is_staff: boolean;
   is_superuser: boolean;
-  role?: string;
+  role?: string;  // Backward compat (same as system_role)
+  system_role?: 'superuser' | 'admin' | 'manager' | null;  // CustomUser.SystemRole
+  resident_role?: 'manager' | 'owner' | 'tenant' | null;  // Resident.Role (apartment level)
+  resident_profile?: {
+    apartment: string;
+    building_id: number;
+    building_name: string;
+    phone?: string | null;
+  } | null;
   office_name?: string;
   office_phone?: string;
   office_address?: string;

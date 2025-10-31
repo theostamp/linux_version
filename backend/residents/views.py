@@ -95,12 +95,14 @@ class ResidentViewSet(viewsets.ModelViewSet):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 # Δημιουργία νέου χρήστη
+                # Note: Don't set CustomUser.role='resident' - that's for Resident.role (apartment level)
+                # CustomUser.role (SystemRole) can only be 'superuser', 'admin', or 'manager'
                 user = User.objects.create_user(
                     email=email,
                     first_name=first_name,
                     last_name=last_name,
                     password=password,
-                    role='resident'
+                    role=None  # No SystemRole - will have Resident.role instead
                 )
 
                 # Δημιουργία κατοίκου

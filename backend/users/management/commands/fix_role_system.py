@@ -3,7 +3,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group
 from users.models import CustomUser
-from users.role_management import RoleManager, ensure_ultra_user
+from users.role_management import SystemRoleManager, ensure_ultra_user
 from core.unified_permissions import get_user_effective_role, get_user_permissions_summary
 import logging
 
@@ -95,8 +95,8 @@ class Command(BaseCommand):
             self.stdout.write(f'  is_staff: {ultra_user.is_staff}')
             
             if not dry_run:
-                # Ensure ultra user has correct permissions
-                RoleManager.assign_role(ultra_user, 'superuser')
+                # Ensure ultra user has correct permissions (use 'superuser', not 'admin')
+                SystemRoleManager.assign_role(ultra_user, 'superuser')
                 self.stdout.write('  ✅ Updated ultra user permissions')
             else:
                 self.stdout.write('  🔍 Would update ultra user to superuser role')
@@ -117,28 +117,46 @@ class Command(BaseCommand):
             self.fix_user_role(user, dry_run)
     
     def fix_user_role(self, user, dry_run):
-        """Fix a specific user's role."""
-        current_role = get_user_effective_role(user)
-        current_permissions = get_user_permissions_summary(user)
+        """Fix a specific user's SystemRole."""
+        current_role = user.role  # Get actual CustomUser.role (not effective role)
         
-        # Determine correct role based on user attributes
+        # Determine correct SystemRole based on user attributes
+        # Valid SystemRole values: 'superuser', 'admin', 'manager', or None
         if user.email == 'theostam1966@gmail.com':
             correct_role = 'superuser'
         elif user.is_superuser and user.is_staff:
-            correct_role = 'admin'
+            # Ultra Admin: use 'superuser' (preferred) or 'admin' (backward compat)
+            correct_role = 'superuser' if current_role == 'superuser' else 'admin'
         elif user.is_staff or user.role == 'manager':
             correct_role = 'manager'
-        elif user.role == 'resident' or not user.role:
-            correct_role = 'resident'
+        elif user.role in ['resident', 'tenant', 'owner', 'staff']:
+            # Invalid SystemRole - remove it (resident roles belong to Resident model)
+            correct_role = None
+            self.stdout.write(f'  ⚠️  {user.email}: Invalid SystemRole "{user.role}" -> None (resident roles belong to Resident model)')
+        elif not user.role:
+            # No role is fine (for regular users who aren't managers/admins)
+            correct_role = None
         else:
-            correct_role = 'resident'  # Default fallback
+            # Unknown role - set to None
+            correct_role = None
+            self.stdout.write(f'  ⚠️  {user.email}: Unknown SystemRole "{user.role}" -> None')
         
+        # Only update if role changed
         if current_role != correct_role:
             self.stdout.write(f'  🔄 {user.email}: {current_role} → {correct_role}')
             
             if not dry_run:
-                RoleManager.assign_role(user, correct_role)
-                self.stdout.write(f'    ✅ Updated {user.email} to {correct_role}')
+                if correct_role is None:
+                    # Clear invalid role
+                    user.role = None
+                    user.save(update_fields=['role'])
+                    self.stdout.write(f'    ✅ Cleared invalid role for {user.email}')
+                elif correct_role in SystemRoleManager.VALID_SYSTEM_ROLES:
+                    # Assign valid SystemRole
+                    SystemRoleManager.assign_role(user, correct_role)
+                    self.stdout.write(f'    ✅ Updated {user.email} to {correct_role}')
+                else:
+                    self.stdout.write(f'    ⚠️  Skipped {user.email}: invalid role {correct_role}')
         else:
             self.stdout.write(f'  ✅ {user.email}: {current_role} (correct)')
     

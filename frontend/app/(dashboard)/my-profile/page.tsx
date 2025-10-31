@@ -34,23 +34,55 @@ import { userProfileApi, type UserProfile } from '@/lib/api/user';
 import { toast } from '@/hooks/use-toast';
 
 // Helper function to get user role label in Greek
-// Note: This is for CustomUser.role (SystemRole), not Resident.role
-// CustomUser.role values:
-//   - 'admin' = Ultra Admin (π.χ. theostam1966@gmail.com) - πρόσβαση σε όλο το project
-//   - 'manager' = Django Tenant Owner - έχει δημιουργήσει tenant μετά από πληρωμή, πρόσβαση μόνο στο tenant schema του
-// Resident.role (for apartments) can be: 'manager', 'owner', 'tenant' - but that's different!
-const getUserRoleLabel = (role?: string): string => {
-  if (!role) return 'Χρήστης';
+// Note: Uses system_role (CustomUser.SystemRole) and optionally resident_role (Resident.Role)
+// SystemRole values: 'superuser', 'admin' (Ultra Admin), or 'manager' (Django Tenant Owner)
+// Resident.Role values: 'manager' (Εσωτερικός Διαχειριστής), 'owner' (Ιδιοκτήτης), 'tenant' (Ένοικος)
+const getUserRoleLabel = (profile: any): string => {
+  if (!profile) return 'Χρήστης';
   
-  switch (role.toLowerCase()) {
-    case 'admin':
-      return 'Ultra Admin'; // Ultra Admin με πρόσβαση σε όλο το project
+  // Use system_role if available, fallback to role (backward compat)
+  const systemRole = profile.system_role ?? profile.role;
+  
+  // SystemRole: 'superuser' or 'admin' = Ultra Admin
+  if (systemRole === 'superuser' || systemRole === 'admin') {
+    return 'Ultra Admin';
+  }
+  
+  // SystemRole: 'manager' = Django Tenant Owner
+  if (systemRole === 'manager') {
+    return 'Διαχειριστής'; // Office Manager = Django Tenant Owner
+  }
+  
+  // Check resident_role if no system_role (for residents without SystemRole)
+  if (profile.resident_role && !systemRole) {
+    switch (profile.resident_role) {
+      case 'manager':
+        return 'Εσωτερικός Διαχειριστής';
+      case 'owner':
+        return 'Ιδιοκτήτης';
+      case 'tenant':
+        return 'Ένοικος';
+      default:
+        return 'Χρήστης';
+    }
+  }
+  
+  return 'Χρήστης';
+};
+
+// Helper to get resident role label
+const getResidentRoleLabel = (residentRole?: string): string => {
+  if (!residentRole) return '';
+  
+  switch (residentRole) {
     case 'manager':
-      return 'Διαχειριστής'; // Office Manager = Django Tenant Owner
-    // Note: 'owner' and 'tenant' are Resident.role values, not CustomUser.role
-    // These are handled separately in apartment listings
+      return 'Εσωτερικός Διαχειριστής';
+    case 'owner':
+      return 'Ιδιοκτήτης';
+    case 'tenant':
+      return 'Ένοικος';
     default:
-      return role;
+      return residentRole;
   }
 };
 
@@ -119,10 +151,10 @@ export default function MyProfilePage() {
     try {
       setSaving(true);
       const updatedProfile = await userProfileApi.updateProfile({
-        first_name: profile.first_name,
-        last_name: profile.last_name,
-        phone: profile.phone,
-        address: profile.address,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          phone: profile.phone,
+          address: profile.address,
       });
       
       // Refresh user data in AuthContext
@@ -465,13 +497,29 @@ export default function MyProfilePage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="role">Ρόλος</Label>
+                    <Label htmlFor="role">Ρόλος Συστήματος</Label>
                     <Input
                       id="role"
-                      value={getUserRoleLabel(profile?.role)}
+                      value={getUserRoleLabel(profile)}
                       disabled
                       className="bg-gray-50"
                     />
+                    {profile?.resident_role && (
+                      <div className="mt-4">
+                        <Label htmlFor="resident-role">Ρόλος Κατοίκου</Label>
+                        <Input
+                          id="resident-role"
+                          value={getResidentRoleLabel(profile.resident_role)}
+                          disabled
+                          className="bg-gray-50"
+                        />
+                        {profile?.resident_profile && (
+                          <p className="mt-1 text-sm text-gray-500">
+                            Διαμέρισμα: {profile.resident_profile.apartment} | Κτίριο: {profile.resident_profile.building_name}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
                 

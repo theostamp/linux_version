@@ -8,28 +8,31 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class RoleManager:
+class SystemRoleManager:
     """
-    Centralized role management system for the Concierge platform.
+    System-level role management for CustomUser (SystemRole).
     
-    Handles role assignment, permission validation, and role hierarchy.
+    Handles only system roles: 'superuser', 'admin', 'manager'
+    These are Django tenant-level roles stored in CustomUser.role.
+    
+    For apartment-level roles (manager, owner, tenant), see ResidentRoleManager.
     """
+    
+    # Valid SystemRole values (from CustomUser.SystemRole enum)
+    VALID_SYSTEM_ROLES = ['superuser', 'admin', 'manager']
     
     # Role hierarchy (higher number = more permissions)
     ROLE_HIERARCHY = {
         'superuser': 100,
-        'admin': 90,
+        'admin': 90,  # Same level as superuser (backward compat)
         'manager': 80,
-        'staff': 70,
-        'resident': 60,
-        'guest': 50,
     }
     
     # Role definitions with permissions
     ROLE_DEFINITIONS = {
         'superuser': {
-            'name': 'Ultra Superuser',
-            'description': 'Complete system administration access',
+            'name': 'Ultra Admin',
+            'description': 'Complete system administration access (public + all tenant schemas)',
             'permissions': {
                 'can_manage_all_tenants': True,
                 'can_manage_all_users': True,
@@ -43,23 +46,29 @@ class RoleManager:
             'is_staff': True,
         },
         'admin': {
-            'name': 'Tenant Administrator',
-            'description': 'Full admin access within tenant',
+            'name': 'Ultra Admin (backward compat)',
+            'description': 'Complete system administration access (same as superuser, backward compat)',
+            'permissions': {
+                'can_manage_all_tenants': True,
+                'can_manage_all_users': True,
+                'can_access_all_buildings': True,
+                'can_manage_billing': True,
+                'can_view_analytics': True,
+                'can_manage_system_settings': True,
+            },
+            'django_groups': [],
+            'is_superuser': True,
+            'is_staff': True,
+        },
+        'manager': {
+            'name': 'Office Manager (Django Tenant Owner)',
+            'description': 'Django Tenant Owner: access only to own tenant schema',
             'permissions': {
                 'can_manage_tenant_users': True,
                 'can_manage_tenant_buildings': True,
                 'can_access_tenant_analytics': True,
                 'can_manage_tenant_billing': True,
                 'can_invite_users': True,
-            },
-            'django_groups': ['Manager'],
-            'is_superuser': False,
-            'is_staff': True,
-        },
-        'manager': {
-            'name': 'Office Manager',
-            'description': 'Building management and user invitation',
-            'permissions': {
                 'can_manage_buildings': True,
                 'can_invite_residents': True,
                 'can_manage_financials': True,
@@ -70,47 +79,37 @@ class RoleManager:
             'is_superuser': False,
             'is_staff': True,
         },
-        'staff': {
-            'name': 'Staff Member',
-            'description': 'Limited administrative access',
-            'permissions': {
-                'can_view_buildings': True,
-                'can_manage_maintenance': True,
-                'can_view_financials': True,
-                'can_manage_residents': False,
-            },
-            'django_groups': ['Manager'],
-            'is_superuser': False,
-            'is_staff': True,
-        },
-        'resident': {
-            'name': 'Resident',
-            'description': 'Regular user with building access',
-            'permissions': {
-                'can_view_own_data': True,
-                'can_submit_maintenance_requests': True,
-                'can_participate_in_votes': True,
-                'can_view_building_announcements': True,
-                'can_manage_own_profile': True,
-            },
-            'django_groups': ['Resident'],
-            'is_superuser': False,
-            'is_staff': False,
-        },
     }
     
     @classmethod
     def assign_role(cls, user, role_name, building=None):
         """
-        Assign a role to a user with proper group membership and permissions.
+        Assign a system role to a user with proper group membership and permissions.
         
         Args:
             user: CustomUser instance
-            role_name: Role to assign
-            building: Building instance (for building-specific roles)
+            role_name: System role to assign ('superuser', 'admin', or 'manager')
+            building: Building instance (ignored for system roles, kept for backward compat)
+        
+        Raises:
+            ValueError: If role_name is not a valid SystemRole
         """
+        # Validate that role_name is a valid SystemRole
+        if role_name not in cls.VALID_SYSTEM_ROLES:
+            # Check for common mistakes
+            if role_name in ['tenant', 'owner', 'staff', 'resident']:
+                raise ValueError(
+                    f"'{role_name}' is not a valid SystemRole. "
+                    f"Valid SystemRole values: {cls.VALID_SYSTEM_ROLES}. "
+                    f"'{role_name}' is a Resident.Role value - use ResidentRoleManager instead."
+                )
+            raise ValueError(
+                f"Invalid SystemRole: '{role_name}'. "
+                f"Valid values: {cls.VALID_SYSTEM_ROLES}"
+            )
+        
         if role_name not in cls.ROLE_DEFINITIONS:
-            raise ValueError(f"Invalid role: {role_name}")
+            raise ValueError(f"Role definition missing for: {role_name}")
         
         role_def = cls.ROLE_DEFINITIONS[role_name]
         
@@ -201,7 +200,7 @@ class RoleManager:
         if manager == target_user:
             return False
         
-        # Get role hierarchy levels
+        # Get role hierarchy levels (only for system roles)
         manager_level = cls.ROLE_HIERARCHY.get(manager.role, 0)
         target_level = cls.ROLE_HIERARCHY.get(target_user.role, 0)
         
@@ -254,8 +253,8 @@ def ensure_ultra_user():
         ultra_user = CustomUser.objects.get(email='theostam1966@gmail.com')
         
         # Ensure ultra user has correct role and permissions
-        if ultra_user.role != 'admin' or not ultra_user.is_superuser:
-            RoleManager.assign_role(ultra_user, 'superuser')
+        if ultra_user.role not in ['superuser', 'admin'] or not ultra_user.is_superuser:
+            SystemRoleManager.assign_role(ultra_user, 'superuser')
             logger.info("Updated ultra user permissions")
         
         return ultra_user
@@ -305,11 +304,20 @@ def create_demo_users():
             user.set_password('demo123456')
             user.save()
         
-        # Assign proper role
-        RoleManager.assign_role(user, user_data['role'])
+        # Assign proper system role (skip 'resident' - that's handled by Resident model)
+        if user_data['role'] in SystemRoleManager.VALID_SYSTEM_ROLES:
+            SystemRoleManager.assign_role(user, user_data['role'])
+        elif user_data['role'] == 'resident':
+            # Don't set CustomUser.role to 'resident' - that's for Resident.role only
+            logger.warning(f"Skipping role assignment for {user.email}: 'resident' is not a SystemRole")
         created_users.append(user)
-    
+
+
     return created_users
+
+
+# Backward compatibility alias
+RoleManager = SystemRoleManager
 
 
 

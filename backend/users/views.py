@@ -153,10 +153,36 @@ def me_view(request):
     """
     GET /api/users/me/
     Επιστρέφει τα στοιχεία του authenticated χρήστη.
+    
+    Includes:
+    - system_role: CustomUser.role ('superuser', 'admin', or 'manager')
+    - resident_role: Resident.role ('manager', 'owner', or 'tenant') if user has Resident profile
+    - resident_profile: Full Resident object if exists
     """
     user = request.user
-    role = getattr(user, "role", None)
-
+    
+    # Try to get resident profile with building (optimized query)
+    resident_profile = None
+    resident_role = None
+    try:
+        # Use select_related to avoid N+1 queries
+        resident_profile = getattr(user, 'resident_profile', None)
+        if resident_profile:
+            # Access building safely
+            building = getattr(resident_profile, 'building', None)
+            resident_role = resident_profile.role
+            
+            resident_profile_data = {
+                'apartment': resident_profile.apartment,
+                'building_id': building.id if building else None,
+                'building_name': building.name if building else None,
+                'phone': resident_profile.phone or None,
+            }
+        else:
+            resident_profile_data = None
+    except AttributeError:
+        resident_profile_data = None
+    
     return Response({
         'id': user.id,
         'email': user.email,
@@ -164,7 +190,10 @@ def me_view(request):
         'last_name': user.last_name,
         'is_staff': user.is_staff,
         'is_superuser': user.is_superuser,
-        'role': role,
+        'role': user.role,  # SystemRole (backward compat)
+        'system_role': user.role,  # Explicit system_role field
+        'resident_role': resident_role,  # Resident.Role if exists
+        'resident_profile': resident_profile_data,  # Full Resident profile if exists
         'office_name': user.office_name,
         'office_phone': user.office_phone,
         'office_address': user.office_address,

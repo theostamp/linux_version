@@ -77,18 +77,32 @@ def fix_user_roles():
             correct_role = 'admin'
         elif user.is_staff or user.role == 'manager':
             correct_role = 'manager'
-        elif user.role == 'resident' or not user.role:
-            correct_role = 'resident'
+        elif user.role in ['resident', 'tenant', 'owner', 'staff']:
+            # Invalid SystemRole - remove it (resident roles belong to Resident model)
+            correct_role = None
+        elif not user.role:
+            # No role is fine (for regular users who aren't managers/admins)
+            correct_role = None
         else:
-            correct_role = 'resident'  # Default fallback
+            # Unknown role - set to None
+            correct_role = None
         
         print(f"    Correct role: {correct_role}")
         
         # Assign role if different
         if user.role != correct_role:
             try:
-                RoleManager.assign_role(user, correct_role)
-                print(f"    ✅ Updated to {correct_role}")
+                if correct_role is None:
+                    # Clear invalid role
+                    user.role = None
+                    user.save(update_fields=['role'])
+                    print(f"    ✅ Cleared invalid role")
+                elif correct_role in ['superuser', 'admin', 'manager']:
+                    # Assign valid SystemRole
+                    RoleManager.assign_role(user, correct_role)
+                    print(f"    ✅ Updated to {correct_role}")
+                else:
+                    print(f"    ⚠️  Skipped: invalid role {correct_role}")
             except Exception as e:
                 print(f"    ❌ Error updating role: {e}")
         else:
