@@ -229,6 +229,12 @@ class UserSubscription(models.Model):
         help_text='When subscription was canceled'
     )
     
+    # First month free flag (only for first-time subscriptions, not upgrades)
+    is_first_month_free = models.BooleanField(
+        default=False,
+        help_text='First month is free (only true for initial subscriptions, not upgrades)'
+    )
+    
     # Payment
     stripe_subscription_id = models.CharField(
         max_length=255,
@@ -309,7 +315,12 @@ class UserSubscription(models.Model):
     @property
     def days_until_renewal(self):
         """Days until next billing cycle"""
-        if self.current_period_end:
+        # During trial, calculate days until trial_end
+        # After trial, calculate days until current_period_end
+        if self.status == 'trial' and self.trial_end:
+            delta = self.trial_end - timezone.now()
+            return max(0, delta.days)
+        elif self.current_period_end:
             delta = self.current_period_end - timezone.now()
             return max(0, delta.days)
         return 0
