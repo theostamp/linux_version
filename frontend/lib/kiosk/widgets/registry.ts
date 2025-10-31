@@ -703,7 +703,7 @@ export const WIDGET_TEMPLATES: WidgetTemplate[] = [
 
 // Get system widgets for a building
 export function getSystemWidgets(buildingId: number): KioskWidget[] {
-  return SYSTEM_WIDGETS.map((widget, index) => ({
+  return SYSTEM_WIDGETS.map((widget) => ({
     ...widget,
     id: `system_${(widget.component || widget.name.replace(/\s+/g, '').toLowerCase())}_${buildingId}`,
     createdAt: new Date(),
