@@ -247,9 +247,41 @@ export default function PlansPage() {
 
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Επιλέξτε το Πακέτο σας</h1>
-        <p className="text-xl text-gray-600">
-          Ξεκινήστε με {plans[0]?.trial_days || 14} ημέρες δωρεάν δοκιμή!
+        <p className="text-xl text-gray-600 mb-4">
+          Ξεκινήστε με πρώτο μήνα δωρεάν!
         </p>
+        
+        {/* Important Notice */}
+        <div className="max-w-3xl mx-auto mb-8">
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 font-bold text-lg">ℹ️</span>
+                  </div>
+                </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-semibold text-blue-900 mb-2">Σημαντικές Πληροφορίες</h3>
+                  <ul className="space-y-2 text-sm text-blue-800">
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
+                      <span><strong>Πρώτος μήνας δωρεάν:</strong> Όταν ολοκληρώσετε την εγγραφή, θα έχετε πλήρη πρόσβαση για 30 ημέρες χωρίς χρέωση.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
+                      <span><strong>Αυτόματη χρέωση:</strong> Μετά το τέλος του πρώτου μήνα, η συνδρομή θα ανανεώνεται αυτόματα κάθε μήνα με χρέωση <strong>€{plans[0]?.monthly_price || '29'}</strong>.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
+                      <span><strong>Ακύρωση ανά πάσα στιγμή:</strong> Μπορείτε να ακυρώσετε τη συνδρομή σας οποιαδήποτε στιγμή χωρίς πρόσθετη χρέωση.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -261,9 +293,17 @@ export default function PlansPage() {
             </CardHeader>
             
             <CardContent>
-              <div className="mb-6">
-                <span className="text-4xl font-bold">€{plan.monthly_price}</span>
-                <span className="text-gray-600">/μήνα</span>
+              <div className="mb-4">
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-4xl font-bold">€{plan.monthly_price}</span>
+                  <span className="text-gray-600">/μήνα</span>
+                </div>
+                <div className="text-sm text-green-600 font-semibold mb-2">
+                  ✓ Πρώτος μήνας δωρεάν
+                </div>
+                <div className="text-xs text-gray-500">
+                  Από τον 2ο μήνα: €{plan.monthly_price}/μήνα
+                </div>
               </div>
 
               <ul className="space-y-3">
