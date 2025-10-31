@@ -249,55 +249,57 @@ export default function MySubscriptionPage() {
               </div>
 
               {/* Usage Stats */}
-              <div className="mb-6">
-                <h4 className="font-semibold mb-3">Χρήση</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium">Κτίρια</span>
-                      <span className="text-sm text-gray-500">
-                        {currentSubscription.usage.buildings}/{currentSubscription.usage_limits.buildings === 999999 ? '∞' : currentSubscription.usage_limits.buildings}
-                      </span>
+              {currentSubscription.usage && currentSubscription.usage_limits && (
+                <div className="mb-6">
+                  <h4 className="font-semibold mb-3">Χρήση</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium">Κτίρια</span>
+                        <span className="text-sm text-gray-500">
+                          {currentSubscription.usage?.buildings ?? 0}/{currentSubscription.usage_limits?.buildings === 999999 ? '∞' : (currentSubscription.usage_limits?.buildings ?? 0)}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full"
+                          style={{ width: `${getUsagePercentage(currentSubscription.usage?.buildings ?? 0, currentSubscription.usage_limits?.buildings ?? 0)}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full"
-                        style={{ width: `${getUsagePercentage(currentSubscription.usage.buildings, currentSubscription.usage_limits.buildings)}%` }}
-                      />
+                    
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium">Διαμερίσματα</span>
+                        <span className="text-sm text-gray-500">
+                          {currentSubscription.usage?.apartments ?? 0}/{currentSubscription.usage_limits?.apartments === 999999 ? '∞' : (currentSubscription.usage_limits?.apartments ?? 0)}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-green-600 h-2 rounded-full"
+                          style={{ width: `${getUsagePercentage(currentSubscription.usage?.apartments ?? 0, currentSubscription.usage_limits?.apartments ?? 0)}%` }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium">Διαμερίσματα</span>
-                      <span className="text-sm text-gray-500">
-                        {currentSubscription.usage.apartments}/{currentSubscription.usage_limits.apartments === 999999 ? '∞' : currentSubscription.usage_limits.apartments}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full"
-                        style={{ width: `${getUsagePercentage(currentSubscription.usage.apartments, currentSubscription.usage_limits.apartments)}%` }}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium">Χρήστες</span>
-                      <span className="text-sm text-gray-500">
-                        {currentSubscription.usage.users}/{currentSubscription.usage_limits.users === 999999 ? '∞' : currentSubscription.usage_limits.users}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-purple-600 h-2 rounded-full"
-                        style={{ width: `${getUsagePercentage(currentSubscription.usage.users, currentSubscription.usage_limits.users)}%` }}
-                      />
+                    
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium">Χρήστες</span>
+                        <span className="text-sm text-gray-500">
+                          {currentSubscription.usage?.users ?? 0}/{currentSubscription.usage_limits?.users === 999999 ? '∞' : (currentSubscription.usage_limits?.users ?? 0)}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-purple-600 h-2 rounded-full"
+                          style={{ width: `${getUsagePercentage(currentSubscription.usage?.users ?? 0, currentSubscription.usage_limits?.users ?? 0)}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Actions */}
               <div className="flex gap-2">
