@@ -235,11 +235,25 @@ export default function MySubscriptionPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Τρέχουσα Περίοδος</p>
-                  <p className="text-lg font-semibold">
-                    {new Date(currentSubscription.current_period_start).toLocaleDateString('el-GR')} - 
-                    {new Date(currentSubscription.current_period_end).toLocaleDateString('el-GR')}
+                  <p className="text-sm font-medium text-gray-600">
+                    {currentSubscription.status === 'trial' ? 'Trial Περίοδος' : 'Τρέχουσα Περίοδος'}
                   </p>
+                  <p className="text-lg font-semibold">
+                    {currentSubscription.status === 'trial' && currentSubscription.trial_start && currentSubscription.trial_end ? (
+                      <>
+                        {new Date(currentSubscription.trial_start).toLocaleDateString('el-GR')} - 
+                        {new Date(currentSubscription.trial_end).toLocaleDateString('el-GR')}
+                      </>
+                    ) : (
+                      <>
+                        {new Date(currentSubscription.current_period_start).toLocaleDateString('el-GR')} - 
+                        {new Date(currentSubscription.current_period_end).toLocaleDateString('el-GR')}
+                      </>
+                    )}
+                  </p>
+                  {currentSubscription.status === 'trial' && (
+                    <p className="text-xs text-green-600 mt-1">Δωρεάν trial - χωρίς χρέωση</p>
+                  )}
                 </div>
                 
                 {currentSubscription.status === 'trial' && currentSubscription.trial_end && (
@@ -249,16 +263,39 @@ export default function MySubscriptionPage() {
                       {new Date(currentSubscription.trial_end).toLocaleDateString('el-GR')}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {currentSubscription.days_until_renewal} ημέρες απομένουν
+                      {(() => {
+                        const now = new Date();
+                        const trialEnd = new Date(currentSubscription.trial_end);
+                        const diffTime = trialEnd.getTime() - now.getTime();
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        return diffDays > 0 ? `${diffDays} ημέρες απομένουν` : 'Trial έληξε';
+                      })()}
                     </p>
                   </div>
                 )}
                 
                 <div>
                   <p className="text-sm font-medium text-gray-600">Επόμενη Πληρωμή</p>
-                  <p className="text-lg font-semibold">
-                    {currentSubscription.days_until_renewal} ημέρες
-                  </p>
+                  {currentSubscription.status === 'trial' && currentSubscription.trial_end ? (
+                    <div>
+                      <p className="text-lg font-semibold text-orange-600">
+                        {(() => {
+                          const now = new Date();
+                          const trialEnd = new Date(currentSubscription.trial_end);
+                          const diffTime = trialEnd.getTime() - now.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          return diffDays > 0 ? `${diffDays} ημέρες` : 'Σήμερα';
+                        })()}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Μετά το τέλος του trial
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-lg font-semibold">
+                      {currentSubscription.days_until_renewal || 0} ημέρες
+                    </p>
+                  )}
                 </div>
               </div>
 
