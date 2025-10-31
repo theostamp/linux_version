@@ -321,6 +321,7 @@ def fix_production_users():
     print("\n🔧 Διόρθωση χρηστών παραγωγής...")
     
     try:
+        from django_tenants.utils import schema_context, get_public_schema_name
         with schema_context(get_public_schema_name()):
             fixed_count = 0
             

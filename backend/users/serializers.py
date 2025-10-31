@@ -269,6 +269,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             password=password,
             is_active=True,  # User is active immediately
             email_verified=True,  # Auto-verified for better UX
+            role='tenant',  # Default role for new users
             **validated_data
         )
         
