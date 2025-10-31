@@ -93,7 +93,7 @@ ENABLE_PRODUCTION_USER_FIXES=false
 | `ULTRA_ADMIN_PASSWORD` | No | `theo123!@#` | Ultra admin password |
 | `ULTRA_ADMIN_FIRST_NAME` | No | "Theo" | Ultra admin first name |
 | `ULTRA_ADMIN_LAST_NAME` | No | "Ultra Admin" | Ultra admin last name |
-| `ENABLE_PRODUCTION_USER_FIXES` | No | `false` | Enable production user fixes |
+| `ENABLE_PRODUCTION_USER_FIXES` | No | `true` | Enable production user fixes (auto-fixes email verification, subscriptions) |
 | `PRODUCTION_USERS_TO_FIX` | No | - | Comma-separated list of users to fix |
 | `ENABLE_DEMO_DATA` | No | `true` | Enable demo data creation (default: true για demo κτίριο) |
 

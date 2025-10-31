@@ -1245,8 +1245,8 @@ def main():
     # 5. Δημιουργία public tenant
     create_public_tenant()
 
-    # 5.5. Διόρθωση χρηστών παραγωγής (μόνο αν ενεργοποιηθεί)
-    enable_user_fixes = os.getenv('ENABLE_PRODUCTION_USER_FIXES', 'false').lower() == 'true'
+    # 5.5. Διόρθωση χρηστών παραγωγής (enabled by default for production readiness)
+    enable_user_fixes = os.getenv('ENABLE_PRODUCTION_USER_FIXES', 'true').lower() == 'true'
     if enable_user_fixes:
         fix_production_users()
     else:
