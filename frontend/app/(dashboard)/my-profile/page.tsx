@@ -123,6 +123,12 @@ export default function MyProfilePage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
+    // Initialize profile with authUser immediately to prevent showing "Χρήστης"
+    if (authUser && !profile) {
+      console.log('[MyProfile] Setting initial profile from authUser:', authUser);
+      setProfile(authUser as any);
+    }
+    
     // Fetch fresh profile data from API to get all fields including email_verified and date_joined
     fetchProfile();
     fetchNotificationSettings();
@@ -133,6 +139,9 @@ export default function MyProfilePage() {
       setLoading(true);
       // Fetch fresh profile from API to ensure we have all fields
       const profileData = await userProfileApi.getProfile();
+      
+      console.log('[MyProfile] API profileData:', profileData);
+      console.log('[MyProfile] Profile system_role:', profileData.system_role, 'role:', profileData.role);
       
       // If profile doesn't have subscription, try to fetch subscription directly as fallback
       if (!profileData.subscription) {
@@ -536,7 +545,7 @@ export default function MyProfilePage() {
                     <Label htmlFor="role">Ρόλος Συστήματος</Label>
                     <Input
                       id="role"
-                      value={getUserRoleLabel(profile)}
+                      value={loading && !profile ? 'Φόρτωση...' : getUserRoleLabel(profile)}
                       disabled
                       className="bg-gray-50"
                     />
