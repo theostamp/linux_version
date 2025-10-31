@@ -699,30 +699,39 @@ class UserVerificationService:
     def verify_email(token):
         """
         Επιβεβαίωση email με token
+        Users are created in public schema, so we must search there
         """
-        try:
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            user = User.objects.get(email_verification_token=token)
-        except User.DoesNotExist:
-            raise ValueError("Μη έγκυρο token επιβεβαίωσης.")
+        from django_tenants.utils import schema_context, get_public_schema_name
+        from django.contrib.auth import get_user_model
+        from django.db import connection
         
-        # Έλεγχος αν το token έχει λήξει (24 ώρες)
-        if user.email_verification_sent_at:
-            time_diff = timezone.now() - user.email_verification_sent_at
-            if time_diff.total_seconds() > 24 * 3600:  # 24 hours
-                raise ValueError("Το token επιβεβαίωσης έχει λήξει.")
+        User = get_user_model()
+        public_schema = get_public_schema_name()
         
-        # Επιβεβαίωση email
-        user.email_verified = True
-        user.is_active = True
-        user.email_verification_token = None
-        user.email_verification_sent_at = None
-        user.save(update_fields=[
-            'email_verified', 
-            'is_active', 
-            'email_verification_token', 
-            'email_verification_sent_at'
-        ])
-        
-        return user
+        # Users are always created in public schema during registration
+        # So we must search in public schema, regardless of current schema context
+        with schema_context(public_schema):
+            try:
+                user = User.objects.get(email_verification_token=token)
+            except User.DoesNotExist:
+                raise ValueError("Μη έγκυρο token επιβεβαίωσης.")
+            
+            # Έλεγχος αν το token έχει λήξει (24 ώρες)
+            if user.email_verification_sent_at:
+                time_diff = timezone.now() - user.email_verification_sent_at
+                if time_diff.total_seconds() > 24 * 3600:  # 24 hours
+                    raise ValueError("Το token επιβεβαίωσης έχει λήξει.")
+            
+            # Επιβεβαίωση email
+            user.email_verified = True
+            user.is_active = True
+            user.email_verification_token = None
+            user.email_verification_sent_at = None
+            user.save(update_fields=[
+                'email_verified', 
+                'is_active', 
+                'email_verification_token', 
+                'email_verification_sent_at'
+            ])
+            
+            return user

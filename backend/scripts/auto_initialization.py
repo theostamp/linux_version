@@ -84,8 +84,8 @@ def run_migrations():
         # Tenant migrations - only if tenants exist
         print("🏢 Tenant migrations...")
         try:
-            from tenants.models import Tenant
-            if Tenant.objects.exists():
+            from tenants.models import Client
+            if Client.objects.exists():
                 call_command("migrate_schemas", tenant=True, interactive=False)
                 print("✅ Tenant migrations ολοκληρώθηκαν")
             else:
