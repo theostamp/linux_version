@@ -423,27 +423,35 @@ def resend_verification_view(request):
     """
     POST /api/users/resend-verification/
     Επανάληψη αποστολής email επιβεβαίωσης
+    Users are created in public schema, so we must search there
     """
+    from django_tenants.utils import schema_context, get_public_schema_name
+    
     email = request.data.get('email')
     if not email:
         return Response({
             'error': 'Email είναι υποχρεωτικό.'
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    try:
-        user = CustomUser.objects.get(email=email, email_verified=False)
-        if EmailService.send_verification_email(user):
+    public_schema = get_public_schema_name()
+    
+    # Users are always created in public schema during registration
+    # So we must search in public schema, regardless of current schema context
+    with schema_context(public_schema):
+        try:
+            user = CustomUser.objects.get(email=email, email_verified=False)
+            if EmailService.send_verification_email(user):
+                return Response({
+                    'message': 'Email επιβεβαίωσης στάλθηκε ξανά.'
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'Αποτυχία αποστολής email.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except CustomUser.DoesNotExist:
             return Response({
-                'message': 'Email επιβεβαίωσης στάλθηκε ξανά.'
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response({
-                'error': 'Αποτυχία αποστολής email.'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    except CustomUser.DoesNotExist:
-        return Response({
-            'error': 'Δεν βρέθηκε χρήστης με αυτό το email ή το email είναι ήδη επιβεβαιωμένο.'
-        }, status=status.HTTP_404_NOT_FOUND)
+                'error': 'Δεν βρέθηκε χρήστης με αυτό το email ή το email είναι ήδη επιβεβαιωμένο.'
+            }, status=status.HTTP_404_NOT_FOUND)
 
 
 # ===== INVITATION ENDPOINTS =====
