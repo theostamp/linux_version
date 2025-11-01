@@ -371,7 +371,7 @@ class TenantService:
                         building=building,
                         number=apt_data['number'],
                         floor=apt_data['floor'],
-                        area=apt_data['area'],
+                        square_meters=apt_data.get('square_meters', apt_data.get('area', 85)),
                         participation_mills=apt_data['participation_mills'],
                         heating_mills=apt_data['heating_mills'],
                         elevator_mills=apt_data['elevator_mills']
