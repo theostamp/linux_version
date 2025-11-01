@@ -583,7 +583,14 @@ class EmailService:
 
 class InvitationService:
     """
-    Service για τη διαχείριση των προσκλήσεων
+    Service για τη διαχείριση των προσκλήσεων (LEGACY - DEPRECATED)
+    
+    ⚠️ ATTENTION: This service uses the old UserInvitation model.
+    The new invitation system uses TenantInvitation model (see users/models_invitation.py).
+    For new invitations, use TenantInvitationViewSet in users/views_invitation.py.
+    
+    This service is kept for backward compatibility but should not be used for new features.
+    Use the new TenantInvitation system instead.
     """
     
     @staticmethod
