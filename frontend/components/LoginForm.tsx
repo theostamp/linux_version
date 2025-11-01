@@ -54,12 +54,24 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
       
       // Extract error message from different possible locations
       let errorMessage = 'Σφάλμα σύνδεσης';
-      if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.response?.data?.detail) {
-        errorMessage = err.response.data.detail;
+      
+      // Check for 502/503/504 backend connection errors
+      if (err.response?.status === 502 || err.response?.status === 503 || err.response?.status === 504) {
+        errorMessage = 'Ο server δεν είναι διαθέσιμος αυτή τη στιγμή. Παρακαλώ δοκιμάστε αργότερα.';
+      } else if (err.response?.data) {
+        // Try multiple error message locations
+        const errorData = err.response.data;
+        if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else if (errorData?.error) {
+          errorMessage = typeof errorData.error === 'string' ? errorData.error : JSON.stringify(errorData.error);
+        } else if (errorData?.detail) {
+          errorMessage = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+        } else if (errorData?.message) {
+          errorMessage = typeof errorData.message === 'string' ? errorData.message : JSON.stringify(errorData.message);
+        }
       } else if (err.message) {
-        errorMessage = err.message;
+        errorMessage = typeof err.message === 'string' ? err.message : JSON.stringify(err.message);
       }
       
       toast.error(errorMessage);

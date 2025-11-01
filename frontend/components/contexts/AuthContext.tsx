@@ -83,9 +83,20 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       
       // Return user plus backend-suggested redirect path
       return { ...loggedInUser, redirectPath } as User & { redirectPath?: string };
-    } catch (error) {
+    } catch (error: any) {
       setIsLoading(false);
       console.error('AuthContext: Login failed:', error);
+      
+      // Improve error logging for 502/503/504 errors
+      if (error?.response?.status === 502 || error?.response?.status === 503 || error?.response?.status === 504) {
+        console.error('AuthContext: Backend connection error - server may be down');
+        console.error('AuthContext: Error details:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+      }
+      
       throw error;
     }
   }, [setUser]);
