@@ -400,30 +400,7 @@ class TenantService:
                     logger.warning(f"No tenant user found in schema {schema_name} for demo data creation")
                     return
                 
-                # Create demo resident users
-                resident1 = User.objects.create_user(
-                    email=f'resident1@{schema_name}.demo',
-                    password='demo123456',  # Demo password
-                    first_name='Μαρία',
-                    last_name='Παπαδοπούλου',
-                    is_active=True,
-                    email_verified=True,
-                    role=None  # Residents don't have system role
-                )
-                logger.info(f"Created demo user: resident1@{schema_name}.demo")
-                
-                resident2 = User.objects.create_user(
-                    email=f'resident2@{schema_name}.demo',
-                    password='demo123456',  # Demo password
-                    first_name='Γιώργος',
-                    last_name='Κωνσταντίνου',
-                    is_active=True,
-                    email_verified=True,
-                    role=None  # Residents don't have system role
-                )
-                logger.info(f"Created demo user: resident2@{schema_name}.demo")
-                
-                # Create Αλκμάνος 22 building
+                # Create Αλκμάνος 22 building (we'll create users after apartments based on apartment data)
                 building = Building.objects.create(
                     name='🎓 Demo Building - Αλκμάνος 22',
                     address='Αλκμάνος 22, Αθήνα 115 28, Ελλάδα',
@@ -435,66 +412,107 @@ class TenantService:
                     internal_manager_name='Γραμματεία'
                 )
                 
-                # Create apartments (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1) - Total mills: 1000
+                # Create apartments (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1) with owners/tenants data - Total mills: 1000
                 apartments_data = [
-                    {'number': 'Α1', 'floor': 1, 'square_meters': 85.5, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
-                    {'number': 'Α2', 'floor': 1, 'square_meters': 75.0, 'participation_mills': 88, 'heating_mills': 88, 'elevator_mills': 88},
-                    {'number': 'Α3', 'floor': 1, 'square_meters': 90.0, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105},
-                    {'number': 'Β1', 'floor': 2, 'square_meters': 85.5, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
-                    {'number': 'Β2', 'floor': 2, 'square_meters': 75.0, 'participation_mills': 88, 'heating_mills': 88, 'elevator_mills': 88},
-                    {'number': 'Β3', 'floor': 2, 'square_meters': 90.0, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105},
-                    {'number': 'Γ1', 'floor': 3, 'square_meters': 85.5, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
-                    {'number': 'Γ2', 'floor': 3, 'square_meters': 75.0, 'participation_mills': 88, 'heating_mills': 88, 'elevator_mills': 88},
-                    {'number': 'Γ3', 'floor': 3, 'square_meters': 90.0, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105},
-                    {'number': 'Δ1', 'floor': 4, 'square_meters': 120.0, 'participation_mills': 121, 'heating_mills': 121, 'elevator_mills': 121},  # Fixed: 140→121 to total 1000
+                    {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': f'demo.owner1@{schema_name}.demo', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': 'Α2', 'floor': 0, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2103456789', 'owner_email': f'eleni.d@{schema_name}.demo', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 2, 'participation_mills': 97, 'heating_mills': 105, 'elevator_mills': 97},
+                    {'number': 'Α3', 'floor': 0, 'owner_name': 'Νικόλαος Αλεξίου', 'owner_phone': '2104567890', 'owner_email': f'nikos.alex@{schema_name}.demo', 'tenant_name': 'Ανδρέας Παπαγεωργίου', 'tenant_phone': '2105678901', 'tenant_email': f'andreas.p@{schema_name}.demo', 'is_rented': True, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 88, 'heating_mills': 92, 'elevator_mills': 88},
+                    {'number': 'Β1', 'floor': 1, 'owner_name': 'Αικατερίνη Σταματίου', 'owner_phone': '2106789012', 'owner_email': f'katerina.s@{schema_name}.demo', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 115, 'elevator_mills': 110},
+                    {'number': 'Β2', 'floor': 1, 'owner_name': 'Δημήτριος Κωνσταντίνου', 'owner_phone': '2107890123', 'owner_email': f'dimitris.k@{schema_name}.demo', 'tenant_name': 'Σοφία Παπαδοπούλου', 'tenant_phone': '2108901234', 'tenant_email': f'sofia.pap@{schema_name}.demo', 'is_rented': True, 'square_meters': 92, 'bedrooms': 2, 'participation_mills': 105, 'heating_mills': 108, 'elevator_mills': 105},
+                    {'number': 'Β3', 'floor': 1, 'owner_name': 'Ιωάννης Μιχαηλίδης', 'owner_phone': '2109012345', 'owner_email': f'giannis.m@{schema_name}.demo', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 88, 'bedrooms': 2, 'participation_mills': 98, 'heating_mills': 102, 'elevator_mills': 98},
+                    {'number': 'Γ1', 'floor': 2, 'owner_name': 'Αννα Παπαδοπούλου', 'owner_phone': '2100123456', 'owner_email': f'anna.pap@{schema_name}.demo', 'tenant_name': 'Χρήστος Γεωργίου', 'tenant_phone': '2101234567', 'tenant_email': f'christos.g@{schema_name}.demo', 'is_rented': True, 'square_meters': 82, 'bedrooms': 2, 'participation_mills': 92, 'heating_mills': 95, 'elevator_mills': 92},
+                    {'number': 'Γ2', 'floor': 2, 'owner_name': 'Παναγιώτης Αντωνίου', 'owner_phone': '2102345678', 'owner_email': f'panagiotis.a@{schema_name}.demo', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 100, 'bedrooms': 3, 'participation_mills': 115, 'heating_mills': 100, 'elevator_mills': 115},
+                    {'number': 'Γ3', 'floor': 3, 'owner_name': 'Ευαγγελία Κωνσταντίνου', 'owner_phone': '2103456789', 'owner_email': f'evangelia.k@{schema_name}.demo', 'tenant_name': 'Δημήτριος Παπαδόπουλος', 'tenant_phone': '2104567890', 'tenant_email': f'dimitris.pap@{schema_name}.demo', 'is_rented': True, 'square_meters': 96, 'bedrooms': 3, 'participation_mills': 108, 'heating_mills': 100, 'elevator_mills': 108},
+                    {'number': 'Δ1', 'floor': 3, 'owner_name': 'Μιχαήλ Γεωργίου', 'owner_phone': '2105678901', 'owner_email': f'michalis.g@{schema_name}.demo', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 78, 'bedrooms': 1, 'participation_mills': 87, 'heating_mills': 83, 'elevator_mills': 87}
                 ]
                 
                 created_apartments = []
+                created_resident_users = []  # Store all created resident users
+                
                 for apt_data in apartments_data:
+                    # Create apartment with owner/tenant data
                     apt = Apartment.objects.create(
                         building=building,
                         number=apt_data['number'],
                         floor=apt_data['floor'],
                         square_meters=apt_data['square_meters'],
+                        bedrooms=apt_data.get('bedrooms', 2),
                         participation_mills=apt_data['participation_mills'],
                         heating_mills=apt_data['heating_mills'],
-                        elevator_mills=apt_data['elevator_mills']
+                        elevator_mills=apt_data['elevator_mills'],
+                        owner_name=apt_data['owner_name'],
+                        owner_phone=apt_data['owner_phone'],
+                        owner_email=apt_data['owner_email'],
+                        tenant_name=apt_data.get('tenant_name', ''),
+                        tenant_phone=apt_data.get('tenant_phone', ''),
+                        tenant_email=apt_data.get('tenant_email', ''),
+                        is_rented=apt_data.get('is_rented', False)
                     )
                     created_apartments.append(apt)
+                    
+                    # Create CustomUser for owner (if email exists and user doesn't exist)
+                    if apt_data['owner_email']:
+                        owner_user, created = User.objects.get_or_create(
+                            email=apt_data['owner_email'],
+                            defaults={
+                                'first_name': apt_data['owner_name'].split()[0] if apt_data['owner_name'] else 'Owner',
+                                'last_name': ' '.join(apt_data['owner_name'].split()[1:]) if len(apt_data['owner_name'].split()) > 1 else '',
+                                'password': 'demo123456',  # Demo password for all
+                                'is_active': True,
+                                'email_verified': True,
+                                'role': None  # Residents don't have system role
+                            }
+                        )
+                        if created:
+                            owner_user.set_password('demo123456')
+                            owner_user.save()
+                            created_resident_users.append((owner_user, apt, 'owner'))
+                            logger.info(f"Created demo owner user: {owner_user.email} -> Apartment {apt.number}")
+                    
+                    # Create CustomUser for tenant (if email exists and user doesn't exist)
+                    if apt_data.get('tenant_email'):
+                        tenant_user, created = User.objects.get_or_create(
+                            email=apt_data['tenant_email'],
+                            defaults={
+                                'first_name': apt_data['tenant_name'].split()[0] if apt_data['tenant_name'] else 'Tenant',
+                                'last_name': ' '.join(apt_data['tenant_name'].split()[1:]) if len(apt_data['tenant_name'].split()) > 1 else '',
+                                'password': 'demo123456',  # Demo password for all
+                                'is_active': True,
+                                'email_verified': True,
+                                'role': None  # Residents don't have system role
+                            }
+                        )
+                        if created:
+                            tenant_user.set_password('demo123456')
+                            tenant_user.save()
+                            created_resident_users.append((tenant_user, apt, 'tenant'))
+                            logger.info(f"Created demo tenant user: {tenant_user.email} -> Apartment {apt.number}")
                 
                 logger.info(f"Created demo building 'Αλκμάνος 22' with 10 apartments in schema {schema_name}")
                 
-                # Create Resident entries and BuildingMembership for demo users
-                if len(created_apartments) >= 2:
-                    # Resident1 -> Apartment Α1 (tenant/ενοικιαστής)
-                    resident1_profile = Resident.objects.create(
-                        user=resident1,
+                # Create Resident entries and BuildingMembership for all created users
+                for user, apartment, resident_role in created_resident_users:
+                    # Create Resident entry
+                    resident_profile, created = Resident.objects.get_or_create(
+                        user=user,
                         building=building,
-                        apartment=created_apartments[0].number,  # Α1
-                        role='tenant',  # Resident.Role
-                        phone='+30 210 111 2222'
+                        defaults={
+                            'apartment': apartment.number,
+                            'role': resident_role,  # 'owner' or 'tenant'
+                            'phone': apartment.owner_phone if resident_role == 'owner' else apartment.tenant_phone
+                        }
                     )
-                    BuildingMembership.objects.create(
-                        building=building,
-                        user=resident1,
-                        role='tenant'  # BuildingMembership.role
-                    )
-                    logger.info(f"Created Resident entry for resident1: apartment {created_apartments[0].number}")
+                    if created:
+                        logger.info(f"Created Resident entry: {user.email} ({resident_role}) -> Apartment {apartment.number}")
                     
-                    # Resident2 -> Apartment Α2 (owner/ιδιοκτήτης)
-                    resident2_profile = Resident.objects.create(
-                        user=resident2,
+                    # Create BuildingMembership
+                    BuildingMembership.objects.get_or_create(
                         building=building,
-                        apartment=created_apartments[1].number,  # Α2
-                        role='owner',  # Resident.Role
-                        phone='+30 210 333 4444'
+                        user=user,
+                        defaults={'role': resident_role}  # BuildingMembership.role
                     )
-                    BuildingMembership.objects.create(
-                        building=building,
-                        user=resident2,
-                        role='owner'  # BuildingMembership.role
-                    )
-                    logger.info(f"Created Resident entry for resident2: apartment {created_apartments[1].number}")
+                
+                logger.info(f"Created {len(created_resident_users)} demo resident users with Resident profiles and BuildingMembership entries")
 
                 today = timezone.now().date()
 
@@ -503,7 +521,7 @@ class TenantService:
                     building=building,
                     author=tenant_user,
                     title='Καλωσορίσατε στην πλατφόρμα!',
-                    description='Η ομάδα του Concierge έχει ήδη δημιουργήσει το demo κτίριο "Αλκμάνος 22" με 10 διαμερίσματα και 2 εικονικούς κατοίκους. Εξερευνήστε το dashboard για να δείτε όλα τα διαθέσιμα modules. Μπορείτε να διαγράψετε αυτά τα δεδομένα όποτε θέλετε.',
+                    description=f'Η ομάδα του Concierge έχει ήδη δημιουργήσει το demo κτίριο "Αλκμάνος 22" με 10 διαμερίσματα και {len(created_resident_users)} εικονικούς κατοίκους (owners και tenants). Όλοι οι demo users έχουν password: demo123456. Εξερευνήστε το dashboard για να δείτε όλα τα διαθέσιμα modules. Μπορείτε να διαγράψετε αυτά τα δεδομένα όποτε θέλετε.',
                     start_date=today,
                     end_date=today + timedelta(days=30),
                     published=True,
@@ -539,10 +557,12 @@ class TenantService:
                     min_participation=40
                 )
                 
-                # Vote submissions from demo users
+                # Vote submissions from demo users (manager + some residents)
                 VoteSubmission.objects.create(vote=vote1, user=tenant_user, choice="ΝΑΙ")
-                VoteSubmission.objects.create(vote=vote1, user=resident1, choice="ΝΑΙ")
-                VoteSubmission.objects.create(vote=vote1, user=resident2, choice="ΟΧΙ")
+                # Add submissions from a few demo residents if available
+                for idx, (user, _, _) in enumerate(created_resident_users[:3]):  # First 3 residents
+                    choice = "ΝΑΙ" if idx % 2 == 0 else "ΟΧΙ"
+                    VoteSubmission.objects.create(vote=vote1, user=user, choice=choice)
                 
                 vote2 = Vote.objects.create(
                     building=building,
@@ -573,22 +593,25 @@ class TenantService:
                     apartment_number='Υπόγειο'
                 )
                 
-                UserRequest.objects.create(
-                    building=building,
-                    title='Βλάβη στον φωτισμό κλιμακοστασίου',
-                    description='Δεν λειτουργούν 2 λάμπες στον 2ο όροφο.',
-                    status='pending',
-                    type='repair',
-                    priority='medium',
-                    estimated_completion=today + timedelta(days=3),
-                    created_by=resident1,
-                    assigned_to=tenant_user,
-                    location='2ος όροφος - κλιμακοστάσιο',
-                    apartment_number='Α1'
-                )
+                # Create user requests from demo residents if available
+                if created_resident_users:
+                    first_resident_user = created_resident_users[0][0]  # Get first user from tuple
+                    UserRequest.objects.create(
+                        building=building,
+                        title='Βλάβη στον φωτισμό κλιμακοστασίου',
+                        description='Δεν λειτουργούν 2 λάμπες στον 2ο όροφο.',
+                        status='pending',
+                        type='repair',
+                        priority='medium',
+                        estimated_completion=today + timedelta(days=3),
+                        created_by=first_resident_user,
+                        assigned_to=tenant_user,
+                        location='2ος όροφος - κλιμακοστάσιο',
+                        apartment_number=created_resident_users[0][1].number  # Use apartment number from first resident
+                    )
 
                 logger.info(f"Created demo announcements, votes, and user requests in schema {schema_name}")
-                logger.info(f"Demo users created: resident1@{schema_name}.demo, resident2@{schema_name}.demo (password: demo123456)")
+                logger.info(f"Demo users created: {len(created_resident_users)} total (owners + tenants) - Password: demo123456")
                 
         except Exception as e:
             logger.error(f"Failed to create demo data in schema {schema_name}: {e}")
