@@ -374,16 +374,16 @@ class TenantService:
         return tenant
 
     def _create_demo_data(self, schema_name):
-        """Create demo data (Αλκμάνος 22 building) for the new tenant."""
+        """Create demo data (Αλκμάνος 22 building + demo users) for the new tenant."""
         try:
             with schema_context(schema_name):
                 from datetime import timedelta
-
-                from buildings.models import Building
+                from buildings.models import Building, BuildingMembership
                 from apartments.models import Apartment
                 from announcements.models import Announcement
                 from votes.models import Vote, VoteSubmission
                 from user_requests.models import UserRequest
+                from residents.models import Resident
                 from django.contrib.auth import get_user_model
                 from django.utils import timezone
                 
@@ -394,11 +394,34 @@ class TenantService:
                     logger.info(f"Demo data already exists in schema {schema_name}")
                     return
                 
-                # Get the tenant user (manager)
+                # Get the tenant user (manager/owner)
                 tenant_user = User.objects.filter(is_staff=True).first()
                 if not tenant_user:
                     logger.warning(f"No tenant user found in schema {schema_name} for demo data creation")
                     return
+                
+                # Create demo resident users
+                resident1 = User.objects.create_user(
+                    email=f'resident1@{schema_name}.demo',
+                    password='demo123456',  # Demo password
+                    first_name='Μαρία',
+                    last_name='Παπαδοπούλου',
+                    is_active=True,
+                    email_verified=True,
+                    role=None  # Residents don't have system role
+                )
+                logger.info(f"Created demo user: resident1@{schema_name}.demo")
+                
+                resident2 = User.objects.create_user(
+                    email=f'resident2@{schema_name}.demo',
+                    password='demo123456',  # Demo password
+                    first_name='Γιώργος',
+                    last_name='Κωνσταντίνου',
+                    is_active=True,
+                    email_verified=True,
+                    role=None  # Residents don't have system role
+                )
+                logger.info(f"Created demo user: resident2@{schema_name}.demo")
                 
                 # Create Αλκμάνος 22 building
                 building = Building.objects.create(
@@ -426,8 +449,9 @@ class TenantService:
                     {'number': 'Δ1', 'floor': 4, 'square_meters': 120.0, 'participation_mills': 121, 'heating_mills': 121, 'elevator_mills': 121},  # Fixed: 140→121 to total 1000
                 ]
                 
+                created_apartments = []
                 for apt_data in apartments_data:
-                    Apartment.objects.create(
+                    apt = Apartment.objects.create(
                         building=building,
                         number=apt_data['number'],
                         floor=apt_data['floor'],
@@ -436,17 +460,50 @@ class TenantService:
                         heating_mills=apt_data['heating_mills'],
                         elevator_mills=apt_data['elevator_mills']
                     )
+                    created_apartments.append(apt)
                 
                 logger.info(f"Created demo building 'Αλκμάνος 22' with 10 apartments in schema {schema_name}")
+                
+                # Create Resident entries and BuildingMembership for demo users
+                if len(created_apartments) >= 2:
+                    # Resident1 -> Apartment Α1 (tenant/ενοικιαστής)
+                    resident1_profile = Resident.objects.create(
+                        user=resident1,
+                        building=building,
+                        apartment=created_apartments[0].number,  # Α1
+                        role='tenant',  # Resident.Role
+                        phone='+30 210 111 2222'
+                    )
+                    BuildingMembership.objects.create(
+                        building=building,
+                        user=resident1,
+                        role='tenant'  # BuildingMembership.role
+                    )
+                    logger.info(f"Created Resident entry for resident1: apartment {created_apartments[0].number}")
+                    
+                    # Resident2 -> Apartment Α2 (owner/ιδιοκτήτης)
+                    resident2_profile = Resident.objects.create(
+                        user=resident2,
+                        building=building,
+                        apartment=created_apartments[1].number,  # Α2
+                        role='owner',  # Resident.Role
+                        phone='+30 210 333 4444'
+                    )
+                    BuildingMembership.objects.create(
+                        building=building,
+                        user=resident2,
+                        role='owner'  # BuildingMembership.role
+                    )
+                    logger.info(f"Created Resident entry for resident2: apartment {created_apartments[1].number}")
 
                 today = timezone.now().date()
 
-                # Create a welcome announcement
+                # Create welcome announcements
                 Announcement.objects.create(
                     building=building,
                     author=tenant_user,
                     title='Καλωσορίσατε στην πλατφόρμα!',
-                    description='Η ομάδα του Concierge έχει ήδη δημιουργήσει το κτίριο Αλκμάνος 22 με 10 διαμερίσματα. Εξερευνήστε το dashboard για να δείτε όλα τα διαθέσιμα modules.',
+                    description='Η ομάδα του Concierge έχει ήδη δημιουργήσει το demo κτίριο "Αλκμάνος 22" με 10 διαμερίσματα και 2 εικονικούς κατοίκους. Εξερευνήστε το dashboard για να δείτε όλα τα διαθέσιμα modules. Μπορείτε να διαγράψετε αυτά τα δεδομένα όποτε θέλετε.',
                     start_date=today,
                     end_date=today + timedelta(days=30),
                     published=True,
@@ -454,27 +511,54 @@ class TenantService:
                     is_urgent=False,
                     priority=10
                 )
+                
+                Announcement.objects.create(
+                    building=building,
+                    author=tenant_user,
+                    title='Συντήρηση ανελκυστήρα',
+                    description='Ενημερώνουμε ότι θα πραγματοποιηθεί προγραμματισμένη συντήρηση του ανελκυστήρα την Παρασκευή. Παρακαλούμε για την κατανόηση σας.',
+                    start_date=today,
+                    end_date=today + timedelta(days=7),
+                    published=True,
+                    is_active=True,
+                    is_urgent=True,
+                    priority=20
+                )
+                logger.info(f"Created demo announcements in schema {schema_name}")
 
-                # Create a sample vote
-                vote = Vote.objects.create(
+                # Create sample votes
+                vote1 = Vote.objects.create(
                     building=building,
                     creator=tenant_user,
                     title='Εγκατάσταση Φωτοβολταϊκών',
-                    description='Προτείνουμε την εγκατάσταση φωτοβολταϊκών στο δώμα του κτιρίου. Η ψήφος θα παραμείνει ανοιχτή για 14 ημέρες.',
+                    description='Προτείνουμε την εγκατάσταση φωτοβολταϊκών στο δώμα του κτιρίου για μείωση του κόστους ενέργειας. Η ψήφος θα παραμείνει ανοιχτή για 14 ημέρες.',
                     start_date=today - timedelta(days=1),
                     end_date=today + timedelta(days=14),
                     is_active=True,
                     is_urgent=False,
                     min_participation=40
                 )
-
-                VoteSubmission.objects.create(
-                    vote=vote,
-                    user=tenant_user,
-                    choice="ΝΑΙ"
+                
+                # Vote submissions from demo users
+                VoteSubmission.objects.create(vote=vote1, user=tenant_user, choice="ΝΑΙ")
+                VoteSubmission.objects.create(vote=vote1, user=resident1, choice="ΝΑΙ")
+                VoteSubmission.objects.create(vote=vote1, user=resident2, choice="ΟΧΙ")
+                
+                vote2 = Vote.objects.create(
+                    building=building,
+                    creator=tenant_user,
+                    title='Αλλαγή διαχειριστή κτιρίου',
+                    description='Πρόταση αλλαγής της εταιρείας διαχείρισης του κτιρίου.',
+                    start_date=today - timedelta(days=7),
+                    end_date=today + timedelta(days=7),
+                    is_active=True,
+                    is_urgent=True,
+                    min_participation=50
                 )
+                VoteSubmission.objects.create(vote=vote2, user=tenant_user, choice="ΝΑΙ")
+                logger.info(f"Created demo votes with submissions in schema {schema_name}")
 
-                # Create a sample user request
+                # Create sample user requests
                 UserRequest.objects.create(
                     building=building,
                     title='Έλεγχος συστήματος θέρμανσης',
@@ -488,8 +572,23 @@ class TenantService:
                     location='Λεβητοστάσιο',
                     apartment_number='Υπόγειο'
                 )
+                
+                UserRequest.objects.create(
+                    building=building,
+                    title='Βλάβη στον φωτισμό κλιμακοστασίου',
+                    description='Δεν λειτουργούν 2 λάμπες στον 2ο όροφο.',
+                    status='pending',
+                    type='repair',
+                    priority='medium',
+                    estimated_completion=today + timedelta(days=3),
+                    created_by=resident1,
+                    assigned_to=tenant_user,
+                    location='2ος όροφος - κλιμακοστάσιο',
+                    apartment_number='Α1'
+                )
 
-                logger.info(f"Created demo announcement, vote, and user request in schema {schema_name}")
+                logger.info(f"Created demo announcements, votes, and user requests in schema {schema_name}")
+                logger.info(f"Demo users created: resident1@{schema_name}.demo, resident2@{schema_name}.demo (password: demo123456)")
                 
         except Exception as e:
             logger.error(f"Failed to create demo data in schema {schema_name}: {e}")
