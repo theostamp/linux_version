@@ -41,13 +41,20 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
       // Clear queries and wait a bit for state to settle
       queryClient.clear();
 
-      // Use redirect path from backend response (clean propagation)
+      // Check if we need to redirect to tenant URL
+      const tenantUrl = (loggedInUser as any).tenantUrl;
       const redirectPath = (loggedInUser as any).redirectPath || finalRedirect;
-      console.log('LoginForm: Backend suggested redirect:', redirectPath);
-
-      setTimeout(() => {
-        router.push(redirectPath);
-      }, 100);
+      
+      if (tenantUrl) {
+        console.log('LoginForm: Redirecting to tenant URL:', tenantUrl);
+        // For tenant users, redirect to their tenant domain
+        window.location.href = tenantUrl;
+      } else {
+        console.log('LoginForm: Backend suggested redirect:', redirectPath);
+        setTimeout(() => {
+          router.push(redirectPath);
+        }, 100);
+      }
 
     } catch (err: any) {
       console.error('LoginForm: Login error:', err);

@@ -130,20 +130,42 @@ def login_view(request):
     print(f">>> DEBUG: user_data keys = {list(user_data.keys())}")
     print(f">>> DEBUG: user_data['role'] = {repr(user_data.get('role'))}")
 
-    # Determine redirect path based on tenant existence
+    # Determine redirect path and tenant URL based on tenant existence
     redirect_path = '/dashboard'  # Default
+    tenant_url = None
+    
     if not hasattr(user, 'tenant') or user.tenant is None:
         redirect_path = '/plans'
         print(f">>> DEBUG: User has no tenant, redirecting to /plans")
     else:
-        print(f">>> DEBUG: User has tenant: {user.tenant.schema_name}, redirecting to /dashboard")
+        # Get the tenant domain
+        from tenants.models import Domain
+        tenant_domain = Domain.objects.filter(tenant=user.tenant, is_primary=True).first()
+        if tenant_domain:
+            # In production, use the actual domain
+            # In development, use subdomain
+            import os
+            if os.environ.get('RAILWAY_ENVIRONMENT'):
+                # Production - use the actual tenant subdomain
+                tenant_url = f"https://{user.tenant.schema_name}.newconcierge.app"  # TODO: Configure actual production domain
+            else:
+                # Development
+                tenant_url = f"http://{tenant_domain.domain}:3000"
+            print(f">>> DEBUG: User has tenant: {user.tenant.schema_name}, tenant_url: {tenant_url}")
+        else:
+            print(f">>> DEBUG: User has tenant but no primary domain")
 
-    return Response({
+    response_data = {
         'access': access,
         'refresh': str(refresh),
         'user': user_data,
         'redirect_path': redirect_path,
-    }, status=status.HTTP_200_OK)
+    }
+    
+    if tenant_url:
+        response_data['tenant_url'] = tenant_url
+    
+    return Response(response_data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
