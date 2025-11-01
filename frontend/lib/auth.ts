@@ -74,8 +74,8 @@ export function useResidentRole() {
 // Note: CustomUser.role (SystemRole) can only be 'superuser', 'admin', or 'manager'
 // 'tenant', 'owner', 'staff', 'resident' are NOT SystemRole - they are Resident.Role (apartment level)
 // SystemRole: 'superuser'/'admin' = Ultra Admin, 'manager' = Django Tenant Owner
-export function withAuth<TProps = any>(
-  Component: (props: TProps) => any, 
+export function withAuth<TProps extends Record<string, any> = any>(
+  Component: React.ComponentType<TProps>, 
   allowedRoles: Array<'superuser' | 'admin' | 'manager'> = ['admin', 'manager']
 ) {
   return function Protected(props: TProps) {

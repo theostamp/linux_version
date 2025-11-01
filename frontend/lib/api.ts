@@ -1667,8 +1667,11 @@ export interface AcceptInvitationRequest {
 export const invitationApi = {
   // List invitations
   list: async (): Promise<Invitation[]> => {
-    const response = await api.get<Invitation[]>('/api/users/invitations/');
-    return Array.isArray(response.data) ? response.data : (response.data.results || []);
+    const response = await api.get<Invitation[] | { results: Invitation[] }>('/api/users/invitations/');
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return response.data.results || [];
   },
 
   // Create single invitation
@@ -1768,7 +1771,7 @@ async function fetchApartmentsWithFinancialDataFallback(buildingId: number): Pro
   console.log('[API CALL] Using fallback method with throttling for building:', buildingId);
   
   // First get building data and apartments
-  const [buildingResponse, apartmentsResponse] = await Promise.all([
+  const [, apartmentsResponse] = await Promise.all([
     makeRequestWithRetry({ method: 'get', url: `/api/buildings/list/${buildingId}/` }),
     makeRequestWithRetry({ method: 'get', url: `/api/apartments/?building=${buildingId}` })
   ]);
