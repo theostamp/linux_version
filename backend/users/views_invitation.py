@@ -305,7 +305,7 @@ class AcceptInvitationView(APIView):
                             if not building:
                                 # Get manager's building membership
                                 manager_building_membership = BuildingMembership.objects.filter(
-                                    user=invitation.invited_by
+                                    resident=invitation.invited_by
                                 ).first()
                                 if manager_building_membership:
                                     building = manager_building_membership.building
@@ -326,7 +326,7 @@ class AcceptInvitationView(APIView):
                                 # Create BuildingMembership
                                 BuildingMembership.objects.get_or_create(
                                     building=building,
-                                    user=tenant_user,
+                                    resident=tenant_user,
                                     defaults={'role': resident_role}
                                 )
                                 
