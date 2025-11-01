@@ -422,7 +422,8 @@ CORS_ALLOWED_ORIGINS = get_list_env(
     "http://top.localhost:3000,http://tap.localhost:3000,"
     "http://localhost:3001,http://127.0.0.1:3001,http://demo.localhost:3001,"
     "http://top.localhost:3001,http://tap.localhost:3001,"
-    "https://linux-version.vercel.app"  # Vercel production domain
+    "https://newconcierge.app",  # Production domain
+    "https://*.newconcierge.app"  # All subdomains
 )
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
@@ -430,7 +431,6 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://[\w\-]+\.localhost:3000$",
     r"^http://[\w\-]+\.localhost:3001$",
     r"^https://[\w\.-]+\.vercel\.app$",  # Vercel preview deployments
-    r"^https://linux-version\.vercel\.app$",  # Specific Vercel production domain
     r"^https://[\w\.-]+\.newconcierge\.app$",  # All newconcierge.app subdomains
     r"^https://newconcierge\.app$",  # Apex domain
 ]  # ✅ Επιτρέπει *.localhost:* και *.vercel.app και *.newconcierge.app
@@ -457,7 +457,7 @@ _raw_csrf = get_list_env(
     "localhost:8080,localhost:3000,127.0.0.1:8080,127.0.0.1:3000,"
     "demo.localhost:8080,demo.localhost:3000,"
     "top.localhost:8080,tap.localhost:8080,top.localhost:3000,tap.localhost:3000,"
-    "linux-version.vercel.app,*.vercel.app"
+    "newconcierge.app,*.newconcierge.app,*.vercel.app"  # Keep vercel.app for preview deployments
 )
 CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in _raw_csrf] + [f"https://{h}" for h in _raw_csrf]
 
@@ -527,7 +527,7 @@ STRIPE_CURRENCY = 'eur'  # Euro currency
 STRIPE_WEBHOOK_TOLERANCE = 300  # 5 minutes tolerance for webhook timestamps
 
 # Frontend URL for redirects
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://newconcierge.app')
 
 # Internal API security
 INTERNAL_API_SECRET_KEY = os.getenv('INTERNAL_API_SECRET_KEY', '')
@@ -668,7 +668,7 @@ GOOGLE_CALENDAR_SCOPES = [
 ]
 
 # Frontend URL για links στα Google Calendar events
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:8080')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://newconcierge.app')
 
 # Calendar sync settings
 GOOGLE_CALENDAR_SYNC_ENABLED = os.getenv('GOOGLE_CALENDAR_SYNC_ENABLED', 'True') == 'True'
