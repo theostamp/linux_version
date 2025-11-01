@@ -61,13 +61,13 @@ urlpatterns = [
     path('subscription/actions/', UserSubscriptionActionsView.as_view(), name='user-subscription-actions'),
     path('subscription/create/', UserCreateSubscriptionView.as_view(), name='user-create-subscription'),
 
-    # Include router URLs (MUST be last to avoid conflicts with specific paths)
-    path('', include(router.urls)),
-    
-    # Invitation endpoints
+    # Invitation endpoints (MUST be before router.urls to avoid conflicts)
     path('invitations/accept/', AcceptInvitationView.as_view(), name='accept-invitation'),
     path('invitations/decline/', DeclineInvitationView.as_view(), name='decline-invitation'),
     path('invitations/verify/', VerifyInvitationView.as_view(), name='verify-invitation'),
+
+    # Include router URLs (MUST be last to avoid conflicts with specific paths)
+    path('', include(router.urls)),
     
     # OAuth endpoints
     path('auth/google/', google_oauth_initiate, name='google-oauth-initiate'),  # With trailing slash
