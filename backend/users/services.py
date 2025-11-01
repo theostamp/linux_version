@@ -465,6 +465,71 @@ class EmailService:
         except Exception as e:
             logger.error(f"Failed to send payment failure notification to {user.email}: {e}")
             return False
+    
+    @staticmethod
+    def send_tenant_welcome_email(user, tenant, domain):
+        """
+        Send welcome email with secure tenant access link.
+        Uses time-limited signed token (24h expiry).
+        """
+        from django.core.signing import TimestampSigner
+        
+        # Generate secure token (expires in 24h)
+        signer = TimestampSigner()
+        token_data = f"{user.id}:{tenant.id}:{domain.domain}"
+        secure_token = signer.sign(token_data)
+        
+        # Build access URL
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        access_url = f"{frontend_url}/tenant/accept?token={secure_token}"
+        
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}🎉 Το Workspace σας είναι έτοιμο - {tenant.name}"
+        
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <h2>Καλώς ήρθατε στο New Concierge!</h2>
+            <p>Γεια σας {user.first_name},</p>
+            <p>Το workspace σας <strong>{tenant.name}</strong> δημιουργήθηκε επιτυχώς!</p>
+            
+            <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px;">
+                <h3>Στοιχεία Πρόσβασης:</h3>
+                <p><strong>Domain:</strong> {domain.domain}</p>
+                <p><strong>Email:</strong> {user.email}</p>
+                <p><strong>Ρόλος:</strong> Manager (Διαχειριστής)</p>
+            </div>
+            
+            <p>
+                <a href="{access_url}" 
+                   style="background: #4CAF50; color: white; padding: 12px 24px; 
+                          text-decoration: none; border-radius: 4px; display: inline-block;">
+                    Πρόσβαση στο Workspace
+                </a>
+            </p>
+            
+            <p style="color: #666; font-size: 14px;">
+                Αυτό το link είναι έγκυρο για 24 ώρες. Μετά μπορείτε να συνδεθείτε κανονικά με το email και password σας.
+            </p>
+            
+            <p>Καλή αρχή!</p>
+            <p>Η Ομάδα του New Concierge</p>
+        </body>
+        </html>
+        """
+        
+        try:
+            send_mail(
+                subject=subject,
+                message=strip_tags(html_content),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                html_message=html_content,
+                fail_silently=False,
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send tenant welcome email to {user.email}: {e}")
+            return False
 
 
 class InvitationService:
@@ -614,72 +679,6 @@ class PasswordResetService:
         ).update(used=True, used_at=timezone.now())
         
         return user
-
-
-    @staticmethod  
-    def send_tenant_welcome_email(user, tenant, domain):
-        """
-        Send welcome email with secure tenant access link.
-        Uses time-limited signed token (24h expiry).
-        """
-        from django.core.signing import TimestampSigner
-        
-        # Generate secure token (expires in 24h)
-        signer = TimestampSigner()
-        token_data = f"{user.id}:{tenant.id}:{domain.domain}"
-        secure_token = signer.sign(token_data)
-        
-        # Build access URL
-        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
-        access_url = f"{frontend_url}/tenant/accept?token={secure_token}"
-        
-        subject = f"{settings.EMAIL_SUBJECT_PREFIX}🎉 Το Workspace σας είναι έτοιμο - {tenant.name}"
-        
-        html_content = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-            <h2>Καλώς ήρθατε στο New Concierge!</h2>
-            <p>Γεια σας {user.first_name},</p>
-            <p>Το workspace σας <strong>{tenant.name}</strong> δημιουργήθηκε επιτυχώς!</p>
-            
-            <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px;">
-                <h3>Στοιχεία Πρόσβασης:</h3>
-                <p><strong>Domain:</strong> {domain.domain}</p>
-                <p><strong>Email:</strong> {user.email}</p>
-                <p><strong>Ρόλος:</strong> Manager (Διαχειριστής)</p>
-            </div>
-            
-            <p>
-                <a href="{access_url}" 
-                   style="background: #4CAF50; color: white; padding: 12px 24px; 
-                          text-decoration: none; border-radius: 4px; display: inline-block;">
-                    Πρόσβαση στο Workspace
-                </a>
-            </p>
-            
-            <p style="color: #666; font-size: 14px;">
-                Αυτό το link είναι έγκυρο για 24 ώρες. Μετά μπορείτε να συνδεθείτε κανονικά με το email και password σας.
-            </p>
-            
-            <p>Καλή αρχή!</p>
-            <p>Η Ομάδα του New Concierge</p>
-        </body>
-        </html>
-        """
-        
-        try:
-            send_mail(
-                subject=subject,
-                message=strip_tags(html_content),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_content,
-                fail_silently=False,
-            )
-            return True
-        except Exception as e:
-            logger.error(f"Failed to send tenant welcome email to {user.email}: {e}")
-            return False
 
 
 class UserVerificationService:
