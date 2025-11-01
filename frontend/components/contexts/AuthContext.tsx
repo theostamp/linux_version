@@ -1,6 +1,5 @@
 'use client';
 
-import type { User } from '@/types/user';
 import React, {
   createContext,
   useContext,
@@ -9,6 +8,8 @@ import React, {
   ReactNode,
   useCallback,
 } from 'react';
+import type { User } from '@/types/user';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   getCurrentUser,
   loginUser,
@@ -38,16 +39,19 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const queryClient = useQueryClient();
 
   // Always sync user to localStorage
   const setUser = useCallback((user: User | null) => {
     setUserState(user);
     if (user) {
       localStorage.setItem('user', JSON.stringify(user));
+      queryClient.setQueryData(['me'], user);
     } else {
       localStorage.removeItem('user');
+      queryClient.removeQueries({ queryKey: ['me'], exact: true });
     }
-  }, []);
+  }, [queryClient]);
 
   const performClientLogout = useCallback(() => {
     localStorage.removeItem('access');

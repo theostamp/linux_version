@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { useAuth } from '@/components/contexts/AuthContext';
 import { CheckCircle, XCircle, AlertCircle, RefreshCw, Mail } from 'lucide-react';
 
 const POLLING_INTERVAL = 3000; // 3 seconds
@@ -16,6 +17,7 @@ export default function SubscriptionSuccessPage() {
   const [status, setStatus] = useState('processing');
   const [error, setError] = useState('');
   const [attempts, setAttempts] = useState(0);
+  const { refreshUser } = useAuth();
 
   const handleRetry = () => {
     setStatus('processing');
@@ -52,6 +54,12 @@ export default function SubscriptionSuccessPage() {
           }
           if (data.refresh) {
             localStorage.setItem('refresh', data.refresh);
+          }
+
+          try {
+            await refreshUser();
+          } catch (refreshError) {
+            console.error('Failed to refresh user data after subscription completion:', refreshError);
           }
           
           // Redirect to dashboard (production uses main domain, not subdomains)
