@@ -31,7 +31,6 @@ from django_tenants.utils import get_tenant_model, get_tenant_domain_model, sche
 from django.contrib.auth.models import Group
 from users.models import CustomUser
 from buildings.models import Building, BuildingMembership
-from residents.models import Resident
 from announcements.models import Announcement
 from user_requests.models import UserRequest
 from votes.models import Vote
@@ -84,8 +83,8 @@ def run_migrations():
         # Tenant migrations - only if tenants exist
         print("🏢 Tenant migrations...")
         try:
-            from tenants.models import Client
-            if Client.objects.exists():
+            from tenants.models import Tenant
+            if Tenant.objects.exists():
                 call_command("migrate_schemas", tenant=True, interactive=False)
                 print("✅ Tenant migrations ολοκληρώθηκαν")
             else:
@@ -262,20 +261,15 @@ def create_public_tenant():
         else:
             print(f"ℹ️ Υπάρχει ήδη Railway domain: {railway_domain}")
     
-    # Δημιουργία Ultra-Superuser στο public schema (με default values για backward compatibility)
-    ultra_admin_email = os.getenv('ULTRA_ADMIN_EMAIL', 'theostam1966@gmail.com')
-    ultra_admin_password = os.getenv('ULTRA_ADMIN_PASSWORD', 'theo123!@#')
-    ultra_admin_first_name = os.getenv('ULTRA_ADMIN_FIRST_NAME', 'Theo')
-    ultra_admin_last_name = os.getenv('ULTRA_ADMIN_LAST_NAME', 'Ultra Admin')
-    
+    # Δημιουργία Ultra-Superuser στο public schema
     print("\n👑 Δημιουργία Ultra-Superuser...")
     from users.models import CustomUser
     
     ultra_user, created = CustomUser.objects.get_or_create(
-        email=ultra_admin_email,
+        email='theostam1966@gmail.com',
         defaults={
-            'first_name': ultra_admin_first_name,
-            'last_name': ultra_admin_last_name,
+            'first_name': 'Theo',
+            'last_name': 'Ultra Admin',
             'is_staff': True,
             'is_superuser': True,
             'is_active': True,
@@ -285,183 +279,28 @@ def create_public_tenant():
     )
     
     if created:
-        ultra_user.set_password(ultra_admin_password)
+        ultra_user.set_password('theo123!@#')
         ultra_user.save()
-        print(f"✅ Δημιουργήθηκε Ultra-Superuser: {ultra_admin_email}")
+        print("✅ Δημιουργήθηκε Ultra-Superuser: theostam1966@gmail.com")
     else:
         # Ενημέρωση password αν υπάρχει ήδη
-        ultra_user.set_password(ultra_admin_password)
+        ultra_user.set_password('theo123!@#')
         ultra_user.is_superuser = True
         ultra_user.is_staff = True
         ultra_user.is_active = True
         ultra_user.email_verified = True
         ultra_user.save()
-        print(f"✅ Ενημέρωθηκε Ultra-Superuser: {ultra_admin_email}")
+        print("✅ Ενημερώθηκε Ultra-Superuser: theostam1966@gmail.com")
 
     # Verify authentication works
     from django.contrib.auth import authenticate
-    test_auth = authenticate(username=ultra_admin_email, password=ultra_admin_password)
+    test_auth = authenticate(username='theostam1966@gmail.com', password='theo123!@#')
     if test_auth:
         print("   ✅ Authentication verified - login will work!")
     else:
         print("   ⚠️ WARNING: Authentication test failed - may need to run fix_admin_auth")
     
     return public_tenant
-
-def fix_production_users():
-    """
-    Αυτόματη διόρθωση χρηστών παραγωγής
-    Διορθώνει role, email verification, names, και subscriptions
-    
-    Διορθώνει:
-    1. Όλους τους users με active subscriptions (role -> manager, is_staff=True, is_superuser=False)
-    2. Users από environment variable PRODUCTION_USERS_TO_FIX (format: email:first_name:last_name:role)
-    3. Διορθώνει email verification για όλους τους active users
-    4. Διορθώνει επώνυμο αν είναι email
-    """
-    print("\n🔧 Διόρθωση χρηστών παραγωγής...")
-    
-    try:
-        from django_tenants.utils import schema_context, get_public_schema_name
-        from django.db.models import Q
-        with schema_context(get_public_schema_name()):
-            fixed_count = 0
-            
-            # 1. Fix ALL managers (not just with subscriptions)
-            print("   📋 Checking all managers...")
-            managers_to_fix = CustomUser.objects.filter(
-                Q(role='manager') | Q(is_staff=True)
-            ).exclude(
-                email__contains='@demo.localhost'  # Exclude demo users
-            )
-            
-            for user in managers_to_fix:
-                # Check if user needs fixing
-                needs_fix = (
-                    user.is_superuser or  # Managers should not be superusers
-                    not user.is_staff or  # Managers should be staff
-                    not user.is_active or  # Should be active
-                    not user.email_verified  # Should be verified
-                )
-                
-                if needs_fix:
-                    print(f"   🔧 Fixing manager: {user.email}")
-                    
-                    user.is_superuser = False  # Manager, not superuser
-                    user.is_staff = True
-                    user.is_active = True
-                    user.email_verified = True  # Auto-verify all managers
-                    
-                    user.save()
-                    
-                    # Fix groups
-                    manager_group, _ = Group.objects.get_or_create(name='Manager')
-                    if not user.groups.filter(name='Manager').exists():
-                        user.groups.add(manager_group)
-                    
-                    if user.groups.filter(name='Resident').exists():
-                        resident_group = Group.objects.get(name='Resident')
-                        user.groups.remove(resident_group)
-                    
-                    fixed_count += 1
-                    print(f"      ✅ Fixed manager: {user.email}")
-                
-            # 2. Also check users with active subscriptions (they should be managers)
-            print("   📋 Checking users with active subscriptions...")
-            active_subscriptions = UserSubscription.objects.filter(
-                status__in=['active', 'trial']
-            ).select_related('user', 'plan')
-            
-            for subscription in active_subscriptions:
-                user = subscription.user
-                if user.role != 'manager' or not user.email_verified:
-                    print(f"   🔧 Fixing subscription user: {user.email}")
-                    user.role = 'manager'
-                    user.is_superuser = False
-                    user.is_staff = True
-                    user.is_active = True
-                    user.email_verified = True
-                    user.save()
-                    fixed_count += 1
-            
-            # 2. Fix users from environment variable (optional, for specific cases)
-            prod_users_env = os.getenv('PRODUCTION_USERS_TO_FIX', '')
-            if prod_users_env:
-                print("   📋 Checking users from PRODUCTION_USERS_TO_FIX...")
-                users_to_fix = []
-                for user_config in prod_users_env.split(','):
-                    parts = user_config.strip().split(':')
-                    if len(parts) >= 4:
-                        users_to_fix.append({
-                            'email': parts[0],
-                            'first_name': parts[1],
-                            'last_name': parts[2],
-                            'role': parts[3],
-                        })
-                
-                for user_data in users_to_fix:
-                    email = user_data['email']
-                    try:
-                        user = CustomUser.objects.get(email=email)
-                        
-                        # Check if user needs fixing
-                        needs_fix = (
-                            user.role != user_data['role'] or
-                            user.is_superuser or
-                            not user.is_staff or
-                            not user.is_active or
-                            not user.email_verified or
-                            user.first_name != user_data['first_name'] or
-                            (user.last_name == email or '@' in user.last_name) or
-                            user.last_name != user_data['last_name']
-                        )
-                        
-                        if needs_fix:
-                            print(f"   🔧 Fixing configured user: {email}")
-                            
-                            user.role = user_data['role']
-                            user.is_superuser = False
-                            user.is_staff = True
-                            user.is_active = True
-                            user.email_verified = True
-                            user.first_name = user_data['first_name']
-                            
-                            if user.last_name == email or '@' in user.last_name:
-                                user.last_name = user_data['last_name']
-                            
-                            user.save()
-                            
-                            # Fix groups based on role
-                            if user_data['role'] == 'manager':
-                                manager_group, _ = Group.objects.get_or_create(name='Manager')
-                                if not user.groups.filter(name='Manager').exists():
-                                    user.groups.add(manager_group)
-                                if user.groups.filter(name='Resident').exists():
-                                    user.groups.remove(Group.objects.get(name='Resident'))
-                            
-                            fixed_count += 1
-                            print(f"      ✅ Fixed user: {email}")
-                        else:
-                            print(f"      ℹ️  User {email} is already correct")
-                            
-                    except CustomUser.DoesNotExist:
-                        print(f"      ℹ️  User {email} not found - skipping")
-                        continue
-                    except Exception as e:
-                        print(f"      ⚠️  Error fixing user {email}: {e}")
-                        continue
-            
-            if fixed_count > 0:
-                print(f"✅ Fixed {fixed_count} production user(s)")
-            else:
-                print("ℹ️  No users needed fixing")
-            
-            return True
-            
-    except Exception as e:
-        print(f"⚠️  Error in production user fixes: {e}")
-        print("   Continuing with initialization...")
-        return True  # Don't fail the entire setup
 
 def create_demo_tenant():
     """Δημιουργία demo tenant με πλήρη αρχικοποίηση"""
@@ -573,8 +412,7 @@ def create_demo_data(tenant_schema):
                 'password': 'resident123456',
                 'is_staff': False,
                 'is_superuser': False,  # 👤 Resident χωρίς admin δικαιώματα
-                'role': None,  # No SystemRole - will have Resident.role instead
-                'resident_role': 'tenant',  # Resident.Role: Ένοικος
+                'role': 'resident',
                 'email_verified': True,
                 'is_active': True
             },
@@ -585,35 +423,24 @@ def create_demo_data(tenant_schema):
                 'password': 'resident123456',
                 'is_staff': False,
                 'is_superuser': False,  # 👤 Owner χωρίς admin δικαιώματα
-                'role': None,  # No SystemRole - will have Resident.role instead
-                'resident_role': 'owner',  # Resident.Role: Ιδιοκτήτης
+                'role': 'resident',  # 🔄 Owner και Resident είναι το ίδιο role
                 'email_verified': True,
                 'is_active': True
             }
         ]
         
         created_users = []
-        resident_role_map = {}  # Store resident_role mapping before processing
-        
         for user_data in users_data:
-            # Store resident_role mapping before creating user
-            if 'resident_role' in user_data:
-                resident_role_map[user_data['email']] = user_data['resident_role']
-            
-            # Extract resident_role from user_data for CustomUser creation (don't include in CustomUser.role)
-            user_data_copy = user_data.copy()
-            user_data_copy.pop('resident_role', None)  # Remove resident_role - it's for Resident model only
-            
             user, created = CustomUser.objects.get_or_create(
-                email=user_data_copy['email'],
+                email=user_data['email'],
                 defaults={
-                    'first_name': user_data_copy['first_name'],
-                    'last_name': user_data_copy['last_name'],
-                    'is_staff': user_data_copy['is_staff'],
-                    'is_superuser': user_data_copy['is_superuser'],
-                    'role': user_data_copy['role'],  # SystemRole: 'superuser', 'admin', 'manager', or None
-                    'is_active': user_data_copy.get('is_active', True),
-                    'email_verified': user_data_copy.get('email_verified', True),
+                    'first_name': user_data['first_name'],
+                    'last_name': user_data['last_name'],
+                    'is_staff': user_data['is_staff'],
+                    'is_superuser': user_data['is_superuser'],
+                    'role': user_data['role'],
+                    'is_active': user_data.get('is_active', True),
+                    'email_verified': user_data.get('email_verified', True),
                     'email_notifications_enabled': True,
                     'notify_financial_updates': True,
                     'notify_maintenance_updates': True,
@@ -623,28 +450,24 @@ def create_demo_data(tenant_schema):
             )
             
             if created:
-                user.set_password(user_data_copy['password'])
+                user.set_password(user_data['password'])
                 user.save()
                 print(f"✅ Δημιουργήθηκε χρήστης: {user.email}")
             else:
                 # Ενημέρωση password αν υπάρχει ήδη
-                user.set_password(user_data_copy['password'])
-                user.is_active = user_data_copy.get('is_active', True)
-                user.email_verified = user_data_copy.get('email_verified', True)
-                # Don't overwrite existing role - only set if it was explicitly None
-                if user_data_copy.get('role') is not None:
-                    user.role = user_data_copy['role']
+                user.set_password(user_data['password'])
+                user.is_active = user_data.get('is_active', True)
+                user.email_verified = user_data.get('email_verified', True)
                 user.save()
                 print(f"ℹ️ Ενημερώθηκε χρήστης: {user.email}")
             
-            # Ανάθεση σε Groups για RBAC (only for SystemRole, not Resident.Role)
+            # Ανάθεση σε Groups για RBAC
             if user.role == 'manager':
                 manager_group = Group.objects.get(name='Manager')
                 user.groups.add(manager_group)
-            elif user.role in ['superuser', 'admin']:
-                # Ultra Admins don't need specific groups
-                pass
-            # Note: Resident.Role users don't get groups via CustomUser.role
+            elif user.role == 'resident':
+                resident_group = Group.objects.get(name='Resident')
+                user.groups.add(resident_group)
             
             created_users.append(user)
         
@@ -678,11 +501,12 @@ def create_demo_data(tenant_schema):
             
             created_buildings.append(building)
         
-        # 3. Δημιουργία building memberships (Manager only - residents created after apartments)
+        # 3. Δημιουργία building memberships
         manager = next((u for u in created_users if u.role == 'manager'), created_users[0])
+        residents = [u for u in created_users if u.role in ['resident', 'owner']]
         
         for i, building in enumerate(created_buildings):
-            # Manager membership (BuildingMembership for backward compat)
+            # Manager membership
             membership, created = BuildingMembership.objects.get_or_create(
                 building=building,
                 resident=manager,
@@ -690,13 +514,24 @@ def create_demo_data(tenant_schema):
             )
             if created:
                 print(f"✅ Manager membership: {manager.email} -> {building.name}")
+            
+            # Resident memberships
+            if i < len(residents):
+                resident = residents[i]
+                membership, created = BuildingMembership.objects.get_or_create(
+                    building=building,
+                    resident=resident,
+                    defaults={'role': resident.role}
+                )
+                if created:
+                    print(f"✅ Resident membership: {resident.email} -> {building.name}")
         
         # 4. Δημιουργία διαμερισμάτων
         for building in created_buildings:
             if building.name == 'Αλκμάνος 22':
                 # Ειδική δημιουργία για Αλκμάνος 22 - 10 διαμερίσματα (ΣΥΝΟΛΟ ΧΙΛΙΟΣΤΑ = 1000)
                 apartments_data = [
-                    {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'demo.owner1@demo.localhost', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'theostam1966@gmail.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
                     {'number': 'Α2', 'floor': 0, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2103456789', 'owner_email': 'eleni.d@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 2, 'participation_mills': 97, 'heating_mills': 105, 'elevator_mills': 97},
                     {'number': 'Α3', 'floor': 0, 'owner_name': 'Νικόλαος Αλεξίου', 'owner_phone': '2104567890', 'owner_email': 'nikos.alex@email.com', 'tenant_name': 'Ανδρέας Παπαγεωργίου', 'tenant_phone': '2105678901', 'tenant_email': 'andreas.p@email.com', 'is_rented': True, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 88, 'heating_mills': 92, 'elevator_mills': 88},
                     {'number': 'Β1', 'floor': 1, 'owner_name': 'Αικατερίνη Σταματίου', 'owner_phone': '2106789012', 'owner_email': 'katerina.s@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 115, 'elevator_mills': 110},
@@ -736,49 +571,6 @@ def create_demo_data(tenant_schema):
                     )
                     if created:
                         print(f"✅ Δημιουργήθηκε διαμέρισμα: {apt_data['number']} (Αλκμάνος 22)")
-        
-        # 4.5. Δημιουργία Resident entries (after apartments are created)
-        # Get users that will become residents (those without SystemRole)
-        resident_users = [u for u in created_users if u.role is None]
-        created_residents = []  # Store created Resident objects
-        
-        for i, building in enumerate(created_buildings):
-            # Create Resident entries for resident users
-            # Match users with apartments (using index for demo)
-            for j, resident_user in enumerate(resident_users):
-                if j < len(resident_users):
-                    # Get the resident_role for this user
-                    resident_role = resident_role_map.get(resident_user.email, 'tenant')  # Default to 'tenant'
-                    
-                    # Find an apartment for this resident (assign to available apartments)
-                    apartments = Apartment.objects.filter(building=building).order_by('number')
-                    if apartments.exists():
-                        apartment = apartments[j % apartments.count()] if j < apartments.count() else apartments.first()
-                        
-                        # Create Resident entry
-                        resident, created = Resident.objects.get_or_create(
-                            user=resident_user,
-                            building=building,
-                            defaults={
-                                'apartment': apartment.number,
-                                'role': resident_role,
-                                'phone': ''
-                            }
-                        )
-                        if created:
-                            print(f"✅ Resident entry: {resident_user.email} ({resident_role}) -> {building.name}, Apartment {apartment.number}")
-                        
-                        # Store created resident for later use
-                        created_residents.append(resident)
-                        
-                        # Also create BuildingMembership for backward compatibility
-                        membership, created = BuildingMembership.objects.get_or_create(
-                            building=building,
-                            resident=resident_user,
-                            defaults={'role': 'resident'}
-                        )
-                        if created:
-                            print(f"✅ BuildingMembership: {resident_user.email} -> {building.name}")
         
         # 5. Δημιουργία ανακοινώσεων
         announcements_data = [
@@ -824,15 +616,12 @@ def create_demo_data(tenant_schema):
         ]
         
         for request_data in requests_data:
-            # Use first resident user if available, otherwise use first user
-            created_by_user = created_residents[0].user if created_residents else (resident_users[0] if resident_users else created_users[0])
-            
             user_request, created = UserRequest.objects.get_or_create(
                 title=request_data['title'],
                 defaults={
                     'description': request_data['description'],
                     'building': created_buildings[0],
-                    'created_by': created_by_user,
+                    'created_by': residents[0],
                     'type': request_data['type'],
                     'priority': 'urgent' if request_data['is_urgent'] else 'medium'
                 }
@@ -1068,11 +857,19 @@ def save_credentials():
     os.makedirs(log_dir, exist_ok=True)
     log_path = os.path.join(log_dir, "demo_credentials.log")
     
-    ultra_admin_email = os.getenv('ULTRA_ADMIN_EMAIL', 'theostam1966@gmail.com')
-    ultra_admin_password_set = '*** SET IN ENV VAR ***' if os.getenv('ULTRA_ADMIN_PASSWORD') else 'theo123!@# (default)'
-    enable_demo_data = os.getenv('ENABLE_DEMO_DATA', 'true').lower() == 'true'
-    if enable_demo_data:
-        demo_section = """
+    credentials = """
+🎯 NEW CONCIERGE PLATFORM - AUTO INITIALIZATION
+==============================================
+🚀 Complete Production-Ready System with Authentication, Authorization, Billing & Analytics
+
+🏢 PUBLIC SCHEMA (localhost):
+-----------------------------
+👑 Ultra-Superuser (System Administrator):
+   Email: theostam1966@gmail.com
+   Password: theo123!@#
+   Permissions: Complete system management, all tenants and users
+   Admin URL: http://localhost:8000/admin/
+   Features: Full access to all system functions and analytics
 
 🏢 DEMO TENANT (demo.localhost):
 -------------------------------
@@ -1146,24 +943,6 @@ Demo Frontend: http://demo.localhost:8080
 Demo Backend API: http://demo.localhost:8000/api/
 Demo Admin Panel: http://demo.localhost:8000/admin/
 API Documentation: http://demo.localhost:8000/api/docs/
-"""
-    else:
-        demo_section = "\n⚠️  Demo data disabled (ENABLE_DEMO_DATA=false)\n"
-    
-    credentials = f"""
-🎯 NEW CONCIERGE PLATFORM - AUTO INITIALIZATION
-==============================================
-🚀 Complete Production-Ready System with Authentication, Authorization, Billing & Analytics
-
-🏢 PUBLIC SCHEMA (localhost):
------------------------------
-👑 Ultra-Superuser (System Administrator):
-   Email: {ultra_admin_email}
-   Password: {ultra_admin_password_set}
-   Permissions: Complete system management, all tenants and users
-   Admin URL: http://localhost:8000/admin/
-   Features: Full access to all system functions and analytics
-{demo_section}
 
 🔐 SECURITY FEATURES:
 ---------------------
@@ -1227,7 +1006,7 @@ API Documentation: http://demo.localhost:8000/api/docs/
 
 🔐 PERMISSION HIERARCHY:
 ------------------------
-👑 Ultra-Superuser ({ultra_admin_email}):
+👑 Ultra-Superuser (theostam1966@gmail.com):
    - Complete system administration
    - Manage all tenants and users
    - Full access to all schemas and analytics
@@ -1306,23 +1085,11 @@ def main():
     # 5. Δημιουργία public tenant
     create_public_tenant()
 
-    # 5.5. Διόρθωση χρηστών παραγωγής (enabled by default for production readiness)
-    enable_user_fixes = os.getenv('ENABLE_PRODUCTION_USER_FIXES', 'true').lower() == 'true'
-    if enable_user_fixes:
-        fix_production_users()
-    else:
-        print("\n⚠️  Production user fixes disabled (ENABLE_PRODUCTION_USER_FIXES=false)")
-        print("   ℹ️  Set ENABLE_PRODUCTION_USER_FIXES=true to enable automatic user fixes")
+    # 6. Δημιουργία demo tenant - DISABLED FOR PRODUCTION
+    # tenant = create_demo_tenant()
 
-    # 6. Δημιουργία demo tenant (enabled by default για demo κτίριο)
-    enable_demo_data = os.getenv('ENABLE_DEMO_DATA', 'true').lower() == 'true'
-    if enable_demo_data:
-        tenant = create_demo_tenant()
-        # 7. Δημιουργία demo δεδομένων
-        create_demo_data('demo')
-    else:
-        print("\n⚠️  Demo data creation disabled (ENABLE_DEMO_DATA=false)")
-        print("   ℹ️  Set ENABLE_DEMO_DATA=true to create demo tenant and data")
+    # 7. Δημιουργία demo δεδομένων - DISABLED FOR PRODUCTION
+    # create_demo_data('demo')
 
     # 8. Αποθήκευση credentials
     credentials_file = save_credentials()
@@ -1342,34 +1109,27 @@ def main():
     
     print("\n👑 Ultra-Superuser (System Administrator):")
     print("   URL: http://localhost:8000/admin/")
-    ultra_admin_email = os.getenv('ULTRA_ADMIN_EMAIL', 'theostam1966@gmail.com')
-    ultra_admin_password = os.getenv('ULTRA_ADMIN_PASSWORD', 'theo123!@#')
-    if ultra_admin_email:
-        print(f"   Email: {ultra_admin_email}")
-        print(f"   Password: {'*** SET IN ENV VAR ***' if os.getenv('ULTRA_ADMIN_PASSWORD') else ultra_admin_password}")
+    print("   Email: theostam1966@gmail.com")
+    print("   Password: theo123!@#")
     print("   Permissions: Complete system management")
     
-    enable_demo_data = os.getenv('ENABLE_DEMO_DATA', 'true').lower() == 'true'
-    if enable_demo_data:
-        print("\n🌐 Demo Tenant Access:")
-        print("   Frontend: http://demo.localhost:8080")
-        print("   Backend API: http://demo.localhost:8000/api/")
-        print("   Admin Panel: http://demo.localhost:8000/admin/")
-        print("   API Documentation: http://demo.localhost:8000/api/docs/")
-        
-        print("\n👥 Demo Users (RBAC Enabled):")
-        print("   🔧 Admin: admin@demo.localhost / admin123456")
-        print("   👨‍💼 Manager: manager@demo.localhost / manager123456")
-        print("   👤 Resident 1: resident1@demo.localhost / resident123456")
-        print("   👤 Resident 2: resident2@demo.localhost / resident123456")
-        
-        print("\n🏢 Demo Building: Αλκμάνος 22")
-        print("   Address: Αλκμάνος 22, Αθήνα 115 28, Ελλάδα")
-        print("   Apartments: 10 (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)")
-        print("   Mills: 1000/1000/1000 (Participation/Heating/Elevator)")
-        print("   Financial Data: Zero demo amounts")
-    else:
-        print("\n⚠️  Demo data disabled (ENABLE_DEMO_DATA=false)")
+    print("\n🌐 Demo Tenant Access:")
+    print("   Frontend: http://demo.localhost:8080")
+    print("   Backend API: http://demo.localhost:8000/api/")
+    print("   Admin Panel: http://demo.localhost:8000/admin/")
+    print("   API Documentation: http://demo.localhost:8000/api/docs/")
+    
+    print("\n👥 Demo Users (RBAC Enabled):")
+    print("   🔧 Admin: admin@demo.localhost / admin123456")
+    print("   👨‍💼 Manager: manager@demo.localhost / manager123456")
+    print("   👤 Resident 1: resident1@demo.localhost / resident123456")
+    print("   👤 Resident 2: resident2@demo.localhost / resident123456")
+    
+    print("\n🏢 Demo Building: Αλκμάνος 22")
+    print("   Address: Αλκμάνος 22, Αθήνα 115 28, Ελλάδα")
+    print("   Apartments: 10 (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)")
+    print("   Mills: 1000/1000/1000 (Participation/Heating/Elevator)")
+    print("   Financial Data: Zero demo amounts")
     
     print("\n💳 Billing System Features:")
     print("   ✅ Subscription Plans: Starter, Professional, Enterprise")

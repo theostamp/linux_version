@@ -74,127 +74,15 @@ class EmailService:
             msg.attach_alternative(html_content, "text/html")
             msg.send()
             
-            logger.info(f"Verification email sent successfully to {user.email}")
             return True
         except Exception as e:
-            logger.error(f"Error sending verification email to {user.email}: {e}")
-            import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
-            return False
-    
-    @staticmethod
-    def send_tenant_invitation_email(invitation):
-        """
-        Αποστολή email πρόσκλησης για TenantInvitation (new invitation system)
-        """
-        from .models_invitation import TenantInvitation
-        
-        # Generate invitation token and URL
-        token = invitation.generate_token()
-        invitation_url = f"{settings.FRONTEND_URL}/invitations/accept?token={token}"
-        
-        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Πρόσκληση στο Digital Concierge"
-        
-        # Get building name if apartment_id exists
-        building_name = None
-        apartment_info = None
-        if invitation.apartment_id:
-            try:
-                from buildings.models import Building, Apartment
-                apartment = Apartment.objects.get(id=invitation.apartment_id)
-                building = apartment.building
-                building_name = building.name
-                apartment_info = f"Διαμέρισμα {apartment.number}"
-            except Exception as e:
-                logger.warning(f"Could not fetch apartment/building info for invitation {invitation.id}: {e}")
-        
-        # Get inviter name
-        inviter_name = invitation.invited_by.get_full_name() or invitation.invited_by.email
-        
-        # Email content
-        message = f"""
-        Γεια σας,
-        
-        Ο/Η {inviter_name} σας έχει προσκληθεί να συμμετάσχετε στην πλατφόρμα Digital Concierge.
-        
-        """
-        
-        if building_name:
-            message += f"""
-        Κτίριο: {building_name}
-        """
-        
-        if apartment_info:
-            message += f"{apartment_info}\n        "
-        
-        message += f"""
-        Ρόλος: {invitation.invited_role or 'Resident'}
-        
-        Για να αποδεχτείτε την πρόσκληση και να δημιουργήσετε τον λογαριασμό σας, παρακαλώ κάντε κλικ στον παρακάτω σύνδεσμο:
-        {invitation_url}
-        
-        """
-        
-        if invitation.message:
-            message += f"""
-        Προσωπικό μήνυμα:
-        {invitation.message}
-        
-        """
-        
-        message += f"""
-        Αυτή η πρόσκληση θα λήξει στις {invitation.expires_at.strftime('%d/%m/%Y %H:%M')}.
-        
-        Αν δεν περιμένατε αυτήν την πρόσκληση, παρακαλώ αγνοήστε αυτό το email.
-        
-        Με εκτίμηση,
-        Η ομάδα του Digital Concierge
-        """
-        
-        try:
-            from django.core.mail import EmailMultiAlternatives
-            
-            # Try to render HTML template
-            html_content = None
-            try:
-                html_content = render_to_string('emails/tenant_invitation.html', {
-                    'invitation': invitation,
-                    'invitation_url': invitation_url,
-                    'inviter_name': inviter_name,
-                    'building_name': building_name,
-                    'apartment_info': apartment_info,
-                    'role': invitation.invited_role or 'Resident',
-                    'message': invitation.message,
-                    'expires_at': invitation.expires_at,
-                })
-            except Exception as e:
-                logger.warning(f"Could not render HTML template for tenant invitation: {e}. Using plain text.")
-            
-            # Create email
-            msg = EmailMultiAlternatives(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [invitation.email]
-            )
-            
-            if html_content:
-                msg.attach_alternative(html_content, "text/html")
-            
-            msg.send()
-            
-            logger.info(f"Tenant invitation email sent successfully to {invitation.email}")
-            return True
-        except Exception as e:
-            logger.error(f"Error sending tenant invitation email to {invitation.email}: {e}")
-            import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            print(f"Error sending verification email: {e}")
             return False
     
     @staticmethod
     def send_invitation_email(invitation):
         """
-        Αποστολή email πρόσκλησης (legacy - για UserInvitation)
+        Αποστολή email πρόσκλησης
         """
         invitation_url = f"{settings.FRONTEND_URL}/accept-invitation?token={invitation.token}"
         
@@ -361,8 +249,7 @@ class EmailService:
     @staticmethod
     def send_workspace_welcome_email(user, tenant_domain):
         """
-        Send workspace welcome email AFTER successful payment confirmation and tenant creation.
-        This should only be called after payment is confirmed, not during tenant creation.
+        Send workspace welcome email after successful subscription and tenant creation.
 
         Args:
             user: The user who subscribed
@@ -370,7 +257,7 @@ class EmailService:
         """
         workspace_url = f"http://{tenant_domain}:8080"  # Adjust protocol/port as needed
 
-        subject = f"{settings.EMAIL_SUBJECT_PREFIX}🎉 Το Workspace σας είναι έτοιμο - {user.email}"
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Ο χώρος εργασίας σας είναι έτοιμος!"
 
         # Plain text version
         message = f"""
@@ -378,8 +265,7 @@ class EmailService:
 
         Καλώς ήρθατε στο New Concierge! 🎉
 
-        ✅ Η πληρωμή σας επιβεβαιώθηκε επιτυχώς!
-        ✅ Ο χώρος εργασίας σας έχει δημιουργηθεί και είναι έτοιμος για χρήση.
+        Ο χώρος εργασίας σας έχει δημιουργηθεί επιτυχώς και είναι έτοιμος για χρήση.
 
         📍 Ο χώρος εργασίας σας: {workspace_url}
 
@@ -583,14 +469,7 @@ class EmailService:
 
 class InvitationService:
     """
-    Service για τη διαχείριση των προσκλήσεων (LEGACY - DEPRECATED)
-    
-    ⚠️ ATTENTION: This service uses the old UserInvitation model.
-    The new invitation system uses TenantInvitation model (see users/models_invitation.py).
-    For new invitations, use TenantInvitationViewSet in users/views_invitation.py.
-    
-    This service is kept for backward compatibility but should not be used for new features.
-    Use the new TenantInvitation system instead.
+    Service για τη διαχείριση των προσκλήσεων
     """
     
     @staticmethod
@@ -760,11 +639,7 @@ class PasswordResetService:
         <body style="font-family: Arial, sans-serif; line-height: 1.6;">
             <h2>Καλώς ήρθατε στο New Concierge!</h2>
             <p>Γεια σας {user.first_name},</p>
-            
-            <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; margin: 20px 0; border-radius: 8px;">
-                <h3 style="color: #155724; margin: 0;">✅ Η πληρωμή σας επιβεβαιώθηκε επιτυχώς!</h3>
-                <p style="color: #155724; margin: 5px 0 0 0;">Το workspace σας <strong>{tenant.name}</strong> είναι έτοιμο για χρήση.</p>
-            </div>
+            <p>Το workspace σας <strong>{tenant.name}</strong> δημιουργήθηκε επιτυχώς!</p>
             
             <div style="background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px;">
                 <h3>Στοιχεία Πρόσβασης:</h3>
@@ -815,46 +690,30 @@ class UserVerificationService:
     def verify_email(token):
         """
         Επιβεβαίωση email με token
-        Users are created in public schema, so we must search there
         """
-        from django_tenants.utils import schema_context, get_public_schema_name
-        from django.contrib.auth import get_user_model
-        from django.db import connection
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            user = User.objects.get(email_verification_token=token)
+        except User.DoesNotExist:
+            raise ValueError("Μη έγκυρο token επιβεβαίωσης.")
         
-        User = get_user_model()
-        public_schema = get_public_schema_name()
+        # Έλεγχος αν το token έχει λήξει (24 ώρες)
+        if user.email_verification_sent_at:
+            time_diff = timezone.now() - user.email_verification_sent_at
+            if time_diff.total_seconds() > 24 * 3600:  # 24 hours
+                raise ValueError("Το token επιβεβαίωσης έχει λήξει.")
         
-        # Users are always created in public schema during registration
-        # So we must search in public schema, regardless of current schema context
-        with schema_context(public_schema):
-            try:
-                user = User.objects.get(email_verification_token=token)
-            except User.DoesNotExist:
-                # Token not found - may be expired, used already, or invalid
-                raise ValueError("Μη έγκυρο token επιβεβαίωσης.")
-            
-            # Check if user is already verified (token was already used)
-            # This handles the case where user clicks verification link multiple times
-            if user.email_verified:
-                logger.info(f"[VERIFY_EMAIL] User {user.email} is already verified (token reused)")
-                return user  # Return user without error - already verified
-            
-            # Έλεγχος αν το token έχει λήξει (24 ώρες)
-            if user.email_verification_sent_at:
-                time_diff = timezone.now() - user.email_verification_sent_at
-                if time_diff.total_seconds() > 24 * 3600:  # 24 hours
-                    raise ValueError("Το token επιβεβαίωσης έχει λήξει.")
-            
-            # Επιβεβαίωση email
-            user.email_verified = True
-            user.is_active = True
-            user.email_verification_token = None
-            user.email_verification_sent_at = None
-            user.save(update_fields=[
-                'email_verified', 
-                'is_active', 
-                'email_verification_token', 
-                'email_verification_sent_at'
-            ])
-            
-            return user
+        # Επιβεβαίωση email
+        user.email_verified = True
+        user.is_active = True
+        user.email_verification_token = None
+        user.email_verification_sent_at = None
+        user.save(update_fields=[
+            'email_verified', 
+            'is_active', 
+            'email_verification_token', 
+            'email_verification_sent_at'
+        ])
+        
+        return user

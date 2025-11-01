@@ -44,12 +44,15 @@ class TenantInvitation(models.Model):
         help_text='Role the user will have when they accept'
     )
     
-    # Optional: Link to specific apartment
-    apartment_id = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text='Optional: ID of apartment to assign user to'
-    )
+    # Optional: Link to specific apartment (commented out until buildings app is properly installed)
+    # apartment = models.ForeignKey(
+    #     'buildings.Apartment',
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     related_name='invitations',
+    #     help_text='Optional: Assign user to specific apartment'
+    # )
     
     # Invitation metadata
     invited_by = models.ForeignKey(

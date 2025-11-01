@@ -1,7 +1,5 @@
 # backend/users/views.py
 
-import logging
-
 from django.contrib.auth import authenticate, get_user_model
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
@@ -15,7 +13,6 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.utils import timezone
-from django.core.exceptions import ObjectDoesNotExist
 from .models import CustomUser, UserInvitation, PasswordResetToken
 from .serializers import (
     UserSerializer, OfficeDetailsSerializer, CustomTokenObtainPairSerializer,
@@ -30,10 +27,8 @@ from core.throttles import (
     LoginThrottle, RegistrationThrottle, PasswordResetThrottle,
     InvitationThrottle, EmailVerificationThrottle, AuthEndpointThrottle
 )
-from .utils import resident_table_exists
 
 User = get_user_model()
-logger = logging.getLogger(__name__)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
@@ -158,42 +153,10 @@ def me_view(request):
     """
     GET /api/users/me/
     Επιστρέφει τα στοιχεία του authenticated χρήστη.
-    
-    Includes:
-    - system_role: CustomUser.role ('superuser', 'admin', or 'manager')
-    - resident_role: Resident.role ('manager', 'owner', or 'tenant') if user has Resident profile
-    - resident_profile: Full Resident object if exists
     """
     user = request.user
-    
-    # Try to get resident profile with building (optimized query)
-    resident_role = None
-    resident_profile_data = None
+    role = getattr(user, "role", None)
 
-    if resident_table_exists():
-        try:
-            resident_profile = user.resident_profile  # May trigger DB lookup
-        except ObjectDoesNotExist:
-            resident_profile = None
-        except Exception as exc:
-            # If the resident table exists but isn't migrated correctly, avoid crashing the endpoint
-            logger.debug(
-                "Skipping resident profile for user %s due to error: %s",
-                user.id,
-                exc,
-            )
-            resident_profile = None
-
-        if resident_profile:
-            building = getattr(resident_profile, 'building', None)
-            resident_role = resident_profile.role
-            resident_profile_data = {
-                'apartment': resident_profile.apartment,
-                'building_id': building.id if building else None,
-                'building_name': building.name if building else None,
-                'phone': resident_profile.phone or None,
-            }
-    
     return Response({
         'id': user.id,
         'email': user.email,
@@ -201,13 +164,7 @@ def me_view(request):
         'last_name': user.last_name,
         'is_staff': user.is_staff,
         'is_superuser': user.is_superuser,
-        'email_verified': getattr(user, 'email_verified', False),
-        'date_joined': user.date_joined.isoformat() if user.date_joined else None,
-        'last_login': user.last_login.isoformat() if user.last_login else None,
-        'role': user.role,  # SystemRole (backward compat)
-        'system_role': user.role,  # Explicit system_role field
-        'resident_role': resident_role,  # Resident.Role if exists
-        'resident_profile': resident_profile_data,  # Full Resident profile if exists
+        'role': role,
         'office_name': user.office_name,
         'office_phone': user.office_phone,
         'office_address': user.office_address,
@@ -423,35 +380,27 @@ def resend_verification_view(request):
     """
     POST /api/users/resend-verification/
     Επανάληψη αποστολής email επιβεβαίωσης
-    Users are created in public schema, so we must search there
     """
-    from django_tenants.utils import schema_context, get_public_schema_name
-    
     email = request.data.get('email')
     if not email:
         return Response({
             'error': 'Email είναι υποχρεωτικό.'
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    public_schema = get_public_schema_name()
-    
-    # Users are always created in public schema during registration
-    # So we must search in public schema, regardless of current schema context
-    with schema_context(public_schema):
-        try:
-            user = CustomUser.objects.get(email=email, email_verified=False)
-            if EmailService.send_verification_email(user):
-                return Response({
-                    'message': 'Email επιβεβαίωσης στάλθηκε ξανά.'
-                }, status=status.HTTP_200_OK)
-            else:
-                return Response({
-                    'error': 'Αποτυχία αποστολής email.'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except CustomUser.DoesNotExist:
+    try:
+        user = CustomUser.objects.get(email=email, email_verified=False)
+        if EmailService.send_verification_email(user):
             return Response({
-                'error': 'Δεν βρέθηκε χρήστης με αυτό το email ή το email είναι ήδη επιβεβαιωμένο.'
-            }, status=status.HTTP_404_NOT_FOUND)
+                'message': 'Email επιβεβαίωσης στάλθηκε ξανά.'
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'error': 'Αποτυχία αποστολής email.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except CustomUser.DoesNotExist:
+        return Response({
+            'error': 'Δεν βρέθηκε χρήστης με αυτό το email ή το email είναι ήδη επιβεβαιωμένο.'
+        }, status=status.HTTP_404_NOT_FOUND)
 
 
 # ===== INVITATION ENDPOINTS =====

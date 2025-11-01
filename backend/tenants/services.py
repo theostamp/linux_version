@@ -9,7 +9,6 @@ from django_tenants.utils import schema_context
 from django.core.exceptions import ValidationError
 
 from .models import Client, Domain
-from .utils import generate_schema_name_from_email, generate_unique_schema_name, get_tenant_subdomain
 from users.models import CustomUser
 from billing.models import SubscriptionPlan, UserSubscription
 
@@ -71,8 +70,8 @@ class TenantService:
                 
                 # Step 8: Send welcome email with secure access link
                 try:
-                    from users.services import PasswordResetService
-                    PasswordResetService.send_tenant_welcome_email(user, tenant, domain)
+                    from users.services import EmailService
+                    EmailService.send_tenant_welcome_email(user, tenant, domain)
                     logger.info(f"Sent tenant welcome email to {user.email}")
                 except Exception as email_error:
                     logger.error(f"Failed to send welcome email: {email_error}")
@@ -95,7 +94,7 @@ class TenantService:
             counter += 1
 
         tenant = Client.objects.create(
-            name=user.get_full_name() or generate_schema_name_from_email(user.email),
+            name=user.get_full_name() or user.email.split('@')[0],
             schema_name=schema_name,
             paid_until=timezone.now().date() + timezone.timedelta(days=30),  # 30-day trial
             on_trial=True,
@@ -106,65 +105,20 @@ class TenantService:
         return tenant
     
     def _create_domain(self, tenant, schema_name):
-        """
-        Create or assign a domain for the tenant.
+        """Create the domain for the tenant."""
+        # Determine the base domain
+        base_domain = "localhost"  # Default for development
+        # In production, this would be your actual domain
         
-        Production: All tenants share the main domain (Railway doesn't support wildcard DNS)
-        Development: Each tenant gets a subdomain (e.g., etherm2021.localhost)
-        """
-        from django.conf import settings
-        import os
+        domain_name = f"{schema_name}.{base_domain}"
         
-        # Use production domain if available, otherwise localhost
-        is_production = bool(os.getenv('RAILWAY_PUBLIC_DOMAIN')) or not settings.DEBUG
+        domain = Domain.objects.create(
+            domain=domain_name,
+            tenant=tenant,
+            is_primary=True
+        )
         
-        if is_production:
-            # Production: use the main shared domain
-            base_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN', 'linuxversion-production.up.railway.app')
-            
-            # Check if this domain already exists for another tenant
-            existing_domain = Domain.objects.filter(domain=base_domain, tenant=tenant).first()
-            if existing_domain:
-                logger.info(f"Domain already assigned to tenant: {base_domain}")
-                return existing_domain
-            
-            # Check if this domain already exists
-            existing_domain = Domain.objects.filter(domain=base_domain).first()
-            
-            if existing_domain:
-                # Domain exists - just return it (all tenants share the same domain in production)
-                # We'll use session-based routing instead of domain-based routing
-                logger.info(f"Reusing existing shared domain for tenant {tenant.schema_name}: {base_domain}")
-                domain = existing_domain
-            else:
-                # First tenant - create the primary domain  
-                # This domain will be shared by all future tenants
-                domain = Domain.objects.create(
-                    domain=base_domain,
-                    tenant=tenant,
-                    is_primary=True
-                )
-                logger.info(f"Created primary production domain (will be shared): {base_domain}")
-        else:
-            # Development: each tenant gets a unique subdomain
-            domain_name = f"{schema_name}.localhost"
-            
-            # Check if domain already exists
-            existing_domain = Domain.objects.filter(domain=domain_name).first()
-            if existing_domain:
-                logger.warning(f"Domain {domain_name} already exists for tenant {existing_domain.tenant.schema_name}")
-                # Update to point to new tenant (shouldn't happen, but handle it)
-                existing_domain.tenant = tenant
-                existing_domain.save()
-                return existing_domain
-            
-            domain = Domain.objects.create(
-                domain=domain_name,
-                tenant=tenant,
-                is_primary=True
-            )
-            logger.info(f"Created development subdomain: {domain_name}")
-        
+        logger.info(f"Created domain: {domain_name}")
         return domain
     
     def _run_tenant_migrations(self, schema_name):
@@ -195,7 +149,6 @@ class TenantService:
         current_period_start = timezone.now()
         current_period_end = current_period_start + timezone.timedelta(days=30)  # Monthly
         
-        # Create subscription
         subscription = UserSubscription.objects.create(
             user=user,
             plan=plan,
@@ -232,16 +185,14 @@ class TenantService:
 
                 # Create user in tenant schema with SAME hashed password
                 # Use create() instead of create_user() to avoid re-hashing the password
-                # User is created as TENANT ADMIN (superuser within their tenant)
                 tenant_user = CustomUser.objects.create(
                     email=user.email,
                     password=user.password,  # Already hashed - copy directly
                     first_name=user.first_name,
                     last_name=user.last_name,
                     is_staff=True,
-                    is_superuser=True,  # Full admin rights within this tenant
                     is_active=True,
-                    role='manager',  # Tenant owner/admin role
+                    role='manager',
                     office_name=user.office_name or f"{user.get_full_name()}'s Office",
                     office_phone=user.office_phone,
                     office_address=user.office_address,
@@ -257,38 +208,27 @@ class TenantService:
     def generate_unique_schema_name(self, base_name):
         """
         Generate a unique schema name from a base name.
-        
-        If base_name looks like an email, extracts only the prefix (before @).
-        Otherwise, uses the full base_name.
 
         Args:
-            base_name (str): The base name (can be email or any string)
+            base_name (str): The base name to slugify
 
         Returns:
             str: A unique schema name (RFC 1034/1035 compliant - uses hyphens, not underscores)
-            
-        Examples:
-            etherm2021@gmail.com     → etherm2021 (or etherm2021-1 if taken)
-            john.doe@company.com     → john-doe
-            MyCompany Building       → mycompany-building
         """
-        # If it looks like an email, extract only the prefix
-        if '@' in base_name:
-            base_schema = generate_schema_name_from_email(base_name)
-        else:
-            # Not an email, just slugify it
-            base_schema = slugify(base_name)
-            if not base_schema:
-                base_schema = f"tenant-{int(timezone.now().timestamp())}"
-        
-        # Ensure uniqueness by checking database
-        schema_name = base_schema
+        # Slugify the base name (this already converts underscores to hyphens)
+        schema_name = slugify(base_name)
+
+        # Ensure it's not empty
+        if not schema_name:
+            schema_name = f"tenant-{int(timezone.now().timestamp())}"
+
+        # Ensure it's unique (use hyphens for RFC compliance)
+        original_schema_name = schema_name
         counter = 1
         while Client.objects.filter(schema_name=schema_name).exists():
-            schema_name = f"{base_schema}-{counter}"
+            schema_name = f"{original_schema_name}-{counter}"
             counter += 1
-        
-        logger.info(f"Generated unique schema name: {schema_name} (from: {base_name})")
+
         return schema_name
     
     def get_tenant_by_schema(self, schema_name):
@@ -343,8 +283,14 @@ class TenantService:
                 # Step 5: Create demo data (Αλκμάνος 22 building)
                 self._create_demo_data(schema_name)
 
-                # Step 6: Tenant infrastructure ready (email will be sent after payment confirmation)
-                logger.info(f"Tenant infrastructure ready for {user.email} - email will be sent after payment confirmation")
+                # Step 6: Send welcome email with workspace link
+                try:
+                    from users.services import EmailService
+                    EmailService.send_workspace_welcome_email(user, domain.domain)
+                    logger.info(f"Sent workspace welcome email to {user.email}")
+                except Exception as email_error:
+                    # Don't fail tenant creation if email fails
+                    logger.error(f"Failed to send welcome email: {email_error}")
 
                 logger.info(f"Successfully created tenant infrastructure '{schema_name}' for user {user.email}")
                 return tenant, domain
@@ -363,7 +309,7 @@ class TenantService:
             counter += 1
 
         tenant = Client.objects.create(
-            name=user.get_full_name() or generate_schema_name_from_email(user.email),
+            name=user.get_full_name() or user.email.split('@')[0],
             schema_name=schema_name,
             paid_until=paid_until,
             on_trial=on_trial,
@@ -374,36 +320,27 @@ class TenantService:
         return tenant
 
     def _create_demo_data(self, schema_name):
-        """Create demo data (Αλκμάνος 22 building + demo users) for the new tenant."""
+        """Create demo data (Αλκμάνος 22 building) for the new tenant."""
         try:
             with schema_context(schema_name):
-                from datetime import timedelta
-                from buildings.models import Building, BuildingMembership
+                from buildings.models import Building
                 from apartments.models import Apartment
-                from announcements.models import Announcement
-                from votes.models import Vote, VoteSubmission
-                from user_requests.models import UserRequest
-                from residents.models import Resident
                 from django.contrib.auth import get_user_model
-                from django.utils import timezone
                 
                 User = get_user_model()
                 
                 # Check if demo data already exists
-                existing_demo_building = Building.objects.filter(name__icontains='Αλκμάνος 22').first()
-                if existing_demo_building:
-                    logger.info(
-                        f"Demo data already exists in schema {schema_name} (building: {existing_demo_building.name})"
-                    )
+                if Building.objects.filter(name__icontains='Αλκμάνος').exists():
+                    logger.info(f"Demo data already exists in schema {schema_name}")
                     return
                 
-                # Get the tenant user (manager/owner)
+                # Get the tenant user (manager)
                 tenant_user = User.objects.filter(is_staff=True).first()
                 if not tenant_user:
                     logger.warning(f"No tenant user found in schema {schema_name} for demo data creation")
                     return
                 
-                # Create Αλκμάνος 22 building (we'll create users after apartments based on apartment data)
+                # Create Αλκμάνος 22 building
                 building = Building.objects.create(
                     name='🎓 Demo Building - Αλκμάνος 22',
                     address='Αλκμάνος 22, Αθήνα 115 28, Ελλάδα',
@@ -415,225 +352,34 @@ class TenantService:
                     internal_manager_name='Γραμματεία'
                 )
                 
-                # Create apartments (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1) with owners/tenants data - Total mills: 1000
+                # Create apartments (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)
                 apartments_data = [
-                    {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': f'demo.owner1@{schema_name}.demo', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
-                    {'number': 'Α2', 'floor': 0, 'owner_name': 'Ελένη Δημητρίου', 'owner_phone': '2103456789', 'owner_email': f'eleni.d@{schema_name}.demo', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 90, 'bedrooms': 2, 'participation_mills': 97, 'heating_mills': 105, 'elevator_mills': 97},
-                    {'number': 'Α3', 'floor': 0, 'owner_name': 'Νικόλαος Αλεξίου', 'owner_phone': '2104567890', 'owner_email': f'nikos.alex@{schema_name}.demo', 'tenant_name': 'Ανδρέας Παπαγεωργίου', 'tenant_phone': '2105678901', 'tenant_email': f'andreas.p@{schema_name}.demo', 'is_rented': True, 'square_meters': 75, 'bedrooms': 1, 'participation_mills': 88, 'heating_mills': 92, 'elevator_mills': 88},
-                    {'number': 'Β1', 'floor': 1, 'owner_name': 'Αικατερίνη Σταματίου', 'owner_phone': '2106789012', 'owner_email': f'katerina.s@{schema_name}.demo', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 95, 'bedrooms': 3, 'participation_mills': 110, 'heating_mills': 115, 'elevator_mills': 110},
-                    {'number': 'Β2', 'floor': 1, 'owner_name': 'Δημήτριος Κωνσταντίνου', 'owner_phone': '2107890123', 'owner_email': f'dimitris.k@{schema_name}.demo', 'tenant_name': 'Σοφία Παπαδοπούλου', 'tenant_phone': '2108901234', 'tenant_email': f'sofia.pap@{schema_name}.demo', 'is_rented': True, 'square_meters': 92, 'bedrooms': 2, 'participation_mills': 105, 'heating_mills': 108, 'elevator_mills': 105},
-                    {'number': 'Β3', 'floor': 1, 'owner_name': 'Ιωάννης Μιχαηλίδης', 'owner_phone': '2109012345', 'owner_email': f'giannis.m@{schema_name}.demo', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 88, 'bedrooms': 2, 'participation_mills': 98, 'heating_mills': 102, 'elevator_mills': 98},
-                    {'number': 'Γ1', 'floor': 2, 'owner_name': 'Αννα Παπαδοπούλου', 'owner_phone': '2100123456', 'owner_email': f'anna.pap@{schema_name}.demo', 'tenant_name': 'Χρήστος Γεωργίου', 'tenant_phone': '2101234567', 'tenant_email': f'christos.g@{schema_name}.demo', 'is_rented': True, 'square_meters': 82, 'bedrooms': 2, 'participation_mills': 92, 'heating_mills': 95, 'elevator_mills': 92},
-                    {'number': 'Γ2', 'floor': 2, 'owner_name': 'Παναγιώτης Αντωνίου', 'owner_phone': '2102345678', 'owner_email': f'panagiotis.a@{schema_name}.demo', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 100, 'bedrooms': 3, 'participation_mills': 115, 'heating_mills': 100, 'elevator_mills': 115},
-                    {'number': 'Γ3', 'floor': 3, 'owner_name': 'Ευαγγελία Κωνσταντίνου', 'owner_phone': '2103456789', 'owner_email': f'evangelia.k@{schema_name}.demo', 'tenant_name': 'Δημήτριος Παπαδόπουλος', 'tenant_phone': '2104567890', 'tenant_email': f'dimitris.pap@{schema_name}.demo', 'is_rented': True, 'square_meters': 96, 'bedrooms': 3, 'participation_mills': 108, 'heating_mills': 100, 'elevator_mills': 108},
-                    {'number': 'Δ1', 'floor': 3, 'owner_name': 'Μιχαήλ Γεωργίου', 'owner_phone': '2105678901', 'owner_email': f'michalis.g@{schema_name}.demo', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 78, 'bedrooms': 1, 'participation_mills': 87, 'heating_mills': 83, 'elevator_mills': 87}
+                    {'number': 'Α1', 'floor': 1, 'area': 85.5, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': 'Α2', 'floor': 1, 'area': 75.0, 'participation_mills': 88, 'heating_mills': 88, 'elevator_mills': 88},
+                    {'number': 'Α3', 'floor': 1, 'area': 90.0, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105},
+                    {'number': 'Β1', 'floor': 2, 'area': 85.5, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': 'Β2', 'floor': 2, 'area': 75.0, 'participation_mills': 88, 'heating_mills': 88, 'elevator_mills': 88},
+                    {'number': 'Β3', 'floor': 2, 'area': 90.0, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105},
+                    {'number': 'Γ1', 'floor': 3, 'area': 85.5, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
+                    {'number': 'Γ2', 'floor': 3, 'area': 75.0, 'participation_mills': 88, 'heating_mills': 88, 'elevator_mills': 88},
+                    {'number': 'Γ3', 'floor': 3, 'area': 90.0, 'participation_mills': 105, 'heating_mills': 105, 'elevator_mills': 105},
+                    {'number': 'Δ1', 'floor': 4, 'area': 120.0, 'participation_mills': 140, 'heating_mills': 140, 'elevator_mills': 140},
                 ]
                 
-                created_apartments = []
-                created_resident_users = []  # Store all created resident users
-                
                 for apt_data in apartments_data:
-                    # Create apartment with owner/tenant data
-                    apt = Apartment.objects.create(
+                    Apartment.objects.create(
                         building=building,
                         number=apt_data['number'],
                         floor=apt_data['floor'],
-                        square_meters=apt_data['square_meters'],
-                        bedrooms=apt_data.get('bedrooms', 2),
+                        area=apt_data['area'],
                         participation_mills=apt_data['participation_mills'],
                         heating_mills=apt_data['heating_mills'],
-                        elevator_mills=apt_data['elevator_mills'],
-                        owner_name=apt_data['owner_name'],
-                        owner_phone=apt_data['owner_phone'],
-                        owner_email=apt_data['owner_email'],
-                        tenant_name=apt_data.get('tenant_name', ''),
-                        tenant_phone=apt_data.get('tenant_phone', ''),
-                        tenant_email=apt_data.get('tenant_email', ''),
-                        is_rented=apt_data.get('is_rented', False)
+                        elevator_mills=apt_data['elevator_mills']
                     )
-                    created_apartments.append(apt)
-                    
-                    # Create CustomUser for owner (if email exists and user doesn't exist)
-                    if apt_data['owner_email']:
-                        owner_user, created = User.objects.get_or_create(
-                            email=apt_data['owner_email'],
-                            defaults={
-                                'first_name': apt_data['owner_name'].split()[0] if apt_data['owner_name'] else 'Owner',
-                                'last_name': ' '.join(apt_data['owner_name'].split()[1:]) if len(apt_data['owner_name'].split()) > 1 else '',
-                                'password': 'demo123456',  # Demo password for all
-                                'is_active': True,
-                                'email_verified': True,
-                                'role': None  # Residents don't have system role
-                            }
-                        )
-                        if created:
-                            owner_user.set_password('demo123456')
-                            owner_user.save()
-                            created_resident_users.append((owner_user, apt, 'owner'))
-                            logger.info(f"Created demo owner user: {owner_user.email} -> Apartment {apt.number}")
-                    
-                    # Create CustomUser for tenant (if email exists and user doesn't exist)
-                    if apt_data.get('tenant_email'):
-                        tenant_user, created = User.objects.get_or_create(
-                            email=apt_data['tenant_email'],
-                            defaults={
-                                'first_name': apt_data['tenant_name'].split()[0] if apt_data['tenant_name'] else 'Tenant',
-                                'last_name': ' '.join(apt_data['tenant_name'].split()[1:]) if len(apt_data['tenant_name'].split()) > 1 else '',
-                                'password': 'demo123456',  # Demo password for all
-                                'is_active': True,
-                                'email_verified': True,
-                                'role': None  # Residents don't have system role
-                            }
-                        )
-                        if created:
-                            tenant_user.set_password('demo123456')
-                            tenant_user.save()
-                            created_resident_users.append((tenant_user, apt, 'tenant'))
-                            logger.info(f"Created demo tenant user: {tenant_user.email} -> Apartment {apt.number}")
                 
                 logger.info(f"Created demo building 'Αλκμάνος 22' with 10 apartments in schema {schema_name}")
-                
-                # Create Resident entries and BuildingMembership for all created users
-                for user, apartment, resident_role in created_resident_users:
-                    # Check if resident already exists for this (building, apartment) combination
-                    # The unique constraint is (building, apartment), not (user, building)
-                    existing_resident = Resident.objects.filter(
-                        building=building,
-                        apartment=apartment.number
-                    ).first()
-                    
-                    if existing_resident:
-                        # Resident already exists for this apartment - skip creation
-                        logger.info(
-                            f"Skipping Resident creation: Apartment {apartment.number} already has resident "
-                            f"({existing_resident.user.email}). Updating user link if needed."
-                        )
-                        # If the existing resident's user is different, we could update it, but for demo data
-                        # it's safer to skip and keep the original resident
-                        resident_profile = existing_resident
-                    else:
-                        # Create Resident entry
-                        # Check by (user, building) first, then create with apartment
-                        resident_profile, created = Resident.objects.get_or_create(
-                            user=user,
-                            building=building,
-                            defaults={
-                                'apartment': apartment.number,
-                                'role': resident_role,  # 'owner' or 'tenant'
-                                'phone': apartment.owner_phone if resident_role == 'owner' else apartment.tenant_phone
-                            }
-                        )
-                        if created:
-                            logger.info(f"Created Resident entry: {user.email} ({resident_role}) -> Apartment {apartment.number}")
-                    
-                    # Create BuildingMembership (this doesn't have a unique constraint, so safe to use get_or_create)
-                    BuildingMembership.objects.get_or_create(
-                        building=building,
-                        resident=user,
-                        defaults={'role': resident_role}  # BuildingMembership.role
-                    )
-                
-                logger.info(f"Created {len(created_resident_users)} demo resident users with Resident profiles and BuildingMembership entries")
-
-                today = timezone.now().date()
-
-                # Create welcome announcements
-                Announcement.objects.create(
-                    building=building,
-                    author=tenant_user,
-                    title='Καλωσορίσατε στην πλατφόρμα!',
-                    description=f'Η ομάδα του Concierge έχει ήδη δημιουργήσει το demo κτίριο "Αλκμάνος 22" με 10 διαμερίσματα και {len(created_resident_users)} εικονικούς κατοίκους (owners και tenants). Όλοι οι demo users έχουν password: demo123456. Εξερευνήστε το dashboard για να δείτε όλα τα διαθέσιμα modules. Μπορείτε να διαγράψετε αυτά τα δεδομένα όποτε θέλετε.',
-                    start_date=today,
-                    end_date=today + timedelta(days=30),
-                    published=True,
-                    is_active=True,
-                    is_urgent=False,
-                    priority=10
-                )
-                
-                Announcement.objects.create(
-                    building=building,
-                    author=tenant_user,
-                    title='Συντήρηση ανελκυστήρα',
-                    description='Ενημερώνουμε ότι θα πραγματοποιηθεί προγραμματισμένη συντήρηση του ανελκυστήρα την Παρασκευή. Παρακαλούμε για την κατανόηση σας.',
-                    start_date=today,
-                    end_date=today + timedelta(days=7),
-                    published=True,
-                    is_active=True,
-                    is_urgent=True,
-                    priority=20
-                )
-                logger.info(f"Created demo announcements in schema {schema_name}")
-
-                # Create sample votes
-                vote1 = Vote.objects.create(
-                    building=building,
-                    creator=tenant_user,
-                    title='Εγκατάσταση Φωτοβολταϊκών',
-                    description='Προτείνουμε την εγκατάσταση φωτοβολταϊκών στο δώμα του κτιρίου για μείωση του κόστους ενέργειας. Η ψήφος θα παραμείνει ανοιχτή για 14 ημέρες.',
-                    start_date=today - timedelta(days=1),
-                    end_date=today + timedelta(days=14),
-                    is_active=True,
-                    is_urgent=False,
-                    min_participation=40
-                )
-                
-                # Vote submissions from demo users (manager + some residents)
-                VoteSubmission.objects.create(vote=vote1, user=tenant_user, choice="ΝΑΙ")
-                # Add submissions from a few demo residents if available
-                for idx, (user, _, _) in enumerate(created_resident_users[:3]):  # First 3 residents
-                    choice = "ΝΑΙ" if idx % 2 == 0 else "ΟΧΙ"
-                    VoteSubmission.objects.create(vote=vote1, user=user, choice=choice)
-                
-                vote2 = Vote.objects.create(
-                    building=building,
-                    creator=tenant_user,
-                    title='Αλλαγή διαχειριστή κτιρίου',
-                    description='Πρόταση αλλαγής της εταιρείας διαχείρισης του κτιρίου.',
-                    start_date=today - timedelta(days=7),
-                    end_date=today + timedelta(days=7),
-                    is_active=True,
-                    is_urgent=True,
-                    min_participation=50
-                )
-                VoteSubmission.objects.create(vote=vote2, user=tenant_user, choice="ΝΑΙ")
-                logger.info(f"Created demo votes with submissions in schema {schema_name}")
-
-                # Create sample user requests
-                UserRequest.objects.create(
-                    building=building,
-                    title='Έλεγχος συστήματος θέρμανσης',
-                    description='Παρακαλώ προγραμματίστε έναν έλεγχο στο λεβητοστάσιο πριν την έναρξη της χειμερινής περιόδου.',
-                    status='in_progress',
-                    type='maintenance',
-                    priority='high',
-                    estimated_completion=today + timedelta(days=7),
-                    created_by=tenant_user,
-                    assigned_to=tenant_user,
-                    location='Λεβητοστάσιο',
-                    apartment_number='Υπόγειο'
-                )
-                
-                # Create user requests from demo residents if available
-                if created_resident_users:
-                    first_resident_user = created_resident_users[0][0]  # Get first user from tuple
-                    UserRequest.objects.create(
-                        building=building,
-                        title='Βλάβη στον φωτισμό κλιμακοστασίου',
-                        description='Δεν λειτουργούν 2 λάμπες στον 2ο όροφο.',
-                        status='pending',
-                        type='repair',
-                        priority='medium',
-                        estimated_completion=today + timedelta(days=3),
-                        created_by=first_resident_user,
-                        assigned_to=tenant_user,
-                        location='2ος όροφος - κλιμακοστάσιο',
-                        apartment_number=created_resident_users[0][1].number  # Use apartment number from first resident
-                    )
-
-                logger.info(f"Created demo announcements, votes, and user requests in schema {schema_name}")
-                logger.info(f"Demo users created: {len(created_resident_users)} total (owners + tenants) - Password: demo123456")
                 
         except Exception as e:
             logger.error(f"Failed to create demo data in schema {schema_name}: {e}")
             # Don't raise here - tenant creation can still succeed without demo data
+

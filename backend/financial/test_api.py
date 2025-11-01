@@ -12,7 +12,7 @@ from .models import (
     MeterReading, ExpenseCategory, DistributionType
 )
 from buildings.models import Building, Apartment
-from tenants.models import Client as Tenant
+from tenants.models import Tenant
 
 User = get_user_model()
 

@@ -4,68 +4,6 @@
 
 This application uses **schema-based multi-tenancy** with `django-tenants`. Each customer (tenant) has their own isolated PostgreSQL schema, ensuring complete data separation.
 
-## User Roles Hierarchy
-
-### ⚠️ CRITICAL: CustomUser.role vs Resident.role
-
-There are **different role systems** at different levels of the application:
-
-#### 1. **CustomUser.role (SystemRole)** - Django Tenant Owner Level
-Located in: `users.models.CustomUser.SystemRole`
-
-**Valid values:**
-- `'superuser'` = **Ultra Admin / System Administrator** (preferred)
-  - Example: `theostam1966@gmail.com`
-  - `is_superuser=True`
-  - Lives in **public schema**
-  - Has access to **entire project** (all tenant schemas)
-  - Manages **SaaS platform** (billing, subscriptions, tenants)
-  - Can view all users, all tenants
-  - Access to `/admin/users/`, `/admin/billing/`, etc.
-
-- `'admin'` = **Ultra Admin / System Administrator** (backward compat)
-  - Same as `'superuser'` - used for backward compatibility
-  - `is_superuser=True`
-  - Same permissions as `'superuser'`
-  - **Note:** New Ultra Admin users should use `'superuser'`
-
-- `'manager'` = **Office Manager / Django Tenant Owner**
-  - Example: user created after successful subscription payment
-  - `is_staff=True`, `is_superuser=False`
-  - Has **own tenant schema** (e.g., `etherm2021_schema`)
-  - Has **active subscription**
-  - Access **only to their tenant schema**
-  - Manages buildings, apartments, finances **within their tenant**
-  - Cannot see other tenants or admin panel
-
-**Important:** CustomUser.role (SystemRole) can ONLY be `'superuser'`, `'admin'`, or `'manager'`. It CANNOT be `'owner'`, `'tenant'`, `'staff'`, or `'resident'` - these are Resident.role values or invalid values.
-
-#### 2. **Resident.role** - Apartment Level (within tenant schema)
-Located in: `residents.models.Resident.Role`
-
-**Valid values:**
-- `'manager'` = Διαχειριστής διαμερίσματος (apartment manager)
-- `'owner'` = Ιδιοκτήτης διαμερίσματος (apartment owner)
-- `'tenant'` = Ένοικος διαμερίσματος (apartment tenant/renter)
-
-#### 3. **BuildingMembership.role** - Building Level
-Located in: `buildings.models.BuildingMembership.RESIDENT_ROLES`
-
-**Valid values:**
-- `'resident'` = Κάτοικος κτιρίου (building resident)
-- `'representative'` = Εκπρόσωπος (building representative)
-
-#### 4. **Chat sender_role** - Building Context
-Used in: `chat.models.ChatMessage.sender_role`
-
-**Valid values:**
-- `'manager'` = Building Manager
-- `'resident'` = Building Resident
-- `'admin'` = Admin/Superuser
-- `'other'` = Other users
-
----
-
 ## App Classification
 
 ### SHARED_APPS (Public Schema)

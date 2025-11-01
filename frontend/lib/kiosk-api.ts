@@ -1,7 +1,7 @@
 // Kiosk API service for configuration management
 
 import { api, apiPublic } from '@/lib/api'; // Using public API for kiosk
-import { KioskWidget } from '@/types/kiosk';
+import { KioskConfig, KioskWidget } from '@/types/kiosk';
 
 export interface KioskConfigResponse {
   id: number;

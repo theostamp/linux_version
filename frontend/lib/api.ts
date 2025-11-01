@@ -1622,101 +1622,6 @@ export async function fetchApartment(id: number): Promise<Apartment> {
   return data;
 }
 
-// Invitation API
-export interface InvitationCreateRequest {
-  email: string;
-  invited_role?: 'resident' | 'manager' | 'staff';
-  apartment_id?: number;
-  message?: string;
-  expires_in_days?: number;
-}
-
-export interface Invitation {
-  id: string;
-  email: string;
-  invited_role: string;
-  apartment_id?: number;
-  apartment_info?: {
-    id: number;
-    number: string;
-    floor: number;
-    building: string;
-  };
-  invited_by: number;
-  invited_by_email: string;
-  invited_by_name: string;
-  invited_at: string;
-  expires_at: string;
-  status: 'pending' | 'accepted' | 'declined' | 'expired' | 'cancelled';
-  accepted_at?: string;
-  declined_at?: string;
-  message?: string;
-  is_expired: boolean;
-  can_be_accepted: boolean;
-  invitation_url: string;
-}
-
-export interface AcceptInvitationRequest {
-  token: string;
-  password: string;
-  first_name?: string;
-  last_name?: string;
-  phone?: string;
-}
-
-export const invitationApi = {
-  // List invitations
-  list: async (): Promise<Invitation[]> => {
-    const response = await api.get<Invitation[] | { results: Invitation[] }>('/api/users/invitations/');
-    if (Array.isArray(response.data)) {
-      return response.data;
-    }
-    return response.data.results || [];
-  },
-
-  // Create single invitation
-  create: async (data: InvitationCreateRequest): Promise<Invitation> => {
-    const response = await api.post<Invitation>('/api/users/invitations/create-single/', data);
-    return response.data;
-  },
-
-  // Create bulk invitations
-  createBulk: async (emails: string[], data: Omit<InvitationCreateRequest, 'email'>): Promise<{ message: string; invitations: Invitation[] }> => {
-    const response = await api.post('/api/users/invitations/create-bulk/', {
-      emails,
-      ...data
-    });
-    return response.data;
-  },
-
-  // Cancel invitation
-  cancel: async (id: string): Promise<void> => {
-    await api.post(`/api/users/invitations/${id}/cancel/`);
-  },
-
-  // Resend invitation
-  resend: async (id: string): Promise<void> => {
-    await api.post(`/api/users/invitations/${id}/resend/`);
-  },
-
-  // Accept invitation
-  accept: async (data: AcceptInvitationRequest): Promise<{ message: string; user: any; tenant: any }> => {
-    const response = await api.post('/api/users/invitations/accept/', data);
-    return response.data;
-  },
-
-  // Decline invitation
-  decline: async (token: string, reason?: string): Promise<void> => {
-    await api.post('/api/users/invitations/decline/', { token, reason });
-  },
-
-  // Verify invitation token
-  verify: async (token: string): Promise<{ valid: boolean; invitation?: Invitation; error?: string }> => {
-    const response = await api.get('/api/users/invitations/verify/', { params: { token } });
-    return response.data;
-  },
-};
-
 // Λήψη όλων των διαμερισμάτων ενός κτιρίου
 export async function fetchBuildingApartments(buildingId: number): Promise<BuildingApartmentsResponse> {
   console.log('[API CALL] Attempting to fetch building apartments:', buildingId);
@@ -1771,7 +1676,7 @@ async function fetchApartmentsWithFinancialDataFallback(buildingId: number): Pro
   console.log('[API CALL] Using fallback method with throttling for building:', buildingId);
   
   // First get building data and apartments
-  const [, apartmentsResponse] = await Promise.all([
+  const [buildingResponse, apartmentsResponse] = await Promise.all([
     makeRequestWithRetry({ method: 'get', url: `/api/buildings/list/${buildingId}/` }),
     makeRequestWithRetry({ method: 'get', url: `/api/apartments/?building=${buildingId}` })
   ]);

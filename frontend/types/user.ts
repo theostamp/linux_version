@@ -9,17 +9,7 @@ export type User = {
   groups?: { id: number; name: string }[];
   is_staff?: boolean;
   is_superuser?: boolean;
-  is_active?: boolean;
-  email_verified?: boolean;
-  role?: string;  // Backward compat (same as system_role)
-  system_role?: 'superuser' | 'admin' | 'manager' | null;  // CustomUser.SystemRole
-  resident_role?: 'manager' | 'owner' | 'tenant' | null;  // Resident.Role (apartment level)
-  resident_profile?: {
-    apartment: string;
-    building_id: number;
-    building_name: string;
-    phone?: string | null;
-  } | null;
+  role?: string;
 
   // Office Management Details
   office_name?: string;

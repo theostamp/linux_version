@@ -83,29 +83,16 @@ class BillingService:
                     stripe_subscription.get('current_period_start', timezone.now().timestamp()),
                     tz=timezone.get_current_timezone()
                 )
-                stripe_period_end = timezone.datetime.fromtimestamp(
+                current_period_end = timezone.datetime.fromtimestamp(
                     stripe_subscription.get('current_period_end', (timezone.now() + timezone.timedelta(days=30)).timestamp()),
                     tz=timezone.get_current_timezone()
                 )
-                
-                # During trial, current_period_end should match trial_end for clarity
-                # After trial ends, Stripe will automatically set it to the next billing date
-                if trial_days and trial_end:
-                    # During trial, use trial_end as the current_period_end
-                    current_period_end = trial_end
-                else:
-                    current_period_end = stripe_period_end
             else:
-                # Fallback: During trial, current_period_end = trial_end
-                # After trial, calculate normal billing period
-                if trial_days and trial_end:
-                    current_period_start = trial_start if trial_start else timezone.now()
-                    current_period_end = trial_end
-                else:
-                    current_period_start = timezone.now()
-                    current_period_end = current_period_start + timezone.timedelta(
-                        days=30 if billing_interval == 'month' else 365
-                    )
+                # Fallback to trial dates or current time
+                current_period_start = trial_end if trial_end else timezone.now()
+                current_period_end = current_period_start + timezone.timedelta(
+                    days=30 if billing_interval == 'month' else 365
+                )
             
             # Create UserSubscription
             subscription = UserSubscription.objects.create(
@@ -139,11 +126,10 @@ class BillingService:
             TenantModel = get_tenant_model()
             DomainModel = get_tenant_domain_model()
 
-            # Generate tenant schema name using improved utility functions
-            from tenants.utils import generate_schema_name_from_email, generate_unique_schema_name
-            
-            base_name = generate_schema_name_from_email(user.email)
-            safe_schema = generate_unique_schema_name(base_name)
+            # Generate tenant schema name from email (clean and simple)
+            # Use only the email prefix (before @), sanitized for database safety
+            email_prefix = user.email.split('@')[0]
+            safe_schema = re.sub(r'[^a-z0-9]', '', email_prefix.lower())[:30]
 
             # Check if user already has a tenant (search by domain pattern)
             # This prevents creating multiple tenants for the same user
@@ -190,19 +176,7 @@ class BillingService:
             # Initialize usage tracking
             BillingService._initialize_usage_tracking(subscription)
             
-            # Update user role to manager when subscription is created
-            user.role = 'manager'
-            user.is_staff = True
-            user.is_superuser = False
-            user.email_verified = True  # Auto-verify on payment
-            user.save(update_fields=['role', 'is_staff', 'is_superuser', 'email_verified'])
-            
-            # Add to Manager group
-            from django.contrib.auth.models import Group
-            manager_group, _ = Group.objects.get_or_create(name='Manager')
-            user.groups.add(manager_group)
-            
-            logger.info(f"Created subscription {subscription.id} for user {user.email} - upgraded to manager role")
+            logger.info(f"Created subscription {subscription.id} for user {user.email}")
             return subscription
             
         except Exception as e:
@@ -850,20 +824,7 @@ class WebhookService:
                     billing_cycle.paid_at = timezone.now()
                     billing_cycle.save()
                 
-                # Update user role to manager on payment success
-                user = subscription.user
-                user.role = 'manager'
-                user.is_staff = True
-                user.is_superuser = False
-                user.email_verified = True  # Auto-verify on payment
-                user.save(update_fields=['role', 'is_staff', 'is_superuser', 'email_verified'])
-                
-                # Add to Manager group
-                from django.contrib.auth.models import Group
-                manager_group, _ = Group.objects.get_or_create(name='Manager')
-                user.groups.add(manager_group)
-                
-                logger.info(f"Payment succeeded for subscription {subscription.id} - user {user.email} upgraded to manager")
+                logger.info(f"Payment succeeded for subscription {subscription.id}")
                 return True
                 
             except UserSubscription.DoesNotExist:

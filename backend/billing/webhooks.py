@@ -33,19 +33,13 @@ class StripeWebhookView(APIView):
         sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
         
         try:
-            # Verify webhook signature (only when signature header is present and webhook secret is configured)
-            if settings.STRIPE_WEBHOOK_SECRET and sig_header:
-                try:
-                    event = stripe.Webhook.construct_event(
-                        payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
-                    )
-                    logger.info(f"Webhook signature verified for event: {event.get('type', 'unknown')}")
-                except stripe.error.SignatureVerificationError as e:
-                    logger.error(f"Webhook signature verification failed: {e}")
-                    return HttpResponse(status=400)
+            # Verify webhook signature (only in production and when signature header is present)
+            if not settings.STRIPE_MOCK_MODE and settings.STRIPE_WEBHOOK_SECRET and sig_header:
+                event = stripe.Webhook.construct_event(
+                    payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+                )
             else:
                 # In mock mode or testing mode (no signature), parse the payload directly
-                logger.info("Processing webhook in mock mode (no signature verification)")
                 event = json.loads(payload)
             
             # Handle the event
@@ -67,13 +61,13 @@ class StripeWebhookView(APIView):
             return HttpResponse(status=200)
             
         except ValueError as e:
-            logger.error(f'Invalid JSON payload: {e}')
+            logger.error(f'Invalid payload: {e}')
             return HttpResponse(status=400)
-        except json.JSONDecodeError as e:
-            logger.error(f'JSON decode error: {e}')
+        except stripe.error.SignatureVerificationError as e:
+            logger.error(f'Invalid signature: {e}')
             return HttpResponse(status=400)
         except Exception as e:
-            logger.error(f'Webhook processing error: {e}', exc_info=True)
+            logger.error(f'Webhook error: {e}')
             return HttpResponse(status=500)
 
     def handle_checkout_session_completed(self, session):
@@ -113,33 +107,14 @@ class StripeWebhookView(APIView):
             logger.info(f"[WEBHOOK] Subscription already processed for session: {stripe_checkout_session_id}")
             return
 
-        # Update user role to manager on checkout completion
-        user.role = 'manager'
-        user.is_staff = True
-        user.is_superuser = False
-        user.email_verified = True  # Auto-verify on payment
-        user.save(update_fields=['role', 'is_staff', 'is_superuser', 'email_verified'])
-        
-        # Add to Manager group
-        from django.contrib.auth.models import Group
-        manager_group, _ = Group.objects.get_or_create(name='Manager')
-        user.groups.add(manager_group)
-        
-        logger.info(f"[WEBHOOK] User {user.email} upgraded to manager role")
-
         # Provisioning με transaction
         try:
             with transaction.atomic():
-                # Δημιουργία tenant infrastructure using improved naming
-                from tenants.utils import generate_schema_name_from_email, generate_unique_schema_name
-                
+                # Δημιουργία tenant infrastructure
                 tenant_service = TenantService()
-                if tenant_subdomain:
-                    schema_name = tenant_subdomain
-                else:
-                    # Use improved email-based naming (extract only prefix before @)
-                    base_name = generate_schema_name_from_email(user.email)
-                    schema_name = generate_unique_schema_name(base_name)
+                schema_name = tenant_subdomain or tenant_service.generate_unique_schema_name(
+                    user.email.split('@')[0]
+                )
                 
                 # Get plan
                 try:
@@ -158,41 +133,13 @@ class StripeWebhookView(APIView):
                     stripe_checkout_session_id=stripe_checkout_session_id
                 )
 
-                # Link user to tenant and make them tenant admin
+                # Link user to tenant
                 user.tenant = tenant
                 user.is_staff = True
-                user.is_superuser = False  # Manager, NOT superuser (only Ultra Admin is superuser)
-                user.role = 'manager'  # Tenant owner/admin role (Django Tenant Owner)
-                user.save(update_fields=['tenant', 'is_staff', 'is_superuser', 'role'])
-                
-                # Add user to Manager group for proper permissions
-                from django.contrib.auth.models import Group
-                manager_group, created = Group.objects.get_or_create(name='Manager')
-                if not user.groups.filter(name='Manager').exists():
-                    user.groups.add(manager_group)
-                    logger.info(f"[WEBHOOK] Added {user.email} to Manager group")
-                
-                # Remove from Resident group if present
-                if user.groups.filter(name='Resident').exists():
-                    resident_group = Group.objects.get(name='Resident')
-                    user.groups.remove(resident_group)
-                    logger.info(f"[WEBHOOK] Removed {user.email} from Resident group")
+                user.role = 'manager'
+                user.save(update_fields=['tenant', 'is_staff', 'role'])
 
                 logger.info(f"[WEBHOOK] Provisioning complete for {user.email} → {tenant.schema_name}")
-                
-                # Send workspace welcome email AFTER successful payment confirmation
-                try:
-                    from users.services import EmailService
-                    # Get the domain from the tenant
-                    from tenants.models import Domain
-                    domain = Domain.objects.filter(tenant=tenant).first()
-                    if domain:
-                        EmailService.send_workspace_welcome_email(user, domain.domain)
-                        logger.info(f"[WEBHOOK] Sent workspace welcome email to {user.email}")
-                    else:
-                        logger.warning(f"[WEBHOOK] No domain found for tenant {tenant.schema_name}")
-                except Exception as email_error:
-                    logger.error(f"[WEBHOOK] Failed to send workspace welcome email: {email_error}")
 
         except Exception as e:
             logger.error(f"[WEBHOOK] Provisioning failed: {e}", exc_info=True)

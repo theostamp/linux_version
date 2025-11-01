@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
-import { ApartmentList, updateApartmentOwner, updateApartmentTenant, deleteApartment, invitationApi, type Invitation } from '@/lib/api';
+import { ApartmentList, updateApartmentOwner, updateApartmentTenant, deleteApartment } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Settings, Mail, MailCheck, UserPlus, Send } from 'lucide-react';
+import { Edit, Trash2, Settings } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import ApartmentStatusModal from './ApartmentStatusModal';
 import ApartmentEditModal from './ApartmentEditModal';
@@ -32,60 +32,6 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
     apartment: null,
     type: 'owner'
   });
-  
-  // Invitation states
-  const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [sendingInvitation, setSendingInvitation] = useState<{ email: string; apartmentId: number } | null>(null);
-  
-  // Load invitations on mount
-  useEffect(() => {
-    loadInvitations();
-  }, []);
-  
-  const loadInvitations = async () => {
-    try {
-      const data = await invitationApi.list();
-      setInvitations(data);
-    } catch (error) {
-      console.error('Failed to load invitations:', error);
-    }
-  };
-  
-  const hasPendingInvitation = (email: string): boolean => {
-    if (!email) return false;
-    return invitations.some(
-      inv => inv.email.toLowerCase() === email.toLowerCase() && 
-      inv.status === 'pending' && 
-      !inv.is_expired
-    );
-  };
-  
-  const handleSendInvitation = async (email: string, apartmentId: number, type: 'owner' | 'tenant') => {
-    if (!email) {
-      toast.error('Το email είναι υποχρεωτικό');
-      return;
-    }
-    
-    setSendingInvitation({ email, apartmentId });
-    
-    try {
-      await invitationApi.create({
-        email,
-        invited_role: 'resident',
-        apartment_id: apartmentId,
-        message: `Σας προσκληθήκατε να συμμετάσχετε στην πλατφόρμα διαχείρισης του κτιρίου ως ${type === 'owner' ? 'ιδιοκτήτης' : 'ενοικιαστής'} του διαμερίσματος.`,
-        expires_in_days: 7,
-      });
-      
-      toast.success(`Η πρόσκληση στάλθηκε επιτυχώς στο ${email}`);
-      loadInvitations();
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || error.response?.data?.detail || 'Αποτυχία αποστολής πρόσκλησης';
-      toast.error(errorMessage);
-    } finally {
-      setSendingInvitation(null);
-    }
-  };
 
   // Υπολογισμός αθροισμάτων χιλιοστών
   const totals = {
@@ -285,15 +231,13 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 ml-2">
-                    <button
-                      onClick={() => openEditModal(apartment, 'owner')}
-                      className="text-blue-600 hover:text-blue-800"
-                      title="Επεξεργασία ιδιοκτήτη"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => openEditModal(apartment, 'owner')}
+                    className="text-blue-600 hover:text-blue-800 ml-2"
+                    title="Επεξεργασία ιδιοκτήτη"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
                 </div>
               </td>
               
@@ -361,15 +305,13 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 ml-2">
-                    <button
-                      onClick={() => openEditModal(apartment, 'tenant')}
-                      className="text-green-600 hover:text-green-800"
-                      title="Επεξεργασία ενοικιαστή"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => openEditModal(apartment, 'tenant')}
+                    className="text-green-600 hover:text-green-800 ml-2"
+                    title="Επεξεργασία ενοικιαστή"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
                 </div>
               </td>
                
@@ -387,45 +329,7 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
                </td>
               
               <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                <div className="flex items-center space-x-2">
-                  {/* Invitation buttons for owner and tenant */}
-                  {((apartment.owner_email && !hasPendingInvitation(apartment.owner_email)) || 
-                    (apartment.tenant_email && !hasPendingInvitation(apartment.tenant_email))) && (
-                    <button
-                      onClick={() => {
-                        // Prioritize tenant email if both exist
-                        const email = apartment.tenant_email || apartment.owner_email;
-                        const type = apartment.tenant_email ? 'tenant' : 'owner';
-                        if (email) {
-                          handleSendInvitation(email, apartment.id, type);
-                        }
-                      }}
-                      disabled={Boolean(
-                        (apartment.owner_email && sendingInvitation?.email === apartment.owner_email && sendingInvitation?.apartmentId === apartment.id) ||
-                        (apartment.tenant_email && sendingInvitation?.email === apartment.tenant_email && sendingInvitation?.apartmentId === apartment.id)
-                      )}
-                      className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded p-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title={
-                        (apartment.owner_email && hasPendingInvitation(apartment.owner_email)) || 
-                        (apartment.tenant_email && hasPendingInvitation(apartment.tenant_email))
-                          ? "Υπάρχει ενεργή πρόσκληση"
-                          : "Στείλε πρόσκληση για πρόσβαση στην εφαρμογή"
-                      }
-                    >
-                      {(apartment.owner_email && sendingInvitation?.email === apartment.owner_email && sendingInvitation?.apartmentId === apartment.id) ||
-                       (apartment.tenant_email && sendingInvitation?.email === apartment.tenant_email && sendingInvitation?.apartmentId === apartment.id) ? (
-                        <MailCheck className="w-4 h-4 animate-pulse" />
-                      ) : (
-                        <UserPlus className="w-4 h-4" />
-                      )}
-                    </button>
-                  )}
-                  {(apartment.owner_email && hasPendingInvitation(apartment.owner_email)) || 
-                   (apartment.tenant_email && hasPendingInvitation(apartment.tenant_email)) ? (
-                    <span className="inline-flex items-center justify-center text-green-600" title="Υπάρχει ενεργή πρόσκληση">
-                      <MailCheck className="w-4 h-4" />
-                    </span>
-                  ) : null}
+                <div className="flex space-x-2">
                   <button
                     onClick={() => handleDelete(apartment.id)}
                     disabled={deleting === apartment.id}

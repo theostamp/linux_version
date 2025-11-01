@@ -56,19 +56,19 @@ export default function MySubscriptionPage() {
       setLoading(true);
       
       const [subscriptionResponse, plansResponse, billingResponse] = await Promise.all([
-        fetch('/api/billing/subscriptions/current/', {
+        fetch('/api/user/subscription/current/', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access') || localStorage.getItem('access_token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           },
         }),
-        fetch('/api/billing/plans/', {
+        fetch('/api/subscription-plans/', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access') || localStorage.getItem('access_token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           },
         }),
-        fetch('/api/billing/analytics/billing-history/', {
+        fetch('/api/user/subscription/billing-history/', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access') || localStorage.getItem('access_token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           },
         })
       ]);
@@ -98,10 +98,10 @@ export default function MySubscriptionPage() {
     try {
       setActionLoading(true);
       
-      const response = await fetch(`/api/billing/subscriptions/${action}/`, {
+      const response = await fetch(`/api/user/subscription/${action}/`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access') || localStorage.getItem('access_token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
         },
         body: data ? JSON.stringify(data) : undefined,
@@ -210,50 +210,22 @@ export default function MySubscriptionPage() {
                 </div>
                 <div className="text-right">
                   {getStatusBadge(currentSubscription.status)}
-                  {currentSubscription.status === 'trial' ? (
-                    <div className="mt-2">
-                      <p className="text-2xl font-bold text-green-600">
-                        Δωρεάν
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Κατά τη διάρκεια του trial
-                      </p>
-                      <p className="text-sm font-medium text-gray-700 mt-2">
-                        Μετά το trial: {formatCurrency(currentSubscription.price, currentSubscription.currency)}/μήνα
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-2xl font-bold mt-2">
-                      {formatCurrency(currentSubscription.price, currentSubscription.currency)}
-                      <span className="text-sm font-normal text-gray-500">
-                        /{currentSubscription.billing_interval === 'month' ? 'μήνας' : 'έτος'}
-                      </span>
-                    </p>
-                  )}
+                  <p className="text-2xl font-bold mt-2">
+                    {formatCurrency(currentSubscription.price, currentSubscription.currency)}
+                    <span className="text-sm font-normal text-gray-500">
+                      /{currentSubscription.billing_interval === 'month' ? 'μήνας' : 'έτος'}
+                    </span>
+                  </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">
-                    {currentSubscription.status === 'trial' ? 'Trial Περίοδος' : 'Τρέχουσα Περίοδος'}
-                  </p>
+                  <p className="text-sm font-medium text-gray-600">Τρέχουσα Περίοδος</p>
                   <p className="text-lg font-semibold">
-                    {currentSubscription.status === 'trial' && currentSubscription.trial_start && currentSubscription.trial_end ? (
-                      <>
-                        {new Date(currentSubscription.trial_start).toLocaleDateString('el-GR')} - 
-                        {new Date(currentSubscription.trial_end).toLocaleDateString('el-GR')}
-                      </>
-                    ) : (
-                      <>
-                        {new Date(currentSubscription.current_period_start).toLocaleDateString('el-GR')} - 
-                        {new Date(currentSubscription.current_period_end).toLocaleDateString('el-GR')}
-                      </>
-                    )}
+                    {new Date(currentSubscription.current_period_start).toLocaleDateString('el-GR')} - 
+                    {new Date(currentSubscription.current_period_end).toLocaleDateString('el-GR')}
                   </p>
-                  {currentSubscription.status === 'trial' && (
-                    <p className="text-xs text-green-600 mt-1">Δωρεάν trial - χωρίς χρέωση</p>
-                  )}
                 </div>
                 
                 {currentSubscription.status === 'trial' && currentSubscription.trial_end && (
@@ -263,94 +235,69 @@ export default function MySubscriptionPage() {
                       {new Date(currentSubscription.trial_end).toLocaleDateString('el-GR')}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {(() => {
-                        const now = new Date();
-                        const trialEnd = new Date(currentSubscription.trial_end);
-                        const diffTime = trialEnd.getTime() - now.getTime();
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        return diffDays > 0 ? `${diffDays} ημέρες απομένουν` : 'Trial έληξε';
-                      })()}
+                      {currentSubscription.days_until_renewal} ημέρες απομένουν
                     </p>
                   </div>
                 )}
                 
                 <div>
                   <p className="text-sm font-medium text-gray-600">Επόμενη Πληρωμή</p>
-                  {currentSubscription.status === 'trial' && currentSubscription.trial_end ? (
-                    <div>
-                      <p className="text-lg font-semibold text-orange-600">
-                        {(() => {
-                          const now = new Date();
-                          const trialEnd = new Date(currentSubscription.trial_end);
-                          const diffTime = trialEnd.getTime() - now.getTime();
-                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                          return diffDays > 0 ? `${diffDays} ημέρες` : 'Σήμερα';
-                        })()}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Μετά το τέλος του trial
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-lg font-semibold">
-                      {currentSubscription.days_until_renewal || 0} ημέρες
-                    </p>
-                  )}
+                  <p className="text-lg font-semibold">
+                    {currentSubscription.days_until_renewal} ημέρες
+                  </p>
                 </div>
               </div>
 
               {/* Usage Stats */}
-              {currentSubscription.usage && currentSubscription.usage_limits && (
-                <div className="mb-6">
-                  <h4 className="font-semibold mb-3">Χρήση</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-medium">Κτίρια</span>
-                        <span className="text-sm text-gray-500">
-                          {currentSubscription.usage?.buildings ?? 0}/{currentSubscription.usage_limits?.buildings === 999999 ? '∞' : (currentSubscription.usage_limits?.buildings ?? 0)}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full"
-                          style={{ width: `${getUsagePercentage(currentSubscription.usage?.buildings ?? 0, currentSubscription.usage_limits?.buildings ?? 0)}%` }}
-                        />
-                      </div>
+              <div className="mb-6">
+                <h4 className="font-semibold mb-3">Χρήση</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm font-medium">Κτίρια</span>
+                      <span className="text-sm text-gray-500">
+                        {currentSubscription.usage.buildings}/{currentSubscription.usage_limits.buildings === 999999 ? '∞' : currentSubscription.usage_limits.buildings}
+                      </span>
                     </div>
-                    
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-medium">Διαμερίσματα</span>
-                        <span className="text-sm text-gray-500">
-                          {currentSubscription.usage?.apartments ?? 0}/{currentSubscription.usage_limits?.apartments === 999999 ? '∞' : (currentSubscription.usage_limits?.apartments ?? 0)}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-green-600 h-2 rounded-full"
-                          style={{ width: `${getUsagePercentage(currentSubscription.usage?.apartments ?? 0, currentSubscription.usage_limits?.apartments ?? 0)}%` }}
-                        />
-                      </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full"
+                        style={{ width: `${getUsagePercentage(currentSubscription.usage.buildings, currentSubscription.usage_limits.buildings)}%` }}
+                      />
                     </div>
-                    
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-medium">Χρήστες</span>
-                        <span className="text-sm text-gray-500">
-                          {currentSubscription.usage?.users ?? 0}/{currentSubscription.usage_limits?.users === 999999 ? '∞' : (currentSubscription.usage_limits?.users ?? 0)}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-purple-600 h-2 rounded-full"
-                          style={{ width: `${getUsagePercentage(currentSubscription.usage?.users ?? 0, currentSubscription.usage_limits?.users ?? 0)}%` }}
-                        />
-                      </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm font-medium">Διαμερίσματα</span>
+                      <span className="text-sm text-gray-500">
+                        {currentSubscription.usage.apartments}/{currentSubscription.usage_limits.apartments === 999999 ? '∞' : currentSubscription.usage_limits.apartments}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-green-600 h-2 rounded-full"
+                        style={{ width: `${getUsagePercentage(currentSubscription.usage.apartments, currentSubscription.usage_limits.apartments)}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm font-medium">Χρήστες</span>
+                      <span className="text-sm text-gray-500">
+                        {currentSubscription.usage.users}/{currentSubscription.usage_limits.users === 999999 ? '∞' : currentSubscription.usage_limits.users}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-purple-600 h-2 rounded-full"
+                        style={{ width: `${getUsagePercentage(currentSubscription.usage.users, currentSubscription.usage_limits.users)}%` }}
+                      />
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* Actions */}
               <div className="flex gap-2">

@@ -1,5 +1,4 @@
 // lib/api/user.ts
-// Updated: 2025-10-31 - Added resident_role and resident_profile to UserProfile interface
 
 import { apiClient } from './client';
 
@@ -14,15 +13,7 @@ export interface UserProfile {
   date_joined: string;
   last_login?: string;
   email_verified: boolean;
-  role?: string; // Backward compat (same as system_role)
-  system_role?: 'superuser' | 'admin' | 'manager' | null; // CustomUser.SystemRole
-  resident_role?: 'manager' | 'owner' | 'tenant' | null; // Resident.Role (apartment level)
-  resident_profile?: {
-    apartment: string;
-    building_id: number;
-    building_name: string;
-    phone?: string | null;
-  } | null;
+  role?: string;
   office_name?: string;
   office_phone?: string;
   office_address?: string;
@@ -183,13 +174,13 @@ export const userProfileApi = {
 export const userSubscriptionApi = {
   // Get current subscription
   getCurrentSubscription: async (): Promise<{ subscription: UserSubscription | null }> => {
-    const response = await apiClient.get('/api/billing/subscriptions/current/');
+    const response = await apiClient.get('/api/users/subscription/');
     return response.data;
   },
 
   // Get available subscription plans
   getSubscriptionPlans: async (): Promise<{ plans: SubscriptionPlan[] }> => {
-    const response = await apiClient.get('/api/billing/plans/');
+    const response = await apiClient.get('/api/users/subscription/plans/');
     return response.data;
   },
 
@@ -198,7 +189,7 @@ export const userSubscriptionApi = {
     billing_cycles: BillingCycle[];
     total: number;
   }> => {
-    const response = await apiClient.get('/api/billing/analytics/billing-history/', {
+    const response = await apiClient.get('/api/users/subscription/billing-history/', {
       params: { limit }
     });
     return response.data;

@@ -1,5 +1,3 @@
-import logging
-
 # users/serializers.py
 
 from rest_framework import serializers
@@ -7,14 +5,12 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from .models import CustomUser, UserInvitation, PasswordResetToken, UserLoginAttempt
 from .audit import SecurityAuditLogger
-from .utils import resident_table_exists
 
 User = get_user_model()
-logger = logging.getLogger(__name__)
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
@@ -174,13 +170,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return ip
 
 class UserSerializer(serializers.ModelSerializer):
-    """
-    Serializer for CustomUser with system_role and resident_profile support.
-    """
-    system_role = serializers.CharField(source='role', read_only=True, help_text="SystemRole: 'superuser', 'admin', or 'manager'")
-    resident_role = serializers.SerializerMethodField(help_text="Resident.Role: 'manager', 'owner', or 'tenant' (if user has Resident profile)")
-    resident_profile = serializers.SerializerMethodField(help_text="Full Resident profile object if exists")
-    
     class Meta:
         model = CustomUser
         fields = [
@@ -188,10 +177,7 @@ class UserSerializer(serializers.ModelSerializer):
             'email', 
             'first_name', 
             'last_name', 
-            'role',  # Backward compat (same as system_role)
-            'system_role',
-            'resident_role',
-            'resident_profile',
+            'role',
             'is_active', 
             'is_staff',
             'is_superuser',
@@ -205,65 +191,7 @@ class UserSerializer(serializers.ModelSerializer):
             'office_bank_beneficiary',
             'tenant'
         ]
-        read_only_fields = ['id', 'is_staff', 'is_superuser', 'system_role']
-    
-    def get_resident_role(self, obj):
-        """
-        Get Resident.Role from resident_profile if exists.
-        """
-        if getattr(self, '_resident_table_exists', None) is None:
-            self._resident_table_exists = resident_table_exists()
-
-        if not self._resident_table_exists:
-            return None
-
-        try:
-            resident_profile = obj.resident_profile
-        except ObjectDoesNotExist:
-            return None
-        except Exception as exc:
-            logger.debug(
-                "Skipping resident_role for user %s due to error: %s",
-                getattr(obj, 'id', 'unknown'),
-                exc,
-            )
-            return None
-
-        return getattr(resident_profile, 'role', None)
-    
-    def get_resident_profile(self, obj):
-        """
-        Get full Resident profile object if exists.
-        Returns dict with apartment, building_id, building_name, phone.
-        """
-        if getattr(self, '_resident_table_exists', None) is None:
-            self._resident_table_exists = resident_table_exists()
-
-        if not self._resident_table_exists:
-            return None
-
-        try:
-            resident_profile = obj.resident_profile
-        except ObjectDoesNotExist:
-            return None
-        except Exception as exc:
-            logger.debug(
-                "Skipping resident_profile for user %s due to error: %s",
-                getattr(obj, 'id', 'unknown'),
-                exc,
-            )
-            return None
-
-        if not resident_profile:
-            return None
-
-        building = getattr(resident_profile, 'building', None)
-        return {
-            'apartment': resident_profile.apartment,
-            'building_id': building.id if building else None,
-            'building_name': building.name if building else None,
-            'phone': resident_profile.phone or None,
-        }
+        read_only_fields = ['id', 'is_staff', 'is_superuser']
 
 class OfficeDetailsSerializer(serializers.ModelSerializer):
     """
@@ -337,14 +265,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
         
         # Always require email verification for security
-        # Note: CustomUser.role (SystemRole) can only be 'admin' or 'manager' (Django Tenant Owner)
-        # 'tenant' is NOT a valid CustomUser.role - it's a Resident.role (apartment level)
-        # New users start with role=None and get 'manager' role when they create a subscription/tenant
         user = CustomUser.objects.create_user(
             password=password,
-            is_active=True,  # User is active immediately
-            email_verified=True,  # Auto-verified for better UX
-            role=None,  # Role will be set to 'manager' when they create subscription/tenant
+            is_active=False,  # User must verify email before activation
+            email_verified=False,  # Email verification required
             **validated_data
         )
         

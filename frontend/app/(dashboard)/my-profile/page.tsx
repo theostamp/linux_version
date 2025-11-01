@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,68 +26,13 @@ import {
   AlertTriangle,
   Building2,
   Home,
-  Trash2,
-  ArrowRight,
-  ExternalLink,
-  RefreshCw
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import AuthGate from '@/components/AuthGate';
-import { userProfileApi, userSubscriptionApi, type UserProfile } from '@/lib/api/user';
+import { userProfileApi, type UserProfile } from '@/lib/api/user';
 import { toast } from '@/hooks/use-toast';
 
-// Helper function to get user role label in Greek
-// Note: Uses system_role (CustomUser.SystemRole) and optionally resident_role (Resident.Role)
-// SystemRole values: 'superuser', 'admin' (Ultra Admin), or 'manager' (Django Tenant Owner)
-// Resident.Role values: 'manager' (Εσωτερικός Διαχειριστής), 'owner' (Ιδιοκτήτης), 'tenant' (Ένοικος)
-const getUserRoleLabel = (profile: any): string => {
-  if (!profile) return 'Χρήστης';
-  
-  // Use system_role if available, fallback to role (backward compat)
-  const systemRole = profile.system_role ?? profile.role;
-  
-  // SystemRole: 'superuser' or 'admin' = Ultra Admin
-  if (systemRole === 'superuser' || systemRole === 'admin') {
-    return 'Ultra Admin';
-  }
-  
-  // SystemRole: 'manager' = Django Tenant Owner
-  if (systemRole === 'manager') {
-    return 'Διαχειριστής'; // Office Manager = Django Tenant Owner
-  }
-  
-  // Check resident_role if no system_role (for residents without SystemRole)
-  if (profile.resident_role && !systemRole) {
-    switch (profile.resident_role) {
-      case 'manager':
-        return 'Εσωτερικός Διαχειριστής';
-      case 'owner':
-        return 'Ιδιοκτήτης';
-      case 'tenant':
-        return 'Ένοικος';
-      default:
-        return 'Χρήστης';
-    }
-  }
-  
-  return 'Χρήστης';
-};
-
-// Helper to get resident role label
-const getResidentRoleLabel = (residentRole?: string): string => {
-  if (!residentRole) return '';
-  
-  switch (residentRole) {
-    case 'manager':
-      return 'Εσωτερικός Διαχειριστής';
-    case 'owner':
-      return 'Ιδιοκτήτης';
-    case 'tenant':
-      return 'Ένοικος';
-    default:
-      return residentRole;
-  }
-};
 
 interface NotificationSettings {
   email_notifications: boolean;
@@ -100,8 +43,7 @@ interface NotificationSettings {
 }
 
 export default function MyProfilePage() {
-  const { user: authUser, refreshUser } = useAuth();
-  const router = useRouter();
+  const { user: authUser } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [notifications, setNotifications] = useState<NotificationSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,58 +65,17 @@ export default function MyProfilePage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    // Initialize profile with authUser immediately to prevent showing "Χρήστης"
-    // But only if authUser has a role set
-    if (authUser && !profile) {
-      console.log('[MyProfile] Setting initial profile from authUser:', authUser);
-      console.log('[MyProfile] authUser.role:', authUser.role, 'system_role:', authUser.system_role);
+    // Use authUser directly from context instead of fetching
+    if (authUser) {
       setProfile(authUser as any);
+      setLoading(false);
     }
-    
-    // Fetch fresh profile data from API to get all fields including email_verified and date_joined
-    fetchProfile();
     fetchNotificationSettings();
   }, [authUser]);
 
   const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      // Fetch fresh profile from API to ensure we have all fields
-      const profileData = await userProfileApi.getProfile();
-      
-      console.log('[MyProfile] API profileData:', profileData);
-      console.log('[MyProfile] Profile system_role:', profileData.system_role, 'role:', profileData.role);
-      
-      // If profile doesn't have subscription, try to fetch subscription directly as fallback
-      if (!profileData.subscription) {
-        try {
-          const subscriptionResponse = await userSubscriptionApi.getCurrentSubscription();
-          if (subscriptionResponse.subscription) {
-            // Merge subscription data into profile
-            profileData.subscription = {
-              plan_name: subscriptionResponse.subscription.plan?.name || 'Unknown Plan',
-              status: subscriptionResponse.subscription.status,
-              current_period_end: subscriptionResponse.subscription.current_period_end,
-              price: subscriptionResponse.subscription.price,
-              currency: subscriptionResponse.subscription.currency,
-            };
-            console.log('[MyProfile] Found subscription via direct fetch:', profileData.subscription);
-          }
-        } catch (subError) {
-          console.warn('[MyProfile] Could not fetch subscription directly:', subError);
-        }
-      }
-      
-      setProfile(profileData);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      // Fallback to authUser if API fails
-      if (authUser) {
-        setProfile(authUser as any);
-      }
-    } finally {
-      setLoading(false);
-    }
+    // Profile is loaded from AuthContext
+    // This function is kept for compatibility but not used
   };
 
   const fetchNotificationSettings = async () => {
@@ -197,33 +98,27 @@ export default function MyProfilePage() {
     
     try {
       setSaving(true);
-      const updatedProfile = await userProfileApi.updateProfile({
+      const response = await fetch('/api/user/profile/', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           first_name: profile.first_name,
           last_name: profile.last_name,
           phone: profile.phone,
           address: profile.address,
+        }),
       });
-      
-      // Refresh user data in AuthContext
-      await refreshUser();
-      
-      // Update local profile state with the response
-      if (updatedProfile?.user) {
-        setProfile({ ...profile, ...updatedProfile.user });
+
+      if (response.ok) {
+        setEditing(false);
+        alert('Profile updated successfully!');
       }
-      
-      setEditing(false);
-      toast({
-        title: 'Επιτυχία',
-        description: 'Το προφίλ ενημερώθηκε επιτυχώς',
-      });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving profile:', error);
-      toast({
-        title: 'Σφάλμα',
-        description: error?.response?.data?.error || 'Σφάλμα κατά την ενημέρωση του προφίλ',
-        variant: 'destructive',
-      });
+      alert('Error updating profile');
     } finally {
       setSaving(false);
     }
@@ -544,29 +439,13 @@ export default function MyProfilePage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="role">Ρόλος Συστήματος</Label>
+                    <Label htmlFor="role">Ρόλος</Label>
                     <Input
                       id="role"
-                      value={loading && !profile ? 'Φόρτωση...' : getUserRoleLabel(profile)}
+                      value={profile?.role === 'manager' ? 'Manager' : 'Resident'}
                       disabled
                       className="bg-gray-50"
                     />
-                    {profile?.resident_role && (
-                      <div className="mt-4">
-                        <Label htmlFor="resident-role">Ρόλος Κατοίκου</Label>
-                        <Input
-                          id="resident-role"
-                          value={getResidentRoleLabel(profile.resident_role)}
-                          disabled
-                          className="bg-gray-50"
-                        />
-                        {profile?.resident_profile && (
-                          <p className="mt-1 text-sm text-gray-500">
-                            Διαμέρισμα: {profile.resident_profile.apartment} | Κτίριο: {profile.resident_profile.building_name}
-                          </p>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </div>
                 
@@ -638,40 +517,6 @@ export default function MyProfilePage() {
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-6">Συνδρομή</h3>
                 
-                {/* Warning for managers without subscription */}
-                {/* Only show for users with role='manager' (not null/undefined) */}
-                {!profile?.subscription && 
-                 (profile?.role === 'manager' || profile?.system_role === 'manager') && 
-                 profile?.role !== null && 
-                 profile?.role !== undefined && (
-                  <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-yellow-800 mb-1">Προσοχή: Λείπει η Συνδρομή</h4>
-                        <p className="text-sm text-yellow-700 mb-3">
-                          Ως διαχειριστής κτιρίου, θα πρέπει να έχετε ενεργή συνδρομή. Εάν δεν εμφανίζεται η συνδρομή σας, παρακαλώ επικοινωνήστε με την υποστήριξη ή ανανεώστε τη σελίδα.
-                        </p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            fetchProfile();
-                            toast({
-                              title: 'Ανανέωση...',
-                              description: 'Ανανέωση δεδομένων συνδρομής...',
-                            });
-                          }}
-                          className="text-yellow-700 border-yellow-300 hover:bg-yellow-100"
-                        >
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          Ανανέωση Συνδρομής
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
                 {profile?.subscription ? (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -700,96 +545,20 @@ export default function MyProfilePage() {
                       </div>
                     </div>
                     
-                    <div className="flex gap-2 flex-wrap">
-                      <Link href="/plans">
-                        <Button variant="outline" className="flex items-center gap-2">
-                          Αλλαγή Plan
-                          <ArrowRight className="w-4 h-4" />
-                        </Button>
-                      </Link>
-                      <Link href="/my-subscription">
-                        <Button variant="outline" className="flex items-center gap-2">
-                          Ιστορικό Πληρωμών
-                          <ExternalLink className="w-4 h-4" />
-                        </Button>
-                      </Link>
-                      <Link href="/my-subscription">
-                        <Button variant="outline" className="flex items-center gap-2">
-                          Διαχείριση Πληρωμών
-                          <ExternalLink className="w-4 h-4" />
-                        </Button>
-                      </Link>
+                    <div className="flex gap-2">
+                      <Button variant="outline">Αλλαγή Plan</Button>
+                      <Button variant="outline">Ιστορικό Πληρωμών</Button>
+                      <Button variant="outline">Διαχείριση Πληρωμών</Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-6">
-                    {/* No Subscription Message */}
-                    <div className="text-center py-12">
-                      <div className="max-w-md mx-auto">
-                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
-                          <CreditCard className="w-12 h-12 text-blue-500" />
-                        </div>
-                        <h4 className="text-2xl font-bold mb-3 text-gray-900">Δεν έχετε συνδρομή</h4>
-                        <p className="text-gray-600 mb-2 max-w-sm mx-auto text-base">
-                          Δημιουργήστε μια συνδρομή για να αποκτήσετε πρόσβαση σε όλες τις δυνατότητες του συστήματος.
-                        </p>
-                        <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto">
-                          Επιλέξτε ένα πλάνο που ταιριάζει στις ανάγκες σας και ξεκινήστε να απολαμβάνετε όλα τα features.
-                        </p>
-                        
-                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                          <Link href="/plans" className="w-full sm:w-auto">
-                            <Button className="w-full sm:w-auto flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-base">
-                              <CreditCard className="w-5 h-5" />
-                              Επιλογή Plan
-                              <ArrowRight className="w-5 h-5" />
-                            </Button>
-                          </Link>
-                          <Link href="/my-subscription" className="w-full sm:w-auto">
-                            <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2 px-6 py-3 text-base border-gray-300 hover:bg-gray-50">
-                              Δες τις Επιλογές
-                              <ExternalLink className="w-5 h-5" />
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Additional Help Section */}
-                    <div className="border-t pt-6 mt-6">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                        <div className="p-4 rounded-lg bg-gray-50">
-                          <div className="text-2xl font-bold text-blue-600 mb-2">29€</div>
-                          <p className="text-sm text-gray-600">Ξεκινά από /μήνα</p>
-                        </div>
-                        <div className="p-4 rounded-lg bg-gray-50">
-                          <div className="text-2xl font-bold text-green-600 mb-2">Δωρεάν</div>
-                          <p className="text-sm text-gray-600">Δοκιμαστική περίοδος</p>
-                        </div>
-                        <div className="p-4 rounded-lg bg-gray-50">
-                          <div className="text-2xl font-bold text-purple-600 mb-2">Άμεσα</div>
-                          <p className="text-sm text-gray-600">Ενεργοποίηση</p>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-6 text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            fetchProfile();
-                            toast({
-                              title: 'Ανανέωση...',
-                              description: 'Ελέγχοντας συνδρομή...',
-                            });
-                          }}
-                          className="text-gray-600 hover:text-gray-900"
-                        >
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          Ανανέωση Συνδρομής
-                        </Button>
-                      </div>
-                    </div>
+                  <div className="text-center py-8">
+                    <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold mb-2">Δεν έχετε συνδρομή</h4>
+                    <p className="text-gray-500 mb-4">
+                      Δημιουργήστε μια συνδρομή για να αποκτήσετε πρόσβαση σε όλες τις δυνατότητες.
+                    </p>
+                    <Button>Επιλογή Plan</Button>
                   </div>
                 )}
               </Card>

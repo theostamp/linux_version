@@ -159,14 +159,6 @@ class UserSubscriptionViewSet(ModelViewSet):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=False, methods=['post'], url_path='upgrade')
-    def upgrade_subscription(self, request):
-        """
-        Upgrade subscription plan (convenience endpoint)
-        Alias for update_subscription with upgrade-specific logic
-        """
-        return self.update_subscription(request)
-    
     @action(detail=False, methods=['post'])
     def cancel_subscription(self, request):
         """
@@ -207,35 +199,18 @@ class UserSubscriptionViewSet(ModelViewSet):
         """
         Τρέχουσα subscription του user
         """
-        try:
-            subscription = BillingService.get_user_subscription(request.user)
-            
-            if not subscription:
-                return Response({
-                    'message': 'No active subscription found',
-                    'subscription': None
-                }, status=status.HTTP_200_OK)
-            
-            # Check if subscription has plan
-            if not subscription.plan:
-                logger.warning(f"Subscription {subscription.id} has no plan assigned")
-                return Response({
-                    'message': 'Subscription found but plan is missing',
-                    'subscription': None
-                }, status=status.HTTP_200_OK)
-            
-            serializer = UserSubscriptionSerializer(subscription)
+        subscription = BillingService.get_user_subscription(request.user)
+        
+        if not subscription:
             return Response({
-                'subscription': serializer.data
-            }, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            logger.error(f"Error getting current subscription for user {request.user.email}: {e}", exc_info=True)
-            return Response({
-                'message': 'Error retrieving subscription',
-                'error': str(e),
+                'message': 'No active subscription found',
                 'subscription': None
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            })
+        
+        serializer = UserSubscriptionSerializer(subscription)
+        return Response({
+            'subscription': serializer.data
+        })
 
 
 class PaymentMethodViewSet(ModelViewSet):
@@ -1337,7 +1312,7 @@ class CreateCheckoutSessionView(APIView):
             from billing.models import UserSubscription
             existing_subscription = UserSubscription.objects.filter(
                 user=user,
-                status__in=['active', 'trial']
+                status__in=['active', 'trialing']
             ).first()
             
             if existing_subscription:
@@ -1364,33 +1339,22 @@ class CreateCheckoutSessionView(APIView):
                     'error': 'Invalid subscription plan'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Generate unique tenant subdomain using improved naming logic
+            # Generate unique tenant subdomain
             from tenants.services import TenantService
-            from tenants.utils import generate_schema_name_from_email, generate_unique_schema_name
-            
             tenant_service = TenantService()
             
             if building_name:
-                # Use building name if provided
                 base_name = building_name
             else:
-                # Use improved email-based naming (extract only prefix before @)
-                base_name = generate_schema_name_from_email(user.email)
+                base_name = user.get_full_name() or user.email.split('@')[0]
             
-            tenant_subdomain = generate_unique_schema_name(base_name)
+            tenant_subdomain = tenant_service.generate_unique_schema_name(base_name)
             
             # Create Stripe Checkout Session
             stripe_service = StripeService()
             
             # Determine the price ID based on plan
             price_id = plan.stripe_price_id_monthly  # Default to monthly
-            
-            # Validate that price ID exists
-            if not price_id:
-                logger.error(f"Plan {plan.id} ({plan.name}) does not have a stripe_price_id_monthly set")
-                return Response({
-                    'error': 'Subscription plan is not properly configured. Please contact support.'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             # Build success and cancel URLs
             from django.conf import settings
@@ -1424,13 +1388,7 @@ class CreateCheckoutSessionView(APIView):
                 }
             }
             
-            try:
-                checkout_session = stripe_service.create_checkout_session(session_data)
-            except Exception as e:
-                logger.error(f"Stripe checkout session creation failed: {e}", exc_info=True)
-                return Response({
-                    'error': f'Failed to create checkout session: {str(e)}'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            checkout_session = stripe_service.create_checkout_session(session_data)
             
             # Save the checkout session ID to the user for polling
             user.stripe_checkout_session_id = checkout_session['id']

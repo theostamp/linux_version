@@ -12,53 +12,41 @@ import { User, Building as BuildingIcon, Settings, Menu, Calendar } from 'lucide
 import { API_BASE_URL } from '@/lib/api';
 
 // Helper function to get user role label
-// Note: Uses system_role (CustomUser.SystemRole) and optionally resident_role (Resident.Role)
-// SystemRole values: 'superuser', 'admin' (Ultra Admin), or 'manager' (Django Tenant Owner)
-// Resident.Role values: 'manager' (Εσωτερικός Διαχειριστής), 'owner' (Ιδιοκτήτης), 'tenant' (Ένοικος)
 const getUserRoleLabel = (user: any): string => {
   if (!user) return 'Χρήστης';
 
-  // Use system_role if available, fallback to role (backward compat)
-  const systemRole = user.system_role ?? user.role;
-  
-  // SystemRole: 'superuser' or 'admin' = Ultra Admin
-  if (systemRole === 'superuser' || systemRole === 'admin') {
-    return 'Ultra Admin';
-  }
-  
-  // SystemRole: 'manager' = Django Tenant Owner
-  if (systemRole === 'manager') {
-    // Check if user also has Resident.Role (apartment level)
-    const residentRole = user.resident_role;
-    if (residentRole) {
-      // Display resident role if exists (for apartment context)
-      switch (residentRole) {
-        case 'manager':
-          return 'Διαχειριστής (Εσωτερικός)'; // Internal Building Manager
-        case 'owner':
-          return 'Ιδιοκτήτης';
-        case 'tenant':
-          return 'Ένοικος';
-      }
-    }
-    return 'Διαχειριστής'; // Office Manager = Django Tenant Owner
-  }
-
-  // Check for superuser flag (only if no specific role is set)
+  // Check for superuser first (highest priority)
   if (user.is_superuser) return 'Ultra Admin';
 
   // Check for staff/admin
   if (user.is_staff) return 'Διαχειριστής';
 
-  // Check resident_role if no system_role (for residents without SystemRole)
-  if (user.resident_role && !systemRole) {
-    switch (user.resident_role) {
+  // Check for role property
+  if (user.role) {
+    switch (user.role.toLowerCase()) {
+      case 'admin':
       case 'manager':
-        return 'Εσωτερικός Διαχειριστής';
+        return 'Διαχειριστής';
       case 'owner':
         return 'Ιδιοκτήτης';
       case 'tenant':
         return 'Ένοικος';
+      default:
+        return user.role;
+    }
+  }
+
+  // Check profile.role
+  if (user.profile?.role) {
+    switch (user.profile.role) {
+      case 'superuser':
+        return 'Ultra Admin';
+      case 'manager':
+        return 'Διαχειριστής';
+      case 'resident':
+        return 'Κάτοικος';
+      default:
+        return user.profile.role;
     }
   }
 

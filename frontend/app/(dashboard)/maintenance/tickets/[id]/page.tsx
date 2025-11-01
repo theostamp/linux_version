@@ -99,7 +99,6 @@ function TicketDetailInner() {
   );
 }
 
-// Note: 'tenant' is NOT a CustomUser.role - only 'admin' and 'manager' are valid
-export default withAuth(TicketDetailInner, ['admin', 'manager']);
+export default withAuth(TicketDetailInner, ['admin', 'manager', 'tenant']);
 
 

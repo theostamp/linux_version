@@ -124,6 +124,7 @@ class CacheService {
 
   // Cleanup expired entries from memory cache
   private cleanupMemoryCache(): void {
+    const now = Date.now();
     const entriesToDelete: string[] = [];
 
     this.memoryCache.forEach((entry, key) => {

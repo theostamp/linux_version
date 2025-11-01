@@ -155,67 +155,33 @@ export default function AdminUsersPage() {
   };
 
   const getRoleBadge = (user: User) => {
-    // Use system_role if available, fallback to role (backward compat)
-    const systemRole = user.system_role ?? user.role;
-    
-    // SystemRole: 'superuser' or 'admin' = Ultra Admin
-    if (user.is_superuser || systemRole === 'superuser' || systemRole === 'admin') {
-      return <Badge variant="default" className="bg-purple-600">Ultra Admin</Badge>;
+    if (user.is_superuser) {
+      return <Badge variant="default" className="bg-purple-600">Superuser</Badge>;
     }
-    
-    // SystemRole: 'manager' = Django Tenant Owner
-    if (systemRole === 'manager') {
-      // Check if user also has Resident.Role
-      if (user.resident_role) {
-        return (
-          <div className="flex items-center gap-2">
-            <Badge variant="default" className="bg-green-600">Manager</Badge>
-            <Badge variant="outline" className="text-xs">
-              {user.resident_role === 'manager' ? 'Εσωτ. Διαχ.' :
-               user.resident_role === 'owner' ? 'Ιδιοκτήτης' :
-               user.resident_role === 'tenant' ? 'Ένοικος' : user.resident_role}
-            </Badge>
-          </div>
-        );
-      }
+    if (user.is_staff) {
+      return <Badge variant="default" className="bg-blue-600">Staff</Badge>;
+    }
+    if (user.role === 'manager') {
       return <Badge variant="default" className="bg-green-600">Manager</Badge>;
     }
-    
-    // Check resident_role if no system_role (for residents without SystemRole)
-    if (user.resident_role && !systemRole) {
-      return (
-        <Badge variant="outline">
-          {user.resident_role === 'manager' ? 'Εσωτερικός Διαχειριστής' :
-           user.resident_role === 'owner' ? 'Ιδιοκτήτης' :
-           user.resident_role === 'tenant' ? 'Ένοικος' : user.resident_role}
-        </Badge>
-      );
-    }
-    
-    return <Badge variant="outline">Χρήστης</Badge>;
+    return <Badge variant="outline">Resident</Badge>;
   };
 
   const filteredUsers = users.filter(user => {
-    // Search filter - handle null/undefined values
-    const matchesSearch = !searchTerm || 
-                         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.last_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.last_name.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Status filter
     const matchesStatus = statusFilter === 'all' || 
                          (statusFilter === 'active' && user.is_active && user.email_verified) ||
                          (statusFilter === 'inactive' && !user.is_active) ||
                          (statusFilter === 'unverified' && !user.email_verified);
     
-    // Role filter - use system_role if available, fallback to role (backward compat)
-    const systemRole = user.system_role ?? user.role;
-    
     const matchesRole = roleFilter === 'all' ||
-                       (roleFilter === 'superuser' && (user.is_superuser || systemRole === 'superuser' || systemRole === 'admin')) ||
-                       (roleFilter === 'staff' && user.is_staff && !user.is_superuser && systemRole !== 'manager') ||
-                       (roleFilter === 'manager' && systemRole === 'manager') ||
-                       (roleFilter === 'resident' && !user.is_staff && !user.is_superuser && !systemRole && user.resident_role);
+                       (roleFilter === 'superuser' && user.is_superuser) ||
+                       (roleFilter === 'staff' && user.is_staff && !user.is_superuser) ||
+                       (roleFilter === 'manager' && user.role === 'manager') ||
+                       (roleFilter === 'resident' && !user.is_staff && !user.is_superuser && user.role !== 'manager');
 
     return matchesSearch && matchesStatus && matchesRole;
   });
@@ -337,10 +303,10 @@ export default function AdminUsersPage() {
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">Όλοι οι Ρόλοι</option>
-              <option value="superuser">Ultra Admin</option>
+              <option value="superuser">Superuser</option>
               <option value="staff">Staff</option>
               <option value="manager">Manager</option>
-              <option value="resident">Κάτοικος</option>
+              <option value="resident">Resident</option>
             </select>
           </div>
         </div>

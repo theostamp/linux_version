@@ -20,17 +20,10 @@ from .subscription_views import (
     UserSubscriptionActionsView,
     UserCreateSubscriptionView
 )
-from .views_invitation import (
-    TenantInvitationViewSet,
-    AcceptInvitationView,
-    DeclineInvitationView,
-    VerifyInvitationView
-)
 
 # Create router for ViewSets
 router = DefaultRouter()
 router.register(r'', views.UserViewSet, basename='users')
-router.register(r'invitations', TenantInvitationViewSet, basename='invitations')
 
 urlpatterns = [
     # Authentication endpoints
@@ -60,11 +53,6 @@ urlpatterns = [
     path('subscription/billing-history/', UserSubscriptionBillingHistoryView.as_view(), name='user-billing-history'),
     path('subscription/actions/', UserSubscriptionActionsView.as_view(), name='user-subscription-actions'),
     path('subscription/create/', UserCreateSubscriptionView.as_view(), name='user-create-subscription'),
-
-    # Invitation endpoints (MUST be before router.urls to avoid conflicts)
-    path('invitations/accept/', AcceptInvitationView.as_view(), name='accept-invitation'),
-    path('invitations/decline/', DeclineInvitationView.as_view(), name='decline-invitation'),
-    path('invitations/verify/', VerifyInvitationView.as_view(), name='verify-invitation'),
 
     # Include router URLs (MUST be last to avoid conflicts with specific paths)
     path('', include(router.urls)),
