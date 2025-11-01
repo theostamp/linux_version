@@ -531,7 +531,9 @@ STRIPE_CURRENCY = 'eur'  # Euro currency
 STRIPE_WEBHOOK_TOLERANCE = 300  # 5 minutes tolerance for webhook timestamps
 
 # Frontend URL for redirects
+# Default to newconcierge.app, but can be overridden by environment variable
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://newconcierge.app')
+logger.info(f"[SETTINGS] FRONTEND_URL: {FRONTEND_URL} (env var: {os.getenv('FRONTEND_URL', 'NOT SET')})")
 
 # Internal API security
 INTERNAL_API_SECRET_KEY = os.getenv('INTERNAL_API_SECRET_KEY', '')
@@ -672,7 +674,8 @@ GOOGLE_CALENDAR_SCOPES = [
 ]
 
 # Frontend URL για links στα Google Calendar events
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://newconcierge.app')
+# Use the same FRONTEND_URL as defined above
+# (This is a duplicate definition, keeping for backward compatibility)
 
 # Calendar sync settings
 GOOGLE_CALENDAR_SYNC_ENABLED = os.getenv('GOOGLE_CALENDAR_SYNC_ENABLED', 'True') == 'True'
