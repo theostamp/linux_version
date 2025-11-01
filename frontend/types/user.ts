@@ -10,6 +10,23 @@ export type User = {
   is_staff?: boolean;
   is_superuser?: boolean;
   role?: string;
+  
+  // Role system (backend/users/models.py - CustomUser.role)
+  system_role?: 'superuser' | 'admin' | 'manager' | null;
+  resident_role?: 'owner' | 'tenant' | null;
+  resident_profile?: {
+    id: number;
+    apartment: string;
+    phone: string;
+    role: 'owner' | 'tenant';
+    building: number;
+    building_name?: string;
+  } | null;
+
+  // Email verification
+  email_verified?: boolean;
+  date_joined?: string;
+  last_login?: string;
 
   // Office Management Details
   office_name?: string;
