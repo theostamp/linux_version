@@ -70,8 +70,8 @@ class TenantService:
                 
                 # Step 8: Send welcome email with secure access link
                 try:
-                    from users.services import TenantWelcomeService
-                    TenantWelcomeService.send_tenant_welcome_email(user, tenant, domain)
+                    from users.services import EmailService
+                    EmailService.send_tenant_welcome_email(user, tenant, domain)
                     logger.info(f"Sent tenant welcome email to {user.email}")
                 except Exception as email_error:
                     logger.error(f"Failed to send welcome email: {email_error}")

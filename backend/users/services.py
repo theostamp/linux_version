@@ -616,12 +616,7 @@ class PasswordResetService:
         return user
 
 
-class TenantWelcomeService:
-    """
-    Service για αποστολή welcome emails σε νέους tenants
-    """
-    
-    @staticmethod
+    @staticmethod  
     def send_tenant_welcome_email(user, tenant, domain):
         """
         Send welcome email with secure tenant access link.
