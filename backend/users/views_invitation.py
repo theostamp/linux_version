@@ -44,6 +44,12 @@ class TenantInvitationViewSet(viewsets.ModelViewSet):
         # Regular users can only see their own invitations (if any)
         return TenantInvitation.objects.filter(email=user.email)
     
+    def list(self, request, *args, **kwargs):
+        """List invitations - ensure empty queryset returns 200 with empty list"""
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
     def perform_create(self, serializer):
         """Create invitation and send email"""
         serializer.save(invited_by=self.request.user)
