@@ -83,9 +83,118 @@ class EmailService:
             return False
     
     @staticmethod
+    def send_tenant_invitation_email(invitation):
+        """
+        Αποστολή email πρόσκλησης για TenantInvitation (new invitation system)
+        """
+        from .models_invitation import TenantInvitation
+        
+        # Generate invitation token and URL
+        token = invitation.generate_token()
+        invitation_url = f"{settings.FRONTEND_URL}/invitations/accept?token={token}"
+        
+        subject = f"{settings.EMAIL_SUBJECT_PREFIX}Πρόσκληση στο Digital Concierge"
+        
+        # Get building name if apartment_id exists
+        building_name = None
+        apartment_info = None
+        if invitation.apartment_id:
+            try:
+                from buildings.models import Building, Apartment
+                apartment = Apartment.objects.get(id=invitation.apartment_id)
+                building = apartment.building
+                building_name = building.name
+                apartment_info = f"Διαμέρισμα {apartment.number}"
+            except Exception as e:
+                logger.warning(f"Could not fetch apartment/building info for invitation {invitation.id}: {e}")
+        
+        # Get inviter name
+        inviter_name = invitation.invited_by.get_full_name() or invitation.invited_by.email
+        
+        # Email content
+        message = f"""
+        Γεια σας,
+        
+        Ο/Η {inviter_name} σας έχει προσκληθεί να συμμετάσχετε στην πλατφόρμα Digital Concierge.
+        
+        """
+        
+        if building_name:
+            message += f"""
+        Κτίριο: {building_name}
+        """
+        
+        if apartment_info:
+            message += f"{apartment_info}\n        "
+        
+        message += f"""
+        Ρόλος: {invitation.invited_role or 'Resident'}
+        
+        Για να αποδεχτείτε την πρόσκληση και να δημιουργήσετε τον λογαριασμό σας, παρακαλώ κάντε κλικ στον παρακάτω σύνδεσμο:
+        {invitation_url}
+        
+        """
+        
+        if invitation.message:
+            message += f"""
+        Προσωπικό μήνυμα:
+        {invitation.message}
+        
+        """
+        
+        message += f"""
+        Αυτή η πρόσκληση θα λήξει στις {invitation.expires_at.strftime('%d/%m/%Y %H:%M')}.
+        
+        Αν δεν περιμένατε αυτήν την πρόσκληση, παρακαλώ αγνοήστε αυτό το email.
+        
+        Με εκτίμηση,
+        Η ομάδα του Digital Concierge
+        """
+        
+        try:
+            from django.core.mail import EmailMultiAlternatives
+            
+            # Try to render HTML template
+            html_content = None
+            try:
+                html_content = render_to_string('emails/tenant_invitation.html', {
+                    'invitation': invitation,
+                    'invitation_url': invitation_url,
+                    'inviter_name': inviter_name,
+                    'building_name': building_name,
+                    'apartment_info': apartment_info,
+                    'role': invitation.invited_role or 'Resident',
+                    'message': invitation.message,
+                    'expires_at': invitation.expires_at,
+                })
+            except Exception as e:
+                logger.warning(f"Could not render HTML template for tenant invitation: {e}. Using plain text.")
+            
+            # Create email
+            msg = EmailMultiAlternatives(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [invitation.email]
+            )
+            
+            if html_content:
+                msg.attach_alternative(html_content, "text/html")
+            
+            msg.send()
+            
+            logger.info(f"Tenant invitation email sent successfully to {invitation.email}")
+            return True
+        except Exception as e:
+            logger.error(f"Error sending tenant invitation email to {invitation.email}: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return False
+    
+    @staticmethod
     def send_invitation_email(invitation):
         """
-        Αποστολή email πρόσκλησης
+        Αποστολή email πρόσκλησης (legacy - για UserInvitation)
         """
         invitation_url = f"{settings.FRONTEND_URL}/accept-invitation?token={invitation.token}"
         

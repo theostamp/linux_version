@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Πρόσκληση στο Digital Concierge</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #2563eb;
+            margin: 0;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #2563eb;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .button:hover {
+            background-color: #1d4ed8;
+        }
+        .info-box {
+            background-color: #f0f9ff;
+            border-left: 4px solid #2563eb;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        .message-box {
+            background-color: #fff7ed;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Digital Concierge</h1>
+            <p>Πρόσκληση για Πρόσβαση</p>
+        </div>
+        
+        <div class="content">
+            <p>Γεια σας,</p>
+            
+            <p>
+                Ο/Η <strong>{{ inviter_name }}</strong> σας έχει προσκληθεί να συμμετάσχετε στην πλατφόρμα 
+                <strong>Digital Concierge</strong>.
+            </p>
+            
+            {% if building_name or apartment_info %}
+            <div class="info-box">
+                {% if building_name %}
+                <p><strong>Κτίριο:</strong> {{ building_name }}</p>
+                {% endif %}
+                {% if apartment_info %}
+                <p><strong>{{ apartment_info }}</strong></p>
+                {% endif %}
+                {% if role %}
+                <p><strong>Ρόλος:</strong> {{ role }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            {% if message %}
+            <div class="message-box">
+                <p><strong>Προσωπικό μήνυμα:</strong></p>
+                <p>{{ message|linebreaks }}</p>
+            </div>
+            {% endif %}
+            
+            <p>
+                Για να αποδεχτείτε την πρόσκληση και να δημιουργήσετε τον λογαριασμό σας, 
+                παρακαλώ κάντε κλικ στον παρακάτω σύνδεσμο:
+            </p>
+            
+            <div style="text-align: center;">
+                <a href="{{ invitation_url }}" class="button">Αποδοχή Πρόσκλησης</a>
+            </div>
+            
+            <p style="font-size: 12px; color: #666; margin-top: 20px;">
+                <strong>Σημείωση:</strong> Αυτή η πρόσκληση θα λήξει στις 
+                {{ expires_at|date:"d/m/Y H:i" }}.
+            </p>
+            
+            <p style="font-size: 12px; color: #666;">
+                Αν δεν περιμένατε αυτήν την πρόσκληση, παρακαλώ αγνοήστε αυτό το email.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>Με εκτίμηση,</p>
+            <p><strong>Η ομάδα του Digital Concierge</strong></p>
+            <p style="margin-top: 20px; font-size: 10px; color: #999;">
+                Αυτό το email αποστάλληκε αυτόματα. Παρακαλώ μην απαντάτε σε αυτό το email.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+

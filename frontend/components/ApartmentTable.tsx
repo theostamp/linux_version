@@ -285,19 +285,19 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
                             <button
                               onClick={() => handleSendInvitation(apartment.owner_email!, apartment.id, 'owner')}
                               disabled={sendingInvitation?.email === apartment.owner_email && sendingInvitation?.apartmentId === apartment.id}
-                              className="text-blue-600 hover:text-blue-800 ml-1"
+                              className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded p-1 ml-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               title="Στείλε πρόσκληση για πρόσβαση στην εφαρμογή"
                             >
                               {sendingInvitation?.email === apartment.owner_email && sendingInvitation?.apartmentId === apartment.id ? (
-                                <MailCheck className="w-3 h-3 animate-pulse" />
+                                <MailCheck className="w-4 h-4 animate-pulse" />
                               ) : (
-                                <Mail className="w-3 h-3" />
+                                <Mail className="w-4 h-4" />
                               )}
                             </button>
                           )}
                           {hasPendingInvitation(apartment.owner_email) && (
-                            <span className="text-green-600 ml-1" title="Υπάρχει ενεργή πρόσκληση">
-                              <MailCheck className="w-3 h-3" />
+                            <span className="inline-flex items-center justify-center text-green-600 ml-1" title="Υπάρχει ενεργή πρόσκληση">
+                              <MailCheck className="w-4 h-4" />
                             </span>
                           )}
                         </div>
@@ -379,19 +379,19 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
                               <button
                                 onClick={() => handleSendInvitation(apartment.tenant_email!, apartment.id, 'tenant')}
                                 disabled={sendingInvitation?.email === apartment.tenant_email && sendingInvitation?.apartmentId === apartment.id}
-                                className="text-blue-600 hover:text-blue-800 ml-1"
+                                className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded p-1 ml-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Στείλε πρόσκληση για πρόσβαση στην εφαρμογή"
                               >
                                 {sendingInvitation?.email === apartment.tenant_email && sendingInvitation?.apartmentId === apartment.id ? (
-                                  <MailCheck className="w-3 h-3 animate-pulse" />
+                                  <MailCheck className="w-4 h-4 animate-pulse" />
                                 ) : (
-                                  <Mail className="w-3 h-3" />
+                                  <Mail className="w-4 h-4" />
                                 )}
                               </button>
                             )}
                             {hasPendingInvitation(apartment.tenant_email) && (
-                              <span className="text-green-600 ml-1" title="Υπάρχει ενεργή πρόσκληση">
-                                <MailCheck className="w-3 h-3" />
+                              <span className="inline-flex items-center justify-center text-green-600 ml-1" title="Υπάρχει ενεργή πρόσκληση">
+                                <MailCheck className="w-4 h-4" />
                               </span>
                             )}
                           </div>
