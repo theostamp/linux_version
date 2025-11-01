@@ -20,7 +20,7 @@ import FullPageSpinner from '@/components/FullPageSpinner';
 
 interface AuthCtx {
   user: User | null;
-  login: (email: string, password: string) => Promise<User>;
+  login: (email: string, password: string) => Promise<User & { redirectPath?: string; tenantUrl?: string }>;
   loginWithToken: (token: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -81,10 +81,10 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     console.log('AuthContext: Client-side logout performed.');
   }, [setUser]);
 
-  const login = useCallback(async (email: string, password: string): Promise<User & { redirectPath?: string }> => {
+  const login = useCallback(async (email: string, password: string): Promise<User & { redirectPath?: string; tenantUrl?: string }> => {
     try {
       setIsLoading(true);
-      const { user: loggedInUser, redirectPath } = await loginUser(email, password);
+      const { user: loggedInUser, redirectPath, tenantUrl } = await loginUser(email, password);
       setUser(loggedInUser);
       console.log('AuthContext: Login successful for user:', loggedInUser?.email);
       
@@ -92,8 +92,8 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       setIsLoading(false);
       setIsAuthReady(true);
       
-      // Return user plus backend-suggested redirect path
-      return { ...loggedInUser, redirectPath } as User & { redirectPath?: string };
+      // Return user plus backend-suggested redirect path and tenant URL
+      return { ...loggedInUser, redirectPath, tenantUrl } as User & { redirectPath?: string; tenantUrl?: string };
     } catch (error: any) {
       setIsLoading(false);
       console.error('AuthContext: Login failed:', error);
