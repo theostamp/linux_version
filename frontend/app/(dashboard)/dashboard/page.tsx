@@ -136,18 +136,22 @@ function DashboardContent() {
             // Development: Use subdomain on localhost
             tenantUrl = `http://${tenantInfo.schema_name}.localhost:3000/dashboard`;
           } else if (hostname.includes('vercel.app')) {
-            // Vercel deployment: Stay on same domain for now
-            // TODO: Configure proper subdomain routing on Vercel
-            return;
+            // Vercel deployment: Use query parameter for tenant switching
+            // SessionTenantMiddleware will handle the tenant switch via JWT
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('tenant', tenantInfo.schema_name);
+            tenantUrl = currentUrl.toString();
           } else {
             // Production: Use actual tenant subdomain
             tenantUrl = `https://${tenantInfo.schema_name}.newconcierge.app/dashboard`;
           }
           
-          console.log('Redirecting to tenant URL from pending redirect:', tenantUrl);
-          window.location.href = tenantUrl;
+          console.log('[DASHBOARD] Redirecting to tenant URL from pending redirect:', tenantUrl);
+          if (tenantUrl !== window.location.href) {
+            window.location.href = tenantUrl;
+          }
         } catch (e) {
-          console.error('Failed to parse pending tenant redirect:', e);
+          console.error('[DASHBOARD] Failed to parse pending tenant redirect:', e);
         }
       }
     }

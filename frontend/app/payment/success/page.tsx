@@ -62,9 +62,25 @@ export default function SubscriptionSuccessPage() {
             console.error('Failed to refresh user data after subscription completion:', refreshError);
           }
           
-          // Redirect to dashboard (production uses main domain, not subdomains)
+          // Redirect to dashboard
+          // SessionTenantMiddleware will handle tenant switch via JWT token
+          // On Vercel, we use the same domain (no subdomains)
           setTimeout(() => {
-            window.location.href = '/dashboard';
+            const hostname = window.location.hostname;
+            if (hostname.includes('vercel.app')) {
+              // Vercel: Stay on same domain, middleware will handle tenant switch via JWT
+              window.location.href = '/dashboard';
+            } else if (hostname.includes('localhost')) {
+              // Development: Try to get tenant from response or redirect to dashboard
+              if (data.tenant_schema) {
+                window.location.href = `http://${data.tenant_schema}.localhost:3000/dashboard`;
+              } else {
+                window.location.href = '/dashboard';
+              }
+            } else {
+              // Production: Redirect to dashboard
+              window.location.href = '/dashboard';
+            }
           }, 2000);
 
         } else if (data.status === 'failed') {

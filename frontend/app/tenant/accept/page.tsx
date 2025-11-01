@@ -106,19 +106,30 @@ export default function AcceptTenantPage() {
 
       toast.success('Πρόσβαση στο workspace επιτυχής!')
 
-      // Store tenant info for redirect
-      if (response.data.tenant) {
-        localStorage.setItem('pending_tenant_redirect', JSON.stringify({
-          schema_name: response.data.tenant.schema_name,
-          domain: response.data.tenant.domain,
-          name: response.data.tenant.name
-        }));
-      }
+              // Store tenant info for redirect
+              if (response.data.tenant) {
+                localStorage.setItem('pending_tenant_redirect', JSON.stringify({
+                  schema_name: response.data.tenant.schema_name,
+                  domain: response.data.tenant.domain,
+                  name: response.data.tenant.name
+                }));
+              }
 
-      // Redirect to dashboard which will handle tenant domain redirect
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 2000)
+              // Redirect to dashboard which will handle tenant domain redirect
+              // SessionTenantMiddleware will handle tenant switch via JWT token
+              setTimeout(() => {
+                const hostname = window.location.hostname;
+                if (hostname.includes('vercel.app')) {
+                  // Vercel: Use query parameter for tenant switching
+                  router.push(`/dashboard?tenant=${response.data.tenant?.schema_name || ''}`);
+                } else if (hostname.includes('localhost')) {
+                  // Development: Redirect to tenant subdomain
+                  router.push(`http://${response.data.tenant?.schema_name || ''}.localhost:3000/dashboard`);
+                } else {
+                  // Production: Redirect to tenant subdomain
+                  router.push('/dashboard');
+                }
+              }, 2000)
 
       isProcessingRef.current = false
 
