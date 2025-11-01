@@ -337,6 +337,22 @@ api.interceptors.request.use(
         config.headers['X-CSRFToken'] = csrfToken;
       }
     }
+
+    // X-Tenant-Schema header for subdomain-based tenant routing
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const parts = hostname.split('.');
+      // Extract subdomain if hostname has 3+ parts (e.g., alpha.newconcierge.app -> alpha)
+      if (parts.length >= 3) {
+        const tenant = parts[0];
+        // Only add header if subdomain is not 'newconcierge', 'www', or 'localhost'
+        if (tenant && tenant !== 'newconcierge' && tenant !== 'www' && !tenant.includes('localhost')) {
+          config.headers['X-Tenant-Schema'] = tenant;
+          console.log(`[API INTERCEPTOR] Added X-Tenant-Schema header: ${tenant}`);
+        }
+      }
+    }
+
     return config;
   },
   (error) => {

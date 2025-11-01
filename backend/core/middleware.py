@@ -5,6 +5,9 @@ from django_tenants.utils import (
     get_public_schema_name,
     get_tenant_model,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -161,12 +164,17 @@ class SessionTenantMiddleware:
 
         tenant = None
 
-        # 1) Session-based authentication (request.user populated by Django auth)
+        # 1) X-Tenant-Schema header (from subdomain-based routing)
+        tenant = self._tenant_from_header(request)
+        if tenant:
+            return tenant
+
+        # 2) Session-based authentication (request.user populated by Django auth)
         user = getattr(request, "user", None)
         if user and getattr(user, "is_authenticated", False):
             tenant = getattr(user, "tenant", None)
 
-        # 2) JWT-based authentication (API requests from the frontend)
+        # 3) JWT-based authentication (API requests from the frontend)
         if not tenant and JWTAuthentication is not None:
             tenant = self._tenant_from_jwt(request)
 
@@ -178,6 +186,24 @@ class SessionTenantMiddleware:
             return None
 
         return tenant
+
+    def _tenant_from_header(self, request):
+        """Resolve tenant via X-Tenant-Schema header (from subdomain routing)."""
+        tenant_schema = request.META.get('HTTP_X_TENANT_SCHEMA')
+        if not tenant_schema:
+            return None
+
+        try:
+            tenant_model = get_tenant_model()
+            tenant = tenant_model.objects.get(schema_name=tenant_schema)
+            logger.debug(f"[SessionTenantMiddleware] Resolved tenant from X-Tenant-Schema header: {tenant_schema}")
+            return tenant
+        except tenant_model.DoesNotExist:
+            logger.warning(f"[SessionTenantMiddleware] Tenant schema '{tenant_schema}' from X-Tenant-Schema header not found")
+            return None
+        except Exception as e:
+            logger.error(f"[SessionTenantMiddleware] Error resolving tenant from header: {e}", exc_info=True)
+            return None
 
     def _tenant_from_jwt(self, request):
         """Resolve tenant via JWT Authorization header."""

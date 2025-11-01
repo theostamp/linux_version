@@ -31,6 +31,9 @@ if DEBUG:
     ALLOWED_HOSTS += [".localhost"]      # οποιοδήποτε sub-domain *.localhost
     ALLOWED_HOSTS += ["backend"]         # Docker container hostname
 
+# Production domain: newconcierge.app and all subdomains
+ALLOWED_HOSTS += ['.newconcierge.app', 'newconcierge.app']
+
 # CSRF Trusted Origins for Railway
 CSRF_TRUSTED_ORIGINS = []
 
@@ -56,6 +59,12 @@ if DEBUG:
         'http://localhost:8000',
         'http://demo.localhost:8000',
     ])
+
+# Production domain: newconcierge.app and all subdomains
+CSRF_TRUSTED_ORIGINS.extend([
+    'https://newconcierge.app',
+    'https://*.newconcierge.app',
+])
 
 # Force add Railway domain even without env var (temporary fix)
 if not DEBUG:
@@ -422,7 +431,9 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://[\w\-]+\.localhost:3001$",
     r"^https://[\w\.-]+\.vercel\.app$",  # Vercel preview deployments
     r"^https://linux-version\.vercel\.app$",  # Specific Vercel production domain
-]  # ✅ Επιτρέπει *.localhost:* και *.vercel.app
+    r"^https://[\w\.-]+\.newconcierge\.app$",  # All newconcierge.app subdomains
+    r"^https://newconcierge\.app$",  # Apex domain
+]  # ✅ Επιτρέπει *.localhost:* και *.vercel.app και *.newconcierge.app
 
 logger.info(f"[SETTINGS] CORS_ALLOWED_ORIGINS: {CORS_ALLOWED_ORIGINS}")
 logger.info(f"[SETTINGS] CORS_ALLOWED_ORIGIN_REGEXES count: {len(CORS_ALLOWED_ORIGIN_REGEXES)}")
@@ -432,7 +443,7 @@ CORS_ALLOW_HEADERS = get_list_env(
     "CORS_ALLOW_HEADERS",
     "accept,accept-encoding,authorization,content-type,dnt,origin,"
     "user-agent,x-csrftoken,x-requested-with,x-xsrf-token,"
-    "x-toast-suppress,x-toast-success,x-toast-error"
+    "x-toast-suppress,x-toast-success,x-toast-error,x-tenant-schema"
 )
 
 CORS_ALLOW_METHODS   = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
