@@ -28,6 +28,9 @@ def public_buildings_list(request):
     - For unauthenticated users: Returns buildings from demo tenant
     Used by kiosk mode and authenticated dashboard
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
         from django_tenants.utils import schema_context, get_tenant_model
         from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -36,11 +39,13 @@ def public_buildings_list(request):
         target_schema = 'demo'  # Default to demo
         user = None
         
+        logger.debug(f"[PUBLIC_BUILDINGS] Processing request for buildings list")
+        
         # Check if user is authenticated
         try:
             # Try to authenticate using JWT
             auth_header = request.META.get('HTTP_AUTHORIZATION', '')
-            print(f"🔍 [PUBLIC BUILDINGS] Authorization header: {auth_header[:50]}...")
+            logger.debug(f"[PUBLIC_BUILDINGS] Authorization header present: {bool(auth_header)}")
             
             if auth_header.startswith('Bearer '):
                 token = auth_header.split(' ')[1]
@@ -48,30 +53,46 @@ def public_buildings_list(request):
                 validated_token = jwt_auth.get_validated_token(token)
                 user = jwt_auth.get_user(validated_token)
                 
-                print(f"🔍 [PUBLIC BUILDINGS] Authenticated user: {user.email}")
-                print(f"🔍 [PUBLIC BUILDINGS] User tenant: {user.tenant if hasattr(user, 'tenant') else 'None'}")
+                logger.info(f"[PUBLIC_BUILDINGS] Authenticated user: {user.email} (ID: {user.id})")
                 
-                # If user has a tenant, use their schema
-                if hasattr(user, 'tenant') and user.tenant:
-                    tenant_obj = user.tenant
-                    if hasattr(tenant_obj, 'schema_name') and tenant_obj.schema_name:
-                        target_schema = tenant_obj.schema_name
-                    elif isinstance(tenant_obj, str):
-                        target_schema = tenant_obj
+                # Debug user tenant information
+                if hasattr(user, 'tenant'):
+                    if user.tenant:
+                        tenant_obj = user.tenant
+                        logger.debug(f"[PUBLIC_BUILDINGS] User has tenant object: {tenant_obj}")
+                        logger.debug(f"[PUBLIC_BUILDINGS] User.tenant type: {type(tenant_obj)}")
+                        
+                        if hasattr(tenant_obj, 'id'):
+                            logger.debug(f"[PUBLIC_BUILDINGS] Tenant ID: {tenant_obj.id}")
+                        if hasattr(tenant_obj, 'schema_name'):
+                            logger.debug(f"[PUBLIC_BUILDINGS] Tenant schema_name: {tenant_obj.schema_name}")
+                        if hasattr(tenant_obj, 'name'):
+                            logger.debug(f"[PUBLIC_BUILDINGS] Tenant name: {tenant_obj.name}")
+                        
+                        # If user has a tenant, use their schema
+                        if hasattr(tenant_obj, 'schema_name') and tenant_obj.schema_name:
+                            target_schema = tenant_obj.schema_name
+                            logger.info(f"[PUBLIC_BUILDINGS] Using user's tenant schema: {target_schema} (tenant ID: {tenant_obj.id})")
+                        elif isinstance(tenant_obj, str):
+                            target_schema = tenant_obj
+                            logger.info(f"[PUBLIC_BUILDINGS] Using tenant string as schema: {target_schema}")
+                        else:
+                            logger.warning(f"[PUBLIC_BUILDINGS] Could not derive tenant schema from tenant object, falling back to demo")
+                            target_schema = 'demo'
                     else:
-                        print("🔍 [PUBLIC BUILDINGS] Could not derive tenant schema, falling back to demo")
-                        # Fallback to demo if schema name cannot be determined safely
-                        target_schema = 'demo'
-                    print(f"🔍 [PUBLIC BUILDINGS] Using user's tenant schema: {target_schema}")
+                        logger.info(f"[PUBLIC_BUILDINGS] User has no tenant assigned (user.tenant is None)")
+                        logger.debug(f"[PUBLIC_BUILDINGS] User.tenant_id: {getattr(user, 'tenant_id', None)}")
+                        logger.debug(f"[PUBLIC_BUILDINGS] Using demo schema (no tenant)")
                 else:
-                    print(f"🔍 [PUBLIC BUILDINGS] User has no tenant, using demo schema")
+                    logger.warning(f"[PUBLIC_BUILDINGS] User object does not have 'tenant' attribute")
+                    logger.debug(f"[PUBLIC_BUILDINGS] Using demo schema (no tenant attribute)")
             else:
-                print(f"🔍 [PUBLIC BUILDINGS] No Bearer token found, using demo schema")
+                logger.debug(f"[PUBLIC_BUILDINGS] No Bearer token found in authorization header, using demo schema")
         except Exception as auth_error:
-            print(f"🔍 [PUBLIC BUILDINGS] Authentication error: {auth_error}")
-            print(f"🔍 [PUBLIC BUILDINGS] Using demo schema")
+            logger.warning(f"[PUBLIC_BUILDINGS] Authentication error: {auth_error}", exc_info=True)
+            logger.debug(f"[PUBLIC_BUILDINGS] Using demo schema due to authentication error")
         
-        print(f"🔍 [PUBLIC BUILDINGS] Final target schema: {target_schema}")
+        logger.info(f"[PUBLIC_BUILDINGS] Final target schema: {target_schema}")
         
         try:
             with schema_context(target_schema):
@@ -81,9 +102,9 @@ def public_buildings_list(request):
                 # Check if buildings exist (use list() to avoid .count() error on non-existent schema)
                 try:
                     buildings_list = list(buildings)
-                    print(f"🔍 [PUBLIC BUILDINGS] Found {len(buildings_list)} buildings in schema {target_schema}")
+                    logger.info(f"[PUBLIC_BUILDINGS] Found {len(buildings_list)} buildings in schema {target_schema}")
                 except Exception as e:
-                    print(f"❌ [PUBLIC BUILDINGS] Schema {target_schema} has no buildings table: {e}")
+                    logger.error(f"[PUBLIC_BUILDINGS] Schema {target_schema} has no buildings table or query failed: {e}", exc_info=True)
                     return JsonResponse([], safe=False)
                 
                 buildings_data = []
@@ -108,18 +129,19 @@ def public_buildings_list(request):
                     }
                     buildings_data.append(building_data)
                 
-                print(f"🔍 [PUBLIC BUILDINGS] Returning {len(buildings_data)} buildings from schema: {target_schema}")
+                logger.info(f"[PUBLIC_BUILDINGS] Returning {len(buildings_data)} buildings from schema: {target_schema}")
+                if user:
+                    logger.debug(f"[PUBLIC_BUILDINGS] User {user.email} requested buildings from schema {target_schema}")
+                
                 return JsonResponse(buildings_data, safe=False)
         
         except Exception as e:
-            print(f"❌ [PUBLIC BUILDINGS] Error: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"[PUBLIC_BUILDINGS] Error querying buildings from schema {target_schema}: {e}", exc_info=True)
             # Return empty array on error
             return JsonResponse([], safe=False)
     
     except Exception as e:
-        print(f"❌ [PUBLIC BUILDINGS] Fatal error: {e}")
+        logger.error(f"[PUBLIC_BUILDINGS] Fatal error in public_buildings_list: {e}", exc_info=True)
         import traceback
         traceback.print_exc()
         # Return empty array on fatal error

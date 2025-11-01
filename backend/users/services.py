@@ -474,14 +474,28 @@ class EmailService:
         """
         from django.core.signing import TimestampSigner
         
+        logger.info(f"[TENANT_WELCOME_EMAIL] Generating welcome email for user {user.email}, tenant {tenant.schema_name}")
+        
         # Generate secure token (expires in 24h)
-        signer = TimestampSigner()
-        token_data = f"{user.id}:{tenant.id}:{domain.domain}"
-        secure_token = signer.sign(token_data)
+        try:
+            signer = TimestampSigner()
+            token_data = f"{user.id}:{tenant.id}:{domain.domain}"
+            secure_token = signer.sign(token_data)
+            
+            # Log token generation (first 10 chars for security)
+            token_preview = secure_token[:10] + '...' if len(secure_token) > 10 else secure_token
+            logger.debug(f"[TENANT_WELCOME_EMAIL] Generated token (preview): {token_preview}")
+            logger.debug(f"[TENANT_WELCOME_EMAIL] Token data: user_id={user.id}, tenant_id={tenant.id}, domain={domain.domain}")
+        except Exception as e:
+            logger.error(f"[TENANT_WELCOME_EMAIL] Failed to generate token: {e}", exc_info=True)
+            raise
         
         # Build access URL
         frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
         access_url = f"{frontend_url}/tenant/accept?token={secure_token}"
+        
+        logger.info(f"[TENANT_WELCOME_EMAIL] Access URL generated: {frontend_url}/tenant/accept?token={token_preview}...")
+        logger.debug(f"[TENANT_WELCOME_EMAIL] Full access URL: {access_url}")
         
         subject = f"{settings.EMAIL_SUBJECT_PREFIX}🎉 Το Workspace σας είναι έτοιμο - {tenant.name}"
         
@@ -518,6 +532,7 @@ class EmailService:
         """
         
         try:
+            logger.debug(f"[TENANT_WELCOME_EMAIL] Sending email to {user.email}")
             send_mail(
                 subject=subject,
                 message=strip_tags(html_content),
@@ -526,9 +541,11 @@ class EmailService:
                 html_message=html_content,
                 fail_silently=False,
             )
+            logger.info(f"[TENANT_WELCOME_EMAIL] ✅ Successfully sent welcome email to {user.email}")
+            logger.info(f"[TENANT_WELCOME_EMAIL] Email contains access link with token (expires in 24h)")
             return True
         except Exception as e:
-            logger.error(f"Failed to send tenant welcome email to {user.email}: {e}")
+            logger.error(f"[TENANT_WELCOME_EMAIL] ❌ Failed to send tenant welcome email to {user.email}: {e}", exc_info=True)
             return False
 
 

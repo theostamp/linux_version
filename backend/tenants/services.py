@@ -41,47 +41,93 @@ class TenantService:
             Exception: For other errors
         """
         try:
+            logger.info(f"[TENANT_PROVISIONING] Starting tenant creation for user {user.email}, schema: {schema_name}")
+            
             with transaction.atomic():
                 # Step 1: Get the subscription plan
                 try:
+                    logger.debug(f"[TENANT_PROVISIONING] Step 1: Getting subscription plan ID={plan_id}")
                     plan = SubscriptionPlan.objects.get(id=plan_id)
-                except SubscriptionPlan.DoesNotExist:
+                    logger.debug(f"[TENANT_PROVISIONING] Found plan: {plan.name}")
+                except SubscriptionPlan.DoesNotExist as e:
+                    logger.error(f"[TENANT_PROVISIONING] Step 1 FAILED: Subscription plan with ID {plan_id} not found")
                     raise ValidationError(f"Subscription plan with ID {plan_id} not found")
+                except Exception as e:
+                    logger.error(f"[TENANT_PROVISIONING] Step 1 FAILED: Unexpected error getting plan {plan_id}: {e}", exc_info=True)
+                    raise
                 
                 # Step 2: Create the tenant
-                tenant = self._create_tenant(schema_name, user)
+                try:
+                    logger.debug(f"[TENANT_PROVISIONING] Step 2: Creating tenant with schema: {schema_name}")
+                    tenant = self._create_tenant(schema_name, user)
+                    logger.info(f"[TENANT_PROVISIONING] Step 2 SUCCESS: Created tenant {tenant.id} (schema: {tenant.schema_name})")
+                except Exception as e:
+                    logger.error(f"[TENANT_PROVISIONING] Step 2 FAILED: Failed to create tenant {schema_name}: {e}", exc_info=True)
+                    raise
                 
                 # Step 3: Create the domain
-                domain = self._create_domain(tenant, schema_name)
+                try:
+                    logger.debug(f"[TENANT_PROVISIONING] Step 3: Creating domain for tenant {tenant.id}")
+                    domain = self._create_domain(tenant, schema_name)
+                    logger.info(f"[TENANT_PROVISIONING] Step 3 SUCCESS: Created domain {domain.domain}")
+                except Exception as e:
+                    logger.error(f"[TENANT_PROVISIONING] Step 3 FAILED: Failed to create domain for tenant {tenant.id}: {e}", exc_info=True)
+                    raise
                 
                 # Step 4: Run tenant migrations
-                self._run_tenant_migrations(schema_name)
+                try:
+                    logger.debug(f"[TENANT_PROVISIONING] Step 4: Running migrations for schema: {schema_name}")
+                    self._run_tenant_migrations(schema_name)
+                    logger.info(f"[TENANT_PROVISIONING] Step 4 SUCCESS: Completed migrations for schema {schema_name}")
+                except Exception as e:
+                    logger.error(f"[TENANT_PROVISIONING] Step 4 FAILED: Migration error for schema {schema_name}: {e}", exc_info=True)
+                    logger.error(f"[TENANT_PROVISIONING] Manual migration command: python manage.py migrate_schemas --schema={schema_name}")
+                    raise
                 
                 # Step 5: Create the user subscription
-                subscription = self._create_user_subscription(
-                    user, plan, stripe_customer_id, stripe_subscription_id, tenant, stripe_checkout_session_id
-                )
+                try:
+                    logger.debug(f"[TENANT_PROVISIONING] Step 5: Creating user subscription for user {user.id}")
+                    subscription = self._create_user_subscription(
+                        user, plan, stripe_customer_id, stripe_subscription_id, tenant, stripe_checkout_session_id
+                    )
+                    logger.info(f"[TENANT_PROVISIONING] Step 5 SUCCESS: Created subscription {subscription.id} for user {user.email}")
+                except Exception as e:
+                    logger.error(f"[TENANT_PROVISIONING] Step 5 FAILED: Failed to create subscription for user {user.id}: {e}", exc_info=True)
+                    raise
                 
                 # Step 6: Create initial user in tenant schema
-                self._create_tenant_user(user, schema_name)
+                try:
+                    logger.debug(f"[TENANT_PROVISIONING] Step 6: Creating tenant user in schema {schema_name}")
+                    self._create_tenant_user(user, schema_name)
+                    logger.info(f"[TENANT_PROVISIONING] Step 6 SUCCESS: Created tenant user {user.email} in schema {schema_name}")
+                except Exception as e:
+                    logger.error(f"[TENANT_PROVISIONING] Step 6 FAILED: Failed to create tenant user in schema {schema_name}: {e}", exc_info=True)
+                    # Don't raise - tenant can still work without tenant user
                 
                 # Step 7: Create demo data (Αλκμάνος 22 building)
-                self._create_demo_data(schema_name)
+                try:
+                    logger.debug(f"[TENANT_PROVISIONING] Step 7: Creating demo data in schema {schema_name}")
+                    self._create_demo_data(schema_name)
+                    logger.info(f"[TENANT_PROVISIONING] Step 7 SUCCESS: Created demo data in schema {schema_name}")
+                except Exception as e:
+                    logger.error(f"[TENANT_PROVISIONING] Step 7 FAILED: Failed to create demo data in schema {schema_name}: {e}", exc_info=True)
+                    # Don't raise - tenant can still work without demo data
                 
                 # Step 8: Send welcome email with secure access link
                 try:
+                    logger.debug(f"[TENANT_PROVISIONING] Step 8: Sending welcome email to {user.email}")
                     from users.services import EmailService
                     EmailService.send_tenant_welcome_email(user, tenant, domain)
-                    logger.info(f"Sent tenant welcome email to {user.email}")
+                    logger.info(f"[TENANT_PROVISIONING] Step 8 SUCCESS: Sent tenant welcome email to {user.email}")
                 except Exception as email_error:
-                    logger.error(f"Failed to send welcome email: {email_error}")
+                    logger.error(f"[TENANT_PROVISIONING] Step 8 FAILED: Failed to send welcome email to {user.email}: {email_error}", exc_info=True)
                     # Don't fail provisioning if email fails
                 
-                logger.info(f"Successfully created tenant '{schema_name}' and subscription for user {user.email}")
+                logger.info(f"[TENANT_PROVISIONING] ✅ Provisioning complete for {user.email} → {tenant.schema_name}")
                 return tenant, subscription
                 
         except Exception as e:
-            logger.error(f"Failed to create tenant and subscription: {e}")
+            logger.error(f"[TENANT_PROVISIONING] ❌ FAILED to create tenant and subscription for {user.email}: {e}", exc_info=True)
             raise
     
     def _create_tenant(self, schema_name, user):
@@ -124,50 +170,68 @@ class TenantService:
     def _run_tenant_migrations(self, schema_name):
         """Run migrations for the new tenant schema."""
         try:
+            logger.debug(f"[MIGRATIONS] Starting migrations for schema: {schema_name}")
             call_command(
                 "migrate_schemas",
                 schema_name=schema_name,
                 interactive=False,
                 verbosity=0
             )
-            logger.info(f"Ran migrations for schema: {schema_name}")
+            logger.info(f"[MIGRATIONS] Successfully ran migrations for schema: {schema_name}")
         except Exception as e:
-            logger.error(f"Failed to run migrations for schema {schema_name}: {e}")
+            logger.error(f"[MIGRATIONS] FAILED to run migrations for schema {schema_name}: {e}", exc_info=True)
+            logger.error(f"[MIGRATIONS] Stack trace captured above. Manual command: python manage.py migrate_schemas --schema={schema_name}")
             raise
     
     def _create_user_subscription(self, user, plan, stripe_customer_id, stripe_subscription_id, tenant, stripe_checkout_session_id=None):
         """Create the UserSubscription object."""
-        # Calculate pricing based on plan
-        price = plan.monthly_price  # Default to monthly
-        currency = 'EUR'
-        
-        # Set trial dates
-        trial_start = timezone.now()
-        trial_end = trial_start + timezone.timedelta(days=plan.trial_days)
-        
-        # Set billing period
-        current_period_start = timezone.now()
-        current_period_end = current_period_start + timezone.timedelta(days=30)  # Monthly
-        
-        subscription = UserSubscription.objects.create(
-            user=user,
-            plan=plan,
-            status='trial',
-            billing_interval='month',
-            trial_start=trial_start,
-            trial_end=trial_end,
-            current_period_start=current_period_start,
-            current_period_end=current_period_end,
-            stripe_subscription_id=stripe_subscription_id,
-            stripe_customer_id=stripe_customer_id,
-            stripe_checkout_session_id=stripe_checkout_session_id,
-            price=price,
-            currency=currency,
-            tenant_domain=f"{tenant.schema_name}.localhost"
-        )
-        
-        logger.info(f"Created subscription for user {user.email}: {subscription.id}")
-        return subscription
+        try:
+            logger.debug(f"[SUBSCRIPTION] Creating subscription for user {user.id}, plan {plan.id}, tenant {tenant.id}")
+            
+            # Calculate pricing based on plan
+            price = plan.monthly_price  # Default to monthly
+            currency = 'EUR'
+            
+            # Set trial dates
+            trial_start = timezone.now()
+            trial_end = trial_start + timezone.timedelta(days=plan.trial_days)
+            
+            # Set billing period
+            current_period_start = timezone.now()
+            current_period_end = current_period_start + timezone.timedelta(days=30)  # Monthly
+            
+            # Check for duplicate subscription with same checkout session
+            if stripe_checkout_session_id:
+                existing = UserSubscription.objects.filter(
+                    stripe_checkout_session_id=stripe_checkout_session_id
+                ).first()
+                if existing:
+                    logger.warning(f"[SUBSCRIPTION] Subscription already exists with checkout session {stripe_checkout_session_id}: {existing.id}")
+                    return existing
+            
+            subscription = UserSubscription.objects.create(
+                user=user,
+                plan=plan,
+                status='trial',
+                billing_interval='month',
+                trial_start=trial_start,
+                trial_end=trial_end,
+                current_period_start=current_period_start,
+                current_period_end=current_period_end,
+                stripe_subscription_id=stripe_subscription_id,
+                stripe_customer_id=stripe_customer_id,
+                stripe_checkout_session_id=stripe_checkout_session_id,
+                price=price,
+                currency=currency,
+                tenant_domain=f"{tenant.schema_name}.localhost"
+            )
+            
+            logger.info(f"[SUBSCRIPTION] Created subscription {subscription.id} for user {user.email}, status: {subscription.status}")
+            return subscription
+            
+        except Exception as e:
+            logger.error(f"[SUBSCRIPTION] FAILED to create subscription for user {user.id}: {e}", exc_info=True)
+            raise
     
     def _create_tenant_user(self, user, schema_name):
         """
@@ -322,6 +386,8 @@ class TenantService:
     def _create_demo_data(self, schema_name):
         """Create demo data (Αλκμάνος 22 building) for the new tenant."""
         try:
+            logger.debug(f"[DEMO_DATA] Starting demo data creation in schema {schema_name}")
+            
             with schema_context(schema_name):
                 from buildings.models import Building
                 from apartments.models import Apartment
@@ -331,26 +397,33 @@ class TenantService:
                 
                 # Check if demo data already exists
                 if Building.objects.filter(name__icontains='Αλκμάνος').exists():
-                    logger.info(f"Demo data already exists in schema {schema_name}")
+                    logger.info(f"[DEMO_DATA] Demo data already exists in schema {schema_name}, skipping creation")
                     return
                 
                 # Get the tenant user (manager)
                 tenant_user = User.objects.filter(is_staff=True).first()
                 if not tenant_user:
-                    logger.warning(f"No tenant user found in schema {schema_name} for demo data creation")
+                    logger.warning(f"[DEMO_DATA] No tenant user found in schema {schema_name} for demo data creation")
                     return
                 
+                logger.debug(f"[DEMO_DATA] Creating building with tenant user: {tenant_user.email}")
+                
                 # Create Αλκμάνος 22 building
-                building = Building.objects.create(
-                    name='🎓 Demo Building - Αλκμάνος 22',
-                    address='Αλκμάνος 22, Αθήνα 115 28, Ελλάδα',
-                    city='Αθήνα',
-                    postal_code='115 28',
-                    apartments_count=10,
-                    latitude=37.9838,
-                    longitude=23.7275,
-                    internal_manager_name='Γραμματεία'
-                )
+                try:
+                    building = Building.objects.create(
+                        name='🎓 Demo Building - Αλκμάνος 22',
+                        address='Αλκμάνος 22, Αθήνα 115 28, Ελλάδα',
+                        city='Αθήνα',
+                        postal_code='115 28',
+                        apartments_count=10,
+                        latitude=37.9838,
+                        longitude=23.7275,
+                        internal_manager_name='Γραμματεία'
+                    )
+                    logger.debug(f"[DEMO_DATA] Created building {building.id}: {building.name}")
+                except Exception as e:
+                    logger.error(f"[DEMO_DATA] FAILED to create building in schema {schema_name}: {e}", exc_info=True)
+                    raise
                 
                 # Create apartments (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)
                 apartments_data = [
@@ -366,20 +439,26 @@ class TenantService:
                     {'number': 'Δ1', 'floor': 4, 'area': 120.0, 'participation_mills': 140, 'heating_mills': 140, 'elevator_mills': 140},
                 ]
                 
+                created_apartments = 0
                 for apt_data in apartments_data:
-                    Apartment.objects.create(
-                        building=building,
-                        number=apt_data['number'],
-                        floor=apt_data['floor'],
-                        square_meters=apt_data.get('square_meters', apt_data.get('area', 85)),
-                        participation_mills=apt_data['participation_mills'],
-                        heating_mills=apt_data['heating_mills'],
-                        elevator_mills=apt_data['elevator_mills']
-                    )
+                    try:
+                        Apartment.objects.create(
+                            building=building,
+                            number=apt_data['number'],
+                            floor=apt_data['floor'],
+                            square_meters=apt_data.get('square_meters', apt_data.get('area', 85)),
+                            participation_mills=apt_data['participation_mills'],
+                            heating_mills=apt_data['heating_mills'],
+                            elevator_mills=apt_data['elevator_mills']
+                        )
+                        created_apartments += 1
+                    except Exception as e:
+                        logger.error(f"[DEMO_DATA] FAILED to create apartment {apt_data['number']} in building {building.id}: {e}", exc_info=True)
+                        # Continue creating other apartments
                 
-                logger.info(f"Created demo building 'Αλκμάνος 22' with 10 apartments in schema {schema_name}")
+                logger.info(f"[DEMO_DATA] Created demo building 'Αλκμάνος 22' with {created_apartments}/10 apartments in schema {schema_name}")
                 
         except Exception as e:
-            logger.error(f"Failed to create demo data in schema {schema_name}: {e}")
+            logger.error(f"[DEMO_DATA] FAILED to create demo data in schema {schema_name}: {e}", exc_info=True)
             # Don't raise here - tenant creation can still succeed without demo data
 

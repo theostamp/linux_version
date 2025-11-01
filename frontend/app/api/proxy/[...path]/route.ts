@@ -51,6 +51,14 @@ async function handleRequest(
     
     const targetUrl = `${RAILWAY_BACKEND_URL}/api/${targetPath}${queryString}`;
     
+    // Log proxy forwarding for debugging
+    console.log('[PROXY] Forwarding request:', {
+      method,
+      originalPath: originalPath,
+      targetUrl,
+      hasQueryString: queryString.length > 0
+    });
+    
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
