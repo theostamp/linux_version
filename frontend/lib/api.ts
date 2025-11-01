@@ -298,13 +298,16 @@ api.interceptors.request.use(
     }
 
     // Normalize duplicated /api segments when baseURL already includes /api
+    // BUT: Don't strip /api if baseURL is exactly '/api' (same-origin Vercel case)
     if (typeof config.url === 'string') {
       const baseSource = (config.baseURL ?? api.defaults.baseURL ?? '') as string;
       const normalizedBase = baseSource.replace(/\/+$/, '');
       const hasApiSuffix = normalizedBase.endsWith('/api');
       const isRelativeApiCall = config.url.startsWith('/api/');
+      const isSameOriginApi = normalizedBase === '/api';
 
-      if (hasApiSuffix && isRelativeApiCall) {
+      // Only strip /api prefix if baseURL has /api at the end AND is not just '/api'
+      if (hasApiSuffix && isRelativeApiCall && !isSameOriginApi) {
         config.url = config.url.replace(/^\/api\/?/, '/');
       }
     }

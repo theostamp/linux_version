@@ -186,69 +186,11 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   }, []);
 
   // Automatically resync role after upgrades (e.g., subscription activation)
-  // IMPORTANT: Only depends on isAuthReady and roleSyncDone, NOT userState
-  // to avoid infinite loops when refreshUser updates the user
-  useEffect(() => {
-    if (!isAuthReady) return;
-    
-    // Skip if already marked as done
-    if (roleSyncDone) return;
-
-    const currentUser = userState;
-    if (!currentUser) return;
-
-    const tokenExists = !!localStorage.getItem('access');
-    const systemRole = currentUser.system_role ?? currentUser.role ?? null;
-    const needsSync = tokenExists && (!systemRole || systemRole === 'user');
-
-    if (!needsSync) {
-      setRoleSyncDone(true);
-      roleSyncAttemptsRef.current = 0;
-      if (roleSyncTimeoutRef.current) {
-        clearTimeout(roleSyncTimeoutRef.current);
-        roleSyncTimeoutRef.current = null;
-      }
-      return;
-    }
-
-    if (roleSyncAttemptsRef.current >= MAX_ROLE_SYNC_ATTEMPTS) {
-      console.warn('AuthContext: Maximum role sync attempts reached, marking as done');
-      setRoleSyncDone(true);
-      return;
-    }
-
-    console.log(`AuthContext: Scheduling role sync attempt ${roleSyncAttemptsRef.current + 1}/${MAX_ROLE_SYNC_ATTEMPTS}`);
-    const delay = roleSyncAttemptsRef.current === 0 ? 0 : 1000 * roleSyncAttemptsRef.current;
-    roleSyncAttemptsRef.current += 1;
-
-    if (roleSyncTimeoutRef.current) {
-      clearTimeout(roleSyncTimeoutRef.current);
-      roleSyncTimeoutRef.current = null;
-    }
-
-    const timeoutId = setTimeout(() => {
-      refreshUser().catch((error) => {
-        console.error('AuthContext: Automatic role sync failed', error);
-        // On failure, mark as done after max attempts
-        if (roleSyncAttemptsRef.current >= MAX_ROLE_SYNC_ATTEMPTS) {
-          setRoleSyncDone(true);
-        }
-      }).finally(() => {
-        roleSyncTimeoutRef.current = null;
-      });
-    }, delay);
-
-    roleSyncTimeoutRef.current = timeoutId;
-
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        if (roleSyncTimeoutRef.current === timeoutId) {
-          roleSyncTimeoutRef.current = null;
-        }
-      }
-    };
-  }, [isAuthReady, roleSyncDone, refreshUser]);
+  // DISABLED TEMPORARILY - causing loops and unnecessary refreshes
+  // Users can manually refresh if needed
+  // useEffect(() => {
+  //   // Disabled to prevent loops
+  // }, []);
 
   useEffect(() => {
     const loadUserOnMount = async () => {
