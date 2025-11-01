@@ -616,5 +616,3 @@ class TenantService:
         except Exception as e:
             logger.error(f"Failed to create demo data in schema {schema_name}: {e}")
             # Don't raise here - tenant creation can still succeed without demo data
-
-επί
