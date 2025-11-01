@@ -78,7 +78,7 @@ export function withAuth<TProps extends Record<string, any> = any>(
   Component: React.ComponentType<TProps>, 
   allowedRoles: Array<'superuser' | 'admin' | 'manager'> = ['admin', 'manager']
 ) {
-  return function Protected(props: TProps) {
+  return function Protected(componentProps: TProps) {
     const { systemRole, isAdmin, isManager, isLoading } = useRole();
     if (isLoading) return null;
     
@@ -97,7 +97,7 @@ export function withAuth<TProps extends Record<string, any> = any>(
       if (typeof window !== 'undefined') window.location.replace('/');
       return null;
     }
-    return React.createElement(Component as any, props as any);
+    return React.createElement(Component as any, componentProps as any);
   };
 }
 
