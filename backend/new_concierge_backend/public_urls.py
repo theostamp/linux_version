@@ -43,7 +43,7 @@ urlpatterns = [
     path('api/internal/tenants/create/', include('tenants.internal_urls')),
     
     # Tenant accept invite endpoint
-    path('api/tenants/accept-invite/', include('tenants.urls')),
+    path('api/tenants/', include('tenants.urls')),
 ]
 
 if settings.DEBUG:

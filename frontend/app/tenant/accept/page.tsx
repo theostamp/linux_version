@@ -41,9 +41,18 @@ export default function AcceptTenantPage() {
 
         toast.success('Πρόσβαση στο workspace επιτυχής!')
 
-        // Redirect to dashboard after 2 seconds
+        // Store tenant info for redirect
+        if (response.data.tenant) {
+          localStorage.setItem('pending_tenant_redirect', JSON.stringify({
+            schema_name: response.data.tenant.schema_name,
+            domain: response.data.tenant.domain,
+            name: response.data.tenant.name
+          }));
+        }
+
+        // Redirect to dashboard which will handle tenant domain redirect
         setTimeout(() => {
-          router.push('/dashboard')
+          router.push('/dashboard');
         }, 2000)
 
       } catch (error: any) {

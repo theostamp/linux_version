@@ -119,6 +119,40 @@ function DashboardContent() {
   } | null>(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
 
+  // Check for pending tenant redirect
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const pendingRedirect = localStorage.getItem('pending_tenant_redirect');
+      if (pendingRedirect) {
+        try {
+          const tenantInfo = JSON.parse(pendingRedirect);
+          localStorage.removeItem('pending_tenant_redirect');
+          
+          // Build tenant URL based on environment
+          const hostname = window.location.hostname;
+          let tenantUrl = '';
+          
+          if (hostname.includes('localhost')) {
+            // Development: Use subdomain on localhost
+            tenantUrl = `http://${tenantInfo.schema_name}.localhost:3000/dashboard`;
+          } else if (hostname.includes('vercel.app')) {
+            // Vercel deployment: Stay on same domain for now
+            // TODO: Configure proper subdomain routing on Vercel
+            return;
+          } else {
+            // Production: Use actual tenant subdomain
+            tenantUrl = `https://${tenantInfo.schema_name}.newconcierge.app/dashboard`;
+          }
+          
+          console.log('Redirecting to tenant URL from pending redirect:', tenantUrl);
+          window.location.href = tenantUrl;
+        } catch (e) {
+          console.error('Failed to parse pending tenant redirect:', e);
+        }
+      }
+    }
+  }, []);
+
   // Fetch weather data
   useEffect(() => {
     const fetchWeather = async () => {
