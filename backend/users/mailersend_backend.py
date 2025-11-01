@@ -79,6 +79,13 @@ class MailerSendEmailBackend(BaseEmailBackend):
             if text_content:
                 email_data["text"] = text_content
             
+            # Disable click tracking to preserve direct links
+            # This prevents MailerSend from wrapping links in tracking URLs
+            email_data["settings"] = {
+                "click_tracking": False,
+                "open_tracking": False
+            }
+            
             # Add CC and BCC if present
             if message.cc:
                 email_data["cc"] = [{"email": email, "name": ""} for email in message.cc]
