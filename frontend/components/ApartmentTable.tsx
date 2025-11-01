@@ -400,10 +400,10 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
                           handleSendInvitation(email, apartment.id, type);
                         }
                       }}
-                      disabled={
+                      disabled={Boolean(
                         (apartment.owner_email && sendingInvitation?.email === apartment.owner_email && sendingInvitation?.apartmentId === apartment.id) ||
                         (apartment.tenant_email && sendingInvitation?.email === apartment.tenant_email && sendingInvitation?.apartmentId === apartment.id)
-                      }
+                      )}
                       className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded p-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title={
                         (apartment.owner_email && hasPendingInvitation(apartment.owner_email)) || 
