@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
 import { ApartmentList, updateApartmentOwner, updateApartmentTenant, deleteApartment, invitationApi, type Invitation } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Settings, Mail, MailCheck } from 'lucide-react';
+import { Edit, Trash2, Settings, Mail, MailCheck, UserPlus, Send } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import ApartmentStatusModal from './ApartmentStatusModal';
 import ApartmentEditModal from './ApartmentEditModal';
@@ -274,32 +274,13 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
                         </div>
                       )}
                       {apartment.owner_email && (
-                        <div className="flex items-center gap-1">
+                        <div>
                           <span className="text-gray-500">Email:</span>
                           <ContactLink 
                             type="email" 
                             value={apartment.owner_email}
                             className="text-xs ml-1"
                           />
-                          {!hasPendingInvitation(apartment.owner_email) && (
-                            <button
-                              onClick={() => handleSendInvitation(apartment.owner_email!, apartment.id, 'owner')}
-                              disabled={sendingInvitation?.email === apartment.owner_email && sendingInvitation?.apartmentId === apartment.id}
-                              className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded p-1 ml-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Στείλε πρόσκληση για πρόσβαση στην εφαρμογή"
-                            >
-                              {sendingInvitation?.email === apartment.owner_email && sendingInvitation?.apartmentId === apartment.id ? (
-                                <MailCheck className="w-4 h-4 animate-pulse" />
-                              ) : (
-                                <Mail className="w-4 h-4" />
-                              )}
-                            </button>
-                          )}
-                          {hasPendingInvitation(apartment.owner_email) && (
-                            <span className="inline-flex items-center justify-center text-green-600 ml-1" title="Υπάρχει ενεργή πρόσκληση">
-                              <MailCheck className="w-4 h-4" />
-                            </span>
-                          )}
                         </div>
                       )}
                     </div>
@@ -368,32 +349,13 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
                           </div>
                         )}
                         {apartment.tenant_email && (
-                          <div className="flex items-center gap-1">
+                          <div>
                             <span className="text-gray-500">Email:</span>
                             <ContactLink 
                               type="email" 
                               value={apartment.tenant_email}
                               className="text-xs ml-1"
                             />
-                            {!hasPendingInvitation(apartment.tenant_email) && (
-                              <button
-                                onClick={() => handleSendInvitation(apartment.tenant_email!, apartment.id, 'tenant')}
-                                disabled={sendingInvitation?.email === apartment.tenant_email && sendingInvitation?.apartmentId === apartment.id}
-                                className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded p-1 ml-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="Στείλε πρόσκληση για πρόσβαση στην εφαρμογή"
-                              >
-                                {sendingInvitation?.email === apartment.tenant_email && sendingInvitation?.apartmentId === apartment.id ? (
-                                  <MailCheck className="w-4 h-4 animate-pulse" />
-                                ) : (
-                                  <Mail className="w-4 h-4" />
-                                )}
-                              </button>
-                            )}
-                            {hasPendingInvitation(apartment.tenant_email) && (
-                              <span className="inline-flex items-center justify-center text-green-600 ml-1" title="Υπάρχει ενεργή πρόσκληση">
-                                <MailCheck className="w-4 h-4" />
-                              </span>
-                            )}
                           </div>
                         )}
                       </div>
@@ -425,7 +387,45 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
                </td>
               
               <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                <div className="flex space-x-2">
+                <div className="flex items-center space-x-2">
+                  {/* Invitation buttons for owner and tenant */}
+                  {((apartment.owner_email && !hasPendingInvitation(apartment.owner_email)) || 
+                    (apartment.tenant_email && !hasPendingInvitation(apartment.tenant_email))) && (
+                    <button
+                      onClick={() => {
+                        // Prioritize tenant email if both exist
+                        const email = apartment.tenant_email || apartment.owner_email;
+                        const type = apartment.tenant_email ? 'tenant' : 'owner';
+                        if (email) {
+                          handleSendInvitation(email, apartment.id, type);
+                        }
+                      }}
+                      disabled={
+                        (apartment.owner_email && sendingInvitation?.email === apartment.owner_email && sendingInvitation?.apartmentId === apartment.id) ||
+                        (apartment.tenant_email && sendingInvitation?.email === apartment.tenant_email && sendingInvitation?.apartmentId === apartment.id)
+                      }
+                      className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded p-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={
+                        (apartment.owner_email && hasPendingInvitation(apartment.owner_email)) || 
+                        (apartment.tenant_email && hasPendingInvitation(apartment.tenant_email))
+                          ? "Υπάρχει ενεργή πρόσκληση"
+                          : "Στείλε πρόσκληση για πρόσβαση στην εφαρμογή"
+                      }
+                    >
+                      {(apartment.owner_email && sendingInvitation?.email === apartment.owner_email && sendingInvitation?.apartmentId === apartment.id) ||
+                       (apartment.tenant_email && sendingInvitation?.email === apartment.tenant_email && sendingInvitation?.apartmentId === apartment.id) ? (
+                        <MailCheck className="w-4 h-4 animate-pulse" />
+                      ) : (
+                        <UserPlus className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
+                  {(apartment.owner_email && hasPendingInvitation(apartment.owner_email)) || 
+                   (apartment.tenant_email && hasPendingInvitation(apartment.tenant_email)) ? (
+                    <span className="inline-flex items-center justify-center text-green-600" title="Υπάρχει ενεργή πρόσκληση">
+                      <MailCheck className="w-4 h-4" />
+                    </span>
+                  ) : null}
                   <button
                     onClick={() => handleDelete(apartment.id)}
                     disabled={deleting === apartment.id}

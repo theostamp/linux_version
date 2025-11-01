@@ -37,7 +37,7 @@ class TenantInvitationSerializer(serializers.ModelSerializer):
     def get_apartment_info(self, obj):
         if obj.apartment_id:
             try:
-                from buildings.models import Apartment
+                from apartments.models import Apartment
                 apartment = Apartment.objects.get(id=obj.apartment_id)
                 return {
                     'id': apartment.id,
@@ -79,7 +79,7 @@ class CreateInvitationSerializer(serializers.Serializer):
     def validate_apartment_id(self, value):
         """Validate apartment exists and belongs to tenant"""
         if value:
-            from buildings.models import Apartment
+            from apartments.models import Apartment
             try:
                 apartment = Apartment.objects.get(id=value)
                 return value
