@@ -159,6 +159,14 @@ class UserSubscriptionViewSet(ModelViewSet):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    @action(detail=False, methods=['post'], url_path='upgrade')
+    def upgrade_subscription(self, request):
+        """
+        Upgrade subscription plan (convenience endpoint)
+        Alias for update_subscription with upgrade-specific logic
+        """
+        return self.update_subscription(request)
+    
     @action(detail=False, methods=['post'])
     def cancel_subscription(self, request):
         """
