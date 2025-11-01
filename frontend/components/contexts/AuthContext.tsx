@@ -7,6 +7,7 @@ import React, {
   useState,
   ReactNode,
   useCallback,
+  useRef,
 } from 'react';
 import type { User } from '@/types/user';
 import { useQueryClient } from '@tanstack/react-query';
@@ -33,13 +34,16 @@ const AuthContext = createContext<AuthCtx | undefined>(undefined);
 
 // Global flag to prevent multiple AuthProvider instances from initializing simultaneously
 let globalAuthInitializing = false;
+const MAX_ROLE_SYNC_ATTEMPTS = 3;
 
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [userState, setUserState] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
-  const [hasSyncedRole, setHasSyncedRole] = useState(false);
+  const [roleSyncDone, setRoleSyncDone] = useState(false);
+  const roleSyncAttemptsRef = useRef(0);
+  const roleSyncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
 
   // Always sync user to localStorage
@@ -50,23 +54,30 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       localStorage.setItem('user', JSON.stringify(user));
       queryClient.setQueryData(['me'], user);
       if (effectiveRole && effectiveRole !== 'user') {
-        setHasSyncedRole(true);
+        setRoleSyncDone(true);
+        roleSyncAttemptsRef.current = 0;
       } else {
-        setHasSyncedRole(false);
+        setRoleSyncDone(false);
       }
     } else {
       localStorage.removeItem('user');
       queryClient.removeQueries({ queryKey: ['me'], exact: true });
-      setHasSyncedRole(false);
+      setRoleSyncDone(false);
+      roleSyncAttemptsRef.current = 0;
     }
-  }, [queryClient, setHasSyncedRole]);
+  }, [queryClient]);
 
   const performClientLogout = useCallback(() => {
     localStorage.removeItem('access');
     localStorage.removeItem('refresh');
     localStorage.removeItem('user');
     setUser(null);
-    setHasSyncedRole(false);
+    setRoleSyncDone(false);
+    roleSyncAttemptsRef.current = 0;
+    if (roleSyncTimeoutRef.current) {
+      clearTimeout(roleSyncTimeoutRef.current);
+      roleSyncTimeoutRef.current = null;
+    }
     console.log('AuthContext: Client-side logout performed.');
   }, [setUser]);
 
@@ -164,28 +175,80 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     }
   }, [setUser]);
 
-  // Automatically resync role after upgrades (e.g., subscription activation)
+  // Clean up any pending role sync timeout on unmount
   useEffect(() => {
-    if (!isAuthReady || !userState) return;
-    if (hasSyncedRole) return;
+    return () => {
+      if (roleSyncTimeoutRef.current) {
+        clearTimeout(roleSyncTimeoutRef.current);
+        roleSyncTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  // Automatically resync role after upgrades (e.g., subscription activation)
+  // IMPORTANT: Only depends on isAuthReady and roleSyncDone, NOT userState
+  // to avoid infinite loops when refreshUser updates the user
+  useEffect(() => {
+    if (!isAuthReady) return;
+    
+    // Skip if already marked as done
+    if (roleSyncDone) return;
+
+    const currentUser = userState;
+    if (!currentUser) return;
 
     const tokenExists = !!localStorage.getItem('access');
-    const systemRole = userState.system_role ?? userState.role ?? null;
-    const shouldSync = tokenExists && (!systemRole || systemRole === 'user');
+    const systemRole = currentUser.system_role ?? currentUser.role ?? null;
+    const needsSync = tokenExists && (!systemRole || systemRole === 'user');
 
-    if (!shouldSync) {
-      setHasSyncedRole(true);
+    if (!needsSync) {
+      setRoleSyncDone(true);
+      roleSyncAttemptsRef.current = 0;
+      if (roleSyncTimeoutRef.current) {
+        clearTimeout(roleSyncTimeoutRef.current);
+        roleSyncTimeoutRef.current = null;
+      }
       return;
     }
 
-    setHasSyncedRole(true);
-    refreshUser()
-      .catch((error) => {
+    if (roleSyncAttemptsRef.current >= MAX_ROLE_SYNC_ATTEMPTS) {
+      console.warn('AuthContext: Maximum role sync attempts reached, marking as done');
+      setRoleSyncDone(true);
+      return;
+    }
+
+    console.log(`AuthContext: Scheduling role sync attempt ${roleSyncAttemptsRef.current + 1}/${MAX_ROLE_SYNC_ATTEMPTS}`);
+    const delay = roleSyncAttemptsRef.current === 0 ? 0 : 1000 * roleSyncAttemptsRef.current;
+    roleSyncAttemptsRef.current += 1;
+
+    if (roleSyncTimeoutRef.current) {
+      clearTimeout(roleSyncTimeoutRef.current);
+      roleSyncTimeoutRef.current = null;
+    }
+
+    const timeoutId = setTimeout(() => {
+      refreshUser().catch((error) => {
         console.error('AuthContext: Automatic role sync failed', error);
-        // Allow a future retry (e.g., manual refresh or next render cycle)
-        setTimeout(() => setHasSyncedRole(false), 1000);
+        // On failure, mark as done after max attempts
+        if (roleSyncAttemptsRef.current >= MAX_ROLE_SYNC_ATTEMPTS) {
+          setRoleSyncDone(true);
+        }
+      }).finally(() => {
+        roleSyncTimeoutRef.current = null;
       });
-  }, [isAuthReady, userState, refreshUser, hasSyncedRole]);
+    }, delay);
+
+    roleSyncTimeoutRef.current = timeoutId;
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        if (roleSyncTimeoutRef.current === timeoutId) {
+          roleSyncTimeoutRef.current = null;
+        }
+      }
+    };
+  }, [isAuthReady, roleSyncDone, refreshUser]);
 
   useEffect(() => {
     const loadUserOnMount = async () => {
