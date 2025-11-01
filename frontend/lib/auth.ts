@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
 import React from 'react';
+import { useAuth } from '@/components/contexts/AuthContext';
 
 type Me = {
   id: number;
@@ -37,6 +38,9 @@ export function useMe() {
 
 export function useRole() {
   const { data, isLoading } = useMe();
+  const { refreshUser, isAuthReady, isLoading: authLoading } = useAuth();
+  const [requestedRoleSync, setRequestedRoleSync] = React.useState(false);
+
   let userData: Me | null = data ?? null;
   if (!userData && typeof window !== 'undefined') {
     try {
@@ -47,6 +51,28 @@ export function useRole() {
   // Use system_role if available, fallback to role (backward compat)
   const systemRole = userData?.system_role ?? userData?.role ?? null;
   const residentRole = userData?.resident_role ?? null;
+
+  const tokenExists = typeof window !== 'undefined' ? !!localStorage.getItem('access') : false;
+  const missingRole = tokenExists && (!systemRole || systemRole === 'user');
+
+  React.useEffect(() => {
+    if (!isAuthReady) return;
+    if (!tokenExists) return;
+    if (!missingRole) {
+      setRequestedRoleSync(false);
+      return;
+    }
+    if (requestedRoleSync) return;
+
+    setRequestedRoleSync(true);
+    refreshUser()
+      .catch((error) => {
+        console.error('[useRole] Failed to refresh user role', error);
+        setTimeout(() => setRequestedRoleSync(false), 1000);
+      });
+  }, [isAuthReady, tokenExists, missingRole, requestedRoleSync, refreshUser]);
+  
+  const combinedLoading = isLoading || authLoading || missingRole;
   
   // isAdmin: Ultra Admin (superuser or admin SystemRole)
   const isAdmin = !!userData?.is_superuser || systemRole === 'admin' || systemRole === 'superuser';
@@ -59,7 +85,7 @@ export function useRole() {
     residentRole,
     isAdmin, 
     isManager, 
-    isLoading 
+    isLoading: combinedLoading 
   };
 }
 
@@ -100,5 +126,4 @@ export function withAuth<TProps extends Record<string, any> = any>(
     return React.createElement(Component as any, componentProps as any);
   };
 }
-
 

@@ -39,25 +39,34 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [hasSyncedRole, setHasSyncedRole] = useState(false);
   const queryClient = useQueryClient();
 
   // Always sync user to localStorage
   const setUser = useCallback((user: User | null) => {
     setUserState(user);
     if (user) {
+      const effectiveRole = user.system_role ?? user.role ?? null;
       localStorage.setItem('user', JSON.stringify(user));
       queryClient.setQueryData(['me'], user);
+      if (effectiveRole && effectiveRole !== 'user') {
+        setHasSyncedRole(true);
+      } else {
+        setHasSyncedRole(false);
+      }
     } else {
       localStorage.removeItem('user');
       queryClient.removeQueries({ queryKey: ['me'], exact: true });
+      setHasSyncedRole(false);
     }
-  }, [queryClient]);
+  }, [queryClient, setHasSyncedRole]);
 
   const performClientLogout = useCallback(() => {
     localStorage.removeItem('access');
     localStorage.removeItem('refresh');
     localStorage.removeItem('user');
     setUser(null);
+    setHasSyncedRole(false);
     console.log('AuthContext: Client-side logout performed.');
   }, [setUser]);
 
@@ -143,6 +152,29 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       throw error;
     }
   }, [setUser]);
+
+  // Automatically resync role after upgrades (e.g., subscription activation)
+  useEffect(() => {
+    if (!isAuthReady || !userState) return;
+    if (hasSyncedRole) return;
+
+    const tokenExists = !!localStorage.getItem('access');
+    const systemRole = userState.system_role ?? userState.role ?? null;
+    const shouldSync = tokenExists && (!systemRole || systemRole === 'user');
+
+    if (!shouldSync) {
+      setHasSyncedRole(true);
+      return;
+    }
+
+    setHasSyncedRole(true);
+    refreshUser()
+      .catch((error) => {
+        console.error('AuthContext: Automatic role sync failed', error);
+        // Allow a future retry (e.g., manual refresh or next render cycle)
+        setTimeout(() => setHasSyncedRole(false), 1000);
+      });
+  }, [isAuthReady, userState, refreshUser, hasSyncedRole]);
 
   useEffect(() => {
     const loadUserOnMount = async () => {
