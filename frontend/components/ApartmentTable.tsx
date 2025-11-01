@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
-import { ApartmentList, updateApartmentOwner, updateApartmentTenant, deleteApartment } from '@/lib/api';
+import { ApartmentList, updateApartmentOwner, updateApartmentTenant, deleteApartment, invitationApi, type Invitation } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Settings } from 'lucide-react';
+import { Edit, Trash2, Settings, Mail, MailCheck } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import ApartmentStatusModal from './ApartmentStatusModal';
 import ApartmentEditModal from './ApartmentEditModal';
@@ -32,6 +32,60 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
     apartment: null,
     type: 'owner'
   });
+  
+  // Invitation states
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [sendingInvitation, setSendingInvitation] = useState<{ email: string; apartmentId: number } | null>(null);
+  
+  // Load invitations on mount
+  useEffect(() => {
+    loadInvitations();
+  }, []);
+  
+  const loadInvitations = async () => {
+    try {
+      const data = await invitationApi.list();
+      setInvitations(data);
+    } catch (error) {
+      console.error('Failed to load invitations:', error);
+    }
+  };
+  
+  const hasPendingInvitation = (email: string): boolean => {
+    if (!email) return false;
+    return invitations.some(
+      inv => inv.email.toLowerCase() === email.toLowerCase() && 
+      inv.status === 'pending' && 
+      !inv.is_expired
+    );
+  };
+  
+  const handleSendInvitation = async (email: string, apartmentId: number, type: 'owner' | 'tenant') => {
+    if (!email) {
+      toast.error('Το email είναι υποχρεωτικό');
+      return;
+    }
+    
+    setSendingInvitation({ email, apartmentId });
+    
+    try {
+      await invitationApi.create({
+        email,
+        invited_role: 'resident',
+        apartment_id: apartmentId,
+        message: `Σας προσκληθήκατε να συμμετάσχετε στην πλατφόρμα διαχείρισης του κτιρίου ως ${type === 'owner' ? 'ιδιοκτήτης' : 'ενοικιαστής'} του διαμερίσματος.`,
+        expires_in_days: 7,
+      });
+      
+      toast.success(`Η πρόσκληση στάλθηκε επιτυχώς στο ${email}`);
+      loadInvitations();
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || error.response?.data?.detail || 'Αποτυχία αποστολής πρόσκλησης';
+      toast.error(errorMessage);
+    } finally {
+      setSendingInvitation(null);
+    }
+  };
 
   // Υπολογισμός αθροισμάτων χιλιοστών
   const totals = {
@@ -220,24 +274,45 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
                         </div>
                       )}
                       {apartment.owner_email && (
-                        <div>
+                        <div className="flex items-center gap-1">
                           <span className="text-gray-500">Email:</span>
                           <ContactLink 
                             type="email" 
                             value={apartment.owner_email}
                             className="text-xs ml-1"
                           />
+                          {!hasPendingInvitation(apartment.owner_email) && (
+                            <button
+                              onClick={() => handleSendInvitation(apartment.owner_email!, apartment.id, 'owner')}
+                              disabled={sendingInvitation?.email === apartment.owner_email && sendingInvitation?.apartmentId === apartment.id}
+                              className="text-blue-600 hover:text-blue-800 ml-1"
+                              title="Στείλε πρόσκληση για πρόσβαση στην εφαρμογή"
+                            >
+                              {sendingInvitation?.email === apartment.owner_email && sendingInvitation?.apartmentId === apartment.id ? (
+                                <MailCheck className="w-3 h-3 animate-pulse" />
+                              ) : (
+                                <Mail className="w-3 h-3" />
+                              )}
+                            </button>
+                          )}
+                          {hasPendingInvitation(apartment.owner_email) && (
+                            <span className="text-green-600 ml-1" title="Υπάρχει ενεργή πρόσκληση">
+                              <MailCheck className="w-3 h-3" />
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => openEditModal(apartment, 'owner')}
-                    className="text-blue-600 hover:text-blue-800 ml-2"
-                    title="Επεξεργασία ιδιοκτήτη"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1 ml-2">
+                    <button
+                      onClick={() => openEditModal(apartment, 'owner')}
+                      className="text-blue-600 hover:text-blue-800"
+                      title="Επεξεργασία ιδιοκτήτη"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </td>
               
@@ -293,25 +368,46 @@ export default function ApartmentTable({ apartments, onRefresh }: ApartmentTable
                           </div>
                         )}
                         {apartment.tenant_email && (
-                          <div>
+                          <div className="flex items-center gap-1">
                             <span className="text-gray-500">Email:</span>
                             <ContactLink 
                               type="email" 
                               value={apartment.tenant_email}
                               className="text-xs ml-1"
                             />
+                            {!hasPendingInvitation(apartment.tenant_email) && (
+                              <button
+                                onClick={() => handleSendInvitation(apartment.tenant_email!, apartment.id, 'tenant')}
+                                disabled={sendingInvitation?.email === apartment.tenant_email && sendingInvitation?.apartmentId === apartment.id}
+                                className="text-blue-600 hover:text-blue-800 ml-1"
+                                title="Στείλε πρόσκληση για πρόσβαση στην εφαρμογή"
+                              >
+                                {sendingInvitation?.email === apartment.tenant_email && sendingInvitation?.apartmentId === apartment.id ? (
+                                  <MailCheck className="w-3 h-3 animate-pulse" />
+                                ) : (
+                                  <Mail className="w-3 h-3" />
+                                )}
+                              </button>
+                            )}
+                            {hasPendingInvitation(apartment.tenant_email) && (
+                              <span className="text-green-600 ml-1" title="Υπάρχει ενεργή πρόσκληση">
+                                <MailCheck className="w-3 h-3" />
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => openEditModal(apartment, 'tenant')}
-                    className="text-green-600 hover:text-green-800 ml-2"
-                    title="Επεξεργασία ενοικιαστή"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1 ml-2">
+                    <button
+                      onClick={() => openEditModal(apartment, 'tenant')}
+                      className="text-green-600 hover:text-green-800"
+                      title="Επεξεργασία ενοικιαστή"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </td>
                
