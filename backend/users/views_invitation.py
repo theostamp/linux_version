@@ -319,24 +319,51 @@ class AcceptInvitationView(APIView):
                             if building:
                                 # Create Resident entry
                                 resident_role = 'tenant' if invitation.invited_role == 'resident' else 'owner'
-                                resident, created = Resident.objects.get_or_create(
-                                    user=tenant_user,
-                                    building=building,
-                                    defaults={
-                                        'apartment': apartment.number if apartment else '',
-                                        'role': resident_role,
-                                        'phone': serializer.validated_data.get('phone', '')
-                                    }
-                                )
                                 
-                                # Create BuildingMembership
+                                # Check if resident already exists for this (building, apartment) combination
+                                # The unique constraint is (building, apartment), not (user, building)
+                                apartment_number = apartment.number if apartment else ''
+                                existing_resident = Resident.objects.filter(
+                                    building=building,
+                                    apartment=apartment_number
+                                ).first()
+                                
+                                if existing_resident:
+                                    # Resident already exists for this apartment
+                                    logger.warning(
+                                        f"Resident already exists for apartment {apartment_number} in building {building.name} "
+                                        f"(existing user: {existing_resident.user.email}). "
+                                        f"Linking new user {tenant_user.email} instead."
+                                    )
+                                    # Update existing resident to link to new user
+                                    existing_resident.user = tenant_user
+                                    existing_resident.role = resident_role
+                                    if serializer.validated_data.get('phone'):
+                                        existing_resident.phone = serializer.validated_data.get('phone')
+                                    existing_resident.save()
+                                    resident = existing_resident
+                                else:
+                                    # Create new Resident entry
+                                    resident, created = Resident.objects.get_or_create(
+                                        user=tenant_user,
+                                        building=building,
+                                        defaults={
+                                            'apartment': apartment_number,
+                                            'role': resident_role,
+                                            'phone': serializer.validated_data.get('phone', '')
+                                        }
+                                    )
+                                    if created:
+                                        logger.info(f"Created Resident entry: {tenant_user.email} ({resident_role}) -> Apartment {apartment_number}")
+                                
+                                # Create BuildingMembership (this doesn't have a unique constraint, so safe to use get_or_create)
                                 BuildingMembership.objects.get_or_create(
                                     building=building,
                                     resident=tenant_user,
                                     defaults={'role': resident_role}
                                 )
                                 
-                                logger.info(f"Created Resident profile and BuildingMembership for {tenant_user.email} in building {building.name}")
+                                logger.info(f"Linked Resident profile and BuildingMembership for {tenant_user.email} in building {building.name}")
                             else:
                                 logger.warning(f"No building found for invitation {invitation.id}, Resident profile not created")
                 
