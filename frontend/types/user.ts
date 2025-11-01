@@ -9,6 +9,7 @@ export type User = {
   groups?: { id: number; name: string }[];
   is_staff?: boolean;
   is_superuser?: boolean;
+  is_active?: boolean;
   role?: string;
   
   // Role system (backend/users/models.py - CustomUser.role)
