@@ -416,14 +416,16 @@ CORS_ALLOW_CREDENTIALS = True     # για cookies / JWT
 CORS_ALLOWED_ORIGINS = get_list_env(
     "CORS_ALLOWED_ORIGINS",
     # Default development origins
-    "http://localhost:8080,http://127.0.0.1:8080,http://demo.localhost:8080,"
-    "http://top.localhost:8080,http://tap.localhost:8080,"
-    "http://localhost:3000,http://127.0.0.1:3000,http://demo.localhost:3000,"
-    "http://top.localhost:3000,http://tap.localhost:3000,"
-    "http://localhost:3001,http://127.0.0.1:3001,http://demo.localhost:3001,"
-    "http://top.localhost:3001,http://tap.localhost:3001,"
-    "https://newconcierge.app",  # Production domain
-    "https://*.newconcierge.app"  # All subdomains
+    (
+        "http://localhost:8080,http://127.0.0.1:8080,http://demo.localhost:8080,"
+        "http://top.localhost:8080,http://tap.localhost:8080,"
+        "http://localhost:3000,http://127.0.0.1:3000,http://demo.localhost:3000,"
+        "http://top.localhost:3000,http://tap.localhost:3000,"
+        "http://localhost:3001,http://127.0.0.1:3001,http://demo.localhost:3001,"
+        "http://top.localhost:3001,http://tap.localhost:3001,"
+        "https://newconcierge.app,"  # Production domain
+        "https://*.newconcierge.app"  # All subdomains
+    )
 )
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
@@ -454,10 +456,12 @@ CORS_ALLOW_METHODS   = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
 _raw_csrf = get_list_env(
     "CSRF_ORIGINS",
     # ✅ Cover common dev hosts and ports by default
-    "localhost:8080,localhost:3000,127.0.0.1:8080,127.0.0.1:3000,"
-    "demo.localhost:8080,demo.localhost:3000,"
-    "top.localhost:8080,tap.localhost:8080,top.localhost:3000,tap.localhost:3000,"
-    "newconcierge.app,*.newconcierge.app,*.vercel.app"  # Keep vercel.app for preview deployments
+    (
+        "localhost:8080,localhost:3000,127.0.0.1:8080,127.0.0.1:3000,"
+        "demo.localhost:8080,demo.localhost:3000,"
+        "top.localhost:8080,tap.localhost:8080,top.localhost:3000,tap.localhost:3000,"
+        "newconcierge.app,*.newconcierge.app,*.vercel.app"  # Keep vercel.app for preview deployments
+    )
 )
 CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in _raw_csrf] + [f"https://{h}" for h in _raw_csrf]
 
