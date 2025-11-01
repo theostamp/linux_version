@@ -830,7 +830,14 @@ class UserVerificationService:
             try:
                 user = User.objects.get(email_verification_token=token)
             except User.DoesNotExist:
+                # Token not found - may be expired, used already, or invalid
                 raise ValueError("Μη έγκυρο token επιβεβαίωσης.")
+            
+            # Check if user is already verified (token was already used)
+            # This handles the case where user clicks verification link multiple times
+            if user.email_verified:
+                logger.info(f"[VERIFY_EMAIL] User {user.email} is already verified (token reused)")
+                return user  # Return user without error - already verified
             
             # Έλεγχος αν το token έχει λήξει (24 ώρες)
             if user.email_verification_sent_at:

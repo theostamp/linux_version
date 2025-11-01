@@ -495,20 +495,38 @@ class TenantService:
                 
                 # Create Resident entries and BuildingMembership for all created users
                 for user, apartment, resident_role in created_resident_users:
-                    # Create Resident entry
-                    resident_profile, created = Resident.objects.get_or_create(
-                        user=user,
+                    # Check if resident already exists for this (building, apartment) combination
+                    # The unique constraint is (building, apartment), not (user, building)
+                    existing_resident = Resident.objects.filter(
                         building=building,
-                        defaults={
-                            'apartment': apartment.number,
-                            'role': resident_role,  # 'owner' or 'tenant'
-                            'phone': apartment.owner_phone if resident_role == 'owner' else apartment.tenant_phone
-                        }
-                    )
-                    if created:
-                        logger.info(f"Created Resident entry: {user.email} ({resident_role}) -> Apartment {apartment.number}")
+                        apartment=apartment.number
+                    ).first()
                     
-                    # Create BuildingMembership
+                    if existing_resident:
+                        # Resident already exists for this apartment - skip creation
+                        logger.info(
+                            f"Skipping Resident creation: Apartment {apartment.number} already has resident "
+                            f"({existing_resident.user.email}). Updating user link if needed."
+                        )
+                        # If the existing resident's user is different, we could update it, but for demo data
+                        # it's safer to skip and keep the original resident
+                        resident_profile = existing_resident
+                    else:
+                        # Create Resident entry
+                        # Check by (user, building) first, then create with apartment
+                        resident_profile, created = Resident.objects.get_or_create(
+                            user=user,
+                            building=building,
+                            defaults={
+                                'apartment': apartment.number,
+                                'role': resident_role,  # 'owner' or 'tenant'
+                                'phone': apartment.owner_phone if resident_role == 'owner' else apartment.tenant_phone
+                            }
+                        )
+                        if created:
+                            logger.info(f"Created Resident entry: {user.email} ({resident_role}) -> Apartment {apartment.number}")
+                    
+                    # Create BuildingMembership (this doesn't have a unique constraint, so safe to use get_or_create)
                     BuildingMembership.objects.get_or_create(
                         building=building,
                         resident=user,
