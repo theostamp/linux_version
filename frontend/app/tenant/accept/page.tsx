@@ -21,7 +21,7 @@ export default function AcceptTenantPage() {
   const retryDelayRef = useRef(INITIAL_RETRY_DELAY)
   const isProcessingRef = useRef(false)
 
-  const checkSubscriptionStatus = useCallback(async (): Promise<boolean> => {
+  const checkSubscriptionStatus = useCallback(async (): Promise<{ isReady: boolean; tenantUrl?: string }> => {
     // If session_id is provided, check subscription status first
     if (sessionId) {
       try {
@@ -29,30 +29,31 @@ export default function AcceptTenantPage() {
         const data = response.data
         
         if (data.status === 'completed') {
-          return true
+          // Return tenant_url if available for redirect
+          return { isReady: true, tenantUrl: data.tenant_url }
         } else if (data.status === 'processing' || data.status === 'pending') {
           setStatus('checking')
           setMessage('Η ρύθμιση δεν έχει ολοκληρωθεί ακόμα, περιμένετε...')
-          return false
+          return { isReady: false }
         } else if (data.status === 'failed') {
           setStatus('error')
           setMessage(data.message || 'Η ρύθμιση του χώρου εργασίας απέτυχε.')
           toast.error(data.message || 'Η ρύθμιση του χώρου εργασίας απέτυχε.')
-          return false
+          return { isReady: false }
         }
       } catch (error: any) {
         // If 404, subscription might not be ready yet, but we can still try to accept invite
         if (error.response?.status === 404) {
           console.log('Subscription status not found, proceeding with invite acceptance')
-          return true
+          return { isReady: true }
         }
         // Other errors: log but continue
         console.warn('Failed to check subscription status:', error)
-        return true // Continue with invite acceptance
+        return { isReady: true } // Continue with invite acceptance
       }
     }
     
-    return true
+    return { isReady: true }
   }, [sessionId])
 
   const acceptTenantInvite = useCallback(async (attempt = 0): Promise<void> => {
@@ -67,8 +68,8 @@ export default function AcceptTenantPage() {
 
       // Check subscription status if session_id is provided
       if (sessionId && attempt === 0) {
-        const isReady = await checkSubscriptionStatus()
-        if (!isReady) {
+        const statusCheck = await checkSubscriptionStatus()
+        if (!statusCheck.isReady) {
           // Schedule retry
           if (retryCountRef.current < MAX_RETRIES) {
             retryCountRef.current += 1
@@ -85,6 +86,30 @@ export default function AcceptTenantPage() {
             isProcessingRef.current = false
             return
           }
+        }
+        
+        // If subscription is ready and tenant_url is provided, redirect immediately
+        if (statusCheck.tenantUrl) {
+          console.log(`[TENANT_ACCEPT] Subscription ready, redirecting to tenant URL: ${statusCheck.tenantUrl}`)
+          // Store tokens if available
+          const response = await api.get(`/api/billing/subscription-status/${sessionId}/`)
+          const data = response.data
+          if (data.access) {
+            localStorage.setItem('access', data.access)
+          }
+          if (data.refresh) {
+            localStorage.setItem('refresh', data.refresh)
+          }
+          
+          setStatus('success')
+          setMessage('Καλώς ήρθατε στο workspace σας!')
+          toast.success('Πρόσβαση στο workspace επιτυχής!')
+          
+          setTimeout(() => {
+            window.location.href = statusCheck.tenantUrl!
+          }, 2000)
+          isProcessingRef.current = false
+          return
         }
       }
 
@@ -106,30 +131,45 @@ export default function AcceptTenantPage() {
 
       toast.success('Πρόσβαση στο workspace επιτυχής!')
 
-              // Store tenant info for redirect
-              if (response.data.tenant) {
-                localStorage.setItem('pending_tenant_redirect', JSON.stringify({
-                  schema_name: response.data.tenant.schema_name,
-                  domain: response.data.tenant.domain,
-                  name: response.data.tenant.name
-                }));
-              }
-
-              // Redirect to dashboard which will handle tenant domain redirect
-              // SessionTenantMiddleware will handle tenant switch via JWT token
-              setTimeout(() => {
-                const hostname = window.location.hostname;
-                if (hostname.includes('vercel.app')) {
-                  // Vercel: Use query parameter for tenant switching
-                  router.push(`/dashboard?tenant=${response.data.tenant?.schema_name || ''}`);
-                } else if (hostname.includes('localhost')) {
-                  // Development: Redirect to tenant subdomain
-                  router.push(`http://${response.data.tenant?.schema_name || ''}.localhost:3000/dashboard`);
-                } else {
-                  // Production: Redirect to tenant subdomain
-                  router.push('/dashboard');
-                }
-              }, 2000)
+      // Redirect to tenant subdomain if tenant_url is provided
+      const tenantUrl = response.data.tenant?.tenant_url
+      if (tenantUrl) {
+        console.log(`[TENANT_ACCEPT] Redirecting to tenant URL: ${tenantUrl}`)
+        setTimeout(() => {
+          window.location.href = tenantUrl
+        }, 2000)
+      } else {
+        // Fallback: try to construct tenant URL from tenant info
+        console.warn('[TENANT_ACCEPT] tenant_url not provided, constructing from tenant info')
+        const hostname = window.location.hostname
+        let redirectUrl = ''
+        
+        if (hostname.includes('localhost')) {
+          // Development: http://schema_name.localhost:3000/dashboard
+          redirectUrl = `http://${response.data.tenant?.schema_name || ''}.localhost:3000/dashboard`
+        } else if (hostname.includes('vercel.app')) {
+          // Vercel: Stay on same domain (no subdomains), use query param
+          router.push(`/dashboard?tenant=${response.data.tenant?.schema_name || ''}`)
+          return
+        } else {
+          // Production: https://schema_name.newconcierge.app/dashboard
+          const baseDomain = hostname.includes('.') ? hostname.split('.').slice(-2).join('.') : 'newconcierge.app'
+          redirectUrl = `https://${response.data.tenant?.schema_name || ''}.${baseDomain}/dashboard`
+        }
+        
+        if (redirectUrl) {
+          console.log(`[TENANT_ACCEPT] Redirecting to constructed URL: ${redirectUrl}`)
+          setTimeout(() => {
+            window.location.href = redirectUrl
+          }, 2000)
+        } else {
+          // Last resort: redirect to dashboard on same domain
+          console.warn('[TENANT_ACCEPT] Could not construct tenant URL, redirecting to dashboard')
+          setTimeout(() => {
+            router.push('/dashboard')
+          }, 2000)
+        }
+      }
 
       isProcessingRef.current = false
 

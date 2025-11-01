@@ -115,6 +115,28 @@ class AcceptTenantInviteView(APIView):
             
             logger.info(f"[TENANT_WORKSPACE_ACCESS] ✅ Successfully granted workspace access for user {user.id}, tenant {tenant.id} (schema: {tenant.schema_name})")
             
+            # Build tenant URL for redirect
+            from django.conf import settings
+            import os
+            
+            # Determine environment based on settings and environment variables
+            is_production = not settings.DEBUG or os.getenv('RAILWAY_ENVIRONMENT', '').lower() == 'production'
+            
+            if is_production:
+                # Production: https://schema_name.newconcierge.app
+                frontend_base = settings.FRONTEND_URL.replace('https://', '').replace('http://', '').split('/')[0]
+                # Extract base domain (e.g., 'newconcierge.app' from 'https://newconcierge.app')
+                if '.' in frontend_base:
+                    base_domain = frontend_base
+                else:
+                    base_domain = 'newconcierge.app'  # Fallback
+                tenant_url = f"https://{tenant.schema_name}.{base_domain}/dashboard"
+            else:
+                # Development: http://schema_name.localhost:3000/dashboard
+                tenant_url = f"http://{tenant.schema_name}.localhost:3000/dashboard"
+            
+            logger.info(f"[TENANT_WORKSPACE_ACCESS] Generated tenant_url: {tenant_url}")
+            
             return Response({
                 'status': 'success',
                 'access': access_token,
@@ -122,7 +144,8 @@ class AcceptTenantInviteView(APIView):
                 'tenant': {
                     'schema_name': tenant.schema_name,
                     'name': tenant.name,
-                    'domain': domain
+                    'domain': domain,
+                    'tenant_url': tenant_url  # Full URL for redirect
                 },
                 'user': {
                     'email': user.email,

@@ -1464,9 +1464,32 @@ class SubscriptionStatusView(APIView):
                 
                 logger.info(f"Subscription completed for user {user.email}, tenant: {user.tenant.schema_name}")
                 
+                # Build tenant URL for redirect
+                from django.conf import settings
+                import os
+                
+                # Determine environment based on settings and environment variables
+                is_production = not settings.DEBUG or os.getenv('RAILWAY_ENVIRONMENT', '').lower() == 'production'
+                
+                if is_production:
+                    # Production: https://schema_name.newconcierge.app
+                    frontend_base = settings.FRONTEND_URL.replace('https://', '').replace('http://', '').split('/')[0]
+                    # Extract base domain (e.g., 'newconcierge.app' from 'https://newconcierge.app')
+                    if '.' in frontend_base:
+                        base_domain = frontend_base
+                    else:
+                        base_domain = 'newconcierge.app'  # Fallback
+                    tenant_url = f"https://{user.tenant.schema_name}.{base_domain}/dashboard"
+                else:
+                    # Development: http://schema_name.localhost:3000/dashboard
+                    tenant_url = f"http://{user.tenant.schema_name}.localhost:3000/dashboard"
+                
+                logger.info(f"[SUBSCRIPTION_STATUS] Generated tenant_url: {tenant_url}")
+                
                 return Response({
                     'status': 'completed',
                     'subdomain': user.tenant.schema_name,
+                    'tenant_url': tenant_url,  # Full URL for redirect
                     'access': access_token,
                     'refresh': str(refresh)
                 })

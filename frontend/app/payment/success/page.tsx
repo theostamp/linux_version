@@ -62,26 +62,53 @@ export default function SubscriptionSuccessPage() {
             console.error('Failed to refresh user data after subscription completion:', refreshError);
           }
           
-          // Redirect to dashboard
-          // SessionTenantMiddleware will handle tenant switch via JWT token
-          // On Vercel, we use the same domain (no subdomains)
-          setTimeout(() => {
+          // Redirect to tenant subdomain if tenant_url is provided
+          const tenantUrl = data.tenant_url;
+          if (tenantUrl) {
+            console.log(`[PAYMENT_SUCCESS] Redirecting to tenant URL: ${tenantUrl}`);
+            setTimeout(() => {
+              window.location.href = tenantUrl;
+            }, 2000);
+          } else {
+            // Fallback: try to construct tenant URL from subdomain
+            console.warn('[PAYMENT_SUCCESS] tenant_url not provided, constructing from subdomain');
             const hostname = window.location.hostname;
-            if (hostname.includes('vercel.app')) {
-              // Vercel: Stay on same domain, middleware will handle tenant switch via JWT
-              window.location.href = '/dashboard';
-            } else if (hostname.includes('localhost')) {
-              // Development: Try to get tenant from response or redirect to dashboard
-              if (data.tenant_schema) {
-                window.location.href = `http://${data.tenant_schema}.localhost:3000/dashboard`;
+            let redirectUrl = '';
+            
+            if (hostname.includes('localhost')) {
+              // Development: http://subdomain.localhost:3000/dashboard
+              if (data.subdomain) {
+                redirectUrl = `http://${data.subdomain}.localhost:3000/dashboard`;
               } else {
-                window.location.href = '/dashboard';
+                redirectUrl = '/dashboard';
               }
+            } else if (hostname.includes('vercel.app')) {
+              // Vercel: Stay on same domain (no subdomains), use query param
+              window.location.href = data.subdomain ? `/dashboard?tenant=${data.subdomain}` : '/dashboard';
+              return;
             } else {
-              // Production: Redirect to dashboard
-              window.location.href = '/dashboard';
+              // Production: https://subdomain.newconcierge.app/dashboard
+              const baseDomain = hostname.includes('.') ? hostname.split('.').slice(-2).join('.') : 'newconcierge.app';
+              if (data.subdomain) {
+                redirectUrl = `https://${data.subdomain}.${baseDomain}/dashboard`;
+              } else {
+                redirectUrl = '/dashboard';
+              }
             }
-          }, 2000);
+            
+            if (redirectUrl) {
+              console.log(`[PAYMENT_SUCCESS] Redirecting to constructed URL: ${redirectUrl}`);
+              setTimeout(() => {
+                window.location.href = redirectUrl;
+              }, 2000);
+            } else {
+              // Last resort: redirect to dashboard on same domain
+              console.warn('[PAYMENT_SUCCESS] Could not construct tenant URL, redirecting to dashboard');
+              setTimeout(() => {
+                window.location.href = '/dashboard';
+              }, 2000);
+            }
+          }
 
         } else if (data.status === 'failed') {
           clearInterval(intervalId);
