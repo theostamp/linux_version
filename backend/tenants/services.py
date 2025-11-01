@@ -390,8 +390,11 @@ class TenantService:
                 User = get_user_model()
                 
                 # Check if demo data already exists
-                if Building.objects.filter(name__icontains='Αλκμάνος').exists():
-                    logger.info(f"Demo data already exists in schema {schema_name}")
+                existing_demo_building = Building.objects.filter(name__icontains='Αλκμάνος 22').first()
+                if existing_demo_building:
+                    logger.info(
+                        f"Demo data already exists in schema {schema_name} (building: {existing_demo_building.name})"
+                    )
                     return
                 
                 # Get the tenant user (manager/owner)
