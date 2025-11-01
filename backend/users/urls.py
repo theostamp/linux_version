@@ -20,10 +20,17 @@ from .subscription_views import (
     UserSubscriptionActionsView,
     UserCreateSubscriptionView
 )
+from .views_invitation import (
+    TenantInvitationViewSet,
+    AcceptInvitationView,
+    DeclineInvitationView,
+    VerifyInvitationView
+)
 
 # Create router for ViewSets
 router = DefaultRouter()
 router.register(r'', views.UserViewSet, basename='users')
+router.register(r'invitations', TenantInvitationViewSet, basename='invitations')
 
 urlpatterns = [
     # Authentication endpoints
@@ -56,6 +63,11 @@ urlpatterns = [
 
     # Include router URLs (MUST be last to avoid conflicts with specific paths)
     path('', include(router.urls)),
+    
+    # Invitation endpoints
+    path('invitations/accept/', AcceptInvitationView.as_view(), name='accept-invitation'),
+    path('invitations/decline/', DeclineInvitationView.as_view(), name='decline-invitation'),
+    path('invitations/verify/', VerifyInvitationView.as_view(), name='verify-invitation'),
     
     # OAuth endpoints
     path('auth/google/', google_oauth_initiate, name='google-oauth-initiate'),  # With trailing slash

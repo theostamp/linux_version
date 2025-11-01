@@ -217,59 +217,138 @@ class AcceptInvitationView(APIView):
         
         try:
             with transaction.atomic():
-                # Get tenant from invitation sender
-                tenant = invitation.invited_by.tenant
+                # Get tenant from invitation sender (manager is in tenant schema)
+                from django_tenants.utils import get_tenant_model
+                TenantModel = get_tenant_model()
+                
+                # Get current tenant schema from request
+                from django_tenants.utils import get_public_schema_name
+                current_schema = get_public_schema_name()
+                
+                # Try to get tenant from the invitation context
+                # Managers are created in tenant schemas, so we need to find the tenant
+                # by checking which tenant schema the invitation.invited_by user is in
+                # Since we're in a multi-tenant context, we'll get tenant from the request
+                from django_tenants.middleware import get_current_tenant
+                try:
+                    tenant = get_current_tenant(request)
+                except:
+                    # Fallback: try to get tenant from invitation sender's email domain or schema
+                    # For now, we'll assume the invitation is being accepted in the correct tenant context
+                    tenant = None
+                
                 if not tenant:
-                    return Response(
-                        {'error': 'Το tenant δεν βρέθηκε'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                    # Try to find tenant by schema name from invitation context
+                    # Since managers are in tenant schemas, we need another way
+                    # For now, we'll create user in public schema and let them access via invitation link
+                    pass
                 
-                # Create user in public schema first
+                # Create user in public schema first (if doesn't exist)
                 with schema_context(get_public_schema_name()):
-                    public_user = CustomUser.objects.create_user(
+                    public_user, created = CustomUser.objects.get_or_create(
                         email=invitation.email,
-                        password=serializer.validated_data['password'],
-                        first_name=serializer.validated_data.get('first_name', ''),
-                        last_name=serializer.validated_data.get('last_name', ''),
-                        is_active=True,
-                        email_verified=True,  # Auto-verify invited users
-                        tenant=tenant,
-                        role=invitation.invited_role
+                        defaults={
+                            'password': serializer.validated_data['password'],
+                            'first_name': serializer.validated_data.get('first_name', ''),
+                            'last_name': serializer.validated_data.get('last_name', ''),
+                            'is_active': True,
+                            'email_verified': True,  # Auto-verify invited users
+                            'role': None  # Residents don't have system role
+                        }
                     )
+                    if created:
+                        public_user.set_password(serializer.validated_data['password'])
+                        public_user.save()
                 
-                # Create user in tenant schema
-                with schema_context(tenant.schema_name):
-                    tenant_user = CustomUser.objects.create(
-                        email=invitation.email,
-                        password=public_user.password,  # Copy hashed password
-                        first_name=serializer.validated_data.get('first_name', ''),
-                        last_name=serializer.validated_data.get('last_name', ''),
-                        is_active=True,
-                        email_verified=True,
-                        role=invitation.invited_role
-                    )
-                    
-                    # Link to apartment if specified
-                    if invitation.apartment:
-                        invitation.apartment.residents.add(tenant_user)
+                # Get tenant schema from invitation sender's context
+                # We need to find which tenant the invitation.invited_by belongs to
+                # Since invitations are created in tenant schemas, we need to handle this differently
+                # For now, accept in current tenant context (request tenant)
+                from django.db import connection
+                tenant_schema = connection.schema_name if hasattr(connection, 'schema_name') else get_public_schema_name()
+                
+                if tenant_schema != get_public_schema_name():
+                    # Create user in tenant schema
+                    with schema_context(tenant_schema):
+                        tenant_user, created = CustomUser.objects.get_or_create(
+                            email=invitation.email,
+                            defaults={
+                                'password': public_user.password,  # Copy hashed password
+                                'first_name': serializer.validated_data.get('first_name', ''),
+                                'last_name': serializer.validated_data.get('last_name', ''),
+                                'is_active': True,
+                                'email_verified': True,
+                                'role': None  # Residents don't have system role
+                            }
+                        )
+                        if created:
+                            tenant_user.set_password(serializer.validated_data['password'])
+                            tenant_user.save()
+                        
+                        # Create Resident profile if invited_role is RESIDENT
+                        if invitation.invited_role == 'resident':
+                            from residents.models import Resident
+                            from buildings.models import Building, BuildingMembership, Apartment
+                            
+                            # Get building from invitation context (from manager's building)
+                            building = None
+                            apartment = None
+                            
+                            if invitation.apartment_id:
+                                try:
+                                    apartment = Apartment.objects.get(id=invitation.apartment_id)
+                                    building = apartment.building
+                                except Apartment.DoesNotExist:
+                                    logger.warning(f"Apartment {invitation.apartment_id} not found for invitation {invitation.id}")
+                            
+                            # If no building found, try to get from manager's context
+                            if not building:
+                                # Get manager's building membership
+                                manager_building_membership = BuildingMembership.objects.filter(
+                                    user=invitation.invited_by
+                                ).first()
+                                if manager_building_membership:
+                                    building = manager_building_membership.building
+                            
+                            if building:
+                                # Create Resident entry
+                                resident_role = 'tenant' if invitation.invited_role == 'resident' else 'owner'
+                                resident, created = Resident.objects.get_or_create(
+                                    user=tenant_user,
+                                    building=building,
+                                    defaults={
+                                        'apartment': apartment.number if apartment else '',
+                                        'role': resident_role,
+                                        'phone': serializer.validated_data.get('phone', '')
+                                    }
+                                )
+                                
+                                # Create BuildingMembership
+                                BuildingMembership.objects.get_or_create(
+                                    building=building,
+                                    user=tenant_user,
+                                    defaults={'role': resident_role}
+                                )
+                                
+                                logger.info(f"Created Resident profile and BuildingMembership for {tenant_user.email} in building {building.name}")
+                            else:
+                                logger.warning(f"No building found for invitation {invitation.id}, Resident profile not created")
                 
                 # Mark invitation as accepted
                 invitation.accept(public_user)
                 
-                logger.info(f"User {invitation.email} accepted invitation and joined tenant {tenant.schema_name}")
+                logger.info(f"User {invitation.email} accepted invitation and joined tenant {tenant_schema}")
                 
                 return Response({
-                    'message': 'Η πρόσκληση έγινε αποδεκτή',
-                    'tenant': {
-                        'name': tenant.name,
-                        'schema_name': tenant.schema_name
-                    },
+                    'message': 'Η πρόσκληση έγινε αποδεκτή. Μπορείτε τώρα να συνδεθείτε στην εφαρμογή.',
                     'user': {
                         'email': public_user.email,
-                        'role': public_user.role
+                        'role': invitation.invited_role
+                    },
+                    'tenant': {
+                        'schema_name': tenant_schema
                     }
-                })
+                }, status=status.HTTP_201_CREATED)
                 
         except Exception as e:
             logger.error(f"Failed to accept invitation: {e}", exc_info=True)
