@@ -39,6 +39,13 @@
 5. **TTL:** 3600 (ή default)
 6. Save
 
+**⚠️ Αν βλέπεις Warning για "Wildcard Domain Override":**
+- Το Vercel μπορεί να δείξει warning: "You are about to create a specific record for mlsend2._domainkey, which overrides existing wildcard entries"
+- **Αυτό είναι OK** ✅ - Μπορείς να το αγνοήσεις και να συνεχίσεις
+- Το MailerSend χρειάζεται το συγκεκριμένο record `mlsend2._domainkey.newconcierge.app`
+- **Δεν θα επηρεάσει** τα subdomains σου, γιατί δεν χρησιμοποιείς wildcards για email authentication
+- **Continue** ή **Confirm** για να προσθέσεις το record
+
 ### Step 4: Add RETURN-PATH Record
 
 1. **Add Record**
