@@ -159,9 +159,15 @@ const getApiBaseUrl = () => {
     (window as any).debugApiCalls = true;
     const hostname = window.location.hostname;
 
-    // Χρησιμοποίησε same-origin '/api' σε Vercel για να αποφύγουμε CORS
-    if (hostname.includes('vercel.app')) {
-      console.log('[API] Using same-origin /api via Vercel rewrites');
+    // On Vercel (including custom domains), use same-origin '/api' to leverage rewrites
+    // Check for Vercel deployment OR custom domains (newconcierge.app)
+    const isVercelDeployment = hostname.includes('vercel.app') || 
+                               hostname === 'newconcierge.app' || 
+                               hostname.endsWith('.newconcierge.app') ||
+                               (typeof process !== 'undefined' && process.env.VERCEL === '1');
+    
+    if (isVercelDeployment) {
+      console.log('[API] Using same-origin /api via Vercel rewrites (custom domain detected)');
       return '/api';
     }
 

@@ -10,9 +10,15 @@ const getApiBaseUrl = () => {
     const hostname = window.location.hostname;
     console.log(`[API PUBLIC] Current hostname: ${hostname}`);
     
-    // On Vercel, prefer same-origin '/api' to leverage rewrites and avoid CORS
-    if (hostname.includes('vercel.app')) {
-      console.log('[API PUBLIC] Using same-origin /api via Vercel rewrites');
+    // On Vercel (including custom domains), prefer same-origin '/api' to leverage rewrites
+    // Check if we're on Vercel by looking at the VERCEL env var OR if hostname is vercel.app OR newconcierge.app
+    const isVercelDeployment = hostname.includes('vercel.app') || 
+                               hostname === 'newconcierge.app' || 
+                               hostname.endsWith('.newconcierge.app') ||
+                               (typeof process !== 'undefined' && process.env.VERCEL === '1');
+    
+    if (isVercelDeployment) {
+      console.log('[API PUBLIC] Using same-origin /api via Vercel rewrites (custom domain detected)');
       return '/api';
     }
     
