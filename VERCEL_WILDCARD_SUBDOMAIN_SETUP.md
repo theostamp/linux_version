@@ -47,27 +47,39 @@ ns2.vercel-dns.com
 
 #### **Πώς Λειτουργούν τα Wildcard Subdomains στο Vercel**
 
-**Στο Vercel, τα wildcard subdomains λειτουργούν αυτόματα!**
+**⚠️ ΠΡΟΣΟΧΗ**: Το Vercel **ΔΕΝ** υποστηρίζει wildcard subdomains με Third Party DNS!
 
-Εάν έχεις wildcard CNAME record στο DNS (που έχεις ήδη):
-```
-* → cname.vercel-dns.com.
-```
+**Το πρόβλημα:**
+- Έχεις wildcard CNAME στο DNS (`*` → `cname.vercel-dns.com.`)
+- Το Vercel δεν αναγνωρίζει αυτόματα wildcard subdomains με Third Party DNS
+- Χρειάζεται να **χρησιμοποιήσεις Vercel DNS** για wildcard subdomains
 
-Το Vercel θα αποδέχεται **αυτόματα** οποιοδήποτε subdomain του `newconcierge.app`:
-- `theo-etherm.newconcierge.app` ✅ (αυτόματα)
-- `alpha.newconcierge.app` ✅ (αυτόματα)
-- `any-tenant.newconcierge.app` ✅ (αυτόματα)
+**Η λύση: Ενεργοποίηση Vercel DNS**
 
-**Δεν χρειάζεται να προσθέσεις wildcard subdomain στο Vercel Dashboard!**
+Για να λειτουργήσουν τα wildcard subdomains, **πρέπει** να χρησιμοποιήσεις Vercel DNS:
 
-Το wildcard CNAME στο DNS (`*` → `cname.vercel-dns.com.`) είναι αρκετό. Το Vercel θα το αναγνωρίσει αυτόματα.
+#### **Ενεργοποίηση Vercel DNS (ΑΥΤΟ ΕΙΝΑΙ ΑΠΑΡΑΙΤΗΤΟ)**
+
+**Στο Vercel Dashboard → Settings → Domains → `newconcierge.app`:**
+
+1. **Κάνε κλικ στο "Enable Vercel DNS to manage domain DNS records"**
+2. **Αλλάξτε τους nameservers** στο domain registrar σου (όπου αγόρασες το domain):
+   ```
+   ns1.vercel-dns.com
+   ns2.vercel-dns.com
+   ```
+3. **Μετά την αλλαγή των nameservers**, το Vercel θα:
+   - Αναγνωρίσει αυτόματα το wildcard subdomain
+   - Εκδώσει wildcard SSL certificates
+   - Διαχειριστεί όλα τα DNS records
+
+**Σημείωση**: Η αλλαγή των nameservers μπορεί να χρειαστεί **έως 48 ώρες** για DNS propagation.
 
 #### **Επαλήθευση**
 
 Αυτό που χρειάζεσαι είναι:
 1. ✅ Domain προσθετημένο στο Vercel (`newconcierge.app` - ήδη έτοιμο)
-2. ✅ Wildcard CNAME στο DNS (`*` → `cname.vercel-dns.com.` - ήδη έτοιμο)
+2. ⚠️ **ΚΡΙΣΙΜΟ**: Vercel DNS ενεργοποιημένο (nameservers changed)
 3. ⚠️ **ΚΡΙΣΙΜΟ**: `FRONTEND_URL` στο Railway να είναι `https://newconcierge.app`
 
 ---
