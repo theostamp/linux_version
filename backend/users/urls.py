@@ -34,6 +34,7 @@ urlpatterns = [
     path('verify-email/', views.verify_email_view, name='user-verify-email'),  # Email verification with slash
     path('verify-email', views.verify_email_view, name='user-verify-email-no-slash'),  # Email verification without slash
     path('resend-verification/', views.resend_verification_view, name='user-resend-verification'),  # Resend verification
+    path('check-email-status/', views.check_email_status_view, name='user-check-email-status'),  # Check email status
     path('me/', me_view, name='user-me'),  # With trailing slash
     path('me', me_view, name='user-me-no-slash'),  # Without trailing slash
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),

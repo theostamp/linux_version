@@ -425,6 +425,39 @@ def resend_verification_view(request):
         }, status=status.HTTP_404_NOT_FOUND)
 
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def check_email_status_view(request):
+    """
+    POST /api/users/check-email-status/
+    Έλεγχος κατάστασης επιβεβαίωσης email
+    
+    Χρησιμοποιείται για να ελέγξουμε αν ένα email έχει ήδη επιβεβαιωθεί
+    (π.χ. σε περίπτωση που ο χρήστης επισκεφθεί ξανά τη σελίδα από cache/bookmarks)
+    """
+    email = request.data.get('email')
+    if not email:
+        return Response({
+            'error': 'Email είναι υποχρεωτικό.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        user = CustomUser.objects.get(email=email)
+        return Response({
+            'email': user.email,
+            'email_verified': user.email_verified,
+            'is_active': user.is_active,
+            'user_exists': True
+        }, status=status.HTTP_200_OK)
+    except CustomUser.DoesNotExist:
+        return Response({
+            'email': email,
+            'email_verified': False,
+            'is_active': False,
+            'user_exists': False
+        }, status=status.HTTP_200_OK)
+
+
 # ===== INVITATION ENDPOINTS =====
 
 @api_view(['POST'])

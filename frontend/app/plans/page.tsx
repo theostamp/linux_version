@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Check, Mail, CheckCircle, RefreshCw } from 'lucide-react'
+import { Check, Mail, CheckCircle, RefreshCw, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/components/contexts/AuthContext'
 
 interface Plan {
   id: number
@@ -30,31 +31,83 @@ export default function PlansPage() {
   const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false)
   const [pendingEmail, setPendingEmail] = useState<string | null>(null)
   const [resendingEmail, setResendingEmail] = useState(false)
+  const [emailVerified, setEmailVerified] = useState(false)
+  const [checkingStatus, setCheckingStatus] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user } = useAuth()
 
   useEffect(() => {
     fetchPlans()
+    checkEmailVerificationStatus()
+  }, [searchParams, user])
+  
+  const checkEmailVerificationStatus = async () => {
+    // Check if user just registered or if there's a pending email
+    const email = searchParams.get('email') || (typeof window !== 'undefined' ? localStorage.getItem('pending_verification_email') : null)
     
-    // Check if user just registered
-    if (searchParams.get('registered') === 'true') {
-      setShowRegistrationSuccess(true)
-      const email = searchParams.get('email') || (typeof window !== 'undefined' ? localStorage.getItem('pending_verification_email') : null)
-      if (email) {
-        setPendingEmail(email)
-      }
-      toast.success('Εγγραφή επιτυχής! Παρακαλώ ελέγξτε το email σας για επιβεβαίωση.')
+    if (!email && searchParams.get('registered') !== 'true') {
+      return
     }
     
-    // Also check localStorage on mount
-    if (typeof window !== 'undefined') {
-      const storedEmail = localStorage.getItem('pending_verification_email')
-      if (storedEmail && !searchParams.get('registered')) {
+    // If user is already authenticated and email is verified, clear the pending state
+    if (user && user.email_verified) {
+      console.log('[PLANS] User is already verified, clearing pending verification state')
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('pending_verification_email')
+      }
+      setEmailVerified(true)
+      setShowRegistrationSuccess(false)
+      return
+    }
+    
+    // If we have an email, check its verification status
+    if (email) {
+      setCheckingStatus(true)
+      setPendingEmail(email)
+      
+      try {
+        // Check if email is already verified by trying to get user info
+        const response = await api.post('/api/users/check-email-status/', { email })
+        
+        if (response.data.email_verified) {
+          console.log('[PLANS] Email is already verified, clearing pending state')
+          setEmailVerified(true)
+          setShowRegistrationSuccess(false)
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('pending_verification_email')
+          }
+          toast.info('Το email σας έχει ήδη επιβεβαιωθεί. Παρακαλώ συνδεθείτε.')
+          setTimeout(() => {
+            router.push('/login?verified=true')
+          }, 2000)
+        } else {
+          // Email not verified yet, show the banner
+          setShowRegistrationSuccess(true)
+          if (searchParams.get('registered') === 'true') {
+            toast.success('Εγγραφή επιτυχής! Παρακαλώ ελέγξτε το email σας για επιβεβαίωση.')
+          }
+        }
+      } catch (error: any) {
+        // If endpoint doesn't exist or user not found, assume email is not verified
+        console.log('[PLANS] Could not check email status, assuming not verified')
+        setShowRegistrationSuccess(true)
+        if (searchParams.get('registered') === 'true') {
+          toast.success('Εγγραφή επιτυχής! Παρακαλώ ελέγξτε το email σας για επιβεβαίωση.')
+        }
+      } finally {
+        setCheckingStatus(false)
+      }
+    } else if (searchParams.get('registered') === 'true') {
+      // No email but registered flag - check localStorage
+      const storedEmail = typeof window !== 'undefined' ? localStorage.getItem('pending_verification_email') : null
+      if (storedEmail) {
         setPendingEmail(storedEmail)
         setShowRegistrationSuccess(true)
+        toast.success('Εγγραφή επιτυχής! Παρακαλώ ελέγξτε το email σας για επιβεβαίωση.')
       }
     }
-  }, [searchParams])
+  }
   
   const handleResendVerificationEmail = async () => {
     const email = pendingEmail || searchParams.get('email') || (typeof window !== 'undefined' ? localStorage.getItem('pending_verification_email') : null)
@@ -143,8 +196,8 @@ export default function PlansPage() {
 
   return (
     <div className="container mx-auto px-4 py-16">
-      {/* Registration Success Banner */}
-      {showRegistrationSuccess && (
+      {/* Registration Success Banner - Only show if email is NOT verified */}
+      {showRegistrationSuccess && !emailVerified && (
         <div className="mb-8 max-w-4xl mx-auto">
           <Card className="border-blue-200 bg-blue-50">
             <CardContent className="pt-6">
