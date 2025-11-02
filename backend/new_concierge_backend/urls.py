@@ -7,6 +7,7 @@ from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.contrib import admin
 from health_check import HealthCheckView, ReadinessCheckView, LivenessCheckView
+from buildings.views import public_buildings_list
 
 # Tenant-specific URL configuration (automatically routed by django-tenants middleware)
 urlpatterns = [
@@ -22,8 +23,9 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
 
     # Public buildings endpoint (for kiosk mode) - must come before general buildings URLs
+    path('api/buildings/public', public_buildings_list, name='public_buildings_list_no_slash'),
     path('api/buildings/public/', include('buildings.public_urls')),
-    
+
     # Building management
     path('api/buildings/', include('buildings.urls')),
     

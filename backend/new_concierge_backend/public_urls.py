@@ -4,8 +4,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-
-from django.http import HttpResponse
+from buildings.views import public_buildings_list
 
 
 # Public home view removed - now handled by Public App (Next.js)
@@ -31,6 +30,7 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     
     # Public buildings endpoint (διαθέσιμο στο public tenant)
+    path('api/buildings/public', public_buildings_list, name='public_buildings_list_public_no_slash'),
     path('api/buildings/public/', include('buildings.public_urls')),
     
     # Core endpoints (CSRF token) - διαθέσιμο στο public tenant
