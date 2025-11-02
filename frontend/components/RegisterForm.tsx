@@ -44,14 +44,19 @@ export default function RegisterForm() {
         password_confirm: data.confirmPassword
       };
 
-      await api.post("/api/users/register", registrationData);
+      const response = await api.post("/api/users/register", registrationData);
+
+      // Store email in localStorage for resend functionality
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pending_verification_email', data.email);
+      }
 
       // Show success message
       toast.success("Επιτυχής εγγραφή! Παρακαλώ ελέγξτε το email σας για επιβεβαίωση.");
 
       // Redirect to plans page after registration
       setTimeout(() => {
-        router.push("/plans?registered=true");
+        router.push(`/plans?registered=true&email=${encodeURIComponent(data.email)}`);
       }, 2000);
 
     } catch (err: any) {

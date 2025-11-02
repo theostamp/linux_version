@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Check, Mail, CheckCircle } from 'lucide-react'
+import { Check, Mail, CheckCircle, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Plan {
@@ -28,6 +28,8 @@ export default function PlansPage() {
   const [loading, setLoading] = useState(true)
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null)
   const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
+  const [resendingEmail, setResendingEmail] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -37,9 +39,44 @@ export default function PlansPage() {
     // Check if user just registered
     if (searchParams.get('registered') === 'true') {
       setShowRegistrationSuccess(true)
+      const email = searchParams.get('email') || (typeof window !== 'undefined' ? localStorage.getItem('pending_verification_email') : null)
+      if (email) {
+        setPendingEmail(email)
+      }
       toast.success('Εγγραφή επιτυχής! Παρακαλώ ελέγξτε το email σας για επιβεβαίωση.')
     }
+    
+    // Also check localStorage on mount
+    if (typeof window !== 'undefined') {
+      const storedEmail = localStorage.getItem('pending_verification_email')
+      if (storedEmail && !searchParams.get('registered')) {
+        setPendingEmail(storedEmail)
+        setShowRegistrationSuccess(true)
+      }
+    }
   }, [searchParams])
+  
+  const handleResendVerificationEmail = async () => {
+    const email = pendingEmail || searchParams.get('email') || (typeof window !== 'undefined' ? localStorage.getItem('pending_verification_email') : null)
+    
+    if (!email) {
+      toast.error('Δεν βρέθηκε email για επαναποστολή.')
+      return
+    }
+    
+    setResendingEmail(true)
+    
+    try {
+      await api.post('/api/users/resend-verification/', { email })
+      toast.success('Το email επιβεβαίωσης στάλθηκε ξανά. Παρακαλώ ελέγξτε το inbox σας.')
+    } catch (error: any) {
+      console.error('Resend email error:', error)
+      const errorMessage = error.response?.data?.error || 'Αποτυχία επαναποστολής email.'
+      toast.error(errorMessage)
+    } finally {
+      setResendingEmail(false)
+    }
+  }
 
   const fetchPlans = async () => {
     try {
@@ -109,25 +146,49 @@ export default function PlansPage() {
       {/* Registration Success Banner */}
       {showRegistrationSuccess && (
         <div className="mb-8 max-w-4xl mx-auto">
-          <Card className="border-green-200 bg-green-50">
+          <Card className="border-blue-200 bg-blue-50">
             <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-                <div>
-                  <h3 className="font-semibold text-green-800">Εγγραφή Επιτυχής!</h3>
-                  <p className="text-green-700 flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    Παρακαλώ ελέγξτε το email σας για επιβεβαίωση του λογαριασμού σας.
-                  </p>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-blue-800 mb-2">Εγγραφή Επιτυχής!</h3>
+                    <p className="text-blue-700 flex items-center gap-2 mb-3">
+                      <Mail className="w-4 h-4 flex-shrink-0" />
+                      <span>Παρακαλώ ελέγξτε το email σας <strong>{pendingEmail || 'σας'}</strong> για επιβεβαίωση του λογαριασμού σας.</span>
+                    </p>
+                    <p className="text-sm text-blue-600 mb-4">
+                      Αν δεν έχετε λάβει το email, κάντε κλικ στο κουμπί "Επαναποστολή Email" παρακάτω.
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowRegistrationSuccess(false)}
+                    className="text-blue-600 hover:text-blue-700 flex-shrink-0"
+                  >
+                    ✕
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowRegistrationSuccess(false)}
-                  className="ml-auto text-green-600 hover:text-green-700"
-                >
-                  ✕
-                </Button>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={handleResendVerificationEmail}
+                    disabled={resendingEmail}
+                    className="flex items-center gap-2 border-blue-300 text-blue-700 hover:bg-blue-100"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${resendingEmail ? 'animate-spin' : ''}`} />
+                    {resendingEmail ? 'Αποστολή...' : 'Επαναποστολή Email'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => window.open(`mailto:${pendingEmail}`, '_blank')}
+                    className="flex items-center gap-2 text-blue-700 hover:bg-blue-100"
+                  >
+                    <Mail className="w-4 h-4" />
+                    Άνοιγμα Email App
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, RefreshCw, Mail } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams()
@@ -12,11 +13,26 @@ export default function VerifyEmailPage() {
   const token = searchParams.get('token')
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
+  const [email, setEmail] = useState<string | null>(null)
+  const [resendingEmail, setResendingEmail] = useState(false)
 
   useEffect(() => {
+    // Get email from localStorage if available
+    if (typeof window !== 'undefined') {
+      const storedEmail = localStorage.getItem('pending_verification_email')
+      if (storedEmail) {
+        setEmail(storedEmail)
+      }
+    }
+    
     if (!token) {
       setStatus('error')
-      setMessage('Λείπει το token επιβεβαίωσης.')
+      const hasEmail = email || (typeof window !== 'undefined' ? localStorage.getItem('pending_verification_email') : null)
+      if (hasEmail) {
+        setMessage('Λείπει το token επιβεβαίωσης. Μπορείτε να ζητήσετε επαναποστολή του email.')
+      } else {
+        setMessage('Λείπει το token επιβεβαίωσης.')
+      }
       return
     }
 
@@ -29,6 +45,11 @@ export default function VerifyEmailPage() {
         setStatus('success')
         setMessage('Το email σας επιβεβαιώθηκε επιτυχώς!')
         toast.success('Email επιβεβαιώθηκε!')
+        
+        // Clear pending email from localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('pending_verification_email')
+        }
 
         // Redirect to login after 2 seconds
         setTimeout(() => {
@@ -47,6 +68,29 @@ export default function VerifyEmailPage() {
 
     verifyEmail()
   }, [token, router])
+  
+  const handleResendVerificationEmail = async () => {
+    const emailToUse = email || (typeof window !== 'undefined' ? localStorage.getItem('pending_verification_email') : null)
+    
+    if (!emailToUse) {
+      toast.error('Δεν βρέθηκε email για επαναποστολή. Παρακαλώ εγγραφείτε ξανά.')
+      router.push('/register')
+      return
+    }
+    
+    setResendingEmail(true)
+    
+    try {
+      await api.post('/api/users/resend-verification/', { email: emailToUse })
+      toast.success('Το email επιβεβαίωσης στάλθηκε ξανά. Παρακαλώ ελέγξτε το inbox σας.')
+    } catch (error: any) {
+      console.error('Resend email error:', error)
+      const errorMessage = error.response?.data?.error || 'Αποτυχία επαναποστολής email.'
+      toast.error(errorMessage)
+    } finally {
+      setResendingEmail(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -78,20 +122,37 @@ export default function VerifyEmailPage() {
               <XCircle className="h-10 w-10 text-red-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Σφάλμα</h1>
-            <p className="text-gray-600 mb-6">{message}</p>
+            <p className="text-gray-600 mb-4">{message}</p>
+            {(email || (typeof window !== 'undefined' && localStorage.getItem('pending_verification_email'))) && (
+              <p className="text-sm text-gray-500 mb-6">
+                Email: <strong>{email || (typeof window !== 'undefined' ? localStorage.getItem('pending_verification_email') : '')}</strong>
+              </p>
+            )}
             <div className="space-y-3">
-              <button
+              {(email || (typeof window !== 'undefined' && localStorage.getItem('pending_verification_email'))) && (
+                <Button
+                  onClick={handleResendVerificationEmail}
+                  disabled={resendingEmail}
+                  className="w-full flex items-center justify-center gap-2"
+                  variant="outline"
+                >
+                  <RefreshCw className={`w-4 h-4 ${resendingEmail ? 'animate-spin' : ''}`} />
+                  {resendingEmail ? 'Αποστολή...' : 'Επαναποστολή Email'}
+                </Button>
+              )}
+              <Button
                 onClick={() => router.push('/login')}
-                className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                className="w-full"
               >
                 Μετάβαση στη Σύνδεση
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => router.push('/register')}
-                className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                variant="outline"
+                className="w-full"
               >
                 Νέα Εγγραφή
-              </button>
+              </Button>
             </div>
           </div>
         )}
