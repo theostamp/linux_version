@@ -62,20 +62,30 @@ ns2.vercel-dns.com
 
 Το Vercel έχει ήδη δημιουργήσει τα wildcard records. Τώρα χρειάζεται να αλλάξεις τους nameservers:
 
-#### **Αλλαγή Nameservers στο Domain Registrar (ΑΥΤΟ ΕΙΝΑΙ ΑΠΑΡΑΙΤΗΤΟ)**
+#### **Αλλαγή Nameservers στο Namecheap (ΑΥΤΟ ΕΙΝΑΙ ΑΠΑΡΑΙΤΗΤΟ)**
 
-**Στο domain registrar σου (όπου αγόρασες το `newconcierge.app`):**
+**Στο Namecheap Dashboard για `newconcierge.app`:**
 
-1. **Πήγαινε στις DNS/Domain settings** για `newconcierge.app`
-2. **Βρες την ενότητα "Nameservers" ή "DNS Management"**
-3. **Άλλαξε τους nameservers σε:**
+1. **Πήγαινε στο Namecheap Dashboard** → Domain List → `newconcierge.app` → Manage
+2. **Στη βάση της σελίδας, βρες την ενότητα "Nameservers"**
+   - Θα δεις "Nameservers" με επιλογές όπως "Namecheap BasicDNS" ή "Custom DNS"
+3. **Επίλεξε "Custom DNS"** (ή "Personal DNS Server")
+4. **Πρόσθεσε τους Vercel nameservers:**
    ```
    ns1.vercel-dns.com
    ns2.vercel-dns.com
    ```
-4. **Save** τις αλλαγές
+5. **Κάνε κλικ στο "Save All Changes"** (green checkmark icon)
 
-**Σημείωση**: Η αλλαγή των nameservers μπορεί να χρειαστεί **έως 48 ώρες** για DNS propagation.
+**Σημείωση**: 
+- Το Namecheap θα σου ενημερώσει ότι "The nameservers will be changed and the change will take effect within 24 hours"
+- Η αλλαγή των nameservers μπορεί να χρειαστεί **έως 48 ώρες** για DNS propagation
+- Μπορεί να χρειαστεί **έως 30 λεπτά** για να αναγνωριστεί η αλλαγή από το Vercel
+
+**⚠️ ΣΗΜΑΝΤΙΚΟ**: Μετά την αλλαγή των nameservers:
+- Τα DNS records στο Namecheap (όπως το wildcard CNAME `*` → `cname.vercel-dns.com.`) **ΔΕΝ θα χρειάζονται πλέον**
+- Το Vercel θα διαχειριστεί **όλα** τα DNS records αυτόματα
+- Το wildcard subdomain θα λειτουργεί αυτόματα χάρη στα records που έχει ήδη δημιουργήσει το Vercel
 
 **Μετά την αλλαγή των nameservers:**
 - Το Vercel θα μπορεί να χειριστεί τα wildcard subdomains
