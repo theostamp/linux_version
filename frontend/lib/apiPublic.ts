@@ -62,6 +62,30 @@ export const apiPublic = axios.create({
   baseURL: getApiBaseUrl(),
 });
 
+// Add request interceptor to include X-Tenant-Schema header for subdomain-based routing
+apiPublic.interceptors.request.use(
+  (config) => {
+    // X-Tenant-Schema header for subdomain-based tenant routing
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const parts = hostname.split('.');
+      // Extract subdomain if hostname has 3+ parts (e.g., theo-etherm202.newconcierge.app -> theo-etherm202)
+      if (parts.length >= 3) {
+        const tenant = parts[0];
+        // Only add header if subdomain is not 'newconcierge', 'www', or 'localhost'
+        if (tenant && tenant !== 'newconcierge' && tenant !== 'www' && !tenant.includes('localhost')) {
+          config.headers['X-Tenant-Schema'] = tenant;
+          console.log(`[API PUBLIC INTERCEPTOR] Added X-Tenant-Schema header: ${tenant}`);
+        }
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 export const fetchPublicInfo = async (buildingId: number) => {
   try {
     const response = await apiPublic.get(`/public-info/${buildingId}`);
