@@ -64,20 +64,22 @@ def login_view(request):
     user_model = get_user_model()
     print(">>> Όλοι οι χρήστες:", list(user_model.objects.values('id', 'email')))
 
-    email = request.data.get('email')
+    # Accept either 'email' or 'username' parameter (backward compatible)
+    username_or_email = request.data.get('email') or request.data.get('username')
     password = request.data.get('password')
 
-    print(f">>> Ελήφθησαν στοιχεία login: email={email}, password={'****' if password else None}")
+    print(f">>> Ελήφθησαν στοιχεία login: username_or_email={username_or_email}, password={'****' if password else None}")
 
-    if not email or not password:
+    if not username_or_email or not password:
         return Response(
-            {'error': 'Παρακαλώ δώστε email και password.'},
+            {'error': 'Παρακαλώ δώστε email/username και password.'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Χρήση του custom EmailBackend για authentication με email
+    # Try authentication με email ή username
+    # The EmailBackend expects 'username' parameter but handles email lookups
     try:
-        user = authenticate(request, username=email, password=password)
+        user = authenticate(request, username=username_or_email, password=password)
         print(">>> Χρήστης από authenticate():", user)
         if user:
             print(">>> Authentication successful - User ID:", user.id)
@@ -89,8 +91,19 @@ def login_view(request):
 
     if user is None:
         # Ελέγχουμε αν υπάρχει ο χρήστης για πιο χρήσιμο error message
+        # Try to find user by email or username
+        existing_user = None
         try:
-            existing_user = user_model.objects.get(email=email)
+            existing_user = user_model.objects.get(email=username_or_email)
+        except user_model.DoesNotExist:
+            # Try username
+            try:
+                existing_user = user_model.objects.get(username=username_or_email)
+            except (user_model.DoesNotExist, Exception):
+                # User doesn't exist with email or username
+                pass
+        
+        if existing_user:
             # Αν ο χρήστης υπάρχει αλλά το authentication απέτυχε,
             # ελέγχουμε αν είναι θέμα email verification
             if not existing_user.email_verified:
@@ -107,9 +120,10 @@ def login_view(request):
                 {'error': 'Ο κωδικός που εισάγατε δεν είναι σωστός. Παρακαλώ δοκιμάστε ξανά.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-        except user_model.DoesNotExist:
+        else:
+            # User doesn't exist
             return Response(
-                {'error': 'Δεν υπάρχει χρήστης με αυτό το email. Παρακαλώ ελέγξτε το email σας.'},
+                {'error': 'Δεν υπάρχει χρήστης με αυτό το email/username. Παρακαλώ ελέγξτε τα στοιχεία σας.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
