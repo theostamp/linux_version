@@ -41,16 +41,20 @@ ns2.vercel-dns.com
 2. **Επέλεξε το project**: `linux-version` (ή όποιο project χρησιμοποιείς)
 3. **Πήγαινε σε**: **Settings** → **Domains**
 4. **Πρόσθεσε το apex domain**: `newconcierge.app`
-5. **Πρόσθεσε wildcard subdomain**: `*.newconcierge.app`
+5. **Πρόσθεσε wildcard subdomain**: `*.newconcierge.app` (αν δεν υπάρχει ήδη)
 
 **Σημείωση**: Το wildcard `*.newconcierge.app` θα καλύψει όλα τα subdomains:
 - `theo-etherm.newconcierge.app` ✅
 - `alpha.newconcierge.app` ✅
 - `any-tenant.newconcierge.app` ✅
 
+**Εάν το wildcard CNAME (`*` → `cname.vercel-dns.com.`) είναι ήδη ρυθμισμένο στο DNS, μπορεί να χρειάζεται να το προσθέσεις στο Vercel Dashboard για να το ενεργοποιήσει το Vercel.**
+
 ---
 
-### **Βήμα 3: Ενημέρωση Railway Environment Variable**
+### **Βήμα 3: Ενημέρωση Railway Environment Variable (ΚΡΙΣΙΜΟ)**
+
+⚠️ **Αυτό είναι το πιο σημαντικό βήμα!** Το backend πρέπει να ξέρει ότι χρησιμοποιείς subdomains.
 
 1. **Πήγαινε στο Railway Dashboard**: https://railway.app
 2. **Επέλεξε το service**: Django Backend
@@ -72,7 +76,11 @@ FRONTEND_URL=https://newconcierge.app
 
 ---
 
-### **Βήμα 4: Επαλήθευση DNS**
+---
+
+### **Βήμα 4: Επαλήθευση DNS (Εάν χρειάζεται)**
+
+**Σημείωση**: Εάν τα DNS records είναι ήδη ρυθμισμένα (όπως φαίνεται παραπάνω), μπορείς να παραλείψεις αυτό το βήμα.
 
 Μετά την αλλαγή των nameservers, επαλήθευσε ότι το DNS λειτουργεί:
 
