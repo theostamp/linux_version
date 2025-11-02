@@ -266,6 +266,16 @@ nslookup -type=NS newconcierge.app
 # newconcierge.app nameserver = ns2.vercel-dns.com
 ```
 
+**✅ ΕΠΙΤΥΧΙΑ**: Αν βλέπεις:
+```
+Non-authoritative answer:
+NewCONCierge.aPP        nameserver = ns2.vercel-dns.com.
+NewCONCierge.aPP        nameserver = ns1.vercel-dns.com.
+```
+**Τότε το DNS propagation έχει ολοκληρωθεί!** ✅
+
+Το Vercel τώρα μπορεί να χειριστεί τα wildcard subdomains.
+
 ### **2. Έλεγχος Apex Domain**
 
 Ανοιξε στο browser:
@@ -277,11 +287,16 @@ https://newconcierge.app
 
 ### **3. Έλεγχος Subdomain**
 
-**ΠΡΟΣΟΧΗ**: Περίμενε **30 λεπτά - 48 ώρες** για DNS propagation πριν δοκιμάσεις!
+**✅ Αν το DNS lookup έδειξε τους Vercel nameservers, μπορείς να δοκιμάσεις τώρα!**
 
-Μετά το DNS propagation, ανοιξε στο browser:
+Ανοιξε στο browser:
 ```
 https://theo-etherm20.newconcierge.app/dashboard
+```
+
+**Εναλλακτικά, δοκίμασε και:**
+```
+https://theo-etherm20.newconcierge.app/
 ```
 
 **Αναμενόμενο**: 
