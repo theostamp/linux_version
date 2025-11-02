@@ -68,14 +68,18 @@ ns2.vercel-dns.com
 
 1. **Πήγαινε στο Namecheap Dashboard** → Domain List → `newconcierge.app` → Manage
 2. **Στη βάση της σελίδας, βρες την ενότητα "Nameservers"**
-   - Θα δεις "Nameservers" με επιλογές όπως "Namecheap BasicDNS" ή "Custom DNS"
-3. **Επίλεξε "Custom DNS"** (ή "Personal DNS Server")
-4. **Πρόσθεσε τους Vercel nameservers:**
-   ```
-   ns1.vercel-dns.com
-   ns2.vercel-dns.com
-   ```
+   - Θα δεις "Nameservers" με dropdown με επιλογές
+3. **Στο dropdown "Nameservers", επίλεξε "Custom DNS"**
+   - ⚠️ **ΜΗΝ** επιλέξεις "Personal DNS Server" (αυτό ζητά IP address)
+4. **Στους δύο πεδία για nameservers, πρόσθεσε:**
+   - **First nameserver**: `ns1.vercel-dns.com`
+   - **Second nameserver**: `ns2.vercel-dns.com`
 5. **Κάνε κλικ στο "Save All Changes"** (green checkmark icon)
+
+**⚠️ ΣΗΜΑΝΤΙΚΟ**: 
+- **ΜΗΝ** χρησιμοποιήσεις "Add Personal DNS Server" - αυτό είναι για custom DNS servers με IP addresses
+- Χρησιμοποίησε **"Custom DNS"** και απλά πάτα τους Vercel nameserver hostnames
+- **ΜΗΝ** προσθέσεις IP addresses - μόνο hostnames (`ns1.vercel-dns.com`, `ns2.vercel-dns.com`)
 
 **Σημείωση**: 
 - Το Namecheap θα σου ενημερώσει ότι "The nameservers will be changed and the change will take effect within 24 hours"
