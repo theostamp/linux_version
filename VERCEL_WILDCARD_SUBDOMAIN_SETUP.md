@@ -47,40 +47,54 @@ ns2.vercel-dns.com
 
 #### **Πώς Λειτουργούν τα Wildcard Subdomains στο Vercel**
 
-**⚠️ ΠΡΟΣΟΧΗ**: Το Vercel **ΔΕΝ** υποστηρίζει wildcard subdomains με Third Party DNS!
+**Καλή νέα!** Το Vercel έχει ήδη δημιουργήσει wildcard records! ✅
+
+**Τι βλέπουμε στο Vercel Dashboard:**
+- ✅ `*` ALIAS → `cname.vercel-dns-016.com.` (wildcard subdomain)
+- ✅ ALIAS record → `37ea4cbe76d7fe5f.vercel-dns-017.com`
+- ✅ CAA record → Let's Encrypt SSL
 
 **Το πρόβλημα:**
-- Έχεις wildcard CNAME στο DNS (`*` → `cname.vercel-dns.com.`)
-- Το Vercel δεν αναγνωρίζει αυτόματα wildcard subdomains με Third Party DNS
-- Χρειάζεται να **χρησιμοποιήσεις Vercel DNS** για wildcard subdomains
+- ⚠️ **Nameservers: Third Party** (δεν έχουν αλλάξει ακόμα)
+- Το Vercel έχει δημιουργήσει τα records, αλλά δεν μπορεί να τα χειριστεί μέχρι να αλλάξουν οι nameservers
 
-**Η λύση: Ενεργοποίηση Vercel DNS**
+**Η λύση: Αλλαγή Nameservers (ΑΥΤΟ ΕΙΝΑΙ ΑΠΑΡΑΙΤΗΤΟ)**
 
-Για να λειτουργήσουν τα wildcard subdomains, **πρέπει** να χρησιμοποιήσεις Vercel DNS:
+Το Vercel έχει ήδη δημιουργήσει τα wildcard records. Τώρα χρειάζεται να αλλάξεις τους nameservers:
 
-#### **Ενεργοποίηση Vercel DNS (ΑΥΤΟ ΕΙΝΑΙ ΑΠΑΡΑΙΤΗΤΟ)**
+#### **Αλλαγή Nameservers στο Domain Registrar (ΑΥΤΟ ΕΙΝΑΙ ΑΠΑΡΑΙΤΗΤΟ)**
 
-**Στο Vercel Dashboard → Settings → Domains → `newconcierge.app`:**
+**Στο domain registrar σου (όπου αγόρασες το `newconcierge.app`):**
 
-1. **Κάνε κλικ στο "Enable Vercel DNS to manage domain DNS records"**
-2. **Αλλάξτε τους nameservers** στο domain registrar σου (όπου αγόρασες το domain):
+1. **Πήγαινε στις DNS/Domain settings** για `newconcierge.app`
+2. **Βρες την ενότητα "Nameservers" ή "DNS Management"**
+3. **Άλλαξε τους nameservers σε:**
    ```
    ns1.vercel-dns.com
    ns2.vercel-dns.com
    ```
-3. **Μετά την αλλαγή των nameservers**, το Vercel θα:
-   - Αναγνωρίσει αυτόματα το wildcard subdomain
-   - Εκδώσει wildcard SSL certificates
-   - Διαχειριστεί όλα τα DNS records
+4. **Save** τις αλλαγές
 
 **Σημείωση**: Η αλλαγή των nameservers μπορεί να χρειαστεί **έως 48 ώρες** για DNS propagation.
 
+**Μετά την αλλαγή των nameservers:**
+- Το Vercel θα μπορεί να χειριστεί τα wildcard subdomains
+- Θα εκδώσει wildcard SSL certificates
+- Θα διαχειριστεί όλα τα DNS records αυτόματα
+- Οι requests σε `theo-etherm20.newconcierge.app` θα λειτουργούν
+
 #### **Επαλήθευση**
 
-Αυτό που χρειάζεσαι είναι:
+**Τρέχουσα κατάσταση:**
 1. ✅ Domain προσθετημένο στο Vercel (`newconcierge.app` - ήδη έτοιμο)
-2. ⚠️ **ΚΡΙΣΙΜΟ**: Vercel DNS ενεργοποιημένο (nameservers changed)
-3. ⚠️ **ΚΡΙΣΙΜΟ**: `FRONTEND_URL` στο Railway να είναι `https://newconcierge.app`
+2. ✅ Wildcard ALIAS records δημιουργημένα από το Vercel (`*` → `cname.vercel-dns-016.com.`)
+3. ✅ SSL CAA record για Let's Encrypt
+4. ⚠️ **ΚΡΙΣΙΜΟ**: Nameservers ακόμα Third Party (χρειάζεται αλλαγή)
+5. ✅ `FRONTEND_URL` στο Railway = `https://newconcierge.app` (ήδη έτοιμο)
+
+**Μετά την αλλαγή των nameservers:**
+- Το Vercel θα μπορεί να χειριστεί τα wildcard subdomains
+- Τα subdomains όπως `theo-etherm20.newconcierge.app` θα λειτουργούν
 
 ---
 
