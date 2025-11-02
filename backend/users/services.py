@@ -77,14 +77,24 @@ class EmailService:
                 [user.email]
             )
             msg.attach_alternative(html_content, "text/html")
-            msg.send()
             
-            logger.info(f"✅ Verification email sent successfully to {user.email}")
-            logger.info(f"   From: {from_email}")
-            logger.info(f"   Verification URL: {verification_url}")
-            return True
+            # CRITICAL: Check the return value from send()
+            # Returns the number of emails sent (0 if failed, 1 if success)
+            sent_count = msg.send()
+            
+            if sent_count > 0:
+                logger.info(f"✅ Verification email sent successfully to {user.email}")
+                logger.info(f"   From: {from_email}")
+                logger.info(f"   Verification URL: {verification_url}")
+                return True
+            else:
+                logger.error(f"❌ Email backend returned 0 - email NOT sent to {user.email}")
+                logger.error(f"   This usually means: missing API key, backend error, or invalid configuration")
+                logger.error(f"   From: {from_email}")
+                return False
+                
         except Exception as e:
-            logger.error(f"❌ Error sending verification email to {user.email}: {e}")
+            logger.error(f"❌ Exception sending verification email to {user.email}: {e}")
             import traceback
             logger.error(f"   Traceback: {traceback.format_exc()}")
             return False
@@ -139,19 +149,32 @@ class EmailService:
             # Import EmailMultiAlternatives here to avoid circular imports
             from django.core.mail import EmailMultiAlternatives
             
+            # Use MailerSend FROM email if available
+            from_email = getattr(settings, 'MAILERSEND_FROM_EMAIL', None) or settings.DEFAULT_FROM_EMAIL
+            
             # Create email with both HTML and text content
             msg = EmailMultiAlternatives(
                 subject,
                 message,
-                settings.DEFAULT_FROM_EMAIL,
+                from_email,
                 [invitation.email]
             )
             msg.attach_alternative(html_content, "text/html")
-            msg.send()
             
-            return True
+            # Check return value from send()
+            sent_count = msg.send()
+            
+            if sent_count > 0:
+                logger.info(f"✅ Invitation email sent successfully to {invitation.email}")
+                return True
+            else:
+                logger.error(f"❌ Email backend returned 0 - invitation email NOT sent to {invitation.email}")
+                return False
+                
         except Exception as e:
-            print(f"Error sending invitation email: {e}")
+            logger.error(f"❌ Error sending invitation email to {invitation.email}: {e}")
+            import traceback
+            logger.error(f"   Traceback: {traceback.format_exc()}")
             return False
     
     @staticmethod
@@ -190,19 +213,32 @@ class EmailService:
             # Import EmailMultiAlternatives here to avoid circular imports
             from django.core.mail import EmailMultiAlternatives
             
+            # Use MailerSend FROM email if available
+            from_email = getattr(settings, 'MAILERSEND_FROM_EMAIL', None) or settings.DEFAULT_FROM_EMAIL
+            
             # Create email with both HTML and text content
             msg = EmailMultiAlternatives(
                 subject,
                 message,
-                settings.DEFAULT_FROM_EMAIL,
+                from_email,
                 [user.email]
             )
             msg.attach_alternative(html_content, "text/html")
-            msg.send()
             
-            return True
+            # Check return value from send()
+            sent_count = msg.send()
+            
+            if sent_count > 0:
+                logger.info(f"✅ Password reset email sent successfully to {user.email}")
+                return True
+            else:
+                logger.error(f"❌ Email backend returned 0 - password reset email NOT sent to {user.email}")
+                return False
+                
         except Exception as e:
-            print(f"Error sending password reset email: {e}")
+            logger.error(f"❌ Error sending password reset email to {user.email}: {e}")
+            import traceback
+            logger.error(f"   Traceback: {traceback.format_exc()}")
             return False
     
     @staticmethod
@@ -241,19 +277,32 @@ class EmailService:
             # Import EmailMultiAlternatives here to avoid circular imports
             from django.core.mail import EmailMultiAlternatives
             
+            # Use MailerSend FROM email if available
+            from_email = getattr(settings, 'MAILERSEND_FROM_EMAIL', None) or settings.DEFAULT_FROM_EMAIL
+            
             # Create email with both HTML and text content
             msg = EmailMultiAlternatives(
                 subject,
                 message,
-                settings.DEFAULT_FROM_EMAIL,
+                from_email,
                 [user.email]
             )
             msg.attach_alternative(html_content, "text/html")
-            msg.send()
             
-            return True
+            # Check return value from send()
+            sent_count = msg.send()
+            
+            if sent_count > 0:
+                logger.info(f"✅ Welcome email sent successfully to {user.email}")
+                return True
+            else:
+                logger.error(f"❌ Email backend returned 0 - welcome email NOT sent to {user.email}")
+                return False
+                
         except Exception as e:
-            print(f"Error sending welcome email: {e}")
+            logger.error(f"❌ Error sending welcome email to {user.email}: {e}")
+            import traceback
+            logger.error(f"   Traceback: {traceback.format_exc()}")
             return False
     
     @staticmethod
@@ -296,16 +345,29 @@ class EmailService:
         """
 
         try:
-            send_mail(
+            # Use MailerSend FROM email if available
+            from_email = getattr(settings, 'MAILERSEND_FROM_EMAIL', None) or settings.DEFAULT_FROM_EMAIL
+            
+            # Check return value from send_mail()
+            sent_count = send_mail(
                 subject,
                 message,
-                settings.DEFAULT_FROM_EMAIL,
+                from_email,
                 [user.email],
                 fail_silently=False,
             )
-            return True
+            
+            if sent_count > 0:
+                logger.info(f"✅ Workspace welcome email sent successfully to {user.email}")
+                return True
+            else:
+                logger.error(f"❌ Email backend returned 0 - workspace welcome email NOT sent to {user.email}")
+                return False
+                
         except Exception as e:
-            print(f"Error sending workspace welcome email: {e}")
+            logger.error(f"❌ Error sending workspace welcome email to {user.email}: {e}")
+            import traceback
+            logger.error(f"   Traceback: {traceback.format_exc()}")
             return False
 
     @staticmethod
@@ -346,20 +408,31 @@ class EmailService:
             # Import EmailMultiAlternatives here to avoid circular imports
             from django.core.mail import EmailMultiAlternatives
             
+            # Use MailerSend FROM email if available
+            from_email = getattr(settings, 'MAILERSEND_FROM_EMAIL', None) or settings.DEFAULT_FROM_EMAIL
+            
             email = EmailMultiAlternatives(
                 subject=subject,
                 body=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
+                from_email=from_email,
                 to=[user.email]
             )
             email.attach_alternative(html_content, "text/html")
-            email.send()
             
-            logger.info(f"Sent invoice notification email to {user.email}")
-            return True
+            # Check return value from send()
+            sent_count = email.send()
+            
+            if sent_count > 0:
+                logger.info(f"✅ Invoice notification email sent successfully to {user.email}")
+                return True
+            else:
+                logger.error(f"❌ Email backend returned 0 - invoice notification NOT sent to {user.email}")
+                return False
             
         except Exception as e:
-            logger.error(f"Failed to send invoice notification to {user.email}: {e}")
+            logger.error(f"❌ Failed to send invoice notification to {user.email}: {e}")
+            import traceback
+            logger.error(f"   Traceback: {traceback.format_exc()}")
             return False
     
     @staticmethod
@@ -402,20 +475,31 @@ class EmailService:
             # Import EmailMultiAlternatives here to avoid circular imports
             from django.core.mail import EmailMultiAlternatives
             
+            # Use MailerSend FROM email if available
+            from_email = getattr(settings, 'MAILERSEND_FROM_EMAIL', None) or settings.DEFAULT_FROM_EMAIL
+            
             email = EmailMultiAlternatives(
                 subject=subject,
                 body=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
+                from_email=from_email,
                 to=[user.email]
             )
             email.attach_alternative(html_content, "text/html")
-            email.send()
             
-            logger.info(f"Sent payment confirmation email to {user.email}")
-            return True
+            # Check return value from send()
+            sent_count = email.send()
+            
+            if sent_count > 0:
+                logger.info(f"✅ Payment confirmation email sent successfully to {user.email}")
+                return True
+            else:
+                logger.error(f"❌ Email backend returned 0 - payment confirmation NOT sent to {user.email}")
+                return False
             
         except Exception as e:
-            logger.error(f"Failed to send payment confirmation to {user.email}: {e}")
+            logger.error(f"❌ Failed to send payment confirmation to {user.email}: {e}")
+            import traceback
+            logger.error(f"   Traceback: {traceback.format_exc()}")
             return False
     
     @staticmethod
@@ -460,20 +544,31 @@ class EmailService:
             # Import EmailMultiAlternatives here to avoid circular imports
             from django.core.mail import EmailMultiAlternatives
             
+            # Use MailerSend FROM email if available
+            from_email = getattr(settings, 'MAILERSEND_FROM_EMAIL', None) or settings.DEFAULT_FROM_EMAIL
+            
             email = EmailMultiAlternatives(
                 subject=subject,
                 body=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
+                from_email=from_email,
                 to=[user.email]
             )
             email.attach_alternative(html_content, "text/html")
-            email.send()
             
-            logger.info(f"Sent payment failure notification to {user.email}")
-            return True
+            # Check return value from send()
+            sent_count = email.send()
+            
+            if sent_count > 0:
+                logger.info(f"✅ Payment failure notification sent successfully to {user.email}")
+                return True
+            else:
+                logger.error(f"❌ Email backend returned 0 - payment failure notification NOT sent to {user.email}")
+                return False
             
         except Exception as e:
-            logger.error(f"Failed to send payment failure notification to {user.email}: {e}")
+            logger.error(f"❌ Failed to send payment failure notification to {user.email}: {e}")
+            import traceback
+            logger.error(f"   Traceback: {traceback.format_exc()}")
             return False
     
     @staticmethod
@@ -543,17 +638,28 @@ class EmailService:
         
         try:
             logger.debug(f"[TENANT_WELCOME_EMAIL] Sending email to {user.email}")
-            send_mail(
+            
+            # Use MailerSend FROM email if available
+            from_email = getattr(settings, 'MAILERSEND_FROM_EMAIL', None) or settings.DEFAULT_FROM_EMAIL
+            
+            # Check return value from send_mail()
+            sent_count = send_mail(
                 subject=subject,
                 message=strip_tags(html_content),
-                from_email=settings.DEFAULT_FROM_EMAIL,
+                from_email=from_email,
                 recipient_list=[user.email],
                 html_message=html_content,
                 fail_silently=False,
             )
-            logger.info(f"[TENANT_WELCOME_EMAIL] ✅ Successfully sent welcome email to {user.email}")
-            logger.info(f"[TENANT_WELCOME_EMAIL] Email contains access link with token (expires in 24h)")
-            return True
+            
+            if sent_count > 0:
+                logger.info(f"[TENANT_WELCOME_EMAIL] ✅ Successfully sent welcome email to {user.email}")
+                logger.info(f"[TENANT_WELCOME_EMAIL] Email contains access link with token (expires in 24h)")
+                return True
+            else:
+                logger.error(f"[TENANT_WELCOME_EMAIL] ❌ Email backend returned 0 - email NOT sent to {user.email}")
+                return False
+                
         except Exception as e:
             logger.error(f"[TENANT_WELCOME_EMAIL] ❌ Failed to send tenant welcome email to {user.email}: {e}", exc_info=True)
             return False
