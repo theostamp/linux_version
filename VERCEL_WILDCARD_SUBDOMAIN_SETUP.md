@@ -35,48 +35,40 @@ ns2.vercel-dns.com
 
 ---
 
-### **Βήμα 2: Προσθήκη Domain στο Vercel**
+### **Βήμα 2: Έλεγχος Vercel Domain Configuration**
 
-1. **Πήγαινε στο Vercel Dashboard**: https://vercel.com/dashboard
-2. **Επέλεξε το project**: `linux-version` (ή όποιο project χρησιμοποιείς)
-3. **Πήγαινε σε**: **Settings** → **Domains**
-4. **Ελέγξε αν υπάρχει ήδη**: `newconcierge.app` (το βλέπω ότι είναι ήδη προσθετημένο ✅)
+**Καλή νέα!** Το `newconcierge.app` είναι ήδη προσθετημένο στο Vercel ✅
 
-#### **Α. Ενεργοποίηση Vercel DNS (Προτιμότερο)**
+**Στο Vercel Dashboard → Settings → Domains → `newconcierge.app`:**
 
-**Εάν χρησιμοποιείς Third Party DNS (όπως τώρα):**
+- ✅ **Domain**: `newconcierge.app`
+- ✅ **Valid Configuration**: Εμφανίζεται
+- ✅ **Production**: Connected
 
-1. **Στο Vercel Dashboard → Settings → Domains → `newconcierge.app`**
-2. **Κάνε κλικ στο "Enable Vercel DNS to manage domain DNS records"**
-3. **Αλλάξτε τους nameservers** στο domain registrar σου σε:
-   ```
-   ns1.vercel-dns.com
-   ns2.vercel-dns.com
-   ```
-4. **Μετά την αλλαγή, το Vercel θα διαχειρίζεται αυτόματα τα DNS records**
+#### **Πώς Λειτουργούν τα Wildcard Subdomains στο Vercel**
 
-#### **Β. Προσθήκη Wildcard Subdomain με Third Party DNS**
+**Στο Vercel, τα wildcard subdomains λειτουργούν αυτόματα!**
 
-**Εάν θες να συνεχίσεις με Third Party DNS:**
+Εάν έχεις wildcard CNAME record στο DNS (που έχεις ήδη):
+```
+* → cname.vercel-dns.com.
+```
 
-1. **Στο Vercel Dashboard → Settings → Domains → `newconcierge.app`**
-2. **Στο τμήμα "DNS Records"**, κάνε κλικ στο **"Add Record"**
-3. **Πρόσθεσε wildcard CNAME**:
-   - **Name**: `*` (wildcard)
-   - **Type**: `CNAME`
-   - **Value**: `cname.vercel-dns.com.` (με τελική τελεία!)
-   - **TTL**: `60` (ή auto)
-4. **Save** το record
+Το Vercel θα αποδέχεται **αυτόματα** οποιοδήποτε subdomain του `newconcierge.app`:
+- `theo-etherm.newconcierge.app` ✅ (αυτόματα)
+- `alpha.newconcierge.app` ✅ (αυτόματα)
+- `any-tenant.newconcierge.app` ✅ (αυτόματα)
 
-**Σημείωση**: Το wildcard `*` θα καλύψει όλα τα subdomains:
-- `theo-etherm.newconcierge.app` ✅
-- `alpha.newconcierge.app` ✅
-- `any-tenant.newconcierge.app` ✅
+**Δεν χρειάζεται να προσθέσεις wildcard subdomain στο Vercel Dashboard!**
 
-**Επίσης**: Χρειάζεται να προσθέσεις CNAME για `www` (αν δεν υπάρχει ήδη):
-- **Name**: `www`
-- **Type**: `CNAME`
-- **Value**: `cname.vercel-dns.com.`
+Το wildcard CNAME στο DNS (`*` → `cname.vercel-dns.com.`) είναι αρκετό. Το Vercel θα το αναγνωρίσει αυτόματα.
+
+#### **Επαλήθευση**
+
+Αυτό που χρειάζεσαι είναι:
+1. ✅ Domain προσθετημένο στο Vercel (`newconcierge.app` - ήδη έτοιμο)
+2. ✅ Wildcard CNAME στο DNS (`*` → `cname.vercel-dns.com.` - ήδη έτοιμο)
+3. ⚠️ **ΚΡΙΣΙΜΟ**: `FRONTEND_URL` στο Railway να είναι `https://newconcierge.app`
 
 ---
 
@@ -145,21 +137,28 @@ nslookup theo-etherm.newconcierge.app
 https://newconcierge.app
 ```
 
-Θα πρέπει να φορτώσει η Next.js app σου.
+**Αναμενόμενο**: Θα πρέπει να φορτώσει η Next.js app σου ✅
 
-### **2. Έλεγχος Subdomain**
+### **2. Έλεγχος Subdomain (Μετά το Railway Update)**
 
-Ανοιξε στο browser:
+**ΠΡΟΣΟΧΗ**: Πρώτα πρέπει να ενημερώσεις το `FRONTEND_URL` στο Railway!
+
+Μετά την ενημέρωση, ανοιξε στο browser:
 ```
 https://theo-etherm.newconcierge.app/dashboard
 ```
 
 **Αναμενόμενο**: 
-- Το middleware θα ανιχνεύσει το subdomain `theo-etherm`
+- Το Vercel θα αποδεχτεί το subdomain (χάρη στο wildcard CNAME)
+- Το Next.js middleware θα ανιχνεύσει το subdomain `theo-etherm`
 - Θα κάνει rewrite σε `/tenant/dashboard?tenant=theo-etherm`
 - Ο `SessionTenantMiddleware` στο backend θα ενεργοποιήσει το σωστό tenant schema
 
-### **3. Έλεγχος Backend Logs**
+**Εάν δεν λειτουργεί:**
+- Ελέγξε αν το wildcard CNAME (`*` → `cname.vercel-dns.com.`) είναι στο DNS
+- Περίμενε λίγο για DNS propagation (μπορεί να χρειαστεί λίγα λεπτά)
+
+### **3. Έλεγχος Backend Logs (Μετά το Railway Update)**
 
 Στο Railway logs, θα πρέπει να βλέπεις:
 
@@ -167,6 +166,13 @@ https://theo-etherm.newconcierge.app/dashboard
 [SETTINGS] FRONTEND_URL: https://newconcierge.app (env var: https://newconcierge.app)
 [TENANT_WORKSPACE_ACCESS] Generated tenant_url: https://theo-etherm.newconcierge.app/dashboard
 ```
+
+**Εάν βλέπεις**:
+```
+[SETTINGS] FRONTEND_URL: https://linux-version.vercel.app
+```
+
+**Τότε** το `FRONTEND_URL` δεν έχει ενημερωθεί ακόμα στο Railway!
 
 ---
 
