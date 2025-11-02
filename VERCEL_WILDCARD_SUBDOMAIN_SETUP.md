@@ -40,15 +40,43 @@ ns2.vercel-dns.com
 1. **Πήγαινε στο Vercel Dashboard**: https://vercel.com/dashboard
 2. **Επέλεξε το project**: `linux-version` (ή όποιο project χρησιμοποιείς)
 3. **Πήγαινε σε**: **Settings** → **Domains**
-4. **Πρόσθεσε το apex domain**: `newconcierge.app`
-5. **Πρόσθεσε wildcard subdomain**: `*.newconcierge.app` (αν δεν υπάρχει ήδη)
+4. **Ελέγξε αν υπάρχει ήδη**: `newconcierge.app` (το βλέπω ότι είναι ήδη προσθετημένο ✅)
 
-**Σημείωση**: Το wildcard `*.newconcierge.app` θα καλύψει όλα τα subdomains:
+#### **Α. Ενεργοποίηση Vercel DNS (Προτιμότερο)**
+
+**Εάν χρησιμοποιείς Third Party DNS (όπως τώρα):**
+
+1. **Στο Vercel Dashboard → Settings → Domains → `newconcierge.app`**
+2. **Κάνε κλικ στο "Enable Vercel DNS to manage domain DNS records"**
+3. **Αλλάξτε τους nameservers** στο domain registrar σου σε:
+   ```
+   ns1.vercel-dns.com
+   ns2.vercel-dns.com
+   ```
+4. **Μετά την αλλαγή, το Vercel θα διαχειρίζεται αυτόματα τα DNS records**
+
+#### **Β. Προσθήκη Wildcard Subdomain με Third Party DNS**
+
+**Εάν θες να συνεχίσεις με Third Party DNS:**
+
+1. **Στο Vercel Dashboard → Settings → Domains → `newconcierge.app`**
+2. **Στο τμήμα "DNS Records"**, κάνε κλικ στο **"Add Record"**
+3. **Πρόσθεσε wildcard CNAME**:
+   - **Name**: `*` (wildcard)
+   - **Type**: `CNAME`
+   - **Value**: `cname.vercel-dns.com.` (με τελική τελεία!)
+   - **TTL**: `60` (ή auto)
+4. **Save** το record
+
+**Σημείωση**: Το wildcard `*` θα καλύψει όλα τα subdomains:
 - `theo-etherm.newconcierge.app` ✅
 - `alpha.newconcierge.app` ✅
 - `any-tenant.newconcierge.app` ✅
 
-**Εάν το wildcard CNAME (`*` → `cname.vercel-dns.com.`) είναι ήδη ρυθμισμένο στο DNS, μπορεί να χρειάζεται να το προσθέσεις στο Vercel Dashboard για να το ενεργοποιήσει το Vercel.**
+**Επίσης**: Χρειάζεται να προσθέσεις CNAME για `www` (αν δεν υπάρχει ήδη):
+- **Name**: `www`
+- **Type**: `CNAME`
+- **Value**: `cname.vercel-dns.com.`
 
 ---
 
@@ -175,15 +203,27 @@ https://theo-etherm.newconcierge.app/dashboard
 
 ## 📝 Checklist
 
-- [ ] Nameservers άλλαξαν σε `ns1.vercel-dns.com`, `ns2.vercel-dns.com`
-- [ ] Προστέθηκε `newconcierge.app` στο Vercel Domains
-- [ ] Προστέθηκε `*.newconcierge.app` (wildcard) στο Vercel Domains
+**DNS Configuration:**
+- [ ] `newconcierge.app` προσθετημένο στο Vercel Domains ✅ (ήδη έτοιμο)
+- [ ] Wildcard CNAME (`*` → `cname.vercel-dns.com.`) προσθετημένο στο DNS ή Vercel
+- [ ] `www` CNAME (`www` → `cname.vercel-dns.com.`) προσθετημένο (αν χρειάζεται)
+- [ ] Apex A Record (`@` → `216.150.1.1` ή `76.76.21.21`) ρυθμισμένο
+
+**Vercel Setup:**
+- [ ] `newconcierge.app` visible στο Vercel Dashboard
+- [ ] `*.newconcierge.app` visible στο Vercel Dashboard (αν χρησιμοποιείς Vercel DNS)
+- [ ] Edge Network: Active ✅ (ήδη active)
+
+**Backend Configuration (ΚΡΙΣΙΜΟ):**
 - [ ] `FRONTEND_URL` ενημερώθηκε στο Railway σε `https://newconcierge.app`
 - [ ] Railway service redeployed
-- [ ] DNS propagation completed (έλεγξε με `nslookup`)
+- [ ] Backend logs δείχνουν: `FRONTEND_URL: https://newconcierge.app`
+
+**Verification:**
 - [ ] Apex domain (`https://newconcierge.app`) λειτουργεί
 - [ ] Subdomain (`https://theo-etherm.newconcierge.app`) λειτουργεί
 - [ ] SSL certificates εκδόθηκαν (no certificate errors)
+- [ ] Backend redirects χρησιμοποιούν subdomains (όχι query parameters)
 
 ---
 
