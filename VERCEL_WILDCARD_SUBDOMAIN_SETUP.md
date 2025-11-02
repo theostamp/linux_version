@@ -72,15 +72,16 @@ ns2.vercel-dns.com
 
 ---
 
-### **Βήμα 3: Ενημέρωση Railway Environment Variable (ΚΡΙΣΙΜΟ)**
+### **Βήμα 3: Ενημέρωση Railway Environment Variables (ΚΡΙΣΙΜΟ)**
 
 ⚠️ **Αυτό είναι το πιο σημαντικό βήμα!** Το backend πρέπει να ξέρει ότι χρησιμοποιείς subdomains.
 
 1. **Πήγαινε στο Railway Dashboard**: https://railway.app
 2. **Επέλεξε το service**: Django Backend
 3. **Πήγαινε σε**: **Variables** tab
-4. **Βρες ή πρόσθεσε**: `FRONTEND_URL`
-5. **Αλλάξτε το value σε**: `https://newconcierge.app`
+4. **Ενημέρωσε τα παρακάτω variables:**
+
+#### **Α. ΚΡΙΣΙΜΟ - FRONTEND_URL**
 
 **Πριν:**
 ```
@@ -92,7 +93,68 @@ FRONTEND_URL=https://linux-version.vercel.app
 FRONTEND_URL=https://newconcierge.app
 ```
 
+#### **Β. CORS_ALLOWED_ORIGINS**
+
+**Πριν:**
+```
+CORS_ALLOWED_ORIGINS=https://linux-version.vercel.app,https://*.vercel.app
+```
+
+**Μετά:**
+```
+CORS_ALLOWED_ORIGINS=https://newconcierge.app,https://*.newconcierge.app,https://linux-version.vercel.app,https://*.vercel.app
+```
+
+**Σημείωση**: Κρατάμε και τα `vercel.app` για backward compatibility με preview deployments.
+
+#### **Γ. CSRF_ORIGINS**
+
+**Πριν:**
+```
+CSRF_ORIGINS=.railway.app,localhost,linuxversion-production.up.railway.app,linux-version.vercel.app,*.vercel.app
+```
+
+**Μετά:**
+```
+CSRF_ORIGINS=.railway.app,localhost,linuxversion-production.up.railway.app,newconcierge.app,*.newconcierge.app,linux-version.vercel.app,*.vercel.app
+```
+
+#### **Δ. DJANGO_ALLOWED_HOSTS**
+
+**Πριν:**
+```
+DJANGO_ALLOWED_HOSTS=.railway.app,localhost,linuxversion-production.up.railway.app,linux-version.vercel.app
+```
+
+**Μετά:**
+```
+DJANGO_ALLOWED_HOSTS=.railway.app,localhost,linuxversion-production.up.railway.app,newconcierge.app,.newconcierge.app,linux-version.vercel.app
+```
+
+**Σημείωση**: Το `.newconcierge.app` (με τελεία μπροστά) επιτρέπει όλα τα subdomains.
+
+#### **Ε. GOOGLE_REDIRECT_URI (Εάν χρησιμοποιείς Google OAuth)**
+
+**Πριν:**
+```
+GOOGLE_REDIRECT_URI=https://linux-version.vercel.app/auth/callback
+```
+
+**Μετά:**
+```
+GOOGLE_REDIRECT_URI=https://newconcierge.app/auth/callback
+```
+
+**Σημείωση**: Ενημέρωσε και το Google OAuth configuration στο Google Console με το νέο redirect URI.
+
+---
+
 6. **Κάνε redeploy** του service ώστε να εφαρμοστούν οι αλλαγές
+
+**ΠΡΟΣΟΧΗ**: Μετά το redeploy, ελέγξε τα logs για να επιβεβαιώσεις:
+```
+[SETTINGS] FRONTEND_URL: https://newconcierge.app (env var: https://newconcierge.app)
+```
 
 ---
 
