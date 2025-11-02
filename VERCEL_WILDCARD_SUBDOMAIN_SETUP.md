@@ -258,8 +258,13 @@ nslookup theo-etherm.newconcierge.app
 - ✅ Nameservers εμφανίζονται ως `ns1.vercel-dns.com` και `ns2.vercel-dns.com`
 
 **Β. Στο Vercel Dashboard:**
-- Πήγαινε στο Vercel Dashboard → Settings → Domains → `newconcierge.app`
-- Μετά το DNS propagation (30 λεπτά - 48 ώρες), οι nameservers θα εμφανιστούν ως **"Vercel DNS"** αντί για "Third Party"
+- Πήγαινε στο Vercel Dashboard → Settings → Domains
+- ✅ Ελέγξε ότι **και τα δύο** domains είναι προσθετημένα:
+  - `newconcierge.app` ✅
+  - `*.newconcierge.app` ✅
+- ✅ Ελέγξε ότι και τα δύο έχουν **"Valid Configuration"** και **"Production"** environment
+- Στο domain `newconcierge.app`, ελέγξε αν οι nameservers εμφανίζονται ως **"Vercel DNS"** ή ακόμα "Third Party"
+- Αν είναι "Third Party", περίμενε **30 λεπτά - 1 ώρα** για το Vercel να αναγνωρίσει την αλλαγή
 
 **Γ. Με DNS lookup:**
 ```bash
