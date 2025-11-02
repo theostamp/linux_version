@@ -64,17 +64,23 @@ class EmailService:
             # Import EmailMultiAlternatives here to avoid circular imports
             from django.core.mail import EmailMultiAlternatives
             
+            # Use MailerSend FROM email if available, otherwise use DEFAULT_FROM_EMAIL
+            # This ensures we use the verified domain for MailerSend
+            from_email = getattr(settings, 'MAILERSEND_FROM_EMAIL', None) or settings.DEFAULT_FROM_EMAIL
+            logger.debug(f"Using from_email: {from_email} for verification email to {user.email}")
+            
             # Create email with both HTML and text content
             msg = EmailMultiAlternatives(
                 subject,
                 message,
-                settings.DEFAULT_FROM_EMAIL,
+                from_email,
                 [user.email]
             )
             msg.attach_alternative(html_content, "text/html")
             msg.send()
             
             logger.info(f"✅ Verification email sent successfully to {user.email}")
+            logger.info(f"   From: {from_email}")
             logger.info(f"   Verification URL: {verification_url}")
             return True
         except Exception as e:

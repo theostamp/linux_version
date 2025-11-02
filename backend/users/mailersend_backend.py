@@ -58,9 +58,10 @@ class MailerSendEmailBackend(BaseEmailBackend):
                 text_content = message.body
             
             # Prepare email data for MailerSend API
-            # Always use self.from_email to ensure verified domain
-            from_email = self.from_email
-            logger.info(f"Sending email from: {from_email}")
+            # Use message.from_email if provided, otherwise use self.from_email (verified domain)
+            # This allows EmailService to override the from_email if needed
+            from_email = message.from_email if message.from_email else self.from_email
+            logger.info(f"Sending email from: {from_email} (message.from_email={message.from_email}, backend.from_email={self.from_email})")
             
             email_data = {
                 "from": {
@@ -99,6 +100,9 @@ class MailerSendEmailBackend(BaseEmailBackend):
                 'X-Requested-With': 'XMLHttpRequest'
             }
             
+            logger.debug(f"Sending email to MailerSend API: {self.api_url}")
+            logger.debug(f"Email data: from={from_email}, to={message.to}, subject={message.subject}")
+            
             response = requests.post(
                 self.api_url,
                 json=email_data,
@@ -106,11 +110,26 @@ class MailerSendEmailBackend(BaseEmailBackend):
                 timeout=30
             )
             
+            logger.debug(f"MailerSend API response: status_code={response.status_code}")
+            
             if response.status_code == 202:
-                logger.info(f"Email sent successfully via MailerSend to {message.to}")
+                response_data = response.json() if response.text else {}
+                message_id = response_data.get('message_id', 'N/A')
+                logger.info(f"✅ Email sent successfully via MailerSend to {message.to}")
+                logger.info(f"   Message ID: {message_id}")
+                logger.info(f"   From: {from_email}")
+                logger.info(f"   Subject: {message.subject}")
                 return True
             else:
-                logger.error(f"MailerSend API error: {response.status_code} - {response.text}")
+                error_details = response.text
+                try:
+                    error_json = response.json()
+                    error_details = error_json.get('message', error_details)
+                except:
+                    pass
+                logger.error(f"❌ MailerSend API error: {response.status_code}")
+                logger.error(f"   Response: {error_details}")
+                logger.error(f"   Email data: from={from_email}, to={message.to}")
                 return False
                 
         except Exception as e:
