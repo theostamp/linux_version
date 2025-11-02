@@ -86,10 +86,18 @@ ns2.vercel-dns.com
 - Χρησιμοποίησε **"Custom DNS"** και απλά πάτα τους Vercel nameserver hostnames
 - **ΜΗΝ** προσθέσεις IP addresses - μόνο hostnames (`ns1.vercel-dns.com`, `ns2.vercel-dns.com`)
 
+**✅ ΕΠΙΤΥΧΙΑ**: Αν βλέπεις στο Namecheap:
+```
+Nameservers:
+ns1.vercel-dns.com
+ns2.vercel-dns.com
+```
+**Τότε η αλλαγή έχει γίνει!** ✅
+
 **Σημείωση**: 
-- Το Namecheap θα σου ενημερώσει ότι "The nameservers will be changed and the change will take effect within 24 hours"
-- Η αλλαγή των nameservers μπορεί να χρειαστεί **έως 48 ώρες** για DNS propagation
+- Η αλλαγή των nameservers μπορεί να χρειαστεί **30 λεπτά - 48 ώρες** για DNS propagation
 - Μπορεί να χρειαστεί **έως 30 λεπτά** για να αναγνωριστεί η αλλαγή από το Vercel
+- Στο Vercel Dashboard, οι nameservers θα εμφανιστούν ως "Vercel DNS" αντί για "Third Party" μετά το propagation
 
 **⚠️ ΣΗΜΑΝΤΙΚΟ**: Μετά την αλλαγή των nameservers:
 - Τα DNS records στο Namecheap (όπως το wildcard CNAME `*` → `cname.vercel-dns.com.`) **ΔΕΝ θα χρειάζονται πλέον**
@@ -237,7 +245,28 @@ nslookup theo-etherm.newconcierge.app
 
 ## 🔍 Έλεγχος ότι Λειτουργεί
 
-### **1. Έλεγχος Apex Domain**
+### **1. Έλεγχος ότι οι Nameservers Έχουν Αλλάξει**
+
+**Μετά την αλλαγή των nameservers στο Namecheap, ελέγξε:**
+
+**Α. Στο Namecheap:**
+- ✅ Nameservers εμφανίζονται ως `ns1.vercel-dns.com` και `ns2.vercel-dns.com`
+
+**Β. Στο Vercel Dashboard:**
+- Πήγαινε στο Vercel Dashboard → Settings → Domains → `newconcierge.app`
+- Μετά το DNS propagation (30 λεπτά - 48 ώρες), οι nameservers θα εμφανιστούν ως **"Vercel DNS"** αντί για "Third Party"
+
+**Γ. Με DNS lookup:**
+```bash
+# Ελέγξε τους nameservers
+nslookup -type=NS newconcierge.app
+
+# Αναμενόμενο αποτέλεσμα (μετά το propagation):
+# newconcierge.app nameserver = ns1.vercel-dns.com
+# newconcierge.app nameserver = ns2.vercel-dns.com
+```
+
+### **2. Έλεγχος Apex Domain**
 
 Ανοιξε στο browser:
 ```
@@ -246,32 +275,32 @@ https://newconcierge.app
 
 **Αναμενόμενο**: Θα πρέπει να φορτώσει η Next.js app σου ✅
 
-### **2. Έλεγχος Subdomain (Μετά το Railway Update)**
+### **3. Έλεγχος Subdomain**
 
-**ΠΡΟΣΟΧΗ**: Πρώτα πρέπει να ενημερώσεις το `FRONTEND_URL` στο Railway!
+**ΠΡΟΣΟΧΗ**: Περίμενε **30 λεπτά - 48 ώρες** για DNS propagation πριν δοκιμάσεις!
 
-Μετά την ενημέρωση, ανοιξε στο browser:
+Μετά το DNS propagation, ανοιξε στο browser:
 ```
-https://theo-etherm.newconcierge.app/dashboard
+https://theo-etherm20.newconcierge.app/dashboard
 ```
 
 **Αναμενόμενο**: 
-- Το Vercel θα αποδεχτεί το subdomain (χάρη στο wildcard CNAME)
-- Το Next.js middleware θα ανιχνεύσει το subdomain `theo-etherm`
-- Θα κάνει rewrite σε `/tenant/dashboard?tenant=theo-etherm`
+- Το Vercel θα αποδεχτεί το subdomain (χάρη στο wildcard ALIAS record)
+- Το Next.js middleware θα ανιχνεύσει το subdomain `theo-etherm20`
+- Θα κάνει rewrite σε `/tenant/dashboard?tenant=theo-etherm20`
 - Ο `SessionTenantMiddleware` στο backend θα ενεργοποιήσει το σωστό tenant schema
 
 **Εάν δεν λειτουργεί:**
-- Ελέγξε αν το wildcard CNAME (`*` → `cname.vercel-dns.com.`) είναι στο DNS
-- Περίμενε λίγο για DNS propagation (μπορεί να χρειαστεί λίγα λεπτά)
+- Περίμενε λίγο περισσότερο για DNS propagation (μπορεί να χρειαστεί 1-48 ώρες)
+- Ελέγξε στο Vercel Dashboard αν οι nameservers εμφανίζονται ως "Vercel DNS"
 
-### **3. Έλεγχος Backend Logs (Μετά το Railway Update)**
+### **4. Έλεγχος Backend Logs**
 
 Στο Railway logs, θα πρέπει να βλέπεις:
 
 ```
 [SETTINGS] FRONTEND_URL: https://newconcierge.app (env var: https://newconcierge.app)
-[TENANT_WORKSPACE_ACCESS] Generated tenant_url: https://theo-etherm.newconcierge.app/dashboard
+[TENANT_WORKSPACE_ACCESS] Generated tenant_url: https://theo-etherm20.newconcierge.app/dashboard
 ```
 
 **Εάν βλέπεις**:
