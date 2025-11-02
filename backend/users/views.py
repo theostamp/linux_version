@@ -91,6 +91,18 @@ def login_view(request):
         # Ελέγχουμε αν υπάρχει ο χρήστης για πιο χρήσιμο error message
         try:
             existing_user = user_model.objects.get(email=email)
+            # Αν ο χρήστης υπάρχει αλλά το authentication απέτυχε,
+            # ελέγχουμε αν είναι θέμα email verification
+            if not existing_user.email_verified:
+                return Response(
+                    {
+                        'error': 'Το email σας δεν έχει επιβεβαιωθεί. Παρακαλώ ελέγξτε το email σας και κάντε κλικ στο link επιβεβαίωσης.',
+                        'email_not_verified': True,
+                        'email': existing_user.email
+                    },
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            # Αν είναι verified, το πρόβλημα είναι το password
             return Response(
                 {'error': 'Ο κωδικός που εισάγατε δεν είναι σωστός. Παρακαλώ δοκιμάστε ξανά.'},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -100,6 +112,17 @@ def login_view(request):
                 {'error': 'Δεν υπάρχει χρήστης με αυτό το email. Παρακαλώ ελέγξτε το email σας.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
+    # Έλεγχος email verification πριν δημιουργήσουμε tokens
+    if not user.email_verified:
+        return Response(
+            {
+                'error': 'Το email σας δεν έχει επιβεβαιωθεί. Παρακαλώ ελέγξτε το email σας και κάντε κλικ στο link επιβεβαίωσης.',
+                'email_not_verified': True,
+                'email': user.email
+            },
+            status=status.HTTP_401_UNAUTHORIZED
+        )
 
     # Δημιουργία JWT tokens
     refresh = RefreshToken.for_user(user)

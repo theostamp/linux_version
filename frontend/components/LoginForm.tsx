@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import OAuthButtons from './OAuthButtons';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, RefreshCw, Mail } from 'lucide-react';
 import { api } from '@/lib/api';
 
 export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redirectTo?: string }) {
@@ -25,6 +25,31 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+  const [resendingEmail, setResendingEmail] = useState(false);
+
+  const handleResendVerificationEmail = async () => {
+    const emailToResend = pendingVerificationEmail || email || (typeof window !== 'undefined' ? localStorage.getItem('pending_verification_email') : null);
+    
+    if (!emailToResend) {
+      toast.error('Δεν βρέθηκε email για επαναποστολή.');
+      return;
+    }
+    
+    setResendingEmail(true);
+    
+    try {
+      await api.post('/api/users/resend-verification/', { email: emailToResend });
+      toast.success('Το email επιβεβαίωσης στάλθηκε ξανά. Παρακαλώ ελέγξτε το inbox σας.');
+    } catch (error: any) {
+      console.error('Resend email error:', error);
+      const errorMessage = error.response?.data?.error || 'Αποτυχία επαναποστολής email.';
+      toast.error(errorMessage);
+    } finally {
+      setResendingEmail(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,16 +84,33 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
     } catch (err: any) {
       console.error('LoginForm: Login error:', err);
       
+      // Check if email is not verified
+      const responseData = err.response?.data;
+      if (responseData?.email_not_verified) {
+        setEmailNotVerified(true);
+        setPendingVerificationEmail(responseData.email || email);
+        // Store email in localStorage for resend functionality
+        if (typeof window !== 'undefined' && responseData.email) {
+          localStorage.setItem('pending_verification_email', responseData.email);
+        }
+        toast.error('Το email σας δεν έχει επιβεβαιωθεί. Παρακαλώ ελέγξτε το email σας.');
+        setStatus('Το email σας δεν έχει επιβεβαιωθεί. Παρακαλώ ελέγξτε το email σας και κάντε κλικ στο link επιβεβαίωσης.');
+        setLoading(false);
+        return;
+      }
+      
       // Extract error message from different possible locations
       let errorMessage = 'Σφάλμα σύνδεσης';
-      if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.response?.data?.detail) {
-        errorMessage = err.response.data.detail;
+      if (responseData?.error) {
+        errorMessage = responseData.error;
+      } else if (responseData?.detail) {
+        errorMessage = responseData.detail;
       } else if (err.message) {
         errorMessage = err.message;
       }
       
+      setEmailNotVerified(false);
+      setPendingVerificationEmail(null);
       toast.error(errorMessage);
       setStatus(errorMessage);
       setLoading(false);
@@ -123,7 +165,35 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
             {loading ? 'Φόρτωση...' : 'Σύνδεση'}
           </Button>
           {status && (
-            <p className="text-center text-sm text-gray-600 mt-2">{status}</p>
+            <p className={`text-center text-sm mt-2 ${emailNotVerified ? 'text-amber-600 font-medium' : 'text-gray-600'}`}>
+              {status}
+            </p>
+          )}
+          {emailNotVerified && pendingVerificationEmail && (
+            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <Mail className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-amber-800 font-medium mb-2">
+                    Το email σας <strong>{pendingVerificationEmail}</strong> δεν έχει επιβεβαιωθεί.
+                  </p>
+                  <p className="text-sm text-amber-700 mb-3">
+                    Παρακαλώ ελέγξτε το inbox σας για το email επιβεβαίωσης. Αν δεν το έχετε λάβει, μπορείτε να το στείλετε ξανά.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResendVerificationEmail}
+                    disabled={resendingEmail}
+                    className="w-full flex items-center justify-center gap-2 border-amber-300 text-amber-700 hover:bg-amber-100"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${resendingEmail ? 'animate-spin' : ''}`} />
+                    {resendingEmail ? 'Αποστολή...' : 'Επαναποστολή Email Επιβεβαίωσης'}
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </form>
         
