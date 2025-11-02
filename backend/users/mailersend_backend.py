@@ -113,8 +113,53 @@ class MailerSendEmailBackend(BaseEmailBackend):
             logger.debug(f"MailerSend API response: status_code={response.status_code}")
             
             if response.status_code == 202:
-                response_data = response.json() if response.text else {}
-                message_id = response_data.get('message_id', 'N/A')
+                response_data = {}
+                if response.text:
+                    try:
+                        response_data = response.json()
+                    except ValueError:
+                        logger.warning(
+                            "MailerSend returned non-JSON payload with status 202. "
+                            "Response text will be logged for debugging.")
+                        logger.debug(f"MailerSend raw response text: {response.text}")
+
+                # MailerSend can accept the request (202) but still include
+                # contextual errors in the payload (e.g. suppressed recipients
+                # or disabled sending). Detect these conditions to avoid
+                # reporting a successful send when nothing was actually queued.
+                error_messages = []
+                if isinstance(response_data, dict):
+                    # Common error payloads observed from MailerSend
+                    if response_data.get('status') == 'error':
+                        error_messages.append(response_data.get('message', 'Unknown MailerSend error'))
+
+                    errors_field = response_data.get('errors')
+                    if errors_field:
+                        if isinstance(errors_field, list):
+                            error_messages.extend(str(item) for item in errors_field)
+                        elif isinstance(errors_field, dict):
+                            for key, value in errors_field.items():
+                                if isinstance(value, list):
+                                    error_messages.extend(str(item) for item in value)
+                                else:
+                                    error_messages.append(f"{key}: {value}")
+                        else:
+                            error_messages.append(str(errors_field))
+
+                    message_text = response_data.get('message')
+                    if isinstance(message_text, str):
+                        lowered = message_text.lower()
+                        if any(keyword in lowered for keyword in ['error', 'invalid', 'suppress', 'blocked']):
+                            error_messages.append(message_text)
+
+                if error_messages:
+                    logger.error("❌ MailerSend reported an error despite HTTP 202 status")
+                    for details in error_messages:
+                        logger.error(f"   ➤ {details}")
+                    logger.error(f"   Email data: from={from_email}, to={message.to}")
+                    return False
+
+                message_id = response_data.get('message_id', 'N/A') if isinstance(response_data, dict) else 'N/A'
                 logger.info(f"✅ Email sent successfully via MailerSend to {message.to}")
                 logger.info(f"   Message ID: {message_id}")
                 logger.info(f"   From: {from_email}")
