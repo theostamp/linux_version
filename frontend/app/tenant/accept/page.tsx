@@ -131,43 +131,56 @@ export default function AcceptTenantPage() {
 
       toast.success('Πρόσβαση στο workspace επιτυχής!')
 
-      // Redirect to tenant subdomain if tenant_url is provided
+      // Redirect to tenant URL if provided
       const tenantUrl = response.data.tenant?.tenant_url
       if (tenantUrl) {
         console.log(`[TENANT_ACCEPT] Redirecting to tenant URL: ${tenantUrl}`)
-        setTimeout(() => {
-          window.location.href = tenantUrl
-        }, 2000)
+        
+        // Check if it's a query parameter approach (Vercel) or subdomain approach
+        if (tenantUrl.includes('?tenant=') || tenantUrl.includes(window.location.hostname)) {
+          // Query parameter approach (Vercel) - use router.push
+          const url = new URL(tenantUrl)
+          router.push(`${url.pathname}${url.search}`)
+        } else {
+          // Subdomain approach - use window.location.href
+          setTimeout(() => {
+            window.location.href = tenantUrl
+          }, 2000)
+        }
       } else {
         // Fallback: try to construct tenant URL from tenant info
         console.warn('[TENANT_ACCEPT] tenant_url not provided, constructing from tenant info')
         const hostname = window.location.hostname
-        let redirectUrl = ''
         
         if (hostname.includes('localhost')) {
           // Development: http://schema_name.localhost:3000/dashboard
-          redirectUrl = `http://${response.data.tenant?.schema_name || ''}.localhost:3000/dashboard`
-        } else if (hostname.includes('vercel.app')) {
-          // Vercel: Stay on same domain (no subdomains), use query param
-          router.push(`/dashboard?tenant=${response.data.tenant?.schema_name || ''}`)
-          return
-        } else {
-          // Production: https://schema_name.newconcierge.app/dashboard
-          const baseDomain = hostname.includes('.') ? hostname.split('.').slice(-2).join('.') : 'newconcierge.app'
-          redirectUrl = `https://${response.data.tenant?.schema_name || ''}.${baseDomain}/dashboard`
-        }
-        
-        if (redirectUrl) {
+          const redirectUrl = `http://${response.data.tenant?.schema_name || ''}.localhost:3000/dashboard`
           console.log(`[TENANT_ACCEPT] Redirecting to constructed URL: ${redirectUrl}`)
           setTimeout(() => {
             window.location.href = redirectUrl
           }, 2000)
+        } else if (hostname.includes('vercel.app')) {
+          // Vercel: Stay on same domain (no subdomains), use query param
+          router.push(`/dashboard?tenant=${response.data.tenant?.schema_name || ''}`)
         } else {
-          // Last resort: redirect to dashboard on same domain
-          console.warn('[TENANT_ACCEPT] Could not construct tenant URL, redirecting to dashboard')
+          // Production: Try subdomain first, fallback to query param if it fails
+          const baseDomain = hostname.includes('.') ? hostname.split('.').slice(-2).join('.') : 'newconcierge.app'
+          const redirectUrl = `https://${response.data.tenant?.schema_name || ''}.${baseDomain}/dashboard`
+          console.log(`[TENANT_ACCEPT] Attempting subdomain redirect: ${redirectUrl}`)
+          
+          // Try subdomain redirect with error handling
           setTimeout(() => {
-            router.push('/dashboard')
+            // If subdomain doesn't work, it will show error, but we can catch it
+            const testLink = document.createElement('a')
+            testLink.href = redirectUrl
+            window.location.href = redirectUrl
           }, 2000)
+          
+          // Fallback: if subdomain fails, redirect to query param after 5 seconds
+          setTimeout(() => {
+            console.warn('[TENANT_ACCEPT] Subdomain redirect may have failed, falling back to query parameter')
+            router.push(`/dashboard?tenant=${response.data.tenant?.schema_name || ''}`)
+          }, 7000)
         }
       }
 

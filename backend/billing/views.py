@@ -1471,9 +1471,18 @@ class SubscriptionStatusView(APIView):
                 # Determine environment based on settings and environment variables
                 is_production = not settings.DEBUG or os.getenv('RAILWAY_ENVIRONMENT', '').lower() == 'production'
                 
-                if is_production:
-                    # Production: https://schema_name.newconcierge.app
-                    frontend_base = settings.FRONTEND_URL.replace('https://', '').replace('http://', '').split('/')[0]
+                # Check if we're on Vercel (shared domain, no subdomains)
+                frontend_url = settings.FRONTEND_URL
+                is_vercel = 'vercel.app' in frontend_url.lower()
+                
+                if is_vercel:
+                    # Vercel: Use query parameter approach (no subdomains)
+                    # Keep user on same domain, use query param for tenant switching
+                    tenant_url = f"{frontend_url}/dashboard?tenant={user.tenant.schema_name}"
+                    logger.info(f"[SUBSCRIPTION_STATUS] Vercel deployment detected, using query parameter approach")
+                elif is_production:
+                    # Production with subdomains: https://schema_name.newconcierge.app
+                    frontend_base = frontend_url.replace('https://', '').replace('http://', '').split('/')[0]
                     # Extract base domain (e.g., 'newconcierge.app' from 'https://newconcierge.app')
                     if '.' in frontend_base:
                         base_domain = frontend_base

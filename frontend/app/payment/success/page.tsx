@@ -62,51 +62,59 @@ export default function SubscriptionSuccessPage() {
             console.error('Failed to refresh user data after subscription completion:', refreshError);
           }
           
-          // Redirect to tenant subdomain if tenant_url is provided
+          // Redirect to tenant URL if provided
           const tenantUrl = data.tenant_url;
           if (tenantUrl) {
             console.log(`[PAYMENT_SUCCESS] Redirecting to tenant URL: ${tenantUrl}`);
-            setTimeout(() => {
+            
+            // Check if it's a query parameter approach (Vercel) or subdomain approach
+            if (tenantUrl.includes('?tenant=') || tenantUrl.includes(window.location.hostname)) {
+              // Query parameter approach (Vercel) - use window.location
               window.location.href = tenantUrl;
-            }, 2000);
+            } else {
+              // Subdomain approach - use window.location.href
+              setTimeout(() => {
+                window.location.href = tenantUrl;
+              }, 2000);
+            }
           } else {
             // Fallback: try to construct tenant URL from subdomain
             console.warn('[PAYMENT_SUCCESS] tenant_url not provided, constructing from subdomain');
             const hostname = window.location.hostname;
-            let redirectUrl = '';
             
             if (hostname.includes('localhost')) {
               // Development: http://subdomain.localhost:3000/dashboard
               if (data.subdomain) {
-                redirectUrl = `http://${data.subdomain}.localhost:3000/dashboard`;
+                const redirectUrl = `http://${data.subdomain}.localhost:3000/dashboard`;
+                console.log(`[PAYMENT_SUCCESS] Redirecting to constructed URL: ${redirectUrl}`);
+                setTimeout(() => {
+                  window.location.href = redirectUrl;
+                }, 2000);
               } else {
-                redirectUrl = '/dashboard';
+                window.location.href = '/dashboard';
               }
             } else if (hostname.includes('vercel.app')) {
               // Vercel: Stay on same domain (no subdomains), use query param
               window.location.href = data.subdomain ? `/dashboard?tenant=${data.subdomain}` : '/dashboard';
-              return;
             } else {
-              // Production: https://subdomain.newconcierge.app/dashboard
-              const baseDomain = hostname.includes('.') ? hostname.split('.').slice(-2).join('.') : 'newconcierge.app';
+              // Production: Try subdomain first, fallback to query param
               if (data.subdomain) {
-                redirectUrl = `https://${data.subdomain}.${baseDomain}/dashboard`;
+                const baseDomain = hostname.includes('.') ? hostname.split('.').slice(-2).join('.') : 'newconcierge.app';
+                const redirectUrl = `https://${data.subdomain}.${baseDomain}/dashboard`;
+                console.log(`[PAYMENT_SUCCESS] Attempting subdomain redirect: ${redirectUrl}`);
+                
+                setTimeout(() => {
+                  window.location.href = redirectUrl;
+                }, 2000);
+                
+                // Fallback: if subdomain fails, redirect to query param after 5 seconds
+                setTimeout(() => {
+                  console.warn('[PAYMENT_SUCCESS] Subdomain redirect may have failed, falling back to query parameter');
+                  window.location.href = `/dashboard?tenant=${data.subdomain}`;
+                }, 7000);
               } else {
-                redirectUrl = '/dashboard';
-              }
-            }
-            
-            if (redirectUrl) {
-              console.log(`[PAYMENT_SUCCESS] Redirecting to constructed URL: ${redirectUrl}`);
-              setTimeout(() => {
-                window.location.href = redirectUrl;
-              }, 2000);
-            } else {
-              // Last resort: redirect to dashboard on same domain
-              console.warn('[PAYMENT_SUCCESS] Could not construct tenant URL, redirecting to dashboard');
-              setTimeout(() => {
                 window.location.href = '/dashboard';
-              }, 2000);
+              }
             }
           }
 
