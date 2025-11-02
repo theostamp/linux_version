@@ -34,10 +34,19 @@
 1. **Add Record**
 2. **Type:** `CNAME`
 3. **Name:** `mlsend2._domainkey` (το Vercel προσθέτει αυτόματα το `.newconcierge.app`)
-   - **Ή** `mlsend2._domainkey.newconcierge.app` αν χρειάζεται full path
+   - **⚠️ Σημαντικό:** Μην βάλεις trailing dot (`.`)
 4. **Value/Target:** `mlsend2._domainkey.mailersend.net`
+   - **⚠️ Σημαντικό:** Πρέπει να είναι **fully qualified domain name**
+   - **Μην βάλεις** trailing dot (`.`)
+   - **Μην βάλεις** placeholder όπως `host.example.com`
+   - **Βάλε ακριβώς:** `mlsend2._domainkey.mailersend.net`
 5. **TTL:** 3600 (ή default)
 6. Save
+
+**⚠️ Αν βλέπεις Error "The specified target is not a fully qualified domain name":**
+- Έλεγξε ότι το Value/Target είναι: `mlsend2._domainkey.mailersend.net` (χωρίς trailing dot)
+- Έλεγξε ότι **δεν** είναι placeholder όπως `host.example.com`
+- Έλεγξε ότι έχει το **πλήρες domain name** με `.mailersend.net` στο τέλος
 
 **⚠️ Αν βλέπεις Warning για "Wildcard Domain Override":**
 - Το Vercel μπορεί να δείξει warning: "You are about to create a specific record for mlsend2._domainkey, which overrides existing wildcard entries"
