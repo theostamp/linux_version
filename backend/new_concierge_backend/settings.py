@@ -79,8 +79,11 @@ IS_PRODUCTION = os.getenv("ENV", "development") == "production"
 if os.getenv('RAILWAY_PUBLIC_DOMAIN') or not DEBUG:
     USE_X_FORWARDED_HOST = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    # Also disable host header validation for Railway
-    ALLOWED_HOSTS = ['*']  # Temporary for debugging CSRF
+    
+    # Add Railway domain to ALLOWED_HOSTS if not already present
+    railway_domain_host = os.getenv('RAILWAY_PUBLIC_DOMAIN', 'linuxversion-production.up.railway.app')
+    if railway_domain_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(railway_domain_host)
 
     # Session and Cookie settings for Railway HTTPS
     SESSION_COOKIE_SECURE = True

@@ -34,6 +34,26 @@ export async function DELETE(
   return handleRequest(request, resolvedParams, 'DELETE');
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> }
+) {
+  const resolvedParams = await params;
+  return handleRequest(request, resolvedParams, 'PATCH');
+}
+
+export async function OPTIONS(request: NextRequest) {
+  // Handle CORS preflight requests
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+}
+
 async function handleRequest(
   request: NextRequest,
   params: { path: string[] },
