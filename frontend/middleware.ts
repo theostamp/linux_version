@@ -46,6 +46,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Skip API routes - let them be handled by Next.js rewrites to proxy
+  if (pathname.startsWith('/api/')) {
+    console.log(`[Middleware] ⚡ Skipping API route for tenant subdomain: ${pathname}`);
+    return NextResponse.next();
+  }
+
   // Extract subdomain (e.g., alpha.newconcierge.app -> alpha)
   const parts = host.split('.');
   const sub = parts.length >= 3 ? parts[0] : null;
