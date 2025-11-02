@@ -116,12 +116,17 @@ ns2.vercel-dns.com
 1. ✅ Domain προσθετημένο στο Vercel (`newconcierge.app` - ήδη έτοιμο)
 2. ✅ Wildcard ALIAS records δημιουργημένα από το Vercel (`*` → `cname.vercel-dns-016.com.`)
 3. ✅ SSL CAA record για Let's Encrypt
-4. ⚠️ **ΚΡΙΣΙΜΟ**: Nameservers ακόμα Third Party (χρειάζεται αλλαγή)
-5. ✅ `FRONTEND_URL` στο Railway = `https://newconcierge.app` (ήδη έτοιμο)
+4. ✅ Nameservers changed στο Namecheap (`ns1.vercel-dns.com`, `ns2.vercel-dns.com`)
+5. ✅ DNS propagation complete (verified με `nslookup`)
+6. ⚠️ **ΕΠΟΜΕΝΟ**: Πρόσθεσε wildcard domain `*.newconcierge.app` στο Vercel project
+7. ✅ `FRONTEND_URL` στο Railway = `https://newconcierge.app` (ήδη έτοιμο)
 
-**Μετά την αλλαγή των nameservers:**
-- Το Vercel θα μπορεί να χειριστεί τα wildcard subdomains
-- Τα subdomains όπως `theo-etherm20.newconcierge.app` θα λειτουργούν
+**⚠️ ΣΗΜΑΝΤΙΚΟ**: Μετά την αλλαγή των nameservers, **πρέπει** να προσθέσεις το wildcard domain στο Vercel project:
+
+1. **Vercel Dashboard** → Settings → Domains
+2. **Κάνε κλικ στο "Add Domain"**
+3. **Πρόσθεσε**: `*.newconcierge.app` (wildcard)
+4. **Verify** ότι το wildcard domain είναι assigned στο σωστό project και "Production" environment
 
 ---
 
@@ -328,6 +333,32 @@ https://theo-etherm20.newconcierge.app/
 ---
 
 ## ⚠️ Troubleshooting
+
+### **Πρόβλημα: "404: DEPLOYMENT_NOT_FOUND"**
+
+**Αιτία**: Το Vercel δεν έχει αναγνωρίσει ακόμα το wildcard subdomain ή το wildcard domain δεν είναι προσθετημένο στο project.
+
+**Λύση**:
+
+**Βήμα 1: Ελέγξε αν οι nameservers έχουν αναγνωριστεί από το Vercel**
+1. Πήγαινε στο Vercel Dashboard → Settings → Domains → `newconcierge.app`
+2. Ελέγξε αν οι nameservers εμφανίζονται ως **"Vercel DNS"** ή ακόμα "Third Party"
+3. Αν είναι "Third Party", περίμενε **30 λεπτά - 1 ώρα** για το Vercel να αναγνωρίσει την αλλαγή
+
+**Βήμα 2: Πρόσθεσε wildcard domain στο Vercel Project**
+1. Πήγαινε στο Vercel Dashboard → Settings → Domains
+2. Κάνε κλικ στο "Add Domain"
+3. Πρόσθεσε: `*.newconcierge.app` (wildcard)
+4. Αναμονή για το Vercel να το verify (μπορεί να πάρει λίγα λεπτά)
+
+**Βήμα 3: Ελέγξε το Project Assignment**
+1. Πήγαινε στο Vercel Dashboard → Settings → Domains
+2. Ελέγξε ότι τόσο το `newconcierge.app` όσο και το `*.newconcierge.app` είναι **assigned στο σωστό project**
+3. Ελέγξε ότι είναι **"Production"** environment
+
+**Σημείωση**: 
+- Μετά την προσθήκη του wildcard domain, μπορεί να χρειαστεί **έως 5 λεπτά** για το Vercel να το configure
+- Το wildcard SSL certificate μπορεί να χρειαστεί **έως 10 λεπτά** για έκδοση
 
 ### **Πρόβλημα: "ERR_CONNECTION_CLOSED"**
 
