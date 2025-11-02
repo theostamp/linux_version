@@ -2432,8 +2432,8 @@ async function handleTokenRefresh(originalRequest: InternalAxiosRequestConfig & 
     console.log('[handleTokenRefresh] Attempting to refresh token with:', API_BASE_URL);
     
     // Χρησιμοποιούμε απευθείας axios αντί για το api instance για να αποφύγουμε κυκλικές κλήσεις
-    const response = await axios.post(`${API_BASE_URL}/api/users/token/refresh/`, { refresh }, {
-      baseURL: API_BASE_URL,
+    // API_BASE_URL already contains '/api', so we don't add it again
+    const response = await axios.post(`${API_BASE_URL}/users/token/refresh/`, { refresh }, {
       headers: { 'Content-Type': 'application/json' },
       withCredentials: true,
     });

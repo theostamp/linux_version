@@ -52,6 +52,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Skip public auth routes - these should work on all subdomains
+  const publicAuthPaths = ['/login', '/register', '/auth', '/plans', '/payment', '/pricing'];
+  if (publicAuthPaths.some(path => pathname.startsWith(path))) {
+    console.log(`[Middleware] 🔓 Skipping public auth route: ${pathname}`);
+    return NextResponse.next();
+  }
+
   // Extract subdomain (e.g., alpha.newconcierge.app -> alpha)
   const parts = host.split('.');
   const sub = parts.length >= 3 ? parts[0] : null;
