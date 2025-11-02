@@ -506,6 +506,100 @@ def check_email_status_view(request):
         }, status=status.HTTP_200_OK)
 
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def check_username_availability(request):
+    """
+    POST /api/users/check-username/
+    Έλεγχος διαθεσιμότητας username
+    
+    Request body:
+    {
+        "username": "theo-eth"
+    }
+    
+    Response:
+    {
+        "username": "theo-eth",
+        "available": true,
+        "message": "Username is available"
+    }
+    """
+    import re
+    from django_tenants.utils import get_tenant_model
+    
+    username = request.data.get('username', '').lower().strip()
+    
+    if not username:
+        return Response({
+            'error': 'Username είναι υποχρεωτικό.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Validation rules
+    if len(username) < 3:
+        return Response({
+            'username': username,
+            'available': False,
+            'message': 'Το username πρέπει να έχει τουλάχιστον 3 χαρακτήρες.'
+        }, status=status.HTTP_200_OK)
+    
+    if len(username) > 30:
+        return Response({
+            'username': username,
+            'available': False,
+            'message': 'Το username δεν μπορεί να υπερβαίνει τους 30 χαρακτήρες.'
+        }, status=status.HTTP_200_OK)
+    
+    # Check allowed characters (lowercase alphanumeric + hyphens)
+    if not re.match(r'^[a-z0-9-]+$', username):
+        return Response({
+            'username': username,
+            'available': False,
+            'message': 'Το username μπορεί να περιέχει μόνο πεζά γράμματα, αριθμούς και παύλες (-).'
+        }, status=status.HTTP_200_OK)
+    
+    # Check for reserved words
+    reserved_words = [
+        'admin', 'api', 'www', 'mail', 'smtp', 'ftp', 'ssh', 'root',
+        'newconcierge', 'support', 'help', 'billing', 'sales', 'info',
+        'contact', 'about', 'login', 'register', 'signup', 'signin',
+        'logout', 'dashboard', 'settings', 'profile', 'account',
+        'test', 'demo', 'staging', 'dev', 'development', 'prod', 'production'
+    ]
+    
+    if username in reserved_words:
+        return Response({
+            'username': username,
+            'available': False,
+            'message': 'Αυτό το username είναι δεσμευμένο. Παρακαλώ επιλέξτε άλλο.'
+        }, status=status.HTTP_200_OK)
+    
+    # Check if username exists in CustomUser
+    if CustomUser.objects.filter(username=username).exists():
+        return Response({
+            'username': username,
+            'available': False,
+            'message': 'Αυτό το username χρησιμοποιείται ήδη.'
+        }, status=status.HTTP_200_OK)
+    
+    # Check if tenant schema exists (extra safety)
+    TenantModel = get_tenant_model()
+    if TenantModel.objects.filter(schema_name=username).exists():
+        return Response({
+            'username': username,
+            'available': False,
+            'message': 'Αυτό το username δεν είναι διαθέσιμο.'
+        }, status=status.HTTP_200_OK)
+    
+    # Username is available!
+    return Response({
+        'username': username,
+        'available': True,
+        'message': 'Το username είναι διαθέσιμο! ✨',
+        'subdomain_preview': f'{username}.newconcierge.app'
+    }, status=status.HTTP_200_OK)
+
+
 # ===== INVITATION ENDPOINTS =====
 
 @api_view(['POST'])

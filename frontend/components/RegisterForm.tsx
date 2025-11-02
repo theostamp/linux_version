@@ -4,18 +4,19 @@
 import { useForm } from "react-hook-form"
 import { api } from "@/lib/api"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Eye, EyeOff, AlertCircle, Loader2, Check, X } from "lucide-react"
 import OAuthButtons from "./OAuthButtons"
 import { toast } from "sonner"
 import Link from "next/link"
 
 type RegisterFormInputs = {
   email: string;
-  first_name: string;
-  last_name: string;
+  username: string;
   password: string;
   confirmPassword: string;
+  first_name?: string;  // Optional for display name
+  last_name?: string;   // Optional for display name
 }
 
 export default function RegisterForm() {
@@ -25,23 +26,77 @@ export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [emailExists, setEmailExists] = useState(false)
+  
+  // Username availability state
+  const [usernameChecking, setUsernameChecking] = useState(false)
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null)
+  const [usernameMessage, setUsernameMessage] = useState("")
+  const [subdomainPreview, setSubdomainPreview] = useState("")
+  
   const router = useRouter()
 
   const password = watch("password")
+  const username = watch("username")
+
+  // Check username availability with debounce
+  useEffect(() => {
+    if (!username || username.length < 3) {
+      setUsernameAvailable(null)
+      setUsernameMessage("")
+      setSubdomainPreview("")
+      return
+    }
+
+    const checkUsername = async () => {
+      setUsernameChecking(true)
+      try {
+        const { data } = await api.post('/api/users/check-username/', {
+          username: username.toLowerCase().trim()
+        })
+        setUsernameAvailable(data.available)
+        setUsernameMessage(data.message)
+        setSubdomainPreview(data.subdomain_preview || `${username}.newconcierge.app`)
+      } catch (error) {
+        console.error('Error checking username:', error)
+        setUsernameAvailable(null)
+        setUsernameMessage('Σφάλμα ελέγχου διαθεσιμότητας')
+      } finally {
+        setUsernameChecking(false)
+      }
+    }
+
+    // Debounce: Check after 500ms of no typing
+    const timeoutId = setTimeout(checkUsername, 500)
+    return () => clearTimeout(timeoutId)
+  }, [username])
 
   const onSubmit = async (data: RegisterFormInputs) => {
     setError("");
     setEmailExists(false);
+    
+    // Validate username is available before submitting
+    if (usernameAvailable === false) {
+      setError("Το username που επιλέξατε δεν είναι διαθέσιμο. Παρακαλώ επιλέξτε άλλο.");
+      return;
+    }
+    
+    if (!usernameAvailable) {
+      setError("Παρακαλώ περιμένετε την επιβεβαίωση διαθεσιμότητας του username.");
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
       // Transform the data to match backend expectations
       const registrationData = {
         email: data.email,
-        first_name: data.first_name,
-        last_name: data.last_name,
+        username: data.username.toLowerCase().trim(),
         password: data.password,
-        password_confirm: data.confirmPassword
+        password_confirm: data.confirmPassword,
+        // Optional fields for display name
+        ...(data.first_name && { first_name: data.first_name }),
+        ...(data.last_name && { last_name: data.last_name })
       };
 
       const response = await api.post("/api/users/register", registrationData);
@@ -68,7 +123,12 @@ export default function RegisterForm() {
 
       if (responseData) {
         // Check for specific field errors
-        if (responseData.email) {
+        if (responseData.username) {
+          errorMessage = Array.isArray(responseData.username)
+            ? responseData.username[0]
+            : "Το username δεν είναι έγκυρο ή χρησιμοποιείται ήδη.";
+          toast.error(errorMessage);
+        } else if (responseData.email) {
           errorMessage = Array.isArray(responseData.email)
             ? responseData.email[0]
             : "Το email υπάρχει ήδη ή δεν είναι έγκυρο.";
@@ -92,32 +152,70 @@ export default function RegisterForm() {
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-2xl shadow">
       <h2 className="text-2xl font-bold mb-4 text-center">Εγγραφή</h2>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <input
-          {...register("email", { required: true })}
-          type="email"
-          placeholder="Email"
-          className="w-full border p-2 rounded"
-          autoComplete="email"
-        />
-        {errors.email && <p className="text-red-500 text-sm">Το email είναι απαραίτητο</p>}
+        <div>
+          <input
+            {...register("email", { required: true })}
+            type="email"
+            placeholder="Email"
+            className="w-full border p-2 rounded"
+            autoComplete="email"
+          />
+          {errors.email && <p className="text-red-500 text-sm">Το email είναι απαραίτητο</p>}
+        </div>
 
-        <input
-          {...register("first_name", { required: true })}
-          type="text"
-          placeholder="Όνομα"
-          className="w-full border p-2 rounded"
-          autoComplete="given-name"
-        />
-        {errors.first_name && <p className="text-red-500 text-sm">Το όνομα είναι απαραίτητο</p>}
-
-        <input
-          {...register("last_name", { required: true })}
-          type="text"
-          placeholder="Επώνυμο"
-          className="w-full border p-2 rounded"
-          autoComplete="family-name"
-        />
-        {errors.last_name && <p className="text-red-500 text-sm">Το επώνυμο είναι απαραίτητο</p>}
+        {/* Username Input with Real-time Validation */}
+        <div>
+          <div className="relative">
+            <input
+              {...register("username", { 
+                required: "Το username είναι απαραίτητο",
+                minLength: { value: 3, message: "Το username πρέπει να έχει τουλάχιστον 3 χαρακτήρες" },
+                pattern: { value: /^[a-z0-9-]+$/, message: "Μόνο πεζά γράμματα, αριθμοί και παύλες (-)" }
+              })}
+              type="text"
+              placeholder="Username (π.χ. theo-eth)"
+              className={`w-full border p-2 pr-10 rounded lowercase ${
+                usernameAvailable === true ? 'border-green-500' : 
+                usernameAvailable === false ? 'border-red-500' : 
+                ''
+              }`}
+              autoComplete="username"
+              onChange={(e) => {
+                // Force lowercase
+                e.target.value = e.target.value.toLowerCase();
+              }}
+            />
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              {usernameChecking && <Loader2 className="h-5 w-5 animate-spin text-gray-400" />}
+              {!usernameChecking && usernameAvailable === true && (
+                <Check className="h-5 w-5 text-green-500" />
+              )}
+              {!usernameChecking && usernameAvailable === false && (
+                <X className="h-5 w-5 text-red-500" />
+              )}
+            </div>
+          </div>
+          
+          {errors.username && (
+            <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>
+          )}
+          
+          {usernameMessage && (
+            <p className={`text-sm mt-1 ${usernameAvailable ? 'text-green-600' : 'text-red-600'}`}>
+              {usernameMessage}
+            </p>
+          )}
+          
+          {subdomainPreview && usernameAvailable && (
+            <p className="text-sm text-gray-600 mt-1">
+              🌐 Το workspace σας: <span className="font-semibold">{subdomainPreview}</span>
+            </p>
+          )}
+          
+          <p className="text-xs text-gray-500 mt-1">
+            Μόνο πεζά γράμματα, αριθμοί και παύλες (-). Τουλάχιστον 3 χαρακτήρες.
+          </p>
+        </div>
 
         <div className="relative">
           <input

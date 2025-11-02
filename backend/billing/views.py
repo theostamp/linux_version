@@ -1339,16 +1339,21 @@ class CreateCheckoutSessionView(APIView):
                     'error': 'Invalid subscription plan'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Generate unique tenant subdomain
-            from tenants.services import TenantService
-            tenant_service = TenantService()
-            
-            if building_name:
-                base_name = building_name
+            # Use username as tenant subdomain (username-based architecture)
+            # Username is already validated and unique during registration
+            if hasattr(user, 'username') and user.username:
+                tenant_subdomain = user.username
             else:
-                base_name = user.get_full_name() or user.email.split('@')[0]
-            
-            tenant_subdomain = tenant_service.generate_unique_schema_name(base_name)
+                # Fallback for old users without username (legacy support)
+                from tenants.services import TenantService
+                tenant_service = TenantService()
+                
+                if building_name:
+                    base_name = building_name
+                else:
+                    base_name = user.get_full_name() or user.email.split('@')[0]
+                
+                tenant_subdomain = tenant_service.generate_unique_schema_name(base_name)
             
             # Create Stripe Checkout Session
             stripe_service = StripeService()

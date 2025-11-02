@@ -1,6 +1,7 @@
 # backend/users/models.py
 
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.core.validators import RegexValidator, MinLengthValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -37,6 +38,23 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         ADMIN = 'admin', _('Admin')  # Superusers only
         OFFICE_MANAGER = 'manager', _('Office Manager')  # Γραφείο διαχείρισης (Tenant owner)
 
+    # Core authentication fields
+    username = models.CharField(
+        max_length=30,
+        unique=True,
+        help_text=_("Unique username (3-30 characters, alphanumeric and hyphens only). Used as tenant subdomain."),
+        validators=[
+            RegexValidator(
+                regex=r'^[a-z0-9-]+$',
+                message='Username can only contain lowercase letters, numbers, and hyphens',
+                code='invalid_username'
+            ),
+            MinLengthValidator(3, message='Username must be at least 3 characters long'),
+        ],
+        error_messages={
+            'unique': 'This username is already taken.',
+        }
+    )
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)

@@ -112,9 +112,16 @@ class StripeWebhookView(APIView):
             with transaction.atomic():
                 # Δημιουργία tenant infrastructure
                 tenant_service = TenantService()
-                schema_name = tenant_subdomain or tenant_service.generate_unique_schema_name(
-                    user.email.split('@')[0]
-                )
+                
+                # Priority: tenant_subdomain from metadata > user.username > generated from email
+                if tenant_subdomain:
+                    schema_name = tenant_subdomain
+                elif hasattr(user, 'username') and user.username:
+                    schema_name = user.username
+                else:
+                    schema_name = tenant_service.generate_unique_schema_name(
+                        user.email.split('@')[0]
+                    )
                 
                 # Get plan
                 try:

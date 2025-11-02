@@ -234,23 +234,42 @@ class OfficeDetailsSerializer(serializers.ModelSerializer):
 class UserRegistrationSerializer(serializers.ModelSerializer):
     """
     Serializer για την εγγραφή νέων χρηστών
+    Username-based architecture: Username is used as tenant subdomain
     """
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True)
     
     class Meta:
         model = CustomUser
-        fields = ('email', 'first_name', 'last_name', 'password', 'password_confirm')
+        fields = ('email', 'username', 'first_name', 'last_name', 'password', 'password_confirm')
         extra_kwargs = {
             'email': {'required': True},
-            'first_name': {'required': True},
-            'last_name': {'required': True},
+            'username': {'required': True},
+            'first_name': {'required': False},  # Optional (for display name)
+            'last_name': {'required': False},   # Optional (for display name)
         }
     
     def validate_email(self, value):
         """Έλεγχος αν το email υπάρχει ήδη"""
         if CustomUser.objects.filter(email=value).exists():
             raise serializers.ValidationError("Χρήστης με αυτό το email υπάρχει ήδη.")
+        return value
+    
+    def validate_username(self, value):
+        """Έλεγχος αν το username υπάρχει ήδη και είναι valid"""
+        # Normalize to lowercase
+        value = value.lower().strip()
+        
+        # Check if already taken
+        if CustomUser.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Αυτό το username χρησιμοποιείται ήδη.")
+        
+        # Check tenant schema (extra safety)
+        from django_tenants.utils import get_tenant_model
+        TenantModel = get_tenant_model()
+        if TenantModel.objects.filter(schema_name=value).exists():
+            raise serializers.ValidationError("Αυτό το username δεν είναι διαθέσιμο.")
+        
         return value
     
     def validate(self, attrs):
