@@ -358,12 +358,22 @@ https://theo-etherm20.newconcierge.app/
 
 **Βήμα 3: Ελέγξε το Project Assignment**
 1. Πήγαινε στο Vercel Dashboard → Settings → Domains
-2. Ελέγξε ότι τόσο το `newconcierge.app` όσο και το `*.newconcierge.app` είναι **assigned στο σωστό project**
-3. Ελέγξε ότι είναι **"Production"** environment
+2. ✅ Εάν βλέπεις και τα δύο domains με "Valid Configuration" και "Production":
+   - `newconcierge.app` ✅
+   - `*.newconcierge.app` ✅
+   **Τότε όλα είναι σωστά!** ✅
+
+**Βήμα 4: Κάνε Redeploy (Συχνά χρειάζεται!)**
+1. Πήγαινε στο Vercel Dashboard → Deployments
+2. Κάνε κλικ στο latest deployment
+3. Κάνε κλικ στο "Redeploy" button
+4. Περίμενε να ολοκληρωθεί το redeploy
+
+**⚠️ ΣΗΜΑΝΤΙΚΟ**: Ακόμα και αν τα domains έχουν "Valid Configuration", συχνά χρειάζεται **redeploy** για να αναγνωρίσει το Vercel το wildcard domain!
 
 **Σημείωση**: 
-- Μετά την προσθήκη του wildcard domain, μπορεί να χρειαστεί **έως 5 λεπτά** για το Vercel να το configure
-- Το wildcard SSL certificate μπορεί να χρειαστεί **έως 10 λεπτά** για έκδοση
+- Μετά την προσθήκη του wildcard domain, μπορεί να χρειαστεί **redeploy** για να αναγνωριστεί
+- Το wildcard SSL certificate μπορεί να χρειαστεί **έως 10 λεπτά** για έκδοση μετά το redeploy
 
 ### **Πρόβλημα: "ERR_CONNECTION_CLOSED"**
 
