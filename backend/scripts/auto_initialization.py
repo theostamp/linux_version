@@ -268,6 +268,7 @@ def create_public_tenant():
     ultra_user, created = CustomUser.objects.get_or_create(
         email='theostam1966@gmail.com',
         defaults={
+            'username': 'theostam',  # Username-based architecture
             'first_name': 'Theo',
             'last_name': 'Ultra Admin',
             'is_staff': True,
@@ -281,16 +282,19 @@ def create_public_tenant():
     if created:
         ultra_user.set_password('theo123!@#')
         ultra_user.save()
-        print("✅ Δημιουργήθηκε Ultra-Superuser: theostam1966@gmail.com")
+        print("✅ Δημιουργήθηκε Ultra-Superuser: theostam1966@gmail.com (username: theostam)")
     else:
-        # Ενημέρωση password αν υπάρχει ήδη
+        # Ενημέρωση password και username αν υπάρχει ήδη
         ultra_user.set_password('theo123!@#')
         ultra_user.is_superuser = True
         ultra_user.is_staff = True
         ultra_user.is_active = True
         ultra_user.email_verified = True
+        # Add username if missing (for existing users before migration)
+        if not hasattr(ultra_user, 'username') or not ultra_user.username:
+            ultra_user.username = 'theostam'
         ultra_user.save()
-        print("✅ Ενημερώθηκε Ultra-Superuser: theostam1966@gmail.com")
+        print("✅ Ενημερώθηκε Ultra-Superuser: theostam1966@gmail.com (username: theostam)")
 
     # Verify authentication works
     from django.contrib.auth import authenticate
@@ -385,6 +389,7 @@ def create_demo_data(tenant_schema):
         users_data = [
             {
                 'email': 'admin@demo.localhost',
+                'username': 'demo-admin',  # Username-based architecture
                 'first_name': 'Admin',
                 'last_name': 'User',
                 'password': 'admin123456',
@@ -396,6 +401,7 @@ def create_demo_data(tenant_schema):
             },
             {
                 'email': 'manager@demo.localhost',
+                'username': 'demo-manager',  # Username-based architecture
                 'first_name': 'Γιώργος',
                 'last_name': 'Διαχειριστής',
                 'password': 'manager123456',
@@ -407,6 +413,7 @@ def create_demo_data(tenant_schema):
             },
             {
                 'email': 'resident1@demo.localhost',
+                'username': 'demo-resident1',  # Username-based architecture
                 'first_name': 'Μαρία',
                 'last_name': 'Κατοίκος',
                 'password': 'resident123456',
@@ -418,6 +425,7 @@ def create_demo_data(tenant_schema):
             },
             {
                 'email': 'resident2@demo.localhost',
+                'username': 'demo-resident2',  # Username-based architecture
                 'first_name': 'Νίκος',
                 'last_name': 'Ιδιοκτήτης',
                 'password': 'resident123456',
@@ -434,6 +442,7 @@ def create_demo_data(tenant_schema):
             user, created = CustomUser.objects.get_or_create(
                 email=user_data['email'],
                 defaults={
+                    'username': user_data['username'],  # Username-based architecture
                     'first_name': user_data['first_name'],
                     'last_name': user_data['last_name'],
                     'is_staff': user_data['is_staff'],
@@ -452,14 +461,17 @@ def create_demo_data(tenant_schema):
             if created:
                 user.set_password(user_data['password'])
                 user.save()
-                print(f"✅ Δημιουργήθηκε χρήστης: {user.email}")
+                print(f"✅ Δημιουργήθηκε χρήστης: {user.email} (username: {user.username})")
             else:
-                # Ενημέρωση password αν υπάρχει ήδη
+                # Ενημέρωση password και username αν υπάρχει ήδη
                 user.set_password(user_data['password'])
                 user.is_active = user_data.get('is_active', True)
                 user.email_verified = user_data.get('email_verified', True)
+                # Add username if missing (for existing users before migration)
+                if not user.username:
+                    user.username = user_data['username']
                 user.save()
-                print(f"ℹ️ Ενημερώθηκε χρήστης: {user.email}")
+                print(f"ℹ️ Ενημερώθηκε χρήστης: {user.email} (username: {user.username})")
             
             # Ανάθεση σε Groups για RBAC
             if user.role == 'manager':
