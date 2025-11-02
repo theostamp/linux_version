@@ -38,8 +38,26 @@ const nextConfig = {
   poweredByHeader: false,
   generateEtags: false,
 
-  // Note: API routes are handled by /app/api/proxy/[...path]/route.ts
-  // No rewrites needed - direct routing handles all /api/* requests
+  // Rewrites to proxy API calls to backend (for Vercel deployment)
+  async rewrites() {
+    // Get backend URL from environment
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'https://linuxversion-production.up.railway.app';
+    
+    // Only configure rewrites if we have a backend URL
+    if (backendUrl && !backendUrl.includes('localhost')) {
+      console.log('Configuring API rewrites to proxy routes');
+      
+      return [
+        {
+          source: '/api/:path*',
+          destination: '/api/proxy/:path*',
+        },
+      ];
+    }
+    
+    // No rewrites for localhost (direct connection)
+    return [];
+  },
   
   // Bundle analyzer (enable with ANALYZE=true)
   webpack: (config, { dev, isServer }) => {
