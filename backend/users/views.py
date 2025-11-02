@@ -425,6 +425,14 @@ def resend_verification_view(request):
     """
     POST /api/users/resend-verification/
     Επανάληψη αποστολής email επιβεβαίωσης
+    
+    Returns 204 No Content για security (silent response):
+    - Αν το email δεν υπάρχει
+    - Αν το email είναι ήδη verified
+    - Αν το email στάλθηκε επιτυχώς
+    
+    Returns 400 αν λείπει το email field.
+    Returns 500 αν αποτύχει η αποστολή.
     """
     email = request.data.get('email')
     if not email:
@@ -433,19 +441,36 @@ def resend_verification_view(request):
         }, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        user = CustomUser.objects.get(email=email, email_verified=False)
+        # Ελέγχουμε αν υπάρχει ο χρήστης (case-insensitive)
+        user = CustomUser.objects.get(email__iexact=email)
+        
+        # Αν το email είναι ήδη verified, επιστρέφουμε 204 (silent για security)
+        if user.email_verified:
+            logger.debug(f"[RESEND_VERIFICATION] Email {email} is already verified, returning 204")
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        
+        # Αποστολή email
         if EmailService.send_verification_email(user):
-            return Response({
-                'message': 'Email επιβεβαίωσης στάλθηκε ξανά.'
-            }, status=status.HTTP_200_OK)
+            logger.info(f"[RESEND_VERIFICATION] ✅ Verification email resent successfully to: {user.email}")
+            # Επιστρέφουμε 204 για security (silent response)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         else:
+            logger.error(f"[RESEND_VERIFICATION] ❌ Failed to send verification email to: {user.email}")
             return Response({
-                'error': 'Αποτυχία αποστολής email.'
+                'error': 'Αποτυχία αποστολής email. Παρακαλώ δοκιμάστε ξανά αργότερα.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
     except CustomUser.DoesNotExist:
+        # Silent 204 για security (δεν εκθέτουμε αν το email υπάρχει ή όχι)
+        logger.debug(f"[RESEND_VERIFICATION] User with email {email} not found, returning 204 (silent)")
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Exception as e:
+        logger.error(f"[RESEND_VERIFICATION] ❌ Unexpected error: {e}")
+        import traceback
+        logger.error(f"[RESEND_VERIFICATION] Traceback: {traceback.format_exc()}")
         return Response({
-            'error': 'Δεν βρέθηκε χρήστης με αυτό το email ή το email είναι ήδη επιβεβαιωμένο.'
-        }, status=status.HTTP_404_NOT_FOUND)
+            'error': 'Σφάλμα συστήματος. Παρακαλώ δοκιμάστε ξανά αργότερα.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
