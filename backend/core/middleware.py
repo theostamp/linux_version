@@ -76,9 +76,19 @@ class CustomTenantMiddleware(TenantMainMiddleware):
 
         Handles:
         - X-Forwarded-Host header for proxied requests
+        - X-Tenant-Schema header for explicit tenant routing
         - Port stripping (already handled by hostname_from_request)
         """
-        # Check for X-Forwarded-Host header first (for frontend container requests)
+        # Check for X-Tenant-Schema header (highest priority)
+        tenant_schema_header = request.META.get('HTTP_X_TENANT_SCHEMA')
+        if tenant_schema_header:
+            logger.debug(f"[CustomTenantMiddleware] X-Tenant-Schema header found: {tenant_schema_header}")
+            # Let SessionTenantMiddleware handle this
+            # Just set the schema to public and let SessionTenantMiddleware override it
+            connection.set_schema_to_public()
+            return None
+        
+        # Check for X-Forwarded-Host header (for frontend container requests)
         forwarded_host = request.META.get('HTTP_X_FORWARDED_HOST')
         original_host = None
 
