@@ -76,18 +76,12 @@ class CustomTenantMiddleware(TenantMainMiddleware):
 
         Handles:
         - X-Forwarded-Host header for proxied requests
-        - X-Tenant-Schema header for explicit tenant routing
         - Port stripping (already handled by hostname_from_request)
-        """
-        # Check for X-Tenant-Schema header (highest priority)
-        tenant_schema_header = request.META.get('HTTP_X_TENANT_SCHEMA')
-        if tenant_schema_header:
-            logger.debug(f"[CustomTenantMiddleware] X-Tenant-Schema header found: {tenant_schema_header}")
-            # Let SessionTenantMiddleware handle this
-            # Just set the schema to public and let SessionTenantMiddleware override it
-            connection.set_schema_to_public()
-            return None
         
+        NOTE: X-Tenant-Schema header is handled by SessionTenantMiddleware,
+        but CustomTenantMiddleware must still set up the tenant from hostname
+        so that the correct URLconf (tenant_urls.py) is used.
+        """
         # Check for X-Forwarded-Host header (for frontend container requests)
         forwarded_host = request.META.get('HTTP_X_FORWARDED_HOST')
         original_host = None
@@ -97,7 +91,9 @@ class CustomTenantMiddleware(TenantMainMiddleware):
             original_host = request.META.get('HTTP_HOST')
             request.META['HTTP_HOST'] = forwarded_host
 
-        # Call the parent process_request
+        # Call the parent process_request to set up tenant from hostname
+        # This is necessary even with X-Tenant-Schema header because we need
+        # the URLconf to be set to tenant_urls.py
         response = super().process_request(request)
 
         # Restore original host if it was modified
@@ -137,11 +133,27 @@ class SessionTenantMiddleware:
             logger.info(f"[SessionTenantMiddleware] X-Tenant-Schema header: {request.META.get('HTTP_X_TENANT_SCHEMA')}")
             logger.info(f"[SessionTenantMiddleware] Resolved tenant: {getattr(tenant, 'schema_name', None) if tenant else 'None'}")
             logger.info(f"[SessionTenantMiddleware] Current connection schema: {connection.schema_name}")
+            logger.info(f"[SessionTenantMiddleware] Current connection tenant: {getattr(connection, 'tenant', None)}")
 
         if not tenant:
+            # No tenant override needed, keep whatever CustomTenantMiddleware set
             return self.get_response(request)
 
-        previous_tenant = getattr(connection, "tenant", None)
+        # Check if CustomTenantMiddleware already set the correct tenant
+        current_tenant = getattr(connection, "tenant", None)
+        current_schema = getattr(current_tenant, "schema_name", None) if current_tenant else None
+        target_schema = getattr(tenant, "schema_name", None)
+        
+        if current_schema == target_schema:
+            # Tenant is already correct, just store it on request and continue
+            logger.debug(f"[SessionTenantMiddleware] Tenant {target_schema} already set, no override needed")
+            request.tenant = tenant
+            return self.get_response(request)
+
+        # Need to override the tenant
+        logger.debug(f"[SessionTenantMiddleware] Overriding tenant from {current_schema} to {target_schema}")
+        
+        previous_tenant = current_tenant
         previous_schema = connection.schema_name
         previous_urlconf = getattr(request, "urlconf", None)
 
@@ -152,7 +164,7 @@ class SessionTenantMiddleware:
             connection.set_tenant(tenant)
             request.tenant = tenant
             
-            # Set tenant urlconf
+            # Set tenant urlconf (might already be set by CustomTenantMiddleware)
             tenant_urlconf = getattr(tenant, "get_urlconf", None)
             fallback_urlconf = getattr(settings, "TENANT_URLCONF", None)
 
