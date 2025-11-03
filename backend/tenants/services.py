@@ -152,11 +152,42 @@ class TenantService:
     
     def _create_domain(self, tenant, schema_name):
         """Create the domain for the tenant."""
+        import os
+        
         # Determine the base domain
         base_domain = "localhost"  # Default for development
-        # In production, this would be your actual domain
         
-        domain_name = f"{schema_name}.{base_domain}"
+        # Check if we're in production
+        is_production = os.getenv('RAILWAY_PUBLIC_DOMAIN') or os.getenv('ROOT_DOMAIN')
+        if is_production:
+            root_domain = os.getenv('ROOT_DOMAIN', 'newconcierge.app')
+            domain_name = f"{schema_name}.{root_domain}"
+        else:
+            domain_name = f"{schema_name}.{base_domain}"
+        
+        # Optionally verify subdomain accessibility in production
+        if is_production:
+            try:
+                from tenants.utils import verify_subdomain_accessibility
+                
+                logger.debug(f"[DOMAIN_CREATION] Verifying subdomain accessibility: {domain_name}")
+                verification_result = verify_subdomain_accessibility(
+                    domain_name,
+                    protocol='https',
+                    timeout=5,
+                    verify_ssl=True
+                )
+                
+                if verification_result['accessible']:
+                    logger.info(f"[DOMAIN_CREATION] ✅ Subdomain {domain_name} is accessible (Status: {verification_result.get('status_code')}, IP: {verification_result.get('ip_address')})")
+                elif verification_result['dns_resolved']:
+                    logger.warning(f"[DOMAIN_CREATION] ⚠️  Subdomain {domain_name} DNS resolved but HTTP check failed: {verification_result.get('error')}")
+                else:
+                    logger.warning(f"[DOMAIN_CREATION] ⚠️  Subdomain {domain_name} DNS not resolved yet (may need time to propagate): {verification_result.get('error')}")
+                    logger.info(f"[DOMAIN_CREATION] Domain will be created but may need DNS configuration")
+            except Exception as e:
+                logger.warning(f"[DOMAIN_CREATION] Subdomain verification failed (non-blocking): {e}")
+                # Don't fail tenant creation if verification fails
         
         domain = Domain.objects.create(
             domain=domain_name,
