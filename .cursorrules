@@ -246,6 +246,7 @@ This project has complex financial calculations:
 - **Focus on requested files** when provided with @ symbol
 - **Never run migrations automatically** unless explicitly requested
 - **Never restart services automatically** unless explicitly requested
+- **NEVER create markdown documentation files (*.md) automatically** - Only create documentation files when explicitly requested by the user
 - **Provide clear explanations** for technical decisions
 - **Follow Greek language requirements** when applicable
 

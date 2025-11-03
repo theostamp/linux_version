@@ -4,6 +4,7 @@ from django_tenants.middleware.main import TenantMainMiddleware
 from django_tenants.utils import (
     get_public_schema_name,
     get_tenant_model,
+    get_tenant_domain_model,
 )
 import logging
 
@@ -158,16 +159,27 @@ class SessionTenantMiddleware:
     def _resolve_tenant_from_request(self, request):
         """Return the tenant associated with the current request, if any."""
 
-        # Skip tenant switching for explicitly public endpoints (auth, billing webhooks, etc.)
+        # Allow specific auth endpoints (like /api/users/login/) to honour an explicit
+        # X-Tenant-Schema header even though they are normally treated as public.
+        # This fixes tenant logins on custom subdomains where the request is routed
+        # through the public domain and would otherwise resolve to the public schema.
+        header_tenant = self._tenant_from_header(request)
+
         if self._should_skip_path(request.path):
+            if header_tenant and self._header_override_allowed(request.path):
+                logger.debug(
+                    "[SessionTenantMiddleware] Overriding skip list for %s using header schema %s",
+                    request.path,
+                    getattr(header_tenant, "schema_name", None),
+                )
+                return header_tenant
             return None
 
         tenant = None
 
         # 1) X-Tenant-Schema header (from subdomain-based routing)
-        tenant = self._tenant_from_header(request)
-        if tenant:
-            return tenant
+        if header_tenant:
+            return header_tenant
 
         # 2) Session-based authentication (request.user populated by Django auth)
         user = getattr(request, "user", None)
@@ -188,19 +200,56 @@ class SessionTenantMiddleware:
         return tenant
 
     def _tenant_from_header(self, request):
-        """Resolve tenant via X-Tenant-Schema header (from subdomain routing)."""
+        """Resolve tenant via X-Tenant-Schema header (from subdomain routing).
+        
+        The header value can be either:
+        1. A schema_name (direct lookup)
+        2. A subdomain (e.g., 'demo' from 'demo.newconcierge.app')
+        
+        We first try to find by schema_name, then by domain/subdomain.
+        """
         tenant_schema = request.META.get('HTTP_X_TENANT_SCHEMA')
         if not tenant_schema:
             return None
 
         try:
             tenant_model = get_tenant_model()
-            tenant = tenant_model.objects.get(schema_name=tenant_schema)
-            logger.debug(f"[SessionTenantMiddleware] Resolved tenant from X-Tenant-Schema header: {tenant_schema}")
-            return tenant
-        except tenant_model.DoesNotExist:
-            logger.warning(f"[SessionTenantMiddleware] Tenant schema '{tenant_schema}' from X-Tenant-Schema header not found")
+            domain_model = get_tenant_domain_model()
+            
+            # First, try to find tenant by schema_name (backward compatibility)
+            try:
+                tenant = tenant_model.objects.get(schema_name=tenant_schema)
+                logger.debug(f"[SessionTenantMiddleware] Resolved tenant from X-Tenant-Schema header (by schema_name): {tenant_schema}")
+                return tenant
+            except tenant_model.DoesNotExist:
+                # If not found by schema_name, try to find by domain/subdomain
+                # The header value might be a subdomain (e.g., 'demo' from 'demo.newconcierge.app')
+                # Try to match it against domain names
+                pass
+            
+            # Try to find tenant by domain matching
+            # Check if tenant_schema matches a domain (exact match or subdomain)
+            domain = domain_model.objects.filter(
+                domain__iexact=tenant_schema
+            ).first()
+            
+            if not domain:
+                # Try matching as subdomain (e.g., 'demo' matches 'demo.localhost' or 'demo.newconcierge.app')
+                # Extract subdomain from domain if it contains dots
+                domain = domain_model.objects.filter(
+                    domain__icontains=f".{tenant_schema}."
+                ).first() or domain_model.objects.filter(
+                    domain__istartswith=f"{tenant_schema}."
+                ).first()
+            
+            if domain:
+                tenant = domain.tenant
+                logger.debug(f"[SessionTenantMiddleware] Resolved tenant from X-Tenant-Schema header (by domain): {tenant_schema} → {domain.domain} → {tenant.schema_name}")
+                return tenant
+            
+            logger.warning(f"[SessionTenantMiddleware] Tenant not found for X-Tenant-Schema header value: {tenant_schema} (tried schema_name and domain matching)")
             return None
+            
         except Exception as e:
             logger.error(f"[SessionTenantMiddleware] Error resolving tenant from header: {e}", exc_info=True)
             return None
@@ -245,3 +294,14 @@ class SessionTenantMiddleware:
         )
 
         return any(path.startswith(prefix) for prefix in public_prefixes)
+
+    def _header_override_allowed(self, path: str) -> bool:
+        """Allow X-Tenant-Schema override on specific auth endpoints."""
+
+        override_paths = (
+            "/api/users/login",
+            "/api/users/token",
+            "/api/users/token/",
+        )
+
+        return any(path.startswith(prefix) for prefix in override_paths)
