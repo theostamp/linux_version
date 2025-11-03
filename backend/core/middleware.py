@@ -82,6 +82,16 @@ class CustomTenantMiddleware(TenantMainMiddleware):
         but CustomTenantMiddleware must still set up the tenant from hostname
         so that the correct URLconf (tenant_urls.py) is used.
         """
+        # Debug logging for tenant-specific endpoints
+        if request.path.startswith('/api/announcements') or \
+           request.path.startswith('/api/votes') or \
+           request.path.startswith('/api/user-requests') or \
+           request.path.startswith('/api/obligations'):
+            logger.info(f"[CustomTenantMiddleware] Processing {request.path}")
+            logger.info(f"[CustomTenantMiddleware] HTTP_HOST: {request.META.get('HTTP_HOST')}")
+            logger.info(f"[CustomTenantMiddleware] X-Forwarded-Host: {request.META.get('HTTP_X_FORWARDED_HOST')}")
+            logger.info(f"[CustomTenantMiddleware] X-Tenant-Schema: {request.META.get('HTTP_X_TENANT_SCHEMA')}")
+        
         # Check for X-Forwarded-Host header (for frontend container requests)
         forwarded_host = request.META.get('HTTP_X_FORWARDED_HOST')
         original_host = None
@@ -95,6 +105,17 @@ class CustomTenantMiddleware(TenantMainMiddleware):
         # This is necessary even with X-Tenant-Schema header because we need
         # the URLconf to be set to tenant_urls.py
         response = super().process_request(request)
+        
+        # Debug logging after tenant resolution
+        if request.path.startswith('/api/announcements') or \
+           request.path.startswith('/api/votes') or \
+           request.path.startswith('/api/user-requests') or \
+           request.path.startswith('/api/obligations'):
+            current_tenant = getattr(connection, "tenant", None)
+            current_urlconf = getattr(request, "urlconf", None)
+            logger.info(f"[CustomTenantMiddleware] Resolved tenant: {getattr(current_tenant, 'schema_name', None) if current_tenant else 'None'}")
+            logger.info(f"[CustomTenantMiddleware] Set URLconf: {current_urlconf}")
+            logger.info(f"[CustomTenantMiddleware] Connection schema: {connection.schema_name}")
 
         # Restore original host if it was modified
         if forwarded_host and original_host:
