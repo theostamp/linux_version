@@ -302,6 +302,7 @@ class SessionTenantMiddleware:
             "/api/users/login",
             "/api/users/token",
             "/api/users/token/",
+            "/api/users/me",  # Add /api/users/me for tenant user verification
         )
 
         return any(path.startswith(prefix) for prefix in override_paths)
