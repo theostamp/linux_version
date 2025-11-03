@@ -70,10 +70,26 @@ export default function LoginForm({ redirectTo = '/dashboard' }: { readonly redi
       const tenantUrl = (loggedInUser as any).tenantUrl;
       const redirectPath = (loggedInUser as any).redirectPath || finalRedirect;
       
+      // Get current hostname
+      const currentHost = window.location.hostname;
+      
       if (tenantUrl) {
-        console.log('LoginForm: Redirecting to tenant URL:', tenantUrl);
-        // For tenant users, redirect to their tenant domain
-        window.location.href = tenantUrl;
+        // Parse the tenant URL to get its hostname
+        const tenantUrlObj = new URL(tenantUrl);
+        const tenantHost = tenantUrlObj.hostname;
+        
+        // Check if we're already on the tenant subdomain
+        if (currentHost === tenantHost) {
+          console.log('LoginForm: Already on tenant subdomain, redirecting to dashboard');
+          // We're already on the correct subdomain, just navigate to the dashboard
+          setTimeout(() => {
+            router.push('/dashboard');
+          }, 100);
+        } else {
+          console.log('LoginForm: Redirecting to tenant URL:', tenantUrl);
+          // We need to switch to the tenant subdomain
+          window.location.href = tenantUrl;
+        }
       } else {
         console.log('LoginForm: Backend suggested redirect:', redirectPath);
         setTimeout(() => {
