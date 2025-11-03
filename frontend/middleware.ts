@@ -5,6 +5,8 @@ const PUBLIC_BASE = 'newconcierge.app';
 
 export const config = {
   matcher: ['/((?!_next|static|images|favicon\\.ico|robots\\.txt|sitemap\\.xml).*)'],
+  // Explicitly include manifest.json in matcher
+  // matcher will match /manifest.json
 };
 
 export function middleware(request: NextRequest) {
@@ -13,6 +15,44 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const dest = request.headers.get('sec-fetch-dest');
   const acceptHeader = request.headers.get('Accept');
+
+  // Handle manifest.json requests - serve inline manifest
+  if (pathname === '/manifest.json') {
+    const manifest = {
+      name: 'New Concierge - Building Management',
+      short_name: 'New Concierge',
+      description: 'Διαχείριση Πολυκατοικίας - Κοινόχρηστα, Ανακοινώσεις, Συντήρηση',
+      start_url: '/',
+      display: 'standalone',
+      background_color: '#ffffff',
+      theme_color: '#2563eb',
+      orientation: 'portrait',
+      icons: [
+        {
+          src: '/icon-192x192.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'any maskable',
+        },
+        {
+          src: '/icon-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any maskable',
+        },
+      ],
+      categories: ['productivity', 'utilities'],
+      lang: 'el',
+      dir: 'ltr',
+    };
+
+    return NextResponse.json(manifest, {
+      headers: {
+        'Content-Type': 'application/manifest+json',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      },
+    });
+  }
 
   // Intercept CSS files being loaded as scripts (existing functionality)
   if (pathname.endsWith('.css')) {
