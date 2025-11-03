@@ -158,16 +158,27 @@ class SessionTenantMiddleware:
     def _resolve_tenant_from_request(self, request):
         """Return the tenant associated with the current request, if any."""
 
-        # Skip tenant switching for explicitly public endpoints (auth, billing webhooks, etc.)
+        # Allow specific auth endpoints (like /api/users/login/) to honour an explicit
+        # X-Tenant-Schema header even though they are normally treated as public.
+        # This fixes tenant logins on custom subdomains where the request is routed
+        # through the public domain and would otherwise resolve to the public schema.
+        header_tenant = self._tenant_from_header(request)
+
         if self._should_skip_path(request.path):
+            if header_tenant and self._header_override_allowed(request.path):
+                logger.debug(
+                    "[SessionTenantMiddleware] Overriding skip list for %s using header schema %s",
+                    request.path,
+                    getattr(header_tenant, "schema_name", None),
+                )
+                return header_tenant
             return None
 
         tenant = None
 
         # 1) X-Tenant-Schema header (from subdomain-based routing)
-        tenant = self._tenant_from_header(request)
-        if tenant:
-            return tenant
+        if header_tenant:
+            return header_tenant
 
         # 2) Session-based authentication (request.user populated by Django auth)
         user = getattr(request, "user", None)
@@ -245,3 +256,15 @@ class SessionTenantMiddleware:
         )
 
         return any(path.startswith(prefix) for prefix in public_prefixes)
+
+    def _header_override_allowed(self, path: str) -> bool:
+        """Allow X-Tenant-Schema override on specific auth endpoints."""
+
+        override_paths = (
+            "/api/users/login",
+            "/api/users/token",
+            "/api/users/token/",
+        )
+
+        return any(path.startswith(prefix) for prefix in override_paths)
+
