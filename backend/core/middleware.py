@@ -146,8 +146,13 @@ class SessionTenantMiddleware:
         previous_urlconf = getattr(request, "urlconf", None)
 
         try:
+            # Switch to tenant schema for data access
+            # NOTE: JWT authentication will happen in public schema via PublicSchemaJWTAuthentication
+            # which temporarily switches back to public schema for user lookup
             connection.set_tenant(tenant)
             request.tenant = tenant
+            
+            # Set tenant urlconf
             tenant_urlconf = getattr(tenant, "get_urlconf", None)
             fallback_urlconf = getattr(settings, "TENANT_URLCONF", None)
 
@@ -157,6 +162,7 @@ class SessionTenantMiddleware:
                 request.urlconf = fallback_urlconf
             else:
                 request.urlconf = None
+                
             return self.get_response(request)
         finally:
             # Restore original tenant state to avoid leaking schema between requests
@@ -199,6 +205,9 @@ class SessionTenantMiddleware:
 
         # 1) X-Tenant-Schema header (from subdomain-based routing)
         if header_tenant:
+            # IMPORTANT: For JWT-authenticated requests, we need to authenticate the user
+            # in the PUBLIC schema first (where users are stored), then switch to tenant schema
+            # So we return the tenant but JWT authentication will happen in public schema
             return header_tenant
 
         # 2) Session-based authentication (request.user populated by Django auth)
@@ -207,8 +216,9 @@ class SessionTenantMiddleware:
             tenant = getattr(user, "tenant", None)
 
         # 3) JWT-based authentication (API requests from the frontend)
-        if not tenant and JWTAuthentication is not None:
-            tenant = self._tenant_from_jwt(request)
+        # This won't work here because we haven't authenticated yet
+        # JWT authentication happens AFTER this middleware, but BEFORE we switch schemas
+        # So we rely on X-Tenant-Schema header for tenant-specific requests
 
         if not tenant:
             return None
