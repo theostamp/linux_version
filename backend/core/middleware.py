@@ -117,6 +117,16 @@ class SessionTenantMiddleware:
     def __call__(self, request):
         # By default keep whatever schema the tenant middleware selected
         tenant = self._resolve_tenant_from_request(request)
+        
+        # Debug logging for tenant-specific endpoints
+        if request.path.startswith('/api/announcements') or \
+           request.path.startswith('/api/votes') or \
+           request.path.startswith('/api/user-requests') or \
+           request.path.startswith('/api/obligations'):
+            logger.info(f"[SessionTenantMiddleware] Processing {request.path}")
+            logger.info(f"[SessionTenantMiddleware] X-Tenant-Schema header: {request.META.get('HTTP_X_TENANT_SCHEMA')}")
+            logger.info(f"[SessionTenantMiddleware] Resolved tenant: {getattr(tenant, 'schema_name', None) if tenant else 'None'}")
+            logger.info(f"[SessionTenantMiddleware] Current connection schema: {connection.schema_name}")
 
         if not tenant:
             return self.get_response(request)
