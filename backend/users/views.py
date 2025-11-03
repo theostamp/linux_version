@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.utils import timezone
 from .models import CustomUser, UserInvitation, PasswordResetToken
 from .serializers import (
@@ -36,6 +36,38 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     """
     serializer_class = CustomTokenObtainPairSerializer
     throttle_classes = [LoginThrottle]
+
+
+class PublicSchemaTokenRefreshView(TokenRefreshView):
+    """
+    Custom token refresh view that ensures token validation happens in public schema.
+    
+    This is necessary because:
+    1. Users are stored in public schema (SHARED_APPS)
+    2. Token refresh validation may need to look up users
+    3. Middleware may have switched to tenant schema
+    4. User lookup would fail in tenant schema
+    """
+    
+    def post(self, request, *args, **kwargs):
+        # Save current tenant/schema state
+        current_tenant = getattr(connection, "tenant", None)
+        current_schema = connection.schema_name
+        
+        try:
+            # Switch to public schema for token validation
+            connection.set_schema_to_public()
+            
+            # Call parent method to handle token refresh (will validate in public schema)
+            return super().post(request, *args, **kwargs)
+        finally:
+            # Restore original tenant/schema state
+            if current_tenant is not None:
+                connection.set_tenant(current_tenant)
+            elif current_schema != 'public':
+                connection.set_schema_to_public()  # Fallback to public
+            else:
+                connection.set_schema_to_public()
 
 @ensure_csrf_cookie
 def get_csrf_token(request):

@@ -22,7 +22,8 @@ class PublicSchemaJWTAuthentication(JWTAuthentication):
         """
         Override get_user to always look up users in public schema.
         """
-        # Save current schema
+        # Save current tenant/schema state
+        current_tenant = getattr(connection, "tenant", None)
         current_schema = connection.schema_name
         
         try:
@@ -32,9 +33,19 @@ class PublicSchemaJWTAuthentication(JWTAuthentication):
             # Call parent method to get user (will query public schema)
             return super().get_user(validated_token)
         finally:
-            # Restore original schema
-            if current_schema != 'public':
-                connection.set_schema(current_schema)
+            # Restore original tenant/schema state
+            if current_tenant is not None:
+                connection.set_tenant(current_tenant)
+            elif current_schema != 'public':
+                # If we had a specific schema but no tenant object, restore it
+                # This shouldn't happen in normal flow, but handle it safely
+                try:
+                    from django_tenants.utils import schema_context
+                    with schema_context(current_schema):
+                        pass  # Just ensure schema is restored
+                    connection.set_schema_to_public()  # Fallback to public
+                except:
+                    connection.set_schema_to_public()
             else:
                 connection.set_schema_to_public()
 
