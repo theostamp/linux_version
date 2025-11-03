@@ -134,6 +134,9 @@ class SessionTenantMiddleware:
             logger.info(f"[SessionTenantMiddleware] Resolved tenant: {getattr(tenant, 'schema_name', None) if tenant else 'None'}")
             logger.info(f"[SessionTenantMiddleware] Current connection schema: {connection.schema_name}")
             logger.info(f"[SessionTenantMiddleware] Current connection tenant: {getattr(connection, 'tenant', None)}")
+            current_urlconf_before = getattr(request, "urlconf", None)
+            logger.info(f"[SessionTenantMiddleware] Current URLconf: {current_urlconf_before} (type: {type(current_urlconf_before)})")
+            logger.info(f"[SessionTenantMiddleware] Expected TENANT_URLCONF: {getattr(settings, 'TENANT_URLCONF', None)}")
 
         if not tenant:
             # No tenant override needed, keep whatever CustomTenantMiddleware set
@@ -144,14 +147,32 @@ class SessionTenantMiddleware:
         current_schema = getattr(current_tenant, "schema_name", None) if current_tenant else None
         target_schema = getattr(tenant, "schema_name", None)
         
-        if current_schema == target_schema:
-            # Tenant is already correct, just store it on request and continue
-            logger.debug(f"[SessionTenantMiddleware] Tenant {target_schema} already set, no override needed")
+        # Check if urlconf is already set correctly
+        # urlconf can be a string ('tenant_urls') or the actual module
+        current_urlconf = getattr(request, "urlconf", None)
+        tenant_urlconf_name = getattr(settings, "TENANT_URLCONF", None)
+        
+        # urlconf is correct if it's set to TENANT_URLCONF or contains tenant_urls
+        urlconf_is_correct = False
+        if current_urlconf and tenant_urlconf_name:
+            if current_urlconf == tenant_urlconf_name:
+                urlconf_is_correct = True
+            elif hasattr(current_urlconf, '__name__') and tenant_urlconf_name in current_urlconf.__name__:
+                urlconf_is_correct = True
+            elif isinstance(current_urlconf, str) and tenant_urlconf_name in current_urlconf:
+                urlconf_is_correct = True
+        
+        if current_schema == target_schema and urlconf_is_correct:
+            # Tenant is already correct AND urlconf is set, just store it on request and continue
+            logger.debug(f"[SessionTenantMiddleware] Tenant {target_schema} and URLconf already set correctly, no override needed")
             request.tenant = tenant
             return self.get_response(request)
-
-        # Need to override the tenant
-        logger.debug(f"[SessionTenantMiddleware] Overriding tenant from {current_schema} to {target_schema}")
+        
+        # Tenant might be correct but urlconf is missing, or tenant needs override
+        if current_schema == target_schema:
+            logger.debug(f"[SessionTenantMiddleware] Tenant {target_schema} already set but URLconf is missing/incorrect, setting URLconf")
+        else:
+            logger.debug(f"[SessionTenantMiddleware] Overriding tenant from {current_schema} to {target_schema}")
         
         previous_tenant = current_tenant
         previous_schema = connection.schema_name
@@ -174,6 +195,13 @@ class SessionTenantMiddleware:
                 request.urlconf = fallback_urlconf
             else:
                 request.urlconf = None
+            
+            # Debug logging for tenant-specific endpoints
+            if request.path.startswith('/api/announcements') or \
+               request.path.startswith('/api/votes') or \
+               request.path.startswith('/api/user-requests') or \
+               request.path.startswith('/api/obligations'):
+                logger.info(f"[SessionTenantMiddleware] Set URLconf to: {request.urlconf} (type: {type(request.urlconf)})")
                 
             return self.get_response(request)
         finally:
