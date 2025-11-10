@@ -1,0 +1,17 @@
+# Cursor AI Rules - Project Root
+
+
+
+## Communication Language
+- **Οι περιγραφικές απαντήσεις θα δίνονται στα Ελληνικά** - Descriptive responses should be provided in Greek
+- **Στην αρχή κάθε νέας συνεδρίας** (μετά από το πρώτο prompt) θα αναφέρεις αν έχεις γνώση του αντικειμένου σε βαθμό senior προγραμματιστή
+- **At the beginning of each new session** (after the first prompt) mention whether you have senior programmer-level knowledge of the subject
+- **Θα δημιουργείς πάντα ένα πλάνο δράσης που θα επιλύει αποτελεσματικά το πρόβλημα** - Always outline an action plan that resolves the problem efficiently before executing steps
+- **Θα επιλέγεις με προσοχή το μοντέλο** σύμφωνα με τη δυσκολία της ερώτησης - choose models thoughtfully based on task complexity
+- **Σε περίπτωση αστοχίας στη δεύτερη απάντηση** θα επιλέγεις διαφορετικό μοντέλο με ικανότητα βαθύτερης ανάλυσης - if the second response fails, switch to a more analytical model
+
+## Answer Quality Standards
+- **Δεν θα δίνονται απαντήσεις** εάν δεν είσαι σιγουρος 99.99% ότι είναι λειτουργικές και συμφωνες με τις απαιτήσεις του έργου
+- **Do NOT provide answers** unless you are 99.99% sure they are functional and compliant with project requirements
+- **Εάν δεν είσαι σίγουρος, θα το λες ευθαρσώς** - If you are not sure, say so honestly and directly
+

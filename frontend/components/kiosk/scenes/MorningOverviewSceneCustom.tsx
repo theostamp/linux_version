@@ -9,6 +9,7 @@ import EmergencyWidget from '@/components/kiosk/widgets/EmergencyWidget';
 import ApartmentDebtsWidget from '@/components/kiosk/widgets/ApartmentDebtsWidget';
 import AnnouncementsVotesCarousel from '@/components/kiosk/widgets/AnnouncementsVotesCarousel';
 import NewsWidget from '@/components/kiosk/widgets/NewsWidget';
+import ManagementOfficeWidget from '@/components/kiosk/widgets/ManagementOfficeWidget';
 import BuildingSelector from '@/components/BuildingSelector';
 import type { Building } from '@/lib/api';
 
@@ -222,8 +223,18 @@ export default function MorningOverviewSceneCustom({ data, buildingId, onBuildin
 
         {/* Center Area - 55% with stacked widgets */}
         <div className="w-[55%] flex flex-col space-y-4 p-4">
-          {/* Weather Widget - Primary focus */}
-          <div className="h-[60%] relative">
+          {/* Management Office Widget - Top */}
+          <div className="h-[20%] relative">
+            <div className="relative h-full bg-gradient-to-br from-slate-800/95 via-slate-800/90 to-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-blue-500/30 transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none" />
+              <div className="h-full">
+                <ManagementOfficeWidget data={data} isLoading={false} error={undefined} />
+              </div>
+            </div>
+          </div>
+
+          {/* Weather Widget - Middle */}
+          <div className="h-[45%] relative">
             <div className="relative h-full bg-gradient-to-br from-slate-800/95 via-slate-800/90 to-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-purple-500/30 transition-all duration-300">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none" />
               <div className="h-full p-5">
@@ -233,7 +244,7 @@ export default function MorningOverviewSceneCustom({ data, buildingId, onBuildin
           </div>
 
           {/* Announcements & Votes Carousel - Bottom */}
-          <div className="h-[40%] relative">
+          <div className="h-[35%] relative">
             <div className="relative h-full bg-gradient-to-br from-slate-800/95 via-slate-800/90 to-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-blue-500/30 transition-all duration-300">
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none" />
               <div className="h-full p-5">
