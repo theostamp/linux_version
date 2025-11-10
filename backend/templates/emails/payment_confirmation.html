@@ -1,0 +1,132 @@
+{% extends "emails/base.html" %}
+{% load static %}
+
+{% block title %}Payment Confirmation - New Concierge{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #ffffff;">
+    
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">
+            ✅ Payment Successful
+        </h1>
+        <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">
+            Your payment has been processed successfully
+        </p>
+    </div>
+
+    <!-- Main Content -->
+    <div style="padding: 40px 30px; background-color: #ffffff;">
+        
+        <!-- Greeting -->
+        <div style="margin-bottom: 30px;">
+            <h2 style="color: #333333; margin: 0 0 10px 0; font-size: 24px; font-weight: 600;">
+                Thank you, {{ user.first_name|default:user.email }}!
+            </h2>
+            <p style="color: #666666; margin: 0; font-size: 16px; line-height: 1.6;">
+                Your payment for invoice <strong>#{{ billing_cycle.id|stringformat:"06d" }}</strong> 
+                has been processed successfully. Your subscription is now active and up to date.
+            </p>
+        </div>
+
+        <!-- Payment Details -->
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 25px; margin-bottom: 30px;">
+            <h3 style="color: #333333; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">
+                💳 Payment Details
+            </h3>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Payment Date:</span>
+                <span style="color: #333333; font-weight: 600;">{{ billing_cycle.paid_at|date:"M d, Y H:i" }}</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Amount Paid:</span>
+                <span style="color: #28a745; font-weight: 600; font-size: 18px;">€{{ billing_cycle.amount_paid }}</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Payment Method:</span>
+                <span style="color: #333333; font-weight: 600;">Credit Card</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Transaction ID:</span>
+                <span style="color: #333333; font-weight: 600; font-family: monospace; font-size: 12px;">
+                    {{ billing_cycle.stripe_payment_intent_id|truncatechars:20 }}
+                </span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Billing Period:</span>
+                <span style="color: #333333; font-weight: 600;">
+                    {{ billing_cycle.period_start|date:"M d, Y" }} - {{ billing_cycle.period_end|date:"M d, Y" }}
+                </span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0;">
+                <span style="color: #666666; font-weight: 500;">Next Billing Date:</span>
+                <span style="color: #333333; font-weight: 600;">{{ billing_cycle.subscription.current_period_end|date:"M d, Y" }}</span>
+            </div>
+        </div>
+
+        <!-- Subscription Status -->
+        <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+            <h4 style="color: #155724; margin: 0 0 10px 0; font-size: 16px; font-weight: 600;">
+                🎉 Subscription Active
+            </h4>
+            <p style="color: #155724; margin: 0; font-size: 14px; line-height: 1.5;">
+                Your <strong>{{ billing_cycle.subscription.plan.name }}</strong> subscription is now active 
+                and will continue until <strong>{{ billing_cycle.subscription.current_period_end|date:"M d, Y" }}</strong>.
+            </p>
+        </div>
+
+        <!-- What's Next -->
+        <div style="background-color: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+            <h4 style="color: #0d47a1; margin: 0 0 15px 0; font-size: 16px; font-weight: 600;">
+                🚀 What's Next?
+            </h4>
+            <ul style="color: #0d47a1; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
+                <li>Access all features included in your {{ billing_cycle.subscription.plan.name }}</li>
+                <li>Manage your buildings and apartments without limits</li>
+                <li>Invite team members to collaborate</li>
+                <li>Enjoy priority support if available in your plan</li>
+            </ul>
+        </div>
+
+        <!-- Dashboard Link -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <a href="{{ frontend_url }}/dashboard" 
+               style="display: inline-block; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); 
+                      color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 25px; 
+                      font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);">
+                🏠 Go to Dashboard
+            </a>
+        </div>
+
+        <!-- Support -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <p style="color: #666666; margin: 0 0 15px 0; font-size: 14px;">
+                Questions about your payment or subscription?
+            </p>
+            <a href="mailto:support@newconcierge.com" 
+               style="color: #667eea; text-decoration: none; font-weight: 600; font-size: 14px;">
+                📧 Contact Support
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;">
+        <p style="color: #666666; margin: 0; font-size: 12px; line-height: 1.5;">
+            This payment confirmation was sent by New Concierge.<br>
+            Keep this email for your records.
+        </p>
+    </div>
+
+</div>
+{% endblock %}
+
+

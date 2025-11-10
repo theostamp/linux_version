@@ -1,0 +1,49 @@
+{% extends "emails/base.html" %}
+
+{% block title %}Επιβεβαίωση Email - New Concierge{% endblock %}
+
+{% block content %}
+<div class="success">
+    <h2>Καλώς ήρθατε στο New Concierge!</h2>
+    <p>Γεια σας <strong>{{ user.first_name }} {{ user.last_name }}</strong>,</p>
+    <p>Ευχαριστούμε που εγγραφήκατε στο σύστημα διαχείρισης κτιρίων New Concierge.</p>
+</div>
+
+<h3>🔐 Επιβεβαίωση Email</h3>
+<p>Για να ενεργοποιήσετε τον λογαριασμό σας και να αποκτήσετε πρόσβαση σε όλες τις λειτουργίες του συστήματος, παρακαλούμε κάντε κλικ στον παρακάτω σύνδεσμο:</p>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ verification_url }}" class="button">Επιβεβαίωση Email</a>
+</div>
+
+<div class="warning">
+    <p><strong>⚠️ Σημαντικό:</strong></p>
+    <ul>
+        <li>Αυτός ο σύνδεσμος θα λήξει σε <strong>24 ώρες</strong></li>
+        <li>Μπορείτε να χρησιμοποιήσετε τον σύνδεσμο μόνο μία φορά</li>
+        <li>Εάν δεν λειτουργεί, μπορείτε να ζητήσετε νέο email επιβεβαίωσης</li>
+    </ul>
+</div>
+
+<p>Μετά την επιβεβαίωση, θα μπορείτε να:</p>
+<ul>
+    <li>Συνδεθείτε στο σύστημα</li>
+    <li>Προβάλετε τα στοιχεία του κτιρίου σας</li>
+    <li>Διαχειριστείτε τις οικονομικές σας υποχρεώσεις</li>
+    <li>Υποβάλετε αιτήματα συντήρησης</li>
+</ul>
+
+<p>Εάν έχετε οποιεσδήποτε ερωτήσεις, μη διστάσετε να επικοινωνήσετε μαζί μας.</p>
+
+<p>Με εκτίμηση,<br>
+<strong>Η ομάδα του New Concierge</strong></p>
+
+<hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+<p style="font-size: 12px; color: #666;">
+    Εάν δεν μπορείτε να κάνετε κλικ στον σύνδεσμο, αντιγράψτε και επικολλήστε αυτή τη διεύθυνση στο πρόγραμμα περιήγησής σας:<br>
+    <a href="{{ verification_url }}">{{ verification_url }}</a>
+</p>
+{% endblock %}
+
+
+

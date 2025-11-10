@@ -1,0 +1,146 @@
+{% extends "emails/base.html" %}
+{% load static %}
+
+{% block title %}Payment Failed - New Concierge{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #ffffff;">
+    
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">
+            ⚠️ Payment Failed
+        </h1>
+        <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">
+            We were unable to process your payment
+        </p>
+    </div>
+
+    <!-- Main Content -->
+    <div style="padding: 40px 30px; background-color: #ffffff;">
+        
+        <!-- Greeting -->
+        <div style="margin-bottom: 30px;">
+            <h2 style="color: #333333; margin: 0 0 10px 0; font-size: 24px; font-weight: 600;">
+                Hello {{ user.first_name|default:user.email }},
+            </h2>
+            <p style="color: #666666; margin: 0; font-size: 16px; line-height: 1.6;">
+                We were unable to process your payment for invoice <strong>#{{ billing_cycle.id|stringformat:"06d" }}</strong>. 
+                Please update your payment information to continue using our services.
+            </p>
+        </div>
+
+        <!-- Payment Details -->
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 25px; margin-bottom: 30px;">
+            <h3 style="color: #333333; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">
+                💳 Payment Details
+            </h3>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Invoice Number:</span>
+                <span style="color: #333333; font-weight: 600;">#{{ billing_cycle.id|stringformat:"06d" }}</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Amount Due:</span>
+                <span style="color: #dc3545; font-weight: 600; font-size: 18px;">€{{ billing_cycle.amount_due }}</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Due Date:</span>
+                <span style="color: #333333; font-weight: 600;">{{ billing_cycle.due_date|date:"M d, Y" }}</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Billing Period:</span>
+                <span style="color: #333333; font-weight: 600;">
+                    {{ billing_cycle.period_start|date:"M d, Y" }} - {{ billing_cycle.period_end|date:"M d, Y" }}
+                </span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0;">
+                <span style="color: #666666; font-weight: 500;">Failure Reason:</span>
+                <span style="color: #dc3545; font-weight: 600;">{{ failure_reason|default:"Payment declined" }}</span>
+            </div>
+        </div>
+
+        <!-- Urgent Action Required -->
+        <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+            <h4 style="color: #721c24; margin: 0 0 10px 0; font-size: 16px; font-weight: 600;">
+                🚨 Action Required
+            </h4>
+            <p style="color: #721c24; margin: 0; font-size: 14px; line-height: 1.5;">
+                <strong>Your subscription may be suspended if payment is not completed within 7 days.</strong> 
+                Please update your payment information and retry the payment as soon as possible.
+            </p>
+        </div>
+
+        <!-- Common Issues -->
+        <div style="background-color: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+            <h4 style="color: #0d47a1; margin: 0 0 15px 0; font-size: 16px; font-weight: 600;">
+                🔍 Common Payment Issues
+            </h4>
+            <ul style="color: #0d47a1; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
+                <li><strong>Insufficient funds:</strong> Check your account balance</li>
+                <li><strong>Expired card:</strong> Update your payment method with a valid card</li>
+                <li><strong>Incorrect details:</strong> Verify your card number and security code</li>
+                <li><strong>Bank restrictions:</strong> Contact your bank to allow online payments</li>
+            </ul>
+        </div>
+
+        <!-- Payment Button -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <a href="{{ frontend_url }}/billing/invoice/{{ billing_cycle.id }}/retry" 
+               style="display: inline-block; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); 
+                      color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 25px; 
+                      font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);">
+                💳 Retry Payment
+            </a>
+        </div>
+
+        <!-- Alternative Actions -->
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+            <h4 style="color: #333333; margin: 0 0 15px 0; font-size: 16px; font-weight: 600;">
+                🛠️ Alternative Actions
+            </h4>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                <a href="{{ frontend_url }}/billing/payment-methods" 
+                   style="display: inline-block; background-color: #ffffff; color: #667eea; 
+                          text-decoration: none; padding: 10px 20px; border-radius: 20px; 
+                          border: 2px solid #667eea; font-weight: 600; font-size: 14px;">
+                    🔄 Update Payment Method
+                </a>
+                <a href="{{ frontend_url }}/billing/subscription" 
+                   style="display: inline-block; background-color: #ffffff; color: #667eea; 
+                          text-decoration: none; padding: 10px 20px; border-radius: 20px; 
+                          border: 2px solid #667eea; font-weight: 600; font-size: 14px;">
+                    📋 View Subscription
+                </a>
+            </div>
+        </div>
+
+        <!-- Support -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <p style="color: #666666; margin: 0 0 15px 0; font-size: 14px;">
+                Need help resolving this payment issue?
+            </p>
+            <a href="mailto:support@newconcierge.com" 
+               style="color: #667eea; text-decoration: none; font-weight: 600; font-size: 14px;">
+                📧 Contact Support
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;">
+        <p style="color: #666666; margin: 0; font-size: 12px; line-height: 1.5;">
+            This payment failure notification was sent by New Concierge.<br>
+            Please resolve this issue promptly to avoid service interruption.
+        </p>
+    </div>
+
+</div>
+{% endblock %}
+
+

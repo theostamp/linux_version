@@ -1,0 +1,131 @@
+{% extends "emails/base.html" %}
+{% load static %}
+
+{% block title %}Invoice Notification - New Concierge{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #ffffff;">
+    
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">
+            📄 Invoice Ready
+        </h1>
+        <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">
+            Your subscription invoice is ready for payment
+        </p>
+    </div>
+
+    <!-- Main Content -->
+    <div style="padding: 40px 30px; background-color: #ffffff;">
+        
+        <!-- Greeting -->
+        <div style="margin-bottom: 30px;">
+            <h2 style="color: #333333; margin: 0 0 10px 0; font-size: 24px; font-weight: 600;">
+                Hello {{ user.first_name|default:user.email }}!
+            </h2>
+            <p style="color: #666666; margin: 0; font-size: 16px; line-height: 1.6;">
+                Your invoice for <strong>{{ billing_cycle.period_start|date:"F Y" }}</strong> is ready. 
+                Please review the details below and complete your payment.
+            </p>
+        </div>
+
+        <!-- Invoice Details -->
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 25px; margin-bottom: 30px;">
+            <h3 style="color: #333333; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">
+                📋 Invoice Details
+            </h3>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Invoice Number:</span>
+                <span style="color: #333333; font-weight: 600;">#{{ billing_cycle.id|stringformat:"06d" }}</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Billing Period:</span>
+                <span style="color: #333333; font-weight: 600;">
+                    {{ billing_cycle.period_start|date:"M d, Y" }} - {{ billing_cycle.period_end|date:"M d, Y" }}
+                </span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Plan:</span>
+                <span style="color: #333333; font-weight: 600;">{{ billing_cycle.subscription.plan.name }}</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Due Date:</span>
+                <span style="color: #333333; font-weight: 600;">{{ billing_cycle.due_date|date:"M d, Y" }}</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e9ecef;">
+                <span style="color: #666666; font-weight: 500;">Amount Due:</span>
+                <span style="color: #333333; font-weight: 600; font-size: 18px;">€{{ billing_cycle.amount_due }}</span>
+            </div>
+        </div>
+
+        <!-- Payment Button -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <a href="{{ frontend_url }}/billing/invoice/{{ billing_cycle.id }}/pay" 
+               style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                      color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 25px; 
+                      font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                💳 Pay Now
+            </a>
+        </div>
+
+        <!-- Payment Methods -->
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+            <h4 style="color: #333333; margin: 0 0 15px 0; font-size: 16px; font-weight: 600;">
+                💳 Accepted Payment Methods
+            </h4>
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <span style="background-color: #ffffff; padding: 8px 12px; border-radius: 4px; font-size: 14px; color: #666666;">
+                    💳 Credit/Debit Cards
+                </span>
+                <span style="background-color: #ffffff; padding: 8px 12px; border-radius: 4px; font-size: 14px; color: #666666;">
+                    🏦 Bank Transfer
+                </span>
+                <span style="background-color: #ffffff; padding: 8px 12px; border-radius: 4px; font-size: 14px; color: #666666;">
+                    📱 Digital Wallets
+                </span>
+            </div>
+        </div>
+
+        <!-- Important Notice -->
+        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+            <h4 style="color: #856404; margin: 0 0 10px 0; font-size: 16px; font-weight: 600;">
+                ⚠️ Important Notice
+            </h4>
+            <p style="color: #856404; margin: 0; font-size: 14px; line-height: 1.5;">
+                Please ensure your payment is completed by <strong>{{ billing_cycle.due_date|date:"M d, Y" }}</strong> 
+                to avoid any service interruption. If you have any questions about this invoice, 
+                please contact our support team.
+            </p>
+        </div>
+
+        <!-- Support -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <p style="color: #666666; margin: 0 0 15px 0; font-size: 14px;">
+                Need help with your invoice or payment?
+            </p>
+            <a href="mailto:support@newconcierge.com" 
+               style="color: #667eea; text-decoration: none; font-weight: 600; font-size: 14px;">
+                📧 Contact Support
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px;">
+        <p style="color: #666666; margin: 0; font-size: 12px; line-height: 1.5;">
+            This invoice was generated automatically by New Concierge.<br>
+            If you believe this is an error, please contact our support team immediately.
+        </p>
+    </div>
+
+</div>
+{% endblock %}
+
+

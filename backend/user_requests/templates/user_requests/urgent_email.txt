@@ -1,0 +1,7 @@
+🚨 Νέο Επείγον Αίτημα
+
+Τίτλος: {{ request_title }}
+Περιγραφή: {{ request_description }}
+Υποστηρικτές: {{ supporter_count }}
+
+Δείτε το αίτημα: {{ request_url }}
