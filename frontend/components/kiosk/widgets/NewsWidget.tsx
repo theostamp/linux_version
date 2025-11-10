@@ -106,3 +106,4 @@ export default function NewsWidget({ data, isLoading, error }: BaseWidgetProps) 
   );
 }
 
+
