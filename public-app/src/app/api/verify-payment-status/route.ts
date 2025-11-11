@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const stripe = new Stripe(apiKey, { apiVersion: '2024-12-18.acacia' });
+    const stripe = new Stripe(apiKey, { apiVersion: '2025-09-30.clover' });
     const searchParams = request.nextUrl.searchParams;
     const sessionId = searchParams.get('session_id');
 
