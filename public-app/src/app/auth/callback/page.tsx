@@ -30,9 +30,9 @@ function OAuthCallback() {
 
     const handleCallback = async () => {
       try {
-        const coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL || process.env.CORE_API_URL;
+        const coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
         if (!coreApiUrl) {
-          throw new Error('Backend API not configured');
+          throw new Error('Backend API not configured. Please set NEXT_PUBLIC_CORE_API_URL environment variable.');
         }
 
         // Parse state to get redirect info

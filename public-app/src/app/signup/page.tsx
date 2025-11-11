@@ -175,9 +175,9 @@ function SignupForm() {
               <button
                 type="button"
                 onClick={() => {
-                  const coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL || process.env.CORE_API_URL;
+                  const coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
                   if (!coreApiUrl) {
-                    setErrors({ general: 'Backend API not configured' });
+                    setErrors({ general: 'Backend API not configured. Please set NEXT_PUBLIC_CORE_API_URL environment variable.' });
                     return;
                   }
                   const redirectUri = `${window.location.origin}/auth/callback`;

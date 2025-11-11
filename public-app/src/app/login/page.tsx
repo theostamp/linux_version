@@ -56,9 +56,9 @@ function LoginForm() {
     setIsLoading(true);
     
     try {
-      const coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL || process.env.CORE_API_URL;
+      const coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
       if (!coreApiUrl) {
-        throw new Error('Backend API not configured');
+        throw new Error('Backend API not configured. Please set NEXT_PUBLIC_CORE_API_URL environment variable.');
       }
 
       // Login via backend API
@@ -105,9 +105,9 @@ function LoginForm() {
   };
 
   const handleGoogleLogin = () => {
-    const coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL || process.env.CORE_API_URL;
+    const coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
     if (!coreApiUrl) {
-      setErrors({ general: 'Backend API not configured' });
+      setErrors({ general: 'Backend API not configured. Please set NEXT_PUBLIC_CORE_API_URL environment variable.' });
       return;
     }
 
