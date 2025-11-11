@@ -112,8 +112,20 @@ class InternalTenantCreateView(APIView):
                 
                 # Update user's tenant reference
                 user.tenant = tenant
-                user.is_active = True
+                user.is_active = False  # User needs email verification before activation
                 user.save(update_fields=['tenant', 'is_active'])
+                
+                # Send email verification after tenant creation
+                try:
+                    from users.services import EmailService
+                    email_sent = EmailService.send_verification_email(user)
+                    if email_sent:
+                        logger.info(f"Verification email sent to {user.email}")
+                    else:
+                        logger.warning(f"Failed to send verification email to {user.email}")
+                except Exception as e:
+                    logger.error(f"Error sending verification email: {e}")
+                    # Don't fail tenant creation if email fails
                 
                 logger.info(f"Successfully created tenant '{tenant.schema_name}' for user {user.email}")
                 
@@ -123,7 +135,7 @@ class InternalTenantCreateView(APIView):
                         'id': tenant.id,
                         'schema_name': tenant.schema_name,
                         'name': tenant.name,
-                        'domain': f"{tenant.schema_name}.localhost"
+                        'domain': f"{tenant.schema_name}.newconcierge.app"
                     },
                     'subscription': {
                         'id': subscription.id,
@@ -134,7 +146,8 @@ class InternalTenantCreateView(APIView):
                         'id': user.id,
                         'email': user.email,
                         'name': user.get_full_name()
-                    }
+                    },
+                    'user_id': user.id  # For webhook to trigger email if needed
                 }, status=status.HTTP_201_CREATED)
                 
         except ValidationError as e:

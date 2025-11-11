@@ -40,7 +40,7 @@ urlpatterns = [
     path('api/billing/', include('billing.urls')),
     
     # Internal API endpoints (accessible from public schema only)
-    path('api/internal/tenants/create/', include('tenants.internal_urls')),
+    path('api/internal/tenants/', include('tenants.internal_urls')),
     
     # Tenant accept invite endpoint
     path('api/tenants/accept-invite/', include('tenants.urls')),

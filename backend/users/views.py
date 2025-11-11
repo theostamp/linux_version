@@ -289,29 +289,46 @@ def register_view(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 # @throttle_classes([EmailVerificationThrottle])  # Temporarily disabled due to Redis auth issue
 def verify_email_view(request):
     """
-    POST /api/users/verify-email/
+    GET /api/users/verify-email/?token=... OR POST /api/users/verify-email/
     Επιβεβαίωση email με token
     """
-    serializer = EmailVerificationSerializer(data=request.data)
-    if serializer.is_valid():
-        try:
-            user = UserVerificationService.verify_email(serializer.validated_data['token'])
+    # Support both GET (query param) and POST (body) for token
+    token = None
+    if request.method == 'GET':
+        token = request.query_params.get('token')
+        if not token:
             return Response({
-                'message': 'Email επιβεβαιώθηκε επιτυχώς.',
-                'user_id': user.id,
-                'email': user.email
-            }, status=status.HTTP_200_OK)
-        except ValueError as e:
-            return Response({
-                'error': str(e)
+                'error': 'Token parameter is required'
             }, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        serializer = EmailVerificationSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        token = serializer.validated_data['token']
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        user = UserVerificationService.verify_email(token)
+        
+        # Get tenant URL if user has tenant
+        tenant_url = None
+        if hasattr(user, 'tenant') and user.tenant:
+            tenant_url = f"{user.tenant.schema_name}.newconcierge.app"
+        
+        return Response({
+            'message': 'Email επιβεβαιώθηκε επιτυχώς.',
+            'user_id': user.id,
+            'email': user.email,
+            'tenant_url': tenant_url
+        }, status=status.HTTP_200_OK)
+    except ValueError as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
