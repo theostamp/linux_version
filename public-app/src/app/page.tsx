@@ -236,13 +236,21 @@ export default function Home() {
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
               Ενώστε εκατοντάδες κτίρια που χρησιμοποιούν ήδη το New Concierge για να απλοποιήσουν τις λειτουργίες τους.
             </p>
-            <Link 
-              href="/signup" 
-              className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors inline-flex items-center"
-            >
-              Ξεκινήστε τη Δωρεάν Δοκιμή σας
-              <Zap className="ml-2 h-5 w-5" />
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link 
+                href="/signup" 
+                className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors inline-flex items-center justify-center"
+              >
+                Ξεκινήστε τη Δωρεάν Δοκιμή σας
+                <Zap className="ml-2 h-5 w-5" />
+              </Link>
+              <Link 
+                href="/login" 
+                className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white/10 transition-colors inline-flex items-center justify-center"
+              >
+                Σύνδεση
+              </Link>
+            </div>
         </div>
         </section>
       </main>
@@ -266,6 +274,7 @@ export default function Home() {
                 <li><Link href="#features" className="hover:text-white">Λειτουργίες</Link></li>
                 <li><Link href="#pricing" className="hover:text-white">Τιμές</Link></li>
                 <li><Link href="/signup" className="hover:text-white">Εγγραφή</Link></li>
+                <li><Link href="/login" className="hover:text-white">Σύνδεση</Link></li>
               </ul>
             </div>
             <div>
