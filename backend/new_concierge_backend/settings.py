@@ -477,7 +477,33 @@ _raw_csrf = get_list_env(
     "top.localhost:8080,tap.localhost:8080,top.localhost:3000,tap.localhost:3000,"
     "*.vercel.app,linuxversion-production.up.railway.app,*.up.railway.app,*.railway.app"
 )
-CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in _raw_csrf] + [f"https://{h}" for h in _raw_csrf]
+
+# Process CSRF origins: handle both full URLs and domain-only entries
+CSRF_TRUSTED_ORIGINS = []
+for origin in _raw_csrf:
+    origin = origin.strip()
+    if not origin:
+        continue
+    
+    # If already has protocol, use as-is
+    if origin.startswith('http://') or origin.startswith('https://'):
+        if origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin)
+    else:
+        # Domain-only: add both http and https (for localhost) or just https (for production domains)
+        if origin.startswith('localhost') or origin.startswith('127.0.0.1') or ':8080' in origin or ':3000' in origin:
+            # Local development: add both http and https
+            http_origin = f"http://{origin}"
+            https_origin = f"https://{origin}"
+            if http_origin not in CSRF_TRUSTED_ORIGINS:
+                CSRF_TRUSTED_ORIGINS.append(http_origin)
+            if https_origin not in CSRF_TRUSTED_ORIGINS:
+                CSRF_TRUSTED_ORIGINS.append(https_origin)
+        else:
+            # Production domains: add https only
+            https_origin = f"https://{origin}"
+            if https_origin not in CSRF_TRUSTED_ORIGINS:
+                CSRF_TRUSTED_ORIGINS.append(https_origin)
 
 # Always ensure Railway domain is included (safety check)
 if 'https://linuxversion-production.up.railway.app' not in CSRF_TRUSTED_ORIGINS:
