@@ -1,4 +1,5 @@
 import os
+import json
 import requests
 from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import EmailMessage
@@ -14,10 +15,11 @@ class MailerSendEmailBackend(BaseEmailBackend):
     def __init__(self, fail_silently=False, **kwargs):
         super().__init__(fail_silently=fail_silently, **kwargs)
         self.api_key = os.getenv('MAILERSEND_API_KEY')
-        self.api_url = 'https://api.mailersend.com/v1/email'
+        # MailerSend API v1 endpoint (note: /emails with 's')
+        self.api_url = 'https://api.mailersend.com/v1/emails'
         # Use verified newconcierge.app domain
         self.from_email = os.getenv('MAILERSEND_FROM_EMAIL', 'noreply@newconcierge.app')
-        logger.info(f"MailerSend backend initialized with from_email: {self.from_email}")
+        logger.info(f"MailerSend backend initialized with from_email: {self.from_email}, API URL: {self.api_url}")
         
     def send_messages(self, email_messages):
         """
@@ -92,6 +94,7 @@ class MailerSendEmailBackend(BaseEmailBackend):
                 'X-Requested-With': 'XMLHttpRequest'
             }
             
+            logger.info(f"Attempting to send email via MailerSend to {message.to}, subject: {message.subject}")
             response = requests.post(
                 self.api_url,
                 json=email_data,
@@ -99,11 +102,14 @@ class MailerSendEmailBackend(BaseEmailBackend):
                 timeout=30
             )
             
+            logger.info(f"MailerSend API response: status={response.status_code}, headers={dict(response.headers)}")
+            
             if response.status_code == 202:
                 logger.info(f"Email sent successfully via MailerSend to {message.to}")
                 return True
             else:
                 logger.error(f"MailerSend API error: {response.status_code} - {response.text}")
+                logger.error(f"Request data sent: {json.dumps(email_data, indent=2)}")
                 return False
                 
         except Exception as e:
