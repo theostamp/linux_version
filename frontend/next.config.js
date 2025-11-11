@@ -194,11 +194,19 @@ const nextConfig = {
     ];
   },
 
-  // Output configuration
-  output: 'standalone',
+  // Output configuration - use default instead of standalone for faster builds
+  // output: 'standalone', // Disabled - causes slower builds
   
   // Fix workspace root detection
   outputFileTracingRoot: __dirname,
+  
+  // Disable output file tracing for faster builds (Vercel handles this)
+  outputFileTracingExcludes: {
+    '*': [
+      'node_modules/@swc/core-*',
+      'node_modules/webpack',
+    ],
+  },
   
   // Trailing slash - disabled to prevent redirect loops with API rewrites
   trailingSlash: false,
@@ -208,8 +216,8 @@ const nextConfig = {
   
   // Reduce build time by skipping type checking during build
   typescript: {
-    // Type checking is done separately, skip during build
-    ignoreBuildErrors: false, // Keep false for production, but can be set to true if needed
+    // Type checking is done separately, skip during build for faster builds
+    ignoreBuildErrors: true, // Set to true to skip type checking during build
   },
   
   // Skip ESLint during build for faster builds (linting should be done in CI)

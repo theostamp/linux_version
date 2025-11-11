@@ -74,3 +74,53 @@ railway.env.example
 *.doc
 *.docx
 
+# Backend directory (not needed for frontend build)
+backend/
+infra/
+monitoring/
+scripts/
+old_calculations/
+OldMdFiles/
+OldTestFiles/
+raspberry-pi-kiosk/
+
+# Large directories
+*.img
+*.iso
+*.zip
+*.tar.gz
+*.tar.bz2
+
+# Python files (backend)
+*.py
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+venv/
+.venv/
+
+# Database files
+*.sqlite3
+*.db
+*.sql
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+.cache/
+.next-root/
+
+# Environment files (except .env.local which might be needed)
+.env
+.env.*
+!.env.local
+
+# Build directories from root
+.next/
+out/
+dist/
+build/
+temp_build/
+
