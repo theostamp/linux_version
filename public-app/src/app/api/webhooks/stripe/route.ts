@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
-});
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
-
 export async function POST(request: NextRequest) {
   try {
+    const apiKey = process.env.STRIPE_SECRET_KEY;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!apiKey || !webhookSecret) {
+      console.error('Stripe env vars missing: STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET');
+      return NextResponse.json(
+        { error: 'Stripe configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const stripe = new Stripe(apiKey, { apiVersion: '2024-12-18.acacia' });
+
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
 
@@ -39,33 +46,26 @@ export async function POST(request: NextRequest) {
       case 'checkout.session.completed':
         await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
         break;
-      
       case 'customer.subscription.created':
         await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
         break;
-      
       case 'customer.subscription.updated':
         await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
         break;
-      
       case 'customer.subscription.deleted':
         await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
         break;
-      
       case 'invoice.payment_succeeded':
         await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
         break;
-      
       case 'invoice.payment_failed':
         await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
         break;
-      
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
 
     return NextResponse.json({ received: true });
-
   } catch (error) {
     console.error('Webhook error:', error);
     return NextResponse.json(
@@ -77,7 +77,6 @@ export async function POST(request: NextRequest) {
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   console.log('Processing checkout.session.completed:', session.id);
-  
   try {
     const metadata = session.metadata;
     if (!metadata) {
@@ -104,7 +103,6 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       user_email
     });
 
-    // Call the Core API to create the tenant
     const coreApiResponse = await fetch(process.env.CORE_API_URL!, {
       method: 'POST',
       headers: {
@@ -118,7 +116,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
           email: user_email,
           first_name: user_first_name || '',
           last_name: user_last_name || '',
-          password: 'temp_password_123' // This should be handled securely
+          password: 'temp_password_123'
         },
         plan_id: getPlanId(plan),
         stripe_customer_id: session.customer as string,
@@ -135,49 +133,36 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
     const tenantData = await coreApiResponse.json();
     console.log('Tenant created successfully:', tenantData);
-
   } catch (error) {
     console.error('Error handling checkout session completed:', error);
-    // In a production environment, you might want to:
-    // 1. Send an alert to administrators
-    // 2. Queue the event for retry
-    // 3. Log to a monitoring service
   }
 }
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   console.log('Processing subscription.created:', subscription.id);
-  // Additional logic for subscription creation if needed
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   console.log('Processing subscription.updated:', subscription.id);
-  // Handle subscription updates (plan changes, etc.)
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   console.log('Processing subscription.deleted:', subscription.id);
-  // Handle subscription cancellation
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   console.log('Processing invoice.payment_succeeded:', invoice.id);
-  // Handle successful payments
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   console.log('Processing invoice.payment_failed:', invoice.id);
-  // Handle failed payments
 }
 
 function getPlanId(planName: string): number {
-  // Map plan names to plan IDs
-  // This should match the plan IDs in your Core App database
   const planMapping: Record<string, number> = {
-    'basic': 1,
-    'professional': 2,
-    'enterprise': 3
+    basic: 1,
+    professional: 2,
+    enterprise: 3,
   };
-  
-  return planMapping[planName] || 2; // Default to professional
+  return planMapping[planName] || 2;
 }

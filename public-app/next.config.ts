@@ -62,7 +62,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  swcMinify: true,
   reactStrictMode: true,
   productionBrowserSourceMaps: false,
   trailingSlash: false,

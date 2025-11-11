@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
-});
-
 export async function POST(request: NextRequest) {
   try {
+    const apiKey = process.env.STRIPE_SECRET_KEY;
+    if (!apiKey) {
+      console.error('Stripe env var missing: STRIPE_SECRET_KEY');
+      return NextResponse.json(
+        { error: 'Stripe configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const stripe = new Stripe(apiKey, { apiVersion: '2024-12-18.acacia' });
+
     const body = await request.json();
     const { 
       plan, 
@@ -14,7 +21,6 @@ export async function POST(request: NextRequest) {
       tenantSubdomain 
     } = body;
 
-    // Validate required fields
     if (!plan || !userData || !tenantSubdomain) {
       return NextResponse.json(
         { error: 'Missing required fields: plan, userData, tenantSubdomain' },
@@ -22,27 +28,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Plan configuration
     const plans = {
       basic: {
-        priceId: 'price_1SKa7uB8WcZR1y86JEXtzwJB', // Basic Plan - €29.00/month
-        amount: 2900, // €29.00 in cents
+        priceId: 'price_1SKa7uB8WcZR1y86JEXtzwJB',
+        amount: 2900,
         name: 'Basic Plan',
         description: 'Perfect for small buildings - Up to 20 apartments'
       },
       professional: {
-        priceId: 'price_1SKa7vB8WcZR1y86Ru5cZFWu', // Professional Plan - €59.00/month
-        amount: 5900, // €59.00 in cents
+        priceId: 'price_1SKa7vB8WcZR1y86Ru5cZFWu',
+        amount: 5900,
         name: 'Professional Plan',
         description: 'Ideal for medium buildings - Up to 50 apartments'
       },
       enterprise: {
-        priceId: 'price_1SKa7vB8WcZR1y86ypH2sSlS', // Enterprise Plan - €99.00/month
-        amount: 9900, // €99.00 in cents
+        priceId: 'price_1SKa7vB8WcZR1y86ypH2sSlS',
+        amount: 9900,
         name: 'Enterprise Plan',
         description: 'For large complexes - Unlimited apartments'
       }
-    };
+    } as const;
 
     const selectedPlan = plans[plan as keyof typeof plans];
     if (!selectedPlan) {
@@ -52,7 +57,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Stripe customer
     const customer = await stripe.customers.create({
       email: userData.email,
       name: `${userData.firstName} ${userData.lastName}`,
@@ -64,7 +68,6 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
       payment_method_types: ['card'],
@@ -77,9 +80,7 @@ export async function POST(request: NextRequest) {
               description: selectedPlan.description,
             },
             unit_amount: selectedPlan.amount,
-            recurring: {
-              interval: 'month',
-            },
+            recurring: { interval: 'month' },
           },
           quantity: 1,
         },
@@ -95,14 +96,6 @@ export async function POST(request: NextRequest) {
         user_last_name: userData.lastName
       },
       subscription_data: {
-        metadata: {
-          tenant_subdomain: tenantSubdomain,
-          plan: plan,
-          user_email: userData.email
-        }
-      },
-      // Enable trial period (30 days)
-      subscription_data: {
         trial_period_days: 30,
         metadata: {
           tenant_subdomain: tenantSubdomain,
@@ -116,7 +109,6 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
       url: session.url 
     });
-
   } catch (error) {
     console.error('Error creating checkout session:', error);
     return NextResponse.json(
