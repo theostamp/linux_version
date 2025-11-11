@@ -475,11 +475,11 @@ _raw_csrf = get_list_env(
     "localhost:8080,localhost:3000,127.0.0.1:8080,127.0.0.1:3000,"
     "demo.localhost:8080,demo.localhost:3000,"
     "top.localhost:8080,tap.localhost:8080,top.localhost:3000,tap.localhost:3000,"
-    "*.vercel.app"
+    "*.vercel.app,linuxversion-production.up.railway.app,*.up.railway.app,*.railway.app"
 )
 CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in _raw_csrf] + [f"https://{h}" for h in _raw_csrf]
 
-# Always ensure Railway domain is included
+# Always ensure Railway domain is included (safety check)
 if 'https://linuxversion-production.up.railway.app' not in CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS.append('https://linuxversion-production.up.railway.app')
 if 'https://*.up.railway.app' not in CSRF_TRUSTED_ORIGINS:
