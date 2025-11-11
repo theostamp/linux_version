@@ -1,8 +1,17 @@
 # backend/users/admin.py
 
 from django.contrib import admin
-from django.db import ProgrammingError
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied
+from django.db import ProgrammingError, connection, transaction
 from django.contrib.auth.admin import UserAdmin  # type: ignore
+from django.http import HttpResponseRedirect
+from django.template.response import TemplateResponse
+from django.urls import reverse
+from django.utils.encoding import force_str
+from django.utils.translation import gettext_lazy as _
+from django.contrib.admin.utils import unquote
+
 from .models import CustomUser
 
 class CustomUserAdmin(UserAdmin):
@@ -45,61 +54,102 @@ class CustomUserAdmin(UserAdmin):
         """
         try:
             return super().get_deleted_objects(objs, request)
-        except (ProgrammingError, Exception) as e:
-            # Αν το σφάλμα είναι για missing table, επιστρέφουμε minimal info
+        except ProgrammingError as e:
             error_str = str(e)
             if 'buildings_buildingmembership' in error_str or 'does not exist' in error_str:
-                nested = [[obj] for obj in objs]
-                model_count = {self.model._meta.verbose_name: len(objs)}
+                nested = [[force_str(obj)] for obj in objs]
+                model_count = {force_str(self.model._meta.verbose_name): len(objs)}
                 return nested, model_count, set(), []
             raise
 
+    def _delete_user_rows(self, ids):
+        """
+        Διαγράφει users βάσει IDs με raw SQL ώστε να μην ενεργοποιείται
+        ο Django ORM delete collector (που προσπαθεί να προσπελάσει tenant tables).
+        """
+        if not ids:
+            return
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                # Χρησιμοποιούμε tuple για σωστή παράμετρο
+                cursor.execute(
+                    "DELETE FROM users_customuser WHERE id = ANY(%s)",
+                    [ids],
+                )
+
     def delete_view(self, request, object_id, extra_context=None):
         """
-        Override delete_view για να χειρίζεται το σφάλμα αν ο πίνακας buildings_buildingmembership δεν υπάρχει.
+        Προσαρμοσμένο delete view που παρακάμπτει την πρόσβαση σε tenant-only tables.
         """
-        from django.shortcuts import get_object_or_404, redirect
-        from django.contrib import messages
-        from django.contrib.admin.utils import unquote
-        
-        obj = get_object_or_404(self.get_queryset(request), pk=unquote(object_id))
-        
+        opts = self.model._meta
+        obj = self.get_object(request, unquote(object_id))
+        if obj is None:
+            return super().delete_view(request, object_id, extra_context)
+
+        if not self.has_delete_permission(request, obj):
+            raise PermissionDenied
+
         if request.method == 'POST':
+            obj_display = force_str(obj)
             try:
-                return super().delete_view(request, object_id, extra_context)
-            except (ProgrammingError, Exception) as e:
+                self._delete_user_rows([obj.pk])
+            except ProgrammingError as e:
                 error_str = str(e)
                 if 'buildings_buildingmembership' in error_str or 'does not exist' in error_str:
-                    # Αν λείπει ο πίνακας, κάνουμε απλή διαγραφή χωρίς related objects check
-                    obj.delete()
-                    messages.success(request, f'The {self.model._meta.verbose_name} "{obj}" was deleted successfully.')
-                    from django.urls import reverse
-                    return redirect(reverse(f'admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist'))
+                    messages.error(
+                        request,
+                        _("Αποτυχία διαγραφής επειδή υπάρχουν BuildingMembership εγγραφές. Τρέξε migrate_schemas για όλους τους tenants και δοκίμασε ξανά."),
+                    )
+                    return HttpResponseRedirect(
+                        reverse(f'admin:{opts.app_label}_{opts.model_name}_change', args=[object_id])
+                    )
                 raise
-        
-        # GET request - show confirmation page
+
+            self.log_deletion(request, obj, obj_display)
+            messages.success(request, _('Ο χρήστης "%(obj)s" διαγράφηκε επιτυχώς.') % {'obj': obj_display})
+            return HttpResponseRedirect(reverse(f'admin:{opts.app_label}_{opts.model_name}_changelist'))
+
+        # GET: δείχνουμε απλή σελίδα επιβεβαίωσης χωρίς related objects
+        context = {
+            **self.admin_site.each_context(request),
+            'title': _('Επιβεβαίωση διαγραφής'),
+            'object': obj,
+            'object_name': force_str(opts.verbose_name),
+            'opts': opts,
+            'app_label': opts.app_label,
+            'preserved_filters': self.get_preserved_filters(request),
+            'perms_lacking': False,
+            'protected': [],
+            'is_popup': False,
+            'deleted_objects': [[force_str(obj)]],
+            'model_count': {force_str(opts.verbose_name): 1},
+            'media': self.media,
+        }
+        if extra_context:
+            context.update(extra_context)
+        return TemplateResponse(request, "admin/delete_confirmation.html", context)
+
+    def delete_queryset(self, request, queryset):
+        """
+        Προσαρμοσμένη διαγραφή για bulk actions χωρίς πρόσβαση σε tenant tables.
+        """
+        ids = list(queryset.values_list('pk', flat=True))
+        objects = list(queryset)
+        if not ids:
+            return
         try:
-            return super().delete_view(request, object_id, extra_context)
-        except (ProgrammingError, Exception) as e:
+            self._delete_user_rows(ids)
+        except ProgrammingError as e:
             error_str = str(e)
             if 'buildings_buildingmembership' in error_str or 'does not exist' in error_str:
-                # Αν λείπει ο πίνακας, δείχνουμε confirmation page χωρίς related objects
-                from django.template.response import TemplateResponse
-                from django.contrib.admin.options import IS_POPUP_VAR
-                
-                context = {
-                    **self.admin_site.each_context(request),
-                    'title': f'Delete {self.model._meta.verbose_name}',
-                    'object': obj,
-                    'object_name': self.model._meta.verbose_name,
-                    'opts': self.model._meta,
-                    'is_popup': (IS_POPUP_VAR in request.POST or IS_POPUP_VAR in request.GET),
-                    'has_absolute_url': False,
-                    'deleted_objects': [obj],  # Minimal deleted objects
-                    'model_count': {self.model._meta.verbose_name: 1},
-                    **(extra_context or {}),
-                }
-                return TemplateResponse(request, 'admin/delete_confirmation.html', context)
+                messages.error(
+                    request,
+                    _("Αποτυχία μαζικής διαγραφής επειδή υπάρχουν BuildingMembership εγγραφές. Τρέξε migrate_schemas για όλους τους tenants και δοκίμασε ξανά."),
+                )
+                return
             raise
+
+        for obj in objects:
+            self.log_deletion(request, obj, force_str(obj))
 
 admin.site.register(CustomUser, CustomUserAdmin)
