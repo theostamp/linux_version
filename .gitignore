@@ -55,3 +55,7 @@ fd.png
 relax.png
 *.tmp
 *.bak
+
+# Legacy/orphan directories (should be removed)
+linux_version/frontend/
+frontend/
