@@ -1,6 +1,8 @@
 # backend/users/admin.py
 
 from django.contrib import admin  
+from django.contrib.admin.utils import get_deleted_objects
+from django.db import ProgrammingError
         
 from django.contrib.auth.admin import UserAdmin
       # type: ignore
@@ -38,5 +40,30 @@ class CustomUserAdmin(UserAdmin):
 
     def has_module_permission(self, request):
         return request.user.is_superuser
+
+    def get_deleted_objects(self, objs, request):
+        """
+        Override για να χειρίζεται το σφάλμα αν ο πίνακας buildings_buildingmembership δεν υπάρχει.
+        Αυτό είναι workaround μέχρι να τρέξουν οι migrations.
+        """
+        try:
+            return super().get_deleted_objects(objs, request)
+        except (ProgrammingError, Exception) as e:
+            # Αν το σφάλμα είναι για missing table, επιστρέφουμε minimal info
+            error_str = str(e)
+            if 'buildings_buildingmembership' in error_str or 'does not exist' in error_str:
+                # Επιστρέφουμε μόνο τα objects που θέλουμε να διαγράψουμε, χωρίς related objects check
+                # Αυτό επιτρέπει τη διαγραφή ακόμα και αν λείπει ο πίνακας
+                from django.contrib.admin.utils import NestedObjects
+                collector = NestedObjects(using='default')
+                # Προσθέτουμε μόνο τα βασικά objects, χωρίς να ελέγχουμε related
+                for obj in objs:
+                    collector.add(obj.__class__, obj.pk)
+                # Επιστρέφουμε minimal nested structure
+                nested = []
+                for obj in objs:
+                    nested.append([obj])
+                return nested, len(objs), set(), []
+            raise
 
 admin.site.register(CustomUser, CustomUserAdmin)
