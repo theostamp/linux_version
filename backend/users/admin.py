@@ -57,9 +57,13 @@ class CustomUserAdmin(UserAdmin):
         except ProgrammingError as e:
             error_str = str(e)
             if 'buildings_buildingmembership' in error_str or 'does not exist' in error_str:
-                nested = [[force_str(obj)] for obj in objs]
+                # Επιστρέφουμε minimal structure:
+                # deleted_objects (nested list), model_count (dict), perms_needed (set), protected (list)
+                deleted_objects = [force_str(obj) for obj in objs]
                 model_count = {force_str(self.model._meta.verbose_name): len(objs)}
-                return nested, model_count, set(), []
+                perms_needed = set()
+                protected = []
+                return deleted_objects, model_count, perms_needed, protected
             raise
 
     def _delete_user_rows(self, ids):
