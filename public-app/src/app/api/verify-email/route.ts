@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${coreApiUrl}/api/users/verify-email/?token=${token}`, {
+    const response = await fetch(`${coreApiUrl}/api/users/verify-email/?token=${encodeURIComponent(token)}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

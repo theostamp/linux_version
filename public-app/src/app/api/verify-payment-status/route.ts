@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
         if (coreApiUrl && internalApiKey && tenantSubdomain) {
           // Check tenant status from backend
           const tenantStatusResponse = await fetch(
-            `${coreApiUrl}/api/tenants/${tenantSubdomain}/status/`,
+            `${coreApiUrl}/api/internal/tenants/${tenantSubdomain}/status/`,
             {
               headers: {
                 'X-Internal-API-Key': internalApiKey,
