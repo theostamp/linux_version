@@ -52,18 +52,69 @@ class CustomUserAdmin(UserAdmin):
             # Αν το σφάλμα είναι για missing table, επιστρέφουμε minimal info
             error_str = str(e)
             if 'buildings_buildingmembership' in error_str or 'does not exist' in error_str:
-                # Επιστρέφουμε μόνο τα objects που θέλουμε να διαγράψουμε, χωρίς related objects check
-                # Αυτό επιτρέπει τη διαγραφή ακόμα και αν λείπει ο πίνακας
+                # Επιστρέφουμε minimal structure για να επιτρέψουμε τη διαγραφή
                 from django.contrib.admin.utils import NestedObjects
                 collector = NestedObjects(using='default')
                 # Προσθέτουμε μόνο τα βασικά objects, χωρίς να ελέγχουμε related
                 for obj in objs:
-                    collector.add(obj.__class__, obj.pk)
+                    try:
+                        collector.add(obj.__class__, obj.pk)
+                    except (ProgrammingError, Exception):
+                        # Αν αποτύχει, προσθέτουμε μόνο το object χωρίς related
+                        pass
                 # Επιστρέφουμε minimal nested structure
                 nested = []
                 for obj in objs:
                     nested.append([obj])
                 return nested, len(objs), set(), []
+            raise
+
+    def delete_view(self, request, object_id, extra_context=None):
+        """
+        Override delete_view για να χειρίζεται το σφάλμα αν ο πίνακας buildings_buildingmembership δεν υπάρχει.
+        """
+        from django.shortcuts import get_object_or_404, redirect
+        from django.contrib import messages
+        from django.contrib.admin.utils import unquote
+        
+        obj = get_object_or_404(self.get_queryset(request), pk=unquote(object_id))
+        
+        if request.method == 'POST':
+            try:
+                return super().delete_view(request, object_id, extra_context)
+            except (ProgrammingError, Exception) as e:
+                error_str = str(e)
+                if 'buildings_buildingmembership' in error_str or 'does not exist' in error_str:
+                    # Αν λείπει ο πίνακας, κάνουμε απλή διαγραφή χωρίς related objects check
+                    obj.delete()
+                    messages.success(request, f'The {self.model._meta.verbose_name} "{obj}" was deleted successfully.')
+                    from django.urls import reverse
+                    return redirect(reverse(f'admin:{self.model._meta.app_label}_{self.model._meta.model_name}_changelist'))
+                raise
+        
+        # GET request - show confirmation page
+        try:
+            return super().delete_view(request, object_id, extra_context)
+        except (ProgrammingError, Exception) as e:
+            error_str = str(e)
+            if 'buildings_buildingmembership' in error_str or 'does not exist' in error_str:
+                # Αν λείπει ο πίνακας, δείχνουμε confirmation page χωρίς related objects
+                from django.template.response import TemplateResponse
+                from django.contrib.admin.options import IS_POPUP_VAR
+                
+                context = {
+                    **self.admin_site.each_context(request),
+                    'title': f'Delete {self.model._meta.verbose_name}',
+                    'object': obj,
+                    'object_name': self.model._meta.verbose_name,
+                    'opts': self.model._meta,
+                    'is_popup': (IS_POPUP_VAR in request.POST or IS_POPUP_VAR in request.GET),
+                    'has_absolute_url': False,
+                    'deleted_objects': [obj],  # Minimal deleted objects
+                    'model_count': {self.model._meta.verbose_name: 1},
+                    **(extra_context or {}),
+                }
+                return TemplateResponse(request, 'admin/delete_confirmation.html', context)
             raise
 
 admin.site.register(CustomUser, CustomUserAdmin)
