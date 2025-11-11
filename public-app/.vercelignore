@@ -1,0 +1,42 @@
+# Documentation and guides (kept in repo, not needed in deployment)
+*.md
+*.mdx
+!README.md
+docs/
+
+# Tests and local tooling
+**/__tests__/**
+**/*.test.*
+**/*.spec.*
+**/e2e/**
+coverage/
+
+# Build artifacts
+.next/
+dist/
+out/
+build/
+
+# Dependency directories (Vercel installs from package-lock)
+node_modules/
+
+# Environment & config samples (handled via Vercel env vars)
+.env
+.env.*
+!.env.local
+*.env.example
+
+# Local tooling & scripts
+scripts/
+*.sh
+*.py
+*.log
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+

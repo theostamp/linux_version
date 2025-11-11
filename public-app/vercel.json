@@ -1,13 +1,13 @@
 {
   "framework": "nextjs",
+  "installCommand": "npm ci",
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
-  "installCommand": "npm ci",
-  "ignoreCommand": "bash -c 'if [[ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ]] && [[ \"$VERCEL_GIT_COMMIT_REF\" != \"develop\" ]]; then exit 1; else git diff HEAD^ HEAD --quiet -- public-app/ || exit 1; fi'",
+  "ignoreCommand": "bash -c 'if [ -z \"$VERCEL_GIT_PREVIOUS_SHA\" ]; then exit 1; fi; git diff --quiet \"$VERCEL_GIT_PREVIOUS_SHA\" \"$VERCEL_GIT_COMMIT_SHA\" -- ./src ./public ./package.json ./package-lock.json ./tsconfig.json ./next.config.ts ./vercel.json && exit 0 || exit 1'",
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "/api/proxy/:path*"
+      "destination": "/backend-proxy/:path*"
     }
   ],
   "headers": [
@@ -50,24 +50,6 @@
           "value": "public, max-age=31536000, immutable"
         }
       ]
-    },
-    {
-      "source": "/api/:path*",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization"
-        }
-      ]
     }
   ]
 }
-
