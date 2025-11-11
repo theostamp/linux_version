@@ -48,6 +48,12 @@ if railway_domain:
         CSRF_TRUSTED_ORIGINS.append(railway_origin)
     logger.info(f"Added Railway domain to CSRF_TRUSTED_ORIGINS: {railway_origin}")
 
+# Always add the production Railway domain for admin access
+production_railway_origin = 'https://linuxversion-production.up.railway.app'
+if production_railway_origin not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(production_railway_origin)
+    logger.info(f"Added production Railway domain to CSRF_TRUSTED_ORIGINS: {production_railway_origin}")
+
 # CORS origins from environment
 CORS_ORIGINS_STR = os.getenv("CORS_ALLOWED_ORIGINS", "")
 if not CORS_ORIGINS_STR:
