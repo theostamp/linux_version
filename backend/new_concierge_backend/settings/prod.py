@@ -53,11 +53,16 @@ if railway_domain:
         CSRF_TRUSTED_ORIGINS.append(railway_origin)
         logger.info(f"Added Railway domain from env var to CSRF_TRUSTED_ORIGINS: {railway_origin}")
 
-# Add Vercel domains pattern
-vercel_pattern = 'https://*.vercel.app'
-if vercel_pattern not in CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS.append(vercel_pattern)
-    logger.info(f"Added Vercel pattern to CSRF_TRUSTED_ORIGINS: {vercel_pattern}")
+# Add common wildcard patterns (Railway/Vercel)
+wildcard_origins = [
+    'https://*.up.railway.app',
+    'https://*.railway.app',
+    'https://*.vercel.app',
+]
+for origin in wildcard_origins:
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
+        logger.info(f"Added wildcard origin to CSRF_TRUSTED_ORIGINS: {origin}")
 
 logger.info(f"[PROD SETTINGS] CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
 
