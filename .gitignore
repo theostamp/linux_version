@@ -56,6 +56,8 @@ relax.png
 *.tmp
 *.bak
 
-# Legacy/orphan directories (should be removed)
-linux_version/frontend/
+# Legacy/orphan directories (removed)
+# linux_version/ - removed (backed up in backups/)
+# Note: linux_version/frontend/.next-root may remain due to root ownership
+linux_version/frontend/.next-root/
 frontend/
