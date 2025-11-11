@@ -20,6 +20,7 @@ from .subscription_views import (
     UserSubscriptionActionsView,
     UserCreateSubscriptionView
 )
+from .send_verification_email_view import SendVerificationEmailView
 
 # Create router for ViewSets
 router = DefaultRouter()
