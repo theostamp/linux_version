@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Building, User, Mail, Lock, ArrowRight, CheckCircle } from 'lucide-react';
+import { Building, User, Mail, Lock, ArrowRight, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 function SignupForm() {
   const searchParams = useSearchParams();
@@ -21,6 +21,8 @@ function SignupForm() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const plans = {
     basic: { name: 'Βασικό', price: 29, apartments: 'Έως 20 διαμερίσματα' },
@@ -329,17 +331,29 @@ function SignupForm() {
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                       <input
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         id="password"
                         name="password"
                         value={formData.password}
                         onChange={handleInputChange}
                         autoComplete="new-password"
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                           errors.password ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="••••••••"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        aria-label={showPassword ? "Απόκρυψη κωδικού" : "Εμφάνιση κωδικού"}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
                     </div>
                     {errors.password && (
                       <p className="mt-1 text-sm text-red-600">{errors.password}</p>
@@ -353,17 +367,29 @@ function SignupForm() {
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                       <input
-                        type="password"
+                        type={showConfirmPassword ? "text" : "password"}
                         id="confirmPassword"
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
                         autoComplete="new-password"
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                           errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="••••••••"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        aria-label={showConfirmPassword ? "Απόκρυψη κωδικού" : "Εμφάνιση κωδικού"}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
                     </div>
                     {errors.confirmPassword && (
                       <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
