@@ -40,7 +40,7 @@ class StripeWebhookView(APIView):
                         payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
                     )
                     logger.info(f"Webhook signature verified for event: {event.get('type', 'unknown')}")
-                except stripe.error.SignatureVerificationError as e:
+                except stripe._error.SignatureVerificationError as e:
                     logger.error(f"Webhook signature verification failed: {e}")
                     return HttpResponse(status=400)
             else:
