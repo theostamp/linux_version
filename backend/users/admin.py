@@ -1,11 +1,8 @@
 # backend/users/admin.py
 
-from django.contrib import admin  
-from django.contrib.admin.utils import get_deleted_objects
+from django.contrib import admin
 from django.db import ProgrammingError
-        
-from django.contrib.auth.admin import UserAdmin
-      # type: ignore
+from django.contrib.auth.admin import UserAdmin  # type: ignore
 from .models import CustomUser
 
 class CustomUserAdmin(UserAdmin):
@@ -52,21 +49,9 @@ class CustomUserAdmin(UserAdmin):
             # Αν το σφάλμα είναι για missing table, επιστρέφουμε minimal info
             error_str = str(e)
             if 'buildings_buildingmembership' in error_str or 'does not exist' in error_str:
-                # Επιστρέφουμε minimal structure για να επιτρέψουμε τη διαγραφή
-                from django.contrib.admin.utils import NestedObjects
-                collector = NestedObjects(using='default')
-                # Προσθέτουμε μόνο τα βασικά objects, χωρίς να ελέγχουμε related
-                for obj in objs:
-                    try:
-                        collector.add(obj.__class__, obj.pk)
-                    except (ProgrammingError, Exception):
-                        # Αν αποτύχει, προσθέτουμε μόνο το object χωρίς related
-                        pass
-                # Επιστρέφουμε minimal nested structure
-                nested = []
-                for obj in objs:
-                    nested.append([obj])
-                return nested, len(objs), set(), []
+                nested = [[obj] for obj in objs]
+                model_count = {self.model._meta.verbose_name: len(objs)}
+                return nested, model_count, set(), []
             raise
 
     def delete_view(self, request, object_id, extra_context=None):
