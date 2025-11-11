@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -26,6 +26,9 @@ export const metadata: Metadata = {
       { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" }
     ]
   },
+};
+
+export const viewport: Viewport = {
   themeColor: "#2563eb",
 };
 

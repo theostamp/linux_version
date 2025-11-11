@@ -1,31 +1,36 @@
-# Ignore directories outside public-app
-backend/
-linux_version/
-scripts/
-.github/
+# Backup files (too large for Vercel)
+backups/
+*.tar.gz
+*.tar
 
-# Build artifacts
+# Legacy directories
+linux_version/
+
+# Python and backend files (not needed for frontend)
+backend/
+*.py
+*.pyc
+__pycache__/
+
+# Node modules (will be installed by Vercel)
 node_modules/
-.next/
-temp_build/
-dist/
-build/
+
+# Git files
+.git/
+.gitignore
+
+# Documentation (not needed in deployment)
+*.md
+!README.md
 
 # Environment files
 .env
-.env.local
-.env.*.local
+.env.*
 
-# Documentation
-*.md
-!public-app/**/*.md
+# IDE files
+.vscode/
+.idea/
 
-# Python
-**/__pycache__/
-*.py[cod]
-*.egg-info/
-
-# Logs
-*.log
-logs/
-
+# OS files
+.DS_Store
+Thumbs.db

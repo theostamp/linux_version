@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Building, User, Mail, Lock, ArrowRight, CheckCircle } from 'lucide-react';
 
-export default function SignupPage() {
+function SignupForm() {
   const searchParams = useSearchParams();
   const selectedPlan = searchParams.get('plan') || 'professional';
   
@@ -388,5 +388,17 @@ export default function SignupPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-gray-600">Loading...</div>
+      </div>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }
