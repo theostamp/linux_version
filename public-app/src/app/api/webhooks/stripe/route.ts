@@ -103,7 +103,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       user_email
     });
 
-    const coreApiResponse = await fetch(process.env.CORE_API_URL!, {
+    const coreApiUrl = process.env.CORE_API_URL || process.env.NEXT_PUBLIC_CORE_API_URL;
+    if (!coreApiUrl) {
+      console.error('Backend API not configured');
+      return;
+    }
+    
+    const coreApiResponse = await fetch(coreApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -142,7 +148,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     // If backend doesn't send email automatically, trigger it:
     if (tenantData.user_id) {
       try {
-        const emailResponse = await fetch(`${process.env.CORE_API_URL}/api/users/send-verification-email/`, {
+        const emailResponse = await fetch(`${coreApiUrl}/api/users/send-verification-email/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

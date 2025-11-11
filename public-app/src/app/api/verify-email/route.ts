@@ -13,10 +13,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Call backend API to verify email
-    const coreApiUrl = process.env.CORE_API_URL;
+    // Use CORE_API_URL (server-side) or fallback to NEXT_PUBLIC_CORE_API_URL
+    const coreApiUrl = process.env.CORE_API_URL || process.env.NEXT_PUBLIC_CORE_API_URL;
     if (!coreApiUrl) {
       return NextResponse.json(
-        { error: 'Backend API not configured' },
+        { error: 'Backend API not configured. Please set CORE_API_URL or NEXT_PUBLIC_CORE_API_URL environment variable.' },
         { status: 500 }
       );
     }

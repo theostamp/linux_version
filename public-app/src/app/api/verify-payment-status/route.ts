@@ -52,7 +52,8 @@ export async function GET(request: NextRequest) {
       // Payment successful - check tenant and email verification status
       // Query backend to check tenant creation and email verification status
       try {
-        const coreApiUrl = process.env.CORE_API_URL;
+        // Use CORE_API_URL (server-side) or fallback to NEXT_PUBLIC_CORE_API_URL
+        const coreApiUrl = process.env.CORE_API_URL || process.env.NEXT_PUBLIC_CORE_API_URL;
         const internalApiKey = process.env.INTERNAL_API_SECRET_KEY;
         
         if (coreApiUrl && internalApiKey && tenantSubdomain) {
