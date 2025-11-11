@@ -45,11 +45,18 @@ function OAuthCallback() {
           console.error('Failed to parse state:', e);
         }
 
-        // Call backend OAuth callback
-        const callbackUrl = `${coreApiUrl}/api/users/auth/callback/?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state || '{}')}`;
-        const response = await fetch(callbackUrl, {
-          method: 'GET',
+        // Call backend OAuth callback (POST method)
+        const response = await fetch(`${coreApiUrl}/api/users/auth/callback/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
           credentials: 'include',
+          body: JSON.stringify({
+            code: code,
+            state: state || '{}',
+            redirect_uri: `${window.location.origin}/auth/callback`
+          }),
         });
 
         const data = await response.json();
