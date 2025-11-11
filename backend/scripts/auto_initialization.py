@@ -78,15 +78,16 @@ def run_migrations():
         
         # Shared migrations (public schema)
         print("📦 Shared migrations...")
-        call_command("migrate_schemas", shared=True, interactive=False)
+        call_command("migrate_schemas", "--shared", verbosity=1)
         
-        # Tenant migrations - only if tenants exist
+        # Tenant migrations - run on all tenant schemas
         print("🏢 Tenant migrations...")
         try:
-            from tenants.models import Tenant
-            if Tenant.objects.exists():
-                call_command("migrate_schemas", tenant=True, interactive=False)
-                print("✅ Tenant migrations ολοκληρώθηκαν")
+            from tenants.models import Client
+            tenant_count = Client.objects.exclude(schema_name='public').count()
+            if tenant_count > 0:
+                call_command("migrate_schemas", verbosity=1)
+                print(f"✅ Tenant migrations ολοκληρώθηκαν για {tenant_count} tenant(s)")
             else:
                 print("ℹ️ Δεν υπάρχουν tenants - παράκαμψη tenant migrations")
         except Exception as tenant_err:
