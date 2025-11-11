@@ -2,10 +2,12 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
+  "installCommand": "npm ci",
+  "ignoreCommand": "bash -c 'if [[ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ]] && [[ \"$VERCEL_GIT_COMMIT_REF\" != \"develop\" ]]; then exit 1; else git diff HEAD^ HEAD --quiet -- public-app/ || exit 1; fi'",
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://linuxversion-production.up.railway.app/api/:path*"
+      "destination": "/api/proxy/:path*"
     }
   ],
   "headers": [

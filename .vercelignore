@@ -1,0 +1,31 @@
+# Ignore directories outside public-app
+backend/
+linux_version/
+scripts/
+.github/
+
+# Build artifacts
+node_modules/
+.next/
+temp_build/
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Documentation
+*.md
+!public-app/**/*.md
+
+# Python
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Logs
+*.log
+logs/
+
