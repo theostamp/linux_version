@@ -34,25 +34,32 @@ if os.getenv('RAILWAY_PUBLIC_DOMAIN'):
 # Explicit CSRF_TRUSTED_ORIGINS from environment
 CSRF_ORIGINS_STR = os.getenv("CSRF_TRUSTED_ORIGINS", "")
 if not CSRF_ORIGINS_STR:
-    raise ValueError(
-        "CSRF_TRUSTED_ORIGINS must be set in production environment. "
-        "Example: 'https://yourdomain.com,https://*.vercel.app'"
-    )
+    # Fallback: Use default origins if not set
+    CSRF_ORIGINS_STR = "https://linuxversion-production.up.railway.app,https://newconcierge.app"
+    logger.warning("CSRF_TRUSTED_ORIGINS not set, using defaults")
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in CSRF_ORIGINS_STR.split(",") if o.strip()]
-
-# Add Railway domain if provided
-railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
-if railway_domain:
-    railway_origin = f'https://{railway_domain}'
-    if railway_origin not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append(railway_origin)
-    logger.info(f"Added Railway domain to CSRF_TRUSTED_ORIGINS: {railway_origin}")
 
 # Always add the production Railway domain for admin access
 production_railway_origin = 'https://linuxversion-production.up.railway.app'
 if production_railway_origin not in CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS.append(production_railway_origin)
     logger.info(f"Added production Railway domain to CSRF_TRUSTED_ORIGINS: {production_railway_origin}")
+
+# Add Railway domain if provided via env var
+railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+if railway_domain:
+    railway_origin = f'https://{railway_domain}'
+    if railway_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(railway_origin)
+        logger.info(f"Added Railway domain from env var to CSRF_TRUSTED_ORIGINS: {railway_origin}")
+
+# Add Vercel domains pattern
+vercel_pattern = 'https://*.vercel.app'
+if vercel_pattern not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(vercel_pattern)
+    logger.info(f"Added Vercel pattern to CSRF_TRUSTED_ORIGINS: {vercel_pattern}")
+
+logger.info(f"[PROD SETTINGS] CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
 
 # CORS origins from environment
 CORS_ORIGINS_STR = os.getenv("CORS_ALLOWED_ORIGINS", "")
