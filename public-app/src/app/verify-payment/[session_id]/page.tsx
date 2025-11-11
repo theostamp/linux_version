@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle, XCircle, Loader2, Building, ArrowRight } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Building, ArrowRight, Mail } from 'lucide-react';
 
 interface PaymentStatus {
   status: 'loading' | 'success' | 'error' | 'pending';
   message: string;
-  tenantUrl?: string;
+  tenantUrl?: string | null;
   error?: string;
 }
 
@@ -18,57 +18,92 @@ export default function VerifyPaymentPage() {
   
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>({
     status: 'loading',
-    message: 'Verifying your payment...'
+    message: 'Επαληθεύουμε την πληρωμή σας...'
   });
 
   useEffect(() => {
-    if (!sessionId) {
+      if (!sessionId) {
       setPaymentStatus({
         status: 'error',
-        message: 'Invalid session ID',
-        error: 'No session ID provided'
+        message: 'Μη έγκυρο session ID',
+        error: 'Δεν παρέχεται session ID'
       });
       return;
     }
 
-    // Simulate payment verification and tenant creation
+    // Verify payment status and wait for tenant creation
     const verifyPayment = async () => {
       try {
-        // TODO: Implement actual payment verification
-        // This would typically:
-        // 1. Verify the Stripe session
-        // 2. Call the Core API to create the tenant
-        // 3. Wait for tenant creation to complete
-        
         setPaymentStatus({
           status: 'loading',
-          message: 'Processing your payment...'
+          message: 'Επαληθεύουμε την πληρωμή σας...'
         });
 
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Poll for payment verification status
+        const pollStatus = async (): Promise<void> => {
+          const maxAttempts = 30; // 30 attempts = ~2.5 minutes max
+          let attempts = 0;
 
-        setPaymentStatus({
-          status: 'loading',
-          message: 'Creating your building dashboard...'
-        });
+          while (attempts < maxAttempts) {
+            try {
+              const response = await fetch(`/api/verify-payment-status?session_id=${sessionId}`);
+              const data = await response.json();
 
-        // Simulate tenant creation delay
-        await new Promise(resolve => setTimeout(resolve, 3000));
+              if (!response.ok) {
+                throw new Error(data.error || 'Failed to verify payment');
+              }
 
-        // For demo purposes, assume success
-        setPaymentStatus({
-          status: 'success',
-          message: 'Your building dashboard is ready!',
-          tenantUrl: 'demo.localhost:8080' // This would be dynamic based on the actual tenant
-        });
+              const { status, message, tenantUrl, emailSent, tenantSubdomain } = data;
+
+              if (status === 'ready') {
+                // Tenant ready and email verified
+                setPaymentStatus({
+                  status: 'success',
+                  message: message || 'Το workspace σας είναι έτοιμο!',
+                  tenantUrl: tenantUrl || null
+                });
+                return;
+              } else if (status === 'processing') {
+                // Still processing - update message and continue polling
+                setPaymentStatus({
+                  status: 'loading',
+                  message: message || 'Προετοιμάζουμε το workspace σας...'
+                });
+              } else if (status === 'error') {
+                setPaymentStatus({
+                  status: 'error',
+                  message: message || 'Προέκυψε σφάλμα κατά την επεξεργασία',
+                  error: message
+                });
+                return;
+              }
+
+              // Wait before next poll (5 seconds)
+              await new Promise(resolve => setTimeout(resolve, 5000));
+              attempts++;
+            } catch (error) {
+              console.error('Error polling payment status:', error);
+              // Continue polling on error (might be temporary)
+              await new Promise(resolve => setTimeout(resolve, 5000));
+              attempts++;
+            }
+          }
+
+          // Max attempts reached - show pending email verification
+          setPaymentStatus({
+            status: 'pending',
+            message: 'Η πληρωμή σας επιβεβαιώθηκε! Έχουμε στείλει email επιβεβαίωσης. Παρακαλώ ελέγξτε το inbox σας.'
+          });
+        };
+
+        await pollStatus();
 
       } catch (error) {
         console.error('Payment verification error:', error);
         setPaymentStatus({
           status: 'error',
-          message: 'There was an error processing your payment',
-          error: error instanceof Error ? error.message : 'Unknown error'
+          message: 'Προέκυψε σφάλμα κατά την επαλήθευση της πληρωμής',
+          error: error instanceof Error ? error.message : 'Άγνωστο σφάλμα'
         });
       }
     };
@@ -93,9 +128,10 @@ export default function VerifyPaymentPage() {
     return (
       <div className="text-center">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-          {paymentStatus.status === 'success' ? 'Welcome to New Concierge!' : 
-           paymentStatus.status === 'error' ? 'Payment Verification Failed' :
-           'Processing Your Payment'}
+          {paymentStatus.status === 'success' ? 'Καλώς ήρθατε στο New Concierge!' : 
+           paymentStatus.status === 'error' ? 'Η Επαλήθευση Πληρωμής Απέτυχε' :
+           paymentStatus.status === 'pending' ? 'Ελέγξτε το Email σας' :
+           'Επεξεργασία Πληρωμής'}
         </h1>
         <p className="text-lg text-gray-600 mb-8">
           {paymentStatus.message}
@@ -106,46 +142,68 @@ export default function VerifyPaymentPage() {
             <div className="flex items-center justify-center mb-4">
               <Building className="h-8 w-8 text-green-600 mr-2" />
               <span className="text-lg font-semibold text-green-800">
-                Your Building Dashboard
+                Πίνακας Ελέγχου Κτιρίου
               </span>
             </div>
             <p className="text-green-700 mb-4">
-              Your building is now accessible at:
+              Το κτίριό σας είναι πλέον προσβάσιμο στο:
             </p>
             <div className="bg-white border border-green-300 rounded-lg p-4 mb-4">
               <code className="text-green-800 font-mono">
-                http://{paymentStatus.tenantUrl}
+                https://{paymentStatus.tenantUrl}
               </code>
             </div>
             <Link
-              href={`http://${paymentStatus.tenantUrl}`}
+              href={`https://${paymentStatus.tenantUrl}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
             >
-              Access Your Dashboard
+              Πρόσβαση στον Πίνακα Ελέγχου
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
+          </div>
+        )}
+
+        {paymentStatus.status === 'pending' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <Mail className="h-8 w-8 text-blue-600 mr-2" />
+              <span className="text-lg font-semibold text-blue-800">
+                Ελέγξτε το Email σας
+              </span>
+            </div>
+            <p className="text-blue-700 mb-4">
+              Έχουμε στείλει email επιβεβαίωσης. Παρακαλώ:
+            </p>
+            <ol className="list-decimal list-inside space-y-2 text-blue-700 mb-4">
+              <li>Ελέγξτε το inbox σας (και spam folder)</li>
+              <li>Κάντε click στο link επιβεβαίωσης</li>
+              <li>Μετά την επιβεβαίωση, θα λάβετε email με τα στοιχεία login</li>
+            </ol>
+            <p className="text-sm text-blue-600">
+              Αν δεν λάβατε email εντός 5 λεπτών, ελέγξτε το spam folder ή επικοινωνήστε μαζί μας.
+            </p>
           </div>
         )}
 
         {paymentStatus.status === 'error' && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
             <p className="text-red-700 mb-4">
-              {paymentStatus.error || 'An unexpected error occurred.'}
+              {paymentStatus.error || 'Προέκυψε απρόσμενο σφάλμα.'}
             </p>
             <div className="space-y-3">
               <Link
                 href="/signup"
                 className="inline-block bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors"
               >
-                Try Again
+                Δοκιμάστε Ξανά
               </Link>
               <Link
                 href="/"
                 className="inline-block ml-4 border border-red-300 text-red-700 px-6 py-3 rounded-lg font-semibold hover:bg-red-50 transition-colors"
               >
-                Back to Home
+                Επιστροφή στην Αρχική
               </Link>
             </div>
           </div>
@@ -158,7 +216,7 @@ export default function VerifyPaymentPage() {
                 <div className="animate-pulse bg-blue-200 h-2 w-32 rounded"></div>
               </div>
               <p className="text-blue-700 text-sm">
-                This may take a few moments. Please don&apos;t close this page.
+                Αυτό μπορεί να πάρει λίγα λεπτά. Παρακαλώ μην κλείσετε αυτή τη σελίδα.
               </p>
             </div>
           </div>
@@ -195,15 +253,15 @@ export default function VerifyPaymentPage() {
           {/* Additional Information */}
           {paymentStatus.status === 'success' && (
             <div className="mt-8 bg-white rounded-2xl shadow-lg p-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">What&apos;s Next?</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Τι Ακολουθεί;</h2>
               <div className="space-y-4">
                 <div className="flex items-start">
                   <div className="bg-green-100 w-8 h-8 rounded-full flex items-center justify-center mr-4 mt-1">
                     <span className="text-green-600 font-semibold text-sm">1</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Access Your Dashboard</h3>
-                    <p className="text-gray-600">Log in to your building dashboard to start managing your building.</p>
+                    <h3 className="font-semibold text-gray-900">Επιβεβαιώστε το Email σας</h3>
+                    <p className="text-gray-600">Ελέγξτε το inbox σας και κάντε click στο link επιβεβαίωσης.</p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -211,8 +269,8 @@ export default function VerifyPaymentPage() {
                     <span className="text-blue-600 font-semibold text-sm">2</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Set Up Your Building</h3>
-                    <p className="text-gray-600">Add apartments, residents, and configure your building settings.</p>
+                    <h3 className="font-semibold text-gray-900">Πρόσβαση στον Πίνακα Ελέγχου</h3>
+                    <p className="text-gray-600">Μετά την επιβεβαίωση, θα λάβετε email με τα στοιχεία login.</p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -220,8 +278,8 @@ export default function VerifyPaymentPage() {
                     <span className="text-purple-600 font-semibold text-sm">3</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Start Managing</h3>
-                    <p className="text-gray-600">Begin using all the features to streamline your building operations.</p>
+                    <h3 className="font-semibold text-gray-900">Ξεκινήστε τη Διαχείριση</h3>
+                    <p className="text-gray-600">Προσθέστε διαμερίσματα, κατοίκους και ρυθμίστε το κτίριό σας.</p>
                   </div>
                 </div>
               </div>
