@@ -32,11 +32,13 @@ if DEBUG:
     ALLOWED_HOSTS += ["backend"]         # Docker container hostname
 
 # CSRF Trusted Origins for Railway
+# Note: This will be overridden later in the file, but we add Railway domains here too
 CSRF_TRUSTED_ORIGINS = []
 
-# Always add production Railway domain for admin access
+# Always add production Railway domain for admin access (even if overridden later)
 production_railway_origin = 'https://linuxversion-production.up.railway.app'
-CSRF_TRUSTED_ORIGINS.append(production_railway_origin)
+if production_railway_origin not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(production_railway_origin)
 
 # Add Railway domain if in production
 railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
