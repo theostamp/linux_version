@@ -49,20 +49,54 @@ export async function GET(request: NextRequest) {
     let emailSent = false;
 
     if (status === 'complete' && paymentStatus === 'paid') {
-      // Payment successful - check if tenant is ready
-      // In a real implementation, you'd check your database/backend
-      // For now, we'll check if webhook has processed it
-      // This is a simplified check - in production, query your database
-      
-      // TODO: Query backend/database to check tenant creation status
-      // For now, assume tenant is being created (webhook processes it)
-      verificationStatus = 'processing';
-      message = 'Η πληρωμή σας επιβεβαιώθηκε. Προετοιμάζουμε το workspace σας...';
-      
-      // In production, check database for tenant status
-      // If tenant exists and email verified → 'ready'
-      // If tenant exists but email not verified → 'processing' (waiting for email)
-      // If tenant doesn't exist yet → 'processing' (webhook still processing)
+      // Payment successful - check tenant and email verification status
+      // Query backend to check tenant creation and email verification status
+      try {
+        const coreApiUrl = process.env.CORE_API_URL;
+        const internalApiKey = process.env.INTERNAL_API_SECRET_KEY;
+        
+        if (coreApiUrl && internalApiKey && tenantSubdomain) {
+          // Check tenant status from backend
+          const tenantStatusResponse = await fetch(
+            `${coreApiUrl}/api/tenants/${tenantSubdomain}/status/`,
+            {
+              headers: {
+                'X-Internal-API-Key': internalApiKey,
+              },
+            }
+          );
+
+          if (tenantStatusResponse.ok) {
+            const tenantStatus = await tenantStatusResponse.json();
+            
+            if (tenantStatus.email_verified && tenantStatus.tenant_ready) {
+              verificationStatus = 'ready';
+              message = 'Το workspace σας είναι έτοιμο!';
+              tenantUrl = tenantStatus.tenant_url || `${tenantSubdomain}.newconcierge.app`;
+              emailSent = tenantStatus.email_sent || false;
+            } else if (tenantStatus.tenant_ready && !tenantStatus.email_verified) {
+              verificationStatus = 'processing';
+              message = 'Η πληρωμή σας επιβεβαιώθηκε. Έχουμε στείλει email επιβεβαίωσης. Παρακαλώ ελέγξτε το inbox σας.';
+              emailSent = tenantStatus.email_sent || false;
+            } else {
+              verificationStatus = 'processing';
+              message = 'Η πληρωμή σας επιβεβαιώθηκε. Προετοιμάζουμε το workspace σας...';
+            }
+          } else {
+            // Backend not available or tenant not created yet
+            verificationStatus = 'processing';
+            message = 'Η πληρωμή σας επιβεβαιώθηκε. Προετοιμάζουμε το workspace σας...';
+          }
+        } else {
+          // No backend configured - use default processing message
+          verificationStatus = 'processing';
+          message = 'Η πληρωμή σας επιβεβαιώθηκε. Προετοιμάζουμε το workspace σας...';
+        }
+      } catch (error) {
+        console.error('Error checking tenant status:', error);
+        verificationStatus = 'processing';
+        message = 'Η πληρωμή σας επιβεβαιώθηκε. Προετοιμάζουμε το workspace σας...';
+      }
     } else if (status === 'expired') {
       verificationStatus = 'error';
       message = 'Η συνεδρία πληρωμής έχει λήξει. Παρακαλώ ξαναδοκιμάστε.';

@@ -133,6 +133,36 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
     const tenantData = await coreApiResponse.json();
     console.log('Tenant created successfully:', tenantData);
+
+    // After tenant creation, send email verification
+    // The backend should handle this, but we can also trigger it here if needed
+    // The user should be created by the backend during tenant creation
+    // and email verification should be sent automatically
+    
+    // If backend doesn't send email automatically, trigger it:
+    if (tenantData.user_id) {
+      try {
+        const emailResponse = await fetch(`${process.env.CORE_API_URL}/api/users/send-verification-email/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Internal-API-Key': process.env.INTERNAL_API_SECRET_KEY!,
+          },
+          body: JSON.stringify({
+            user_id: tenantData.user_id,
+          }),
+        });
+
+        if (emailResponse.ok) {
+          console.log('Verification email sent successfully');
+        } else {
+          console.error('Failed to send verification email:', await emailResponse.text());
+        }
+      } catch (emailError) {
+        console.error('Error sending verification email:', emailError);
+        // Don't fail the webhook if email fails - tenant is already created
+      }
+    }
   } catch (error) {
     console.error('Error handling checkout session completed:', error);
   }
