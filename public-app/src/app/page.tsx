@@ -61,7 +61,7 @@ export default function Home() {
                 Everything you need to manage your building
               </h2>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                From financial management to resident communication, we&apos;ve got you covered.
+                From financial management to resident communication, we&#39;ve got you covered.
               </p>
             </div>
             
@@ -107,7 +107,7 @@ export default function Home() {
                 Simple, transparent pricing
               </h2>
               <p className="text-xl text-gray-600">
-                Choose the plan that fits your building&apos;s needs.
+                Choose the plan that fits your building&#39;s needs.
               </p>
             </div>
             
