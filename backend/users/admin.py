@@ -51,15 +51,24 @@ class CustomUserAdmin(UserAdmin):
         """
         Override για να χειρίζεται το σφάλμα αν ο πίνακας buildings_buildingmembership δεν υπάρχει.
         Αυτό είναι workaround μέχρι να τρέξουν οι migrations.
+        
+        Το Django admin περιμένει:
+        - deleted_objects: nested list με structure [[obj_repr, [nested_related_objects]]]
+        - model_count: dict {verbose_name: count}
+        - perms_needed: set of permission names
+        - protected: list of protected objects
         """
         try:
             return super().get_deleted_objects(objs, request)
         except ProgrammingError as e:
             error_str = str(e)
             if 'buildings_buildingmembership' in error_str or 'does not exist' in error_str:
-                # Επιστρέφουμε minimal structure:
-                # deleted_objects (nested list), model_count (dict), perms_needed (set), protected (list)
-                deleted_objects = [force_str(obj) for obj in objs]
+                # Δημιουργούμε nested list structure που περιμένει το Django template
+                # Κάθε στοιχείο είναι [obj_repr, [nested_objects]]
+                deleted_objects = []
+                for obj in objs:
+                    deleted_objects.append([force_str(obj), []])
+                
                 model_count = {force_str(self.model._meta.verbose_name): len(objs)}
                 perms_needed = set()
                 protected = []
@@ -114,6 +123,7 @@ class CustomUserAdmin(UserAdmin):
             return HttpResponseRedirect(reverse(f'admin:{opts.app_label}_{opts.model_name}_changelist'))
 
         # GET: δείχνουμε απλή σελίδα επιβεβαίωσης χωρίς related objects
+        # Το Django template περιμένει deleted_objects με structure: [[obj_repr, [nested_objects]]]
         context = {
             **self.admin_site.each_context(request),
             'title': _('Επιβεβαίωση διαγραφής'),
@@ -125,7 +135,7 @@ class CustomUserAdmin(UserAdmin):
             'perms_lacking': False,
             'protected': [],
             'is_popup': False,
-            'deleted_objects': [[force_str(obj)]],
+            'deleted_objects': [[force_str(obj), []]],  # Nested structure: [obj_repr, nested_list]
             'model_count': {force_str(opts.verbose_name): 1},
             'media': self.media,
         }
