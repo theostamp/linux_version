@@ -23,9 +23,9 @@ function SignupForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const plans = {
-    basic: { name: 'Basic', price: 29, apartments: 'Up to 20' },
-    professional: { name: 'Professional', price: 59, apartments: 'Up to 50' },
-    enterprise: { name: 'Enterprise', price: 99, apartments: 'Unlimited' }
+    basic: { name: 'Βασικό', price: 29, apartments: 'Έως 20 διαμερίσματα' },
+    professional: { name: 'Επαγγελματικό', price: 59, apartments: 'Έως 50 διαμερίσματα' },
+    enterprise: { name: 'Επιχειρηματικό', price: 99, apartments: 'Απεριόριστα' }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -42,33 +42,33 @@ function SignupForm() {
     const newErrors: Record<string, string> = {};
 
     if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
+      newErrors.firstName = 'Το όνομα είναι υποχρεωτικό';
     }
 
     if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
+      newErrors.lastName = 'Το επώνυμο είναι υποχρεωτικό';
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Το email είναι υποχρεωτικό';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = 'Το email δεν είναι έγκυρο';
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Ο κωδικός είναι υποχρεωτικός';
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = 'Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες';
     }
 
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Οι κωδικοί δεν ταιριάζουν';
     }
 
     if (!formData.tenantSubdomain.trim()) {
-      newErrors.tenantSubdomain = 'Building subdomain is required';
+      newErrors.tenantSubdomain = 'Το subdomain του κτιρίου είναι υποχρεωτικό';
     } else if (!/^[a-z0-9-]+$/.test(formData.tenantSubdomain)) {
-      newErrors.tenantSubdomain = 'Subdomain can only contain lowercase letters, numbers, and hyphens';
+      newErrors.tenantSubdomain = 'Το subdomain μπορεί να περιέχει μόνο πεζά γράμματα, αριθμούς και παύλες';
     }
 
     setErrors(newErrors);
@@ -119,7 +119,7 @@ function SignupForm() {
     } catch (error) {
       console.error('Signup error:', error);
       setErrors({ 
-        general: error instanceof Error ? error.message : 'An error occurred during signup. Please try again.' 
+        general: error instanceof Error ? error.message : 'Προέκυψε σφάλμα κατά την εγγραφή. Παρακαλώ δοκιμάστε ξανά.' 
       });
       setIsLoading(false);
     }
@@ -136,7 +136,7 @@ function SignupForm() {
               <span className="ml-2 text-2xl font-bold text-gray-900">New Concierge</span>
             </Link>
             <Link href="/" className="text-gray-600 hover:text-gray-900">
-              Back to Home
+              Επιστροφή στην Αρχική
             </Link>
           </div>
         </div>
@@ -146,17 +146,17 @@ function SignupForm() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Create Your Account
+              Δημιουργήστε τον Λογαριασμό σας
             </h1>
             <p className="text-xl text-gray-600">
-              Get started with your {plans[formData.plan as keyof typeof plans]?.name} plan
+              Ξεκινήστε με το πρόγραμμα {plans[formData.plan as keyof typeof plans]?.name}
             </p>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Signup Form */}
             <div className="bg-white rounded-2xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Account Information</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Στοιχεία Λογαριασμού</h2>
               
               {errors.general && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
@@ -168,7 +168,7 @@ function SignupForm() {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
-                      First Name
+                      Όνομα
                     </label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -192,7 +192,7 @@ function SignupForm() {
 
                   <div>
                     <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
-                      Last Name
+                      Επώνυμο
                     </label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -217,7 +217,7 @@ function SignupForm() {
 
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
+                    Διεύθυνση Email
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -241,7 +241,7 @@ function SignupForm() {
 
                 <div>
                   <label htmlFor="tenantSubdomain" className="block text-sm font-medium text-gray-700 mb-2">
-                    Building Subdomain
+                    Subdomain Κτιρίου
                   </label>
                   <div className="relative">
                     <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -258,7 +258,7 @@ function SignupForm() {
                     />
                   </div>
                   <p className="mt-1 text-sm text-gray-500">
-                    Your building will be accessible at: {formData.tenantSubdomain || 'my-building'}.localhost
+                    Το κτίριό σας θα είναι προσβάσιμο στο: {formData.tenantSubdomain || 'my-building'}.localhost
                   </p>
                   {errors.tenantSubdomain && (
                     <p className="mt-1 text-sm text-red-600">{errors.tenantSubdomain}</p>
@@ -268,7 +268,7 @@ function SignupForm() {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                      Password
+                      Κωδικός
                     </label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -292,7 +292,7 @@ function SignupForm() {
 
                   <div>
                     <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirm Password
+                      Επιβεβαίωση Κωδικού
                     </label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -323,11 +323,11 @@ function SignupForm() {
                   {isLoading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Creating Account...
+                      Δημιουργία Λογαριασμού...
                     </>
                   ) : (
                     <>
-                      Create Account & Continue to Payment
+                      Δημιουργία Λογαριασμού & Συνέχεια στην Πληρωμή
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </>
                   )}
@@ -337,7 +337,7 @@ function SignupForm() {
 
             {/* Plan Summary */}
             <div className="bg-white rounded-2xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Plan Summary</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Σύνοψη Προγράμματος</h2>
               
               <div className="border border-gray-200 rounded-lg p-6 mb-6">
                 <div className="flex justify-between items-start mb-4">
@@ -346,46 +346,46 @@ function SignupForm() {
                       {plans[formData.plan as keyof typeof plans]?.name}
                     </h3>
                     <p className="text-gray-600">
-                      {plans[formData.plan as keyof typeof plans]?.apartments} apartments
+                      {plans[formData.plan as keyof typeof plans]?.apartments}
                     </p>
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-gray-900">
                       €{plans[formData.plan as keyof typeof plans]?.price}
                     </div>
-                    <div className="text-gray-600">per month</div>
+                    <div className="text-gray-600">ανά μήνα</div>
                   </div>
                 </div>
                 
                 <div className="space-y-3">
                   <div className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span className="text-gray-700">30-day free trial</span>
+                    <span className="text-gray-700">30ήμερη δωρεάν δοκιμή</span>
                   </div>
                   <div className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span className="text-gray-700">Cancel anytime</span>
+                    <span className="text-gray-700">Ακύρωση οποιαδήποτε στιγμή</span>
                   </div>
                   <div className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span className="text-gray-700">Full feature access</span>
+                    <span className="text-gray-700">Πλήρης πρόσβαση σε όλες τις λειτουργίες</span>
                   </div>
                   <div className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span className="text-gray-700">24/7 support</span>
+                    <span className="text-gray-700">Υποστήριξη 24/7</span>
                   </div>
                 </div>
               </div>
 
               <div className="text-sm text-gray-600">
                 <p className="mb-2">
-                  <strong>What happens next?</strong>
+                  <strong>Τι ακολουθεί;</strong>
                 </p>
                 <ol className="list-decimal list-inside space-y-1">
-                  <li>Create your account</li>
-                  <li>Complete payment setup</li>
-                  <li>Access your building dashboard</li>
-                  <li>Start managing your building</li>
+                  <li>Δημιουργήστε τον λογαριασμό σας</li>
+                  <li>Ολοκληρώστε τη ρύθμιση πληρωμής</li>
+                  <li>Προσπελάστε τον πίνακα ελέγχου του κτιρίου</li>
+                  <li>Ξεκινήστε τη διαχείριση του κτιρίου σας</li>
                 </ol>
               </div>
             </div>
@@ -400,7 +400,7 @@ export default function SignupPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-gray-600">Loading...</div>
+        <div className="animate-pulse text-gray-600">Φόρτωση...</div>
       </div>
     }>
       <SignupForm />

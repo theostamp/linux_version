@@ -13,10 +13,10 @@ export default function Home() {
               <span className="ml-2 text-2xl font-bold text-gray-900">New Concierge</span>
             </div>
             <nav className="hidden md:flex space-x-8">
-              <Link href="#features" className="text-gray-600 hover:text-gray-900">Features</Link>
-              <Link href="#pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
+              <Link href="#features" className="text-gray-600 hover:text-gray-900">Λειτουργίες</Link>
+              <Link href="#pricing" className="text-gray-600 hover:text-gray-900">Τιμές</Link>
               <Link href="/signup" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                Get Started
+                Ξεκινήστε
               </Link>
             </nav>
           </div>
@@ -28,26 +28,26 @@ export default function Home() {
         <section className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              Digital Concierge for
-              <span className="text-blue-600"> Modern Buildings</span>
+              Ψηφιακός Concierge για
+              <span className="text-blue-600"> Σύγχρονα Κτίρια</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Streamline building management, enhance resident experience, and automate 
-              financial operations with our comprehensive digital platform.
+              Απλοποιήστε τη διαχείριση κτιρίων, βελτιώστε την εμπειρία των κατοίκων και αυτοματοποιήστε 
+              τις οικονομικές λειτουργίες με την ολοκληρωμένη ψηφιακή μας πλατφόρμα.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link 
                 href="/signup" 
                 className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center"
               >
-                Start Free Trial
+                Ξεκινήστε Δωρεάν Δοκιμή
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Link 
                 href="#pricing" 
                 className="border border-gray-300 text-gray-700 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-colors"
               >
-                View Pricing
+                Δείτε Τιμές
               </Link>
             </div>
           </div>
@@ -58,10 +58,10 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                Everything you need to manage your building
+                Όλα όσα χρειάζεστε για τη διαχείριση του κτιρίου σας
               </h2>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                From financial management to resident communication, we&apos;ve got you covered.
+                Από τη χρηματοοικονομική διαχείριση έως την επικοινωνία με τους κατοίκους, σας καλύπτουμε.
               </p>
             </div>
             
@@ -70,9 +70,9 @@ export default function Home() {
                 <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Building className="h-8 w-8 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Building Management</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Διαχείριση Κτιρίου</h3>
                 <p className="text-gray-600">
-                  Complete building information, apartment management, and maintenance tracking.
+                  Πλήρης πληροφόρηση κτιρίου, διαχείριση διαμερισμάτων και παρακολούθηση συντηρήσεων.
                 </p>
               </div>
               
@@ -80,9 +80,9 @@ export default function Home() {
                 <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="h-8 w-8 text-green-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Resident Portal</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Πύλη Κατοίκων</h3>
                 <p className="text-gray-600">
-                  Secure resident access with announcements, voting, and request management.
+                  Ασφαλής πρόσβαση κατοίκων με ανακοινώσεις, ψηφοφορίες και διαχείριση αιτημάτων.
                 </p>
               </div>
               
@@ -90,9 +90,9 @@ export default function Home() {
                 <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Shield className="h-8 w-8 text-purple-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Financial Control</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Χρηματοοικονομικός Έλεγχος</h3>
                 <p className="text-gray-600">
-                  Automated expense tracking, payment processing, and financial reporting.
+                  Αυτοματοποιημένη παρακολούθηση εξόδων, επεξεργασία πληρωμών και χρηματοοικονομικές αναφορές.
                 </p>
               </div>
             </div>
@@ -104,41 +104,41 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                Simple, transparent pricing
+                Απλές, διαφανείς τιμές
               </h2>
               <p className="text-xl text-gray-600">
-                Choose the plan that fits your building&apos;s needs.
+                Επιλέξτε το πρόγραμμα που ταιριάζει στις ανάγκες του κτιρίου σας.
               </p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
               {/* Basic Plan */}
               <div className="bg-white rounded-2xl shadow-lg p-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Basic</h3>
-                <p className="text-gray-600 mb-6">Perfect for small buildings</p>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Βασικό</h3>
+                <p className="text-gray-600 mb-6">Ιδανικό για μικρά κτίρια</p>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-gray-900">€29</span>
-                  <span className="text-gray-600">/month</span>
+                  <span className="text-gray-600">/μήνα</span>
                 </div>
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span>Up to 20 apartments</span>
+                    <span>Έως 20 διαμερίσματα</span>
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span>Basic financial management</span>
+                    <span>Βασική χρηματοοικονομική διαχείριση</span>
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span>Email support</span>
+                    <span>Υποστήριξη μέσω email</span>
                   </li>
                 </ul>
                 <Link 
                   href="/signup?plan=basic" 
                   className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors block text-center"
                 >
-                  Get Started
+                  Ξεκινήστε
                 </Link>
               </div>
 
@@ -146,72 +146,72 @@ export default function Home() {
               <div className="bg-white rounded-2xl shadow-lg p-8 border-2 border-blue-600 relative">
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                   <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                    Most Popular
+                    Πιο Δημοφιλές
                   </span>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Professional</h3>
-                <p className="text-gray-600 mb-6">Ideal for medium buildings</p>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Επαγγελματικό</h3>
+                <p className="text-gray-600 mb-6">Ιδανικό για μεσαία κτίρια</p>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-gray-900">€59</span>
-                  <span className="text-gray-600">/month</span>
+                  <span className="text-gray-600">/μήνα</span>
                 </div>
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span>Up to 50 apartments</span>
+                    <span>Έως 50 διαμερίσματα</span>
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span>Advanced financial tools</span>
+                    <span>Προηγμένα χρηματοοικονομικά εργαλεία</span>
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span>Maintenance management</span>
+                    <span>Διαχείριση συντηρήσεων</span>
           </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span>Priority support</span>
+                    <span>Προτεραιότητα υποστήριξης</span>
           </li>
                 </ul>
                 <Link 
                   href="/signup?plan=professional" 
                   className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors block text-center"
                 >
-                  Get Started
+                  Ξεκινήστε
                 </Link>
               </div>
 
               {/* Enterprise Plan */}
               <div className="bg-white rounded-2xl shadow-lg p-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Enterprise</h3>
-                <p className="text-gray-600 mb-6">For large complexes</p>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Επιχειρηματικό</h3>
+                <p className="text-gray-600 mb-6">Για μεγάλα συγκροτήματα</p>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-gray-900">€99</span>
-                  <span className="text-gray-600">/month</span>
+                  <span className="text-gray-600">/μήνα</span>
                 </div>
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span>Unlimited apartments</span>
+                    <span>Απεριόριστα διαμερίσματα</span>
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span>Full feature access</span>
+                    <span>Πλήρης πρόσβαση σε όλες τις λειτουργίες</span>
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span>Custom integrations</span>
+                    <span>Προσαρμοσμένες ενσωματώσεις</span>
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                    <span>24/7 support</span>
+                    <span>Υποστήριξη 24/7</span>
                   </li>
                 </ul>
                 <Link 
                   href="/signup?plan=enterprise" 
                   className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors block text-center"
                 >
-                  Get Started
+                  Ξεκινήστε
                 </Link>
               </div>
             </div>
@@ -222,16 +222,16 @@ export default function Home() {
         <section className="py-20 bg-blue-600">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Ready to transform your building management?
+              Έτοιμοι να μεταμορφώσετε τη διαχείριση του κτιρίου σας;
             </h2>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Join hundreds of buildings already using New Concierge to streamline their operations.
+              Ενώστε εκατοντάδες κτίρια που χρησιμοποιούν ήδη το New Concierge για να απλοποιήσουν τις λειτουργίες τους.
             </p>
             <Link 
               href="/signup" 
               className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors inline-flex items-center"
             >
-              Start Your Free Trial
+              Ξεκινήστε τη Δωρεάν Δοκιμή σας
               <Zap className="ml-2 h-5 w-5" />
             </Link>
         </div>
@@ -248,36 +248,36 @@ export default function Home() {
                 <span className="ml-2 text-xl font-bold">New Concierge</span>
               </div>
               <p className="text-gray-400">
-                Digital concierge platform for modern building management.
+                Ψηφιακή πλατφόρμα concierge για σύγχρονη διαχείριση κτιρίων.
               </p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Product</h3>
+              <h3 className="text-lg font-semibold mb-4">Προϊόν</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="#features" className="hover:text-white">Features</Link></li>
-                <li><Link href="#pricing" className="hover:text-white">Pricing</Link></li>
-                <li><Link href="/signup" className="hover:text-white">Sign Up</Link></li>
+                <li><Link href="#features" className="hover:text-white">Λειτουργίες</Link></li>
+                <li><Link href="#pricing" className="hover:text-white">Τιμές</Link></li>
+                <li><Link href="/signup" className="hover:text-white">Εγγραφή</Link></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Support</h3>
+              <h3 className="text-lg font-semibold mb-4">Υποστήριξη</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">Documentation</a></li>
-                <li><a href="#" className="hover:text-white">Help Center</a></li>
-                <li><a href="#" className="hover:text-white">Contact</a></li>
+                <li><a href="#" className="hover:text-white">Τεκμηρίωση</a></li>
+                <li><a href="#" className="hover:text-white">Κέντρο Βοήθειας</a></li>
+                <li><a href="#" className="hover:text-white">Επικοινωνία</a></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Legal</h3>
+              <h3 className="text-lg font-semibold mb-4">Νομικά</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white">Cookie Policy</a></li>
+                <li><a href="#" className="hover:text-white">Πολιτική Απορρήτου</a></li>
+                <li><a href="#" className="hover:text-white">Όροι Χρήσης</a></li>
+                <li><a href="#" className="hover:text-white">Πολιτική Cookies</a></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 New Concierge. All rights reserved.</p>
+            <p>&copy; 2025 New Concierge. Όλα τα δικαιώματα διατηρούνται.</p>
           </div>
         </div>
       </footer>
