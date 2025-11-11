@@ -195,7 +195,7 @@ export default function VerifyPaymentPage() {
           {/* Additional Information */}
           {paymentStatus.status === 'success' && (
             <div className="mt-8 bg-white rounded-2xl shadow-lg p-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">What's Next?</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">What&apos;s Next?</h2>
               <div className="space-y-4">
                 <div className="flex items-start">
                   <div className="bg-green-100 w-8 h-8 rounded-full flex items-center justify-center mr-4 mt-1">
