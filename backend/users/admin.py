@@ -123,7 +123,7 @@ class CustomUserAdmin(UserAdmin):
             return HttpResponseRedirect(reverse(f'admin:{opts.app_label}_{opts.model_name}_changelist'))
 
         # GET: δείχνουμε απλή σελίδα επιβεβαίωσης χωρίς related objects
-        # Το Django template περιμένει deleted_objects με structure: [[obj_repr, [nested_objects]]]
+        # Χρησιμοποιούμε custom template για να αποφύγουμε το πρόβλημα με τα tenant-only tables
         context = {
             **self.admin_site.each_context(request),
             'title': _('Επιβεβαίωση διαγραφής'),
@@ -132,16 +132,13 @@ class CustomUserAdmin(UserAdmin):
             'opts': opts,
             'app_label': opts.app_label,
             'preserved_filters': self.get_preserved_filters(request),
-            'perms_lacking': False,
-            'protected': [],
             'is_popup': False,
-            'deleted_objects': [[force_str(obj), []]],  # Nested structure: [obj_repr, nested_list]
-            'model_count': {force_str(opts.verbose_name): 1},
             'media': self.media,
         }
         if extra_context:
             context.update(extra_context)
-        return TemplateResponse(request, "admin/delete_confirmation.html", context)
+        # Χρησιμοποιούμε custom template που δεν χρειάζεται deleted_objects structure
+        return TemplateResponse(request, "admin/users/customuser/delete_confirmation.html", context)
 
     def delete_queryset(self, request, queryset):
         """
