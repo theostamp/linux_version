@@ -34,19 +34,42 @@ if DEBUG:
 # CSRF Trusted Origins for Railway
 CSRF_TRUSTED_ORIGINS = []
 
+# Always add production Railway domain for admin access
+production_railway_origin = 'https://linuxversion-production.up.railway.app'
+CSRF_TRUSTED_ORIGINS.append(production_railway_origin)
+
 # Add Railway domain if in production
 railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
 if railway_domain:
-    CSRF_TRUSTED_ORIGINS.extend([
-        f'https://{railway_domain}',
-        'https://linuxversion-production.up.railway.app',  # Hardcoded as fallback
-        'https://*.railway.app',
-    ])
+    railway_origin = f'https://{railway_domain}'
+    if railway_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(railway_origin)
+    
+    # Add wildcard patterns
+    if 'https://*.up.railway.app' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('https://*.up.railway.app')
+    if 'https://*.railway.app' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('https://*.railway.app')
+    
     # Debug logging
     import logging
     logger = logging.getLogger('django')
     logger.info(f"CSRF_TRUSTED_ORIGINS configured: {CSRF_TRUSTED_ORIGINS}")
     logger.info(f"RAILWAY_PUBLIC_DOMAIN: {railway_domain}")
+else:
+    # Even without RAILWAY_PUBLIC_DOMAIN, add wildcards for Railway
+    if 'https://*.up.railway.app' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('https://*.up.railway.app')
+    if 'https://*.railway.app' not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append('https://*.railway.app')
+    
+    import logging
+    logger = logging.getLogger('django')
+    logger.info(f"CSRF_TRUSTED_ORIGINS configured (no RAILWAY_PUBLIC_DOMAIN): {CSRF_TRUSTED_ORIGINS}")
+
+# Add Vercel pattern
+if 'https://*.vercel.app' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('https://*.vercel.app')
 
 # Add localhost origins in development
 if DEBUG:
@@ -453,6 +476,14 @@ _raw_csrf = get_list_env(
     "*.vercel.app"
 )
 CSRF_TRUSTED_ORIGINS = [f"http://{h}" for h in _raw_csrf] + [f"https://{h}" for h in _raw_csrf]
+
+# Always ensure Railway domain is included
+if 'https://linuxversion-production.up.railway.app' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('https://linuxversion-production.up.railway.app')
+if 'https://*.up.railway.app' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('https://*.up.railway.app')
+if 'https://*.railway.app' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('https://*.railway.app')
 
 logger.info(f"[SETTINGS] CSRF_TRUSTED_ORIGINS (first 5): {CSRF_TRUSTED_ORIGINS[:5]}...")
 logger.info(f"[SETTINGS] CSRF_TRUSTED_ORIGINS count: {len(CSRF_TRUSTED_ORIGINS)}")
