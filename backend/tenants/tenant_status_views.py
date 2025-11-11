@@ -27,9 +27,16 @@ class TenantStatusView(APIView):
         """
         Get tenant status including email verification status.
         """
+        logger.info(f"[TENANT_STATUS] Request received for tenant: {tenant_subdomain}")
+        api_key_header = request.META.get('HTTP_X_INTERNAL_API_KEY', 'NOT_FOUND')
+        logger.info(f"[TENANT_STATUS] X-Internal-API-Key header: {'PRESENT' if api_key_header != 'NOT_FOUND' else 'NOT_FOUND'}")
+        logger.info(f"[TENANT_STATUS] Request method: {request.method}")
+        
         try:
             # Get tenant
+            logger.info(f"[TENANT_STATUS] Looking up tenant with schema_name: {tenant_subdomain}")
             tenant = Client.objects.get(schema_name=tenant_subdomain)
+            logger.info(f"[TENANT_STATUS] Tenant found: {tenant.schema_name}")
             
             # Get user associated with tenant
             try:

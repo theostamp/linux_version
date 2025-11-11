@@ -53,10 +53,23 @@ export async function GET(request: NextRequest) {
       // Query backend to check tenant creation and email verification status
       try {
         // Use CORE_API_URL (server-side) or fallback to NEXT_PUBLIC_CORE_API_URL
-        const coreApiUrl = process.env.CORE_API_URL || process.env.NEXT_PUBLIC_CORE_API_URL;
+        let coreApiUrl = process.env.CORE_API_URL || process.env.NEXT_PUBLIC_CORE_API_URL;
         const internalApiKey = process.env.INTERNAL_API_SECRET_KEY;
         
         if (coreApiUrl && internalApiKey && tenantSubdomain) {
+          // Extract base URL if CORE_API_URL contains a path
+          // e.g., "https://backend.com/api/internal/tenants/create/" -> "https://backend.com"
+          try {
+            const url = new URL(coreApiUrl);
+            // If the path contains '/api/', extract base URL
+            if (url.pathname.includes('/api/')) {
+              coreApiUrl = `${url.protocol}//${url.host}`;
+            }
+          } catch (e) {
+            // If URL parsing fails, use as-is
+            console.warn('Could not parse CORE_API_URL, using as-is:', coreApiUrl);
+          }
+          
           // Check tenant status from backend
           const tenantStatusResponse = await fetch(
             `${coreApiUrl}/api/internal/tenants/${tenantSubdomain}/status/`,
