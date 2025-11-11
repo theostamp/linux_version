@@ -485,6 +485,10 @@ for origin in _raw_csrf:
     if not origin:
         continue
     
+    # Normalize wildcard patterns (e.g., .railway.app -> *.railway.app)
+    if origin.startswith('.'):
+        origin = '*' + origin
+    
     # If already has protocol, use as-is
     if origin.startswith('http://') or origin.startswith('https://'):
         if origin not in CSRF_TRUSTED_ORIGINS:
