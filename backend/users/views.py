@@ -311,24 +311,25 @@ def verify_email_view(request):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         token = serializer.validated_data['token']
     
-        try:
-            user = UserVerificationService.verify_email(token)
-            
-            # Get tenant URL if user has tenant
-            tenant_url = None
-            if hasattr(user, 'tenant') and user.tenant:
-                tenant_url = f"{user.tenant.schema_name}.newconcierge.app"
-            
-            return Response({
-                'message': 'Email επιβεβαιώθηκε επιτυχώς.',
-                'user_id': user.id,
-                'email': user.email,
-                'tenant_url': tenant_url
-            }, status=status.HTTP_200_OK)
-        except ValueError as e:
-            return Response({
-                'error': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
+    # Process verification for both GET and POST
+    try:
+        user = UserVerificationService.verify_email(token)
+        
+        # Get tenant URL if user has tenant
+        tenant_url = None
+        if hasattr(user, 'tenant') and user.tenant:
+            tenant_url = f"{user.tenant.schema_name}.newconcierge.app"
+        
+        return Response({
+            'message': 'Email επιβεβαιώθηκε επιτυχώς.',
+            'user_id': user.id,
+            'email': user.email,
+            'tenant_url': tenant_url
+        }, status=status.HTTP_200_OK)
+    except ValueError as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
