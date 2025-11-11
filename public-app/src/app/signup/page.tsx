@@ -180,6 +180,7 @@ function SignupForm() {
                   }
                   const redirectUri = `${window.location.origin}/auth/callback`;
                   const state = JSON.stringify({ 
+                    provider: 'google',
                     action: 'signup',
                     plan: formData.plan,
                     tenantSubdomain: formData.tenantSubdomain 

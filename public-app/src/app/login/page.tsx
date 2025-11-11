@@ -112,7 +112,10 @@ function LoginForm() {
 
     // Redirect to backend Google OAuth endpoint
     const redirectUri = `${window.location.origin}/auth/callback`;
-    const state = JSON.stringify({ redirect: redirectTo });
+    const state = JSON.stringify({ 
+      provider: 'google',
+      redirect: redirectTo 
+    });
     const googleAuthUrl = `${coreApiUrl}/api/users/auth/google/?redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}`;
     
     window.location.href = googleAuthUrl;
