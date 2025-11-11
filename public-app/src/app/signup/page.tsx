@@ -178,6 +178,7 @@ function SignupForm() {
                         name="firstName"
                         value={formData.firstName}
                         onChange={handleInputChange}
+                        autoComplete="given-name"
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                           errors.firstName ? 'border-red-300' : 'border-gray-300'
                         }`}
@@ -201,6 +202,7 @@ function SignupForm() {
                         name="lastName"
                         value={formData.lastName}
                         onChange={handleInputChange}
+                        autoComplete="family-name"
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                           errors.lastName ? 'border-red-300' : 'border-gray-300'
                         }`}
@@ -225,6 +227,7 @@ function SignupForm() {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
+                      autoComplete="email"
                       className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         errors.email ? 'border-red-300' : 'border-gray-300'
                       }`}
@@ -275,6 +278,7 @@ function SignupForm() {
                         name="password"
                         value={formData.password}
                         onChange={handleInputChange}
+                        autoComplete="new-password"
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                           errors.password ? 'border-red-300' : 'border-gray-300'
                         }`}
@@ -298,6 +302,7 @@ function SignupForm() {
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
+                        autoComplete="new-password"
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                           errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
                         }`}
