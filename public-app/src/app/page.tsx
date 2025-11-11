@@ -12,9 +12,12 @@ export default function Home() {
               <Building className="h-8 w-8 text-blue-600" />
               <span className="ml-2 text-2xl font-bold text-gray-900">New Concierge</span>
             </div>
-            <nav className="hidden md:flex space-x-8">
+            <nav className="hidden md:flex items-center space-x-4">
               <Link href="#features" className="text-gray-600 hover:text-gray-900">Λειτουργίες</Link>
               <Link href="#pricing" className="text-gray-600 hover:text-gray-900">Τιμές</Link>
+              <Link href="/login" className="text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                Σύνδεση
+              </Link>
               <Link href="/signup" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                 Ξεκινήστε
               </Link>
@@ -42,6 +45,12 @@ export default function Home() {
               >
                 Ξεκινήστε Δωρεάν Δοκιμή
                 <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+              <Link 
+                href="/login" 
+                className="border border-gray-300 text-gray-700 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Σύνδεση
               </Link>
               <Link 
                 href="#pricing" 
