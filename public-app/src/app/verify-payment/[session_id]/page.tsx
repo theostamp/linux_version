@@ -158,7 +158,7 @@ export default function VerifyPaymentPage() {
                 <div className="animate-pulse bg-blue-200 h-2 w-32 rounded"></div>
               </div>
               <p className="text-blue-700 text-sm">
-                This may take a few moments. Please don't close this page.
+                This may take a few moments. Please don&apos;t close this page.
               </p>
             </div>
           </div>
