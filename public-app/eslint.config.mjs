@@ -20,6 +20,11 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    rules: {
+      "react/no-unescaped-entities": "off", // Disable apostrophe escaping requirement
+    },
+  },
 ];
 
 export default eslintConfig;
