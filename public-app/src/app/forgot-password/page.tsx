@@ -30,10 +30,18 @@ function ForgotPasswordForm() {
     setError(null);
     
     try {
-      const coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
+      let coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
       if (!coreApiUrl) {
         throw new Error('Backend API not configured');
       }
+
+      // Ensure URL has protocol
+      if (!coreApiUrl.startsWith('http://') && !coreApiUrl.startsWith('https://')) {
+        coreApiUrl = `https://${coreApiUrl}`;
+      }
+      
+      // Remove trailing slash
+      coreApiUrl = coreApiUrl.replace(/\/$/, '');
 
       // Call backend password reset endpoint
       const response = await fetch(`${coreApiUrl}/api/users/password-reset/`, {

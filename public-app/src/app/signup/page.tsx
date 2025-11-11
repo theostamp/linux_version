@@ -175,11 +175,20 @@ function SignupForm() {
               <button
                 type="button"
                 onClick={() => {
-                  const coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
+                  let coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
                   if (!coreApiUrl) {
                     setErrors({ general: 'Backend API not configured. Please set NEXT_PUBLIC_CORE_API_URL environment variable.' });
                     return;
                   }
+                  
+                  // Ensure URL has protocol
+                  if (!coreApiUrl.startsWith('http://') && !coreApiUrl.startsWith('https://')) {
+                    coreApiUrl = `https://${coreApiUrl}`;
+                  }
+                  
+                  // Remove trailing slash
+                  coreApiUrl = coreApiUrl.replace(/\/$/, '');
+                  
                   const redirectUri = `${window.location.origin}/auth/callback`;
                   const state = JSON.stringify({ 
                     provider: 'google',

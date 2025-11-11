@@ -30,10 +30,18 @@ function OAuthCallback() {
 
     const handleCallback = async () => {
       try {
-        const coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
+        let coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
         if (!coreApiUrl) {
           throw new Error('Backend API not configured. Please set NEXT_PUBLIC_CORE_API_URL environment variable.');
         }
+        
+        // Ensure URL has protocol
+        if (!coreApiUrl.startsWith('http://') && !coreApiUrl.startsWith('https://')) {
+          coreApiUrl = `https://${coreApiUrl}`;
+        }
+        
+        // Remove trailing slash
+        coreApiUrl = coreApiUrl.replace(/\/$/, '');
 
         // Parse state to get redirect info
         let stateData = {};
