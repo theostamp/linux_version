@@ -60,3 +60,5 @@ CORS_ALLOWED_ORIGINS=https://newconcierge.app,https://*.vercel.app
 
 **After adding CSRF_TRUSTED_ORIGINS and redeploying, Django Admin should work!** ✅
 
+
+

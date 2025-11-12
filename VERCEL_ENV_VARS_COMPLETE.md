@@ -104,3 +104,5 @@ The code now has fallback logic:
 
 **After adding both variables and redeploying, all errors should be resolved!** ✅
 
+
+

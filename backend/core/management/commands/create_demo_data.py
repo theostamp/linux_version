@@ -31,3 +31,5 @@ class Command(BaseCommand):
         self.stdout.write(self.style.WARNING('⚠️  Demo data creation is currently handled by auto_init command.'))
         self.stdout.write(self.style.SUCCESS('✅ Use "python manage.py auto_init" to create demo data.'))
 
+
+

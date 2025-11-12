@@ -80,3 +80,5 @@ But it's **better to set it explicitly** in Railway for clarity.
 
 **After adding CSRF_TRUSTED_ORIGINS and redeploying, the CSRF error should be resolved!** ✅
 
+
+

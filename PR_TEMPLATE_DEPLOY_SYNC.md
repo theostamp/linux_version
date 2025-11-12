@@ -74,3 +74,5 @@ This PR aligns the frontend proxy configuration with Vercel deployment settings,
 3. Monitor for any issues
 4. Clean up `deploy-sync` branch if no longer needed
 
+
+

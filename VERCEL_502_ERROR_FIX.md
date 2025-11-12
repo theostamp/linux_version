@@ -157,3 +157,5 @@ After fixes:
 
 **After fixing environment variables and redeploying, the 502 error should be resolved!** ✅
 
+
+

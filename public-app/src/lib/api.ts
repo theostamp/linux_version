@@ -930,4 +930,75 @@ export const api = {
   },
 };
 
+// ============================================================================
+// Request Retry Logic (for backward compatibility)
+// ============================================================================
+
+/**
+ * Enhanced request wrapper with retry logic for rate limiting
+ * For backward compatibility with old codebase
+ */
+export const makeRequestWithRetry = async (
+  requestConfig: { method: string; url: string; data?: unknown },
+  maxAttempts: number = 3
+): Promise<{ data: unknown }> => {
+  let lastError: unknown = null;
+  
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      let result: unknown;
+      
+      switch (requestConfig.method.toLowerCase()) {
+        case 'get':
+          result = await apiGet(requestConfig.url);
+          break;
+        case 'post':
+          result = await apiPost(requestConfig.url, requestConfig.data);
+          break;
+        case 'patch':
+          result = await apiPatch(requestConfig.url, requestConfig.data);
+          break;
+        case 'delete':
+          result = await apiDelete(requestConfig.url);
+          break;
+        case 'put':
+          result = await apiPut(requestConfig.url, requestConfig.data);
+          break;
+        default:
+          throw new Error(`Unsupported method: ${requestConfig.method}`);
+      }
+      
+      // Reset retry delay on successful request
+      resetRetryDelay(requestConfig.url || 'unknown');
+      return { data: result };
+    } catch (error: unknown) {
+      lastError = error;
+      const apiError = error as { status?: number; response?: { status?: number } };
+      
+      // Only retry on 429 (rate limit) or certain network errors
+      if (apiError?.status === 429 || apiError?.response?.status === 429) {
+        if (attempt < maxAttempts) {
+          console.warn(`Request failed (attempt ${attempt}/${maxAttempts}), retrying...`, {
+            status: apiError?.status || apiError?.response?.status,
+            url: requestConfig.url,
+          });
+          
+          // Use exponential backoff for 429 errors per endpoint
+          const delayMs = getRetryDelay(requestConfig.url || 'unknown');
+          console.log(`[429 BACKOFF] Waiting ${delayMs}ms for ${requestConfig.url}`);
+          
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+          continue;
+        }
+      }
+      
+      // Don't retry on other errors
+      throw error;
+    }
+  }
+  
+  // If we get here, all attempts failed
+  throw lastError || new Error('Request failed after all retry attempts');
+};
+
 

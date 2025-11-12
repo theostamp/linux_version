@@ -45,3 +45,5 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f'❌ Auto-initialization failed: {e}'))
             sys.exit(1)
 
+
+

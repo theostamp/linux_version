@@ -117,3 +117,5 @@ CORE_API_URL=http://localhost:18000
 
 **After updating the environment variable with correct format and redeploying, the login should work!** ✅
 
+
+

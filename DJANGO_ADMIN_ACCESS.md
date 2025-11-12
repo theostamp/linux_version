@@ -170,3 +170,5 @@ python scripts/create_superuser.py --email admin@newconcierge.app --password YOU
 
 **Μετά τη δημιουργία superuser, θα έχεις πλήρη πρόσβαση στο Django Admin!** ✅
 
+
+

@@ -63,6 +63,7 @@
    - **Output Directory**: `.next` (auto-detected)
    - **Where to find**: Settings → General → Build & Development Settings
    - These are usually auto-detected from `public-app/vercel.json`
+   - **Note**: If Project Settings differ from Production Overrides, see `VERCEL_SETTINGS_SYNC_GUIDE.md` for synchronization instructions
 
 4. **Project Configuration File**
    - **File Location**: `public-app/vercel.json` (inside your app directory)

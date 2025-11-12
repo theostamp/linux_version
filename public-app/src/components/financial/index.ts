@@ -6,14 +6,31 @@ export { FinancialPage } from './FinancialPage';
 export { ProtectedFinancialRoute, ConditionalRender, PermissionButton, PermissionIcon } from './ProtectedFinancialRoute';
 export { MonthSelector } from './MonthSelector';
 
-// Placeholder exports - will be replaced with full implementations
-export { CommonExpenseCalculatorNew } from './placeholders/CommonExpenseCalculatorNew';
-export { ExpenseForm } from './placeholders/ExpenseForm';
-export { TransactionHistory } from './placeholders/TransactionHistory';
-export { ChartsContainer } from './placeholders/ChartsContainer';
-export { BulkImportWizard } from './placeholders/BulkImportWizard';
-export { ExpenseList } from './placeholders/ExpenseList';
-export { BuildingOverviewSection } from './placeholders/BuildingOverviewSection';
-export { ApartmentBalancesTab } from './placeholders/ApartmentBalancesTab';
-export { MeterReadingList } from './placeholders/MeterReadingList';
+// Main components - Full implementations
+export { CommonExpenseCalculatorNew } from './calculator/CommonExpenseCalculatorNew';
+export { ExpenseForm } from './ExpenseForm';
+export { TransactionHistory } from './TransactionHistory';
+export { ChartsContainer } from './charts/ChartsContainer';
+export { BulkImportWizard } from './BulkImportWizard';
+export { ExpenseList } from './ExpenseList';
+export { BuildingOverviewSection } from './calculator/BuildingOverviewSection';
+export { ApartmentBalancesTab } from './ApartmentBalancesTab';
+export { MeterReadingList } from './MeterReadingList';
+
+// Sub-components
+export { ServicePackageModal } from './ServicePackageModal';
+export { AmountDetailsModal } from './AmountDetailsModal';
+export { PreviousObligationsModal } from './PreviousObligationsModal';
+export { ApartmentOverviewIntegrated } from './ApartmentOverviewIntegrated';
+export { ExpenseViewModal } from './ExpenseViewModal';
+export { PaymentForm } from './PaymentForm';
+export { PaymentNotificationModal } from './PaymentNotificationModal';
+export { PaymentHistoryModal } from './PaymentHistoryModal';
+export { TransactionHistoryModal } from './TransactionHistoryModal';
+export { ApartmentFilter } from './ApartmentFilter';
+export { SupplierSelector } from './SupplierSelector';
+export { ExpenseTitleDropdown } from './ExpenseTitleDropdown';
+export { CategorySearchDropdown } from './CategorySearchDropdown';
+export { CalculatorWizard } from './calculator/CalculatorWizard';
+export { MeterReadingReport } from './MeterReadingReport';
 

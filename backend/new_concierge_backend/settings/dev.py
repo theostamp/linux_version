@@ -49,3 +49,5 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 # No proxy settings for development
 USE_X_FORWARDED_HOST = False
 
+
+

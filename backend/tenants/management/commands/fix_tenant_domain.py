@@ -101,3 +101,4 @@ class Command(BaseCommand):
                 self.stdout.write(f"  - {tenant.schema_name} ({tenant.name}) - Domains: {domain_list}")
             return
 
+

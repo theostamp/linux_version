@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { cn } from '@/lib/utils';
 
 interface ProgressBarProps {
   progress: number; // 0-100
@@ -44,13 +43,12 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
         </div>
       )}
       
-      <div className={cn("w-full bg-gray-200 rounded-full", sizeClasses[size])}>
+      <div className={`w-full bg-gray-200 rounded-full ${sizeClasses[size]}`}>
         <div 
-          className={cn(variantClasses[variant], sizeClasses[size], "rounded-full transition-all duration-300 ease-out")}
+          className={`${variantClasses[variant]} ${sizeClasses[size]} rounded-full transition-all duration-300 ease-out`}
           style={{ width: `${clampedProgress}%` }}
         />
       </div>
     </div>
   );
-};
-
+}; 
