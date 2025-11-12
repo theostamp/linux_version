@@ -96,20 +96,55 @@ export async function GET(request: NextRequest) {
               verificationStatus = 'processing';
               message = 'Η πληρωμή σας επιβεβαιώθηκε. Προετοιμάζουμε το workspace σας...';
             }
+          } else if (tenantStatusResponse.status === 404) {
+            // Tenant not found - check if enough time has passed to consider it an error
+            // If session was completed more than 2 minutes ago and tenant doesn't exist, it's likely an error
+            const sessionCreated = session.created ? session.created * 1000 : Date.now();
+            const timeSinceCreation = Date.now() - sessionCreated;
+            const twoMinutes = 2 * 60 * 1000;
+            
+            if (timeSinceCreation > twoMinutes) {
+              // Enough time has passed - likely webhook processing failed
+              verificationStatus = 'error';
+              message = 'Προέκυψε σφάλμα κατά την επεξεργασία της πληρωμής. Παρακαλώ επικοινωνήστε με την υποστήριξη.';
+            } else {
+              // Still processing - give it more time
+              verificationStatus = 'processing';
+              message = 'Η πληρωμή σας επιβεβαιώθηκε. Προετοιμάζουμε το workspace σας...';
+            }
           } else {
-            // Backend not available or tenant not created yet
+            // Backend error or unavailable
+            verificationStatus = 'error';
+            message = 'Προέκυψε σφάλμα κατά την επαλήθευση της πληρωμής. Παρακαλώ επικοινωνήστε με την υποστήριξη.';
+          }
+        } else {
+          // No backend configured - check if enough time has passed
+          const sessionCreated = session.created ? session.created * 1000 : Date.now();
+          const timeSinceCreation = Date.now() - sessionCreated;
+          const twoMinutes = 2 * 60 * 1000;
+          
+          if (timeSinceCreation > twoMinutes) {
+            verificationStatus = 'error';
+            message = 'Προέκυψε σφάλμα κατά την επεξεργασία της πληρωμής. Παρακαλώ επικοινωνήστε με την υποστήριξη.';
+          } else {
             verificationStatus = 'processing';
             message = 'Η πληρωμή σας επιβεβαιώθηκε. Προετοιμάζουμε το workspace σας...';
           }
-        } else {
-          // No backend configured - use default processing message
-          verificationStatus = 'processing';
-          message = 'Η πληρωμή σας επιβεβαιώθηκε. Προετοιμάζουμε το workspace σας...';
         }
       } catch (error) {
         console.error('Error checking tenant status:', error);
-        verificationStatus = 'processing';
-        message = 'Η πληρωμή σας επιβεβαιώθηκε. Προετοιμάζουμε το workspace σας...';
+        // Check if enough time has passed since session creation
+        const sessionCreated = session.created ? session.created * 1000 : Date.now();
+        const timeSinceCreation = Date.now() - sessionCreated;
+        const twoMinutes = 2 * 60 * 1000;
+        
+        if (timeSinceCreation > twoMinutes) {
+          verificationStatus = 'error';
+          message = 'Προέκυψε σφάλμα κατά την επαλήθευση της πληρωμής. Παρακαλώ επικοινωνήστε με την υποστήριξη.';
+        } else {
+          verificationStatus = 'processing';
+          message = 'Η πληρωμή σας επιβεβαιώθηκε. Προετοιμάζουμε το workspace σας...';
+        }
       }
     } else if (status === 'expired') {
       verificationStatus = 'error';

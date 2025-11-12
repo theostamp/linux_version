@@ -22,7 +22,7 @@ export default function VerifyPaymentPage() {
   });
 
   useEffect(() => {
-      if (!sessionId) {
+    if (!sessionId) {
       setPaymentStatus({
         status: 'error',
         message: 'Μη έγκυρο session ID',
@@ -65,8 +65,8 @@ export default function VerifyPaymentPage() {
                 return;
               } else if (status === 'processing') {
                 // Still processing - update message and continue polling
-                setPaymentStatus({
-                  status: 'loading',
+        setPaymentStatus({
+          status: 'loading',
                   message: message || 'Προετοιμάζουμε το workspace σας...'
                 });
               } else if (status === 'error') {
@@ -83,17 +83,28 @@ export default function VerifyPaymentPage() {
               attempts++;
             } catch (error) {
               console.error('Error polling payment status:', error);
-              // Continue polling on error (might be temporary)
+              // If it's a network error or API error, check if we should stop polling
+              const errorMessage = error instanceof Error ? error.message : String(error);
+              // If error indicates a permanent failure, stop polling
+              if (errorMessage.includes('Failed to verify payment') || errorMessage.includes('Session not found')) {
+                setPaymentStatus({
+                  status: 'error',
+                  message: 'Προέκυψε σφάλμα κατά την επαλήθευση της πληρωμής. Παρακαλώ επικοινωνήστε με την υποστήριξη.',
+                  error: errorMessage
+                });
+                return;
+              }
+              // Continue polling on temporary errors
               await new Promise(resolve => setTimeout(resolve, 5000));
               attempts++;
             }
           }
 
           // Max attempts reached - show pending email verification
-          setPaymentStatus({
+        setPaymentStatus({
             status: 'pending',
             message: 'Η πληρωμή σας επιβεβαιώθηκε! Έχουμε στείλει email επιβεβαίωσης. Παρακαλώ ελέγξτε το inbox σας.'
-          });
+        });
         };
 
         await pollStatus();

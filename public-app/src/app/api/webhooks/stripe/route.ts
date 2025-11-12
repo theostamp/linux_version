@@ -42,9 +42,15 @@ export async function POST(request: NextRequest) {
     console.log('Received Stripe webhook event:', event.type);
 
     // Handle the event
+    let handlerError: Error | null = null;
     switch (event.type) {
       case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        try {
+          await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        } catch (error) {
+          handlerError = error instanceof Error ? error : new Error(String(error));
+          console.error('Error in checkout.session.completed handler:', handlerError);
+        }
         break;
       case 'customer.subscription.created':
         await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
@@ -65,6 +71,14 @@ export async function POST(request: NextRequest) {
         console.log(`Unhandled event type: ${event.type}`);
     }
 
+    // If handler failed, return error so Stripe can retry
+    if (handlerError) {
+      return NextResponse.json(
+        { error: handlerError.message },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Webhook error:', error);
@@ -77,25 +91,22 @@ export async function POST(request: NextRequest) {
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   console.log('Processing checkout.session.completed:', session.id);
-  try {
-    const metadata = session.metadata;
-    if (!metadata) {
-      console.error('No metadata found in checkout session');
-      return;
-    }
+  const metadata = session.metadata;
+  if (!metadata) {
+    throw new Error('No metadata found in checkout session');
+  }
 
-    const {
-      tenant_subdomain,
-      plan,
-      user_email,
-      user_first_name,
-      user_last_name
-    } = metadata;
+  const {
+    tenant_subdomain,
+    plan,
+    user_email,
+    user_first_name,
+    user_last_name
+  } = metadata;
 
-    if (!tenant_subdomain || !plan || !user_email) {
-      console.error('Missing required metadata:', { tenant_subdomain, plan, user_email });
-      return;
-    }
+  if (!tenant_subdomain || !plan || !user_email) {
+    throw new Error(`Missing required metadata: tenant_subdomain=${tenant_subdomain}, plan=${plan}, user_email=${user_email}`);
+  }
 
     console.log('Creating tenant via Core API:', {
       tenant_subdomain,
@@ -105,8 +116,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
     const coreApiUrl = process.env.CORE_API_URL || process.env.NEXT_PUBLIC_CORE_API_URL;
     if (!coreApiUrl) {
-      console.error('Backend API not configured');
-      return;
+      throw new Error('Backend API not configured');
     }
     
     const coreApiResponse = await fetch(coreApiUrl, {
@@ -132,7 +142,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     });
 
     if (!coreApiResponse.ok) {
-      const errorData = await coreApiResponse.json();
+      const errorData = await coreApiResponse.json().catch(() => ({}));
       console.error('Core API error:', errorData);
       throw new Error(`Core API failed: ${errorData.error || 'Unknown error'}`);
     }
@@ -169,9 +179,6 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         // Don't fail the webhook if email fails - tenant is already created
       }
     }
-  } catch (error) {
-    console.error('Error handling checkout session completed:', error);
-  }
 }
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
