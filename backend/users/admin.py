@@ -94,20 +94,39 @@ class CustomUserAdmin(UserAdmin):
             return
         with transaction.atomic():
             with connection.cursor() as cursor:
-                # Μετατρέπουμε list σε tuple για IN clause ή array για ANY
+                # Prepare IN clause for multiple IDs or single WHERE
                 if len(ids) == 1:
-                    # Single ID - χρησιμοποιούμε απλό WHERE
-                    cursor.execute(
-                        "DELETE FROM users_customuser WHERE id = %s",
-                        [ids[0]],
-                    )
+                    where_clause = "user_id = %s"
+                    params = [ids[0]]
                 else:
-                    # Multiple IDs - χρησιμοποιούμε IN clause
                     placeholders = ','.join(['%s'] * len(ids))
-                    cursor.execute(
-                        f"DELETE FROM users_customuser WHERE id IN ({placeholders})",
-                        ids,
-                    )
+                    where_clause = f"user_id IN ({placeholders})"
+                    params = ids
+                
+                # Delete related objects first (in public schema)
+                # These are related via foreign keys that won't cascade with raw DELETE
+                related_tables = [
+                    'users_passwordresettoken',
+                    'users_loginattempt', 
+                    'users_tenantinvitation',
+                    'billing_usersubscription',
+                ]
+                
+                for table in related_tables:
+                    try:
+                        cursor.execute(f"DELETE FROM {table} WHERE {where_clause}", params)
+                    except ProgrammingError as e:
+                        # Table might not exist in all environments - log but continue
+                        error_str = str(e)
+                        if 'does not exist' not in error_str:
+                            raise
+                
+                # Now delete the user
+                if len(ids) == 1:
+                    cursor.execute("DELETE FROM users_customuser WHERE id = %s", [ids[0]])
+                else:
+                    placeholders = ','.join(['%s'] * len(ids))
+                    cursor.execute(f"DELETE FROM users_customuser WHERE id IN ({placeholders})", ids)
 
     def delete_view(self, request, object_id, extra_context=None):
         """
@@ -136,6 +155,18 @@ class CustomUserAdmin(UserAdmin):
                         reverse(f'admin:{opts.app_label}_{opts.model_name}_change', args=[object_id])
                     )
                 raise
+            except Exception as e:
+                # Catch any other errors and display them
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error deleting user {obj.pk}: {e}", exc_info=True)
+                messages.error(
+                    request,
+                    _("Αποτυχία διαγραφής: %(error)s") % {'error': str(e)},
+                )
+                return HttpResponseRedirect(
+                    reverse(f'admin:{opts.app_label}_{opts.model_name}_changelist')
+                )
 
             self.log_deletion(request, obj, obj_display)
             messages.success(request, _('Ο χρήστης "%(obj)s" διαγράφηκε επιτυχώς.') % {'obj': obj_display})
