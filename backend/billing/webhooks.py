@@ -153,8 +153,8 @@ class StripeWebhookView(APIView):
                         first_name=user_first_name,
                         last_name=user_last_name,
                         is_active=False,  # Needs email verification
-                        stripe_checkout_session_id=stripe_checkout_session_id,
-                        username=user_email  # Required field from AbstractBaseUser
+                        stripe_checkout_session_id=stripe_checkout_session_id
+                        # username is set automatically by CustomUserManager to email
                     )
                     logger.info(f"[WEBHOOK] Created new user: {user.email}")
             else:
