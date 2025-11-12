@@ -2,12 +2,38 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building, Loader2 } from 'lucide-react';
+import { Building, Loader2, Users, DollarSign, FileText, AlertCircle } from 'lucide-react';
+import { apiGet } from '@/lib/api';
+
+interface User {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  office_name?: string;
+}
+
+interface BuildingData {
+  id: number;
+  name: string;
+  address: string;
+  apartments_count: number;
+}
+
+interface DashboardStats {
+  buildings_count?: number;
+  apartments_count?: number;
+  total_residents?: number;
+}
 
 export default function DashboardPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [buildings, setBuildings] = useState<BuildingData[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({});
 
   useEffect(() => {
     // Check if user is authenticated
@@ -18,41 +44,47 @@ export default function DashboardPage() {
       return;
     }
 
-    // Get the current hostname to determine tenant
-    const hostname = window.location.hostname;
-    const tenantSubdomain = hostname.split('.')[0];
-    
-    // Get the backend API URL
-    const coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL || 'https://linuxversion-production.up.railway.app';
-    
-    // Verify token and get user info
-    fetch(`${coreApiUrl}/api/users/me/`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Authentication failed');
-        }
-        return response.json();
-      })
-      .then(userData => {
-        setIsLoading(false);
-        // For now, redirect to a placeholder or show tenant info
-        // In the future, this should load the actual dashboard from Django backend
-        setError(null);
-      })
-      .catch(err => {
-        console.error('Dashboard error:', err);
-        setError('Failed to load dashboard');
-        setIsLoading(false);
-        // Redirect to login if token is invalid
+    loadDashboardData();
+  }, [router]);
+
+  const loadDashboardData = async () => {
+    try {
+      // Load user info
+      const userData = await apiGet<User>('/users/me/');
+      setUser(userData);
+
+      // Load buildings
+      try {
+        const buildingsData = await apiGet<BuildingData[]>('/buildings/');
+        setBuildings(buildingsData || []);
+        
+        // Calculate stats
+        const totalApartments = buildingsData?.reduce((sum, b) => sum + (b.apartments_count || 0), 0) || 0;
+        setStats({
+          buildings_count: buildingsData?.length || 0,
+          apartments_count: totalApartments,
+        });
+      } catch (buildingsError) {
+        console.warn('Could not load buildings:', buildingsError);
+        // Buildings might not be available yet, continue anyway
+      }
+
+      setIsLoading(false);
+    } catch (err: any) {
+      console.error('Dashboard error:', err);
+      
+      // If 401, redirect to login
+      if (err.status === 401) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         router.push('/login?redirect=/dashboard');
-      });
-  }, [router]);
+        return;
+      }
+      
+      setError(err.message || 'Failed to load dashboard');
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -85,26 +117,135 @@ export default function DashboardPage() {
     );
   }
 
-  // Placeholder dashboard - in production this should load the actual dashboard from Django backend
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="flex items-center mb-6">
-            <Building className="h-8 w-8 text-blue-600 mr-3" />
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <p className="text-blue-800">
-              Το dashboard θα φορτωθεί σύντομα. Αυτή τη στιγμή, το tenant domain δείχνει στο Django backend.
-            </p>
-            <p className="text-blue-700 text-sm mt-2">
-              Για να λειτουργήσει πλήρως, το tenant domain πρέπει να δείχνει στο Vercel (Next.js frontend) 
-              και το Next.js να κάνει proxy για τα API calls προς το Django backend.
-            </p>
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center">
+              <Building className="h-8 w-8 text-blue-600" />
+              <span className="ml-2 text-2xl font-bold text-gray-900">New Concierge</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              {user && (
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">{user.first_name} {user.last_name}</p>
+                  <p className="text-xs text-gray-500">{user.email}</p>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  localStorage.removeItem('access_token');
+                  localStorage.removeItem('refresh_token');
+                  router.push('/login');
+                }}
+                className="text-gray-600 hover:text-gray-900 text-sm"
+              >
+                Αποσύνδεση
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Section */}
+        {user && (
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Καλώς ήρθατε, {user.first_name}!
+            </h1>
+            <p className="text-gray-600">
+              {user.office_name || 'Dashboard διαχείρισης κτιρίου'}
+            </p>
+          </div>
+        )}
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="flex items-center">
+              <Building className="h-12 w-12 text-blue-600 mr-4" />
+              <div>
+                <p className="text-sm font-medium text-gray-600">Κτίρια</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.buildings_count || 0}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="flex items-center">
+              <Users className="h-12 w-12 text-green-600 mr-4" />
+              <div>
+                <p className="text-sm font-medium text-gray-600">Διαμερίσματα</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.apartments_count || 0}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="flex items-center">
+              <FileText className="h-12 w-12 text-purple-600 mr-4" />
+              <div>
+                <p className="text-sm font-medium text-gray-600">Ρόλος</p>
+                <p className="text-lg font-bold text-gray-900 capitalize">
+                  {user?.role === 'manager' ? 'Διαχειριστής' : user?.role || 'Χρήστης'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Buildings List */}
+        {buildings.length > 0 ? (
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Κτίρια</h2>
+            <div className="space-y-4">
+              {buildings.map((building) => (
+                <div
+                  key={building.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => {
+                    // Navigate to building details
+                    window.location.href = `/buildings/${building.id}`;
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{building.name}</h3>
+                      <p className="text-sm text-gray-600">{building.address}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">Διαμερίσματα</p>
+                      <p className="text-xl font-bold text-gray-900">{building.apartments_count || 0}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="text-center">
+              <Building className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Δεν υπάρχουν κτίρια ακόμα</h2>
+              <p className="text-gray-600 mb-6">
+                Ξεκινήστε προσθέτοντας το πρώτο σας κτίριο για να αρχίσετε τη διαχείριση.
+              </p>
+              <button
+                onClick={() => {
+                  // Navigate to add building
+                  window.location.href = '/buildings/new';
+                }}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              >
+                Προσθήκη Κτιρίου
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

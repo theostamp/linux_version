@@ -85,7 +85,9 @@ function getHeaders(): Record<string, string> {
   if (typeof window !== "undefined") {
     // Add auth token if available
     const token =
-      localStorage.getItem("access") || localStorage.getItem("accessToken");
+      localStorage.getItem("access_token") || 
+      localStorage.getItem("access") || 
+      localStorage.getItem("accessToken");
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -210,3 +212,5 @@ export async function apiDelete<T>(path: string): Promise<T> {
   
   return {} as T;
 }
+
+
