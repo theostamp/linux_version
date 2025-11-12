@@ -98,11 +98,24 @@ def login_view(request):
         if user is None:
             try:
                 existing_user = user_model.objects.get(email=email)
-                # User exists but password is wrong
-                return Response(
-                    {'error': 'Ο κωδικός που εισάγατε δεν είναι σωστός. Παρακαλώ δοκιμάστε ξανά.'},
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
+                # Check why authentication failed
+                if not existing_user.is_active:
+                    if not existing_user.email_verified:
+                        return Response(
+                            {'error': 'Παρακαλώ επιβεβαιώστε το email σας πριν από τη σύνδεση. Ελέγξτε το inbox σας για το email επιβεβαίωσης.'},
+                            status=status.HTTP_401_UNAUTHORIZED
+                        )
+                    else:
+                        return Response(
+                            {'error': 'Ο λογαριασμός σας δεν είναι ενεργός. Παρακαλώ επικοινωνήστε με την υποστήριξη.'},
+                            status=status.HTTP_401_UNAUTHORIZED
+                        )
+                else:
+                    # User exists and is active but password is wrong
+                    return Response(
+                        {'error': 'Ο κωδικός που εισάγατε δεν είναι σωστός. Παρακαλώ δοκιμάστε ξανά.'},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
             except user_model.DoesNotExist:
                 # User doesn't exist
                 return Response(
