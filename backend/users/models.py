@@ -15,6 +15,7 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError('Το email είναι υποχρεωτικό')
         email = self.normalize_email(email)
+        extra_fields.setdefault('username', email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -38,6 +39,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         OFFICE_MANAGER = 'manager', _('Office Manager')  # Γραφείο διαχείρισης (Tenant owner)
 
     email = models.EmailField(unique=True)
+    username = models.CharField(
+        max_length=150,
+        blank=True,
+        default='',
+        db_column='username',
+        help_text=_('Legacy username field for compatibility with existing data')
+    )
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
     is_active = models.BooleanField(default=False)  # Changed to False - requires email verification
