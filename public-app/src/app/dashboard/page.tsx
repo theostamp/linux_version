@@ -131,10 +131,8 @@ export default function DashboardPage() {
             <div className="flex items-center">
               <FileText className="h-12 w-12 text-purple-600 mr-4" />
               <div>
-                <p className="text-sm font-medium text-gray-600">Ρόλος</p>
-                <p className="text-lg font-bold text-gray-900 capitalize">
-                  {user?.role === 'manager' ? 'Διαχειριστής' : user?.role || 'Χρήστης'}
-                </p>
+                <p className="text-sm font-medium text-gray-600">Σύνολο</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.buildings_count || 0}</p>
               </div>
             </div>
           </div>

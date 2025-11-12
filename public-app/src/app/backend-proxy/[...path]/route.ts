@@ -43,11 +43,16 @@ const buildTargetUrl = (ctx: RouteContext, request: NextRequest) => {
 
 const createForwardHeaders = (request: NextRequest) => {
   const forwardHeaders = new Headers(request.headers);
-  forwardHeaders.set("X-Forwarded-Host", request.headers.get("host") ?? "");
+  const host = request.headers.get("host") ?? "";
+  
+  // Set Host header for tenant routing in Django
+  forwardHeaders.set("Host", host);
+  forwardHeaders.set("X-Forwarded-Host", host);
   forwardHeaders.set(
     "X-Forwarded-Proto",
     request.headers.get("x-forwarded-proto") ?? "https",
   );
+  
   return stripHopByHopHeaders(forwardHeaders);
 };
 
