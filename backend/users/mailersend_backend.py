@@ -15,8 +15,8 @@ class MailerSendEmailBackend(BaseEmailBackend):
     def __init__(self, fail_silently=False, **kwargs):
         super().__init__(fail_silently=fail_silently, **kwargs)
         self.api_key = os.getenv('MAILERSEND_API_KEY')
-        # MailerSend API v1 endpoint (note: /emails with 's')
-        self.api_url = 'https://api.mailersend.com/v1/emails'
+        # MailerSend API v1 endpoint - correct endpoint is /email (singular)
+        self.api_url = 'https://api.mailersend.com/v1/email'
         # Use verified newconcierge.app domain
         self.from_email = os.getenv('MAILERSEND_FROM_EMAIL', 'noreply@newconcierge.app')
         logger.info(f"MailerSend backend initialized with from_email: {self.from_email}, API URL: {self.api_url}")
