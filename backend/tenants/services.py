@@ -1,6 +1,7 @@
 # backend/tenants/services.py
 
 import logging
+import os
 from django.db import transaction
 from django.utils import timezone
 from django.utils.text import slugify
@@ -106,9 +107,9 @@ class TenantService:
     
     def _create_domain(self, tenant, schema_name):
         """Create the domain for the tenant."""
-        # Determine the base domain
-        base_domain = "localhost"  # Default for development
-        # In production, this would be your actual domain
+        # Determine the base domain from environment variable
+        # Default to localhost for development, newconcierge.app for production
+        base_domain = os.getenv("TENANT_BASE_DOMAIN", "localhost")
         
         domain_name = f"{schema_name}.{base_domain}"
         
@@ -118,7 +119,7 @@ class TenantService:
             is_primary=True
         )
         
-        logger.info(f"Created domain: {domain_name}")
+        logger.info(f"Created domain: {domain_name} (base_domain: {base_domain})")
         return domain
     
     def _run_tenant_migrations(self, schema_name):
