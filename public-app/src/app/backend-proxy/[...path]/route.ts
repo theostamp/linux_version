@@ -37,7 +37,9 @@ const buildTargetUrl = (ctx: RouteContext, request: NextRequest) => {
   const base = resolveBackendBaseUrl();
   const path = (ctx.params.path ?? []).join("/");
   const search = request.nextUrl.search;
-  const url = `${base}/${path}${search}`;
+  // Django backend expects /api prefix, so add it if not present
+  const apiPath = path.startsWith("api/") ? path : `api/${path}`;
+  const url = `${base}/${apiPath}${search}`;
   return url;
 };
 
