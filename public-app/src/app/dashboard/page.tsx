@@ -1,11 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Building, Loader2, Users, DollarSign, FileText, AlertCircle } from 'lucide-react';
+import { Building, Loader2, Users, DollarSign, FileText } from 'lucide-react';
 import { apiGet } from '@/lib/api';
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
 
 interface User {
   id: number;
@@ -30,31 +27,17 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null);
   const [buildings, setBuildings] = useState<BuildingData[]>([]);
   const [stats, setStats] = useState<DashboardStats>({});
 
   useEffect(() => {
-    // Check if user is authenticated
-    const accessToken = localStorage.getItem('access_token');
-    
-    if (!accessToken) {
-      router.push('/login?redirect=/dashboard');
-      return;
-    }
-
     loadDashboardData();
-  }, [router]);
+  }, []);
 
   const loadDashboardData = async () => {
     try {
-      // Load user info
-      const userData = await apiGet<User>('/users/me/');
-      setUser(userData);
-
       // Load buildings
       try {
         const buildingsData = await apiGet<BuildingData[]>('/buildings/');
@@ -90,7 +73,7 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Φόρτωση dashboard...</p>
@@ -101,18 +84,12 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md">
           <div className="text-center">
             <Building className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Σφάλμα</h1>
             <p className="text-gray-600 mb-6">{error}</p>
-            <button
-              onClick={() => router.push('/login')}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Σύνδεση
-            </button>
           </div>
         </div>
       </div>
@@ -120,28 +97,16 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <Sidebar user={user || undefined} />
-
-      {/* Main Content */}
-      <div className="lg:pl-64">
-        {/* Header */}
-        <Header user={user || undefined} />
-
-        {/* Dashboard Content */}
-        <main className="p-6">
-        {/* Welcome Section */}
-        {user && (
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Καλώς ήρθατε, {user.first_name}!
-            </h1>
-            <p className="text-gray-600">
-              {user.office_name || 'Dashboard διαχείρισης κτιρίου'}
-            </p>
-          </div>
-        )}
+    <main className="p-6">
+      {/* Welcome Section */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Dashboard
+        </h1>
+        <p className="text-gray-600">
+          Επισκόπηση των κτιρίων και των διαμερισμάτων σας
+        </p>
+      </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -226,9 +191,7 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }
 
