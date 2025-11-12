@@ -92,36 +92,47 @@ class CustomUserAdmin(UserAdmin):
         """
         if not ids:
             return
+        
+        # Prepare IN clause for multiple IDs or single WHERE
+        if len(ids) == 1:
+            where_clause = "user_id = %s"
+            params = [ids[0]]
+        else:
+            placeholders = ','.join(['%s'] * len(ids))
+            where_clause = f"user_id IN ({placeholders})"
+            params = ids
+        
+        # Delete related objects first (in public schema)
+        # Each deletion in its own transaction to avoid "transaction aborted" errors
+        related_tables = [
+            'users_passwordresettoken',
+            'users_loginattempt', 
+            'users_tenantinvitation',
+            'billing_usersubscription',
+        ]
+        
+        for table in related_tables:
+            try:
+                with transaction.atomic():
+                    with connection.cursor() as cursor:
+                        cursor.execute(f"DELETE FROM {table} WHERE {where_clause}", params)
+            except ProgrammingError as e:
+                # Table might not exist in all environments - skip silently
+                error_str = str(e)
+                if 'does not exist' not in error_str.lower():
+                    # Log but don't raise - continue with other tables
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Could not delete from {table}: {e}")
+            except Exception as e:
+                # Log other errors but continue
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Error deleting from {table}: {e}")
+        
+        # Now delete the user in main transaction
         with transaction.atomic():
             with connection.cursor() as cursor:
-                # Prepare IN clause for multiple IDs or single WHERE
-                if len(ids) == 1:
-                    where_clause = "user_id = %s"
-                    params = [ids[0]]
-                else:
-                    placeholders = ','.join(['%s'] * len(ids))
-                    where_clause = f"user_id IN ({placeholders})"
-                    params = ids
-                
-                # Delete related objects first (in public schema)
-                # These are related via foreign keys that won't cascade with raw DELETE
-                related_tables = [
-                    'users_passwordresettoken',
-                    'users_loginattempt', 
-                    'users_tenantinvitation',
-                    'billing_usersubscription',
-                ]
-                
-                for table in related_tables:
-                    try:
-                        cursor.execute(f"DELETE FROM {table} WHERE {where_clause}", params)
-                    except ProgrammingError as e:
-                        # Table might not exist in all environments - log but continue
-                        error_str = str(e)
-                        if 'does not exist' not in error_str:
-                            raise
-                
-                # Now delete the user
                 if len(ids) == 1:
                     cursor.execute("DELETE FROM users_customuser WHERE id = %s", [ids[0]])
                 else:
