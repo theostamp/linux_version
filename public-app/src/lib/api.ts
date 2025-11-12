@@ -772,7 +772,7 @@ export async function fetchRequests(filters: { status?: string; buildingId?: num
     params.building = filters.buildingId;
   }
   
-  const data = await apiGet<Paginated<UserRequest>>('/requests/', params);
+  const data = await apiGet<Paginated<UserRequest>>('/user-requests/', params);
   return extractResults(data);
 }
 
@@ -788,30 +788,30 @@ export async function fetchTopRequests(buildingId: number | null): Promise<UserR
   params.ordering = '-support_count';
   params.page_size = 10;
   
-  const data = await apiGet<Paginated<UserRequest>>('/requests/', params);
+  const data = await apiGet<Paginated<UserRequest>>('/user-requests/', params);
   return extractResults(data);
 }
 
 export async function fetchRequest(id: number | string): Promise<UserRequest> {
-  return apiGet<UserRequest>(`/requests/${id}/`);
+  return apiGet<UserRequest>(`/user-requests/${id}/`);
 }
 
 export async function createUserRequest(payload: CreateUserRequestPayload): Promise<UserRequest> {
-  return apiPost<UserRequest>('/requests/', payload);
+  return apiPost<UserRequest>('/user-requests/', payload);
 }
 
 export async function updateUserRequest(id: number, payload: UpdateUserRequestPayload): Promise<UserRequest> {
-  return apiPatch<UserRequest>(`/requests/${id}/`, payload);
+  return apiPatch<UserRequest>(`/user-requests/${id}/`, payload);
 }
 
 export async function deleteUserRequest(requestId: number): Promise<void> {
-  await apiDelete(`/requests/${requestId}/`);
+  await apiDelete(`/user-requests/${requestId}/`);
 }
 
 export async function toggleSupportRequest(
   id: number
 ): Promise<{ status: string; supporter_count: number; supported: boolean }> {
-  return apiPost<{ status: string; supporter_count: number; supported: boolean }>(`/requests/${id}/support/`, {});
+  return apiPost<{ status: string; supporter_count: number; supported: boolean }>(`/user-requests/${id}/support/`, {});
 }
 
 export async function fetchObligationsSummary(): Promise<{ pending_payments?: number; maintenance_tickets?: number }> {
