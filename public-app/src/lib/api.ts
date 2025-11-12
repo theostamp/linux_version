@@ -178,7 +178,15 @@ export async function apiGet<T>(
   path: string,
   params?: Record<string, string | number | undefined>,
 ): Promise<T> {
-  const url = new URL(getApiUrl(path));
+  const apiUrl = getApiUrl(path);
+  const url = new URL(apiUrl);
+  
+  // Preserve trailing slash - URL constructor removes it from pathname
+  const hadTrailingSlash = apiUrl.endsWith('/') && !apiUrl.includes('?');
+  if (hadTrailingSlash && !url.pathname.endsWith('/')) {
+    url.pathname = `${url.pathname}/`;
+  }
+  
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null) {
