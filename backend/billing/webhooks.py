@@ -108,16 +108,16 @@ class StripeWebhookView(APIView):
         user_first_name = metadata.get('user_first_name', '')
         user_last_name = metadata.get('user_last_name', '')
         
-        # Convert plan name to plan_id if needed
-        plan_id = plan_id_from_metadata
-        if not plan_id and plan_name:
-            plan_mapping = {
-                'basic': 1,
-                'professional': 2,
-                'enterprise': 3,
+        # Convert plan name to plan_type for lookup
+        plan_type = None
+        if plan_name:
+            plan_type_mapping = {
+                'basic': 'starter',
+                'professional': 'professional',
+                'enterprise': 'enterprise',
             }
-            plan_id = plan_mapping.get(plan_name.lower())
-            if not plan_id:
+            plan_type = plan_type_mapping.get(plan_name.lower())
+            if not plan_type:
                 logger.error(f"[WEBHOOK] Invalid plan name: {plan_name}")
                 return
 
@@ -142,8 +142,8 @@ class StripeWebhookView(APIView):
                     if not all([user_email, tenant_subdomain]):
                         logger.error(f"[WEBHOOK] Missing required metadata to create user: email={user_email}, tenant={tenant_subdomain}")
                         return
-                    if not plan_id:
-                        logger.error(f"[WEBHOOK] Missing plan_id or plan name in metadata")
+                    if not plan_type:
+                        logger.error(f"[WEBHOOK] Missing plan name in metadata")
                         return
                     
                     logger.info(f"[WEBHOOK] Creating new user from metadata: {user_email}")
@@ -184,18 +184,24 @@ class StripeWebhookView(APIView):
                     user.email.split('@')[0]
                 )
                 
-                # Get plan
+                # Get plan by plan_type (more reliable than ID)
                 try:
-                    plan = SubscriptionPlan.objects.get(id=plan_id)
+                    if plan_id_from_metadata:
+                        # Try by ID first if provided
+                        plan = SubscriptionPlan.objects.get(id=plan_id_from_metadata)
+                    else:
+                        # Use plan_type lookup
+                        plan = SubscriptionPlan.objects.get(plan_type=plan_type)
+                    logger.info(f"[WEBHOOK] Found plan: {plan.name} (ID: {plan.id}, Type: {plan.plan_type})")
                 except SubscriptionPlan.DoesNotExist:
-                    logger.error(f"[WEBHOOK] Plan {plan_id} not found")
+                    logger.error(f"[WEBHOOK] Plan not found: plan_type={plan_type}, plan_id={plan_id_from_metadata}")
                     return
 
                 # Create tenant + subscription
                 tenant, subscription = tenant_service.create_tenant_and_subscription(
                     schema_name=schema_name,
                     user=user,
-                    plan_id=plan_id,
+                    plan_id=plan.id,  # Use the actual plan ID from database
                     stripe_customer_id=stripe_customer_id,
                     stripe_subscription_id=stripe_subscription_id,
                     stripe_checkout_session_id=stripe_checkout_session_id
