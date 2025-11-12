@@ -53,6 +53,10 @@ def login_view(request):
     POST /api/users/login/
     Δέχεται JSON { email, password }, επιστρέφει JWT tokens + user data.
     """
+    # Handle OPTIONS request for CORS preflight
+    if request.method == 'OPTIONS':
+        return Response({}, status=status.HTTP_200_OK)
+    
     print(">>> LOGIN_VIEW CALLED - Method:", request.method)
     print(">>> LOGIN_VIEW - Request data:", request.data)
     print(">>> LOGIN_VIEW - Request headers:", dict(request.headers))

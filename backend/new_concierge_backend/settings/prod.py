@@ -98,6 +98,7 @@ CORS_ALLOWED_ORIGINS = [o.strip() for o in CORS_ORIGINS_STR.split(",") if o.stri
 # Vercel preview deployments support
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://[\w\.-]+\.vercel\.app$",  # Vercel preview deployments
+    r"^https://[\w\.-]+\.newconcierge\.app$",  # New Concierge app domains
 ]
 
 logger.info(f"[PROD SETTINGS] ALLOWED_HOSTS: {ALLOWED_HOSTS}")
