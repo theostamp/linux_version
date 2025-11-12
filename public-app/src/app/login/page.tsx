@@ -18,6 +18,8 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -105,10 +107,63 @@ function LoginForm() {
       
     } catch (error) {
       console.error('Login error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Προέκυψε σφάλμα κατά τη σύνδεση. Παρακαλώ δοκιμάστε ξανά.';
       setErrors({ 
-        general: error instanceof Error ? error.message : 'Προέκυψε σφάλμα κατά τη σύνδεση. Παρακαλώ δοκιμάστε ξανά.' 
+        general: errorMessage
       });
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerificationEmail = async () => {
+    if (!formData.email) {
+      setErrors({ general: 'Παρακαλώ εισάγετε το email σας πρώτα.' });
+      return;
+    }
+
+    setIsResendingEmail(true);
+    setResendSuccess(false);
+    setErrors({});
+
+    try {
+      let coreApiUrl = process.env.NEXT_PUBLIC_CORE_API_URL;
+      if (!coreApiUrl) {
+        throw new Error('Backend API not configured');
+      }
+
+      // Ensure URL has protocol
+      if (!coreApiUrl.startsWith('http://') && !coreApiUrl.startsWith('https://')) {
+        coreApiUrl = `https://${coreApiUrl}`;
+      }
+      
+      // Remove trailing slash
+      coreApiUrl = coreApiUrl.replace(/\/$/, '');
+
+      const response = await fetch(`${coreApiUrl}/api/users/resend-verification/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Αποτυχία αποστολής email');
+      }
+
+      setResendSuccess(true);
+      setErrors({});
+    } catch (error) {
+      console.error('Resend email error:', error);
+      setErrors({
+        general: error instanceof Error ? error.message : 'Αποτυχία αποστολής email. Παρακαλώ δοκιμάστε ξανά.'
+      });
+    } finally {
+      setIsResendingEmail(false);
     }
   };
 
@@ -169,7 +224,26 @@ function LoginForm() {
             
             {errors.general && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-                {errors.general}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    {errors.general}
+                    {errors.general.includes('επιβεβαιώστε το email') && (
+                      <button
+                        onClick={handleResendVerificationEmail}
+                        disabled={isResendingEmail}
+                        className="mt-2 text-sm underline hover:no-underline font-semibold block"
+                      >
+                        {isResendingEmail ? 'Αποστολή...' : 'Επανάληψη αποστολής email επιβεβαίωσης'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {resendSuccess && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+                Το email επιβεβαίωσης στάλθηκε επιτυχώς! Ελέγξτε το inbox σας (και spam folder).
               </div>
             )}
 
