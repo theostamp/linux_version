@@ -815,7 +815,18 @@ export async function toggleSupportRequest(
 }
 
 export async function fetchObligationsSummary(): Promise<{ pending_payments?: number; maintenance_tickets?: number }> {
-  return apiGet<{ pending_payments?: number; maintenance_tickets?: number }>('/financial/obligations/summary/');
+  try {
+    return await apiGet<{ pending_payments?: number; maintenance_tickets?: number }>('/financial/obligations/summary/');
+  } catch (error: unknown) {
+    // If endpoint doesn't exist (404), return empty data instead of throwing
+    const apiError = error as { status?: number; response?: { status?: number } };
+    if (apiError?.status === 404 || apiError?.response?.status === 404) {
+      console.warn('[fetchObligationsSummary] Endpoint not found, returning empty data');
+      return { pending_payments: 0, maintenance_tickets: 0 };
+    }
+    // Re-throw other errors
+    throw error;
+  }
 }
 
 

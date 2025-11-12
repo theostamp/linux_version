@@ -150,11 +150,11 @@ function DashboardContent() {
       textColor: 'text-yellow-700',
       link: '/requests',
       description: obligations 
-        ? `${obligations.pending_payments + obligations.maintenance_tickets} συνολικά`
+        ? `${(obligations.pending_payments || 0) + (obligations.maintenance_tickets || 0)} συνολικά`
         : obligationsLoading 
           ? 'Φόρτωση...' 
           : error 
-            ? 'Σφάλμα φόρτωσης' 
+            ? '—' // Don't show error, just show dash
             : '—',
       apiCondition: () => true,
     },
