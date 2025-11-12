@@ -337,7 +337,8 @@ export default function Sidebar() {
   }
 
   // No access state - only show if not loading and user exists but no current building
-  if (!user || (!buildingsIsLoading && !currentBuilding)) {
+  // Also show if user has no tenant (buildings won't load)
+  if (!user || (!buildingsIsLoading && !currentBuilding && buildings.length === 0)) {
     return (
       <>
         {/* Mobile Menu Toggle */}

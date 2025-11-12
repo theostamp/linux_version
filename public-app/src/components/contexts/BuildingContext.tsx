@@ -156,10 +156,28 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   }, [selectedBuilding, buildings]);
 
   useEffect(() => {
+    // If auth is ready and no user, stop loading
     if (!authLoading && !user) {
       setIsLoading(false);
+      setIsLoadingBuildings(false);
+      return;
     }
-  }, [authLoading, user]);
+    
+    // If auth is ready and user exists but no tenant, stop loading (user might not have tenant yet)
+    if (!authLoading && user && !user.tenant) {
+      console.log('[BuildingContext] User has no tenant, stopping loading');
+      setIsLoading(false);
+      setIsLoadingBuildings(false);
+      return;
+    }
+    
+    // If auth is ready, user exists, has tenant, but buildings haven't loaded yet and not currently loading
+    // This handles the case where loadBuildings() didn't run for some reason
+    if (!authLoading && user && user.tenant && !isLoadingBuildings && !hasInitialized && buildings.length === 0) {
+      console.log('[BuildingContext] User has tenant but buildings not loaded, attempting to load...');
+      loadBuildings();
+    }
+  }, [authLoading, user, isLoadingBuildings, hasInitialized, buildings.length, loadBuildings]);
 
   useEffect(() => {
     // Μόνο αν υπάρχει σοβαρό error (όχι απλά empty buildings list) κάνουμε redirect
