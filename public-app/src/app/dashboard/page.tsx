@@ -58,11 +58,8 @@ export default function DashboardPage() {
     } catch (err: any) {
       console.error('Dashboard error:', err);
       
-      // If 401, redirect to login
+      // If 401, the layout will handle redirect
       if (err.status === 401) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        router.push('/login?redirect=/dashboard');
         return;
       }
       
