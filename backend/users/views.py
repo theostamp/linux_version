@@ -52,6 +52,8 @@ def login_view(request):
     """
     POST /api/users/login/
     Δέχεται JSON { email, password }, επιστρέφει JWT tokens + user data.
+    
+    IMPORTANT: Login must always run in public schema to find all users.
     """
     # Handle OPTIONS request for CORS preflight
     if request.method == 'OPTIONS':
@@ -61,10 +63,14 @@ def login_view(request):
     print(">>> LOGIN_VIEW - Request data:", request.data)
     print(">>> LOGIN_VIEW - Request headers:", dict(request.headers))
     
-    # Debug πριν την αυθεντικοποίηση
-    user_model = get_user_model()
-    print(">>> Όλοι οι χρήστες:", list(user_model.objects.values('id', 'email')))
-
+    # Get current schema for debugging
+    from django.db import connection
+    current_schema = getattr(connection, 'schema_name', 'unknown')
+    print(f">>> LOGIN_VIEW - Current schema: {current_schema}")
+    
+    # Force public schema for authentication - users are stored in public schema
+    public_schema = get_public_schema_name()
+    
     email = request.data.get('email')
     password = request.data.get('password')
 
@@ -76,23 +82,33 @@ def login_view(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Χρήση του custom EmailBackend για authentication με email
-    user = authenticate(request, username=email, password=password)
-    print(">>> Χρήστης από authenticate():", user)
-
-    if user is None:
-        # Ελέγχουμε αν υπάρχει ο χρήστης για πιο χρήσιμο error message
-        try:
-            existing_user = user_model.objects.get(email=email)
-            return Response(
-                {'error': 'Ο κωδικός που εισάγατε δεν είναι σωστός. Παρακαλώ δοκιμάστε ξανά.'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        except user_model.DoesNotExist:
-            return Response(
-                {'error': 'Δεν υπάρχει χρήστης με αυτό το email. Παρακαλώ ελέγξτε το email σας.'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+    # Authenticate in public schema context - users are stored in public schema
+    user = None
+    user_model = None
+    with schema_context(public_schema):
+        print(f">>> LOGIN_VIEW - Authenticating in schema: {public_schema}")
+        user_model = get_user_model()
+        print(">>> Όλοι οι χρήστες:", list(user_model.objects.values('id', 'email')))
+        
+        # Χρήση του custom EmailBackend για authentication με email
+        user = authenticate(request, username=email, password=password)
+        print(">>> Χρήστης από authenticate():", user)
+        
+        # Check if user exists for better error message
+        if user is None:
+            try:
+                existing_user = user_model.objects.get(email=email)
+                # User exists but password is wrong
+                return Response(
+                    {'error': 'Ο κωδικός που εισάγατε δεν είναι σωστός. Παρακαλώ δοκιμάστε ξανά.'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            except user_model.DoesNotExist:
+                # User doesn't exist
+                return Response(
+                    {'error': 'Δεν υπάρχει χρήστης με αυτό το email. Παρακαλώ ελέγξτε το email σας.'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
 
     # Δημιουργία JWT tokens
     refresh = RefreshToken.for_user(user)
