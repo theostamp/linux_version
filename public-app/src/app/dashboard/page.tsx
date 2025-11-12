@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building, Loader2, Users, DollarSign, FileText, AlertCircle } from 'lucide-react';
 import { apiGet } from '@/lib/api';
+import Sidebar from '@/components/Sidebar';
+import Header from '@/components/Header';
 
 interface User {
   id: number;
@@ -118,38 +120,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <Building className="h-8 w-8 text-blue-600" />
-              <span className="ml-2 text-2xl font-bold text-gray-900">New Concierge</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              {user && (
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">{user.first_name} {user.last_name}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
-                </div>
-              )}
-              <button
-                onClick={() => {
-                  localStorage.removeItem('access_token');
-                  localStorage.removeItem('refresh_token');
-                  router.push('/login');
-                }}
-                className="text-gray-600 hover:text-gray-900 text-sm"
-              >
-                Αποσύνδεση
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <Sidebar user={user || undefined} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content */}
+      <div className="lg:pl-64">
+        {/* Header */}
+        <Header user={user || undefined} />
+
+        {/* Dashboard Content */}
+        <main className="p-6">
         {/* Welcome Section */}
         {user && (
           <div className="mb-8">
@@ -245,7 +226,8 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
