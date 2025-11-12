@@ -816,7 +816,8 @@ export async function toggleSupportRequest(
 
 export async function fetchObligationsSummary(): Promise<{ pending_payments?: number; maintenance_tickets?: number }> {
   try {
-    return await apiGet<{ pending_payments?: number; maintenance_tickets?: number }>('/financial/obligations/summary/');
+    // Try the correct endpoint first (from old codebase)
+    return await apiGet<{ pending_payments?: number; maintenance_tickets?: number }>('/obligations/summary/');
   } catch (error: unknown) {
     // If endpoint doesn't exist (404), return empty data instead of throwing
     const apiError = error as { status?: number; response?: { status?: number } };
