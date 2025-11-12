@@ -84,11 +84,20 @@ class CustomUserAdmin(UserAdmin):
             return
         with transaction.atomic():
             with connection.cursor() as cursor:
-                # Χρησιμοποιούμε tuple για σωστή παράμετρο
-                cursor.execute(
-                    "DELETE FROM users_customuser WHERE id = ANY(%s)",
-                    [ids],
-                )
+                # Μετατρέπουμε list σε tuple για IN clause ή array για ANY
+                if len(ids) == 1:
+                    # Single ID - χρησιμοποιούμε απλό WHERE
+                    cursor.execute(
+                        "DELETE FROM users_customuser WHERE id = %s",
+                        [ids[0]],
+                    )
+                else:
+                    # Multiple IDs - χρησιμοποιούμε IN clause
+                    placeholders = ','.join(['%s'] * len(ids))
+                    cursor.execute(
+                        f"DELETE FROM users_customuser WHERE id IN ({placeholders})",
+                        ids,
+                    )
 
     def delete_view(self, request, object_id, extra_context=None):
         """
