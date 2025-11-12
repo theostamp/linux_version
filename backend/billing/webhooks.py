@@ -102,16 +102,63 @@ class StripeWebhookView(APIView):
         stripe_subscription_id = session.get('subscription')
         metadata = session.get('metadata', {})
         tenant_subdomain = metadata.get('tenant_subdomain')
-        plan_id = metadata.get('plan_id')
+        plan_name = metadata.get('plan')  # Plan name from metadata (basic, professional, enterprise)
+        plan_id_from_metadata = metadata.get('plan_id')  # Plan ID if provided directly
+        user_email = metadata.get('user_email')
+        user_first_name = metadata.get('user_first_name', '')
+        user_last_name = metadata.get('user_last_name', '')
+        
+        # Convert plan name to plan_id if needed
+        plan_id = plan_id_from_metadata
+        if not plan_id and plan_name:
+            plan_mapping = {
+                'basic': 1,
+                'professional': 2,
+                'enterprise': 3,
+            }
+            plan_id = plan_mapping.get(plan_name.lower())
+            if not plan_id:
+                logger.error(f"[WEBHOOK] Invalid plan name: {plan_name}")
+                return
 
         logger.info(f"[WEBHOOK] checkout.session.completed: {stripe_checkout_session_id}")
 
-        # Idempotency check #1: Find user by session ID
+        # Idempotency check #1: Find user by session ID or email
+        user = None
         try:
             user = CustomUser.objects.get(stripe_checkout_session_id=stripe_checkout_session_id)
+            logger.info(f"[WEBHOOK] Found user by session ID: {user.email}")
         except CustomUser.DoesNotExist:
-            logger.error(f"[WEBHOOK] User not found for session: {stripe_checkout_session_id}")
-            return
+            # Try to find user by email if session ID not found
+            if user_email:
+                try:
+                    user = CustomUser.objects.get(email=user_email)
+                    logger.info(f"[WEBHOOK] Found user by email: {user.email}, updating session ID")
+                    # Update session ID for future lookups
+                    user.stripe_checkout_session_id = stripe_checkout_session_id
+                    user.save(update_fields=['stripe_checkout_session_id'])
+                except CustomUser.DoesNotExist:
+                    # User doesn't exist - create it from metadata
+                    if not all([user_email, tenant_subdomain]):
+                        logger.error(f"[WEBHOOK] Missing required metadata to create user: email={user_email}, tenant={tenant_subdomain}")
+                        return
+                    if not plan_id:
+                        logger.error(f"[WEBHOOK] Missing plan_id or plan name in metadata")
+                        return
+                    
+                    logger.info(f"[WEBHOOK] Creating new user from metadata: {user_email}")
+                    user = CustomUser.objects.create_user(
+                        email=user_email,
+                        password='temp_password_123',  # Will be reset after email verification
+                        first_name=user_first_name,
+                        last_name=user_last_name,
+                        is_active=False,  # Needs email verification
+                        stripe_checkout_session_id=stripe_checkout_session_id
+                    )
+                    logger.info(f"[WEBHOOK] Created new user: {user.email}")
+            else:
+                logger.error(f"[WEBHOOK] User not found for session: {stripe_checkout_session_id} and no email in metadata")
+                return
 
         # Idempotency check #2: If tenant already exists, skip
         if user.tenant:
@@ -158,9 +205,22 @@ class StripeWebhookView(APIView):
                 user.is_staff = True
                 user.is_superuser = True  # Full admin rights for their tenant
                 user.role = 'manager'  # Tenant owner/admin role
-                user.save(update_fields=['tenant', 'is_staff', 'is_superuser', 'role'])
+                user.is_active = False  # Needs email verification before activation
+                user.save(update_fields=['tenant', 'is_staff', 'is_superuser', 'role', 'is_active'])
 
                 logger.info(f"[WEBHOOK] Provisioning complete for {user.email} → {tenant.schema_name}")
+                
+                # Send email verification after tenant creation
+                try:
+                    from users.services import EmailService
+                    email_sent = EmailService.send_verification_email(user)
+                    if email_sent:
+                        logger.info(f"[WEBHOOK] Verification email sent to {user.email}")
+                    else:
+                        logger.warning(f"[WEBHOOK] Failed to send verification email to {user.email}")
+                except Exception as e:
+                    logger.error(f"[WEBHOOK] Error sending verification email: {e}")
+                    # Don't fail webhook if email fails - tenant is already created
 
         except Exception as e:
             logger.error(f"[WEBHOOK] Provisioning failed: {e}", exc_info=True)
