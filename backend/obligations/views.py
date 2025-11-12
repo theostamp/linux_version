@@ -28,11 +28,9 @@ def obligations_summary(request):
     ).count()
     
     # Count maintenance tickets
-    # Get user's buildings (if user is building manager or has access)
-    # Option 1: If user has direct building relationships
-    user_buildings = Building.objects.filter(
-        Q(manager=user) | Q(residents__user=user)
-    ).distinct()
+    # Get user's buildings (buildings where user is manager)
+    # Based on buildings/views.py pattern: Building.objects.filter(manager_id=user.id)
+    user_buildings = Building.objects.filter(manager_id=user.id)
     
     # Option 2: If user is superuser/staff, count all open tickets
     if user.is_staff or user.is_superuser:
