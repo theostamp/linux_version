@@ -35,13 +35,19 @@ const stripHopByHopHeaders = (headers: Headers) => {
 
 const buildTargetUrl = (ctx: RouteContext, request: NextRequest) => {
   const base = resolveBackendBaseUrl();
-  const path = (ctx.params.path ?? []).join("/");
+  // Get the original path from the request URL to preserve trailing slash
+  const originalPath = request.nextUrl.pathname.replace('/backend-proxy', '');
+  const path = originalPath.startsWith('/') ? originalPath.slice(1) : originalPath;
   const search = request.nextUrl.search;
+  
   // Django backend expects /api prefix, so add it if not present
   const apiPath = path.startsWith("api/") ? path : `api/${path}`;
   // Ensure trailing slash for Django REST framework compatibility
   const normalizedPath = apiPath.endsWith("/") ? apiPath : `${apiPath}/`;
   const url = `${base}/${normalizedPath}${search}`;
+  
+  console.log(`[backend-proxy] Original: ${request.nextUrl.pathname}, Path: ${path}, API Path: ${apiPath}, Final: ${url}`);
+  
   return url;
 };
 
