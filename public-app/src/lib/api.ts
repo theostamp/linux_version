@@ -1001,4 +1001,26 @@ export const makeRequestWithRetry = async (
   throw lastError || new Error('Request failed after all retry attempts');
 };
 
+// ============================================================================
+// Maintenance API Functions (for ExpenseList)
+// ============================================================================
+
+export async function fetchScheduledMaintenances(params: { buildingId?: number; priority?: string; ordering?: string } = {}): Promise<unknown[]> {
+  const searchParams: Record<string, string> = {};
+  if (params.buildingId) searchParams.building = String(params.buildingId);
+  if (params.priority) searchParams.priority = params.priority;
+  if (params.ordering) searchParams.ordering = params.ordering;
+  
+  const data = await apiGet<Paginated<unknown>>(`/maintenance/scheduled/`, searchParams);
+  return extractResults(data);
+}
+
+export async function updateScheduledMaintenance(id: number, updates: unknown): Promise<unknown> {
+  return apiPatch(`/maintenance/scheduled/${id}/`, updates);
+}
+
+export async function deleteServiceReceipt(id: number): Promise<void> {
+  await apiDelete(`/maintenance/receipts/${id}/`);
+}
+
 
