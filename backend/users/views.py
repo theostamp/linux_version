@@ -125,10 +125,12 @@ def login_view(request):
 
     # Determine redirect path based on tenant existence
     redirect_path = '/dashboard'  # Default
+    tenant_url = None
     if not hasattr(user, 'tenant') or user.tenant is None:
         redirect_path = '/plans'
         print(f">>> DEBUG: User has no tenant, redirecting to /plans")
     else:
+        tenant_url = f"{user.tenant.schema_name}.newconcierge.app"
         print(f">>> DEBUG: User has tenant: {user.tenant.schema_name}, redirecting to /dashboard")
 
     return Response({
@@ -136,6 +138,7 @@ def login_view(request):
         'refresh': str(refresh),
         'user': user_data,
         'redirect_path': redirect_path,
+        'tenant_url': tenant_url,
     }, status=status.HTTP_200_OK)
 
 
