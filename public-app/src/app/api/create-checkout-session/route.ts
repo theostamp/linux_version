@@ -93,7 +93,8 @@ export async function POST(request: NextRequest) {
         plan: plan,
         user_email: userData.email,
         user_first_name: userData.firstName,
-        user_last_name: userData.lastName
+        user_last_name: userData.lastName,
+        user_password: userData.password // Store password for tenant creation (will be hashed by Django)
       },
       subscription_data: {
         trial_period_days: 30,

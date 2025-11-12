@@ -101,7 +101,8 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     plan,
     user_email,
     user_first_name,
-    user_last_name
+    user_last_name,
+    user_password
   } = metadata;
 
   if (!tenant_subdomain || !plan || !user_email) {
@@ -132,7 +133,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
           email: user_email,
           first_name: user_first_name || '',
           last_name: user_last_name || '',
-          password: 'temp_password_123'
+          password: user_password || 'temp_password_123' // Use password from metadata or fallback
         },
         plan_id: getPlanId(plan),
         stripe_customer_id: session.customer as string,
