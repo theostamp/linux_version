@@ -830,4 +830,104 @@ export async function fetchObligationsSummary(): Promise<{ pending_payments?: nu
   }
 }
 
+// ============================================================================
+// Apartment API Functions
+// ============================================================================
+
+export type Apartment = {
+  id: number;
+  building: number;
+  building_name: string;
+  number: string;
+  floor?: number;
+  owner_name: string;
+  owner_phone: string;
+  owner_phone2: string;
+  owner_email: string;
+  owner_user?: number;
+  owner_user_email?: string;
+  ownership_percentage?: number;
+  tenant_name: string;
+  tenant_phone: string;
+  tenant_phone2: string;
+  tenant_email: string;
+  tenant_user?: number;
+  tenant_user_email?: string;
+  is_rented: boolean;
+  rent_start_date?: string;
+  rent_end_date?: string;
+  square_meters?: number;
+  bedrooms?: number;
+  notes: string;
+  occupant_name: string;
+  occupant_phone: string;
+  occupant_phone2: string;
+  occupant_email: string;
+  status_display: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ApartmentList = {
+  id: number;
+  building: number;
+  building_name: string;
+  number: string;
+  identifier: string;
+  floor?: number;
+  owner_name: string;
+  owner_phone: string;
+  owner_phone2: string;
+  owner_email: string;
+  ownership_percentage?: number;
+  participation_mills?: number;
+  heating_mills?: number;
+  elevator_mills?: number;
+  tenant_name: string;
+  tenant_phone: string;
+  tenant_phone2: string;
+  tenant_email: string;
+  occupant_name: string;
+  occupant_phone: string;
+  occupant_phone2: string;
+  occupant_email: string;
+  square_meters?: number;
+  bedrooms?: number;
+  notes: string;
+  status_display: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function fetchApartments(buildingId: number): Promise<ApartmentList[]> {
+  const data = await apiGet<Paginated<ApartmentList>>(`/apartments/`, { building: buildingId });
+  return extractResults(data);
+}
+
+// ============================================================================
+// API Instance Export (for backward compatibility)
+// ============================================================================
+
+/**
+ * API instance for backward compatibility with old codebase
+ * Uses fetch-based apiGet/apiPost/etc internally
+ */
+export const api = {
+  get: async <T>(path: string): Promise<T> => {
+    return apiGet<T>(path);
+  },
+  post: async <T>(path: string, body?: unknown): Promise<T> => {
+    return apiPost<T>(path, body);
+  },
+  patch: async <T>(path: string, body?: unknown): Promise<T> => {
+    return apiPatch<T>(path, body);
+  },
+  delete: async <T>(path: string): Promise<T> => {
+    return apiDelete<T>(path);
+  },
+  put: async <T>(path: string, body?: unknown): Promise<T> => {
+    return apiPut<T>(path, body);
+  },
+};
+
 
