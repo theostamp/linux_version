@@ -39,7 +39,7 @@ import { fetchApartments, ApartmentList, api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import { useModalState } from '@/hooks/useModalState';
-import useFinancialAutoRefresh from '@/hooks/useFinancialAutoRefresh';
+import { useFinancialAutoRefresh } from '@/hooks/useFinancialAutoRefresh';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface FinancialPageProps {
