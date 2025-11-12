@@ -47,6 +47,16 @@ class CustomUserAdmin(UserAdmin):
     def has_module_permission(self, request):
         return request.user.is_superuser
 
+    def save_model(self, request, obj, form, change):
+        """
+        Override save_model to ensure username is set when creating new users.
+        """
+        # If creating a new user and username is not set, set it to email
+        if not change and not obj.username:
+            obj.username = obj.email
+        # Call parent save_model which handles password hashing
+        super().save_model(request, obj, form, change)
+
     def get_deleted_objects(self, objs, request):
         """
         Override για να χειρίζεται το σφάλμα αν ο πίνακας buildings_buildingmembership δεν υπάρχει.
