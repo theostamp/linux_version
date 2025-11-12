@@ -16,10 +16,18 @@ from .models import CustomUser
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    list_display = ('email', 'first_name', 'last_name', 'is_staff', 'is_active')
+    list_display = ('email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_protected')
     list_filter = ('is_staff', 'is_active')
     search_fields = ('email', 'first_name', 'last_name')
     ordering = ('email',)
+    
+    def is_protected(self, obj):
+        """Visual indicator για προστατευμένους users"""
+        if obj.email == self.PROTECTED_ADMIN_EMAIL:
+            return '🛡️ Προστατευμένος'
+        return ''
+    is_protected.short_description = 'Κατάσταση'
+    is_protected.admin_order_field = 'email'
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
@@ -46,6 +54,17 @@ class CustomUserAdmin(UserAdmin):
 
     def has_module_permission(self, request):
         return request.user.is_superuser
+
+    # Protected admin email - cannot be deleted
+    PROTECTED_ADMIN_EMAIL = 'theostam1966@gmail.com'
+
+    def has_delete_permission(self, request, obj=None):
+        """
+        Override to prevent deletion of protected admin user.
+        """
+        if obj and obj.email == self.PROTECTED_ADMIN_EMAIL:
+            return False
+        return super().has_delete_permission(request, obj)
 
     def save_model(self, request, obj, form, change):
         """
@@ -148,6 +167,16 @@ class CustomUserAdmin(UserAdmin):
         if obj is None:
             return super().delete_view(request, object_id, extra_context)
 
+        # Προστασία για protected admin user
+        if obj.email == self.PROTECTED_ADMIN_EMAIL:
+            messages.error(
+                request,
+                _('⚠️ ΑΔΥΝΑΤΗ Η ΔΙΑΓΡΑΦΗ: Ο χρήστης "%(email)s" είναι προστατευμένος και δεν μπορεί να διαγραφεί για λόγους ασφαλείας.') % {'email': obj.email}
+            )
+            return HttpResponseRedirect(
+                reverse(f'admin:{opts.app_label}_{opts.model_name}_changelist')
+            )
+
         if not self.has_delete_permission(request, obj):
             raise PermissionDenied
 
@@ -195,6 +224,7 @@ class CustomUserAdmin(UserAdmin):
             'preserved_filters': self.get_preserved_filters(request),
             'is_popup': False,
             'media': self.media,
+            'is_protected': obj.email == self.PROTECTED_ADMIN_EMAIL,
         }
         if extra_context:
             context.update(extra_context)
@@ -205,10 +235,21 @@ class CustomUserAdmin(UserAdmin):
         """
         Προσαρμοσμένη διαγραφή για bulk actions χωρίς πρόσβαση σε tenant tables.
         """
+        # Έλεγχος για protected admin user
+        protected_users = queryset.filter(email=self.PROTECTED_ADMIN_EMAIL)
+        if protected_users.exists():
+            messages.error(
+                request,
+                _('⚠️ ΑΔΥΝΑΤΗ Η ΔΙΑΓΡΑΦΗ: Ο χρήστης "%(email)s" είναι προστατευμένος και δεν μπορεί να διαγραφεί για λόγους ασφαλείας.') % {'email': self.PROTECTED_ADMIN_EMAIL}
+            )
+            # Αφαιρούμε τον protected user από το queryset
+            queryset = queryset.exclude(email=self.PROTECTED_ADMIN_EMAIL)
+        
         ids = list(queryset.values_list('pk', flat=True))
         objects = list(queryset)
         if not ids:
             return
+        
         try:
             self._delete_user_rows(ids)
         except ProgrammingError as e:
@@ -223,5 +264,11 @@ class CustomUserAdmin(UserAdmin):
 
         for obj in objects:
             self.log_deletion(request, obj, force_str(obj))
+        
+        if protected_users.exists():
+            messages.warning(
+                request,
+                _('Οι υπόλοιποι χρήστες διαγράφηκαν, αλλά ο προστατευμένος admin user παραμένει.')
+            )
 
 admin.site.register(CustomUser, CustomUserAdmin)
