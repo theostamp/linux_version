@@ -28,7 +28,7 @@ interface FilterOptions {
   searchTerm: string;
 }
 
-export default function TransactionHistory({ buildingId, limit, selectedMonth }: TransactionHistoryProps) {
+export function TransactionHistory({ buildingId, limit, selectedMonth }: TransactionHistoryProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterOptions>({

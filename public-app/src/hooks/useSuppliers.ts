@@ -39,9 +39,10 @@ export const useSuppliers = (options: UseSuppliersOptions = {}): UseSuppliersRet
         params.append('is_active', options.isActive.toString());
       }
 
-      const response = await apiClient.get(`/financial/suppliers/?${params.toString()}`);
-      const apiData = response.data;
-      setSuppliers(Array.isArray(apiData) ? apiData : apiData?.results ?? []);
+      // The apiClient.get returns data directly, not response.data
+      const response = await apiClient.get<{ results?: Supplier[] } | Supplier[]>(`/financial/suppliers/?${params.toString()}`);
+      const apiData = Array.isArray(response) ? response : (response as { results?: Supplier[] }).results;
+      setSuppliers(Array.isArray(apiData) ? apiData : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Σφάλμα κατά τη φόρτωση προμηθευτών');
     } finally {
@@ -51,9 +52,10 @@ export const useSuppliers = (options: UseSuppliersOptions = {}): UseSuppliersRet
 
   const createSupplier = async (data: Partial<Supplier>): Promise<Supplier> => {
     try {
-      const response = await apiClient.post('/financial/suppliers/', data);
+      // The apiClient.post returns data directly
+      const response = await apiClient.post<Supplier>('/financial/suppliers/', data);
       await fetchSuppliers(); // Refresh the list
-      return response.data;
+      return response;
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'Σφάλμα κατά τη δημιουργία προμηθευτή');
     }
@@ -61,9 +63,10 @@ export const useSuppliers = (options: UseSuppliersOptions = {}): UseSuppliersRet
 
   const updateSupplier = async (id: number, data: Partial<Supplier>): Promise<Supplier> => {
     try {
-      const response = await apiClient.put(`/financial/suppliers/${id}/`, data);
+      // The apiClient.put returns data directly
+      const response = await apiClient.put<Supplier>(`/financial/suppliers/${id}/`, data);
       await fetchSuppliers(); // Refresh the list
-      return response.data;
+      return response;
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'Σφάλμα κατά την ενημέρωση προμηθευτή');
     }
@@ -108,9 +111,10 @@ export const useSupplierCategories = () => {
       setLoading(true);
       setError(null);
       
-      const response = await apiClient.get('/financial/suppliers/categories/');
-      const apiData = response.data;
-      setCategories(Array.isArray(apiData) ? apiData : apiData?.results ?? []);
+      // The apiClient.get returns data directly
+      const response = await apiClient.get<{ value: string; label: string }[] | { results?: { value: string; label: string }[] }>('/financial/suppliers/categories/');
+      const apiData = Array.isArray(response) ? response : (response as { results?: { value: string; label: string }[] }).results;
+      setCategories(Array.isArray(apiData) ? apiData : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Σφάλμα κατά τη φόρτωση κατηγοριών');
     } finally {
@@ -147,9 +151,10 @@ export const useSuppliersByCategory = (buildingId: number, category?: string) =>
         params.append('category', category);
       }
 
-      const response = await apiClient.get(`/financial/suppliers/by_category/?${params.toString()}`);
-      const apiData = response.data;
-      setSuppliers(Array.isArray(apiData) ? apiData : apiData?.results ?? []);
+      // The apiClient.get returns data directly
+      const response = await apiClient.get<{ results?: Supplier[] } | Supplier[]>(`/financial/suppliers/by_category/?${params.toString()}`);
+      const apiData = Array.isArray(response) ? response : (response as { results?: Supplier[] }).results;
+      setSuppliers(Array.isArray(apiData) ? apiData : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Σφάλμα κατά τη φόρτωση προμηθευτών');
     } finally {

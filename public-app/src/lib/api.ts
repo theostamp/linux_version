@@ -1023,4 +1023,228 @@ export async function deleteServiceReceipt(id: number): Promise<void> {
   await apiDelete(`/maintenance/receipts/${id}/`);
 }
 
+// ============================================================================
+// Apartment Financial Data API Functions
+// ============================================================================
+
+export async function fetchApartmentsWithFinancialData(buildingId: number, month?: string): Promise<any[]> {
+  console.log('[API CALL] Attempting to fetch apartments with financial data:', buildingId, 'month:', month);
+  
+  try {
+    // Use the apartment_balances endpoint which has expense_share data
+    const params: Record<string, string> = {
+      building_id: buildingId.toString()
+    };
+    if (month) {
+      params.month = month;
+    }
+    
+    // The apiGet returns data directly
+    const response = await apiGet<{ apartments?: any[] } | any[]>(`/financial/dashboard/apartment_balances/`, params);
+    
+    // Handle both object with apartments property and direct array
+    const result = Array.isArray(response) ? response : (response as { apartments?: any[] }).apartments || [];
+    
+    console.log('[API CALL] Successfully fetched apartments with financial data:', {
+      resultType: typeof result,
+      isArray: Array.isArray(result),
+      length: Array.isArray(result) ? result.length : 'N/A',
+    });
+    
+    return Array.isArray(result) ? result : [];
+  } catch (error: any) {
+    // If the optimized endpoint doesn't exist, fall back to individual calls
+    console.warn('Batch endpoint not available, using fallback');
+    return await fetchApartmentsWithFinancialDataFallback(buildingId);
+  }
+}
+
+// Fallback method with throttling to prevent rate limiting
+async function fetchApartmentsWithFinancialDataFallback(buildingId: number): Promise<any[]> {
+  console.log('[API CALL] Using fallback method with throttling for building:', buildingId);
+  
+  try {
+    // Get apartments first
+    const apartments = await fetchApartments(buildingId);
+    
+    // Process apartments in batches to avoid rate limiting
+    const apartmentsWithFinancialData = [];
+    const BATCH_SIZE = 3;
+    const DELAY_BETWEEN_BATCHES = 500;
+    
+    for (let i = 0; i < apartments.length; i += BATCH_SIZE) {
+      const batch = apartments.slice(i, i + BATCH_SIZE);
+      
+      const batchPromises = batch.map(async (apartment: any) => {
+        try {
+          // The apiGet returns data directly
+          const paymentsResponse = await apiGet<{ results?: any[] } | any[]>(`/financial/payments/`, {
+            building_id: buildingId.toString(),
+            apartment: apartment.id.toString()
+          });
+          
+          const payments = Array.isArray(paymentsResponse) 
+            ? paymentsResponse 
+            : (paymentsResponse as { results?: any[] }).results || [];
+          
+          const sortedPayments = Array.isArray(payments)
+            ? [...payments].sort((a, b) => {
+                const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+                if (dateDiff !== 0) return dateDiff;
+                const aId = typeof a.id === 'number' ? a.id : parseInt(String(a.id), 10) || 0;
+                const bId = typeof b.id === 'number' ? b.id : parseInt(String(b.id), 10) || 0;
+                return bId - aId;
+              })
+            : [];
+          const latestPayment = sortedPayments.length > 0 ? sortedPayments[0] : null;
+          
+          return {
+            id: apartment.id,
+            number: apartment.number,
+            owner_name: apartment.owner_name,
+            tenant_name: apartment.tenant_name,
+            current_balance: latestPayment?.current_balance || 0,
+            monthly_due: latestPayment?.monthly_due || 0,
+            building_id: apartment.building,
+            building_name: apartment.building_name,
+            participation_mills: apartment.participation_mills,
+            heating_mills: apartment.heating_mills,
+            elevator_mills: apartment.elevator_mills,
+            latest_payment_date: latestPayment?.date,
+            latest_payment_amount: latestPayment?.amount,
+          };
+        } catch (err) {
+          console.warn(`Failed to get financial data for apartment ${apartment.id}:`, err);
+          return {
+            id: apartment.id,
+            number: apartment.number,
+            owner_name: apartment.owner_name,
+            tenant_name: apartment.tenant_name,
+            current_balance: 0,
+            monthly_due: 0,
+            building_id: apartment.building,
+            building_name: apartment.building_name,
+            participation_mills: apartment.participation_mills,
+            heating_mills: apartment.heating_mills,
+            elevator_mills: apartment.elevator_mills,
+          };
+        }
+      });
+      
+      const batchResults = await Promise.all(batchPromises);
+      apartmentsWithFinancialData.push(...batchResults);
+      
+      // Delay between batches to avoid rate limiting
+      if (i + BATCH_SIZE < apartments.length) {
+        await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
+      }
+    }
+    
+    return apartmentsWithFinancialData;
+  } catch (error) {
+    console.error('[API CALL] Error in fallback method:', error);
+    return [];
+  }
+}
+
+// ============================================================================
+// Service Package API Functions
+// ============================================================================
+
+export type ServicePackage = {
+  id: number;
+  name: string;
+  description: string;
+  fee_per_apartment: number;
+  services_included: string[];
+  services_list: string;
+  total_cost_for_building: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ServicePackagesResponse = {
+  results: ServicePackage[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+};
+
+export async function fetchServicePackages(buildingId?: number): Promise<ServicePackage[]> {
+  console.log('[API CALL] Fetching service packages');
+  try {
+    const params: Record<string, string> = {};
+    if (buildingId) {
+      params.building_id = buildingId.toString();
+    }
+    
+    // The apiGet returns data directly
+    const response = await apiGet<ServicePackagesResponse | ServicePackage[]>(`/buildings/service-packages/`, params);
+    
+    // Handle both paginated and non-paginated responses
+    if (Array.isArray(response)) {
+      return response;
+    }
+    
+    const paginatedResponse = response as ServicePackagesResponse;
+    return paginatedResponse.results || [];
+  } catch (error) {
+    console.error('[API CALL] Error fetching service packages:', error);
+    throw error;
+  }
+}
+
+export async function createServicePackage(packageData: Partial<ServicePackage>): Promise<ServicePackage> {
+  console.log('[API CALL] Creating service package:', packageData);
+  try {
+    // The apiPost returns data directly
+    const response = await apiPost<ServicePackage>('/buildings/service-packages/', packageData);
+    console.log('[API CALL] Create service package response:', response);
+    return response;
+  } catch (error) {
+    console.error('[API CALL] Error creating service package:', error);
+    throw error;
+  }
+}
+
+export async function updateServicePackage(packageId: number, packageData: Partial<ServicePackage>): Promise<ServicePackage> {
+  console.log(`[API CALL] Updating service package ${packageId}:`, packageData);
+  try {
+    // The apiPatch returns data directly
+    const response = await apiPatch<ServicePackage>(`/buildings/service-packages/${packageId}/`, packageData);
+    console.log('[API CALL] Update service package response:', response);
+    return response;
+  } catch (error) {
+    console.error('[API CALL] Error updating service package:', error);
+    throw error;
+  }
+}
+
+export async function deleteServicePackage(packageId: number): Promise<void> {
+  console.log(`[API CALL] Deleting service package ${packageId}`);
+  try {
+    await apiDelete(`/buildings/service-packages/${packageId}/`);
+    console.log('[API CALL] Service package deleted successfully');
+  } catch (error) {
+    console.error('[API CALL] Error deleting service package:', error);
+    throw error;
+  }
+}
+
+export async function applyServicePackageToBuilding(packageId: number, buildingId: number): Promise<unknown> {
+  console.log(`[API CALL] Applying service package ${packageId} to building ${buildingId}`);
+  try {
+    // The apiPost returns data directly
+    const response = await apiPost(`/buildings/service-packages/${packageId}/apply_to_building/`, {
+      building_id: buildingId
+    });
+    console.log('[API CALL] Apply service package response:', response);
+    return response;
+  } catch (error) {
+    console.error('[API CALL] Error applying service package:', error);
+    throw error;
+  }
+}
+
 
