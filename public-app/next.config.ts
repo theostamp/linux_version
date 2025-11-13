@@ -20,7 +20,11 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       // Route handlers have priority over rewrites
-      // Only proxy non-specific routes to backend-proxy as fallback
+      // Fallback: proxy any remaining /api/* requests to backend-proxy
+      {
+        source: "/api/:path*",
+        destination: "/backend-proxy/:path*",
+      },
     ];
   },
   async headers() {
