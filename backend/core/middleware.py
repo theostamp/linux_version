@@ -56,20 +56,27 @@ class CustomTenantMiddleware(TenantMainMiddleware):
         Returns:
             Client: The tenant object
         """
+        print(f"🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: '{hostname}'")
+        
         # If the hostname is demo.localhost, use demo tenant
         if hostname in ['demo.localhost']:
             try:
                 tenant_model = get_tenant_model()
                 demo_tenant = tenant_model.objects.get(schema_name='demo')
+                print(f"🔍 [TENANT MIDDLEWARE] Resolved demo.localhost -> demo tenant")
                 return demo_tenant
             except tenant_model.DoesNotExist:
                 # Fall back to public schema if demo tenant doesn't exist
+                print(f"⚠️ [TENANT MIDDLEWARE] Demo tenant not found, falling back to default")
                 return super().get_tenant(domain_model, hostname)
 
         # For all other cases, use the default behavior first
         try:
-            return super().get_tenant(domain_model, hostname)
+            tenant = super().get_tenant(domain_model, hostname)
+            print(f"🔍 [TENANT MIDDLEWARE] Resolved '{hostname}' -> tenant '{tenant.schema_name}' via domain lookup")
+            return tenant
         except domain_model.DoesNotExist:
+            print(f"⚠️ [TENANT MIDDLEWARE] Domain '{hostname}' not found, trying subdomain fallback")
             # Fallback: attempt to resolve tenant by subdomain if domain entry is missing
             parts = hostname.split(".")
             if len(parts) > 1:
@@ -79,6 +86,7 @@ class CustomTenantMiddleware(TenantMainMiddleware):
                     tenant_model = get_tenant_model()
                     try:
                         tenant = tenant_model.objects.get(schema_name=subdomain)
+                        print(f"🔍 [TENANT MIDDLEWARE] Resolved '{hostname}' -> tenant '{tenant.schema_name}' via subdomain '{subdomain}'")
                         # Ensure domain record exists for future requests
                         domain_model.objects.get_or_create(
                             domain=hostname,
@@ -89,9 +97,11 @@ class CustomTenantMiddleware(TenantMainMiddleware):
                         )
                         return tenant
                     except tenant_model.DoesNotExist:
+                        print(f"❌ [TENANT MIDDLEWARE] Tenant with schema_name '{subdomain}' not found")
                         pass
 
             # If fallback also fails, re-raise the original exception
+            print(f"❌ [TENANT MIDDLEWARE] Failed to resolve tenant for hostname '{hostname}'")
             raise
 
     def process_request(self, request):
