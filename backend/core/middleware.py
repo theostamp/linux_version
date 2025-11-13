@@ -28,9 +28,18 @@ class CustomTenantMiddleware(TenantMainMiddleware):
             str: The hostname without port number
         """
         from django_tenants.utils import remove_www
-        # Check X-Forwarded-Host first (for proxied requests from Next.js/Vercel)
+        # Check X-Tenant-Host first (custom header that Railway won't overwrite)
+        # Railway Edge proxy overwrites X-Forwarded-Host, so we use X-Tenant-Host
+        tenant_host = request.META.get('HTTP_X_TENANT_HOST', '')
         forwarded_host = request.META.get('HTTP_X_FORWARDED_HOST', '')
         internal_host = request.META.get('HTTP_HOST', '')
+        
+        # Priority: X-Tenant-Host > X-Forwarded-Host > HTTP_HOST
+        if tenant_host:
+            hostname = tenant_host.split(':')[0]  # Strip port
+            final_hostname = remove_www(hostname)
+            print(f"🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host '{tenant_host}' -> '{final_hostname}' (internal: '{internal_host}')")
+            return final_hostname
         
         if forwarded_host:
             hostname = forwarded_host.split(':')[0]  # Strip port

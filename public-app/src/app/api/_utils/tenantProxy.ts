@@ -161,8 +161,10 @@ const createForwardHeaders = (request: NextRequest) => {
 
   // Set Host header for tenant routing in Django
   // Django middleware uses X-Forwarded-Host to resolve tenant
+  // Railway Edge proxy overwrites X-Forwarded-Host, so we use X-Tenant-Host as well
   headers.set("Host", finalHost);
   headers.set("X-Forwarded-Host", finalHost);
+  headers.set("X-Tenant-Host", finalHost); // Custom header that Railway won't overwrite
   headers.set(
     "X-Forwarded-Proto",
     request.headers.get("x-forwarded-proto") ?? "https",
