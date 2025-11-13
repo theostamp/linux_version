@@ -130,7 +130,9 @@ class CustomUserAdmin(UserAdmin):
         # Order matters: delete child records before parent records
         
         # Tables with CASCADE delete (must delete these records)
+        # Order matters: delete child records before parent records
         cascade_tables = [
+            'django_admin_log',  # Admin log entries (CASCADE) - must be deleted first
             'votes_votesubmission',  # User submissions in votes (CASCADE)
             'users_passwordresettoken',  # Password reset tokens (CASCADE)
             'users_loginattempt',  # Login attempts (CASCADE)
@@ -149,7 +151,11 @@ class CustomUserAdmin(UserAdmin):
             try:
                 with transaction.atomic():
                     with connection.cursor() as cursor:
-                        cursor.execute(f"DELETE FROM {table} WHERE {where_clause}", params)
+                        # django_admin_log uses user_id, not id
+                        if table == 'django_admin_log':
+                            cursor.execute(f"DELETE FROM {table} WHERE user_id IN ({placeholders if len(ids) > 1 else '%s'})", params if len(ids) > 1 else [ids[0]])
+                        else:
+                            cursor.execute(f"DELETE FROM {table} WHERE {where_clause}", params)
             except ProgrammingError as e:
                 # Table might not exist in all environments - skip silently
                 error_str = str(e)
