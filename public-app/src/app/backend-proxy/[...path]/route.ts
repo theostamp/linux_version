@@ -68,26 +68,37 @@ const buildTargetUrl = (ctx: RouteContext, request: NextRequest) => {
 const createForwardHeaders = (request: NextRequest) => {
   const forwardHeaders = new Headers(request.headers);
   
-  // Get the public hostname - prioritize Host header over x-forwarded-host
+  // Get the public hostname - prioritize Origin header over Host header
   // Vercel sends x-forwarded-host as the internal Railway URL, not the public domain
-  // The Host header contains the actual public domain (theo.newconcierge.app)
+  // The Origin header is the most reliable source for the public domain in CORS requests
   const forwardedHost = request.headers.get("x-forwarded-host");
   const referer = request.headers.get("referer");
   const requestHost = request.headers.get("host") ?? "";
+  const origin = request.headers.get("origin");
   
-  // Priority: Host header > Referer > x-forwarded-host
-  // Host header is the actual public domain from the browser request
+  // Priority: Origin > Referer > Host header > x-forwarded-host
+  // Origin header is the most reliable source for the public domain
   let publicHostname = requestHost;
   
+  // First, try Origin header (most reliable for CORS requests)
+  if (origin) {
+    try {
+      const originUrl = new URL(origin);
+      publicHostname = originUrl.host;
+      console.log(`[backend-proxy] Using Origin header: ${publicHostname}`);
+    } catch {
+      // Invalid origin URL, continue with other options
+    }
+  }
+  
   // If Host header looks like internal Vercel/Railway URL, try referer
-  if (requestHost.includes("railway.app") || requestHost.includes("vercel.app")) {
-    if (referer) {
-      try {
-        const refererUrl = new URL(referer);
-        publicHostname = refererUrl.host;
-      } catch {
-        // Invalid referer URL, keep using Host header
-      }
+  if ((publicHostname.includes("railway.app") || publicHostname.includes("vercel.app")) && referer) {
+    try {
+      const refererUrl = new URL(referer);
+      publicHostname = refererUrl.host;
+      console.log(`[backend-proxy] Using Referer header: ${publicHostname}`);
+    } catch {
+      // Invalid referer URL, keep using current hostname
     }
   }
   
@@ -96,6 +107,7 @@ const createForwardHeaders = (request: NextRequest) => {
       !forwardedHost.includes("railway.app") && 
       !forwardedHost.includes("vercel.app")) {
     publicHostname = forwardedHost;
+    console.log(`[backend-proxy] Using X-Forwarded-Host header: ${publicHostname}`);
   }
   
   const finalHost = publicHostname;
@@ -118,9 +130,12 @@ const createForwardHeaders = (request: NextRequest) => {
     requestHost,
     forwardedHost,
     referer,
-    decision: requestHost.includes("railway.app") || requestHost.includes("vercel.app") 
-      ? "using-referer-or-host" 
-      : "using-host",
+    origin,
+    decision: origin 
+      ? "using-origin" 
+      : (requestHost.includes("railway.app") || requestHost.includes("vercel.app"))
+        ? "using-referer-or-host" 
+        : "using-host",
   });
 
   return stripHopByHopHeaders(forwardHeaders);
