@@ -1,119 +1,133 @@
 #!/usr/bin/env python
 """
-Fix tenant 'theo' by creating demo data
-Can be adapted for any tenant that's missing demo data
+Utility script to (re)create demo data for a specific tenant.
+
+Usage:
+    python fix_tenant_theo_demo_data.py
+    python fix_tenant_theo_demo_data.py --schema theo
 """
+
+import argparse
 import os
 import sys
+from pathlib import Path
+
 import django
 
-# Setup Django environment
-sys.path.append('/app')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'new_concierge_backend.settings')
-django.setup()
 
-from django_tenants.utils import schema_context, get_tenant_model
-from tenants.services import TenantService
+def bootstrap_django():
+    """Configure Django settings so the script can run from the repo root."""
+    repo_root = Path(__file__).resolve().parent
 
-TENANT_SCHEMA = 'theo'  # Change this to fix other tenants
+    # Project structure: backend/ contains the Django project
+    backend_dir = repo_root / "backend"
+    if not backend_dir.exists():
+        raise RuntimeError(
+            f"Unable to locate backend directory at {backend_dir}. "
+            "Run this script from the repository root."
+        )
 
-print("=" * 80)
-print(f"FIXING TENANT '{TENANT_SCHEMA}' - Adding Demo Data")
-print("=" * 80)
-print()
+    sys.path.insert(0, str(backend_dir))
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "new_concierge_backend.settings")
+    django.setup()
 
-# Check if tenant exists
-TenantModel = get_tenant_model()
 
-try:
-    tenant = TenantModel.objects.get(schema_name=TENANT_SCHEMA)
-    print(f"✅ Found tenant: {tenant.name} (schema: {tenant.schema_name})")
+def create_demo_data(schema_name: str):
+    from django_tenants.utils import schema_context, get_tenant_model
+    from tenants.services import TenantService
+
+    TenantModel = get_tenant_model()
+
+    print("=" * 80)
+    print(f"FIXING TENANT '{schema_name}' - Adding Demo Data")
+    print("=" * 80)
     print()
-    
-    # Check current state
-    with schema_context(TENANT_SCHEMA):
-        from buildings.models import Building
-        from apartments.models import Apartment
-        
-        building_count = Building.objects.count()
-        apartment_count = Apartment.objects.count()
-        
-        print(f"📊 Current State:")
-        print(f"   Buildings: {building_count}")
-        print(f"   Apartments: {apartment_count}")
+
+    try:
+        tenant = TenantModel.objects.get(schema_name=schema_name)
+        print(f"✅ Found tenant: {tenant.name} (schema: {tenant.schema_name})")
         print()
-        
-        if building_count > 0:
-            print("✅ Tenant already has buildings!")
+
+        with schema_context(schema_name):
+            from buildings.models import Building
+            from apartments.models import Apartment
+
+            building_count = Building.objects.count()
+            apartment_count = Apartment.objects.count()
+
+            print("📊 Current State:")
+            print(f"   Buildings: {building_count}")
+            print(f"   Apartments: {apartment_count}")
+            print()
+
+            if building_count > 0:
+                print("✅ Tenant already has buildings!")
+                for building in Building.objects.all():
+                    apts = Apartment.objects.filter(building=building).count()
+                    print(f"   - {building.name}: {apts} apartments")
+                print()
+                print("No action needed.")
+                return
+
+        print("🏗️ Creating demo data for tenant...")
+        tenant_service = TenantService()
+        tenant_service._create_demo_data(schema_name)  # pylint: disable=protected-access
+
+        with schema_context(schema_name):
+            from buildings.models import Building
+            from apartments.models import Apartment
+
+            building_count = Building.objects.count()
+            apartment_count = Apartment.objects.count()
+
+            print()
+            print("=" * 80)
+            print("✅ DEMO DATA CREATED SUCCESSFULLY!")
+            print("=" * 80)
+            print(f"   Buildings: {building_count}")
+            print(f"   Apartments: {apartment_count}")
+            print()
+
             for building in Building.objects.all():
                 apts = Apartment.objects.filter(building=building).count()
-                print(f"   - {building.name}: {apts} apartments")
-            print()
-            print("No action needed.")
-            sys.exit(0)
-        
-        # Create demo data
-        print("🏗️ Creating demo data for tenant...")
+                print(f"   📍 {building.name}")
+                print(f"      Address: {building.address}")
+                print(f"      Apartments: {apts}")
+                print()
+
+    except TenantModel.DoesNotExist:
+        print(f"❌ Tenant '{schema_name}' not found in database!")
         print()
-        
-        tenant_service = TenantService()
-        tenant_service._create_demo_data(TENANT_SCHEMA)
-        
-        # Verify
-        building_count = Building.objects.count()
-        apartment_count = Apartment.objects.count()
-        
+        print("Available tenants:")
+        for tenant in TenantModel.objects.all():
+            print(f"  - {tenant.schema_name} ({tenant.name})")
         print()
+        raise SystemExit(1) from None
+    except Exception as exc:  # pylint: disable=broad-except
+        print(f"❌ Error while creating demo data: {exc}")
+        raise
+    finally:
         print("=" * 80)
-        print("✅ DEMO DATA CREATED SUCCESSFULLY!")
+        print("🎉 Done")
         print("=" * 80)
-        print(f"   Buildings: {building_count}")
-        print(f"   Apartments: {apartment_count}")
+        print(f"Test at: https://{schema_name}.newconcierge.app/")
         print()
-        
-        for building in Building.objects.all():
-            apts = Apartment.objects.filter(building=building).count()
-            print(f"   📍 {building.name}")
-            print(f"      Address: {building.address}")
-            print(f"      Apartments: {apts}")
-            print()
-
-except TenantModel.DoesNotExist:
-    print(f"❌ Tenant '{TENANT_SCHEMA}' not found in database!")
-    print()
-    print("Available tenants:")
-    for t in TenantModel.objects.all():
-        print(f"  - {t.schema_name} ({t.name})")
-    print()
-    sys.exit(1)
-
-except Exception as e:
-    print(f"❌ Error: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
-
-print("=" * 80)
-print("🎉 TENANT IS NOW READY!")
-print("=" * 80)
-print()
-print(f"Test at: https://{TENANT_SCHEMA}.newconcierge.app/")
-print()
 
 
+def main():
+    parser = argparse.ArgumentParser(description="Create demo data for a tenant schema.")
+    parser.add_argument(
+        "--schema",
+        default="theo",
+        help="Target tenant schema (default: theo)",
+    )
+    args = parser.parse_args()
+
+    bootstrap_django()
+    create_demo_data(args.schema)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+if __name__ == "__main__":
+    main()
 
 
