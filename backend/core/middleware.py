@@ -19,13 +19,22 @@ class CustomTenantMiddleware(TenantMainMiddleware):
 
         Django's request.get_host() validates hostnames against RFC 1034/1035.
         We bypass this by reading HTTP_HOST directly and stripping the port.
+        
+        Priority:
+        1. X-Forwarded-Host header (for proxied requests from Next.js)
+        2. HTTP_HOST header (direct requests)
 
         Returns:
             str: The hostname without port number
         """
         from django_tenants.utils import remove_www
-        # Get the raw HTTP_HOST header instead of using request.get_host()
-        # to bypass Django's strict hostname validation
+        # Check X-Forwarded-Host first (for proxied requests from Next.js/Vercel)
+        forwarded_host = request.META.get('HTTP_X_FORWARDED_HOST', '')
+        if forwarded_host:
+            hostname = forwarded_host.split(':')[0]  # Strip port
+            return remove_www(hostname)
+        
+        # Fall back to HTTP_HOST for direct requests
         host = request.META.get('HTTP_HOST', '')
         hostname = host.split(':')[0]  # Strip port
         return remove_www(hostname)
