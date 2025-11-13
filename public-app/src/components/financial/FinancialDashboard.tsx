@@ -20,7 +20,7 @@ import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import { TransactionHistory } from './TransactionHistory';
 import { CashFlowChart } from './CashFlowChart';
-import ReportsManager from './ReportsManager';
+import { ReportsManager } from './ReportsManager';
 import { useRouter } from 'next/navigation';
 import { useMonthRefresh } from '@/hooks/useMonthRefresh';
 import useFinancialAutoRefresh from '@/hooks/useFinancialAutoRefresh';
