@@ -96,9 +96,14 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       setCurrentBuilding(buildingToSelect);
       setSelectedBuilding(buildingToSelect);
       
-      // Update localStorage with the selected building
+      // Update localStorage with the selected building (both keys for compatibility)
       if (buildingToSelect) {
         setStoredSelectedBuildingId(buildingToSelect.id);
+        // Also update activeBuildingId for backward compatibility with getActiveBuildingId()
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('activeBuildingId', buildingToSelect.id.toString());
+        }
+        console.log(`[BuildingContext] Auto-selected building: ${buildingToSelect.name} (ID: ${buildingToSelect.id})`);
       }
       
       setError(null);
@@ -136,6 +141,15 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   const setSelectedBuildingWithStorage = useCallback((building: Building | null) => {
     setSelectedBuilding(building);
     setStoredSelectedBuildingId(building?.id || null);
+    // Also update activeBuildingId for backward compatibility
+    if (typeof window !== 'undefined') {
+      if (building?.id) {
+        window.localStorage.setItem('activeBuildingId', building.id.toString());
+        console.log(`[BuildingContext] Selected building: ${building.name} (ID: ${building.id})`);
+      } else {
+        window.localStorage.removeItem('activeBuildingId');
+      }
+    }
   }, [setSelectedBuilding]);
 
   // Load buildings on mount - only once when auth is ready and user is authenticated AND has a tenant
@@ -194,19 +208,34 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isLoading, error, router]);
 
+  // Custom setCurrentBuilding that also updates localStorage
+  const setCurrentBuildingWithStorage = useCallback((building: Building | null) => {
+    setCurrentBuilding(building);
+    // Also update activeBuildingId for backward compatibility
+    if (typeof window !== 'undefined') {
+      if (building?.id) {
+        window.localStorage.setItem('activeBuildingId', building.id.toString());
+        setStoredSelectedBuildingId(building.id);
+      } else {
+        window.localStorage.removeItem('activeBuildingId');
+        setStoredSelectedBuildingId(null);
+      }
+    }
+  }, [setCurrentBuilding]);
+
   const contextValue = React.useMemo(
     () => ({
       buildings,
       currentBuilding,
       selectedBuilding,
-      setCurrentBuilding,
+      setCurrentBuilding: setCurrentBuildingWithStorage, // Use the custom function
       setSelectedBuilding: setSelectedBuildingWithStorage, // Use the custom function
       setBuildings,
       refreshBuildings,
       isLoading,
       error,
     }),
-    [buildings, currentBuilding, selectedBuilding, setCurrentBuilding, setSelectedBuildingWithStorage, setBuildings, refreshBuildings, isLoading, error]
+    [buildings, currentBuilding, selectedBuilding, setCurrentBuildingWithStorage, setSelectedBuildingWithStorage, setBuildings, refreshBuildings, isLoading, error]
   );
 
   return (
