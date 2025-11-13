@@ -17,17 +17,9 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   generateEtags: false,
-  async rewrites() {
-    return [
-      // Route handlers have priority over rewrites
-      // Fallback: proxy routes without specific handlers to backend-proxy
-      {
-        source: "/api/:path*",
-        destination: "/backend-proxy/:path*",
-        // This will only match if no route handler exists
-      },
-    ];
-  },
+  // Removed rewrites - route handlers have priority
+  // Routes without specific handlers will return 404
+  // If fallback proxy is needed, it should be handled at the route handler level
   async headers() {
     return [
       {
