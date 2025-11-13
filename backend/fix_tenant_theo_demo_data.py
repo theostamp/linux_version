@@ -111,7 +111,7 @@ def create_demo_data(schema_name: str, force: bool = False):
 
             for building in Building.objects.all():
                 apts = Apartment.objects.filter(building=building).count()
-                print(f"   📍 {building.name}")
+                print(f"   📍 {building.name} (ID: {building.id})")
                 print(f"      Address: {building.address}")
                 print(f"      Apartments: {apts}")
                 print()
