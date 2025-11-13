@@ -114,25 +114,37 @@ const buildTargetUrl = (
 const createForwardHeaders = (request: NextRequest) => {
   const headers = new Headers(request.headers);
   
-  // Get the public hostname from x-forwarded-host or referer header
-  // This is critical for tenant routing in Django
+  // Get the public hostname - prioritize Host header over x-forwarded-host
+  // Vercel sends x-forwarded-host as the internal Railway URL, not the public domain
+  // The Host header contains the actual public domain (theo.newconcierge.app)
   const forwardedHost = request.headers.get("x-forwarded-host");
   const referer = request.headers.get("referer");
-  const internalHost = request.headers.get("host") ?? "demo.localhost";
+  const requestHost = request.headers.get("host") ?? "demo.localhost";
   
-  // Extract hostname from referer if x-forwarded-host is not available
-  let publicHostname = forwardedHost;
-  if (!publicHostname && referer) {
-    try {
-      const refererUrl = new URL(referer);
-      publicHostname = refererUrl.host;
-    } catch {
-      // Invalid referer URL, fall back to internal host
+  // Priority: Host header > Referer > x-forwarded-host
+  // Host header is the actual public domain from the browser request
+  let publicHostname = requestHost;
+  
+  // If Host header looks like internal Vercel/Railway URL, try referer
+  if (requestHost.includes("railway.app") || requestHost.includes("vercel.app")) {
+    if (referer) {
+      try {
+        const refererUrl = new URL(referer);
+        publicHostname = refererUrl.host;
+      } catch {
+        // Invalid referer URL, keep using Host header
+      }
     }
   }
   
-  // Fall back to internal host if no public hostname found
-  const finalHost = publicHostname || internalHost;
+  // Only use x-forwarded-host if it's a public domain (not Railway/Vercel internal)
+  if (forwardedHost && 
+      !forwardedHost.includes("railway.app") && 
+      !forwardedHost.includes("vercel.app")) {
+    publicHostname = forwardedHost;
+  }
+  
+  const finalHost = publicHostname;
   const subdomain = finalHost.split('.')[0];
 
   // Set Host header for tenant routing in Django
@@ -150,9 +162,12 @@ const createForwardHeaders = (request: NextRequest) => {
     Host: finalHost,
     "X-Forwarded-Host": finalHost,
     subdomain,
-    originalHost: internalHost,
+    requestHost,
     forwardedHost,
     referer,
+    decision: requestHost.includes("railway.app") || requestHost.includes("vercel.app") 
+      ? "using-referer-or-host" 
+      : "using-host",
   });
 
   return stripHopByHopHeaders(headers);
