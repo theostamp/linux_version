@@ -3,6 +3,8 @@ import { exportHandlers } from "../../../_utils/exportHandlers";
 
 const methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] as const;
 
+console.log("[ROUTE HANDLER] /api/buildings/list/[...path] route.ts loaded");
+
 const handlers = createTenantProxyHandlers(
   {
     logLabel: "buildings-list",
@@ -13,7 +15,9 @@ const handlers = createTenantProxyHandlers(
         : segments
           ? [segments]
           : [];
-      return ["buildings/list", ...pathSegments].join("/");
+      const path = ["buildings/list", ...pathSegments].join("/");
+      console.log("[ROUTE HANDLER] buildings/list resolvePath called:", { segments, pathSegments, path });
+      return path;
     },
     ensureTrailingSlash: true,
   },
@@ -21,6 +25,8 @@ const handlers = createTenantProxyHandlers(
 );
 
 const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = exportHandlers(handlers, methods, "buildings-list");
+
+console.log("[ROUTE HANDLER] buildings/list handlers exported:", { GET: !!GET, POST: !!POST });
 
 export { GET, POST, PUT, PATCH, DELETE, OPTIONS };
 
