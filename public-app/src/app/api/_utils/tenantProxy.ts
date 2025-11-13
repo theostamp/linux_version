@@ -96,18 +96,17 @@ const buildTargetUrl = (
   const search = config.forwardSearchParams === false ? "" : request.nextUrl.search;
   const finalUrl = `${base}/${normalizedPath}${search}`;
   
-  // Log URL construction for debugging
-  if (process.env.NODE_ENV === "development") {
-    const logger = createLogger(config.logLabel ?? "unknown");
-    logger.info("URL constructed", {
-      method,
-      originalPath: request.nextUrl.pathname,
-      backendPath,
-      normalizedPath,
-      base,
-      finalUrl,
-    });
-  }
+  // Log URL construction for debugging (ALWAYS log in production too for debugging)
+  const logger = createLogger(config.logLabel ?? "unknown");
+  logger.info("URL constructed", {
+    method,
+    originalPath: request.nextUrl.pathname,
+    backendPath,
+    normalizedPath,
+    base,
+    finalUrl,
+    ensureTrailingSlash: config.ensureTrailingSlash ?? true,
+  });
   
   return finalUrl;
 };
@@ -115,6 +114,7 @@ const buildTargetUrl = (
 const createForwardHeaders = (request: NextRequest) => {
   const headers = new Headers(request.headers);
   const host = request.headers.get("host") ?? "demo.localhost";
+  const subdomain = host.split('.')[0];
 
   headers.set("Host", host);
   headers.set("X-Forwarded-Host", host);
@@ -122,6 +122,16 @@ const createForwardHeaders = (request: NextRequest) => {
     "X-Forwarded-Proto",
     request.headers.get("x-forwarded-proto") ?? "https",
   );
+  
+  // Log headers for debugging
+  if (process.env.NODE_ENV !== "production" || process.env.ENABLE_PROXY_LOGS === "true") {
+    console.log(`[tenantProxy] Forward headers:`, {
+      Host: host,
+      "X-Forwarded-Host": host,
+      subdomain,
+      originalHost: request.headers.get("host"),
+    });
+  }
 
   return stripHopByHopHeaders(headers);
 };
@@ -192,6 +202,8 @@ async function proxyTenantRequest(
     targetUrl,
     hasBody: !!body,
     bodySize: body?.byteLength ?? 0,
+    headers: Object.fromEntries(headers.entries()),
+    subdomain: host.split('.')[0],
   });
 
   try {
@@ -220,6 +232,7 @@ async function proxyTenantRequest(
       durationMs: duration,
       contentType: response.headers.get("content-type"),
       contentLength: response.headers.get("content-length"),
+      responseHeaders: Object.fromEntries(response.headers.entries()),
     });
 
     if (!response.ok) {
