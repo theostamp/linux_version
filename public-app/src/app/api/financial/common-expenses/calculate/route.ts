@@ -32,6 +32,14 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
         'X-Forwarded-Host': host,
         'Host': host,
+        // Forward authorization if present
+        ...(request.headers.get('authorization') && {
+          'Authorization': request.headers.get('authorization')!,
+        }),
+        // Forward cookie for authentication
+        ...(request.headers.get('cookie') && {
+          'Cookie': request.headers.get('cookie')!,
+        }),
       },
       body: JSON.stringify(body),
     });

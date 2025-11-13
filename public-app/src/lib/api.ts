@@ -1247,4 +1247,79 @@ export async function applyServicePackageToBuilding(packageId: number, buildingI
   }
 }
 
+// ============================================================================
+// 🛠️ MAINTENANCE: CONTRACTORS API FUNCTIONS
+// ============================================================================
+
+export type Supplier = {
+  id: number;
+  name: string;
+  category: string;
+  status: string;
+  contact_person: string;
+  phone: string;
+  email: string;
+  address: string;
+  vat_number: string;
+  contract_number: string;
+  rating: number;
+  reliability_score: number;
+  response_time_hours: number;
+  emergency_contact: string;
+  emergency_phone: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type Contractor = {
+  id: number;
+  name: string;
+  service_type: string;
+  status: string;
+  contact_person: string;
+  phone: string;
+  email: string;
+  rating: number;
+  reliability_score: number;
+  response_time_hours: number;
+  hourly_rate: number;
+  availability: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+export async function fetchSuppliers(buildingId?: number): Promise<Supplier[]> {
+  const params: Record<string, string | number | undefined> = {};
+  if (buildingId) params.building = buildingId;
+  
+  const response = await api.get<Supplier[] | { results: Supplier[] }>('/api/financial/suppliers/', params);
+  return Array.isArray(response) ? response : response?.results || [];
+}
+
+export async function fetchContractors(): Promise<Contractor[]> {
+  const response = await api.get<Contractor[] | { results: Contractor[] }>('/api/maintenance/contractors/');
+  return Array.isArray(response) ? response : response?.results || [];
+}
+
+export async function createContractor(
+  payload: Partial<Omit<Contractor, 'id' | 'created_at'>>
+): Promise<Contractor> {
+  return await api.post<Contractor>('/api/maintenance/contractors/', payload);
+}
+
+export async function updateContractor(
+  id: number,
+  payload: Partial<Omit<Contractor, 'id' | 'created_at'>>
+): Promise<Contractor> {
+  return await api.patch<Contractor>(`/api/maintenance/contractors/${id}/`, payload);
+}
+
+export async function deleteContractor(id: number): Promise<void> {
+  await api.delete(`/api/maintenance/contractors/${id}/`);
+}
+
+export async function fetchContractor(id: number): Promise<Contractor> {
+  return await api.get<Contractor>(`/api/maintenance/contractors/${id}/`);
+}
+
 
