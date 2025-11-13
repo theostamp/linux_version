@@ -19,13 +19,8 @@ const nextConfig: NextConfig = {
   generateEtags: false,
   async rewrites() {
     return [
-      // Specific API routes are handled by their own route handlers
-      // Only proxy non-specific routes to backend-proxy
-      {
-        source: "/api/:path*",
-        destination: "/backend-proxy/:path*",
-        // This will only match if there's no specific route handler
-      },
+      // Route handlers have priority over rewrites
+      // Only proxy non-specific routes to backend-proxy as fallback
     ];
   },
   async headers() {
