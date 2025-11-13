@@ -1,20 +1,44 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import type { Building } from '@/lib/api';
 import { fetchBuilding } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Building as BuildingIcon, Edit, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import ErrorMessage from '@/components/ErrorMessage';
+import { useBuilding } from '@/components/contexts/BuildingContext';
 
 export default function BuildingDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = Number(params.id);
+  const { buildings, selectedBuilding, isLoading: buildingsLoading } = useBuilding();
   const [building, setBuilding] = useState<Building | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Check if the ID in URL matches available buildings
+  useEffect(() => {
+    // Wait for buildings to load
+    if (buildingsLoading) return;
+
+    // If we have buildings loaded, check if the URL ID is valid
+    if (buildings.length > 0) {
+      const urlBuilding = buildings.find(b => b.id === id);
+      
+      // If URL ID doesn't match any building, redirect to the selected building or first building
+      if (!urlBuilding) {
+        const targetBuilding = selectedBuilding || buildings[0];
+        if (targetBuilding && targetBuilding.id !== id) {
+          console.log(`[BuildingDetail] URL ID ${id} not found. Redirecting to building ${targetBuilding.id}`);
+          router.replace(`/buildings/${targetBuilding.id}`);
+          return;
+        }
+      }
+    }
+  }, [id, buildings, selectedBuilding, buildingsLoading, router]);
 
   useEffect(() => {
     async function load() {
@@ -26,13 +50,24 @@ export default function BuildingDetailPage() {
       } catch (err: unknown) {
         const error = err as { message?: string };
         console.error('Error loading building:', err);
+        
+        // If building not found and we have buildings loaded, redirect to first available
+        if (buildings.length > 0 && !buildingsLoading) {
+          const targetBuilding = selectedBuilding || buildings[0];
+          if (targetBuilding && targetBuilding.id !== id) {
+            console.log(`[BuildingDetail] Building ${id} not found. Redirecting to building ${targetBuilding.id}`);
+            router.replace(`/buildings/${targetBuilding.id}`);
+            return;
+          }
+        }
+        
         setError(error.message || 'Αποτυχία φόρτωσης δεδομένων κτιρίου');
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [id]);
+  }, [id, buildings, selectedBuilding, buildingsLoading, router]);
 
   if (loading) {
     return (
