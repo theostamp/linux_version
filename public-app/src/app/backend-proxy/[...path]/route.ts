@@ -91,14 +91,28 @@ async function proxyRequest(request: NextRequest, ctx: RouteContext) {
 
   let upstreamResponse: Response;
   try {
-    upstreamResponse = await fetch(targetUrl, {
-      method: request.method,
-      headers,
-      body,
-      redirect: "manual",
-      // @ts-expect-error: duplex is required for streaming bodies in Node18+
-      duplex: "half",
-    });
+    // Add timeout and better error handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    try {
+      upstreamResponse = await fetch(targetUrl, {
+        method: request.method,
+        headers,
+        body,
+        redirect: "manual",
+        signal: controller.signal,
+        // @ts-expect-error: duplex is required for streaming bodies in Node18+
+        duplex: "half",
+      });
+      clearTimeout(timeoutId);
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        throw new Error(`Request timeout after 30 seconds to ${targetUrl}`);
+      }
+      throw fetchError;
+    }
     
     console.log(`[backend-proxy] Response status: ${upstreamResponse.status} for ${targetUrl}`, {
       method: request.method,
