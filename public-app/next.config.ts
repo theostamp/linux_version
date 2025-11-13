@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
   // Removed rewrites - route handlers have priority
   // Routes without specific handlers will return 404
   // If fallback proxy is needed, it should be handled at the route handler level
+  // Dummy change to trigger new deployment
   async headers() {
     return [
       {
