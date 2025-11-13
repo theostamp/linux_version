@@ -104,8 +104,9 @@ export const useCommonExpenses = () => {
     setError(null);
     
     try {
+      // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/issue/', data);
-      return response.data;
+      return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την έκδοση κοινοχρήστων';
       setError(errorMessage);
@@ -132,8 +133,9 @@ export const useCommonExpenses = () => {
     
     try {
       // Χρησιμοποιούμε το υπάρχον issue endpoint για την αποθήκευση
+      // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/issue/', data);
-      return response.data;
+      return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την αποθήκευση του φύλλου κοινοχρήστων';
       setError(errorMessage);
@@ -153,8 +155,9 @@ export const useCommonExpenses = () => {
     setError(null);
     
     try {
+      // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/create_period_automatically/', data);
-      return response.data;
+      return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη δημιουργία περιόδου';
       setError(errorMessage);
@@ -172,8 +175,9 @@ export const useCommonExpenses = () => {
     setError(null);
     
     try {
+      // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/collect_expenses_automatically/', data);
-      return response.data;
+      return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη συλλογή δαπανών';
       setError(errorMessage);
@@ -191,8 +195,9 @@ export const useCommonExpenses = () => {
     setError(null);
     
     try {
+      // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/calculate_automatically/', data);
-      return response.data;
+      return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τον υπολογισμό';
       setError(errorMessage);
@@ -210,8 +215,9 @@ export const useCommonExpenses = () => {
     setError(null);
     
     try {
+      // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/issue_automatically/', data);
-      return response.data;
+      return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την έκδοση';
       setError(errorMessage);
@@ -230,8 +236,9 @@ export const useCommonExpenses = () => {
     setError(null);
     
     try {
+      // The api.post returns data directly
       const response = await api.post('/financial/common-expenses/auto_process_period/', data);
-      return response.data;
+      return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά την αυτοματοποιημένη επεξεργασία';
       setError(errorMessage);
@@ -246,8 +253,9 @@ export const useCommonExpenses = () => {
     setError(null);
     
     try {
+      // The api.get returns data directly
       const response = await api.get(`/financial/common-expenses/period_statistics/?building_id=${building_id}&period_id=${period_id}`);
-      return response.data;
+      return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Σφάλμα κατά τη λήψη στατιστικών';
       setError(errorMessage);

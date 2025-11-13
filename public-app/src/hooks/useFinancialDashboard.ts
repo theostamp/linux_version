@@ -32,8 +32,10 @@ export const useFinancialDashboard = () => {
     setError(null);
     
     try {
-      const data = await apiGet<ApartmentBalance[]>(`/financial/dashboard/apartment-balances/`, { building_id: buildingId });
-      return data;
+      const data = await apiGet<{ apartments?: ApartmentBalance[] } | ApartmentBalance[]>(`/financial/dashboard/apartment_balances/`, { building_id: buildingId });
+      // Handle both object with apartments property and direct array
+      const result = Array.isArray(data) ? data : (data as { apartments?: ApartmentBalance[] }).apartments || [];
+      return result;
     } catch (err: unknown) {
       const error = err as { message?: string };
       const errorMessage = error.message || 'Σφάλμα κατά τη λήψη των οφειλών διαμερισμάτων';

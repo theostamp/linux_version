@@ -40,13 +40,27 @@ const buildTargetUrl = (ctx: RouteContext, request: NextRequest) => {
   const path = originalPath.startsWith('/') ? originalPath.slice(1) : originalPath;
   const search = request.nextUrl.search;
   
-  // Django backend expects /api prefix, so add it if not present
-  const apiPath = path.startsWith("api/") ? path : `api/${path}`;
+  // The path already comes from /api/* rewrite, so it doesn't have /api/ prefix
+  // Django backend expects /api prefix, so add it
+  // But check if base already includes /api to avoid double prefix
+  let apiPath = path;
+  if (!path.startsWith("api/")) {
+    apiPath = `api/${path}`;
+  }
+  
   // Ensure trailing slash for Django REST framework compatibility
   const normalizedPath = apiPath.endsWith("/") ? apiPath : `${apiPath}/`;
-  const url = `${base}/${normalizedPath}${search}`;
   
-  console.log(`[backend-proxy] Original: ${request.nextUrl.pathname}, Path: ${path}, API Path: ${apiPath}, Final: ${url}`);
+  // Check if base already ends with /api to avoid double /api/api/
+  let finalBase = base;
+  if (finalBase.endsWith('/api')) {
+    // Base already has /api, so remove it to avoid double prefix
+    finalBase = finalBase.slice(0, -4); // Remove /api
+  }
+  
+  const url = `${finalBase}/${normalizedPath}${search}`;
+  
+  console.log(`[backend-proxy] Method: ${request.method}, Original: ${request.nextUrl.pathname}, Path: ${path}, API Path: ${apiPath}, Base: ${finalBase}, Final: ${url}`);
   
   return url;
 };
@@ -85,10 +99,38 @@ async function proxyRequest(request: NextRequest, ctx: RouteContext) {
       // @ts-expect-error: duplex is required for streaming bodies in Node18+
       duplex: "half",
     });
+    
+    console.log(`[backend-proxy] Response status: ${upstreamResponse.status} for ${targetUrl}`);
+    
+    // Log response details for debugging
+    if (!upstreamResponse.ok) {
+      // Clone the response to read body without consuming the original
+      const clonedResponse = upstreamResponse.clone();
+      const responseText = await clonedResponse.text();
+      console.error(`[backend-proxy] Error response from ${targetUrl}:`, {
+        status: upstreamResponse.status,
+        statusText: upstreamResponse.statusText,
+        body: responseText.substring(0, 500), // First 500 chars
+      });
+      
+      // Return error response with more details
+      return NextResponse.json(
+        { 
+          error: `Backend request failed: ${upstreamResponse.status} ${upstreamResponse.statusText}`,
+          details: responseText.substring(0, 500),
+          url: targetUrl
+        },
+        { status: upstreamResponse.status },
+      );
+    }
   } catch (error) {
     console.error(`[backend-proxy] Failed to reach ${targetUrl}`, error);
     return NextResponse.json(
-      { error: "Unable to reach backend service" },
+      { 
+        error: "Unable to reach backend service",
+        details: error instanceof Error ? error.message : String(error),
+        url: targetUrl
+      },
       { status: 502 },
     );
   }
