@@ -15,6 +15,7 @@ const handlers = createTenantProxyHandlers(
           : [];
       return ["financial/dashboard", ...pathSegments].join("/");
     },
+    ensureTrailingSlash: true,
   },
   methods,
 );

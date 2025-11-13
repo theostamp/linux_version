@@ -15,6 +15,7 @@ const handlers = createTenantProxyHandlers(
           : [];
       return ["apartments", ...pathSegments].join("/");
     },
+    ensureTrailingSlash: true,
   },
   methods,
 );

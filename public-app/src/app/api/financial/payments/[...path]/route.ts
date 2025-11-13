@@ -15,6 +15,7 @@ const handlers = createTenantProxyHandlers(
           : [];
       return ["financial/payments", ...pathSegments].join("/");
     },
+    ensureTrailingSlash: true,
   },
   methods,
 );

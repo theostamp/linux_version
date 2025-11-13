@@ -1,18 +1,18 @@
 import { createTenantProxyHandlers } from "../_utils/tenantProxy";
 import { exportHandlers } from "../_utils/exportHandlers";
 
-const methods = ["GET"] as const;
+const methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] as const;
 
 const handlers = createTenantProxyHandlers(
   {
     logLabel: "buildings",
-    resolvePath: (_request, _context) => "buildings",
+    resolvePath: (_request, _context) => "buildings/list",
     ensureTrailingSlash: true,
   },
   methods,
 );
 
-const { GET } = exportHandlers(handlers, methods, "buildings");
+const { GET, POST, PUT, PATCH, DELETE, OPTIONS } = exportHandlers(handlers, methods, "buildings");
 
-export { GET };
+export { GET, POST, PUT, PATCH, DELETE, OPTIONS };
 

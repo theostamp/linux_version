@@ -635,19 +635,19 @@ export async function fetchBuildings(page: number = 1, pageSize: number = 50): P
 }
 
 export async function fetchBuilding(id: number): Promise<Building> {
-  return apiGet<Building>(`/buildings/${id}/`);
+  return apiGet<Building>(`/buildings/list/${id}/`);
 }
 
 export async function createBuilding(payload: BuildingPayload): Promise<Building> {
-  return apiPost<Building>('/buildings/', payload);
+  return apiPost<Building>('/buildings/list/', payload);
 }
 
 export async function updateBuilding(id: number, payload: BuildingPayload): Promise<Building> {
-  return apiPatch<Building>(`/buildings/${id}/`, payload);
+  return apiPatch<Building>(`/buildings/list/${id}/`, payload);
 }
 
 export async function deleteBuilding(id: number): Promise<void> {
-  await apiDelete(`/buildings/${id}/`);
+  await apiDelete(`/buildings/list/${id}/`);
 }
 
 // ============================================================================
