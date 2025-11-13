@@ -68,14 +68,24 @@ const buildTargetUrl = (ctx: RouteContext, request: NextRequest) => {
 const createForwardHeaders = (request: NextRequest) => {
   const forwardHeaders = new Headers(request.headers);
   const host = request.headers.get("host") ?? "";
+  const subdomain = host.split('.')[0];
   
   // Set Host header for tenant routing in Django
+  // Extract subdomain from host (e.g., "theo.newconcierge.app" -> "theo")
   forwardHeaders.set("Host", host);
   forwardHeaders.set("X-Forwarded-Host", host);
   forwardHeaders.set(
     "X-Forwarded-Proto",
     request.headers.get("x-forwarded-proto") ?? "https",
   );
+  
+  // Log for debugging tenant routing
+  console.log(`[backend-proxy] Forward headers:`, {
+    Host: host,
+    "X-Forwarded-Host": host,
+    subdomain,
+    originalHost: request.headers.get("host"),
+  });
   
   return stripHopByHopHeaders(forwardHeaders);
 };
