@@ -354,11 +354,15 @@ class TenantService:
                     logger.info(f"Demo data already exists in schema {schema_name}")
                     return
                 
-                # Get the tenant user (manager)
+                # Get the tenant user (manager) - try multiple methods
                 tenant_user = User.objects.filter(is_staff=True).first()
                 if not tenant_user:
-                    logger.warning(f"No tenant user found in schema {schema_name} for demo data creation")
-                    return
+                    # Try to get any user in the schema
+                    tenant_user = User.objects.first()
+                if not tenant_user:
+                    logger.error(f"CRITICAL: No user found in schema {schema_name} for demo data creation. Cannot create demo building.")
+                    # Don't return - try to create building anyway, BuildingMembership will be skipped
+                    tenant_user = None
                 
                 # Create Αλκμάνος 22 building with full data matching auto_initialization.py
                 building = Building.objects.create(
@@ -374,12 +378,16 @@ class TenantService:
                     longitude=23.7275
                 )
                 
-                # Create building membership for tenant user
-                BuildingMembership.objects.get_or_create(
-                    building=building,
-                    resident=tenant_user,
-                    defaults={'role': 'manager'}
-                )
+                # Create building membership for tenant user (if user exists)
+                if tenant_user:
+                    BuildingMembership.objects.get_or_create(
+                        building=building,
+                        resident=tenant_user,
+                        defaults={'role': 'manager'}
+                    )
+                    logger.info(f"Created BuildingMembership for user {tenant_user.email} in schema {schema_name}")
+                else:
+                    logger.warning(f"No user available to create BuildingMembership in schema {schema_name}")
                 
                 # Create apartments with full data from auto_initialization.py - Total mills: 1000
                 apartments_data = [
@@ -426,6 +434,23 @@ class TenantService:
                 logger.error(f"CRITICAL: Database tables missing in schema {schema_name}. Migrations may have failed.")
                 # Re-raise for critical errors so tenant creation fails
                 raise Exception(f"Migrations incomplete for schema {schema_name}: {e}") from e
-            # For other errors, don't raise - tenant creation can still succeed without demo data
+            # For other errors, log but don't raise - tenant creation can still succeed without demo data
+            # However, we should try to create the building anyway if possible
             logger.warning(f"Demo data creation failed but continuing tenant creation: {e}")
+            # Try to create at least the building without apartments if building creation failed
+            try:
+                with schema_context(schema_name):
+                    from buildings.models import Building
+                    if not Building.objects.filter(name__icontains='Αλκμάνος').exists():
+                        logger.info(f"Attempting to create minimal demo building in schema {schema_name}")
+                        Building.objects.create(
+                            name='Αλκμάνος 22',
+                            address='Αλκμάνος 22, Αθήνα 115 28, Ελλάδα',
+                            city='Αθήνα',
+                            postal_code='11528',
+                            apartments_count=10
+                        )
+                        logger.info(f"Created minimal demo building 'Αλκμάνος 22' in schema {schema_name}")
+            except Exception as fallback_error:
+                logger.error(f"Failed to create minimal demo building in schema {schema_name}: {fallback_error}")
 
