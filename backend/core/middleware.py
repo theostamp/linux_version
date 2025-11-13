@@ -51,8 +51,33 @@ class CustomTenantMiddleware(TenantMainMiddleware):
                 # Fall back to public schema if demo tenant doesn't exist
                 return super().get_tenant(domain_model, hostname)
 
-        # For all other cases, use the default behavior
-        return super().get_tenant(domain_model, hostname)
+        # For all other cases, use the default behavior first
+        try:
+            return super().get_tenant(domain_model, hostname)
+        except domain_model.DoesNotExist:
+            # Fallback: attempt to resolve tenant by subdomain if domain entry is missing
+            parts = hostname.split(".")
+            if len(parts) > 1:
+                subdomain = parts[0]
+                # Ignore common prefixes that shouldn't map to tenants
+                if subdomain not in ("www", ""):
+                    tenant_model = get_tenant_model()
+                    try:
+                        tenant = tenant_model.objects.get(schema_name=subdomain)
+                        # Ensure domain record exists for future requests
+                        domain_model.objects.get_or_create(
+                            domain=hostname,
+                            defaults={
+                                "tenant": tenant,
+                                "is_primary": False,
+                            },
+                        )
+                        return tenant
+                    except tenant_model.DoesNotExist:
+                        pass
+
+            # If fallback also fails, re-raise the original exception
+            raise
 
     def process_request(self, request):
         """
