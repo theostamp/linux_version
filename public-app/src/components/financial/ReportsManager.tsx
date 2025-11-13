@@ -83,22 +83,22 @@ export function ReportsManager({ buildingId }: ReportsManagerProps) {
       });
 
       const endpoint = format === 'excel' ? 'export_excel' : 'export_pdf';
-      const url = new URL(getApiUrl(`/financial/reports/${endpoint}/`));
-      params.forEach((value, key) => url.searchParams.set(key, value));
+      const apiUrl = new URL(getApiUrl(`/financial/reports/${endpoint}/`));
+      params.forEach((value, key) => apiUrl.searchParams.set(key, value));
 
-      const response = await fetch(url.toString(), { method: 'GET', credentials: 'include' });
+      const response = await fetch(apiUrl.toString(), { method: 'GET', credentials: 'include' });
       if (!response.ok) {
         throw new Error(`Failed to export report (${format}) with status ${response.status}`);
       }
       
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = blobUrl;
       a.download = `${selectedReport}_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
     } catch (error) {
       console.error(`Σφάλμα εξαγωγής ${format}:`, error);
