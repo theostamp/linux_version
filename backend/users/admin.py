@@ -118,6 +118,7 @@ class CustomUserAdmin(UserAdmin):
             params = [ids[0]]
             id_where_clause = "id = %s"
             id_params = [ids[0]]
+            placeholders = '%s'
         else:
             placeholders = ','.join(['%s'] * len(ids))
             where_clause = f"user_id IN ({placeholders})"
