@@ -1,170 +1,197 @@
-02:59:08.330 Running build in Portland, USA (West) – pdx1 (Enhanced Build Machine)
-02:59:08.330 Build machine configuration: 8 cores, 16 GB
-02:59:08.418 Cloning github.com/theostamp/linux_version (Branch: main, Commit: f74ea4f)
-02:59:09.872 Cloning completed: 1.454s
-02:59:10.001 Found .vercelignore
-02:59:10.101 Removed 1561 ignored files defined in .vercelignore
-02:59:10.102   /ALTERNATIVE_DEPLOYMENT_SOLUTIONS.md
-02:59:10.102   /APP_SEPARATION_GUIDE.md
-02:59:10.102   /AUTO_CREATION_FEATURE.md
-02:59:10.102   /AZURE_DEPLOYMENT_PLAN.md
-02:59:10.102   /BACK_BUTTON_IMPLEMENTATION_SUMMARY.md
-02:59:10.102   /backend/.env
-02:59:10.102   /backend/.env.example
-02:59:10.102   /backend/activate_monthly_balance_system.py
-02:59:10.102   /backend/add_august_2025_expenses.py
-02:59:10.102   /backend/add_debts_after_reset.py
-02:59:10.132 Restored build cache from previous deployment (Fs5oGcABABhu8R9R8MeaYebZicW2)
-02:59:10.460 Running "vercel build"
-02:59:10.804 Vercel CLI 48.9.1
-02:59:11.091 Running "install" command: `npm ci`...
-02:59:25.080 
-02:59:25.080 added 268 packages, and audited 269 packages in 14s
-02:59:25.080 
-02:59:25.080 40 packages are looking for funding
-02:59:25.080   run `npm fund` for details
-02:59:25.082 
-02:59:25.082 1 high severity vulnerability
-02:59:25.082 
-02:59:25.082 Some issues need review, and may require choosing
-02:59:25.082 a different dependency.
-02:59:25.082 
-02:59:25.082 Run `npm audit` for details.
-02:59:25.129 Detected Next.js version: 15.5.6
-02:59:25.130 Running "npm run build"
-02:59:25.225 
-02:59:25.225 > public-app@0.1.0 build
-02:59:25.225 > next build --turbopack
-02:59:25.225 
-02:59:25.701  ⚠ Installing TypeScript as it was not found while loading "next.config.ts".
-02:59:25.711 
-02:59:25.711 Installing devDependencies (npm):
-02:59:25.711 - typescript
-02:59:25.711 
-02:59:29.394 
-02:59:29.394 added 275 packages, and audited 544 packages in 4s
-02:59:29.394 
-02:59:29.394 159 packages are looking for funding
-02:59:29.394   run `npm fund` for details
-02:59:29.396 
-02:59:29.396 1 high severity vulnerability
-02:59:29.396 
-02:59:29.396 Some issues need review, and may require choosing
-02:59:29.396 a different dependency.
-02:59:29.396 
-02:59:29.396 Run `npm audit` for details.
-02:59:29.408 
-02:59:29.677    ▲ Next.js 15.5.6 (Turbopack)
-02:59:29.677    - Experiments (use with caution):
-02:59:29.677      · cssChunking: "strict"
-02:59:29.677 
-02:59:29.715    Creating an optimized production build ...
-02:59:41.595  ✓ Finished writing to disk in 33ms
-02:59:41.640 
-02:59:41.640 > Build error occurred
-02:59:41.643 Error: Turbopack build failed with 6 errors:
-02:59:41.643 ./src/components/maintenance/PaymentConfigurationSection.tsx:9:1
-02:59:41.643 Module not found: Can't resolve '@/components/ui/switch'
-02:59:41.644 [0m [90m  7 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m'@/components/ui/label'[39m[33m;[39m
-02:59:41.644  [90m  8 |[39m [36mimport[39m { [33mSelect[39m[33m,[39m [33mSelectContent[39m[33m,[39m [33mSelectItem[39m[33m,[39m [33mSelectTrigger[39m[33m,[39m [33mSelectValue[39m } [36mfrom[39m [32m'@/components/ui/select'[39m[33m;[39m
-02:59:41.644 [31m[1m>[22m[39m[90m  9 |[39m [36mimport[39m { [33mSwitch[39m } [36mfrom[39m [32m'@/components/ui/switch'[39m[33m;[39m
-02:59:41.644  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
-02:59:41.644  [90m 10 |[39m [36mimport[39m { [33mTextarea[39m } [36mfrom[39m [32m'@/components/ui/textarea'[39m[33m;[39m
-02:59:41.644  [90m 11 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m'@/components/ui/button'[39m[33m;[39m
-02:59:41.645  [90m 12 |[39m [36mimport[39m { [33mBadge[39m } [36mfrom[39m [32m'@/components/ui/badge'[39m[33m;[39m[0m
-02:59:41.645 
-02:59:41.645 Import map: aliased to relative './src/components/ui/switch' inside of [project]/
-02:59:41.645 
-02:59:41.645 
-02:59:41.645 https://nextjs.org/docs/messages/module-not-found
-02:59:41.645 
-02:59:41.645 
-02:59:41.645 ./src/components/maintenance/PaymentConfigurationSection.tsx:9:1
-02:59:41.645 Module not found: Can't resolve '@/components/ui/switch'
-02:59:41.645 [0m [90m  7 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m'@/components/ui/label'[39m[33m;[39m
-02:59:41.645  [90m  8 |[39m [36mimport[39m { [33mSelect[39m[33m,[39m [33mSelectContent[39m[33m,[39m [33mSelectItem[39m[33m,[39m [33mSelectTrigger[39m[33m,[39m [33mSelectValue[39m } [36mfrom[39m [32m'@/components/ui/select'[39m[33m;[39m
-02:59:41.645 [31m[1m>[22m[39m[90m  9 |[39m [36mimport[39m { [33mSwitch[39m } [36mfrom[39m [32m'@/components/ui/switch'[39m[33m;[39m
-02:59:41.646  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
-02:59:41.646  [90m 10 |[39m [36mimport[39m { [33mTextarea[39m } [36mfrom[39m [32m'@/components/ui/textarea'[39m[33m;[39m
-02:59:41.646  [90m 11 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m'@/components/ui/button'[39m[33m;[39m
-02:59:41.646  [90m 12 |[39m [36mimport[39m { [33mBadge[39m } [36mfrom[39m [32m'@/components/ui/badge'[39m[33m;[39m[0m
-02:59:41.646 
-02:59:41.646 Import map: aliased to relative './src/components/ui/switch' inside of [project]/
-02:59:41.646 
-02:59:41.646 
-02:59:41.646 https://nextjs.org/docs/messages/module-not-found
-02:59:41.646 
-02:59:41.646 
-02:59:41.646 ./src/components/maintenance/PaymentConfigurationSection.tsx:9:1
-02:59:41.646 Module not found: Can't resolve '@/components/ui/switch'
-02:59:41.646 [0m [90m  7 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m'@/components/ui/label'[39m[33m;[39m
-02:59:41.646  [90m  8 |[39m [36mimport[39m { [33mSelect[39m[33m,[39m [33mSelectContent[39m[33m,[39m [33mSelectItem[39m[33m,[39m [33mSelectTrigger[39m[33m,[39m [33mSelectValue[39m } [36mfrom[39m [32m'@/components/ui/select'[39m[33m;[39m
-02:59:41.646 [31m[1m>[22m[39m[90m  9 |[39m [36mimport[39m { [33mSwitch[39m } [36mfrom[39m [32m'@/components/ui/switch'[39m[33m;[39m
-02:59:41.647  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
-02:59:41.647  [90m 10 |[39m [36mimport[39m { [33mTextarea[39m } [36mfrom[39m [32m'@/components/ui/textarea'[39m[33m;[39m
-02:59:41.647  [90m 11 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m'@/components/ui/button'[39m[33m;[39m
-02:59:41.647  [90m 12 |[39m [36mimport[39m { [33mBadge[39m } [36mfrom[39m [32m'@/components/ui/badge'[39m[33m;[39m[0m
-02:59:41.647 
-02:59:41.647 Import map: aliased to relative './src/components/ui/switch' inside of [project]/
-02:59:41.647 
-02:59:41.647 
-02:59:41.647 https://nextjs.org/docs/messages/module-not-found
-02:59:41.647 
-02:59:41.647 
-02:59:41.647 ./src/components/maintenance/PaymentConfigurationSection.tsx:9:1
-02:59:41.647 Module not found: Can't resolve '@/components/ui/switch'
-02:59:41.647 [0m [90m  7 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m'@/components/ui/label'[39m[33m;[39m
-02:59:41.647  [90m  8 |[39m [36mimport[39m { [33mSelect[39m[33m,[39m [33mSelectContent[39m[33m,[39m [33mSelectItem[39m[33m,[39m [33mSelectTrigger[39m[33m,[39m [33mSelectValue[39m } [36mfrom[39m [32m'@/components/ui/select'[39m[33m;[39m
-02:59:41.647 [31m[1m>[22m[39m[90m  9 |[39m [36mimport[39m { [33mSwitch[39m } [36mfrom[39m [32m'@/components/ui/switch'[39m[33m;[39m
-02:59:41.648  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
-02:59:41.648  [90m 10 |[39m [36mimport[39m { [33mTextarea[39m } [36mfrom[39m [32m'@/components/ui/textarea'[39m[33m;[39m
-02:59:41.648  [90m 11 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m'@/components/ui/button'[39m[33m;[39m
-02:59:41.648  [90m 12 |[39m [36mimport[39m { [33mBadge[39m } [36mfrom[39m [32m'@/components/ui/badge'[39m[33m;[39m[0m
-02:59:41.648 
-02:59:41.648 Import map: aliased to relative './src/components/ui/switch' inside of [project]/
-02:59:41.648 
-02:59:41.648 
-02:59:41.648 https://nextjs.org/docs/messages/module-not-found
-02:59:41.648 
-02:59:41.648 
-02:59:41.648 ./src/components/maintenance/ScheduledMaintenanceForm.tsx:8:1
-02:59:41.648 Export createServiceReceipt doesn't exist in target module
-02:59:41.648 [0m [90m  6 |[39m [36mimport[39m { zodResolver } [36mfrom[39m [32m'@hookform/resolvers/zod'[39m[33m;[39m
-02:59:41.648  [90m  7 |[39m [36mimport[39m { useRouter } [36mfrom[39m [32m'next/navigation'[39m[33m;[39m
-02:59:41.648 [31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m { api[33m,[39m getActiveBuildingId[33m,[39m fetchScheduledMaintenances[33m,[39m type [33mScheduledMaintenance[39m [36mas[39m [33mApiScheduledMaintenance[39m[33m,[39m createServiceReceipt } [36mfrom[39m [32m'@/lib/api'[39m[33m;[39m
-02:59:41.648  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
-02:59:41.648  [90m  9 |[39m [36mimport[39m { useToast } [36mfrom[39m [32m'@/hooks/use-toast'[39m[33m;[39m
-02:59:41.648  [90m 10 |[39m [36mimport[39m { useRole } [36mfrom[39m [32m'@/lib/auth'[39m[33m;[39m
-02:59:41.648  [90m 11 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[39m[33m,[39m [33mCardHeader[39m[33m,[39m [33mCardTitle[39m } [36mfrom[39m [32m'@/components/ui/card'[39m[33m;[39m[0m
-02:59:41.648 
-02:59:41.648 The export createServiceReceipt was not found in module [project]/src/lib/api.ts [app-client] (ecmascript).
-02:59:41.648 Did you mean to import deleteServiceReceipt?
-02:59:41.648 All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
-02:59:41.648 
-02:59:41.648 
-02:59:41.648 ./src/components/maintenance/ScheduledMaintenanceForm.tsx:8:1
-02:59:41.648 Export createServiceReceipt doesn't exist in target module
-02:59:41.649 [0m [90m  6 |[39m [36mimport[39m { zodResolver } [36mfrom[39m [32m'@hookform/resolvers/zod'[39m[33m;[39m
-02:59:41.649  [90m  7 |[39m [36mimport[39m { useRouter } [36mfrom[39m [32m'next/navigation'[39m[33m;[39m
-02:59:41.649 [31m[1m>[22m[39m[90m  8 |[39m [36mimport[39m { api[33m,[39m getActiveBuildingId[33m,[39m fetchScheduledMaintenances[33m,[39m type [33mScheduledMaintenance[39m [36mas[39m [33mApiScheduledMaintenance[39m[33m,[39m createServiceReceipt } [36mfrom[39m [32m'@/lib/api'[39m[33m;[39m
-02:59:41.649  [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
-02:59:41.649  [90m  9 |[39m [36mimport[39m { useToast } [36mfrom[39m [32m'@/hooks/use-toast'[39m[33m;[39m
-02:59:41.649  [90m 10 |[39m [36mimport[39m { useRole } [36mfrom[39m [32m'@/lib/auth'[39m[33m;[39m
-02:59:41.649  [90m 11 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[39m[33m,[39m [33mCardHeader[39m[33m,[39m [33mCardTitle[39m } [36mfrom[39m [32m'@/components/ui/card'[39m[33m;[39m[0m
-02:59:41.649 
-02:59:41.649 The export createServiceReceipt was not found in module [project]/src/lib/api.ts [app-ssr] (ecmascript).
-02:59:41.649 Did you mean to import deleteServiceReceipt?
-02:59:41.649 All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
-02:59:41.649 
-02:59:41.649 
-02:59:41.649     at <unknown> (./src/components/maintenance/PaymentConfigurationSection.tsx:9:1)
-02:59:41.649     at <unknown> (https://nextjs.org/docs/messages/module-not-found)
-02:59:41.649     at <unknown> (./src/components/maintenance/PaymentConfigurationSection.tsx:9:1)
-02:59:41.649     at <unknown> (https://nextjs.org/docs/messages/module-not-found)
-02:59:41.649     at <unknown> (./src/components/maintenance/PaymentConfigurationSection.tsx:9:1)
-02:59:41.649     at <unknown> (https://nextjs.org/docs/messages/module-not-found)
-02:59:41.649     at <unknown> (./src/components/maintenance/PaymentConfigurationSection.tsx:9:1)
-02:59:41.649     at <unknown> (https://nextjs.org/docs/messages/module-not-found)
-02:59:41.649     at <unknown> (./src/components/maintenance/ScheduledMaintenanceForm.tsx:8:1)
-02:59:41.649     at <unknown> (./src/components/maintenance/ScheduledMaintenanceForm.tsx:8:1)
-02:59:41.669 Error: Command "npm run build" exited with 1
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AuthContext] loadUserOnMount starting...
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 AuthContext: Found cached user: etherm2021@gmail.com but will verify with API
+f2f82778f21c4ea3.js?…Q3QqzVBBEyLhSx1d7:1 [API CALL] Attempting to fetch /api/users/me/
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AuthContext] Token check interval disabled to debug hanging issue
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Current pathname: /dashboard
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is Dashboard: true
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is Kiosk Mode: false
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is Info Screen: false
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is No Sidebar Route: false
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 AuthContext: Refreshed user data: etherm2021@gmail.com
+f2f82778f21c4ea3.js?…Q3QqzVBBEyLhSx1d7:1 [API CALL] Fetching all buildings
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [BuildingContext] User has no tenant, stopping loading
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AuthContext] Token check interval disabled to debug hanging issue
+/api/obligations/summary:1 
+ Failed to load resource: the server responded with a status of 404 ()
+f2f82778f21c4ea3.js?…Q3QqzVBBEyLhSx1d7:1 [fetchObligationsSummary] Endpoint not found, returning empty data
+f2f82778f21c4ea3.js?…Q3QqzVBBEyLhSx1d7:1 [API THROTTLE] Returning cached data for /api/buildings/public/_{"page_size":1000,"page":1}
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [BuildingContext] Selected building: Σόλωνος 8, Αθήνα 106 73 (ID: 3)
+/api/user-requests?building=3:1 
+ Failed to load resource: the server responded with a status of 404 ()
+09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useRequests] Error fetching requests: Error: GET https://theo.newconcierge.app/api/user-requests/?building=3 failed: 404
+    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
+    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
+    at async W (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9959)
+    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:21340)
+/api/announcements?building=3:1 
+ Failed to load resource: the server responded with a status of 404 ()
+09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useAnnouncements] Error fetching announcements: Error: GET https://theo.newconcierge.app/api/announcements/?building=3 failed: 404
+    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
+    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
+    at async O (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9082)
+    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:22457)
+/api/votes?building=3:1 
+ Failed to load resource: the server responded with a status of 404 ()
+09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useVotes] Error fetching votes: Error: GET https://theo.newconcierge.app/api/votes/?building=3 failed: 404
+    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
+    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
+    at async q (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9384)
+    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:20260)
+/api/user-requests?building=3:1 
+ Failed to load resource: the server responded with a status of 404 ()
+09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useRequests] Error fetching requests: Error: GET https://theo.newconcierge.app/api/user-requests/?building=3 failed: 404
+    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
+    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
+    at async W (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9959)
+    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:21340)
+/api/announcements?building=3:1 
+ Failed to load resource: the server responded with a status of 404 ()
+09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useAnnouncements] Error fetching announcements: Error: GET https://theo.newconcierge.app/api/announcements/?building=3 failed: 404
+    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
+    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
+    at async O (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9082)
+    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:22457)
+/api/votes?building=3:1 
+ Failed to load resource: the server responded with a status of 404 ()
+09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useVotes] Error fetching votes: Error: GET https://theo.newconcierge.app/api/votes/?building=3 failed: 404
+    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
+    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
+    at async q (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9384)
+    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:20260)
+/api/user-requests?building=3:1 
+ Failed to load resource: the server responded with a status of 404 ()
+09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useRequests] Error fetching requests: Error: GET https://theo.newconcierge.app/api/user-requests/?building=3 failed: 404
+    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
+    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
+    at async W (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9959)
+    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:21340)
+/api/announcements?building=3:1 
+ Failed to load resource: the server responded with a status of 404 ()
+09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useAnnouncements] Error fetching announcements: Error: GET https://theo.newconcierge.app/api/announcements/?building=3 failed: 404
+    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
+    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
+    at async O (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9082)
+    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:22457)
+/api/votes?building=3:1 
+ Failed to load resource: the server responded with a status of 404 ()
+09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useVotes] Error fetching votes: Error: GET https://theo.newconcierge.app/api/votes/?building=3 failed: 404
+    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
+    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
+    at async q (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9384)
+    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:20260)
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 FinancialPage selectedMonth initialization: 
+Object
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 CommonExpenseCalculatorNew: Received props: 
+Object
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG useEffect triggered: 
+Object
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG calling loadApartments for buildingId: 3 month: 2025-11
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 Loading apartments for building 3, month: 2025-11
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG calling building API...
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 👂 FinancialPage setting up open-maintenance-overview event listener
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 FinancialPage: Dependencies changed, triggering refresh
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 FinancialPage: Executing automatic refresh...
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 Selected month changed to: 2025-11
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 FinancialPage URL params: 
+Object
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Current pathname: /financial
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is Dashboard: true
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is Kiosk Mode: false
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is Info Screen: false
+7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is No Sidebar Route: false
+/api/financial/payments?building_id=3:1 
+ Failed to load resource: the server responded with a status of 404 ()
+/api/buildings/list/3:1 
+ Failed to load resource: the server responded with a status of 404 ()
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 Error loading apartments with financial data: Error: GET https://theo.newconcierge.app/api/buildings/list/3/ failed: 404
+    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
+    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
+3
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 ⚠️ BuildingOverviewSection: Could not fetch building data: Error: GET https://theo.newconcierge.app/api/buildings/list/3/ failed: 404
+    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
+    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
+/api/financial/dashb…ary?building_id=3:1 
+ Failed to load resource: the server responded with a status of 404 ()
+/api/financial/payme…d=3&month=2025-11:1 
+ Failed to load resource: the server responded with a status of 404 ()
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 Reserve fund goal is zero or not set, returning false
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 ResultsStep: Reserve fund check: 
+Object
+/api/apartments?building=3:1 
+ Failed to load resource: the server responded with a status of 404 ()
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 Error loading apartments: Error: GET https://theo.newconcierge.app/api/apartments/?building=3 failed: 404
+    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
+    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 CommonExpenseCalculatorNew: Received props: 
+Object
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 FinancialPage: Dependencies changed, triggering refresh
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 FinancialPage: Refresh already in progress, skipping...
+/api/financial/dashb…d=3&month=2025-11:1 
+ Failed to load resource: the server responded with a status of 404 ()
+3
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 Error fetching financial summary: Error: GET https://theo.newconcierge.app/api/financial/dashboard/summary/?building_id=3&month=2025-11 failed: 404
+    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
+    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 ✅ FinancialPage: Automatic refresh completed successfully
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG current_month_expenses: 0
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG current_obligations: 0
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG previous_obligations: 0
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG final value: 0
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 BuildingOverviewSection: Reserve fund calculation: 
+Object
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG current_month_expenses: 0
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG current_obligations: 0
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG previous_obligations: 0
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG final value: 0
+/api/financial/commo…xpenses/calculate:1 
+ Failed to load resource: the server responded with a status of 404 ()
+/api/financial/commo…alculate_advanced:1 
+ Failed to load resource: the server responded with a status of 404 ()
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 CommonExpenseCalculatorNew: Received props: 
+Object
+0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG current_month_expenses: 0
+﻿...25:08:13:08 +0200] "GET /admin/jsi18n/ HTTP/1.1" 200 13992 "https://linuxversion-production.up.railway.app/admin/users/customuser/804/change/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+>>> Ελήφθησαν στοιχεία login: email=etherm2021@gmail.com, password=****
+>>> LOGIN_VIEW - Authenticating in schema: public
+>>> Όλοι οι χρήστες: [{'id': 804, 'email': 'etherm2021@gmail.com'}, {'id': 792, 'email': 'theostam1966@gmail.com'}]
+>>> LOGIN_VIEW CALLED - Method: POST
+>>> LOGIN_VIEW - Request data: {'email': 'etherm2021@gmail.com', 'password': 'theo123@@@'}
+>>> LOGIN_VIEW - Request headers: {'Host': 'linuxversion-production.up.railway.app', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36', 'Content-Length': '56', 'Accept': '*/*', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'el-GR,el;q=0.9', 'Content-Type': 'application/json', 'Origin': 'https://theo.newconcierge.app', 'Priority': 'u=1, i', 'Referer': 'https://theo.newconcierge.app/', 'Sec-Ch-Ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'cross-site', 'Sec-Fetch-Storage-Access': 'active', 'X-Forwarded-For': '79.131.214.234', 'X-Forwarded-Host': 'linuxversion-production.up.railway.app', 'X-Forwarded-Proto': 'https', 'X-Railway-Edge': 'railway/europe-west4-drams3a', 'X-Railway-Request-Id': 'Z-c3rNwdRuurWS11ss7a6g', 'X-Real-Ip': '79.131.214.234', 'X-Request-Start': '1763014394730'}
+>>> LOGIN_VIEW - Current schema: public
+>>> Χρήστης από authenticate(): etherm2021@gmail.com
+>>> DEBUG: user.role = 'manager'
+>>> DEBUG: user_data keys = ['id', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser', 'role', 'office_name', 'office_phone', 'office_address', 'office_logo', 'office_bank_name', 'office_bank_account', 'office_bank_iban', 'office_bank_beneficiary']
+>>> DEBUG: user_data['role'] = 'manager'
+>>> DEBUG: User has tenant: theo, redirecting to /dashboard
+100.64.0.10 - - [13/Nov/2025:08:13:14 +0200] "POST /api/users/login/ HTTP/1.1" 200 873 "https://theo.newconcierge.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+100.64.0.11 - - [13/Nov/2025:08:13:15 +0200] "GET /api/users/me/ HTTP/1.1" 200 305 "https://theo.newconcierge.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+WARNING 2025-11-13 08:13:21,132 log 16 139938214599552 Not Found: /api/obligations/summary/
+100.64.0.12 - - [13/Nov/2025:08:13:21 +0200] "GET /api/obligations/summary/ HTTP/1.1" 404 179 "https://theo.newconcierge.app/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+WARNING 2025-11-13 08:13:34,303 log 16 139938214599552 Not Found: /api/user-requests/
+100.64.0.3 - - [13/Nov/2025:08:13:34 +0200] "GET /api/user-requests/?building=3 HTTP/1.1" 404 179 "https://theo.newconcierge.app/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+WARNING 2025-11-13 08:13:34,512 log 16 139938214599552 Not Found: /api/announcements/
+100.64.0.3 - - [13/Nov/2025:08:13:34 +0200] "GET /api/announcements/?building=3 HTTP/1.1" 404 179 "https://theo.newconcierge.app/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+WARNING 2025-11-13 08:13:34,980 log 16 139938214599552 Not Found: /api/votes/
+100.64.0.13 - - [13/Nov/2025:08:13:34 +0200] "GET /api/votes/?building=3 HTTP/1.1" 404 179 "https://theo.newconcierge.app/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+100.64.0.3 - - [13/Nov/2025:08:14:14 +0200] "GET /api/financial/payments/?building_id=3&month=2025-11 HTTP/1.1" 404 179 "https://theo.newconcierge.app/financial" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+WARNING 2025-11-13 08:14:15,080 log 16 139938214599552 Not Found: /api/financial/dashboard/summary/
+WARNING 2025-11-13 08:14:14,776 log 17 139938214599552 Not Found: /api/apartments/
+100.64.0.9 - - [13/Nov/2025:08:14:15 +0200] "GET /api/financial/dashboard/summary/?building_id=3&month=2025-11 HTTP/1.1" 404 179 "https://theo.newconcierge.app/financial" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+100.64.0.9 - - [13/Nov/2025:08:14:14 +0200] "GET /api/apartments/?building=3 HTTP/1.1" 404 179 "https://theo.newconcierge.app/financial" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+WARNING 2025-11-13 08:14:15,799 log 17 139938214599552 Not Found: /api/financial/common-expenses/calculate/
+100.64.0.4 - - [13/Nov/2025:08:14:14 +0200] "GET /api/financial/payments/?building_id=3 HTTP/1.1" 404 179 "https://theo.newconcierge.app/financial" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+100.64.0.13 - - [13/Nov/2025:08:14:14 +0200] "GET /api/buildings/list/3/ HTTP/1.1" 404 179 "https://theo.newconcierge.app/financial" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+WARNING 2025-11-13 08:14:14,207 log 17 139938214599552 Not Found: /api/buildings/list/3/
+WARNING 2025-11-13 08:14:14,202 log 17 139938214599552 Not Found: /api/financial/payments/
+WARNING 2025-11-13 08:14:14,295 log 16 139938214599552 Not Found: /api/financial/dashboard/summary/
+100.64.0.9 - - [13/Nov/2025:08:14:15 +0200] "POST /api/financial/common-expenses/calculate/ HTTP/1.1" 404 179 "-" "node"
+100.64.0.3 - - [13/Nov/2025:08:14:14 +0200] "GET /api/financial/dashboard/summary/?building_id=3 HTTP/1.1" 404 179 "https://theo.newconcierge.app/financial" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+WARNING 2025-11-13 08:14:15,833 log 16 139938214599552 Not Found: /api/financial/common-expenses/calculate_advanced/
+WARNING 2025-11-13 08:14:14,761 log 17 139938214599552 Not Found: /api/financial/payments/
+100.64.0.3 - - [13/Nov/2025:08:14:15 +0200] "POST /api/financial/common-expenses/calculate_advanced/ HTTP/1.1" 404 179 "-" "node"
+WARNING 2025-11-13 08:14:51,048 log 16 139938214599552 Not Found: /api/financial/dashboard/apartment_balances/
+100.64.0.14 - - [13/Nov/2025:08:14:51 +0200] "GET /api/financial/dashboard/apartment_balances/?building_id=3&month=2025-11 HTTP/1.1" 404 179 "-" "node"
+WARNING 2025-11-13 08:15:03,529 log 17 139938214599552 Not Found: /api/financial/common-expenses/calculate_advanced/
+100.64.0.9 - - [13/Nov/2025:08:15:03 +0200] "POST /api/financial/common-expenses/calculate_advanced/ HTTP/1.1" 404 179 "-" "node"
+WARNING 2025-11-13 08:15:03,573 log 16 139938214599552 Not Found: /api/financial/common-expenses/calculate/
+100.64.0.13 - - [13/Nov/2025:08:15:03 +0200] "POST /api/financial/common-expenses/calculate/ HTTP/1.1" 404 179 "-" "node"

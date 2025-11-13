@@ -22,6 +22,7 @@ import {
   History
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { ensureArray } from '@/lib/arrayHelpers';
 import { formatCurrency, roundToCents } from '@/lib/utils';
 import { PaymentForm } from './PaymentForm';
 import PaymentNotificationModal from './PaymentNotificationModal';
@@ -122,20 +123,47 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
       });
 
       // Fetch both apartment balances and financial summary
-      const [balancesResponse, summaryResponse] = await Promise.all([
+      const [balancesRaw, summaryRaw] = await Promise.all([
         api.get(`/financial/dashboard/apartment_balances/?${params}`),
         api.get(`/financial/dashboard/summary/?${params}`)
       ]);
 
-      const responseData = balancesResponse.data;
-      const financialSummary = summaryResponse.data;
+      const responseData = balancesRaw ?? {};
+      const financialSummary = summaryRaw ?? {};
 
-      setApartmentBalances(responseData.apartments || []);
+      const apartments = ensureArray<ApartmentBalanceWithDetails>(
+        (responseData as { apartments?: unknown }).apartments ?? responseData
+      );
+
+      setApartmentBalances(
+        apartments.map((apartment) => ({
+          ...apartment,
+          participation_mills: Number((apartment as { participation_mills?: number }).participation_mills ?? 0),
+          current_balance: Number((apartment as { current_balance?: number }).current_balance ?? 0),
+          previous_balance: Number((apartment as { previous_balance?: number }).previous_balance ?? 0),
+          reserve_fund_share: Number((apartment as { reserve_fund_share?: number }).reserve_fund_share ?? 0),
+          expense_share: Number((apartment as { expense_share?: number }).expense_share ?? 0),
+          resident_expenses: Number((apartment as { resident_expenses?: number }).resident_expenses ?? 0),
+          owner_expenses: Number((apartment as { owner_expenses?: number }).owner_expenses ?? 0),
+          total_obligations: Number((apartment as { total_obligations?: number }).total_obligations ?? 0),
+          total_payments: Number((apartment as { total_payments?: number }).total_payments ?? 0),
+          net_obligation: Number((apartment as { net_obligation?: number }).net_obligation ?? 0),
+        }))
+      );
 
       // Merge the summary data from both endpoints
+      const mergedSummary = {
+        ...((responseData as { summary?: Record<string, unknown> }).summary ?? {}),
+        ...(typeof financialSummary === 'object' ? financialSummary as Record<string, unknown> : {}),
+      };
+
       setSummary({
-        ...(responseData.summary || {}),
-        management_fee_per_apartment: financialSummary.management_fee_per_apartment || 0
+        ...mergedSummary,
+        management_fee_per_apartment: Number(
+          (financialSummary as { management_fee_per_apartment?: number })?.management_fee_per_apartment ??
+            (responseData as { management_fee_per_apartment?: number })?.management_fee_per_apartment ??
+            0
+        ),
       });
 
       // Validate if the returned data matches the selected month

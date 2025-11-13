@@ -10,8 +10,9 @@ import { Calendar, Download, Search, Filter, FileText, FileSpreadsheet } from 'l
 import { format } from 'date-fns';
 // import { el } from 'date-fns/locale/el';
 import { Transaction } from '@/types/financial';
-import { api } from '@/lib/api';
+import { api, getApiUrl } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { ensureArray } from '@/lib/arrayHelpers';
 import { ApartmentFilter } from './ApartmentFilter';
 
 interface TransactionHistoryProps {
@@ -52,8 +53,11 @@ export function TransactionHistory({ buildingId, limit, selectedMonth }: Transac
         ...filterParams,
       });
 
-      const response = await api.get(`/financial/reports/transaction_history/?${params}`);
-      setTransactions(response.data);
+      const response = await api.get<Transaction[] | { results?: Transaction[] } | { data?: Transaction[] }>(
+        `/financial/reports/transaction_history/?${params}`,
+      );
+      const data = ensureArray<Transaction>(response);
+      setTransactions(data);
     } catch (error) {
       console.error('Σφάλμα φόρτωσης κινήσεων:', error);
     } finally {
@@ -82,10 +86,17 @@ export function TransactionHistory({ buildingId, limit, selectedMonth }: Transac
         ...filters,
       });
 
-      const response = await api.get(`/financial/reports/export_excel/?${params}`, {
-        responseType: 'blob'
+      const url = new URL(getApiUrl('/financial/reports/export_excel/'));
+      params.forEach((value, key) => {
+        if (value !== undefined && value !== null && value !== '' && value !== 'all') {
+          url.searchParams.set(key, value);
+        }
       });
-      const blob = response.data;
+      const response = await fetch(url.toString(), { method: 'GET', credentials: 'include' });
+      if (!response.ok) {
+        throw new Error(`Export excel failed with status ${response.status}`);
+      }
+      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -108,10 +119,17 @@ export function TransactionHistory({ buildingId, limit, selectedMonth }: Transac
         ...filters,
       });
 
-      const response = await api.get(`/financial/reports/export_pdf/?${params}`, {
-        responseType: 'blob'
+      const url = new URL(getApiUrl('/financial/reports/export_pdf/'));
+      params.forEach((value, key) => {
+        if (value !== undefined && value !== null && value !== '' && value !== 'all') {
+          url.searchParams.set(key, value);
+        }
       });
-      const blob = response.data;
+      const response = await fetch(url.toString(), { method: 'GET', credentials: 'include' });
+      if (!response.ok) {
+        throw new Error(`Export pdf failed with status ${response.status}`);
+      }
+      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -346,12 +364,12 @@ export function TransactionHistory({ buildingId, limit, selectedMonth }: Transac
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold">
-                      {formatCurrency(transaction.amount)}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      Υπόλοιπο: {formatCurrency(transaction.balance_after)}
-                    </div>
+                  <div className="text-lg font-bold">
+                    {formatCurrency(typeof transaction.amount === 'string' ? parseFloat(transaction.amount) : transaction.amount)}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Υπόλοιπο: {formatCurrency(typeof transaction.balance_after === 'string' ? parseFloat(transaction.balance_after) : transaction.balance_after)}
+                  </div>
                   </div>
                 </div>
                 {(transaction as any).notes && (

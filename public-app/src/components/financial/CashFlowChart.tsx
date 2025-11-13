@@ -18,6 +18,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { api } from '@/lib/api';
+import { ensureArray } from '@/lib/arrayHelpers';
 
 interface CashFlowData {
   date: string;
@@ -42,7 +43,15 @@ export function CashFlowChart({ buildingId }: CashFlowChartProps) {
     try {
       const response = await api.get(`/financial/reports/cash_flow/?building_id=${buildingId.toString()}&days=${days}`);
       // The api.get returns data directly
-      setCashFlowData(response);
+      const data = ensureArray<CashFlowData>(response);
+      setCashFlowData(
+        data.map((item) => ({
+          ...item,
+          inflow: Number((item as { inflow?: number | string }).inflow ?? 0),
+          outflow: Number((item as { outflow?: number | string }).outflow ?? 0),
+          net_flow: Number((item as { net_flow?: number | string }).net_flow ?? 0),
+        })),
+      );
     } catch (error) {
       console.error('Σφάλμα φόρτωσης δεδομένων ταμειακής ροής:', error);
     } finally {
@@ -57,14 +66,14 @@ export function CashFlowChart({ buildingId }: CashFlowChartProps) {
   // Προετοιμασία δεδομένων για το γράφημα (Recharts format)
   const chartData = cashFlowData.map(item => ({
     date: new Date(item.date).toLocaleDateString('el-GR'),
-    inflow: item.inflow,
-    outflow: item.outflow,
-    netFlow: item.net_flow,
+    inflow: Number(item.inflow ?? 0),
+    outflow: Number(item.outflow ?? 0),
+    netFlow: Number(item.net_flow ?? 0),
   }));
 
   // Υπολογισμός στατιστικών
-  const totalInflow = cashFlowData.reduce((sum, item) => sum + item.inflow, 0);
-  const totalOutflow = cashFlowData.reduce((sum, item) => sum + item.outflow, 0);
+  const totalInflow = cashFlowData.reduce((sum, item) => sum + Number(item.inflow ?? 0), 0);
+  const totalOutflow = cashFlowData.reduce((sum, item) => sum + Number(item.outflow ?? 0), 0);
   const netFlow = totalInflow - totalOutflow;
   const averageInflow = cashFlowData.length > 0 ? totalInflow / cashFlowData.length : 0;
   const averageOutflow = cashFlowData.length > 0 ? totalOutflow / cashFlowData.length : 0;

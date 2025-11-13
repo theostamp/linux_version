@@ -17,6 +17,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { ensureArray } from '@/lib/arrayHelpers';
 import { formatCurrency } from '@/lib/utils';
 import { TransactionHistory } from './TransactionHistory';
 import { CashFlowChart } from './CashFlowChart';
@@ -78,6 +79,11 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
       
       const response = await api.get(`/financial/dashboard/summary/?${params}`);
       // The api.get returns data directly
+      if (!response) {
+        console.warn('[FinancialDashboard] Empty response received');
+        setSummary(null);
+        return;
+      }
       setSummary(response);
       
       console.log(`✅ FinancialDashboard: Summary loaded successfully for ${selectedMonth || 'current'}`);
@@ -175,6 +181,9 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
     );
   }
 
+  const recentTransactions = ensureArray(summary.recent_transactions);
+  const apartmentBalances = ensureArray<ApartmentBalance>(summary.apartment_balances);
+
   return (
     <div className="space-y-6">
       {/* Κουμπί Manual Refresh */}
@@ -257,7 +266,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {summary.recent_transactions.length}
+              {recentTransactions.length}
             </div>
             <p className="text-xs text-muted-foreground">
               Τελευταίες 30 ημέρες
@@ -274,7 +283,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {summary.apartment_balances?.length || 0}
+              {apartmentBalances.length}
             </div>
             <p className="text-xs text-muted-foreground">
               Ενεργά διαμερίσματα
@@ -284,17 +293,19 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
       </div>
       
       {/* Γράφημα Κατανομής Οφειλών */}
-      {summary.apartment_balances && summary.apartment_balances.length > 0 && (
+      {apartmentBalances.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Κατανομή Οφειλών ανά Διαμέρισμα</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {summary.apartment_balances
-                .filter((apt: ApartmentBalance) => apt.current_balance < 0)
+              {apartmentBalances
+                .filter((apt: ApartmentBalance) => Number(apt?.current_balance) < 0)
                 .sort((a: ApartmentBalance, b: ApartmentBalance) => {
-                  return Math.abs(a.current_balance) - Math.abs(b.current_balance);
+                  const balanceA = Number(a?.current_balance ?? 0);
+                  const balanceB = Number(b?.current_balance ?? 0);
+                  return Math.abs(balanceA) - Math.abs(balanceB);
                 })
                 .slice(0, 10)
                 .map((apartment: ApartmentBalance) => (
@@ -314,7 +325,7 @@ const FinancialDashboard = React.forwardRef<{ loadSummary: () => void }, Financi
                       <p className={`text-sm font-medium ${
                         Number(apartment.current_balance) < 0 ? 'text-red-600' : 'text-green-600'
                       }`}>
-                        {formatCurrency(apartment.current_balance)}
+                        {formatCurrency(Number(apartment.current_balance ?? 0))}
                       </p>
                       {apartment.last_payment_date && (
                         <p className="text-xs text-muted-foreground">

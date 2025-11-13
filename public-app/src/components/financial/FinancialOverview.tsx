@@ -19,6 +19,7 @@ import {
   Calculator
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { ensureArray } from '@/lib/arrayHelpers';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { el } from 'date-fns/locale/el';
@@ -86,6 +87,11 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
       
       const response = await api.get(`/financial/dashboard/summary/?${params}`);
       // The api.get returns data directly
+      if (!response) {
+        console.warn('[FinancialOverview] Empty response received');
+        setStats(null);
+        return;
+      }
       setStats(response);
     } catch (error) {
       console.error('Error loading financial stats:', error);
@@ -151,6 +157,9 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
       </Card>
     );
   }
+
+  const apartmentBalances = ensureArray(stats.apartment_balances);
+  const paymentMethods = ensureArray(stats.payment_statistics?.payment_methods);
 
   return (
     <div className="space-y-6">
@@ -254,7 +263,7 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
       </div>
 
       {/* Γράφημα Κατανομής Οφειλών */}
-      {stats.apartment_balances && stats.apartment_balances.length > 0 && (
+      {apartmentBalances.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -264,9 +273,9 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {stats.apartment_balances
-                .filter(apt => apt.current_balance < 0)
-                .sort((a, b) => a.current_balance - b.current_balance)
+              {apartmentBalances
+                .filter((apt) => Number(apt?.current_balance) < 0)
+                .sort((a, b) => Number(a?.current_balance ?? 0) - Number(b?.current_balance ?? 0))
                 .slice(0, 10)
                 .map((apartment) => (
                   <div key={apartment.apartment_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -282,10 +291,10 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {getBalanceIcon(apartment.current_balance)}
+                      {getBalanceIcon(Number(apartment.current_balance ?? 0))}
                       <div className="text-right">
-                        <p className={`text-sm font-medium ${getBalanceColor(apartment.current_balance)}`}>
-                          {formatCurrency(apartment.current_balance)}
+                        <p className={`text-sm font-medium ${getBalanceColor(Number(apartment.current_balance ?? 0))}`}>
+                          {formatCurrency(Number(apartment.current_balance ?? 0))}
                         </p>
                         {apartment.last_payment_date && (
                           <p className="text-xs text-muted-foreground">
@@ -314,36 +323,36 @@ const FinancialOverview = React.forwardRef<{ loadSummary: () => void }, Financia
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
-                  {stats.payment_statistics.total_payments}
+                  {Number(stats.payment_statistics.total_payments ?? 0)}
                 </div>
                 <p className="text-sm text-muted-foreground">Συνολικές Πληρωμές</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(stats.payment_statistics.average_payment)}
+                  {formatCurrency(Number(stats.payment_statistics.average_payment ?? 0))}
                 </div>
                 <p className="text-sm text-muted-foreground">Μέση Πληρωμή</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">
-                  {stats.payment_statistics.payment_methods.length}
+                  {paymentMethods.length}
                 </div>
                 <p className="text-sm text-muted-foreground">Τρόποι Πληρωμής</p>
               </div>
             </div>
             
             {/* Κατανομή Τρόπων Πληρωμής */}
-            {stats.payment_statistics.payment_methods.length > 0 && (
+            {paymentMethods.length > 0 && (
               <div className="mt-6">
                 <h4 className="text-sm font-medium mb-3">Κατανομή ανά Τρόπο Πληρωμής</h4>
                 <div className="space-y-2">
-                  {stats.payment_statistics.payment_methods.map((method, index) => (
+                  {paymentMethods.map((method, index) => (
                     <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                       <span className="text-sm font-medium">{method.method}</span>
                       <div className="flex items-center space-x-2">
-                        <Badge variant="secondary">{method.count}</Badge>
+                        <Badge variant="secondary">{Number((method as { count?: number }).count ?? 0)}</Badge>
                         <span className="text-sm text-muted-foreground">
-                          {formatCurrency(method.total)}
+                          {formatCurrency(Number((method as { total?: number }).total ?? 0))}
                         </span>
                       </div>
                     </div>

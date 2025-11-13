@@ -32,7 +32,7 @@ def bootstrap_django():
     django.setup()
 
 
-def create_demo_data(schema_name: str):
+def create_demo_data(schema_name: str, force: bool = False):
     from django_tenants.utils import schema_context, get_tenant_model
     from tenants.services import TenantService
 
@@ -51,23 +51,39 @@ def create_demo_data(schema_name: str):
         with schema_context(schema_name):
             from buildings.models import Building
             from apartments.models import Apartment
+            from buildings.models import BuildingMembership
 
             building_count = Building.objects.count()
             apartment_count = Apartment.objects.count()
+            has_demo_building = Building.objects.filter(name__icontains="Αλκμάνος").exists()
 
             print("📊 Current State:")
             print(f"   Buildings: {building_count}")
             print(f"   Apartments: {apartment_count}")
+            print(f"   Has demo building (Αλκμάνος 22): {'yes' if has_demo_building else 'no'}")
             print()
 
-            if building_count > 0:
-                print("✅ Tenant already has buildings!")
+            if has_demo_building and not force:
+                print("✅ Demo building already present. Use --force to recreate it.")
                 for building in Building.objects.all():
                     apts = Apartment.objects.filter(building=building).count()
                     print(f"   - {building.name}: {apts} apartments")
                 print()
-                print("No action needed.")
                 return
+
+            if force:
+                print("⚠️ Force flag detected: removing existing demo building data...")
+                BuildingMembership.objects.filter(
+                    building__name__icontains="Αλκμάνος"
+                ).delete()
+                Apartment.objects.filter(
+                    building__name__icontains="Αλκμάνος"
+                ).delete()
+                Building.objects.filter(
+                    name__icontains="Αλκμάνος"
+                ).delete()
+                print("🧹 Existing demo data removed.")
+                print()
 
         print("🏗️ Creating demo data for tenant...")
         tenant_service = TenantService()
@@ -121,10 +137,15 @@ def main():
         default="theo",
         help="Target tenant schema (default: theo)",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Recreate demo building even if it already exists",
+    )
     args = parser.parse_args()
 
     bootstrap_django()
-    create_demo_data(args.schema)
+    create_demo_data(args.schema, force=args.force)
 
 
 if __name__ == "__main__":

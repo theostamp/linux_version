@@ -17,7 +17,7 @@ import {
   Filter,
   Search
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { getApiUrl } from '@/lib/api';
 
 interface ReportsManagerProps {
   buildingId: number;
@@ -74,15 +74,24 @@ export function ReportsManager({ buildingId }: ReportsManagerProps) {
       const params = new URLSearchParams({
         building_id: buildingId.toString(),
         report_type: selectedReport,
-        ...filters,
+      });
+
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value && value !== 'all') {
+          params.set(key, value);
+        }
       });
 
       const endpoint = format === 'excel' ? 'export_excel' : 'export_pdf';
-      const response = await api.get(`/financial/reports/${endpoint}/?${params}`, {
-        responseType: 'blob'
-      });
+      const url = new URL(getApiUrl(`/financial/reports/${endpoint}/`));
+      params.forEach((value, key) => url.searchParams.set(key, value));
+
+      const response = await fetch(url.toString(), { method: 'GET', credentials: 'include' });
+      if (!response.ok) {
+        throw new Error(`Failed to export report (${format}) with status ${response.status}`);
+      }
       
-      const blob = response.data;
+      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
