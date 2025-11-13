@@ -18,8 +18,8 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
-import TransactionHistory from './TransactionHistory';
-import CashFlowChart from './CashFlowChart';
+import { TransactionHistory } from './TransactionHistory';
+import { CashFlowChart } from './CashFlowChart';
 import ReportsManager from './ReportsManager';
 import { useRouter } from 'next/navigation';
 import { useMonthRefresh } from '@/hooks/useMonthRefresh';
