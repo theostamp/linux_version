@@ -89,6 +89,11 @@ const createApiError = (
   return error;
 };
 
+const isNotFoundError = (error: unknown): boolean => {
+  const err = error as { status?: number; response?: { status?: number } };
+  return err?.status === 404 || err?.response?.status === 404;
+};
+
 const normalizeApiPath = (path: string): string => {
   if (!path) return "/api/";
   const prefixed = path.startsWith("/") ? path : `/${path}`;
@@ -671,9 +676,16 @@ export async function fetchAnnouncements(buildingId?: number | null): Promise<An
   if (buildingId) {
     params.building = buildingId;
   }
-  
-  const data = await apiGet<Paginated<Announcement>>('/announcements/', params);
-  return extractResults(data);
+  try {
+    const data = await apiGet<Paginated<Announcement>>('/announcements/', params);
+    return extractResults(data);
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      console.warn('[fetchAnnouncements] Endpoint returned 404, returning empty list');
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function fetchAnnouncement(id: string | number): Promise<Announcement> {
@@ -727,9 +739,16 @@ export async function fetchVotes(buildingId?: number | null): Promise<Vote[]> {
   if (buildingId) {
     params.building = buildingId;
   }
-  
-  const data = await apiGet<Paginated<Vote>>('/votes/', params);
-  return extractResults(data);
+  try {
+    const data = await apiGet<Paginated<Vote>>('/votes/', params);
+    return extractResults(data);
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      console.warn('[fetchVotes] Endpoint returned 404, returning empty list');
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function fetchMyVote(voteId: number): Promise<VoteSubmission | null> {
@@ -786,9 +805,16 @@ export async function fetchRequests(filters: { status?: string; buildingId?: num
   if (filters.buildingId) {
     params.building = filters.buildingId;
   }
-  
-  const data = await apiGet<Paginated<UserRequest>>('/user-requests/', params);
-  return extractResults(data);
+  try {
+    const data = await apiGet<Paginated<UserRequest>>('/user-requests/', params);
+    return extractResults(data);
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      console.warn('[fetchRequests] Endpoint returned 404, returning empty list');
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function fetchUserRequestsForBuilding(buildingId: number): Promise<UserRequest[]> {
@@ -802,9 +828,16 @@ export async function fetchTopRequests(buildingId: number | null): Promise<UserR
   }
   params.ordering = '-support_count';
   params.page_size = 10;
-  
-  const data = await apiGet<Paginated<UserRequest>>('/user-requests/', params);
-  return extractResults(data);
+  try {
+    const data = await apiGet<Paginated<UserRequest>>('/user-requests/', params);
+    return extractResults(data);
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      console.warn('[fetchTopRequests] Endpoint returned 404, returning empty list');
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function fetchRequest(id: number | string): Promise<UserRequest> {
@@ -915,8 +948,16 @@ export type ApartmentList = {
 };
 
 export async function fetchApartments(buildingId: number): Promise<ApartmentList[]> {
-  const data = await apiGet<Paginated<ApartmentList>>(`/apartments/`, { building: buildingId });
-  return extractResults(data);
+  try {
+    const data = await apiGet<Paginated<ApartmentList>>(`/apartments/`, { building: buildingId });
+    return extractResults(data);
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      console.warn('[fetchApartments] Endpoint returned 404, returning empty list');
+      return [];
+    }
+    throw error;
+  }
 }
 
 // ============================================================================

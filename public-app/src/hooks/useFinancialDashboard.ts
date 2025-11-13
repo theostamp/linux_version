@@ -8,6 +8,11 @@ export const useFinancialDashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isNotFoundError = (err: unknown) => {
+    const e = err as { status?: number; response?: { status?: number } };
+    return e?.status === 404 || e?.response?.status === 404;
+  };
+
   // Λήψη σύνοψης οικονομικών στοιχείων
   const getFinancialSummary = useCallback(async (buildingId: number): Promise<FinancialSummary | null> => {
     setIsLoading(true);
@@ -17,9 +22,11 @@ export const useFinancialDashboard = () => {
       const data = await apiGet<FinancialSummary>(`/financial/dashboard/summary/`, { building_id: buildingId });
       return data;
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      const errorMessage = error.message || 'Σφάλμα κατά τη λήψη της οικονομικής σύνοψης';
-      setError(errorMessage);
+      if (!isNotFoundError(err)) {
+        const error = err as { message?: string };
+        const errorMessage = error.message || 'Σφάλμα κατά τη λήψη της οικονομικής σύνοψης';
+        setError(errorMessage);
+      }
       return null;
     } finally {
       setIsLoading(false);
@@ -37,9 +44,11 @@ export const useFinancialDashboard = () => {
       const result = Array.isArray(data) ? data : (data as { apartments?: ApartmentBalance[] }).apartments || [];
       return result;
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      const errorMessage = error.message || 'Σφάλμα κατά τη λήψη των οφειλών διαμερισμάτων';
-      setError(errorMessage);
+      if (!isNotFoundError(err)) {
+        const error = err as { message?: string };
+        const errorMessage = error.message || 'Σφάλμα κατά τη λήψη των οφειλών διαμερισμάτων';
+        setError(errorMessage);
+      }
       return [];
     } finally {
       setIsLoading(false);
@@ -55,9 +64,11 @@ export const useFinancialDashboard = () => {
       const data = await apiGet<Transaction[]>(`/financial/dashboard/recent-transactions/`, { building_id: buildingId, limit });
       return data;
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      const errorMessage = error.message || 'Σφάλμα κατά τη λήψη των πρόσφατων συναλλαγών';
-      setError(errorMessage);
+      if (!isNotFoundError(err)) {
+        const error = err as { message?: string };
+        const errorMessage = error.message || 'Σφάλμα κατά τη λήψη των πρόσφατων συναλλαγών';
+        setError(errorMessage);
+      }
       return [];
     } finally {
       setIsLoading(false);
@@ -73,9 +84,11 @@ export const useFinancialDashboard = () => {
       const data = await apiGet<unknown>(`/financial/dashboard/payment-statistics/`, { building_id: buildingId, period });
       return data;
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      const errorMessage = error.message || 'Σφάλμα κατά τη λήψη των στατιστικών πληρωμών';
-      setError(errorMessage);
+      if (!isNotFoundError(err)) {
+        const error = err as { message?: string };
+        const errorMessage = error.message || 'Σφάλμα κατά τη λήψη των στατιστικών πληρωμών';
+        setError(errorMessage);
+      }
       return null;
     } finally {
       setIsLoading(false);
@@ -91,9 +104,11 @@ export const useFinancialDashboard = () => {
       const data = await apiGet<unknown>(`/financial/dashboard/revenue-chart/`, { building_id: buildingId, period });
       return data;
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      const errorMessage = error.message || 'Σφάλμα κατά τη λήψη του γραφήματος εσόδων';
-      setError(errorMessage);
+      if (!isNotFoundError(err)) {
+        const error = err as { message?: string };
+        const errorMessage = error.message || 'Σφάλμα κατά τη λήψη του γραφήματος εσόδων';
+        setError(errorMessage);
+      }
       return null;
     } finally {
       setIsLoading(false);
@@ -109,9 +124,11 @@ export const useFinancialDashboard = () => {
       const data = await apiGet<unknown>(`/financial/dashboard/expense-chart/`, { building_id: buildingId, period });
       return data;
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      const errorMessage = error.message || 'Σφάλμα κατά τη λήψη του γραφήματος εξόδων';
-      setError(errorMessage);
+      if (!isNotFoundError(err)) {
+        const error = err as { message?: string };
+        const errorMessage = error.message || 'Σφάλμα κατά τη λήψη του γραφήματος εξόδων';
+        setError(errorMessage);
+      }
       return null;
     } finally {
       setIsLoading(false);
@@ -127,9 +144,11 @@ export const useFinancialDashboard = () => {
       const data = await apiGet<unknown>(`/financial/dashboard/debt-report/`, { building_id: buildingId });
       return data;
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      const errorMessage = error.message || 'Σφάλμα κατά τη λήψη της αναφοράς οφειλών';
-      setError(errorMessage);
+      if (!isNotFoundError(err)) {
+        const error = err as { message?: string };
+        const errorMessage = error.message || 'Σφάλμα κατά τη λήψη της αναφοράς οφειλών';
+        setError(errorMessage);
+      }
       return null;
     } finally {
       setIsLoading(false);
