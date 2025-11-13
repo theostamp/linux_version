@@ -11,7 +11,7 @@ import React, {
 import type { Building } from '@/lib/api';
 import { fetchAllBuildings } from '@/lib/api';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
 interface BuildingContextType {
@@ -68,7 +68,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
 
   // Load buildings function - wrapped with useCallback to prevent unnecessary re-renders
   const loadBuildings = useCallback(async () => {
-    if (authLoading || !user || isLoadingBuildings || buildings.length > 0 || hasInitialized) return;
+    if (authLoading || !user || isLoadingBuildings || hasInitialized) return;
 
     try {
       setIsLoading(true);
@@ -76,34 +76,44 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       // For now, use fetchAllBuildings to maintain backward compatibility
       // Later we can implement pagination in the UI
       const data = await fetchAllBuildings();
-      console.log('[BuildingContext] Loaded buildings:', data);
+      console.log('[BuildingContext] Loaded buildings:', data.length, 'buildings');
       setBuildings(data);
       
-      // Restore selected building from localStorage or default to first building
-      const storedBuildingId = getStoredSelectedBuildingId();
-      let buildingToSelect: Building | null = null;
-      
-      if (storedBuildingId && data.length > 0) {
-        // Try to find the stored building
-        buildingToSelect = data.find(building => building.id === storedBuildingId) || null;
-      }
-      
-      // If stored building not found, default to first building
-      if (!buildingToSelect && data.length > 0) {
-        buildingToSelect = data[0];
-      }
-      
-      setCurrentBuilding(buildingToSelect);
-      setSelectedBuilding(buildingToSelect);
-      
-      // Update localStorage with the selected building (both keys for compatibility)
-      if (buildingToSelect) {
+      // Always try to select a building if we have buildings
+      if (data.length > 0) {
+        // Restore selected building from localStorage or default to first building
+        const storedBuildingId = getStoredSelectedBuildingId();
+        let buildingToSelect: Building | null = null;
+        
+        if (storedBuildingId) {
+          // Try to find the stored building
+          buildingToSelect = data.find(building => building.id === storedBuildingId) || null;
+        }
+        
+        // If stored building not found, default to first building
+        if (!buildingToSelect) {
+          buildingToSelect = data[0];
+          console.log(`[BuildingContext] No stored building found, selecting first building: ${buildingToSelect.name} (ID: ${buildingToSelect.id})`);
+        } else {
+          console.log(`[BuildingContext] Restored stored building: ${buildingToSelect.name} (ID: ${buildingToSelect.id})`);
+        }
+        
+        setCurrentBuilding(buildingToSelect);
+        setSelectedBuilding(buildingToSelect);
+        
+        // Update localStorage with the selected building (both keys for compatibility)
         setStoredSelectedBuildingId(buildingToSelect.id);
         // Also update activeBuildingId for backward compatibility with getActiveBuildingId()
         if (typeof window !== 'undefined') {
           window.localStorage.setItem('activeBuildingId', buildingToSelect.id.toString());
         }
-        console.log(`[BuildingContext] Auto-selected building: ${buildingToSelect.name} (ID: ${buildingToSelect.id})`);
+        console.log(`[BuildingContext] ✓ Auto-selected building: ${buildingToSelect.name} (ID: ${buildingToSelect.id})`);
+      } else {
+        // No buildings found - clear selection
+        console.warn('[BuildingContext] No buildings found for user');
+        setCurrentBuilding(null);
+        setSelectedBuilding(null);
+        setStoredSelectedBuildingId(null);
       }
       
       setError(null);
@@ -161,13 +171,13 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
   }, [authLoading, user, loadBuildings]);
 
   // Keep currentBuilding in sync with selectedBuilding
+  // Only update if selectedBuilding changes, don't override if it's null (user might want to see "all buildings")
   useEffect(() => {
     if (selectedBuilding) {
       setCurrentBuilding(selectedBuilding);
-    } else if (buildings.length > 0) {
-      setCurrentBuilding(buildings[0]);
     }
-  }, [selectedBuilding, buildings]);
+    // Don't auto-select first building if selectedBuilding is null - let user choose
+  }, [selectedBuilding]);
 
   useEffect(() => {
     // If auth is ready and no user, stop loading
