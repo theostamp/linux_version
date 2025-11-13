@@ -125,15 +125,32 @@ class TenantService:
     def _run_tenant_migrations(self, schema_name):
         """Run migrations for the new tenant schema."""
         try:
+            logger.info(f"Running migrations for schema: {schema_name}")
             call_command(
                 "migrate_schemas",
                 schema_name=schema_name,
                 interactive=False,
-                verbosity=0
+                verbosity=1  # Increased verbosity to see migration output
             )
-            logger.info(f"Ran migrations for schema: {schema_name}")
+            logger.info(f"✓ Successfully ran migrations for schema: {schema_name}")
+            
+            # Verify that buildings table exists after migrations
+            with schema_context(schema_name):
+                from django.db import connection
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT EXISTS (
+                            SELECT FROM information_schema.tables 
+                            WHERE table_schema = current_schema()
+                            AND table_name = 'buildings_building'
+                        );
+                    """)
+                    table_exists = cursor.fetchone()[0]
+                    if not table_exists:
+                        raise Exception(f"buildings_building table does not exist in schema {schema_name} after migrations")
+                    logger.info(f"✓ Verified buildings_building table exists in schema {schema_name}")
         except Exception as e:
-            logger.error(f"Failed to run migrations for schema {schema_name}: {e}")
+            logger.error(f"Failed to run migrations for schema {schema_name}: {e}", exc_info=True)
             raise
     
     def _create_user_subscription(self, user, plan, stripe_customer_id, stripe_subscription_id, tenant, stripe_checkout_session_id=None):
@@ -402,6 +419,13 @@ class TenantService:
                 logger.info(f"Created demo building 'Αλκμάνος 22' with 10 apartments and full data in schema {schema_name}")
                 
         except Exception as e:
-            logger.error(f"Failed to create demo data in schema {schema_name}: {e}")
-            # Don't raise here - tenant creation can still succeed without demo data
+            logger.error(f"Failed to create demo data in schema {schema_name}: {e}", exc_info=True)
+            # Check if it's a table missing error - if so, migrations didn't run properly
+            error_str = str(e)
+            if 'does not exist' in error_str.lower() or 'relation' in error_str.lower():
+                logger.error(f"CRITICAL: Database tables missing in schema {schema_name}. Migrations may have failed.")
+                # Re-raise for critical errors so tenant creation fails
+                raise Exception(f"Migrations incomplete for schema {schema_name}: {e}") from e
+            # For other errors, don't raise - tenant creation can still succeed without demo data
+            logger.warning(f"Demo data creation failed but continuing tenant creation: {e}")
 
