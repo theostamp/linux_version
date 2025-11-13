@@ -913,8 +913,8 @@ export async function fetchApartments(buildingId: number): Promise<ApartmentList
  * Uses fetch-based apiGet/apiPost/etc internally
  */
 export const api = {
-  get: async <T>(path: string): Promise<T> => {
-    return apiGet<T>(path);
+  get: async <T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> => {
+    return apiGet<T>(path, params);
   },
   post: async <T>(path: string, body?: unknown): Promise<T> => {
     return apiPost<T>(path, body);

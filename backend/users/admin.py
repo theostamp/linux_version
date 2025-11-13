@@ -116,21 +116,36 @@ class CustomUserAdmin(UserAdmin):
         if len(ids) == 1:
             where_clause = "user_id = %s"
             params = [ids[0]]
+            id_where_clause = "id = %s"
+            id_params = [ids[0]]
         else:
             placeholders = ','.join(['%s'] * len(ids))
             where_clause = f"user_id IN ({placeholders})"
             params = ids
+            id_where_clause = f"id IN ({placeholders})"
+            id_params = ids
         
         # Delete related objects first (in public schema)
         # Each deletion in its own transaction to avoid "transaction aborted" errors
-        related_tables = [
-            'users_passwordresettoken',
-            'users_loginattempt', 
-            'users_tenantinvitation',
-            'billing_usersubscription',
+        # Order matters: delete child records before parent records
+        
+        # Tables with CASCADE delete (must delete these records)
+        cascade_tables = [
+            'votes_votesubmission',  # User submissions in votes (CASCADE)
+            'users_passwordresettoken',  # Password reset tokens (CASCADE)
+            'users_loginattempt',  # Login attempts (CASCADE)
+            'users_tenantinvitation',  # Tenant invitations (CASCADE)
+            'billing_usersubscription',  # User subscriptions (CASCADE)
+            'todo_management_todo',  # Todos created by user (CASCADE)
         ]
         
-        for table in related_tables:
+        # Tables with SET_NULL (set to NULL instead of deleting)
+        set_null_tables = [
+            ('votes_vote', 'creator_id'),  # Votes created by user (SET_NULL)
+        ]
+        
+        # Delete CASCADE tables
+        for table in cascade_tables:
             try:
                 with transaction.atomic():
                     with connection.cursor() as cursor:
@@ -149,14 +164,42 @@ class CustomUserAdmin(UserAdmin):
                 logger = logging.getLogger(__name__)
                 logger.warning(f"Error deleting from {table}: {e}")
         
+        # Set SET_NULL fields to NULL
+        for table, field in set_null_tables:
+            try:
+                with transaction.atomic():
+                    with connection.cursor() as cursor:
+                        if len(ids) == 1:
+                            cursor.execute(f"UPDATE {table} SET {field} = NULL WHERE {field} = %s", id_params)
+                        else:
+                            cursor.execute(f"UPDATE {table} SET {field} = NULL WHERE {field} IN ({placeholders})", id_params)
+            except ProgrammingError as e:
+                # Table might not exist - skip silently
+                error_str = str(e)
+                if 'does not exist' not in error_str.lower():
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Could not update {table}.{field}: {e}")
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Error updating {table}.{field}: {e}")
+        
         # Now delete the user in main transaction
-        with transaction.atomic():
-            with connection.cursor() as cursor:
-                if len(ids) == 1:
-                    cursor.execute("DELETE FROM users_customuser WHERE id = %s", [ids[0]])
-                else:
-                    placeholders = ','.join(['%s'] * len(ids))
-                    cursor.execute(f"DELETE FROM users_customuser WHERE id IN ({placeholders})", ids)
+        try:
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    if len(ids) == 1:
+                        cursor.execute("DELETE FROM users_customuser WHERE id = %s", [ids[0]])
+                    else:
+                        placeholders = ','.join(['%s'] * len(ids))
+                        cursor.execute(f"DELETE FROM users_customuser WHERE id IN ({placeholders})", ids)
+        except Exception as e:
+            # Log the error and re-raise so it can be caught by delete_view
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error deleting user(s) {ids}: {e}", exc_info=True)
+            raise
 
     def delete_view(self, request, object_id, extra_context=None):
         """
