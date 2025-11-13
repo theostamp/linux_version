@@ -25,13 +25,34 @@ def public_buildings_list(request):
     """
     Public endpoint for listing buildings (no authentication required)
     Used by kiosk mode - Simple Django view without DRF
-    Always uses demo tenant since that's where the building data is
+    Uses the authenticated user's tenant schema if available, otherwise falls back to demo
     """
     try:
-        # Always use demo tenant context since that's where the data is
         from django_tenants.utils import schema_context
+        from tenants.models import Client
         
-        with schema_context('demo'):
+        # Determine which tenant schema to use
+        schema_name = 'demo'  # Default fallback
+        
+        # Try to get tenant from authenticated user if available
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            # Check if user has a tenant
+            if hasattr(request.user, 'tenant') and request.user.tenant:
+                schema_name = request.user.tenant.schema_name
+                print(f"🔍 [PUBLIC BUILDINGS] Using authenticated user's tenant: {schema_name}")
+            else:
+                # Try to find tenant from user's email domain or other method
+                # For now, fall back to demo
+                print(f"🔍 [PUBLIC BUILDINGS] User authenticated but no tenant, using demo")
+        else:
+            print(f"🔍 [PUBLIC BUILDINGS] No authenticated user, using demo tenant")
+        
+        # Verify schema exists before using it
+        if not Client.objects.filter(schema_name=schema_name).exists():
+            print(f"⚠️ [PUBLIC BUILDINGS] Schema {schema_name} does not exist, falling back to demo")
+            schema_name = 'demo'
+        
+        with schema_context(schema_name):
             # Get all buildings from database
             buildings = Building.objects.all().order_by('name')
             
@@ -57,7 +78,7 @@ def public_buildings_list(request):
                 }
                 buildings_data.append(building_data)
             
-            print(f"🔍 [PUBLIC BUILDINGS] Returning {len(buildings_data)} buildings from demo tenant")
+            print(f"🔍 [PUBLIC BUILDINGS] Returning {len(buildings_data)} buildings from tenant: {schema_name}")
             return JsonResponse(buildings_data, safe=False)
         
     except Exception as e:
