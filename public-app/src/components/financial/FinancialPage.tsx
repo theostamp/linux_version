@@ -49,11 +49,38 @@ interface FinancialPageProps {
 export const FinancialPage: React.FC<FinancialPageProps> = ({ buildingId }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { currentBuilding, selectedBuilding } = useBuilding();
+  const { buildings, currentBuilding, selectedBuilding } = useBuilding();
   const queryClient = useQueryClient();
   
   // Use selectedBuilding ID if available, otherwise use the passed buildingId
-  const activeBuildingId = selectedBuilding?.id || buildingId;
+  // But validate that the buildingId exists in available buildings
+  const [activeBuildingId, setActiveBuildingId] = useState(() => {
+    return selectedBuilding?.id || buildingId;
+  });
+  
+  // Validate buildingId exists in available buildings
+  useEffect(() => {
+    if (buildings.length > 0) {
+      const initialId = selectedBuilding?.id || buildingId;
+      const buildingExists = buildings.some(b => b.id === initialId);
+      
+      if (!buildingExists) {
+        // Use selectedBuilding or first available building
+        const targetBuilding = selectedBuilding || buildings[0];
+        if (targetBuilding && targetBuilding.id !== initialId) {
+          console.warn(`[FinancialPage] Building ${initialId} not found. Using building ${targetBuilding.id} instead.`);
+          setActiveBuildingId(targetBuilding.id);
+          // Redirect to financial page with correct building
+          router.replace('/financial');
+        }
+      } else {
+        // Update activeBuildingId if selectedBuilding changed
+        if (selectedBuilding?.id && selectedBuilding.id !== activeBuildingId) {
+          setActiveBuildingId(selectedBuilding.id);
+        }
+      }
+    }
+  }, [buildings, buildingId, selectedBuilding, router, activeBuildingId]);
   const [activeTab, setActiveTab] = useState(() => {
     // Check URL parameters for tab, apartment, and amount
     const params = new URLSearchParams(window.location.search);
