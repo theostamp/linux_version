@@ -12,6 +12,7 @@ from core.permissions import IsInternalService
 from tenants.services import TenantService
 from users.models import CustomUser
 from billing.models import SubscriptionPlan
+from users.password_storage import store_password, retrieve_password, delete_password
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,17 @@ class InternalTenantCreateView(APIView):
                     'required': required_user_fields
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            # IMPORTANT: Store plain password temporarily for tenant user creation
+            # This allows the password to be used across different services (Stripe, tenant creation, etc.)
+            plain_password = user_data.get('password')
+            if plain_password:
+                store_password(
+                    user_email=user_data['email'],
+                    session_id=stripe_checkout_session_id,
+                    password=plain_password
+                )
+                logger.info(f"Stored plain password temporarily for {user_data['email']}")
+            
             # IMPORTANT: Get or create user OUTSIDE transaction to avoid ALTER TABLE conflicts
             user_email = user_data['email']
             try:
@@ -81,9 +93,10 @@ class InternalTenantCreateView(APIView):
                 user.save(update_fields=['stripe_checkout_session_id'])
             except CustomUser.DoesNotExist:
                 # Create new user OUTSIDE the transaction
+                # Use plain password - create_user will hash it
                 user = CustomUser.objects.create_user(
                     email=user_email,
-                    password=user_data.get('password', 'temp_password_123'),
+                    password=plain_password or 'temp_password_123',
                     first_name=user_data['first_name'],
                     last_name=user_data['last_name'],
                     is_active=True,

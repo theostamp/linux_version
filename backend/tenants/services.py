@@ -64,7 +64,7 @@ class TenantService:
                 )
                 
                 # Step 6: Create initial user in tenant schema
-                self._create_tenant_user(user, schema_name)
+                self._create_tenant_user(user, schema_name, stripe_checkout_session_id)
                 
                 # Step 7: Create demo data (Αλκμάνος 22 building)
                 self._create_demo_data(schema_name)
@@ -187,12 +187,12 @@ class TenantService:
         logger.info(f"Created subscription for user {user.email}: {subscription.id}")
         return subscription
     
-    def _create_tenant_user(self, user, schema_name):
+    def _create_tenant_user(self, user, schema_name, stripe_checkout_session_id=None):
         """
         Create the user account inside the tenant schema with SAME credentials as public schema.
-
-        CRITICAL: The password in user.password is ALREADY HASHED in the public schema.
-        We need to copy the hashed password directly to avoid double-hashing.
+        
+        Uses plain password from temporary storage if available, otherwise falls back to
+        copying the hashed password from public schema user.
         """
         try:
             with schema_context(schema_name):
@@ -201,25 +201,58 @@ class TenantService:
                     logger.info(f"User {user.email} already exists in schema {schema_name}")
                     return
 
-                # Create user in tenant schema with SAME hashed password
-                # Use create() instead of create_user() to avoid re-hashing the password
-                # User is created as TENANT ADMIN (superuser within their tenant)
-                tenant_user = CustomUser.objects.create(
-                    email=user.email,
-                    password=user.password,  # Already hashed - copy directly
-                    first_name=user.first_name,
-                    last_name=user.last_name,
-                    is_staff=True,
-                    is_superuser=True,  # Full admin rights within this tenant
-                    is_active=True,
-                    role='manager',  # Tenant owner/admin role
-                    office_name=user.office_name or f"{user.get_full_name()}'s Office",
-                    office_phone=user.office_phone,
-                    office_address=user.office_address,
-                    email_verified=True  # Auto-verify since they paid
-                )
+                # Try to retrieve plain password from temporary storage
+                plain_password = None
+                if stripe_checkout_session_id:
+                    try:
+                        from users.password_storage import retrieve_password
+                        plain_password = retrieve_password(
+                            user_email=user.email,
+                            session_id=stripe_checkout_session_id
+                        )
+                        if plain_password:
+                            logger.info(f"Retrieved plain password for tenant user creation: {user.email}")
+                    except Exception as e:
+                        logger.warning(f"Failed to retrieve plain password for {user.email}: {e}")
 
-                logger.info(f"Created tenant user: {tenant_user.email} in schema {schema_name} with synced credentials")
+                # Create user in tenant schema
+                # If we have plain password, use create_user() to hash it properly
+                # Otherwise, copy the hashed password directly
+                if plain_password:
+                    # Use create_user() to hash the plain password
+                    tenant_user = CustomUser.objects.create_user(
+                        email=user.email,
+                        password=plain_password,
+                        first_name=user.first_name,
+                        last_name=user.last_name,
+                        is_staff=True,
+                        is_superuser=True,  # Full admin rights within this tenant
+                        is_active=True,
+                        role='manager',  # Tenant owner/admin role
+                        office_name=user.office_name or f"{user.get_full_name()}'s Office",
+                        office_phone=user.office_phone,
+                        office_address=user.office_address,
+                        email_verified=True  # Auto-verify since they paid
+                    )
+                    logger.info(f"Created tenant user with plain password: {tenant_user.email} in schema {schema_name}")
+                else:
+                    # Fallback: copy hashed password directly
+                    # Use create() instead of create_user() to avoid re-hashing
+                    tenant_user = CustomUser.objects.create(
+                        email=user.email,
+                        password=user.password,  # Already hashed - copy directly
+                        first_name=user.first_name,
+                        last_name=user.last_name,
+                        is_staff=True,
+                        is_superuser=True,  # Full admin rights within this tenant
+                        is_active=True,
+                        role='manager',  # Tenant owner/admin role
+                        office_name=user.office_name or f"{user.get_full_name()}'s Office",
+                        office_phone=user.office_phone,
+                        office_address=user.office_address,
+                        email_verified=True  # Auto-verify since they paid
+                    )
+                    logger.info(f"Created tenant user with copied hashed password: {tenant_user.email} in schema {schema_name}")
 
         except Exception as e:
             logger.error(f"Failed to create tenant user in schema {schema_name}: {e}")
