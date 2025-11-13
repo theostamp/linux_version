@@ -29,28 +29,43 @@ def public_buildings_list(request):
     """
     try:
         from django_tenants.utils import schema_context
-        from tenants.models import Client
+        from tenants.models import Client, Domain as TenantDomain
         
         # Determine which tenant schema to use
         schema_name = 'demo'  # Default fallback
+        resolved_from = 'default'
         
-        # Try to get tenant from authenticated user if available
-        if hasattr(request, 'user') and request.user.is_authenticated:
-            # Check if user has a tenant
+        # Prefer tenant derived from request host (matches Django tenant routing)
+        host = (
+            request.headers.get('x-forwarded-host')
+            or request.headers.get('host')
+            or request.get_host()
+            or ''
+        ).split(':')[0].lower()
+        
+        if host:
+            domain_entry = (
+                TenantDomain.objects.filter(domain__iexact=host)
+                .select_related('tenant')
+                .first()
+            )
+            if domain_entry and domain_entry.tenant:
+                schema_name = domain_entry.tenant.schema_name
+                resolved_from = f'domain:{host}'
+                print(f"🔍 [PUBLIC BUILDINGS] Resolved schema '{schema_name}' from domain '{host}'")
+        
+        # If host lookup failed, try to use authenticated user's tenant
+        if resolved_from == 'default' and hasattr(request, 'user') and request.user.is_authenticated:
             if hasattr(request.user, 'tenant') and request.user.tenant:
                 schema_name = request.user.tenant.schema_name
+                resolved_from = 'user'
                 print(f"🔍 [PUBLIC BUILDINGS] Using authenticated user's tenant: {schema_name}")
-            else:
-                # Try to find tenant from user's email domain or other method
-                # For now, fall back to demo
-                print(f"🔍 [PUBLIC BUILDINGS] User authenticated but no tenant, using demo")
-        else:
-            print(f"🔍 [PUBLIC BUILDINGS] No authenticated user, using demo tenant")
         
         # Verify schema exists before using it
         if not Client.objects.filter(schema_name=schema_name).exists():
-            print(f"⚠️ [PUBLIC BUILDINGS] Schema {schema_name} does not exist, falling back to demo")
+            print(f"⚠️ [PUBLIC BUILDINGS] Schema {schema_name} (resolved via {resolved_from}) does not exist, falling back to demo")
             schema_name = 'demo'
+            resolved_from = 'default'
         
         with schema_context(schema_name):
             # Get all buildings from database
@@ -78,7 +93,7 @@ def public_buildings_list(request):
                 }
                 buildings_data.append(building_data)
             
-            print(f"🔍 [PUBLIC BUILDINGS] Returning {len(buildings_data)} buildings from tenant: {schema_name}")
+            print(f"🔍 [PUBLIC BUILDINGS] Returning {len(buildings_data)} buildings from tenant: {schema_name} (resolved via {resolved_from})")
             return JsonResponse(buildings_data, safe=False)
         
     except Exception as e:
