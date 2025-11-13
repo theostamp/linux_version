@@ -6,7 +6,7 @@ const methods = ["POST", "OPTIONS"] as const;
 const handlers = createTenantProxyHandlers(
   {
     logLabel: "financial-common-expenses-calculate-advanced",
-    resolvePath: () => "financial/common-expenses/calculate_advanced",
+    resolvePath: () => "financial/common-expenses/calculate-advanced",
     ensureTrailingSlash: true,
   },
   methods,
