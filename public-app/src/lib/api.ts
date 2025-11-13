@@ -533,20 +533,11 @@ let buildingsCache: { data: Building[]; timestamp: number } | null = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export async function fetchAllBuildings(): Promise<Building[]> {
-  const cacheKey = getCacheKey('/api/buildings/public/', { page_size: 1000, page: 1 });
-  
-  // Check global throttling cache first
-  const cached = getCachedOrInFlight<Building[]>(cacheKey);
-  if (cached) {
-    return await cached;
-  }
-
-  // Check if we should throttle this request
-  if (shouldThrottleRequest(cacheKey)) {
-    console.log('[API THROTTLE] Request throttled, returning cached data');
-    const cachedData = API_CALL_CACHE.get(cacheKey);
-    if (cachedData && cachedData.data) return cachedData.data as Building[];
-  }
+  const params = { page_size: 1000, page: 1 };
+  const attemptOrder: Array<{ path: string; cacheKey: string }> = [
+    { path: '/buildings/', cacheKey: getCacheKey('/api/buildings/', params) },
+    { path: '/buildings/public/', cacheKey: getCacheKey('/api/buildings/public/', params) },
+  ];
 
   // Check local cache first (backward compatibility)
   if (buildingsCache && (Date.now() - buildingsCache.timestamp) < CACHE_DURATION) {
@@ -554,52 +545,67 @@ export async function fetchAllBuildings(): Promise<Building[]> {
     return buildingsCache.data;
   }
 
-  console.log('[API CALL] Fetching all buildings');
-  
-  try {
-    // Try to get all buildings with large page size
-    const data = await apiGet<Paginated<Building>>('/buildings/public/', {
-      page_size: 1000,
-      page: 1
-    });
-    
-    let buildings: Building[] = extractResults(data);
-    
-    // If paginated, fetch all pages
-    const paginated = data as BuildingsResponse;
-    if (paginated.next && paginated.count && buildings.length < paginated.count) {
-      console.log('[API CALL] Pagination detected, fetching all pages...');
-      let allBuildings = [...buildings];
-      let nextUrl = paginated.next;
-      
-      while (nextUrl && allBuildings.length < paginated.count) {
-        // Extract path from next URL
-        const nextPath = nextUrl.startsWith('http') 
-          ? new URL(nextUrl).pathname.replace('/api', '')
-          : nextUrl.replace('/api', '');
-        
-        const nextData = await apiGet<Paginated<Building>>(nextPath);
-        const nextBuildings = extractResults(nextData);
-        allBuildings = [...allBuildings, ...nextBuildings];
-        
-        const nextPaginated = nextData as BuildingsResponse;
-        nextUrl = nextPaginated.next || '';
-        
-        if (allBuildings.length >= paginated.count) break;
-      }
-      
-      buildings = allBuildings;
+  let lastError: unknown = null;
+
+  for (const attempt of attemptOrder) {
+    // Global throttling cache
+    const cached = getCachedOrInFlight<Building[]>(attempt.cacheKey);
+    if (cached) {
+      return await cached;
     }
-    
-    // Cache the result
-    buildingsCache = { data: buildings, timestamp: Date.now() };
-    API_CALL_CACHE.set(cacheKey, { data: buildings, timestamp: Date.now() });
-    
-    return buildings;
-  } catch (error) {
-    console.error('[API CALL] Error fetching buildings:', error);
-    throw error;
+
+    if (shouldThrottleRequest(attempt.cacheKey)) {
+      console.log('[API THROTTLE] Request throttled, returning cached data');
+      const throttled = API_CALL_CACHE.get(attempt.cacheKey);
+      if (throttled && throttled.data) {
+        return throttled.data as Building[];
+      }
+    }
+
+    console.log(`[API CALL] Fetching buildings from ${attempt.path}`);
+
+    try {
+      const data = await apiGet<Paginated<Building>>(attempt.path, params);
+
+      let buildings: Building[] = extractResults(data);
+      const paginated = data as BuildingsResponse;
+
+      if (paginated.next && paginated.count && buildings.length < paginated.count) {
+        console.log('[API CALL] Pagination detected, fetching all pages...');
+        let allBuildings = [...buildings];
+        let nextUrl = paginated.next;
+
+        while (nextUrl && allBuildings.length < paginated.count) {
+          const nextPath = nextUrl.startsWith('http')
+            ? new URL(nextUrl).pathname.replace('/api', '')
+            : nextUrl.replace('/api', '');
+
+          const nextData = await apiGet<Paginated<Building>>(nextPath);
+          const nextBuildings = extractResults(nextData);
+          allBuildings = [...allBuildings, ...nextBuildings];
+
+          const nextPaginated = nextData as BuildingsResponse;
+          nextUrl = nextPaginated.next || '';
+
+          if (allBuildings.length >= paginated.count) break;
+        }
+
+        buildings = allBuildings;
+      }
+
+      // Cache the result for both per-path cache and legacy cache
+      buildingsCache = { data: buildings, timestamp: Date.now() };
+      API_CALL_CACHE.set(attempt.cacheKey, { data: buildings, timestamp: Date.now() });
+
+      return buildings;
+    } catch (error) {
+      lastError = error;
+      console.error(`[API CALL] Error fetching buildings from ${attempt.path}:`, error);
+      // Try next fallback path
+    }
   }
+
+  throw lastError instanceof Error ? lastError : new Error('Failed to fetch buildings');
 }
 
 export async function fetchAllBuildingsPublic(): Promise<Building[]> {
@@ -607,11 +613,20 @@ export async function fetchAllBuildingsPublic(): Promise<Building[]> {
 }
 
 export async function fetchBuildings(page: number = 1, pageSize: number = 50): Promise<BuildingsResponse> {
-  const data = await apiGet<BuildingsResponse>('/buildings/public/', {
-    page,
-    page_size: pageSize
-  });
-  return data;
+  const params = { page, page_size: pageSize };
+  const paths = ['/buildings/', '/buildings/public/'];
+  let lastError: unknown = null;
+
+  for (const path of paths) {
+    try {
+      return await apiGet<BuildingsResponse>(path, params);
+    } catch (error) {
+      lastError = error;
+      console.error(`[API CALL] Error fetching buildings list from ${path}:`, error);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('Failed to fetch buildings list');
 }
 
 export async function fetchBuilding(id: number): Promise<Building> {
