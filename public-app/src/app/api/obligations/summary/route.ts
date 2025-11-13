@@ -7,6 +7,7 @@ const handlers = createTenantProxyHandlers(
   {
     logLabel: "obligations-summary",
     resolvePath: () => "obligations/summary",
+    ensureTrailingSlash: true,
   },
   methods,
 );

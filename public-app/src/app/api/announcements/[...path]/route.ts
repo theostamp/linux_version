@@ -21,6 +21,7 @@ const handlers = createTenantProxyHandlers(
           : [];
       return ["announcements", ...pathSegments].join("/");
     },
+    ensureTrailingSlash: true,
   },
   methods,
 );
