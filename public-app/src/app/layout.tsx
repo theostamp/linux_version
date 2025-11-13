@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import AppProviders from "@/components/AppProviders";
 
@@ -42,20 +43,15 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <head>
-        {googleMapsApiKey && (
-          <>
-            <script
-              src={`https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places`}
-              async
-              defer
-            />
-          </>
-        )}
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {googleMapsApiKey && (
+          <Script
+            src={`https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places`}
+            strategy="lazyOnload"
+          />
+        )}
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
