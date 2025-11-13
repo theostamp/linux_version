@@ -3,7 +3,66 @@
 import django.db.models.deletion
 import uuid
 from django.conf import settings
-from django.db import migrations, models
+from django.db import migrations, models, connection
+
+
+def create_tenant_invitation_table_if_not_exists(apps, schema_editor):
+    """Create TenantInvitation table only if it doesn't exist"""
+    db_table = 'users_tenantinvitation'
+    with connection.cursor() as cursor:
+        # Check if table exists
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = %s
+            );
+        """, [db_table])
+        table_exists = cursor.fetchone()[0]
+        
+        if not table_exists:
+            # Create the table using raw SQL
+            cursor.execute("""
+                CREATE TABLE users_tenantinvitation (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    email VARCHAR(254) NOT NULL,
+                    invited_role VARCHAR(20) NOT NULL DEFAULT 'resident',
+                    invited_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+                    accepted_at TIMESTAMP WITH TIME ZONE,
+                    declined_at TIMESTAMP WITH TIME ZONE,
+                    message TEXT NOT NULL DEFAULT '',
+                    created_user_id UUID REFERENCES users_customuser(id) ON DELETE SET NULL,
+                    invited_by_id UUID NOT NULL REFERENCES users_customuser(id) ON DELETE CASCADE
+                );
+            """)
+            
+            # Create indexes (only if they don't exist)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS users_tenan_email_405961_idx ON users_tenantinvitation(email, status);
+                CREATE INDEX IF NOT EXISTS users_tenan_invited_8d8333_idx ON users_tenantinvitation(invited_by_id, status);
+                CREATE INDEX IF NOT EXISTS users_tenan_status_b8b2b5_idx ON users_tenantinvitation(status, expires_at);
+            """)
+            
+            # Create unique constraint (only if it doesn't exist)
+            cursor.execute("""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_constraint WHERE conname = 'users_tenantinvitation_email_invited_by_status_uniq'
+                    ) THEN
+                        CREATE UNIQUE INDEX users_tenantinvitation_email_invited_by_status_uniq 
+                        ON users_tenantinvitation(email, invited_by_id, status);
+                    END IF;
+                END $$;
+            """)
+
+
+def reverse_create_tenant_invitation_table(apps, schema_editor):
+    """Drop TenantInvitation table if it exists"""
+    with connection.cursor() as cursor:
+        cursor.execute("DROP TABLE IF EXISTS users_tenantinvitation CASCADE;")
 
 
 class Migration(migrations.Migration):
@@ -23,25 +82,34 @@ class Migration(migrations.Migration):
             name='invited_by',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sent_user_invitations', to=settings.AUTH_USER_MODEL, verbose_name='Invited By'),
         ),
-        migrations.CreateModel(
-            name='TenantInvitation',
-            fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('email', models.EmailField(help_text='Email address of the invited user', max_length=254)),
-                ('invited_role', models.CharField(choices=[('resident', 'Resident'), ('manager', 'Manager'), ('staff', 'Staff')], default='resident', help_text='Role the user will have when they accept', max_length=20)),
-                ('invited_at', models.DateTimeField(auto_now_add=True)),
-                ('expires_at', models.DateTimeField(help_text='Invitation expiration date/time')),
-                ('status', models.CharField(choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('declined', 'Declined'), ('expired', 'Expired'), ('cancelled', 'Cancelled')], default='pending', max_length=20)),
-                ('accepted_at', models.DateTimeField(blank=True, null=True)),
-                ('declined_at', models.DateTimeField(blank=True, null=True)),
-                ('message', models.TextField(blank=True, help_text='Optional personal message to the invitee')),
-                ('created_user', models.ForeignKey(blank=True, help_text='User created from this invitation (if accepted)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='accepted_invitations', to=settings.AUTH_USER_MODEL)),
-                ('invited_by', models.ForeignKey(help_text='User who sent the invitation', on_delete=django.db.models.deletion.CASCADE, related_name='sent_tenant_invitations', to=settings.AUTH_USER_MODEL)),
+        migrations.RunPython(
+            create_tenant_invitation_table_if_not_exists,
+            reverse_create_tenant_invitation_table,
+        ),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[],
+            state_operations=[
+                migrations.CreateModel(
+                    name='TenantInvitation',
+                    fields=[
+                        ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                        ('email', models.EmailField(help_text='Email address of the invited user', max_length=254)),
+                        ('invited_role', models.CharField(choices=[('resident', 'Resident'), ('manager', 'Manager'), ('staff', 'Staff')], default='resident', help_text='Role the user will have when they accept', max_length=20)),
+                        ('invited_at', models.DateTimeField(auto_now_add=True)),
+                        ('expires_at', models.DateTimeField(help_text='Invitation expiration date/time')),
+                        ('status', models.CharField(choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('declined', 'Declined'), ('expired', 'Expired'), ('cancelled', 'Cancelled')], default='pending', max_length=20)),
+                        ('accepted_at', models.DateTimeField(blank=True, null=True)),
+                        ('declined_at', models.DateTimeField(blank=True, null=True)),
+                        ('message', models.TextField(blank=True, help_text='Optional personal message to the invitee')),
+                        ('created_user', models.ForeignKey(blank=True, help_text='User created from this invitation (if accepted)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='accepted_invitations', to=settings.AUTH_USER_MODEL)),
+                        ('invited_by', models.ForeignKey(help_text='User who sent the invitation', on_delete=django.db.models.deletion.CASCADE, related_name='sent_tenant_invitations', to=settings.AUTH_USER_MODEL)),
+                    ],
+                    options={
+                        'ordering': ['-invited_at'],
+                        'indexes': [models.Index(fields=['email', 'status'], name='users_tenan_email_405961_idx'), models.Index(fields=['invited_by', 'status'], name='users_tenan_invited_8d8333_idx'), models.Index(fields=['status', 'expires_at'], name='users_tenan_status_b8b2b5_idx')],
+                        'unique_together': {('email', 'invited_by', 'status')},
+                    },
+                ),
             ],
-            options={
-                'ordering': ['-invited_at'],
-                'indexes': [models.Index(fields=['email', 'status'], name='users_tenan_email_405961_idx'), models.Index(fields=['invited_by', 'status'], name='users_tenan_invited_8d8333_idx'), models.Index(fields=['status', 'expires_at'], name='users_tenan_status_b8b2b5_idx')],
-                'unique_together': {('email', 'invited_by', 'status')},
-            },
         ),
     ]
