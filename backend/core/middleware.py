@@ -30,14 +30,20 @@ class CustomTenantMiddleware(TenantMainMiddleware):
         from django_tenants.utils import remove_www
         # Check X-Forwarded-Host first (for proxied requests from Next.js/Vercel)
         forwarded_host = request.META.get('HTTP_X_FORWARDED_HOST', '')
+        internal_host = request.META.get('HTTP_HOST', '')
+        
         if forwarded_host:
             hostname = forwarded_host.split(':')[0]  # Strip port
-            return remove_www(hostname)
+            final_hostname = remove_www(hostname)
+            print(f"🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Forwarded-Host '{forwarded_host}' -> '{final_hostname}' (internal: '{internal_host}')")
+            return final_hostname
         
         # Fall back to HTTP_HOST for direct requests
-        host = request.META.get('HTTP_HOST', '')
+        host = internal_host
         hostname = host.split(':')[0]  # Strip port
-        return remove_www(hostname)
+        final_hostname = remove_www(hostname)
+        print(f"🔍 [TENANT MIDDLEWARE] hostname_from_request: Using HTTP_HOST '{host}' -> '{final_hostname}'")
+        return final_hostname
 
     def get_tenant(self, domain_model, hostname):
         """
