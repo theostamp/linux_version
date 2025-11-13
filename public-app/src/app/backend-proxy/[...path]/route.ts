@@ -67,13 +67,32 @@ const buildTargetUrl = (ctx: RouteContext, request: NextRequest) => {
 
 const createForwardHeaders = (request: NextRequest) => {
   const forwardHeaders = new Headers(request.headers);
-  const host = request.headers.get("host") ?? "";
-  const subdomain = host.split('.')[0];
+  
+  // Get the public hostname from x-forwarded-host or referer header
+  // This is critical for tenant routing in Django
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const referer = request.headers.get("referer");
+  const internalHost = request.headers.get("host") ?? "";
+  
+  // Extract hostname from referer if x-forwarded-host is not available
+  let publicHostname = forwardedHost;
+  if (!publicHostname && referer) {
+    try {
+      const refererUrl = new URL(referer);
+      publicHostname = refererUrl.host;
+    } catch {
+      // Invalid referer URL, fall back to internal host
+    }
+  }
+  
+  // Fall back to internal host if no public hostname found
+  const finalHost = publicHostname || internalHost;
+  const subdomain = finalHost.split('.')[0];
   
   // Set Host header for tenant routing in Django
-  // Extract subdomain from host (e.g., "theo.newconcierge.app" -> "theo")
-  forwardHeaders.set("Host", host);
-  forwardHeaders.set("X-Forwarded-Host", host);
+  // Django middleware uses X-Forwarded-Host to resolve tenant
+  forwardHeaders.set("Host", finalHost);
+  forwardHeaders.set("X-Forwarded-Host", finalHost);
   forwardHeaders.set(
     "X-Forwarded-Proto",
     request.headers.get("x-forwarded-proto") ?? "https",
@@ -81,10 +100,12 @@ const createForwardHeaders = (request: NextRequest) => {
   
   // Log for debugging tenant routing
   console.log(`[backend-proxy] Forward headers:`, {
-    Host: host,
-    "X-Forwarded-Host": host,
+    Host: finalHost,
+    "X-Forwarded-Host": finalHost,
     subdomain,
-    originalHost: request.headers.get("host"),
+    originalHost: internalHost,
+    forwardedHost,
+    referer,
   });
   
   return stripHopByHopHeaders(forwardHeaders);

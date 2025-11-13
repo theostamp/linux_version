@@ -113,25 +113,47 @@ const buildTargetUrl = (
 
 const createForwardHeaders = (request: NextRequest) => {
   const headers = new Headers(request.headers);
-  const host = request.headers.get("host") ?? "demo.localhost";
-  const subdomain = host.split('.')[0];
+  
+  // Get the public hostname from x-forwarded-host or referer header
+  // This is critical for tenant routing in Django
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const referer = request.headers.get("referer");
+  const internalHost = request.headers.get("host") ?? "demo.localhost";
+  
+  // Extract hostname from referer if x-forwarded-host is not available
+  let publicHostname = forwardedHost;
+  if (!publicHostname && referer) {
+    try {
+      const refererUrl = new URL(referer);
+      publicHostname = refererUrl.host;
+    } catch {
+      // Invalid referer URL, fall back to internal host
+    }
+  }
+  
+  // Fall back to internal host if no public hostname found
+  const finalHost = publicHostname || internalHost;
+  const subdomain = finalHost.split('.')[0];
 
-  headers.set("Host", host);
-  headers.set("X-Forwarded-Host", host);
+  // Set Host header for tenant routing in Django
+  // Django middleware uses X-Forwarded-Host to resolve tenant
+  headers.set("Host", finalHost);
+  headers.set("X-Forwarded-Host", finalHost);
   headers.set(
     "X-Forwarded-Proto",
     request.headers.get("x-forwarded-proto") ?? "https",
   );
   
-  // Log headers for debugging
-  if (process.env.NODE_ENV !== "production" || process.env.ENABLE_PROXY_LOGS === "true") {
-    console.log(`[tenantProxy] Forward headers:`, {
-      Host: host,
-      "X-Forwarded-Host": host,
-      subdomain,
-      originalHost: request.headers.get("host"),
-    });
-  }
+  // Log headers for debugging (ALWAYS log in production for debugging)
+  const logger = createLogger("headers");
+  logger.info("Forward headers created", {
+    Host: finalHost,
+    "X-Forwarded-Host": finalHost,
+    subdomain,
+    originalHost: internalHost,
+    forwardedHost,
+    referer,
+  });
 
   return stripHopByHopHeaders(headers);
 };
