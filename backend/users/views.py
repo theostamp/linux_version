@@ -131,6 +131,18 @@ def login_view(request):
     role_value = getattr(user, 'role', None)
     print(f">>> DEBUG: user.role = {repr(role_value)}")
     
+    tenant_data = None
+    if hasattr(user, 'tenant') and user.tenant:
+        tenant = user.tenant
+        tenant_data = {
+            'id': tenant.id,
+            'name': tenant.name,
+            'schema_name': tenant.schema_name,
+            'paid_until': tenant.paid_until,
+            'on_trial': tenant.on_trial,
+            'is_active': tenant.is_active,
+        }
+
     user_data = {
         'id': user.id,
         'email': user.email,
@@ -147,6 +159,7 @@ def login_view(request):
         'office_bank_account': user.office_bank_account,
         'office_bank_iban': user.office_bank_iban,
         'office_bank_beneficiary': user.office_bank_beneficiary,
+        'tenant': tenant_data,
     }
     
     print(f">>> DEBUG: user_data keys = {list(user_data.keys())}")
@@ -182,6 +195,18 @@ def me_view(request):
     user = request.user
     role = getattr(user, "role", None)
 
+    tenant_data = None
+    if hasattr(user, 'tenant') and user.tenant:
+        tenant = user.tenant
+        tenant_data = {
+            'id': tenant.id,
+            'name': tenant.name,
+            'schema_name': tenant.schema_name,
+            'paid_until': tenant.paid_until,
+            'on_trial': tenant.on_trial,
+            'is_active': tenant.is_active,
+        }
+
     return Response({
         'id': user.id,
         'email': user.email,
@@ -198,6 +223,7 @@ def me_view(request):
         'office_bank_account': user.office_bank_account,
         'office_bank_iban': user.office_bank_iban,
         'office_bank_beneficiary': user.office_bank_beneficiary,
+        'tenant': tenant_data,
     }, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
