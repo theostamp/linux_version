@@ -1005,22 +1005,159 @@ export const makeRequestWithRetry = async (
 // Maintenance API Functions (for ExpenseList)
 // ============================================================================
 
-export async function fetchScheduledMaintenances(params: { buildingId?: number; priority?: string; ordering?: string } = {}): Promise<unknown[]> {
-  const searchParams: Record<string, string> = {};
-  if (params.buildingId) searchParams.building = String(params.buildingId);
+// ============================================================================
+// 📅 MAINTENANCE: SCHEDULED MAINTENANCE API FUNCTIONS
+// ============================================================================
+
+export type ScheduledMaintenance = {
+  id: number;
+  title: string;
+  description: string;
+  building: number;
+  contractor?: number | null;
+  contractor_name?: string;
+  contractor_contact?: string;
+  contractor_phone?: string;
+  contractor_email?: string;
+  scheduled_date?: string | null;
+  estimated_duration?: number | null;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  estimated_cost?: number | null;
+  total_cost?: number | null;
+  actual_cost?: number | null;
+  payment_method?: string;
+  installments?: number;
+  advance_payment?: number | null;
+  payment_terms?: string;
+  payment_config?: {
+    enabled: boolean;
+    payment_type?: 'lump_sum' | 'advance_installments' | 'periodic' | 'milestone_based';
+    total_amount?: number;
+    advance_percentage?: number;
+    installment_count?: number;
+    installment_frequency?: 'weekly' | 'biweekly' | 'monthly';
+    periodic_amount?: number;
+    periodic_frequency?: 'weekly' | 'biweekly' | 'monthly';
+    start_date?: string;
+    notes?: string;
+  };
+  payment_schedule?: any; // Full payment schedule data from backend
+};
+
+export async function fetchScheduledMaintenances(params: { buildingId?: number; priority?: string; ordering?: string } = {}): Promise<ScheduledMaintenance[]> {
+  const searchParams: Record<string, string | number | undefined> = {};
+  if (params.buildingId) searchParams.building = params.buildingId;
   if (params.priority) searchParams.priority = params.priority;
   if (params.ordering) searchParams.ordering = params.ordering;
   
-  const data = await apiGet<Paginated<unknown>>(`/maintenance/scheduled/`, searchParams);
-  return extractResults(data);
+  const data = await api.get<ScheduledMaintenance[] | { results: ScheduledMaintenance[] }>('/api/maintenance/scheduled/', searchParams);
+  return Array.isArray(data) ? data : data?.results || [];
 }
 
-export async function updateScheduledMaintenance(id: number, updates: unknown): Promise<unknown> {
-  return apiPatch(`/maintenance/scheduled/${id}/`, updates);
+export async function fetchScheduledMaintenance(id: number): Promise<ScheduledMaintenance> {
+  return await api.get<ScheduledMaintenance>(`/api/maintenance/scheduled/${id}/`);
+}
+
+export async function createScheduledMaintenance(payload: Omit<ScheduledMaintenance, 'id'>): Promise<ScheduledMaintenance> {
+  return await api.post<ScheduledMaintenance>('/api/maintenance/scheduled/', payload);
+}
+
+export async function updateScheduledMaintenance(
+  id: number,
+  payload: Partial<Omit<ScheduledMaintenance, 'id'>>
+): Promise<ScheduledMaintenance> {
+  return await api.patch<ScheduledMaintenance>(`/api/maintenance/scheduled/${id}/`, payload);
+}
+
+// ============================================================================
+// 🧾 MAINTENANCE: SERVICE RECEIPTS API FUNCTIONS
+// ============================================================================
+
+export type ServiceReceipt = {
+  id: number;
+  contractor: number;
+  building: number;
+  service_date: string;
+  amount: number | string;
+  receipt_file?: string | null;
+  description: string;
+  invoice_number?: string | null;
+  payment_status: 'pending' | 'paid' | 'overdue';
+  payment_date?: string | null;
+  created_at: string;
+  // Explicit links (optional; require backend support)
+  expense?: number | null;
+  scheduled_maintenance?: number | null;
+};
+
+export async function fetchServiceReceipts(params: { buildingId?: number } = {}): Promise<ServiceReceipt[]> {
+  const searchParams: Record<string, string | number | undefined> = {};
+  if (params.buildingId) searchParams.building = params.buildingId;
+  
+  const data = await api.get<ServiceReceipt[] | { results: ServiceReceipt[] }>('/api/maintenance/receipts/', searchParams);
+  return Array.isArray(data) ? data : data?.results || [];
+}
+
+export async function fetchServiceReceipt(id: number): Promise<ServiceReceipt> {
+  return await api.get<ServiceReceipt>(`/api/maintenance/receipts/${id}/`);
+}
+
+export async function createServiceReceipt(payload: {
+  contractor: number;
+  building: number;
+  service_date: string;
+  amount: string | number;
+  description: string;
+  invoice_number?: string;
+  payment_status?: 'pending' | 'paid' | 'overdue';
+  receipt_file?: File;
+  // Explicit links (optional)
+  expense?: number;
+  scheduled_maintenance?: number;
+}): Promise<ServiceReceipt> {
+  const form = new FormData();
+  form.append('contractor', String(payload.contractor));
+  form.append('building', String(payload.building));
+  form.append('service_date', payload.service_date);
+  form.append('amount', String(payload.amount));
+  form.append('description', payload.description);
+  if (payload.invoice_number) form.append('invoice_number', payload.invoice_number);
+  form.append('payment_status', payload.payment_status ?? 'pending');
+  if (payload.receipt_file) form.append('receipt_file', payload.receipt_file);
+  if (typeof payload.expense === 'number') form.append('expense', String(payload.expense));
+  if (typeof payload.scheduled_maintenance === 'number') form.append('scheduled_maintenance', String(payload.scheduled_maintenance));
+  
+  // Use fetch directly for FormData (can't use api.post with FormData)
+  const url = getApiUrl('/api/maintenance/receipts/');
+  const headers = getHeaders('POST');
+  // Remove Content-Type header to let browser set it with boundary for FormData
+  delete headers['Content-Type'];
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    credentials: 'include',
+    body: form,
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw createApiError('POST', url, response.status, errorText);
+  }
+  
+  return await response.json();
+}
+
+export async function updateServiceReceipt(
+  id: number,
+  payload: Partial<Omit<ServiceReceipt, 'id' | 'created_at'>>
+): Promise<ServiceReceipt> {
+  return await api.patch<ServiceReceipt>(`/api/maintenance/receipts/${id}/`, payload);
 }
 
 export async function deleteServiceReceipt(id: number): Promise<void> {
-  await apiDelete(`/maintenance/receipts/${id}/`);
+  await api.delete(`/api/maintenance/receipts/${id}/`);
 }
 
 // ============================================================================
