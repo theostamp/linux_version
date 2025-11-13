@@ -9,6 +9,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.http import JsonResponse  
 from django.utils import timezone  
 from django_filters.rest_framework import DjangoFilterBackend
+import logging
 
 from .models import Building, BuildingMembership, ServicePackage
 from .serializers import BuildingSerializer, BuildingMembershipSerializer, ServicePackageSerializer
@@ -196,20 +197,38 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
 
     def get_queryset(self):
         user = self.request.user
+        logger = logging.getLogger(__name__)
+
+        logger.info(
+            f"[BuildingViewSet] get_queryset called for user: {user.email} (ID: {user.id}) "
+            f"in tenant: {self.request.tenant.schema_name}"
+        )
 
         # Superusers & staff -> όλα τα κτίρια
         if user.is_superuser or user.is_staff:
+            logger.info(f"User is superuser/staff. Returning all buildings.")
             return Building.objects.all()
 
         # Managers -> μόνο τα κτίρια που διαχειρίζονται
-        if hasattr(user, "is_manager") and user.is_manager:
-            return Building.objects.filter(manager_id=user.id)
+        is_manager = hasattr(user, "is_manager") and user.is_manager
+        if is_manager:
+            queryset = Building.objects.filter(manager_id=user.id)
+            building_ids = list(queryset.values_list('id', flat=True))
+            logger.info(f"User is a manager. Found buildings: {building_ids} for manager ID: {user.id}")
+            return queryset
 
         # Residents -> μόνο τα κτίρια στα οποία ανήκουν
         if BuildingMembership.objects.filter(resident=user).exists():
-            return Building.objects.filter(buildingmembership__resident=user)
+            queryset = Building.objects.filter(buildingmembership__resident=user)
+            building_ids = list(queryset.values_list('id', flat=True))
+            logger.info(f"User is a resident. Found buildings by membership: {building_ids}")
+            return queryset
 
         # Αν δεν υπάρχει ρόλος ή δεν υπάρχει αντιστοίχιση
+        logger.warning(
+            f"User {user.email} is not superuser, staff, manager, or resident with membership. "
+            f"Returning empty queryset."
+        )
         return Building.objects.none()
 
     def retrieve(self, request, *args, **kwargs):
