@@ -100,7 +100,12 @@ async function proxyRequest(request: NextRequest, ctx: RouteContext) {
       duplex: "half",
     });
     
-    console.log(`[backend-proxy] Response status: ${upstreamResponse.status} for ${targetUrl}`);
+    console.log(`[backend-proxy] Response status: ${upstreamResponse.status} for ${targetUrl}`, {
+      method: request.method,
+      originalPath: request.nextUrl.pathname,
+      targetUrl,
+      headers: Object.fromEntries(upstreamResponse.headers.entries()),
+    });
     
     // Log response details for debugging
     if (!upstreamResponse.ok) {
@@ -111,6 +116,8 @@ async function proxyRequest(request: NextRequest, ctx: RouteContext) {
         status: upstreamResponse.status,
         statusText: upstreamResponse.statusText,
         body: responseText.substring(0, 500), // First 500 chars
+        fullBodyLength: responseText.length,
+        requestHeaders: Object.fromEntries(headers.entries()),
       });
       
       // Return error response with more details
@@ -124,12 +131,28 @@ async function proxyRequest(request: NextRequest, ctx: RouteContext) {
       );
     }
   } catch (error) {
-    console.error(`[backend-proxy] Failed to reach ${targetUrl}`, error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    console.error(`[backend-proxy] Failed to reach ${targetUrl}`, {
+      error: errorMessage,
+      stack: errorStack,
+      targetUrl,
+      method: request.method,
+      base: resolveBackendBaseUrl(),
+      env: {
+        API_BASE_URL: process.env.API_BASE_URL,
+        NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+        API_URL: process.env.API_URL,
+      }
+    });
+    
     return NextResponse.json(
       { 
         error: "Unable to reach backend service",
-        details: error instanceof Error ? error.message : String(error),
-        url: targetUrl
+        details: errorMessage,
+        url: targetUrl,
+        base: resolveBackendBaseUrl(),
       },
       { status: 502 },
     );
