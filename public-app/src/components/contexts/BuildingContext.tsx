@@ -119,6 +119,7 @@ export const BuildingProvider = ({ children }: { children: ReactNode }) => {
       setError(null);
       setHasInitialized(true);
     } catch (err: unknown) {
+      setHasInitialized(true); // Mark as initialized even on error to prevent retry loops
       console.error('[BuildingContext] Failed to load buildings:', err);
 
       const apiError = err as { status?: number; response?: { status?: number }; message?: string };
