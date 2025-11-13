@@ -275,15 +275,16 @@ export const ApartmentBalancesTab: React.FC<ApartmentBalancesTabProps> = ({
         building_id: buildingId.toString()
       });
       
+      // The api.delete returns data directly
       const response = await api.delete(`/financial/payments/bulk_delete/?${params.toString()}`);
       
-      if (response.data.success) {
+      if (response.success) {
         await loadApartmentBalances(true);
         setShowDeleteConfirmation(false);
         setApartmentToDelete(null);
-        console.log('Payments deleted successfully:', response.data);
+        console.log('Payments deleted successfully:', response);
       } else {
-        throw new Error(response.data.message || 'Σφάλμα κατά τη διαγραφή');
+        throw new Error(response.message || 'Σφάλμα κατά τη διαγραφή');
       }
     } catch (error: any) {
       console.error('Error deleting payments:', error);
