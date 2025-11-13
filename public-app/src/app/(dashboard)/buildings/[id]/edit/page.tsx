@@ -5,11 +5,12 @@ import { useParams, useRouter } from 'next/navigation';
 import type { Building } from '@/lib/api';
 import { fetchBuilding, deleteBuilding } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building as BuildingIcon, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import ErrorMessage from '@/components/ErrorMessage';
 import { toast } from 'sonner';
 import { useBuilding } from '@/components/contexts/BuildingContext';
+import CreateBuildingForm from '@/components/buildings/CreateBuildingForm';
 
 export default function EditBuildingPage() {
   const params = useParams();
@@ -150,27 +151,21 @@ export default function EditBuildingPage() {
         </Button>
       </div>
 
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <div className="flex items-start space-x-3">
-          <BuildingIcon className="w-5 h-5 text-yellow-600 mt-0.5" />
-          <div>
-            <h3 className="font-medium text-yellow-900 mb-2">⚠️ Component Missing</h3>
-            <p className="text-sm text-yellow-800">
-              Το CreateBuildingForm component λείπει. Χρειάζεται να δημιουργηθεί για να λειτουργήσει αυτή η σελίδα.
-            </p>
-            <p className="text-xs text-yellow-700 mt-2">
-              Το component χρειάζεται: AddressAutocomplete, StreetViewImage, και fetchBuildingResidents/fetchApartments API functions.
-            </p>
-            {initialData && (
-              <div className="mt-4 p-4 bg-white rounded border">
-                <p className="text-sm font-medium mb-2">Τρέχον Κτίριο:</p>
-                <p className="text-sm">{initialData.name}</p>
-                <p className="text-sm text-gray-600">{initialData.address}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {initialData ? (
+        <CreateBuildingForm
+          initialData={initialData}
+          onSuccess={(updatedBuilding) => {
+            toast.success('Το κτίριο ενημερώθηκε επιτυχώς');
+            refreshBuildings();
+            router.push(`/buildings/${updatedBuilding.id}`);
+          }}
+          onCancel={() => {
+            router.push(`/buildings/${id}`);
+          }}
+        />
+      ) : (
+        <ErrorMessage message="Δεν ήταν δυνατή η φόρτωση των δεδομένων του κτιρίου" />
+      )}
     </div>
   );
 }
