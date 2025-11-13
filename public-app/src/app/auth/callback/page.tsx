@@ -112,11 +112,11 @@ function OAuthCallback() {
           }
         }
 
-        // For login flow, redirect to tenant or home
+        // For login flow, redirect to tenant or dashboard
         if (data.tenant_url) {
-          window.location.href = `https://${data.tenant_url}`;
+          window.location.href = `https://${data.tenant_url}/dashboard`;
         } else {
-          router.push(stateData.redirect || '/');
+          router.push(stateData.redirect || '/dashboard');
         }
 
         setStatus('success');

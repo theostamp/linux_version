@@ -8,7 +8,7 @@ import { Building, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-r
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/';
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
   
   const [formData, setFormData] = useState({
     email: '',
