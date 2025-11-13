@@ -31,7 +31,7 @@ interface ReportConfig {
   filters: string[];
 }
 
-export default function ReportsManager({ buildingId }: ReportsManagerProps) {
+export function ReportsManager({ buildingId }: ReportsManagerProps) {
   const [selectedReport, setSelectedReport] = useState<string>('');
   const [filters, setFilters] = useState({
     startDate: '',
