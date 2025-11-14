@@ -89,6 +89,29 @@ const createApiError = (
   return error;
 };
 
+/**
+ * Attach a non-enumerable `data` property to API responses so callers that expect
+ * Axios-style objects (response.data) continue to work while newer code can use
+ * the raw payload directly.
+ */
+function attachApiResponseData<T>(payload: T): T {
+  if (payload !== null && (typeof payload === 'object' || typeof payload === 'function')) {
+    const target = payload as Record<string, unknown> & { data?: T };
+    if (!Object.prototype.hasOwnProperty.call(target, 'data')) {
+      try {
+        Object.defineProperty(target, 'data', {
+          value: payload,
+          enumerable: false,
+          configurable: true,
+        });
+      } catch {
+        target.data = payload;
+      }
+    }
+  }
+  return payload;
+}
+
 const isNotFoundError = (error: unknown): boolean => {
   const err = error as { status?: number; response?: { status?: number } };
   return err?.status === 404 || err?.response?.status === 404;
@@ -231,7 +254,7 @@ export async function apiGet<T>(
         throw createApiError("GET", urlString, res.status);
       }
       
-      const data = await res.json() as T;
+      const data = attachApiResponseData(await res.json() as T);
       
       // Cache the result
       API_CALL_CACHE.set(cacheKey, {
@@ -296,7 +319,8 @@ export async function apiPost<T>(path: string, body: unknown, maxRetries: number
       // Reset retry delay on success
       resetRetryDelay(url);
       
-      return res.json();
+      const data = attachApiResponseData(await res.json() as T);
+      return data;
     } catch (error) {
       lastError = error as Error;
       
@@ -346,7 +370,8 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
     throw createApiError("PUT", url, res.status, text);
   }
   
-  return res.json();
+  const data = attachApiResponseData(await res.json() as T);
+  return data;
 }
 
 /**
@@ -367,7 +392,8 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
     throw createApiError("PATCH", url, res.status, text);
   }
   
-  return res.json();
+  const data = attachApiResponseData(await res.json() as T);
+  return data;
 }
 
 /**
@@ -389,7 +415,8 @@ export async function apiDelete<T>(path: string): Promise<T> {
   
   // DELETE might not return a body
   if (res.headers.get("content-type")?.includes("application/json")) {
-    return res.json();
+    const data = attachApiResponseData(await res.json() as T);
+    return data;
   }
   
   return {} as T;
@@ -1241,7 +1268,8 @@ export async function createServiceReceipt(payload: {
     throw createApiError('POST', url, response.status, errorText);
   }
   
-  return await response.json();
+  const data = attachApiResponseData(await response.json() as ServiceReceipt);
+  return data;
 }
 
 export async function updateServiceReceipt(
@@ -1553,5 +1581,3 @@ export async function deleteContractor(id: number): Promise<void> {
 export async function fetchContractor(id: number): Promise<Contractor> {
   return await api.get<Contractor>(`/api/maintenance/contractors/${id}/`);
 }
-
-
