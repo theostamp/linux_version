@@ -1,10 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useBuilding } from '@/components/contexts/BuildingContext';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
-import { useAuth } from '@/components/contexts/AuthContext';
 import NewAnnouncementForm from '@/components/NewAnnouncementForm';
 import { useSuperUserGuard } from '@/hooks/useSuperUserGuard';
 

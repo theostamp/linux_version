@@ -308,7 +308,7 @@ export default function KioskDisplayPage() {
                 <div>
                   <h4 className="text-sm font-semibold text-blue-400 mb-2">Πρόγνωση</h4>
                   <div className="space-y-2">
-                    {weather.forecast.map((day: any, index: number) => (
+                    {weather.forecast.map((day, index: number) => (
                       <div key={index} className="flex items-center justify-between text-xs">
                         <div className="text-gray-400">{day.day}</div>
                         <div className="text-lg">{day.icon}</div>
@@ -380,7 +380,7 @@ export default function KioskDisplayPage() {
                     {/* Top Left - Assembly Widget (Permanent, only if has data) */}
                     {(() => {
                       // Check if there are assembly announcements
-                      const hasAssemblyData = combinedData?.announcements?.some((a: any) =>
+                      const hasAssemblyData = combinedData?.announcements?.some((a) =>
                         a.title?.includes('Συνέλευση') || a.title?.includes('Σύγκληση')
                       );
 

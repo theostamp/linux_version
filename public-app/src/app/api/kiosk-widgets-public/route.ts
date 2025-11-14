@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   // Determine backend URL
   // Default to Docker service name (backend:8000)
   // Use NEXT_PUBLIC_DJANGO_API_URL if explicitly set
-  let backendUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000';
+  const backendUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000';
   
   console.log('[API PROXY] Using backend URL:', backendUrl);
   

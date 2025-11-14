@@ -14,7 +14,6 @@ import BuildingStats from '@/components/BuildingStats';
 import SelectedBuildingInfo from '@/components/SelectedBuildingInfo';
 import AnnouncementsCarousel from '@/components/AnnouncementsCarousel';
 import ErrorMessage from '@/components/ErrorMessage';
-import type { UserRequest } from '@/types/userRequests';
 import AuthGate from '@/components/AuthGate';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import Link from 'next/link';

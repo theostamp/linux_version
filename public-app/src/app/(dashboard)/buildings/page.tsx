@@ -19,8 +19,6 @@ const BuildingsPageContent = () => {
     buildings,
     error,
     isLoading,
-    setCurrentBuilding,
-    currentBuilding,
   } = useBuilding();
 
   const { user } = useAuth();

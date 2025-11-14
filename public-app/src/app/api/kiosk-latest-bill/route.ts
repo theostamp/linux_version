@@ -9,7 +9,7 @@ const FALLBACK_RESPONSE = {
 
 export async function GET(request: NextRequest) {
   // Use Docker service name for backend
-  let backendUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000';
+  const backendUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000';
   
   const targetUrl = `${backendUrl}/api/kiosk/latest-bill/`;
 

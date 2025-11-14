@@ -67,10 +67,11 @@ export default function TenantAcceptPage() {
           setStatus('error');
           setMessage('Failed to accept invitation. Please try again.');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[TenantAccept] Error accepting invitation:', error);
         
-        const errorMessage = error?.response?.data?.error || 
+        const err = error as { response?: { data?: { error?: string } }; message?: string };
+        const errorMessage = err?.response?.data?.error || 
                            error?.message || 
                            'Failed to accept invitation. The link may have expired.';
         

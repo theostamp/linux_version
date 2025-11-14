@@ -1,7 +1,6 @@
 'use client';
 
 import { useBuilding } from '@/components/contexts/BuildingContext';
-import { useAuth } from '@/components/contexts/AuthContext';
 import BuildingFilterIndicator from '@/components/BuildingFilterIndicator';
 import AssemblyForm from '@/components/AssemblyForm';
 import { useSuperUserGuard } from '@/hooks/useSuperUserGuard';

@@ -39,7 +39,7 @@ export async function GET(
 
   // Determine backend URL - use Docker service name when in container
   // Default to Docker service name (backend:8000)
-  let backendUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000';
+  const backendUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000';
   
   console.log('[PUBLIC-INFO API] ===== NEW CODE VERSION =====');
   console.log('[PUBLIC-INFO API] Using backend URL:', backendUrl);

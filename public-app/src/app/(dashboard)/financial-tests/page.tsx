@@ -3,7 +3,6 @@
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import ErrorMessage from '@/components/ErrorMessage';
 import { AlertCircle } from 'lucide-react';
 
 export default function FinancialTestsPage() {

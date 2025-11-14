@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import type { Building } from '@/lib/api';
 import { fetchBuilding } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building as BuildingIcon, Edit, MapPin, Settings } from 'lucide-react';
+import { ArrowLeft, Edit, MapPin, Settings } from 'lucide-react';
 import Link from 'next/link';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useBuilding } from '@/components/contexts/BuildingContext';

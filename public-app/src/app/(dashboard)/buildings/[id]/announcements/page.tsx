@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { fetchAnnouncements } from '@/lib/api';
 import AnnouncementCard from '@/components/AnnouncementCard';
@@ -44,7 +44,7 @@ export default function BuildingAnnouncementsPage() {
     }
   }, [buildingId, buildings, selectedBuilding, buildingsLoading, router]);
 
-  async function loadAnnouncements() {
+  const loadAnnouncements = useCallback(async () => {
     if (!buildingId) return;
     try {
       const data = await fetchAnnouncements(buildingId);
@@ -57,11 +57,11 @@ export default function BuildingAnnouncementsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [buildingId]);
 
   useEffect(() => {
     loadAnnouncements();
-  }, [buildingId]);
+  }, [loadAnnouncements]);
 
   const container = {
     hidden: { opacity: 1 },

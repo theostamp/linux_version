@@ -1,9 +1,10 @@
-import type { HttpMethod } from "./tenantProxy";
+import type { HttpMethod, ProxyRouteContext } from "./tenantProxy";
+import type { NextRequest, NextResponse } from "next/server";
 
 type ProxyHandler = (
-  request: any,
-  context: any,
-) => Promise<any>;
+  request: NextRequest,
+  context: ProxyRouteContext,
+) => Promise<NextResponse>;
 
 /**
  * Type-safe helper to export route handlers with runtime validation.
