@@ -11,6 +11,7 @@ interface PaginationProps {
   pageSize: number;
   onPageChange: (page: number) => void;
   className?: string;
+  itemLabel?: string;
 }
 
 const Pagination: React.FC<PaginationProps> = ({
@@ -19,7 +20,8 @@ const Pagination: React.FC<PaginationProps> = ({
   totalItems,
   pageSize,
   onPageChange,
-  className = ''
+  className = '',
+  itemLabel = 'κτίρια'
 }) => {
   if (totalPages <= 1) {
     return null;
@@ -57,7 +59,7 @@ const Pagination: React.FC<PaginationProps> = ({
   return (
     <div className={`flex items-center justify-between ${className}`}>
       <div className="text-sm text-gray-700">
-        Εμφανίζονται {startItem}-{endItem} από {totalItems} κτίρια
+        Εμφανίζονται {startItem}-{endItem} από {totalItems} {itemLabel}
       </div>
       
       <div className="flex items-center space-x-1">
@@ -107,4 +109,3 @@ const Pagination: React.FC<PaginationProps> = ({
 };
 
 export default Pagination;
-

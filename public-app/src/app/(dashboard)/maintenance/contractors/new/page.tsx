@@ -68,10 +68,10 @@ export default function NewContractorPage() {
       // Basic validation
       const finalServiceType = form.service_type === 'custom' ? 'other' : form.service_type;
       if (!form.name || !finalServiceType) {
-        toast({ title: 'Σφάλμα', description: 'Συμπληρώστε Όνομα και Τύπο Υπηρεσίας.', variant: 'destructive' as any });
+        toast({ title: 'Σφάλμα', description: 'Συμπληρώστε Όνομα και Τύπο Υπηρεσίας.', variant: 'destructive' });
         return;
       }
-      const payload: any = {
+      const payload: Partial<Contractor> & { specializations?: string[]; emergency_phone?: string } = {
         ...form,
         service_type: finalServiceType,
       };
@@ -83,7 +83,7 @@ export default function NewContractorPage() {
       toast({ title: 'Αποθηκεύτηκε', description: 'Το συνεργείο δημιουργήθηκε.' });
       router.push('/maintenance/contractors');
     } catch (e) {
-      toast({ title: 'Σφάλμα', description: 'Αποτυχία δημιουργίας συνεργείου.', variant: 'destructive' as any });
+      toast({ title: 'Σφάλμα', description: 'Αποτυχία δημιουργίας συνεργείου.', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -107,7 +107,7 @@ export default function NewContractorPage() {
               id="type"
               className="w-full border rounded h-9 px-2"
               value={form.service_type as string}
-              onChange={(e) => setForm({ ...form, service_type: e.target.value as any })}
+              onChange={(e) => setForm({ ...form, service_type: e.target.value })}
             >
               {SERVICE_TYPES.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -139,7 +139,7 @@ export default function NewContractorPage() {
               </div>
               <div>
                 <Label htmlFor="phone2">Τηλέφωνο (2)</Label>
-                <Input id="phone2" value={(form as any).emergency_phone || ''} onChange={(e) => setForm({ ...form, emergency_phone: e.target.value } as any)} />
+                <Input id="phone2" value={(form as Partial<Contractor> & { emergency_phone?: string }).emergency_phone || ''} onChange={(e) => setForm({ ...form, emergency_phone: e.target.value } as NewContractor & { emergency_phone?: string })} />
               </div>
             </div>
           </div>
@@ -150,7 +150,7 @@ export default function NewContractorPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Κατάσταση</Label>
-              <select className="w-full border rounded h-9 px-2" value={form.status || 'active'} onChange={(e) => setForm({ ...form, status: e.target.value as any })}>
+              <select className="w-full border rounded h-9 px-2" value={form.status || 'active'} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                 <option value="active">Ενεργό</option>
                 <option value="inactive">Ανενεργό</option>
               </select>

@@ -82,8 +82,15 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
     enabled: !!buildingId
   });
 
-  const expenseRows = extractResults<any>(operationalExpensesQ.data ?? []);
-  const totalOperationalExpenses = expenseRows.reduce((sum: number, expense: any) => sum + (Number(expense?.amount) || 0), 0);
+  type OperationalExpense = {
+    id: number;
+    title?: string;
+    date: string;
+    amount: number | string;
+    category?: string;
+  };
+  const expenseRows = extractResults<OperationalExpense>(operationalExpensesQ.data ?? []);
+  const totalOperationalExpenses = expenseRows.reduce((sum: number, expense: OperationalExpense) => sum + (Number(expense?.amount) || 0), 0);
 
   // Handle expense deletion
   const handleDeleteExpense = async (expenseId: number, expenseTitle: string) => {
@@ -239,7 +246,7 @@ function OperationalExpensesTab({ buildingId }: { buildingId: number | null }) {
             </div>
           ) : (
             <div className="space-y-4">
-              {expenseRows.slice(0, 5).map((expense: any) => (
+              {expenseRows.slice(0, 5).map((expense: OperationalExpense) => (
                 <div key={expense.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                   <div className="flex items-center space-x-4">
                     <div className="p-2 rounded-lg bg-blue-50">
@@ -377,12 +384,18 @@ function MaintenanceDashboardContent() {
       });
       
       // Filter out future management fees on the client side
-      const expenses = extractResults<any>(response.data ?? []);
+      type ServiceExpense = {
+        id: number;
+        amount: number | string;
+        date?: string;
+        category?: string;
+      };
+      const expenses = extractResults<ServiceExpense>(response.data ?? []);
       const currentDate = new Date();
       const currentMonth = currentDate.getMonth() + 1; // 1-based month
       const currentYear = currentDate.getFullYear();
       
-      const filteredExpenses = expenses.filter((expense: any) => {
+      const filteredExpenses = expenses.filter((expense: ServiceExpense) => {
         // If it's a management fee, check if it's for a future month
         if (expense.category === 'management_fees') {
           const expenseDate = new Date(expense.date);
@@ -456,43 +469,68 @@ function MaintenanceDashboardContent() {
     staleTime: 30_000,
   });
 
+  type ContractorRow = {
+    id: number;
+    name?: string;
+    service_type?: string;
+  };
+  type ScheduledMaintenanceRow = {
+    id: number;
+    title?: string;
+    scheduled_date?: string;
+  };
+  type ExpenseRow = {
+    id: number;
+    amount: number | string;
+  };
+  
   const loading = contractorsQ.isLoading || receiptsQ.isLoading || receiptsCompletedQ.isLoading || scheduledQ.isLoading || urgentScheduledQ.isLoading || serviceExpensesYearQ.isLoading || expensesYearQ.isLoading || completedYearQ.isLoading || receiptsYearQ.isLoading;
-  const contractorRows = extractResults<any>(contractorsQ.data ?? []);
-  const scheduledRows = extractResults<any>(scheduledQ.data ?? []);
+  const contractorRows = extractResults<ContractorRow>(contractorsQ.data ?? []);
+  const scheduledRows = extractResults<ScheduledMaintenanceRow>(scheduledQ.data ?? []);
   // Service/Maintenance expenses total for the year (for overview tab)
   const totalServiceSpentThisYear = useMemo(() => {
-    const rows = extractResults<any>(serviceExpensesYearQ.data ?? []);
-    return rows.reduce((sum: number, r: any) => sum + (Number(r?.amount) || 0), 0);
+    const rows = extractResults<ExpenseRow>(serviceExpensesYearQ.data ?? []);
+    return rows.reduce((sum: number, r: ExpenseRow) => sum + (Number(r?.amount) || 0), 0);
   }, [serviceExpensesYearQ.data]);
 
   // Total expenses for the year (for operational expenses tab)
   const totalSpentThisYear = useMemo(() => {
-    const rows = extractResults<any>(expensesYearQ.data ?? []);
-    return rows.reduce((sum: number, r: any) => sum + (Number(r?.amount) || 0), 0);
+    const rows = extractResults<ExpenseRow>(expensesYearQ.data ?? []);
+    return rows.reduce((sum: number, r: ExpenseRow) => sum + (Number(r?.amount) || 0), 0);
   }, [expensesYearQ.data]);
   const completedThisYear = useMemo(() => {
     // Prefer server-side count if provided
     const data = completedYearQ.data;
-    const count = (data && typeof data === 'object' && typeof (data as any).count === 'number') ? (data as any).count : extractResults<any>(data ?? []).length;
+    type CountResponse = { count?: number };
+    const count = (data && typeof data === 'object' && typeof (data as CountResponse).count === 'number') ? (data as CountResponse).count : extractResults<{ id: number }>(data ?? []).length;
     if (count > 0) return count;
     // Fallback 1: maintenance service receipts count in the year
-    const receiptsRows = extractResults<any>(receiptsYearQ.data ?? []);
+    type ReceiptRow = { id: number };
+    const receiptsRows = extractResults<ReceiptRow>(receiptsYearQ.data ?? []);
     if (Array.isArray(receiptsRows) && receiptsRows.length > 0) {
       return receiptsRows.length;
     }
     // Fallback: local filtering (if server didn't return count)
     const startMs = new Date(`${year}-01-01T00:00:00`).getTime();
     const endMs = new Date(`${year}-12-31T23:59:59.999`).getTime();
-    const toMs = (v: any): number | null => {
+    const toMs = (v: string | null | undefined): number | null => {
       if (!v || typeof v !== 'string') return null;
       const s = v.length === 10 ? `${v}T00:00:00` : v;
       const t = new Date(s).getTime();
       return Number.isFinite(t) ? t : null;
     };
-    const getCompletionDateMs = (r: any): number | null => (
+    type ScheduledRowWithDates = ScheduledMaintenanceRow & {
+      finished_at?: string;
+      completed_at?: string;
+      updated_at?: string;
+      scheduled_date?: string;
+      created_at?: string;
+      status?: string;
+    };
+    const getCompletionDateMs = (r: ScheduledRowWithDates): number | null => (
       toMs(r?.finished_at) ?? toMs(r?.completed_at) ?? toMs(r?.updated_at) ?? toMs(r?.scheduled_date) ?? toMs(r?.created_at) ?? null
     );
-    return scheduledRows.filter((r: any) => r?.status === 'completed' && (() => {
+    return scheduledRows.filter((r: ScheduledRowWithDates) => r?.status === 'completed' && (() => {
       const ms = getCompletionDateMs(r);
       return ms !== null && ms >= startMs && ms <= endMs;
     })()).length;
@@ -517,9 +555,18 @@ function MaintenanceDashboardContent() {
     return isNaN(t.getTime()) ? null : t;
   };
 
-  const receiptsPendingRows = extractResults<any>(receiptsQ.data ?? []);
-
-  const getCompletionDate = (r: any): Date | null => {
+  type ReceiptWithDates = {
+    finished_at?: string;
+    completed_at?: string;
+    updated_at?: string;
+    service_date?: string;
+    created_at?: string;
+    scheduled_date?: string;
+    status?: string;
+  };
+  type ReceiptPendingRow = ReceiptWithDates & { id: number };
+  const receiptsPendingRows = extractResults<ReceiptPendingRow>(receiptsQ.data ?? []);
+  const getCompletionDate = (r: ReceiptWithDates): Date | null => {
     return (
       toDate(r?.finished_at) ||
       toDate(r?.completed_at) ||
@@ -530,21 +577,25 @@ function MaintenanceDashboardContent() {
     );
   };
 
-  const byLatest = (getDate: (r: any) => Date | null) => (a: any, b: any) => {
+  const byLatest = <T extends ReceiptWithDates>(getDate: (r: T) => Date | null) => (a: T, b: T) => {
     const da = getDate(a)?.getTime() ?? -Infinity;
     const db = getDate(b)?.getTime() ?? -Infinity;
     return db - da;
   };
 
   const latestCompletedScheduled = [...scheduledRows]
-    .filter((r: any) => r?.status === 'completed')
+    .filter((r: ScheduledRowWithDates) => r?.status === 'completed')
     .sort(byLatest(getCompletionDate))[0];
 
   const latestPendingReceipt = [...receiptsPendingRows]
-    .sort(byLatest((r: any) => toDate(r?.updated_at) || toDate(r?.service_date) || toDate(r?.created_at)))[0];
+    .sort(byLatest((r: ReceiptPendingRow) => toDate(r?.updated_at) || toDate(r?.service_date) || toDate(r?.created_at)))[0];
 
+  type ContractorWithDates = ContractorRow & {
+    created_at?: string;
+    updated_at?: string;
+  };
   const latestContractor = [...contractorRows]
-    .sort(byLatest((r: any) => toDate(r?.created_at) || toDate(r?.updated_at)))[0];
+    .sort(byLatest((r: ContractorWithDates) => toDate(r?.created_at) || toDate(r?.updated_at)))[0];
 
   const activityItems: ActivityItem[] = [];
 
@@ -595,7 +646,8 @@ function MaintenanceDashboardContent() {
   
   // Count scheduled maintenance that are NOT linked to approved projects to avoid double counting
   const scheduledMaintenanceCount = scheduledRows.length;
-  const linkedToProjectsCount = scheduledRows.filter((maintenance: any) => maintenance.linked_project).length;
+  type ScheduledWithProject = ScheduledMaintenanceRow & { linked_project?: number };
+  const linkedToProjectsCount = scheduledRows.filter((maintenance: ScheduledWithProject) => maintenance.linked_project).length;
   const unlinkedScheduledCount = scheduledMaintenanceCount - linkedToProjectsCount;
   
   // Total maintenance work = unlinked scheduled maintenance + approved projects
@@ -603,7 +655,7 @@ function MaintenanceDashboardContent() {
 
   const baseStats: MaintenanceStats = {
     total_contractors: contractorRows.length,
-    active_contractors: contractorRows.filter((c: any) => c.status === 'active' || c.is_active === true).length,
+    active_contractors: contractorRows.filter((c: ContractorRow & { status?: string; is_active?: boolean }) => c.status === 'active' || c.is_active === true).length,
     pending_receipts: extractCount(receiptsQ.data ?? []),
     scheduled_maintenance: totalMaintenanceWork, // Avoid double counting linked projects
     urgent_maintenance: extractCount(urgentScheduledQ.data ?? []),

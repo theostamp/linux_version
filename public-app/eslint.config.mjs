@@ -18,6 +18,7 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      "setup-stripe.js", // Node.js script that uses require()
     ],
   },
   {

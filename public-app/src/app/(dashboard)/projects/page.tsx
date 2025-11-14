@@ -77,12 +77,25 @@ function ProjectsDashboardContent() {
     return isNaN(t.getTime()) ? null : t;
   };
 
-  const projectsRows = extractResults<any>(projectsQ.data ?? []);
-  const completedRows = extractResults<any>(completedProjectsQ.data ?? []);
-  const pendingOffersRows = extractResults<any>(pendingOffersQ.data ?? []);
-  const approvedOffersRows = extractResults<any>(approvedOffersQ.data ?? []);
+  type ProjectRow = {
+    id: number;
+    completed_at?: string;
+    updated_at?: string;
+    created_at?: string;
+  };
+  type OfferRow = {
+    id: number;
+    submitted_at?: string;
+    reviewed_at?: string;
+    created_at?: string;
+  };
+  
+  const projectsRows = extractResults<ProjectRow>(projectsQ.data ?? []);
+  const completedRows = extractResults<ProjectRow>(completedProjectsQ.data ?? []);
+  const pendingOffersRows = extractResults<OfferRow>(pendingOffersQ.data ?? []);
+  const approvedOffersRows = extractResults<OfferRow>(approvedOffersQ.data ?? []);
 
-  const getProjectRelevantDate = (r: any): Date | null => {
+  const getProjectRelevantDate = (r: ProjectRow): Date | null => {
     return (
       toDate(r?.completed_at) ||
       toDate(r?.updated_at) ||
@@ -90,15 +103,15 @@ function ProjectsDashboardContent() {
       null
     );
   };
-  const byLatest = (getDate: (r: any) => Date | null) => (a: any, b: any) => {
+  const byLatest = <T extends ProjectRow | OfferRow>(getDate: (r: T) => Date | null) => (a: T, b: T) => {
     const da = getDate(a)?.getTime() ?? -Infinity;
     const db = getDate(b)?.getTime() ?? -Infinity;
     return db - da;
   };
 
   const latestCompletedProject = [...completedRows].sort(byLatest(getProjectRelevantDate))[0];
-  const latestPendingOffer = [...pendingOffersRows].sort(byLatest((r: any) => toDate(r?.submitted_at) || toDate(r?.created_at)))[0];
-  const latestApprovedOffer = [...approvedOffersRows].sort(byLatest((r: any) => toDate(r?.reviewed_at) || toDate(r?.submitted_at)))[0];
+  const latestPendingOffer = [...pendingOffersRows].sort(byLatest((r: OfferRow) => toDate(r?.submitted_at) || toDate(r?.created_at)))[0];
+  const latestApprovedOffer = [...approvedOffersRows].sort(byLatest((r: OfferRow) => toDate(r?.reviewed_at) || toDate(r?.submitted_at)))[0];
 
   const activityItems: ActivityItem[] = [];
 
