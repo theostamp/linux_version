@@ -448,7 +448,9 @@ def create_assembly_announcement(project: Project, check_existing: bool = False)
                 url=f"/projects/{project.id}",
                 is_urgent=True,
                 icon='📋',
-                event_date=assembly_date,
+                event_date=timezone.make_aware(
+                    timezone.datetime.combine(assembly_date, timezone.datetime.min.time())
+                ) if assembly_date else None,
                 related_project_id=project.id
             )
         except Exception:
