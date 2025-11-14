@@ -202,34 +202,33 @@ export default function NewProjectPage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <CardTitle>Στοιχεία έργου</CardTitle>
-            <p className="text-sm text-gray-500">Ορίστε βασικά στοιχεία, προθεσμίες και προαιρετικά Zoom</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={() => setIsZoomModalOpen(true)}
-            >
-              <SettingsIcon className="w-4 h-4" />
-              Ρυθμίσεις Zoom
-            </Button>
-            <Button
-              type="button"
-              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-              onClick={() => setSelectedTab('suggested')}
-            >
-              <Lightbulb className="w-4 h-4" />
-              Προτεινόμενα Έργα
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+      <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as 'new' | 'suggested')}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="new">Νέα Δημιουργία</TabsTrigger>
+          <TabsTrigger value="suggested">Προτεινόμενα Έργα</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="new">
+          <Card>
+            <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <CardTitle>Στοιχεία έργου</CardTitle>
+                <p className="text-sm text-gray-500">Ορίστε βασικά στοιχεία, προθεσμίες και προαιρετικά Zoom</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={() => setIsZoomModalOpen(true)}
+                >
+                  <SettingsIcon className="w-4 h-4" />
+                  Ρυθμίσεις Zoom
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="title">Τίτλος *</Label>
@@ -403,12 +402,8 @@ export default function NewProjectPage() {
           </form>
         </CardContent>
       </Card>
+        </TabsContent>
 
-      <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as 'new' | 'suggested')}>
-        <TabsList>
-          <TabsTrigger value="new">Νέα Δημιουργία</TabsTrigger>
-          <TabsTrigger value="suggested">Προτεινόμενα Έργα</TabsTrigger>
-        </TabsList>
         <TabsContent value="suggested">
           <div className="grid gap-4 md:grid-cols-2">
             {SUGGESTED_PROJECTS.map((project) => (
