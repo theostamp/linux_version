@@ -10,7 +10,7 @@ const handlers = createTenantProxyHandlers(
     logLabel: "financial-common-expenses-calculate-advanced",
     resolvePath: () => {
       console.log("[ROUTE HANDLER] calculate_advanced resolvePath called");
-      return "financial/common-expenses/calculate-advanced";
+      return "financial/common-expenses/calculate_advanced";
     },
     ensureTrailingSlash: true,
   },
@@ -22,4 +22,3 @@ const { POST, OPTIONS } = exportHandlers(handlers, methods, "financial-common-ex
 console.log("[ROUTE HANDLER] calculate_advanced handlers exported:", { POST: !!POST, OPTIONS: !!OPTIONS });
 
 export { POST, OPTIONS };
-

@@ -1,63 +1,66 @@
-# Dependencies
-node_modules/
-**/node_modules/
+theo@DESKTOP-JA662GO:~/project/linux_version$    railway ssh
+  ✓ Connected to interactive shell                                           
+root@20d532b07365:/app#    python /app/fix_tenant_theo_demo_data.py --schema theo --force
+================================================================================
+FIXING TENANT 'theo' - Adding Demo Data
+================================================================================
 
-# Build outputs
-.next/
-**/.next/
-temp_build/
-**/temp_build/
-dist/
-build/
+✅ Found tenant: theo stam (schema: theo)
 
-# Environment files
-.env
-.env.local
-.env.*.local
-.env.development.local
-.env.test.local
-.env.production.local
+📊 Current State:
+   Buildings: 1
+   Apartments: 10
+   Has demo building (Αλκμάνος 22): yes
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
+⚠️ Force flag detected: removing existing demo building data...
+🧹 Existing demo data removed.
 
-# OS
-Thumbs.db
-.DS_Store
+🏗️ Creating demo data for tenant...
+INFO 2025-11-13 23:28:26,456 services 19 139687704128384 Created BuildingMembership for user etherm2021@gmail.com in schema theo
+INFO 2025-11-13 23:28:26,481 services 19 139687704128384 Created demo building 'Αλκμάνος 22' with 10 apartments and full data in schema theo
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+================================================================================
+✅ DEMO DATA CREATED SUCCESSFULLY!
+================================================================================
+   Buildings: 1
+   Apartments: 10
 
-# Testing
-coverage/
-.nyc_output/
+   📍 Αλκμάνος 22
+      Address: Αλκμάνος 22, Αθήνα 115 28, Ελλάδα
+      Apartments: 10
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-*.egg-info/
-.pytest_cache/
+================================================================================
+🎉 Done
+================================================================================
+Test at: https://theo.newconcierge.app/
 
-# Temporary files
-fd.png
-relax.png
-*.tmp
-*.bak
+root@20d532b07365:/app#    python /app/manage.py migrate financial --fake
+[standard:public] === Starting migration
+[standard:public] Operations to perform:
+[standard:public]   Apply all migrations: financial
+[standard:public] Running migrations:
+[standard:public]   No migrations to apply.
+[1/1 (100%) standard:theo] === Starting migration
+[1/1 (100%) standard:theo] Operations to perform:
+[1/1 (100%) standard:theo]   Apply all migrations: financial
+[1/1 (100%) standard:theo] Running migrations:
+[1/1 (100%) standard:theo]   No migrations to apply.
+root@20d532b07365:/app#    exit
+exit
 
-# Legacy/orphan directories (removed)
-# linux_version/ - removed (backed up in backups/)
-# Note: linux_version/frontend/.next-root may remain due to root ownership
-linux_version/frontend/.next-root/
-frontend/
+theo@DESKTOP-JA662GO:~/project/linux_version$ theo@DESKTOP-JA662GO:~/project/linux_version$    railway ssh
+  ✓ Connected to interactive shell                                            
+root@20d532b07365:/app#    python /app/fix_tenant_theo_demo_data.py --schema theo --force
+================================================================================
+FIXING TENANT 'theo' - Adding Demo Data
+================================================================================
+
+✅ Found tenant: theo stam (schema: theo)
+
+📊 Current State:
+   Buildings: 1
+   Apartments: 10
+   Has demo building (Αλκμάνος 22): yes
+
+⚠️ Force flag detected: removing existing demo building data...
+[24~@20d532b07365:/app#    exit migrations to apply.inancialancial --fake====

@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import type { Building } from '@/lib/api';
 import { fetchBuilding, deleteBuilding } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Building as BuildingIcon, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import ErrorMessage from '@/components/ErrorMessage';
 import { toast } from 'sonner';
@@ -133,39 +133,79 @@ export default function EditBuildingPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <Link href={`/buildings/${id}`}>
-          <Button variant="outline">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Επιστροφή
-          </Button>
+      {/* Breadcrumb Navigation */}
+      <nav className="flex items-center space-x-2 text-sm text-gray-500">
+        <Link href="/buildings" className="hover:text-blue-600 transition-colors">
+          Κτίρια
         </Link>
-        <h1 className="text-3xl font-bold">✏️ Επεξεργασία Κτιρίου</h1>
+        <span>/</span>
+        {initialData && (
+          <>
+            <Link href={`/buildings/${id}`} className="hover:text-blue-600 transition-colors">
+              {initialData.name}
+            </Link>
+            <span>/</span>
+          </>
+        )}
+        <span className="text-gray-900 font-medium">Επεξεργασία</span>
+      </nav>
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Link href={initialData ? `/buildings/${id}` : '/buildings'}>
+            <Button variant="outline">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Επιστροφή
+            </Button>
+          </Link>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <BuildingIcon className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Επεξεργασία Κτιρίου</h1>
+              {initialData?.name && (
+                <p className="text-gray-600">{initialData.name}</p>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Delete Button */}
         <Button
+          variant="destructive"
           onClick={handleDelete}
           disabled={deleting}
-          variant="destructive"
+          className="flex items-center space-x-2"
         >
-          <Trash2 className="w-4 h-4 mr-2" />
-          {deleting ? 'Διαγραφή...' : 'Διαγραφή'}
+          <Trash2 className="w-4 h-4" />
+          <span>{deleting ? 'Διαγραφή...' : 'Διαγραφή Κτιρίου'}</span>
         </Button>
       </div>
 
-      {initialData ? (
-        <CreateBuildingForm
-          initialData={initialData}
-          onSuccess={(updatedBuilding) => {
-            toast.success('Το κτίριο ενημερώθηκε επιτυχώς');
-            refreshBuildings();
-            router.push(`/buildings/${updatedBuilding.id}`);
-          }}
-          onCancel={() => {
-            router.push(`/buildings/${id}`);
-          }}
-        />
-      ) : (
-        <ErrorMessage message="Δεν ήταν δυνατή η φόρτωση των δεδομένων του κτιρίου" />
-      )}
+      {/* Form Container */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="p-6">
+          {initialData ? (
+            <CreateBuildingForm
+              initialData={initialData}
+              buildingId={id}
+              submitText="Ενημέρωση Κτιρίου"
+              onSuccess={(updatedBuilding) => {
+                toast.success('Το κτίριο ενημερώθηκε επιτυχώς');
+                refreshBuildings();
+                router.push(`/buildings/${updatedBuilding.id}`);
+              }}
+              onCancel={() => {
+                router.push(`/buildings/${id}`);
+              }}
+            />
+          ) : (
+            <ErrorMessage message="Δεν ήταν δυνατή η φόρτωση των δεδομένων του κτιρίου" />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

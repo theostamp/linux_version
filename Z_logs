@@ -1,197 +1,258 @@
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AuthContext] loadUserOnMount starting...
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 AuthContext: Found cached user: etherm2021@gmail.com but will verify with API
-f2f82778f21c4ea3.js?…Q3QqzVBBEyLhSx1d7:1 [API CALL] Attempting to fetch /api/users/me/
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AuthContext] Token check interval disabled to debug hanging issue
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Current pathname: /dashboard
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is Dashboard: true
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is Kiosk Mode: false
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is Info Screen: false
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is No Sidebar Route: false
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 AuthContext: Refreshed user data: etherm2021@gmail.com
-f2f82778f21c4ea3.js?…Q3QqzVBBEyLhSx1d7:1 [API CALL] Fetching all buildings
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [BuildingContext] User has no tenant, stopping loading
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AuthContext] Token check interval disabled to debug hanging issue
-/api/obligations/summary:1 
- Failed to load resource: the server responded with a status of 404 ()
-f2f82778f21c4ea3.js?…Q3QqzVBBEyLhSx1d7:1 [fetchObligationsSummary] Endpoint not found, returning empty data
-f2f82778f21c4ea3.js?…Q3QqzVBBEyLhSx1d7:1 [API THROTTLE] Returning cached data for /api/buildings/public/_{"page_size":1000,"page":1}
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [BuildingContext] Selected building: Σόλωνος 8, Αθήνα 106 73 (ID: 3)
-/api/user-requests?building=3:1 
- Failed to load resource: the server responded with a status of 404 ()
-09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useRequests] Error fetching requests: Error: GET https://theo.newconcierge.app/api/user-requests/?building=3 failed: 404
-    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
-    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
-    at async W (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9959)
-    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:21340)
-/api/announcements?building=3:1 
- Failed to load resource: the server responded with a status of 404 ()
-09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useAnnouncements] Error fetching announcements: Error: GET https://theo.newconcierge.app/api/announcements/?building=3 failed: 404
-    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
-    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
-    at async O (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9082)
-    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:22457)
-/api/votes?building=3:1 
- Failed to load resource: the server responded with a status of 404 ()
-09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useVotes] Error fetching votes: Error: GET https://theo.newconcierge.app/api/votes/?building=3 failed: 404
-    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
-    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
-    at async q (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9384)
-    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:20260)
-/api/user-requests?building=3:1 
- Failed to load resource: the server responded with a status of 404 ()
-09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useRequests] Error fetching requests: Error: GET https://theo.newconcierge.app/api/user-requests/?building=3 failed: 404
-    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
-    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
-    at async W (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9959)
-    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:21340)
-/api/announcements?building=3:1 
- Failed to load resource: the server responded with a status of 404 ()
-09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useAnnouncements] Error fetching announcements: Error: GET https://theo.newconcierge.app/api/announcements/?building=3 failed: 404
-    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
-    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
-    at async O (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9082)
-    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:22457)
-/api/votes?building=3:1 
- Failed to load resource: the server responded with a status of 404 ()
-09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useVotes] Error fetching votes: Error: GET https://theo.newconcierge.app/api/votes/?building=3 failed: 404
-    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
-    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
-    at async q (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9384)
-    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:20260)
-/api/user-requests?building=3:1 
- Failed to load resource: the server responded with a status of 404 ()
-09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useRequests] Error fetching requests: Error: GET https://theo.newconcierge.app/api/user-requests/?building=3 failed: 404
-    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
-    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
-    at async W (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9959)
-    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:21340)
-/api/announcements?building=3:1 
- Failed to load resource: the server responded with a status of 404 ()
-09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useAnnouncements] Error fetching announcements: Error: GET https://theo.newconcierge.app/api/announcements/?building=3 failed: 404
-    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
-    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
-    at async O (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9082)
-    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:22457)
-/api/votes?building=3:1 
- Failed to load resource: the server responded with a status of 404 ()
-09abcce2cc2ab8c9.js?…Q3QqzVBBEyLhSx1d7:1 [useVotes] Error fetching votes: Error: GET https://theo.newconcierge.app/api/votes/?building=3 failed: 404
-    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
-    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
-    at async q (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:9384)
-    at async queryFn (09abcce2cc2ab8c9.js?…BBEyLhSx1d7:1:20260)
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 FinancialPage selectedMonth initialization: 
-Object
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 CommonExpenseCalculatorNew: Received props: 
-Object
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG useEffect triggered: 
-Object
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG calling loadApartments for buildingId: 3 month: 2025-11
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 Loading apartments for building 3, month: 2025-11
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG calling building API...
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 👂 FinancialPage setting up open-maintenance-overview event listener
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 FinancialPage: Dependencies changed, triggering refresh
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 FinancialPage: Executing automatic refresh...
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 Selected month changed to: 2025-11
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 FinancialPage URL params: 
-Object
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Current pathname: /financial
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is Dashboard: true
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is Kiosk Mode: false
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is Info Screen: false
-7c95aaa73b32e9fa.js?…Q3QqzVBBEyLhSx1d7:1 [AppProviders] Is No Sidebar Route: false
-/api/financial/payments?building_id=3:1 
- Failed to load resource: the server responded with a status of 404 ()
-/api/buildings/list/3:1 
- Failed to load resource: the server responded with a status of 404 ()
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 Error loading apartments with financial data: Error: GET https://theo.newconcierge.app/api/buildings/list/3/ failed: 404
-    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
-    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
-3
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 ⚠️ BuildingOverviewSection: Could not fetch building data: Error: GET https://theo.newconcierge.app/api/buildings/list/3/ failed: 404
-    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
-    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
-/api/financial/dashb…ary?building_id=3:1 
- Failed to load resource: the server responded with a status of 404 ()
-/api/financial/payme…d=3&month=2025-11:1 
- Failed to load resource: the server responded with a status of 404 ()
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 Reserve fund goal is zero or not set, returning false
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 ResultsStep: Reserve fund check: 
-Object
-/api/apartments?building=3:1 
- Failed to load resource: the server responded with a status of 404 ()
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 Error loading apartments: Error: GET https://theo.newconcierge.app/api/apartments/?building=3 failed: 404
-    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
-    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 CommonExpenseCalculatorNew: Received props: 
-Object
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 FinancialPage: Dependencies changed, triggering refresh
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 FinancialPage: Refresh already in progress, skipping...
-/api/financial/dashb…d=3&month=2025-11:1 
- Failed to load resource: the server responded with a status of 404 ()
-3
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 Error fetching financial summary: Error: GET https://theo.newconcierge.app/api/financial/dashboard/summary/?building_id=3&month=2025-11 failed: 404
-    at c (f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:2387)
-    at f2f82778f21c4ea3.js?…VBBEyLhSx1d7:1:4018
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 ✅ FinancialPage: Automatic refresh completed successfully
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG current_month_expenses: 0
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG current_obligations: 0
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG previous_obligations: 0
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG final value: 0
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 BuildingOverviewSection: Reserve fund calculation: 
-Object
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG current_month_expenses: 0
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG current_obligations: 0
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG previous_obligations: 0
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG final value: 0
-/api/financial/commo…xpenses/calculate:1 
- Failed to load resource: the server responded with a status of 404 ()
-/api/financial/commo…alculate_advanced:1 
- Failed to load resource: the server responded with a status of 404 ()
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔄 CommonExpenseCalculatorNew: Received props: 
-Object
-0d20bb522bf04cc1.js?…Q3QqzVBBEyLhSx1d7:1 🔍 DEBUG current_month_expenses: 0
-﻿...25:08:13:08 +0200] "GET /admin/jsi18n/ HTTP/1.1" 200 13992 "https://linuxversion-production.up.railway.app/admin/users/customuser/804/change/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
->>> Ελήφθησαν στοιχεία login: email=etherm2021@gmail.com, password=****
->>> LOGIN_VIEW - Authenticating in schema: public
->>> Όλοι οι χρήστες: [{'id': 804, 'email': 'etherm2021@gmail.com'}, {'id': 792, 'email': 'theostam1966@gmail.com'}]
->>> LOGIN_VIEW CALLED - Method: POST
->>> LOGIN_VIEW - Request data: {'email': 'etherm2021@gmail.com', 'password': 'theo123@@@'}
->>> LOGIN_VIEW - Request headers: {'Host': 'linuxversion-production.up.railway.app', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36', 'Content-Length': '56', 'Accept': '*/*', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Accept-Language': 'el-GR,el;q=0.9', 'Content-Type': 'application/json', 'Origin': 'https://theo.newconcierge.app', 'Priority': 'u=1, i', 'Referer': 'https://theo.newconcierge.app/', 'Sec-Ch-Ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"', 'Sec-Ch-Ua-Mobile': '?0', 'Sec-Ch-Ua-Platform': '"Windows"', 'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'cross-site', 'Sec-Fetch-Storage-Access': 'active', 'X-Forwarded-For': '79.131.214.234', 'X-Forwarded-Host': 'linuxversion-production.up.railway.app', 'X-Forwarded-Proto': 'https', 'X-Railway-Edge': 'railway/europe-west4-drams3a', 'X-Railway-Request-Id': 'Z-c3rNwdRuurWS11ss7a6g', 'X-Real-Ip': '79.131.214.234', 'X-Request-Start': '1763014394730'}
->>> LOGIN_VIEW - Current schema: public
->>> Χρήστης από authenticate(): etherm2021@gmail.com
->>> DEBUG: user.role = 'manager'
->>> DEBUG: user_data keys = ['id', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser', 'role', 'office_name', 'office_phone', 'office_address', 'office_logo', 'office_bank_name', 'office_bank_account', 'office_bank_iban', 'office_bank_beneficiary']
->>> DEBUG: user_data['role'] = 'manager'
->>> DEBUG: User has tenant: theo, redirecting to /dashboard
-100.64.0.10 - - [13/Nov/2025:08:13:14 +0200] "POST /api/users/login/ HTTP/1.1" 200 873 "https://theo.newconcierge.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-100.64.0.11 - - [13/Nov/2025:08:13:15 +0200] "GET /api/users/me/ HTTP/1.1" 200 305 "https://theo.newconcierge.app/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-WARNING 2025-11-13 08:13:21,132 log 16 139938214599552 Not Found: /api/obligations/summary/
-100.64.0.12 - - [13/Nov/2025:08:13:21 +0200] "GET /api/obligations/summary/ HTTP/1.1" 404 179 "https://theo.newconcierge.app/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-WARNING 2025-11-13 08:13:34,303 log 16 139938214599552 Not Found: /api/user-requests/
-100.64.0.3 - - [13/Nov/2025:08:13:34 +0200] "GET /api/user-requests/?building=3 HTTP/1.1" 404 179 "https://theo.newconcierge.app/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-WARNING 2025-11-13 08:13:34,512 log 16 139938214599552 Not Found: /api/announcements/
-100.64.0.3 - - [13/Nov/2025:08:13:34 +0200] "GET /api/announcements/?building=3 HTTP/1.1" 404 179 "https://theo.newconcierge.app/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-WARNING 2025-11-13 08:13:34,980 log 16 139938214599552 Not Found: /api/votes/
-100.64.0.13 - - [13/Nov/2025:08:13:34 +0200] "GET /api/votes/?building=3 HTTP/1.1" 404 179 "https://theo.newconcierge.app/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-100.64.0.3 - - [13/Nov/2025:08:14:14 +0200] "GET /api/financial/payments/?building_id=3&month=2025-11 HTTP/1.1" 404 179 "https://theo.newconcierge.app/financial" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-WARNING 2025-11-13 08:14:15,080 log 16 139938214599552 Not Found: /api/financial/dashboard/summary/
-WARNING 2025-11-13 08:14:14,776 log 17 139938214599552 Not Found: /api/apartments/
-100.64.0.9 - - [13/Nov/2025:08:14:15 +0200] "GET /api/financial/dashboard/summary/?building_id=3&month=2025-11 HTTP/1.1" 404 179 "https://theo.newconcierge.app/financial" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-100.64.0.9 - - [13/Nov/2025:08:14:14 +0200] "GET /api/apartments/?building=3 HTTP/1.1" 404 179 "https://theo.newconcierge.app/financial" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-WARNING 2025-11-13 08:14:15,799 log 17 139938214599552 Not Found: /api/financial/common-expenses/calculate/
-100.64.0.4 - - [13/Nov/2025:08:14:14 +0200] "GET /api/financial/payments/?building_id=3 HTTP/1.1" 404 179 "https://theo.newconcierge.app/financial" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-100.64.0.13 - - [13/Nov/2025:08:14:14 +0200] "GET /api/buildings/list/3/ HTTP/1.1" 404 179 "https://theo.newconcierge.app/financial" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-WARNING 2025-11-13 08:14:14,207 log 17 139938214599552 Not Found: /api/buildings/list/3/
-WARNING 2025-11-13 08:14:14,202 log 17 139938214599552 Not Found: /api/financial/payments/
-WARNING 2025-11-13 08:14:14,295 log 16 139938214599552 Not Found: /api/financial/dashboard/summary/
-100.64.0.9 - - [13/Nov/2025:08:14:15 +0200] "POST /api/financial/common-expenses/calculate/ HTTP/1.1" 404 179 "-" "node"
-100.64.0.3 - - [13/Nov/2025:08:14:14 +0200] "GET /api/financial/dashboard/summary/?building_id=3 HTTP/1.1" 404 179 "https://theo.newconcierge.app/financial" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
-WARNING 2025-11-13 08:14:15,833 log 16 139938214599552 Not Found: /api/financial/common-expenses/calculate_advanced/
-WARNING 2025-11-13 08:14:14,761 log 17 139938214599552 Not Found: /api/financial/payments/
-100.64.0.3 - - [13/Nov/2025:08:14:15 +0200] "POST /api/financial/common-expenses/calculate_advanced/ HTTP/1.1" 404 179 "-" "node"
-WARNING 2025-11-13 08:14:51,048 log 16 139938214599552 Not Found: /api/financial/dashboard/apartment_balances/
-100.64.0.14 - - [13/Nov/2025:08:14:51 +0200] "GET /api/financial/dashboard/apartment_balances/?building_id=3&month=2025-11 HTTP/1.1" 404 179 "-" "node"
-WARNING 2025-11-13 08:15:03,529 log 17 139938214599552 Not Found: /api/financial/common-expenses/calculate_advanced/
-100.64.0.9 - - [13/Nov/2025:08:15:03 +0200] "POST /api/financial/common-expenses/calculate_advanced/ HTTP/1.1" 404 179 "-" "node"
-WARNING 2025-11-13 08:15:03,573 log 16 139938214599552 Not Found: /api/financial/common-expenses/calculate/
-100.64.0.13 - - [13/Nov/2025:08:15:03 +0200] "POST /api/financial/common-expenses/calculate/ HTTP/1.1" 404 179 "-" "node"
+76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AuthContext] loadUserOnMount starting...
+76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 AuthContext: Found cached user: etherm2021@gmail.com but will verify with API
+76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [API CALL] Attempting to fetch /api/users/me/
+76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AuthContext] Token check interval disabled to debug hanging issue
+11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AppProviders] Current pathname: /buildings/new
+11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AppProviders] Is Dashboard: true
+11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AppProviders] Is Kiosk Mode: false
+11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AppProviders] Is Info Screen: false
+11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AppProviders] Is No Sidebar Route: false
+76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 AuthContext: Refreshed user data: etherm2021@gmail.com
+76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [API CALL] Fetching buildings from /buildings/
+11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] User has tenant but buildings not loaded, attempting to load...
+76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [API CALL] Fetching buildings from /buildings/
+76867a9a3c9a400b.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [AuthContext] Token check interval disabled to debug hanging issue
+11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] Loaded buildings: 1 buildings
+11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] Restored stored building: Αλκμάνος 22 (ID: 2)
+11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] ✓ Auto-selected building: Αλκμάνος 22 (ID: 2)
+11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] Loaded buildings: 1 buildings
+11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] Restored stored building: Αλκμάνος 22 (ID: 2)
+11f3a14e5f9ed8d9.js?dpl=dpl_JAysupmthkh9UnxhnYxmjMqE8Byx:1 [BuildingContext] ✓ Auto-selected building: Αλκμάνος 22 (ID: 2)
+
+
+Επιστροφή
+Νέο Κτίριο
+Δημιουργία νέου κτιρίου στο σύστημα
+
+⚠️ Component Missing
+Το CreateBuildingForm component λείπει. Χρειάζεται να δημιουργηθεί για να λειτουργήσει αυτή η σελίδα.
+
+Το component χρειάζεται: AddressAutocomplete, StreetViewImage, και fetchBuildingResidents/fetchApartments API functions.
+
+
+2025-11-13T21:55:25.000000000Z [inf]  Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/ff4c1217-dd11-472f-bbf2-d3e84b8b7d3c/vol_zybfcqlvz8kkv1o6
+2025-11-13T21:55:26.000000000Z [inf]  Starting Container
+2025-11-13T21:55:27.110865214Z [inf]  🚀 DIGITAL CONCIERGE - CONTAINER STARTUP
+2025-11-13T21:55:27.110869289Z [inf]  ========================================
+2025-11-13T21:55:27.110873104Z [inf]  📅 Deployment: 2025-11-13 21:55:26
+2025-11-13T21:55:27.110877322Z [inf]  📁 Logs directory ready
+2025-11-13T21:55:27.110881320Z [inf]  ⏳ Waiting for Postgres (postgres.railway.internal:5432)...
+2025-11-13T21:55:27.110885364Z [inf]  ✅ Postgres is up!
+2025-11-13T21:55:27.110890678Z [inf]  ⏳ Waiting 5 seconds for Postgres to fully initialize...
+2025-11-13T21:55:31.372541025Z [inf]  ✅ Postgres ready!
+2025-11-13T21:55:31.372550264Z [inf]  
+2025-11-13T21:55:31.372556709Z [inf]  🎯 Running auto-initialization...
+2025-11-13T21:55:33.089848652Z [inf]  🎯 ΑΥΤΟΜΑΤΗ ΑΡΧΙΚΟΠΟΙΗΣΗ NEW CONCIERGE PLATFORM
+2025-11-13T21:55:33.089854344Z [inf]  ============================================================
+2025-11-13T21:55:33.089859731Z [inf]  🚀 Complete System with Authentication, Authorization, Billing & Analytics
+2025-11-13T21:55:33.089865005Z [inf]  ============================================================
+2025-11-13T21:55:33.242606303Z [inf]  
+2025-11-13T21:55:33.242616746Z [inf]  🔄 Εκτέλεση migrations...
+2025-11-13T21:55:33.242623517Z [inf]  🔍 Έλεγχος για unmigrated changes...
+2025-11-13T21:55:33.242639358Z [inf]  ✅ Σύνδεση βάσης δεδομένων: OK
+2025-11-13T21:55:33.536479305Z [inf]  Migrations for 'financial':
+2025-11-13T21:55:33.536484145Z [inf]    financial/migrations/0051_delete_financialauditlog.py
+2025-11-13T21:55:33.536489256Z [inf]      - Delete model FinancialAuditLog
+2025-11-13T21:55:33.536494956Z [inf]  📦 Shared migrations...
+2025-11-13T21:55:33.536499759Z [inf]  === Starting migration
+2025-11-13T21:55:33.581340246Z [inf]  Operations to perform:
+2025-11-13T21:55:33.581345407Z [inf]    Apply all migrations: admin, announcements, apartments, auth, billing, buildings, chat, collaborators, contenttypes, document_parser, events, financial, kiosk, maintenance, notifications, obligations, projects, residents, sessions, teams, tenants, todo_management, user_requests, users, votes
+2025-11-13T21:55:34.141170318Z [inf]  === Starting migration
+2025-11-13T21:55:34.141179908Z [inf]  Operations to perform:
+2025-11-13T21:55:34.141186546Z [inf]    Apply all migrations: admin, announcements, apartments, auth, billing, buildings, chat, collaborators, contenttypes, document_parser, events, financial, kiosk, maintenance, notifications, obligations, projects, residents, sessions, teams, tenants, todo_management, user_requests, users, votes
+2025-11-13T21:55:34.141196932Z [inf]  Running migrations:
+2025-11-13T21:55:34.141201781Z [inf]    No migrations to apply.
+2025-11-13T21:55:34.141212276Z [inf]    Your models in app(s): 'financial' have changes that are not yet reflected in a migration, and so won't be applied.
+2025-11-13T21:55:34.141218034Z [inf]    Run 'manage.py makemigrations' to make new migrations, and then re-run 'manage.py migrate' to apply them.
+2025-11-13T21:55:34.141222633Z [inf]  🏢 Tenant migrations...
+2025-11-13T21:55:34.213261782Z [inf]  Running migrations:
+2025-11-13T21:55:34.213279990Z [inf]    No migrations to apply.
+2025-11-13T21:55:34.309579745Z [inf]    Your models in app(s): 'financial' have changes that are not yet reflected in a migration, and so won't be applied.
+2025-11-13T21:55:34.309594884Z [inf]    Run 'manage.py makemigrations' to make new migrations, and then re-run 'manage.py migrate' to apply them.
+2025-11-13T21:55:34.565082974Z [inf]  === Starting migration
+2025-11-13T21:55:34.608915662Z [inf]  Operations to perform:
+2025-11-13T21:55:34.608920990Z [inf]    Apply all migrations: admin, announcements, apartments, auth, billing, buildings, chat, collaborators, contenttypes, document_parser, events, financial, kiosk, maintenance, notifications, obligations, projects, residents, sessions, teams, tenants, todo_management, user_requests, users, votes
+2025-11-13T21:55:35.334251476Z [inf]    Your models in app(s): 'financial' have changes that are not yet reflected in a migration, and so won't be applied.
+2025-11-13T21:55:35.334257213Z [inf]    Run 'manage.py makemigrations' to make new migrations, and then re-run 'manage.py migrate' to apply them.
+2025-11-13T21:55:35.334263824Z [inf]  ✅ Tenant migrations ολοκληρώθηκαν για 1 tenant(s)
+2025-11-13T21:55:35.334270231Z [inf]  ✅ Migrations ολοκληρώθηκαν
+2025-11-13T21:55:35.334275366Z [inf]  
+2025-11-13T21:55:35.334280445Z [inf]  🔐 Ρύθμιση RBAC System...
+2025-11-13T21:55:35.334285373Z [inf]  ✅ RBAC System ρυθμίστηκε
+2025-11-13T21:55:35.334289944Z [inf]  
+2025-11-13T21:55:35.334295253Z [inf]  💳 Ρύθμιση Billing System...
+2025-11-13T21:55:35.334300866Z [inf]  ℹ️ Subscription plans υπάρχουν ήδη
+2025-11-13T21:55:35.334305598Z [inf]  
+2025-11-13T21:55:35.334310123Z [inf]  🏠 Δημιουργία public tenant...
+2025-11-13T21:55:35.334314268Z [inf]  ℹ️ Υπάρχει ήδη public tenant
+2025-11-13T21:55:35.334318651Z [inf]  ℹ️ Υπάρχει ήδη domain: localhost
+2025-11-13T21:55:35.334323322Z [inf]  ℹ️ Υπάρχει ήδη Railway domain: linuxversion-production.up.railway.app
+2025-11-13T21:55:35.334328508Z [inf]  Running migrations:
+2025-11-13T21:55:35.334328652Z [inf]  
+2025-11-13T21:55:35.334335744Z [inf]  👑 Δημιουργία Ultra-Superuser...
+2025-11-13T21:55:35.334341081Z [inf]    No migrations to apply.
+2025-11-13T21:55:35.334341283Z [inf]  ✅ Ενημερώθηκε Ultra-Superuser: theostam1966@gmail.com
+2025-11-13T21:55:35.532754195Z [inf]  🌐 Demo Tenant Access:
+2025-11-13T21:55:35.532765605Z [inf]     Frontend: http://demo.localhost:8080
+2025-11-13T21:55:35.532772356Z [inf]     Backend API: http://demo.localhost:8000/api/
+2025-11-13T21:55:35.532778175Z [inf]     ✅ Authentication verified - login will work!
+2025-11-13T21:55:35.532780881Z [inf]     Admin Panel: http://demo.localhost:8000/admin/
+2025-11-13T21:55:35.532786887Z [inf]  📄 Credentials αποθηκεύτηκαν: backend/logs/demo_credentials.log
+2025-11-13T21:55:35.532787178Z [inf]  
+2025-11-13T21:55:35.532793962Z [inf]  
+2025-11-13T21:55:35.532797531Z [inf]  ============================================================
+2025-11-13T21:55:35.532802416Z [inf]  🔥 Starting frontend warm-up in background...
+2025-11-13T21:55:35.532805026Z [inf]  ✅ ΟΛΟΚΛΗΡΩΘΗΚΕ Η ΑΥΤΟΜΑΤΗ ΑΡΧΙΚΟΠΟΙΗΣΗ!
+2025-11-13T21:55:35.532810400Z [inf]  
+2025-11-13T21:55:35.532810897Z [inf]  ============================================================
+2025-11-13T21:55:35.532818598Z [inf]  🔥 Frontend Warm-up...
+2025-11-13T21:55:35.532825064Z [inf]  ==================================================
+2025-11-13T21:55:35.532826861Z [inf]  🎯 NEW CONCIERGE PLATFORM - PRODUCTION READY!
+2025-11-13T21:55:35.532833377Z [inf]  ============================================================
+2025-11-13T21:55:35.532838098Z [inf]  
+2025-11-13T21:55:35.532842405Z [inf]  👑 Ultra-Superuser (System Administrator):
+2025-11-13T21:55:35.532847542Z [inf]     URL: http://localhost:8000/admin/
+2025-11-13T21:55:35.532852792Z [inf]     Email: theostam1966@gmail.com
+2025-11-13T21:55:35.532857335Z [inf]     Password: theo123!@#
+2025-11-13T21:55:35.532862152Z [inf]     Permissions: Complete system management
+2025-11-13T21:55:35.532866371Z [inf]  
+2025-11-13T21:55:35.534211646Z [inf]     ✅ Stripe Integration: Ready for payment processing
+2025-11-13T21:55:35.534216091Z [inf]     Apartments: 10 (Α1-Α3, Β1-Β3, Γ1-Γ3, Δ1)
+2025-11-13T21:55:35.534218229Z [inf]     ✅ Advanced Analytics: Business intelligence
+2025-11-13T21:55:35.534224798Z [inf]  
+2025-11-13T21:55:35.534224997Z [inf]     Mills: 1000/1000/1000 (Participation/Heating/Elevator)
+2025-11-13T21:55:35.534225300Z [inf]     API Documentation: http://demo.localhost:8000/api/docs/
+2025-11-13T21:55:35.534231951Z [inf]  🔐 Security Features:
+2025-11-13T21:55:35.534232567Z [inf]     Financial Data: Zero demo amounts
+2025-11-13T21:55:35.534238511Z [inf]     ✅ RBAC System: Manager & Resident roles
+2025-11-13T21:55:35.534238601Z [inf]  
+2025-11-13T21:55:35.534240338Z [inf]  
+2025-11-13T21:55:35.534244734Z [inf]     ✅ Email Verification: All users verified
+2025-11-13T21:55:35.534246480Z [inf]  💳 Billing System Features:
+2025-11-13T21:55:35.534247031Z [inf]  👥 Demo Users (RBAC Enabled):
+2025-11-13T21:55:35.534251669Z [inf]     ✅ Subscription Plans: Starter, Professional, Enterprise
+2025-11-13T21:55:35.534254957Z [inf]     🔧 Admin: admin@demo.localhost / admin123456
+2025-11-13T21:55:35.534256948Z [inf]     ✅ Demo Subscription: Manager has Starter plan
+2025-11-13T21:55:35.534262336Z [inf]     👨‍💼 Manager: manager@demo.localhost / manager123456
+2025-11-13T21:55:35.534262719Z [inf]     ✅ Usage Tracking: Real-time usage monitoring
+2025-11-13T21:55:35.534267710Z [inf]     👤 Resident 1: resident1@demo.localhost / resident123456
+2025-11-13T21:55:35.534272296Z [inf]     👤 Resident 2: resident2@demo.localhost / resident123456
+2025-11-13T21:55:35.534276863Z [inf]  
+2025-11-13T21:55:35.534281934Z [inf]  🏢 Demo Building: Αλκμάνος 22
+2025-11-13T21:55:35.534287887Z [inf]     Address: Αλκμάνος 22, Αθήνα 115 28, Ελλάδα
+2025-11-13T21:55:35.536158089Z [inf]     ✅ JWT Authentication: Secure token-based auth
+2025-11-13T21:55:35.536164471Z [inf]     ✅ Rate Limiting: API protection
+2025-11-13T21:55:35.536166236Z [inf]     🧪 API Testing: API_TESTING_GUIDE.md
+2025-11-13T21:55:35.536169387Z [inf]     ✅ Audit Logging: Security monitoring
+2025-11-13T21:55:35.536174718Z [inf]  
+2025-11-13T21:55:35.536175605Z [inf]     🚀 Deployment: DEPLOYMENT_GUIDE.md
+2025-11-13T21:55:35.536179736Z [inf]  📊 System Capabilities:
+2025-11-13T21:55:35.536181452Z [inf]     ⚡ Quick Start: QUICK_START.md
+2025-11-13T21:55:35.536185545Z [inf]     ✅ Complete API: 70+ endpoints
+2025-11-13T21:55:35.536191632Z [inf]     ✅ Admin Portal: System management
+2025-11-13T21:55:35.536193587Z [inf]     📋 Project Summary: PROJECT_SUMMARY.md
+2025-11-13T21:55:35.536198604Z [inf]     ✅ User Management: Full lifecycle
+2025-11-13T21:55:35.536198971Z [inf]     📄 Credentials: backend/logs/demo_credentials.log
+2025-11-13T21:55:35.536204839Z [inf]     ✅ Analytics: Revenue, customer, usage analytics
+2025-11-13T21:55:35.536205627Z [inf]  
+2025-11-13T21:55:35.536211477Z [inf]  🚀 READY FOR PRODUCTION!
+2025-11-13T21:55:35.536213322Z [inf]     ✅ Documentation: Complete user guides
+2025-11-13T21:55:35.536219502Z [inf]     The New Concierge platform is fully operational
+2025-11-13T21:55:35.536221032Z [inf]  
+2025-11-13T21:55:35.536226790Z [inf]     with complete Authentication, Authorization, Billing,
+2025-11-13T21:55:35.536228683Z [inf]  📄 Documentation:
+2025-11-13T21:55:35.536231632Z [inf]     and Analytics systems ready for immediate use!
+2025-11-13T21:55:35.536235931Z [inf]     📚 User Guides: USER_GUIDES.md
+2025-11-13T21:55:35.536241878Z [inf]     ⚙️ System Admin: SYSTEM_ADMINISTRATION_GUIDE.md
+2025-11-13T21:55:36.182521592Z [inf]  
+2025-11-13T21:55:36.182528605Z [inf]  💳 Creating Stripe Prices...
+2025-11-13T21:55:37.361469640Z [inf]  ======================================================================
+2025-11-13T21:55:37.361476491Z [inf]    💳 CREATING STRIPE PRICES
+2025-11-13T21:55:37.361481229Z [inf]  ======================================================================
+2025-11-13T21:55:37.361486884Z [inf]  
+2025-11-13T21:55:37.524609261Z [inf]  📦 Processing plan: Starter
+2025-11-13T21:55:37.524616066Z [inf]     ℹ️  Product already exists: prod_TOFuyDd8xL00Qj
+2025-11-13T21:55:37.524620640Z [inf]     ℹ️  Monthly price already exists: price_1SRTOWRpRJxSaTlvGW7HG6nV
+2025-11-13T21:55:37.524624671Z [inf]     ℹ️  Yearly price already exists: price_1SRTOWRpRJxSaTlvjenESiFp
+2025-11-13T21:55:37.524630397Z [inf]     💾 Plan saved with Stripe IDs
+2025-11-13T21:55:37.524634603Z [inf]  
+2025-11-13T21:55:37.524638412Z [inf]  📦 Processing plan: Professional
+2025-11-13T21:55:37.524642713Z [inf]     ℹ️  Product already exists: prod_TOFu4XWM2Nkhmz
+2025-11-13T21:55:37.524646677Z [inf]     ℹ️  Monthly price already exists: price_1SRTOXRpRJxSaTlvGxr0dG80
+2025-11-13T21:55:37.524650608Z [inf]     ℹ️  Yearly price already exists: price_1SRTOXRpRJxSaTlvpDkyhk4c
+2025-11-13T21:55:37.526113118Z [inf]     💾 Plan saved with Stripe IDs
+2025-11-13T21:55:37.526119331Z [inf]  
+2025-11-13T21:55:37.526123861Z [inf]  📦 Processing plan: Enterprise
+2025-11-13T21:55:37.526128675Z [inf]     ℹ️  Product already exists: prod_TOFuZdgY8iNsC7
+2025-11-13T21:55:37.526134219Z [inf]     ℹ️  Monthly price already exists: price_1SRTOXRpRJxSaTlvlN1NVzHu
+2025-11-13T21:55:37.526134471Z [inf]     ℹ️  Yearly price already exists: price_1SRTOYRpRJxSaTlvIsi8rcDG
+2025-11-13T21:55:37.534824546Z [inf]     💾 Plan saved with Stripe IDs
+2025-11-13T21:55:37.534832309Z [inf]  
+2025-11-13T21:55:37.534836933Z [inf]  ======================================================================
+2025-11-13T21:55:37.534837818Z [inf]        Product ID: prod_TOFu4XWM2Nkhmz
+2025-11-13T21:55:37.534841189Z [inf]    ✅ STRIPE PRICES CREATED SUCCESSFULLY!
+2025-11-13T21:55:37.534845429Z [inf]  ======================================================================
+2025-11-13T21:55:37.534849862Z [inf]  
+2025-11-13T21:55:37.534855020Z [inf]  📊 Summary:
+2025-11-13T21:55:37.534855518Z [inf]        Monthly Price ID: price_1SRTOXRpRJxSaTlvGxr0dG80
+2025-11-13T21:55:37.534859623Z [inf]     Starter:
+2025-11-13T21:55:37.534864592Z [inf]        Product ID: prod_TOFuyDd8xL00Qj
+2025-11-13T21:55:37.534864965Z [inf]        Yearly Price ID: price_1SRTOXRpRJxSaTlvpDkyhk4c
+2025-11-13T21:55:37.534869569Z [inf]        Monthly Price ID: price_1SRTOWRpRJxSaTlvGW7HG6nV
+2025-11-13T21:55:37.534873956Z [inf]  
+2025-11-13T21:55:37.534874485Z [inf]        Yearly Price ID: price_1SRTOWRpRJxSaTlvjenESiFp
+2025-11-13T21:55:37.534879964Z [inf]  
+2025-11-13T21:55:37.534882763Z [inf]     Enterprise:
+2025-11-13T21:55:37.534885312Z [inf]     Professional:
+2025-11-13T21:55:37.534890322Z [inf]        Product ID: prod_TOFuZdgY8iNsC7
+2025-11-13T21:55:37.534901362Z [inf]        Monthly Price ID: price_1SRTOXRpRJxSaTlvlN1NVzHu
+2025-11-13T21:55:37.534907672Z [inf]        Yearly Price ID: price_1SRTOYRpRJxSaTlvIsi8rcDG
+2025-11-13T21:55:37.534913721Z [inf]  
+2025-11-13T21:55:37.714572192Z [inf]  
+2025-11-13T21:55:37.714578918Z [inf]  🔄 Running additional migrations...
+2025-11-13T21:55:37.714583686Z [inf]     AUTO_MAKEMIGRATIONS=unset
+2025-11-13T21:55:37.714588158Z [inf]  
+2025-11-13T21:55:37.714592279Z [inf]  📦 Collecting static files...
+2025-11-13T21:55:39.370818148Z [inf]  
+2025-11-13T21:55:39.370824732Z [inf]  163 static files copied to '/app/staticfiles'.
+2025-11-13T21:55:39.533171537Z [inf]  
+2025-11-13T21:55:39.533177538Z [inf]  🔥 Initiating frontend warm-up process...
+2025-11-13T21:55:39.533186043Z [inf]  🚂 Railway deployment detected - skipping frontend warm-up
+2025-11-13T21:55:39.533190527Z [inf]     Frontend is deployed separately on Vercel
+2025-11-13T21:55:39.533194427Z [inf]  
+2025-11-13T21:55:39.533198169Z [inf]  🚀 Launching Django server...
+2025-11-13T21:55:39.533202394Z [inf]     🌐 Production mode detected
+2025-11-13T21:55:39.533206468Z [inf]     Starting gunicorn on port 8080
+2025-11-13T21:55:40.388616178Z [err]  [2025-11-13 21:55:40 +0000] [17] [INFO] Booting worker with pid: 17
+2025-11-13T21:55:40.388763158Z [err]  [2025-11-13 21:55:40 +0000] [1] [INFO] Starting gunicorn 21.2.0
+2025-11-13T21:55:40.388768187Z [err]  [2025-11-13 21:55:40 +0000] [1] [INFO] Listening at: http://0.0.0.0:8080 (1)
+2025-11-13T21:55:40.388772774Z [err]  [2025-11-13 21:55:40 +0000] [1] [INFO] Using worker: sync
+2025-11-13T21:55:40.388777265Z [err]  [2025-11-13 21:55:40 +0000] [16] [INFO] Booting worker with pid: 16
+2025-11-13T21:56:39.749739000Z [inf]  🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-13T21:56:39.749749417Z [inf]  🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-13T21:56:39.749757586Z [inf]  🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-13T21:56:39.749764819Z [inf]  100.64.0.2 - - [13/Nov/2025:23:56:37 +0200] "GET /api/users/me/ HTTP/1.1" 200 424 "https://theo.newconcierge.app/buildings/new" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-13T21:56:39.749772096Z [inf]  🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-13T21:56:39.749779796Z [inf]  🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-13T21:56:39.749786238Z [inf]  🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-13T21:56:39.749796265Z [inf]  🔍 BuildingViewSet.list() called
+2025-11-13T21:56:39.749803100Z [err]  INFO 2025-11-13 23:56:38,473 views 16 140720062122880 [BuildingViewSet] get_queryset called for user: etherm2021@gmail.com (ID: 806) in tenant: theo
+2025-11-13T21:56:39.749809679Z [err]  INFO 2025-11-13 23:56:38,473 views 16 140720062122880 User is superuser/staff. Returning all buildings.
+2025-11-13T21:56:39.749816378Z [err]  /usr/local/lib/python3.12/site-packages/rest_framework/pagination.py:207: UnorderedObjectListWarning: Pagination may yield inconsistent results with an unordered object_list: <class 'buildings.models.Building'> QuerySet.
+2025-11-13T21:56:39.749822761Z [err]    paginator = self.django_paginator_class(queryset, page_size)
+2025-11-13T21:56:39.749828972Z [inf]  🔍 BuildingViewSet.list() response count: 1
+2025-11-13T21:56:39.751037086Z [inf]  🔍 First building street view image: None
+2025-11-13T21:56:39.751041120Z [inf]  100.64.0.2 - - [13/Nov/2025:23:56:38 +0200] "GET /api/buildings/list/?page_size=1000&page=1 HTTP/1.1" 200 1086 "https://theo.newconcierge.app/buildings/new" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-13T21:57:29.766802501Z [inf]  🔍 BuildingViewSet.list() response count: 1
+2025-11-13T21:57:29.766811020Z [inf]  🔍 First building street view image: None
+2025-11-13T21:57:29.766816691Z [inf]  100.64.0.2 - - [13/Nov/2025:23:57:21 +0200] "GET /api/buildings/list/?page_size=1000&page=1 HTTP/1.1" 200 1086 "https://theo.newconcierge.app/buildings/new" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-13T21:57:29.766836865Z [inf]  🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-13T21:57:29.766842349Z [inf]  🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-13T21:57:29.766848042Z [inf]  🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-13T21:57:29.766853332Z [inf]  100.64.0.2 - - [13/Nov/2025:23:57:20 +0200] "GET /api/users/me/ HTTP/1.1" 200 424 "https://theo.newconcierge.app/buildings/new" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+2025-11-13T21:57:29.766858717Z [inf]  🔍 [TENANT MIDDLEWARE] hostname_from_request: Using X-Tenant-Host 'theo.newconcierge.app' -> 'theo.newconcierge.app' (internal: 'linuxversion-production.up.railway.app')
+2025-11-13T21:57:29.766936540Z [inf]  🔍 [TENANT MIDDLEWARE] get_tenant called with hostname: 'theo.newconcierge.app'
+2025-11-13T21:57:29.766942400Z [inf]  🔍 [TENANT MIDDLEWARE] Resolved 'theo.newconcierge.app' -> tenant 'theo' via domain lookup
+2025-11-13T21:57:29.766948257Z [inf]  🔍 BuildingViewSet.list() called
+2025-11-13T21:57:29.766955401Z [err]  INFO 2025-11-13 23:57:21,267 views 16 140720062122880 [BuildingViewSet] get_queryset called for user: etherm2021@gmail.com (ID: 806) in tenant: theo
+2025-11-13T21:57:29.766961348Z [err]  INFO 2025-11-13 23:57:21,267 views 16 140720062122880 User is superuser/staff. Returning all buildings.

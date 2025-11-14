@@ -8,6 +8,12 @@ interface AddressAutocompleteProps {
   value: string;
   onChange: (address: string) => void;
   onLocationChange?: (lat: number, lng: number) => void;
+  onAddressDetailsChange?: (details: {
+    address: string;
+    city: string;
+    postal_code: string;
+    country: string;
+  }) => void;
   label?: string;
   placeholder?: string;
   required?: boolean;
@@ -18,6 +24,7 @@ export default function AddressAutocomplete({
   value,
   onChange,
   onLocationChange,
+  onAddressDetailsChange,
   label = 'Διεύθυνση',
   placeholder = 'Εισάγετε διεύθυνση...',
   required = false,
@@ -56,6 +63,48 @@ export default function AddressAutocomplete({
             onChange(place.formatted_address);
           }
 
+          // Extract address components
+          let city = '';
+          let postalCode = '';
+          let country = 'Ελλάδα';
+          let streetAddress = place.formatted_address || '';
+
+          if (place.address_components) {
+            for (const component of place.address_components) {
+              const types = component.types;
+              
+              if (types.includes('locality') || types.includes('administrative_area_level_2')) {
+                city = component.long_name;
+              }
+              
+              if (types.includes('postal_code')) {
+                postalCode = component.long_name;
+              }
+              
+              if (types.includes('country')) {
+                country = component.long_name;
+              }
+            }
+          }
+
+          // Extract street address (without city/postal code)
+          if (place.formatted_address) {
+            const parts = place.formatted_address.split(',');
+            if (parts.length > 0) {
+              streetAddress = parts[0].trim();
+            }
+          }
+
+          // Call onAddressDetailsChange if provided
+          if (onAddressDetailsChange) {
+            onAddressDetailsChange({
+              address: streetAddress,
+              city: city,
+              postal_code: postalCode,
+              country: country,
+            });
+          }
+
           if (place.geometry?.location && onLocationChange) {
             const lat = place.geometry.location.lat();
             const lng = place.geometry.location.lng();
@@ -75,7 +124,7 @@ export default function AddressAutocomplete({
         autocompleteRef.current = null;
       }
     };
-  }, [onChange, onLocationChange]);
+  }, [onChange, onLocationChange, onAddressDetailsChange]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -110,4 +159,5 @@ export default function AddressAutocomplete({
     </div>
   );
 }
+
 

@@ -517,6 +517,17 @@ export type Building = {
   latitude?: number | null;
   longitude?: number | null;
   total_apartments?: number;
+  apartments_count?: number;
+  heating_system?: string;
+  heating_fixed_percentage?: number;
+  internal_manager_name?: string;
+  internal_manager_phone?: string;
+  internal_manager_apartment?: string;
+  internal_manager_collection_schedule?: string;
+  management_office_name?: string;
+  management_office_phone?: string;
+  management_office_address?: string;
+  street_view_image?: string;
   created_at: string;
   updated_at: string;
 };
@@ -955,6 +966,34 @@ export async function fetchApartments(buildingId: number): Promise<ApartmentList
     if (isNotFoundError(error)) {
       console.warn('[fetchApartments] Endpoint returned 404, returning empty list');
       return [];
+    }
+    throw error;
+  }
+}
+
+export type BuildingResident = {
+  id: string;
+  apartment_id: number;
+  apartment_number: string;
+  name: string;
+  phone: string;
+  email: string;
+  type: 'owner' | 'tenant';
+  display_text: string;
+};
+
+export type BuildingResidentsResponse = {
+  residents: BuildingResident[];
+};
+
+export async function fetchBuildingResidents(buildingId: number): Promise<BuildingResidentsResponse> {
+  try {
+    const data = await apiGet<BuildingResidentsResponse>(`/buildings/list/${buildingId}/residents/`);
+    return data;
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      console.warn('[fetchBuildingResidents] Endpoint returned 404, returning empty list');
+      return { residents: [] };
     }
     throw error;
   }

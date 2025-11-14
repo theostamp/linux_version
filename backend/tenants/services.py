@@ -422,6 +422,37 @@ class TenantService:
                 else:
                     logger.warning(f"No user available to create BuildingMembership in schema {schema_name}")
                 
+                # Validate mills function (same as auto_initialization.py)
+                def validate_all_mills(apartments_data, building_name):
+                    """Επικύρωση ότι όλα τα χιλιοστά έχουν συνολικό άθροισμα 1000"""
+                    total_participation = sum(apt['participation_mills'] for apt in apartments_data)
+                    total_heating = sum(apt['heating_mills'] for apt in apartments_data)
+                    total_elevator = sum(apt['elevator_mills'] for apt in apartments_data)
+                    
+                    logger.info(f"🔍 Validating mills for {building_name}:")
+                    logger.info(f"   Participation: {total_participation} mills")
+                    logger.info(f"   Heating: {total_heating} mills")
+                    logger.info(f"   Elevator: {total_elevator} mills")
+                    
+                    all_correct = True
+                    
+                    if total_participation != 1000:
+                        logger.error(f"❌ ERROR: Participation mills = {total_participation} (must be 1000)")
+                        all_correct = False
+                    
+                    if total_heating != 1000:
+                        logger.error(f"❌ ERROR: Heating mills = {total_heating} (must be 1000)")
+                        all_correct = False
+                    
+                    if total_elevator != 1000:
+                        logger.error(f"❌ ERROR: Elevator mills = {total_elevator} (must be 1000)")
+                        all_correct = False
+                    
+                    if all_correct:
+                        logger.info(f"✅ All mills are correct for {building_name}")
+                    
+                    return all_correct
+                
                 # Create apartments with full data from auto_initialization.py - Total mills: 1000
                 apartments_data = [
                     {'number': 'Α1', 'floor': 0, 'owner_name': 'Θεοδώρος Σταματιάδης', 'owner_phone': '2101234567', 'owner_email': 'theostam1966@gmail.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 85, 'bedrooms': 2, 'participation_mills': 100, 'heating_mills': 100, 'elevator_mills': 100},
@@ -436,26 +467,36 @@ class TenantService:
                     {'number': 'Δ1', 'floor': 3, 'owner_name': 'Μιχαήλ Γεωργίου', 'owner_phone': '2105678901', 'owner_email': 'michalis.g@email.com', 'tenant_name': '', 'tenant_phone': '', 'tenant_email': '', 'is_rented': False, 'square_meters': 78, 'bedrooms': 1, 'participation_mills': 87, 'heating_mills': 83, 'elevator_mills': 87}
                 ]
                 
+                # Validate mills before creating apartments
+                if not validate_all_mills(apartments_data, building.name):
+                    raise ValueError(f"Invalid mills for building {building.name}")
+                
                 for apt_data in apartments_data:
-                    Apartment.objects.create(
+                    apartment, created = Apartment.objects.get_or_create(
                         building=building,
                         number=apt_data['number'],
-                        identifier=apt_data['number'],
-                        floor=apt_data['floor'],
-                        owner_name=apt_data['owner_name'],
-                        owner_phone=apt_data['owner_phone'],
-                        owner_email=apt_data['owner_email'],
-                        tenant_name=apt_data['tenant_name'],
-                        tenant_phone=apt_data['tenant_phone'],
-                        tenant_email=apt_data['tenant_email'],
-                        is_rented=apt_data['is_rented'],
-                        square_meters=apt_data['square_meters'],
-                        bedrooms=apt_data['bedrooms'],
-                        participation_mills=apt_data['participation_mills'],
-                        heating_mills=apt_data['heating_mills'],
-                        elevator_mills=apt_data['elevator_mills'],
-                        notes=f"Διαμέρισμα {apt_data['number']} στο κτίριο {building.name} - Όροφος {apt_data['floor']}"
+                        defaults={
+                            'identifier': apt_data['number'],
+                            'floor': apt_data['floor'],
+                            'owner_name': apt_data['owner_name'],
+                            'owner_phone': apt_data['owner_phone'],
+                            'owner_email': apt_data['owner_email'],
+                            'tenant_name': apt_data['tenant_name'],
+                            'tenant_phone': apt_data['tenant_phone'],
+                            'tenant_email': apt_data['tenant_email'],
+                            'is_rented': apt_data['is_rented'],
+                            'square_meters': apt_data['square_meters'],
+                            'bedrooms': apt_data['bedrooms'],
+                            'participation_mills': apt_data['participation_mills'],
+                            'heating_mills': apt_data['heating_mills'],
+                            'elevator_mills': apt_data['elevator_mills'],
+                            'notes': f"Διαμέρισμα {apt_data['number']} στο κτίριο {building.name} - Όροφος {apt_data['floor']}"
+                        }
                     )
+                    if created:
+                        logger.info(f"✅ Created apartment: {apt_data['number']} (Αλκμάνος 22)")
+                    else:
+                        logger.info(f"ℹ️ Apartment {apt_data['number']} already exists, skipping creation")
                 
                 logger.info(f"Created demo building 'Αλκμάνος 22' with 10 apartments and full data in schema {schema_name}")
                 
