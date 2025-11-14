@@ -207,19 +207,19 @@ class BuildingViewSet(viewsets.ModelViewSet):  # <-- ΟΧΙ ReadOnlyModelViewSet
         # Superusers & staff -> όλα τα κτίρια
         if user.is_superuser or user.is_staff:
             logger.info(f"User is superuser/staff. Returning all buildings.")
-            return Building.objects.all()
+            return Building.objects.all().order_by('id')
 
         # Managers -> μόνο τα κτίρια που διαχειρίζονται
         is_manager = hasattr(user, "is_manager") and user.is_manager
         if is_manager:
-            queryset = Building.objects.filter(manager_id=user.id)
+            queryset = Building.objects.filter(manager_id=user.id).order_by('id')
             building_ids = list(queryset.values_list('id', flat=True))
             logger.info(f"User is a manager. Found buildings: {building_ids} for manager ID: {user.id}")
             return queryset
 
         # Residents -> μόνο τα κτίρια στα οποία ανήκουν
         if BuildingMembership.objects.filter(resident=user).exists():
-            queryset = Building.objects.filter(buildingmembership__resident=user)
+            queryset = Building.objects.filter(buildingmembership__resident=user).order_by('id')
             building_ids = list(queryset.values_list('id', flat=True))
             logger.info(f"User is a resident. Found buildings by membership: {building_ids}")
             return queryset
