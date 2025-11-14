@@ -555,6 +555,7 @@ export type Building = {
   management_office_phone?: string;
   management_office_address?: string;
   street_view_image?: string;
+  financial_system_start_date?: string | null;
   created_at: string;
   updated_at: string;
 };

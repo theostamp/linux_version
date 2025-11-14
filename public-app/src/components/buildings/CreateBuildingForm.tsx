@@ -83,6 +83,7 @@ export default function CreateBuildingForm({
     management_office_phone: initialData?.management_office_phone || user?.office_phone || '',
     management_office_address: initialData?.management_office_address || user?.office_address || '',
     street_view_image: initialData?.street_view_image || '',
+    financial_system_start_date: initialData?.financial_system_start_date || null,
   });
 
   const [loading, setLoading] = useState(false);
@@ -212,6 +213,7 @@ export default function CreateBuildingForm({
         management_office_phone: initialData.management_office_phone || user?.office_phone || '',
         management_office_address: initialData.management_office_address || user?.office_address || '',
         street_view_image: initialData.street_view_image || '',
+        financial_system_start_date: initialData.financial_system_start_date || null,
       });
       if (initialData.latitude && initialData.longitude) {
         setCoordinates({ lat: initialData.latitude, lng: initialData.longitude });
@@ -894,6 +896,63 @@ export default function CreateBuildingForm({
             </div>
           </div>
         )}
+      </div>
+
+      {/* Financial System Settings */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+          Οικονομικές Ρυθμίσεις
+        </h3>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="financial_system_start_date">
+              Ημερομηνία Έναρξης Οικονομικού Συστήματος
+            </Label>
+            <Input
+              id="financial_system_start_date"
+              type="date"
+              value={
+                formData.financial_system_start_date
+                  ? new Date(formData.financial_system_start_date).toISOString().split('T')[0]
+                  : ''
+              }
+              onChange={(e) => {
+                const dateValue = e.target.value;
+                if (dateValue) {
+                  // Ensure it's the 1st of the month
+                  const date = new Date(dateValue);
+                  const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+                  const formattedDate = firstOfMonth.toISOString().split('T')[0];
+                  handleInputChange('financial_system_start_date', formattedDate);
+                } else {
+                  handleInputChange('financial_system_start_date', null);
+                }
+              }}
+              disabled={loading}
+              className="max-w-xs"
+            />
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-start space-x-2">
+                <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-blue-800">
+                  <p className="font-medium mb-1">ℹ️ Σημείωση:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>
+                      Αν αφήσετε το πεδίο κενό, θα υπολογιστεί αυτόματα η <strong>1η του μήνα</strong> που δημιουργήθηκε το κτίριο.
+                    </li>
+                    <li>
+                      Αν εισαγάγετε ημερομηνία, θα χρησιμοποιηθεί η <strong>1η του μήνα</strong> της εισαγμένης ημερομηνίας.
+                    </li>
+                    <li>
+                      Αυτή η ημερομηνία καθορίζει πότε αρχίζουν να υπολογίζονται τα management fees και άλλες οικονομικές υποχρεώσεις.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Form Actions */}

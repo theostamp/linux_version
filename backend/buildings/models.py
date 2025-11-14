@@ -380,11 +380,25 @@ class Building(models.Model):
                 pass
         
         # ✅ ΑΥΤΟΜΑΤΟΣ ΟΡΙΣΜΟΣ: financial_system_start_date
-        # Ορίζουμε πάντα την 1η του τρέχοντος μήνα αν δεν έχει οριστεί
+        # Αν δεν έχει οριστεί, υπολογίζουμε την 1η του μήνα που δημιουργήθηκε το κτίριο
         if not self.financial_system_start_date:
-            today = date.today()
-            self.financial_system_start_date = today.replace(day=1)
-            print(f"✅ Auto-set financial_system_start_date = {self.financial_system_start_date} for building {self.name}")
+            if self.created_at:
+                # Χρησιμοποιούμε την ημερομηνία δημιουργίας (1η του μήνα)
+                creation_date = self.created_at.date() if hasattr(self.created_at, 'date') else self.created_at
+                if isinstance(creation_date, str):
+                    from datetime import datetime
+                    creation_date = datetime.strptime(creation_date, '%Y-%m-%d').date()
+                self.financial_system_start_date = creation_date.replace(day=1)
+                print(f"✅ Auto-set financial_system_start_date = {self.financial_system_start_date} (1η του μήνα δημιουργίας) for building {self.name}")
+            else:
+                # Fallback: 1η του τρέχοντος μήνα αν δεν υπάρχει created_at
+                today = date.today()
+                self.financial_system_start_date = today.replace(day=1)
+                print(f"✅ Auto-set financial_system_start_date = {self.financial_system_start_date} (fallback: 1η τρέχοντος μήνα) for building {self.name}")
+        
+        # 🔧 ΕΠΙΣΗ: Εξασφαλίζουμε ότι η ημερομηνία είναι πάντα η 1η του μήνα
+        if self.financial_system_start_date:
+            self.financial_system_start_date = self.financial_system_start_date.replace(day=1)
         
         super().save(*args, **kwargs)
         
