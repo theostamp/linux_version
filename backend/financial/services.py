@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 from typing import Dict, Any, List, Optional
 from django.db.models import Sum
@@ -6,6 +7,7 @@ from django.utils import timezone
 from .models import Expense, Transaction, Payment, CommonExpensePeriod, ApartmentShare, MonthlyBalance
 from apartments.models import Apartment
 from buildings.models import Building
+from .monthly_balance_service import MonthlyBalanceService
 
 import os
 import uuid
@@ -419,6 +421,8 @@ class FinancialDashboardService:
     def __init__(self, building_id: int):
         self.building_id = building_id
         self.building = Building.objects.get(id=building_id)
+        self.logger = logging.getLogger(__name__)
+        self._monthly_balance_service = MonthlyBalanceService(self.building)
     
     def get_summary(self, month: str | None = None) -> Dict[str, Any]:
         # 🔧 ΝΕΟ: Αποθήκευση month context για reserve fund calculation
@@ -426,6 +430,40 @@ class FinancialDashboardService:
         """Επιστρέφει σύνοψη οικονομικών στοιχείων.
         Αν δοθεί month (YYYY-MM), υπολογίζει για τον συγκεκριμένο μήνα."""
         apartments = Apartment.objects.filter(building_id=self.building_id)
+        
+        # Monthly balance snapshot (single source of truth for carryover)
+        monthly_balance_snapshot: Optional[MonthlyBalance] = None
+        scheduled_maintenance_amount = Decimal('0.00')
+        carry_forward_amount = Decimal('0.00')
+        
+        # Resolve the target month/year (defaults to current month)
+        target_year: int
+        target_month_number: int
+        if month:
+            try:
+                target_year, target_month_number = map(int, month.split('-'))
+            except ValueError:
+                today = timezone.now().date()
+                target_year, target_month_number = today.year, today.month
+        else:
+            today = timezone.now().date()
+            target_year, target_month_number = today.year, today.month
+        
+        try:
+            monthly_balance_snapshot = self._monthly_balance_service.create_or_update_monthly_balance(
+                target_year,
+                target_month_number,
+                recalculate=bool(month)
+            )
+            scheduled_maintenance_amount = monthly_balance_snapshot.scheduled_maintenance_amount
+            carry_forward_amount = monthly_balance_snapshot.carry_forward
+        except Exception as exc:
+            self.logger.warning(
+                "MonthlyBalanceService failed for %s-%s",
+                target_year,
+                f"{target_month_number:02d}",
+                exc_info=exc
+            )
         
         # Συνολικές οφειλές: αρνητικά υπόλοιπα + ανέκδοτες δαπάνες
         apartment_obligations = Decimal(str(sum(
@@ -474,6 +512,7 @@ class FinancialDashboardService:
         # Συνολικές υποχρεώσεις = Υφιστάμενες οφειλές + Ανέκδοτες δαπάνες + Διαχειριστικά τέλη
         # This represents the TOTAL financial obligations, not month-specific
         total_obligations = apartment_obligations + pending_expenses_all + total_management_cost
+        management_fees_snapshot = total_management_cost
         
         # Δαπάνες αυτού του μήνα
         from datetime import date
@@ -802,6 +841,16 @@ class FinancialDashboardService:
             # For current view, use total obligations
             current_obligations = total_obligations
 
+        # Εφαρμογή αποτελεσμάτων MonthlyBalanceService (Single Source of Truth)
+        if monthly_balance_snapshot:
+            previous_obligations = monthly_balance_snapshot.previous_obligations
+            total_expenses_this_month = monthly_balance_snapshot.total_expenses
+            total_payments_this_month = monthly_balance_snapshot.total_payments
+            reserve_fund_contribution = monthly_balance_snapshot.reserve_fund_amount
+            current_obligations = monthly_balance_snapshot.total_obligations
+            current_month_expenses = monthly_balance_snapshot.total_expenses
+            management_fees_snapshot = monthly_balance_snapshot.management_fees
+        
         # (apartments_count, building, management_fee_per_apartment, total_management_cost already calculated above)
 
         # Calculate pending payments (apartments with negative balance)
@@ -843,6 +892,8 @@ class FinancialDashboardService:
             'last_calculation_date': timezone.now().strftime('%Y-%m-%d'),
             'total_expenses_month': float(total_expenses_this_month.quantize(Decimal('0.01'))),
             'total_payments_month': float(total_payments_this_month.quantize(Decimal('0.01'))),
+            'scheduled_maintenance_amount': float(scheduled_maintenance_amount.quantize(Decimal('0.01'))),
+            'carry_forward': float(carry_forward_amount.quantize(Decimal('0.01'))),
             'pending_expenses': float(pending_expenses.quantize(Decimal('0.01'))),
             'recent_transactions': list(recent_transactions),
             'recent_transactions_count': len(recent_transactions),
@@ -857,7 +908,8 @@ class FinancialDashboardService:
             'reserve_fund_target_date': self.building.reserve_fund_target_date.strftime('%Y-%m-%d') if self.building.reserve_fund_target_date else None,
             # Management expenses
             'management_fee_per_apartment': float(effective_management_fee_per_apartment),  # 🔧 ΝΕΟ: Χρήση effective fee
-            'total_management_cost': float(total_management_cost),
+            'total_management_cost': float(management_fees_snapshot.quantize(Decimal('0.01'))),
+            'uses_monthly_balance_snapshot': monthly_balance_snapshot is not None,
             # Αναλυτική κατανομή δαπανών ανά κατηγορία
             'expense_breakdown': expense_breakdown  # ← ΝΕΟ FIELD
         }
