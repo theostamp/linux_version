@@ -473,6 +473,10 @@ def create_demo_data(tenant_schema):
             created_users.append(user)
         
         # 2. Δημιουργία κτιρίων
+        from datetime import date
+        today = date.today()
+        financial_start_date = today.replace(day=1)  # First day of current month
+        
         buildings_data = [
             {
                 'name': 'Αλκμάνος 22',
@@ -484,7 +488,8 @@ def create_demo_data(tenant_schema):
                 'internal_manager_phone': '2101234567',
                 'heating_fixed_percentage': 30.0,
                 'latitude': 37.9838,
-                'longitude': 23.7275
+                'longitude': 23.7275,
+                'financial_system_start_date': financial_start_date
             }
         ]
         
@@ -494,6 +499,12 @@ def create_demo_data(tenant_schema):
                 name=building_data['name'],
                 defaults=building_data
             )
+            
+            # Ensure financial_system_start_date is set even if building already exists
+            if not building.financial_system_start_date:
+                building.financial_system_start_date = financial_start_date
+                building.save(update_fields=['financial_system_start_date'])
+                print(f"✅ Set financial_system_start_date = {financial_start_date} for existing building {building.name}")
             
             if created:
                 print(f"✅ Δημιουργήθηκε κτίριο: {building.name}")

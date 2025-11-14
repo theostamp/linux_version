@@ -398,6 +398,10 @@ class TenantService:
                     tenant_user = None
                 
                 # Create Αλκμάνος 22 building with full data matching auto_initialization.py
+                from datetime import date
+                today = date.today()
+                financial_start_date = today.replace(day=1)  # First day of current month
+                
                 building = Building.objects.create(
                     name='Αλκμάνος 22',
                     address='Αλκμάνος 22, Αθήνα 115 28, Ελλάδα',
@@ -408,8 +412,10 @@ class TenantService:
                     internal_manager_phone='2101234567',
                     heating_fixed_percentage=30.0,
                     latitude=37.9838,
-                    longitude=23.7275
+                    longitude=23.7275,
+                    financial_system_start_date=financial_start_date
                 )
+                logger.info(f"✅ Created building 'Αλκμάνος 22' with financial_system_start_date={financial_start_date}")
                 
                 # Create building membership for tenant user (if user exists)
                 if tenant_user:
@@ -517,14 +523,18 @@ class TenantService:
                     from buildings.models import Building
                     if not Building.objects.filter(name__icontains='Αλκμάνος').exists():
                         logger.info(f"Attempting to create minimal demo building in schema {schema_name}")
+                        from datetime import date
+                        today = date.today()
+                        financial_start_date = today.replace(day=1)  # First day of current month
                         Building.objects.create(
                             name='Αλκμάνος 22',
                             address='Αλκμάνος 22, Αθήνα 115 28, Ελλάδα',
                             city='Αθήνα',
                             postal_code='11528',
-                            apartments_count=10
+                            apartments_count=10,
+                            financial_system_start_date=financial_start_date
                         )
-                        logger.info(f"Created minimal demo building 'Αλκμάνος 22' in schema {schema_name}")
+                        logger.info(f"Created minimal demo building 'Αλκμάνος 22' with financial_system_start_date={financial_start_date} in schema {schema_name}")
             except Exception as fallback_error:
                 logger.error(f"Failed to create minimal demo building in schema {schema_name}: {fallback_error}")
 
