@@ -2978,6 +2978,12 @@ def system_health_check(request):
     """
     try:
         # Εκτέλεση ελέγχου υγείας
+        if run_system_health_check is None:
+            return Response(
+                {'error': 'System health validator not available'}, 
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        
         health_results = run_system_health_check()
         
         return Response({
@@ -3002,6 +3008,12 @@ def auto_fix_system_issues(request):
     """
     try:
         # Εκτέλεση αυτόματης διόρθωσης
+        if run_auto_fix is None:
+            return Response(
+                {'error': 'Auto fix system issues not available'}, 
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        
         fix_results = run_auto_fix()
         
         return Response({
