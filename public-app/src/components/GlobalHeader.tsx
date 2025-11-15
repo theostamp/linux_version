@@ -10,7 +10,7 @@ import { User, Building as BuildingIcon, Settings, Calendar } from 'lucide-react
 import { API_BASE_URL } from '@/lib/api';
 
 // Helper function to get user role label
-const getUserRoleLabel = (user: any): string => {
+const getUserRoleLabel = (user: { is_superuser?: boolean; is_staff?: boolean; role?: string } | null): string => {
   if (!user) return 'Χρήστης';
 
   if (user.is_superuser) return 'Ultra Admin';

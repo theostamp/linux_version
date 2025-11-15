@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, extractCount, extractResults, getActiveBuildingId } from '@/lib/api';
 import { getRelativeTimeEl } from '@/lib/date';

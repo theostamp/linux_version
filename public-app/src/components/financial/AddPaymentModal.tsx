@@ -46,9 +46,20 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
+  interface ApartmentShare {
+    total_amount?: number;
+    total_due?: number;
+    [key: string]: unknown;
+  }
+  
+  interface CalculateAdvancedResponse {
+    shares?: Record<string, ApartmentShare>;
+    [key: string]: unknown;
+  }
+  
   // Advanced calculation cache per modal open (maps apartmentId -> monthly total for selected month)
   const [monthlyShares, setMonthlyShares] = useState<Record<number, number> | null>(null);
-  const [monthlySharesData, setMonthlySharesData] = useState<any>(null); // Full calculation data
+  const [monthlySharesData, setMonthlySharesData] = useState<CalculateAdvancedResponse | null>(null); // Full calculation data
   const [isCalculatingShares, setIsCalculatingShares] = useState(false);
   const [calcError, setCalcError] = useState<string | null>(null);
   const [amountTouched, setAmountTouched] = useState(false);
@@ -110,7 +121,12 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
       setIsCalculatingShares(true);
       setCalcError(null);
       try {
-        const payload: any = {
+        interface CalculateAdvancedPayload {
+          building_id: number;
+          period_start_date: string;
+          period_end_date: string;
+        }
+        const payload: CalculateAdvancedPayload = {
           building_id: buildingId,
           period_start_date: monthRange.start,
           period_end_date: monthRange.end,
@@ -120,18 +136,20 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
         const shares = response?.shares || {};
         const map: Record<number, number> = {};
         // shares is expected as record keyed by apartment_id with total_amount and total_due
-        Object.entries(shares).forEach(([aptId, share]: any) => {
+        Object.entries(shares).forEach(([aptId, share]) => {
+          const shareData = share as ApartmentShare;
           // Use total_due for monthly obligation instead of total_amount
-          const monthlyDue = parseFloat(share?.total_due ?? 0);
+          const monthlyDue = parseFloat(String(shareData?.total_due ?? 0));
           if (!isNaN(monthlyDue)) {
             map[Number(aptId)] = monthlyDue;
           }
         });
         setMonthlyShares(map);
         setMonthlySharesData(response); // Store full calculation data
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error fetching monthly shares:', err);
-        setCalcError(err?.response?.data?.error || 'Αποτυχία υπολογισμού κοινοχρήστων μήνα');
+        const error = err as { response?: { data?: { error?: string } } };
+        setCalcError(error?.response?.data?.error || 'Αποτυχία υπολογισμού κοινοχρήστων μήνα');
         setMonthlyShares(null);
       } finally {
         setIsCalculatingShares(false);
@@ -174,7 +192,19 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
       const { usePayments } = await import('@/hooks/usePayments');
       
       // Create FormData for file upload if needed
-      let requestData: any;
+      interface PaymentRequestData {
+        apartment: number;
+        amount: number;
+        reserve_fund_amount: number;
+        date: string;
+        method: string;
+        payment_type: string;
+        payer_type: string;
+        payer_name: string;
+        reference_number?: string;
+        notes?: string;
+      }
+      let requestData: FormData | PaymentRequestData;
       
       if (receiptFile) {
         const formDataPayload = new FormData();
@@ -219,9 +249,10 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
       // Success - notify parent and close modal
       onPaymentAdded();
       handleClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error creating payment:', err);
-      setError(err.response?.data?.error || 'Σφάλμα κατά τη δημιουργία της εισπραξής');
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error?.response?.data?.error || 'Σφάλμα κατά τη δημιουργία της εισπραξής');
     } finally {
       setIsSubmitting(false);
     }

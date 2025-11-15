@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BackButton } from '@/components/ui/BackButton';
@@ -16,8 +16,6 @@ import {
   Users,
   FileText,
   AlertCircle,
-  CheckCircle,
-  XCircle,
   Loader2
 } from 'lucide-react';
 import AuthGate from '@/components/AuthGate';

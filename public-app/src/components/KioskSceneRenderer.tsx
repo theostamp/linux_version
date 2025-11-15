@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useKioskScenes, KioskScene } from '@/hooks/useKioskScenes';
+import { useKioskScenes, KioskScene, WidgetPlacement } from '@/hooks/useKioskScenes';
 import { useKioskData } from '@/hooks/useKioskData';
 import { WIDGET_COMPONENTS } from '@/lib/kiosk/widgets/registry';
 import FinancialSceneCustom from '@/components/kiosk/scenes/FinancialSceneCustom';
@@ -94,7 +94,7 @@ export default function KioskSceneRenderer({
   };
 
   // Render a widget based on its component name
-  const renderWidget = useCallback((placement: any) => {
+  const renderWidget = useCallback((placement: WidgetPlacement) => {
     const { widget } = placement;
     
     if (!widget || !widget.component) {

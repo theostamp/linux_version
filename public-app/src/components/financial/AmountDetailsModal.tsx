@@ -72,7 +72,17 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [monthlyBreakdown, setMonthlyBreakdown] = useState<MonthlyBreakdown[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
-  const [summary, setSummary] = useState<any>(null);
+  
+  interface FinancialSummary {
+    total_balance?: number;
+    current_obligations?: number;
+    previous_obligations?: number;
+    current_month_expenses?: number;
+    total_payments_this_month?: number;
+    reserve_fund_contribution?: number;
+    [key: string]: unknown;
+  }
+  const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [monthlyModalOpen, setMonthlyModalOpen] = useState(false);
   const [selectedMonthForModal, setSelectedMonthForModal] = useState<{ month: string; displayName: string } | null>(null);
 
@@ -107,7 +117,7 @@ export const AmountDetailsModal: React.FC<AmountDetailsModalProps> = ({
       setSummary(summaryResponse.data);
 
       // Load transaction history - try different endpoints
-      let transactions: any[] = [];
+      let transactions: Transaction[] = [];
       let transactionsLoadedSuccessfully = false;
 
       // Always use expenses/payments fallback since transactions endpoint requires auth

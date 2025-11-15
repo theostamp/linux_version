@@ -60,7 +60,8 @@ export default function NewContractorPage() {
     if (suggested && form.name !== suggested) {
       setForm((prev) => ({ ...prev, name: suggested }));
     }
-  }, [form.service_type, customService, nameEdited]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.service_type, customService, nameEdited]); // form.name intentionally omitted to avoid infinite loop
 
   async function handleSave() {
     setSaving(true);
@@ -82,7 +83,7 @@ export default function NewContractorPage() {
       await createContractor(payload);
       toast({ title: 'Αποθηκεύτηκε', description: 'Το συνεργείο δημιουργήθηκε.' });
       router.push('/maintenance/contractors');
-    } catch (e) {
+    } catch {
       toast({ title: 'Σφάλμα', description: 'Αποτυχία δημιουργίας συνεργείου.', variant: 'destructive' });
     } finally {
       setSaving(false);

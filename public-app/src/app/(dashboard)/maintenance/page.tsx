@@ -12,7 +12,7 @@
  *   (excludes operational expenses like utilities, monthly bills)
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, extractCount, extractResults, getActiveBuildingId } from '@/lib/api';
 import { fetchPublicMaintenanceCounters } from '@/lib/apiPublic';
@@ -21,7 +21,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Wrench, 
   FileText, 
   Calendar, 
   Users, 

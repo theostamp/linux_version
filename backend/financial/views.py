@@ -1652,12 +1652,15 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                             share_amount = float((expense.amount / Decimal(str(apartments_count))).quantize(Decimal('0.01')))
                     
                     apartment_data['total_obligations'] += share_amount
+                    payer = expense.payer_responsibility or Expense.get_default_payer_for_category(expense.category) or 'resident'
+                    
                     apartment_data['expense_breakdown'].append({
                         'expense_id': expense.id,
                         'expense_title': expense.title,
                         'expense_amount': float(expense.amount),
                         'share_amount': share_amount,
                         'distribution_type': expense.distribution_type,
+                        'payer_responsibility': payer,
                         'date': expense.date.isoformat(),
                         'month': expense.date.strftime('%Y-%m'),
                         'month_display': expense.date.strftime('%B %Y'),
@@ -1699,6 +1702,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                                         'expense_amount': float(monthly_reserve_target),
                                         'share_amount': reserve_share,
                                         'distribution_type': 'reserve_fund',
+                                        'payer_responsibility': 'owner',
                                         'date': month_start.isoformat(),
                                         'month': month,
                                         'month_display': month_start.strftime('%B %Y'),
@@ -1728,6 +1732,7 @@ class FinancialDashboardViewSet(viewsets.ViewSet):
                                     'expense_amount': float(monthly_reserve_target),
                                     'share_amount': reserve_share,
                                     'distribution_type': 'reserve_fund',
+                                    'payer_responsibility': 'owner',
                                     'date': current_date.isoformat(),
                                     'month': current_date.strftime('%Y-%m'),
                                     'month_display': current_date.strftime('%B %Y'),

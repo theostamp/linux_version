@@ -1332,7 +1332,7 @@ class FinancialDashboardService:
             date__lt=end_date
         ).exclude(
             category__in=['management_fees', 'reserve_fund']
-        ).values('category').annotate(
+        ).values('category', 'payer_responsibility').annotate(
             total_amount=Sum('amount')
         ).order_by('-total_amount')
 
@@ -1343,8 +1343,8 @@ class FinancialDashboardService:
             # Παίρνουμε το display name από το model
             category_display = dict(Expense.EXPENSE_CATEGORIES).get(category, category.upper())
             
-            # Προσθήκη του suggested payer για να δείξουμε Ⓔ/Ⓓ στο frontend
-            payer = Expense.get_default_payer_for_category(category)
+            # Χρήση πραγματικού payer_responsibility αν υπάρχει, αλλιώς fallback στο default mapping
+            payer = expense.get('payer_responsibility') or Expense.get_default_payer_for_category(category) or 'resident'
 
             breakdown.append({
                 'category': category,

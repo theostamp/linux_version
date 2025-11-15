@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import ZoomSettingsModal from '@/components/projects/ZoomSettingsModal';
 import { BackButton } from '@/components/ui/BackButton';
-import { Save, Lightbulb, Plus, Settings as SettingsIcon } from 'lucide-react';
+import { Save, Plus, Settings as SettingsIcon } from 'lucide-react';
 
 const SUGGESTED_PROJECTS = [
   { title: 'Στεγανοποίηση Ταράτσας', description: 'Πλήρης στεγανοποίηση ταράτσας με ασφαλτόπανο και τσιμεντοκονίαμα', priority: 'high' },
