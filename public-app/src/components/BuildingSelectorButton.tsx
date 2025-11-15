@@ -22,6 +22,9 @@ export default function BuildingSelectorButton({
   const [showTooltip, setShowTooltip] = useState(false);
   const [hasSeenTooltip, setHasSeenTooltip] = useState(false);
 
+  const handleOpen = React.useCallback(() => setIsOpen(true), []);
+  const handleClose = React.useCallback(() => setIsOpen(false), []);
+
   useEffect(() => {
     const seen = localStorage.getItem('building-selector-tooltip-seen');
     if (!seen) {
@@ -61,9 +64,6 @@ export default function BuildingSelectorButton({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleOpen]);
-
-  const handleOpen = React.useCallback(() => setIsOpen(true), []);
-  const handleClose = React.useCallback(() => setIsOpen(false), []);
 
   const handleBuildingSelect = (building: Building | null) => {
     onBuildingSelect(building);
