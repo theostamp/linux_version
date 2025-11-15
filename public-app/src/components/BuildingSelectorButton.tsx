@@ -39,6 +39,29 @@ export default function BuildingSelectorButton({
     }
   }, []);
 
+  // Keyboard shortcut: Ctrl+Alt+B (or b, β, Β) to open building selector
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Ctrl+Alt+B or standalone b/β/Β (when not typing in input/textarea)
+      const isInputFocused = document.activeElement?.tagName === 'INPUT' || 
+                             document.activeElement?.tagName === 'TEXTAREA';
+      
+      if (isInputFocused) return; // Don't trigger when typing in inputs
+      
+      const isCtrlAltB = (e.ctrlKey || e.metaKey) && e.altKey && (e.key === 'b' || e.key === 'B');
+      const isStandaloneB = !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey && 
+                           (e.key === 'b' || e.key === 'B' || e.key === 'β' || e.key === 'Β');
+      
+      if (isCtrlAltB || isStandaloneB) {
+        e.preventDefault();
+        handleOpen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleOpen = () => setIsOpen(true);
   const handleClose = () => setIsOpen(false);
 

@@ -37,15 +37,18 @@ export async function GET(
     );
   }
 
-  // Determine backend URL - use Docker service name when in container
-  // Default to Docker service name (backend:8000)
-  const backendUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://backend:8000';
+  const backendUrl =
+    process.env.API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_DJANGO_API_URL ||
+    'https://linuxversion-production.up.railway.app';
   
   console.log('[PUBLIC-INFO API] ===== NEW CODE VERSION =====');
   console.log('[PUBLIC-INFO API] Using backend URL:', backendUrl);
   console.log('[PUBLIC-INFO API] Building ID:', buildingId);
   
-  const targetUrl = `${backendUrl}/api/public-info/${buildingId}/`;
+  const normalizedBase = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
+  const targetUrl = `${normalizedBase}/api/public-info/${buildingId}/`;
 
   console.log('[PUBLIC-INFO API] Fetching from:', targetUrl);
 
@@ -53,10 +56,18 @@ export async function GET(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
+    const requestHost =
+      request.headers.get('x-tenant-host') ||
+      request.headers.get('host') ||
+      request.headers.get('x-forwarded-host') ||
+      'demo.localhost';
+
     const headers = {
       'Content-Type': 'application/json',
-      // Add X-Forwarded-Host header for Django multi-tenant (works better than Host)
-      'X-Forwarded-Host': 'demo.localhost',
+      Host: requestHost,
+      'X-Forwarded-Host': requestHost,
+      'X-Tenant-Host': requestHost,
+      'X-Forwarded-Proto': request.headers.get('x-forwarded-proto') ?? 'https',
     };
 
     console.log('[PUBLIC-INFO API] Request headers:', headers);
@@ -99,4 +110,3 @@ export async function GET(
     return NextResponse.json(FALLBACK_RESPONSE);
   }
 }
-

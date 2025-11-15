@@ -223,7 +223,7 @@ export const useKioskData = (buildingId: number | null = 1) => {
       };
 
       // Transform announcements to match KioskAnnouncement interface
-      const announcementsResult: KioskAnnouncement[] = (publicData.announcements || []).map((announcement) => {
+      let announcementsResult: KioskAnnouncement[] = (publicData.announcements || []).map((announcement) => {
         const priorityScore = typeof announcement.priority === 'number' ? announcement.priority : 0;
         const computedPriority: PriorityLevel = (announcement.is_urgent || priorityScore > 5) ? 'high' : 'medium';
         const description = announcement.description || '';
@@ -240,6 +240,47 @@ export const useKioskData = (buildingId: number | null = 1) => {
           priority: computedPriority
         };
       });
+
+      if (!announcementsResult.length) {
+        try {
+          const fallbackParams: Record<string, string | number> = {
+            page_size: 5,
+            ordering: '-created_at',
+          };
+          if (buildingId) {
+            fallbackParams.building = buildingId;
+          }
+
+          const fallbackResponse = await apiGet<{ results?: PublicAnnouncement[] } | PublicAnnouncement[]>(
+            '/announcements/',
+            fallbackParams
+          );
+
+          const fallbackAnnouncements = Array.isArray(fallbackResponse)
+            ? fallbackResponse
+            : fallbackResponse.results || [];
+
+          announcementsResult = fallbackAnnouncements.map((announcement) => {
+            const priorityScore = typeof announcement.priority === 'number' ? announcement.priority : 0;
+            const computedPriority: PriorityLevel = (announcement.is_urgent || priorityScore > 5) ? 'high' : 'medium';
+            const description = announcement.description || '';
+
+            return {
+              id: announcement.id,
+              title: announcement.title || 'Ανακοίνωση',
+              description,
+              content: description,
+              created_at: announcement.created_at || announcement.start_date || new Date().toISOString(),
+              date: announcement.start_date || announcement.created_at,
+              start_date: announcement.start_date,
+              end_date: announcement.end_date,
+              priority: computedPriority
+            };
+          });
+        } catch (fallbackError) {
+          console.warn('[useKioskData] Fallback announcements fetch failed:', fallbackError);
+        }
+      }
 
       // Use real financial data from backend
       const financialSource = publicData.financial || publicData.financial_info;
