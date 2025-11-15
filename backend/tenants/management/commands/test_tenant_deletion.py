@@ -13,12 +13,22 @@ from django.db import connection
 from django_tenants.utils import schema_context
 from tenants.models import Client, Domain
 from users.models import CustomUser
-from buildings.models import Building
-from apartments.models import Apartment
-from financial.models import Expense, Payment, MonthlyBalance
-from projects.models import Project
-from maintenance.models import Contractor, ScheduledMaintenance
-from announcements.models import Announcement
+
+# Import tenant-specific models (may fail during test discovery if schema doesn't exist)
+try:
+    from buildings.models import Building
+    from apartments.models import Apartment
+    from financial.models import Expense, Payment, MonthlyBalance
+    from projects.models import Project
+    from maintenance.models import Contractor, ScheduledMaintenance
+    from announcements.models import Announcement
+    MODELS_AVAILABLE = True
+except (ImportError, Exception):
+    # During test discovery or if models aren't available, set to None
+    MODELS_AVAILABLE = False
+    Building = Apartment = Expense = Payment = MonthlyBalance = None
+    Project = Contractor = ScheduledMaintenance = Announcement = None
+
 try:
     from billing.models import UserSubscription, SubscriptionPlan
     BILLING_AVAILABLE = True
@@ -59,6 +69,9 @@ class Command(BaseCommand):
         all_domains_before = Domain.objects.count()
 
         # Count related data BEFORE deletion
+        if not MODELS_AVAILABLE:
+            raise CommandError('Required models are not available. Make sure Django is properly configured.')
+
         with schema_context(schema_name):
             counts_before = {
                 'users': CustomUser.objects.count(),
