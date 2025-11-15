@@ -62,18 +62,18 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
         <SelectTrigger className="w-56 bg-white border-blue-300 hover:border-blue-400 focus:border-blue-500 transition-colors">
           <SelectValue placeholder="Επιλέξτε μήνα" />
         </SelectTrigger>
-        <SelectContent className="max-h-80">
+        <SelectContent className="max-h-80 bg-white dark:bg-zinc-900">
           {/* Current Month Section - Only show if current month is selected or available */}
           {selectedMonth === currentMonthValue && (
             <>
-              <div className="px-2 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 border-b">
+              <div className="px-2 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 dark:bg-blue-900/30 border-b">
                 Τρέχων Μήνας
               </div>
               {monthOptions.slice(24, 25).map((month) => (
                 <SelectItem 
                   key={month.value} 
                   value={month.value}
-                  className="font-semibold text-blue-700 bg-blue-50/50"
+                  className="font-semibold text-blue-700 bg-blue-50/50 dark:bg-blue-900/20 dark:text-blue-300"
                 >
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -85,7 +85,7 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
           )}
           
           {/* Recent Months Section */}
-          <div className="px-2 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border-b">
+          <div className="px-2 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 dark:bg-gray-800 dark:text-gray-300 border-b">
             Πρόσφατοι Μήνες
           </div>
           {monthOptions.slice(18, 25).map((month) => {
@@ -105,7 +105,7 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
           })}
           
           {/* Historical Months Section */}
-          <div className="px-2 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border-b">
+          <div className="px-2 py-1.5 text-xs font-semibold text-gray-600 bg-gray-50 dark:bg-gray-800 dark:text-gray-300 border-b">
             Ιστορικά Δεδομένα
           </div>
           {monthOptions.slice(0, 18).map((month) => (
@@ -118,7 +118,7 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
           ))}
           
           {/* Future Months Section */}
-          <div className="px-2 py-1.5 text-xs font-semibold text-green-600 bg-green-50 border-b">
+          <div className="px-2 py-1.5 text-xs font-semibold text-green-600 bg-green-50 dark:bg-green-900/30 dark:text-green-300 border-b">
             Μελλοντικοί Μήνες
           </div>
           {monthOptions.slice(25).map((month) => (
