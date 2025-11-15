@@ -20,7 +20,7 @@ def building_info(request, building_id: int):
     with schema_context('demo'):
         # Get building information
         try:
-            building = Building.objects.select_related('manager').get(id=building_id)
+            building = Building.objects.get(id=building_id)
             building_info = {
                 'id': building.id,
                 'name': building.name,
@@ -33,7 +33,7 @@ def building_info(request, building_id: int):
                 'management_office_name': building.management_office_name,
                 'management_office_phone': building.management_office_phone,
                 'management_office_address': building.management_office_address,
-                'office_logo': building.manager.office_logo.url if building.manager and building.manager.office_logo else None,
+                'office_logo': None,  # Building model doesn't have direct manager relation
             }
         except Building.DoesNotExist:
             building_info = None
